@@ -1,0 +1,7 @@
+@media (max-width: 568px){
+  .table-scroll{
+    margin: auto;
+    overflow-x: scroll;
+    width: 90%;
+  }
+}
