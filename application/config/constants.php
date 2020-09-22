@@ -100,16 +100,13 @@ define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
 #COMPONENTE ALMACENES
-define('ALM', 'traz-comp-almacen/');
+define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
 define('BPM_PROCESS', json_encode(array(
     '8803232493891311406' => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'GEN_Tareas'],
     '6013058915384903051' => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'GEN_Tareas'],
-    '7503443566840192735' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'GEN_Tareas'],
-    '4914088989692457565' => ['nombre' => 'TERSU-BPM01 - Solicitud de Contenedores', 'color' => '#FF3300', 'proyecto'=>'general/transporte-bpm/', 'model'=>'PedidoContenedores'],
-    '6698304776086614055' => ['nombre' => 'TERSU-BPM02 - Solicitud de Retiro de Contenedores', 'color' => '#ABC51A', 'proyecto'=>'general/transporte-bpm/', 'model'=>'RetiroContenedores'],
-    '7522690032220353691' => ['nombre' => 'TERSU-BPM03 - Generación Orden de Transporte', 'color' => '#1A56C5', 'proyecto'=>'general/transporte-bpm/', 'model'=>'EntregaOrdenTransportes']
+    '7503443566840192735' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'GEN_Tareas']
 )));
 
 
@@ -141,8 +138,8 @@ define('ASP_115', 'Error al Leer Variable');
 
 
 //Nombre de Prouyecto
-define('MNOM', 'T!');
-define('NOM', 'Tools');
+define('MNOM', 'Tools');
+define('NOM', 'Trazalog Tools');
 
 //Vista por Defecto
 define('DEF_VIEW',BPM.'Proceso');
@@ -167,6 +164,7 @@ define('API_URL', 'http://10.142.0.7:8280/tools/log');
 define('REST_PRD', 'http://10.142.0.7:8280/services/sema/PRDDataService');
 define('REST_BPM', 'http://10.142.0.7:8280/tools/bpm');
 define('REST_CORED', 'http://10.142.0.7:8280/services/sema/COREDataService');
+define('REST_CORE', 'http://10.142.0.7:8280/services/COREDataService/');
 
 define('HOST', 'http://localhost/');
 
