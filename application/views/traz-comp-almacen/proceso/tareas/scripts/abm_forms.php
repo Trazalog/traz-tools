@@ -284,9 +284,13 @@
     });
   }); 
 
-  function existFunction(nombre){
-		var fn = window[nombre]; 
-		return typeof fn === 'function';
-  }
+  function existFunction(nombre, paramentro = false) {
+	var fn = window[nombre];
+	if (typeof fn === "function") {
+		if (paramentro) fn(paramentro);
+		else fn();
+		return true;
+	} else return false;
+}
 
 </script>
