@@ -23,5 +23,10 @@ if(!function_exists('getJson'))
         preg_match('~>>([^{]*)<<~i', $msj, $match);
         log_message('DEBUG', '#WSO2 #RESPONCE: ' . $match[1]);
     }
+
+    function show($data)
+    {
+        echo "<pre>".json_encode($data, JSON_PRETTY_PRINT)."</pre>";
+    }
 }
 ?>

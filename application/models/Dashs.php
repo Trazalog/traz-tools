@@ -22,7 +22,8 @@ class Dashs extends CI_Model {
   function obtenerMenu(){
 
     $email = $this->session->userdata('email');
-    $aux = $this->rest->callAPI("GET",REST_CORED."/menuitems/porEmail/".$email);
+    #$grupo = "grupotest";
+    $aux = $this->rest->callAPI("GET",REST_CORE."menuitems/porEmail/$email/porGrupo/$grupo");
     $aux =json_decode($aux["data"]);
     return $aux;
   }

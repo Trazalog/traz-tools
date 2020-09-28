@@ -5,22 +5,17 @@ class Test extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-  
     }
 
     public function index()
     {
-     
-         $this->load->view('test1');
-    }
-    public function pp()
-    {
-        echo 'esto es una prueba';
+      echo userId();
     }
 
-    public function datos()
+    public function sesion()
     {
-        $data['nombre'] = "Fernando";
-        echo json_encode($data);
+        show($this->session->userdata());
     }
+
+
 }

@@ -25,47 +25,41 @@
     
     <!-- AdminLTE Skins. Choose a skin from the css/skins
        folder instead of downloading all of them to reduce the load. -->
-    <link rel="stylesheet" href="lib/dist/css/skins/_all-skins.min.css">
+    <link rel="stylesheet" href="<?php echo base_url();?>lib/dist/css/skins/_all-skins.min.css">
 
-    <link rel="stylesheet" href="<?php base_url();?>lib/plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="<?php echo base_url();?>lib/plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
 
     <link rel="stylesheet"
-        href="<?php base_url()?>lib/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
-
-        <!-- <link rel="stylesheet"
-        href="<?php //base_url()?>lib/bower_components/datatables1/datatables.css"> -->
-
-     
-
-        
-        <!-- <link rel="stylesheet"
-        href="<?php //base_url()?>lib/bower_components/datatables1/datatables.min.css"> -->
+        href="<?php echo base_url()?>lib/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
 
         <!-- Select2 -->
-        <link rel="stylesheet" href="<?php base_url()?>lib/bower_components/select2/dist/css/select2.min.css">
+        <link rel="stylesheet" href="<?php echo base_url()?>lib/bower_components/select2/dist/css/select2.min.css">
+
+        
+    <link rel="stylesheet" href="<?php echo base_url() ?>lib/bower_components/select2/dist/css/boostrap.css">
 
 
 
-    <link rel="stylesheet" href="<?php base_url()?>lib/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css">
+    <link rel="stylesheet" href="<?php echo base_url()?>lib/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css">
 
-    <link rel="stylesheet" href="<?php base_url()?>lib/bower_components/bootstrap-daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" href="<?php echo base_url()?>lib/bower_components/bootstrap-daterangepicker/daterangepicker.css">
 
     <!-- Bootstrap datetimepicker -->
-    <link rel="stylesheet" href="<?php base_url();?>lib/plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="<?php echo base_url();?>lib/plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
 
     <!-- iCheck for checkboxes and radio inputs -->
-    <link rel="stylesheet" href="<?php base_url();?>lib/plugins/iCheck/all.css">
+    <link rel="stylesheet" href="<?php echo base_url();?>lib/plugins/iCheck/all.css">
 
     <link rel="stylesheet" href="<?php echo base_url();?>lib/bootstrapValidator/bootstrapValidator.min.css" />
 
     <!-- alertifyjs -->
 
-    <link rel="stylesheet" href="<?php base_url();?>lib/alertify/css/alertify.css">
-    <link rel="stylesheet" href="<?php base_url();?>lib/alertify/css/themes/bootstrap.css">
+    <link rel="stylesheet" href="<?php  echo base_url();?>lib/alertify/css/alertify.css">
+    <link rel="stylesheet" href="<?php  echo base_url();?>lib/alertify/css/themes/bootstrap.css">
 
     <!-- animate.css -->
 
-    <link rel="stylesheet" href="<?php base_url();?>lib/animate/animate.css">
+    <link rel="stylesheet" href="<?php  echo base_url();?>lib/animate/animate.css">
 
     <!-- Google Font -->
     <link rel="stylesheet"
@@ -82,13 +76,11 @@
 
     <header class="main-header">
         <!-- Logo -->
-        <a href="#" onclick="linkTo()" class="logo">
+        <a href="#"  class="logo">
             <!-- mini logo for sidebar mini 50x50 pixels -->
             <span class="logo-mini"><strong><?php echo MNOM ?></strong></span>
-            <!-- logo for regular state and mobile devices -->
-            <!-- <span class="logo-lg"><img src="<?php //echo base_url()?>lib\dist\img\Isologo.png" class="brandlogo-image"> -->
-						<span class="logo-lg"><b><?php echo NOM ?></b></span>
-        </span>
+						<span class="logo-lg" onclick="linkTo();"><b><?php echo NOM ?></b></span>
+        <!-- </span> -->
         </a>
         <!-- Header Navbar: style can be found in header.less -->
         <nav class="navbar navbar-static-top">
@@ -334,20 +326,7 @@
 </div>
 <!-- ./wrapper -->
 <script>
-var link = '';
-
 linkTo('<?php echo DEF_VIEW ?>');
-
-$('.menu .link').on('click', function() {
-    link = $(this).data('link');
-    linkTo();
-});
-
-function linkTo(uri = '') {
-    if (link == '' && uri == '') return;
-    $('#content').empty();
-    $('#content').load('<?php echo base_url() ?>' + (uri == '' ? link : uri));
-}
 
 function collapse(e) {
     e = $(e).closest('.box');
