@@ -89,7 +89,7 @@ $autoload['drivers'] = array();
 |
 |	$autoload['helper'] = array('url', 'file');
 */
-$autoload['helper'] = array('url','componente','fecha','timeline','info','develop','form', 'validacion','admin','menu', 'sesion','lenguaje', 'infoentidadesproceso', 'infoproceso', 'wso2');
+$autoload['helper'] = array('url', PRD.'componente','fecha','timeline','info','develop', 'validacion','admin','menu', 'sesion','lenguaje', 'infoentidadesproceso', 'infoproceso', 'wso2', 'form');
 
 /*
 | -------------------------------------------------------------------

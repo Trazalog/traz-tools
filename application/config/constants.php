@@ -104,18 +104,14 @@ define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
 define('BPM_PROCESS', json_encode(array(
-    '8803232493891311406' => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'ALM_Tareas'],
-    '6013058915384903051' => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'GEN_Tareas'],
-    '7503443566840192735' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>ALM, 'model'=>'GEN_Tareas']
+    BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'ALM_Tareas'],
+    BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'GEN_Tareas'],
+    '7503443566840192735' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'GEN_Tareas']
 )));
 
-
-define('BPM_ADMIN_USER', 'almacentools');
-define('BPM_ADMIN_PASS', 'bpm');
-define('BPM_USER_PASS', 'bpm');
-// define('BPM_ADMIN_USER', 'admin');
-// define('BPM_ADMIN_PASS', '123traza');
-// define('BPM_USER_PASS', '123');
+define('BPM_ADMIN_USER', 'admin');
+define('BPM_ADMIN_PASS', '123traza');
+define('BPM_USER_PASS', '123');
 
 #ERRORES DE BONITA
 define('ASP_100', 'Fallo Conexión BPM');
@@ -169,7 +165,7 @@ define('REST_CORE', 'http://10.142.0.7:8280/services/COREDataService/');
 define('HOST', 'http://localhost/');
 
 #COMPONENTE FORMULARIOS
-define('FRM', 'traz-comp-form/');
+define('FRM', 'traz-comp-formularios/');
 define('FILES', 'files/');
 
 # DNATO
@@ -179,4 +175,6 @@ define('DNATO', 'http://localhost/traz-comp-dnato/');
 
 define('PORT', ':3000/');
 
+define('PRD', 'traz-prod-trazasoft/');
 
+define('TST', 'traz-comp-tareasestandar/');

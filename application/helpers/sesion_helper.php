@@ -9,11 +9,11 @@ if(!function_exists('userId')){
 
     function userId()
     {
-				$ci =& get_instance();
-				$user = userNick();
-				$userBPM = $ci->bpm->getUser($user);
-				$userid = $userBPM['data']['id'];
-				return  $userid;
+		$ci =& get_instance();
+		$user = userNick();
+		$userBPM = $ci->bpm->getUser($user);
+		$userid = $userBPM['data']['id'];
+		return  $userid;
     }
 }
 
@@ -125,4 +125,4 @@ if(!function_exists('validarSesion')){
         if(empty($userdata['email'])) redirect(base_url().'login/main/logout/'); 
     }
 
-}
+}		
