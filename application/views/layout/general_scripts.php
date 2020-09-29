@@ -58,7 +58,6 @@ $.widget.bridge('uibutton', $.ui.button);
 
        <!-- plugin sweet alert -->
        <script src="<?php echo base_url() ?>lib/sweetalert/sweetalert.min.js"></script>
-       <!-- <script src="<?php #base_url() ?>lib/sweetalert/sweetalert.js"></script> -->
 
        <!-- props   -->
 
