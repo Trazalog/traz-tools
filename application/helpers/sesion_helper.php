@@ -33,6 +33,20 @@ if(!function_exists('userNick')){
 }
 
 /**
+* Devuelve el id de susuario en BPM
+* @param
+* @return 
+*/
+if(!function_exists('userIdBpm')){
+		function userIdBpm()
+		{
+				$ci =& get_instance();
+				$userIdBpm  = $ci->session->userdata('userIdBpm');
+				return  $userIdBpm;
+		}
+}
+
+/**
 * Devuelve id de transportista por nickName de usuario logueado
 * @param
 * @return string $tran_id (tran_id en log.transportistas)
@@ -107,13 +121,18 @@ if(!function_exists('userPass')){
     }
 }
 
+/**
+* Devuelve empr_id desde lavariable de usuario
+* @param
+* @return int empr_id
+*/
 if(!function_exists('empresa')){
 
     function empresa(){
-        return 1; //!HARDCODE
+
         $ci =& get_instance();
-        $userdata  = $ci->session->userdata('user_data');
-		return  empresa();
+        $empr_id  = $ci->session->userdata('empr_id');
+				return  $empr_id;
     }
 }
 
