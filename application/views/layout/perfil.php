@@ -61,17 +61,12 @@
 			wo();
 			var empr_id = $(this).data('ui');
 			cambiarDeEmpresa(empr_id);
-			alert('cambio perfil: ' + empr_id);
-
-			//location.reload();
 	});
 
 	function cambiarDeEmpresa(empr_id) {
 
 			$.ajax({
-					data: {
-							empr_id: empr_id
-					},
+					data: {empr_id: empr_id},
 					dataType: 'json',
 					type: 'POST',
 					url: 'index.php/Dash/cambiarDeEmpresa',
