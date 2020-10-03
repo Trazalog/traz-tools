@@ -14,10 +14,26 @@
 					</li>
 
 
-					<li class="user-body">						
-					</li>					
+					<li class="user-body">
+						<?php
+								$empActiva = empresa();
+						?>
+						<?php foreach($memberships as $empr_id => $memb){ ?>
+								<a href="#" class="btnEmpresa" data-ui="<?php echo $empr_id ?>">
+										<?php
+												if( $empActiva == $empr_id )
+														echo '<i class="fa fa-check"></i>';
+												else
+														echo '<i class="notFA"></i>';
+										?>
+										<?php echo $memb ?>
+
+								</a>
+						<?php } ?>
+
+					</li>
 					<!-- Menu Footer-->
-					<li class="user-footer">						
+					<li class="user-footer">
 							<?php if($this->session->userdata['role'] == 1){  // si es usr admin 	?>
 								<div class="pull-left">
 										<a href=<?php echo base_url('Login/list_usuarios')?> class="btn-sm btn-primary pull-right">Usuarios <i class="fa fa-user-circle-o"></i></a>
@@ -37,3 +53,37 @@
 	.navbar-nav>.user-menu>.dropdown-menu>.user-body {padding: 15px 0;}
 	.navbar-nav>.user-menu>.dropdown-menu>.user-footer {padding: 10px 20px;}
 </style>
+
+
+<script>
+
+	$(document).on('click', '.btnEmpresa', function() {
+			wo();
+			var empr_id = $(this).data('ui');
+			cambiarDeEmpresa(empr_id);
+	});
+
+	function cambiarDeEmpresa(empr_id) {
+
+			$.ajax({
+					data: {empr_id: empr_id},
+					dataType: 'json',
+					type: 'POST',
+					url: 'index.php/Dash/cambiarDeEmpresa',
+					success: function(result) {
+						//window.location.href = 'dash';
+						location.reload();
+					},
+					error: function(result) {
+							console.error("Error al cambiar de empresa");
+							console.table(result);
+					},
+			});
+	}
+
+	$( document ).ready(function() {
+    wc();
+	});
+
+
+</script>

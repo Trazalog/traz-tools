@@ -19,9 +19,20 @@ class Dash extends CI_Controller {
 
 	function index(){
 
+		$data = $this->session->userdata();
+		$data['memberships'] = $this->Dashs->obtenerMemberships();
 		$aux = $this->Dashs->obtenerMenu();
 		$data['menu'] = menu($aux);
 		$this->load->view('layout/Admin',$data);
+	}
+
+
+	function cambiarDeEmpresa(){
+
+		$empr_id = $this->input->post('empr_id');
+		$resp = $this->session->set_userdata('empr_id', $empr_id);
+		$empresa_nueva = empresa();
+		echo json_encode($empresa_nueva);
 	}
 
 }

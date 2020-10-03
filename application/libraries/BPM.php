@@ -377,6 +377,26 @@ class BPM
         return $idUsrBPM;
     }
 
+		// con userIdBpm devuelve las memberships de ese usuario
+		public function getMemeberships($userIdBpm){
+
+				log_message('DEBUG', '#TRAZA | #BPM >> Obtener Bandeja de Entrada userID: ' . userId());
+
+				$resource = 'API/identity/membership?p=0&c=10&f=user\_id%3d';
+
+				$url = BONITA_URL . $resource .$userIdBpm .'&d=role\_id';
+
+				$rsp = $this->REST->callAPI('GET', $url, false, $this->loggin(BPM_ADMIN_USER, BPM_ADMIN_PASS));
+
+				if (!$rsp['status']) {
+
+						log_message('DEBUG', '#TRAZA | #BPM >> ' . ASP_111);
+						return $this->msj(false, ASP_111);
+				}
+
+				return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+		}
+
     public function loggin($user, $pass)
     {
         $data = array(
