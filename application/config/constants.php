@@ -159,7 +159,7 @@ define('REST4', 'http://10.142.0.7:8280/services/TrazabilidadDataService');
 define('API_URL', 'http://10.142.0.7:8280/tools/log');
 define('REST_PRD', 'http://10.142.0.7:8280/services/sema/PRDDataService');
 define('REST_BPM', 'http://10.142.0.7:8280/tools/bpm');
-define('REST_CORED', 'http://10.142.0.7:8280/services/sema/COREDataService');
+// define('REST_CORED', 'http://10.142.0.7:8280/services/COREDataService');
 define('REST_CORE', 'http://10.142.0.7:8280/services/COREDataService/');
 
 define('HOST', 'http://localhost/');
