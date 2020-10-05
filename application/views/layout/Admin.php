@@ -65,15 +65,6 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
 
 
-		<!-- funciones para almacen -->
-		<script src="<?php echo base_url('lib/props/tabla.js'); ?>"></script>
-		<script src="<?php echo base_url(); ?>lib\props\busqueda_avanzada.js"></script>
-
-		<!-- <script src="<?php #echo base_url(); ?>lib\props\snapshot.js"></script> -->
-		<!--Impresión -->
-		<script src="<?php echo base_url(); ?>lib/props/Impresora.js"></script>
-		<script src="<?php echo base_url(); ?>lib\props\navegacion.js"></script>
-
     <?php $this->load->view('layout/general_scripts')?>
 
 </head>
