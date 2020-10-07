@@ -87,7 +87,7 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
 
-define('BONITA_URL', 'http://10.142.0.7:8080/bonita/');
+define('BONITA_URL', 'http://10.142.0.3:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 
@@ -149,18 +149,18 @@ define('DEF_VIEW',BPM.'Proceso');
 |
 */
 
-#define('REST', 'http://10.142.0.7:8280/services/semaresiduosDS');
-define('REST', 'http://10.142.0.7:8280/services/ProduccionDataService/');
-define('RESTPT', 'http://10.142.0.7:8280/services/produccionTest/');
-define('REST_TDS', 'http://10.142.0.7:8280/services/TrazabilidadDataService/');
-define('REST2', 'http://10.142.0.7:8280/services/ProduccionDataService');
-define('REST3', 'http://10.142.0.7:8280/services/produccionTest');
-define('REST4', 'http://10.142.0.7:8280/services/TrazabilidadDataService');
-define('API_URL', 'http://10.142.0.7:8280/tools/log');
-define('REST_PRD', 'http://10.142.0.7:8280/services/PRDDataService');
-define('REST_BPM', 'http://10.142.0.7:8280/tools/bpm');
-define('REST_CORE', 'http://10.142.0.7:8280/services/COREDataService/');
-define('FRM_DS','http://10.142.0.7:8280/services/FRMDataService');
+#define('REST', 'http://10.142.0.3:8280/services/semaresiduosDS');
+define('REST', 'http://10.142.0.3:8280/services/ProduccionDataService/');
+define('RESTPT', 'http://10.142.0.3:8280/services/produccionTest/');
+define('REST_TDS', 'http://10.142.0.3:8280/services/TrazabilidadDataService/');
+define('REST2', 'http://10.142.0.3:8280/services/ProduccionDataService');
+define('REST3', 'http://10.142.0.3:8280/services/produccionTest');
+define('REST4', 'http://10.142.0.3:8280/services/TrazabilidadDataService');
+define('API_URL', 'http://10.142.0.3:8280/tools/log');
+define('REST_PRD', 'http://10.142.0.3:8280/services/PRDDataService');
+define('REST_BPM', 'http://10.142.0.3:8280/tools/bpm');
+define('REST_CORE', 'http://10.142.0.3:8280/services/COREDataService/');
+define('FRM_DS','http://10.142.0.3:8280/services/FRMDataService');
 
 define('HOST', 'http://localhost/');
 
