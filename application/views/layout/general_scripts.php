@@ -31,10 +31,9 @@ $.widget.bridge('uibutton', $.ui.button);
 
        <script src="<?php echo base_url() ?>lib/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
 
-       <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js">
+       <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
 
-        <script src="https://cdn.jsdelivr.net/jquery.tablednd/0.8/jquery.tablednd.0.8.min.js"></script>
-       </script>
+       <script src = "https://cdn.jsdelivr.net/jquery.tablednd/0.8/jquery.tablednd.0.8.min.js"></script>
 
        <!-- iCheck -->
        <script src="<?php echo base_url() ?>lib/plugins/iCheck/icheck.min.js"></script>
@@ -54,7 +53,8 @@ $.widget.bridge('uibutton', $.ui.button);
 
        <script src="<?php echo base_url();?>lib/plugins/datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
 
-       <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery.bootstrapvalidator/0.5.2/js/bootstrapValidator.min.js"></script>
+       <script type="text/javascript"
+           src="//cdnjs.cloudflare.com/ajax/libs/jquery.bootstrapvalidator/0.5.2/js/bootstrapValidator.min.js"></script>
 
        <!-- plugin sweet alert -->
        <script src="<?php echo base_url() ?>lib/sweetalert/sweetalert.min.js"></script>
@@ -65,25 +65,24 @@ $.widget.bridge('uibutton', $.ui.button);
 
 
 
+       <script src="<?php echo base_url(); ?>lib/props/navegacion.js"></script>
        <script src="<?php echo base_url();?>lib/bootstrapValidator/bootstrapValidator.min.js"></script>
 
        <!-- Select2 -->
        <script src="<?php echo base_url() ?>lib/bower_components/select2/dist/js/select2.full.min.js"></script>
 
-       <script src="<?php echo base_url('lib/props/tabla.js'); ?>"></script>
        <script src="<?php echo base_url(); ?>lib/props/busqueda_avanzada.js"></script>
        <script src="<?php echo base_url(); ?>lib\props\json.js"></script>
        <!--Impresión -->
        <script src="<?php echo base_url(); ?>lib/props/Impresora.js"></script>
-       <script src="<?php echo base_url(); ?>lib/props/navegacion.js"></script>
 
        <!-- SWAL ALERT -->
        <script src="<?php echo base_url() ?>lib/swal/dist/sweetalert2.js"></script>
 
        <script>
-        function conexion(){
-            return true;
-        }
+function conexion() {
+    return true;
+}
 
 jQuery.fn.single_double_click = function(single_click_callback, double_click_callback, timeout) {
     return this.each(function() {
