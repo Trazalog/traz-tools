@@ -65,11 +65,12 @@ $.widget.bridge('uibutton', $.ui.button);
 
 
 
-       <script src="<?php echo base_url(); ?>lib/props/navegacion.js"></script>
        <script src="<?php echo base_url();?>lib/bootstrapValidator/bootstrapValidator.min.js"></script>
 
        <!-- Select2 -->
        <script src="<?php echo base_url() ?>lib/bower_components/select2/dist/js/select2.full.min.js"></script>
+       <script src="<?php echo base_url(); ?>lib/props/navegacion.js"></script>
+       <script src="<?php echo base_url(); ?>lib/props/notificaciones.js"></script>
 
        <script src="<?php echo base_url(); ?>lib/props/busqueda_avanzada.js"></script>
        <script src="<?php echo base_url(); ?>lib\props\json.js"></script>
