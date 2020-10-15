@@ -129,7 +129,7 @@ if(!function_exists('userPass')){
 if(!function_exists('empresa')){
 
     function empresa(){
-
+		return 777;
         $ci =& get_instance();
         $empr_id  = $ci->session->userdata('empr_id');
 				return  $empr_id;

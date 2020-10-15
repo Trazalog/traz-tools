@@ -148,21 +148,27 @@ define('DEF_VIEW',BPM.'Proceso');
 | Variables Locales
 |
 */
+define('HOST', 'http://10.142.0.3:8280');
 
-#define('REST', 'http://10.142.0.3:8280/services/semaresiduosDS');
-define('REST', 'http://10.142.0.3:8280/services/PRDDataService/');
-define('RESTPT', 'http://10.142.0.3:8280/services/produccionTest/');
-define('REST_TDS', 'http://10.142.0.3:8280/services/TrazabilidadDataService/');
-define('REST2', 'http://10.142.0.3:8280/services/PRDDataService');
-define('REST3', 'http://10.142.0.3:8280/services/produccionTest');
-define('REST4', 'http://10.142.0.3:8280/services/TrazabilidadDataService');
-define('API_URL', 'http://10.142.0.3:8280/tools/log');
-define('REST_PRD', 'http://10.142.0.3:8280/services/PRDDataService');
-define('REST_BPM', 'http://10.142.0.3:8280/tools/bpm');
-define('REST_CORE', 'http://10.142.0.3:8280/services/COREDataService/');
-define('FRM_DS','http://10.142.0.3:8280/services/FRMDataService');
+define('REST', HOST.'/services/PRDDataService/');
+define('RESTPT', HOST.'/services/produccionTest/');
+define('REST_TDS', HOST.'/services/TrazabilidadDataService/');
+define('REST2', HOST.'/services/PRDDataService');
+define('REST3', HOST.'/services/produccionTest');
+define('REST4', HOST.'/services/TrazabilidadDataService');
 
-define('HOST', 'http://localhost/');
+
+define('API_URL', HOST.'/tools/log');
+define('REST_ALM', HOST.'/services/ALMDataService');
+define('REST_PRD', HOST.'/services/PRDDataService');
+define('REST_BPM', HOST.'/tools/bpm');
+define('REST_CORE', HOST.'/services/COREDataService/');
+define('FRM_DS', HOST.'/services/FRMDataService');
+define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
+define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapasDataService');
+define('REST_LOG', HOST.'/services/LOGDataService');
+
+
 
 #COMPONENTE FORMULARIOS
 define('FRM', 'traz-comp-formularios/');
