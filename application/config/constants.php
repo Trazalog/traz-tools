@@ -161,6 +161,7 @@ define('REST_PRD', 'http://10.142.0.3:8280/services/PRDDataService');
 define('REST_BPM', 'http://10.142.0.3:8280/tools/bpm');
 define('REST_CORE', 'http://10.142.0.3:8280/services/COREDataService/');
 define('FRM_DS','http://10.142.0.3:8280/services/FRMDataService');
+define('REST_LOG','http://10.142.0.3:8280/services/LOGDataService');
 
 define('HOST', 'http://localhost/');
 
