@@ -9,7 +9,7 @@ class Test extends CI_Controller
 
     public function index()
     {
-      show(wso2('http://10.142.0.7:8280/services/COREDataService/tablas/tipos_no_consumibles'));
+      show(wso2('http://localhost:8283/services/COREDataService/tablas/tipos_no_consumibles'));
     }
 
     public function sesion()
