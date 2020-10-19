@@ -58,6 +58,9 @@ if (!function_exists('bolita')) {
             case 'Cancelado':
                 return bolita($estado, 'red');
                 break;
+            case 'PLANIFICADO':
+                return bolita($estado, '');
+                break;
             default:
                 return bolita('S/E', '');
                 break;
