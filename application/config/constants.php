@@ -149,7 +149,7 @@ define('DEF_VIEW',BPM.'Proceso');
 |
 */
 
-#define('REST', 'http://10.142.0.7:8280/services/semaresiduosDS');
+#define('REST', 'http://10.142.0.7:8280/services/jduosDS');
 define('REST', 'http://10.142.0.7:8280/services/PRDDataService/');
 define('RESTPT', 'http://10.142.0.7:8280/services/produccionTest/');
 define('REST_TDS', 'http://10.142.0.7:8280/services/TrazabilidadDataService/');

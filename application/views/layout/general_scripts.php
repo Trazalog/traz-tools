@@ -33,6 +33,8 @@ $.widget.bridge('uibutton', $.ui.button);
 
        <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
 
+       <script src="https://cdn.datatables.net/plug-ins/1.10.21/sorting/natural.js"></script>
+
        <script src = "https://cdn.jsdelivr.net/jquery.tablednd/0.8/jquery.tablednd.0.8.min.js"></script>
 
        <!-- iCheck -->
@@ -80,6 +82,16 @@ $.widget.bridge('uibutton', $.ui.button);
        <!-- SWAL ALERT -->
        <script src="<?php echo base_url() ?>lib/swal/dist/sweetalert2.js"></script>
 
+       <script src="https://cdn.jsdelivr.net/jquery.tablednd/0.8/jquery.tablednd.0.8.min.js"></script>
+       <!-- jHTree -->
+       <script src="<?php echo base_url(); ?>lib\plugins\jHTree\js\jquery-ui-1.10.4.custom.min.js"></script>
+       <link rel="stylesheet" href="<?php echo base_url(); ?>lib/plugins/jHTree/CSS/jHTree.css">
+       <link rel="stylesheet" href="<?php echo base_url(); ?>lib/plugins/jHTree/Themes/ui-lightness/jquery-ui-1.10.4.custom.css">
+       <script src="<?php echo base_url(); ?>lib\plugins\jHTree\js\jQuery.jHTree.js"></script>
+
+       <!-- printThis -->
+       <script src="<?php echo base_url(); ?>lib\plugins\jasonday-printThis-f73ca19\printThis.js"></script>
+
        <script>
 function conexion() {
     return true;
@@ -104,6 +116,63 @@ jQuery.fn.single_double_click = function(single_click_callback, double_click_cal
         });
     });
 }
+
+function _isset(variable) {
+           if (typeof(variable) == "undefined" || variable == null || variable == '')
+             return false;
+           else
+           if (typeof(variable) == "object" && !variable.length)
+             return false;
+           else
+             return true;
+         }
+
+         function print(id) { //plugin printThis
+           console.log('id: ' + id);
+           $("#" + id).printThis({
+             debug: false, // show the iframe for debugging
+             importCSS: true, // import parent page css
+             importStyle: false, // import style tags
+             printContainer: true, // print outer container/$.selector
+             loadCSS: "", // path to additional css file - use an array [] for multiple
+             pageTitle: "", // add title to print page
+             removeInline: false, // remove inline styles from print elements
+             removeInlineSelector: "*", // custom selectors to filter inline styles. removeInline must be true
+             printDelay: 333, // variable print delay
+             header: null, // prefix to html
+             footer: null, // postfix to html
+             base: false, // preserve the BASE tag or accept a string for the URL
+             formValues: true, // preserve input/form values
+             canvas: false, // copy canvas content
+             doctypeString: 'Informe de Trazabilidad', // enter a different doctype for older markup
+             removeScripts: false, // remove script tags from print content
+             copyTagClasses: false, // copy classes from the html & body tag
+             beforePrintEvent: null, // function for printEvent in iframe
+             beforePrint: null, // function called before iframe is filled
+             afterPrint: null // function called before iframe is removed
+           });
+         }
+
+         function fechaMagic() {
+           $('#daterange-btn').daterangepicker({
+               ranges: {
+                 'Hoy': [moment(), moment()],
+                 'Ayer': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                 'Últimos 7 días': [moment().subtract(6, 'days'), moment()],
+                 'Últimos 30 días': [moment().subtract(29, 'days'), moment()],
+                 'Este mes': [moment().startOf('month'), moment().endOf('month')],
+                 'Último mes': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+               },
+               startDate: moment().subtract(29, 'days'),
+               endDate: moment()
+             },
+             function(start, end) {
+               // $('#daterange-btn span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+               $('#datepickerDesde').val(start.format('YYYY-MM-DD'));
+               $('#datepickerHasta').val(end.format('YYYY-MM-DD'));
+             }
+           );
+         }
 
 window.mobileAndTabletcheck = function() {
     var check = false;
