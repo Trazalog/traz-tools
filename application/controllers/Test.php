@@ -5,22 +5,17 @@ class Test extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-  
     }
 
     public function index()
     {
-     
-         $this->load->view('test1');
-    }
-    public function pp()
-    {
-        echo 'esto es una prueba';
+      show(wso2('http://10.142.0.7:8280/services/COREDataService/tablas/tipos_no_consumibles'));
     }
 
-    public function datos()
+    public function sesion()
     {
-        $data['nombre'] = "Fernando";
-        echo json_encode($data);
+        show($this->session->userdata());
     }
+
+
 }

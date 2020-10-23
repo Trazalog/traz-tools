@@ -19,7 +19,8 @@ class Login extends CI_Controller
     }
     public function log_out()
     {
-			//redirect(DNATO.'main/logout');
+            //redirect(DNATO.'main/logout');
+        $this->session->sess_destroy();
         logout();
     }
     public function edit()
