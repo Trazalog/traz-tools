@@ -91,7 +91,7 @@ define('BONITA_URL', 'http://10.142.0.7:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 
-define('BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS', '6013058915384903051');
+define('BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS', '6866538875650512673');
 
 define('BPM_PROCESS_ID_PEDIDO_CONTENEDORES', '4914088989692457565');
 
@@ -106,7 +106,7 @@ define('viewOT', false);
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
-    '7503443566840192735' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas']
+    '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
