@@ -131,7 +131,7 @@
         <strong>Copyright &copy; 2020 <a href="">Trazalog</a>.</strong> All rights
         reserved.
     </footer>
-
+    <?php $this->load->view('layout/modal_generico') ?>
     <!-- Control Sidebar -->
     <aside class="control-sidebar control-sidebar-dark">
         <!-- Create the tabs -->

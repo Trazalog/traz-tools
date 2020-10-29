@@ -109,6 +109,28 @@ if(!function_exists('filtrarbyDepo')){
 }
 
 /**
+* Devuelve correspondencua entre Case_id con Empresa
+* @param
+* @return bool true o false
+*/
+if(!function_exists('bandejaEmpresa')){
+
+	function bandejaEmpresa($case_id, $empr_id)
+	{
+			$ci =& get_instance();
+			$aux = $ci->rest->callAPI("GET",REST_CORE."bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
+			$aux =json_decode($aux["data"]);
+
+			if ($aux->respuesta->case_id) {
+				return  true;
+			} else {
+				return  false;
+			}
+	}
+}
+
+
+/**
 * Devuelve pass de usuario en BPM
 * @param 
 * @return 
