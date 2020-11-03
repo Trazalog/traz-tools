@@ -57,7 +57,7 @@ if(!function_exists('usrIdTransportistaByNick')){
 
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST."/transportista/id/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_PRD."/transportista/id/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->transportista->tran_id;
 	}
@@ -74,7 +74,7 @@ if(!function_exists('usrIdGeneradorByNick')){
 
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST."/solicitantesTransporte/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->solicitantes_transporte->sotr_id;
 	}
@@ -118,7 +118,7 @@ if(!function_exists('bandejaEmpresa')){
 	function bandejaEmpresa($case_id, $empr_id)
 	{
 			$ci =& get_instance();
-			$aux = $ci->rest->callAPI("GET",REST_CORE."bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
+			$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
 			$aux =json_decode($aux["data"]);
 
 			if ($aux->respuesta->case_id) {
@@ -151,7 +151,6 @@ if(!function_exists('userPass')){
 if(!function_exists('empresa')){
 
     function empresa(){
-
         $ci =& get_instance();
         $empr_id  = $ci->session->userdata('empr_id');
 				return  $empr_id;

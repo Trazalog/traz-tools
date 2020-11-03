@@ -82,14 +82,20 @@ if (!function_exists('bolita')) {
                 break;
 
             //Estado Camiones
-            case 'ASIGNADO':
-                return bolita('Asignado', 'blue');
+            case 'CARGADO':
+                return bolita('Cargado', 'yellow');
                 break;
             case 'EN CURSO':
                 return bolita('En Curso', 'green');
                 break;
+            case 'DESCARGADO':
+                return bolita('Descargado', 'yellow');
+                break;
+            case 'TRANSITO':
+                return bolita('Finalizado', 'orange');
+                break;
             case 'FINALIZADO':
-                return bolita('Finalizado', 'yellow');
+                return bolita('Finalizado', 'red');
                 break;
 
             //Estado Etapas

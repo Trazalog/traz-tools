@@ -111,7 +111,7 @@ define('BPM_PROCESS', json_encode(array(
 
 define('BPM_ADMIN_USER', 'admin');
 define('BPM_ADMIN_PASS', '123traza');
-define('BPM_USER_PASS', '123');
+define('BPM_USER_PASS', '123traza');
 
 #ERRORES DE BONITA
 define('ASP_100', 'Fallo Conexión BPM');
@@ -148,22 +148,23 @@ define('DEF_VIEW',BPM.'Proceso');
 | Variables Locales
 |
 */
+define('HOST', 'http://10.142.0.7:8280');
+define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
+define('API_URL', HOST.'/tools/log');
+define('REST_ALM', HOST.'/services/ALMDataService');
+define('REST_PRD', HOST.'/services/PRDDataService');
+define('REST_BPM', HOST.'/tools/bpm');
+define('REST_CORE', HOST.'/services/COREDataService');
+define('REST_FRM', HOST.'/services/FRMDataService');
+define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
+define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
+define('REST_LOG', HOST.'/services/LOGDataService');
+define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
+define('REST_TST', HOST.'/services/TARDataService');
+define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
+define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 
-#define('REST', 'http://10.142.0.7:8280/services/jduosDS');
-define('REST', 'http://10.142.0.7:8280/services/PRDDataService/');
-define('RESTPT', 'http://10.142.0.7:8280/services/produccionTest/');
-define('REST_TDS', 'http://10.142.0.7:8280/services/TrazabilidadDataService/');
-define('REST2', 'http://10.142.0.7:8280/services/PRDDataService');
-define('REST3', 'http://10.142.0.7:8280/services/produccionTest');
-define('REST4', 'http://10.142.0.7:8280/services/TrazabilidadDataService');
-define('API_URL', 'http://10.142.0.7:8280/tools/log');
-define('REST_PRD', 'http://10.142.0.7:8280/services/PRDDataService');
-define('REST_BPM', 'http://10.142.0.7:8280/tools/bpm');
-define('REST_CORE', 'http://10.142.0.7:8280/services/COREDataService/');
-define('FRM_DS','http://10.142.0.7:8280/services/FRMDataService');
-define('REST_LOG','http://10.142.0.7:8280/services/LOGDataService');
 
-define('HOST', 'http://localhost/');
 
 #COMPONENTE FORMULARIOS
 define('FRM', 'traz-comp-formularios/');
