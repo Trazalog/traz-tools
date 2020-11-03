@@ -149,26 +149,21 @@ define('DEF_VIEW',BPM.'Proceso');
 |
 */
 define('HOST', 'http://10.142.0.7:8280');
-
-define('REST', HOST.'/services/PRDDataService/');
-define('RESTPT', HOST.'/services/produccionTest/');
-define('REST_TDS', HOST.'/services/TrazabilidadDataService/');
-define('REST2', HOST.'/services/PRDDataService');
-define('REST3', HOST.'/services/produccionTest');
-define('REST4', HOST.'/services/TrazabilidadDataService');
-
-
+define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
 define('REST_PRD', HOST.'/services/PRDDataService');
 define('REST_BPM', HOST.'/tools/bpm');
 define('REST_CORE', HOST.'/services/COREDataService/');
-define('FRM_DS', HOST.'/services/FRMDataService');
+define('REST_FRM', HOST.'/services/FRMDataService');
 define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapasDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
 define('REST_FRM', HOST.'/services/FRMDataService');
-
+define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
+define('REST_TST', HOST.'/services/TareasSTD/');
+define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
+define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 
 
 

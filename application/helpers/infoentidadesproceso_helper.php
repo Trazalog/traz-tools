@@ -19,10 +19,10 @@
 
                 log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) >> '.json_encode($tarea));
                 log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
-                $aux_gen = $ci2->rest->callAPI("GET",REST."/solicitantesTransporte/case/".$ent_case_id);
+                $aux_gen = $ci2->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/case/".$ent_case_id);
                 $aux_gen =json_decode($aux_gen["data"]);
 
-                $aux_tran = $ci2->rest->callAPI("GET",REST."/transportistas/case/".$ent_case_id);
+                $aux_tran = $ci2->rest->callAPI("GET",REST_PRD."/transportistas/case/".$ent_case_id);
                 $aux_tran =json_decode($aux_tran["data"]);
               break;
 
@@ -30,10 +30,10 @@
 
                 log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) >> '.json_encode($tarea));
                 log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
-                $aux_gen = $ci2->rest->callAPI("GET",REST."/solicitantesTransporte/proceso/retiro/case/".$ent_case_id);
+                $aux_gen = $ci2->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/proceso/retiro/case/".$ent_case_id);
                 $aux_gen =json_decode($aux_gen["data"]);
 
-                $aux_tran = $ci2->rest->callAPI("GET",REST."/transportistas/proceso/retiro/case/".$ent_case_id);
+                $aux_tran = $ci2->rest->callAPI("GET",REST_PRD."/transportistas/proceso/retiro/case/".$ent_case_id);
                 $aux_tran =json_decode($aux_tran["data"]);
               break;
 
@@ -42,10 +42,10 @@
                 log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) >> '.json_encode($tarea));
                 log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
 
-                $aux_gen = $ci2->rest->callAPI("GET",REST."/solicitantesTransporte/proceso/ingreso/case/".$ent_case_id);
+                $aux_gen = $ci2->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/proceso/ingreso/case/".$ent_case_id);
                 $aux_gen =json_decode($aux_gen["data"]);
 
-                $aux_tran = $ci2->rest->callAPI("GET",REST."/transportistas/proceso/ingreso/case/".$ent_case_id);
+                $aux_tran = $ci2->rest->callAPI("GET",REST_PRD."/transportistas/proceso/ingreso/case/".$ent_case_id);
                 $aux_tran =json_decode($aux_tran["data"]);
               break;
 

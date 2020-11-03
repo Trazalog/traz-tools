@@ -57,7 +57,7 @@ if(!function_exists('usrIdTransportistaByNick')){
 
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST."/transportista/id/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_PRD."/transportista/id/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->transportista->tran_id;
 	}
@@ -74,7 +74,7 @@ if(!function_exists('usrIdGeneradorByNick')){
 
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST."/solicitantesTransporte/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->solicitantes_transporte->sotr_id;
 	}
