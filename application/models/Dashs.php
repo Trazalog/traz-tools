@@ -23,7 +23,7 @@ class Dashs extends CI_Model {
 
     $email = $this->session->userdata('email');
     #$grupo = "grupotest";
-    $aux = $this->rest->callAPI("GET",REST_CORE."menuitems/porEmail/$email/porGrupo/$grupo");
+    $aux = $this->rest->callAPI("GET",REST_CORE."/menuitems/porEmail/$email/porGrupo/$grupo");
     $aux =json_decode($aux["data"]);
     return $aux;
   }

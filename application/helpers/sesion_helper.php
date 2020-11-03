@@ -118,7 +118,7 @@ if(!function_exists('bandejaEmpresa')){
 	function bandejaEmpresa($case_id, $empr_id)
 	{
 			$ci =& get_instance();
-			$aux = $ci->rest->callAPI("GET",REST_CORE."bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
+			$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
 			$aux =json_decode($aux["data"]);
 
 			if ($aux->respuesta->case_id) {

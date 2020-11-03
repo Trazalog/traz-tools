@@ -154,14 +154,13 @@ define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
 define('REST_PRD', HOST.'/services/PRDDataService');
 define('REST_BPM', HOST.'/tools/bpm');
-define('REST_CORE', HOST.'/services/COREDataService/');
+define('REST_CORE', HOST.'/services/COREDataService');
 define('REST_FRM', HOST.'/services/FRMDataService');
 define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
-define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapasDataService');
+define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
-define('REST_FRM', HOST.'/services/FRMDataService');
 define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
-define('REST_TST', HOST.'/services/TareasSTD/');
+define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 
