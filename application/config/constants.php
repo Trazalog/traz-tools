@@ -111,7 +111,7 @@ define('BPM_PROCESS', json_encode(array(
 
 define('BPM_ADMIN_USER', 'admin');
 define('BPM_ADMIN_PASS', '123traza');
-define('BPM_USER_PASS', '123');
+define('BPM_USER_PASS', '123traza');
 
 #ERRORES DE BONITA
 define('ASP_100', 'Fallo Conexión BPM');
@@ -148,7 +148,7 @@ define('DEF_VIEW',BPM.'Proceso');
 | Variables Locales
 |
 */
-define('HOST', 'http://10.142.0.3:8280');
+define('HOST', 'http://10.142.0.7:8280');
 
 define('REST', HOST.'/services/PRDDataService/');
 define('RESTPT', HOST.'/services/produccionTest/');
@@ -167,6 +167,8 @@ define('FRM_DS', HOST.'/services/FRMDataService');
 define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapasDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
+define('REST_FRM', HOST.'/services/FRMDataService');
+
 
 
 
