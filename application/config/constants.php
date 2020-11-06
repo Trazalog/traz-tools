@@ -84,6 +84,21 @@ defined('EXIT_DATABASE')       OR define('EXIT_DATABASE', 8); // database error
 defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
 
+#COMPONENTE FORMULARIOS
+define('FRM', 'traz-comp-formularios/');
+define('FILES', 'files/');
+
+# DNATO
+define('LOGIN', true);
+define('DNATO', 'http://localhost/traz-comp-dnato/');
+
+
+define('PORT', ':3000/');
+
+define('PRD', 'traz-prod-trazasoft/');
+
+define('TST', 'traz-comp-tareasestandar/');
+
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
 
@@ -99,6 +114,8 @@ define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 
 define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
+define('BPM_PROCESS_ID_TAREA_GENERICA', '7148440093058377088');
+
 #COMPONENTE ALMACENES
 define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
@@ -106,7 +123,8 @@ define('viewOT', false);
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
-    '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas']
+    '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
+    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
@@ -166,17 +184,4 @@ define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 
 
 
-#COMPONENTE FORMULARIOS
-define('FRM', 'traz-comp-formularios/');
-define('FILES', 'files/');
 
-# DNATO
-define('LOGIN', true);
-define('DNATO', 'http://localhost/traz-comp-dnato/');
-
-
-define('PORT', ':3000/');
-
-define('PRD', 'traz-prod-trazasoft/');
-
-define('TST', 'traz-comp-tareasestandar/');
