@@ -12,9 +12,10 @@ class Test extends CI_Controller
       show(wso2('http://10.142.0.7:8280/services/COREDataService/tablas/tipos_no_consumibles'));
     }
 
-    public function sesion()
+    public function view()
     {
-        show($this->session->userdata());
+        $data = $this->input->get();
+        $this->load->view('testView', $data);
     }
 
 
