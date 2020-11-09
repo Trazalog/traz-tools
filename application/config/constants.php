@@ -182,6 +182,32 @@ define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 
+<<<<<<< HEAD
+=======
+#define('REST', 'http://localhost:8283/services/semaresiduosDS');
+define('REST', 'http://localhost:8283/services/PRDDataService/');
+define('RESTPT', 'http://localhost:8283/services/produccionTest/');
+define('REST_TDS', 'http://localhost:8283/services/TrazabilidadDataService/');
+define('REST2', 'http://localhost:8283/services/PRDDataService');
+define('REST3', 'http://localhost:8283/services/produccionTest');
+define('REST4', 'http://localhost:8283/services/TrazabilidadDataService');
+define('API_URL', 'http://localhost:8283/tools/log');
+define('REST_PRD', 'http://localhost:8283/services/PRDDataService');
+define('REST_BPM', 'http://localhost:8283/tools/bpm');
+define('REST_CORE', 'http://localhost:8283/services/COREDataService/');
+define('FRM_DS','http://localhost:8283/services/FRMDataService');
+define('REST_LOG','http://localhost:8283/services/LOGDataService');
+
+define('HOST', 'http://localhost/');
+
+#COMPONENTE FORMULARIOS
+define('FRM', 'traz-comp-formularios/');
+define('FILES', 'files/');
+
+# DNATO
+define('LOGIN', true);
+define('DNATO', 'http://localhost/traz-comp-dnato/');
+>>>>>>> master
 
 
 
