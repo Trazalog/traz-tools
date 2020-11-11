@@ -102,7 +102,7 @@ define('TST', 'traz-comp-tareasestandar/');
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
 
-define('BONITA_URL', 'http://10.142.0.7:8080/bonita/');
+define('BONITA_URL', 'http://10.142.0.3:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 
@@ -129,7 +129,7 @@ define('BPM_PROCESS', json_encode(array(
 
 define('BPM_ADMIN_USER', 'admin');
 define('BPM_ADMIN_PASS', '123traza');
-define('BPM_USER_PASS', '123traza');
+define('BPM_USER_PASS', '123');
 
 #ERRORES DE BONITA
 define('ASP_100', 'Fallo Conexión BPM');
@@ -166,7 +166,7 @@ define('DEF_VIEW',BPM.'Proceso');
 | Variables Locales
 |
 */
-define('HOST', 'http://10.142.0.7:8280');
+define('HOST', 'http://10.142.0.3:8280');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
@@ -181,7 +181,6 @@ define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
 define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
-
 
 
 
