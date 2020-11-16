@@ -9,13 +9,23 @@ class Test extends CI_Controller
 
     public function index()
     {
-      show(wso2('http://10.142.0.7:8280/services/COREDataService/tablas/tipos_no_consumibles'));
+      $this->load->view('pedidos_trabajo/dash');
     }
 
     public function view()
     {
         $data = $this->input->get();
         $this->load->view('testView', $data);
+    }
+
+    public function pedidosTrabajos()
+    {
+        $this->load->view('pedidos_trabajo/lista_pedidos');
+    }
+
+    public function hitos($petaId)
+    {
+        $this->load->view('pedidos_trabajo/lista_hitos');
     }
 
 

@@ -36,4 +36,8 @@ if (!function_exists('getJson')) {
             return false;
         }
     }
+
+    function comp($id, $url, $load = false){
+        return "<comp id='$id' class='reload' data-link='$url'>".($load?"<script>reload('#$id', '$load')</script>":'')."</comp>";
+    }
 }
