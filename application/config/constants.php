@@ -181,6 +181,6 @@ define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
 define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
-
+define('REST_PAN', HOST.'/services/PANDataService');
 
 
