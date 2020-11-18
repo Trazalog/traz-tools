@@ -69,15 +69,14 @@ if(!function_exists('menu')){
 										$nivel2 .= '<ul class="treeview-menu">
 																<li class="treeview">';
 
-										$nivel2 .= "<a href='#' onclick='linkTo(\"$valueLevel2->url\")'><i class='$valueLevel2->url_icono'></i>$valueLevel2->texto</a>";
+										$nivel2 .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$valueLevel2->url\")'><i class='$valueLevel2->url_icono'></i>$valueLevel2->texto</a>";
 										$nivel2 .= '</li>';
 										$bandLevel2 = 1;
-
 
 							} else {
 
 										$nivel2 .= '<li class="treeview">';
-										$nivel2 .= "<a href='#' onclick='linkTo(\"$valueLevel2->url\")'><i class='$valueLevel2->url_icono'></i>$valueLevel2->texto</a>";
+										$nivel2 .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$valueLevel2->url\")'><i class='$valueLevel2->url_icono'></i>$valueLevel2->texto</a>";
 										$nivel2 .= '</li>';
 							}
 					}
@@ -109,9 +108,9 @@ if(!function_exists('menu')){
 				log_message('INFO','#TRAZA|MENU_HELPER|NIVEL3 >> ');
 				$nivel3 = "";
 				$nivel3 .= '<li class="treeview">';
-				$nivel3 .= "<a href='#' onclick='linkTo(\"$valueLevel3->url\")'><i class='fa fa-circle-o'></i>".$valueLevel3->texto."</a>";
+				$nivel3 .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$valueLevel3->url\")'><i class='fa fa-circle-o'></i>".$valueLevel3->texto."</a>";
 				$nivel3 .= '</li>';
-							
+
 				return $nivel3;
 		}
 }
