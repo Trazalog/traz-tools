@@ -57,6 +57,12 @@
       <param name="case_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getClientexEmpresayEstado" useConfig="ToolsDataSource">
+      <sql>SELECT * FROM core.clientes&#xd;WHERE EMPR_ID = CAST(:empr_id AS INTEGER) &#xd;and estado = :estado</sql>
+      <result outputType="json">{&#xd; "cliente":{&#xd;   "clientes":[&#xd;     {&#xd;      "clie_id":"$clie_id",&#xd;      "nombre":"$nombre",&#xd;      "dir_entrega":"$dir_entrega",&#xd;      "observaciones":"$observaciones",&#xd;      "ticl_id":"$ticl_id"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -112,6 +118,12 @@
       <call-query href="validaBPMCaseYEmpr">
          <with-param name="case_id" query-param="case_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/clientes/porEmpresa/{empr_id}/porEstado/{estado}">
+      <call-query href="getClientexEmpresayEstado">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
 </data>
