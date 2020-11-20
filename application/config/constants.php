@@ -102,7 +102,7 @@ define('TST', 'traz-comp-tareasestandar/');
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
 
-define('BONITA_URL', 'http://10.142.0.3:8080/bonita/');
+define('BONITA_URL', 'http://10.142.0.7:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 
@@ -166,7 +166,7 @@ define('DEF_VIEW',BPM.'Proceso');
 | Variables Locales
 |
 */
-define('HOST', 'http://10.142.0.3:8280');
+define('HOST', 'http://10.142.0.7:8280');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
