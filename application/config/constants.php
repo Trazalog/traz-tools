@@ -156,8 +156,9 @@ define('MNOM', 'Tools');
 define('NOM', 'Trazalog Tools');
 
 //Vista por Defecto
+define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
 #define('DEF_VIEW',BPM.'Proceso');
-define('DEF_VIEW','Test');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -182,6 +183,7 @@ define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
 define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
+define('REST_PRO', HOST.'/services/PRODataService');
 
 
 
