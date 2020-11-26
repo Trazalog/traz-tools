@@ -36,4 +36,26 @@ if (!function_exists('getJson')) {
             return false;
         }
     }
+
+    function comp($id, $url, $load = false){
+        return "<comp id='$id' class='reload' data-link='$url'>".($load?"<script>reload('#$id', '$load')</script>":'')."</comp>";
+    }
+
+    function payToStr($data)
+    {
+        return array_map('strval', $data);
+    }
+
+    function stringColor($str) {
+        $code = dechex(crc32($str));
+        $code = substr($code, 0, 6);
+        return $code;
+      }
+}
+
+if (!function_exists('toArray')) {
+
+    function toArray($data){
+        return json_decode(json_encode($data), true);
+    }
 }
