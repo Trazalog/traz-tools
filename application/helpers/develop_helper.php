@@ -46,11 +46,16 @@ if (!function_exists('getJson')) {
         return array_map('strval', $data);
     }
 
-    function stringColor($str) {
+    function stringColor($str, $op = 1) {
         $code = dechex(crc32($str));
         $code = substr($code, 0, 6);
-        return $code;
+        return hexToRgb("#$code", $op);
       }
+
+     function hexToRgb($hex, $op){
+        list($r, $g, $b) = sscanf($hex, "#%02x%02x%02x");
+        return "rgb($r, $g, $b, $op)";
+     } 
 }
 
 if (!function_exists('toArray')) {
