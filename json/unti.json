@@ -1,0 +1,18 @@
+{
+	"unidades_medidas": {
+		"unidad_medida": [
+			{
+                "descripcion":"años",
+                "valor": "365"
+			},
+			{ 
+                "descripcion":"meses",
+                "valor": "30" 
+            },
+			{ 
+                "descripcion":"dias",
+                "valor": "1" 
+            }
+		]
+	}
+}

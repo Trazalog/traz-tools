@@ -1,0 +1,7 @@
+CREATE TABLE alm.origen_pedido_materiales (
+	tipo varchar NOT NULL,
+	orig_id int4 NOT NULL,
+	pema_id int4 NOT NULL,
+	CONSTRAINT origen_pedido_materiales_pk PRIMARY KEY (tipo,orig_id,pema_id),
+	CONSTRAINT origen_pedido_materiales_fk FOREIGN KEY (pema_id) REFERENCES alm.alm_pedidos_materiales(pema_id)
+);
