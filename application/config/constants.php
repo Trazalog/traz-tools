@@ -186,4 +186,6 @@ define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 
-
+#TRAZ-COMP-CALENDAR
+define('DURACION_JORNADA', '08:00');
+define('HORA_FIN_JORNADA', '19:00');

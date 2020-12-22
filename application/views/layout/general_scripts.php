@@ -93,6 +93,8 @@
 <!-- printThis -->
 <script src="<?php echo base_url(); ?>lib\plugins\jasonday-printThis-f73ca19\printThis.js"></script>
 
+<script src="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.js"></script>
+
 <script>
     function conexion() {
         return true;
