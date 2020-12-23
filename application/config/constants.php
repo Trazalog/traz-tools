@@ -117,6 +117,9 @@ define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 define('BPM_PROCESS_ID_TAREA_GENERICA', '7148440093058377088');
 
 #COMPONENTE ALMACENES
+define('PAN', 'traz-comp-pan/');
+
+#COMPONENTE ALMACENES
 define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
