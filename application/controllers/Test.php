@@ -8,6 +8,12 @@ class Test extends CI_Controller
         $this->load->model('Tests');
     }
 
+    public function test()
+    {
+        $this->load->model(FRM.'Forms');
+        echo form($this->Forms->obtenerXEmpresa('Entrega Materiales', 1));
+    }
+
     public function wso()
     {
         $data = 'id_notaPedido, fecha, justificacion, estado';

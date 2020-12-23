@@ -156,8 +156,8 @@ define('MNOM', 'Tools');
 define('NOM', 'Trazalog Tools');
 
 //Vista por Defecto
-define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
-#define('DEF_VIEW',BPM.'Proceso');
+#define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
+define('DEF_VIEW',BPM.'Proceso');
 
 
 /*
