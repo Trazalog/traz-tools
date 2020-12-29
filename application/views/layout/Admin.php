@@ -66,6 +66,9 @@
 
     <link rel="stylesheet" href="<?php echo base_url() ?>lib/swal/dist/sweetalert2.min.css">
 
+    <link rel="stylesheet" href="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.css">
+
+
     <style>
         .mr-2{
             margin-right: 5px;
