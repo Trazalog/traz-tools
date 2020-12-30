@@ -175,6 +175,11 @@
       <param name="etap_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
    </query>
+   <query id="setEstadoEtapa" useConfig="ToolsDataSource">
+      <sql>UPDATE prd.lotes set estado = :estado where batch_id = cast(:batch_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/productos/etapa/{etapa}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}">
       <call-query href="getProduccion">
          <with-param name="etapa" query-param="etapa"/>
@@ -343,6 +348,12 @@
       <call-query href="etapaEntradaDelete">
          <with-param name="etap_id" query-param="etap_id"/>
          <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/etapas/estado">
+      <call-query href="setEstadoEtapa">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="batch_id" query-param="batch_id"/>
       </call-query>
    </resource>
 </data>
