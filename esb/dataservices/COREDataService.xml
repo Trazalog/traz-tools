@@ -63,6 +63,11 @@
       <param name="empr_id" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
    </query>
+   <query id="getEquiposXSector" useConfig="ToolsDataSource">
+      <sql>select * from core.equipos where sect_id = :sect_id</sql>
+      <result outputType="json">{&#xd;  "equipos": {&#xd;    "equipo": [&#xd;      {&#xd;        "descripcion": "$descripcion",&#xd;        "marca": "$marca",&#xd;        "codigo": "$codigo",&#xd;        "ubicacion": "$ubicacion",&#xd;        "estado": "$estado",&#xd;        "fecha_ultimalectura": "$fecha_ultimalectura",&#xd;        "ultima_lectura": "$ultima_lectura",&#xd;        "tipo_horas": "$tipo_horas",&#xd;        "valor_reposicion": "$valor_reposicion",&#xd;        "fecha_reposicion": "$fecha_reposicion",&#xd;        "valor": "$valor",&#xd;        "comprobante": "$comprobante",&#xd;        "descrip_tecnica": "$descrip_tecnica",&#xd;        "numero_serie": "$numero_serie",&#xd;        "adjunto": "$adjunto",&#xd;        "meta_disponibilidad": "$meta_disponibilidad",&#xd;        "fecha_ingreso": "$fecha_ingreso",&#xd;        "fecha_baja": "$fecha_baja",&#xd;        "fecha_garantia": "$fecha_garantia",&#xd;        "prov_id": "$prov_id",&#xd;        "empr_id": "$empr_id",&#xd;        "sect_id": "$sect_id",&#xd;        "ubic_id": "$ubic_id",&#xd;        "grup_id": "$grup_id",&#xd;        "crit_id": "$crit_id",&#xd;        "unme_id": "$unme_id",&#xd;        "area_id": "$area_id",&#xd;        "proc_id": "$proc_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <param name="sect_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -124,6 +129,11 @@
       <call-query href="getClientexEmpresayEstado">
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="estado" query-param="estado"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/equipos/sector/{sect_id}">
+      <call-query href="getEquiposXSector">
+         <with-param name="sect_id" query-param="sect_id"/>
       </call-query>
    </resource>
 </data>

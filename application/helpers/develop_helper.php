@@ -36,4 +36,31 @@ if (!function_exists('getJson')) {
             return false;
         }
     }
+
+    function comp($id, $url, $load = false){
+        return "<comp id='$id' class='reload' data-link='$url'>".($load?"<script>reload('#$id', '$load')</script>":'')."</comp>";
+    }
+
+    function payToStr($data)
+    {
+        return array_map('strval', $data);
+    }
+
+    function stringColor($str, $op = 1) {
+        $code = dechex(crc32($str));
+        $code = substr($code, 0, 6);
+        return hexToRgb("#$code", $op);
+      }
+
+     function hexToRgb($hex, $op){
+        list($r, $g, $b) = sscanf($hex, "#%02x%02x%02x");
+        return "rgb($r, $g, $b, $op)";
+     } 
+}
+
+if (!function_exists('toArray')) {
+
+    function toArray($data){
+        return json_decode(json_encode($data), true);
+    }
 }

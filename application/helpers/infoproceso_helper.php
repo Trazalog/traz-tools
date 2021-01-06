@@ -11,16 +11,21 @@
 				$ci =& get_instance();
 				$case_id = $tarea->caseId;
 				$processId = $tarea->processId;
+				$data['processId']=$processId;
 
 				switch ($processId) {
-					case BPM_PROCESS_ID_PEDIDO_CONTENEDORES:
+					case BPM_PROCESS_ID_PEDIDOS_NORMALES:
 
 							log_message('INFO','#TRAZA|INFOPROCESO_HELPER|/solicitudContenedores/info/.$case_id): $case_id >> '.json_encode($case_id));
-							$aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
-							$aux =json_decode($aux["data"]);
+							$ci->load->model(ALM . 'Notapedidos');
+							$data['info'] = $ci->Notapedidos->getXCaseId($tarea->caseId);
+							
+							
+							// $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
+							// $aux =json_decode($aux["data"]);
 						break;
 
-					case BPM_PROCESS_ID_RETIRO_CONTENEDORES:
+					case BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS:
 
 							log_message('INFO','#TRAZA|INFOPROCESO_HELPER|/solicitudRetiro/proceso/retiro/case/.$case_id): $case_id >> '.json_encode($case_id));
 							$aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudRetiro/proceso/retiro/case/".$case_id);
@@ -53,8 +58,8 @@
 							<h4 class="panel-title">
 								<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
 									Proceso <?php
-														if (BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE == $processId) {
-															echo ' - Orden Transporte Nº: '.$aux->ortr_id;
+														if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
+															echo ' - Orden Nº: '.$aux->ortr_id;
 														}
 
 													?>
@@ -68,7 +73,7 @@
 
 									switch ($processId) {
 
-										case BPM_PROCESS_ID_PEDIDO_CONTENEDORES:
+										case BPM_PROCESS_ID_PEDIDOS_NORMALES:
 								?>
 											<!--_____________ Formulario Solicitud Contenedor_____________-->
 											<form class="formNombre1" id="IDnombre">
@@ -76,8 +81,8 @@
 
 														<div class="col-md-6">
 																<div class="form-group">
-																		<label for="generador" name="">Nº Solicitud:</label>
-																		<input type="text" class="form-control habilitar" id="generador" value="<?php echo $aux->solicitud->soco_id; ?>"  readonly>
+																		<label for="generador" name="">Nº pedido:</label>
+																		<input type="text" class="form-control habilitar" id="generador" value="<?php echo $data->info->pema_id; ?>"  readonly>
 																</div>
 														</div>
 														<!--_____________________________________________-->
@@ -85,15 +90,15 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="pedido" name=""> Estado:</label>
-																		<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $aux->solicitud->estado; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $data->info->estado; ?>"  readonly>
 																</div>
 														</div>
 														<!--_____________________________________________-->
 
 														<div class="col-md-6">
 															<div class="form-group">
-																	<label for="domicilio" name="">Observacion:</label>
-																	<input type="text" class="form-control habilitar" id="domicilio" value="<?php echo $aux->solicitud->observaciones; ?>"  readonly>
+																	<label for="domicilio" name="">Justificacion:</label>
+																	<input type="text" class="form-control habilitar" id="domicilio" value="<?php echo $data->info->justificacion; ?>"  readonly>
 															</div>
 														</div>
 														<!--_____________________________________________-->
@@ -101,7 +106,7 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="fec_alta" name="">Fecha Alta:</label>
-																		<input type="text" class="form-control habilitar" id="fec_alta" value="<?php echo $aux->solicitud->fec_alta; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="fec_alta" value="<?php echo $data->info->fec_alta; ?>"  readonly>
 																</div>
 														</div>
 													<!--_____________________________________________-->
@@ -251,7 +256,7 @@
 
 				<?php
 			}
-
+			
 	}
 
 ?>

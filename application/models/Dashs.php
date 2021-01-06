@@ -30,7 +30,7 @@ class Dashs extends CI_Model {
 
   /**
   * Obtiene las memberships por id de user en BPM
-  * @param 
+  * @param
   * @return
   */  //FIXME: ACA TRAERE LAS MEMBRESIAS Y DEVOLVER PARA MOSTRAR EN PERFIL
   function obtenerMemberships()

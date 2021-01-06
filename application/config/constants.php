@@ -102,7 +102,7 @@ define('TST', 'traz-comp-tareasestandar/');
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
 
-define('BONITA_URL', 'http://10.142.0.3:8080/bonita/');
+define('BONITA_URL', 'http://10.142.0.7:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 
@@ -115,6 +115,9 @@ define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
 define('BPM_PROCESS_ID_TAREA_GENERICA', '7148440093058377088');
+
+#COMPONENTE PAÑOL
+define('PAN', 'traz-comp-pan/');
 
 #COMPONENTE ALMACENES
 define('ALM', 'traz-comp-almacenes/');
@@ -156,7 +159,9 @@ define('MNOM', 'Tools');
 define('NOM', 'Trazalog Tools');
 
 //Vista por Defecto
-define('DEF_VIEW',BPM.'Proceso');
+define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
+#define('DEF_VIEW',BPM.'Proceso');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -166,7 +171,7 @@ define('DEF_VIEW',BPM.'Proceso');
 | Variables Locales
 |
 */
-define('HOST', 'http://10.142.0.3:8280');
+define('HOST', 'http://10.142.0.7:8280');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
@@ -181,32 +186,11 @@ define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
 define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
+define('REST_PRO', HOST.'/services/PRODataService');
+define('REST_PAN', HOST.'/services/PANDataService');
 
-<<<<<<< HEAD
-=======
-#define('REST', 'http://localhost:8283/services/semaresiduosDS');
-define('REST', 'http://localhost:8283/services/PRDDataService/');
-define('RESTPT', 'http://localhost:8283/services/produccionTest/');
-define('REST_TDS', 'http://localhost:8283/services/TrazabilidadDataService/');
-define('REST2', 'http://localhost:8283/services/PRDDataService');
-define('REST3', 'http://localhost:8283/services/produccionTest');
-define('REST4', 'http://localhost:8283/services/TrazabilidadDataService');
-define('API_URL', 'http://localhost:8283/tools/log');
-define('REST_PRD', 'http://localhost:8283/services/PRDDataService');
-define('REST_BPM', 'http://localhost:8283/tools/bpm');
-define('REST_CORE', 'http://localhost:8283/services/COREDataService/');
-define('FRM_DS','http://localhost:8283/services/FRMDataService');
-define('REST_LOG','http://localhost:8283/services/LOGDataService');
-
-define('HOST', 'http://localhost/');
-
-#COMPONENTE FORMULARIOS
-define('FRM', 'traz-comp-formularios/');
-define('FILES', 'files/');
-
-# DNATO
-define('LOGIN', true);
-define('DNATO', 'http://localhost/traz-comp-dnato/');
->>>>>>> master
+#TRAZ-COMP-CALENDAR
+define('DURACION_JORNADA', '08:00');
+define('HORA_FIN_JORNADA', '19:00');
 
 
