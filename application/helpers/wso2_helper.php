@@ -18,7 +18,11 @@ if (!function_exists('wso2')) {
 
         if ($rsp['status']) {
             $aux = json_decode($rsp['data']);
-            $rsp['data'] = reset(reset($aux));
+            if(strpos($url, 'bpm')){
+                $rsp['data'] = $aux;
+            }else{
+                $rsp['data'] = reset(reset($aux));
+            }
         }
 
         return $rsp;
