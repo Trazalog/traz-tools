@@ -14,22 +14,6 @@ class Test extends CI_Controller
             "lotes": {
               "lote": [
                 {
-                  "batch_id": "875",
-                  "level": "3",
-                  "arti_descripcion": "Ajo Cosechado. / VARIEDAD: Chino convencional",
-                  "arti_barcode": "PP0001",
-                  "lote_fec_alta": "28-01-2021",
-                  "reci_tipo": "PRODUCTIVO",
-                  "path_lote_id": "LF2801_03 | LF2801_03 | LF2801_3",
-                  "etap_nombre": "Finca",
-                  "batch_id_padre": null,
-                  "path": "877-876-875",
-                  "lote_estado": "En Curso",
-                  "lote_num_orden_prod": "OLF2801_3",
-                  "reci_nombre": "N12",
-                  "lote_id": "LF2801_3"
-                },
-                {
                   "batch_id": "870",
                   "level": "4",
                   "arti_descripcion": "Ajo Clasificado. / VARIEDAD: Chino convencional. / CALIBRE: 7",
@@ -60,6 +44,22 @@ class Test extends CI_Controller
                   "lote_num_orden_prod": "OLF2801_01",
                   "reci_nombre": "Descarga 2",
                   "lote_id": "LF2801_02"
+                },
+                {
+                  "batch_id": "875",
+                  "level": "3",
+                  "arti_descripcion": "Ajo Cosechado. / VARIEDAD: Chino convencional",
+                  "arti_barcode": "PP0001",
+                  "lote_fec_alta": "28-01-2021",
+                  "reci_tipo": "PRODUCTIVO",
+                  "path_lote_id": "LF2801_03 | LF2801_03 | LF2801_3",
+                  "etap_nombre": "Finca",
+                  "batch_id_padre": null,
+                  "path": "877-876-875",
+                  "lote_estado": "En Curso",
+                  "lote_num_orden_prod": "OLF2801_3",
+                  "reci_nombre": "N12",
+                  "lote_id": "LF2801_3"
                 },
                 {
                   "batch_id": "876",
@@ -114,15 +114,23 @@ class Test extends CI_Controller
           }';
           $data = json_decode($data)->lotes->lote;
           $arbol = array();
-          foreach ($data as $o) {
-              $arbol[$o->level][$o->batch_id] = $o;
+
+          foreach ($data as $key => $o) {
+              if($o->batch_id_padre){
+                  #TIENE PADRE Y ESTA METIDO EN EL ARBOL
+                if(isset($arbol[$o->batch_id])){
+                    $arbol[$o->batch_id]  = $arbol[$o->batch_id];
+                }else{
+                    $o->hijos = $arbol;
+                    $arbol = array("$o->batch_id" => $o);
+                }
+              }else{
+                  $arbol[$o->batch_id] = $o;
+              }
           }
-          for ($i=sizeof($arbol); $i <= 1 ; $i--) { 
-             foreach ($arbol[$i] as $o) {
-                 $arbol[$i-1][$o->bat]
-             }
-          }
-          show($arbol);
+          $e = reset($arbol);
+          
+          show(nodo($e, $e->hijos));
     }
 
     public function wso()
