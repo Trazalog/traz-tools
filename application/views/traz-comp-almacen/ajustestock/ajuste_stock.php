@@ -38,7 +38,7 @@ function obtenerArticulos() {
             }
             rsp.data.forEach(function(e, i) {
                 $('.articulos').append(
-                    `<option value="${e.id}" data="${e.unidad_medida}">${e.barcode} | ${e.titulo}</option>`
+                    `<option value="${e.arti_id}" data="${e.unidad_medida}">${e.barcode} | ${e.titulo}</option>`
                 );
             });
         },
