@@ -113,6 +113,8 @@ class BPM
 
         }
 
+				$resp = $this->setCaseEmpresa($rsp['data']['caseId']);
+
         return $this->msj(true, 'OK', json_decode($rsp['data'], true));
     }
 
@@ -449,5 +451,34 @@ class BPM
             'data' => $data,
         );
     }
+
+		/**
+		* Agrega la relacion case_id con empr_id desp de lanzar PROCESOS
+		* @param string case_id
+		* @returnarray con mensaje depandiendo del resultado
+		*/
+		function setCaseEmpresa($caseid){
+
+			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid) >> '.json_encode($caseid));
+			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid)  $empr_id>> '.json_encode($empr_id));
+
+			$data = array("case_id"=>$caseid,
+										"empr_id"=>empresa());
+
+			$CI = &get_instance();
+			$CI->load->database();
+			$resp = $CI->db->insert('core.case_empresa', $data);
+
+			if ($resp === FALSE) {
+
+				log_message('ERROR','#TRAZA|BPM|setCaseEmpresa($caseid) >> ERROR No se actualizó la tabla core.case_empresa con el case_id');
+				return $this->msj(false, 'No se guardo el case_id');
+			} else {
+
+				log_message('INFO','#TRAZA|BPM|setCaseEmpresa($caseid) >> Guardado Exitoso');
+				return $this->msj(true, 'Guardado exitosamente');
+			}
+
+		}
 
 }
