@@ -116,6 +116,12 @@ define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
 define('BPM_PROCESS_ID_TAREA_GENERICA', '7148440093058377088');
 
+#YUDIKA REPARACION_NEUMATICOS
+define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '5762191560462134594');
+
+#YUDIKA REPARACION_NEUMATICOS
+define('YUDIPROC', 'yudi-tools-almproc/');
+
 #COMPONENTE PAÑOL
 define('PAN', 'traz-comp-pan/');
 
@@ -124,10 +130,15 @@ define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
 define('BPM_PROCESS', json_encode(array(
+        BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#F39C12', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
-    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas']
+    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas'],
+
+     
+
+
 )));
 
 define('BPM_ADMIN_USER', 'admin');
