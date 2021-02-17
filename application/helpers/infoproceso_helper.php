@@ -46,6 +46,20 @@
 							$aux_cont = $data_cont->contenedores->contenedor;
 						break;
 
+
+						#######
+						//CHUKA
+						case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
+
+							log_message('INFO','#TRAZA|INFOPROCESO_HELPER|CHUKA/.$case_id): $case_id >> '.json_encode($case_id));
+							$ci->load->model(YUDIPROC . 'Yudiproctareas');
+							//$data['info'] = $ci->Notapedidos->getXCaseId($tarea->caseId);
+							
+							
+							// $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
+							// $aux =json_decode($aux["data"]);
+						break;
+
 					default:
 						# code...
 						break;
@@ -60,6 +74,8 @@
 									Proceso <?php
 														if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
 															echo ' - Orden Nº: '.$aux->ortr_id;
+														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
+															echo 'Reparación de Neumáticos';
 														}
 
 													?>
@@ -236,7 +252,35 @@
 													<tbody>
 											</table>			
 								<?php	
-											break;		
+											break;	
+											
+								
+											
+							##############YUDICA CHUKA	
+											case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
+									?>
+												<!--_____________ Formulario Solicitud Retiro_____________-->
+												<form class="formNombre1" id="IDnombre">
+														<div class="col-md-12">
+	
+																<div class="col-md-6">
+																		<div class="form-group">
+																				<label for="generador" name="">Nº Solicitud de Reparacion:</label>
+																				<input type="text" class="form-control habilitar" id="generador" value="<?php echo $aux->case_id; ?>"  readonly>
+																		</div>
+																</div>
+																<!--_____________________________________________-->
+	
+																<div class="col-md-6">
+																		<div class="form-group">
+																				<label for="pedido" name=""> Fecha Alta:</label>
+																				<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $aux->fec_alta; ?>"  readonly>
+																		</div>
+																</div>
+																<!--_____________________________________________-->
+														</div>
+												</form> 
+									<?php			
 										
 										default:
 											# code...
