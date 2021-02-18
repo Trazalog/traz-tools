@@ -49,19 +49,28 @@
 
 						#######
 						//CHUKA
-						case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
+//case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
 
-							log_message('INFO','#TRAZA|INFOPROCESO_HELPER|CHUKA/.$case_id): $case_id >> '.json_encode($case_id));
-							$ci->load->model(YUDIPROC . 'Yudiproctareas');
+							//log_message('INFO','#TRAZA|INFOPROCESO_HELPER|CHUKA/.$case_id): $case_id >> '.json_encode($case_id));
+//$ci->load->model(YUDIPROC . 'Yudiproctareas');
 							//$data['info'] = $ci->Notapedidos->getXCaseId($tarea->caseId);
 							
 							
 							// $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
 							// $aux =json_decode($aux["data"]);
-						break;
+//break;
 
 					default:
-						# code...
+						
+					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|chuka/".$case_id : $case_id >> '.json_encode($case_id));
+					$ci->load->model(YUDIPROC . 'Yudiproctareas');
+					//$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
+					//$data =json_decode($aux["data"]);
+				
+					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
+					 		$data_generico =json_decode($aux["data"]);
+					 		$aux = $data_generico->pedidoTrabajo;
+
 						break;
 				}
 
@@ -257,33 +266,69 @@
 								
 											
 							##############YUDICA CHUKA	
-											case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
-									?>
-												<!--_____________ Formulario Solicitud Retiro_____________-->
-												<form class="formNombre1" id="IDnombre">
-														<div class="col-md-12">
-	
-																<div class="col-md-6">
-																		<div class="form-group">
-																				<label for="generador" name="">Nº Solicitud de Reparacion:</label>
-																				<input type="text" class="form-control habilitar" id="generador" value="<?php echo $aux->case_id; ?>"  readonly>
-																		</div>
-																</div>
-																<!--_____________________________________________-->
-	
-																<div class="col-md-6">
-																		<div class="form-group">
-																				<label for="pedido" name=""> Fecha Alta:</label>
-																				<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $aux->fec_alta; ?>"  readonly>
-																		</div>
-																</div>
-																<!--_____________________________________________-->
-														</div>
-												</form> 
+							default :
+									?><div class="col-md-12">
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="patente" name="">Codigo Proyecto:</label>
+													<input type="text" class="form-control habilitar" id="patente" value="<?php echo $aux->cod_proyecto; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="desc_vehiculo" name=""> Descripcion:</label>
+													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+								</div>
+
+
+								<div class="col-md-12">
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="patente" name="">Fecha Inicio:</label>
+													<input type="text" class="form-control habilitar" id="patente" value="<?php echo $aux->fec_inicio; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="desc_vehiculo" name=""> Fecha Entrega:</label>
+													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->fec_entrega; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+								</div>
+
+
+								<div class="col-md-12">
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="patente" name="">Objetivo:</label>
+													<input type="text" class="form-control habilitar" id="patente" value="<?php echo $aux->objetivo; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="desc_vehiculo" name=""> Info Id:</label>
+													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->info_id; ?>"  readonly>
+											</div>
+									</div>
+									
+									<!--_____________________________________________-->
+								</div>
+								<div class="frm-new" data-form=""></div>
+
 									<?php			
-										
-										default:
-											# code...
 											break;
 									}
 

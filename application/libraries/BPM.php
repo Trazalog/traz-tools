@@ -113,7 +113,8 @@ class BPM
 
         }
 
-				$resp = $this->setCaseEmpresa($rsp['data']['caseId']);
+        $dato = json_decode($rsp['data']);
+		$resp = $this->setCaseEmpresa($dato->caseId);
 
         return $this->msj(true, 'OK', json_decode($rsp['data'], true));
     }
