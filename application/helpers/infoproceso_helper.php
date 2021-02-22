@@ -47,20 +47,7 @@
 						break;
 
 
-						#######
-						//CHUKA
-//case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
-
-							//log_message('INFO','#TRAZA|INFOPROCESO_HELPER|CHUKA/.$case_id): $case_id >> '.json_encode($case_id));
-//$ci->load->model(YUDIPROC . 'Yudiproctareas');
-							//$data['info'] = $ci->Notapedidos->getXCaseId($tarea->caseId);
-							
-							
-							// $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
-							// $aux =json_decode($aux["data"]);
-//break;
-
-					default:
+				default:
 						
 					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|chuka/".$case_id : $case_id >> '.json_encode($case_id));
 					$ci->load->model(YUDIPROC . 'Yudiproctareas');
@@ -325,8 +312,29 @@
 									</div>
 									
 									<!--_____________________________________________-->
+
+
+									<div class="col-md-12">
+									<style>
+										.frm-save {
+											display: none;
+										}
+									</style>
+								<?php 
+
+									$info_id = $aux->info_id;
+									
+									echo getForm($info_id);
+								
+								 
+								?>
+										
+									</div>
+
+
 								</div>
-								<div class="frm-new" data-form=""></div>
+								
+
 
 									<?php			
 											break;
