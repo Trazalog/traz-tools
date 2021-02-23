@@ -95,6 +95,7 @@ class BPM
     }
 
     // Lanza proceso en BPM
+  
     public function lanzarProceso($processId, $contract)
     {
         $resource = 'API/bpm/process/';
@@ -118,6 +119,8 @@ class BPM
 
         return $this->msj(true, 'OK', json_decode($rsp['data'], true));
     }
+
+
 
     public function ObtenerLineaTiempo($processId, $caseId)
     {
@@ -453,7 +456,7 @@ class BPM
         );
     }
 
-		/**
+	/**
 		* Agrega la relacion case_id con empr_id desp de lanzar PROCESOS
 		* @param string case_id
 		* @returnarray con mensaje depandiendo del resultado
@@ -463,8 +466,9 @@ class BPM
 			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid) >> '.json_encode($caseid));
 			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid)  $empr_id>> '.json_encode($empr_id));
 
-			$data = array("case_id"=>$caseid,
-										"empr_id"=>empresa());
+           $string_case_id = (string)$caseid;
+
+			$data = array("case_id"=>$string_case_id,"empr_id"=>empresa());
 
 			$CI = &get_instance();
 			$CI->load->database();
