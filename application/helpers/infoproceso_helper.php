@@ -296,45 +296,27 @@
 
 								<div class="col-md-12">
 
-									<div class="col-md-6">
+									<div class="col-md-12">
 											<div class="form-group">
 													<label for="patente" name="">Objetivo:</label>
 													<input type="text" class="form-control habilitar" id="patente" value="<?php echo $aux->objetivo; ?>"  readonly>
 											</div>
 									</div>
-									<!--_____________________________________________-->
-
-									<div class="col-md-6">
-											<div class="form-group">
-													<label for="desc_vehiculo" name=""> Info Id:</label>
-													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->info_id; ?>"  readonly>
-											</div>
-									</div>
-									
-									<!--_____________________________________________-->
-
-
-									<div class="col-md-12">
-									<style>
-										.frm-save {
-											display: none;
-										}
-									</style>
-								<?php 
-
-									$info_id = $aux->info_id;
-									
-									echo getForm($info_id);
 								
-								 
-								?>
-										
-									</div>
+									<!--_____________________________________________-->
+									<div class="col-md-12">
+									<div id="form-dinamico-cabecera">
+										<?php
+										$info_id = $aux->info_id;
 
+										echo getForm($info_id);
+										?>
+										</div>
+									</div>
 
 								</div>
 								
-
+<!--_____________________________________________-->
 
 									<?php			
 											break;
