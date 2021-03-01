@@ -102,13 +102,13 @@ define('TST', 'traz-comp-tareasestandar/');
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
 
-define('BONITA_URL', 'http://10.142.0.7:8080/bonita/');
+define('BONITA_URL', 'http://10.142.0.13:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 
 define('BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS', '6866538875650512673');
 
-define('BPM_PROCESS_ID_PEDIDO_CONTENEDORES', '4914088989692457565');
+define('BPM_PROCESS_ID_PEDIDO_CONTENEDORES', '7158449738201115927');
 
 define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 
@@ -117,7 +117,7 @@ define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 define('BPM_PROCESS_ID_TAREA_GENERICA', '7148440093058377088');
 
 #YUDIKA REPARACION_NEUMATICOS
-define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '5762191560462134594');
+define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '8439367675004569290');
 
 #YUDIKA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
@@ -130,15 +130,11 @@ define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
 define('BPM_PROCESS', json_encode(array(
-        BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#F39C12', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
+    BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#F39C12', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
-    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas'],
-
-     
-
-
+    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
@@ -182,7 +178,7 @@ define('DEF_VIEW',BPM.'Proceso');
 | Variables Locales
 |
 */
-define('HOST', 'http://10.142.0.7:8280');
+define('HOST', 'http://10.142.0.13:8280');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
