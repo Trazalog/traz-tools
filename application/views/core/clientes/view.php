@@ -65,8 +65,8 @@
             <!--Tipo Cliente-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
-                    <label for="Tipo">Tipo:</label>
-                    <select class="form-control select2 select2-hidden-accesible habilitar" name="ticl_id" id="ticl_id">
+                    <label for="Tipo">Tipo(<strong style="color: #dd4b39">*</strong>):</label>
+                    <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id">
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                   foreach ($tipos_clientes as $tipos) {
@@ -149,7 +149,7 @@
                         <div class="form-group">
                             <label for="dir_entrega_edit" class="col-sm-4 control-label">Dirección Entrega:</label>
                             <div class="col-sm-8">
-                            <input type="text" class="form-control habilitar requerido" name="dir_entrega" id="dir_entrega_edit">
+                            <input type="text" class="form-control habilitar" name="dir_entrega" id="dir_entrega_edit">
                             </div>
                         </div>
                     <!--__________________________-->
@@ -158,7 +158,7 @@
                         <div class="form-group">
                             <label for="observaciones_edit" class="col-sm-4 control-label">Observaciones:</label>
                             <div class="col-sm-8">
-                            <input type="text" class="form-control habilitar requerido" name="observaciones" id="observaciones_edit">
+                            <input type="text" class="form-control habilitar" name="observaciones" id="observaciones_edit">
                             </div>
                         </div>
                     <!--__________________________-->
@@ -172,8 +172,7 @@
                         <label for="ticl_id_edit" class="col-sm-4 control-label">Tipo:</label>
                         <div class="col-sm-8">
                             <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id_edit">
-                            <option value="" disabled selected>-Seleccione opcion-</option>	
+                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id_edit">	
                             <?php
                                 foreach ($tipos_clientes as $tipos) {
                                 echo '<option  value="'.$tipos->tabl_id.'">'.$tipos->valor.'</option>';
