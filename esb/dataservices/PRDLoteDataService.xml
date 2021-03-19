@@ -86,6 +86,27 @@
       <param name="planificado" sqlType="STRING"/>
       <param name="batch_id" optional="true" sqlType="STRING"/>
    </query>
+   <query id="loteSetNoCo_batch_req" useConfig="ToolsDataSource">
+      <sql>select prd.crear_lote_noco(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8)&#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as int4)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint),:noco_list)&#xd;resultado;</sql>
+      <param name="lote_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="batch_id_padre" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="cantidad_padre" sqlType="STRING"/>
+      <param name="num_orden_prod" sqlType="STRING"/>
+      <param name="reci_id" sqlType="STRING"/>
+      <param name="etap_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="forzar_agregar" sqlType="STRING"/>
+      <param name="fec_vencimiento" sqlType="STRING"/>
+      <param name="recu_id" sqlType="STRING"/>
+      <param name="tipo_recurso" sqlType="STRING"/>
+      <param name="planificado" sqlType="STRING"/>
+      <param name="batch_id" optional="true" sqlType="STRING"/>
+      <param name="noco_list" optional="true" sqlType="STRING"/>
+   </query>
    <query id="setRecursoLote" useConfig="ToolsDataSource">
       <sql>insert into prd.recursos_lotes &#xd; (batch_id, recu_id, usuario, empr_id, cantidad, tipo, empa_id, empa_cantidad) &#xd;values&#xd; (CAST(:batch_id AS INTEGER), &#xd;  CAST(:recu_id AS INTEGER), &#xd;  :usuario, &#xd;  CAST(:empr_id AS INTEGER), &#xd;  CAST(:cantidad AS double precision), &#xd;  :tipo,&#xd;  CAST(:empa_id AS INTEGER),&#xd;  CAST(:empa_cantidad AS double precision))</sql>
       <param name="batch_id" sqlType="STRING"/>
@@ -119,8 +140,8 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="getLotes" useConfig="ToolsDataSource">
-      <sql>select AUX.*,case when allo.cantidad is null then prlo.cantidad else allo.cantidad end as cantidad&#xd;,case when art.barcode is null then prlo.barcode else art.barcode end as producto&#xd;,coalesce(art.unidad_medida,alm2.unidad_medida) as unidad from &#xd;(select&#xd;lote.batch_id&#xd;,lote.lote_id&#xd;,lote.fec_alta as fecha&#xd;,etap.nombre as titulo&#xd;,etap.etap_id&#xd;,esta.nombre as establecimiento&#xd;,reci.nombre as recipiente&#xd;,lote.num_orden_prod as orden&#xd;,lote.estado as estado&#xd;from&#xd;prd.etapas etap&#xd;,prd.establecimientos esta&#xd;,prd.recipientes reci&#xd;,prd.lotes lote&#xd;,alm.alm_depositos depo&#xd;where&#xd;lote.etap_id = etap.etap_id&#xd;and lote.reci_id = reci.reci_id&#xd;and reci.depo_id = depo.depo_id&#xd;and depo.esta_id = esta.esta_id&#xd;and etap.etap_id &lt; 1000&#xd;and lote.empr_id = cast(:empr_id as integer)&#xd;) as  AUX&#xd;left join&#xd;alm.alm_lotes allo on allo.batch_id = AUX.batch_id&#xd;left join alm.alm_articulos art on allo.arti_id = art.arti_id&#xd;left join prd.productos_lotes_vw  prlo on prlo.batch_id = AUX.batch_id&#xd;left join alm.alm_articulos alm2 on alm2.barcode = prlo.barcode</sql>
-      <result outputType="json">{&#xd; "etapas": {&#xd; "etapa": [&#xd; {&#xd; "id": "$batch_id",&#xd; "lote": "$lote_id",&#xd; "titulo" : "$titulo",&#xd; "etap_id":"$etap_id",&#xd; "producto" : "$producto",&#xd; "cantidad" : "$cantidad",&#xd; "unidad" : "$unidad" &#xd; ,"establecimiento" : "$establecimiento",&#xd; "recipiente" : "$recipiente",&#xd; "orden" : "$orden",&#xd; "estado" : "$estado",&#xd;  "fecha":"$fecha"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <sql>select AUX.*,case when allo.cantidad is null then prlo.cantidad else allo.cantidad end as cantidad&#xd;,case when art.barcode is null then prlo.barcode else art.barcode end as producto&#xd;,coalesce(art.unidad_medida,alm2.unidad_medida) as unidad from &#xd;(select&#xd;lote.batch_id&#xd;,lote.lote_id&#xd;,lote.fec_alta as fecha&#xd;,etap.nombre as titulo&#xd;,etap.etap_id&#xd;,esta.nombre as establecimiento&#xd;,reci.nombre as recipiente&#xd;,lote.num_orden_prod as orden&#xd;,lote.estado as estado&#xd;,esta.esta_id &#xd;from&#xd;prd.etapas etap&#xd;,prd.establecimientos esta&#xd;,prd.recipientes reci&#xd;,prd.lotes lote&#xd;,alm.alm_depositos depo&#xd;where&#xd;lote.etap_id = etap.etap_id&#xd;and lote.reci_id = reci.reci_id&#xd;and reci.depo_id = depo.depo_id&#xd;and depo.esta_id = esta.esta_id&#xd;and etap.etap_id &lt; 1000&#xd;and lote.empr_id = cast(:empr_id as integer)&#xd;) as  AUX&#xd;left join&#xd;alm.alm_lotes allo on allo.batch_id = AUX.batch_id&#xd;left join alm.alm_articulos art on allo.arti_id = art.arti_id&#xd;left join prd.productos_lotes_vw  prlo on prlo.batch_id = AUX.batch_id&#xd;left join alm.alm_articulos alm2 on alm2.barcode = prlo.barcode</sql>
+      <result outputType="json">{&#xd; "etapas": {&#xd; "etapa": [&#xd; {&#xd; "id": "$batch_id",&#xd; "lote": "$lote_id",&#xd; "titulo" : "$titulo",&#xd; "etap_id":"$etap_id",&#xd; "producto" : "$producto",&#xd; "cantidad" : "$cantidad",&#xd; "unidad" : "$unidad" &#xd; ,"establecimiento" : "$establecimiento",&#xd; "recipiente" : "$recipiente",&#xd; "orden" : "$orden",&#xd; "estado" : "$estado",&#xd;  "fecha":"$fecha",&#xd; "esta_id":"$esta_id"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getLote2" useConfig="ToolsDataSource">
@@ -265,6 +286,28 @@
          <with-param name="batch_id" query-param="batch_id"/>
       </call-query>
    </resource>
+   <resource method="POST" path="/lote/noConsumibles/list" returnRequestStatus="true">
+      <call-query href="loteSetNoCo_batch_req">
+         <with-param name="lote_id" query-param="lote_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="batch_id_padre" query-param="batch_id_padre"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="cantidad_padre" query-param="cantidad_padre"/>
+         <with-param name="num_orden_prod" query-param="num_orden_prod"/>
+         <with-param name="reci_id" query-param="reci_id"/>
+         <with-param name="etap_id" query-param="etap_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="forzar_agregar" query-param="forzar_agregar"/>
+         <with-param name="fec_vencimiento" query-param="fec_vencimiento"/>
+         <with-param name="recu_id" query-param="recu_id"/>
+         <with-param name="tipo_recurso" query-param="tipo_recurso"/>
+         <with-param name="planificado" query-param="planificado"/>
+         <with-param name="batch_id" query-param="batch_id"/>
+         <with-param name="noco_list" query-param="noco_list"/>
+      </call-query>
+   </resource>
    <resource method="POST" path="/recurso/lote">
       <call-query href="setRecursoLote">
          <with-param name="batch_id" query-param="batch_id"/>
@@ -357,3 +400,4 @@
       </call-query>
    </resource>
 </data>
+
