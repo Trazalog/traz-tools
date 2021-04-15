@@ -1,4 +1,4 @@
-create schema sta;:browse confirm wa
+create schema sta;
 
 -- Drop table
 
