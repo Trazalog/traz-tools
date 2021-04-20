@@ -1,3 +1,8 @@
+<style>
+.oculto {
+    display: none;
+}
+</style>
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 	/**
 	* Cabeceras con informacion variable segun proceso BPM
@@ -305,12 +310,41 @@
 								
 									<!--_____________________________________________-->
 									<div class="col-md-12">
-									<div id="form-dinamico-cabecera">
-										<?php
-										$info_id = $aux->info_id;
+									<?php
+									
+									if ($processId == BPM_PROCESS_ID_REPARACION_NEUMATICOS )
+										{
+											$info_id = $aux->info_id;
 
-										echo getForm($info_id);
+											$formulario = getForm($info_id);
+									
+										}
+
 										?>
+									<div id="form-dinamico-cabecera" data-frm-id="<?php echo "frm-".$info_id;?>">
+									<?php
+											
+											echo $formulario;
+
+									?>
+										<script>
+										var formulario = $('#form-dinamico-cabecera').attr('data-frm-id');
+										
+										
+										$('#form-dinamico-cabecera button.frm-save').addClass('oculto');
+										
+								
+										$('#form-dinamico-cabecera').find(':input').each(function() {
+										var elemento= this;
+										console.log("elemento.id="+ elemento.id); 
+
+										var new_elemento = "#"+elemento.id;
+										
+										$(new_elemento).attr('readonly', true); 
+
+										
+												});
+										</script>
 										</div>
 									</div>
 

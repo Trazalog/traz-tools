@@ -213,15 +213,17 @@ class BPM
 
         }
 
-        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+//        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+          return json_decode($rsp['data'], true);
     }
 
-    public function guardarComentario($caseId, $comentario)
+    public function guardarComentario($caseId)//$caseId, $comentario
     {
-        $data = array(
-            'processInstanceId' => $caseId,
-            'content' => $comentario,
-        );
+        $data = $caseId;
+        // $data = array(
+        //     'processInstanceId' => $caseId,
+        //     'content' => $comentario,
+        // );
 
         $url = BONITA_URL . 'API/bpm/comment';
 
@@ -235,7 +237,8 @@ class BPM
 
         }
 
-        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+     //        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+     return json_decode($rsp['data'], true);
     }
 
     public function actualizarIdOT($caseId, $ot)
