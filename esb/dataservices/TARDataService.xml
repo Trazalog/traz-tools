@@ -104,7 +104,7 @@
       <param name="plan_id" sqlType="STRING"/>
    </query>
    <query id="setTareaPlanificada" useConfig="produccionDS">
-      <sql>INSERT&#xd;	INTO&#xd;	tst.tareas_planificadas (tapl_id, nombre, fecha, user_id, info_id, case_id, tare_id, proc_id, form_id, descripcion, rece_id, fec_inicio, fec_fin, hora_duracion, empr_id)&#xd;SELECT&#xd;	CASE&#xd;		WHEN IDT.id IS NULL&#xd;		OR IDT.ID = '' THEN nextval('tst.tareas_planificadas_tapl_id_seq')&#xd;		ELSE CAST(idt.id AS INTEGER)&#xd;	END&#xd;	, :nombre, TO_DATE(:fecha,'YYYY-MM-DD'),:user_id, CAST(:info_id as integer), CAST(:case_id as integer), CAST(:tare_id as integer), :proc_id, cast(:form_id as integer), :descripcion, cast(:rece_id as integer), TO_TIMESTAMP(:fec_inicio,'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP(:fec_fin,'YYYY-MM-DD HH24:MI:SS'), :hora_duracion, cast(:empr_id as integer)&#xd;FROM&#xd;	(SELECT :tapl_id ID) AS IDT&#xd;ON CONFLICT (tapl_id) DO&#xd;UPDATE&#xd;SET&#xd;    nombre = excluded.nombre,&#xd;    fecha = excluded.fecha,&#xd;    user_id = excluded.user_id,&#xd;    info_id = excluded.info_id,&#xd;    case_id = excluded.case_id,&#xd;    tare_id = excluded.tare_id,&#xd;    proc_id = excluded.proc_id,&#xd;    form_id = excluded.form_id,&#xd;    descripcion = excluded.descripcion,&#xd;    rece_id = excluded.rece_id, &#xd;    fec_inicio = excluded.fec_inicio, &#xd;    fec_fin = excluded.fec_fin, &#xd;    hora_duracion = excluded.hora_duracion,&#xd;    empr_id = excluded.empr_id&#xd; returning tapl_id;</sql>
+      <sql>insert&#xd;	into&#xd;	tst.tareas_planificadas (tapl_id,&#xd;	nombre,&#xd;	fecha,&#xd;	user_id,&#xd;	info_id,&#xd;	case_id,&#xd;	tare_id,&#xd;	proc_id,&#xd;	form_id,&#xd;	descripcion,&#xd;	rece_id,&#xd;	fec_inicio,&#xd;	fec_fin,&#xd;	hora_duracion,&#xd;	empr_id)&#xd;select&#xd;	case&#xd;		when param.id is null or param.id = ''&#xd;		 then nextval('tst.tareas_planificadas_tapl_id_seq') else cast(param.id as integer) end ,&#xd;		:nombre,&#xd;		to_date(:fecha, 'YYYY-MM-DD'),&#xd;		case when param.user_id is null or param.user_id ='' then null else param.user_id end,&#xd;		case when param.info_id is null or param.info_id ='' then null else cast(param.info_id as integer) end,&#xd;		case when param.case_id is null or param.case_id ='' then null else cast(param.case_id as integer) end,&#xd;		case when param.tare_id is null or param.tare_id ='' then null else cast(param.tare_id as integer) end,&#xd;		:proc_id,&#xd;		case when param.form_id is null or param.form_id ='' then null else cast(param.form_id as integer) end,&#xd;		:descripcion,&#xd;		case when param.rece_id is null or param.rece_id ='' then null else cast(param.rece_id as integer) end,&#xd;		to_timestamp(:fec_inicio, 'YYYY-MM-DD HH24:MI:SS'),&#xd;		to_timestamp(:fec_fin, 'YYYY-MM-DD HH24:MI:SS'),&#xd;		:hora_duracion,&#xd;		cast(:empr_id as integer)&#xd;	from&#xd;		(&#xd;		select&#xd;			:tapl_id id&#xd;			,:user_id user_id&#xd;			,:info_id info_Id&#xd;			,:case_id case_id&#xd;			,:tare_id tare_id&#xd;			,:form_id form_id&#xd;			,:rece_id rece_id&#xd;			) as param &#xd;			on&#xd;		conflict (tapl_id) do&#xd;update&#xd;set&#xd;	nombre = excluded.nombre,&#xd;	fecha = excluded.fecha,&#xd;	user_id = case when excluded.user_id is null then null else excluded.user_id end,&#xd;	info_id = case when excluded.info_id is null then null else cast( excluded.info_id as integer)end,&#xd;	case_id = case when excluded.case_id is null then null else cast( excluded.case_id as integer) end,&#xd;	tare_id = case when excluded.tare_id is null then null else cast( excluded.tare_id as integer) end,&#xd;	proc_id = excluded.proc_id,&#xd;	form_id = case when excluded.form_id is null then null else cast( excluded.form_id as integer) end,&#xd;	descripcion = excluded.descripcion,&#xd;	rece_id = case when excluded.rece_id is null then null else cast( excluded.rece_id as integer) end,&#xd;	fec_inicio = excluded.fec_inicio,&#xd;	fec_fin = excluded.fec_fin,&#xd;	hora_duracion = excluded.hora_duracion,&#xd;	empr_id = excluded.empr_id &#xd;	returning tapl_id;</sql>
       <result outputType="json">{"respuesta":{"tapl_id":"$tapl_id"}}</result>
       <param name="nombre" sqlType="STRING"/>
       <param name="fecha" sqlType="STRING"/>
@@ -190,6 +190,28 @@
    <query id="delTareasSinOrigen" useConfig="produccionDS">
       <sql>delete from tst.tareas_planificadas tp where tapl_id not in (select otp.tapl_id from tst.origen_tarea_planficada otp) and tp.empr_id = cast(:empr_id as integer)</sql>
       <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setHito" useConfig="produccionDS">
+      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), :documento, cast(:petr_id as integer))</sql>
+      <param name="numero" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="objetivo" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+      <param name="petr_id" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="user_id" sqlType="STRING"/>
+      <param name="unidad_tiempo" sqlType="STRING"/>
+      <param name="documento" sqlType="STRING"/>
+   </query>
+   <query id="getHitos" useConfig="produccionDS">
+      <sql>SELECT numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id&#xd;FROM tst.hitos h&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and not h.eliminado</sql>
+      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;      {&#xd;        "numero": "$numero",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "user_id": "$user_id",&#xd;        "objetivo": "$objetivo",&#xd;        "unidad_tiempo": "$unidad_tiempo",&#xd;        "esta_id": "$esta_id",&#xd;        "documento": "$documento",&#xd;        "petr_id": "$petr_id",&#xd;        "hito_id": "$hito_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <param name="petr_id" sqlType="STRING"/>
+   </query>
+   <query id="getHito" useConfig="produccionDS">
+      <sql>SELECT numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id&#xd;FROM tst.hitos&#xd;WHERE not eliminado&#xd;and hito_id = cast(:hito_id as integer);</sql>
+      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;        {&#xd;            "numero": "$numero",&#xd;            "descripcion": "$descripcion",&#xd;            "fec_inicio": "$fec_inicio",&#xd;            "user_id": "$user_id",&#xd;            "objetivo": "$objetivo",&#xd;            "unidad_tiempo": "$unidad_tiempo",&#xd;            "esta_id": "$esta_id",&#xd;            "documento": "$documento",&#xd;            "petr_id": "$petr_id",&#xd;            "hito_id": "$hito_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="hito_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/tareas/{empr_id}">
       <call-query href="getTareas">
@@ -390,4 +412,28 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
+   <resource method="POST" path="/hitos">
+      <call-query href="setHito">
+         <with-param name="numero" query-param="numero"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="objetivo" query-param="objetivo"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="petr_id" query-param="petr_id"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="user_id" query-param="user_id"/>
+         <with-param name="unidad_tiempo" query-param="unidad_tiempo"/>
+         <with-param name="documento" query-param="documento"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidostrabajo/hitos/{petr_id}">
+      <call-query href="getHitos">
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/hitos/{hito_id}">
+      <call-query href="getHito">
+         <with-param name="hito_id" query-param="hito_id"/>
+      </call-query>
+   </resource>
 </data>
+
