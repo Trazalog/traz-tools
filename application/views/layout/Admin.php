@@ -73,6 +73,10 @@
         .mr-2{
             margin-right: 5px;
         }
+
+        .oculto {
+            display: none;
+        }
     </style>
 
 

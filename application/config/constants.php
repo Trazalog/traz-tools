@@ -130,7 +130,7 @@ define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
 define('BPM_PROCESS', json_encode(array(
-    BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#F39C12', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
+    BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
@@ -139,7 +139,7 @@ define('BPM_PROCESS', json_encode(array(
 
 define('BPM_ADMIN_USER', 'admin');
 define('BPM_ADMIN_PASS', '123traza');
-define('BPM_USER_PASS', '123');
+define('BPM_USER_PASS', 'bpm');
 
 #ERRORES DE BONITA
 define('ASP_100', 'Fallo Conexión BPM');
