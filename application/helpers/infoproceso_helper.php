@@ -310,29 +310,24 @@
 								
 									<!--_____________________________________________-->
 									<div class="col-md-12">
-									<?php
 									
+									<div id="form-dinamico-cabecera">
+									<?php
 									if ($processId == BPM_PROCESS_ID_REPARACION_NEUMATICOS )
 										{
 											$info_id = $aux->info_id;
 
 											$formulario = getForm($info_id);
-									
+										
+											echo $formulario;
 										}
 
 										?>
-									<div id="form-dinamico-cabecera" data-frm-id="<?php echo "frm-".$info_id;?>">
-									<?php
-											
-											echo $formulario;
-
-									?>
-										<script>
-										var formulario = $('#form-dinamico-cabecera').attr('data-frm-id');
-										
-										
+<script>
+								
 										$('#form-dinamico-cabecera button.frm-save').addClass('oculto');
 										
+										$('#form-dinamico .frm-save ').hide(); 
 								
 										$('#form-dinamico-cabecera').find(':input').each(function() {
 										var elemento= this;
@@ -345,6 +340,7 @@
 										
 												});
 										</script>
+
 										</div>
 									</div>
 
