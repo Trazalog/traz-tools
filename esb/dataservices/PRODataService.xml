@@ -3,7 +3,7 @@
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
    <query id="setPedidoTrabajo" useConfig="ToolsDataSource">
-      <sql>insert&#xd;	into&#xd;	pro.pedidos_trabajo (cod_proyecto,&#xd;	descripcion,&#xd;	estado,&#xd;	objetivo,&#xd;	fec_inicio,&#xd;	fec_entrega,&#xd;	usuario_app,&#xd;	umti_id,&#xd;	info_id,&#xd;	proc_id,&#xd;	empr_id,&#xd;	clie_id)&#xd;values(:cod_proyecto,&#xd;	:descripcion,&#xd;	:estado,&#xd;	:objetivo,&#xd;	to_date('YYYY-MM-DD',:fec_inicio),&#xd;	to_date('YYYY-MM-DD',:fec_entrega),&#xd;	:usuario_app,&#xd;	:umti_id,&#xd;	cast(:info_id as integer),&#xd;	:proc_id,&#xd;	cast(:empr_id as integer),&#xd;	cast(:clie_id as integer))&#xd;returning petr_id;</sql>
+      <sql>insert&#xd;	into&#xd;	pro.pedidos_trabajo (cod_proyecto,&#xd;	descripcion,&#xd;	estado,&#xd;	objetivo,&#xd;	fec_inicio,&#xd;	fec_entrega,&#xd;	usuario_app,&#xd;	umti_id,&#xd;	info_id,&#xd;	proc_id,&#xd;	empr_id,&#xd;	clie_id)&#xd;values(:cod_proyecto,&#xd;	:descripcion,&#xd;	:estado,&#xd;	:objetivo,&#xd;	to_date(:fec_inicio,'YYYY-MM-DD'),&#xd;	to_date(:fec_entrega,'YYYY-MM-DD'),&#xd;	:usuario_app,&#xd;	:umti_id,&#xd;	cast(:info_id as integer),&#xd;	:proc_id,&#xd;	cast(:empr_id as integer),&#xd;	cast(:clie_id as integer))&#xd;returning petr_id;</sql>
       <result outputType="json">{"respuesta":{"petr_id":"$petr_id"}}</result>
       <param name="cod_proyecto" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -49,13 +49,13 @@
       <param name="petr_id" optional="false" sqlType="STRING"/>
    </query>
    <query id="getinfopedidotrabajo" useConfig="ToolsDataSource">
-      <sql>SELECT pe.objetivo , pe.cod_proyecto ,pe.descripcion, pe.fec_inicio , pe.fec_entrega ,pe.info_id&#xd;,t.valor unidad_medida&#xd;,t.tabl_id umti_id&#xd;FROM pro.pedidos_trabajo pe  &#xd;,core.tablas t&#xd;and pe.petr_id = cast(:petr_id as integer)&#xd;and pe.umti_id = t.tabl_id&#xd;and not pe.eliminado</sql>
-      <result outputType="json">{&#xd;  "pedidos_info": {&#xd;    "pedido_info": [&#xd;      {&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "info_id":"$info_id",&#xd;        "unidad_medida":"$unidad_medida",&#xd;        "umti_id":"$umti_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <sql>SELECT pe.objetivo , pe.cod_proyecto ,pe.descripcion, pe.fec_inicio , pe.fec_entrega ,pe.info_id&#xd;FROM pro.pedidos_trabajo pe  &#xd;and pe.petr_id = cast(:petr_id as integer)&#xd;and not pe.eliminado</sql>
+      <result outputType="json">{&#xd;  "pedidos_info": {&#xd;    "pedido_info": [&#xd;      {&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "info_id":"$info_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="petr_id" optional="false" sqlType="STRING"/>
    </query>
    <query id="getinfopedidotrabajoxcaseid" useConfig="ToolsDataSource">
-      <sql>SELECT pe.objetivo , pe.cod_proyecto ,pe.descripcion, pe.fec_inicio , pe.fec_entrega ,pe.info_id&#xd;,t.valor unidad_medida&#xd;,t.tabl_id umti_id&#xd;,t2.tabl_id esta_id&#xd;,t2.descripcion estado&#xd;FROM pro.pedidos_trabajo pe&#xd;,core.tablas t  &#xd;,core.tablas t2&#xd;where pe.case_id = :case_id&#xd;and pe.umti_id = t.tabl_id&#xd;and pe.estado = t2.tabl_id</sql>
-      <result outputType="json">{&#xd;  "pedidoTrabajo": {&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "info_id":"$info_id",&#xd;        "unidad_medida":"$unidad_medida",&#xd;        "umti_id":"$umti_id",&#xd;        "estado":"$estado",&#xd;        "esta_id":"$esta_id"&#xd;  }&#xd;}</result>
+      <sql>SELECT pe.objetivo , pe.cod_proyecto ,pe.descripcion, pe.fec_inicio , pe.fec_entrega ,pe.info_id&#xd;FROM pro.pedidos_trabajo pe  &#xd;where pe.case_id = :case_id</sql>
+      <result outputType="json">{&#xd;  "pedidoTrabajo": {&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "info_id":"$info_id"&#xd;  }&#xd;}</result>
       <param name="case_id" optional="false" sqlType="STRING"/>
    </query>
    <query id="getInfoptrabajo" useConfig="ToolsDataSource">
