@@ -1,8 +1,3 @@
-<style>
-.oculto {
-    display: none;
-}
-</style>
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 	/**
 	* Cabeceras con informacion variable segun proceso BPM
@@ -56,12 +51,16 @@
 						
 					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|chuka/".$case_id : $case_id >> '.json_encode($case_id));
 					$ci->load->model(YUDIPROC . 'Yudiproctareas');
-					//$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
-					//$data =json_decode($aux["data"]);
 				
 					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
 					 		$data_generico =json_decode($aux["data"]);
 					 		$aux = $data_generico->pedidoTrabajo;
+
+					//HARCODE CHUKA	
+							 $clie_id = $aux->clie_id;
+
+					$aux_clie = $ci->rest->callAPI("GET",REST_CORE."/cliente/".$clie_id);
+					$aux_clie =json_decode($aux_clie["data"]);
 
 						break;
 				}
@@ -259,19 +258,44 @@
 											
 							##############YUDICA CHUKA	
 							default :
-									?><div class="col-md-12">
+							$data =json_decode($aux,true);
 
+									?>
+									<div class="col-md-12">
+									<p>Datos del Cliente:</p>
+									<hr>
+										<div class="col-md-6">
+											<div class="form-group">
+													<label for="cliente" name="">Cliente:</label>
+													<input type="text" class="form-control habilitar" id="cliente" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
+											</div>
+										</div>
+
+
+										<div class="col-md-6">
+											<div class="form-group">
+													<label for="dir_entrega" name="">Dirección de Entrega:</label>
+													<input type="text" class="form-control habilitar" id="dir_entrega" value="<?php echo $aux_clie->cliente->dir_entrega; ?>"  readonly>
+											</div>
+										</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-12">
+									<br>
+									<p>Datos del Proyecto:</p>
+									<hr>
 									<div class="col-md-6">
 											<div class="form-group">
-													<label for="patente" name="">Codigo Proyecto:</label>
-													<input type="text" class="form-control habilitar" id="patente" value="<?php echo $aux->cod_proyecto; ?>"  readonly>
+													<label for="codigo_proyecto" name="">Codigo Proyecto:</label>
+													<input type="text" class="form-control habilitar" id="codigo_proyecto" value="<?php echo $aux->cod_proyecto; ?>"  readonly>
 											</div>
 									</div>
 									<!--_____________________________________________-->
 
 									<div class="col-md-6">
 											<div class="form-group">
-													<label for="desc_vehiculo" name=""> Descripcion:</label>
+													<label for="descripcion" name=""> Descripcion:</label>
 													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
 											</div>
 									</div>
@@ -283,16 +307,32 @@
 
 									<div class="col-md-6">
 											<div class="form-group">
-													<label for="patente" name="">Fecha Inicio:</label>
-													<input type="text" class="form-control habilitar" id="patente" value="<?php echo $aux->fec_inicio; ?>"  readonly>
+													<label for="fecha_inicio" name="">Fecha Inicio:</label>
+													<input type="text" class="form-control habilitar" id="patente" value="<?php
+															
+
+																								
+     											$fecha = date("d-m-Y",strtotime($data->fec_inicio));
+
+													// 	  $fecha =	date('d-m-Y', strtotime($data->fec_inicio)) . '+00:00:00';
+
+													echo $fecha ;
+													
+													?>"  readonly>
 											</div>
 									</div>
 									<!--_____________________________________________-->
 
 									<div class="col-md-6">
 											<div class="form-group">
-													<label for="desc_vehiculo" name=""> Fecha Entrega:</label>
-													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->fec_entrega; ?>"  readonly>
+													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
+													<input type="text" class="form-control habilitar" id="descripcion" value="<?php
+																									
+														$fecha = date("d-m-Y",$data->fec_entrega);
+														
+														echo $fecha ;
+														
+														?>"  readonly>
 											</div>
 									</div>
 									<!--_____________________________________________-->
@@ -303,31 +343,36 @@
 
 									<div class="col-md-12">
 											<div class="form-group">
-													<label for="patente" name="">Objetivo:</label>
-													<input type="text" class="form-control habilitar" id="patente" value="<?php echo $aux->objetivo; ?>"  readonly>
+													<label for="objetivo" name="">Objetivo:</label>
+													<input type="text" class="form-control habilitar" id="objetivo" value="<?php echo $aux->objetivo; ?>"  readonly>
 											</div>
 									</div>
 								
 									<!--_____________________________________________-->
 									<div class="col-md-12">
-									
-									<div id="form-dinamico-cabecera">
 									<?php
+									
 									if ($processId == BPM_PROCESS_ID_REPARACION_NEUMATICOS )
 										{
 											$info_id = $aux->info_id;
 
 											$formulario = getForm($info_id);
-										
-											echo $formulario;
+									
 										}
 
 										?>
-<script>
-								
+									<div id="form-dinamico-cabecera" data-frm-id="<?php echo "frm-".$info_id;?>">
+									<?php
+											
+											echo $formulario;
+
+									?>
+										<script>
+										var formulario = $('#form-dinamico-cabecera').attr('data-frm-id');
+										
+										
 										$('#form-dinamico-cabecera button.frm-save').addClass('oculto');
 										
-										$('#form-dinamico .frm-save ').hide(); 
 								
 										$('#form-dinamico-cabecera').find(':input').each(function() {
 										var elemento= this;
@@ -340,8 +385,7 @@
 										
 												});
 										</script>
-
-										</div>
+									
 									</div>
 
 								</div>
