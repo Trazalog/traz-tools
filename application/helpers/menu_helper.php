@@ -69,7 +69,7 @@ if(!function_exists('menu')){
 					$habilitadoLevel2 = $valueLevel2->habilitado;
 
 					if ( $nivel1_Opcion == $nivel2_OPadre ) { // opcion de nivel raiz == opcion hijo
-						if($habilitadoLevel2 == "true"){
+					//	if($habilitadoLevel2 == "true"){
 
 							if ($bandLevel2 == 0) {
 
@@ -87,7 +87,7 @@ if(!function_exists('menu')){
 										$nivel2 .= '</li>';
 							}
 
-						}
+					//	}
 
 					}
 
