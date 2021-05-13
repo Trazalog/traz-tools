@@ -198,4 +198,5 @@ define('REST_PAN', HOST.'/services/PANDataService');
 
 #TRAZ-COMP-CALENDAR
 define('DURACION_JORNADA', '08:00');
-define('HORA_FIN_JORNADA', '19:00');
+define('HORA_FIN_JORNADA', '18:00');
+define('HORA_INICIO_JORNADA','10:00');
