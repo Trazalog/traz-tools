@@ -1,7 +1,12 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
+/**
+* helper que arma el menu general en funcion de permisos y niveles
+*
+* @autor Hugo Gallardo
+*/
 
 if(!function_exists('menu')){
-							
+
     function menu($json, $aux = null)
     {
 				$item =  $json->menu_items->menu_item;
@@ -11,7 +16,7 @@ if(!function_exists('menu')){
 				$ul_apertura_menu = '<ul class="sidebar-menu" data-widget="tree">';
 				$ul_cierre_menu = '</ul>';
 				log_message('INFO','#TRAZA|MENU_HELPER|MENU >> ');
-				foreach ($item as $value) {			
+				foreach ($item as $value) {
 
 					$nivel1_Opcion = $value->opcion;
 					$habilitado = $value->habilitado;
@@ -61,8 +66,10 @@ if(!function_exists('menu')){
 
 					$nivel2_Opcion = $valueLevel2->opcion;
 					$nivel2_OPadre = $valueLevel2->opcion_padre;
-			
+					$habilitadoLevel2 = $valueLevel2->habilitado;
+
 					if ( $nivel1_Opcion == $nivel2_OPadre ) { // opcion de nivel raiz == opcion hijo
+					//	if($habilitadoLevel2 == "true"){
 
 							if ($bandLevel2 == 0) {
 
@@ -79,6 +86,9 @@ if(!function_exists('menu')){
 										$nivel2 .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$valueLevel2->url\")'><i class='$valueLevel2->url_icono'></i>$valueLevel2->texto</a>";
 										$nivel2 .= '</li>';
 							}
+
+					//	}
+
 					}
 
 					$nivelActual = $valueLevel2->nivel;
