@@ -10,6 +10,7 @@ if(!function_exists('menu')){
     function menu($json, $aux = null)
     {
       $item =  $json->menu_items->menu_item;
+      //var_dump($item);
       $nivel1 = "";
       $nivel1_habilitado = 0;
       $subniv_habilitado = 0;
