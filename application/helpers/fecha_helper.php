@@ -55,7 +55,8 @@ if (!function_exists('formato_fecha')) {
             return $result;
         }
     }
-
+		
+		// 19/05/2021
     function formatFechaPG($fecha)
     {
         $fecha = substr($fecha, 0, 10);
