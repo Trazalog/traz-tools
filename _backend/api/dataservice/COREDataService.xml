@@ -94,8 +94,8 @@
       <param name="clie_id" sqlType="STRING"/>
    </query>
    <query id="getUsersXGroup" useConfig="ToolsDataSource">
-      <sql>select U.id, U.first_name, U.last_name, U.usernick from seg.users U, seg.memberships_users MU&#xd;where U.email = MU.email&#xd;and MU.group = :group</sql>
-      <result outputType="json">{&#xd;    "usuarios":{&#xd;                    "usuario": [&#xd;                      {&#xd;                        "id": "$id",&#xd;                        "first_name": "$first_name",&#xd;                        "last_name": "$last_name",&#xd;                        "usernick": "$usernick"&#xd;                      }&#xd;                    ]&#xd;    }&#xd;}</result>
+      <sql>select U.id, U.first_name, U.last_name from seg.users U, seg.memberships_users MU&#xd;where U.email = MU.email&#xd;and MU.group = :group</sql>
+      <result outputType="json">{&#xd;    "usuarios":{&#xd;                    "usuario": [&#xd;                      {&#xd;                        "id": "$id",&#xd;                        "first_name": "$first_name",&#xd;                        "last_name": "$last_name"&#xd;                      }&#xd;                    ]&#xd;    }&#xd;}</result>
       <param name="group" sqlType="STRING"/>
    </query>
    <query id="getCliente" useConfig="ToolsDataSource">
@@ -207,3 +207,4 @@
       </call-query>
    </resource>
 </data>
+
