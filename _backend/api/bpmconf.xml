@@ -1,0 +1,6 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<bpm>
+<bpm_url>http://localhost:8080/bonita</bpm_url>
+<usuario>admin</usuario>
+<password>!Password00</password>
+</bpm>

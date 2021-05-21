@@ -1,0 +1,230 @@
+<api xmlns="http://ws.apache.org/ns/synapse" name="toolsbpmAPI" context="/tools/bpm">
+   <resource methods="POST" uri-template="/proceso/instancia">
+      <inSequence>
+         <log level="custom" description="msg entrada">
+            <property name="nombre proceso" expression="json-eval($.nombre_proceso)"/>
+            <property name="payload" expression="json-eval($.payload)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
+         <property name="payload" expression="json-eval($.payload)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="getprocess_url" expression="fn:concat('/API/bpm/process?s=',$ctx:nombre_proceso,'&amp;f%3DactivationStateactivationState%253D=ENABLED')" scope="default" type="STRING"/>
+         <log level="custom">
+            <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="url a invocar getprocess" expression="get-property('getprocess_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:getprocess_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="processid" expression="json-eval($..id)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <property name="processid" expression="json-eval($..id)"/>
+         <property name="session" expression="json-eval($..session)"/>
+         <script language="js">try{ var log = mc.getServiceLog(); var pid = mc.getProperty("processid");log.debug("process id:"+pid.substring(2,21));     mc.setProperty('bpmProcessId',pid.substring(2,21));                       }catch(error1){  log.debug("error parseando processid:" + error1); }</script>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="instantiation_url" expression="fn:concat('/API/bpm/process/',$ctx:bpmProcessId,'/instantiation')" scope="default" type="STRING"/>
+         <log level="custom" category="DEBUG">
+            <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="url a invocar instantiation" expression="get-property('instantiation_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:instantiation_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+         </call-template>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="DELETE" uri-template="/proceso/instancia">
+      <inSequence>
+         <log level="custom" description="msg entrada">
+            <property name="caseid" expression="json-eval($.caseid)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="caseid" expression="json-eval($.caseid)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="deletecase_url" expression="fn:concat('/API/bpm/case/',$ctx:caseid)" scope="default" type="STRING"/>
+         <log level="custom">
+            <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="url a invocar delete case" expression="get-property('deletecase_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:deletecase_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="DELETE"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="processid" expression="json-eval($..id)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <property name="session" expression="json-eval($..session)"/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/roles/{uri.var.session}">
+      <inSequence>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="roles_url" value="/API/identity/role?p=0&amp;c=1000&amp;o=displayName%20ASC" scope="default" type="STRING"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:roles_url}"/>
+            <with-param name="session" value="{$ctx:uri.var.session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="$ctx:uri.var.session"/>
+         </log>
+         <property name="session" expression="$ctx:uri.var.session"/>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/groups/{uri.var.session}">
+      <inSequence>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="groups_url" value="/API/identity/group?p=0&amp;c=1000&amp;d=parent_group_id&amp;o=name%20ASC" scope="default" type="STRING"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:groups_url}"/>
+            <with-param name="session" value="{$ctx:uri.var.session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="$ctx:uri.var.session"/>
+         </log>
+         <property name="session" expression="$ctx:uri.var.session"/>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/memberships">
+      <inSequence>
+         <log level="custom" description="msg entrada">
+            <property name="payload" expression="json-eval($.payload)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="payload" expression="json-eval($.payload)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="membership_url" value="/API/identity/membership" scope="default" type="STRING"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:membership_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+            <with-param name="method" value="POST"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <property name="session" expression="json-eval($..session)"/>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/users">
+      <inSequence>
+         <log level="custom" description="msg entrada">
+            <property name="payload" expression="json-eval($.payload)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="payload" expression="json-eval($.payload)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="user_url" value="/API/identity/user" scope="default" type="STRING"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:user_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+            <with-param name="method" value="POST"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <property name="userid" expression="json-eval($.payload.id)"/>
+         <payloadFactory media-type="json" description="crear solicitud">
+            <format>       {  "enabled":"true"} </format>
+            <args/>
+         </payloadFactory>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="payload" expression="json-eval($)"/>
+         <property name="put_user_url" expression="fn:concat('/API/identity/user/',$ctx:userid)" scope="default"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:put_user_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+            <with-param name="method" value="PUT"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg_put" expression="json-eval($)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <property name="session" expression="json-eval($..session)"/>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+</api>
+                        
