@@ -1,0 +1,48 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="FRMDataService" transports="http https local">
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="getFormularios" useConfig="ToolsDataSource">
+      <sql>select * from frm.formularios where empr_id = cast(:empr_id as integer)&#xd;and eliminado != 1</sql>
+      <result outputType="json">{&#xd;  "formularios": {&#xd;    "formulario": [&#xd;        {&#xd;            "form_id":"$form_id",&#xd;            "nombre":"$nombre",&#xd;            "descripcion":"$descripcion"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getVariablesXOrigen" useConfig="ToolsDataSource">
+      <sql>select info.variable,  info.valor, info.form_id, info.info_id as info_id&#xd;from tst.origen_tarea_planficada otp,&#xd;tst.tareas_planificadas tp,&#xd;frm.instancias_formularios info&#xd;where otp.origen = :tipo_origen&#xd;and otp.orta_id = cast(:id as integer)&#xd;and otp.tapl_id = tp.tapl_id&#xd;and info.info_id = tp.info_id&#xd;and info.variable is not null</sql>
+      <result outputType="json">{&#xd;  "variables": {&#xd;    "variable": [&#xd;        {&#xd;            "variable":"$variable",&#xd;            "valor":"$valor",&#xd;            "info_id":"$info_id",&#xd;            "form_id":"$form_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="tipo_origen" sqlType="STRING"/>
+      <param name="id" sqlType="STRING"/>
+   </query>
+   <query id="getFormulario" useConfig="ToolsDataSource">
+      <sql>select&#xd;	a.info_id,c.nombre&#xd;from&#xd;	frm.instancias_formularios as A&#xd;join frm.formularios as C on&#xd;	C.form_id = A.form_id&#xd;where&#xd;	A.info_id = cast(:info_id as integer)&#xd;	and A.eliminado = false&#xd;limit 1</sql>
+      <result outputType="json">{&#xd;   "formulario":{&#xd;      "nombre":"$nombre",&#xd;      "@getItemsFormulario":"$info_id-&gt;info_id"&#xd;   }&#xd;}</result>
+      <param name="info_id" sqlType="STRING"/>
+   </query>
+   <query id="getItemsFormulario" useConfig="ToolsDataSource">
+      <sql>select&#xd;	A.name,&#xd;	A.label,&#xd;	case&#xd;		when A.requerido = true then 'true'&#xd;		else 'false' end requerido,&#xd;	A.valo_id tabla,&#xd;	A.orden,&#xd;	A.form_id,&#xd;	A.tipo_dato,&#xd;	A.valor&#xd;	from&#xd;		frm.instancias_formularios as A&#xd;	where&#xd;		A.info_id = cast(:info_id as integer)&#xd;		and A.eliminado = false&#xd;	order by&#xd;		A.orden</sql>
+      <result outputType="json">{ "items":&#xd;         {&#xd;      "item":[&#xd;            {&#xd;            "name":"$name",&#xd;            "label": "$label",&#xd;            "requerido": "$requerido",&#xd;            "tipo_dato": "$tipo_dato",&#xd;            "orden": "$orden",&#xd;            "form_id": "$form_id",&#xd;            "valor": "$valor",&#xd;            "@getvalvalidos":"$tabla-&gt;tabla"&#xd;             }&#xd;             ]&#xd;         }&#xd;}</result>
+      <param name="info_id" sqlType="STRING"/>
+   </query>
+   <query id="getvalvalidos" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;     valor as valor&#xd;FROM &#xd;     frm.utl_tablas where tabla = :tabla&#xd;order by valor</sql>
+      <result outputType="json">{&#xd;   "valoresValidos":{&#xd;      "valorValido":[&#xd;         {&#xd;            "valor":"$valor"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="tabla" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/formularios/{empr_id}">
+      <call-query href="getFormularios">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/formularios/etapa/variables/origen/{tipo_origen}/{id}">
+      <call-query href="getVariablesXOrigen">
+         <with-param name="tipo_origen" query-param="tipo_origen"/>
+         <with-param name="id" query-param="id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/formulario/{info_id}">
+      <call-query href="getFormulario">
+         <with-param name="info_id" query-param="info_id"/>
+      </call-query>
+   </resource>
+</data>
+
