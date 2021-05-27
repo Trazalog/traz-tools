@@ -129,6 +129,9 @@ define('PAN', 'traz-comp-pan/');
 define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
+#COMPONENTE SICPOA
+define('SICP', 'ddpe-tools-pro/');
+
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],

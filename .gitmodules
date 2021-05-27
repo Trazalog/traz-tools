@@ -22,3 +22,6 @@
 [submodule "application/modules/yudi-tools-almproc"]
 	path = application/modules/yudi-tools-almproc
 	url = https://github.com/Trazalog/yudi-tools-almproc.git
+[submodule "application/modules/ddpe-tools-pro"]
+	path = application/modules/ddpe-tools-pro
+	url = https://github.com/Trazalog/ddpe-tools-pro
