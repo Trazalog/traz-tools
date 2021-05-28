@@ -109,13 +109,14 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="formulasSet" useConfig="ToolsDataSource">
-      <sql>INSERT INTO prd.formulas&#xd;(descripcion, cantidad,  aplicacion, usuario_app, unme_id)&#xd;VALUES(:descripcion, cast(:cantidad as float8), :aplicacion, :usuario_app, :unme_id)&#xd;returning form_id</sql>
+      <sql>INSERT INTO prd.formulas&#xd;(descripcion, cantidad,  aplicacion, usuario_app, unme_id, empr_id)&#xd;VALUES(:descripcion, cast(:cantidad as float8), :aplicacion, :usuario_app, :unme_id, cast(:empr_id as integer))&#xd;returning form_id</sql>
       <result outputType="json">{&#xd;   "respuesta":{&#xd;       "form_id":"$form_id"&#xd;   }&#xd;}</result>
       <param name="descripcion" sqlType="STRING"/>
       <param name="cantidad" sqlType="STRING"/>
       <param name="aplicacion" sqlType="STRING"/>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="unme_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="formulasArticulosSet" useConfig="ToolsDataSource">
       <sql>INSERT INTO prd.formulas_articulos&#xd;(cantidad, fec_alta, usuario, form_id, arti_id)&#xd;VALUES(cast(:cantidad as float8), now(), CURRENT_USER, cast(:form_id as int4), cast(:arti_id as int4));</sql>
@@ -124,8 +125,9 @@
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="getFormulas" useConfig="ToolsDataSource">
-      <sql>SELECT * FROM prd.formulas&#xd;WHERE eliminado != true</sql>
+      <sql>SELECT * FROM prd.formulas&#xd;WHERE eliminado != true&#xd;and empr_id = cast(:empr_id as integer)</sql>
       <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="deleteFormula" useConfig="ToolsDataSource">
       <sql>UPDATE prd.formulas&#xd;SET eliminado = true &#xd;WHERE form_id = cast(:form_id as int8)</sql>
@@ -285,6 +287,7 @@
          <with-param name="aplicacion" query-param="aplicacion"/>
          <with-param name="usuario_app" query-param="usuario_app"/>
          <with-param name="unme_id" query-param="unme_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="POST" path="/formula_articulo">
@@ -294,8 +297,10 @@
          <with-param name="arti_id" query-param="arti_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/getFormulas">
-      <call-query href="getFormulas"/>
+   <resource method="GET" path="/getFormulas/{empr_id}">
+      <call-query href="getFormulas">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
    </resource>
    <resource method="PUT" path="/deleteFormula">
       <call-query href="deleteFormula">

@@ -206,8 +206,9 @@
       <param name="tipo" sqlType="STRING"/>
    </query>
    <query id="getEmpaques" useConfig="ToolsDataSource">
-      <sql>select &#xd;   empa_id as id, nombre as titulo, unidad_medida as unidad, capacidad as volumen , tara, arti_id&#xd;from &#xd;   prd.empaque</sql>
+      <sql>select &#xd;   empa_id as id, nombre as titulo, unidad_medida as unidad, capacidad as volumen , tara, arti_id&#xd;from &#xd;   prd.empaque&#xd;where empr_id = cast(:empr_id as integer)</sql>
       <result outputType="json">{&#xd; "empaques": {&#xd;    "empaque": [&#xd;           {&#xd;            "id": "$id",&#xd;            "titulo": "$titulo",&#xd;            "unidad": "$unidad",&#xd;            "volumen": "$volumen",&#xd;"tara":"$tara",&#xd;"arti_id":"$arti_id"&#xd;           }&#xd;      ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setFraccionamiento" useConfig="ToolsDataSource">
       <sql>insert into &#xd;    prd.fraccionamientos(recu_id, empa_id, cantidad, empr_id) &#xd;values&#xd;   (CAST(:recu_id AS INTEGER), CAST(:empa_id AS INTEGER), CAST(:cantidad AS FLOAT8 ), CAST(:empr_id AS INTEGER))</sql>
@@ -340,11 +341,12 @@
       <param name="tipo" sqlType="STRING"/>
    </query>
    <query id="getRecipientes" useConfig="ToolsDataSource">
-      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo = case when t.tipo = 'TODOS' then r.tipo else t.tipo end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;order by r.nombre</sql>
+      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo = case when t.tipo = 'TODOS' then r.tipo else t.tipo end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;and esta.empr_id = cast(:empr_id as integer)&#xd;order by r.nombre</sql>
       <result outputType="json">{&#xd;    "recipientes": {&#xd;        "recipiente": [&#xd;            {&#xd;                "reci_id": "$reci_id",&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "estado": "$estado",&#xd;                "depo_id": "$depo_id",&#xd;                "esta_id":"$esta_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setCamionEstado" useConfig="ToolsDataSource">
       <sql>update prd.movimientos_trasportes set estado= :estado where motr_id = cast(:motr_id as int4)</sql>
@@ -539,8 +541,8 @@
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="getEstablecimientos" useConfig="ToolsDataSource">
-      <sql>select e.*,'TODOS' as tipo,'TODOS' as estado&#xd;from prd.establecimientos e &#xd;where e.empr_id =  cast(:empr_id as integer)&#xd;and not eliminado</sql>
-      <result outputType="json">{&#xd; "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "lng": "$lng",&#xd;          "lat": "$lat",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usuario": "$usuario",&#xd;"@getRecipientes":"$esta_id-&gt;esta_id,$tipo-&gt;tipo,$estado-&gt;estado"&#xd;        }&#xd;      ]&#xd; }&#xd;}</result>
+      <sql>select cast(e.esta_id as varchar), e.nombre, e.lng, e.lat, e.calle, e.altura, e.localidad, e.estado, e.pais, e.fec_alta, e.usuario,'TODOS' as tipo, 'TODOS' as estado&#xd;from prd.establecimientos e &#xd;where e.empr_id =  cast(:empr_id as integer)&#xd;and not eliminado</sql>
+      <result outputType="json">{&#xd; "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "lng": "$lng",&#xd;          "lat": "$lat",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usuario": "$usuario"&#xd;        }&#xd;      ]&#xd; }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="delDetaNotaPedido" useConfig="ToolsDataSource">
@@ -1119,6 +1121,19 @@
    <resource method="DELETE" path="/pedidos/detalle">
       <call-query href="delDetaNotaPedido">
          <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/empaques/{empr_id}">
+      <call-query href="getEmpaques">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/recipientes/tipo/{tipo}/estado/{estado}/establecimiento/{esta_id}/{empr_id}">
+      <call-query href="getRecipientes">
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>

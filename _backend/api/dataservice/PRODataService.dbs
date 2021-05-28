@@ -3,7 +3,7 @@
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
    <query id="setPedidoTrabajo" useConfig="ToolsDataSource">
-      <sql>insert&#xd;	into&#xd;	pro.pedidos_trabajo (cod_proyecto,&#xd;	descripcion,&#xd;	estado,&#xd;	objetivo,&#xd;	fec_inicio,&#xd;	fec_entrega,&#xd;	usuario_app,&#xd;	umti_id,&#xd;	info_id,&#xd;	proc_id,&#xd;	empr_id,&#xd;	clie_id,&#xd;       tipt_id)&#xd;values(:cod_proyecto,&#xd;	:descripcion,&#xd;	:estado,&#xd;	:objetivo,&#xd;	to_date(:fec_inicio,'YYYY-MM-DD'),&#xd;	to_date(:fec_entrega,'YYYY-MM-DD'),&#xd;	:usuario_app,&#xd;	:umti_id,&#xd;	cast(:info_id as integer),&#xd;	:proc_id,&#xd;	cast(:empr_id as integer),&#xd;	cast(:clie_id as integer),&#xd;        :tipt_id)&#xd;returning petr_id;</sql>
+      <sql>insert&#xd;	into&#xd;	pro.pedidos_trabajo (cod_proyecto,&#xd;	descripcion,&#xd;	estado,&#xd;	objetivo,&#xd;	fec_inicio,&#xd;	fec_entrega,&#xd;	usuario_app,&#xd;	umti_id,&#xd;	info_id,&#xd;	proc_id,&#xd;	empr_id,&#xd;	clie_id)&#xd;values(:cod_proyecto,&#xd;	:descripcion,&#xd;	:estado,&#xd;	:objetivo,&#xd;	to_date(:fec_inicio,'YYYY-MM-DD'),&#xd;	to_date(:fec_entrega,'YYYY-MM-DD'),&#xd;	:usuario_app,&#xd;	:umti_id,&#xd;	cast(:info_id as integer),&#xd;	:proc_id,&#xd;	cast(:empr_id as integer),&#xd;	cast(:clie_id as integer))&#xd;returning petr_id;</sql>
       <result outputType="json">{"respuesta":{"petr_id":"$petr_id"}}</result>
       <param name="cod_proyecto" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -17,7 +17,6 @@
       <param name="proc_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
       <param name="clie_id" sqlType="STRING"/>
-      <param name="tipt_id" sqlType="STRING"/>
    </query>
    <query id="deletePedidoTrabajo" useConfig="ToolsDataSource">
       <sql>update pro.pedidos_trabajo &#xd;set eliminado = true&#xd;where petr_id = cast(:petr_id as integer)</sql>
@@ -91,7 +90,6 @@
          <with-param name="proc_id" query-param="proc_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="clie_id" query-param="clie_id"/>
-         <with-param name="tipt_id" query-param="tipt_id"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/pedidoTrabajo">

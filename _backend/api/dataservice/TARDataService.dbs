@@ -213,6 +213,11 @@
       <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;        {&#xd;            "numero": "$numero",&#xd;            "descripcion": "$descripcion",&#xd;            "fec_inicio": "$fec_inicio",&#xd;            "user_id": "$user_id",&#xd;            "objetivo": "$objetivo",&#xd;            "unidad_tiempo": "$unidad_tiempo",&#xd;            "esta_id": "$esta_id",&#xd;            "documento": "$documento",&#xd;            "petr_id": "$petr_id",&#xd;            "hito_id": "$hito_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="hito_id" sqlType="STRING"/>
    </query>
+   <query id="getPetrIdXHitoId" useConfig="produccionDS">
+      <sql>select H.petr_id from tst.hitos H&#xd;where H.hito_id = cast(:hito_id as Integer)</sql>
+      <result outputType="json">{ &#xd; "pedidoTrabajoId":{&#xd;    "petr_id": "$petr_id"&#xd;  }&#xd;} </result>
+      <param name="hito_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/tareas/{empr_id}">
       <call-query href="getTareas">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -435,5 +440,9 @@
          <with-param name="hito_id" query-param="hito_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/petrid/hito/{hito_id}">
+      <call-query href="getPetrIdXHitoId">
+         <with-param name="hito_id" query-param="hito_id"/>
+      </call-query>
+   </resource>
 </data>
-
