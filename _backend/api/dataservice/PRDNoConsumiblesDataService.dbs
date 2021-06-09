@@ -51,10 +51,11 @@
       <param name="codigo" sqlType="STRING"/>
    </query>
    <query id="noConsumibleCambiarEstadoUpdate" useConfig="ToolsDataSource">
-      <sql>update nco.no_consumibles &#xd;set estado = :estado &#xd;,usuario_app = :usuario_app&#xd;where codigo = :codigo</sql>
+      <sql>update nco.no_consumibles &#xd;set estado = :estado &#xd;,usuario_app = :usuario_app&#xd;where codigo = :codigo&#xd;and empr_id = cast(:empr_id as INTEGER)</sql>
       <param name="estado" sqlType="STRING"/>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="codigo" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="noConsumiblesAsocLoteSet" useConfig="ToolsDataSource">
       <sql>INSERT INTO nco.no_consumibles_lotes&#xd;(noco_id, batch_id, usuario_app)&#xd;VALUES(:noco_id,cast( :batch_id as integer), :usuario_app);</sql>
@@ -123,6 +124,7 @@
          <with-param name="estado" query-param="estado"/>
          <with-param name="usuario_app" query-param="usuario_app"/>
          <with-param name="codigo" query-param="codigo"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/noConsumible">
