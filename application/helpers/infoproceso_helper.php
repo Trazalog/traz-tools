@@ -76,6 +76,8 @@
 															echo ' - Orden Nº: '.$aux->ortr_id;
 														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
 															echo 'Reparación de Neumáticos';
+														}  else {
+															echo 'Proceso Estandar';
 														}
 
 													?>
@@ -258,7 +260,7 @@
 											
 							##############YUDICA CHUKA	
 							default :
-							$data =json_decode($aux,true);
+							$data =json_decode($aux);
 
 									?>
 									<div class="col-md-12">
@@ -378,11 +380,9 @@
 										var elemento= this;
 										console.log("elemento.id="+ elemento.id); 
 
-										var new_elemento = "#"+elemento.id;
-										
-										$(new_elemento).attr('readonly', true); 
+										$(elemento).attr('readonly', true); 
 
-										
+										$(elemento).attr('disabled',true);
 												});
 										</script>
 									
