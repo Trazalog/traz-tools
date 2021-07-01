@@ -119,6 +119,8 @@ define('BPM_PROCESS_ID_TAREA_GENERICA', '7485374631624182404');
 #YUDICA REPARACION_NEUMATICOS
 define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '7768356718186290307');
                                                 
+#SICPOA Control de Ingreso de Camiones
+define('BPM_PROCESS_ID_INGRESO_CAMIONES', '7276586766067602804');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
@@ -138,7 +140,8 @@ define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
-    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas']
+    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas'],
+    BPM_PROCESS_ID_INGRESO_CAMIONES  => ['nombre' => 'SICPOA', 'color' => '#00A65A', 'proyecto'=>SICP, 'model'=>'Sicpoatareas']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
