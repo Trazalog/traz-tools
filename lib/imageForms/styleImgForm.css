@@ -49,8 +49,8 @@
 }
 
 .imgConte .imgPreview {
-  width: 192px;
-  height: 192px;
+  width: 80px;
+  height: 80px;
   position: relative;
   border-radius: 100%;
   border: 6px solid #F8F8F8;
