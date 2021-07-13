@@ -1,0 +1,215 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="ddpeSicpoaDataService" transports="http https local">
+   <config enableOData="false" id="SICPOADataService">
+      <property name="carbon_datasource_name">ddpeSicpoaDataService</property>
+   </config>
+   <query id="setInspeccion" useConfig="SICPOADataService">
+      <sql>insert&#xd;	into&#xd;	sicpoa.inspecciones (&#xd;	case_id,&#xd;	patente_tractor,&#xd;	nro_senasa,&#xd;	productos,&#xd;	reprecintado,&#xd;	bruto,&#xd;	tara,&#xd;	ticket,&#xd;	resultado,&#xd;	cant_fajas,&#xd;	bruto_reprecintado,&#xd;	ticket_reprecintado,&#xd;	usuario_app,&#xd;	petr_id,&#xd;	chof_id,&#xd;	inca_id,&#xd;	observaciones)&#xd;select	cast ( :case_id as integer),&#xd;	:patente_tractor,&#xd;	:nro_senasa,&#xd;	:productos,&#xd;	cast(:reprecintado as boolean),&#xd;	case when param.bruto is null or param.bruto = '' then null else cast(param.bruto as float) end,&#xd;	case when param.tara  is null or param.tara = '' then null else  cast(param.tara as float) end,&#xd;	:ticket,&#xd;	:resultado,&#xd;	case when param.cant_fajas is null or param.cant_fajas ='' then null else cast(param.cant_fajas as integer) end,&#xd;	case when param.bruto_reprecintado  is null or param.bruto_reprecintado = '' then null else cast(param.bruto_reprecintado as float) end,&#xd;	:ticket_reprecintado,&#xd;	:usuario_app,&#xd;	cast(:petr_id as integer),&#xd;	cast(:chof_id as integer),&#xd;	case when param.inca_id is null or param.inca_id = '' then null else cast(param.inca_id as integer) end,&#xd;	:observaciones&#xd;from (select :bruto bruto, :tara tara, :bruto_reprecintado bruto_reprecintado, :inca_id inca_id,:cant_fajas cant_fajas) param&#xd;on conflict (case_id) do&#xd;update&#xd;set&#xd;	patente_tractor = excluded.patente_tractor,&#xd;	nro_senasa = excluded.nro_senasa,&#xd;	productos = excluded.productos,&#xd;	reprecintado = cast(excluded.reprecintado as boolean),&#xd;	bruto = cast(excluded.bruto as float),&#xd;	tara = cast(excluded.tara as float),&#xd;	ticket = excluded.ticket,&#xd;	resultado = excluded.resultado,&#xd;	cant_fajas = cast(excluded.cant_fajas as integer),&#xd;	bruto_reprecintado = cast(excluded.bruto_reprecintado as float),&#xd;	ticket_reprecintado = excluded.ticket_reprecintado,&#xd;	usuario_app = excluded.usuario_app ,&#xd;	petr_id = cast(excluded.petr_id as integer),&#xd;	chof_id = excluded.chof_id,&#xd;	inca_id = excluded.inca_id,&#xd;	observaciones = excluded.observaciones</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="patente_tractor" sqlType="STRING"/>
+      <param name="nro_senasa" sqlType="STRING"/>
+      <param name="productos" sqlType="STRING"/>
+      <param name="reprecintado" sqlType="STRING"/>
+      <param name="bruto" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="ticket" sqlType="STRING"/>
+      <param name="resultado" sqlType="STRING"/>
+      <param name="cant_fajas" sqlType="STRING"/>
+      <param name="bruto_reprecintado" sqlType="STRING"/>
+      <param name="ticket_reprecintado" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="petr_id" sqlType="STRING"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="inca_id" sqlType="STRING"/>
+      <param name="observaciones" sqlType="STRING"/>
+   </query>
+   <query id="getInspeccion" useConfig="SICPOADataService">
+      <sql>select &#xd;case_id&#xd;,patente_tractor&#xd;,nro_senasa&#xd;,productos&#xd;,reprecintado&#xd;,bruto&#xd;,tara&#xd;,ticket&#xd;,resultado&#xd;,cant_fajas&#xd;,bruto_reprecintado&#xd;,ticket_reprecintado&#xd;,to_char( i.fec_alta, 'YYYY-MM-DD HH24:MI') fec_alta&#xd;,i.usuario&#xd;,i.usuario_app&#xd;,petr_id&#xd;,chof_id&#xd;,c.nombre chofer&#xd;,inca_id&#xd;,inf.valor4_base64 foto_infraccion_calle&#xd;,observaciones&#xd;from sicpoa.inspecciones i&#xd;left join frm.instancias_formularios inf on inf.inst_id = i.inca_id &#xd;, sicpoa.choferes c&#xd;where i.case_id = cast(:case_id as integer)&#xd;and i.chof_id = c.dni</sql>
+      <result outputType="json">{&#xd;   "inspeccion":{&#xd;      "case_id":"$case_id",&#xd;      "patente_tractor":"$patente_tractor",&#xd;      "nro_senasa":"$nro_senasa",&#xd;      "productos":"$productos",&#xd;      "reprecintado":"$reprecintado",&#xd;      "bruto":"$bruto",&#xd;      "tara":"$tara",&#xd;      "ticket":"$ticket",&#xd;      "resultado":"$resultado",&#xd;      "cant_fajas":"$cant_fajas",&#xd;      "bruto_reprecintado":"$bruto_reprecintado",&#xd;      "ticket_reprecintado":"$ticket_reprecintado",&#xd;      "fec_alta":"$fec_alta",&#xd;      "usuario":"$usuario",&#xd;      "usuario_app":"$usuario_app",&#xd;      "petr_id":"$petr_id",&#xd;      "chof_id":"$chof_id",&#xd;      "chofer":"$chofer",&#xd;      "inca_id":"$inca_id",&#xd;      "foto_infraccion_calle":"$foto_infraccion_calle",&#xd;      "observaciones":"$observaciones",&#xd;      "@getPermisosTransito":"$case_id-&gt;case_id",&#xd;      "@getInfracciones":"$case_id-&gt;case_id",&#xd;      "@getEmpresasInspeccion":"$case_id-&gt;case_id",&#xd;      "@getTermicosInspeccion":"$case_id-&gt;case_id"&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getPermisosTransito" useConfig="SICPOADataService">
+      <sql>select perm_id&#xd;,lugar_emision&#xd;,to_char(fecha_hora_salida,'yyyy-mm-dd hh24:mi') fecha_hora_salida &#xd;,tipo&#xd;,to_char(fec_alta,'yyyy-mm-dd hh24:mi') fec_alta&#xd;,usuario&#xd;,usuario_app&#xd;from sicpoa.permisos_transito pt &#xd;where pt.case_id = cast(:case_id as integer)</sql>
+      <result outputType="json">{&#xd;   "permisos_transito":{&#xd;      "permiso_transito":[&#xd;         {&#xd;            "perm_id":"$perm_id",&#xd;            "lugar_emision":"$lugar_emision",&#xd;            "fecha_hora_salida":"$fecha_hora_salida",&#xd;            "tipo":"$tipo",&#xd;            "fec_alta":"$fec_alta",&#xd;            "usuario":"$usuario",&#xd;            "usuario_app":"$usuario_app"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getInfracciones" useConfig="SICPOADataService">
+      <sql>select &#xd;to_char(i.fec_alta,'yyyy-mm-dd hh24:mi') fec_alta &#xd;,i.usuario&#xd;,i.usuario_app&#xd;,i.case_id&#xd;,i.tiin_id&#xd;,t.valor tipo_infraccion&#xd;from sicpoa.infracciones i &#xd;     ,core.tablas t &#xd;where i.case_id = cast (:case_id as integer)&#xd;and t.tabl_id = i.tiin_id</sql>
+      <result outputType="json">{&#xd;   "infracciones":{&#xd;      "infraccion":[&#xd;         {&#xd;            "fec_alta":"$fec_alta",&#xd;            "usuario":"$usuario",&#xd;            "usuario_app":"$usuario_app",&#xd;            "case_id":"$case_id",&#xd;            "tiin_id":"$tiin_id",&#xd;            "tipo_infraccion":"$tipo_infraccion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getChoferes" useConfig="SICPOADataService">
+      <sql>select &#xd;dni&#xd;,nombre&#xd;,fec_alta&#xd;,usuario&#xd;,usuario_app&#xd;from sicpoa.choferes c &#xd;where c.dni = :chof_id</sql>
+      <result outputType="json">{&#xd;   "chofer":{&#xd;            "dni":"$dni",&#xd;            "nombre":"$nombre",&#xd;            "fec_alta":"$fec_alta",&#xd;            "usuario":"$usuario",&#xd;            "usuario_app":"$usuario_app"&#xd;   }&#xd;}</result>
+      <param name="chof_id" sqlType="STRING"/>
+   </query>
+   <query id="getEmpresasInspeccion" useConfig="SICPOADataService">
+      <sql>select &#xd;ie.rol &#xd;,e.cuit&#xd;,e.razon_social &#xd;,d.calle &#xd;,d.altura &#xd;,d.depa_id&#xd;,t.valor departamento&#xd;from sicpoa.inspecciones_empresas ie &#xd;join sicpoa.empresas e on ie.empr_id = e.cuit &#xd;left join sicpoa.depositos d on ie.depo_id = d.depo_id&#xd;left join core.tablas t on d.depa_id = t.tabl_id &#xd;where ie.case_id = cast(:case_id as integer)</sql>
+      <result outputType="json">{&#xd;   "empresas":{&#xd;      "empresa":[&#xd;         {&#xd;            "rol":"$rol",&#xd;            "cuit":"$cuit",&#xd;            "razon_social":"$razon_social",&#xd;            "calle":"$calle",&#xd;            "altura":"$altura",&#xd;            "depa_id":"$depa_id",&#xd;            "departamento":"$departamento"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getTermicosInspeccion" useConfig="SICPOADataService">
+      <sql>select &#xd;t.patente &#xd;,it.precintos &#xd;,it.temperatura &#xd;,e.cuit &#xd;,e.razon_social &#xd;from sicpoa.inspecciones_termicos it &#xd;join sicpoa.termicos t on it.term_id = t.patente &#xd;join sicpoa.empresas e on t.empr_id = e.cuit &#xd;and it.case_id = cast(:case_id as integer)</sql>
+      <result outputType="json">{&#xd;   "termicos":{&#xd;      "termico":[&#xd;         {&#xd;            "patente":"$patente",&#xd;            "precintos":"$precintos",&#xd;            "temperatura":"$temperatura",&#xd;            "cuit":"$cuit",&#xd;            "razon_social":"$razon_social"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="setInfraccionInspeccion" useConfig="SICPOADataService">
+      <sql>insert into&#xd;	sicpoa.infracciones (&#xd;	usuario_app,&#xd;	case_id,&#xd;	tiin_id)&#xd;values(&#xd;	:usuario_app,&#xd;	cast(:case_id as integer),&#xd;	:tiin_id);</sql>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="tiin_id" sqlType="STRING"/>
+   </query>
+   <query id="setPermisosInspeccion" useConfig="SICPOADataService">
+      <sql>insert&#xd;	into&#xd;	sicpoa.permisos_transito (perm_id,&#xd;	lugar_emision,&#xd;	fecha_hora_salida,&#xd;	tipo,&#xd;	usuario_app,&#xd;	case_id)&#xd;values(:perm_id,&#xd;	:lugar_emision,&#xd;	to_timestamp(:fecha_hora_salida,'YYYY-MM-DD HH24:MI'),&#xd;	:tipo,&#xd;	:usuario_app,&#xd;	cast(:case_id as integer));</sql>
+      <param name="perm_id" sqlType="STRING"/>
+      <param name="lugar_emision" sqlType="STRING"/>
+      <param name="fecha_hora_salida" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="deletePermisoInspeccion" useConfig="SICPOADataService">
+      <sql>delete from sicpoa.permisos_transito&#xd;WHERE perm_id=:perm_id ;</sql>
+      <param name="perm_id" sqlType="STRING"/>
+   </query>
+   <query id="setEmpresaInspeccion" useConfig="SICPOADataService">
+      <sql>insert&#xd;	into&#xd;	sicpoa.inspecciones_empresas (rol,&#xd;	empr_id,&#xd;	case_id,&#xd;	usuario_app,&#xd;	depo_id)&#xd;select&#xd;	:rol,&#xd;	:empr_id,&#xd;	cast(:case_id as integer),&#xd;	:usuario_app,&#xd;	case&#xd;		when param.depo_id is null&#xd;		or param.depo_id = '' then null&#xd;		else cast(param.depo_id as integer) end&#xd;from (select	:depo_id depo_id) param ;</sql>
+      <param name="rol" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteEmpresaInspeccion" useConfig="SICPOADataService">
+      <sql>delete from sicpoa.inspecciones_empresas&#xd;WHERE empr_id=:empr_id &#xd;AND case_id= cast(:case_id as integer)&#xd;AND rol=:rol;</sql>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="rol" sqlType="STRING"/>
+   </query>
+   <query id="setTermicoInspeccion" useConfig="SICPOADataService">
+      <sql>insert&#xd;	into&#xd;	sicpoa.inspecciones_termicos (temperatura,&#xd;	precintos,&#xd;	usuario_app,&#xd;	case_id,&#xd;	term_id)&#xd;values(cast(:temperatura as float),&#xd;	:precintos,&#xd;	:usuario_app,&#xd;	cast( :case_id as integer),&#xd;	:term_id);</sql>
+      <param name="temperatura" sqlType="STRING"/>
+      <param name="precintos" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="term_id" sqlType="STRING"/>
+   </query>
+   <query id="updateInspeccion" useConfig="SICPOADataService">
+      <sql>update&#xd;	sicpoa.inspecciones&#xd;set&#xd;	patente_tractor = :patente_tractor,&#xd;	nro_senasa = :nro_senasa,&#xd;	productos = :productos,&#xd;	reprecintado = cast(:reprecintado as boolean),&#xd;	bruto = cast(:bruto as float),&#xd;	tara = cast(:taras float),&#xd;	ticket = :ticket,&#xd;	resultado = :resultado,&#xd;	cant_fajas = cast(:cant_fajas as integer),&#xd;	bruto_reprecintado = cast(:bruto_reprecintado as float),&#xd;	ticket_reprecintado = :ticket_reprecintado,&#xd;	usuario_app = :usuario_app ,&#xd;	petr_id = cast(:petr_id as integer),&#xd;	chof_id = :chof_id,&#xd;	inca_id = :inca_id,&#xd;	observaciones = :observaciones &#xd;where&#xd;	case_id = cast(:case_id as integer);</sql>
+      <param name="patente_tractor" sqlType="STRING"/>
+      <param name="nro_senasa" sqlType="STRING"/>
+      <param name="productos" sqlType="STRING"/>
+      <param name="reprecintado" sqlType="STRING"/>
+      <param name="bruto" sqlType="STRING"/>
+      <param name="taras" sqlType="STRING"/>
+      <param name="ticket" sqlType="STRING"/>
+      <param name="resultado" sqlType="STRING"/>
+      <param name="bruto_reprecintado" sqlType="STRING"/>
+      <param name="ticket_reprecintado" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="petr_id" sqlType="STRING"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="inca_id" sqlType="STRING"/>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="cant_fajas" sqlType="STRING"/>
+   </query>
+   <resource method="POST" path="/inspeccion">
+      <call-query href="setInspeccion">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="patente_tractor" query-param="patente_tractor"/>
+         <with-param name="nro_senasa" query-param="nro_senasa"/>
+         <with-param name="productos" query-param="productos"/>
+         <with-param name="reprecintado" query-param="reprecintado"/>
+         <with-param name="bruto" query-param="bruto"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="ticket" query-param="ticket"/>
+         <with-param name="resultado" query-param="resultado"/>
+         <with-param name="cant_fajas" query-param="cant_fajas"/>
+         <with-param name="bruto_reprecintado" query-param="bruto_reprecintado"/>
+         <with-param name="ticket_reprecintado" query-param="ticket_reprecintado"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="petr_id" query-param="petr_id"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="inca_id" query-param="inca_id"/>
+         <with-param name="observaciones" query-param="observaciones"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/inspeccion/id/{case_id}">
+      <call-query href="getInspeccion">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/inspeccion/infraccion">
+      <call-query href="setInfraccionInspeccion">
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="tiin_id" query-param="tiin_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/inspeccion/permiso">
+      <call-query href="setPermisosInspeccion">
+         <with-param name="perm_id" query-param="perm_id"/>
+         <with-param name="lugar_emision" query-param="lugar_emision"/>
+         <with-param name="fecha_hora_salida" query-param="fecha_hora_salida"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/inspeccion/permiso">
+      <call-query href="deletePermisoInspeccion">
+         <with-param name="perm_id" query-param="perm_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/inspeccion/empresa">
+      <call-query href="setEmpresaInspeccion">
+         <with-param name="rol" query-param="rol"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/inspeccion/empresa">
+      <call-query href="deleteEmpresaInspeccion">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="rol" query-param="rol"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/inspeccion/termico">
+      <call-query href="setTermicoInspeccion">
+         <with-param name="temperatura" query-param="temperatura"/>
+         <with-param name="precintos" query-param="precintos"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="term_id" query-param="term_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/chofer/{chof_id}">
+      <call-query href="getChoferes">
+         <with-param name="chof_id" query-param="chof_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/inspeccion">
+      <call-query href="updateInspeccion">
+         <with-param name="patente_tractor" query-param="patente_tractor"/>
+         <with-param name="nro_senasa" query-param="nro_senasa"/>
+         <with-param name="productos" query-param="productos"/>
+         <with-param name="reprecintado" query-param="reprecintado"/>
+         <with-param name="bruto" query-param="bruto"/>
+         <with-param name="taras" query-param="taras"/>
+         <with-param name="ticket" query-param="ticket"/>
+         <with-param name="resultado" query-param="resultado"/>
+         <with-param name="cant_fajas" query-param="cant_fajas"/>
+         <with-param name="bruto_reprecintado" query-param="bruto_reprecintado"/>
+         <with-param name="ticket_reprecintado" query-param="ticket_reprecintado"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="petr_id" query-param="petr_id"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="inca_id" query-param="inca_id"/>
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+</data>
