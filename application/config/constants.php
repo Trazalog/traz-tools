@@ -202,6 +202,7 @@ define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_PAN', HOST.'/services/PANDataService');
+define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 
 #TRAZ-COMP-CALENDAR
 define('DURACION_JORNADA', '08:00');
