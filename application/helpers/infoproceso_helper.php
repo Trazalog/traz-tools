@@ -11,6 +11,7 @@
 				$ci =& get_instance();
 				$case_id = $tarea->caseId;
 				$processId = $tarea->processId;
+				$nombreTarea = $tarea->nombreTarea;
 				$data['processId']=$processId;
 
 				switch ($processId) {
@@ -76,7 +77,9 @@
 															echo ' - Orden Nº: '.$aux->ortr_id;
 														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
 															echo 'Reparación de Neumáticos';
-														}  else {
+														}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
+															echo 'Control de Ingreso de Camiones: ' . $nombreTarea;
+														}else{
 															echo 'Proceso Estandar';
 														}
 
@@ -310,7 +313,7 @@
 									<div class="col-md-6">
 											<div class="form-group">
 													<label for="fecha_inicio" name="">Fecha Inicio:</label>
-													<input type="text" class="form-control habilitar" id="patente" value="<?php
+													<input type="text" class="form-control habilitar" id="fec_inicio" value="<?php
 															
 
 																								
@@ -328,7 +331,7 @@
 									<div class="col-md-6">
 											<div class="form-group">
 													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
-													<input type="text" class="form-control habilitar" id="descripcion" value="<?php
+													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
 																									
 														$fecha = date("d-m-Y",$data->fec_entrega);
 														
