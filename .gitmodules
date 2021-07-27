@@ -25,5 +25,3 @@
 [submodule "application/modules/ddpe-tools-pro"]
 	path = application/modules/ddpe-tools-pro
 	url = https://github.com/Trazalog/ddpe-tools-pro
-[submodule "traz-comp-codigos"]
-	url = https://github.com/Trazalog/traz-tools.git
