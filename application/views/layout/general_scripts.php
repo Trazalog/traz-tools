@@ -95,6 +95,9 @@
 
 <script src="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.js"></script>
 
+<!-- scripts para generacion codigos QR y de Barras -->
+<script src="<?php echo base_url(); ?>lib/props/generar_codigos.js"></script>
+
 <script>
     function conexion() {
         return true;
