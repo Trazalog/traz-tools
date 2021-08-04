@@ -57,7 +57,7 @@
 					 		$data_generico =json_decode($aux["data"]);
 					 		$aux = $data_generico->pedidoTrabajo;
 
-					//HARCODE CHUKA	
+					
 							 $clie_id = $aux->clie_id;
 
 					$aux_clie = $ci->rest->callAPI("GET",REST_CORE."/cliente/".$clie_id);

@@ -169,6 +169,37 @@ class BPM
         return $array;
     }
 
+
+    // DELETE http://10.142.0.13:8280/bpm/proceso/instancia
+    // {"caseid":"<case id >", "session":"ddd"}
+  
+
+
+    public function eliminarCaso($processId, $caseId)//$processId, $caseId, $session.
+    {
+        $resource = 'bpm/proceso/instancia';
+      //  $resource = 'bpm/proceso='. $processId . '/instancia='. $caseId ;
+
+        $url = BONITA_URL . $resource ;
+        $data[] = array(
+            "caseid" => $caseId,
+            "session" => 'fruta'
+    
+        );
+
+        $rsp = $this->REST->callAPI('DELETE', $url, $data, $this->loggin(BPM_ADMIN_USER, BPM_ADMIN_PASS));
+
+        if (!$rsp['status']) {
+
+            log_message('DEBUG', '#TRAZA | #BPM - Eliminar Caso >> ERROR AL ELIMINAR CASO');
+
+            return ;
+
+        }
+        return json_decode($rsp['data'], true);
+    }
+
+
     // Obtiene Actividades Archivadas desde BPM por id de caso
     public function ObtenerActividadesArchivadas($processId, $caseId)
     {
@@ -466,12 +497,14 @@ class BPM
 		*/
 		function setCaseEmpresa($caseid){
 
+            $empr_id = empresa();
+
 			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid) >> '.json_encode($caseid));
 			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid)  $empr_id>> '.json_encode($empr_id));
 
            $string_case_id = (string)$caseid;
 
-			$data = array("case_id"=>$string_case_id,"empr_id"=>empresa());
+			$data = array("case_id"=>$string_case_id,"empr_id"=>$empr_id);
 
 			$CI = &get_instance();
 			$CI->load->database();
