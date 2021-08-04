@@ -1,6 +1,6 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
 /**
-* Representa la entidad 
+* Representa la entidad
 *
 * @autor Hugo Gallardo
 */

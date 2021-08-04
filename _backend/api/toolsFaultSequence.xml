@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="toolsFault" xmlns="http://ws.apache.org/ns/synapse">
+    <log category="ERROR" level="custom">
+        <property name="text" value="************Error Inesperado******************"/>
+        <property name="code" value="1000"/>
+        <property expression="get-property('TOOLS_ERROR')" name="error"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns3="http://org.apache.synapse/xsd"/>
+        <property expression="get-property('ERROR_MESSAGE')"
+            name="detail" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns3="http://org.apache.synapse/xsd"/>
+    </log>
+    <payloadFactory media-type="json">
+        <format>{"respuesta" : {&#xd;                       "codigo" : "1000"  , "error":"$1"  , "detalle":"$2"  ,"payload":"$3"           }&#xd;}</format>
+        <args>
+            <arg evaluator="xml"
+                expression="get-property('TOOLS_ERROR')" literal="false"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns3="http://org.apache.synapse/xsd"/>
+            <arg evaluator="xml"
+                expression="get-property('ERROR_MESSAGE')"
+                literal="false" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns3="http://org.apache.synapse/xsd"/>
+            <arg evaluator="json" expression="$" literal="false"/>
+        </args>
+    </payloadFactory>
+    <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+    <property name="HTTP_SC" scope="axis2" type="STRING" value="404"/>
+    <send/>
+</sequence>
+
