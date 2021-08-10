@@ -33,6 +33,15 @@
 
 <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
 
+<script src="<?php echo base_url() ?>lib/bower_components/datatables1/Buttons-1.6.1/js/dataTables.buttons.js"></script>
+
+<script src="<?php echo base_url() ?>lib/bower_components/datatables1/Buttons-1.6.1/js/buttons.html5.js"></script>
+
+<script src="<?php echo base_url() ?>lib/bower_components/datatables1/Buttons-1.6.1/js/buttons.print.js"></script>
+
+
+
+
 <script src="https://cdn.datatables.net/plug-ins/1.10.21/sorting/natural.js"></script>
 
 <script src = "https://cdn.jsdelivr.net/jquery.tablednd/0.8/jquery.tablednd.0.8.min.js"></script>
