@@ -401,6 +401,12 @@
       <param name="depo_id" sqlType="STRING"/>
       <param name="tipo" sqlType="STRING"/>
    </query>
+   <query id="getArticulosYTiposXEtapa" useConfig="ToolsDataSource">
+      <sql>SELECT art.* from(&#xd;SELECT a.arti_id,a.barcode,a.descripcion,'Entrada' as tipo,a.unidad_medida,a.es_caja,a.cantidad_caja,em.etap_id ,a.empr_id , a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_materiales em ON a.arti_id = em.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,a.barcode, a.descripcion,'Producto' as tipo, a.unidad_medida, a.es_caja, a.cantidad_caja,ep.etap_id ,a.empr_id , a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_productos ep &#xd;ON a.arti_id = ep.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,a.barcode, a.descripcion,'Salida' as tipo, a.unidad_medida, a.es_caja, a.cantidad_caja,es.etap_id ,a.empr_id , a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_salidas es &#xd;ON a.arti_id = es.arti_id&#xd;)art&#xd;,(SELECT :etap_id etap_id, :empr_id empr_id) param&#xd;WHERE art.etap_id = cast(param.etap_id as INTEGER) and art.empr_id = cast(param.empr_id as INTEGER) and art.eliminado = false&#xd;order by descripcion</sql>
+      <result outputType="json">{&#xd;   "articulos":{&#xd;      "articulo":[&#xd;         {&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "tipo":"$tipo",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "es_caja":"$es_caja",&#xd;            "cantidad_caja":"$cantidad_caja"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="etap_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -828,4 +834,11 @@
          <with-param name="tipo" query-param="tipo"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/articulos/etapa/{etap_id}/empresa/{empr_id}">
+      <call-query href="getArticulosYTiposXEtapa">
+         <with-param name="etap_id" query-param="etap_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
 </data>
+
