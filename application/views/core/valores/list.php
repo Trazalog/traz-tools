@@ -26,12 +26,6 @@
       llenarModal(datajson);
   });
 
-  // deshabilita botones, selects e inputs de modal
-  function blockEdicion(){
-    $(".habilitar").attr("readonly","readonly");
-    //$(".selec_habilitar").attr('disabled', 'disabled');
-  }
-
   // habilita botones, selects e inputs de modal
   function habilitarEdicion(){
     $('.habilitar').removeAttr("readonly");//

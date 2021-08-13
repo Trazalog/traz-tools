@@ -16,8 +16,6 @@ class Valor extends CI_Controller
     function index(){
       	log_message('INFO','#TRAZA | VALORES | index()  >> ');
 	  	$data['listarValores'] = $this->Valores->Listar_Valores();
-    	//   $data['list'] = $this->Valores->Listar_Valores();
-    	//   $data['tipos_valores'] = $this->Valores->Listar_Tipos_Valores();
       	$this->load->view('core/valores/view', $data);
     }
     
@@ -29,13 +27,12 @@ class Valor extends CI_Controller
 	function Listar_Valores()
 	{
 		log_message('INFO','#TRAZA| VALORES | Listar_Valores() >> ');
-		// $data['listarValores'] = $this->Valores->Listar_Valores();
     	$this->load->view('core/valores/list', $data);
 	}
 
 	/**
 	* Obtener contenido de una tabla
-	* @param array cliente
+	* @param array tabla
 	* @return bool true o false segun resultado de servicio de guardado
 	*/
 	function getValor()
@@ -57,7 +54,7 @@ class Valor extends CI_Controller
 	*/
 	function guardarValor()
 	{
-    	log_message('ERROR', '#TRAZA | VALORES | guardar() >> ');
+    	log_message('ERROR', '#TRAZA | VALORES | guardarValor() >> ');
 		$valor = $this->input->post('datos');
 		$valor['empr_id'] = empresa();
 		$resp = $this->Valores->guardarValor($valor);
@@ -69,21 +66,7 @@ class Valor extends CI_Controller
 	}
 
 	/**
-	* Edita info de Cliente
-	* @param array con informacion de Cliente
-	* @return bool true o false respuesta del servicio
-	*/
-	function Editar_Cliente()
-	{
-    	log_message('INFO','#TRAZA | VALORES | Editar_Cliente() >> ');
-		$cliente = $this->input->post('datos');
-		$cliente['usuario_app'] = userNick();
-		$resp = $this->Valores->Editar_Cliente($cliente);
-		echo json_encode($resp);
-	}
-
-	/**
-	* Borra Cliente por id
+	* Borrado lógico de valor por ID
 	* @param
 	* @return bool true o false
 	*/
