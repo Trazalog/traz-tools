@@ -60,7 +60,7 @@
 </div>
 <!--_______ FIN FORMULARIO VALORES ______-->
 
-<!---/////---BOX 2 DATATBLE ---/////----->
+<!---/////---BOX 2 DATATABLE ---/////----->
 <div class="box box-primary">
     <div class="box-body">
         <div class="col-md-3">
@@ -155,7 +155,6 @@
     // carga los depositos de acuerdo a establecimiento
 	function seleccionTabla(opcion){
         var id_tabla = $("#selectTabla").val();
-        // $("#tabla_valores tbody").empty(); 
         wo();
         $.ajax({
             type: 'POST',
@@ -180,7 +179,6 @@
             });
             }
             wc();
-            // $('#modalarticulos').modal('show');  
             },
             error: function(data) {
                 alert('Error');
@@ -249,7 +247,6 @@
 
     function eliminarValor(e) {
         var data = JSON.parse($(e).closest('tr').attr('data-json'));
-        // console.log(data);
         var tabl_id = data.tabl_id;
         wo();
         $.ajax({
@@ -257,16 +254,14 @@
             data:{tabl_id: tabl_id},
             url: 'index.php/core/Valor/borrarValor',
             success: function(result) {
-
-            $("#cargar_tabla").load("index.php/core/Cliente/Listar_Clientes");
-            wc();
-            $("#modalaviso").modal('hide');
-
+                $("#cargar_tabla").load("index.php/core/Valor/Listar_Valores");
+                wc();
+                $("#modalaviso").modal('hide');
             },
             error: function(result){
             wc();
             $("#modalaviso").modal('hide');
-            alertify.error('Error en eliminado de Herramientas...');
+            alertify.error('Error en eliminado de Valor...');
             }
         });
         $('#modalaviso').modal('show');
