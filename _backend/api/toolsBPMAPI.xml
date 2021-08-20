@@ -74,6 +74,7 @@
             <property name="session" expression="json-eval($..session)"/>
          </log>
          <property name="session" expression="json-eval($..session)"/>
+         <respond/>
       </inSequence>
       <outSequence>
          <log level="full">
@@ -86,7 +87,7 @@
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
-   <resource methods="GET" uri-template="/roles/{uri.var.session}">
+   <resource methods="GET" uri-template="/roles/{session}">
       <inSequence>
          <header name="Accept" scope="transport" value="application/json"/>
          <property name="roles_url" value="/API/identity/role?p=0&amp;c=1000&amp;o=displayName%20ASC" scope="default" type="STRING"/>
@@ -113,7 +114,7 @@
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
-   <resource methods="GET" uri-template="/groups/{uri.var.session}">
+   <resource methods="GET" uri-template="/groups/{session}">
       <inSequence>
          <header name="Accept" scope="transport" value="application/json"/>
          <property name="groups_url" value="/API/identity/group?p=0&amp;c=1000&amp;d=parent_group_id&amp;o=name%20ASC" scope="default" type="STRING"/>
@@ -226,5 +227,67 @@
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
+   <resource methods="GET" uri-template="/users/{usr}/session/{session}">
+      <inSequence>
+         <log level="custom" description="msg entrada">
+            <property name="user" expression="$ctx:uri.var.usr"/>
+            <property name="session" expression="$ctx:uri.var.session"/>
+         </log>
+         <property name="session" expression="$ctx:uri.var.session"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="get_user_url" expression="fn:concat('/API/identity/user?f=userName%3d',$ctx:uri.var.usr)" scope="default"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:get_user_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <property name="userid" expression="json-eval($.payload.id)"/>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/memberships/xUserid/{usrid}/session/{session}">
+      <inSequence>
+         <log level="custom" description="msg entrada">
+            <property name="userid" expression="$ctx:uri.var.usrid"/>
+            <property name="session" expression="$ctx:uri.var.session"/>
+         </log>
+         <property name="session" expression="$ctx:uri.var.session"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="get_user_url" expression="fn:concat('/API/identity/membership?f=user_id%3d',$ctx:uri.var.usrid,'&amp;d=role_id&amp;d=group_id&amp;o=GROUP_NAME_ASC')" scope="default"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:get_user_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
 </api>
-                        
