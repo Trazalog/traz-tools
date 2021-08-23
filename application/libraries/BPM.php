@@ -170,18 +170,24 @@ class BPM
     }
 
 
-    // DELETE http://10.142.0.13:8280/bpm/proceso/instancia
-    // {"caseid":"<case id >", "session":"ddd"}
-  
-
-
-    public function eliminarCaso($processId, $caseId)//$processId, $caseId, $session.
+  /**
+		*Elimina Case_id en BPM 
+		* @param //$processId, $caseId, $session.
+		* @return array json
+		**/
+    public function eliminarCaso($processId, $caseId)
     {
-        $resource = 'bpm/proceso/instancia';
-      //  $resource = 'bpm/proceso='. $processId . '/instancia='. $caseId ;
+        
+    // DELETE http://10.142.0.13:8280/tools/bpm/proceso/instancia 
+  //  {"caseid":"11208","session":"fruta"}
 
-        $url = BONITA_URL . $resource ;
-        $data[] = array(
+       // $resource = '/proceso/instancia';
+
+       // $url = REST_API_BPM . $resource ;
+
+       $url = REST_API_BPM;
+       
+        $data = array(
             "caseid" => $caseId,
             "session" => 'fruta'
     
@@ -189,14 +195,35 @@ class BPM
 
         $rsp = $this->REST->callAPI('DELETE', $url, $data, $this->loggin(BPM_ADMIN_USER, BPM_ADMIN_PASS));
 
-        if (!$rsp['status']) {
+        $status = ($rsp['status']);
 
-            log_message('DEBUG', '#TRAZA | #BPM - Eliminar Caso >> ERROR AL ELIMINAR CASO');
+            if ($status == true) {
 
-            return ;
+            log_message('DEBUG', '#TRAZA | #BPM - Eliminar Caso >> Se Elimino Caso Correctamente');
+
+            return $rsp;
+
+        } elseif ($status == false) {
+
+            log_message('ERROR', '#TRAZA | #BPM - Eliminar Caso >> NO Se Elimino Caso');
+
+            /*
+            Analizar si se updatea de nuevo el pedido para cambiar el estado de true a false
+            en tabla de pedidos
+            */
+
+            return $rsp;
+
+        } else {
+
+            log_message('ERROR', '#TRAZA | #BPM - Eliminar Caso >> NO Se Elimino Caso - ERROR TREMENDO');
+
+          //  $this->eliminarPedidoTrabajo($petr_id);
+
+            return $rsp;
+
 
         }
-        return json_decode($rsp['data'], true);
     }
 
 
@@ -384,7 +411,7 @@ class BPM
 
     public function getUsuariosBPM()
     {
-        $resource = 'API/identity/user?p=0&c=50000'; // siempre debe jaber un numero altopor la cant de usr
+        $resource = 'API/identity/user?p=0&c=50000'; // siempre debe haber un numero alto por la cantidad de usr
 
         $url = BONITA_URL . $resource;
 

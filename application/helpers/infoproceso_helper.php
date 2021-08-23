@@ -259,9 +259,10 @@
 								<?php	
 											break;	
 											
-								
-											
-							##############YUDICA CHUKA	
+						/*
+						DEFAULT DE CABECERA
+						* todo lo que pasa x aka debe ser standar de tools
+						*/
 							default :
 							$data =json_decode($aux);
 
@@ -290,6 +291,14 @@
 									<br>
 									<p>Datos del Proyecto:</p>
 									<hr>
+									<div class="col-md-12">
+											<div class="form-group">
+													<label for="tipo_proyecto" name="">Tipo de Proyecto:</label>
+													<input type="text" class="form-control habilitar" id="tipo_proyecto" value="<?php echo $aux->tipo; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
 									<div class="col-md-6">
 											<div class="form-group">
 													<label for="codigo_proyecto" name="">Codigo Proyecto:</label>
@@ -319,8 +328,7 @@
 																								
      											$fecha = date("d-m-Y",strtotime($data->fec_inicio));
 
-													// 	  $fecha =	date('d-m-Y', strtotime($data->fec_inicio)) . '+00:00:00';
-
+										
 													echo $fecha ;
 													
 													?>"  readonly>
