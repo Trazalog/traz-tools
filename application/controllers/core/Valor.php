@@ -13,7 +13,8 @@ class Valor extends CI_Controller
 	 * @param
 	 * @return  void
 	 */
-    function index(){
+    function index()
+	{
       	log_message('INFO','#TRAZA | VALORES | index()  >> ');
 	  	$data['listarValores'] = $this->Valores->Listar_Valores();
       	$this->load->view('core/valores/view', $data);
@@ -31,8 +32,8 @@ class Valor extends CI_Controller
 	}
 
 	/**
-	* Obtener contenido de una tabla
-	* @param array tabla
+	* Obtener contenido de una lista
+	* @param array lista
 	* @return bool true o false segun resultado de servicio de guardado
 	*/
 	function getValor()
@@ -56,8 +57,19 @@ class Valor extends CI_Controller
 	{
     	log_message('ERROR', '#TRAZA | VALORES | guardarValor() >> ');
 		$valor = $this->input->post('datos');
-		$valor['empr_id'] = empresa();
 		$resp = $this->Valores->guardarValor($valor);
+		if ($resp != null) {
+			return json_encode(true);
+		} else {
+			return json_encode(false);
+		}
+	}
+
+	function editarValor()
+	{
+    	log_message('ERROR', '#TRAZA | VALORES | guardarValor() >> ');
+		$valor = $this->input->post('datos');
+		$resp = $this->Valores->editarValor($valor);
 		if ($resp != null) {
 			return json_encode(true);
 		} else {

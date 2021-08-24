@@ -20,11 +20,19 @@ class Valores extends CI_Model {
   * @return array con listado de valores
   */
   function Listar_Valores(){
-    $empr_id = empresa();
-    $aux = $this->rest->callAPI("GET",REST_CORE."/tablas/lista/empresa/", $empr_id);
+    $data = $this->session->userdata();
+    if($data['email'] == TOOLS_ADMIN_USER){
+      $resource = "/tablas/lista/empresa/";
+      $url = REST_CORE . $resource;
+      $aux = $this->rest->callApi('GET', $url);
+		} else {
+      $resource = "/tablas/lista/empresa/".empresa();
+      $url = REST_CORE . $resource;
+      $aux = $this->rest->callApi('GET', $url);
+    }
     $aux = json_decode($aux["data"]);
     $valores = $aux->tablas->tabla;
-    return $valores;
+    return $valores;    
   }
 
   /**
@@ -35,8 +43,15 @@ class Valores extends CI_Model {
   function getValor($tabla){
     $post['_post_valor'] = $tabla;
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | getValor() $post: >> '.json_encode($post));
-    $empre_id = empresa();
-    $aux = $this->rest->callAPI("GET",REST_CORE."/tabla/".$tabla."/empresa/",$empre_id);
+    $empre_id = '';
+    $usuario = $this->session->userdata();
+    // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
+    if ($usuario['email'] != TOOLS_ADMIN_USER) {
+      $empre_id = empresa();
+    }
+    $resource = "/tabla/".$tabla."/empresa/".$empre_id;
+    $url = REST_CORE . $resource;
+    $aux = $this->rest->callApi('GET', $url); 
     $aux = json_decode($aux["data"]);
     $valores = $aux->tablas->tabla;
     return $valores;
@@ -49,8 +64,32 @@ class Valores extends CI_Model {
   */
   function guardarValor($data){
     $post['_post_valor'] = $data;
+    $post['_post_valor']['empr_id'] = '';
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarValor()  $post: >> '.json_encode($post));
+    $usuario = $this->session->userdata();
+    // SI HAY ALGO CON "-" QUE LO CORTE
+    if (strpos($post['_post_valor']['tabla'], "-")) {
+      $tabla_nueva = substr(strstr($post['_post_valor']['tabla'], "-"), 1);
+      $post['_post_valor']['tabla'] = $tabla_nueva;
+    }
+    // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
+    if ($usuario['email'] != TOOLS_ADMIN_USER) {
+      $post['_post_valor']['empr_id'] = empresa();
+    }
     $aux = $this->rest->callAPI("POST",REST_CORE."/tablas", $post);
+    $aux = json_decode($aux["data"]);
+    return $aux->GeneratedKeys->Entry;
+  }
+
+  /**
+  * Editar un valor
+  * @param array con datos del valor
+  * @return ID valor generado
+  */
+  function editarValor($data){
+    $post['_post_valor'] = $data;
+    log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarValor()  $post: >> '.json_encode($post));
+    $aux = $this->rest->callAPI("PUT",REST_CORE."/tabla", $post);
     $aux = json_decode($aux["data"]);
     return $aux->GeneratedKeys->Entry;
   }

@@ -92,6 +92,7 @@ define('FILES', 'files/');
 define('LOGIN', true);
 define('DNATO', 'http://localhost/traz-comp-dnato/');
 
+define('TOOLS_ADMIN_USER','admin@gmail.com');
 
 define('PORT', ':3000/');
 
