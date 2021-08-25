@@ -87,34 +87,82 @@ function cerrar() {
     }
 }
 
+//Funcion COMENTARIOS
 function guardarComentario() {
-    var nombUsr = $('#usrName').val();
-    var apellUsr = $('#usrLastName').val();
-    var comentario = $('#comentario').val();
-    wo();
-    $.ajax({
-        type: 'POST',
-        data: {
-            'processInstanceId': task.caseId,
-            'content': comentario
-        },
-        url: 'index.php/<?php echo BPM ?>Tarea/guardarComentario',
-        success: function(result) {
-            var lista = $('#listaComentarios');
-            lista.prepend(
-                '<div class="item"><p class="message"><a href="#" class="name"><small class="text-muted pull-right"><i class="fa fa-clock-o"></i> 2:15</small>' +
-                nombUsr + ' ' + apellUsr +
-                '</a><br><br>' + comentario + '</p></div>'
 
+debugger;
+var comentario = $('#comentario').val();
+if (comentario.length == 0 ) {
+                
+Swal.fire({
+            icon: 'error',
+            title: 'Error...',
+            text: 'Asegurate de escribir un comentario!',
+            footer: ''
+            });
+    
+    return;
+
+            }
+            else{
+
+console.log("Guardar Comentarios...");
+var id = $('#case_id').val();
+var comentario = $('#comentario').val();
+var nombUsr = $('#usrName').val();
+var apellUsr = $('#usrLastName').val();;
+$.ajax({
+    type: 'POST',
+    data: {
+        'processInstanceId': id,
+        'content': comentario
+    },
+    url: '<?php echo base_url(BPM) ?>Proceso/guardarComentario',
+    success: function(result) {
+        console.log("Submit");
+        var lista = $('#listaComentarios');
+        lista.prepend('<hr/><li><h4>' + nombUsr + ' ' + apellUsr +
+            '<small style="float: right">Hace un momento</small></h4><p>' + comentario + '</p></li>'
             );
-            $('#comentario').val('');
-        },
-        error: function(result) {
-            console.log("Error");
-        },
-        complete:function(){
-            wc();
-        }
-    });
+        $('#comentario').val('');
+    },
+    error: function(result) {
+        console.log("Error");
+    }
+});
 }
+}
+
+
+//COMENTARIOS VIEJOS
+// function guardarComentario() {
+//     var nombUsr = $('#usrName').val();
+//     var apellUsr = $('#usrLastName').val();
+//     var comentario = $('#comentario').val();
+//     wo();
+//     $.ajax({
+//         type: 'POST',
+//         data: {
+//             'processInstanceId': task.caseId,
+//             'content': comentario
+//         },
+//         url: 'index.php/<?php// echo BPM ?>Tarea/guardarComentario',
+//         success: function(result) {
+//             var lista = $('#listaComentarios');
+//             lista.prepend(
+//                 '<div class="item"><p class="message"><a href="#" class="name"><small class="text-muted pull-right"><i class="fa fa-clock-o"></i> 2:15</small>' +
+//                 nombUsr + ' ' + apellUsr +
+//                 '</a><br><br>' + comentario + '</p></div>'
+
+//             );
+//             $('#comentario').val('');
+//         },
+//         error: function(result) {
+//             console.log("Error");
+//         },
+//         complete:function(){
+//             wc();
+//         }
+//     });
+// }
 </script>

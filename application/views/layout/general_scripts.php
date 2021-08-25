@@ -29,9 +29,31 @@
 <!-- FastClick -->
 <script src="<?php echo base_url() ?>lib/bower_components/fastclick/lib/fastclick.js"></script>
 
+<!-- DataTables 1.10.19 -->
 <script src="<?php echo base_url() ?>lib/bower_components/datatables.net/js/jquery.dataTables.min.js"></script>
 
+<!-- DataTables Bootstrap 3 -->
 <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+
+<!-- Buttons-1.6.1 -->
+<script src="<?php echo base_url() ?>lib/bower_components/datatables1/Buttons-1.6.1/js/dataTables.buttons.js"></script>
+
+<script src="<?php echo base_url() ?>lib/bower_components/datatables1/Buttons-1.6.1/js/buttons.html5.js"></script>
+
+<script src="<?php echo base_url() ?>lib/bower_components/datatables1/Buttons-1.6.1/js/buttons.print.js"></script>
+
+ <!--buttons.flash ZeroClipboard 1.0.4 -->
+ <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/extensions/Buttons/js/buttons.flash.min.js"></script>
+
+ <!-- JSZip v3.1.3  -->
+ <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/extensions/Buttons/js/jszip.min.js"></script>
+
+ <!-- pdfmake/0.1.53 -->
+ <script src="<?php echo base_url() ?>lib\bower_components\datatables.net-bs\extensions\Buttons\js\pdfmake.min.js"></script>
+
+ <!-- /vfs_fonts/0.1.53 -->
+  <script src="<?php echo base_url() ?>lib/bower_components/datatables.net-bs/extensions/Buttons/js/vfs_fonts.js"></script> 
+
 
 <script src="https://cdn.datatables.net/plug-ins/1.10.21/sorting/natural.js"></script>
 
@@ -66,7 +88,7 @@
 <?php $this->load->view(FRM.'scripts') ?>
 
 
-
+<!-- BootstrapValidator v0.5.3 -->
 <script src="<?php echo base_url();?>lib/bootstrapValidator/bootstrapValidator.min.js"></script>
 
 <!-- Select2 -->
@@ -94,6 +116,9 @@
 <script src="<?php echo base_url(); ?>lib\plugins\jasonday-printThis-f73ca19\printThis.js"></script>
 
 <script src="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.js"></script>
+
+<!-- scripts para generacion codigos QR y de Barras -->
+<script src="<?php echo base_url(); ?>lib/props/generar_codigos.js"></script>
 
 <script>
     function conexion() {

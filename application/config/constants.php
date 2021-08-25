@@ -92,6 +92,7 @@ define('FILES', 'files/');
 define('LOGIN', true);
 define('DNATO', 'http://localhost/traz-comp-dnato/');
 
+define('TOOLS_ADMIN_USER','admin@gmail.com');
 
 define('PORT', ':3000/');
 
@@ -114,11 +115,13 @@ define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 
 define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
-define('BPM_PROCESS_ID_TAREA_GENERICA', '7148440093058377088');
+define('BPM_PROCESS_ID_TAREA_GENERICA', '7485374631624182404');
 
 #YUDICA REPARACION_NEUMATICOS
-define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '7768356718186290307');
-                                                
+define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
+
+#SICPOA Control de Ingreso de Camiones
+define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5724181768742614717');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
@@ -130,12 +133,19 @@ define('PAN', 'traz-comp-pan/');
 define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
+#COMPONENTE SICPOA
+define('SICP', 'ddpe-tools-pro/');
+
+#COMPONENTE SICPOA
+define('COD', 'traz-comp-codigos/');
+
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
-    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas']
+    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas'],
+    BPM_PROCESS_ID_INGRESO_CAMIONES  => ['nombre' => 'SICPOA', 'color' => '#00A65A', 'proyecto'=>SICP, 'model'=>'Sicpoatareas']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
@@ -196,6 +206,7 @@ define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_PAN', HOST.'/services/PANDataService');
+define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 
 #TRAZ-COMP-CALENDAR
 define('DURACION_JORNADA', '08:00');

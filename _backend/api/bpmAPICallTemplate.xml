@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template name="bpmAPICallTemplate" xmlns="http://ws.apache.org/ns/synapse">
+    <parameter name="recurso"/>
+    <parameter name="session"/>
+    <parameter name="payload"/>
+    <parameter name="method"/>
+    <sequence>
+        <property
+            expression="get-property('registry','conf:tools/bpmconf.xml')"
+            name="bpmconf" scope="default" type="OM"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <property expression="$ctx:bpmconf//bpm_url" name="bpm_url"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <property expression="$ctx:bpmconf//usuario"
+            name="uri.var.usuario"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <property expression="$ctx:bpmconf//password"
+            name="uri.var.password"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <log level="custom">
+            <property expression="get-property('uri.var.usuario')"
+                name="usuario" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="get-property('uri.var.password')"
+                name="password" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="get-property('bpm_url')"
+                name="bpm_url" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$func:recurso" name="recurso"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$func:session" name="session"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$func:payload" name="payload"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$func:method" name="method"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        </log>
+        <property action="remove" name="Server" scope="transport"/>
+        <property action="remove" name="X-Bonita-API-Token" scope="transport"/>
+        <property action="remove" name="Cookie" scope="transport"/>
+        <header name="Accept" scope="transport" value="application/json"/>
+        <property expression="$func:method" name="uri.var.method"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <property expression="$func:session" name="bonitaCookies"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <script function="armarSession" key="conf:tools/armarSession.js" language="js"/>
+        <property expression="$ctx:bonitaCookies" name="Cookie"
+            scope="transport" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <header expression="get-property('bonitaApiToken')"
+            name="X-Bonita-API-Token" scope="transport"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <property expression="fn:concat($ctx:bpm_url,$func:recurso)"
+            name="uri.var.recurso_url" scope="default" type="STRING"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        <log level="custom">
+            <property expression="get-property('uri.var.recurso_url')"
+                name="url a invocar"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        </log>
+        <payloadFactory media-type="json">
+            <format>$1</format>
+            <args>
+                <arg evaluator="xml" expression="$func:payload"
+                    literal="false"
+                    xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            </args>
+        </payloadFactory>
+        <log level="custom">
+            <property expression="json-eval($)" name="body request"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="get-property('transport', 'Cookie')"
+                name="cookie request"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property
+                expression="get-property('transport', 'X-Bonita-API-Token')"
+                name="x-boni request"
+                xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+        </log>
+        <switch source="$func:method"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd">
+            <case regex="GET">
+                <call>
+                    <endpoint>
+                        <http method="GET" uri-template="{uri.var.recurso_url}"/>
+                    </endpoint>
+                </call>
+            </case>
+            <case regex="POST">
+                <call>
+                    <endpoint>
+                        <http method="POST" uri-template="{uri.var.recurso_url}"/>
+                    </endpoint>
+                </call>
+            </case>
+            <case regex="PUT">
+                <call>
+                    <endpoint>
+                        <http method="PUT" uri-template="{uri.var.recurso_url}"/>
+                    </endpoint>
+                </call>
+            </case>
+            <case regex="DELETE">
+                <call>
+                    <endpoint>
+                        <http method="DELETE" uri-template="{uri.var.recurso_url}"/>
+                    </endpoint>
+                </call>
+            </case>
+        </switch>
+        <switch source="get-property('axis2', 'HTTP_SC')"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd">
+            <case regex="2[0-9][0-9]"/>
+            <case regex="401">
+                <log level="custom">
+                    <property name="sesion vencida" value="sesion vencida"/>
+                </log>
+                <header name="Accept" scope="transport" value="text/html"/>
+                <property name="messageType" scope="axis2" type="STRING" value="text/html"/>
+                <property name="BLOCKING_SENDER_PRESERVE_REQ_HEADERS" value="false"/>
+                <property action="remove" name="Server" scope="transport"/>
+                <property action="remove" name="X-Bonita-API-Token" scope="transport"/>
+                <property action="remove" name="Cookie" scope="transport"/>
+                <property action="remove" name="Set-Cookie" scope="transport"/>
+                <property
+                    expression="fn:concat($ctx:bpm_url,'/loginservice?username=',$ctx:uri.var.usuario,'&amp;password=',$ctx:uri.var.password,'&amp;redirect=false')"
+                    name="uri.var.login_url" scope="default" type="STRING"/>
+                <log level="custom">
+                    <property expression="$ctx:uri.var.login_url" name="url login"/>
+                </log>
+                <call blocking="true">
+                    <endpoint>
+                        <http method="GET" uri-template="{uri.var.login_url}"/>
+                    </endpoint>
+                </call>
+                <log level="full"/>
+                <switch source="get-property('axis2', 'HTTP_SC')">
+                    <case regex="2[0-9][0-9]">
+                        <log level="custom">
+                            <property name="resultado login" value="ok"/>
+                        </log>
+                    </case>
+                    <default>
+                        <property
+                            expression="fn:concat('Error login de Bonita: ',get-property('axis2', 'HTTP_SC'))"
+                            name="TOOLS_ERROR" type="STRING"/>
+                        <sequence key="toolsFault"/>
+                    </default>
+                </switch>
+                <log level="custom">
+                    <property expression="$trp:Set-Cookie" name="post login session"/>
+                </log>
+                <property expression="$trp:Set-Cookie" name="bonitaCookies"/>
+                <script function="armarSession"
+                    key="conf:tools/armarSession.js" language="js"/>
+                <property action="remove" name="Server" scope="transport"/>
+                <property action="remove" name="X-Bonita-API-Token" scope="transport"/>
+                <property action="remove" name="Cookie" scope="transport"/>
+                <header name="Accept" scope="transport" value="application/json"/>
+                <header expression="get-property('bonitaApiToken')"
+                    name="X-Bonita-API-Token" scope="transport"/>
+                <property expression="$ctx:bonitaCookies" name="Cookie" scope="transport"/>
+                <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+                <payloadFactory media-type="json">
+                    <format>$1</format>
+                    <args>
+                        <arg evaluator="xml" expression="$func:payload" literal="false"/>
+                    </args>
+                </payloadFactory>
+                <log level="custom">
+                    <property expression="json-eval($)" name="body request"/>
+                    <property expression="$ctx:uri.var.recurso_url" name="resource request"/>
+                    <property
+                        expression="get-property('transport', 'Cookie')" name="cookie request"/>
+                    <property
+                        expression="get-property('transport', 'X-Bonita-API-Token')" name="x-boni request"/>
+                </log>
+                <switch source="$func:method">
+                    <case regex="GET">
+                        <call>
+                            <endpoint>
+                                <http method="GET" uri-template="{uri.var.recurso_url}"/>
+                            </endpoint>
+                        </call>
+                    </case>
+                    <case regex="POST">
+                        <call>
+                            <endpoint>
+                                <http method="POST" uri-template="{uri.var.recurso_url}"/>
+                            </endpoint>
+                        </call>
+                    </case>
+                    <case regex="PUT">
+                        <call>
+                            <endpoint>
+                                <http method="PUT" uri-template="{uri.var.recurso_url}"/>
+                            </endpoint>
+                        </call>
+                    </case>
+                    <case regex="DELETE">
+                        <call>
+                            <endpoint>
+                                <http method="DELETE" uri-template="{uri.var.recurso_url}"/>
+                            </endpoint>
+                        </call>
+                    </case>
+                </switch>
+            </case>
+            <default>
+                <property name="TOOLS_ERROR" type="STRING" value="Error Bonita caido"/>
+                <sequence key="toolsFault"/>
+            </default>
+        </switch>
+        <filter regex="2[0-9][0-9]"
+            source="get-property('axis2', 'HTTP_SC')"
+            xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd">
+            <then>
+                <enrich>
+                    <source clone="true" type="body"/>
+                    <target action="replace" property="resultPayload" type="property"/>
+                </enrich>
+                <payloadFactory media-type="json">
+                    <format>
+                            {
+                            "session":"$1",
+                            "payload":$2
+                            }
+                    </format>
+                    <args>
+                        <arg evaluator="xml"
+                            expression="get-property('bonitaCookies')" literal="false"/>
+                        <arg evaluator="xml"
+                            expression="get-property('resultPayload')" literal="false"/>
+                    </args>
+                </payloadFactory>
+                <log level="full"/>
+            </then>
+            <else>
+                <property name="TOOLS_ERROR" type="STRING" value="Error al invocar al BPM, verifique si esta disponible"/>
+                <sequence key="toolsFault"/>
+            </else>
+        </filter>
+    </sequence>
+</template>
+

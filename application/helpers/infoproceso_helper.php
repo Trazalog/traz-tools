@@ -11,6 +11,7 @@
 				$ci =& get_instance();
 				$case_id = $tarea->caseId;
 				$processId = $tarea->processId;
+				$nombreTarea = $tarea->nombreTarea;
 				$data['processId']=$processId;
 
 				switch ($processId) {
@@ -56,7 +57,7 @@
 					 		$data_generico =json_decode($aux["data"]);
 					 		$aux = $data_generico->pedidoTrabajo;
 
-					//HARCODE CHUKA	
+					
 							 $clie_id = $aux->clie_id;
 
 					$aux_clie = $ci->rest->callAPI("GET",REST_CORE."/cliente/".$clie_id);
@@ -76,7 +77,9 @@
 															echo ' - Orden Nº: '.$aux->ortr_id;
 														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
 															echo 'Reparación de Neumáticos';
-														}  else {
+														}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
+															echo 'Control de Ingreso de Camiones: ' . $nombreTarea;
+														}else{
 															echo 'Proceso Estandar';
 														}
 
@@ -256,9 +259,10 @@
 								<?php	
 											break;	
 											
-								
-											
-							##############YUDICA CHUKA	
+						/*
+						DEFAULT DE CABECERA
+						* todo lo que pasa x aka debe ser standar de tools
+						*/
 							default :
 							$data =json_decode($aux);
 
@@ -287,6 +291,14 @@
 									<br>
 									<p>Datos del Proyecto:</p>
 									<hr>
+									<div class="col-md-12">
+											<div class="form-group">
+													<label for="tipo_proyecto" name="">Tipo de Proyecto:</label>
+													<input type="text" class="form-control habilitar" id="tipo_proyecto" value="<?php echo $aux->tipo; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
 									<div class="col-md-6">
 											<div class="form-group">
 													<label for="codigo_proyecto" name="">Codigo Proyecto:</label>
@@ -310,14 +322,13 @@
 									<div class="col-md-6">
 											<div class="form-group">
 													<label for="fecha_inicio" name="">Fecha Inicio:</label>
-													<input type="text" class="form-control habilitar" id="patente" value="<?php
+													<input type="text" class="form-control habilitar" id="fec_inicio" value="<?php
 															
 
 																								
      											$fecha = date("d-m-Y",strtotime($data->fec_inicio));
 
-													// 	  $fecha =	date('d-m-Y', strtotime($data->fec_inicio)) . '+00:00:00';
-
+										
 													echo $fecha ;
 													
 													?>"  readonly>
@@ -328,7 +339,7 @@
 									<div class="col-md-6">
 											<div class="form-group">
 													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
-													<input type="text" class="form-control habilitar" id="descripcion" value="<?php
+													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
 																									
 														$fecha = date("d-m-Y",$data->fec_entrega);
 														
