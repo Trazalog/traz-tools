@@ -14,12 +14,6 @@
 <!--_______ FIN TABLA PRINCIPAL DE PANTALLA ______-->
 
 <script>
-  // habilita botones, selects e inputs de modal
-  function habilitarEdicion(){
-    $('.habilitar').removeAttr("readonly");//
-    //$(".selec_habilitar").removeAttr("disabled");
-  }
-
   // Config Tabla
   DataTable($('#tabla_valores'));
 </script>

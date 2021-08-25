@@ -46,7 +46,7 @@
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
                     <label for="Nombre">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
-                    <input type="text" class="form-control requerido" name="nombreLista" id="nombreLista" placeholder="Ingrese Nombre...">
+                    <input type="text" class="form-control requerido" name="nombreLista" id="nombreLista" onkeypress="return check(event)" placeholder="Ingrese Nombre de lista">
                 </div>
             </div>
         </form>
@@ -94,25 +94,25 @@
                 </button>
             </div>
             <div class="modal-body ">
-                <form class="formValores" id="formValores">
+                <form class="" id="formValores">
                     <div class="form-horizontal">
                         <div class="row">
-                        <form class="frmValor" id="frmValor">
+                        <!-- <form class="frmValor" id="frmValor"> -->
                             <input type="text" class="form-control habilitar hidden" name="tabla" id="tabla">
                             <div class="col-sm-6">
                             <!--_____________ DESCRIPCION _____________-->
                                 <div class="form-group">
-                                    <label for="descri_edit" class="col-sm-4 control-label">Descripción:</label>
+                                    <label for="descri_edit" class="col-sm-4 control-label">Descripción(<strong style="color: #dd4b39">*</strong>):</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar requerido" name="descripcion" id="descripcion">
+                                        <input type="text" class="form-control requerido" name="descripcion" id="descripcion" required>
                                     </div>
                                 </div>
                             <!--___________________________-->
                             <!--_____________ VALOR 1 _____________-->
                                 <div class="form-group">
-                                    <label for="valor1_edit" class="col-sm-4 control-label">Valor 1:</label>
+                                    <label for="valor1_edit" class="col-sm-4 control-label">Valor 1(<strong style="color: #dd4b39">*</strong>):</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar" name="valor" id="valor">
+                                        <input type="text" class="form-control requerido" name="valor" id="valor">
                                     </div>
                                 </div>
                             <!--__________________________-->
@@ -120,7 +120,7 @@
                                 <div class="form-group">
                                     <label for="valor2_edit" class="col-sm-4 control-label">Valor 2:</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar" name="valor2" id="valor2">
+                                        <input type="text" class="form-control" name="valor2" id="valor2">
                                     </div>
                                 </div>
                             <!--__________________________-->
@@ -128,19 +128,19 @@
                                 <div class="form-group">
                                     <label for="valor3_edit" class="col-sm-4 control-label">Valor 3:</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar" name="valor3" id="valor3">
+                                        <input type="text" class="form-control" name="valor3" id="valor3">
                                     </div>
                                 </div>
                             <!--__________________________-->
                             </div>
-                        </form>
+                        <!-- </form> -->
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <div class="form-group text-right">
-                    <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarValor('nuevo')">Guardar</button>
+                    <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarValor()">Guardar</button>
                     <button type="" class="btn btn-default cerrarModalEdit" id="" onclick="cerrar()" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -162,22 +162,22 @@
                 <form class="formEditarValores" id="formEditarValores">
                     <div class="form-horizontal">
                         <div class="row">
-                        <form class="frmValor" id="frmValor">
+                        <!-- <form class="frmValor" id="frmValor"> -->
                             <input type="text" class="form-control habilitar hidden" name="tabl_id" id="tabl_id_edit">
                             <div class="col-sm-6">
                             <!--_____________ DESCRIPCION _____________-->
                                 <div class="form-group">
-                                    <label for="descri_edit" class="col-sm-4 control-label">Descripción:</label>
+                                    <label for="descri_edit" class="col-sm-4 control-label">Descripción(<strong style="color: #dd4b39">*</strong>):</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar requerido" name="descripcion" id="descripcion_edit">
+                                        <input type="text" class="form-control requerido" name="descripcion" id="descripcion_edit">
                                     </div>
                                 </div>
                             <!--___________________________-->
                             <!--_____________ VALOR 1 _____________-->
                                 <div class="form-group">
-                                    <label for="valor1_edit" class="col-sm-4 control-label">Valor 1:</label>
+                                    <label for="valor1_edit" class="col-sm-4 control-label">Valor 1(<strong style="color: #dd4b39">*</strong>):</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar" name="valor" id="valor_edit">
+                                        <input type="text" class="form-control requerido" name="valor" id="valor_edit">
                                     </div>
                                 </div>
                             <!--__________________________-->
@@ -185,7 +185,7 @@
                                 <div class="form-group">
                                     <label for="valor2_edit" class="col-sm-4 control-label">Valor 2:</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar" name="valor2" id="valor2_edit">
+                                        <input type="text" class="form-control" name="valor2" id="valor2_edit">
                                     </div>
                                 </div>
                             <!--__________________________-->
@@ -193,12 +193,12 @@
                                 <div class="form-group">
                                     <label for="valor3_edit" class="col-sm-4 control-label">Valor 3:</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control habilitar" name="valor3" id="valor3_edit">
+                                        <input type="text" class="form-control" name="valor3" id="valor3_edit">
                                     </div>
                                 </div>
                             <!--__________________________-->
                             </div>
-                        </form>
+                        <!-- </form> -->
                         </div>
                     </div>
                 </form>
@@ -298,7 +298,38 @@
         $('#modalEditarValor').modal('show');
 	}
 
-    function guardarValor(operacion) {
+    // valida campos obligatorios
+    function validarCampos(form){
+        var mensaje = "";
+        var ban = true;
+        $('#' + form).find('.requerido').each(function() {
+        if (this.value == "" || this.value=="-1") {
+            ban = ban && false;
+            return;
+        }
+        });
+        if (!ban){
+            if(!alertify.errorAlert){
+            alertify.dialog('errorAlert',function factory(){
+                return{
+                        build:function(){
+                            var errorHeader = '<span class="fa fa-times-circle fa-2x" '
+                            +    'style="vertical-align:middle;color:#e10000;">'
+                            + '</span>Error...!!';
+                            this.setHeader(errorHeader);
+                        }
+                    };
+                },true,'alert');
+            }
+            alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
+        }
+        return ban;
+    }
+    
+    function guardarValor() {
+        if( !validarCampos('formValores') ){
+            return;
+        }
         var recurso = "";
         var form = $('#formValores')[0];
         var datos = new FormData(form);
@@ -314,21 +345,20 @@
                 wc();
                 $("#boxDatos").hide(500);
                 form.reset();
-                $("#botonAgregar").removeAttr("disabled");                
-                if (operacion == "editar") {
-                    alertify.success("Valor editado exitosamente");
-                }else{
-                    alertify.success("Valor agregado con éxito");
-                }
+                $("#botonAgregar").removeAttr("disabled");
+                alertify.success("Valor agregado con éxito");
             },
             error: function(result){
-            wc();
-            alertify.error("Error agregando Valor");
+                wc();
+                alertify.error("Error agregando Valor");
             }            
-        });        
+        });
     }
 
     function editarValor(operacion) {
+        if( !validarCampos('formEditarValores') ){
+            return;
+        }        
         var recurso = "";
         var form = $('#formEditarValores')[0];
         var datos = new FormData(form);
@@ -391,6 +421,18 @@
     function cerrar() {
         var form = $('#formValores')[0];
         form.reset();
+    }
+
+    function check(e) {
+        tecla = (document.all) ? e.keyCode : e.which;
+        //Tecla de retroceso para borrar, siempre la permite
+        if (tecla == 8) {
+            return true;
+        }
+        // Patron de entrada, en este caso solo acepta numeros y letras
+        patron = /[A-Za-z0-9_]/;
+        tecla_final = String.fromCharCode(tecla);
+        return patron.test(tecla_final);
     }
     
 </script>

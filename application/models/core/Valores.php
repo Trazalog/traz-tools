@@ -69,8 +69,9 @@ class Valores extends CI_Model {
     $usuario = $this->session->userdata();
     // SI HAY ALGO CON "-" QUE LO CORTE
     if (strpos($post['_post_valor']['tabla'], "-")) {
-      $tabla_nueva = substr(strstr($post['_post_valor']['tabla'], "-"), 1);
-      $post['_post_valor']['tabla'] = $tabla_nueva;
+      $nombres = explode("-", $post['_post_valor']['tabla']);
+      $post['_post_valor']['empr_id'] = $nombres[0];
+      $post['_post_valor']['tabla'] = $nombres[1];
     }
     // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
     if ($usuario['email'] != TOOLS_ADMIN_USER) {
