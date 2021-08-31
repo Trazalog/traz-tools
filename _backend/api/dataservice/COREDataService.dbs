@@ -111,7 +111,7 @@
       <param name="tabla" sqlType="STRING"/>
    </query>
    <query id="getListaTablasXEmpresa" useConfig="ToolsDataSource">
-      <sql>select distinct tab.tabla &#xd;from &#xd;(select&#xd;    case when param.empr_id is null or param.empr_id = '' &#xd;    then t.tabla &#xd;    else  substring(t.tabla from '^[0-9]-(.*)?') end  as tabla&#xd;from&#xd;	core.tablas t ,&#xd;	( select :empr_id empr_id) param&#xd;where&#xd;	(t.empr_id is null&#xd;		and (param.empr_id is null&#xd;		or param.empr_id = ''))&#xd;	or t.empr_id =&#xd;	case&#xd;		when param.empr_id is null&#xd;		or param.empr_id = '' &#xd;		then t.empr_id&#xd;		else cast(param.empr_id as integer) &#xd;		end) tab&#xd;order by 1</sql>
+      <sql>select distinct tab.tabla &#xd;from &#xd;(select&#xd;    case when param.empr_id is null or param.empr_id = '' &#xd;    then t.tabla &#xd;    else  substring(t.tabla from '^[0-9]*-(.*)?') end  as tabla&#xd;from&#xd;	core.tablas t ,&#xd;	( select :empr_id empr_id) param&#xd;where&#xd;	(t.empr_id is null&#xd;		and (param.empr_id is null&#xd;		or param.empr_id = ''))&#xd;	or t.empr_id =&#xd;	case&#xd;		when param.empr_id is null&#xd;		or param.empr_id = '' &#xd;		then t.empr_id&#xd;		else cast(param.empr_id as integer) &#xd;		end) tab&#xd;order by 1</sql>
       <result outputType="json">{&#xd;   "tablas":{&#xd;      "tabla":[&#xd;         {&#xd;            "tabla":"$tabla"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" optional="false" sqlType="STRING"/>
    </query>
@@ -257,3 +257,4 @@
       </call-query>
    </resource>
 </data>
+
