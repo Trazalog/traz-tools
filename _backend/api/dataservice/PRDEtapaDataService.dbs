@@ -165,7 +165,8 @@
       <param name="reci_id" sqlType="STRING"/>
    </query>
    <query id="setFinalizarLote" useConfig="ToolsDataSource">
-      <sql>UPDATE prd.lotes set estado = 'FINALIZADO'&#xd;WHERE batch_id =  cast(:batch_id as integer)</sql>
+      <sql>select prd.finalizar_lote(cast(:batch_id as integer)) resultado;</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
       <param name="batch_id" sqlType="STRING"/>
    </query>
    <query id="etapaEntradaSet" useConfig="ToolsDataSource">
