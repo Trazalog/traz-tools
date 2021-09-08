@@ -98,7 +98,9 @@ define('PORT', ':3000/');
 
 define('PRD', 'traz-prod-trazasoft/');
 
+#COMPONENTE TST
 define('TST', 'traz-comp-tareasestandar/');
+define('TAREAS_DEFAULT_PROC', 'TST001');
 
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
