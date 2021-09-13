@@ -220,6 +220,50 @@
       <param name="tiet_id" sqlType="STRING"/>
       <param name="etap_id" sqlType="STRING"/>
    </query>
+   <query id="getEtapasProductivas" useConfig="ToolsDataSource">
+      <sql>select &#xd;        e.etap_id,&#xd;	e.nombre, &#xd;	p.nombre proc_prod, &#xd;	e.nom_recipiente recipiente, &#xd;	t.valor tipo, &#xd;	e.orden, &#xd;	f.nombre formulario&#xd;from &#xd;	prd.etapas e &#xd;join core.tablas t &#xd;	on e.tiet_id = t.tabl_id&#xd;join prd.procesos p &#xd;	on e.proc_id = p.proc_id &#xd;left join frm.formularios f &#xd;	on e.form_id = f.form_id&#xd;where e.empr_id = CAST(:empr_id as INTEGER)&#xd;        and e.eliminado = 0&#xd;order by e.proc_id, e.orden asc;</sql>
+      <result outputType="json">{&#xd;   "etapas_productivas":{&#xd;      "etapa_productiva":[&#xd;         {&#xd;            "etap_id":   "$etap_id",&#xd;            "nombre":    "$nombre",&#xd;            "proc_prod": "$proc_prod",&#xd;            "recipiente":"$recipiente",&#xd;            "tipo":      "$tipo",&#xd;            "orden":     "$orden",&#xd;            "formulario":"$formulario"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteEtapa" useConfig="ToolsDataSource">
+      <sql>update prd.etapas&#xd;set eliminado = 1&#xd;where etap_id = CAST(:etap_id AS INTEGER)</sql>
+      <param name="etap_id" sqlType="STRING"/>
+   </query>
+   <query id="setEtapaProductiva" useConfig="ToolsDataSource">
+      <sql>insert into prd.etapas (&#xd;	nombre, &#xd;	nom_recipiente, &#xd;	proc_id,&#xd;	empr_id,&#xd;	orden,&#xd;	form_id,&#xd;	tiet_id )&#xd;values(&#xd;	:nombre, &#xd;  	:nom_recipiente, &#xd;  	CAST(:proc_id as INTEGER), &#xd;  	CAST(:empr_id as INTEGER),&#xd;  	CAST(:orden as INTEGER),&#xd;  	CAST(:form_id AS INTEGER),&#xd;  	:tiet_id)&#xd;returning etap_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;     "etap_id": "$etap_id"&#xd;  }&#xd;}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="nom_recipiente" sqlType="STRING"/>
+      <param name="proc_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="orden" sqlType="STRING"/>
+      <param name="form_id" sqlType="STRING"/>
+      <param name="tiet_id" sqlType="STRING"/>
+   </query>
+   <query id="updateEtapaProductiva" useConfig="ToolsDataSource">
+      <sql>update prd.etapas set &#xd;nombre = :nombre, &#xd;nom_recipiente = :nom_recipiente,&#xd;proc_id = CAST(:proc_id as INTEGER),&#xd;empr_id = CAST(:empr_id as INTEGER),&#xd;orden = CAST(:orden as INTEGER),&#xd;form_id = CAST(:form_id as INTEGER),&#xd;tiet_id = :tiet_id&#xd;where &#xd;  etap_id = CAST(:etap_id AS INTEGER)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="nom_recipiente" sqlType="STRING"/>
+      <param name="proc_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="orden" sqlType="STRING"/>
+      <param name="form_id" sqlType="STRING"/>
+      <param name="tiet_id" sqlType="STRING"/>
+      <param name="etap_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteArticuloEntrada" useConfig="ToolsDataSource">
+      <sql>delete&#xd;from prd.etapas_materiales&#xd;where arti_id = CAST(:arti_id as INTEGER)</sql>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteArticuloProducto" useConfig="ToolsDataSource">
+      <sql>delete&#xd;from prd.etapas_productos&#xd;where arti_id = CAST(:arti_id as INTEGER)</sql>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteArticuloSalida" useConfig="ToolsDataSource">
+      <sql>delete&#xd;from prd.etapas_salidas&#xd;where arti_id = CAST(:arti_id as INTEGER)</sql>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   
    <resource method="GET" path="/productos/etapa/{etapa}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}">
       <call-query href="getProduccion">
          <with-param name="etapa" query-param="etapa"/>
@@ -441,6 +485,52 @@
          <with-param name="form_id" query-param="form_id"/>
          <with-param name="tiet_id" query-param="tiet_id"/>
          <with-param name="etap_id" query-param="etap_id"/>
+      </call-query>
+   </resource>
+      <resource method="GET" path="/etapasProductivas/list/empresa/{empr_id}">
+      <call-query href="getEtapasProductivas">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/etapasProductivas/borrar">
+      <call-query href="deleteEtapa">
+         <with-param name="etap_id" query-param="etap_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/etapasProductivas/insertar">
+      <call-query href="setEtapaProductiva">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="nom_recipiente" query-param="nom_recipiente"/>
+         <with-param name="proc_id" query-param="proc_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="orden" query-param="orden"/>
+         <with-param name="form_id" query-param="form_id"/>
+         <with-param name="tiet_id" query-param="tiet_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/etapasProductivas/actualizar">
+      <call-query href="updateEtapaProductiva">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="nom_recipiente" query-param="nom_recipiente"/>
+         <with-param name="proc_id" query-param="proc_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="orden" query-param="orden"/>
+         <with-param name="form_id" query-param="form_id"/>
+         <with-param name="tiet_id" query-param="tiet_id"/>
+         <with-param name="etap_id" query-param="etap_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/deleteArticuloEntrada/{arti_id}">
+      <call-query href="deleteArticuloEntrada"/>
+   </resource>
+   <resource method="DELETE" path="/deleteArticuloProducto/{arti_id}">
+      <call-query href="deleteArticuloProducto">
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/deleteArticuloSalida/{arti_id}">
+      <call-query href="deleteArticuloSalida">
+         <with-param name="arti_id" query-param="arti_id"/>
       </call-query>
    </resource>
 </data>
