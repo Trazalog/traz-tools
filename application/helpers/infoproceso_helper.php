@@ -257,6 +257,140 @@
 													<tbody>
 											</table>			
 								<?php	
+											break;
+
+										case BPM_PROCESS_ID_INGRESO_CAMIONES:
+
+											$fec = explode("+" , $aux->fec_inicio);
+											$fecha = date("d-m-Y",strtotime($fec[0]));
+								?>			
+											<!--_____________ Cabecera SICPOA _____________-->
+											<div class="col-md-12">
+												<h3>Datos ingreso por barrera:</h3>
+												<hr>
+												<!--_____________ Proceso _____________-->
+												<div class="col-md-12">
+													<div class="form-group">
+														<label for="descripcion" name="">Proceso:</label>
+														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ CASE ID _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="descripcion" name="">N° de inspección:</label>
+														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->case_id; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ Fecha Inicio _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="fecha_inicio" name="">Fecha inicio:</label>
+														<input type="text" class="form-control" id="fecha_inicio" value="<?php echo $fecha; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ PETR ID _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="descripcion" name="">Pedido de trabajo:</label>
+														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->petr_id; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+											</div>
+											<div class="col-md-12">
+												<h3>Datos inspección:</h3>
+												<hr>
+												<!--_____________ Chofer _____________-->
+												<div class="col-md-6">
+													<!-- <div class="form-group"> -->
+														<!-- <label for="choferC" name="">Chofer:</label> -->
+														<ul>
+															<li><label for="choferC" name="">Chofer:&nbsp;</label><?php echo $tarea->inspeccion->chofer ? $tarea->inspeccion->chofer : ""; ?></li>
+														</ul>
+														<!-- <input type="text" class="form-control" id="choferC" value="<?php echo $tarea->inspeccion->chofer ? $tarea->inspeccion->chofer : ""; ?>"  readonly> -->
+													<!-- </div> -->
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ DNI CHOFER _____________-->
+												<div class="col-md-6">
+													<!-- <div class="form-group"> -->
+														<!-- <label for="chof_idC" name="">Documento:</label> -->
+														<ul>
+															<li><label for="chof_idC" name="">Documento:&nbsp;</label><?php echo $tarea->inspeccion->chof_id ? $tarea->inspeccion->chof_id : ""; ?></li>
+														</ul>
+														<!-- <input type="text" class="form-control" id="chof_idC" value="<?php echo $tarea->inspeccion->chof_id ? $tarea->inspeccion->chof_id : ""; ?>"  readonly> -->
+													</div>
+												<!-- </div> -->
+												<!--_____________________________________________-->
+												<!--_____________ Patente tractor _____________-->
+												<div class="col-md-6">
+													<!-- <div class="form-group"> -->
+														<!-- <label for="patente_tractorC" name="">Patente tractor:</label> -->
+														<ul>
+															<li><label for="patente_tractorC" name="">Patente tractor:&nbsp;</label><?php echo $tarea->inspeccion->patente_tractor ? $tarea->inspeccion->patente_tractor : ""; ?></li>
+														</ul>
+														<!-- <input type="text" class="form-control" id="patente_tractorC" value="<?php echo $tarea->inspeccion->patente_tractor ? $tarea->inspeccion->patente_tractor : ""; ?>"  readonly> -->
+													</div>
+												<!-- </div> -->
+												<!--_____________________________________________-->
+												<!--_________________ N° SENASA _________________-->
+												<div class="col-md-6">
+													<!-- <div class="form-group"> -->
+														<!-- <label for="nro_senasaC" name="">N° SENASA:</label> -->
+														<ul>
+															<li><label for="nro_senasaC" name="">N° SENASA:&nbsp;</label><?php echo $tarea->inspeccion->nro_senasa ? $tarea->inspeccion->nro_senasa : ""; ?></li>
+														</ul>
+														<!-- <input type="text" class="form-control" id="nro_senasaC" value="<?php echo $tarea->inspeccion->nro_senasa ? $tarea->inspeccion->nro_senasa : ""; ?>"  readonly> -->
+													</div>
+												<!-- </div> -->
+												<!--______________________________________________-->
+												<!--__________________ PERMISOS __________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Permisos:</h4>
+													<ul>
+														<?php 
+														if(!empty($tarea->inspeccion->permisos_transito->permiso_transito)){
+															foreach ($tarea->inspeccion->permisos_transito->permiso_transito as $key) {
+																echo "<li><b>Id</b>:  $key->perm_id   ---   <b>Tipo</b>:  $key->tipo   ---   <b>Emisión</b>:  $key->lugar_emision   ---   <b>Fecha</b>:  $key->fecha_hora_salida </li>";
+															}
+														}
+														?>
+													</ul>
+												</div>
+												<!--______________________________________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Empresas:</h4>
+													<ul>
+													<?php 
+														if(!empty($tarea->inspeccion->empresas->empresa)){
+															foreach ($tarea->inspeccion->empresas->empresa as $key) {
+																echo "<li><b>Razón Social</b>:  $key->razon_social   ---   <b>Rol</b>:  $key->rol".($key->calle ? "   ---   <b>Calle</b>:  ".$key->calle : "" )."".($key->altura ? "   ---   <b>Altura</b>:  ".$key->altura : "")." </li>";	
+															}
+														}
+													?>
+													</ul>
+												</div>
+												<!--______________________________________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Térmicos:</h4>
+													<ul>
+														<?php 
+															if(!empty($tarea->inspeccion->termicos->termico)){
+																foreach ($tarea->inspeccion->termicos->termico as $key) {
+																	echo "<li><b>Patente</b>:  $key->patente   ---   <b>T°</b>:  $key->temperatura   ---   <b>Precintos</b>:  $key->precintos</li>";
+																}
+															}
+														?>
+													</ul>
+												</div>
+												<!--______________________________________________-->
+											</div><!-- fin col-md --> 
+											<!--_____________FIN CABECERA SICPOA_____________-->
+								<?php			
 											break;	
 											
 						/*
