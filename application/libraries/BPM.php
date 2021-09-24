@@ -95,6 +95,7 @@ class BPM
     }
 
     // Lanza proceso en BPM
+  
     public function lanzarProceso($processId, $contract)
     {
         $resource = 'API/bpm/process/';
@@ -113,8 +114,13 @@ class BPM
 
         }
 
+        $dato = json_decode($rsp['data']);
+		$resp = $this->setCaseEmpresa($dato->caseId);
+
         return $this->msj(true, 'OK', json_decode($rsp['data'], true));
     }
+
+
 
     public function ObtenerLineaTiempo($processId, $caseId)
     {
@@ -163,6 +169,64 @@ class BPM
         return $array;
     }
 
+
+  /**
+		*Elimina Case_id en BPM 
+		* @param //$processId, $caseId, $session.
+		* @return array json
+		**/
+    public function eliminarCaso($processId, $caseId)
+    {
+        
+    // DELETE http://10.142.0.13:8280/tools/bpm/proceso/instancia 
+  //  {"caseid":"11208","session":"fruta"}
+
+       // $resource = '/proceso/instancia';
+
+       // $url = REST_API_BPM . $resource ;
+
+       $url = REST_API_BPM;
+       
+        $data = array(
+            "caseid" => $caseId,
+            "session" => 'fruta'
+    
+        );
+
+        $rsp = $this->REST->callAPI('DELETE', $url, $data, $this->loggin(BPM_ADMIN_USER, BPM_ADMIN_PASS));
+
+        $status = ($rsp['status']);
+
+            if ($status == true) {
+
+            log_message('DEBUG', '#TRAZA | #BPM - Eliminar Caso >> Se Elimino Caso Correctamente');
+
+            return $rsp;
+
+        } elseif ($status == false) {
+
+            log_message('ERROR', '#TRAZA | #BPM - Eliminar Caso >> NO Se Elimino Caso');
+
+            /*
+            Analizar si se updatea de nuevo el pedido para cambiar el estado de true a false
+            en tabla de pedidos
+            */
+
+            return $rsp;
+
+        } else {
+
+            log_message('ERROR', '#TRAZA | #BPM - Eliminar Caso >> NO Se Elimino Caso - ERROR TREMENDO');
+
+          //  $this->eliminarPedidoTrabajo($petr_id);
+
+            return $rsp;
+
+
+        }
+    }
+
+
     // Obtiene Actividades Archivadas desde BPM por id de caso
     public function ObtenerActividadesArchivadas($processId, $caseId)
     {
@@ -207,15 +271,17 @@ class BPM
 
         }
 
-        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+				//        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+          return json_decode($rsp['data'], true);
     }
 
-    public function guardarComentario($caseId, $comentario)
+    public function guardarComentario($caseId)//$caseId, $comentario
     {
-        $data = array(
-            'processInstanceId' => $caseId,
-            'content' => $comentario,
-        );
+        $data = $caseId;
+        // $data = array(
+        //     'processInstanceId' => $caseId,
+        //     'content' => $comentario,
+        // );
 
         $url = BONITA_URL . 'API/bpm/comment';
 
@@ -229,7 +295,8 @@ class BPM
 
         }
 
-        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+     //        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+     return json_decode($rsp['data'], true);
     }
 
     public function actualizarIdOT($caseId, $ot)
@@ -344,7 +411,7 @@ class BPM
 
     public function getUsuariosBPM()
     {
-        $resource = 'API/identity/user?p=0&c=50000'; // siempre debe jaber un numero altopor la cant de usr
+        $resource = 'API/identity/user?p=0&c=50000'; // siempre debe haber un numero alto por la cantidad de usr
 
         $url = BONITA_URL . $resource;
 
@@ -449,5 +516,37 @@ class BPM
             'data' => $data,
         );
     }
+
+	/**
+		* Agrega la relacion case_id con empr_id desp de lanzar PROCESOS
+		* @param string case_id
+		* @returnarray con mensaje depandiendo del resultado
+		*/
+		function setCaseEmpresa($caseid){
+
+            $empr_id = empresa();
+
+			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid) >> '.json_encode($caseid));
+			log_message('DEBUG','#TRAZA|BPM|setCaseEmpresa($caseid)  $empr_id>> '.json_encode($empr_id));
+
+           $string_case_id = (string)$caseid;
+
+			$data = array("case_id"=>$string_case_id,"empr_id"=>$empr_id);
+
+			$CI = &get_instance();
+			$CI->load->database();
+			$resp = $CI->db->insert('core.case_empresa', $data);
+
+			if ($resp === FALSE) {
+
+				log_message('ERROR','#TRAZA|BPM|setCaseEmpresa($caseid) >> ERROR No se actualizó la tabla core.case_empresa con el case_id');
+				return $this->msj(false, 'No se guardo el case_id');
+			} else {
+
+				log_message('INFO','#TRAZA|BPM|setCaseEmpresa($caseid) >> Guardado Exitoso');
+				return $this->msj(true, 'Guardado exitosamente');
+			}
+
+		}
 
 }

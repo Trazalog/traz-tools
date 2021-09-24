@@ -30,7 +30,9 @@ class Dash extends CI_Controller {
 	function cambiarDeEmpresa(){
 
 		$empr_id = $this->input->post('empr_id');
-		$resp = $this->session->set_userdata('empr_id', $empr_id);
+		$group = $this->input->post('group');
+		$this->session->set_userdata('empr_id', $empr_id);
+		$this->session->set_userdata('groupBpm', $group);
 		$empresa_nueva = empresa();
 		echo json_encode($empresa_nueva);
 	}

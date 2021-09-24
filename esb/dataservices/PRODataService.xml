@@ -1,0 +1,162 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="PRODataService" transports="http https local">
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="setPedidoTrabajo" useConfig="ToolsDataSource">
+      <sql>insert&#xd;	into&#xd;	pro.pedidos_trabajo (cod_proyecto,&#xd;	descripcion,&#xd;	estado,&#xd;	objetivo,&#xd;	fec_inicio,&#xd;	fec_entrega,&#xd;	usuario_app,&#xd;	umti_id,&#xd;	info_id,&#xd;	proc_id,&#xd;	empr_id,&#xd;	clie_id)&#xd;values(:cod_proyecto,&#xd;	:descripcion,&#xd;	:estado,&#xd;	:objetivo,&#xd;	to_date(:fec_inicio,'YYYY-MM-DD'),&#xd;	to_date(:fec_entrega,'YYYY-MM-DD'),&#xd;	:usuario_app,&#xd;	:umti_id,&#xd;	cast(:info_id as integer),&#xd;	:proc_id,&#xd;	cast(:empr_id as integer),&#xd;	cast(:clie_id as integer))&#xd;returning petr_id;</sql>
+      <result outputType="json">{"respuesta":{"petr_id":"$petr_id"}}</result>
+      <param name="cod_proyecto" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="objetivo" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_entrega" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="umti_id" sqlType="STRING"/>
+      <param name="info_id" sqlType="STRING"/>
+      <param name="proc_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="clie_id" sqlType="STRING"/>
+   </query>
+   <query id="deletePedidoTrabajo" useConfig="ToolsDataSource">
+      <sql>update pro.pedidos_trabajo &#xd;set eliminado = true&#xd;where petr_id = cast(:petr_id as integer)</sql>
+      <param name="petr_id" sqlType="STRING"/>
+   </query>
+   <query id="updatePedidoTrabajoCaseId" useConfig="ToolsDataSource">
+      <sql>update pro.pedidos_trabajo&#xd;set case_id = :case_id&#xd;where petr_id = cast(:petr_id as integer)</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="petr_id" sqlType="STRING"/>
+   </query>
+   <query id="getProcesos" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;nombre&#xd;,descripcion &#xd;,planificar_tareas &#xd;,lanzar_bpm &#xd;,nombre_bpm &#xd;,esin_id &#xd;,form_id &#xd;FROM pro.procesos&#xd;where empr_id =cast(:empr_id as integer)&#xd;and proc_id = :proc_id &#xd;and eliminado =false;</sql>
+      <result outputType="json">{&#xd;  "proceso":&#xd;    { "nombre":"$nombre",&#xd;      "descripcion":"$descripcion",&#xd;      "lanzar_bpm":$lanzar_bpm,&#xd;      "planificar_tareas":$planificar_tareas,&#xd;      "nombre_bpm":"$nombre_bpm",&#xd;      "esin_id":"$esin_id",&#xd;      "form_id":"$form_id"&#xd;&#xd;     }&#xd;}&#xd;</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="proc_id" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTrabajo" useConfig="ToolsDataSource">
+      <sql>select pt.*, C.nombre from pro.pedidos_trabajo pt, core.clientes C&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and pt.clie_id = C.clie_id&#xd;and not eliminado</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="updateEstadoPedido" useConfig="ToolsDataSource">
+      <sql>update pro.pedidos_trabajo set estado = :estado&#xd;where petr_id  = cast(:petr_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="petr_id" sqlType="STRING"/>
+   </query>
+   <query id="getInfoId" useConfig="ToolsDataSource">
+      <sql>SELECT pe.info_id &#xd;FROM pro.pedidos_trabajo pe &#xd;where pe.petr_id = cast(:petr_id as integer)&#xd;and not pe.eliminado</sql>
+      <result outputType="json">{&#xd;  "infos_id": {&#xd;    "info_id": "$info_id",&#xd;  }&#xd;}&#xd;</result>
+      <param name="petr_id" optional="false" sqlType="STRING"/>
+   </query>
+   <query id="getinfopedidotrabajo" useConfig="ToolsDataSource">
+      <sql>SELECT pe.objetivo , pe.cod_proyecto ,pe.descripcion, pe.fec_inicio , pe.fec_entrega ,pe.info_id&#xd;,t.valor unidad_medida&#xd;,t.tabl_id umti_id&#xd;,pe.petr_id&#xd;,t2.tabl_id esta_id&#xd;,t2.descripcion estado&#xd;,c.nombre nom_cliente&#xd;,c.dir_entrega&#xd;,t3.tabl_id tipt_id&#xd;,t3.descripcion tipo&#xd;,pe.case_id&#xd;FROM pro.pedidos_trabajo pe  &#xd;,core.tablas t&#xd;,core.tablas t2&#xd;,core.tablas t3&#xd;,core.clientes c &#xd;where pe.petr_id = cast(:petr_id as integer)&#xd;and pe.umti_id = t.tabl_id&#xd;and pe.estado = t2.tabl_id&#xd;and pe.tipt_id = t3.tabl_id&#xd;and pe.clie_id = c.clie_id &#xd;and not pe.eliminado</sql>
+      <result outputType="json">{&#xd;  "pedidos_info": {&#xd;    "pedido_info": [&#xd;      {&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "info_id":"$info_id",&#xd;        "unidad_medida":"$unidad_medida",&#xd;        "umti_id":"$umti_id",&#xd;        "esta_id":"$esta_id",&#xd;        "estado":"$estado",&#xd;        "nom_cliente":"$nom_cliente",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "tipo":"$tipo",&#xd;        "case_id":"$case_id",&#xd;        "@getPetrForms":"$petr_id-&gt;petr_id"&#xd;   &#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="petr_id" optional="false" sqlType="STRING"/>
+   </query>
+   <query id="getinfopedidotrabajoxcaseid" useConfig="ToolsDataSource">
+      <sql>SELECT pe.objetivo , pe.cod_proyecto ,pe.descripcion, pe.fec_inicio , pe.fec_entrega ,pe.info_id&#xd;,t.valor unidad_medida&#xd;,t.tabl_id umti_id&#xd;,t2.tabl_id esta_id&#xd;,t2.descripcion estado&#xd;,pe.clie_id&#xd;,pe.petr_id&#xd;,t3.descripcion tipo&#xd;,pe.case_id&#xd;FROM pro.pedidos_trabajo pe&#xd;,core.tablas t  &#xd;,core.tablas t2&#xd;,core.tablas t3&#xd;where pe.case_id = :case_id&#xd;and pe.umti_id = t.tabl_id&#xd;and pe.estado = t2.tabl_id&#xd;and pe.tipt_id = t3.tabl_id</sql>
+      <result outputType="json">{&#xd;  "pedidoTrabajo": {&#xd;        "petr_id":"$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "info_id":"$info_id",&#xd;        "unidad_medida":"$unidad_medida",&#xd;        "umti_id":"$umti_id",&#xd;        "estado":"$estado",&#xd;        "esta_id":"$esta_id",&#xd;        "clie_id":"$clie_id",&#xd;        "tipo":"$tipo",&#xd;        "case_id":"$case_id"&#xd;  }&#xd;}</result>
+      <param name="case_id" optional="false" sqlType="STRING"/>
+   </query>
+   <query id="getInfoptrabajo" useConfig="ToolsDataSource">
+      <sql>SELECT pe.objetivo , pe.cod_proyecto ,pe.descripcion, pe.fec_inicio , pe.fec_entrega, c.nombre &#xd;FROM pro.pedidos_trabajo pe, core.clientes c &#xd;where pe.petr_id = cast(:petr_id as integer)&#xd;and pe.clie_id = c.clie_id &#xd;and not pe.eliminado</sql>
+      <result outputType="json">{&#xd;  "pedidos_info": {&#xd;    "pedido_info": [&#xd;      {&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;         "descripcion": "$descripcion",&#xd;         "objetivo": "$objetivo",&#xd;         "fec_inicio": "$fec_inicio",&#xd;         "fec_entrega": "$fec_entrega",&#xd;         "nombre":  "$nombre"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="petr_id" optional="false" sqlType="STRING"/>
+   </query>
+   <query id="setFormTaskPedidoTrabajo" useConfig="ToolsDataSource">
+      <sql>INSERT INTO pro.pedidos_trabajo_forms&#xd;(nom_tarea, task_id, usuario_app, petr_id, info_id)&#xd;select :nom_tarea,:task_id,:usuario_app, pt.petr_id, cast(:info_id as integer)&#xd;from pro.pedidos_trabajo pt&#xd;where pt.case_id = :case_id</sql>
+      <param name="nom_tarea" sqlType="STRING"/>
+      <param name="task_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="info_id" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getPetrForms" useConfig="ToolsDataSource">
+      <sql>select distinct(ptf.info_id)&#xd;,f.nombre nom_form&#xd;,ptf.nom_tarea&#xd;from &#xd;pro.pedidos_trabajo_forms ptf &#xd;,frm.instancias_formularios i &#xd;, frm.formularios f &#xd;where  i.info_id = ptf.info_id &#xd;and f.form_id = i.form_id &#xd;and ptf.petr_id = cast(:petr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "forms":{&#xd;      "form":[&#xd;         {&#xd;            "info_id":"$info_id",&#xd;            "nom_tarea":"$nom_tarea",&#xd;            "nom_form":"$nom_form"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="petr_id" sqlType="STRING"/>
+   </query>
+   <resource method="POST" path="/pedidoTrabajo">
+      <call-query href="setPedidoTrabajo">
+         <with-param name="cod_proyecto" query-param="cod_proyecto"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="objetivo" query-param="objetivo"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_entrega" query-param="fec_entrega"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="umti_id" query-param="umti_id"/>
+         <with-param name="info_id" query-param="info_id"/>
+         <with-param name="proc_id" query-param="proc_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="clie_id" query-param="clie_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/pedidoTrabajo">
+      <call-query href="deletePedidoTrabajo">
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidoTrabajo">
+      <call-query href="updatePedidoTrabajoCaseId">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/proceso/nombre/{proc_id}/empresa/{empr_id}">
+      <call-query href="getProcesos">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="proc_id" query-param="proc_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajo/{empr_id}">
+      <call-query href="getPedidosTrabajo">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidoTrabajo/estado/{petr_id}">
+      <call-query href="updateEstadoPedido">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidoTrabajo/estado">
+      <call-query href="updateEstadoPedido">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/info_id/{petr_id}">
+      <call-query href="getInfoId">
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoinfo/{petr_id}">
+      <call-query href="getinfopedidotrabajo"/>
+   </resource>
+   <resource method="GET" path="/getInfotrabajo/{petr_id}">
+      <call-query href="getInfoptrabajo">
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidoTrabajo/tarea/form">
+      <call-query href="setFormTaskPedidoTrabajo">
+         <with-param name="nom_tarea" query-param="nom_tarea"/>
+         <with-param name="task_id" query-param="task_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="info_id" query-param="info_id"/>
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajo/xcaseid/{case_id}">
+      <call-query href="getinfopedidotrabajoxcaseid">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajo/petr_id/{petr_id}">
+      <call-query href="getinfopedidotrabajo">
+         <with-param name="petr_id" query-param="petr_id"/>
+      </call-query>
+   </resource>
+</data>
+

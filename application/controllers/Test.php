@@ -10,8 +10,127 @@ class Test extends CI_Controller
 
     public function test()
     {
-        $this->load->model(FRM.'Forms');
-        echo form($this->Forms->obtenerXEmpresa('Entrega Materiales', 1));
+        $data = '{
+            "lotes": {
+              "lote": [
+                {
+                  "batch_id": "870",
+                  "level": "4",
+                  "arti_descripcion": "Ajo Clasificado. / VARIEDAD: Chino convencional. / CALIBRE: 7",
+                  "arti_barcode": "PR0015",
+                  "lote_fec_alta": "28-01-2021",
+                  "reci_tipo": "PRODUCTIVO",
+                  "path_lote_id": "LF2801_03 | LF2801_03 | LF2801_02 | LF2801_02",
+                  "etap_nombre": "Finca",
+                  "batch_id_padre": null,
+                  "path": "877-876-871-870",
+                  "lote_estado": "En Curso",
+                  "lote_num_orden_prod": "OLF2801_01",
+                  "reci_nombre": "Chotintintan",
+                  "lote_id": "LF2801_02"
+                },
+                {
+                  "batch_id": "871",
+                  "level": "3",
+                  "arti_descripcion": "Ajo Cosechado. / VARIEDAD: Chino convencional",
+                  "arti_barcode": "PP0001",
+                  "lote_fec_alta": "28-01-2021",
+                  "reci_tipo": "DEPOSITO",
+                  "path_lote_id": "LF2801_03 | LF2801_03 | LF2801_02",
+                  "etap_nombre": "DEPOSITO",
+                  "batch_id_padre": "870",
+                  "path": "877-876-871",
+                  "lote_estado": "En Curso",
+                  "lote_num_orden_prod": "OLF2801_01",
+                  "reci_nombre": "Descarga 2",
+                  "lote_id": "LF2801_02"
+                },
+                {
+                  "batch_id": "875",
+                  "level": "3",
+                  "arti_descripcion": "Ajo Cosechado. / VARIEDAD: Chino convencional",
+                  "arti_barcode": "PP0001",
+                  "lote_fec_alta": "28-01-2021",
+                  "reci_tipo": "PRODUCTIVO",
+                  "path_lote_id": "LF2801_03 | LF2801_03 | LF2801_3",
+                  "etap_nombre": "Finca",
+                  "batch_id_padre": null,
+                  "path": "877-876-875",
+                  "lote_estado": "En Curso",
+                  "lote_num_orden_prod": "OLF2801_3",
+                  "reci_nombre": "N12",
+                  "lote_id": "LF2801_3"
+                },
+                {
+                  "batch_id": "876",
+                  "level": "2",
+                  "arti_descripcion": "Ajo Clasificado. / VARIEDAD: Chino convencional. / CALIBRE: 7",
+                  "arti_barcode": "PR0015",
+                  "lote_fec_alta": "28-01-2021",
+                  "reci_tipo": "PRODUCTIVO",
+                  "path_lote_id": "LF2801_03 | LF2801_03",
+                  "etap_nombre": "Finca",
+                  "batch_id_padre": "871",
+                  "path": "877-876",
+                  "lote_estado": "FINALIZADO",
+                  "lote_num_orden_prod": "OLF2801_03",
+                  "reci_nombre": "N13",
+                  "lote_id": "LF2801_03"
+                },
+                {
+                  "batch_id": "876",
+                  "level": "2",
+                  "arti_descripcion": "Ajo Clasificado. / VARIEDAD: Chino convencional. / CALIBRE: 7",
+                  "arti_barcode": "PR0015",
+                  "lote_fec_alta": "28-01-2021",
+                  "reci_tipo": "PRODUCTIVO",
+                  "path_lote_id": "LF2801_03 | LF2801_03",
+                  "etap_nombre": "Finca",
+                  "batch_id_padre": "875",
+                  "path": "877-876",
+                  "lote_estado": "FINALIZADO",
+                  "lote_num_orden_prod": "OLF2801_03",
+                  "reci_nombre": "N13",
+                  "lote_id": "LF2801_03"
+                },
+                {
+                  "batch_id": "877",
+                  "level": "1",
+                  "arti_descripcion": "Ajo Cosechado. / VARIEDAD: Chino convencional",
+                  "arti_barcode": "PP0001",
+                  "lote_fec_alta": "28-01-2021",
+                  "reci_tipo": "DEPOSITO",
+                  "path_lote_id": "LF2801_03",
+                  "etap_nombre": "DEPOSITO",
+                  "batch_id_padre": "876",
+                  "path": "877",
+                  "lote_estado": "En Curso",
+                  "lote_num_orden_prod": "OLF2801_03",
+                  "reci_nombre": "preSO",
+                  "lote_id": "LF2801_03"
+                }
+              ]
+            }
+          }';
+          $data = json_decode($data)->lotes->lote;
+          $arbol = array();
+
+          foreach ($data as $key => $o) {
+              if($o->batch_id_padre){
+                  #TIENE PADRE Y ESTA METIDO EN EL ARBOL
+                if(isset($arbol[$o->batch_id])){
+                    $arbol[$o->batch_id]  = $arbol[$o->batch_id];
+                }else{
+                    $o->hijos = $arbol;
+                    $arbol = array("$o->batch_id" => $o);
+                }
+              }else{
+                  $arbol[$o->batch_id] = $o;
+              }
+          }
+          $e = reset($arbol);
+          
+          show(nodo($e, $e->hijos));
     }
 
     public function wso()

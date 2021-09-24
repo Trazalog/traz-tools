@@ -157,6 +157,20 @@ if(!function_exists('empresa')){
     }
 }
 
+/**
+* Devuelve empr_id desde group BPM
+* @param 
+* @return 
+*/
+if(!function_exists('empr_id_BPM')){
+	function empr_id_BPM($memb)
+	{
+		$group = $memb->group_id->name;
+		$group = explode("-", $group);
+		return $group[0];
+
+	}
+}
 if(!function_exists('validarSesion')){
 
     function validarSesion(){

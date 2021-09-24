@@ -16,20 +16,20 @@
 
 					<li class="user-body">
 						<?php
-								$empActiva = empresa();
-						?>
-						<?php foreach($memberships as $empr_id => $memb){ ?>
-								<a href="#" class="btnEmpresa" data-ui="<?php echo $empr_id ?>">
-										<?php
-												if( $empActiva == $empr_id )
-														echo '<i class="fa fa-check"></i>';
-												else
-														echo '<i class="notFA"></i>';
-										?>
-										<?php echo $memb ?>
+							$empActiva = empresa();
+							foreach($memberships as $memb){
+								$group_id = empr_id_BPM($memb);
+								echo "<a href='#' class='btnEmpresa' data-json='".json_encode($memb)."'>";
 
-								</a>
-						<?php } ?>
+								if( $empActiva == $group_id )
+										echo '<i class="fa fa-check"></i>';
+								else
+										echo '<i class="notFA"></i>';
+
+								echo $memb->group_id->displayName." - ".$memb->role_id->displayName;
+								echo "</a>";
+							}
+						?>
 
 					</li>
 					<!-- Menu Footer-->
@@ -38,7 +38,7 @@
 								<div class="pull-left">
 										<a href=<?php echo base_url('Login/list_usuarios')?> class="btn-sm btn-primary pull-right">Usuarios <i class="fa fa-user-circle-o"></i></a>
 								</div>
-							<?php } ?>	
+							<?php } ?>
 							<div class="pull-right">
 									<a href=<?php echo base_url('Login/log_out')?> class="btn-sm btn-primary pull-left">Salir <i class="fa fa-fw fa-sign-out"></i></a>
 							</div>
@@ -58,15 +58,21 @@
 <script>
 
 	$(document).on('click', '.btnEmpresa', function() {
+
 			wo();
-			var empr_id = $(this).data('ui');
-			cambiarDeEmpresa(empr_id);
+			var datajson = $(this).attr('data-json');
+			var data = JSON.parse(datajson);
+			var grupo = data.group_id.name;
+			var name = grupo.split('-');
+			var empr_id = name[0];
+			var group = name[1];
+			cambiarDeEmpresa(empr_id, group);
 	});
 
-	function cambiarDeEmpresa(empr_id) {
+	function cambiarDeEmpresa(empr_id, group) {
 
 			$.ajax({
-					data: {empr_id: empr_id},
+					data: {empr_id: empr_id, group:group},
 					dataType: 'json',
 					type: 'POST',
 					url: 'index.php/Dash/cambiarDeEmpresa',

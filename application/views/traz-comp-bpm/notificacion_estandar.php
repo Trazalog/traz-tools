@@ -58,7 +58,7 @@
             <hr>
             <div class="text-right">
                 <button class="btn btn-primary btnNotifEstandar" onclick="cerrar()">Cerrar</button>
-                <button class="btn btn-success btnNotifEstandar" onclick="if(existFunction('cerrarTarea'))cerrarTarea()">Hecho</button>
+                <button class="btn btn-success btnNotifEstandar" onclick="if(existFunction('cerrarTarea'))cerrarTarea()">Hecho DERECHO</button>
             </div>
 
         </div>

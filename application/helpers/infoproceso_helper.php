@@ -11,6 +11,7 @@
 				$ci =& get_instance();
 				$case_id = $tarea->caseId;
 				$processId = $tarea->processId;
+				$nombreTarea = $tarea->nombreTarea;
 				$data['processId']=$processId;
 
 				switch ($processId) {
@@ -46,8 +47,22 @@
 							$aux_cont = $data_cont->contenedores->contenedor;
 						break;
 
-					default:
-						# code...
+
+				default:
+						
+					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|chuka/".$case_id : $case_id >> '.json_encode($case_id));
+					$ci->load->model(YUDIPROC . 'Yudiproctareas');
+				
+					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
+					 		$data_generico =json_decode($aux["data"]);
+					 		$aux = $data_generico->pedidoTrabajo;
+
+					
+							 $clie_id = $aux->clie_id;
+
+					$aux_clie = $ci->rest->callAPI("GET",REST_CORE."/cliente/".$clie_id);
+					$aux_clie =json_decode($aux_clie["data"]);
+
 						break;
 				}
 
@@ -60,6 +75,12 @@
 									Proceso <?php
 														if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
 															echo ' - Orden Nº: '.$aux->ortr_id;
+														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
+															echo 'Reparación de Neumáticos';
+														}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
+															echo 'Control de Ingreso de Camiones: ' . $nombreTarea;
+														}else{
+															echo 'Proceso Estandar';
 														}
 
 													?>
@@ -236,10 +257,271 @@
 													<tbody>
 											</table>			
 								<?php	
-											break;		
+											break;
+
+										case BPM_PROCESS_ID_INGRESO_CAMIONES:
+
+											$fec = explode("+" , $aux->fec_inicio);
+											$fecha = date("d-m-Y",strtotime($fec[0]));
+								?>			
+											<!--_____________ Cabecera SICPOA _____________-->
+											<div class="col-md-12">
+												<h3>Datos ingreso por barrera:</h3>
+												<hr>
+												<!--_____________ Proceso _____________-->
+												<div class="col-md-12">
+													<div class="form-group">
+														<label for="descripcion" name="">Proceso:</label>
+														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ CASE ID _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="descripcion" name="">N° de inspección:</label>
+														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->case_id; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ Fecha Inicio _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="fecha_inicio" name="">Fecha inicio:</label>
+														<input type="text" class="form-control" id="fecha_inicio" value="<?php echo $fecha; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ PETR ID _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="descripcion" name="">Pedido de trabajo:</label>
+														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->petr_id; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+											</div>
+											<div class="col-md-12">
+												<h3>Datos inspección:</h3>
+												<hr>
+												<!--_____________ Chofer _____________-->
+												<div class="col-md-6">
+													<ul>
+														<li><label for="choferC" name="">Chofer:&nbsp;</label><?php echo $tarea->inspeccion->chofer ? $tarea->inspeccion->chofer : ""; ?></li>
+													</ul>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ DNI CHOFER _____________-->
+												<div class="col-md-6">
+													<ul>
+														<li><label for="chof_idC" name="">Documento:&nbsp;</label><?php echo $tarea->inspeccion->chof_id ? $tarea->inspeccion->chof_id : ""; ?></li>
+													</ul>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ Patente tractor _____________-->
+												<div class="col-md-6">
+													<ul>
+														<li><label for="patente_tractorC" name="">Patente tractor:&nbsp;</label><?php echo $tarea->inspeccion->patente_tractor ? $tarea->inspeccion->patente_tractor : ""; ?></li>
+													</ul>
+												</div>
+												<!--_____________________________________________-->
+												<!--_________________ N° SENASA _________________-->
+												<div class="col-md-6">
+													<ul>
+														<li><label for="nro_senasaC" name="">N° SENASA:&nbsp;</label><?php echo $tarea->inspeccion->nro_senasa ? $tarea->inspeccion->nro_senasa : ""; ?></li>
+													</ul>
+												</div>
+												<!--______________________________________________-->
+												<!--__________________ PERMISOS __________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Permisos:</h4>
+													<ul>
+														<?php 
+														if(!empty($tarea->inspeccion->permisos_transito->permiso_transito)){
+															foreach ($tarea->inspeccion->permisos_transito->permiso_transito as $key) {
+																echo "<li><b>Id</b>:  $key->perm_id   ---   <b>Tipo</b>:  $key->tipo   ---   <b>Emisión</b>:  $key->lugar_emision   ---   <b>Fecha</b>:  $key->fecha_hora_salida </li>";
+															}
+														}
+														?>
+													</ul>
+												</div>
+												<!--______________________________________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Empresas:</h4>
+													<ul>
+													<?php 
+														if(!empty($tarea->inspeccion->empresas->empresa)){
+															foreach ($tarea->inspeccion->empresas->empresa as $key) {
+																echo "<li><b>Razón Social</b>:  $key->razon_social   ---   <b>Rol</b>:  $key->rol".($key->calle ? "   ---   <b>Calle</b>:  ".$key->calle : "" )."".($key->altura ? "   ---   <b>Altura</b>:  ".$key->altura : "")." </li>";	
+															}
+														}
+													?>
+													</ul>
+												</div>
+												<!--______________________________________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Térmicos:</h4>
+													<ul>
+														<?php 
+															if(!empty($tarea->inspeccion->termicos->termico)){
+																foreach ($tarea->inspeccion->termicos->termico as $key) {
+																	echo "<li><b>Patente</b>:  $key->patente   ---   <b>T°</b>:  $key->temperatura   ---   <b>Precintos</b>:  $key->precintos</li>";
+																}
+															}
+														?>
+													</ul>
+												</div>
+												<!--______________________________________________-->
+											</div><!-- fin col-md --> 
+											<!--_____________FIN CABECERA SICPOA_____________-->
+								<?php			
+											break;	
+											
+						/*
+						DEFAULT DE CABECERA
+						* todo lo que pasa x aka debe ser standar de tools
+						*/
+							default :
+							$data =json_decode($aux);
+
+									?>
+									<div class="col-md-12">
+									<p>Datos del Cliente:</p>
+									<hr>
+										<div class="col-md-6">
+											<div class="form-group">
+													<label for="cliente" name="">Cliente:</label>
+													<input type="text" class="form-control habilitar" id="cliente" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
+											</div>
+										</div>
+
+
+										<div class="col-md-6">
+											<div class="form-group">
+													<label for="dir_entrega" name="">Dirección de Entrega:</label>
+													<input type="text" class="form-control habilitar" id="dir_entrega" value="<?php echo $aux_clie->cliente->dir_entrega; ?>"  readonly>
+											</div>
+										</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-12">
+									<br>
+									<p>Datos del Proyecto:</p>
+									<hr>
+									<div class="col-md-12">
+											<div class="form-group">
+													<label for="tipo_proyecto" name="">Tipo de Proyecto:</label>
+													<input type="text" class="form-control habilitar" id="tipo_proyecto" value="<?php echo $aux->tipo; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="codigo_proyecto" name="">Codigo Proyecto:</label>
+													<input type="text" class="form-control habilitar" id="codigo_proyecto" value="<?php echo $aux->cod_proyecto; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="descripcion" name=""> Descripcion:</label>
+													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+								</div>
+
+
+								<div class="col-md-12">
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="fecha_inicio" name="">Fecha Inicio:</label>
+													<input type="text" class="form-control habilitar" id="fec_inicio" value="<?php
+															
+
+																								
+     											$fecha = date("d-m-Y",strtotime($data->fec_inicio));
+
 										
-										default:
-											# code...
+													echo $fecha ;
+													
+													?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
+													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
+																									
+														$fecha = date("d-m-Y",$data->fec_entrega);
+														
+														echo $fecha ;
+														
+														?>"  readonly>
+											</div>
+									</div>
+									<!--_____________________________________________-->
+								</div>
+
+
+								<div class="col-md-12">
+
+									<div class="col-md-12">
+											<div class="form-group">
+													<label for="objetivo" name="">Objetivo:</label>
+													<input type="text" class="form-control habilitar" id="objetivo" value="<?php echo $aux->objetivo; ?>"  readonly>
+											</div>
+									</div>
+								
+									<!--_____________________________________________-->
+									<div class="col-md-12">
+									<?php
+									
+									if ($processId == BPM_PROCESS_ID_REPARACION_NEUMATICOS )
+										{
+											$info_id = $aux->info_id;
+
+											$formulario = getForm($info_id);
+									
+										}
+
+										?>
+									<div id="form-dinamico-cabecera" data-frm-id="<?php echo "frm-".$info_id;?>">
+									<?php
+											
+											echo $formulario;
+
+									?>
+										<script>
+										var formulario = $('#form-dinamico-cabecera').attr('data-frm-id');
+										
+										
+										$('#form-dinamico-cabecera button.frm-save').addClass('oculto');
+										
+								
+										$('#form-dinamico-cabecera').find(':input').each(function() {
+										var elemento= this;
+										console.log("elemento.id="+ elemento.id); 
+
+										$(elemento).attr('readonly', true); 
+
+										$(elemento).attr('disabled',true);
+												});
+										</script>
+									
+									</div>
+
+								</div>
+								
+<!--_____________________________________________-->
+
+									<?php			
 											break;
 									}
 

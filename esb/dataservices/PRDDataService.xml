@@ -95,8 +95,9 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="getEtapa" useConfig="ToolsDataSource">
-      <sql>select &#xd;   etap_id, nombre, nom_recipiente, fec_alta, usuario, proc_id , link&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and&#xd;etap_id &lt; 1000&#xd;order by orden</sql>
+      <sql>select &#xd;   etap_id, nombre, nom_recipiente, fec_alta, usuario, proc_id , link&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and&#xd;etap_id &lt; 1000&#xd;and prd.etapas.empr_id = cast(:empr_id as integer)&#xd;order by orden</sql>
       <result outputType="json">{&#xd;    "etapas":&#xd;      {"etapa":&#xd;        [&#xd;          {&#xd;            "id": "$etap_id",&#xd;            "titulo":"$nombre",&#xd;            "nom_recipiente": "$nom_recipiente",&#xd;            "fec_alta": "$fec_alta",&#xd;            "usuario": "$usuario",&#xd;            "proc_id": "$proc_id",&#xd;            "link": "$link"           &#xd;          }&#xd;        ]&#xd;      }&#xd;  }</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getArticulos" useConfig="ToolsDataSource">
       <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = 1&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
@@ -639,8 +640,10 @@
          <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/etapas">
-      <call-query href="getEtapa"/>
+   <resource method="GET" path="/etapas/{empr_id}">
+      <call-query href="getEtapa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
    </resource>
    <resource method="GET" path="/articulos">
       <call-query href="getArticulos"/>

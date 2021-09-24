@@ -92,29 +92,41 @@ define('FILES', 'files/');
 define('LOGIN', true);
 define('DNATO', 'http://localhost/traz-comp-dnato/');
 
+define('TOOLS_ADMIN_USER','admin@gmail.com');
 
 define('PORT', ':3000/');
 
 define('PRD', 'traz-prod-trazasoft/');
 
+#COMPONENTE TST
 define('TST', 'traz-comp-tareasestandar/');
+define('TAREAS_DEFAULT_PROC', 'TST001');
 
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
 
-define('BONITA_URL', 'http://10.142.0.7:8080/bonita/');
+define('BONITA_URL', 'http://10.142.0.13:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 
 define('BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS', '6866538875650512673');
 
-define('BPM_PROCESS_ID_PEDIDO_CONTENEDORES', '4914088989692457565');
+define('BPM_PROCESS_ID_PEDIDO_CONTENEDORES', '7158449738201115927');
 
 define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 
 define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
-define('BPM_PROCESS_ID_TAREA_GENERICA', '7148440093058377088');
+define('BPM_PROCESS_ID_TAREA_GENERICA', '6236605840529875888');
+
+#YUDICA REPARACION_NEUMATICOS
+define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
+
+#SICPOA Control de Ingreso de Camiones
+define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5841373952148500437');
+
+#YUDICA REPARACION_NEUMATICOS
+define('YUDIPROC', 'yudi-tools-almproc/');
 
 #COMPONENTE PAÑOL
 define('PAN', 'traz-comp-pan/');
@@ -123,16 +135,24 @@ define('PAN', 'traz-comp-pan/');
 define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
+#COMPONENTE SICPOA
+define('SICP', 'ddpe-tools-pro/');
+
+#COMPONENTE SICPOA
+define('COD', 'traz-comp-codigos/');
+
 define('BPM_PROCESS', json_encode(array(
+    BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
-    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas']
+    BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas'],
+    BPM_PROCESS_ID_INGRESO_CAMIONES  => ['nombre' => 'SICPOA', 'color' => '#00A65A', 'proyecto'=>SICP, 'model'=>'Sicpoatareas']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
 define('BPM_ADMIN_PASS', '123traza');
-define('BPM_USER_PASS', '123');
+define('BPM_USER_PASS', 'bpm');
 
 #ERRORES DE BONITA
 define('ASP_100', 'Fallo Conexión BPM');
@@ -159,8 +179,8 @@ define('MNOM', 'Tools');
 define('NOM', 'Trazalog Tools');
 
 //Vista por Defecto
-define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
-#define('DEF_VIEW',BPM.'Proceso');
+#define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
+define('DEF_VIEW',BPM.'Proceso');
 
 
 /*
@@ -171,7 +191,7 @@ define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
 | Variables Locales
 |
 */
-define('HOST', 'http://10.142.0.7:8280');
+define('HOST', 'http://10.142.0.13:8280');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
@@ -188,9 +208,11 @@ define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_PAN', HOST.'/services/PANDataService');
+define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 
 #TRAZ-COMP-CALENDAR
 define('DURACION_JORNADA', '08:00');
-define('HORA_FIN_JORNADA', '19:00');
+define('HORA_FIN_JORNADA', '18:00');
+define('HORA_INICIO_JORNADA','10:00');
 
 
