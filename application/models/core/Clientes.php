@@ -34,7 +34,7 @@ class Clientes extends CI_Model {
   */
   function Listar_Clientes(){
     $empre_id = empresa();
-		$aux = $this->rest->callAPI("GET",REST_CORE."/clientes/porEmpresa/1/porEstado/ACTIVO",$empre_id);
+		$aux = $this->rest->callAPI("GET",REST_CORE."/clientes/porEmpresa/$empre_id/porEstado/ACTIVO");
 		$aux = json_decode($aux["data"]);
 		$clientes = $aux->cliente->clientes;
 		return $clientes;
