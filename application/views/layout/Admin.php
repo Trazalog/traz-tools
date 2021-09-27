@@ -22,6 +22,8 @@
 
     <!-- css sweetalert -->
     <link rel="stylesheet" href="lib/sweetalert/sweetalert.css">
+    <!-- Estilos case image + vista previa -->
+    <link rel="stylesheet" href="lib/imageForms/styleImgForm.css">
     
     <!-- AdminLTE Skins. Choose a skin from the css/skins
        folder instead of downloading all of them to reduce the load. -->
@@ -72,6 +74,10 @@
     <style>
         .mr-2{
             margin-right: 5px;
+        }
+
+        .oculto {
+            display: none;
         }
     </style>
 

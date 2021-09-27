@@ -1,0 +1,382 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="PANDataService" transports="http https local">
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="panolSet" useConfig="ToolsDataSource">
+      <sql>insert into pan.panol(descripcion, usuario_app, empr_id) &#xd;values(:descripcion, :usuario_app, CAST(:empr_id AS INTEGER)) returning pano_id</sql>
+      <result outputType="json">{ &#xd;  "respuesta":{&#xd;     "pano_id": "$pano_id"&#xd;   }&#xd;}&#xd;     </result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="panolGet" useConfig="ToolsDataSource">
+      <sql>select pano_id, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where empr_id = CAST(:empr_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="panolUpdate" useConfig="ToolsDataSource">
+      <sql>update pan.panol set  descripcion = :descripcion, loca_id = :loca_id, prov_id = :prov_id, pais_id = :pais_id, lat = :lat, lng = :lng&#xd;  where pano_id = CAST(:pano_id AS INTEGER)</sql>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="loca_id" sqlType="STRING"/>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="pais_id" sqlType="STRING"/>
+      <param name="lat" sqlType="STRING"/>
+      <param name="lng" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="panolDelete" useConfig="ToolsDataSource">
+      <sql>update pan.panol set eliminado = CAST(:eliminado AS BOOLEAN)&#xd;  where pano_id = CAST(:pano_id as INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="herramientasSet" useConfig="ToolsDataSource">
+      <sql>insert into pan.herramientas(codigo, marca, modelo, tipo, descripcion, pano_id, usuario_app, empr_id)&#xd;  values(:codigo, :marca, :modelo, :tipo, :descripcion, CAST(:pano_id AS INTEGER), :usuario_app, cast(:empr_id as INTEGER))&#xd;  returning herr_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;     "herr_id": "$herr_id"&#xd;  }&#xd;}</result>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="marca" sqlType="STRING"/>
+      <param name="modelo" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="herramientasGet" useConfig="ToolsDataSource">
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion, H.pano_id, H.estado,  P.descripcion as pan_descrip&#xd;  from pan.herramientas H, core.tablas T, pan.panol P&#xd;  where H.empr_id = cast (:empr_id as INTEGER)&#xd;  and H.marca = T.tabl_id&#xd;  and H.pano_id = P.pano_id&#xd;  and H.eliminado = false</sql>
+      <result outputType="json">{&#xd;  "herramientas":{&#xd;    "herramienta":[&#xd;      {&#xd;        "herr_id": "$herr_id",&#xd;        "codigo": "$codigo",&#xd;        "marca": "$marca",&#xd;        "marca_id": "$marca_id",&#xd;        "modelo": "$modelo",&#xd;        "tipo": "$tipo",&#xd;        "descripcion": "$descripcion",&#xd;        "pano_id": "$pano_id",&#xd;        "estado": "$estado",&#xd;        "pan_descrip": "$pan_descrip"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getTablas" useConfig="ToolsDataSource">
+      <sql>select tabl_id, tabla, valor from core.tablas&#xd;where tabla = :tabla</sql>
+      <result outputType="json">{&#xd;  "tablas":{&#xd;     "tabla":[&#xd;        {       &#xd;          "tabl_id": "$tabl_id", &#xd;          "tabla": "$tabla", &#xd;          "valor": "$valor"&#xd;        }&#xd;     ]&#xd;} &#xd;}</result>
+      <param name="tabla" sqlType="STRING"/>
+   </query>
+   <query id="herramientasDelete" useConfig="ToolsDataSource">
+      <sql>update pan.herramientas &#xd;set eliminado = true&#xd;where herr_id = CAST(:herr_id AS INTEGER)</sql>
+      <param name="herr_id" sqlType="STRING"/>
+   </query>
+   <query id="herramientasUpdate" useConfig="ToolsDataSource">
+      <sql>update &#xd;pan.herramientas &#xd;  set codigo = :codigo, marca = :marca, modelo = :modelo, tipo = :tipo, descripcion = :descripcion, usuario_app = :usuario_app, empr_id = CAST(:empr_id as INTEGER)&#xd;where &#xd;  herr_id = CAST(:herr_id AS INTEGER)</sql>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="marca" sqlType="STRING"/>
+      <param name="modelo" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="salidaHerramientasSet" useConfig="ToolsDataSource">
+      <sql>insert into pan.salida_panol (usuario_app, destino, empr_id, pano_id, observaciones, comprobante, responsable)&#xd;  values(:usuario_app, :destino, cast(:empr_id as INTEGER), CAST(:pano_id as INTEGER), :observaciones, :comprobante, :responsable) returning sapa_id</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;      "sapa_id": "$sapa_id"&#xd;    }&#xd;  }</result>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="destino" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="comprobante" sqlType="STRING"/>
+      <param name="responsable" sqlType="STRING"/>
+   </query>
+   <query id="salidaHerramientasDetaSet" useConfig="ToolsDataSource">
+      <sql>insert into pan.deta_salida_panol (sapa_id, herr_id)&#xd;  values(CAST(:sapa_id AS INTEGER), CAST(:herr_id AS INTEGER))</sql>
+      <param name="sapa_id" sqlType="STRING"/>
+      <param name="herr_id" sqlType="STRING"/>
+   </query>
+   <query id="salidasPanol" useConfig="ToolsDataSource">
+      <sql>select SP.destino, SP.observaciones, SP.comprobante, SP.responsable&#xd;  , SP.fec_alta, H.codigo, T.valor as marca&#xd;  from pan.salida_panol SP, pan.deta_salida_panol DSP, pan.herramientas H, core.tablas T&#xd;  where&#xd;  sp.sapa_id = DSP.sapa_id&#xd;  and DSP.herr_id = H.herr_id&#xd;  and T.tabl_id = H.marca&#xd;  and SP.empr_id = cast (:empr_id as integer)</sql>
+      <result outputType="json"> {&#xd;    "salidas":{&#xd;        "salida":          [&#xd;            {&#xd;              "destino": "$destino",&#xd;              "observaciones": "$observaciones",&#xd;              "comprobante": "$comprobante",&#xd;              "responsable": "$responsable",&#xd;              "fec_alta": "$fec_alta",&#xd;              "codigo": "$codigo",&#xd;              "marca": "$marca"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="herramientasSetEstado" useConfig="ToolsDataSource">
+      <sql>update pan.herramientas &#xd;set estado = :estado&#xd;where herr_id = CAST(:herr_id as INTEGER)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="herr_id" sqlType="STRING"/>
+   </query>
+   <query id="entradasPanol" useConfig="ToolsDataSource">
+      <sql>select EP.destino, EP.observaciones, EP.comprobante, EP.responsable, EP.fec_alta, H.codigo, T.valor as marca&#xd;  from pan.entrada_panol EP, pan.deta_entrada_panol DEP, pan.herramientas H, core.tablas T&#xd;  where EP.enpa_id = DEP.enpa_id&#xd;  and DEP.herr_id = H.herr_id&#xd;  and T.tabl_id = H.marca&#xd;  and EP.empr_id = cast (:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "entradas":{&#xd;        "entrada":          [&#xd;            {&#xd;              "destino": "$destino",&#xd;              "observaciones": "$observaciones",&#xd;              "comprobante": "$comprobante",&#xd;              "responsable": "$responsable",&#xd;              "fec_alta": "$fec_alta",&#xd;              "codigo": "$codigo",&#xd;              "marca": "$marca"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="entradaHerramientasSet" useConfig="ToolsDataSource">
+      <sql>insert into pan.entrada_panol (usuario_app, destino, empr_id, pano_id, observaciones, comprobante, responsable)&#xd;  values(:usuario_app, :destino, cast(:empr_id as INTEGER), CAST(:pano_id as INTEGER), :observaciones, :comprobante, :responsable) returning enpa_id</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;      "enpa_id": "$enpa_id"&#xd;    }&#xd;  }</result>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="destino" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="comprobante" sqlType="STRING"/>
+      <param name="responsable" sqlType="STRING"/>
+   </query>
+   <query id="entradaHerramientasDetaSet" useConfig="ToolsDataSource">
+      <sql>insert into pan.deta_entrada_panol (enpa_id, herr_id)&#xd;  values(CAST(:enpa_id AS INTEGER), CAST(:herr_id AS INTEGER))</sql>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="enpa_id" sqlType="STRING"/>
+   </query>
+   <query id="equiposGet" useConfig="ToolsDataSource">
+      <sql>select E.equi_id, E.descripcion, E.marca, E.codigo&#xd;  from core.equipos E&#xd;  where E.empr_id = CAST(:empr_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "equipos":{&#xd;      "equipo":[&#xd;        {&#xd;          "equi_id": "$equi_id",&#xd;          "descripcion": "$descripcion",&#xd;          "marca": "$marca",&#xd;          "codigo": "$codigo"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="componentesGetPorEquipo" useConfig="ToolsDataSource">
+      <sql>select  C.comp_id, C.descripcion&#xd;  from core.componentes C, core.equipos E, core.componente_equipo CE&#xd;  where C.comp_id = CE.comp_id&#xd;  and E.equi_id = CE.equi_id&#xd;  and E.equi_id = CAST(:equi_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "componentes":{&#xd;      "componente":[&#xd;        {&#xd;          "comp_id": "$comp_id",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="estanteriasGetPorPanol" useConfig="ToolsDataSource">
+      <sql>select E.estan_id, E.descripcion, E.codigo, E.filas&#xd;  from pan.estanteria E&#xd;  where E.pano_id = CAST(:pano_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "estanterias":{&#xd;      "estanteria":[&#xd;        {&#xd;          "estan_id": "$estan_id",&#xd;          "descripcion": "$descripcion",&#xd;          "codigo": "$codigo",&#xd;          "filas": "$filas"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="estanteriasSetPorPanol" useConfig="ToolsDataSource">
+      <sql>insert into pan.estanteria (descripcion, codigo, filas, usuario_app, empr_id, pano_id)&#xd;  values(:descripcion, :codigo, CAST(:filas as INTEGER), :usuario_app, CAST(:empr_id as INTEGER), CAST(:pano_id as INTEGER))</sql>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="filas" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="compEquipoIdGet" useConfig="ToolsDataSource">
+      <sql>select coeq_id&#xd;  from core.componente_equipo CE&#xd;  where CE.equi_id = Cast(:equi_id as INTEGER)&#xd;  and CE.comp_id = CAST(:comp_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "respuesta": {&#xd;      "coeq_id": "$coeq_id"&#xd;    }&#xd;  }</result>
+      <param name="equi_id" sqlType="STRING"/>
+      <param name="comp_id" sqlType="STRING"/>
+   </query>
+   <query id="trazacompRecibe" useConfig="ToolsDataSource">
+      <sql>insert into pan.trazacomponente (coeq_id,estan_id,fila,ultimo_recibe,ultimo_entrega,estado,observaciones,usuario_app,empr_id, pano_id) values(CAST(:coeq_id AS INTEGER),CAST(:estan_id AS INTEGER), CAST(:fila AS INTEGER), :ultimo_recibe, :ultimo_entrega, :estado, :observaciones, :usuario_app, CAST(:empr_id AS INTEGER),CAST(:pano_id AS INTEGER))</sql>
+      <param name="estan_id" sqlType="STRING"/>
+      <param name="fila" sqlType="STRING"/>
+      <param name="ultimo_recibe" sqlType="STRING"/>
+      <param name="ultimo_entrega" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="coeq_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="componenteAEntregarPorPanol" useConfig="ToolsDataSource">
+      <sql>select TC.coeq_id, C.descripcion as compo_desc, E.descripcion as equipo_desc, E.codigo, E.marca&#xd;  from pan.trazacomponente TC, core.componente_equipo CE, core.componentes C, core.equipos E&#xd;  where TC.coeq_id = CE.coeq_id&#xd;  and CE.comp_id = C.comp_id&#xd;  and CE.equi_id = E.equi_id&#xd;  and TC.estado != 'TRANSITO'&#xd;  and TC.pano_id = CAST(:pano_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "componentes":{&#xd;      "componente":[&#xd;        {&#xd;          "coeq_id": "$coeq_id",&#xd;          "compo_desc": "$compo_desc",&#xd;          "equipo_desc": "$equipo_desc",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="trazacompEntrega" useConfig="ToolsDataSource">
+      <sql>insert into pan.trazacomponente (coeq_id,ultimo_recibe,ultimo_entrega,estado,observaciones,usuario_app,empr_id, pano_id) values(CAST(:coeq_id AS INTEGER), :ultimo_recibe, :ultimo_entrega, :estado, :observaciones, :usuario_app, CAST(:empr_id AS INTEGER),CAST(:pano_id AS INTEGER))</sql>
+      <param name="coeq_id" sqlType="STRING"/>
+      <param name="ultimo_recibe" sqlType="STRING"/>
+      <param name="ultimo_entrega" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="herramientasPanolGetPorEstado" useConfig="ToolsDataSource">
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;  from pan.herramientas H, core.tablas T&#xd;  where H.marca = T.tabl_id&#xd;  and H.pano_id = cast(:pano_id as integer)&#xd;  and H.eliminado = false&#xd;  and H.estado = :estado</sql>
+      <result outputType="json">{&#xd;    "herramientas":{&#xd;      "herramienta":[&#xd;        {&#xd;          "herr_id": "$herr_id",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca",&#xd;          "marca_id": "$marca_id",&#xd;          "modelo": "$modelo",&#xd;          "tipo": "$tipo",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="pano_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+   </query>
+   <query id="establecimientoPorEmpresa" useConfig="ToolsDataSource">
+      <sql>select E.esta_id, E.nombre&#xd;  from prd.establecimientos E&#xd;  where E.empr_id = CAST(:empr_id as INTEGER)</sql>
+      <result outputType="json">{&#xd; "establecimientos":{&#xd;   "establecimiento":[&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="panolGetPorEstablecimiento" useConfig="ToolsDataSource">
+      <sql>select pano_id, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where esta_id = CAST(:esta_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <resource method="POST" path="/panol">
+      <call-query href="panolSet">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/panol">
+      <call-query href="panolUpdate">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="loca_id" query-param="loca_id"/>
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="pais_id" query-param="pais_id"/>
+         <with-param name="lat" query-param="lat"/>
+         <with-param name="lng" query-param="lng"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/panol/estado">
+      <call-query href="panolDelete">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/herramientas">
+      <call-query href="herramientasSet">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="marca" query-param="marca"/>
+         <with-param name="modelo" query-param="modelo"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/herramientas/empresa/{empr_id}">
+      <call-query href="herramientasGet">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/tablas/{tabla}">
+      <call-query href="getTablas">
+         <with-param name="tabla" query-param="tabla"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/herramientas/estado">
+      <call-query href="herramientasSetEstado">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="herr_id" query-param="herr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/herramientas">
+      <call-query href="herramientasUpdate">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="marca" query-param="marca"/>
+         <with-param name="modelo" query-param="modelo"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="panol/salida/herramientas">
+      <call-query href="salidaHerramientasSet">
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="destino" query-param="destino"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="comprobante" query-param="comprobante"/>
+         <with-param name="responsable" query-param="responsable"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="panol/salida/herramientas/detalle">
+      <call-query href="salidaHerramientasDetaSet">
+         <with-param name="sapa_id" query-param="sapa_id"/>
+         <with-param name="herr_id" query-param="herr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/salidas/empresa/{empr_id}">
+      <call-query href="salidasPanol">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/herramientas/borrar">
+      <call-query href="herramientasDelete">
+         <with-param name="herr_id" query-param="herr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/entradas/empresa/{empr_id}">
+      <call-query href="entradasPanol">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="panol/entrada/herramientas">
+      <call-query href="entradaHerramientasSet">
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="destino" query-param="destino"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="comprobante" query-param="comprobante"/>
+         <with-param name="responsable" query-param="responsable"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/panol/entrada/herramientas/detalle">
+      <call-query href="entradaHerramientasDetaSet">
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="enpa_id" query-param="enpa_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="equipos/{empr_id}">
+      <call-query href="equiposGet">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/componentes/equipo/{equi_id}">
+      <call-query href="componentesGetPorEquipo">
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="estanterias/panol/{pano_id}">
+      <call-query href="estanteriasGetPorPanol">
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="estanterias">
+      <call-query href="estanteriasSetPorPanol">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="filas" query-param="filas"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/componente/{comp_id}/equipo/{equi_id}">
+      <call-query href="compEquipoIdGet">
+         <with-param name="equi_id" query-param="equi_id"/>
+         <with-param name="comp_id" query-param="comp_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/traza/componente/equipo/recepcion">
+      <call-query href="trazacompRecibe">
+         <with-param name="estan_id" query-param="estan_id"/>
+         <with-param name="fila" query-param="fila"/>
+         <with-param name="ultimo_recibe" query-param="ultimo_recibe"/>
+         <with-param name="ultimo_entrega" query-param="ultimo_entrega"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="coeq_id" query-param="coeq_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/componentes/panol/{pano_id}">
+      <call-query href="componenteAEntregarPorPanol">
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/traza/componente/equipo/entrega">
+      <call-query href="trazacompEntrega">
+         <with-param name="coeq_id" query-param="coeq_id"/>
+         <with-param name="ultimo_recibe" query-param="ultimo_recibe"/>
+         <with-param name="ultimo_entrega" query-param="ultimo_entrega"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/herramientas/panol/{pano_id}/estado/{estado}">
+      <call-query href="herramientasPanolGetPorEstado">
+         <with-param name="pano_id" query-param="pano_id"/>
+         <with-param name="estado" query-param="estado"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos/empresa/{empr_id}">
+      <call-query href="establecimientoPorEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/establecimiento/{esta_id}">
+      <call-query href="panolGetPorEstablecimiento">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+</data>

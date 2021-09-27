@@ -1,0 +1,14 @@
+ 
+
+    @media print {
+        @page {
+                 /* Retrato */
+          size: portrait; 
+     
+                 /* Horizontal */
+          size: landscape;
+     
+                 /* Margen superior derecha inferior izquierda */
+          margin: 1cm 2cm 1cm 2cm;
+        }
+      }
