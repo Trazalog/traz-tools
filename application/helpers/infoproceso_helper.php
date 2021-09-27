@@ -22,8 +22,8 @@
 							$data['info'] = $ci->Notapedidos->getXCaseId($tarea->caseId);
 							
 							
-							// $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
-							// $aux =json_decode($aux["data"]);
+						//	 $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
+						//	 $aux =json_decode($data['info']);
 						break;
 
 					case BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS:
