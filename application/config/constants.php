@@ -174,7 +174,7 @@ define('ASP_115', 'Error al Leer Variable');
 
 
 
-//Nombre de Prouyecto
+//Nombre de Proyecto
 define('MNOM', 'Tools');
 define('NOM', 'Trazalog Tools');
 
@@ -182,6 +182,8 @@ define('NOM', 'Trazalog Tools');
 #define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
 define('DEF_VIEW',BPM.'Proceso');
 
+//Proceso pedido trabajo standar
+define('PRO_STD', 'PROCESO-STANDAR');
 
 /*
 |--------------------------------------------------------------------------
