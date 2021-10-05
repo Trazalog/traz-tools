@@ -206,7 +206,7 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label for="pais">País:</label>
-                            <select onchange="seleccionPais()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais_edit">
+                            <select onchange="seleccionPaisEditar()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais_edit">
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($listarPaises as $pais) {
@@ -221,7 +221,7 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label for="estado">Estado:</label>
-                            <select onchange="seleccionEstado()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado_edit">
+                            <select onchange="seleccionEstadoEditar()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado_edit">
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
@@ -262,31 +262,6 @@
 </div>
 <!---///////--- FIN MODAL EDICION ESTABLECIMIENTO ---///////--->
 
-<!-- MODAL AVISO ELIMINAR ESTABLECIMIENTO -->
-<div class="modal fade" id="modalEliminarEstablecimiento">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header bg-blue">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Cliente</h4>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-xs-12">
-              <h4>¿Desea realmente eliminar el Establecimiento?</h4>
-              <input type="text" id="id_esta" class="hidden">
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="eliminarEstablecimiento()">Aceptar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-<!-- /  MODAL AVISO ELIMINAR ESTABLECIMIENTO -->
-
 <script>
     // carga tabla de establecimientos
     $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
@@ -319,11 +294,15 @@
     // carga Estados dependiendo del pais seleccionado
     function seleccionPais() {
         var id_pais = $("#pais option:selected").text();
+        $("#estado_edit").prop('disabled', false);
+        $("#localidad_edit").prop('disabled', false);
+        $("#estado_edit").empty();
+        $("#localidad_edit").empty();
         wo();
         $.ajax({
             type: 'GET',
             dataType: "json",
-            data: {id_pais},
+            data: {id_pais: id_pais},
             url: 'index.php/core/Establecimiento/getEstados',
             success: function(rsp) {
                 // const limpiar = () => {
@@ -334,7 +313,7 @@
                 $('#estado').empty();
                 $('#localidad').empty();
                 if (rsp != null) {
-                    habilitarEdicion();
+                    // habilitarEdicion();
                     var datos = "<option value='' disabled selected>-Seleccione opción-</option>";
                     $('#localidad').html(datos);
                     for (let i = 0; i < rsp.length; i++) {
@@ -351,6 +330,41 @@
                     // $('#pais').val($('#pais > option:first').val());
                     // $('#estado').val($('#estado > option:first').val());
                     // $('#localidad').val($('#localidad > option:first').val());                    
+                    alertify.error("El País no contiene estados");
+                }    
+                wc();
+            },
+            error: function(data) {
+                alert('Error');
+            }
+        });
+    }
+
+    // carga Estados dependiendo del pais seleccionado
+    function seleccionPaisEditar() {
+        var id_pais = $("#pais_edit option:selected").text();
+        $("#estado_edit").prop('disabled', false);
+        $("#estado_edit").empty();
+        $("#localidad_edit").empty();
+        wo();
+        $.ajax({
+            type: 'GET',
+            dataType: "json",
+            data: {id_pais},
+            url: 'index.php/core/Establecimiento/getEstados',
+            success: function(rsp) {
+                if (rsp != null) {
+                    var datos = "<option value='' disabled selected>-Seleccione opción-</option>";
+                    $('#localidad_edit').html(datos);
+                    for (let i = 0; i < rsp.length; i++) {
+                        var datito = encodeURIComponent(rsp[i].tabl_id);
+                        datos += "<option value=" + datito + ">" + rsp[i].valor + "</option>";
+                    }
+                    $('#estado_edit').html(datos);
+                } else {
+                    var datos = "<option value='' disabled selected>-Seleccione opción-</option>";
+                    $('#estado_edit').html(datos);
+                    $('#localidad_edit').html(datos);                    
                     alertify.error("El País no contiene estados");
                 }    
                 wc();
@@ -386,6 +400,38 @@
                     $('#localidad').html(datos);
                     // $('#estado').val($('#estado > option:first').val());
                     // $('#localidad').val($('#localidad > option:first').val());  
+                    alertify.error("El Estado no contiene localidades");
+                }
+                wc();
+            },
+            error: function(data) {
+                alert('Error');
+            }
+        });
+    }
+
+    function seleccionEstadoEditar() {
+        var id_pais = $("#pais_edit option:selected").text();
+        var id_estado = $("#estado_edit option:selected").text();
+        $("#localidad_edit").prop('disabled', false);
+        $("#localidad_edit").empty();
+        wo();
+        $.ajax({
+            type: 'GET',
+            dataType: "json",
+            data: {id_pais, id_estado},
+            url: 'index.php/core/Establecimiento/getLocalidades',
+            success: function(rsp) {
+                if (rsp != null) {
+                    var datos = "<option value='' disabled selected>-Seleccione opción-</option>";
+                    for (let i = 0; i < rsp.length; i++) {
+                        var valor = encodeURIComponent(rsp[i].tabl_id);
+                        datos += "<option value=" + valor + ">" + rsp[i].valor + "</option>";
+                    }
+                    $('#localidad_edit').html(datos);
+                } else {
+                    var datos = "<option value='' disabled selected>-Seleccione opción-</option>";
+                    $('#localidad_edit').html(datos); 
                     alertify.error("El Estado no contiene localidades");
                 }
                 wc();
@@ -455,18 +501,20 @@
     }
 
     function guardarEdicionEstablecimiento() {
-        if( !validarCampos('formEstablecimiento') ){
+        if( !validarCampos('formEdicionEstablecimiento') ){
             return;
         }
+        var estado = $("#estado_edit option:selected").val();
+        var localidad = $("#localidad_edit option:selected").val();
         var recurso = "";
-        var form = $('#formEstablecimiento')[0];
+        var form = $('#formEdicionEstablecimiento')[0];
         var datos = new FormData(form);
         var datos = formToObject(datos);
         recurso = 'index.php/core/Establecimiento/guardarEdicionEstablecimiento';
         wo();
         $.ajax({
             type: 'POST',
-            data:{ datos },
+            data:{ datos, estado, localidad },
             dataType: 'JSON',
             url: recurso,
             success: function(result) {

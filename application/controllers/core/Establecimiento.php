@@ -13,7 +13,7 @@ class Establecimiento extends CI_Controller
 	 * @param
 	 * @return  void
 	 */
-    function index()
+    public function index()
 	{
       	log_message('INFO','#TRAZA | ESTABLECIMIENTOS | index()  >> ');
 	  	// $data['listarEstablecimientos'] = $this->Establecimientos->listarEstablecimientos();
@@ -26,15 +26,15 @@ class Establecimiento extends CI_Controller
      *
      * @return  Array  Devuelve un arreglo con los Establecimientos.
      */
-	function listarEstablecimientos()
+	public function listarEstablecimientos()
 	{
 		log_message('INFO','#TRAZA| ESTABLECIMIENTOS | listarEstablecimientos() >> ');
 		$data['listarEstablecimientos'] = $this->Establecimientos->listarEstablecimientos();
-		// $data['listarPaises'] = $this->Establecimientos->listarPaises();
+		$data['listarPaises'] = $this->Establecimientos->listarPaises();
     	$this->load->view('core/establecimientos/list', $data);
 	}
 
-	function getEstados()
+	public function getEstados()
 	{
 		log_message('INFO','#TRAZA| ESTABLECIMIENTO | getEstados() >> ');
 		$pais = $this->input->get('id_pais');
@@ -50,7 +50,7 @@ class Establecimiento extends CI_Controller
 		}
 	}
 
-	function getLocalidades()
+	public function getLocalidades()
 	{
 		log_message('INFO','#TRAZA| ESTABLECIMIENTO | getLocalidades() >> ');
 		$pais = $this->input->get('id_pais');
@@ -68,7 +68,7 @@ class Establecimiento extends CI_Controller
 	* @param array establecimiento nuevo
 	* @return bool true o false segun resultado de servicio de guardado
 	*/
-	function guardarEstablecimiento()
+	public function guardarEstablecimiento()
 	{
     	log_message('ERROR', '#TRAZA | VALORES | guardarEstablecimiento() >> ');
 		$valor = $this->input->post('datos');
@@ -100,11 +100,13 @@ class Establecimiento extends CI_Controller
 	* @param array establecimiento editado
 	* @return bool true o false segun resultado de servicio de guardado
 	*/
-	function guardarEdicionEstablecimiento()
+	public function guardarEdicionEstablecimiento()
 	{
     	log_message('ERROR', '#TRAZA | VALORES | guardarEdicionEstablecimiento() >> ');
 		$valor = $this->input->post('datos');
 		// $valor['usuario'] = userNick();
+		$valor['estado'] = $this->input->post('estado');
+		$valor['localidad'] = $this->input->post('localidad');
 		$valor['empr_id'] = empresa();
 		$resp = $this->Establecimientos->guardarEdicionEstablecimiento($valor);
 		if ($resp != null) {

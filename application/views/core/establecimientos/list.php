@@ -59,38 +59,22 @@
             url: 'index.php/core/Establecimiento/borrarEstablecimiento',
             success: function(result) {
                 $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
-                wc();
+                setTimeout(function(){ 
+                    alertify.success("Artículo eliminado con éxito");
+                    wc();
+                    // alert("Hello"); 
+                }, 3000);
                 $("#modalaviso").modal('hide');
             },
             error: function(result){
-            wc();
-            $("#modalaviso").modal('hide');
-            alertify.error('Error en eliminado de Establecimiento...');
+                wc();
+                $("#modalaviso").modal('hide');
+                alertify.error('Error en eliminado de Establecimiento...');
             }
         });
     }
 
-    // llena modal para edicion
-    function llenarModal(datajson){
-        var $selectEstado = $("#estado_edit");
-        // var $selectLocalidad = $("#localidad_edit");
-
-        // var valor = $("#nombreLista").val();
-        $selectEstado.append($("<option>", {
-            value: datajson.estado_id,
-            text: datajson.estado,
-        }));
-        $("#estado_edit").val(datajson.estado_id);
-
-        $('#esta_id').val(datajson.esta_id);
-        //$('#pano_id').val(datajson.pano_id);
-        $('#nombre_edit').val(datajson.nombre);
-        $('#calle_edit').val(datajson.calle);
-        $('#altura_edit').val(datajson.altura);
-        $('#pais_edit option[value="'+ datajson.pais_id +'"]').attr("selected",true);
-        // $('#estado_edit option[value="'+ datajson.id_estado +'"]').attr("selected",true);
-        // $('#localidad_edit option[value="'+ datajson.localidad_id +'"]').attr("selected",true);
-    }
+    
 
     // habilita botones, selects e inputs de modal
     // function habilitarEdicion(){
@@ -115,6 +99,37 @@
         llenarModal(datajson);
     });
 
+    // llena modal para edicion
+    function llenarModal(datajson){
+        // creo los select de estado y localidad
+        var $selectEstado = $("#estado_edit");
+        var $selectLocalidad = $("#localidad_edit");
+        // a esos select les guardo solamente los valores guardados previamente
+        // var valor = $("#nombreLista").val();
+        $selectEstado.append($("<option>", {
+            value: datajson.estado_id,
+            text: datajson.estado,
+        }));
+        $selectLocalidad.append($("<option>", {
+            value: datajson.localidad_id,
+            text: datajson.localidad,
+        }));
+        // selecciono en los select los id
+        $("#estado_edit").val(datajson.estado_id);
+        $("#localidad_edit").val(datajson.localidad_id);
+        // deshabilitar los select de estado y localidad
+        $("#estado_edit").prop('disabled', true);
+        $("#localidad_edit").prop('disabled', true);
+        $('#esta_id').val(datajson.esta_id);
+        //$('#pano_id').val(datajson.pano_id);
+        $('#nombre_edit').val(datajson.nombre);
+        $('#calle_edit').val(datajson.calle);
+        $('#altura_edit').val(datajson.altura);
+        $('#pais_edit option[value="'+ datajson.pais_id +'"]').attr("selected",true);
+        // $('#estado_edit option[value="'+ datajson.id_estado +'"]').attr("selected",true);
+        // $('#localidad_edit option[value="'+ datajson.localidad_id +'"]').attr("selected",true);
+    }
+
     // function guardarEdicionEstablecimiento() {
     //     if( !validarCampos('formEdicionEstablecimiento') ){
     //         return;
@@ -125,3 +140,28 @@
     //     var datos = formToObject(datos);
     // }
 </script>
+
+<!-- MODAL AVISO ELIMINAR ESTABLECIMIENTO -->
+<div class="modal fade" id="modalEliminarEstablecimiento">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-blue">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Cliente</h4>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-xs-12">
+              <h4>¿Desea realmente eliminar el Establecimiento?</h4>
+              <input type="text" id="id_esta" class="hidden">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="eliminarEstablecimiento()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- /  MODAL AVISO ELIMINAR ESTABLECIMIENTO -->
