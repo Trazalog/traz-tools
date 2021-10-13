@@ -74,11 +74,6 @@
       <param name="es_loteado" sqlType="STRING"/>
       <param name="unidad_medida" sqlType="STRING"/>
    </query>
-   <query id="getProveedores" useConfig="ToolsDataSource">
-      <sql>SELECT * &#xd;FROM alm.alm_proveedores&#xd;WHERE&#xd;empr_id = CAST(:empr_id as INTEGER)&#xd;AND eliminado = FALSE</sql>
-      <result outputType="json">{&#xd; "proveedores": {&#xd; "proveedor": [&#xd; {&#xd;"id":"$prov_id",&#xd;"titulo":"$nombre",&#xd;"cuit":"$cuit"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
-      <param name="empr_id" sqlType="STRING"/>
-   </query>
    <query id="setNotaPedido" keyColumns="pema_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
       <sql>insert into alm.alm_pedidos_materiales(fecha, empr_id, batch_id) &#xd;values(TO_DATE(:fecha, 'YYYY-MM-DD'), CAST(:empr_id AS INTEGER), CAST(:batch_id AS INTEGER))</sql>
       <result outputType="json">{&#xd; "nota_id": { &#xd;   "pedido_id": "$pema_id" &#xd; }&#xd;}&#xd;&#xd;</result>
@@ -103,7 +98,7 @@
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="getArticulosXTipo" useConfig="ToolsDataSource">
-      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;  core.tablas t&#xd;,alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;  and AR.empr_id = cast(:empr_id as integer)&#xd;where t.valor = :tipo and t.tabl_id = AR.tipo&#xd;  group by ar.arti_id</sql>
+      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;  core.tablas t&#xd;,alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;where t.valor = :tipo &#xd;and t.tabla = 'tipo_articulo'&#xd;and t.tabl_id = AR.tipo&#xd;and AR.empr_id = cast(:empr_id as integer)  &#xd;group by ar.arti_id</sql>
       <result outputType="json">{&#xd;  "articulos":{&#xd;     "articulo":[&#xd;        {&#xd;          "arti_id": "$arti_id",&#xd;          "descripcion": "$descripcion",&#xd;          "barcode":"$barcode",&#xd;          "um":"$um",&#xd;          "stock":"$stock"&#xd;                }&#xd;      ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
@@ -407,6 +402,20 @@
       <param name="etap_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getEstablecimientos" useConfig="ToolsDataSource">
+      <sql>select e.esta_id, e.nombre, e.calle, e.altura, tl.valor as localidad, te.valor as estado, tp.valor as pais&#xd;from prd.establecimientos e&#xd;left join core.tablas tl&#xd;on tl.tabl_id = e.localidad &#xd;left join core.tablas te &#xd;on te.tabl_id = e.estado &#xd;left join core.tablas tp &#xd;on tp.tabl_id = e.pais &#xd;where e.empr_id = cast (:empr_id as integer)&#xd;and e.eliminado = false;</sql>
+      <result outputType="json">{&#xd;   "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getProveedores" useConfig="ToolsDataSource">
+      <sql>SELECT al.*, tl.valor as localidad, te.valor as estado, tp.valor as pais&#xd;FROM alm.alm_proveedores al&#xd;left join core.tablas tl&#xd;on tl.tabl_id = al.loca_id&#xd;left join core.tablas te &#xd;on te.tabl_id = al.esta_id &#xd;left join core.tablas tp &#xd;on tp.tabl_id = al.pais_id &#xd;WHERE&#xd;al.empr_id = CAST(:empr_id as INTEGER)&#xd;AND al.eliminado = FALSE;</sql>
+      <result outputType="json">{&#xd;    "proveedores": {&#xd;        "proveedor": [&#xd;            {&#xd;                "id":"$prov_id",&#xd;                "titulo":"$nombre",&#xd;                "cuit":"$cuit",&#xd;                "domicilio":"$domicilio",&#xd;                "localidad":"$localidad",&#xd;                "localidad_id":"$loca_id",&#xd;                "estado":"$estado",&#xd;                "estado_id":"$esta_id",&#xd;                "pais":"$pais",&#xd;                "pais_id":"$pais_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteProveedor" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_proveedores &#xd;SET eliminado = true &#xd;WHERE prov_id = cast(:prov_id as integer);</sql>
+      <param name="prov_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -472,11 +481,6 @@
    </resource>
    <resource method="GET" path="/articulos/busquedaavanzada">
       <call-query href="getArticulosBusqueda"/>
-   </resource>
-   <resource method="GET" path="/proveedores/{empr_id}">
-      <call-query href="getProveedores">
-         <with-param name="empr_id" query-param="empr_id"/>
-      </call-query>
    </resource>
    <resource method="POST" path="/notapedido">
       <call-query href="setNotaPedido">
@@ -838,6 +842,21 @@
       <call-query href="getArticulosYTiposXEtapa">
          <with-param name="etap_id" query-param="etap_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos/{empr_id}">
+      <call-query href="getEstablecimientos">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/proveedores/{empr_id}">
+      <call-query href="getProveedores">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/proveedor">
+      <call-query href="deleteProveedor">
+         <with-param name="prov_id" query-param="prov_id"/>
       </call-query>
    </resource>
 </data>

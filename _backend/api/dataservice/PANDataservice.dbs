@@ -14,7 +14,7 @@
       <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
-   <query <id="panolUpdate" useConfig="ToolsDataSource">
+   <query id="panolUpdate" useConfig="ToolsDataSource">
       <sql>update pan.panol set  descripcion = :descripcion, loca_id = :loca_id, prov_id = :prov_id, pais_id = :pais_id, lat = :lat, lng = :lng&#xd;  where pano_id = CAST(:pano_id AS INTEGER)</sql>
       <param name="descripcion" sqlType="STRING"/>
       <param name="loca_id" sqlType="STRING"/>

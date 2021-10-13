@@ -95,7 +95,7 @@
       <param name="clie_id" sqlType="STRING"/>
    </query>
    <query id="getUsersXGroup" useConfig="ToolsDataSource">
-      <sql>select U.id, U.first_name, U.last_name, U.usernick from seg.users U, seg.memberships_users MU&#xd;where U.email = MU.email&#xd;and MU.group = :group</sql>
+      <sql>select distinct(U.id), U.first_name, U.last_name, U.usernick &#xd;from seg.users U&#xd;, seg.memberships_users MU&#xd;, core.empresas e &#xd;where U.email = MU.email&#xd;and MU.group = e.descripcion &#xd;and e.empr_id = cast(:group as integer)</sql>
       <result outputType="json">{&#xd;    "usuarios":{&#xd;                    "usuario": [&#xd;                      {&#xd;                        "id": "$id",&#xd;                        "first_name": "$first_name",&#xd;                        "last_name": "$last_name",&#xd;                        "usernick": "$usernick"&#xd;                      }&#xd;                    ]&#xd;    }&#xd;}</result>
       <param name="group" sqlType="STRING"/>
    </query>
@@ -111,7 +111,7 @@
       <param name="tabla" sqlType="STRING"/>
    </query>
    <query id="getListaTablasXEmpresa" useConfig="ToolsDataSource">
-      <sql>select distinct tab.tabla &#xd;from &#xd;(select&#xd;    case when param.empr_id is null or param.empr_id = '' &#xd;    then t.tabla &#xd;    else  substring(t.tabla from '^[0-9]-(.*)?') end  as tabla&#xd;from&#xd;	core.tablas t ,&#xd;	( select :empr_id empr_id) param&#xd;where&#xd;	(t.empr_id is null&#xd;		and (param.empr_id is null&#xd;		or param.empr_id = ''))&#xd;	or t.empr_id =&#xd;	case&#xd;		when param.empr_id is null&#xd;		or param.empr_id = '' &#xd;		then t.empr_id&#xd;		else cast(param.empr_id as integer) &#xd;		end) tab&#xd;order by 1</sql>
+      <sql>select distinct tab.tabla &#xd;from &#xd;(select&#xd;    case when param.empr_id is null or param.empr_id = '' &#xd;    then t.tabla &#xd;    else  substring(t.tabla from '^[0-9]*-(.*)?') end  as tabla&#xd;from&#xd;	core.tablas t ,&#xd;	( select :empr_id empr_id) param&#xd;where&#xd;	(t.empr_id is null&#xd;		and (param.empr_id is null&#xd;		or param.empr_id = ''))&#xd;	or t.empr_id =&#xd;	case&#xd;		when param.empr_id is null&#xd;		or param.empr_id = '' &#xd;		then t.empr_id&#xd;		else cast(param.empr_id as integer) &#xd;		end) tab&#xd;order by 1</sql>
       <result outputType="json">{&#xd;   "tablas":{&#xd;      "tabla":[&#xd;         {&#xd;            "tabla":"$tabla"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" optional="false" sqlType="STRING"/>
    </query>
@@ -126,6 +126,71 @@
    <query id="deleteTablas" useConfig="ToolsDataSource">
       <sql>update core.tablas &#xd;set eliminado = true&#xd;where tabl_id=:tabl_id</sql>
       <param name="tabl_id" sqlType="STRING"/>
+   </query>
+   <query id="getEstados" useConfig="ToolsDataSource">
+      <sql>select t.tabl_id, t.valor&#xd;from core.tablas t&#xd;where t.tabla = concat('estados_paises', :pais)&#xd;and eliminado = false</sql>
+      <result outputType="json">{&#xd;   "estados": {&#xd;      "estado": [&#xd;        {&#xd;          "tabl_id": "$tabl_id",&#xd;          "valor": "$valor"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="pais" sqlType="STRING"/>
+   </query>
+   <query id="getLocalidades" useConfig="ToolsDataSource">
+      <sql>select t.tabl_id, t.valor&#xd;from core.tablas t&#xd;where t.tabla = concat('localidades_estados_paises', :pais, :estado)&#xd;and eliminado = false</sql>
+      <result outputType="json">{&#xd;   "localidades": {&#xd;      "localidad": [&#xd;        {&#xd;          "tabl_id": "$tabl_id",&#xd;          "valor": "$valor"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="pais" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+   </query>
+   <query id="getPaises" useConfig="ToolsDataSource">
+      <sql>select tabl_id, valor&#xd;from core.tablas&#xd;where tabla = 'paises' and eliminado = false</sql>
+      <result outputType="json">{&#xd;   "paises": {&#xd;      "pais": [&#xd;        {&#xd;          "tabl_id": "$tabl_id",&#xd;          "valor": "$valor"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="setCaseEmpresa" useConfig="ToolsDataSource">
+      <sql>insert into core.case_empresa &#xd;(case_id&#xd;,empr_id)&#xd;values &#xd;(cast(:case_id as INTEGER)&#xd;,cast(:empr_id as INTEGER))</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setEstablecimiento" useConfig="ToolsDataSource">
+      <sql>insert into prd.establecimientos (&#xd;	nombre, &#xd;	calle,&#xd;	altura,&#xd;	pais,&#xd;	estado,&#xd;	localidad,&#xd;        empr_id )&#xd;values(&#xd;  	:nombre, &#xd;  	:calle, &#xd;  	:altura,&#xd;  	:pais,&#xd;  	:estado,&#xd;  	:localidad,&#xd;        cast(:empr_id as integer))</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="calle" sqlType="STRING"/>
+      <param name="altura" sqlType="STRING"/>
+      <param name="pais" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="localidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="updateEstablecimiento" useConfig="ToolsDataSource">
+      <sql>UPDATE prd.establecimientos&#xd;set nombre = :nombre,&#xd;    calle = :calle,&#xd;    altura = :altura,&#xd;    localidad = :localidad,&#xd;    estado = :estado,&#xd;    pais = :pais&#xd;where esta_id = CAST(:esta_id as integer)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="calle" sqlType="STRING"/>
+      <param name="altura" sqlType="STRING"/>
+      <param name="localidad" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="pais" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteEstablecimiento" useConfig="ToolsDataSource">
+      <sql>UPDATE prd.establecimientos&#xd;SET eliminado = TRUE&#xd;WHERE esta_id = cast(:esta_id as integer) ;</sql>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositoPorEstablecimiento" useConfig="ToolsDataSource">
+      <sql>select de.depo_id ,de.descripcion &#xd;from alm.alm_depositos de &#xd;WHERE de.esta_id = cast(:esta_id as integer)&#xd;and de.empr_id = cast(:empr_id as integer)&#xd;and de.eliminado = false</sql>
+      <result outputType="json">{&#xd;   "depositos": {&#xd;      "deposito": [&#xd;        {&#xd;          "depo_id": "$depo_id",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteDeposito" useConfig="ToolsDataSource">
+      <sql>delete &#xd;from alm.alm_depositos&#xd;where depo_id = cast(:depo_id as integer);</sql>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="setDepositoPorEstablecimiento" useConfig="ToolsDataSource">
+      <sql>insert into alm.alm_depositos&#xd;(&#xd;    descripcion, &#xd;    empr_id, &#xd;    esta_id)&#xd;VALUES(&#xd;    :descripcion,&#xd;    cast(:empr_id as integer),&#xd;    cast(:esta_id as integer)&#xd;);</sql>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="getEstablecimientos" useConfig="ToolsDataSource">
+      <sql>select e.esta_id, e.nombre, e.calle, e.altura, tl.valor as localidad, tl.tabl_id as localidad_id, te.valor as estado, te.tabl_id as estado_id, tp.valor as pais, tp.tabl_id as pais_id&#xd;from prd.establecimientos e&#xd;left join core.tablas tl&#xd;on tl.tabl_id = e.localidad &#xd;left join core.tablas te &#xd;on te.tabl_id = e.estado &#xd;left join core.tablas tp &#xd;on tp.tabl_id = e.pais &#xd;where e.empr_id = cast (:empr_id as integer)&#xd;and e.eliminado = false;</sql>
+      <result outputType="json">{&#xd;   "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "localidad_id": "$localidad_id",&#xd;          "estado": "$estado",&#xd;          "estado_id": "$estado_id",&#xd;          "pais": "$pais",&#xd;          "pais_id": "$pais_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -256,4 +321,75 @@
          <with-param name="tabl_id" query-param="tabl_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/estados/pais/{pais}">
+      <call-query href="getEstados">
+         <with-param name="pais" query-param="pais"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/localidades/pais/{pais}/estado/{estado}">
+      <call-query href="getLocalidades">
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="estado" query-param="estado"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/paises">
+      <call-query href="getPaises"/>
+   </resource>
+   <resource method="POST" path="/empresa/proceso">
+      <call-query href="setCaseEmpresa">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/establecimiento">
+      <call-query href="setEstablecimiento">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="calle" query-param="calle"/>
+         <with-param name="altura" query-param="altura"/>
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="localidad" query-param="localidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/establecimiento">
+      <call-query href="updateEstablecimiento">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="calle" query-param="calle"/>
+         <with-param name="altura" query-param="altura"/>
+         <with-param name="localidad" query-param="localidad"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/establecimiento">
+      <call-query href="deleteEstablecimiento">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/depositos/establecimiento/{esta_id}">
+      <call-query href="getDepositoPorEstablecimiento">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/deposito/establecimiento">
+      <call-query href="setDepositoPorEstablecimiento">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/deposito">
+      <call-query href="deleteDeposito">
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos/{empr_id}">
+      <call-query href="getEstablecimientos">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
 </data>
+

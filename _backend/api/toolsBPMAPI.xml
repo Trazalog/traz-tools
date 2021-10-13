@@ -1,17 +1,22 @@
 <api xmlns="http://ws.apache.org/ns/synapse" name="toolsbpmAPI" context="/tools/bpm">
    <resource methods="POST" uri-template="/proceso/instancia">
       <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="bpmconf" expression="get-property('registry','conf:tools/bpmconf.xml')" scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:bpmconf//dataservices_url"/>
          <log level="custom" description="msg entrada">
             <property name="nombre proceso" expression="json-eval($.nombre_proceso)"/>
             <property name="payload" expression="json-eval($.payload)"/>
             <property name="session" expression="json-eval($.session)"/>
+            <property name="emprId" expression="json-eval($.emprId)"/>
+            <property name="dataservices_url" expression="$ctx:dataservices_url"/>
          </log>
          <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
          <property name="payload" expression="json-eval($.payload)"/>
          <property name="session" expression="json-eval($.session)"/>
+         <property name="emprId" expression="json-eval($.emprId)"/>
          <header name="Accept" scope="transport" value="application/json"/>
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="getprocess_url" expression="fn:concat('/API/bpm/process?s=',$ctx:nombre_proceso,'&amp;f%3DactivationStateactivationState%253D=ENABLED')" scope="default" type="STRING"/>
-         <log level="custom">
+         <log level="custom" category="DEBUG">
             <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="url a invocar getprocess" expression="get-property('getprocess_url')"/>
          </log>
          <call-template target="bpmAPICallTemplate">
@@ -37,17 +42,80 @@
             <with-param name="method" value="POST"/>
             <with-param name="payload" value="{$ctx:payload}"/>
          </call-template>
-         <respond/>
+         <script language="js">var payload = mc.getPayloadJSON();  mc.setProperty("ORIGINAL_PAYLOAD",JSON.stringify(payload));</script>
+         <property name="caseId" expression="json-eval($.payload.caseId)"/>
+         <log level="custom">
+            <property name="donde" value="por generar case empresa"/>
+            <property name="emprId" expression="$ctx:emprId"/>
+            <property name="caseId" expression="$ctx:caseId"/>
+         </log>
+         <payloadFactory media-type="json" description="setCaseEmpresa">
+            <format>       {          "_post_empresa_proceso":{               "case_id": "$1",                "empr_id": "$2" }     }     </format>
+            <args>
+               <arg evaluator="xml" expression="get-property('caseId')"/>
+               <arg evaluator="xml" expression="get-property('emprId')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.caseempr_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa/proceso')" scope="default"/>
+         <log level="custom">
+            <property name="donde" value="armando post case empresa"/>
+            <property name="payload" expression="json-eval($)"/>
+            <property name="api url" expression="$ctx:uri.var.caseempr_url"/>
+         </log>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.caseempr_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="deletecase_url" expression="fn:concat('/API/bpm/case/',$ctx:caseId)" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="url a invocar delete case" expression="get-property('deletecase_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:deletecase_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="DELETE"/>
+               </call-template>
+               <property name="TOOLS_ERROR" value="POST /empresa/proceso con problemas, compruebe COREDataService" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <loopback/>
       </inSequence>
       <outSequence>
+         <script language="js">mc.setPayloadJSON(mc.getProperty("ORIGINAL_PAYLOAD"));</script>
          <log level="full">
             <property name="MESSAGE" value="FIRST"/>
          </log>
+         <payloadFactory media-type="json" description="Mensaje error">
+            <format>$1</format>
+            <args>
+               <arg evaluator="json" expression="$"/>
+            </args>
+         </payloadFactory>
          <send/>
       </outSequence>
       <faultSequence>
-         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="deletecase_url" expression="fn:concat('/API/bpm/case/',$ctx:caseId)" scope="default" type="STRING"/>
+         <log level="custom" category="DEBUG">
+            <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="url a invocar delete case" expression="get-property('deletecase_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:deletecase_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="DELETE"/>
+         </call-template>
+         <property name="TOOLS_ERROR" value="Existen errores al generar el proceso, compruebe que los endpoints de Bonita y COREDataService estan arriba" type="STRING"/>
          <sequence key="toolsFault"/>
+         <send/>
       </faultSequence>
    </resource>
    <resource methods="DELETE" uri-template="/proceso/instancia">
@@ -83,6 +151,7 @@
          <send/>
       </outSequence>
       <faultSequence>
+         <property name="ERROR_MESSAGE" value="" type="STRING"/>
          <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
@@ -291,3 +360,4 @@
       </faultSequence>
    </resource>
 </api>
+                        
