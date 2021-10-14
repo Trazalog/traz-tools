@@ -133,4 +133,40 @@ class Establecimientos extends CI_Model {
     return $aux;
   }
 
+  public function listarDepositosXEstablecimiento($esta_id,$empr_id) 
+  {
+    log_message('DEBUG', 'Establecimientos/listarDepositosXEstablecimiento(esta_id)-> ' . $esta_id);
+    log_message('DEBUG', 'Establecimientos/listarDepositosXEstablecimiento(empr_id)-> ' . $empr_id);
+    $resource = '/depositos/establecimiento/' . $esta_id . '/empresa/' . $empr_id;
+    $url = REST_CORE . $resource;
+    $rsp = $this->rest->callAPI("GET", $url, $empr_id);
+    if ($rsp['status']) {
+        $rsp = json_decode($rsp['data']);
+    }
+    $valores = $rsp->depositos->deposito;
+    return $valores;
+  }
+
+  public function guardarDeposito($deposito)
+  {
+    $post['_post_deposito_establecimiento'] = $deposito;
+    log_message('DEBUG','#TRAZA|TRAZA-COMP-PRD|DEPOSITOS POR ESTABLECIMIENTO|GUARDAR $post: >> '.json_encode($post));
+    $resource = '/deposito/establecimiento';
+    $url = REST_CORE . $resource;
+    $aux = $this->rest->callApi('POST', $url, $post);
+    $aux = json_decode($aux["status"]);
+    return $aux;
+  }
+
+  public function borrarDeposito($depo_id)
+  {
+    $post['_delete_deposito'] = array("depo_id" => $depo_id);
+    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ETAPAS | borrarArticuloEntrada() $post: >> '.json_encode($post));
+    $resource = '/deposito';
+    $url = REST_CORE . $resource;
+    $aux = $this->rest->callAPI("DELETE", $url, $post);
+    $aux = json_decode($aux["status"]);
+    return $aux;
+  }
+
 }
