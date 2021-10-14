@@ -17,7 +17,7 @@
                             echo '                        
                             <button type="button" title="Eliminar" class="btn btn-primary btn-circle btnEliminar" data-toggle="modal" data-target="#modalEliminarEstablecimiento" id="btnBorrar" ><span class="glyphicon glyphicon-trash" aria-hidden="true" ></span></button>&nbsp
                             <button type="button" title="Editar"  class="btn btn-primary btn-circle btnEditar" data-toggle="modal" data-target="#modalEditarEstablecimiento" id="btnEditar" ><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>&nbsp
-                            <button type="button" title="Depósitos" class="btn btn-primary btn-circle btnInfo" data-toggle="modal" data-target="#modaleditar" ><span class="glyphicon glyphicon-inbox" aria-hidden="true"></span></button>&nbsp
+                            <button type="button" title="Depósitos" class="btn btn-primary btn-circle btnDepositos" data-toggle="modal" data-target="#modaleditar" ><span class="glyphicon glyphicon-inbox" aria-hidden="true"></span></button>&nbsp
                             ';
                         echo '</td>';
                         echo '<td>'.$establecimiento->nombre.'</td>';
@@ -72,9 +72,7 @@
                 alertify.error('Error en eliminado de Establecimiento...');
             }
         });
-    }
-
-    
+    }    
 
     // habilita botones, selects e inputs de modal
     // function habilitarEdicion(){
@@ -129,6 +127,45 @@
         // $('#estado_edit option[value="'+ datajson.id_estado +'"]').attr("selected",true);
         // $('#localidad_edit option[value="'+ datajson.localidad_id +'"]').attr("selected",true);
     }
+    
+    $(".btnDepositos").on("click", function(e) {
+    $("#modaldepositos td").remove();
+    $(".modal-header h4").remove();
+    //guardo el tipo de operacion en el modal
+    $("#operacion").val("Depositos");
+    //pongo titlo al modal
+    $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Depósitos del Establecimiento </h4>');
+    datajson = $(this).parents("tr").attr("data-json");
+    data = JSON.parse(datajson);
+    var esta_id = data.esta_id;
+    // guardo esta_id en modal para usar en funcion agregar deposito
+    $("#id_esta").val(esta_id);
+    $.ajax({
+        type: 'GET',
+        url: 'index.php/core/Establecimiento/listarDepositosXEstablecimiento?esta_id='+esta_id,
+        success: function(result) {
+          if (result) {
+            var tabla = $('#modaldepositos table');    
+            $(tabla).find('tbody').html('');
+            result.forEach(e => {
+                $(tabla).append(
+                  "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
+                    "<td><button type='button' title='Eliminar Artículo' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
+                    "<td>" + e.descripcion + "</td>" +
+                  "</tr>"
+                );
+            });            
+          };
+          $('#modaldepositos').modal('show'); 
+        },
+        error: function(result) {
+            alert('Error');
+        },
+        dataType: 'json'
+    });
+    //levanto modal
+    // $("#modaldepositos").modal('show');
+  });
 
     // function guardarEdicionEstablecimiento() {
     //     if( !validarCampos('formEdicionEstablecimiento') ){
@@ -163,5 +200,5 @@
         </div>
       </div>
     </div>
-  </div>
+</div>
 <!-- /  MODAL AVISO ELIMINAR ESTABLECIMIENTO -->

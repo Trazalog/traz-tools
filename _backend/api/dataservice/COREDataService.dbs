@@ -368,7 +368,7 @@
          <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/depositos/establecimiento/{esta_id}">
+   <resource method="GET" path="/depositos/establecimiento/{esta_id}/empresa/{empr_id}">
       <call-query href="getDepositoPorEstablecimiento">
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="esta_id" query-param="esta_id"/>

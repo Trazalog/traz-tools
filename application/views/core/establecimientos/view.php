@@ -262,6 +262,87 @@
 </div>
 <!---///////--- FIN MODAL EDICION ESTABLECIMIENTO ---///////--->
 
+<!---///////--- MODAL DEPOSITOS ---///////--->
+<div class="modal fade bs-example-modal-lg" id="modaldepositos" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-blue">
+        <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color:white;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body ">
+        <div id="example2_wrapper" class="dataTables_wrapper form-inline dt-bootstrap">						
+          <div class="row">
+            <div class="col-sm-6"></div>
+            <div class="col-sm-6"></div>
+          </div>
+          <div class="row">            
+            <div class="col-sm-12 table-scroll">
+              <input type="text" id="id_esta" class="hidden">
+            <button class="btn btn-block btn-primary" style="width: 100px; margin-top: 10px;" onclick="agregarDeposito()">Agregar</button>
+              <table id="tabla_depositos" class="table table-bordered table-striped">
+                <thead class="thead-dark" bgcolor="#eeeeee">
+                  <th>Acción</th>
+                  <th>Nombre</th>
+                </thead>
+                <tbody >
+                  <!--TABLE BODY -->
+                </tbody>
+              </table>
+            </div>
+          </div>						
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="form-group text-right">
+          <button type="button" class="btn btn-default cerrarModalEdit" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>  
+</div>
+<!---///////--- FIN MODAL DEPOSITOS ---///////--->
+
+<!---///////--- MODAL AGREGAR DEPOSITO ---///////--->
+<div class="modal fade bs-example-modal-lg" id="modalAgregarDeposito" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-blue">
+        <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color:white;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body ">
+          <div class="form-horizontal">
+            <div class="row">
+              <form class="frmDeposito" id="frmDeposito">
+                <div class="col-sm-6">
+                    <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_id">
+                    <!-- Depósito -->
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="deposito">Depósito(<strong style="color: #dd4b39">*</strong>):</label>
+                            <input type="text" class="form-control requerido" name="descripcion" id="deposito" placeholder="Ingrese Depósito...">
+                        </div>
+                    </div>
+                    <!--________________-->
+                </div>
+              </form>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+          <div class="form-group text-right">
+              <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarDeposito()">Guardar</button>
+              <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!---///////--- FIN MODAL AGREGAR DEPOSITO ---///////--->
+
 <script>
     // carga tabla de establecimientos
     $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
@@ -375,6 +456,7 @@
         });
     }
 
+    // carga Localidades dependiendo del estado seleccionado
     function seleccionEstado() {
         var id_pais = $("#pais option:selected").text();
         var id_estado = $("#estado option:selected").text();
@@ -410,6 +492,7 @@
         });
     }
 
+    // carga Localidades dependiendo del estado seleccionado
     function seleccionEstadoEditar() {
         var id_pais = $("#pais_edit option:selected").text();
         var id_estado = $("#estado_edit option:selected").text();
@@ -531,6 +614,119 @@
             }            
         });
     }
+
+    function agregarDeposito() {
+        var form = $('#frmDeposito')[0];
+        form.reset();
+        $(".modal-header h4").remove();
+        //guardo el tipo de operacion en el modal
+        $("#operacion").val("Edit");
+        //pongo titulo al modal
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Agregar Depósito</h4>');
+        $("#modaldepositos").modal('hide');
+        $('#modalAgregarDeposito').modal('show');
+        // guardo esta_id en modal para usar en funcion agregar deposito
+        var esta_id = $("#id_esta").val();
+        $("#establecimiento_id").val(esta_id);
+    }
+
+    function guardarDeposito () {
+        if( !validarCampos('frmDeposito') ){
+        return;
+        }
+        var recurso = "";
+        var form = $('#frmDeposito')[0];
+        var datos = new FormData(form);
+        var datos = formToObject(datos);
+        recurso = 'index.php/core/Establecimiento/guardarDeposito';
+        wo();
+        $.ajax({
+        type: 'POST',
+        data:{ datos },
+        dataType: 'JSON',
+        url: recurso,
+        success: function(result) {
+            $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+            setTimeout(function(){ 
+            wc();
+            alertify.success("Depósito agregado con éxito");
+            }, 3000);
+            $("#modalAgregarDeposito").hide(500);
+            // form.reset();
+        },
+        error: function(result){
+            wc();
+            alertify.error("Error agregando Depósito");
+        }
+        });
+    }
+
+    function eliminarDeposito(e) {
+        var data = JSON.parse($(e).closest('tr').attr('data-json'));
+        var depo_id = data.depo_id;
+        // var esta_id = data.esta_id;
+        $('#depo_id').val(data.depo_id);
+        // var esta_id = $("#id_esta").val();
+        // var esta_id = $("#establecimiento_id").val();
+        // $("#id_establecimiento_borrar").val(esta_id);
+        $(".modal-header h4").remove();
+        //pongo titulo al modal
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Eliminar Depósito </h4>');
+        $("#modaldepositos").modal('hide');
+        $('#modalAvisoDeposito').modal('show');
+    }
+
+    function eliminarDepositoDeEstablecimiento() {
+        var depo_id = $("#depo_id").val();
+        // var esta_id = $("#id_esta").val();
+        // var esta_id = $("#id_establecimiento_borrar").val();
+        wo();
+        $.ajax({
+            type: 'POST',
+            data:{depo_id: depo_id},
+            url: 'index.php/core/Establecimiento/borrarDepositoDeEstablecimiento',
+            success: function(result) {
+            $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+            setTimeout(function(){ 
+                alertify.success("Depósito eliminado con éxito");
+                wc();
+                // alert("Hello"); 
+            }, 3000);
+            $("#modalAvisoDeposito").modal('hide');
+            },
+            error: function(result){
+            wc();
+            $("#modalAvisoDeposito").modal('hide');
+            alertify.error('Error en eliminado de Depósito...');
+            }
+        });        
+    }
     
 
 </script>
+
+<!-- Modal aviso eliminar deposito-->
+<div class="modal fade" id="modalAvisoDeposito">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-blue">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Depósito</h4>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-xs-12">
+              <h4>¿Desea realmente eliminar el depósito del establecimiento?</h4>
+              <input type="text" id="depo_id" class="hidden">
+              <!-- <input type="text" id="id_establecimiento_borrar" class="hidden"> -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="eliminarDepositoDeEstablecimiento()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+</div>
+<!-- /  Modal aviso eliminar deposito-->

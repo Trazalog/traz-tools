@@ -70,7 +70,7 @@ class Establecimiento extends CI_Controller
 	*/
 	public function guardarEstablecimiento()
 	{
-    	log_message('ERROR', '#TRAZA | VALORES | guardarEstablecimiento() >> ');
+    	log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | guardarEstablecimiento() >> ');
 		$valor = $this->input->post('datos');
 		// $valor['usuario'] = userNick();
 		$valor['empr_id'] = empresa();
@@ -89,7 +89,7 @@ class Establecimiento extends CI_Controller
 	*/
 	public function borrarEstablecimiento()
 	{
-		log_message('INFO','#TRAZA | CLIENTES | borrarEstablecimiento() >> ');
+		log_message('INFO','#TRAZA | ESTABLECIMIENTOS | borrarEstablecimiento() >> ');
 		$esta_id = $this->input->post('esta_id');
 		$result = $this->Establecimientos->borrarEstablecimiento($esta_id);
 		echo json_encode($result);
@@ -102,7 +102,7 @@ class Establecimiento extends CI_Controller
 	*/
 	public function guardarEdicionEstablecimiento()
 	{
-    	log_message('ERROR', '#TRAZA | VALORES | guardarEdicionEstablecimiento() >> ');
+    	log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | guardarEdicionEstablecimiento() >> ');
 		$valor = $this->input->post('datos');
 		// $valor['usuario'] = userNick();
 		$valor['estado'] = $this->input->post('estado');
@@ -114,6 +114,37 @@ class Establecimiento extends CI_Controller
 		} else {
 			return json_encode(false);
 		}
+	}
+
+	public function listarDepositosXEstablecimiento() 
+	{
+		log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | listarDepositosXEstablecimiento() >> ');
+        $esta_id = $this->input->get('esta_id');
+        $empr_id = empresa();
+        $resp =  $this->Establecimientos->listarDepositosXEstablecimiento($esta_id,$empr_id);
+        if ($resp != null) {
+			echo json_encode($resp);            
+		} else {
+			echo json_encode($resp);
+		}
+    }
+
+	public function guardarDeposito()
+	{
+		log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | guardarDeposito() >> ');
+		$data = $this->input->post('datos');
+		$data['empr_id'] = empresa();
+		$resp = $this->Establecimientos->guardarDeposito($data);
+        echo json_encode($resp);
+	}
+
+	public function borrarDepositoDeEstablecimiento()
+	{
+		log_message('INFO','#TRAZA | ETAPAS | borrarDepositoDeEstablecimiento() >> ');
+		$depo_id = $this->input->post('depo_id');
+		$result = $this->Establecimientos->borrarDeposito($depo_id);
+		// $result = $this->Establecimientos->borrarArticuloDeEtapa($depo_id, $tipo);
+		echo json_encode($result);
 	}
 
 }
