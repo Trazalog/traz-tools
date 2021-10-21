@@ -187,6 +187,11 @@
       <param name="empr_id" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
    </query>
+   <query id="getEstablecimientos" useConfig="ToolsDataSource">
+      <sql>select e.esta_id, e.nombre, e.calle, e.altura, tl.valor as localidad, tl.tabl_id as localidad_id, te.valor as estado, te.tabl_id as estado_id, tp.valor as pais, tp.tabl_id as pais_id&#xd;from prd.establecimientos e&#xd;left join core.tablas tl&#xd;on tl.tabl_id = e.localidad &#xd;left join core.tablas te &#xd;on te.tabl_id = e.estado &#xd;left join core.tablas tp &#xd;on tp.tabl_id = e.pais &#xd;where e.empr_id = cast (:empr_id as integer)&#xd;and e.eliminado = false;</sql>
+      <result outputType="json">{&#xd;   "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "localidad_id": "$localidad_id",&#xd;          "estado": "$estado",&#xd;          "estado_id": "$estado_id",&#xd;          "pais": "$pais",&#xd;          "pais_id": "$pais_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -363,7 +368,7 @@
          <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/depositos/establecimiento/{esta_id}">
+   <resource method="GET" path="/depositos/establecimiento/{esta_id}/empresa/{empr_id}">
       <call-query href="getDepositoPorEstablecimiento">
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="esta_id" query-param="esta_id"/>
@@ -379,6 +384,11 @@
    <resource method="DELETE" path="/deposito">
       <call-query href="deleteDeposito">
          <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos/{empr_id}">
+      <call-query href="getEstablecimientos">
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>

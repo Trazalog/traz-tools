@@ -74,11 +74,6 @@
       <param name="es_loteado" sqlType="STRING"/>
       <param name="unidad_medida" sqlType="STRING"/>
    </query>
-   <query id="getProveedores" useConfig="ToolsDataSource">
-      <sql>SELECT * &#xd;FROM alm.alm_proveedores&#xd;WHERE&#xd;empr_id = CAST(:empr_id as INTEGER)&#xd;AND eliminado = FALSE</sql>
-      <result outputType="json">{&#xd; "proveedores": {&#xd; "proveedor": [&#xd; {&#xd;"id":"$prov_id",&#xd;"titulo":"$nombre",&#xd;"cuit":"$cuit"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
-      <param name="empr_id" sqlType="STRING"/>
-   </query>
    <query id="setNotaPedido" keyColumns="pema_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
       <sql>insert into alm.alm_pedidos_materiales(fecha, empr_id, batch_id) &#xd;values(TO_DATE(:fecha, 'YYYY-MM-DD'), CAST(:empr_id AS INTEGER), CAST(:batch_id AS INTEGER))</sql>
       <result outputType="json">{&#xd; "nota_id": { &#xd;   "pedido_id": "$pema_id" &#xd; }&#xd;}&#xd;&#xd;</result>
@@ -412,6 +407,20 @@
       <result outputType="json">{&#xd;   "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getProveedores" useConfig="ToolsDataSource">
+      <sql>SELECT al.*, tl.valor as localidad, te.valor as estado, tp.valor as pais&#xd;FROM alm.alm_proveedores al&#xd;left join core.tablas tl&#xd;on tl.tabl_id = al.loca_id&#xd;left join core.tablas te &#xd;on te.tabl_id = al.esta_id &#xd;left join core.tablas tp &#xd;on tp.tabl_id = al.pais_id &#xd;WHERE&#xd;al.empr_id = CAST(:empr_id as INTEGER)&#xd;AND al.eliminado = FALSE;</sql>
+      <result outputType="json">{&#xd;    "proveedores": {&#xd;        "proveedor": [&#xd;            {&#xd;                "id":"$prov_id",&#xd;                "titulo":"$nombre",&#xd;                "cuit":"$cuit",&#xd;                "domicilio":"$domicilio",&#xd;                "localidad":"$localidad",&#xd;                "localidad_id":"$loca_id",&#xd;                "estado":"$estado",&#xd;                "estado_id":"$esta_id",&#xd;                "pais":"$pais",&#xd;                "pais_id":"$pais_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteProveedor" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_proveedores &#xd;SET eliminado = true &#xd;WHERE prov_id = cast(:prov_id as integer);</sql>
+      <param name="prov_id" sqlType="STRING"/>
+   </query>
+   <query id="getRecipientesXEmpresa" useConfig="ToolsDataSource">
+      <sql>select&#xd;	r.reci_id,&#xd;	r.tipo as reci_tipo,&#xd;	r.nombre as reci_nombre,&#xd;	cast(r.fec_alta as date) as reci_fec_alta,&#xd;	d.depo_id,&#xd;	d.descripcion as depo_descripcion,&#xd;	e.esta_id,&#xd;	e.nombre as esta_nombre&#xd;from&#xd;	prd.recipientes r&#xd;join alm.alm_depositos d on&#xd;	d.depo_id = r.depo_id&#xd;join prd.establecimientos e on&#xd;	e.esta_id = d.esta_id&#xd;where&#xd;	r.eliminado = 0&#xd;and r.empr_id = cast(:empr_id as integer) &#xd;order by&#xd;	r.fec_alta desc,&#xd;	d.esta_id asc,&#xd;	r.tipo asc,&#xd;	d.descripcion asc,&#xd;	r.nombre asc</sql>
+      <result outputType="json">{&#xd;   "recipientes":{&#xd;      "recipiente":[&#xd;         {&#xd;            "reci_id":"$reci_id", &#xd;            "reci_tipo":"$reci_tipo", &#xd;            "reci_nombre":"$reci_nombre", &#xd;            "reci_fec_alta":"$reci_fec_alta ", &#xd;            "depo_id":"$depo_id", &#xd;            "depo_descripcion":"$depo_descripcion", &#xd;            "esta_id":"$esta_id", &#xd;            "esta_nombre":"$esta_nombre"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -477,11 +486,6 @@
    </resource>
    <resource method="GET" path="/articulos/busquedaavanzada">
       <call-query href="getArticulosBusqueda"/>
-   </resource>
-   <resource method="GET" path="/proveedores/{empr_id}">
-      <call-query href="getProveedores">
-         <with-param name="empr_id" query-param="empr_id"/>
-      </call-query>
    </resource>
    <resource method="POST" path="/notapedido">
       <call-query href="setNotaPedido">
@@ -839,7 +843,7 @@
          <with-param name="tipo" query-param="tipo"/>
       </call-query>
    </resource>
-<resource method="GET" path="/articulos/etapa/{etap_id}/empresa/{empr_id}">
+   <resource method="GET" path="/articulos/etapa/{etap_id}/empresa/{empr_id}">
       <call-query href="getArticulosYTiposXEtapa">
          <with-param name="etap_id" query-param="etap_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
@@ -850,5 +854,19 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/proveedores/{empr_id}">
+      <call-query href="getProveedores">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/proveedor">
+      <call-query href="deleteProveedor">
+         <with-param name="prov_id" query-param="prov_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/recipientes/empresa/{empr_id}">
+      <call-query href="getRecipientesXEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
 </data>
-

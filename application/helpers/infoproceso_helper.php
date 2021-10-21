@@ -21,9 +21,8 @@
 							$ci->load->model(ALM . 'Notapedidos');
 							$data['info'] = $ci->Notapedidos->getXCaseId($tarea->caseId);
 							
-							
-						//	 $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
-						//	 $aux =json_decode($data['info']);
+							 $data_generico =$data['info'];
+					 		$aux = $data_generico;
 						break;
 
 					case BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS:
@@ -74,7 +73,8 @@
 								<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
 									Proceso <?php
 														if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
-															echo ' - Orden Nº: '.$aux->ortr_id;
+														//	echo ' - Orden Nº: '. $aux["ortr_id"]; valores viejos
+														echo 'Nº pedido : '.$aux["pema_id"];
 														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
 															echo 'Reparación de Neumáticos';
 														}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
@@ -103,7 +103,7 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="generador" name="">Nº pedido:</label>
-																		<input type="text" class="form-control habilitar" id="generador" value="<?php echo $data->info->pema_id; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="generador" value="<?php echo $aux["pema_id"]; ?>"  readonly>
 																</div>
 														</div>
 														<!--_____________________________________________-->
@@ -111,7 +111,7 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="pedido" name=""> Estado:</label>
-																		<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $data->info->estado; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $aux["estado"]; ?>"  readonly>
 																</div>
 														</div>
 														<!--_____________________________________________-->
@@ -119,7 +119,7 @@
 														<div class="col-md-6">
 															<div class="form-group">
 																	<label for="domicilio" name="">Justificacion:</label>
-																	<input type="text" class="form-control habilitar" id="domicilio" value="<?php echo $data->info->justificacion; ?>"  readonly>
+																	<input type="text" class="form-control habilitar" id="domicilio" value="<?php echo $aux["justificacion"]; ?>"  readonly>
 															</div>
 														</div>
 														<!--_____________________________________________-->
@@ -127,7 +127,7 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="fec_alta" name="">Fecha Alta:</label>
-																		<input type="text" class="form-control habilitar" id="fec_alta" value="<?php echo $data->info->fec_alta; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="fec_alta" value="<?php echo $aux["fec_alta"]; ?>"  readonly>
 																</div>
 														</div>
 													<!--_____________________________________________-->

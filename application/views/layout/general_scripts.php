@@ -118,7 +118,8 @@
 <script src="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.js"></script>
 
 <!-- scripts para generacion codigos QR y de Barras -->
-<script src="<?php echo base_url(); ?>lib/props/generar_codigos.js"></script>
+
+<!-- <script src="<?php// echo base_url(); ?>lib/props/generar_codigos.js"></script> -->
 
 <!-- InputMask -->
 <script src="<?php echo base_url(); ?>lib/bower_components/inputmask/dist/jquery.inputmask.js"></script>
