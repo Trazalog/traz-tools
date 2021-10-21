@@ -61,6 +61,10 @@ if (!function_exists('bolita')) {
             case 'PLANIFICADO':
                 return bolita($estado, '');
                 break;
+            case 'Finalizado Ent. Parcial':
+                return bolita($estado, 'yellow');
+                break;
+               
             default:
                 return bolita('S/E', '');
                 break;

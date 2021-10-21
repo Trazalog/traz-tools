@@ -36,11 +36,11 @@
 					<li class="user-footer">
 							<?php if($this->session->userdata['role'] == 1){  // si es usr admin 	?>
 								<div class="pull-left">
-										<a href=<?php echo base_url('Login/list_usuarios')?> class="btn-sm btn-primary pull-right">Usuarios <i class="fa fa-user-circle-o"></i></a>
+										<a style="color: #fff !important;background-color: #3c8dbc !important" href=<?php echo base_url('Login/list_usuarios')?> class="btn-sm btn-primary pull-right">Usuarios <i class="fa fa-user-circle-o"></i></a>
 								</div>
 							<?php } ?>
 							<div class="pull-right">
-									<a href=<?php echo base_url('Login/log_out')?> class="btn-sm btn-primary pull-left">Salir <i class="fa fa-fw fa-sign-out"></i></a>
+									<a style="color: #fff !important;background-color: #3c8dbc !important" href=<?php echo base_url('Login/log_out')?> class="btn-sm btn-primary pull-left">Salir <i class="fa fa-fw fa-sign-out"></i></a>
 							</div>
 					</li>
 			</ul>
