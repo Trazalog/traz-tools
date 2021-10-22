@@ -173,10 +173,47 @@ if(!function_exists('empr_id_BPM')){
 }
 if(!function_exists('validarSesion')){
 
-    function validarSesion(){
-        $ci = &get_instance();
-        $userdata = $ci->session->userdata('user_data');
-        if(empty($userdata['email'])) redirect(base_url().'login/main/logout/'); 
-    }
+// // si esta vencida la sesion redirige al login
+     function validarSesion(){
 
-}		
+//     $ci = &get_instance();
+// 	$userdata = $ci->session->userdata;
+
+// 	$a = '1';
+// 	//if(empty($userdata['email'])) 
+//   //  if(empty($userdata)) 
+//   if($a == '1') {
+// 	log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+
+// //	redirect(DNATO.'main/login');
+// 	redirect(DNATO.'main/logout');
+// 		}
+$userdata_email = $_SESSION['email'];
+
+///$userdata_email = $this->session->userdata('email');
+	
+	if(isset($userdata_email)){
+	//	$userdata_email = $this->session->userdata('email');
+	$userdata_email = $_SESSION['email'];
+	}
+	else{
+		$userdata_email = '0';
+	}
+
+	if($userdata_email != '0') {
+
+log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
+
+		}
+		else{
+				//redirect(DNATO.'main/login');
+				redirect(DNATO.'main/logout');
+				log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+
+				return;
+		}
+
+
+   }
+
+}	

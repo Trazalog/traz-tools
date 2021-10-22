@@ -98,7 +98,9 @@ define('PORT', ':3000/');
 
 define('PRD', 'traz-prod-trazasoft/');
 
+#COMPONENTE TST
 define('TST', 'traz-comp-tareasestandar/');
+define('TAREAS_DEFAULT_PROC', 'TST001');
 
 #TRAZ-COMP-BPM
 define('BPM', 'traz-comp-bpm/');
@@ -115,13 +117,13 @@ define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 
 define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
-define('BPM_PROCESS_ID_TAREA_GENERICA', '7485374631624182404');
+define('BPM_PROCESS_ID_TAREA_GENERICA', '6236605840529875888');
 
 #YUDICA REPARACION_NEUMATICOS
 define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
 
 #SICPOA Control de Ingreso de Camiones
-define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5724181768742614717');
+define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5841373952148500437');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
@@ -172,7 +174,7 @@ define('ASP_115', 'Error al Leer Variable');
 
 
 
-//Nombre de Prouyecto
+//Nombre de Proyecto
 define('MNOM', 'Tools');
 define('NOM', 'Trazalog Tools');
 
@@ -180,6 +182,8 @@ define('NOM', 'Trazalog Tools');
 #define('DEF_VIEW',BPM.'Pedidotrabajo/dash');
 define('DEF_VIEW',BPM.'Proceso');
 
+//Proceso pedido trabajo standar
+define('PRO_STD', 'PROCESO-STANDAR');
 
 /*
 |--------------------------------------------------------------------------

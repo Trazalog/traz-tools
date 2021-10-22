@@ -165,7 +165,8 @@
       <param name="reci_id" sqlType="STRING"/>
    </query>
    <query id="setFinalizarLote" useConfig="ToolsDataSource">
-      <sql>UPDATE prd.lotes set estado = 'FINALIZADO'&#xd;WHERE batch_id =  cast(:batch_id as integer)</sql>
+      <sql>select prd.finalizar_lote(cast(:batch_id as integer)) resultado;</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
       <param name="batch_id" sqlType="STRING"/>
    </query>
    <query id="etapaEntradaSet" useConfig="ToolsDataSource">
@@ -217,6 +218,41 @@
       <param name="orden" sqlType="STRING"/>
       <param name="form_id" sqlType="STRING"/>
       <param name="tiet_id" sqlType="STRING"/>
+      <param name="etap_id" sqlType="STRING"/>
+   </query>
+   <query id="getArticulos" useConfig="ToolsDataSource">
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock, unidad_medida as um&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
+      <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "stock": "$stock",&#xd;                "um":"$um"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setArticuloEntrada" useConfig="ToolsDataSource">
+      <sql>insert into prd.etapas_materiales (etap_id, arti_id) values(CAST(:etap_id AS INTEGER), CAST(:arti_id AS INTEGER))</sql>
+      <param name="etap_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteArticuloEntrada" useConfig="ToolsDataSource">
+      <sql>DELETE FROM prd.etapas_materiales&#xd;WHERE arti_id=cast(:arti_id as integer) AND etap_id=cast(:etap_id as integer);</sql>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="etap_id" sqlType="STRING"/>
+   </query>
+   <query id="setArticuloProducto" useConfig="ToolsDataSource">
+      <sql>insert into prd.etapas_productos (&#xd;	etap_id,&#xd;	arti_id)&#xd;values(&#xd;  	CAST(:etap_id as INTEGER), &#xd;  	CAST(:arti_id as INTEGER))</sql>
+      <param name="etap_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteArticuloProducto" useConfig="ToolsDataSource">
+      <sql>delete from prd.etapas_productos&#xd;WHERE arti_id=cast(:arti_id as integer) AND etap_id=cast(:etap_id as integer);</sql>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="etap_id" sqlType="STRING"/>
+   </query>
+   <query id="setArticuloSalida" useConfig="ToolsDataSource">
+      <sql>insert into prd.etapas_salidas (&#xd;	etap_id,&#xd;	arti_id)&#xd;values(&#xd;  	CAST(:etap_id as INTEGER), &#xd;  	CAST(:arti_id as INTEGER))</sql>
+      <param name="etap_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteArticuloSalida" useConfig="ToolsDataSource">
+      <sql>delete from prd.etapas_salidas&#xd;WHERE arti_id=cast(:arti_id as integer) AND etap_id=cast(:etap_id as integer);</sql>
+      <param name="arti_id" sqlType="STRING"/>
       <param name="etap_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/productos/etapa/{etapa}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}">
@@ -439,6 +475,47 @@
          <with-param name="orden" query-param="orden"/>
          <with-param name="form_id" query-param="form_id"/>
          <with-param name="tiet_id" query-param="tiet_id"/>
+         <with-param name="etap_id" query-param="etap_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulos/{empr_id}">
+      <call-query href="getArticulos">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>   
+   <resource method="POST" path="/articuloEntrada">
+      <call-query href="setArticuloEntrada">
+         <with-param name="etap_id" query-param="etap_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/articuloEntrada">
+      <call-query href="deleteArticuloEntrada">
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="etap_id" query-param="etap_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/articuloProducto">
+      <call-query href="setArticuloProducto">
+         <with-param name="etap_id" query-param="etap_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/articuloProducto">
+      <call-query href="deleteArticuloProducto">
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="etap_id" query-param="etap_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/articuloSalida">
+      <call-query href="setArticuloSalida">
+         <with-param name="etap_id" query-param="etap_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/articuloSalida">
+      <call-query href="deleteArticuloSalida">
+         <with-param name="arti_id" query-param="arti_id"/>
          <with-param name="etap_id" query-param="etap_id"/>
       </call-query>
    </resource>
