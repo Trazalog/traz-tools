@@ -176,24 +176,10 @@ if(!function_exists('validarSesion')){
 // // si esta vencida la sesion redirige al login
      function validarSesion(){
 
-//     $ci = &get_instance();
-// 	$userdata = $ci->session->userdata;
-
-// 	$a = '1';
-// 	//if(empty($userdata['email'])) 
-//   //  if(empty($userdata)) 
-//   if($a == '1') {
-// 	log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
-
-// //	redirect(DNATO.'main/login');
-// 	redirect(DNATO.'main/logout');
-// 		}
 $userdata_email = $_SESSION['email'];
-
-///$userdata_email = $this->session->userdata('email');
 	
 	if(isset($userdata_email)){
-	//	$userdata_email = $this->session->userdata('email');
+		;
 	$userdata_email = $_SESSION['email'];
 	}
 	else{
@@ -206,7 +192,6 @@ log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
 
 		}
 		else{
-				//redirect(DNATO.'main/login');
 				redirect(DNATO.'main/logout');
 				log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
 
@@ -217,3 +202,65 @@ log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
    }
 
 }	
+
+
+if(!function_exists('validarInactividad')){
+
+	function validarInactividad(){	
+//Comprobamos si esta definida la sesión 'tiempo'.
+if(isset($_SESSION['tiempo']) ) {
+
+    //Tiempo en segundos para dar vida a la sesión.
+    $inactivo = 60;//20min en este caso.
+
+    //Calculamos tiempo de vida inactivo.
+    $vida_session = time() - $_SESSION['tiempo'];
+
+        //Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
+        if($vida_session > $inactivo)
+        {
+            //Removemos sesión.
+            session_unset();
+            //Destruimos sesión.
+            session_destroy();              
+            //Redirigimos pagina.
+		
+			log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+			
+			echo	"<script>window.onload = message_error;</script>";
+			?>
+			<script>
+				Swal.fire({
+				icon: 'error',
+				title: 'Oops...',
+				text: 'Something went wrong!',
+				footer: '<a href="">Why do I have this issue?</a>'
+				})
+
+			</script>
+			<?php
+			
+			redirect(DNATO.'main/logout');
+
+            exit();
+        }
+} else {
+    //Activamos sesion tiempo.
+    $_SESSION['tiempo'] = time();
+}
+}
+	}
+
+
+
+	?>
+	<script>
+			function message_error() {
+				Swal.fire({
+					icon: 'error',
+					title: 'Oops...',
+					text: 'Su Sesión ha Expirado!'
+				});
+			}
+
+	</script>
