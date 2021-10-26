@@ -227,7 +227,7 @@ if(isset($_SESSION['tiempo']) ) {
 		
 			log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
 			
-			echo	"<script>window.onload = message_error;</script>";
+	
 			?>
 			<script>
 				Swal.fire({
@@ -254,13 +254,3 @@ if(isset($_SESSION['tiempo']) ) {
 
 
 	?>
-	<script>
-			function message_error() {
-				Swal.fire({
-					icon: 'error',
-					title: 'Oops...',
-					text: 'Su Sesión ha Expirado!'
-				});
-			}
-
-	</script>
