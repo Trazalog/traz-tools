@@ -211,7 +211,7 @@ if(!function_exists('validarInactividad')){
 if(isset($_SESSION['tiempo']) ) {
 
     //Tiempo en segundos para dar vida a la sesión.
-    $inactivo = 60;//20min en este caso.
+    $inactivo = 1200;//20min en este caso.
 
     //Calculamos tiempo de vida inactivo.
     $vida_session = time() - $_SESSION['tiempo'];
@@ -219,29 +219,24 @@ if(isset($_SESSION['tiempo']) ) {
         //Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
         if($vida_session > $inactivo)
         {
+		
+
             //Removemos sesión.
             session_unset();
             //Destruimos sesión.
             session_destroy();              
             //Redirigimos pagina.
-		
-			log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
-			
-	
-			?>
-			<script>
-				Swal.fire({
-				icon: 'error',
-				title: 'Oops...',
-				text: 'Something went wrong!',
-				footer: '<a href="">Why do I have this issue?</a>'
-				})
-
-			</script>
-			<?php
-			
 			redirect(DNATO.'main/logout');
 
+			log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+
+		
+			//echo "<script>Swal.fire({icon: 'error',title: 'Oops...',text: 'Sesion Expirada!'})</script>";	
+			?>
+			
+			<?php
+			
+			
             exit();
         }
 } else {
