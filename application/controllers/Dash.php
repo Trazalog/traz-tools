@@ -20,7 +20,7 @@ class Dash extends CI_Controller {
 			//verifica si esta inactivo
 			//20minutos de inactividad y redirecciona a login
 			validarInactividad();
-		}
+		
 	}
 
 	function index(){
