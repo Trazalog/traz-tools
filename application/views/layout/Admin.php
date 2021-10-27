@@ -141,7 +141,7 @@
 
     <footer class="main-footer">
         <div class="pull-right hidden-xs">
-            <strong>Version</strong> 0.1
+            <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::get(); ?></i> 
         </div>
         <strong>Copyright &copy; 2020 <a href="">Trazalog</a>.</strong> All rights
         reserved.
@@ -342,7 +342,49 @@
     <div class="control-sidebar-bg"></div>
 </div>
 <!-- ./wrapper -->
+
+
+<!--_______ MODAL ______-->
+<div class="modal fade" id="modalGitVersion">
+    <div class="modal-dialog">
+        <!-- modal-content -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title"> Detalles de Despliegue</h4>
+            </div>
+            <!-- /.modal-body -->
+            <div class="modal-body">
+
+
+			</div> 
+            <!-- /.modal-body -->
+
+            <!-- modal-footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Aceptar</button>
+            </div>
+            <!-- modal-footer -->
+
+        </div>
+        <!-- /.modal-content -->
+    </div>
+</div>
+<!-- /.modal -->
+
+
+
+
 <script>
+    
+function modalDetailVersion(){
+
+    $("#modalGitVersion").modal('show');
+}
+
+
+
 linkTo('<?php echo DEF_VIEW ?>');
 
 function collapse(e) {
