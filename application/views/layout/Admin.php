@@ -79,6 +79,14 @@
         .oculto {
             display: none;
         }
+
+        .trazalog:after {
+            /*content: "\A TOOLS";*/
+            content: " TOOLS";
+            font-size: 12px;
+            /*white-space: pre-line;*/
+        }
+        
     </style>
 
 
@@ -93,11 +101,22 @@
 
     <header class="main-header">
         <!-- Logo -->
-        <a href="#"  class="logo">
-            <!-- mini logo for sidebar mini 50x50 pixels -->
-            <span class="logo-mini"><strong><?php echo MNOM ?></strong></span>
-						<span class="logo-lg" onclick="linkTo();"><b><?php echo NOM ?></b></span>
+         <!-- Logo -->
+        <!-- <a href="#"  class="logo"> -->
+        <!-- mini logo for sidebar mini 50x50 pixels -->
+        <!--    <span class="logo-mini"><strong><?php /*echo MNOM */?></strong></span>-->
+		<!--				<span class="logo-lg" onclick="linkTo();"><b><?php /*echo NOM*/ ?></b></span>-->
         <!-- </span> -->
+        <!--</a> -->
+        <!-- Header Navbar: style can be found in header.less -->
+
+
+        <a href="#"  class="logo">
+            <!-- </span> -->
+            <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px;">
+            <span class="trazalog">TRAZALOG</span>
+            <!-- <span class="">TOOLS</strong></span> -->
+            <!-- </span> -->
         </a>
         <!-- Header Navbar: style can be found in header.less -->
         <nav class="navbar navbar-static-top">
@@ -141,7 +160,7 @@
 
     <footer class="main-footer">
         <div class="pull-right hidden-xs">
-            <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::get(); ?></i> 
+            <i style="cursor: pointer;" onclick=""><strong>Versión </strong> <?php echo  ApplicationVersion::get(); ?></i> 
         </div>
         <strong>Copyright &copy; 2020 <a href="">Trazalog</a>.</strong> All rights
         reserved.
