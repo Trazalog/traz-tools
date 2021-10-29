@@ -86,8 +86,7 @@
             font-size: 12px;
             /*white-space: pre-line;*/
             
-        }
-        
+        }        
     </style>
 
 
