@@ -85,6 +85,7 @@
             content: " TOOLS";
             font-size: 12px;
             /*white-space: pre-line;*/
+            
         }
         
     </style>
@@ -111,10 +112,10 @@
         <!-- Header Navbar: style can be found in header.less -->
 
 
-        <a href="#"  class="logo">
+        <a href="<?php echo base_url() ?>"  class="logo">
             <!-- </span> -->
             <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px;">
-            <span class="trazalog">TRAZALOG</span>
+            <span class="trazalog">TRAZALOG </span>
             <!-- <span class="">TOOLS</strong></span> -->
             <!-- </span> -->
         </a>

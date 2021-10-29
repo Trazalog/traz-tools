@@ -14,7 +14,7 @@ class ApplicationVersion
         $commitDate->setTimezone(new \DateTimeZone('UTC'));
 
         //return sprintf('v%s.%s.%s-dev.%s (%s)', self::MAJOR, self::MINOR, self::PATCH, $commitHash, $commitDate->format('Y-m-d H:i:s'));
-        return sprintf('V-%s.%s.%s', self::MAJOR, self::MINOR, self::PATCH, $commitHash, $commitDate->format('Y-m-d'));
+        return sprintf('v%s.%s.%s', self::MAJOR, self::MINOR, self::PATCH, $commitHash, $commitDate->format('Y-m-d'));
     }
 }
 
