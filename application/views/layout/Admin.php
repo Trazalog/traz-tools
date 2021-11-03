@@ -65,11 +65,10 @@
 
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-
     <link rel="stylesheet" href="<?php echo base_url() ?>lib/swal/dist/sweetalert2.min.css">
-
     <link rel="stylesheet" href="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.css">
 
+    <link href='<?php  echo base_url();?>assets/fullcalendar/lib/main.min.css' rel='stylesheet' />
 
     <style>
         .mr-2{
@@ -86,7 +85,14 @@
             font-size: 12px;
             /*white-space: pre-line;*/
             
-        }        
+        }  
+
+        .calendar {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+
     </style>
 
 
@@ -160,7 +166,7 @@
 
     <footer class="main-footer">
         <div class="pull-right hidden-xs">
-            <i style="cursor: pointer;" onclick=""><strong>Versión </strong> <?php echo  ApplicationVersion::get(); ?></i> 
+            <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
         </div>
         <strong>Copyright &copy; 2020 <a href="">Trazalog</a>.</strong> All rights
         reserved.
@@ -364,19 +370,17 @@
 
 
 <!--_______ MODAL ______-->
-<div class="modal fade" id="modalGitVersion">
+<div class="modal" id="modalGitVersion">
     <div class="modal-dialog">
         <!-- modal-content -->
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title"> Detalles de Despliegue</h4>
-            </div>
+            
             <!-- /.modal-body -->
-            <div class="modal-body">
-
-
+            <div class="modal-body ">
+                <?php
+                    //echo  ApplicationVersion::getLastVersions();
+                ?>
+                <div id='calendar'></div>
 			</div> 
             <!-- /.modal-body -->
 
@@ -396,12 +400,65 @@
 
 
 <script>
-    
+
 function modalDetailVersion(){
 
     $("#modalGitVersion").modal('show');
+
+    //
+
+    cargarCalendar();
 }
 
+function cargarCalendar(){
+
+    var tagsLastCommits = <?php echo ApplicationVersion::getLastVersions(); ?>;
+    /*console.log(tagsLastCommits);*/
+
+    let lastCommits = tagsLastCommits[0].split("\n");  
+    console.log(lastCommits);
+
+    var dataCalendar = [];
+
+    lastCommits.forEach(function callback(elemento, indice, array) {  
+        /*console.log("Elemento: "+elemento, indice);*/
+        tagElemento = elemento.split(" ");
+        /*console.log(tagElemento[0]+" "+tagElemento[4]+" "+tagElemento[5]);*/
+        if (typeof(tagElemento[4]) != "undefined" && typeof(tagElemento[5]) != "undefined"){
+            dataCalendar[indice] = {
+                title : tagElemento[4] +" "+tagElemento[5],
+                start : tagElemento[0],
+                end : tagElemento[0]  
+
+            }
+        }
+
+    });
+    /*console.log(dataCalendar);*/
+    var data = dataCalendar.filter(Boolean);
+    var events = JSON.stringify(data);
+    console.log(events);
+
+
+    var initialLocaleCode = 'es';
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      headerToolbar: {
+        left: 'prev,next',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,listMonth'
+      },
+      initialDate: new Date(),
+      locale: initialLocaleCode,
+      navLinks: true, 
+      businessHours: true, 
+      selectable: true,
+      events: $.parseJSON(events)  
+    });
+
+    calendar.render();
+  }
 
 
 linkTo('<?php echo DEF_VIEW ?>');
@@ -441,6 +498,9 @@ function wc() {
     WaitingClose();
 }
 </script>
+
+<script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
+<script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
 
 </body>
 
