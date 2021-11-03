@@ -114,18 +114,18 @@ if(!function_exists('filtrarbyDepo')){
 * @return bool true o false
 */
 if(!function_exists('bandejaEmpresa')){
-
+	
 	function bandejaEmpresa($case_id, $empr_id)
 	{
-			$ci =& get_instance();
-			$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
-			$aux =json_decode($aux["data"]);
-
-			if ($aux->respuesta->case_id) {
-				return  true;
-			} else {
-				return  false;
-			}
+		$ci =& get_instance();
+		$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
+		$aux =json_decode($aux["data"]);
+		
+		if ($aux->respuesta->case_id) {
+			return  true;
+		} else {
+			return  false;
+		}
 	}
 }
 
@@ -205,13 +205,14 @@ log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
 
 
 if(!function_exists('validarInactividad')){
-
+	
 	function validarInactividad(){	
 //Comprobamos si esta definida la sesión 'tiempo'.
+
 if(isset($_SESSION['tiempo']) ) {
 
     //Tiempo en segundos para dar vida a la sesión.
-    $inactivo = 1200;//20min en este caso.
+    $inactivo = 200;//20min en este caso.
 
     //Calculamos tiempo de vida inactivo.
     $vida_session = time() - $_SESSION['tiempo'];
@@ -238,7 +239,9 @@ if(isset($_SESSION['tiempo']) ) {
 			
 			
             exit();
-        }
+        }else{
+			validarSesion();
+		}
 } else {
     //Activamos sesion tiempo.
     $_SESSION['tiempo'] = time();
