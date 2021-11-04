@@ -240,7 +240,9 @@ if(isset($_SESSION['tiempo']) ) {
 			
             exit();
         }else{
+			//Refresco el tiempo luego de actividad
 			validarSesion();
+			$_SESSION['tiempo'] = time();
 		}
 } else {
     //Activamos sesion tiempo.
