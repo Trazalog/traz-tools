@@ -18,7 +18,6 @@
                             echo '                        
                             <button type="button" title="Eliminar" class="btn btn-primary btn-circle btnEliminar" data-toggle="modal" data-target="#modalEliminarProveedor" id="btnBorrar" ><span class="glyphicon glyphicon-trash" aria-hidden="true" ></span></button>&nbsp
                             <button type="button" title="Editar"  class="btn btn-primary btn-circle btnEditar" data-toggle="modal" data-target="#modalEditarProveedor" id="btnEditar" ><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>&nbsp
-                            <button type="button" title="Depósitos" class="btn btn-primary btn-circle btnDepositos" data-toggle="modal" data-target="#modaleditar" ><span class="glyphicon glyphicon-inbox" aria-hidden="true"></span></button>&nbsp
                             ';
                         echo '</td>';
                         echo '<td>'.$proveedor->titulo.'</td>';
