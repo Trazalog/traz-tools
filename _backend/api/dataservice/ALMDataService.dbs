@@ -421,6 +421,31 @@
       <result outputType="json">{&#xd;   "recipientes":{&#xd;      "recipiente":[&#xd;         {&#xd;            "reci_id":"$reci_id", &#xd;            "reci_tipo":"$reci_tipo", &#xd;            "reci_nombre":"$reci_nombre", &#xd;            "reci_fec_alta":"$reci_fec_alta ", &#xd;            "depo_id":"$depo_id", &#xd;            "depo_descripcion":"$depo_descripcion", &#xd;            "esta_id":"$esta_id", &#xd;            "esta_nombre":"$esta_nombre"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="setProveedor" useConfig="ToolsDataSource">
+      <sql>insert into alm.alm_proveedores (&#xd;	nombre, &#xd;	cuit,&#xd;	domicilio,&#xd;        telefono,&#xd;        email,&#xd;	pais_id,&#xd;	esta_id,&#xd;	loca_id,&#xd;    empr_id )&#xd;values(&#xd;  	:nombre, &#xd;  	:cuit, &#xd;  	:domicilio,&#xd;        :telefono,&#xd;        :email,&#xd;  	:pais,&#xd;  	:estado,&#xd;  	:localidad,&#xd;        cast(:empr_id as integer))</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="domicilio" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="pais" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="localidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="updateProveedor" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_proveedores&#xd;set nombre = :nombre,&#xd;    cuit = :cuit,&#xd;    domicilio = :domicilio,&#xd;    telefono = :telefono,&#xd;    email = :email,&#xd;    loca_id = :localidad,&#xd;    esta_id = :estado,&#xd;    pais_id = :pais,&#xd;    empr_id = :empr_id&#xd;where prov_id = CAST(:prov_id as integer)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="domicilio" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="localidad" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="pais" sqlType="STRING"/>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -866,6 +891,33 @@
    </resource>
    <resource method="GET" path="/recipientes/empresa/{empr_id}">
       <call-query href="getRecipientesXEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/proveedores">
+      <call-query href="setProveedor">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="domicilio" query-param="domicilio"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="localidad" query-param="localidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/proveedor">
+      <call-query href="updateProveedor">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="domicilio" query-param="domicilio"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="localidad" query-param="localidad"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="prov_id" query-param="prov_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
