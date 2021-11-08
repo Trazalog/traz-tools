@@ -4,7 +4,7 @@
    </config>
    <query id="getMovimientosTransporte" useConfig="ToolsDataSource">
       <sql>select mt.motr_id, mv.tipo, es.nombre establecimiento ,mv.tipo tipo_movimiento,mt.cuit,mt.boleta,mt.acoplado, pr.nombre proveedor, tr.razon_social transportista ,to_char(mt.fecha_entrada,'dd-mm-yyyy') fecha_entrada, mt.patente, mt.neto, mt.estado, mt.accion&#xd;from prd.movimientos_trasportes mt&#xd;, prd.establecimientos es&#xd;, alm.alm_proveedores pr&#xd;, core.transportistas tr&#xd;,(select :tipo_movimiento tipo) mv&#xd;where mt.prov_id = pr.prov_id&#xd;and mt.cuit = tr.cuit&#xd;and es.esta_id = mt.esta_id&#xd;and mt.empr_id = cast(:empr_id as integer)&#xd;and mt.estado != 'FINALIZADO'&#xd;order by mt.fecha_entrada desc</sql>
-      <result outputType="json">{"movimientosTransporte":{&#xd;   "movimientoTransporte":[&#xd;     {&#xd;      "boleta":"$boleta"&#xd;      ,"establecimiento":"$establecimiento"&#xd;      ,"proveedor":"$proveedor"  &#xd;      ,"transportista":"$transportista"&#xd;      ,"fecha_entrada":"$fecha_entrada"&#xd;      ,"patente":"$patente"&#xd;      ,"acoplado":"$acoplado"&#xd;      ,"neto":"$neto"&#xd;      ,"estado":"$estado",&#xd;      "cuit":"$cuit",&#xd;      "accion":"$accion",&#xd;      "@getArticulosMovimientoTransporte":"$tipo_movimiento-&gt;tipo_movimiento,$motr_id-&gt;motr_id"&#xd;     }&#xd;   ]&#xd;}&#xd;}&#xd;</result>
+      <result outputType="json">{"movimientosTransporte":{&#xd;   "movimientoTransporte":[&#xd;     {&#xd;      "motr_id":"$motr_id"&#xd;      ,"boleta":"$boleta"&#xd;      ,"establecimiento":"$establecimiento"&#xd;      ,"proveedor":"$proveedor"  &#xd;      ,"transportista":"$transportista"&#xd;      ,"fecha_entrada":"$fecha_entrada"&#xd;      ,"patente":"$patente"&#xd;      ,"acoplado":"$acoplado"&#xd;      ,"neto":"$neto"&#xd;      ,"estado":"$estado",&#xd;      "cuit":"$cuit",&#xd;      "accion":"$accion",&#xd;      "@getArticulosMovimientoTransporte":"$tipo_movimiento-&gt;tipo_movimiento,$motr_id-&gt;motr_id"&#xd;     }&#xd;   ]&#xd;}&#xd;}&#xd;</result>
       <param name="tipo_movimiento" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -50,9 +50,10 @@
       <param name="motr_id" sqlType="STRING"/>
    </query>
    <query id="getCamion" useConfig="ToolsDataSource">
-      <sql>SELECT mt.motr_id, mt.patente, mt.acoplado, mt.conductor, mt.tipo, mt.bruto, mt.tara, mt.neto, mt.esta_id, &#xd;e.nombre AS esta_nombre, mt.estado&#xd;FROM prd.movimientos_trasportes mt&#xd;INNER JOIN prd.establecimientos e ON e.esta_id = mt.esta_id&#xd;WHERE mt.patente = :patente</sql>
+      <sql>SELECT mt.motr_id, mt.patente, mt.acoplado, mt.conductor, mt.tipo, mt.bruto, mt.tara, mt.neto, mt.esta_id, mt.empr_id, e.nombre AS esta_nombre, mt.estado&#xd;FROM prd.movimientos_trasportes mt&#xd;INNER JOIN prd.establecimientos e ON e.esta_id = mt.esta_id&#xd;WHERE mt.patente = :patente&#xd;and mt.empr_id = cast(:empr_id as integer)</sql>
       <result outputType="json">{&#xd;    "camiones":{&#xd;        "camion":[&#xd;            {&#xd;                "motr_id":"$motr_id",&#xd;                "acoplado":"$acoplado",&#xd;                "conductor":"$conductor",&#xd;                "tipo":"$tipo",&#xd;                "bruto":"$bruto",&#xd;                "tara":"$tara",&#xd;                "neto":"$neto",&#xd;                "patente":"$patente",&#xd;                "esta_id":"$esta_id",&#xd;                "esta_nombre":"$esta_nombre",&#xd;                "estado":"$estado"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="patente" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setSalidaCamion" useConfig="ToolsDataSource">
       <sql>UPDATE prd.movimientos_trasportes&#xd;SET 	bruto = CAST(:bruto as float8), &#xd;		neto = CAST(:neto as float8), &#xd;		estado = :estado&#xd;WHERE motr_id = cast(:motr_id as integer)</sql>
@@ -107,9 +108,10 @@
       <param name="cuit" sqlType="STRING"/>
    </query>
    <query id="getEstadoCamion" useConfig="ToolsDataSource">
-      <sql>select mt.estado&#xd;from&#xd;	prd.movimientos_trasportes mt ,&#xd;	(select :patente patente) pat&#xd;where mt.fec_alta = (select max(mtra.fec_alta)&#xd;				   from prd.movimientos_trasportes mtra&#xd;				   where mtra.patente = pat.patente)&#xd;and mt.patente = pat.patente</sql>
-      <result outputType="json">{&#xd;  "respuesta":{&#xd;    "estado":"$estado"&#xd;  }&#xd;}</result>
+      <sql>select mt.motr_id, mt.estado&#xd;from prd.movimientos_trasportes mt ,&#xd;	(select :patente patente) pat&#xd;where mt.fec_alta = (select max(mtra.fec_alta)&#xd;				   from prd.movimientos_trasportes mtra&#xd;				   where mtra.patente = pat.patente)&#xd;and mt.patente = pat.patente&#xd;and mt.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;    "estado":"$estado",&#xd;    "motr_id": "$motr_id"&#xd;  }&#xd;}</result>
       <param name="patente" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="updateProveedor" useConfig="ToolsDataSource">
       <sql>update prd.movimientos_trasportes set prov_id = cast(:prov_id as integer)&#xd;where patente = :patente&#xd;and estado = :estado</sql>
@@ -118,10 +120,10 @@
       <param name="estado" sqlType="STRING"/>
    </query>
    <query id="getMovimientoTransporte" useConfig="ToolsDataSource">
-      <sql>select mt.motr_id, es.nombre establecimiento,es.esta_id , mt.cuit, mt.boleta, mt.conductor, mt.tipo, mt.acoplado, pr.nombre proveedor, tr.razon_social transportista ,to_char(mt.fecha_entrada,'dd-mm-yyyy') fecha_entrada, mt.patente,mt.bruto ,mt.tara ,mt.neto, mt.estado, mt.accion, 'tipo_movimiento' tipo_movimiento&#xd;from prd.movimientos_trasportes mt&#xd;, prd.establecimientos es&#xd;, alm.alm_proveedores pr&#xd;, core.transportistas tr&#xd;,(select :patente patente) pat&#xd;where mt.prov_id = pr.prov_id&#xd;and mt.cuit = tr.cuit&#xd;and es.esta_id = mt.esta_id&#xd;and mt.empr_id = cast(:empr_id as integer)&#xd;and mt.patente = pat.patente</sql>
-      <result outputType="json">{&#xd;    "movimiento": {&#xd;        "motr_id": "$motr_id",&#xd;        "esta_id": "$esta_id",&#xd;        "establecimiento": "$establecimiento",&#xd;        "cuit": "$cuit",&#xd;        "boleta": "$boleta",&#xd;        "conductor": "$conductor",&#xd;        "tipo": "$tipo",&#xd;        "acoplado": "$acoplado",&#xd;        "proveedor": "$proveedor",&#xd;        "transportista": "$transportista",&#xd;        "fecha_entrada": "$fecha_entrada",&#xd;        "patente": "$patente",&#xd;        "bruto": "$bruto",&#xd;        "tara": "$tara",&#xd;        "neto": "$neto",&#xd;        "estado": "$estado",&#xd;        "accion": "$accion",&#xd;        "@getArticulosMovimientoTransporte":"$tipo_movimiento-&gt;tipo_movimiento,$motr_id-&gt;motr_id"&#xd;    }&#xd;}</result>
-      <param name="patente" sqlType="STRING"/>
+      <sql>select mt.motr_id, es.nombre establecimiento,es.esta_id , mt.cuit, mt.boleta, mt.conductor, mt.tipo, mt.acoplado, pr.nombre proveedor, tr.razon_social transportista ,to_char(mt.fecha_entrada,'dd-mm-yyyy') fecha_entrada, mt.patente,mt.bruto ,mt.tara ,mt.neto, mt.estado, mt.accion, 'tipo_movimiento' tipo_movimiento, mt.prov_id &#xd;from prd.movimientos_trasportes mt&#xd;, prd.establecimientos es&#xd;, alm.alm_proveedores pr&#xd;, core.transportistas tr&#xd;where mt.prov_id = pr.prov_id&#xd;and mt.cuit = tr.cuit&#xd;and es.esta_id = mt.esta_id&#xd;and mt.empr_id = cast(:empr_id as integer)&#xd;and mt.motr_id = cast(:motr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "movimiento": {&#xd;        "motr_id": "$motr_id",&#xd;        "esta_id": "$esta_id",&#xd;        "establecimiento": "$establecimiento",&#xd;        "cuit": "$cuit",&#xd;        "boleta": "$boleta",&#xd;        "conductor": "$conductor",&#xd;        "tipo": "$tipo",&#xd;        "acoplado": "$acoplado",&#xd;        "proveedor": "$proveedor",&#xd;        "prov_id": "$prov_id",&#xd;        "transportista": "$transportista",&#xd;        "fecha_entrada": "$fecha_entrada",&#xd;        "patente": "$patente",&#xd;        "bruto": "$bruto",&#xd;        "tara": "$tara",&#xd;        "neto": "$neto",&#xd;        "estado": "$estado",&#xd;        "accion": "$accion",&#xd;        "@getArticulosMovimientoTransporte":"$tipo_movimiento-&gt;tipo_movimiento,$motr_id-&gt;motr_id"&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
+      <param name="motr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/transporte/movimiento/list/{tipo_movimiento}/{empr_id}">
       <call-query href="getMovimientosTransporte">
@@ -203,9 +205,10 @@
          <with-param name="motr_id" query-param="motr_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/camiones/{patente}">
+   <resource method="GET" path="/camiones/{patente}/{empr_id}">
       <call-query href="getCamion">
          <with-param name="patente" query-param="patente"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/camiones/salida">
@@ -243,9 +246,10 @@
          <with-param name="cuit" query-param="cuit"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/camiones/estado/pat/{patente}">
+   <resource method="GET" path="/camiones/estado/patente/{patente}/{empr_id}">
       <call-query href="getEstadoCamion">
          <with-param name="patente" query-param="patente"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/camiones/proveedor">
@@ -255,9 +259,9 @@
          <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/transporte/movimiento/patente/{patente}/{empr_id}">
+   <resource method="GET" path="/transporte/movimiento/motr_id/{motr_id}/{empr_id}">
       <call-query href="getMovimientoTransporte">
-         <with-param name="patente" query-param="patente"/>
+         <with-param name="motr_id" query-param="motr_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
