@@ -65,11 +65,10 @@
 
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-
     <link rel="stylesheet" href="<?php echo base_url() ?>lib/swal/dist/sweetalert2.min.css">
-
     <link rel="stylesheet" href="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.css">
 
+    <link href='<?php  echo base_url();?>assets/fullcalendar/lib/main.min.css' rel='stylesheet' />
 
     <style>
         .mr-2{
@@ -79,6 +78,21 @@
         .oculto {
             display: none;
         }
+
+        .trazalog:after {
+            /*content: "\A TOOLS";*/
+            content: " TOOLS";
+            font-size: 12px;
+            /*white-space: pre-line;*/
+            
+        }  
+
+        .calendar {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+
     </style>
 
 
@@ -93,11 +107,22 @@
 
     <header class="main-header">
         <!-- Logo -->
-        <a href="#"  class="logo">
-            <!-- mini logo for sidebar mini 50x50 pixels -->
-            <span class="logo-mini"><strong><?php echo MNOM ?></strong></span>
-						<span class="logo-lg" onclick="linkTo();"><b><?php echo NOM ?></b></span>
+         <!-- Logo -->
+        <!-- <a href="#"  class="logo"> -->
+        <!-- mini logo for sidebar mini 50x50 pixels -->
+        <!--    <span class="logo-mini"><strong><?php /*echo MNOM */?></strong></span>-->
+		<!--				<span class="logo-lg" onclick="linkTo();"><b><?php /*echo NOM*/ ?></b></span>-->
         <!-- </span> -->
+        <!--</a> -->
+        <!-- Header Navbar: style can be found in header.less -->
+
+
+        <a href="<?php echo base_url() ?>"  class="logo">
+            <!-- </span> -->
+            <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px;">
+            <span class="trazalog">TRAZALOG </span>
+            <!-- <span class="">TOOLS</strong></span> -->
+            <!-- </span> -->
         </a>
         <!-- Header Navbar: style can be found in header.less -->
         <nav class="navbar navbar-static-top">
@@ -141,7 +166,7 @@
 
     <footer class="main-footer">
         <div class="pull-right hidden-xs">
-            <strong>Version</strong> 0.1
+            <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
         </div>
         <strong>Copyright &copy; 2020 <a href="">Trazalog</a>.</strong> All rights
         reserved.
@@ -342,7 +367,100 @@
     <div class="control-sidebar-bg"></div>
 </div>
 <!-- ./wrapper -->
+
+
+<!--_______ MODAL ______-->
+<div class="modal" id="modalGitVersion">
+    <div class="modal-dialog">
+        <!-- modal-content -->
+        <div class="modal-content">
+            
+            <!-- /.modal-body -->
+            <div class="modal-body ">
+                <?php
+                    //echo  ApplicationVersion::getLastVersions();
+                ?>
+                <div id='calendar'></div>
+			</div> 
+            <!-- /.modal-body -->
+
+            <!-- modal-footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Aceptar</button>
+            </div>
+            <!-- modal-footer -->
+
+        </div>
+        <!-- /.modal-content -->
+    </div>
+</div>
+<!-- /.modal -->
+
+
+
+
 <script>
+
+function modalDetailVersion(){
+
+    $("#modalGitVersion").modal('show');
+
+    //
+
+    cargarCalendar();
+}
+
+function cargarCalendar(){
+
+    var tagsLastCommits = <?php echo ApplicationVersion::getLastVersions(); ?>;
+    /*console.log(tagsLastCommits);*/
+
+    let lastCommits = tagsLastCommits[0].split("\n");  
+    console.log(lastCommits);
+
+    var dataCalendar = [];
+
+    lastCommits.forEach(function callback(elemento, indice, array) {  
+        /*console.log("Elemento: "+elemento, indice);*/
+        tagElemento = elemento.split(" ");
+        /*console.log(tagElemento[0]+" "+tagElemento[4]+" "+tagElemento[5]);*/
+        if (typeof(tagElemento[4]) != "undefined" && typeof(tagElemento[5]) != "undefined"){
+            dataCalendar[indice] = {
+                title : tagElemento[4] +" "+tagElemento[5],
+                start : tagElemento[0],
+                end : tagElemento[0]  
+
+            }
+        }
+
+    });
+    /*console.log(dataCalendar);*/
+    var data = dataCalendar.filter(Boolean);
+    var events = JSON.stringify(data);
+    console.log(events);
+
+
+    var initialLocaleCode = 'es';
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      headerToolbar: {
+        left: 'prev,next',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,listMonth'
+      },
+      initialDate: new Date(),
+      locale: initialLocaleCode,
+      navLinks: true, 
+      businessHours: true, 
+      selectable: true,
+      events: $.parseJSON(events)  
+    });
+
+    calendar.render();
+  }
+
+
 linkTo('<?php echo DEF_VIEW ?>');
 
 function collapse(e) {
@@ -380,6 +498,9 @@ function wc() {
     WaitingClose();
 }
 </script>
+
+<script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
+<script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
 
 </body>
 
