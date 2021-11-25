@@ -3,12 +3,13 @@
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
    <query id="getProduccion" useConfig="ToolsDataSource">
-      <sql>select lo.fec_alta fecha&#xd;, ar.descripcion producto&#xd;, lh.cantidad&#xd;, ar.unidad_medida&#xd;, et.nombre etapa&#xd;, rle.descripcion recurso&#xd;from &#xd;alm.alm_lotes al&#xd;,prd.lotes_hijos lh&#xd;,alm.alm_articulos ar&#xd;,prd.etapas et &#xd;,(select :fechasta fec ) hasta&#xd;,(select :fecdesde fec ) desde&#xd;,(select :etapa filtro ) etapa&#xd;,(select :producto filtro ) producto&#xd;,prd.lotes lo&#xd;full outer join ( select rl.batch_id batch_id,eq.descripcion descripcion&#xd;                  from prd.recursos_lotes rl &#xd;                	,prd.recursos re&#xd;                	,core.equipos eq&#xd;                  where rl.recu_id =re.recu_id &#xd;				  and eq.equi_id = re.equi_id) rle&#xd;on rle.batch_id = lo.batch_id		&#xd;where lo.batch_id = al.batch_id&#xd;and ar.arti_id = al.arti_id&#xd;and et.etap_id = lo.etap_id&#xd;and lh.batch_id = lo.batch_id&#xd;and et.nombre = case when etapa.filtro is null or etapa.filtro = '' then et.nombre else etapa.filtro end &#xd;and ar.arti_id = case when producto.filtro is null or producto.filtro = '' then ar.arti_id else cast(producto.filtro as integer) end &#xd;and lo.fec_alta &lt;= to_date(case when hasta.fec is null or hasta.fec = '' then '01-01-2100' else hasta.fec end ,'dd-mm-yyyy') &#xd;and lo.fec_alta &gt;= to_date(case when desde.fec is null or desde.fec = '' then '01-01-1899' else desde.fec end,'dd-mm-yyyy')&#xd;and et.etap_id &lt; 1000</sql>
-      <result outputType="json">{"productos":{&#xd;"producto": [&#xd;{&#xd;"fecha":"$fecha",&#xd;"producto":"$producto",&#xd;"cantidad":"$cantidad",&#xd;"unidad_medida":"$unidad_medida",&#xd;"etapa":"$etapa",&#xd;"recurso":"$recurso"&#xd;}&#xd;]&#xd;}&#xd;}&#xd;</result>
-      <param name="etapa" sqlType="STRING"/>
+      <sql>select lo.fec_alta fecha&#xd;, ar.descripcion producto&#xd;, lh.cantidad &#xd;, ar.unidad_medida&#xd;, et.nombre etapa&#xd;, et.orden &#xd;, CASE WHEN u.id IS NULL THEN '' ELSE u.first_name || ' '|| u.last_name|| '('||u.email||')' END responsable&#xd;from &#xd;alm.alm_lotes al&#xd;,prd.lotes_hijos lh&#xd;,alm.alm_articulos ar&#xd;,prd.etapas et &#xd;,prd.lotes lo&#xd;LEFT JOIN prd.lotes_responsables lr ON lr.batch_id = lo.batch_id&#xd;LEFT JOIN seg.users u ON u.id= lr.user_id&#xd;,prd.lotes lo_padre&#xd;,(select :fechasta hasta, :fecdesde desde, :producto producto, :etap_id etap_id, :empr_id empr_id ) filtro&#xd;where lo.batch_id = al.batch_id&#xd;and ar.arti_id = al.arti_id&#xd;and et.etap_id = lo_padre.etap_id&#xd;and lh.batch_id_padre = lo_padre.batch_id&#xd;and lh.batch_id = lo.batch_id&#xd;and et.etap_id = case when filtro.etap_id is null or filtro.etap_id = '' then et.etap_id else CAST(filtro.etap_id AS integer) end &#xd;and ar.arti_id = case when filtro.producto is null or filtro.producto = '' then ar.arti_id else cast(filtro.producto  as integer) end &#xd;and lo.fec_alta &lt;= to_date(case when filtro.hasta is null or filtro.hasta = '' then '2100-01-01' else filtro.hasta end ,'yyyy-mm-dd') &#xd;and lo.fec_alta &gt;= to_date(case when filtro.desde is null or filtro.desde = '' then '1899-01-01' else filtro.desde end,'yyyy-mm-dd')&#xd;and lo.etap_id = (SELECT etap_id FROM prd.etapas e WHERE e.nombre ='DEPOSITO')&#xd;AND lo_padre.etap_id NOT in (SELECT etap_id FROM prd.etapas e WHERE e.nombre ='DEPOSITO'  OR e.nombre ='TRANSPORTE')&#xd;AND lo.empr_id  = CAST (filtro.empr_id AS integer) &#xd;ORDER BY 1,2,6</sql>
+      <result outputType="json">{&#xd;    "productos": {&#xd;        "producto": [&#xd;            {&#xd;                "fecha": "$fecha",&#xd;                "producto": "$producto",&#xd;                "cantidad": "$cantidad",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "etapa": "$etapa",&#xd;                "responsable": "$responsable"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="fechasta" sqlType="STRING"/>
       <param name="fecdesde" sqlType="STRING"/>
       <param name="producto" sqlType="STRING"/>
+      <param name="etap_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getProduccionPorRecurso" useConfig="ToolsDataSource">
       <sql>select lo.fec_alta fecha&#xd;, ar.descripcion producto&#xd;, lh.cantidad&#xd;, ar.unidad_medida&#xd;, et.nombre etapa&#xd;, eq.descripcion recurso&#xd;from &#xd;alm.alm_lotes al&#xd;,prd.lotes_hijos lh&#xd;,alm.alm_articulos ar&#xd;,prd.etapas et &#xd;,(select :fechasta fec ) hasta&#xd;,(select :fecdesde fec ) desde&#xd;,(select :producto filtro) producto&#xd;,(select :etapa filtro ) etapa&#xd;,(select :recurso filtro ) recurso&#xd;,prd.lotes lo&#xd;,prd.recursos_lotes rl &#xd;,prd.recursos re&#xd;,core.equipos eq&#xd;where lo.batch_id = al.batch_id&#xd;and rl.recu_id =re.recu_id &#xd;and eq.equi_id = re.equi_id&#xd;AND rl.batch_id = lo.batch_id		&#xd;and ar.arti_id = al.arti_id&#xd;and et.etap_id = lo.etap_id&#xd;and lh.batch_id = lo.batch_id&#xd;and eq.descripcion =  case when recurso.filtro is null or recurso.filtro = '' then eq.descripcion else recurso.filtro end&#xd;and et.nombre = case when etapa.filtro is null or etapa.filtro = '' then et.nombre else etapa.filtro end &#xd;and ar.arti_id = case when producto.filtro is null or producto.filtro = '' then ar.arti_id else cast(producto.filtro  as integer) end &#xd;and lo.fec_alta &lt;= to_date(case when hasta.fec is null or hasta.fec = '' then '01-01-2100' else hasta.fec end ,'dd-mm-yyyy') &#xd;and lo.fec_alta &gt;= to_date(case when desde.fec is null or desde.fec = '' then '01-01-1899' else desde.fec end,'dd-mm-yyyy')&#xd;and et.etap_id &lt; 1000</sql>
@@ -255,12 +256,13 @@
       <param name="arti_id" sqlType="STRING"/>
       <param name="etap_id" sqlType="STRING"/>
    </query>
-   <resource method="GET" path="/productos/etapa/{etapa}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}">
+   <resource method="GET" path="/productos/etapa/{etap_id}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}/empr_id/{empr_id}">
       <call-query href="getProduccion">
-         <with-param name="etapa" query-param="etapa"/>
          <with-param name="fechasta" query-param="fechasta"/>
          <with-param name="fecdesde" query-param="fecdesde"/>
          <with-param name="producto" query-param="producto"/>
+         <with-param name="etap_id" query-param="etap_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/productos/recurso/{recurso}/etapa/{etapa}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}">
@@ -482,7 +484,7 @@
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
-   </resource>   
+   </resource>
    <resource method="POST" path="/articuloEntrada">
       <call-query href="setArticuloEntrada">
          <with-param name="etap_id" query-param="etap_id"/>
@@ -520,4 +522,3 @@
       </call-query>
    </resource>
 </data>
-
