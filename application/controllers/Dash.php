@@ -26,6 +26,9 @@ class Dash extends CI_Controller {
 	function index(){
 
 		$data = $this->session->userdata();
+
+		log_message('DEBUG','#TRAZA|DASH|index() $data: >> '.json_encode($data));
+
 		$data['memberships'] = $this->Dashs->obtenerMemberships();
 		$aux = $this->Dashs->obtenerMenu();
 		$data['menu'] = menu($aux);
