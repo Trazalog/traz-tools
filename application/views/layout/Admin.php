@@ -119,7 +119,7 @@
 
         <a href="<?php echo base_url() ?>"  class="logo">
             <!-- </span> -->
-            <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px;">
+            <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px; height: auto !important;">
             <span class="trazalog">TRAZALOG </span>
             <!-- <span class="">TOOLS</strong></span> -->
             <!-- </span> -->
