@@ -148,7 +148,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setEstablecimiento" useConfig="ToolsDataSource">
-      <sql>insert into prd.establecimientos (&#xd;	nombre, &#xd;	calle,&#xd;	altura,&#xd;	pais,&#xd;	estado,&#xd;	localidad,&#xd;        empr_id )&#xd;values(&#xd;  	:nombre, &#xd;  	:calle, &#xd;  	:altura,&#xd;  	:pais,&#xd;  	:estado,&#xd;  	:localidad,&#xd;        cast(:empr_id as integer))</sql>
+      <sql>insert into prd.establecimientos (&#xd;	nombre, &#xd;	calle,&#xd;	altura,&#xd;	pais,&#xd;	estado,&#xd;	localidad,&#xd;    empr_id )&#xd;select&#xd;  	:nombre, &#xd;  	:calle, &#xd;  	:altura,&#xd;  	CASE WHEN param.pais IS NULL OR param.pais='' THEN NULL ELSE param.pais end,&#xd;  	CASE WHEN param.estado IS NULL OR param.estado ='' THEN NULL ELSE param.estado end,&#xd;  	CASE WHEN param.localidad IS NULL OR param.localidad ='' THEN NULL ELSE param.localidad end,&#xd;  	cast(:empr_id as integer)&#xd;FROM (select&#xd;  	:pais pais,&#xd;  	:estado estado,&#xd;  	:localidad localidad) param</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="calle" sqlType="STRING"/>
       <param name="altura" sqlType="STRING"/>
