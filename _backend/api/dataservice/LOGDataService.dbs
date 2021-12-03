@@ -50,9 +50,10 @@
       <param name="motr_id" sqlType="STRING"/>
    </query>
    <query id="getCamion" useConfig="ToolsDataSource">
-      <sql>SELECT mt.motr_id, mt.patente, mt.acoplado, mt.conductor, mt.tipo, mt.bruto, mt.tara, mt.neto, mt.esta_id, &#xd;e.nombre AS esta_nombre, mt.estado&#xd;FROM prd.movimientos_trasportes mt&#xd;INNER JOIN prd.establecimientos e ON e.esta_id = mt.esta_id&#xd;WHERE mt.patente = :patente</sql>
+      <sql>SELECT mt.motr_id, mt.patente, mt.acoplado, mt.conductor, mt.tipo, mt.bruto, mt.tara, mt.neto, mt.esta_id, mt.empr_id, e.nombre AS esta_nombre, mt.estado&#xd;FROM prd.movimientos_trasportes mt&#xd;INNER JOIN prd.establecimientos e ON e.esta_id = mt.esta_id&#xd;WHERE mt.patente = :patente&#xd;and mt.empr_id = cast(:empr_id as integer)</sql>
       <result outputType="json">{&#xd;    "camiones":{&#xd;        "camion":[&#xd;            {&#xd;                "motr_id":"$motr_id",&#xd;                "acoplado":"$acoplado",&#xd;                "conductor":"$conductor",&#xd;                "tipo":"$tipo",&#xd;                "bruto":"$bruto",&#xd;                "tara":"$tara",&#xd;                "neto":"$neto",&#xd;                "patente":"$patente",&#xd;                "esta_id":"$esta_id",&#xd;                "esta_nombre":"$esta_nombre",&#xd;                "estado":"$estado"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="patente" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setSalidaCamion" useConfig="ToolsDataSource">
       <sql>UPDATE prd.movimientos_trasportes&#xd;SET 	bruto = CAST(:bruto as float8), &#xd;		neto = CAST(:neto as float8), &#xd;		estado = :estado&#xd;WHERE motr_id = cast(:motr_id as integer)</sql>
@@ -205,9 +206,10 @@
          <with-param name="motr_id" query-param="motr_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/camiones/{patente}">
+   <resource method="GET" path="/camiones/{patente}/{empr_id}">
       <call-query href="getCamion">
          <with-param name="patente" query-param="patente"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/camiones/salida">
