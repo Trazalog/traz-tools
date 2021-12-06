@@ -569,12 +569,15 @@
             dataType: 'JSON',
             url: recurso,
             success: function(result) {
+                if(result.status) {
                     $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
                     $("#modalEstablecimiento").modal('hide');
                     form.reset();
-                    // $("#botonAgregar").removeAttr("disabled");
                     alertify.success("Establecimiento agregado con éxito");
                 wc();
+                } else {
+                    alertify.error("Error agregando Establecimiento");    
+                }
             },
             error: function(result){
                 wc();

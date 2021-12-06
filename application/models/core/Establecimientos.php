@@ -96,8 +96,8 @@ class Establecimientos extends CI_Model {
     $resource = '/establecimiento';
     $url = REST_CORE . $resource;
     $aux = $this->rest->callApi("POST", $url, $post); 
-    $aux = json_decode($aux["data"]);
-    return $aux->GeneratedKeys->Entry;
+    // $aux = json_decode($aux["status"]);
+    return $aux;
   }
 
   /**

@@ -76,9 +76,9 @@ class Establecimiento extends CI_Controller
 		$valor['empr_id'] = empresa();
 		$resp = $this->Establecimientos->guardarEstablecimiento($valor);
 		if ($resp != null) {
-			return json_encode(true);
+			echo json_encode($resp);
 		} else {
-			return json_encode(false);
+			echo json_encode($resp);
 		}
 	}
 
