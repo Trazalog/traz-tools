@@ -272,7 +272,7 @@
 												<div class="col-md-12">
 													<div class="form-group">
 														<label for="descripcion" name="">Proceso:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
+														<input type="text" class="form-control" id="descripcionH" value="<?php echo $aux->descripcion; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -280,7 +280,15 @@
 												<div class="col-md-4">
 													<div class="form-group">
 														<label for="descripcion" name="">N° de inspección:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->case_id; ?>"  readonly>
+														<input type="text" class="form-control" id="nro_inspeccionH" value="<?php echo $aux->case_id; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ PETR ID _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="descripcion" name="">Pedido de trabajo:</label>
+														<input type="text" class="form-control" id="pedidoTrabajoH" value="<?php echo $aux->petr_id; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -292,11 +300,11 @@
 													</div>
 												</div>
 												<!--_____________________________________________-->
-												<!--_____________ PETR ID _____________-->
-												<div class="col-md-4">
+												<!--_____________ USUARIO _____________-->
+												<div class="col-md-12">
 													<div class="form-group">
-														<label for="descripcion" name="">Pedido de trabajo:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->petr_id; ?>"  readonly>
+														<label for="descripcion" name="">Iniciado por:</label>
+														<input type="text" class="form-control" id="usuarioH" value="<?php echo $aux->usuario_app; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
