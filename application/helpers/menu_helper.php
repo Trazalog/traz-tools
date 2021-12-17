@@ -55,7 +55,7 @@ if(!function_exists('menu')){
                                   </span>
                                 </a>';
               } else {
-                  $nivel1 .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i>".$value->texto."</a>";
+                  $nivel1 .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i><span>".$value->texto."</span></a>";
               }
             }else{ // nivel 1 no habilitado
               //seteo a 0 para volever a entrar a nivel 1
@@ -85,7 +85,7 @@ if(!function_exists('menu')){
 
                             $nivel2_Hab .= '<ul class="treeview-menu">
                             <li class="treeview">';
-                            $nivel2_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i>$value->texto</a>";
+                            $nivel2_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i><span>$value->texto</span></a>";
                             $nivel2_Hab .= '</li>';
 
                             $menu_nivel2_Hab .= $nivel2_Hab;
@@ -94,7 +94,7 @@ if(!function_exists('menu')){
 
                             $nivel2_No_Hab .= '<ul class="treeview-menu">
                             <li class="treeview">';
-                            $nivel2_No_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i>$value->texto</a>";
+                            $nivel2_No_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i><span>$value->texto</span></a>";
                             $nivel2_No_Hab .= '</li>';
 
                             $menu_nivel2_No_Hab .= $nivel2_No_Hab;
@@ -105,14 +105,14 @@ if(!function_exists('menu')){
                         if($habilitado == "true") {
 
                             $nivel2_Hab .= '<li class="treeview">';
-                            $nivel2_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i>$value->texto</a>";
+                            $nivel2_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i><span>$value->texto<(span></a>";
                             $nivel2_Hab .= '</li>';
 
                             $menu_nivel2_Hab .= $nivel2_Hab;
                         }else{
 
                             $nivel2_No_Hab .= '<li class="treeview">';
-                            $nivel2_No_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i>$value->texto</a>";
+                            $nivel2_No_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i><span>$value->texto</span></a>";
                             $nivel2_No_Hab .= '</li>';
 
                             $menu_nivel2_No_Hab .= $nivel2_No_Hab;
