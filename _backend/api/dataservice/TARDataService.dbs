@@ -148,7 +148,7 @@
    </query>
    <query id="getTareasPlanificadas" useConfig="produccionDS">
       <sql>select tp.*&#xd;from tst.origen_tarea_planficada otp &#xd;join tst.tareas_planificadas tp &#xd;on otp.tapl_id = tp.tapl_id &#xd;where otp.origen = :origen&#xd;and otp.orta_id = cast(:orta_id as integer)&#xd;and not eliminado&#xd;order by tp.tapl_id</sql>
-      <result outputType="json">{&#xd;  "tareas": {&#xd;    "tarea": [&#xd;        {&#xd;            "tapl_id":"$tapl_id",&#xd;            "nombre":"$nombre",&#xd;            "user_id":"$user_id",&#xd;            "info_id":"$info_id",&#xd;            "case_id":"$case_id",&#xd;            "tare_id":"$tare_id",&#xd;            "fecha":"$fecha",&#xd;            "proc_id":"$proc_id",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "descripcion":"$descripcion",&#xd;            "@getTareaRecursos":$tapl_id-&gt;tapl_id&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
+      <result outputType="json">{&#xd;  "tareas": {&#xd;    "tarea": [&#xd;        {&#xd;            "tapl_id":"$tapl_id",&#xd;            "nombre":"$nombre",&#xd;            "user_id":"$user_id",&#xd;            "info_id":"$info_id",&#xd;            "case_id":"$case_id",&#xd;            "tare_id":"$tare_id",&#xd;            "fecha":"$fecha",&#xd;            "proc_id":"$proc_id",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "estado":"$estado",&#xd;            "descripcion":"$descripcion",&#xd;            "@getTareaRecursos":$tapl_id-&gt;tapl_id&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="orta_id" sqlType="STRING"/>
       <param name="origen" sqlType="STRING"/>
    </query>
