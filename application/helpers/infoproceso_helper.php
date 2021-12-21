@@ -380,6 +380,46 @@
 													</ul>
 												</div>
 												<!--______________________________________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Fotos Ingreso por barrera:</h4>
+													<!--CSS-->
+													<style>
+													.fotos{
+														float: left;
+														margin-right: 10px;
+														display: block;
+													}
+													#expandedImgC{
+														margin-right: auto;
+														margin-left:auto;
+														display: block;
+														max-width: 60%;
+													}
+													</style>
+													<!-- FIN CSS -->
+													<div class="row">
+														<div class="col-md-12 col-sm-12 col-xs-12">
+															<div class="fotos">
+																<?php foreach ($tarea->imgsBarrera as $key => $value) {
+																	echo "<img class='thumbnail fotos barrera' height='51' width='45' src='$value' alt='' onclick='previewC(this)'>";
+																} ?>
+															</div>
+														</div>
+													</div>
+													<script>
+													function previewC(imgs) {
+														var expandImg = document.getElementById("expandedImgC");
+														expandImg.src = imgs.src;
+													}
+													</script>
+													<hr>
+													<div class="col-sm-12 col-md-12 col-xl-12">
+														<div class="contenedor">
+															<img src="lib\imageForms\preview.png" id="expandedImgC" style="">
+														</div>
+													</div>
+												</div>
+												<!--______________________________________________-->
 											</div><!-- fin col-md --> 
 											<!--_____________FIN CABECERA SICPOA_____________-->
 								<?php			
