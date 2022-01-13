@@ -64,7 +64,10 @@ if (!function_exists('bolita')) {
             case 'Finalizado Ent. Parcial':
                 return bolita($estado, 'yellow');
                 break;
-               
+
+            case 'Finalizado Sin Entrega':
+                return bolita($estado, 'gray');
+                break;   
             default:
                 return bolita('S/E', '');
                 break;

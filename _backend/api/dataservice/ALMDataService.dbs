@@ -247,7 +247,7 @@
    </query>
    <query id="getTiposAjustes" useConfig="ToolsDataSource">
       <sql>select valor nombre&#xd;      ,valor2 tipo&#xd;      ,tabl_id id &#xd;      from core.tablas&#xd;       where tabla = 'tipos_ajuste_stock'</sql>
-      <result outputType="json">{&#xd; "tiposAjuste": {&#xd; "tipoAjuste": [&#xd; {&#xd; "nombre": "$nombre",&#xd; "tipo": "$tipo"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <result outputType="json">{&#xd;    "tiposAjuste": {&#xd;        "tipoAjuste": [&#xd;            {&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "id": "$id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
    </query>
    <query id="crearAjuste" returnGeneratedKeys="true" useConfig="ToolsDataSource">
       <sql>INSERT INTO alm.ajustes&#xd;( tipo_ajuste&#xd;, justificacion&#xd;, usuario_app&#xd;, empr_id)&#xd;VALUES&#xd;( :tipo_ajuste&#xd;, :justificacion&#xd;, :usuario_app&#xd;, cast(:empr_id as integer) )</sql>

@@ -38,7 +38,7 @@
 if (comentario.length == 0 ) {
 				
 Swal.fire({
-			icon: 'error',
+			type: 'error',
 			title: 'Error...',
 			text: 'Asegurate de escribir un comentario!',
 			footer: ''
