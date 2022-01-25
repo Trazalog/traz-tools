@@ -168,7 +168,7 @@
         <div class="pull-right hidden-xs">
             <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
         </div>
-        <strong>Copyright &copy; 2020 <a href="">Trazalog</a>.</strong> All rights
+        <strong>Copyright &copy; 2021 <a href="">Trazalog</a>.</strong> All rights
         reserved.
     </footer>
     <?php $this->load->view('layout/modal_generico') ?>

@@ -21,8 +21,8 @@
       <param name="producto" sqlType="STRING"/>
    </query>
    <query id="getProductos" useConfig="ToolsDataSource">
-      <sql>select art.descripcion  nombre&#xd;,art.arti_id id&#xd;from alm.alm_articulos art</sql>
-      <result outputType="json">{&#xd; "productos": {&#xd; "producto": [&#xd; {&#xd; "nombre": "$nombre",&#xd; "id":"$id"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <sql>select art.descripcion  nombre&#xd;,art.arti_id id&#xd;,art.barcode&#xd;from alm.alm_articulos art</sql>
+      <result outputType="json">{&#xd;    "productos": {&#xd;        "producto": [&#xd;            {&#xd;                "nombre": "$nombre",&#xd;                "id": "$id",&#xd;                "codigo": "$barcode"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
    </query>
    <query id="getAllEtapas" useConfig="ToolsDataSource">
       <sql>select nombre&#xd;from prd.etapas&#xd;where etap_id &lt;1000&#xd;order by 1;</sql>
@@ -149,12 +149,13 @@
       <param name="form_id" sqlType="STRING"/>
    </query>
    <query id="updateFormula" useConfig="ToolsDataSource">
-      <sql>UPDATE prd.formulas &#xd;SET descripcion = :descripcion,&#xd;    unme_id = :unme_id,&#xd;    aplicacion = :aplicacion,&#xd;    cantidad = cast(:cantidad as float8)&#xd;WHERE form_id = cast(:form_id as int8)</sql>
+      <sql>UPDATE prd.formulas &#xd;SET descripcion = :descripcion,&#xd;    unme_id = :unme_id,&#xd;    aplicacion = :aplicacion,&#xd;    cantidad = cast(:cantidad as float8)&#xd;WHERE form_id = cast(:form_id as int8)&#xd;and empr_id = cast(:empr_id as integer)</sql>
       <param name="descripcion" sqlType="STRING"/>
       <param name="unme_id" sqlType="STRING"/>
       <param name="aplicacion" sqlType="STRING"/>
       <param name="cantidad" sqlType="STRING"/>
       <param name="form_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getTurnosProd" useConfig="ToolsDataSource">
       <sql>SELECT tabl_id, valor, descripcion&#xd;FROM core.tablas&#xd;WHERE tabla = 'turno_produccion'</sql>
@@ -410,6 +411,7 @@
          <with-param name="aplicacion" query-param="aplicacion"/>
          <with-param name="cantidad" query-param="cantidad"/>
          <with-param name="form_id" query-param="form_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/getTurnosProd">

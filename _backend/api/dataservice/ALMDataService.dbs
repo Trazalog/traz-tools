@@ -199,7 +199,7 @@
       <param name="care_id" sqlType="STRING"/>
    </query>
    <query id="getEstablecimeintosXEmpresa" useConfig="ToolsDataSource">
-      <sql>select *&#xd;from prd.establecimientos e &#xd;where e.empr_id =  cast(:empr_id as integer)</sql>
+      <sql>select *&#xd;from prd.establecimientos e &#xd;where e.empr_id =  cast(:empr_id as integer)&#xd;and e.eliminado = false</sql>
       <result outputType="json">{&#xd; "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "lng": "$lng",&#xd;          "lat": "$lat",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usuario": "$usuario"&#xd;        }&#xd;      ]&#xd; }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -247,7 +247,7 @@
    </query>
    <query id="getTiposAjustes" useConfig="ToolsDataSource">
       <sql>select valor nombre&#xd;      ,valor2 tipo&#xd;      ,tabl_id id &#xd;      from core.tablas&#xd;       where tabla = 'tipos_ajuste_stock'</sql>
-      <result outputType="json">{&#xd; "tiposAjuste": {&#xd; "tipoAjuste": [&#xd; {&#xd; "nombre": "$nombre",&#xd; "tipo": "$tipo"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <result outputType="json">{&#xd;    "tiposAjuste": {&#xd;        "tipoAjuste": [&#xd;            {&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "id": "$id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
    </query>
    <query id="crearAjuste" returnGeneratedKeys="true" useConfig="ToolsDataSource">
       <sql>INSERT INTO alm.ajustes&#xd;( tipo_ajuste&#xd;, justificacion&#xd;, usuario_app&#xd;, empr_id)&#xd;VALUES&#xd;( :tipo_ajuste&#xd;, :justificacion&#xd;, :usuario_app&#xd;, cast(:empr_id as integer) )</sql>
@@ -272,7 +272,7 @@
       <param name="depo_id" sqlType="STRING"/>
    </query>
    <query id="getEstablecimientosXEmpresa" useConfig="ToolsDataSource">
-      <sql>SELECT *&#xd; FROM&#xd;prd.establecimientos&#xd;where empr_id = cast(:empr_id as integer)</sql>
+      <sql>SELECT *&#xd; FROM&#xd;prd.establecimientos&#xd;where empr_id = cast(:empr_id as integer)&#xd;and eliminado = false</sql>
       <result outputType="json">{&#xd; "establecimientos": {&#xd; "establecimiento": [&#xd; {&#xd; "esta_id": "$esta_id",&#xd; "nombre": "$nombre",&#xd; "calle": "$calle",&#xd; "altura": "$altura",&#xd; "localidad": "$localidad",&#xd; "estado": "$estado",&#xd; "pais": "$pais"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
