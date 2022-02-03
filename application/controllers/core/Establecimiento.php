@@ -104,15 +104,11 @@ class Establecimiento extends CI_Controller
 	{
     	log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | guardarEdicionEstablecimiento() >> ');
 		$valor = $this->input->post('datos');
-		// $valor['usuario'] = userNick();
-		$valor['estado'] = $this->input->post('estado');
-		$valor['localidad'] = $this->input->post('localidad');
-		$valor['empr_id'] = empresa();
 		$resp = $this->Establecimientos->guardarEdicionEstablecimiento($valor);
 		if ($resp != null) {
-			return json_encode(true);
+			echo json_encode($resp);
 		} else {
-			return json_encode(false);
+			echo json_encode($resp);
 		}
 	}
 
@@ -143,7 +139,6 @@ class Establecimiento extends CI_Controller
 		log_message('INFO','#TRAZA | ETAPAS | borrarDepositoDeEstablecimiento() >> ');
 		$depo_id = $this->input->post('depo_id');
 		$result = $this->Establecimientos->borrarDeposito($depo_id);
-		// $result = $this->Establecimientos->borrarArticuloDeEtapa($depo_id, $tipo);
 		echo json_encode($result);
 	}
 

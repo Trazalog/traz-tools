@@ -386,11 +386,6 @@
             data: {id_pais: id_pais},
             url: 'index.php/core/Establecimiento/getEstados',
             success: function(rsp) {
-                // const limpiar = () => {
-                //     for (let i = $('#estado').options.length; i >= 0; i--) {
-                //         $('#estado').remove(i);
-                //     }
-                // };
                 $('#estado').empty();
                 $('#localidad').empty();
                 if (rsp != null) {
@@ -398,19 +393,14 @@
                     var datos = "<option value='' disabled selected>-Seleccione opción-</option>";
                     $('#localidad').html(datos);
                     for (let i = 0; i < rsp.length; i++) {
-                        // console.log(rsp[i].tabl_id.toString());
                         var datito = encodeURIComponent(rsp[i].tabl_id);
-                        // var dato_nuevo = rsp[i].tabl_id.toString();
                         datos += "<option value=" + datito + ">" + rsp[i].valor + "</option>";
                     }
                     $('#estado').html(datos);
                 } else {
                     var datos = "<option value='' disabled selected>-Seleccione opción-</option>";
                     $('#estado').html(datos);
-                    $('#localidad').html(datos);
-                    // $('#pais').val($('#pais > option:first').val());
-                    // $('#estado').val($('#estado > option:first').val());
-                    // $('#localidad').val($('#localidad > option:first').val());                    
+                    $('#localidad').html(datos);                   
                     alertify.error("El País no contiene estados");
                 }    
                 wc();
@@ -604,16 +594,20 @@
             dataType: 'JSON',
             url: recurso,
             success: function(result) {
+                if(result.status) {
                     $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
                     $("#modalEstablecimiento").modal('hide');
                     form.reset();
                     // $("#botonAgregar").removeAttr("disabled");
-                    alertify.success("Establecimiento agregado con éxito");
+                    alertify.success("Establecimiento actualizado con éxito");
                 wc();
+                } else {
+                    alertify.error("Error actualizando Establecimiento");    
+                }
             },
             error: function(result){
                 wc();
-                alertify.error("Error agregando Establecimiento");
+                alertify.error("Error actualizando Establecimiento");    
             }            
         });
     }
