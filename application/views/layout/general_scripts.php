@@ -117,9 +117,10 @@
 
 <script src="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.js"></script>
 
-<!-- scripts para generacion codigos QR y de Barras -->
-
-<!-- <script src="<?php// echo base_url(); ?>lib/props/generar_codigos.js"></script> -->
+<!-- scripts para datatables responsivos -->
+<script src="https://cdn.datatables.net/fixedheader/3.2.1/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap.min.js"></script>
 
 <!-- InputMask -->
 <script src="<?php echo base_url(); ?>lib/bower_components/inputmask/dist/jquery.inputmask.js"></script>
