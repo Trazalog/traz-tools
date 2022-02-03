@@ -108,16 +108,20 @@ class Establecimientos extends CI_Model {
   public function guardarEdicionEstablecimiento($data){
     $estado = urldecode($data['estado']);
     $localidad = urldecode($data['localidad']);
+    // $estado = $data['estado'];
+    // $localidad = $data['localidad'];
     $post['_post_establecimiento'] = $data;
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarEdicionEstablecimiento()  $post: >> '.json_encode($post));
-    $post['_post_establecimiento']['pais'] = urlencode($data['pais']);
+    // $post['_post_establecimiento']['pais'] = urlencode($data['pais']);
+    // $post['_post_establecimiento']['pais'] = urldecode($data['pais']);
     $post['_post_establecimiento']['estado'] = $estado;
     $post['_post_establecimiento']['localidad'] = $localidad;
     $resource = '/establecimiento';
     $url = REST_CORE . $resource;
     $aux = $this->rest->callApi("PUT", $url, $post); 
-    $aux = json_decode($aux["data"]);
-    return $aux->GeneratedKeys->Entry;
+    // $aux = json_decode($aux["data"]);
+    // return $aux->GeneratedKeys->Entry;
+    return $aux;
   }
 
   /**
