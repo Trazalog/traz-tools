@@ -633,12 +633,16 @@
             dataType: 'JSON',
             url: recurso,
             success: function(result) {
+                if(result.status) {
                     $("#cargar_tabla").load("index.php/core/Proveedor/listarProveedores");
                     $("#modalProveedor").modal('hide');
                     form.reset();
                     // $("#botonAgregar").removeAttr("disabled");
                     alertify.success("Proveedor agregado con éxito");
                 wc();
+                } else {
+                    alertify.error("Error actualizando Proveedor");    
+                }
             },
             error: function(result){
                 wc();
