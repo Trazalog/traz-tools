@@ -75,12 +75,11 @@ class Proveedor extends CI_Controller
 		// $valor['usuario'] = userNick();
 		$valor['empr_id'] = empresa();
 		$result = $this->Proveedores->guardarProveedor($valor);
-        echo json_encode($result);
-		// if ($resp != null) {
-		// 	return json_encode(true);
-		// } else {
-		// 	return json_encode(false);
-		// }
+        if ($result != null) {
+			echo json_encode($result);
+		} else {
+			echo json_encode($result);
+		}
 	}
 
 	/**
@@ -106,16 +105,16 @@ class Proveedor extends CI_Controller
     	log_message('ERROR', '#TRAZA | PROVEEDORES | guardarEdicionProveedor() >> ');
 		$valor = $this->input->post('datos');
 		// $valor['usuario'] = userNick();
-		$valor['estado'] = $this->input->post('estado');
-		$valor['localidad'] = $this->input->post('localidad');
-		$valor['empr_id'] = empresa();
+		// $valor['estado'] = $this->input->post('estado');
+		// $valor['localidad'] = $this->input->post('localidad');
+		// $valor['empr_id'] = empresa();
 		$resp = $this->Proveedores->guardarEdicionProveedor($valor);
-        echo json_encode($result);
-		// if ($resp != null) {
-		// 	return json_encode(true);
-		// } else {
-		// 	return json_encode(false);
-		// }
+        // echo json_encode($result);
+		if ($resp != null) {
+			echo json_encode($resp);
+		} else {
+			echo json_encode($resp);
+		}
 	}
 
 	public function listarDepositosXProveedor() 
