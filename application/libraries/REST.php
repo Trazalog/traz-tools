@@ -45,7 +45,7 @@ class REST
                         array_push($token, 'Accept: application/json');
                     }
 
-                    if ($data) {
+                    if ($data && !is_numeric($data)) {
                         $url = sprintf("%s?%s", $url, http_build_query(json_decode($data)));
                     }
 
