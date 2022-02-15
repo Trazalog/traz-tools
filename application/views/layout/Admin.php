@@ -102,7 +102,7 @@
 
 <?php $this->load->view('layout/wait') ?>
 
-<body class="hold-transition skin-blue sidebar-mini"></body>
+<body class="hold-transition skin-red sidebar-mini"></body>
 <div class="wrapper">
 
     <header class="main-header">
