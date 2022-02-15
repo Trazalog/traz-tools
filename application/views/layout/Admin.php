@@ -27,7 +27,7 @@
     
     <!-- AdminLTE Skins. Choose a skin from the css/skins
        folder instead of downloading all of them to reduce the load. -->
-    <link rel="stylesheet" href="<?php echo base_url();?>lib/dist/css/skins/skin-red.min.css">
+    <link rel="stylesheet" href="<?php echo base_url();?>lib/dist/css/skins/_all_skins.min.css">
 
     <link rel="stylesheet" href="<?php echo base_url();?>lib/plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
 
@@ -102,8 +102,8 @@
 
 <?php $this->load->view('layout/wait') ?>
 
-<body class="hold-transition skin-blue sidebar-mini"></body>
-<div class="wrapper">
+<body class="hold-transition skin-red sidebar-mini"></body>
+<div class="wrapper"> |
 
     <header class="main-header">
         <!-- Logo -->
