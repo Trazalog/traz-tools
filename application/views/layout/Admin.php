@@ -92,6 +92,11 @@
             margin: 0 auto;
         }
 
+        .panel-primary>.panel-heading {
+        color: #fff;
+        background-color: #dd4b39 !important;
+        border-color: #dd4b39 !important;
+        }   
 
     </style>
 
