@@ -92,6 +92,11 @@
             margin: 0 auto;
         }
 
+        .panel-primary>.panel-heading {
+        color: #fff;
+        background-color: #dd4b39 !important;
+        border-color: #dd4b39 !important;
+        }   
 
     </style>
 
@@ -102,7 +107,7 @@
 
 <?php $this->load->view('layout/wait') ?>
 
-<body class="hold-transition skin-blue sidebar-mini"></body>
+<body class="hold-transition skin-red sidebar-mini"></body>
 <div class="wrapper">
 
     <header class="main-header">

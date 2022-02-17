@@ -83,6 +83,12 @@
       <param name="noco_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="validaNoConsumible" useConfig="ToolsDataSource">
+      <sql>select case when exists &#xd;(select true from nco.no_consumibles nc where upper(nc.codigo) like upper(:noco_cod)&#xd;and nc.empr_id = cast(:empr_id as integer)&#xd;) then 'true' else 'false'&#xd;end</sql>
+      <result outputType="json">{&#xd;    "resultado" : {&#xd;        "existe": "$case"&#xd;    }&#xd;}</result>
+      <param name="noco_cod" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/noConsumibles">
       <call-query href="noConsumiblesSet">
          <with-param name="codigo" query-param="codigo"/>
@@ -163,5 +169,10 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/noConsumible/validar/{noco_cod}/empresa/{empr_id}">
+      <call-query href="validaNoConsumible">
+         <with-param name="noco_cod" query-param="noco_cod"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
 </data>
-

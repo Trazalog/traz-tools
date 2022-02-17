@@ -192,7 +192,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setHito" useConfig="produccionDS">
-      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), :documento, cast(:petr_id as integer))</sql>
+      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), cast(:documento as bytea), cast(:petr_id as integer))</sql>
       <param name="numero" sqlType="STRING"/>
       <param name="fec_inicio" sqlType="STRING"/>
       <param name="objetivo" sqlType="STRING"/>
