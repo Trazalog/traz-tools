@@ -1,3 +1,15 @@
+<style>
+.navbar-header-tzl{
+    float: left;
+}
+</style>
+<div class="navbar-header-tzl">
+<ul class="nav navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="linkTo('traz-comp-bpm/Proceso')">Mis Tareas <span class="sr-only">(current)</span></a>
+      </li>
+    </ul>
+</div>
 <div class="navbar-custom-menu">
 	<ul class="nav navbar-nav">
 		<!-- User Account: style can be found in dropdown.less -->
