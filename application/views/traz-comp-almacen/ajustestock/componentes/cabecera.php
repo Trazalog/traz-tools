@@ -9,7 +9,7 @@
                     <label>Establecimiento:</label>
                     <select class="form-control" id="establecimiento"
                         name="establecimiento" required>
-                        <option value="" disabled selected>-Seleccione opcion-</option>
+                        <option value="" disabled selected>-Seleccione opción-</option>
                         <?php                                               
                         foreach ($establecimientos as $i) {
                             echo '<option value="'.$i->nombre.'" class="emp" data-json=\''.json_encode($i).'\'>'.$i->nombre.'</option>';                            
@@ -20,10 +20,10 @@
             </div>
             <div class="col-md-4">
                 <div class="form-group">
-                    <label>Deposito:</label>
+                    <label>Depósito:</label>
                     <select class="form-control" id="deposito" name="deposito"
                         required>
-                        <option value="" disabled selected>-Seleccione opcion-</option>
+                        <option value="" disabled selected>-Seleccione opción-</option>
 
                     </select>
                 </div>
@@ -33,7 +33,7 @@
                     <label>Tipo de ajuste:</label>
                     <select class="form-control" id="tipoajuste" name="tipoajuste"
                         required>
-                        <option value="" disabled selected>-Seleccione opcion-</option>
+                        <option value="" disabled selected>-Seleccione opción-</option>
                     </select>
                 </div>
             </div>
@@ -53,7 +53,7 @@ $.ajax({
             return;
         }
         result = result.data;
-        var option_ajuste = '<option value="" disabled selected>-Seleccione opcion-</option>';
+        var option_ajuste = '<option value="" disabled selected>-Seleccione opción-</option>';
         for (let index = 0; index < result.length; index++) {
             option_ajuste += '<option value="' + result[index].nombre + '" data="' + result[index].tipo + '">' + result[index].nombre +
                 '</option>';
@@ -77,7 +77,7 @@ $("#establecimiento").on('change', function() {
         success: function(result) {
             if (result != null) {
                 //console.log(result);
-                var option_depo = '<option value="" disabled selected>-Seleccione opcion-</option>';
+                var option_depo = '<option value="" disabled selected>-Seleccione opción-</option>';
                 for (let index = 0; index < result.length; index++) {
                     option_depo += '<option value="' + result[index].depo_id + '">' + result[index].descripcion +
                         '</option>'

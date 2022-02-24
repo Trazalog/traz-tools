@@ -272,7 +272,7 @@
 												<div class="col-md-12">
 													<div class="form-group">
 														<label for="descripcion" name="">Proceso:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
+														<input type="text" class="form-control" id="descripcionH" value="<?php echo $aux->descripcion; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -280,7 +280,15 @@
 												<div class="col-md-4">
 													<div class="form-group">
 														<label for="descripcion" name="">N° de inspección:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->case_id; ?>"  readonly>
+														<input type="text" class="form-control" id="nro_inspeccionH" value="<?php echo $aux->case_id; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ PETR ID _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="descripcion" name="">Pedido de trabajo:</label>
+														<input type="text" class="form-control" id="pedidoTrabajoH" value="<?php echo $aux->petr_id; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -292,11 +300,11 @@
 													</div>
 												</div>
 												<!--_____________________________________________-->
-												<!--_____________ PETR ID _____________-->
-												<div class="col-md-4">
+												<!--_____________ USUARIO _____________-->
+												<div class="col-md-12">
 													<div class="form-group">
-														<label for="descripcion" name="">Pedido de trabajo:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->petr_id; ?>"  readonly>
+														<label for="descripcion" name="">Iniciado por:</label>
+														<input type="text" class="form-control" id="usuarioH" value="<?php echo $aux->usuario_app; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -370,6 +378,46 @@
 															}
 														?>
 													</ul>
+												</div>
+												<!--______________________________________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Fotos Ingreso por barrera:</h4>
+													<!--CSS-->
+													<style>
+													.fotos{
+														float: left;
+														margin-right: 10px;
+														display: block;
+													}
+													#expandedImgC{
+														margin-right: auto;
+														margin-left:auto;
+														display: block;
+														max-width: 60%;
+													}
+													</style>
+													<!-- FIN CSS -->
+													<div class="row">
+														<div class="col-md-12 col-sm-12 col-xs-12">
+															<div class="fotos">
+																<?php foreach ($tarea->imgsBarrera as $key => $value) {
+																	echo "<img class='thumbnail fotos barrera' height='51' width='45' src='$value' alt='' onclick='previewC(this)'>";
+																} ?>
+															</div>
+														</div>
+													</div>
+													<script>
+													function previewC(imgs) {
+														var expandImg = document.getElementById("expandedImgC");
+														expandImg.src = imgs.src;
+													}
+													</script>
+													<hr>
+													<div class="col-sm-12 col-md-12 col-xl-12">
+														<div class="contenedor">
+															<img src="lib\imageForms\preview.png" id="expandedImgC" style="">
+														</div>
+													</div>
 												</div>
 												<!--______________________________________________-->
 											</div><!-- fin col-md --> 

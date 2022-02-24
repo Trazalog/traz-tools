@@ -158,7 +158,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="updateEstablecimiento" useConfig="ToolsDataSource">
-      <sql>UPDATE prd.establecimientos&#xd;set nombre = :nombre,&#xd;    calle = :calle,&#xd;    altura = :altura,&#xd;    localidad = :localidad,&#xd;    estado = :estado,&#xd;    pais = :pais&#xd;where esta_id = CAST(:esta_id as integer)</sql>
+      <sql>UPDATE prd.establecimientos&#xd;set nombre = :nombre,&#xd;    calle = :calle,&#xd;    altura = :altura,&#xd;    pais = CASE WHEN param.pais IS NULL OR param.pais='' THEN NULL ELSE param.pais end,&#xd;    estado = CASE WHEN param.estado IS NULL OR param.estado='' THEN NULL ELSE param.estado end,&#xd;    localidad = CASE WHEN param.localidad IS NULL OR param.localidad ='' THEN NULL ELSE param.localidad end&#xd;FROM (select&#xd;  	:pais pais,&#xd;  	:estado estado,&#xd;  	:localidad localidad) param&#xd;where esta_id = CAST(:esta_id as integer)</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="calle" sqlType="STRING"/>
       <param name="altura" sqlType="STRING"/>
