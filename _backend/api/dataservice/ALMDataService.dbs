@@ -266,8 +266,8 @@
       <param name="cantidad" sqlType="STRING"/>
    </query>
    <query id="getLotePorArticuloYDeposito" useConfig="ToolsDataSource">
-      <sql>select alm_lotes.codigo, alm_lotes.lote_id&#xd;from alm.alm_lotes, (select :depo_id depo_id) param &#xd;where alm_lotes.arti_id = cast(:arti_id as integer) AND&#xd;alm_lotes.depo_id = case &#xd;			when param.depo_id = 'TODOS' &#xd;			then alm_lotes.depo_id &#xd;			else cast(param.depo_id as integer) end</sql>
-      <result outputType="json">{&#xd; "lotes": {&#xd; "lote": [&#xd; {&#xd; "codigo": "$codigo",&#xd; "lote_id": "$lote_id"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <sql>select al.codigo, al.lote_id, al.batch_id &#xd;from alm.alm_lotes al, (select :depo_id depo_id) param &#xd;where al.arti_id = cast(:arti_id as integer) &#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end</sql>
+      <result outputType="json">{&#xd;    "lotes": {&#xd;        "lote": [&#xd;            {&#xd;                "codigo": "$codigo",&#xd;                "lote_id": "$lote_id",&#xd;                "batch_id": "$batch_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="arti_id" sqlType="STRING"/>
       <param name="depo_id" sqlType="STRING"/>
    </query>
@@ -397,7 +397,7 @@
       <param name="tipo" sqlType="STRING"/>
    </query>
    <query id="getArticulosYTiposXEtapa" useConfig="ToolsDataSource">
-      <sql>SELECT art.* from(&#xd;SELECT a.arti_id,a.barcode,a.descripcion,'Entrada' as tipo,a.unidad_medida,a.es_caja,a.cantidad_caja,em.etap_id ,a.empr_id , a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_materiales em ON a.arti_id = em.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,a.barcode, a.descripcion,'Producto' as tipo, a.unidad_medida, a.es_caja, a.cantidad_caja,ep.etap_id ,a.empr_id , a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_productos ep &#xd;ON a.arti_id = ep.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,a.barcode, a.descripcion,'Salida' as tipo, a.unidad_medida, a.es_caja, a.cantidad_caja,es.etap_id ,a.empr_id , a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_salidas es &#xd;ON a.arti_id = es.arti_id&#xd;)art&#xd;,(SELECT :etap_id etap_id, :empr_id empr_id) param&#xd;WHERE art.etap_id = cast(param.etap_id as INTEGER) and art.empr_id = cast(param.empr_id as INTEGER) and art.eliminado = false&#xd;order by descripcion</sql>
+      <sql>SELECT art.* from(&#xd;SELECT a.arti_id,&#xd;a.barcode,&#xd;a.descripcion,&#xd;'Entrada' as tipo,&#xd;a.unidad_medida,&#xd;a.es_caja,&#xd;a.cantidad_caja,&#xd;em.etap_id,&#xd;a.empr_id, &#xd;a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_materiales em ON a.arti_id = em.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,&#xd;a.barcode, &#xd;a.descripcion,&#xd;'Producto' as tipo, &#xd;a.unidad_medida, &#xd;a.es_caja,&#xd;a.cantidad_caja,&#xd;ep.etap_id,&#xd;a.empr_id, &#xd;a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_productos ep &#xd;ON a.arti_id = ep.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,&#xd;a.barcode, &#xd;a.descripcion,&#xd;'Salida' as tipo, &#xd;a.unidad_medida, &#xd;a.es_caja,&#xd;a.cantidad_caja,&#xd;es.etap_id,&#xd;a.empr_id, &#xd;a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_salidas es &#xd;ON a.arti_id = es.arti_id&#xd;)art&#xd;,(SELECT :etap_id etap_id, :empr_id empr_id) param&#xd;WHERE art.etap_id = cast(param.etap_id as INTEGER) and art.empr_id = cast(param.empr_id as INTEGER) and art.eliminado = false&#xd;order by descripcion</sql>
       <result outputType="json">{&#xd;   "articulos":{&#xd;      "articulo":[&#xd;         {&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "tipo":"$tipo",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "es_caja":"$es_caja",&#xd;            "cantidad_caja":"$cantidad_caja"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="etap_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
@@ -444,6 +444,12 @@
       <param name="estado" sqlType="STRING"/>
       <param name="pais" sqlType="STRING"/>
       <param name="prov_id" sqlType="STRING"/>
+   </query>
+   <query id="validaArticulo" useConfig="ToolsDataSource">
+      <sql>select case when exists &#xd;(select true from alm.alm_articulos aa where upper(aa.barcode) like upper(:barcode)&#xd;and aa.empr_id = cast(:empr_id as integer)&#xd;) then 'true' else 'false'&#xd;end</sql>
+      <result outputType="json">{&#xd;    "resultado" : {&#xd;        "existe": "$case"&#xd;    }&#xd;}</result>
+      <param name="barcode" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
@@ -917,6 +923,12 @@
          <with-param name="estado" query-param="estado"/>
          <with-param name="pais" query-param="pais"/>
          <with-param name="prov_id" query-param="prov_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulo/validar/{barcode}/empresa/{empr_id}">
+      <call-query href="validaArticulo">
+         <with-param name="barcode" query-param="barcode"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>
