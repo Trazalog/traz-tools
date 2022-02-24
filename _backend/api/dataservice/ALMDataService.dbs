@@ -266,8 +266,8 @@
       <param name="cantidad" sqlType="STRING"/>
    </query>
    <query id="getLotePorArticuloYDeposito" useConfig="ToolsDataSource">
-      <sql>select alm_lotes.codigo, alm_lotes.lote_id&#xd;from alm.alm_lotes, (select :depo_id depo_id) param &#xd;where alm_lotes.arti_id = cast(:arti_id as integer) AND&#xd;alm_lotes.depo_id = case &#xd;			when param.depo_id = 'TODOS' &#xd;			then alm_lotes.depo_id &#xd;			else cast(param.depo_id as integer) end</sql>
-      <result outputType="json">{&#xd; "lotes": {&#xd; "lote": [&#xd; {&#xd; "codigo": "$codigo",&#xd; "lote_id": "$lote_id"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <sql>select al.codigo, al.lote_id, al.batch_id &#xd;from alm.alm_lotes al, (select :depo_id depo_id) param &#xd;where al.arti_id = cast(:arti_id as integer) &#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end</sql>
+      <result outputType="json">{&#xd;    "lotes": {&#xd;        "lote": [&#xd;            {&#xd;                "codigo": "$codigo",&#xd;                "lote_id": "$lote_id",&#xd;                "batch_id": "$batch_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="arti_id" sqlType="STRING"/>
       <param name="depo_id" sqlType="STRING"/>
    </query>
