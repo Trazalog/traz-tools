@@ -213,6 +213,10 @@
       <sql>UPDATE core.transportistas &#xd;SET eliminado = TRUE&#xd;WHERE cuit = :cuit ;</sql>
       <param name="cuit" sqlType="STRING"/>
    </query>
+   <query id="getEmpresas" useConfig="ToolsDataSource">
+      <sql>select *&#xd;from core.empresas e</sql>
+      <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -434,6 +438,9 @@
       <call-query href="deleteTransportista">
          <with-param name="cuit" query-param="cuit"/>
       </call-query>
+   </resource>
+   <resource method="GET" path="/empresas">
+      <call-query href="getEmpresas"/>
    </resource>
 </data>
 
