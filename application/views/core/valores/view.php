@@ -49,6 +49,28 @@
                     <input type="text" class="form-control requerido" name="nombreLista" id="nombreLista" onkeypress="return check(event)" placeholder="Ingrese Nombre de lista">
                 </div>
             </div>
+            <!--Empresa-->
+            <?php 
+            $usuario = $this->session->userdata();
+            if ($usuario['email'] == TOOLS_ADMIN_USER) {                
+            ?>
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="form-group">
+                    <label for="localidad">Empresa:</label>
+                    <select class="form-control select2 select2-hidden-accesible habilitar" name="empresaLista" id="empresaLista">
+                        <option value="" disabled selected>-Seleccione opción-</option>	
+                        <option value="999999">Todas las empresas</option>	
+                        <?php
+                            foreach ($listarEmpresas as $empresa) {
+                            echo '<option  value="'.$empresa->empr_id.'">'.$empresa->descripcion.'</option>';
+                            }
+                        ?>
+                    </select>
+                </div>
+            </div>
+            <?php 
+            }
+            ?>
         </form>
     </div>
     <!--_________________ GUARDAR_________________-->
@@ -99,6 +121,7 @@
                         <div class="row">
                         <!-- <form class="frmValor" id="frmValor"> -->
                             <input type="text" class="form-control habilitar hidden" name="tabla" id="tabla">
+                            <input type="text" class="form-control habilitar hidden" name="empr_id" id="empr_id">
                             <div class="col-sm-6">
                             <!--_____________ DESCRIPCION _____________-->
                                 <div class="form-group">
@@ -272,6 +295,8 @@
         var $select = $("#selectTabla");
         var empresa = <?= json_encode(empresa()) ?>;
         var valor = $("#nombreLista").val();
+        var valor2 = $("#empresaLista").val();
+        $("#empr_id").val(valor2);
         $select.append($("<option>", {
             value: valor,
             text: valor,
