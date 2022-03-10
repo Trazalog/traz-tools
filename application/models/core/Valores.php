@@ -64,7 +64,7 @@ class Valores extends CI_Model {
   */
   function guardarValor($data){
     $post['_post_valor'] = $data;
-    $post['_post_valor']['empr_id'] = '';
+    // $post['_post_valor']['empr_id'] = '';
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarValor()  $post: >> '.json_encode($post));
     $usuario = $this->session->userdata();
     // SI HAY ALGO CON "-" QUE LO CORTE
@@ -76,6 +76,9 @@ class Valores extends CI_Model {
     // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
     if ($usuario['email'] != TOOLS_ADMIN_USER) {
       $post['_post_valor']['empr_id'] = empresa();
+    }
+    if ($post['_post_valor']['empr_id'] == "999999") {
+      $post['_post_valor']['empr_id'] = "";
     }
     $aux = $this->rest->callAPI("POST",REST_CORE."/tablas", $post);
     $aux = json_decode($aux["data"]);
@@ -108,5 +111,19 @@ class Valores extends CI_Model {
       $aux = json_decode($aux["status"]);
       return $aux;
     }
+
+  /**
+  * Listado de Empresas
+  * @param 
+  * @return array con listado de empresas
+  */
+  function Listar_Empresas(){
+    $resource = "/empresas";
+    $url = REST_CORE . $resource;
+    $aux = $this->rest->callApi('GET', $url);
+    $aux = json_decode($aux["data"]);
+    $empresas = $aux->empresas->empresa;
+    return $empresas;    
+  }
 
 }

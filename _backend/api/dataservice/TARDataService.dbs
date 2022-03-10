@@ -192,7 +192,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setHito" useConfig="produccionDS">
-      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), :documento, cast(:petr_id as integer))</sql>
+      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), cast(:documento as bytea), cast(:petr_id as integer))</sql>
       <param name="numero" sqlType="STRING"/>
       <param name="fec_inicio" sqlType="STRING"/>
       <param name="objetivo" sqlType="STRING"/>
@@ -217,6 +217,15 @@
       <sql>select H.petr_id from tst.hitos H&#xd;where H.hito_id = cast(:hito_id as Integer)</sql>
       <result outputType="json">{ &#xd; "pedidoTrabajoId":{&#xd;    "petr_id": "$petr_id"&#xd;  }&#xd;} </result>
       <param name="hito_id" sqlType="STRING"/>
+   </query>
+   <query id="getKpiBasico" useConfig="produccionDS">
+      <sql>SELECT&#xd;tp.*,&#xd;case when tp.fec_inicio = to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') then 0 else 1 end cant_inicio,&#xd;case when tp.fec_fin = to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') then 0 else 1 end cant_fin,&#xd;pt.petr_id,&#xd;pt.clie_id,&#xd;core.clientes.nombre AS nombre_cliente,&#xd;seg.users.id AS id_usuario&#xd;FROM tst.tareas_planificadas AS tp&#xd;INNER JOIN tst.origen_tarea_planficada AS otp ON otp.tapl_id = tp.tapl_id and otp.origen = 'PETR'&#xd;INNER JOIN tst.hitos AS h ON h.hito_id = otp.orta_id&#xd;INNER JOIN pro.pedidos_trabajo AS pt ON h.petr_id = pt.petr_id&#xd;LEFT JOIN core.clientes ON pt.clie_id = core.clientes.clie_id&#xd;LEFT JOIN seg.users ON tp.user_id = seg.users.usernick,&#xd;(select :empr_id empr_id, :usuario usuario, :cliente cliente, :desde desde, :hasta hasta) filtro  &#xd;WHERE tp.fec_inicio &lt;&gt; to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') AND&#xd; tp.empr_id  = CAST (filtro.empr_id AS integer) AND &#xd; seg.users.id = case when filtro.usuario is null or filtro.usuario ='' then seg.users.id else  CAST (filtro.usuario AS integer) end and&#xd;pt.clie_id =  case when filtro.cliente is null or filtro.cliente ='' then pt.clie_id  else CAST (filtro.cliente AS integer) end and&#xd;tp.fec_inicio &gt;= case when filtro.desde is null or filtro.desde = '' then tp.fec_inicio else to_timestamp(filtro.desde,'YYYY-MM-DD HH24:MI:SS') end and&#xd;tp.fec_fin &lt;= case when filtro.hasta is null or filtro.hasta = '' then tp.fec_fin else to_timestamp(filtro.hasta,'YYYY-MM-DD HH24:MI:SS') end</sql>
+      <result outputType="json">{&#xd;    "tareas": {&#xd;        "tarea": [&#xd;            {&#xd;		"tapl_id": "$tapl_id",&#xd;                "petr_id": "$petr_id",&#xd;                "clie_id": "$clie_id",&#xd;                "id_usuario": "$id_usuario",&#xd;		"user_id": "$user_id",&#xd;                "nombre_cliente": "$nombre_cliente",&#xd;                "fec_inicio": "$fec_inicio",&#xd;                "fec_fin": "$fec_fin",&#xd;                "cant_inicio": "$cant_inicio",&#xd;                "cant_fin": "$cant_fin"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+      <param name="cliente" sqlType="STRING"/>
+      <param name="desde" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/tareas/{empr_id}">
       <call-query href="getTareas">
@@ -443,6 +452,15 @@
    <resource method="GET" path="/petrid/hito/{hito_id}">
       <call-query href="getPetrIdXHitoId">
          <with-param name="hito_id" query-param="hito_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/tareas/kpi/basico/desde/{desde}/hasta/{hasta}/usuario/{usuario}/cliente/{cliente}/empresa/{empr_id}">
+      <call-query href="getKpiBasico">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario" query-param="usuario"/>
+         <with-param name="cliente" query-param="cliente"/>
+         <with-param name="desde" query-param="desde"/>
+         <with-param name="hasta" query-param="hasta"/>
       </call-query>
    </resource>
 </data>
