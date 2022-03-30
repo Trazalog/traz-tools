@@ -178,7 +178,7 @@
       <param name="tapl_id" sqlType="STRING"/>
    </query>
    <query id="getTareaPlanificadaXCaseId" useConfig="produccionDS">
-      <sql>SELECT * FROM tst.tareas_planificadas tp&#xd;JOIN tst.origen_tarea_planficada otp on otp.tapl_id = tp.tapl_id&#xd;WHERE tp.case_id = cast(:case_id as integer)</sql>
+      <sql>SELECT * FROM tst.tareas_planificadas tp&#xd;JOIN tst.origen_tarea_planficada otp on otp.tapl_id = tp.tapl_id&#xd;WHERE tp.case_id = :case_id</sql>
       <result outputType="json">{&#xd;  "tareas": {&#xd;    "tarea": [&#xd;        {&#xd;            "tapl_id":"$tapl_id",&#xd;            "nombre":"$nombre",&#xd;            "user_id":"$user_id",&#xd;            "info_id":"$info_id",&#xd;            "case_id":"$case_id",&#xd;            "tare_id":"$tare_id",&#xd;            "fecha":"$fecha",&#xd;            "origen":"$origen",&#xd;            "orta_id":"$orta_id",&#xd;            "proc_id":"$proc_id",&#xd;            "estado":"$estado",&#xd;            "descripcion":"$descripcion",&#xd;            "@getTareaRecursos":"$tapl_id-&gt;tapl_id",&#xd;            "@getSubtareas":"$tare_id-&gt;tare_id"&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
@@ -226,6 +226,11 @@
       <param name="cliente" sqlType="STRING"/>
       <param name="desde" sqlType="STRING"/>
       <param name="hasta" sqlType="STRING"/>
+   </query>
+   <query id="getTareaPlanificada" useConfig="produccionDS">
+      <sql>select * from tst.tareas_planificadas&#xd;WHERE tapl_id = CAST(:tapl_id as integer)</sql>
+      <result outputType="json">{&#xd;  "tareaPlanificada": {&#xd;   &#xd;        "tapl_id": "$tapl_id",&#xd;        "proc_id": "$proc_id",&#xd;        "case_id": "$case_id" &#xd;    &#xd;  }&#xd;}&#xd;</result>
+      <param name="tapl_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/tareas/{empr_id}">
       <call-query href="getTareas">
@@ -461,6 +466,11 @@
          <with-param name="cliente" query-param="cliente"/>
          <with-param name="desde" query-param="desde"/>
          <with-param name="hasta" query-param="hasta"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/tarea/planificada/{tapl_id}">
+      <call-query href="getTareaPlanificada">
+         <with-param name="tapl_id" query-param="tapl_id"/>
       </call-query>
    </resource>
 </data>
