@@ -192,7 +192,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setHito" useConfig="produccionDS">
-      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), cast(:documento as bytea), cast(:petr_id as integer))</sql>
+      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, nombre_documento)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), cast(:documento as bytea), cast(:petr_id as integer), :nombre_documento)</sql>
       <param name="numero" sqlType="STRING"/>
       <param name="fec_inicio" sqlType="STRING"/>
       <param name="objetivo" sqlType="STRING"/>
@@ -202,6 +202,7 @@
       <param name="user_id" sqlType="STRING"/>
       <param name="unidad_tiempo" sqlType="STRING"/>
       <param name="documento" sqlType="STRING"/>
+      <param name="nombre_documento" sqlType="STRING"/>
    </query>
    <query id="getHitos" useConfig="produccionDS">
       <sql>SELECT numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id&#xd;FROM tst.hitos h&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and not h.eliminado</sql>
@@ -231,6 +232,16 @@
       <sql>select * from tst.tareas_planificadas&#xd;WHERE tapl_id = CAST(:tapl_id as integer)</sql>
       <result outputType="json">{&#xd;  "tareaPlanificada": {&#xd;   &#xd;        "tapl_id": "$tapl_id",&#xd;        "proc_id": "$proc_id",&#xd;        "case_id": "$case_id" &#xd;    &#xd;  }&#xd;}&#xd;</result>
       <param name="tapl_id" sqlType="STRING"/>
+   </query>
+   <query id="updateFec_inicio_TareaPlanificada" useConfig="produccionDS">
+      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_inicio = TO_TIMESTAMP(:fec_inicio,'YYYY-MM-DD HH24:MI:SS')&#xd;WHERE case_id=:case_id</sql>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="updateFec_fin_TareaPlanificada" useConfig="produccionDS">
+      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_fin = TO_TIMESTAMP(:fec_fin,'YYYY-MM-DD HH24:MI:SS')&#xd;WHERE case_id=:case_id</sql>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/tareas/{empr_id}">
       <call-query href="getTareas">
@@ -471,6 +482,18 @@
    <resource method="GET" path="/tarea/planificada/{tapl_id}">
       <call-query href="getTareaPlanificada">
          <with-param name="tapl_id" query-param="tapl_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/tarea/iniciar">
+      <call-query href="updateFec_inicio_TareaPlanificada">
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/tarea/finalizar">
+      <call-query href="updateFec_fin_TareaPlanificada">
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="case_id" query-param="case_id"/>
       </call-query>
    </resource>
 </data>
