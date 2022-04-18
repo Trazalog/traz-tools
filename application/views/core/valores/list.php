@@ -15,5 +15,5 @@
 
 <script>
   // Config Tabla
-  DataTable($('#tabla_valores'));
+  // DataTable($('#tabla_valores'));
 </script>
