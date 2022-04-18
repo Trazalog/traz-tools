@@ -271,7 +271,7 @@
             wc();
             $('#tabla_valores').DataTable({
   "initComplete": function(){
-    alertify.success("Valor agregado con éxito");
+  //  alertify.success("Valor agregado con éxito");
   }
 });
             },
