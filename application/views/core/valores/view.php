@@ -298,6 +298,7 @@
     });
         
     function agregarLista(){
+        debugger;
         var $select = $("#selectTabla");
         var empresa = <?= json_encode(empresa()) ?>;
         var valor = $("#nombreLista").val();
