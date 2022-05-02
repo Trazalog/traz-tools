@@ -251,7 +251,8 @@
             data: {id_tabla},
             url: 'index.php/core/Valor/getValor',
             success: function(result) {
-                $("#tabla_valores tbody").empty(); 
+                //  $("#tabla_valores tbody").empty(); 
+                 $('#tabla_valores').DataTable().clear().destroy();
                 if(result){
                 var tabla = $('#tabla_valores');    
                 $(tabla).find('tbody').html('');
@@ -268,6 +269,11 @@
                 });
                 }
             wc();
+            $('#tabla_valores').DataTable({
+  "initComplete": function(){
+  //  alertify.success("Valor agregado con éxito");
+  }
+});
             },
             error: function(data) {
                 alert('Error');
@@ -292,6 +298,7 @@
     });
         
     function agregarLista(){
+        debugger;
         var $select = $("#selectTabla");
         var empresa = <?= json_encode(empresa()) ?>;
         var valor = $("#nombreLista").val();
