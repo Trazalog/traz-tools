@@ -173,4 +173,28 @@ class Establecimientos extends CI_Model {
     return $aux;
   }
 
+  public function listarPanolesXEstablecimiento($esta_id) 
+  {
+    log_message('DEBUG', 'Establecimientos/listarPanolesXEstablecimiento(esta_id)-> ' . $esta_id);
+    $resource = '/panol/establecimiento/' . $esta_id;
+    $url = REST_PAN . $resource;
+    $rsp = $this->rest->callAPI("GET", $url);
+    if ($rsp['status']) {
+        $rsp = json_decode($rsp['data']);
+    }
+    $valores = $rsp->panoles->panol;
+    return $valores;
+  }
+
+  public function borrarPanol($pano_id)
+  {
+    $post['_delete_panol'] = array("pano_id" => $pano_id, "eliminado" => "1");
+    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ETAPAS | borrarArticuloEntrada() $post: >> '.json_encode($post));
+    $resource = '/panol/estado';
+    $url = REST_PAN . $resource;
+    $aux = $this->rest->callAPI("PUT", $url, $post);
+    $aux = json_decode($aux["status"]);
+    return $aux;
+  }
+
 }

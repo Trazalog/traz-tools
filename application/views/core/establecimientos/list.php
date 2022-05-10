@@ -18,6 +18,7 @@
                             <button type="button" title="Eliminar" class="btn btn-primary btn-circle btnEliminar" data-toggle="modal" data-target="#modalEliminarEstablecimiento" id="btnBorrar" ><span class="glyphicon glyphicon-trash" aria-hidden="true" ></span></button>&nbsp
                             <button type="button" title="Editar"  class="btn btn-primary btn-circle btnEditar" data-toggle="modal" data-target="#modalEditarEstablecimiento" id="btnEditar" ><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>&nbsp
                             <button type="button" title="Depósitos" class="btn btn-primary btn-circle btnDepositos" data-toggle="modal" data-target="#modaleditar" ><span class="glyphicon glyphicon-inbox" aria-hidden="true"></span></button>&nbsp
+                            <button type="button" title="Pañoles" class="btn btn-primary btn-circle btnPanoles" data-toggle="modal" data-target="#modaleditar" ><span class="glyphicon glyphicon-th-large" aria-hidden="true"></span></button>&nbsp
                             ';
                         echo '</td>';
                         echo '<td>'.$establecimiento->nombre.'</td>';
@@ -117,18 +118,18 @@
   }
   
   $(".btnDepositos").on("click", function(e) {
-  $("#modaldepositos td").remove();
-  $(".modal-header h4").remove();
-  //guardo el tipo de operacion en el modal
-  $("#operacion").val("Depositos");
-  //pongo titlo al modal
-  $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Depósitos del Establecimiento </h4>');
-  datajson = $(this).parents("tr").attr("data-json");
-  data = JSON.parse(datajson);
-  var esta_id = data.esta_id;
-  // guardo esta_id en modal para usar en funcion agregar deposito
-  $("#id_esta").val(esta_id);
-  $.ajax({
+    $("#modaldepositos td").remove();
+    $(".modal-header h4").remove();
+    //guardo el tipo de operacion en el modal
+    $("#operacion").val("Depositos");
+    //pongo titlo al modal
+    $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Depósitos del Establecimiento </h4>');
+    datajson = $(this).parents("tr").attr("data-json");
+    data = JSON.parse(datajson);
+    var esta_id = data.esta_id;
+    // guardo esta_id en modal para usar en funcion agregar deposito
+    $("#id_esta").val(esta_id);
+    $.ajax({
       type: 'GET',
       url: 'index.php/core/Establecimiento/listarDepositosXEstablecimiento?esta_id='+esta_id,
       success: function(result) {
@@ -136,12 +137,12 @@
           var tabla = $('#modaldepositos table');    
           $(tabla).find('tbody').html('');
           result.forEach(e => {
-              $(tabla).append(
-                "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
-                  "<td><button type='button' title='Eliminar Artículo' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
-                  "<td>" + e.descripcion + "</td>" +
-                "</tr>"
-              );
+            $(tabla).append(
+              "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
+                "<td><button type='button' title='Eliminar Depósito' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
+                "<td>" + e.descripcion + "</td>" +
+              "</tr>"
+            );
           });            
         };
         $('#modaldepositos').modal('show'); 
@@ -150,9 +151,48 @@
           alert('Error');
       },
       dataType: 'json'
+    });
+    //levanto modal
+    // $("#modaldepositos").modal('show');
   });
-  //levanto modal
-  // $("#modaldepositos").modal('show');
+
+  $(".btnPanoles").on("click", function(e) {
+    $("#modalpanoles td").remove();
+    $(".modal-header h4").remove();
+    //guardo el tipo de operacion en el modal
+    $("#operacion").val("Panoles");
+    //pongo titlo al modal
+    $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Pañoles del Establecimiento </h4>');
+    datajson = $(this).parents("tr").attr("data-json");
+    data = JSON.parse(datajson);
+    var esta_id = data.esta_id;
+    // guardo esta_id en modal para usar en funcion agregar deposito
+    $("#id_esta").val(esta_id);
+    $.ajax({
+      type: 'GET',
+      url: 'index.php/core/Establecimiento/listarPanolesXEstablecimiento?esta_id='+esta_id,
+      success: function(result) {
+        if (result) {
+          var tabla = $('#modalpanoles table');
+          $(tabla).find('tbody').html('');
+          result.forEach(e => {
+            $(tabla).append(
+              "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
+              "<td><button type='button' title='Eliminar Pañol' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarPanol(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
+                "<td>" + e.descripcion + "</td>" +
+              "</tr>"
+            );
+          });            
+        };
+        $('#modalpanoles').modal('show'); 
+      },
+      error: function(result) {
+          alert('Error');
+      },
+      dataType: 'json'
+    });
+    //levanto modal
+    // $("#modaldepositos").modal('show');
   });
 
   // Config Tabla de Establecimientos
@@ -161,25 +201,25 @@
 
 <!-- MODAL AVISO ELIMINAR ESTABLECIMIENTO -->
 <div class="modal fade" id="modalEliminarEstablecimiento">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header bg-blue">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Cliente</h4>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-xs-12">
-              <h4>¿Desea realmente eliminar el Establecimiento?</h4>
-              <input type="text" id="id_esta" class="hidden">
-            </div>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-blue">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Cliente</h4>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-xs-12">
+            <h4>¿Desea realmente eliminar el Establecimiento?</h4>
+            <input type="text" id="id_esta" class="hidden">
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="eliminarEstablecimiento()">Aceptar</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="eliminarEstablecimiento()">Aceptar</button>
       </div>
     </div>
+  </div>
 </div>
 <!-- /  MODAL AVISO ELIMINAR ESTABLECIMIENTO -->

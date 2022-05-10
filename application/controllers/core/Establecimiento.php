@@ -142,4 +142,24 @@ class Establecimiento extends CI_Controller
 		echo json_encode($result);
 	}
 
+	public function listarPanolesXEstablecimiento() 
+	{
+		log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS-PAÑOLES | listarPanolesXEstablecimiento() >> ');
+        $esta_id = $this->input->get('esta_id');
+        $resp =  $this->Establecimientos->listarPanolesXEstablecimiento($esta_id);
+        if ($resp != null) {
+			echo json_encode($resp);            
+		} else {
+			echo json_encode($resp);
+		}
+    }
+
+	public function borrarPanolDeEstablecimiento()
+	{
+		log_message('INFO','#TRAZA | ESTABLECIMIENTOS-PAÑOLES | borrarPanolDeEstablecimiento() >> ');
+		$pano_id = $this->input->post('panol_id');
+		$result = $this->Establecimientos->borrarPanol($pano_id);
+		echo json_encode($result);
+	}
+
 }
