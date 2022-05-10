@@ -547,6 +547,7 @@
 
 									?>
 										<script>
+											$(".frm-select").select2();
 										var formulario = $('#form-dinamico-cabecera').attr('data-frm-id');
 										
 										
