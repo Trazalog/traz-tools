@@ -16,6 +16,7 @@ class Establecimiento extends CI_Controller
     public function index()
 	{
       	log_message('INFO','#TRAZA | ESTABLECIMIENTOS | index()  >> ');
+		$data['listarEncargados'] = $this->Establecimientos->obtenerUsuarios();
 	  	// $data['listarEstablecimientos'] = $this->Establecimientos->listarEstablecimientos();
 		$data['listarPaises'] = $this->Establecimientos->listarPaises();
       	$this->load->view('core/establecimientos/view', $data);
@@ -127,7 +128,7 @@ class Establecimiento extends CI_Controller
 
 	public function guardarDeposito()
 	{
-		log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | guardarDeposito() >> ');
+		log_message('ERROR', '#TRAZA | #CORE | Establecimiento | guardarDeposito() >> ');
 		$data = $this->input->post('datos');
 		$data['empr_id'] = empresa();
 		$resp = $this->Establecimientos->guardarDeposito($data);
@@ -161,5 +162,17 @@ class Establecimiento extends CI_Controller
 		$result = $this->Establecimientos->borrarPanol($pano_id);
 		echo json_encode($result);
 	}
+	/**
+	* Guarda la infomacion del pañol y los usuarios encargados
+	* @param array datos pañol y encargados
+	* @return bool true o false segun resultado de servicio de guardado
+	*/
+	public function guardarPanol(){
+		log_message('ERROR', '#TRAZA | #CORE | Establecimiento | guardarPanol() >> ');
+		$data = $this->input->post('data');
 
+		$resp = $this->Establecimientos->guardarPanol($data);
+
+        echo json_encode($resp);
+	}
 }
