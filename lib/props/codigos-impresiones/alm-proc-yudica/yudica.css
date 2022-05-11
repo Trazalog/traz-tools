@@ -6,9 +6,150 @@
           size: portrait; 
      
                  /* Horizontal */
-          size: landscape;
-     
+           size: auto;
+      
                  /* Margen superior derecha inferior izquierda */
-          margin: 1cm 2cm 1cm 2cm;
+          margin: 1cm 1cm 1cm 1cm;
+
+          
         }
-      }
+
+        #modalBodyCodigos{
+
+              font-size: 100% ;
+        }
+
+         #numero_orden{
+        margin-top: -1%;
+        font-size: 60px ;
+        } 
+
+        #div_numero{
+          margin-top: -5%;
+        }
+
+        #numero_orden_final{
+          margin-top: -1%;
+          font-size: 90px ;
+          } 
+
+
+                #tabla  {
+              margin-top: -30%;
+              width: 250px ;
+              height: 100px ;
+              border: 0,5px solid #000 ;
+              text-align: center;
+              
+              }
+               .tabla_th {
+                border: 1px solid #000;
+                text-align: center;
+                padding: 5px;
+                height: 70px;
+              }
+              
+              #tabla td {
+                     border: 1px solid #000 ; 
+                     text-align: center;
+                    
+              }  
+               #tr_tabla{
+                height: 10px ;
+                text-align: center;
+              } 
+             
+              #codigoImage{
+                margin-top: -20% ;
+                 padding-bottom: 0% ; 
+                padding-left: 68% ;
+              }
+
+               #contenedorImagenYudi{
+                padding-top: -20% ;
+                padding-left: 72% ;
+                padding-bottom: 0% ;
+              } 
+
+              #contenedorImagenYudi_rechazo{
+                padding-top: -30% ;
+                padding-left: 76% ;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              } 
+
+
+                #imagenYudi{
+                margin-top: -30% ;
+                width: 80px;
+                height: 30px;
+              }   
+              #nombreCliente{
+                font-size: 20px ;
+              }
+
+              
+      #tabla1  {
+        margin-top: -10%;
+         width: 100% ;
+        height: 100% ; 
+        border: 1px solid #000 ;
+        border-left: 1px solid #000 ; 
+        text-align: center ;
+        }
+        
+  #tabla1 td {
+               border: 1px solid #000 ; 
+          
+        } 
+
+  #tabla1  th {
+               border: 1px solid #000 ; 
+  
+        } 
+
+  #tabla1 tr {
+               border: 1px solid #000 ; 
+  
+        } 
+
+
+
+        #tabla2  {
+          margin-top: 10%;
+           width: 100% ;
+          height: 100% ; 
+          border: 1px solid #000 ;
+          border-left: 1px solid #000 ; 
+          text-align: center ;
+          }
+          
+    #tabla2 td {
+                 border: 1px solid #000 ; 
+            
+          } 
+  
+    #tabla2  th {
+                 border: 1px solid #000 ; 
+    
+          } 
+  
+    #tabla2 tr {
+                 border: 1px solid #000 ; 
+    
+          }    
+  
+        #rechazada{
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+
+        #div_footer{
+          padding-top:30%;
+          padding-bottom: 10% ; 
+        }
+
+            }

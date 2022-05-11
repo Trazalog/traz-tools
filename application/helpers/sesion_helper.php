@@ -114,18 +114,18 @@ if(!function_exists('filtrarbyDepo')){
 * @return bool true o false
 */
 if(!function_exists('bandejaEmpresa')){
-
+	
 	function bandejaEmpresa($case_id, $empr_id)
 	{
-			$ci =& get_instance();
-			$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
-			$aux =json_decode($aux["data"]);
-
-			if ($aux->respuesta->case_id) {
-				return  true;
-			} else {
-				return  false;
-			}
+		$ci =& get_instance();
+		$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
+		$aux =json_decode($aux["data"]);
+		
+		if ($aux->respuesta->case_id) {
+			return  true;
+		} else {
+			return  false;
+		}
 	}
 }
 
@@ -173,10 +173,84 @@ if(!function_exists('empr_id_BPM')){
 }
 if(!function_exists('validarSesion')){
 
-    function validarSesion(){
-        $ci = &get_instance();
-        $userdata = $ci->session->userdata('user_data');
-        if(empty($userdata['email'])) redirect(base_url().'login/main/logout/'); 
-    }
+// // si esta vencida la sesion redirige al login
+     function validarSesion(){
 
-}		
+$userdata_email = $_SESSION['email'];
+	
+	if(isset($userdata_email)){
+		;
+	$userdata_email = $_SESSION['email'];
+	}
+	else{
+		$userdata_email = '0';
+	}
+
+	if($userdata_email != '0') {
+
+log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
+
+		}
+		else{
+				redirect(DNATO.'main/logout');
+				log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+
+				return;
+		}
+
+
+   }
+
+}	
+
+
+if(!function_exists('validarInactividad')){
+	
+	function validarInactividad(){	
+//Comprobamos si esta definida la sesión 'tiempo'.
+
+if(isset($_SESSION['tiempo']) ) {
+
+    //Tiempo en segundos para dar vida a la sesión.
+    $inactivo = 4000;//40min en este caso.
+
+    //Calculamos tiempo de vida inactivo.
+    $vida_session = time() - $_SESSION['tiempo'];
+
+        //Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
+        if($vida_session > $inactivo)
+        {
+		
+
+            //Removemos sesión.
+            session_unset();
+            //Destruimos sesión.
+            session_destroy();              
+            //Redirigimos pagina.
+			redirect(DNATO.'main/logout');
+
+			log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+
+		
+			//echo "<script>Swal.fire({icon: 'error',title: 'Oops...',text: 'Sesion Expirada!'})</script>";	
+			?>
+			
+			<?php
+			
+			
+            exit();
+        }else{
+			//Refresco el tiempo luego de actividad
+			validarSesion();
+			$_SESSION['tiempo'] = time();
+		}
+} else {
+    //Activamos sesion tiempo.
+    $_SESSION['tiempo'] = time();
+}
+}
+	}
+
+
+
+	?>

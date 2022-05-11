@@ -138,7 +138,7 @@ define('viewOT', false);
 #COMPONENTE SICPOA
 define('SICP', 'ddpe-tools-pro/');
 
-#COMPONENTE SICPOA
+#COMPONENTE CODIGO_QR
 define('COD', 'traz-comp-codigos/');
 
 define('BPM_PROCESS', json_encode(array(

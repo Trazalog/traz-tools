@@ -121,6 +121,7 @@ function ver(e) {
 }
 
 function editar(e) {
+    debugger;
     $('#arti_id').prop('disabled', false);
     var json = JSON.parse(JSON.stringify($(e).closest('tr').data('json')));
     Object.keys(json).forEach(function(key, index) {

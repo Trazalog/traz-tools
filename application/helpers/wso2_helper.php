@@ -21,7 +21,10 @@ if (!function_exists('wso2')) {
             if(strpos($url, 'bpm')){
                 $rsp['data'] = $aux;
             }else{
-                $rsp['data'] = reset(reset($aux));
+                if (isset($aux)) {
+             $rsp['data'] = reset(reset($aux));
+                }
+             
             }
         }
 

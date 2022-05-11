@@ -117,11 +117,21 @@
 
 <script src="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.js"></script>
 
-<!-- scripts para generacion codigos QR y de Barras -->
-<script src="<?php echo base_url(); ?>lib/props/generar_codigos.js"></script>
+<!-- scripts para datatables responsivos -->
+<script src="https://cdn.datatables.net/fixedheader/3.2.1/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap.min.js"></script>
+
+<!-- Complemento para agrupar rows en DataTable -->
+<script src="https://cdn.datatables.net/rowgroup/1.1.4/js/dataTables.rowGroup.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/rowgroup/1.1.4/css/rowGroup.dataTables.min.css"></script>
 
 <!-- InputMask -->
 <script src="<?php echo base_url(); ?>lib/bower_components/inputmask/dist/jquery.inputmask.js"></script>
+
+<!-- Lupa imagenes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/js/jquery.magnify.min.js" integrity="sha512-YKxHqn7D0M5knQJO2xKHZpCfZ+/Ta7qpEHgADN+AkY2U2Y4JJtlCEHzKWV5ZE87vZR3ipdzNJ4U/sfjIaoHMfw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/js/jquery.magnify-mobile.js" integrity="sha512-c4nn0tYA6CqgF8nQZqysAS9lu+tegNtXt0gTwFI5smPpuODc+DJk8HDm/cjaUP6HRAqLKUPIAVnnK9llAKa0+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
     function conexion() {

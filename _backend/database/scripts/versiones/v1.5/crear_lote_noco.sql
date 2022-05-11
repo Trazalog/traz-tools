@@ -2,7 +2,8 @@ CREATE OR REPLACE FUNCTION prd.crear_lote_noco(p_lote_id character varying, p_ar
  RETURNS character varying
  LANGUAGE plpgsql
 AS $function$
-/** Funcion para generar un nuevo lote, y finalizar los lotes padres en la cadena productiva
+/** @version v1.1
+ *  Funcion para generar un nuevo lote, y finalizar los lotes padres en la cadena productiva
  *  Recibe como parametro un id de lote
  *  y un recipiente donde crear el batch.
  *  Si el recipiente esta ocupado, devuelve el error con un mensaje para que el usuario tome una decisión 
@@ -62,15 +63,14 @@ DECLARE
  verificarRecipiente CURSOR (p_batch_id INTEGER
 			   ,p_arti_id INTEGER
 			   ,p_lote_id VARCHAR) for
-				select lo.batch_id
-				,al.arti_id
-				,lo.lote_id
-				from prd.lotes lo
-				,alm.alm_lotes al
-				where reci_id  = p_reci_id
-				and (al.arti_id != p_arti_id or lo.lote_id != p_lote_id)
-				and lo.batch_id = al.batch_id
-				and lo.estado = 'En Curso';
+						   	select lo.batch_id
+							,case when al.arti_id is null then 0 else al.arti_id end arti_id
+							,case when lo.lote_id is null then '' else lo.lote_id end lote_id
+							from prd.lotes lo
+							left join alm.alm_lotes al on lo.batch_id = al.batch_id
+							where reci_id  = p_reci_id
+							and ((al.arti_id != p_arti_id or al.arti_id is null) or (lo.lote_id != p_lote_id or lo.lote_id is null))
+							and lo.estado = 'En Curso';
 
 
 BEGIN
@@ -489,8 +489,8 @@ BEGIN
     	begin
 			RAISE INFO 'PRDCRLO - BL6 no consumibles - inserto noco_id % con batch  %',v_noco_id_aux, v_batch_id;
 
-	    	insert into nco.no_consumibles_lotes (noco_id,batch_id,usuario_app)
-			values (v_noco_id_aux,v_batch_id,p_usuario_app);
+	    	insert into nco.no_consumibles_lotes (noco_id,batch_id,usuario_app,empr_id)
+			values (v_noco_id_aux,v_batch_id,p_usuario_app,p_empr_id);
 		
 		exception
 			when others then

@@ -16,9 +16,9 @@ class BPM
 
         log_message('DEBUG', '#TRAZA | #BPM >> Obtener Bandeja de Entrada userID: ' . userId());
 
-        $resource = 'API/bpm/humanTask?p=0&c=1000&f=user_id%3D';
+        $resource = 'API/bpm/humanTask?p=0&c=1000&f=user_id%3D'.userId().'&o=reachedStateDate%20DESC';
 
-        $url = BONITA_URL . $resource . userId();
+        $url = BONITA_URL . $resource;
 
         $rsp = $this->REST->callAPI('GET', $url, false, $this->loggin(BPM_ADMIN_USER, BPM_ADMIN_PASS));
 

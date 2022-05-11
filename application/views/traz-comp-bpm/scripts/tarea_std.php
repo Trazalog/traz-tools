@@ -95,7 +95,7 @@ var comentario = $('#comentario').val();
 if (comentario.length == 0 ) {
                 
 Swal.fire({
-            icon: 'error',
+            type: 'error',
             title: 'Error...',
             text: 'Asegurate de escribir un comentario!',
             footer: ''
@@ -146,7 +146,7 @@ $.ajax({
 //             'processInstanceId': task.caseId,
 //             'content': comentario
 //         },
-//         url: 'index.php/<?php// echo BPM ?>Tarea/guardarComentario',
+//         url: '',
 //         success: function(result) {
 //             var lista = $('#listaComentarios');
 //             lista.prepend(

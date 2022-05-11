@@ -17,7 +17,7 @@
 
 				if(strcmp($f['userId']['userName'],'System')!=0){
 				echo '<hr/>';
-				echo '<li><h4>'.$f['userId']['firstname'].' '.$f['userId']["lastname"].'<small style="float: right">'.date_format(date_create($f['postDate']),'H:i  d/m/Y').'</small></h4>';
+				echo '<li><i class="fa fa-user mr-2" style="color: #0773BB;" title="User"></i><h4>'.$f['userId']['firstname'].' '.$f['userId']["lastname"].'<small style="float: right">'.date_format(date_create($f['postDate']),'H:i  d/m/Y').'</small></h4>';
 				echo '<p>'.$f['content'].'</p></li>';
 				}
 				}
@@ -38,7 +38,7 @@
 if (comentario.length == 0 ) {
 				
 Swal.fire({
-			icon: 'error',
+			type: 'error',
 			title: 'Error...',
 			text: 'Asegurate de escribir un comentario!',
 			footer: ''
