@@ -398,13 +398,23 @@
           <div class="form-horizontal">
             <div class="row">
               <form class="frmPanol" id="frmPanol">
-                <div class="col-sm-6">
+                <div class="col-sm-12">
                     <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_id">
-                    <!-- Pañol -->
+                    <!-- Nombre -->
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
-                            <label for="deposito">Pañol(<strong style="color: #dd4b39">*</strong>):</label>
-                            <input type="text" class="form-control requerido" name="descripcion" id="deposito" placeholder="Ingrese Depósito...">
+                            <label for="nombre">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
+                            <input type="text" class="form-control requerido" name="nombre" id="nombre" placeholder="Ingrese Nombre...">
+                        </div>
+                    </div>
+                    <!--________________-->
+                </div>
+                <div class="col-sm-12">
+                    <!--Descripcion-->
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group">
+                        <label for="Descripcion">Descripción:</label>
+                            <textarea class="form-control" name="descripcion" id="descripcion" rows="3" placeholder="Ingrese Observaciones..."></textarea>
                         </div>
                     </div>
                     <!--________________-->
@@ -867,8 +877,7 @@
             alertify.error('Error al Eliminar Pañol...');
             }
         });        
-    }
-    
+    }    
 
 </script>
 
