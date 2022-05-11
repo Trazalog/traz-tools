@@ -399,33 +399,50 @@
             <div class="row">
               <form class="frmPanol" id="frmPanol">
                 <div class="col-sm-12">
-                    <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_id">
+                    <input type="hidden" name="esta_id" id="establecimiento_id_panol">
                     <!-- Nombre -->
-                    <div class="col-md-6 col-sm-6 col-xs-12">
+                    <div class="col-md-5 col-sm-5 col-xs-12">
                         <div class="form-group">
                             <label for="nombre">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
                             <input type="text" class="form-control requerido" name="nombre" id="nombre" placeholder="Ingrese Nombre...">
                         </div>
                     </div>
                     <!--________________-->
+
+                    <!-- Encargados -->
+                    <div class="col-md-6 col-sm-6 col-xs-12 ocultar" style="margin-left: 5%;">
+                        <div class="form-group">
+                            <label for="encargados">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
+                            <select class="form-control select2 select2-hidden-accesible" name="encargados" id="encargados" required style="width: 100%;" multiple>
+                                <?php
+                                if(!empty($listarEncargados)){
+                                    foreach ($listarEncargados->usuarios->usuario as $users) {
+                                        echo "<option data-json='".json_encode($users)."' value='".$users->id."'>".$users->first_name." ".$users->last_name."</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <!--____________-->
                 </div>
+                <!--Descripcion-->
                 <div class="col-sm-12">
-                    <!--Descripcion-->
                     <div class="col-md-12 col-sm-12 col-xs-12">
                         <div class="form-group">
                         <label for="Descripcion">Descripción:</label>
                             <textarea class="form-control" name="descripcion" id="descripcion" rows="3" placeholder="Ingrese Observaciones..."></textarea>
                         </div>
                     </div>
-                    <!--________________-->
                 </div>
+                <!--________________-->
               </form>
             </div>
           </div>
       </div>
       <div class="modal-footer">
           <div class="form-group text-right">
-              <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarDeposito()">Guardar</button>
+              <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarPanol()">Guardar</button>
               <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
           </div>
       </div>
@@ -435,6 +452,9 @@
 <!---///////--- FIN MODAL AGREGAR PAÑOL ---///////--->
 
 <script>
+    $(document).ready(function () {
+        $(".select2").select2();
+    });
     // carga tabla de establecimientos
     $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
 
@@ -814,27 +834,35 @@
         var recurso = "";
         var form = $('#frmPanol')[0];
         var datos = new FormData(form);
-        var datos = formToObject(datos);
+        var data = formToObject(datos);
+        
         recurso = 'index.php/core/Establecimiento/guardarPanol';
         wo();
         $.ajax({
-        type: 'POST',
-        data:{ datos },
-        dataType: 'JSON',
-        url: recurso,
-        success: function(result) {
-            $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
-            setTimeout(function(){ 
-            wc();
-            alertify.success("Depósito agregado con éxito");
-            }, 3000);
-            $("#modalAgregarPanol").hide(500);
-            // form.reset();
-        },
-        error: function(result){
-            wc();
-            alertify.error("Error agregando Depósito");
-        }
+            type: 'POST',
+            data: {data},
+            dataType: 'JSON',
+            url: recurso,
+            success: function(result) {
+                wc();
+                if(result.panol.status && result.encargados.status){
+                    hecho();
+                    $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+                }else{
+                    if(!result.panol.status){
+                        error('',result.panol.msj);
+                    }
+                    if(!result.encargados.status){
+                        error('',result.encargados.msj);
+                    }
+                }
+                $("#modalAgregarPanol").hide(500);
+                // form.reset();
+            },
+            error: function(result){
+                wc();
+                alertify.error("Error agregando Depósito");
+            }
         });
     }
 
