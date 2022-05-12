@@ -154,7 +154,7 @@ class Establecimientos extends CI_Model {
   public function guardarDeposito($deposito)
   {
     $post['_post_deposito_establecimiento'] = $deposito;
-    log_message('DEBUG','#TRAZA|TRAZA-COMP-PRD|DEPOSITOS POR ESTABLECIMIENTO|GUARDAR $post: >> '.json_encode($post));
+    log_message('DEBUG','#TRAZA | #CORE | guardarDeposito | GUARDAR $post: >> '.json_encode($post));
     $resource = '/deposito/establecimiento';
     $url = REST_CORE . $resource;
     $aux = $this->rest->callApi('POST', $url, $post);
@@ -197,4 +197,69 @@ class Establecimientos extends CI_Model {
     return $aux;
   }
 
+  /**
+  * Devuelve usuarios activos segun empresa
+  * @param 
+  * @return lista de usuarios por empresa
+  */
+  function obtenerUsuarios(){
+          
+    $aux = $this->rest->callAPI("GET",REST_CORE."/users/".empresa());
+    $aux = json_decode($aux["data"]);
+
+    log_message("DEBUG", "#TRAZA | #CORE | ESTABLECIMIENTOS | obtenerUsuarios() response >> ".json_encode($aux));
+
+    return $aux;
+  }
+  /**
+  * Guarda el pañol y los encargados del mismo
+  * @param 
+  * @return pano_id
+  */
+  public function guardarPanol($data){
+    
+    $panol['usuario_app'] = userNick(); 
+    $panol['empr_id'] = empresa();
+    $panol['nombre'] = $data['nombre'];
+    $panol['descripcion'] = $data['descripcion'];
+    $panol['esta_id'] = $data['esta_id'];
+
+    $post['_post_panol'] = $panol;
+    
+    $url_panol = REST_PAN.'/panol';
+    $rsp_panol = $this->rest->callApi('POST', $url_panol, $post);
+
+    log_message('DEBUG','#TRAZA | #CORE | guardarPanol | GUARDAR $panol: >> '.json_encode($rsp_panol));
+
+    if($rsp_panol['status']){
+      $pano_id = json_decode($rsp_panol['data'])->respuesta->pano_id;
+      $rsp['panol']['status'] = $rsp_panol['status'];
+      $rsp['panol']['msj'] = "Se añadio el pañol correctamente";
+    }else{
+      $rsp['panol']['data'] = $resptiposInfraccion['data'];
+      $rsp['panol']['msj'] = "Se produjo un error al guardar el pañol";
+    }
+
+    $batch_req = [];
+    foreach ($data['encargados'] as $key) {
+      $aux['pano_id'] = $pano_id;
+      $aux['user_id'] =  $key;
+
+      $batch_req['_post_panol_encargado_batch_req']['_post_panol_encargado'][] = $aux;
+    }
+
+    $url_encargados = REST_PAN.'/_post_panol_encargado_batch_req';
+    $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $batch_req);
+
+    log_message('DEBUG','#TRAZA | #CORE | guardarPanol | GUARDAR $encargados: >> '.json_encode($rsp_encargados));
+    
+    if($rsp_encargados['status']){
+      $rsp['encargados']['status'] = $rsp_encargados['status'];
+      $rsp['encargados']['msj'] = "Se agregaron los encargados correctamente";
+    }else{
+      $rsp['encargados']['data'] = $resptiposInfraccion['data'];
+      $rsp['encargados']['msj'] = "Se produjo un error al guardar los encargados";
+    }
+    return $rsp;
+  }
 }
