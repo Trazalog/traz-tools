@@ -3,4 +3,5 @@
 <bpm_url>http://localhost:8080/bonita</bpm_url>
 <usuario>admin</usuario>
 <password>!Password00</password>
+<dataservices_url>http://localhost:8280/services</dataservices_url>
 </bpm>
