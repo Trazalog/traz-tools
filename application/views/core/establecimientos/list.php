@@ -179,7 +179,7 @@
             $(tabla).append(
               "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
               "<td><button type='button' title='Eliminar Pañol' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarPanol(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
-                "<td>" + e.descripcion + "</td>" +
+                "<td>" + e.nombre + "</td>" +
               "</tr>"
             );
           });            
