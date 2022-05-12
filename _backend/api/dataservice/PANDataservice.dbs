@@ -404,4 +404,9 @@
          <with-param name="pano_id" query-param="pano_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/panol/empresa/{empr_id}">
+      <call-query href="panolGet">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
 </data>
