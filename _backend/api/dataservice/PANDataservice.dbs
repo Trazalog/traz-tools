@@ -12,8 +12,8 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="panolGet" useConfig="ToolsDataSource">
-      <sql>select pano_id, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where empr_id = CAST(:empr_id AS INTEGER)</sql>
-      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <sql>select pano_id, nombre, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where empr_id = CAST(:empr_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "nombre": "$nombre",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="panolUpdate" useConfig="ToolsDataSource">
