@@ -862,6 +862,9 @@
             error: function(result){
                 wc();
                 alertify.error("Error agregando Depósito");
+            },
+            complete: function(){
+                $('#encargados').val(null).trigger('change');
             }
         });
     }
