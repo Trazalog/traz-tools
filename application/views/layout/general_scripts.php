@@ -195,7 +195,15 @@
     }
 
     function fechaMagic() {
+      start = moment().subtract(29, 'days');
+      end = moment();
+      function filtrarRangoFecha(start, end) {
+        $('#datepickerDesde').val(start.format('YYYY-MM-DD'));
+        $('#datepickerHasta').val(end.format('YYYY-MM-DD'));
+      }
       $('#daterange-btn').daterangepicker({
+          startDate: start,
+          endDate: end,
           ranges: {
             'Hoy': [moment(), moment()],
             'Ayer': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
@@ -203,16 +211,11 @@
             'Últimos 30 días': [moment().subtract(29, 'days'), moment()],
             'Este mes': [moment().startOf('month'), moment().endOf('month')],
             'Último mes': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-          },
-          startDate: moment().subtract(29, 'days'),
-          endDate: moment()
+          }
         },
-        function(start, end) {
-          // $('#daterange-btn span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-          $('#datepickerDesde').val(start.format('YYYY-MM-DD'));
-          $('#datepickerHasta').val(end.format('YYYY-MM-DD'));
-        }
+        filtrarRangoFecha
       );
+      filtrarRangoFecha(start,end);
     }
 
     window.mobileAndTabletcheck = function() {
