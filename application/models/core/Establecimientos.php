@@ -276,4 +276,13 @@ class Establecimientos extends CI_Model {
     }
     return $rsp;
   }
+
+  public function getPanoles()
+    {
+        $empr_id = empresa();
+        $url = REST_PAN.'/panol/empresa/'.$empr_id;
+				$array = $this->rest->callAPI("GET",$url);
+				$resp =  json_decode($array['data']);
+				return $resp;
+    }
 }
