@@ -175,7 +175,7 @@
       <param name="pano_id" sqlType="STRING"/>
    </query>
    <query id="herramientasPanolGetPorEstado" useConfig="ToolsDataSource">
-      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;  from pan.herramientas H, core.tablas T&#xd;  where H.marca = T.tabl_id&#xd;  and H.pano_id = cast(:pano_id as integer)&#xd;  and H.eliminado = false&#xd;  and H.estado = :estado</sql>
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;  from pan.herramientas H, core.tablas T,&#xd;  (	select&#xd;	:pano_id pano_id,&#xd;	:estado estado) param&#xd;  where H.marca = T.tabl_id&#xd;  and H.pano_id = cast(param.pano_id as integer)&#xd;  and H.eliminado = false&#xd;  and H.estado =&#xd;	case when param.estado = 'TODOS' then H.estado&#xd;	else param.estado end</sql>
       <result outputType="json">{&#xd;    "herramientas":{&#xd;      "herramienta":[&#xd;        {&#xd;          "herr_id": "$herr_id",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca",&#xd;          "marca_id": "$marca_id",&#xd;          "modelo": "$modelo",&#xd;          "tipo": "$tipo",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="pano_id" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
