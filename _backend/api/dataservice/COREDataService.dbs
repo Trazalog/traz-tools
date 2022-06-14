@@ -217,6 +217,19 @@
       <sql>select *&#xd;from core.empresas e</sql>
       <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
    </query>
+   <query id="encargadoXPanolGet" useConfig="ToolsDataSource">
+      <sql>select U.id, U.first_name, U.last_name&#xd;FROM seg.users U, pan.encargado_panol E&#xd;WHERE&#xd;E.user_id = U.id&#xd;and U.status = 'approved' &#xd;and U.banned_users = 'unban' &#xd;and E.pano_id = CAST(:pano_id AS INTEGER);</sql>
+      <result outputType="json">{&#xd;    "users":{&#xd;      "user":[&#xd;        {&#xd;          "id": "$id",&#xd;          "first_name": "$first_name",&#xd;          "last_name": "$last_name"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
+   </query>
+   <query id="getEnvasesXEmpresa" useConfig="ToolsDataSource">
+      <sql>select * from prd.empaque&#xd;where empr_id = cast(:empr_id as Integer)</sql>
+      <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unidad_medida",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$receta",&#xd;      "descripcion":"$descripcion"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getUnidadesMedidas" useConfig="ToolsDataSource">
+      <sql>select tabl_id, valor&#xd;from core.tablas&#xd;where tabla = 'unidades_medida' and eliminado = false</sql>
+      <result outputType="json">{&#xd;  "unidades": {&#xd;     "unidad": [&#xd;       {&#xd;         "tabl_id": "$tabl_id",&#xd;         "valor": "$valor"&#xd;       }&#xd;     ]&#xd;  }&#xd;}</result>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -441,6 +454,14 @@
    </resource>
    <resource method="GET" path="/empresas">
       <call-query href="getEmpresas"/>
+   </resource>
+   <resource method="GET" path="/envases/empresa/{empr_id}">
+      <call-query href="getEnvasesXEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/unidades_medidas">
+      <call-query href="getUnidadesMedidas"/>
    </resource>
 </data>
 
