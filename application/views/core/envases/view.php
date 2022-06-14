@@ -1,7 +1,7 @@
 <!-- /// ---- HEADER ----- /// -->
 <div class="box box-primary animated fadeInLeft">
 			<div class="box-header with-border">
-					<h4>Clientes</h4>
+					<h4>Envases</h4>
 			</div>
 			<div class="box-body">
 					<div class="row">
@@ -20,7 +20,7 @@
 <div class="box box-primary animated bounceInDown" id="boxDatos" hidden>
     <div class="box-header with-border">
         <div class="box-tittle">
-            <h4>Nuevo Cliente</h4>
+            <h4>Nuevo Envase</h4>
         </div>
         <div class="box-tools pull-right border ">
             <button type="button" id="btnclose" title="cerrar" class="btn btn-box-tool" data-widget="remove"
@@ -30,11 +30,8 @@
         </div>
     </div>
     <!--_____________________________________________-->
-
     <div class="box-body">
-
-        <form class="formClientes" id="formClientes">
-
+        <form class="formEnvases" id="formEnvases">
             <!--Nombre-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
@@ -43,54 +40,69 @@
                 </div>
             </div>
             <!--________________-->
-
-            <!-- Dirección de Entrega -->
+            <!--Recetas-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
-                    <label for="dir_entrega">Dirección Entrega:</label>
-                    <input type="text" class="form-control" name="dir_entrega" id="dir_entrega" placeholder="Ingrese Dirección...">
-                </div>
-            </div>
-            <!--________________-->
-
-            <!--Observaciones-->
-            <div class="col-md-6 col-sm-6 col-xs-12">
-                <div class="form-group">
-                <label for="Observaciones">Observaciones:</label>
-                    <textarea class="form-control" name="observaciones" id="observaciones" rows="3" placeholder="Ingrese Observaciones..."></textarea>
-                </div>
-            </div>
-            <!--________________-->
-
-            <!--Tipo Cliente-->
-            <div class="col-md-6 col-sm-6 col-xs-12">
-                <div class="form-group">
-                    <label for="Tipo">Tipo(<strong style="color: #dd4b39">*</strong>):</label>
+                    <label for="Receta">Receta(<strong style="color: #dd4b39">*</strong>):</label>
                     <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id">
-                                <option value="" disabled selected>-Seleccione opción-</option>	
-                                <?php
-                                  foreach ($tipos_clientes as $tipos) {
-                                    echo '<option  value="'.$tipos->tabl_id.'">'.$tipos->valor.'</option>';
-                                  }
-                                ?>
-                              </select>
+                        <option value="" disabled selected>-Seleccione opción-</option>	
+                        <?php
+                            foreach ($listadoFormulas as $formula) {
+                            echo '<option  value="'.$formula->form_id.'">'.$formula->descripcion.'</option>';
+                            }
+                        ?>
+                    </select>
                 </div>
             </div>
             <!--________________-->
-
+            <!--Descripcion-->
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="form-group">
+                <label for="Descripcion">Descripción(<strong style="color: #dd4b39">*</strong>):</label>
+                    <textarea class="form-control" name="descripcion" id="descripcion" rows="3" placeholder="Ingrese Descripción..."></textarea>
+                </div>
+            </div>
+            <!--________________-->
+            <!--Unidad de medida-->
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="form-group">
+                    <label for="Receta">Unidad de medida(<strong style="color: #dd4b39">*</strong>):</label>
+                    <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id">
+                        <option value="" disabled selected>-Seleccione opción-</option>	
+                        <?php
+                            foreach ($listadoUnidades as $unidad) {
+                            echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';
+                            }
+                        ?>
+                    </select>
+                </div>
+            </div>
+            <!--________________-->
+            <!--Contenido neto-->
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="form-group">
+                    <label for="Contenido">Contenido neto(<strong style="color: #dd4b39">*</strong>):</label>
+                    <input type="text" class="form-control requerido" name="contenido" id="contenido" placeholder="Ingrese Contenido neto...">
+                </div>
+            </div>
+            <!--________________-->
+            <!--Tara-->
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="form-group">
+                    <label for="Tara">Tara(<strong style="color: #dd4b39">*</strong>):</label>
+                    <input type="text" class="form-control requerido" name="tara" id="tara" placeholder="Ingrese Tara...">
+                </div>
+            </div>
+            <!--________________-->
         </form>
-        </div>
-        <!--_________________ GUARDAR_________________-->
-        <div class="modal-footer">
-					<div class="form-group text-right">
-          <button type="button" class="btn btn-primary" onclick="guardar('nueva')" >Guardar</button>
-				</div>                
-        <!--__________________________________-->
-
-
-
     </div>
-
+    <!--_________________ GUARDAR_________________-->
+    <div class="modal-footer">
+        <div class="form-group text-right">
+            <button type="button" class="btn btn-primary" onclick="guardar('nueva')" >Guardar</button>
+        </div>
+    </div>
+    <!--__________________________________-->
 </div>
 <!--_______ FIN FORMULARIO CLIENTES ______-->
 
@@ -131,58 +143,83 @@
             <form class="formEdicion" id="formEdicion">
             <div class="form-horizontal">
                 <div class="row">
-                <form class="frm_cliente_edit" id="frm_cliente_edit">
+                <form class="frm_envase_edit" id="frm_envase_edit">
 
-                <input type="text" class="form-control habilitar hidden" name="clie_id" id="clie_id_edit">
-
-                    <div class="col-sm-6">
+                <input type="text" class="form-control habilitar hidden" name="clie_id" id="clie_id_edit">                    
                     <!--_____________ NOMBRE _____________-->
-                        <div class="form-group">
-                        <label for="nombre_edit" class="col-sm-4 control-label">Nombre:</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
-                        </div>
-                        </div>
-                    <!--___________________________-->
-
-                    <!--_____________ DIR ENTREGA _____________-->
-                        <div class="form-group">
-                            <label for="dir_entrega_edit" class="col-sm-4 control-label">Dirección Entrega:</label>
-                            <div class="col-sm-8">
-                            <input type="text" class="form-control habilitar" name="dir_entrega" id="dir_entrega_edit">
-                            </div>
-                        </div>
-                    <!--__________________________-->
-
-                    <!--_____________ OBSERVACIONES _____________-->
-                        <div class="form-group">
-                            <label for="observaciones_edit" class="col-sm-4 control-label">Observaciones:</label>
-                            <div class="col-sm-8">
-                            <input type="text" class="form-control habilitar" name="observaciones" id="observaciones_edit">
-                            </div>
-                        </div>
-                    <!--__________________________-->
-
-                    </div>
-
                     <div class="col-sm-6">
-
-                    <!--_____________ TIPO CLIENTE _____________-->
                         <div class="form-group">
-                        <label for="ticl_id_edit" class="col-sm-4 control-label">Tipo:</label>
-                        <div class="col-sm-8">
-                            <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id_edit">	
-                            <?php
-                                foreach ($tipos_clientes as $tipos) {
-                                echo '<option  value="'.$tipos->tabl_id.'">'.$tipos->valor.'</option>';
-                                }
-                            ?>
-                            </select>
+                            <label for="nombre_edit" class="col-sm-4 control-label">Nombre:</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
+                            </div>
                         </div>
-                        </div>
-                    <!--__________________________-->
                     </div>
+                    <!--___________________________-->
+                    <!--_____________ RECETA _____________-->
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
+                            <div class="col-sm-8">
+                                <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
+                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id_edit">	
+                                <?php
+                                    foreach ($listadoFormulas as $formula) {
+                                    echo '<option  value="'.$formula->form_id.'">'.$formula->descripcion.'</option>';
+                                    }
+                                ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!--__________________________-->
+                    <!--_____________ DESCRIPCION _____________-->
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label for="nombre_edit" class="col-sm-4 control-label">Descripción:</label>
+                            <div class="col-sm-8">
+                                <textarea class="form-control habilitar requerido" name="nombre" id="nombre_edit"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!--___________________________-->
+                    <!--_____________ RECETA _____________-->
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
+                            <div class="col-sm-8">
+                                <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
+                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id_edit">	
+                                <?php
+                                    foreach ($listadoUnidades as $unidad) {
+                                    echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';
+                                    }
+                                ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!--_____________ CONTENIDO NETO _____________-->
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="nombre_edit" class="col-sm-4 control-label">Contenido neto:</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
+                            </div>
+                        </div>
+                    </div>
+                    <!--___________________________-->
+                    <!--_____________ TARA _____________-->
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="nombre_edit" class="col-sm-4 control-label">Tara:</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
+                            </div>
+                        </div>
+                    </div>
+                    <!--___________________________-->
+                    <!-- </div> -->
 
                 </form>
                 </div>
@@ -205,8 +242,8 @@
 </div>
 <!---///////--- FIN MODAL EDICION E INFORMACION ---///////--->
 <script>
-// carga tabla genaral de clientes
-    $("#cargar_tabla").load("index.php/core/Cliente/Listar_Clientes");
+// carga tabla genaral de envases
+    $("#cargar_tabla").load("index.php/core/Envase/Listar_Envases");
 
     // muestra box de datos al dar click en boton agregar
     $("#botonAgregar").on("click", function() {
@@ -252,28 +289,25 @@ function validarCampos(form){
     }
     return ban;
 }
-//Alta de cliente en sistmea
+//Alta de envase en sistmea
 function guardar(operacion){
-
   var recurso = "";
   if (operacion == "editar") {
-
     if( !validarCampos('formEdicion') ){
       return;
     }
     var form = $('#formEdicion')[0];
     var datos = new FormData(form);
     var datos = formToObject(datos);
-    recurso = 'index.php/core/Cliente/Editar_Cliente';
+    recurso = 'index.php/core/Envase/Editar_Envase';
   } else {
-
-    if( !validarCampos('formClientes') ){
+    if( !validarCampos('formEnvases') ){
       return;
     }
-    var form = $('#formClientes')[0];
+    var form = $('#formEnvases')[0];
     var datos = new FormData(form);
     var datos = formToObject(datos);
-    recurso = 'index.php/core/Cliente/Guardar_Cliente';
+    recurso = 'index.php/core/Envase/Guardar_Envase';
   }
   wo();
   $.ajax({
@@ -282,21 +316,20 @@ function guardar(operacion){
       //dataType: 'JSON',
       url: recurso,
       success: function(result) {
-
-        $("#cargar_tabla").load("index.php/core/Cliente/Listar_Clientes");
+        $("#cargar_tabla").load("index.php/core/Envase/Listar_Envases");
         wc();
         $("#boxDatos").hide(500);
-        $("#formClientes")[0].reset();
+        $("#formEnvases")[0].reset();
         $("#botonAgregar").removeAttr("disabled");
         if (operacion == "editar") {
-          alertify.success("Cliente Editado Exitosamente");
+          alertify.success("Envase Editado Exitosamente");
         }else{
-          alertify.success("Cliente Agregado con Exito");
+            alertify.error("Error agregando Envase");
         }
       },
       error: function(result){
         wc();
-        alertify.error("Error agregando Cliente");
+        alertify.error("Error agregando Envase");
       }
   });
 

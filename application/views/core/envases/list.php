@@ -1,13 +1,14 @@
 
 <!-- ______ TABLA PRINCIPAL DE PANTALLA ______ -->
-<table id="tabla_clientes" class="table table-bordered table-striped">
+<table id="tabla_envases" class="table table-bordered table-striped">
 		<thead class="thead-dark" bgcolor="#eeeeee">
       <th>Acciones</th>
-      <th>id</th>
+      <th>Id</th>
       <th>Nombre</th>
-      <th>Dir. entrega</th>
-      <th>Observaciones</th>
-      <th>Tipo cliente</th>
+      <th>Receta</th>
+      <th>U. de medida</th>
+      <th>Contenido neto</th>
+      <th>Tara</th>
 		</thead>
 		<tbody >
 			<?php
@@ -21,11 +22,12 @@
                 <button type="button" title="Info" class="btn btn-primary btn-circle btnInfo" data-toggle="modal" data-target="#modaleditar" ><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></button>&nbsp
                 <button type="button" title="Eliminar" class="btn btn-primary btn-circle btnEliminar" id="btnBorrar"  ><span class="glyphicon glyphicon-trash" aria-hidden="true" ></span></button>&nbsp';
             echo '</td>';
-            echo '<td>'.$value->clie_id.'</td>';
+            echo '<td>'.$value->empa_id.'</td>';
             echo '<td>'.$value->nombre.'</td>';
-            echo '<td>'.$value->dir_entrega.'</td>';
-            echo '<td>'.$value->observaciones.'</td>';
-            echo '<td>'.$value->ticl_id.'</td>';
+            echo '<td>'.$value->receta.'</td>';
+            echo '<td>'.$value->unidad_medida.'</td>';
+            echo '<td>'.$value->capacidad.'</td>';
+            echo '<td>'.$value->tara.'</td>';
             echo '</tr>';
           }
 				}
@@ -40,7 +42,7 @@
         //guardo el tipo de operacion en el modal
         $("#operacion").val("Edit");
         //pongo titulo al modal
-        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Editar Cliente </h4>');
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Editar Envase </h4>');
         data = $(this).parents("tr").attr("data-json");
         datajson = JSON.parse(data);
         habilitarEdicion();
@@ -52,7 +54,7 @@
         //guardo el tipo de operacion en el modal
         $("#operacion").val("Info");
         //pongo titulo al modal
-        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Info Cliente </h4>');
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Info Envase </h4>');
         data = $(this).parents("tr").attr("data-json");
         datajson = JSON.parse(data);
         blockEdicion();
@@ -62,7 +64,7 @@
     $("#btnAdd").on("click", function(e) {
         $("#operacion").val("Add");
         $(".modal-header h4").remove();
-        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil text-light-blue"></span> Agregar Cliente </h4>');
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil text-light-blue"></span> Agregar Envase </h4>');
         ///FIXME: LIMPIAR LOS CAMPOS Y SELECTS
     });
     // llena modal para edicion y muestra
@@ -87,7 +89,7 @@
       // Levanta modal prevencion eliminar herramienta
       $(".btnEliminar").on("click", function() {
         $(".modal-header h4").remove();
-        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-times text-light-blue"></span> Eliminar Cliente </h4>');
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-times text-light-blue"></span> Eliminar Envase </h4>');
         datajson = $(this).parents("tr").attr("data-json");
         data = JSON.parse(datajson);
         var clie_id = data.clie_id;
@@ -97,7 +99,7 @@
         $("#modalaviso").modal('show');
       });
 
-// Elimina Cliente
+// Elimina Envase
 function eliminar(){
 
   var clie_id = $("#clie_id").val();
@@ -105,10 +107,10 @@ function eliminar(){
   $.ajax({
       type: 'POST',
       data:{clie_id: clie_id},
-      url: 'index.php/core/Cliente/Borrar_Cliente',
+      url: 'index.php/core/Envase/Borrar_Envase',
       success: function(result) {
 
-        $("#cargar_tabla").load("index.php/core/Cliente/Listar_Clientes");
+        $("#cargar_tabla").load("index.php/core/Envase/Listar_Envases");
         wc();
         $("#modalaviso").modal('hide');
 
@@ -121,7 +123,7 @@ function eliminar(){
   });
 }
    // Config Tabla
-   DataTable($('#tabla_clientes'));
+   DataTable($('#tabla_envases'));
 </script>
 
 <!-- Modal aviso eliminar -->
@@ -130,12 +132,12 @@ function eliminar(){
       <div class="modal-content">
         <div class="modal-header bg-blue">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Cliente</h4>
+          <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Envase</h4>
         </div>
         <div class="modal-body">
           <div class="row">
             <div class="col-xs-12">
-              <h4>¿Desea realmente eliminar el Cliente?</h4>
+              <h4>¿Desea realmente eliminar el Envase?</h4>
               <input type="text" id="clie_id" class="hidden">
             </div>
           </div>

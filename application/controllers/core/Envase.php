@@ -1,49 +1,51 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Cliente extends CI_Controller 
+class Envase extends CI_Controller 
 {
     function __construct(){
       parent::__construct();
-      $this->load->model('core/Clientes');    
+      $this->load->model('core/Envases');    
     } 
 
     /**
-	 *  Muestra el ABM de los clientes.
+	 *  Muestra el ABM de los envases.
 	 *
 	 * @param
 	 * @return  void
 	 */
 
     function index(){
-      log_message('INFO','#TRAZA | CLIENTES | index()  >> ');
-      $data['list'] = $this->Clientes->Listar_Clientes();
-      $data['tipos_clientes'] = $this->Clientes->Listar_Tipos_Clientes();
-      $this->load->view('core/clientes/view', $data);
+      log_message('INFO','#TRAZA | ENVASES | index()  >> ');
+	  $data['listadoFormulas'] = $this->Envases->Listar_Formulas();
+	  $data['listadoUnidades'] = $this->Envases->Listar_Unidades_Medidas();
+    //   $data['list'] = $this->Envases->Listar_Envases();
+    //   $data['tipos_envases'] = $this->Envases->Listar_Tipos_Envases();
+      $this->load->view('core/envases/view', $data);
     }
     
  /**
-     * Devuelve un listado de las Clientes.
+     * Devuelve un listado de las Envases.
      *
-     * @return  Array   Devuelve un arreglo con las Clientes.
+     * @return  Array   Devuelve un arreglo con las Envases.
      */
-		function Listar_Clientes()
+		function Listar_Envases()
 	{
-		log_message('INFO','#TRAZA| CLIENTES | Listar_Clientes() >> ');
-		$data['list'] = $this->Clientes->Listar_Clientes();
-    	$this->load->view('core/clientes/list', $data);
+		log_message('INFO','#TRAZA| ENVASES | Listar_Envases() >> ');
+		$data['list'] = $this->Envases->Listar_Envases();
+    	$this->load->view('core/envases/list', $data);
 	}
     /**
-	* Guarda cliente
-	* @param array cliente
+	* Guarda envase
+	* @param array envase
 	* @return bool true o false segun resultado de servicio de guardado
 	*/
-	function Guardar_Cliente()
+	function Guardar_Envase()
 	{
-    log_message('ERROR', '#TRAZA | CLIENTES | guardar() >> $cliente_id: '.$cliente_id);
-		$cliente = $this->input->post('datos');
-    $cliente['usuario_app'] = userNick();
-    $cliente['empr_id'] = empresa();
-		$resp = $this->Clientes->Guardar_Cliente($cliente);
+    log_message('ERROR', '#TRAZA | ENVASES | guardar() >> $envase_id: '.$envase_id);
+		$envase = $this->input->post('datos');
+    $envase['usuario_app'] = userNick();
+    $envase['empr_id'] = empresa();
+		$resp = $this->Envases->Guardar_Envase($envase);
 		if ($resp != null) {
 			return json_encode(true);
 		} else {
@@ -52,29 +54,29 @@ class Cliente extends CI_Controller
 	}
 
 	/**
-	* Edita info de Cliente
-	* @param array con informacion de Cliente
+	* Edita info de Envase
+	* @param array con informacion de Envase
 	* @return bool true o false respuesta del servicio
 	*/
-	function Editar_Cliente()
+	function Editar_Envase()
 	{
-    log_message('INFO','#TRAZA | CLIENTES | Editar_Cliente() >> ');
-		$cliente = $this->input->post('datos');
-		$cliente['usuario_app'] = userNick();
-		$resp = $this->Clientes->Editar_Cliente($cliente);
+    log_message('INFO','#TRAZA | ENVASES | Editar_Envase() >> ');
+		$envase = $this->input->post('datos');
+		$envase['usuario_app'] = userNick();
+		$resp = $this->Envases->Editar_Envase($envase);
 		echo json_encode($resp);
 	}
 
 	/**
-	* Borra Cliente por id
+	* Borra Envase por id
 	* @param
 	* @return bool true o false
 	*/
-	public function Borrar_Cliente()
+	public function Borrar_Envase()
 	{
-		log_message('INFO','#TRAZA | CLIENTES | Borrar_Cliente() >> ');
+		log_message('INFO','#TRAZA | ENVASES | Borrar_Envase() >> ');
 		$clie_id = $this->input->post('clie_id');
-		$result = $this->Clientes->Borrar_Cliente($clie_id);
+		$result = $this->Envases->Borrar_Envase($clie_id);
 		echo json_encode($result);
 	}
 }    
