@@ -147,8 +147,8 @@
       <param name="recu_id" sqlType="STRING"/>
    </query>
    <query id="getTareasPlanificadas" useConfig="produccionDS">
-      <sql>select tp.*&#xd;from tst.origen_tarea_planficada otp &#xd;join tst.tareas_planificadas tp &#xd;on otp.tapl_id = tp.tapl_id &#xd;where otp.origen = :origen&#xd;and otp.orta_id = cast(:orta_id as integer)&#xd;and not eliminado&#xd;order by tp.tapl_id</sql>
-      <result outputType="json">{&#xd;  "tareas": {&#xd;    "tarea": [&#xd;        {&#xd;            "tapl_id":"$tapl_id",&#xd;            "nombre":"$nombre",&#xd;            "user_id":"$user_id",&#xd;            "info_id":"$info_id",&#xd;            "case_id":"$case_id",&#xd;            "tare_id":"$tare_id",&#xd;            "fecha":"$fecha",&#xd;            "proc_id":"$proc_id",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "estado":"$estado",&#xd;            "descripcion":"$descripcion",&#xd;            "@getTareaRecursos":$tapl_id-&gt;tapl_id&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
+      <sql>select tp.tapl_id , tp.nombre ,to_char(tp.fecha, 'DD-MM-YYYY') fecha, tp.user_id, tp.equi_id, tp.case_id, tp.tare_id, tp.proc_id, tp.form_id, tp.rece_id, tp.info_id, tp.eliminado, tp.estado,to_char(tp.fec_inicio,'DD-MM-YYYY+HH12:MI:SS') fec_inicio,to_char(fec_fin,'DD-MM-YYYY+HH12:MI:SS') fec_fin, tp.descripcion,tp.hora_duracion &#xd;from tst.origen_tarea_planficada otp &#xd;join tst.tareas_planificadas tp &#xd;on otp.tapl_id = tp.tapl_id &#xd;where otp.origen = :origen&#xd;and otp.orta_id = cast(:orta_id as integer)&#xd;and not eliminado&#xd;order by tp.tapl_id</sql>
+      <result outputType="json">{&#xd;  "tareas": {&#xd;    "tarea": [&#xd;        {&#xd;            "tapl_id":"$tapl_id",&#xd;            "nombre":"$nombre",&#xd;            "user_id":"$user_id",&#xd;            "info_id":"$info_id",&#xd;            "case_id":"$case_id",&#xd;            "tare_id":"$tare_id",&#xd;            "fecha":"$fecha",&#xd;            "fec_inicio":"$fec_inicio",&#xd;            "fec_fin":"$fec_fin",&#xd;            "proc_id":"$proc_id",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "estado":"$estado",&#xd;            "descripcion":"$descripcion",&#xd;            "duracion":"$hora_duracion",&#xd;            "@getTareaRecursos":$tapl_id-&gt;tapl_id&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="orta_id" sqlType="STRING"/>
       <param name="origen" sqlType="STRING"/>
    </query>
@@ -183,7 +183,7 @@
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="getTareasEventos" useConfig="produccionDS">
-      <sql>select &#xd;date(fec_inicio) as dia_inicio, concat(extract('HOUR' from fec_inicio),':', extract('MINUTE' from fec_inicio)) as hora_inicio,&#xd;date(fec_fin) as dia_fin, hora_duracion,&#xd;nombre as titulo, descripcion, tapl_id as even_id&#xd;from tst.tareas_planificadas tp where tp.fec_inicio is not null and tp.fec_fin is not null and not tp.eliminado and tp.empr_id = cast(:empr_id as integer)</sql>
+      <sql>select to_char(fec_inicio,'YYYY-MM-DD+HH12:MI:SS') as dia_inicio, concat(extract(hour from fec_inicio),':', extract(minute from fec_inicio)) as hora_inicio,to_char(fec_fin,'YYYY-MM-DD+HH12:MI:SS') as dia_fin,&#xd;hora_duracion, nombre as titulo, descripcion, tapl_id as even_id&#xd;from tst.tareas_planificadas tp where tp.fec_inicio is not null and tp.fec_fin is not null and not tp.eliminado and tp.empr_id = cast(:empr_id as integer)</sql>
       <result outputType="json">{&#xd;  "eventos": {&#xd;    "evento": [&#xd;        {&#xd;            "even_id":"$even_id",&#xd;            "titulo":"$titulo",&#xd;            "descripcion":"$descripcion",&#xd;            "dia_inicio":"$dia_inicio",&#xd;            "hora_inicio":"$hora_inicio",&#xd;            "hora_duracion":"$hora_duracion",&#xd;            "dia_fin":"$dia_fin"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -242,6 +242,12 @@
       <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_fin = TO_TIMESTAMP(:fec_fin,'YYYY-MM-DD HH24:MI:SS')&#xd;WHERE case_id=:case_id</sql>
       <param name="fec_fin" sqlType="STRING"/>
       <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getTareasXRecursos" useConfig="produccionDS">
+      <sql>select to_char(fec_inicio,'YYYY-MM-DD+HH12:MI:SS') as dia_inicio, concat(extract(hour from fec_inicio),':', extract(minute from fec_inicio)) as hora_inicio,&#xd;to_char(fec_fin,'YYYY-MM-DD+HH12:MI:SS') as dia_fin, hora_duracion, nombre as titulo, tp.descripcion, tp.tapl_id as even_id&#xd;from tst.tareas_planificadas tp, tst.recursos_tareas rt, prd.recursos r, core.equipos e&#xd;where tp.fec_inicio is not null &#xd;and tp.fec_fin is not null &#xd;and not tp.eliminado &#xd;and tp.empr_id = cast(:empr_id as integer)&#xd;and tp.tapl_id = rt.tapl_id&#xd;and rt.recu_id = r.recu_id&#xd;and r.equi_id = e.equi_id&#xd;and e.equi_id = any(array[ :rec_id_list ])&#xd;group by tp.tapl_id</sql>
+      <result outputType="json">{&#xd;  "eventos": {&#xd;    "evento": [&#xd;        {&#xd;            "even_id":"$even_id",&#xd;            "titulo":"$titulo",&#xd;            "descripcion":"$descripcion",&#xd;            "dia_inicio":"$dia_inicio",&#xd;            "hora_inicio":"$hora_inicio",&#xd;            "hora_duracion":"$hora_duracion",&#xd;            "dia_fin":"$dia_fin"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="rec_id_list" optional="false" paramType="ARRAY" sqlType="INTEGER"/>
    </query>
    <resource method="GET" path="/tareas/{empr_id}">
       <call-query href="getTareas">
@@ -453,6 +459,7 @@
          <with-param name="user_id" query-param="user_id"/>
          <with-param name="unidad_tiempo" query-param="unidad_tiempo"/>
          <with-param name="documento" query-param="documento"/>
+         <with-param name="nombre_documento" query-param="nombre_documento"/>
       </call-query>
    </resource>
    <resource method="GET" path="/pedidostrabajo/hitos/{petr_id}">
@@ -494,6 +501,12 @@
       <call-query href="updateFec_fin_TareaPlanificada">
          <with-param name="fec_fin" query-param="fec_fin"/>
          <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/tareas/eventos/empresa/{empr_id}?rec_id_list={rec_id_list}">
+      <call-query href="getTareasXRecursos">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="rec_id_list" query-param="rec_id_list"/>
       </call-query>
    </resource>
 </data>
