@@ -192,6 +192,27 @@
       <result outputType="json">{&#xd;   "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "localidad_id": "$localidad_id",&#xd;          "estado": "$estado",&#xd;          "estado_id": "$estado_id",&#xd;          "pais": "$pais",&#xd;          "pais_id": "$pais_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getTransportistas" useConfig="ToolsDataSource">
+      <sql>select *&#xd;from core.transportistas t &#xd;where t.empr_id = cast(:empr_id as integer)&#xd;and t.eliminado = false</sql>
+      <result outputType="json">{&#xd;   "transportistas": {&#xd;      "transportista": [&#xd;        {&#xd;          "cuit": "$cuit",&#xd;          "razon_social": "$razon_social",&#xd;          "direccion": "$direccion"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="setTransportista" useConfig="ToolsDataSource">
+      <sql>insert into core.transportistas &#xd;(&#xd;cuit, &#xd;razon_social,&#xd;direccion,&#xd;empr_id &#xd;) &#xd;values(&#xd;:cuit, &#xd;:razon_social,&#xd;:direccion,&#xd;cast(:empr_id as integer)&#xd;);</sql>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="razon_social" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="updateTransportista" useConfig="ToolsDataSource">
+      <sql>UPDATE core.transportistas &#xd;SET &#xd;razon_social = :razon_social,&#xd;direccion = :direccion&#xd;WHERE cuit = :cuit;</sql>
+      <param name="razon_social" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+   </query>
+   <query id="deleteTransportista" useConfig="ToolsDataSource">
+      <sql>UPDATE core.transportistas &#xd;SET eliminado = TRUE&#xd;WHERE cuit = :cuit ;</sql>
+      <param name="cuit" sqlType="STRING"/>
+   </query>
    <query id="getEmpresas" useConfig="ToolsDataSource">
       <sql>select *&#xd;from core.empresas e</sql>
       <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
@@ -406,6 +427,29 @@
    <resource method="GET" path="/establecimientos/{empr_id}">
       <call-query href="getEstablecimientos">
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/{$empr_id}">
+      <call-query href="getTransportistas"/>
+   </resource>
+   <resource method="POST" path="/transportista">
+      <call-query href="setTransportista">
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="razon_social" query-param="razon_social"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/transportista">
+      <call-query href="updateTransportista">
+         <with-param name="razon_social" query-param="razon_social"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="cuit" query-param="cuit"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/transportista">
+      <call-query href="deleteTransportista">
+         <with-param name="cuit" query-param="cuit"/>
       </call-query>
    </resource>
    <resource method="GET" path="/empresas">
