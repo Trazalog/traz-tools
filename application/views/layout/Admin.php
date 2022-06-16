@@ -388,7 +388,7 @@
                 <?php
                     //echo  ApplicationVersion::getLastVersions();
                 ?>
-                <div id='calendar'></div>
+                <div id='calendario'></div>
 			</div> 
             <!-- /.modal-body -->
 
@@ -424,8 +424,6 @@ function cargarCalendar(){
     /*console.log(tagsLastCommits);*/
 
     let lastCommits = tagsLastCommits[0].split("\n");  
-    console.log(lastCommits);
-
     var dataCalendar = [];
 
     lastCommits.forEach(function callback(elemento, indice, array) {  
@@ -445,13 +443,10 @@ function cargarCalendar(){
     /*console.log(dataCalendar);*/
     var data = dataCalendar.filter(Boolean);
     var events = JSON.stringify(data);
-    console.log(events);
-
-
     var initialLocaleCode = 'es';
-    var calendarEl = document.getElementById('calendar');
+    var calendarioEl = document.getElementById('calendario');
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {
+    var calendario = new FullCalendar.Calendar(calendarioEl, {
       headerToolbar: {
         left: 'prev,next',
         center: 'title',
@@ -465,7 +460,7 @@ function cargarCalendar(){
       events: $.parseJSON(events)  
     });
 
-    calendar.render();
+    calendario.render();
   }
 
 
