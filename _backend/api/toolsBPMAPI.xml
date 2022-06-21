@@ -186,7 +186,7 @@
    <resource methods="GET" uri-template="/groups/{session}">
       <inSequence>
          <header name="Accept" scope="transport" value="application/json"/>
-         <property name="groups_url" value="/API/identity/group?p=0&amp;c=1000&amp;d=parent_group_id&amp;o=name%20ASC" scope="default" type="STRING"/>
+         <property name="groups_url" value="/API/identity/group?p=0&amp;c=1000&amp;d=parent_group_id&amp;o=displayName%20ASC" scope="default" type="STRING"/>
          <call-template target="bpmAPICallTemplate">
             <with-param name="recurso" value="{$ctx:groups_url}"/>
             <with-param name="session" value="{$ctx:uri.var.session}"/>
