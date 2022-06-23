@@ -97,6 +97,7 @@ define('TOOLS_ADMIN_USER','admin@gmail.com');
 define('PORT', ':3000/');
 
 define('PRD', 'traz-prod-trazasoft/');
+define('PLANIF_AVANZA_TAREA',true);
 
 #COMPONENTE TST
 define('TST', 'traz-comp-tareasestandar/');
