@@ -13,7 +13,7 @@
       <param name="tare_id" sqlType="STRING"/>
    </query>
    <query id="setTarea" useConfig="produccionDS">
-      <sql>INSERT INTO tst.tareas_std&#xd;(nombre, descripcion, duracion, form_id, rece_id, proc_id, empr_id)&#xd;VALUES(:nombre, :descripcion, :duracion, CAST(:form_id as integer), CAST(:rece_id as integer), :proc_id, CAST(:empr_id as integer));</sql>
+      <sql>INSERT INTO tst.tareas_std(nombre, descripcion, duracion, form_id, rece_id, proc_id, empr_id)&#xd;select :nombre,&#xd;:descripcion,&#xd;:duracion,&#xd;case when param.form_id is null or param.form_id = '' then null else cast( param.form_id as integer) end,&#xd;case when param.rece_id is null or param.rece_id = '' then null else cast( param.rece_id as integer) end,&#xd;:proc_id,&#xd;cast(:empr_id as integer)&#xd;from (select :form_id form_id, :rece_id rece_id) param;</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
       <param name="duracion" sqlType="STRING"/>
