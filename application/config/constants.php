@@ -142,6 +142,9 @@ define('SICP', 'ddpe-tools-pro/');
 #COMPONENTE CODIGO_QR
 define('COD', 'traz-comp-codigos/');
 
+#COMPONENTE NOTIFICACIONES
+define('NOTI', 'traz-comp-notificaciones/');
+
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],

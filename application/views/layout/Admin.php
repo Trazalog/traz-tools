@@ -7,6 +7,8 @@
     <title>TRAZALOG | TOOLS</title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Manifest para el desarrollo de la PWA -->
+    <link rel="manifest" crossorigin="use-credentials" href="manifest.json">
     <!-- Bootstrap 3.3.7 -->
     <link rel="stylesheet" href="lib/bower_components/bootstrap/dist/css/bootstrap.min.css">
     <!-- Font Awesome -->
@@ -110,7 +112,7 @@
 
 <?php $this->load->view('layout/wait') ?>
 
-<body class="hold-transition skin-red sidebar-mini"></body>
+<body class="hold-transition skin-red sidebar-mini">
 <div class="wrapper">
 
     <header class="main-header">
@@ -176,7 +178,7 @@
         <div class="pull-right hidden-xs">
             <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
         </div>
-        <strong>Copyright &copy; 2021 <a href="">Trazalog</a>.</strong> All rights
+        <strong>Copyright &copy; <?php echo date('Y') ?> <a href="">Trazalog</a>.</strong> All rights
         reserved.
     </footer>
     <?php $this->load->view('layout/modal_generico') ?>
@@ -500,11 +502,56 @@ function wo(texto) {
 function wc() {
     WaitingClose();
 }
+if ('serviceWorker' in navigator) {
+   window.addEventListener('load', function() {
+     navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
+       // Si es exitoso
+       console.log('SW registrado correctamente');
+     }, function(err) {
+       // Si falla
+       console.log('SW fallo', err);
+     });
+   });
+ }
 </script>
 
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
 
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-analytics.js";
+  import { getMessaging } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-messaging.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+    
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyD-D8C5EuzKsYxAfIKJeps-IPT3RUEuQjU",
+    authDomain: "baupedistribuidora-3eee5.firebaseapp.com",
+    projectId: "baupedistribuidora-3eee5",
+    storageBucket: "baupedistribuidora-3eee5.appspot.com",
+    messagingSenderId: "586234869476",
+    appId: "1:586234869476:web:5ea79c612570b62f0ddef1",
+    measurementId: "G-MRFMZKTEGE"
+  };
+
+  // Initialize Firebase
+//   const firebase = initializeApp(firebaseConfig);
+//   firebase.auth();
+//   const analytics = getAnalytics(firebase);
+//   const messaging = getMessaging(firebase);
+//   console.log(firebase);
+//   console.log(messaging);
+//   messaging.requestPermission().then(function(token) {
+//         console.log('Recibido permiso.');
+//         }).catch(function(err) {
+//         error('No se ha obtenido permiso', err);
+//     });
+export const firebase = initializeApp(firebaseConfig);
+</script>
 </body>
 
 </html>
