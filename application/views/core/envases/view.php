@@ -1,19 +1,19 @@
 <!-- /// ---- HEADER ----- /// -->
 <div class="box box-primary animated fadeInLeft">
-			<div class="box-header with-border">
-					<h4>Envases</h4>
-			</div>
-			<div class="box-body">
-					<div class="row">
-							<div class="col-md-2 col-lg-1 col-xs-12">
-									<button type="button" id="botonAgregar" class="btn btn-primary" aria-label="Left Align">
-											Agregar
-									</button><br>
-							</div>
-							<div class="col-md-10 col-lg-11 col-xs-12"></div>
-					</div>
-			</div>
-	</div>
+    <div class="box-header with-border">
+        <h4>Envases</h4>
+    </div>
+    <div class="box-body">
+        <div class="row">
+            <div class="col-md-2 col-lg-1 col-xs-12">
+                <button type="button" id="botonAgregar" class="btn btn-primary" aria-label="Left Align">
+                    Agregar
+                </button><br>
+            </div>
+            <div class="col-md-10 col-lg-11 col-xs-12"></div>
+        </div>
+    </div>
+</div>
 <!-- /// ----- HEADER -----/// -->
 
 <!--_______ FORMULARIO CLIENTES______-->
@@ -44,7 +44,7 @@
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
                     <label for="Receta">Receta(<strong style="color: #dd4b39">*</strong>):</label>
-                    <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id">
+                    <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="receta" id="receta">
                         <option value="" disabled selected>-Seleccione opción-</option>	
                         <?php
                             foreach ($listadoFormulas as $formula) {
@@ -66,8 +66,8 @@
             <!--Unidad de medida-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
-                    <label for="Receta">Unidad de medida(<strong style="color: #dd4b39">*</strong>):</label>
-                    <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id">
+                    <label for="Unidad_medida">Unidad de medida(<strong style="color: #dd4b39">*</strong>):</label>
+                    <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="unidad_medida">
                         <option value="" disabled selected>-Seleccione opción-</option>	
                         <?php
                             foreach ($listadoUnidades as $unidad) {
@@ -108,22 +108,18 @@
 
 <!---/////---BOX 2 DATATBLE ---/////----->
 <div class="box box-primary">
-		<div class="box-body">
-				<div id="example2_wrapper" class="dataTables_wrapper form-inline dt-bootstrap">
-						
-					<div class="row">
-								<div class="col-sm-6"></div>
-								<div class="col-sm-6"></div>
-						</div>
-
-						<div class="row">
-								<div class="col-sm-12 table-scroll" id="cargar_tabla">
-
-								</div>
-						</div>
-						
-				</div>
-		</div>
+    <div class="box-body">
+        <div id="example2_wrapper" class="dataTables_wrapper form-inline dt-bootstrap">                
+            <div class="row">
+                <div class="col-sm-6"></div>
+                <div class="col-sm-6"></div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 table-scroll" id="cargar_tabla">
+                </div>
+            </div>                
+        </div>
+    </div>
 </div>
 <!---/////--- FIN BOX 2 DATATABLE---//////----->
 
@@ -162,7 +158,7 @@
                             <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
                             <div class="col-sm-8">
                                 <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id_edit">	
+                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
                                 <?php
                                     foreach ($listadoFormulas as $formula) {
                                     echo '<option  value="'.$formula->form_id.'">'.$formula->descripcion.'</option>';
@@ -189,7 +185,7 @@
                             <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
                             <div class="col-sm-8">
                                 <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id_edit">	
+                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
                                 <?php
                                     foreach ($listadoUnidades as $unidad) {
                                     echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';
@@ -315,21 +311,24 @@ function guardar(operacion){
       data:{ datos },
       //dataType: 'JSON',
       url: recurso,
-      success: function(result) {
+      success: function(resp) {
         $("#cargar_tabla").load("index.php/core/Envase/Listar_Envases");
         wc();
         $("#boxDatos").hide(500);
         $("#formEnvases")[0].reset();
         $("#botonAgregar").removeAttr("disabled");
         if (operacion == "editar") {
-          alertify.success("Envase Editado Exitosamente");
+            alertify.success("Envase editado exitosamente");             
         }else{
-            alertify.error("Error agregando Envase");
+            alertify.success("Envase creado exitosamente");
         }
       },
       error: function(result){
+        alertify.error("Error agregando envase");
         wc();
-        alertify.error("Error agregando Envase");
+      },
+      complete: function(){
+        wc();
       }
   });
 
