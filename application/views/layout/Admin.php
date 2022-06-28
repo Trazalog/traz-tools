@@ -502,56 +502,11 @@ function wo(texto) {
 function wc() {
     WaitingClose();
 }
-if ('serviceWorker' in navigator) {
-   window.addEventListener('load', function() {
-     navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
-       // Si es exitoso
-       console.log('SW registrado correctamente');
-     }, function(err) {
-       // Si falla
-       console.log('SW fallo', err);
-     });
-   });
- }
 </script>
 
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
-
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-analytics.js";
-  import { getMessaging } from "https://www.gstatic.com/firebasejs/9.8.4/firebase-messaging.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-    
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyD-D8C5EuzKsYxAfIKJeps-IPT3RUEuQjU",
-    authDomain: "baupedistribuidora-3eee5.firebaseapp.com",
-    projectId: "baupedistribuidora-3eee5",
-    storageBucket: "baupedistribuidora-3eee5.appspot.com",
-    messagingSenderId: "586234869476",
-    appId: "1:586234869476:web:5ea79c612570b62f0ddef1",
-    measurementId: "G-MRFMZKTEGE"
-  };
-
-  // Initialize Firebase
-//   const firebase = initializeApp(firebaseConfig);
-//   firebase.auth();
-//   const analytics = getAnalytics(firebase);
-//   const messaging = getMessaging(firebase);
-//   console.log(firebase);
-//   console.log(messaging);
-//   messaging.requestPermission().then(function(token) {
-//         console.log('Recibido permiso.');
-//         }).catch(function(err) {
-//         error('No se ha obtenido permiso', err);
-//     });
-export const firebase = initializeApp(firebaseConfig);
-</script>
+<script type="module" src="<?php echo base_url();?>lib/props/firebase_config.js"></script>
 </body>
 
 </html>

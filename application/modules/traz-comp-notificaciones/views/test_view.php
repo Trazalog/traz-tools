@@ -64,39 +64,8 @@
         error('No se ha obtenido permiso', err);
     });
 </script> -->
-<script>
+<script type="module">
+    import { firebase, analytics, messaging, sendPushNotification } from "./lib/props/firebase_config.js";
     console.log(firebase);
-function sendPushNotification(){
-    // console.log(firebase);
-    firebase.messaging().requestPermission().then(function(token) {
-            console.log('Recibido permiso.');
-            // En el parámetro "token" tienes el código para poder enviar las notificaciones
-            var dataForm = new FormData($('#formNotificacion')[0]);
-            $.ajax({
-                type: 'POST',
-                data: dataForm,
-                cache: false,
-                contentType: false,
-                processData: false,
-                // dataType: "json",
-                url: "<?php echo NOTI; ?>notificacion/sendPushNotification",
-                success: function(data) { 
-
-                    if(data.status){
-                        console.log(data.message);
-                        hecho("Notificación enviada correctamente");
-                    }else{
-                        console.log(data.message);
-                        error("Error enviando notificación");
-                    }
-                    
-                },
-                error: function(data) {
-                    error("Error enviando notificación");
-                }
-            });
-        }).catch(function(err) {
-        error('No se ha obtenido permiso', err);
-    });
-}
+sendPushNotification();
 </script>
