@@ -20,11 +20,18 @@ class Envases extends CI_Model {
   * @return ID envase generado
   */
   function Guardar_Envase($data){
-    $post['_post_envase'] = $data;
-    log_message('DEBUG','#TRAZA| TRAZ-TOOLS | CLIENTES | Guardar_CLiente()  $post: >> '.json_encode($post));
+    $envase['empr_id'] = empresa();
+		$envase['usuario_app'] = userNick();
+		$envase['nombre'] = $data['nombre'];
+		$envase['descripcion'] = $data['descripcion'];
+		$envase['unidad_medida'] = $data['unidad_medida'];
+		$envase['capacidad'] = $data['contenido'];
+		$envase['tara'] = $data['tara'];
+		$envase['receta'] = $data['receta'];
+		$post['_post_envase'] = $envase;
+    log_message('DEBUG','#TRAZA| TRAZ-TOOLS | ENVASES | Guardar_Envase()  $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("POST",REST_CORE."/envase", $post);
-    $aux = json_decode($aux["data"]);
-    return $aux->GeneratedKeys->Entry;
+    $aux = json_decode($aux["status"]);
   }
 
   /**
@@ -84,7 +91,7 @@ class Envases extends CI_Model {
   function Editar_Envase($envase)
   {
     $post['_put_envase'] = $envase;
-    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | CLIENTES | Editar_Envase() $post: >> '.json_encode($post));
+    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ENVASES | Editar_Envase() $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("PUT",REST_CORE."/envase", $post);
     $aux = json_decode($aux["status"]);
     return $aux;
@@ -98,7 +105,7 @@ class Envases extends CI_Model {
     function Borrar_Envase($clie_id)
     {
       $post['_delete_envase'] = array("clie_id" => $clie_id);
-      log_message('DEBUG','#TRAZA | TRAZ-TOOLS | CLIENTES $post: >> '.json_encode($post));
+      log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ENVASES $post: >> '.json_encode($post));
       $aux = $this->rest->callAPI("DELETE",REST_CORE."/envase", $post);
       $aux = json_decode($aux["status"]);
       return $aux;

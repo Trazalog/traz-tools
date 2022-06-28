@@ -230,6 +230,17 @@
       <sql>select tabl_id, valor&#xd;from core.tablas&#xd;where tabla = 'unidades_medida' and eliminado = false</sql>
       <result outputType="json">{&#xd;  "unidades": {&#xd;     "unidad": [&#xd;       {&#xd;         "tabl_id": "$tabl_id",&#xd;         "valor": "$valor"&#xd;       }&#xd;     ]&#xd;  }&#xd;}</result>
    </query>
+   <query id="setEnvase" useConfig="ToolsDataSource">
+      <sql>insert into prd.empaque&#xd;(&#xd;    nombre,&#xd;    descripcion,&#xd;    unidad_medida,&#xd;    capacidad,&#xd;    empr_id, &#xd;    usuario_app,&#xd;    tara,&#xd;    receta,&#xd;    eliminado)&#xd;VALUES(&#xd;    :nombre,&#xd;    :descripcion,&#xd;    :unidad_medida,&#xd;    cast(:capacidad as float),&#xd;    cast(:empr_id as integer),&#xd;    :usuario_app,&#xd;    cast(:tara as float),&#xd;    :receta,&#xd;    False&#xd;);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="unidad_medida" sqlType="STRING"/>
+      <param name="capacidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="receta" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -462,5 +473,17 @@
    </resource>
    <resource method="GET" path="/unidades_medidas">
       <call-query href="getUnidadesMedidas"/>
+   </resource>
+   <resource method="POST" path="/envase">
+      <call-query href="setEnvase">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="unidad_medida" query-param="unidad_medida"/>
+         <with-param name="capacidad" query-param="capacidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="receta" query-param="receta"/>
+      </call-query>
    </resource>
 </data>

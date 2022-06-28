@@ -41,15 +41,16 @@ class Envase extends CI_Controller
 	*/
 	function Guardar_Envase()
 	{
-    log_message('ERROR', '#TRAZA | ENVASES | guardar() >> $envase_id: '.$envase_id);
+		log_message('ERROR', '#TRAZA | ENVASES | guardar()');
 		$envase = $this->input->post('datos');
-    $envase['usuario_app'] = userNick();
-    $envase['empr_id'] = empresa();
 		$resp = $this->Envases->Guardar_Envase($envase);
-		if ($resp != null) {
-			return json_encode(true);
+		if ( !$resp ) {
+			log_message('ERROR', '#TRAZA | ENVASES | guardar()');
+			echo json_encode(false);
+			return;
 		} else {
-			return json_encode(false);
+			echo json_encode(true);
+			return;
 		}
 	}
 
