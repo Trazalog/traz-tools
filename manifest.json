@@ -4,7 +4,7 @@
     "display": "standalone",
     "version":"0.1r",
     "manifest_version":2,
-    "description":"a demo extesion for learning purpose",
+    "description":"Solo estamos testeando als notificaciones push papito",
     "icons": [
         {
           "src": "lib\/icon\/order.png",

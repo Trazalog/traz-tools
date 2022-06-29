@@ -66,6 +66,9 @@
 </script> -->
 <script type="module">
     import { firebase, analytics, messaging, sendPushNotification } from "./lib/props/firebase_config.js";
-    console.log(firebase);
-sendPushNotification();
+    window.sendPushNotification = () =>{
+        sendPushNotification();
+    } 
+    console.log(window.sendPushNotification());
+// sendPushNotification();
 </script>

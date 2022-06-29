@@ -49,8 +49,8 @@ class Notificacion extends CI_Controller
  
         $accesstoken = 'AAAAiH5SNuQ:APA91bHnxXwO7ujdaR_nPhAF3mtTTZ6fy6pOq4l45flSnCjTctc1ROuzLjgbU4iKIZe14dgVG2gylTMIcJJq5TYvRJLRKoWRDB0rufVjjicuU2GtHlHySaMMbYlc5G_UOChJ68OHz1iQ';
  
-        $URL = 'https://fcm.googleapis.com/fcm/send';
-        // $URL = 'https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send';
+        // $URL = 'https://fcm.googleapis.com/fcm/send';
+        $URL = 'https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send';
  
             $post_data = '{
                 "to" : "' . $noti_id . '",
@@ -86,10 +86,9 @@ class Notificacion extends CI_Controller
         curl_setopt($crl, CURLOPT_POST, true);
         curl_setopt($crl, CURLOPT_POSTFIELDS, $post_data);
         curl_setopt($crl, CURLOPT_RETURNTRANSFER, true);
-        log_message("DEBUG","ESTO >> ".json_encode($crl));
-        $rest = curl_exec($crl);
- 
-        if ($rest === false) {
+        $rest = json_decode(curl_exec($crl));
+        log_message("DEBUG","#TRAZA | #TRAZ-COMP-NOTIFICACIONES | Notificacion >>>>>> respuesta servicio : ".$rest); 
+        if ($rest->error->status === 'UNAUTHENTICATED') {
             $result_noti = 0;
             $rsp['status'] = false;
             $rsp['msg'] = "Errorsito perri";
