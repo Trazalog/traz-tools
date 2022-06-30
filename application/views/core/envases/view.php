@@ -16,7 +16,7 @@
 </div>
 <!-- /// ----- HEADER -----/// -->
 
-<!--_______ FORMULARIO CLIENTES______-->
+<!--_______ FORMULARIO ENVASES______-->
 <div class="box box-primary animated bounceInDown" id="boxDatos" hidden>
     <div class="box-header with-border">
         <div class="box-tittle">
@@ -104,7 +104,7 @@
     </div>
     <!--__________________________________-->
 </div>
-<!--_______ FIN FORMULARIO CLIENTES ______-->
+<!--_______ FIN FORMULARIO ENVASES ______-->
 
 <!---/////---BOX 2 DATATBLE ---/////----->
 <div class="box box-primary">
@@ -125,116 +125,106 @@
 
 <!---///////--- MODAL EDICION E INFORMACION ---///////--->
 <div class="modal fade bs-example-modal-lg" id="modaleditar" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
-
     <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-
-        <div class="modal-header bg-blue">
-            <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+        <div class="modal-content">
+            <div class="modal-header bg-blue">
+                <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true" style="color:white;">&times;</span>
-            </button>
-        </div>
-
-        <div class="modal-body ">
-            <form class="formEdicion" id="formEdicion">
-            <div class="form-horizontal">
-                <div class="row">
-                <form class="frm_envase_edit" id="frm_envase_edit">
-
-                <input type="text" class="form-control habilitar hidden" name="clie_id" id="clie_id_edit">                    
-                    <!--_____________ NOMBRE _____________-->
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label for="nombre_edit" class="col-sm-4 control-label">Nombre:</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
-                            </div>
+                </button>
+            </div>
+            <div class="modal-body ">
+                <form class="formEdicion" id="formEdicion">
+                    <div class="form-horizontal">
+                        <div class="row">
+                            <form class="frm_envase_edit" id="frm_envase_edit">
+                                <input type="text" class="form-control habilitar hidden" name="empa_id" id="empa_id_edit">                    
+                                <!--_____________ NOMBRE _____________-->
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="nombre_edit" class="col-sm-4 control-label">Nombre:</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--___________________________-->
+                                <!--_____________ RECETA _____________-->
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
+                                        <div class="col-sm-8">
+                                            <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
+                                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
+                                            <?php
+                                                foreach ($listadoFormulas as $formula) {
+                                                echo '<option  value="'.$formula->form_id.'">'.$formula->descripcion.'</option>';
+                                                }
+                                            ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--__________________________-->
+                                <!--_____________ DESCRIPCION _____________-->
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <label for="descripcion_edit" class="col-sm-2 control-label">Descripción:</label>
+                                        <div class="col-sm-10">
+                                            <textarea class="form-control habilitar requerido" name="descripcion" id="descripcion_edit"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--___________________________-->
+                                <!--_____________ RECETA _____________-->
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
+                                        <div class="col-sm-8">
+                                            <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
+                                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
+                                            <?php
+                                                foreach ($listadoUnidades as $unidad) {
+                                                echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';
+                                                }
+                                            ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--_____________ CONTENIDO NETO _____________-->
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="contenido_edit" class="col-sm-4 control-label">Contenido neto:</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control habilitar requerido" name="contenido" id="contenido_edit">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--___________________________-->
+                                <!--_____________ TARA _____________-->
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="tara_edit" class="col-sm-4 control-label">Tara:</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control habilitar requerido" name="tara" id="tara_edit">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--___________________________-->
+                                <!-- </div> -->
+                            </form>
                         </div>
                     </div>
-                    <!--___________________________-->
-                    <!--_____________ RECETA _____________-->
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
-                            <div class="col-sm-8">
-                                <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
-                                <?php
-                                    foreach ($listadoFormulas as $formula) {
-                                    echo '<option  value="'.$formula->form_id.'">'.$formula->descripcion.'</option>';
-                                    }
-                                ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <!--__________________________-->
-                    <!--_____________ DESCRIPCION _____________-->
-                    <div class="col-sm-12">
-                        <div class="form-group">
-                            <label for="nombre_edit" class="col-sm-4 control-label">Descripción:</label>
-                            <div class="col-sm-8">
-                                <textarea class="form-control habilitar requerido" name="nombre" id="nombre_edit"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <!--___________________________-->
-                    <!--_____________ RECETA _____________-->
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
-                            <div class="col-sm-8">
-                                <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                                <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
-                                <?php
-                                    foreach ($listadoUnidades as $unidad) {
-                                    echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';
-                                    }
-                                ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <!--_____________ CONTENIDO NETO _____________-->
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label for="nombre_edit" class="col-sm-4 control-label">Contenido neto:</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
-                            </div>
-                        </div>
-                    </div>
-                    <!--___________________________-->
-                    <!--_____________ TARA _____________-->
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label for="nombre_edit" class="col-sm-4 control-label">Tara:</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control habilitar requerido" name="nombre" id="nombre_edit">
-                            </div>
-                        </div>
-                    </div>
-                    <!--___________________________-->
-                    <!-- </div> -->
-
                 </form>
+            </div>
+            <div class="modal-footer">
+                <div class="form-group text-right">
+                    <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardar('editar')">Guardar</button>
+                    <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
-            </form>
         </div>
-
-        <div class="modal-footer">
-
-            <div class="form-group text-right">
-                <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardar('editar')">Guardar</button>
-                <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
-            </div>
-
-        </div>
-
     </div>
-    </div>
-
 </div>
 <!---///////--- FIN MODAL EDICION E INFORMACION ---///////--->
 <script>

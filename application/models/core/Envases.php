@@ -99,13 +99,13 @@ class Envases extends CI_Model {
   
   /**
     * Borra envase por ID
-    * @param	int $clie_id
+    * @param	int $empa_id
     * @return bool true o false resultado del servicio
     */
-    function Borrar_Envase($clie_id)
+    function Borrar_Envase($empa_id)
     {
-      $post['_delete_envase'] = array("clie_id" => $clie_id);
-      log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ENVASES $post: >> '.json_encode($post));
+      $post['_delete_envase'] = array("empa_id" => $empa_id);
+      log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ENVASE $post: >> '.json_encode($post));
       $aux = $this->rest->callAPI("DELETE",REST_CORE."/envase", $post);
       $aux = json_decode($aux["status"]);
       return $aux;
