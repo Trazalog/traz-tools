@@ -76,8 +76,8 @@ class Envase extends CI_Controller
 	public function Borrar_Envase()
 	{
 		log_message('INFO','#TRAZA | ENVASES | Borrar_Envase() >> ');
-		$clie_id = $this->input->post('clie_id');
-		$result = $this->Envases->Borrar_Envase($clie_id);
+		$empa_id = $this->input->post('empa_id');
+		$result = $this->Envases->Borrar_Envase($empa_id);
 		echo json_encode($result);
 	}
 }    
