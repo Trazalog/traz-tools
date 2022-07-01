@@ -3,15 +3,17 @@
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
    <query id="panolSet" useConfig="ToolsDataSource">
-      <sql>insert into pan.panol(descripcion, usuario_app, empr_id) &#xd;values(:descripcion, :usuario_app, CAST(:empr_id AS INTEGER)) returning pano_id</sql>
+      <sql>insert into pan.panol(descripcion, usuario_app, empr_id, esta_id,nombre) &#xd;values(:descripcion, :usuario_app, CAST(:empr_id AS INTEGER),cast(:esta_id as integer),:nombre) returning pano_id</sql>
       <result outputType="json">{ &#xd;  "respuesta":{&#xd;     "pano_id": "$pano_id"&#xd;   }&#xd;}&#xd;     </result>
       <param name="descripcion" sqlType="STRING"/>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="panolGet" useConfig="ToolsDataSource">
-      <sql>select pano_id, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where empr_id = CAST(:empr_id AS INTEGER)</sql>
-      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <sql>select pano_id, nombre, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where empr_id = CAST(:empr_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "nombre": "$nombre",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="panolUpdate" useConfig="ToolsDataSource">
@@ -173,7 +175,7 @@
       <param name="pano_id" sqlType="STRING"/>
    </query>
    <query id="herramientasPanolGetPorEstado" useConfig="ToolsDataSource">
-      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;  from pan.herramientas H, core.tablas T&#xd;  where H.marca = T.tabl_id&#xd;  and H.pano_id = cast(:pano_id as integer)&#xd;  and H.eliminado = false&#xd;  and H.estado = :estado</sql>
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;  from pan.herramientas H, core.tablas T,&#xd;  (	select&#xd;	:pano_id pano_id,&#xd;	:estado estado) param&#xd;  where H.marca = T.tabl_id&#xd;  and H.pano_id = cast(param.pano_id as integer)&#xd;  and H.eliminado = false&#xd;  and H.estado =&#xd;	case when param.estado = 'TODOS' then H.estado&#xd;	else param.estado end</sql>
       <result outputType="json">{&#xd;    "herramientas":{&#xd;      "herramienta":[&#xd;        {&#xd;          "herr_id": "$herr_id",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca",&#xd;          "marca_id": "$marca_id",&#xd;          "modelo": "$modelo",&#xd;          "tipo": "$tipo",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="pano_id" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
@@ -184,15 +186,27 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="panolGetPorEstablecimiento" useConfig="ToolsDataSource">
-      <sql>select pano_id, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where esta_id = CAST(:esta_id AS INTEGER)</sql>
-      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <sql>select nombre, pano_id, descripcion, loca_id, prov_id, pais_id, lat, lng&#xd;  from pan.panol&#xd;  where esta_id = CAST(:esta_id AS INTEGER)&#xd;  and eliminado = false;</sql>
+      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "nombre": "$nombre",&#xd;          "pano_id": "$pano_id",&#xd;          "descripcion": "$descripcion",&#xd;          "loca_id": "$loca_id",&#xd;          "prov_id": "$prov_id",&#xd;          "pais_id": "$pais_id",&#xd;          "lat": "$lat",&#xd;          "lng": "$lng"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="encargadoPanolSet" useConfig="ToolsDataSource">
+      <sql>insert into pan.encargado_panol (pano_id, user_id)&#xd;values (CAST(:pano_id AS INTEGER), CAST(:user_id AS INTEGER))</sql>
+      <param name="pano_id" sqlType="STRING"/>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="encargadoXPanolGet" useConfig="ToolsDataSource">
+      <sql>select U.id, U.first_name, U.last_name&#xd;FROM seg.users U, pan.encargado_panol E&#xd;WHERE&#xd;E.user_id = U.id&#xd;and U.status = 'approved' &#xd;and U.banned_users = 'unban' &#xd;and E.pano_id = CAST(:pano_id AS INTEGER);</sql>
+      <result outputType="json">{&#xd;    "users":{&#xd;      "user":[&#xd;        {&#xd;          "id": "$id",&#xd;          "first_name": "$first_name",&#xd;          "last_name": "$last_name"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
+      <param name="pano_id" sqlType="STRING"/>
    </query>
    <resource method="POST" path="/panol">
       <call-query href="panolSet">
          <with-param name="descripcion" query-param="descripcion"/>
          <with-param name="usuario_app" query-param="usuario_app"/>
          <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/panol">
@@ -377,6 +391,22 @@
    <resource method="GET" path="/panol/establecimiento/{esta_id}">
       <call-query href="panolGetPorEstablecimiento">
          <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/panol/encargado">
+      <call-query href="encargadoPanolSet">
+         <with-param name="pano_id" query-param="pano_id"/>
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/encargado/{pano_id}">
+      <call-query href="encargadoXPanolGet">
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/empresa/{empr_id}">
+      <call-query href="panolGet">
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>

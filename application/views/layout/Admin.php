@@ -7,6 +7,8 @@
     <title>TRAZALOG | TOOLS</title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Manifest para el desarrollo de la PWA -->
+    <link rel="manifest" crossorigin="use-credentials" href="manifest.json">
     <!-- Bootstrap 3.3.7 -->
     <link rel="stylesheet" href="lib/bower_components/bootstrap/dist/css/bootstrap.min.css">
     <!-- Font Awesome -->
@@ -70,6 +72,9 @@
 
     <link href='<?php  echo base_url();?>assets/fullcalendar/lib/main.min.css' rel='stylesheet' />
 
+    <!-- Lupa imagenes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/css/magnify.css" integrity="sha512-JxBFHHd+xyHl++SdVJYCCgxGPJKCTTaqndOl/n12qI73hgj7PuGuYDUcCgtdSHTeXSHCtW4us4Qmv+xwPqKVjQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <style>
         .mr-2{
             margin-right: 5px;
@@ -92,6 +97,11 @@
             margin: 0 auto;
         }
 
+        .panel-primary>.panel-heading {
+        color: #fff;
+        background-color: #dd4b39 !important;
+        border-color: #dd4b39 !important;
+        }   
 
     </style>
 
@@ -102,7 +112,7 @@
 
 <?php $this->load->view('layout/wait') ?>
 
-<body class="hold-transition skin-blue sidebar-mini"></body>
+<body class="hold-transition skin-red sidebar-mini">
 <div class="wrapper">
 
     <header class="main-header">
@@ -168,7 +178,7 @@
         <div class="pull-right hidden-xs">
             <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
         </div>
-        <strong>Copyright &copy; 2021 <a href="">Trazalog</a>.</strong> All rights
+        <strong>Copyright &copy; <?php echo date('Y') ?> <a href="">Trazalog</a>.</strong> All rights
         reserved.
     </footer>
     <?php $this->load->view('layout/modal_generico') ?>
@@ -380,7 +390,7 @@
                 <?php
                     //echo  ApplicationVersion::getLastVersions();
                 ?>
-                <div id='calendar'></div>
+                <div id='calendario'></div>
 			</div> 
             <!-- /.modal-body -->
 
@@ -416,8 +426,6 @@ function cargarCalendar(){
     /*console.log(tagsLastCommits);*/
 
     let lastCommits = tagsLastCommits[0].split("\n");  
-    console.log(lastCommits);
-
     var dataCalendar = [];
 
     lastCommits.forEach(function callback(elemento, indice, array) {  
@@ -437,13 +445,10 @@ function cargarCalendar(){
     /*console.log(dataCalendar);*/
     var data = dataCalendar.filter(Boolean);
     var events = JSON.stringify(data);
-    console.log(events);
-
-
     var initialLocaleCode = 'es';
-    var calendarEl = document.getElementById('calendar');
+    var calendarioEl = document.getElementById('calendario');
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {
+    var calendario = new FullCalendar.Calendar(calendarioEl, {
       headerToolbar: {
         left: 'prev,next',
         center: 'title',
@@ -457,7 +462,7 @@ function cargarCalendar(){
       events: $.parseJSON(events)  
     });
 
-    calendar.render();
+    calendario.render();
   }
 
 
@@ -501,7 +506,7 @@ function wc() {
 
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
-
+<script type="module" src="<?php echo base_url();?>lib/props/firebase_config.js"></script>
 </body>
 
 </html>

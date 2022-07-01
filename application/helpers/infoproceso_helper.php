@@ -434,7 +434,7 @@
 
 									?>
 									<div class="col-md-12">
-									<p>Datos del Cliente:</p>
+									<p>Datos del Cliente:</p><input type="hidden" class="form-control habilitar" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
 									<hr>
 										<div class="col-md-6">
 											<div class="form-group">
@@ -547,6 +547,7 @@
 
 									?>
 										<script>
+											$(".frm-select").select2();
 										var formulario = $('#form-dinamico-cabecera').attr('data-frm-id');
 										
 										

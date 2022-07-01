@@ -97,6 +97,7 @@ define('TOOLS_ADMIN_USER','admin@gmail.com');
 define('PORT', ':3000/');
 
 define('PRD', 'traz-prod-trazasoft/');
+define('PLANIF_AVANZA_TAREA',true);
 
 #COMPONENTE TST
 define('TST', 'traz-comp-tareasestandar/');
@@ -138,8 +139,11 @@ define('viewOT', false);
 #COMPONENTE SICPOA
 define('SICP', 'ddpe-tools-pro/');
 
-#COMPONENTE SICPOA
+#COMPONENTE CODIGO_QR
 define('COD', 'traz-comp-codigos/');
+
+#COMPONENTE NOTIFICACIONES
+define('NOTI', 'traz-comp-notificaciones/');
 
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
