@@ -57,7 +57,7 @@
 		<li class="dropdown user user-menu">
 			<a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 				<?php 
-					echo '<img src="'.imagePerfil($image, $image_name).'" class="user-image" alt="User Image"/>';
+					echo '<img src="'.imageAdmin($image, $image_name).'" class="user-image" alt="User Image"/>';
 				?>
 				<span class="hidden-xs"><?php echo $this->session->userdata['first_name'].' '.$this->session->userdata['last_name']?></span>
 			</a>
