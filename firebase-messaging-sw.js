@@ -13,7 +13,6 @@
 // importScripts('/__/firebase/9.2.0/firebase-messaging-compat.js');
 // importScripts('/__/firebase/init.js');
 
-// const messaging = firebase.messaging();
 
 /**
  * Here is is the code snippet to initialize Firebase Messaging in the Service
@@ -39,32 +38,32 @@
  // Retrieve an instance of Firebase Messaging so that it can handle background
  // messages.
  const messaging = firebase.messaging();
-
- if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./firebase-messaging-sw.js")
-    .then(function(registration) {
-      console.log("Registration successful, scope is:", registration.scope);
-      getToken({vapidKey: 'BBr_p7ZaAscFxO9ljqvTGnsf-_7L8NY7W_VOaWxHFcjjmmfeYYOTTeVogvzExptd0O0gpvGrIAVh9HQwbHiD6w8', serviceWorkerRegistration : registration })
-        .then((currentToken) => {
-          if (currentToken) {
-            console.log('current token for client: ', currentToken);
+//  if ("serviceWorker" in navigator) {
+//   navigator.serviceWorker.register("./firebase-messaging-sw.js")
+//     .then(function(registration) {
+//       debugger;
+//       console.log("Registration successful, scope is:", registration.scope);
+//       getToken({vapidKey: 'BBr_p7ZaAscFxO9ljqvTGnsf-_7L8NY7W_VOaWxHFcjjmmfeYYOTTeVogvzExptd0O0gpvGrIAVh9HQwbHiD6w8', serviceWorkerRegistration : registration })
+//         .then((currentToken) => {
+//           if (currentToken) {
+//             console.log('Token obtenido: ', currentToken);
   
-            // Track the token -> client mapping, by sending to backend server
-            // show on the UI that permission is secured
-          } else {
-            console.log('No registration token available. Request permission to generate one.');
+//             // Track the token -> client mapping, by sending to backend server
+//             // show on the UI that permission is secured
+//           } else {
+//             console.log('No se encontro un token. Solicita permiso para generar uno.');
   
-            // shows on the UI that permission is required 
-          }
-        }).catch((err) => {
-          console.log('An error occurred while retrieving token. ', err);
-          // catch error while creating client token
-        });  
-      })
-      .catch(function(err) {
-        console.log("Service worker registration failed, error:"  , err );
-    }); 
-  }
+//             // shows on the UI that permission is required 
+//           }
+//         }).catch((err) => {
+//           console.log('An error occurred while retrieving token. ', err);
+//           // catch error while creating client token
+//         });  
+//       })
+//       .catch(function(err) {
+//         console.log("Service worker registration failed, error:"  , err );
+//     }); 
+//   }
 
 // If you would like to customize notifications that are received in the
 // background (Web app is closed or not in browser focus) then you should
@@ -75,13 +74,16 @@
 // https://firebase.google.com/docs/cloud-messaging/concept-options
 messaging.onBackgroundMessage(function(payload) {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  // Customize notification here
-  const notificationTitle = 'Background Message Title';
-  const notificationOptions = {
-    body: 'Background Message body.',
-    icon: '/firebase-logo.png'
+  var fecha = Date.now("Y-m-d");
+  const notiTitulo = 'Te llego una notificación papito';
+  const notiOpciones = {
+    tag: 'algoCheto',
+    body: 'Algo paso y deberia esta detallado aca.\n Revista la bandeja que te mande una tarea',
+    icon: './imagenes/trazalog/07ded14d.png',
+    timestamp: fecha
   };
-
-  self.registration.showNotification(notificationTitle,
-    notificationOptions);
+  //Con esta funcion puedo usar el sw registrado e enviar uan notificacion push desde el FRONT
+  // navigator.serviceWorker.ready.then(function(registration) {
+  // });
+  self.registration.showNotification(notiTitulo,notiOpciones);
 });

@@ -17,10 +17,10 @@
                         </div>           
                         <div class="form-group">
                             <label for="formGroupExampleInput">Notification Id</label>
-                            <input type="text" name="noti_id" class="form-control" id="formGroupExampleInput" placeholder="Please enter notification id" required="">
+                            <input type="text" name="noti_id" class="form-control" id="formGroupExampleInput" placeholder="Please enter notification id" readonly>
                         </div> 
                         <div class="form-group">
-                            <button type="button" id="send_form" class="btn btn-success" onclick="sendPushNotification()">Enviar!</button>
+                            <button type="button" id="send_form" class="btn btn-success" onclick="haceAlgo()">Enviar!</button>
                         </div>
                     </form>
                 </div>
@@ -66,9 +66,38 @@
 </script> -->
 <script type="module">
     import { firebase, analytics, messaging, sendPushNotification } from "./lib/props/firebase_config.js";
-    window.sendPushNotification = () =>{
+    window.sendPushNotification = () => {
         sendPushNotification();
     } 
     console.log(window.sendPushNotification());
 // sendPushNotification();
+</script>
+<script>
+    function haceAlgo(){
+        var dataForm = new FormData($('#formNotificacion')[0]);
+        $.ajax({
+            type: 'POST',
+            data: dataForm,
+            cache: false,
+            contentType: false,
+            processData: false,
+            // dataType: "json",
+            url: "traz-comp-notificaciones/notificacion/haceAlgo",
+            success: function(data) { 
+                var rsp = JSON.parse(data);
+                if(rsp.status){
+                    console.log(data.message);
+                    hecho("Notificación enviada correctamente");
+                }else{
+                    console.log(data.message);
+                    error("Error enviando notificación");
+                }
+                
+            },
+            error: function(data) {
+                error("Error enviando notificación");
+            }
+        });
+    }
+
 </script>
