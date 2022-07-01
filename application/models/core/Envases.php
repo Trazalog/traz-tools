@@ -88,8 +88,18 @@ class Envases extends CI_Model {
    * @param array con info
    * @return bool respuesta de servicio
    */
-  function Editar_Envase($envase)
+  function Editar_Envase($data)
   {
+    // $envase['empr_id'] = empresa();
+		// $envase['usuario_app'] = userNick();
+		$envase['empa_id'] = $data['empa_id'];
+		$envase['nombre'] = $data['nombre'];
+		$envase['descripcion'] = $data['descripcion'];
+		$envase['unidad_medida'] = $data['unidad_medida'];
+		$envase['capacidad'] = $data['contenido'];
+		$envase['tara'] = $data['tara'];
+		$envase['receta'] = $data['receta'];
+		// $post['_post_envase'] = $envase;
     $post['_put_envase'] = $envase;
     log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ENVASES | Editar_Envase() $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("PUT",REST_CORE."/envase", $post);

@@ -151,10 +151,10 @@
                                 <!--_____________ RECETA _____________-->
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
+                                        <label for="receta_edit" class="col-sm-4 control-label">Receta:</label>
                                         <div class="col-sm-8">
                                             <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
+                                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="receta" id="receta_edit">	
                                             <?php
                                                 foreach ($listadoFormulas as $formula) {
                                                 echo '<option  value="'.$formula->form_id.'">'.$formula->descripcion.'</option>';
@@ -175,13 +175,13 @@
                                     </div>
                                 </div>
                                 <!--___________________________-->
-                                <!--_____________ RECETA _____________-->
+                                <!--_____________ UNIDAD DE MEDIDA _____________-->
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label for="ticl_id_edit" class="col-sm-4 control-label">Receta:</label>
+                                        <label for="unidad_medida_edit" class="col-sm-4 control-label">Unidad de medida:</label>
                                         <div class="col-sm-8">
                                             <!-- <input type="text" class="form-control habilitar" id="vehiculo_edit">  -->
-                                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="ticl_id_edit">	
+                                            <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="unidad_medida_edit">	
                                             <?php
                                                 foreach ($listadoUnidades as $unidad) {
                                                 echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';

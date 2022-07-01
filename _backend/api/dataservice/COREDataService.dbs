@@ -245,6 +245,16 @@
       <sql>UPDATE prd.empaque &#xd;SET eliminado = TRUE&#xd;WHERE empa_id = cast(:empa_id as integer);</sql>
       <param name="empa_id" sqlType="STRING"/>
    </query>
+   <query id="updateEnvase" useConfig="ToolsDataSource">
+      <sql>update prd.empaque&#xd;set &#xd;    nombre = :nombre,&#xd;    descripcion = :descripcion,&#xd;    unidad_medida = :unidad_medida,&#xd;    capacidad = cast(:capacidad as float),&#xd;    tara = cast(:tara as float),&#xd;    receta = :receta&#xd;where empa_id = CAST(:empa_id as integer);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="unidad_medida" sqlType="STRING"/>
+      <param name="capacidad" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="receta" sqlType="STRING"/>
+      <param name="empa_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -492,6 +502,17 @@
    </resource>
    <resource method="DELETE" path="/envase">
       <call-query href="deleteEnvase">
+         <with-param name="empa_id" query-param="empa_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/envase">
+      <call-query href="updateEnvase">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="unidad_medida" query-param="unidad_medida"/>
+         <with-param name="capacidad" query-param="capacidad"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="receta" query-param="receta"/>
          <with-param name="empa_id" query-param="empa_id"/>
       </call-query>
    </resource>
