@@ -63,7 +63,7 @@ class Envase extends CI_Controller
 	{
     log_message('INFO','#TRAZA | ENVASES | Editar_Envase() >> ');
 		$envase = $this->input->post('datos');
-		$envase['usuario_app'] = userNick();
+		// $envase['usuario_app'] = userNick();
 		$resp = $this->Envases->Editar_Envase($envase);
 		echo json_encode($resp);
 	}
