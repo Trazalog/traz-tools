@@ -69,11 +69,11 @@
     });
     // llena modal para edicion y muestra
     function llenarModal(datajson){
-
-      $('#clie_id_edit').val(datajson.clie_id);
+      $('#empa_id_edit').val(datajson.empa_id);
       $('#nombre_edit').val(datajson.nombre);
-      $('#dir_entrega_edit').val(datajson.dir_entrega);
-      $('#observaciones_edit').val(datajson.observaciones);
+      $('#descripcion_edit').val(datajson.descripcion);
+      $('#contenido_edit').val(datajson.capacidad);
+      $('#tara_edit').val(datajson.tara);
       $('#ticl_id_edit option[value="'+ datajson.ticl_id +'"]').attr("selected",true);
     }
         // deshabilita botones, selects e inputs de modal
@@ -89,36 +89,37 @@
       // Levanta modal prevencion eliminar herramienta
       $(".btnEliminar").on("click", function() {
         $(".modal-header h4").remove();
-        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-times text-light-blue"></span> Eliminar Envase </h4>');
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-times text-light-blue"></span> Eliminar Envase</h4>');
         datajson = $(this).parents("tr").attr("data-json");
         data = JSON.parse(datajson);
-        var clie_id = data.clie_id;
-        // guardo clie_id en modal para usar en funcion eliminar
-        $("#clie_id").val(clie_id);
+        var empa_id = data.empa_id;
+        // guardo empa_id en modal para usar en funcion eliminar
+        $("#id_empa").val(empa_id);
         //levanto modal
         $("#modalaviso").modal('show');
       });
 
 // Elimina Envase
 function eliminar(){
-
-  var clie_id = $("#clie_id").val();
+  var empa_id = $("#id_empa").val();
   wo();
   $.ajax({
       type: 'POST',
-      data:{clie_id: clie_id},
+      data:{empa_id: empa_id},
       url: 'index.php/core/Envase/Borrar_Envase',
       success: function(result) {
-
         $("#cargar_tabla").load("index.php/core/Envase/Listar_Envases");
-        wc();
+        setTimeout(function(){ 
+          alertify.success("Envase eliminado con éxito");
+          wc();
+          // alert("Hello"); 
+        }, 3000);
         $("#modalaviso").modal('hide');
-
       },
       error: function(result){
         wc();
         $("#modalaviso").modal('hide');
-        alertify.error('Error en eliminado de Herramientas...');
+        alertify.error('Error en eliminado de Envase...');
       }
   });
 }
@@ -138,7 +139,7 @@ function eliminar(){
           <div class="row">
             <div class="col-xs-12">
               <h4>¿Desea realmente eliminar el Envase?</h4>
-              <input type="text" id="clie_id" class="hidden">
+              <input type="text" id="id_empa" class="hidden">
             </div>
           </div>
         </div>

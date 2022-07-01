@@ -103,7 +103,7 @@
           success: function(result) {
               $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
               setTimeout(function(){ 
-                  alertify.success("Artículo eliminado con éxito");
+                  alertify.success("Establecimiento eliminado con éxito");
                   wc();
                   // alert("Hello"); 
               }, 3000);
