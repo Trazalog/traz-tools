@@ -430,7 +430,7 @@
 						* todo lo que pasa x aka debe ser standar de tools
 						*/
 							default :
-							$data =json_decode($aux);
+							// $data =json_decode($aux);
 
 									?>
 									<div class="col-md-12">
@@ -492,7 +492,7 @@
 															
 
 																								
-     											$fecha = date("d-m-Y",strtotime($data->fec_inicio));
+     											$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_inicio)));
 
 										
 													echo $fecha ;
@@ -507,7 +507,7 @@
 													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
 													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
 																									
-														$fecha = date("d-m-Y",$data->fec_entrega);
+														$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_entrega)));
 														
 														echo $fecha ;
 														
