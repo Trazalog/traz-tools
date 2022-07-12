@@ -234,14 +234,16 @@
       <param name="tapl_id" sqlType="STRING"/>
    </query>
    <query id="updateFec_inicio_TareaPlanificada" useConfig="produccionDS">
-      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_inicio = TO_TIMESTAMP(:fec_inicio,'YYYY-MM-DD HH24:MI:SS')&#xd;WHERE case_id=:case_id</sql>
+      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_inicio = TO_TIMESTAMP(:fec_inicio,'YYYY-MM-DD HH24:MI:SS'),&#xd;estado = :estado&#xd;WHERE case_id=:case_id</sql>
       <param name="fec_inicio" sqlType="STRING"/>
       <param name="case_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
    </query>
    <query id="updateFec_fin_TareaPlanificada" useConfig="produccionDS">
-      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_fin = TO_TIMESTAMP(:fec_fin,'YYYY-MM-DD HH24:MI:SS')&#xd;WHERE case_id=:case_id</sql>
+      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_fin = TO_TIMESTAMP(:fec_fin,'YYYY-MM-DD HH24:MI:SS'),&#xd;estado = :estado&#xd;WHERE case_id=:case_id</sql>
       <param name="fec_fin" sqlType="STRING"/>
       <param name="case_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
    </query>
    <query id="getTareasXRecursos" useConfig="produccionDS">
       <sql>select to_char(fec_inicio,'YYYY-MM-DD+HH12:MI:SS') as dia_inicio, concat(extract(hour from fec_inicio),':', extract(minute from fec_inicio)) as hora_inicio,&#xd;to_char(fec_fin,'YYYY-MM-DD+HH12:MI:SS') as dia_fin, hora_duracion, nombre as titulo, tp.descripcion, tp.tapl_id as even_id&#xd;from tst.tareas_planificadas tp, tst.recursos_tareas rt, prd.recursos r, core.equipos e&#xd;where tp.fec_inicio is not null &#xd;and tp.fec_fin is not null &#xd;and not tp.eliminado &#xd;and tp.empr_id = cast(:empr_id as integer)&#xd;and tp.tapl_id = rt.tapl_id&#xd;and rt.recu_id = r.recu_id&#xd;and r.equi_id = e.equi_id&#xd;and e.equi_id = any(array[ :rec_id_list ])&#xd;group by tp.tapl_id</sql>
@@ -495,12 +497,14 @@
       <call-query href="updateFec_inicio_TareaPlanificada">
          <with-param name="fec_inicio" query-param="fec_inicio"/>
          <with-param name="case_id" query-param="case_id"/>
+         <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/tarea/finalizar">
       <call-query href="updateFec_fin_TareaPlanificada">
          <with-param name="fec_fin" query-param="fec_fin"/>
          <with-param name="case_id" query-param="case_id"/>
+         <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
    <resource method="GET" path="/tareas/eventos/empresa/{empr_id}?rec_id_list={rec_id_list}">
