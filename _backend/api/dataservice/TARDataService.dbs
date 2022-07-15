@@ -47,10 +47,12 @@
       <param name="suta_id" sqlType="STRING"/>
    </query>
    <query id="setSubtarea" useConfig="produccionDS">
-      <sql>INSERT INTO tst.subtareas&#xd;(descripcion, tare_id, form_id)&#xd;VALUES(:descripcion, CAST(:tare_id as integer), CAST(:form_id as integer))</sql>
+      <sql>INSERT INTO tst.subtareas&#xd;(nombre,descripcion, duracion,tare_id, form_id)&#xd;select :nombre, &#xd;:descripcion, &#xd;:duracion, &#xd;CAST(:tare_id as integer), &#xd;case when param.form_id is null or param.form_id = '' then null else cast(param.form_id as integer) end&#xd;from (select :form_id form_id) param;</sql>
       <param name="descripcion" sqlType="STRING"/>
       <param name="tare_id" sqlType="STRING"/>
       <param name="form_id" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="duracion" sqlType="STRING"/>
    </query>
    <query id="updateSubtarea" useConfig="produccionDS">
       <sql>UPDATE tst.subtareas&#xd;SET nombre=:nombre, descripcion=:descripcion, tare_id=CAST(:tare_id as integer), form_id=CAST(:form_id as integer)&#xd;WHERE suta_id= CAST(:suta_id as integer)</sql>
@@ -303,6 +305,8 @@
          <with-param name="descripcion" query-param="descripcion"/>
          <with-param name="tare_id" query-param="tare_id"/>
          <with-param name="form_id" query-param="form_id"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="duracion" query-param="duracion"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/subtareas">
