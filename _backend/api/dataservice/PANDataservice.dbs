@@ -200,6 +200,12 @@
       <result outputType="json">{&#xd;    "users":{&#xd;      "user":[&#xd;        {&#xd;          "id": "$id",&#xd;          "first_name": "$first_name",&#xd;          "last_name": "$last_name"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
       <param name="pano_id" sqlType="STRING"/>
    </query>
+   <query id="validaEstadoHerramienta" useConfig="ToolsDataSource">
+      <sql>select case when exists &#xd;(select true from pan.herramientas h where h.herr_id = cast(:herr_id as integer)&#xd;and h.empr_id = cast(:empr_id as integer)&#xd;and h.estado = 'TRANSITO'&#xd;) then 'true' else 'false'&#xd;end</sql>
+      <result outputType="json">{&#xd;    "resultado" : {&#xd;        "existe": "$case"&#xd;    }&#xd;}</result>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/panol">
       <call-query href="panolSet">
          <with-param name="descripcion" query-param="descripcion"/>
@@ -266,7 +272,7 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
-   <resource method="POST" path="panol/salida/herramientas">
+   <resource method="POST" path="/panol/salida/herramientas">
       <call-query href="salidaHerramientasSet">
          <with-param name="usuario_app" query-param="usuario_app"/>
          <with-param name="destino" query-param="destino"/>
@@ -298,7 +304,7 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
-   <resource method="POST" path="panol/entrada/herramientas">
+   <resource method="POST" path="/panol/entrada/herramientas">
       <call-query href="entradaHerramientasSet">
          <with-param name="usuario_app" query-param="usuario_app"/>
          <with-param name="destino" query-param="destino"/>
@@ -406,6 +412,12 @@
    </resource>
    <resource method="GET" path="/panol/empresa/{empr_id}">
       <call-query href="panolGet">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/herramienta/validar/estado/{herr_id}/empresa/{empr_id}">
+      <call-query href="validaEstadoHerramienta">
+         <with-param name="herr_id" query-param="herr_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
