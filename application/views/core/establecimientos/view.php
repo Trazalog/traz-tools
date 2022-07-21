@@ -636,22 +636,28 @@
             return;
         }
         });
-        if (!ban){
-            if(!alertify.errorAlert){
-            alertify.dialog('errorAlert',function factory(){
-                return{
-                        build:function(){
-                            var errorHeader = '<span class="fa fa-times-circle fa-2x" '
-                            +    'style="vertical-align:middle;color:#e10000;">'
-                            + '</span>Error...!!';
-                            this.setHeader(errorHeader);
-                        }
-                    };
-                },true,'alert');
-            }
-            alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
-        }
-        return ban;
+        if (!ban) 
+    	Swal.fire(
+            'Error...',
+            'Debes completar los campos Obligatorios (*)',
+            'error'
+        );
+        return ban; 
+        // if (!ban){
+        //     if(!alertify.errorAlert){
+        //     alertify.dialog('errorAlert',function factory(){
+        //         return{
+        //                 build:function(){
+        //                     var errorHeader = '<span class="fa fa-times-circle fa-2x" '
+        //                     +    'style="vertical-align:middle;color:#e10000;">'
+        //                     + '</span>Error...!!';
+        //                     this.setHeader(errorHeader);
+        //                 }
+        //             };
+        //         },true,'alert');
+        //     }
+        //     alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
+        // }
     }
 
     function guardarEstablecimiento() {
@@ -829,7 +835,8 @@
 
     function guardarPanol () {
         if( !validarCampos('frmPanol') ){
-        return;
+            $("#modalpanoles").modal('show');
+            return;
         }
         var recurso = "";
         var form = $('#frmPanol')[0];
