@@ -165,9 +165,24 @@ if(!function_exists('empresa')){
 if(!function_exists('empr_id_BPM')){
 	function empr_id_BPM($memb)
 	{
-		$group = $memb->group_id->name;
-		$group = explode("-", $group);
-		return $group[0];
+		//Codigo Anterior
+		//$group = $memb->group_id->name; 
+		//$group = explode("-", $group);
+		//return $group[0];
+		//Fin de Codigo anterior
+		if(strpos($memb->group_id->name,'-') !== false){
+			// Explode con -
+			list($id_memb, $memb_name) = explode ("-",$memb->group_id->name); 
+			if($id_memb && $memb_name){
+				return $id_memb;
+			}
+
+
+		}else{
+			// Explode con espacio
+			return $memb;
+		}
+
 
 	}
 }
