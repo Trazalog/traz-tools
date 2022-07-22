@@ -47,10 +47,12 @@
       <param name="suta_id" sqlType="STRING"/>
    </query>
    <query id="setSubtarea" useConfig="produccionDS">
-      <sql>INSERT INTO tst.subtareas&#xd;(descripcion, tare_id, form_id)&#xd;VALUES(:descripcion, CAST(:tare_id as integer), CAST(:form_id as integer))</sql>
+      <sql>INSERT INTO tst.subtareas&#xd;(nombre,descripcion, duracion,tare_id, form_id)&#xd;select :nombre, &#xd;:descripcion, &#xd;:duracion, &#xd;CAST(:tare_id as integer), &#xd;case when param.form_id is null or param.form_id = '' then null else cast(param.form_id as integer) end&#xd;from (select :form_id form_id) param;</sql>
       <param name="descripcion" sqlType="STRING"/>
       <param name="tare_id" sqlType="STRING"/>
       <param name="form_id" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="duracion" sqlType="STRING"/>
    </query>
    <query id="updateSubtarea" useConfig="produccionDS">
       <sql>UPDATE tst.subtareas&#xd;SET nombre=:nombre, descripcion=:descripcion, tare_id=CAST(:tare_id as integer), form_id=CAST(:form_id as integer)&#xd;WHERE suta_id= CAST(:suta_id as integer)</sql>
@@ -220,7 +222,7 @@
       <param name="hito_id" sqlType="STRING"/>
    </query>
    <query id="getKpiBasico" useConfig="produccionDS">
-      <sql>select tp.*,&#xd;case when tp.fec_inicio = to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') then 0 else 1 end cant_inicio,&#xd;case when tp.fec_fin = to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') then 0 else 1 end cant_fin,&#xd;pt.petr_id,&#xd;pt.clie_id,&#xd;core.clientes.nombre AS nombre_cliente,&#xd;u.id AS id_usuario,&#xd;u.first_name || ' ' || u.last_name as nombre_usuario &#xd;FROM tst.tareas_planificadas AS tp&#xd;INNER JOIN tst.origen_tarea_planficada AS otp ON otp.tapl_id = tp.tapl_id and otp.origen = 'PETR'&#xd;INNER JOIN tst.hitos AS h ON h.hito_id = otp.orta_id&#xd;INNER JOIN pro.pedidos_trabajo AS pt ON h.petr_id = pt.petr_id&#xd;LEFT JOIN core.clientes ON pt.clie_id = core.clientes.clie_id&#xd;LEFT JOIN seg.users u ON tp.user_id = u.usernick,&#xd;(select :empr_id empr_id, :usuario usuario, :cliente cliente, :desde desde, :hasta hasta) filtro  &#xd;WHERE tp.fec_inicio &lt;&gt; to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') AND&#xd; tp.empr_id  = CAST (filtro.empr_id AS integer) AND &#xd;u.id = case when filtro.usuario is null or filtro.usuario ='' then u.id else  CAST (filtro.usuario AS integer) end and&#xd;pt.clie_id =  case when filtro.cliente is null or filtro.cliente ='' then pt.clie_id  else CAST (filtro.cliente AS integer) end and&#xd;tp.fec_inicio &gt;= case when filtro.desde is null or filtro.desde = '' then tp.fec_inicio else to_timestamp(filtro.desde,'YYYY-MM-DD HH24:MI:SS') end and&#xd;tp.fec_fin &lt;= case when filtro.hasta is null or filtro.hasta = '' then tp.fec_fin else to_timestamp(filtro.hasta,'YYYY-MM-DD HH24:MI:SS') end</sql>
+      <sql>select to_char(tp.fec_inicio,'YYYY-MM-DD HH12:MI:SS') fec_inicio, to_char(tp.fec_fin,'YYYY-MM-DD HH12:MI:SS') fec_fin, tp.tapl_id, tp.user_id, &#xd;case when tp.fec_inicio = to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') then 0 else 1 end cant_inicio,&#xd;case when tp.fec_fin = to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') then 0 else 1 end cant_fin,&#xd;pt.petr_id,&#xd;pt.clie_id,&#xd;core.clientes.nombre AS nombre_cliente,&#xd;u.id AS id_usuario,&#xd;u.first_name || ' ' || u.last_name as nombre_usuario &#xd;FROM tst.tareas_planificadas AS tp&#xd;INNER JOIN tst.origen_tarea_planficada AS otp ON otp.tapl_id = tp.tapl_id and otp.origen = 'PETR'&#xd;INNER JOIN tst.hitos AS h ON h.hito_id = otp.orta_id&#xd;INNER JOIN pro.pedidos_trabajo AS pt ON h.petr_id = pt.petr_id&#xd;LEFT JOIN core.clientes ON pt.clie_id = core.clientes.clie_id&#xd;LEFT JOIN seg.users u ON tp.user_id = u.usernick,&#xd;(select :empr_id empr_id, :usuario usuario, :cliente cliente, :desde desde, :hasta hasta) filtro  &#xd;WHERE tp.fec_inicio &lt;&gt; to_timestamp('3000-12-31 00:00:00','YYYY-MM-DD HH24:MI:SS') AND&#xd; tp.empr_id  = CAST (filtro.empr_id AS integer) AND &#xd;u.id = case when filtro.usuario is null or filtro.usuario ='' then u.id else  CAST (filtro.usuario AS integer) end and&#xd;pt.clie_id =  case when filtro.cliente is null or filtro.cliente ='' then pt.clie_id  else CAST (filtro.cliente AS integer) end and&#xd;tp.fec_inicio &gt;= case when filtro.desde is null or filtro.desde = '' then tp.fec_inicio else to_timestamp(filtro.desde,'YYYY-MM-DD HH24:MI:SS') end and&#xd;tp.fec_fin &lt;= case when filtro.hasta is null or filtro.hasta = '' then tp.fec_fin else to_timestamp(filtro.hasta,'YYYY-MM-DD HH24:MI:SS') end</sql>
       <result outputType="json">{&#xd;    "tareas": {&#xd;        "tarea": [&#xd;            {&#xd;		"tapl_id": "$tapl_id",&#xd;                "petr_id": "$petr_id",&#xd;                "clie_id": "$clie_id",&#xd;                "nombre_usuario": "$nombre_usuario",&#xd;		"user_id": "$user_id",&#xd;                "nombre_cliente": "$nombre_cliente",&#xd;                "fec_inicio": "$fec_inicio",&#xd;                "fec_fin": "$fec_fin",&#xd;                "cant_inicio": "$cant_inicio",&#xd;                "cant_fin": "$cant_fin"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="usuario" sqlType="STRING"/>
@@ -234,14 +236,16 @@
       <param name="tapl_id" sqlType="STRING"/>
    </query>
    <query id="updateFec_inicio_TareaPlanificada" useConfig="produccionDS">
-      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_inicio = TO_TIMESTAMP(:fec_inicio,'YYYY-MM-DD HH24:MI:SS')&#xd;WHERE case_id=:case_id</sql>
+      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_inicio = TO_TIMESTAMP(:fec_inicio,'YYYY-MM-DD HH24:MI:SS'),&#xd;estado = :estado&#xd;WHERE case_id=:case_id</sql>
       <param name="fec_inicio" sqlType="STRING"/>
       <param name="case_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
    </query>
    <query id="updateFec_fin_TareaPlanificada" useConfig="produccionDS">
-      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_fin = TO_TIMESTAMP(:fec_fin,'YYYY-MM-DD HH24:MI:SS')&#xd;WHERE case_id=:case_id</sql>
+      <sql>UPDATE tst.tareas_planificadas&#xd;SET fec_fin = TO_TIMESTAMP(:fec_fin,'YYYY-MM-DD HH24:MI:SS'),&#xd;estado = :estado&#xd;WHERE case_id=:case_id</sql>
       <param name="fec_fin" sqlType="STRING"/>
       <param name="case_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
    </query>
    <query id="getTareasXRecursos" useConfig="produccionDS">
       <sql>select to_char(fec_inicio,'YYYY-MM-DD+HH12:MI:SS') as dia_inicio, concat(extract(hour from fec_inicio),':', extract(minute from fec_inicio)) as hora_inicio,&#xd;to_char(fec_fin,'YYYY-MM-DD+HH12:MI:SS') as dia_fin, hora_duracion, nombre as titulo, tp.descripcion, tp.tapl_id as even_id&#xd;from tst.tareas_planificadas tp, tst.recursos_tareas rt, prd.recursos r, core.equipos e&#xd;where tp.fec_inicio is not null &#xd;and tp.fec_fin is not null &#xd;and not tp.eliminado &#xd;and tp.empr_id = cast(:empr_id as integer)&#xd;and tp.tapl_id = rt.tapl_id&#xd;and rt.recu_id = r.recu_id&#xd;and r.equi_id = e.equi_id&#xd;and e.equi_id = any(array[ :rec_id_list ])&#xd;group by tp.tapl_id</sql>
@@ -301,6 +305,8 @@
          <with-param name="descripcion" query-param="descripcion"/>
          <with-param name="tare_id" query-param="tare_id"/>
          <with-param name="form_id" query-param="form_id"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="duracion" query-param="duracion"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/subtareas">
@@ -495,12 +501,14 @@
       <call-query href="updateFec_inicio_TareaPlanificada">
          <with-param name="fec_inicio" query-param="fec_inicio"/>
          <with-param name="case_id" query-param="case_id"/>
+         <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/tarea/finalizar">
       <call-query href="updateFec_fin_TareaPlanificada">
          <with-param name="fec_fin" query-param="fec_fin"/>
          <with-param name="case_id" query-param="case_id"/>
+         <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
    <resource method="GET" path="/tareas/eventos/empresa/{empr_id}?rec_id_list={rec_id_list}">
