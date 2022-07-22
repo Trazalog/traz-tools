@@ -46,11 +46,28 @@
 							$aux_cont = $data_cont->contenedores->contenedor;
 						break;
 
+						
+						case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
+						
+					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|REPARACION_NEUMATICOS/".$case_id : $case_id >> '.json_encode($case_id));
+					$ci->load->model(YUDIPROC . 'Yudiproctareas');
+				
+					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
+					 		$data_generico =json_decode($aux["data"]);
+					 		$aux = $data_generico->pedidoTrabajo;
+
+					
+							 $clie_id = $aux->clie_id;
+
+					$aux_clie = $ci->rest->callAPI("GET",REST_CORE."/cliente/".$clie_id);
+					$aux_clie =json_decode($aux_clie["data"]);
+
+						break;
 
 				default:
 						
-					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|chuka/".$case_id : $case_id >> '.json_encode($case_id));
-					$ci->load->model(YUDIPROC . 'Yudiproctareas');
+					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|SEIN ALM PAN TAR/".$case_id : $case_id >> '.json_encode($case_id));
+					$ci->load->model(SEIN . 'proceso_tareas');
 				
 					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
 					 		$data_generico =json_decode($aux["data"]);
@@ -79,6 +96,8 @@
 															echo 'Reparación de Neumáticos';
 														}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
 															echo 'Control de Ingreso de Camiones: ' . $nombreTarea;
+														}  elseif (BPM_PROCESS_ID_PROCESO_PRODUCTIVO == $processId) {
+															echo 'PROCESO PRODUCTIVO: ' . $nombreTarea;
 														}else{
 															echo 'Proceso Estandar';
 														}
@@ -415,7 +434,7 @@
 													<hr>
 													<div class="col-sm-12 col-md-12 col-xl-12">
 														<div class="contenedor">
-															<img src="lib\imageForms\preview.png" id="expandedImgC" style="">
+															<img src="lib\imageForms\preview.png" id="expandedImgC" >
 														</div>
 													</div>
 												</div>
@@ -436,7 +455,7 @@
 									<div class="col-md-12">
 									<p>Datos del Cliente:</p><input type="hidden" class="form-control habilitar" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
 									<hr>
-										<div class="col-md-6">
+										<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="cliente" name="">Cliente:</label>
 													<input type="text" class="form-control habilitar" id="cliente" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
@@ -444,12 +463,27 @@
 										</div>
 
 
-										<div class="col-md-6">
+										<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="dir_entrega" name="">Dirección de Entrega:</label>
 													<input type="text" class="form-control habilitar" id="dir_entrega" value="<?php echo $aux_clie->cliente->dir_entrega; ?>"  readonly>
 											</div>
 										</div>
+									<!--_____________________________________________-->
+										<div class="col-md-6 info_sec animated fadeInLeft">
+											<div class="form-group">
+													<label for="email" name="">Email:</label>
+													<input type="text" class="form-control habilitar" id="email" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
+											</div>
+										</div>
+
+
+										<div class="col-md-6 info_sec animated fadeInLeft">
+											<div class="form-group">
+													<label for="email_alternativo" name="">Email alternativo:</label>
+											</div><input type="text" class="form-control habilitar" id="email_alternativo" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
+										</div>
+
 									</div>
 									<!--_____________________________________________-->
 
@@ -457,7 +491,7 @@
 									<br>
 									<p>Datos del Proyecto:</p>
 									<hr>
-									<div class="col-md-12">
+									<div class="col-md-12 animated fadeInLeft">
 											<div class="form-group">
 													<label for="tipo_proyecto" name="">Tipo de Proyecto:</label>
 													<input type="text" class="form-control habilitar" id="tipo_proyecto" value="<?php echo $aux->tipo; ?>"  readonly>
@@ -465,7 +499,7 @@
 									</div>
 									<!--_____________________________________________-->
 
-									<div class="col-md-6">
+									<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="codigo_proyecto" name="">Codigo Proyecto:</label>
 													<input type="text" class="form-control habilitar" id="codigo_proyecto" value="<?php echo $aux->cod_proyecto; ?>"  readonly>
@@ -473,7 +507,7 @@
 									</div>
 									<!--_____________________________________________-->
 
-									<div class="col-md-6">
+									<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="descripcion" name=""> Descripcion:</label>
 													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
@@ -483,7 +517,7 @@
 								</div>
 
 
-								<div class="col-md-12">
+								<div class="col-md-12 animated fadeInLeft">
 
 									<div class="col-md-6">
 											<div class="form-group">
@@ -502,7 +536,7 @@
 									</div>
 									<!--_____________________________________________-->
 
-									<div class="col-md-6">
+									<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
 													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
@@ -518,20 +552,26 @@
 								</div>
 
 
-								<div class="col-md-12">
+								<div class="col-md-12 animated fadeInLeft">
 
-									<div class="col-md-12">
+									<div class="col-md-6">
 											<div class="form-group">
 													<label for="objetivo" name="">Objetivo:</label>
 													<input type="text" class="form-control habilitar" id="objetivo" value="<?php echo $aux->objetivo; ?>"  readonly>
 											</div>
 									</div>
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="unidad_medida" name="">Unidad medida:</label>
+													<input type="text" class="form-control habilitar" id="unidad_medida" value="<?php echo $aux->unidad_medida; ?>"  readonly>
+											</div>
+									</div>
 								
 									<!--_____________________________________________-->
-									<div class="col-md-12">
+									<div class="col-md-12 animated fadeInLeft">
 									<?php
 									
-									if ($processId == BPM_PROCESS_ID_REPARACION_NEUMATICOS )
+									if ($processId !='' )
 										{
 											$info_id = $aux->info_id;
 

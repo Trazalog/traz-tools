@@ -126,8 +126,15 @@ define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
 #SICPOA Control de Ingreso de Camiones
 define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5841373952148500437');
 
+#SEIN PROCESO PRODUCTIVO
+define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '6851792266678531267');
+
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
+
+#SEIN -tools-ALM PAN TAR
+define('SEIN', 'SEIN-tools-almpantar/');
+
 
 #COMPONENTE PAÑOL
 define('PAN', 'traz-comp-pan/');
@@ -146,6 +153,7 @@ define('COD', 'traz-comp-codigos/');
 define('NOTI', 'traz-comp-notificaciones/');
 
 define('BPM_PROCESS', json_encode(array(
+    BPM_PROCESS_ID_PROCESO_PRODUCTIVO => ['nombre' => 'Servicios Industriales - Proseco Productivo', 'color' => '#0275d8', 'proyecto'=>SEIN, 'model'=>'proceso_tareas'],
     BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
     BPM_PROCESS_ID_PEDIDOS_NORMALES => ['nombre' => 'Ped. Materiales', 'color' => '#F39C12', 'proyecto'=>ALM, 'model'=>'Almtareas'],
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
@@ -195,7 +203,7 @@ define('PRO_STD', 'PROCESO-STANDAR');
 |--------------------------------------------------------------------------
 |
 | Variables Locales
-|
+|http://10.142.0.13:8280/tools/bpm/groups/123
 */
 define('HOST', 'http://10.142.0.13:8280');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
