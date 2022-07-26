@@ -82,6 +82,19 @@
 						break;
 				}
 
+				if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
+					//	echo ' - Orden Nº: '. $aux["ortr_id"]; valores viejos
+					$nombreProceso = 'Nº pedido : '.$aux["pema_id"];
+					} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
+						$nombreProceso = 'Reparación de Neumáticos';
+					}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
+						$nombreProceso = 'Control de Ingreso de Camiones: ' . $nombreTarea;
+					}  elseif (BPM_PROCESS_ID_PROCESO_PRODUCTIVO == $processId) {
+						$nombreProceso = 'PROCESO PRODUCTIVO: ' . $nombreTarea;
+					}else{
+						$nombreProceso = 'Proceso Estandar';
+					}
+
 ?>
 				<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="margin-bottom: 7px !important;">
 					<div class="panel panel-default">
@@ -89,18 +102,7 @@
 							<h4 class="panel-title">
 								<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
 									Proceso <?php
-														if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
-														//	echo ' - Orden Nº: '. $aux["ortr_id"]; valores viejos
-														echo 'Nº pedido : '.$aux["pema_id"];
-														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
-															echo 'Reparación de Neumáticos';
-														}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
-															echo 'Control de Ingreso de Camiones: ' . $nombreTarea;
-														}  elseif (BPM_PROCESS_ID_PROCESO_PRODUCTIVO == $processId) {
-															echo 'PROCESO PRODUCTIVO: ' . $nombreTarea;
-														}else{
-															echo 'Proceso Estandar';
-														}
+												echo $nombreProceso;
 
 													?>
 								</a>
@@ -602,6 +604,7 @@
 
 										$(elemento).attr('disabled',true);
 												});
+												
 										</script>
 									
 									</div>
