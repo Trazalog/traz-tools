@@ -41,7 +41,7 @@
       <param name="lote" sqlType="STRING"/>
    </query>
    <query id="loteSetV2" useConfig="ToolsDataSource">
-      <sql>select prd.crear_lote_v2(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8) &#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as integer)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint))&#xd;resultado;</sql>
+      <sql>select prd.crear_lote_v2(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8) &#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as integer)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint)&#xd;,CASE WHEN params.fec_planificado IS NULL OR params.fec_planificado = '' THEN NULL::timestamp ELSE to_timestamp(params.fec_planificado,'YYYY-MM-DD HH24:MI') END) resultado&#xd;FROM (SELECT :fec_planificado fec_planificado ) params ;</sql>
       <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
       <param name="lote_id" sqlType="STRING"/>
       <param name="batch_id_padre" sqlType="STRING"/>
@@ -60,6 +60,7 @@
       <param name="tipo_recurso" sqlType="STRING"/>
       <param name="planificado" sqlType="STRING"/>
       <param name="batch_id" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="fec_planificado" optional="true" sqlType="STRING"/>
    </query>
    <query id="getExistencia" useConfig="ToolsDataSource">
       <sql>select alm.obtener_existencia_batch(&#xd;cast(:batch_id_origen as int8)&#xd;) existencia;</sql>
@@ -190,6 +191,11 @@
       <result outputType="json">{&#xd;   "lotes":{&#xd;      "lote":[&#xd;         {&#xd;         "batch_id":"$batch_id", &#xd;         "batch_id_padre":"$batch_id_padre", &#xd;         "level":"$level", &#xd;         "path":"$path",&#xd;         "path_lote_id":"$path_lote_id", &#xd;         "lote_id":"$lote_id", &#xd;         "lote_estado":"$lote_estado", &#xd;         "lote_num_orden_prod":"$lote_num_orden_prod", &#xd;         "lote_fec_alta":"$lote_fec_alta",&#xd;         "etap_nombre":"$etap_nombre", &#xd;         "reci_tipo":"$reci_tipo", &#xd;         "reci_nombre":"$reci_nombre", &#xd;         "cantidad":"$cantidad",&#xd;         "arti_descripcion":"$arti_descripcion", &#xd;         "arti_barcode":"$arti_barcode"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="batch_id" sqlType="STRING"/>
    </query>
+   <query id="validarCantidadReportes" useConfig="ToolsDataSource">
+      <sql>select count(1) as reportes&#xd;from prd.lotes_hijos lh &#xd;where batch_id_padre = cast(:batch_id as integer)&#xd;and eliminado &lt;&gt; 1</sql>
+      <result outputType="json">{&#xd;    "reportes" : {&#xd;        "cantidad": "$reportes"&#xd;    }&#xd;}</result>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/batch/porrecipiente/{reci_id}">
       <call-query href="getBatchidPorRecipiente">
          <with-param name="reci_id" query-param="reci_id"/>
@@ -238,6 +244,7 @@
          <with-param name="tipo_recurso" query-param="tipo_recurso"/>
          <with-param name="planificado" query-param="planificado"/>
          <with-param name="batch_id" query-param="batch_id"/>
+         <with-param name="fec_planificado" query-param="fec_planificado"/>
       </call-query>
    </resource>
    <resource method="GET" path="/lote/existencia/{batch_id_origen}">
@@ -399,6 +406,11 @@
    <resource method="GET" path="/lotes/{empr_id}">
       <call-query href="getLotes">
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lote/{batch_id}/cantidadReportes">
+      <call-query href="validarCantidadReportes">
+         <with-param name="batch_id" query-param="batch_id"/>
       </call-query>
    </resource>
 </data>

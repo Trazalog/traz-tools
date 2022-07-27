@@ -222,13 +222,38 @@
       <result outputType="json">{&#xd;    "users":{&#xd;      "user":[&#xd;        {&#xd;          "id": "$id",&#xd;          "first_name": "$first_name",&#xd;          "last_name": "$last_name"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
    </query>
    <query id="getEnvasesXEmpresa" useConfig="ToolsDataSource">
-      <sql>select * from prd.empaque&#xd;where empr_id = cast(:empr_id as Integer)</sql>
+      <sql>select * from prd.empaque&#xd;where empr_id = cast(:empr_id as Integer)&#xd;and eliminado = false</sql>
       <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unidad_medida",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$receta",&#xd;      "descripcion":"$descripcion"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getUnidadesMedidas" useConfig="ToolsDataSource">
       <sql>select tabl_id, valor&#xd;from core.tablas&#xd;where tabla = 'unidades_medida' and eliminado = false</sql>
       <result outputType="json">{&#xd;  "unidades": {&#xd;     "unidad": [&#xd;       {&#xd;         "tabl_id": "$tabl_id",&#xd;         "valor": "$valor"&#xd;       }&#xd;     ]&#xd;  }&#xd;}</result>
+   </query>
+   <query id="setEnvase" useConfig="ToolsDataSource">
+      <sql>insert into prd.empaque&#xd;(&#xd;    nombre,&#xd;    descripcion,&#xd;    unidad_medida,&#xd;    capacidad,&#xd;    empr_id, &#xd;    usuario_app,&#xd;    tara,&#xd;    receta,&#xd;    eliminado)&#xd;VALUES(&#xd;    :nombre,&#xd;    :descripcion,&#xd;    :unidad_medida,&#xd;    cast(:capacidad as float),&#xd;    cast(:empr_id as integer),&#xd;    :usuario_app,&#xd;    cast(:tara as float),&#xd;    :receta,&#xd;    False&#xd;);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="unidad_medida" sqlType="STRING"/>
+      <param name="capacidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="receta" sqlType="STRING"/>
+   </query>
+   <query id="deleteEnvase" useConfig="ToolsDataSource">
+      <sql>UPDATE prd.empaque &#xd;SET eliminado = TRUE&#xd;WHERE empa_id = cast(:empa_id as integer);</sql>
+      <param name="empa_id" sqlType="STRING"/>
+   </query>
+   <query id="updateEnvase" useConfig="ToolsDataSource">
+      <sql>update prd.empaque&#xd;set &#xd;    nombre = :nombre,&#xd;    descripcion = :descripcion,&#xd;    unidad_medida = :unidad_medida,&#xd;    capacidad = cast(:capacidad as float),&#xd;    tara = cast(:tara as float),&#xd;    receta = :receta&#xd;where empa_id = CAST(:empa_id as integer);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="unidad_medida" sqlType="STRING"/>
+      <param name="capacidad" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="receta" sqlType="STRING"/>
+      <param name="empa_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -462,5 +487,33 @@
    </resource>
    <resource method="GET" path="/unidades_medidas">
       <call-query href="getUnidadesMedidas"/>
+   </resource>
+   <resource method="POST" path="/envase">
+      <call-query href="setEnvase">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="unidad_medida" query-param="unidad_medida"/>
+         <with-param name="capacidad" query-param="capacidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="receta" query-param="receta"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/envase">
+      <call-query href="deleteEnvase">
+         <with-param name="empa_id" query-param="empa_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/envase">
+      <call-query href="updateEnvase">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="unidad_medida" query-param="unidad_medida"/>
+         <with-param name="capacidad" query-param="capacidad"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="receta" query-param="receta"/>
+         <with-param name="empa_id" query-param="empa_id"/>
+      </call-query>
    </resource>
 </data>

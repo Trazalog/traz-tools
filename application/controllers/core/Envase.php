@@ -41,15 +41,16 @@ class Envase extends CI_Controller
 	*/
 	function Guardar_Envase()
 	{
-    log_message('ERROR', '#TRAZA | ENVASES | guardar() >> $envase_id: '.$envase_id);
+		log_message('ERROR', '#TRAZA | ENVASES | guardar()');
 		$envase = $this->input->post('datos');
-    $envase['usuario_app'] = userNick();
-    $envase['empr_id'] = empresa();
 		$resp = $this->Envases->Guardar_Envase($envase);
-		if ($resp != null) {
-			return json_encode(true);
+		if ( !$resp ) {
+			log_message('ERROR', '#TRAZA | ENVASES | guardar()');
+			echo json_encode(false);
+			return;
 		} else {
-			return json_encode(false);
+			echo json_encode(true);
+			return;
 		}
 	}
 
@@ -62,7 +63,7 @@ class Envase extends CI_Controller
 	{
     log_message('INFO','#TRAZA | ENVASES | Editar_Envase() >> ');
 		$envase = $this->input->post('datos');
-		$envase['usuario_app'] = userNick();
+		// $envase['usuario_app'] = userNick();
 		$resp = $this->Envases->Editar_Envase($envase);
 		echo json_encode($resp);
 	}
@@ -75,8 +76,8 @@ class Envase extends CI_Controller
 	public function Borrar_Envase()
 	{
 		log_message('INFO','#TRAZA | ENVASES | Borrar_Envase() >> ');
-		$clie_id = $this->input->post('clie_id');
-		$result = $this->Envases->Borrar_Envase($clie_id);
+		$empa_id = $this->input->post('empa_id');
+		$result = $this->Envases->Borrar_Envase($empa_id);
 		echo json_encode($result);
 	}
 }    

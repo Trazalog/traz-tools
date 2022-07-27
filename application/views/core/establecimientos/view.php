@@ -110,7 +110,7 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label for="pais">País:</label>
-                            <select onchange="seleccionPais()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais">
+                            <select onchange="seleccionPais()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais" style='width: 100%;'>
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($listarPaises as $pais) {
@@ -124,8 +124,8 @@
                     <!--Estado-->
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
-                            <label for="estado">Estado:</label>
-                            <select onchange="seleccionEstado()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado">
+                            <label for="estado">Estado:</label><br>
+                            <select onchange="seleccionEstado()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado" style='width: 100%;'>
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
@@ -139,8 +139,8 @@
                     <!--Localidad-->
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
-                            <label for="localidad">Localidad:</label>
-                            <select class="form-control select2 select2-hidden-accesible habilitar" name="localidad" id="localidad">
+                            <label for="localidad">Localidad:</label><br>
+                            <select class="form-control select2 select2-hidden-accesible habilitar" name="localidad" id="localidad" style='width: 100%;'>
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
@@ -413,7 +413,7 @@
                     <div class="col-md-6 col-sm-6 col-xs-12 ocultar" style="margin-left: 5%;">
                         <div class="form-group">
                             <label for="encargados">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
-                            <select class="form-control select2 select2-hidden-accesible" name="encargados" id="encargados" required style="width: 100%;" multiple>
+                            <select class="form-control select2 select2-hidden-accesible requerido" name="encargados" id="encargados" required style="width: 100%;" multiple>
                                 <?php
                                 if(!empty($listarEncargados)){
                                     foreach ($listarEncargados->usuarios->usuario as $users) {
@@ -636,22 +636,28 @@
             return;
         }
         });
-        if (!ban){
-            if(!alertify.errorAlert){
-            alertify.dialog('errorAlert',function factory(){
-                return{
-                        build:function(){
-                            var errorHeader = '<span class="fa fa-times-circle fa-2x" '
-                            +    'style="vertical-align:middle;color:#e10000;">'
-                            + '</span>Error...!!';
-                            this.setHeader(errorHeader);
-                        }
-                    };
-                },true,'alert');
-            }
-            alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
-        }
-        return ban;
+        if (!ban) 
+    	Swal.fire(
+            'Error...',
+            'Debes completar los campos Obligatorios (*)',
+            'error'
+        );
+        return ban; 
+        // if (!ban){
+        //     if(!alertify.errorAlert){
+        //     alertify.dialog('errorAlert',function factory(){
+        //         return{
+        //                 build:function(){
+        //                     var errorHeader = '<span class="fa fa-times-circle fa-2x" '
+        //                     +    'style="vertical-align:middle;color:#e10000;">'
+        //                     + '</span>Error...!!';
+        //                     this.setHeader(errorHeader);
+        //                 }
+        //             };
+        //         },true,'alert');
+        //     }
+        //     alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
+        // }
     }
 
     function guardarEstablecimiento() {
@@ -829,7 +835,8 @@
 
     function guardarPanol () {
         if( !validarCampos('frmPanol') ){
-        return;
+            $("#modalpanoles").modal('show');
+            return;
         }
         var recurso = "";
         var form = $('#frmPanol')[0];
