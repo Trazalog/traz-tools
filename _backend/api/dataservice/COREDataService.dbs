@@ -255,6 +255,36 @@
       <param name="receta" sqlType="STRING"/>
       <param name="empa_id" sqlType="STRING"/>
    </query>
+   <query id="getEquiposxEmpresa" useConfig="ToolsDataSource">
+      <sql>select *&#xd;from core.equipos e &#xd;where e.empr_id = cast(:empr_id as integer)&#xd;and e.eliminado = false</sql>
+      <result outputType="json">{&#xd;  "equipos": {&#xd;    "equipo": [&#xd;      {&#xd;        "equi_id" : "$equi_id",&#xd;        "descripcion": "$descripcion",&#xd;        "marca": "$marca",&#xd;        "codigo": "$codigo",&#xd;        "ubicacion": "$ubicacion",&#xd;        "estado": "$estado",&#xd;        "fecha_ultimalectura": "$fecha_ultimalectura",&#xd;        "ultima_lectura": "$ultima_lectura",&#xd;        "tipo_horas": "$tipo_horas",&#xd;        "valor_reposicion": "$valor_reposicion",&#xd;        "fecha_reposicion": "$fecha_reposicion",&#xd;        "valor": "$valor",&#xd;        "comprobante": "$comprobante",&#xd;        "descrip_tecnica": "$descrip_tecnica",&#xd;        "numero_serie": "$numero_serie",&#xd;        "adjunto": "$adjunto",&#xd;        "meta_disponibilidad": "$meta_disponibilidad",&#xd;        "fecha_ingreso": "$fecha_ingreso",&#xd;        "fecha_baja": "$fecha_baja",&#xd;        "fecha_garantia": "$fecha_garantia",&#xd;        "prov_id": "$prov_id",&#xd;        "empr_id": "$empr_id",&#xd;        "sect_id": "$sect_id",&#xd;        "ubic_id": "$ubic_id",&#xd;        "grup_id": "$grup_id",&#xd;        "crit_id": "$crit_id",&#xd;        "unme_id": "$unme_id",&#xd;        "area_id": "$area_id",&#xd;        "proc_id": "$proc_id",&#xd;        "activos_id": "$activos_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setEquipo" useConfig="ToolsDataSource">
+      <sql>insert into core.equipos&#xd;(&#xd;    descripcion,&#xd;    sect_id,&#xd;    area_id,&#xd;    codigo, &#xd;    grup_id,&#xd;    unme_id,&#xd;    marca,&#xd;    numero_serie, &#xd;    crit_id,&#xd;    fecha_ingreso,&#xd;    fecha_garantia,&#xd;    ubicacion,&#xd;    descrip_tecnica,&#xd;    estado,&#xd;    fecha_ultimalectura,&#xd;    ultima_lectura,&#xd;    activos_id,&#xd;    empr_id)&#xd;VALUES(&#xd;    :descripcion,&#xd;    :sect_id,&#xd;    :area_id,&#xd;    :codigo,&#xd;    cast(:grup_id as integer),&#xd;    :unme_id,&#xd;    :marca,&#xd;    cast(:numero_serie as float),&#xd;    :crit_id,&#xd;    TO_DATE(:fecha_ingreso, 'YYYY-MM-DD'),&#xd;    TO_DATE(:fecha_garantia, 'YYYY-MM-DD'),&#xd;    :ubicacion,&#xd;    :descrip_tecnica,&#xd;    :estado,&#xd;    TO_DATE(:fecha_ultimalectura, 'YYYY-MM-DD'),&#xd;    cast(:ultima_lectura as float),&#xd;    :activos_id,&#xd;    cast(:empr_id as integer)&#xd;);</sql>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="sect_id" sqlType="STRING"/>
+      <param name="area_id" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="grup_id" sqlType="STRING"/>
+      <param name="unme_id" sqlType="STRING"/>
+      <param name="marca" sqlType="STRING"/>
+      <param name="numero_serie" sqlType="STRING"/>
+      <param name="crit_id" sqlType="STRING"/>
+      <param name="fecha_ingreso" sqlType="STRING"/>
+      <param name="fecha_garantia" sqlType="STRING"/>
+      <param name="ubicacion" sqlType="STRING"/>
+      <param name="descrip_tecnica" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="fecha_ultimalectura" sqlType="STRING"/>
+      <param name="ultima_lectura" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="activos_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteEquipo" useConfig="ToolsDataSource">
+      <sql>UPDATE core.equipos &#xd;SET eliminado = TRUE&#xd;WHERE equi_id = cast(:equi_id as integer);</sql>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -514,6 +544,38 @@
          <with-param name="tara" query-param="tara"/>
          <with-param name="receta" query-param="receta"/>
          <with-param name="empa_id" query-param="empa_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/equipos/empresa/{empr_id}">
+      <call-query href="getEquiposxEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/equipo">
+      <call-query href="setEquipo">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="sect_id" query-param="sect_id"/>
+         <with-param name="area_id" query-param="area_id"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="grup_id" query-param="grup_id"/>
+         <with-param name="unme_id" query-param="unme_id"/>
+         <with-param name="marca" query-param="marca"/>
+         <with-param name="numero_serie" query-param="numero_serie"/>
+         <with-param name="crit_id" query-param="crit_id"/>
+         <with-param name="fecha_ingreso" query-param="fecha_ingreso"/>
+         <with-param name="fecha_garantia" query-param="fecha_garantia"/>
+         <with-param name="ubicacion" query-param="ubicacion"/>
+         <with-param name="descrip_tecnica" query-param="descrip_tecnica"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="fecha_ultimalectura" query-param="fecha_ultimalectura"/>
+         <with-param name="ultima_lectura" query-param="ultima_lectura"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="activos_id" query-param="activos_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/equipo">
+      <call-query href="deleteEquipo">
+         <with-param name="equi_id" query-param="equi_id"/>
       </call-query>
    </resource>
 </data>
