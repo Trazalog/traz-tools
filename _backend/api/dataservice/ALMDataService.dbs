@@ -93,7 +93,7 @@
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="getinfoPedMatPorCaseId" useConfig="ToolsDataSource">
-      <sql>select &#xd; PM.pema_id, PM.fecha, PM.justificacion, PM.estado, LO.lote_id &#xd;from &#xd; alm.alm_pedidos_materiales PM&#xd;join prd.lotes LO on LO.batch_id = PM.batch_id &#xd;where &#xd; case_id = CAST(:case_id as INTEGER)</sql>
+      <sql>select &#xd; PM.pema_id, PM.fecha, PM.justificacion, PM.estado, LO.lote_id &#xd;from &#xd; alm.alm_pedidos_materiales PM&#xd;left join prd.lotes LO on LO.batch_id = PM.batch_id &#xd;where &#xd; case_id = CAST(:case_id as INTEGER)</sql>
       <result outputType="json">{&#xd;    "info":{&#xd;      "pema_id": "$pema_id",&#xd;      "lote_id": "$lote_id",&#xd;      "fecha": "$fecha",&#xd;      "justificacion": "$justificacion",&#xd;      "estado": "$estado"&#xd;    }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
@@ -266,8 +266,8 @@
       <param name="cantidad" sqlType="STRING"/>
    </query>
    <query id="getLotePorArticuloYDeposito" useConfig="ToolsDataSource">
-      <sql>select alm_lotes.codigo, alm_lotes.lote_id&#xd;from alm.alm_lotes, (select :depo_id depo_id) param &#xd;where alm_lotes.arti_id = cast(:arti_id as integer) AND&#xd;alm_lotes.depo_id = case &#xd;			when param.depo_id = 'TODOS' &#xd;			then alm_lotes.depo_id &#xd;			else cast(param.depo_id as integer) end</sql>
-      <result outputType="json">{&#xd; "lotes": {&#xd; "lote": [&#xd; {&#xd; "codigo": "$codigo",&#xd; "lote_id": "$lote_id"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <sql>select al.codigo, al.lote_id, al.batch_id &#xd;from alm.alm_lotes al, (select :depo_id depo_id) param &#xd;where al.arti_id = cast(:arti_id as integer) &#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end</sql>
+      <result outputType="json">{&#xd;    "lotes": {&#xd;        "lote": [&#xd;            {&#xd;                "codigo": "$codigo",&#xd;                "lote_id": "$lote_id",&#xd;                "batch_id": "$batch_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="arti_id" sqlType="STRING"/>
       <param name="depo_id" sqlType="STRING"/>
    </query>
@@ -390,7 +390,7 @@
       <param name="fec2" sqlType="STRING"/>
    </query>
    <query id="getStockXArticuloYDeposito" useConfig="ToolsDataSource">
-      <sql>select&#xd;    A.arti_id,&#xd;	A.descripcion,&#xd;	A.barcode,&#xd;	t.valor tipo,&#xd;	t.tabl_id tipo_id,&#xd;	l.depo_id, &#xd;	ad.descripcion deposito,&#xd;	coalesce(sum(cantidad), 0) as cantidad,&#xd;	ut.descripcion unidad_medida&#xd;	from&#xd;	alm.alm_articulos a ,&#xd;	alm.alm_lotes l ,&#xd;	alm.utl_tablas ut ,&#xd;	alm.alm_depositos ad, &#xd;	core.tablas t ,&#xd;	(&#xd;	select&#xd;		:arti_id arti_id,&#xd;		:depo_id depo_id,&#xd;		:tipo tipo) param&#xd;where&#xd;	a.tipo = t.tabl_id&#xd;	and t.tabl_id =&#xd;	case&#xd;		when param.tipo = 'TODOS' then t.tabl_id&#xd;		else param.tipo end&#xd;		and l.arti_id = a.arti_id&#xd;		and l.depo_id =&#xd;		case&#xd;			when param.depo_id = 'TODOS' then l.depo_id&#xd;			else cast(param.depo_id as integer) end&#xd;		and a.arti_id =&#xd;			case&#xd;				when param.arti_id = 'TODOS' then a.arti_id&#xd;				else cast(param.arti_id as integer) end&#xd;		and a.unidad_medida = ut.valor &#xd;		and ut.tabla ='unidades_medida'&#xd;		and l.depo_id = ad.depo_id &#xd;		and a.eliminado = false&#xd;group by&#xd;	a.arti_id,&#xd;	l.depo_id,&#xd;	ad.descripcion,&#xd;	t.valor, &#xd;	t.tabl_id,&#xd;	ut.descripcion</sql>
+      <sql>select&#xd;    A.arti_id,&#xd;	A.descripcion,&#xd;	A.barcode,&#xd;	t.valor tipo,&#xd;	t.tabl_id tipo_id,&#xd;	l.depo_id, &#xd;	ad.descripcion deposito,&#xd;	coalesce(sum(cantidad), 0) as cantidad,&#xd;	ut.descripcion unidad_medida&#xd;	from&#xd;	alm.alm_articulos a ,&#xd;	alm.alm_lotes l ,&#xd;	alm.utl_tablas ut ,&#xd;	alm.alm_depositos ad, &#xd;	core.tablas t ,&#xd;	(&#xd;	select&#xd;		:arti_id arti_id,&#xd;		:depo_id depo_id,&#xd;		:tipo tipo) param&#xd;where&#xd;	a.tiar_id = t.tabl_id&#xd;	and t.tabl_id =&#xd;	case&#xd;		when param.tipo = 'TODOS' then t.tabl_id&#xd;		else param.tipo end&#xd;		and l.arti_id = a.arti_id&#xd;		and l.depo_id =&#xd;		case&#xd;			when param.depo_id = 'TODOS' then l.depo_id&#xd;			else cast(param.depo_id as integer) end&#xd;		and a.arti_id =&#xd;			case&#xd;				when param.arti_id = 'TODOS' then a.arti_id&#xd;				else cast(param.arti_id as integer) end&#xd;		and a.unidad_medida = ut.valor &#xd;		and ut.tabla ='unidades_medida'&#xd;		and l.depo_id = ad.depo_id &#xd;		and a.eliminado = false&#xd;group by&#xd;	a.arti_id,&#xd;	l.depo_id,&#xd;	ad.descripcion,&#xd;	t.valor, &#xd;	t.tabl_id,&#xd;	ut.descripcion</sql>
       <result outputType="json">{&#xd;   "stock":{&#xd;      "articulo":[&#xd;         {&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "tipo":"$tipo",&#xd;            "tipo_id":"$tipo_id",&#xd;            "depo_id":"$depo_id",&#xd;            "deposito":"$deposito",&#xd;            "cantidad":"$cantidad",&#xd;            "unidad_medida":"$unidad_medida"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="arti_id" sqlType="STRING"/>
       <param name="depo_id" sqlType="STRING"/>

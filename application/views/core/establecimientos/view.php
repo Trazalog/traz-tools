@@ -110,7 +110,7 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label for="pais">País:</label>
-                            <select onchange="seleccionPais()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais">
+                            <select onchange="seleccionPais()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais" style='width: 100%;'>
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($listarPaises as $pais) {
@@ -124,8 +124,8 @@
                     <!--Estado-->
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
-                            <label for="estado">Estado:</label>
-                            <select onchange="seleccionEstado()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado">
+                            <label for="estado">Estado:</label><br>
+                            <select onchange="seleccionEstado()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado" style='width: 100%;'>
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
@@ -139,8 +139,8 @@
                     <!--Localidad-->
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
-                            <label for="localidad">Localidad:</label>
-                            <select class="form-control select2 select2-hidden-accesible habilitar" name="localidad" id="localidad">
+                            <label for="localidad">Localidad:</label><br>
+                            <select class="form-control select2 select2-hidden-accesible habilitar" name="localidad" id="localidad" style='width: 100%;'>
                                 <option value="" disabled selected>-Seleccione opción-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
@@ -343,7 +343,118 @@
 </div>
 <!---///////--- FIN MODAL AGREGAR DEPOSITO ---///////--->
 
+<!---///////--- MODAL LISTADO PAÑOLES ---///////--->
+<div class="modal fade bs-example-modal-lg" id="modalpanoles" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-blue">
+        <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color:white;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body ">
+        <div id="example2_wrapper" class="dataTables_wrapper form-inline dt-bootstrap">						
+          <div class="row">
+            <div class="col-sm-6"></div>
+            <div class="col-sm-6"></div>
+          </div>
+          <div class="row">            
+            <div class="col-sm-12 table-scroll">
+              <input type="text" id="id_esta" class="hidden">
+            <button class="btn btn-block btn-primary" style="width: 100px; margin-top: 10px;" onclick="agregarPanol()">Agregar</button>
+              <table id="tabla_depositos" class="table table-bordered table-striped">
+                <thead class="thead-dark" bgcolor="#eeeeee">
+                  <th>Acción</th>
+                  <th>Nombre</th>
+                </thead>
+                <tbody >
+                  <!--TABLE BODY -->
+                </tbody>
+              </table>
+            </div>
+          </div>						
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="form-group text-right">
+          <button type="button" class="btn btn-default cerrarModalEdit" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>  
+</div>
+<!---///////--- FIN MODAL LISTADO PAÑOLES ---///////--->
+
+<!---///////--- MODAL AGREGAR PAÑOL ---///////--->
+<div class="modal fade bs-example-modal-lg" id="modalAgregarPanol" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-blue">
+        <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color:white;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body ">
+          <div class="form-horizontal">
+            <div class="row">
+              <form class="frmPanol" id="frmPanol">
+                <div class="col-sm-12">
+                    <input type="hidden" name="esta_id" id="establecimiento_id_panol">
+                    <!-- Nombre -->
+                    <div class="col-md-5 col-sm-5 col-xs-12">
+                        <div class="form-group">
+                            <label for="nombre">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
+                            <input type="text" class="form-control requerido" name="nombre" id="nombre" placeholder="Ingrese Nombre...">
+                        </div>
+                    </div>
+                    <!--________________-->
+
+                    <!-- Encargados -->
+                    <div class="col-md-6 col-sm-6 col-xs-12 ocultar" style="margin-left: 5%;">
+                        <div class="form-group">
+                            <label for="encargados">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
+                            <select class="form-control select2 select2-hidden-accesible requerido" name="encargados" id="encargados" required style="width: 100%;" multiple>
+                                <?php
+                                if(!empty($listarEncargados)){
+                                    foreach ($listarEncargados->usuarios->usuario as $users) {
+                                        echo "<option data-json='".json_encode($users)."' value='".$users->id."'>".$users->first_name." ".$users->last_name."</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <!--____________-->
+                </div>
+                <!--Descripcion-->
+                <div class="col-sm-12">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group">
+                        <label for="Descripcion">Descripción:</label>
+                            <textarea class="form-control" name="descripcion" id="descripcion" rows="3" placeholder="Ingrese Observaciones..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!--________________-->
+              </form>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+          <div class="form-group text-right">
+              <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarPanol()">Guardar</button>
+              <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!---///////--- FIN MODAL AGREGAR PAÑOL ---///////--->
+
 <script>
+    $(document).ready(function () {
+        $(".select2").select2();
+    });
     // carga tabla de establecimientos
     $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
 
@@ -525,22 +636,28 @@
             return;
         }
         });
-        if (!ban){
-            if(!alertify.errorAlert){
-            alertify.dialog('errorAlert',function factory(){
-                return{
-                        build:function(){
-                            var errorHeader = '<span class="fa fa-times-circle fa-2x" '
-                            +    'style="vertical-align:middle;color:#e10000;">'
-                            + '</span>Error...!!';
-                            this.setHeader(errorHeader);
-                        }
-                    };
-                },true,'alert');
-            }
-            alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
-        }
-        return ban;
+        if (!ban) 
+    	Swal.fire(
+            'Error...',
+            'Debes completar los campos Obligatorios (*)',
+            'error'
+        );
+        return ban; 
+        // if (!ban){
+        //     if(!alertify.errorAlert){
+        //     alertify.dialog('errorAlert',function factory(){
+        //         return{
+        //                 build:function(){
+        //                     var errorHeader = '<span class="fa fa-times-circle fa-2x" '
+        //                     +    'style="vertical-align:middle;color:#e10000;">'
+        //                     + '</span>Error...!!';
+        //                     this.setHeader(errorHeader);
+        //                 }
+        //             };
+        //         },true,'alert');
+        //     }
+        //     alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
+        // }
     }
 
     function guardarEstablecimiento() {
@@ -698,7 +815,107 @@
             }
         });        
     }
-    
+
+    // MODULOS DE PAÑOLES
+
+    function agregarPanol() {
+        var form = $('#frmPanol')[0];
+        form.reset();
+        $(".modal-header h4").remove();
+        //guardo el tipo de operacion en el modal
+        $("#operacion").val("Edit");
+        //pongo titulo al modal
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Agregar Pañol</h4>');
+        $("#modalpanoles").modal('hide');
+        $('#modalAgregarPanol').modal('show');
+        // guardo esta_id en modal para usar en funcion agregar panol
+        var esta_id2 = $("#id_esta").val();
+        $("#establecimiento_id_panol").val(esta_id2);
+    }
+
+    function guardarPanol () {
+        if( !validarCampos('frmPanol') ){
+            $("#modalpanoles").modal('show');
+            return;
+        }
+        var recurso = "";
+        var form = $('#frmPanol')[0];
+        var datos = new FormData(form);
+        var data = formToObject(datos);
+        
+        recurso = 'index.php/core/Establecimiento/guardarPanol';
+        wo();
+        $.ajax({
+            type: 'POST',
+            data: {data},
+            dataType: 'JSON',
+            url: recurso,
+            success: function(result) {
+                wc();
+                if(result.panol.status && result.encargados.status){
+                    hecho();
+                    $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+                }else{
+                    if(!result.panol.status){
+                        error('',result.panol.msj);
+                    }
+                    if(!result.encargados.status){
+                        error('',result.encargados.msj);
+                    }
+                }
+                $("#modalAgregarPanol").hide(500);
+                // form.reset();
+            },
+            error: function(result){
+                wc();
+                alertify.error("Error agregando Depósito");
+            },
+            complete: function(){
+                $('#encargados').val(null).trigger('change');
+            }
+        });
+    }
+
+    function eliminarPanol(e) {
+        var data = JSON.parse($(e).closest('tr').attr('data-json'));
+        var panol_id = data.pano_id;
+        // var esta_id = data.esta_id;
+        $('#panol_id').val(data.pano_id);
+        // var esta_id = $("#id_esta").val();
+        // var esta_id = $("#establecimiento_id").val();
+        // $("#id_establecimiento_borrar").val(esta_id);
+        $(".modal-header h4").remove();
+        //pongo titulo al modal
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Eliminar Pañol </h4>');
+        $("#modalpanoles").modal('hide');
+        $('#modalAvisoPanol').modal('show');
+    }
+
+    function eliminarPanolDeEstablecimiento() {
+        var panol_id = $("#panol_id").val();
+        // var esta_id = $("#id_esta").val();
+        // var esta_id = $("#id_establecimiento_borrar").val();
+        wo();
+        $.ajax({
+            type: 'POST',
+            data:{panol_id: panol_id},
+            url: 'index.php/core/Establecimiento/borrarPanolDeEstablecimiento',
+            success: function(result) {
+            $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+            setTimeout(function(){ 
+                alertify.success("Pañol eliminado con éxito");
+                wc();
+                // alert("Hello"); 
+            }, 3000);
+            $("#modalAvisoPanol").modal('hide');
+            },
+            error: function(result){
+            wc();
+            $("#modalAvisoPanol").modal('hide');
+            alertify.error('Error al Eliminar Pañol...');
+            }
+        });        
+    }    
 
 </script>
 
@@ -727,3 +944,29 @@
     </div>
 </div>
 <!-- /  Modal aviso eliminar deposito-->
+
+<!-- Modal aviso eliminar pañol-->
+<div class="modal fade" id="modalAvisoPanol">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-blue">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-trash text-light-blue"></span> Eliminar Pañol</h4>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-xs-12">
+              <h4>¿Desea realmente eliminar el pañol del establecimiento?</h4>
+              <input type="text" id="panol_id" class="hidden">
+              <!-- <input type="text" id="id_establecimiento_borrar" class="hidden"> -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="eliminarPanolDeEstablecimiento()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+</div>
+<!-- /  Modal aviso eliminar pañol-->

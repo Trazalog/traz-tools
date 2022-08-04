@@ -28,3 +28,9 @@
 [submodule "application/modules/traz-comp-codigos"]
 	path = application/modules/traz-comp-codigos
 	url = https://github.com/Trazalog/traz-comp-codigos.git
+[submodule "application/modules/traz-comp-notificaciones"]
+	path = application/modules/traz-comp-notificaciones
+	url = https://github.com/Trazalog/traz-comp-notificaciones.git
+[submodule "application/modules/SEIN-tools-almpantar"]
+	path = application/modules/SEIN-tools-almpantar
+	url = https://github.com/Trazalog/SEIN-tools-almpantar.git

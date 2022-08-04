@@ -17,6 +17,7 @@ class Valor extends CI_Controller
 	{
       	log_message('INFO','#TRAZA | VALORES | index()  >> ');
 	  	$data['listarValores'] = $this->Valores->Listar_Valores();
+	  	$data['listarEmpresas'] = $this->Valores->Listar_Empresas();
       	$this->load->view('core/valores/view', $data);
     }
     

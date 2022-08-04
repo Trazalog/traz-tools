@@ -1,0 +1,13 @@
+<data disableLegacyBoxcarringMode="true" enableBatchRequests="true" enableBoxcarring="true" name="PINGDataService" transports="http https local">
+   <description>Permite hacer ping y entender si wso2 esta arriba&#xd;                                </description>
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="getStatus" useConfig="ToolsDataSource">
+      <sql>select 'ALIVE' as status</sql>
+      <result outputType="json">{ "result":{ "status":"$status"}}</result>
+   </query>
+   <resource method="GET" path="/status">
+      <call-query href="getStatus"/>
+   </resource>
+</data>
