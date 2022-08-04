@@ -215,7 +215,7 @@
    </query>
    <query id="getEmpresas" useConfig="ToolsDataSource">
       <sql>select *&#xd;from core.empresas e</sql>
-      <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
+      <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "nombre":"$nombre",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit",&#xd;                "telefono":"$telefono",&#xd;                "email":"$email",&#xd;                "pais_id":"$pais_id",&#xd;                "prov_id":"$prov_id",&#xd;                "loca_id":"$loca_id",&#xd;                "imagepath":"$imagepath"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
    </query>
    <query id="encargadoXPanolGet" useConfig="ToolsDataSource">
       <sql>select U.id, U.first_name, U.last_name&#xd;FROM seg.users U, pan.encargado_panol E&#xd;WHERE&#xd;E.user_id = U.id&#xd;and U.status = 'approved' &#xd;and U.banned_users = 'unban' &#xd;and E.pano_id = CAST(:pano_id AS INTEGER);</sql>
@@ -284,6 +284,17 @@
    <query id="deleteEquipo" useConfig="ToolsDataSource">
       <sql>UPDATE core.equipos &#xd;SET eliminado = TRUE&#xd;WHERE equi_id = cast(:equi_id as integer);</sql>
       <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="setEmpresa" useConfig="ToolsDataSource">
+      <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id&#xd;);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="pais_id" sqlType="STRING"/>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="loca_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -576,6 +587,18 @@
    <resource method="DELETE" path="/equipo">
       <call-query href="deleteEquipo">
          <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/empresa">
+      <call-query href="setEmpresa">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="pais_id" query-param="pais_id"/>
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="loca_id" query-param="loca_id"/>
       </call-query>
    </resource>
 </data>
