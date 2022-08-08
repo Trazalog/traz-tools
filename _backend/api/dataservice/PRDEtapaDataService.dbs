@@ -264,6 +264,11 @@
       <param name="proc_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="verificaEntregaMateriales" useConfig="ToolsDataSource">
+      <sql>select case when exists &#xd;(select true from alm.alm_entrega_materiales aem,&#xd;alm.alm_pedidos_materiales apm &#xd;where apm.pema_id = aem.pema_id and apm.batch_id = cast(:batch_id as integer)&#xd;) then 'true' else 'false'&#xd;end</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$case"&#xd;    }&#xd;}</result>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/productos/etapa/{etap_id}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}/empr_id/{empr_id}">
       <call-query href="getProduccion">
          <with-param name="fechasta" query-param="fechasta"/>
@@ -536,6 +541,12 @@
          <with-param name="etapa" query-param="etapa"/>
          <with-param name="proc_id" query-param="proc_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/validar/entregaMateriales/batch_id/{batch_id}">
+      <description>Verifica si se realizo alguna entrega de materiales para el batch_id recibido            &#xd;                                    &#xd;                                    </description>
+      <call-query href="verificaEntregaMateriales">
+         <with-param name="batch_id" query-param="batch_id"/>
       </call-query>
    </resource>
 </data>
