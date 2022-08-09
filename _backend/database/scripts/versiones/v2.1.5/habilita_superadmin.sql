@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION core.habilita_superadmin_empresa()
+CREATE OR REPLACE FUNCTION core.habilita_superadmin_empresa_trg()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$
@@ -8,11 +8,11 @@ AS $function$
   BEGIN
     /** Genero menues en la empresa para el superadmin, y ademas le doy permisos para crear usuarios en user.business
      */
-	insert into seg.memberships_menues ("group","role",opcion,modulo)
-	values (new.nombre,'Admin','CORE','core');
+	insert into seg.memberships_menues ("group","role",modulo,opcion,usuario_app)
+	values (new.nombre,'Admin','CORE','core','core');
 
 	insert into seg.users_business (busines, email)
-	select (new.nombre,t.descripcion)
+	select new.nombre,t.descripcion
 	from core.tablas t
 	where t.tabl_id  ='coresuper_admin';
 	
@@ -34,4 +34,8 @@ end;
 
 $function$
 ;
-;
+
+create trigger habilita_superadmin_ai after
+insert
+    on
+    core.empresas for each row execute procedure core.habilita_superadmin_empresa_trg()
