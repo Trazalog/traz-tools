@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <api xmlns="http://ws.apache.org/ns/synapse" name="toolsCOREAPI" context="/tools/core">
    <resource methods="POST" uri-template="/empresa">
       <inSequence>
@@ -29,6 +30,8 @@
                <arg evaluator="json" expression="$.empresa.prov_id"/>
                <arg evaluator="json" expression="$.empresa.loca_id"/>
 =======
+=======
+>>>>>>> Stashed changes
 <api xmlns="http://ws.apache.org/ns/synapse" name="toolsCoreAPI" context="//tools/core"/>
 <resource methods="POST" uri-template="/empresa/nueva">
       <inSequence>
@@ -56,12 +59,16 @@
             <args>
                <arg evaluator="json" expression="fn:concat(json-eval($.empresa.empr_id),json-eval($.empresa.nombre)) "/>
                <arg evaluator="json" expression="$.empresa.nombre"/>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             </args>
          </payloadFactory>
          <property name="messageType" value="application/json" scope="axis2"/>
          <header name="Accept" scope="transport" value="application/json"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
          <property name="uri.var.crear_empresa_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa')" scope="default"/>
          <log level="custom">
@@ -73,6 +80,8 @@
             <endpoint>
                <http method="POST" uri-template="{uri.var.crear_empresa_url}"/>
 =======
+=======
+>>>>>>> Stashed changes
          <property name="crear_empresa_url" expression="fn:concat($ctx:dataservices_url,'/empresa')" scope="default"/>
          <log level="custom" category="DEBUG">
             <property name="donde" value="dentro de crear empresa"/>
@@ -82,6 +91,9 @@
          <call>
             <endpoint>
                <http method="POST" uri-template="{crear_empresa_url}"/>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             </endpoint>
          </call>
@@ -89,6 +101,7 @@
             <then/>
             <else>
                <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                <property name="TOOLS_ERROR" value="POST /empresa con problemas" type="STRING"/>
                <sequence key="toolsFault"/>
@@ -110,6 +123,8 @@
                <arg evaluator="xml" expression="get-property('empr_id_nombre')"/>
                <arg evaluator="xml" expression="get-property('empr_id_descripcion')"/>
 =======
+=======
+>>>>>>> Stashed changes
                <property name="TOOLS_ERROR" value="POST /solicitudContenedor con problemas" type="STRING"/>
                <sequence key="toolsFault"/>
             </else>
@@ -171,6 +186,9 @@
             <format>                 { "nombre_proceso": "TERSU-BPM01"     ,"payload" : { "idPedido":"$1"}     ,"session" :"$2"          }     </format>
             <args>
                <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                <arg evaluator="xml" expression="get-property('uri.var.bpmSession')"/>
             </args>
@@ -179,15 +197,21 @@
             <property name="msg actual 5 antes de BPM" expression="json-eval($)"/>
          </log>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
          <property name="uri.var.crear_empresa_bpm" expression="fn:concat($ctx:api_url,'/bpm/grupo')" scope="default"/>
          <call>
             <endpoint>
                <http method="POST" uri-template="{uri.var.crear_empresa_bpm}"/>
 =======
+=======
+>>>>>>> Stashed changes
          <property name="uri.var.instanciaBPM_url" expression="fn:concat($ctx:api_url,'/bpm/proceso/instancia')" scope="default"/>
          <call>
             <endpoint>
                <http method="POST" uri-template="{uri.var.instanciaBPM_url}"/>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             </endpoint>
          </call>
@@ -201,6 +225,7 @@
                <header name="Accept" scope="transport" value="application/json"/>
                <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
                <payloadFactory media-type="json" description="borrar solicitud">
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                   <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
                   <args>
@@ -247,6 +272,8 @@
             <property name="resp" expression="get-property('axis2', 'HTTP_SC')"/>
          </log>
 =======
+=======
+>>>>>>> Stashed changes
                   <format>{ "_delete_solicitudcontenedor": { "soco_id":"$1"} }</format>
                   <args>
                      <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
@@ -288,6 +315,9 @@
                <http method="PUT" uri-template="{uri.var.solicitudContenedorCaseId_url}"/>
             </endpoint>
          </call>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
@@ -296,6 +326,7 @@
                <header name="Accept" scope="transport" value="application/json"/>
                <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
                <payloadFactory media-type="json" description="borrar solicitud">
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                   <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
                   <args>
@@ -330,6 +361,8 @@
                <arg evaluator="xml" expression="get-property('empr_id')"/>
                <arg evaluator="xml" expression="get-property('bpmSession')"/>
 =======
+=======
+>>>>>>> Stashed changes
                   <format>{ "_delete_solicitudcontenedor": { "soco_id":"$1"} }</format>
                   <args>
                      <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
@@ -370,6 +403,9 @@
                <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
                <arg evaluator="xml" expression="get-property('uri.var.caseid')"/>
                <arg evaluator="xml" expression="get-property('uri.var.bpmSession')"/>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             </args>
          </payloadFactory>
@@ -379,6 +415,7 @@
       <faultSequence>
          <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
          <property name="TOOLS_ERROR" value="Error general crear empresa" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
@@ -386,8 +423,13 @@
 </api>
                         
 =======
+=======
+>>>>>>> Stashed changes
          <property name="TOOLS_ERROR" value="Error general generando Solicitud de Contendores" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
