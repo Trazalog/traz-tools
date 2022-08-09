@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 <api xmlns="http://ws.apache.org/ns/synapse" name="toolsCOREAPI" context="/tools/core">
    <resource methods="POST" uri-template="/empresa">
       <inSequence>
@@ -29,47 +27,11 @@
                <arg evaluator="json" expression="$.empresa.pais_id"/>
                <arg evaluator="json" expression="$.empresa.prov_id"/>
                <arg evaluator="json" expression="$.empresa.loca_id"/>
-=======
-=======
->>>>>>> Stashed changes
-<api xmlns="http://ws.apache.org/ns/synapse" name="toolsCoreAPI" context="//tools/core"/>
-<resource methods="POST" uri-template="/empresa/nueva">
-      <inSequence>
-         <property name="uri.var.bpmSession" value="$.uri.var.bpmSession" type="STRING"/>
-         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="apiconf" expression="get-property('registry','conf:tools/apiconf.xml')" scope="default" type="OM"/>
-         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="api_url" expression="$ctx:apiconf//api_url"/>
-         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
-         <log level="custom">
-            <property name="donde" value="dentro de nueva empresa"/>
-            <property name="payload" expression="json-eval($)"/>
-            <property name="api url" expression="$ctx:api_url"/>
-            <property name="ds url" expression="$ctx:dataservices_url"/>
-         </log>
-         <script language="js">var payload = mc.getPayloadJSON();  mc.setProperty("ORIGINAL_PAYLOAD",JSON.stringify(payload));</script>
-         <payloadFactory media-type="json" description="nueva empresa">
-            <format>  
-            {	
- 		 "icon":""
- 		 ,"name":"$1"
-  		 ,"displayName":"$2"
-  		 ,"parent_group_id":""
-  		 ,"description":""
-             }
-            </format>
-            <args>
-               <arg evaluator="json" expression="fn:concat(json-eval($.empresa.empr_id),json-eval($.empresa.nombre)) "/>
-               <arg evaluator="json" expression="$.empresa.nombre"/>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             </args>
          </payloadFactory>
          <property name="messageType" value="application/json" scope="axis2"/>
          <header name="Accept" scope="transport" value="application/json"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
          <property name="uri.var.crear_empresa_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa')" scope="default"/>
          <log level="custom">
             <property name="donde 2" value="dentro de crear_empresa"/>
@@ -79,30 +41,12 @@
          <call>
             <endpoint>
                <http method="POST" uri-template="{uri.var.crear_empresa_url}"/>
-=======
-=======
->>>>>>> Stashed changes
-         <property name="crear_empresa_url" expression="fn:concat($ctx:dataservices_url,'/empresa')" scope="default"/>
-         <log level="custom" category="DEBUG">
-            <property name="donde" value="dentro de crear empresa"/>
-            <property name="payload" expression="json-eval($)"/>
-            <property name="api url" expression="$ctx:crear_empresa_url"/>
-         </log>
-         <call>
-            <endpoint>
-               <http method="POST" uri-template="{crear_empresa_url}"/>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             </endpoint>
          </call>
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
             <else>
                <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                <property name="TOOLS_ERROR" value="POST /empresa con problemas" type="STRING"/>
                <sequence key="toolsFault"/>
             </else>
@@ -122,97 +66,16 @@
                <arg evaluator="xml" expression="get-property('bpmSession')"/>
                <arg evaluator="xml" expression="get-property('empr_id_nombre')"/>
                <arg evaluator="xml" expression="get-property('empr_id_descripcion')"/>
-=======
-=======
->>>>>>> Stashed changes
-               <property name="TOOLS_ERROR" value="POST /solicitudContenedor con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="custom" category="DEBUG" description="donde 3">
-            <property name="msg actual 3 despues solicitud contenedor" expression="json-eval($)"/>
-            <property name="soco id" expression="json-eval($.respuesta.soco_id)"/>
-         </log>
-         <property name="setIdEnHijos_elemento_origen" value="solicitudContenedores" type="STRING"/>
-         <property name="setIdEnHijos_elemento_destino" value="_post_solicitudcontenedor_tipocarga_batch_req" type="STRING"/>
-         <property name="setIdEnHijos_arreglo_origen" value="contenedores" type="STRING"/>
-         <property name="setIdEnHijos_arreglo_destino" value="_post_solicitudcontenedor_tipocarga" type="STRING"/>
-         <property name="setIdEnHijos_propiedad_destino" value="soco_id" type="STRING"/>
-         <property name="setIdEnHijos_id_padre" expression="json-eval($.respuesta.soco_id)" type="STRING"/>
-         <script language="js" key="conf:tools/setIdEnHijos.js" function="setIdEnHijos"/>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <log level="custom" category="DEBUG" description="donde 4">
-            <property name="msg actual 4 antes de contenedores solicitados" expression="json-eval($)"/>
-         </log>
-         <property name="uri.var.contenedoresSolicitados_url" expression="fn:concat($ctx:dataservices_url,'/_post_solicitudcontenedor_tipocarga_batch_req')" scope="default"/>
-         <log level="custom" category="DEBUG">
-            <property name="payload" expression="json-eval($)"/>
-            <property name="invocar url" expression="$ctx:uri.var.contenedoresSolicitados_url"/>
-         </log>
-         <call>
-            <endpoint>
-               <http method="POST" uri-template="{uri.var.contenedoresSolicitados_url}"/>
-            </endpoint>
-         </call>
-         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
-            <then/>
-            <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <header name="Accept" scope="transport" value="application/json"/>
-               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-               <payloadFactory media-type="json" description="borrar solicitud">
-                  <format>{ "_delete_solicitudcontenedor": { "soco_id":"$1"} }</format>
-                  <args>
-                     <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
-                  </args>
-               </payloadFactory>
-               <property name="uri.var.solicitudContenedorDELETE" expression="fn:concat($ctx:dataservices_url,'/solicitudContenedor')" scope="default"/>
-               <call>
-                  <endpoint>
-                     <http method="DELETE" uri-template="{uri.var.solicitudContenedorDELETE}"/>
-                  </endpoint>
-               </call>
-               <property name="TOOLS_ERROR" value="POST /_post_solicitudcontenedor_tipocarga_batch_req con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="custom" category="DEBUG" description="donde 4">
-            <property name="msg actual 5 despues de contenedores solicitados" expression="json-eval($)"/>
-         </log>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <payloadFactory media-type="json" description="crear solicitud">
-            <format>                 { "nombre_proceso": "TERSU-BPM01"     ,"payload" : { "idPedido":"$1"}     ,"session" :"$2"          }     </format>
-            <args>
-               <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                <arg evaluator="xml" expression="get-property('uri.var.bpmSession')"/>
             </args>
          </payloadFactory>
          <log level="custom" category="DEBUG" description="donde 4">
             <property name="msg actual 5 antes de BPM" expression="json-eval($)"/>
          </log>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
          <property name="uri.var.crear_empresa_bpm" expression="fn:concat($ctx:api_url,'/bpm/grupo')" scope="default"/>
          <call>
             <endpoint>
                <http method="POST" uri-template="{uri.var.crear_empresa_bpm}"/>
-=======
-=======
->>>>>>> Stashed changes
-         <property name="uri.var.instanciaBPM_url" expression="fn:concat($ctx:api_url,'/bpm/proceso/instancia')" scope="default"/>
-         <call>
-            <endpoint>
-               <http method="POST" uri-template="{uri.var.instanciaBPM_url}"/>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             </endpoint>
          </call>
          <log level="custom" category="DEBUG" description="resp bonita 4">
@@ -225,8 +88,6 @@
                <header name="Accept" scope="transport" value="application/json"/>
                <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
                <payloadFactory media-type="json" description="borrar solicitud">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                   <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
                   <args>
                      <arg evaluator="xml" expression="get-property('empr_id')"/>
@@ -271,54 +132,6 @@
          <log level="custom" category="DEBUG" description="resp bonita 8">
             <property name="resp" expression="get-property('axis2', 'HTTP_SC')"/>
          </log>
-=======
-=======
->>>>>>> Stashed changes
-                  <format>{ "_delete_solicitudcontenedor": { "soco_id":"$1"} }</format>
-                  <args>
-                     <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
-                  </args>
-               </payloadFactory>
-               <log level="custom" category="DEBUG" description="delete sol">
-                  <property name="delete" expression="json-eval($)"/>
-               </log>
-               <property name="uri.var.solicitudContenedorDELETE" expression="fn:concat($ctx:dataservices_url,'/solicitudContenedor')" scope="default"/>
-               <call>
-                  <endpoint>
-                     <http method="DELETE" uri-template="{uri.var.solicitudContenedorDELETE}"/>
-                  </endpoint>
-               </call>
-               <property name="TOOLS_ERROR" value="POST /bpm/proceso/instancia con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="custom" category="DEBUG" description="donde 4">
-            <property name="msg actual 6 despues de BPM" expression="json-eval($)"/>
-         </log>
-         <property name="uri.var.caseid" expression="json-eval($.payload.caseId)" type="STRING"/>
-         <property name="uri.var.bpmSession" expression="json-eval($.session)" type="STRING"/>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <payloadFactory media-type="json" description="crear solicitud">
-            <format>                               {      "_put_solicitudContenedor_caseid":{        "case_id":"$1",         "soco_id":"$2"        }      }      </format>
-            <args>
-               <arg evaluator="json" expression="$.payload.caseId"/>
-               <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
-            </args>
-         </payloadFactory>
-         <log level="custom" category="DEBUG" description="donde 4">
-            <property name="msg actual 7 despues de BPM antes de actualizar caseid" expression="json-eval($)"/>
-         </log>
-         <property name="uri.var.solicitudContenedorCaseId_url" expression="fn:concat($ctx:dataservices_url,'/solicitudContenedor/caseid')" scope="default"/>
-         <call>
-            <endpoint>
-               <http method="PUT" uri-template="{uri.var.solicitudContenedorCaseId_url}"/>
-            </endpoint>
-         </call>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
             <else>
@@ -326,8 +139,6 @@
                <header name="Accept" scope="transport" value="application/json"/>
                <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
                <payloadFactory media-type="json" description="borrar solicitud">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                   <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
                   <args>
                      <arg evaluator="xml" expression="get-property('empr_id')"/>
@@ -360,53 +171,6 @@
             <args>
                <arg evaluator="xml" expression="get-property('empr_id')"/>
                <arg evaluator="xml" expression="get-property('bpmSession')"/>
-=======
-=======
->>>>>>> Stashed changes
-                  <format>{ "_delete_solicitudcontenedor": { "soco_id":"$1"} }</format>
-                  <args>
-                     <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
-                  </args>
-               </payloadFactory>
-               <property name="uri.var.solicitudContenedorDELETE" expression="fn:concat($ctx:dataservices_url,'/solicitudContenedor')" scope="default"/>
-               <call>
-                  <endpoint>
-                     <http method="DELETE" uri-template="{uri.var.solicitudContenedorDELETE}"/>
-                  </endpoint>
-               </call>
-               <header name="Accept" scope="transport" value="application/json"/>
-               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-               <property name="uri.var.borrarInstanciaBPM_url" expression="fn:concat($ctx:api_url,'/bpm/proceso/instancia/')" scope="default"/>
-               <log level="custom" category="DEBUG" description="donde 10">
-                  <property name="msg actual 10 eliminando caso de BPM" expression="json-eval($)"/>
-                  <property name="url actual 10 eliminando caso de BPM" expression="$ctx:uri.var.borrarInstanciaBPM_url"/>
-               </log>
-               <call>
-                  <endpoint>
-                     <http method="DELETE" uri-template="{uri.var.borrarInstanciaBPM_url}"/>
-                  </endpoint>
-               </call>
-               <property name="TOOLS_ERROR" value="PUT /solicitudContenedor/caseid con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="full" category="DEBUG" description="salida insequence"/>
-         <loopback/>
-      </inSequence>
-      <outSequence>
-         <log level="full" category="DEBUG">
-            <property name="MESSAGE" value="FIRST"/>
-         </log>
-         <payloadFactory media-type="json" description="Mensaje error">
-            <format>{"respuesta":              { "resultado" : "ok"              , "soco_id":"$1"                 , "case_id":"$2"           , "bpmSession":"$3"   }             }</format>
-            <args>
-               <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
-               <arg evaluator="xml" expression="get-property('uri.var.caseid')"/>
-               <arg evaluator="xml" expression="get-property('uri.var.bpmSession')"/>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             </args>
          </payloadFactory>
          <log level="full"/>
@@ -414,22 +178,9 @@
       </outSequence>
       <faultSequence>
          <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
          <property name="TOOLS_ERROR" value="Error general crear empresa" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
 </api>
                         
-=======
-=======
->>>>>>> Stashed changes
-         <property name="TOOLS_ERROR" value="Error general generando Solicitud de Contendores" type="STRING"/>
-         <sequence key="toolsFault"/>
-      </faultSequence>
-   </resource>
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
