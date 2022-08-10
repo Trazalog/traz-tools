@@ -231,7 +231,7 @@
       <result outputType="json">{&#xd;  "unidades": {&#xd;     "unidad": [&#xd;       {&#xd;         "tabl_id": "$tabl_id",&#xd;         "valor": "$valor"&#xd;       }&#xd;     ]&#xd;  }&#xd;}</result>
    </query>
    <query id="setEnvase" useConfig="ToolsDataSource">
-      <sql>insert into prd.empaque&#xd;(&#xd;    nombre,&#xd;    descripcion,&#xd;    unidad_medida,&#xd;    capacidad,&#xd;    empr_id, &#xd;    usuario_app,&#xd;    tara,&#xd;    receta,&#xd;    eliminado)&#xd;VALUES(&#xd;    :nombre,&#xd;    :descripcion,&#xd;    :unidad_medida,&#xd;    cast(:capacidad as float),&#xd;    cast(:empr_id as integer),&#xd;    :usuario_app,&#xd;    cast(:tara as float),&#xd;    :receta,&#xd;    False&#xd;);</sql>
+      <sql>insert into prd.empaque&#xd;(&#xd;    nombre,&#xd;    descripcion,&#xd;    unidad_medida,&#xd;    capacidad,&#xd;    empr_id, &#xd;    usuario_app,&#xd;    tara,&#xd;    receta,&#xd;    eliminado)&#xd;VALUES(&#xd;    :nombre,&#xd;    :descripcion,&#xd;    :unidad_medida,&#xd;    cast(:capacidad as float),&#xd;    cast(:empr_id as integer),&#xd;    :usuario_app,&#xd;    cast(:tara as float),&#xd;    cast(:receta as integer),&#xd;    False&#xd;);</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
       <param name="unidad_medida" sqlType="STRING"/>
@@ -285,8 +285,11 @@
       <sql>UPDATE core.equipos &#xd;SET eliminado = TRUE&#xd;WHERE equi_id = cast(:equi_id as integer);</sql>
       <param name="equi_id" sqlType="STRING"/>
    </query>
-   <query id="setEmpresa" useConfig="ToolsDataSource">
+   <query id="setEmpresa" returnGeneratedKeys="true" useConfig="ToolsDataSource">
       <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id&#xd;);</sql>
+      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
+         <element column="1" name="ID" xsdType="integer"/>
+      </result>
       <param name="nombre" sqlType="STRING"/>
       <param name="cuit" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -295,6 +298,10 @@
       <param name="pais_id" sqlType="STRING"/>
       <param name="prov_id" sqlType="STRING"/>
       <param name="loca_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteEmpresa" useConfig="ToolsDataSource">
+      <sql>UPDATE core.empresas &#xd;SET eliminado = TRUE&#xd;WHERE empr_id = cast(:empr_id as integer);</sql>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -601,4 +608,10 @@
          <with-param name="loca_id" query-param="loca_id"/>
       </call-query>
    </resource>
+   <resource method="DELETE" path="/empresa">
+      <call-query href="deleteEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
 </data>
+
