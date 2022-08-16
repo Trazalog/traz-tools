@@ -214,8 +214,8 @@
       <param name="cuit" sqlType="STRING"/>
    </query>
    <query id="getEmpresas" useConfig="ToolsDataSource">
-      <sql>select *&#xd;from core.empresas e</sql>
-      <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "nombre":"$nombre",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit",&#xd;                "telefono":"$telefono",&#xd;                "email":"$email",&#xd;                "pais_id":"$pais_id",&#xd;                "prov_id":"$prov_id",&#xd;                "loca_id":"$loca_id",&#xd;                "imagepath":"$imagepath"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
+      <sql>select&#xd;   e.*,&#xd;   tl.valor as localidad,&#xd;   te.valor as estado,&#xd;   tp.valor as pais&#xd;from&#xd;   core.empresas e &#xd;   left join&#xd;      core.tablas tl &#xd;      on tl.tabl_id = e.loca_id &#xd;   left join&#xd;      core.tablas te &#xd;      on te.tabl_id = e.prov_id &#xd;   left join&#xd;      core.tablas tp &#xd;      on tp.tabl_id = e.pais_id</sql>
+      <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "nombre":"$nombre",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit",&#xd;                "telefono":"$telefono",&#xd;                "email":"$email",&#xd;                "pais_id":"$pais_id",&#xd;                "prov_id":"$prov_id",&#xd;                "loca_id":"$loca_id",&#xd;                "imagepath":"$imagepath",&#xd;                "localidad": "$localidad",&#xd;                "estado": "$estado",&#xd;                "pais": "$pais"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
    </query>
    <query id="encargadoXPanolGet" useConfig="ToolsDataSource">
       <sql>select U.id, U.first_name, U.last_name&#xd;FROM seg.users U, pan.encargado_panol E&#xd;WHERE&#xd;E.user_id = U.id&#xd;and U.status = 'approved' &#xd;and U.banned_users = 'unban' &#xd;and E.pano_id = CAST(:pano_id AS INTEGER);</sql>
