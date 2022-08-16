@@ -67,7 +67,7 @@
 				default:
 						
 					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|SEIN ALM PAN TAR/".$case_id : $case_id >> '.json_encode($case_id));
-					$ci->load->model(SEIN . 'proceso_tareas');
+					$ci->load->model(SEIN . 'Proceso_tareas');
 				
 					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
 					 		$data_generico =json_decode($aux["data"]);
