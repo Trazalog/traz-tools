@@ -471,24 +471,7 @@
 													<input type="text" class="form-control habilitar" id="dir_entrega" value="<?php echo $aux_clie->cliente->dir_entrega; ?>"  readonly>
 											</div>
 										</div>
-									<!--_____________________________________________-->
-										<div class="col-md-6 info_sec animated fadeInLeft">
-											<div class="form-group">
-													<label for="email" name="">Email:</label>
-													<input type="text" class="form-control habilitar" id="email" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
-											</div>
-										</div>
-
-
-										<div class="col-md-6 info_sec animated fadeInLeft">
-											<div class="form-group">
-													<label for="email_alternativo" name="">Email alternativo:</label>
-											</div><input type="text" class="form-control habilitar" id="email_alternativo" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
-										</div>
-
-									</div>
-									<!--_____________________________________________-->
-
+								
 									<div class="col-md-12">
 									<br>
 									<p>Datos del Proyecto:</p>
