@@ -33,4 +33,4 @@
 	url = https://github.com/Trazalog/traz-comp-notificaciones.git
 [submodule "application/modules/SEIN-tools-almpantar"]
 	path = application/modules/SEIN-tools-almpantar
-	url = https://github.com/Trazalog/SEIN-tools-almpantar.git
+	url = https://github.com/Trazalog/sein-tools-almpantar.git
