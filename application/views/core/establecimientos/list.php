@@ -103,7 +103,7 @@
           success: function(result) {
               $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
               setTimeout(function(){ 
-                  alertify.success("Artículo eliminado con éxito");
+                  alertify.success("Establecimiento eliminado con éxito");
                   wc();
                   // alert("Hello"); 
               }, 3000);
@@ -179,7 +179,7 @@
             $(tabla).append(
               "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
               "<td><button type='button' title='Eliminar Pañol' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarPanol(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
-                "<td>" + e.descripcion + "</td>" +
+                "<td>" + e.nombre + "</td>" +
               "</tr>"
             );
           });            

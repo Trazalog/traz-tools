@@ -186,7 +186,7 @@
    <resource methods="GET" uri-template="/groups/{session}">
       <inSequence>
          <header name="Accept" scope="transport" value="application/json"/>
-         <property name="groups_url" value="/API/identity/group?p=0&amp;c=1000&amp;d=parent_group_id&amp;o=name%20ASC" scope="default" type="STRING"/>
+         <property name="groups_url" value="/API/identity/group?p=0&amp;c=1000&amp;d=parent_group_id&amp;o=displayName%20ASC" scope="default" type="STRING"/>
          <call-template target="bpmAPICallTemplate">
             <with-param name="recurso" value="{$ctx:groups_url}"/>
             <with-param name="session" value="{$ctx:uri.var.session}"/>
@@ -356,6 +356,109 @@
       </outSequence>
       <faultSequence>
          <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="DELETE" uri-template="/membership">
+      <inSequence>
+         <log level="custom" description="msg entrada">
+            <property name="user_id" expression="json-eval($.user_id)"/>
+            <property name="group_id" expression="json-eval($.group_id)"/>
+            <property name="role_id" expression="json-eval($.role_id)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="user_id" expression="json-eval($.user_id)"/>
+         <property name="group_id" expression="json-eval($.group_id)"/>
+         <property name="role_id" expression="json-eval($.role_id)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="deletemembership_url" expression="fn:concat('/API/identity/membership/',$ctx:user_id,'/',$ctx:group_id,'/',$ctx:role_id)" scope="default" type="STRING"/>
+         <log level="custom">
+            <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="url a invocar delete membership" expression="get-property('deletemembership_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:deletemembership_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="DELETE"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="json-eval($..session)"/>
+         </log>
+         <property name="session" expression="json-eval($..session)"/>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" value="" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en API BPM al borrar membership" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/grupo">
+      <inSequence>
+         <log level="custom" description="msg entrada post grupo">
+            <property name="payload" expression="json-eval($.payload)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="payload" expression="json-eval($.payload)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <property name="post_group_url" value="/API/identity/group"/>
+         <log level="custom" category="DEBUG">
+            <property name="url a invocar post grupo" expression="get-property('post_group_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:post_group_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+         </call-template>
+         <loopback/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM grupo" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/profileMember">
+      <inSequence>
+         <log level="custom" description="msg entrada post profile member">
+            <property name="payload" expression="json-eval($.payload)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="payload" expression="json-eval($.payload)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <property name="post_profile_member_url" value="/API/portal/profileMember"/>
+         <log level="custom" category="DEBUG">
+            <property name="url a invocar post profile member" expression="get-property('post_profile_member_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:post_profile_member_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+         </call-template>
+         <loopback/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM profile member" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>

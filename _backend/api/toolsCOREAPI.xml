@@ -1,0 +1,186 @@
+<api xmlns="http://ws.apache.org/ns/synapse" name="toolsCOREAPI" context="/tools/core">
+   <resource methods="POST" uri-template="/empresa">
+      <inSequence>
+         <property name="bpmSession" expression="json-eval($.bpmSession)" type="STRING"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="api_url" expression="$ctx:apiconf//api_url"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="empr_nombre" expression="json-eval($.empresa.nombre)"/>
+         <property name="empr_descripcion" expression="json-eval($.empresa.descripcion)"/>
+         <log level="custom">
+            <property name="donde" value="dentro de crear empresa"/>
+            <property name="payload" expression="json-eval($)"/>
+            <property name="api url" expression="$ctx:api_url"/>
+            <property name="ds url" expression="$ctx:dataservices_url"/>
+            <property name="bpmSession" expression="$ctx:bpmSession"/>
+            <property name="bpmSession" expression="$ctx:empr_nombre"/>
+            <property name="bpmSession" expression="$ctx:empr_descripcion"/>
+         </log>
+         <payloadFactory media-type="json" description="crear empresa">
+            <format>       {     "_post_empresa":{        "nombre":"$1",        "cuit":"$2",        "descripcion":"$3",        "telefono":"$4",        "email":"$5",        "pais_id":"$6",        "prov_id":"$7",        "loca_id":"$8"     }  }     </format>
+            <args>
+               <arg evaluator="json" expression="$.empresa.nombre"/>
+               <arg evaluator="json" expression="$.empresa.cuit"/>
+               <arg evaluator="json" expression="$.empresa.descripcion"/>
+               <arg evaluator="json" expression="$.empresa.telefono"/>
+               <arg evaluator="json" expression="$.empresa.email"/>
+               <arg evaluator="json" expression="$.empresa.pais_id"/>
+               <arg evaluator="json" expression="$.empresa.prov_id"/>
+               <arg evaluator="json" expression="$.empresa.loca_id"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.crear_empresa_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa')" scope="default"/>
+         <log level="custom">
+            <property name="donde 2" value="dentro de crear_empresa"/>
+            <property name="payload" expression="json-eval($)"/>
+            <property name="api url" expression="$ctx:uri.var.crear_empresa_url"/>
+         </log>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.crear_empresa_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /empresa con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <property name="empr_id" expression="json-eval($.GeneratedKeys.Entry[0].ID)"/>
+         <property name="empr_id_nombre" expression="fn:concat($ctx:empr_id,'-',$ctx:empr_nombre)" type="STRING"/>
+         <log level="custom" description="donde 3">
+            <property name="msg actual 3 despues empresa" expression="json-eval($)"/>
+            <property name="empr_id" expression="$ctx:empr_id"/>
+            <property name="empr_id_nombre" expression="$ctx:empr_id_nombre"/>
+         </log>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <payloadFactory media-type="json" description="crear empresa bonita">
+            <format>                            {     "session":"$1",     "payload":{     "name":"$2",     "displayName":"$3",     "description":"$4" }}                             </format>
+            <args>
+               <arg evaluator="xml" expression="get-property('bpmSession')"/>
+               <arg evaluator="xml" expression="get-property('empr_id_nombre')"/>
+               <arg evaluator="xml" expression="get-property('empr_id_descripcion')"/>
+               <arg evaluator="xml" expression="get-property('uri.var.bpmSession')"/>
+            </args>
+         </payloadFactory>
+         <log level="custom" category="DEBUG" description="donde 4">
+            <property name="msg actual 5 antes de BPM" expression="json-eval($)"/>
+         </log>
+         <property name="uri.var.crear_empresa_bpm" expression="fn:concat($ctx:api_url,'/bpm/grupo')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.crear_empresa_bpm}"/>
+            </endpoint>
+         </call>
+         <log level="custom" category="DEBUG" description="resp bonita 4">
+            <property name="resp" expression="get-property('axis2', 'HTTP_SC')"/>
+         </log>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+               <payloadFactory media-type="json" description="borrar solicitud">
+                  <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('empr_id')"/>
+                  </args>
+               </payloadFactory>
+               <log level="custom" category="DEBUG" description="delete sol">
+                  <property name="delete empresa" expression="json-eval($)"/>
+               </log>
+               <property name="uri.var.empresaDELETE" expression="fn:concat($ctx:dataservices_url,'COREDataService/empresa')" scope="default"/>
+               <call>
+                  <endpoint>
+                     <http method="DELETE" uri-template="{uri.var.empresaDELETE}"/>
+                  </endpoint>
+               </call>
+               <property name="TOOLS_ERROR" value="POST /bpm/grupo con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <log level="custom" category="DEBUG" description="donde 6">
+            <property name="msg actual 6 despues de BPM" expression="json-eval($)"/>
+         </log>
+         <property name="bpmSession" expression="json-eval($.session)" type="STRING"/>
+         <property name="empr_group_id" expression="json-eval($.payload.id)" type="STRING"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <payloadFactory media-type="json" description="crear empresa bonita">
+            <format>                                        {  "session":"$1",  "payload":{  "profile_id":"1",  "member_type":"GROUP",  "group_id":"$2"   }  }             </format>
+            <args>
+               <arg evaluator="xml" expression="get-property('bpmSession')"/>
+               <arg evaluator="xml" expression="get-property('empr_group_id')"/>
+            </args>
+         </payloadFactory>
+         <log level="custom" category="DEBUG" description="donde 4">
+            <property name="msg actual 7 antes de BPM Profile" expression="json-eval($)"/>
+         </log>
+         <property name="uri.var.agregar_perfil_empresa_url" expression="fn:concat($ctx:api_url,'/bpm/profileMember')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.agregar_perfil_empresa_url}"/>
+            </endpoint>
+         </call>
+         <log level="custom" category="DEBUG" description="resp bonita 8">
+            <property name="resp" expression="get-property('axis2', 'HTTP_SC')"/>
+         </log>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+               <payloadFactory media-type="json" description="borrar solicitud">
+                  <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('empr_id')"/>
+                  </args>
+               </payloadFactory>
+               <log level="custom" category="DEBUG" description="delete sol">
+                  <property name="delete empresa" expression="json-eval($)"/>
+               </log>
+               <property name="uri.var.empresaDELETE" expression="fn:concat($ctx:dataservices_url,'COREDataService/empresa')" scope="default"/>
+               <call>
+                  <endpoint>
+                     <http method="DELETE" uri-template="{uri.var.empresaDELETE}"/>
+                  </endpoint>
+               </call>
+               <property name="TOOLS_ERROR" value="POST /bpm/profileMember con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <log level="custom" category="DEBUG" description="donde 4">
+            <property name="msg actual 9 despues de BPM" expression="json-eval($)"/>
+         </log>
+         <loopback/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <payloadFactory media-type="json" description="Mensaje error">
+            <format>{"respuesta":              { "resultado" : "ok"              , "empr_id":"$1"                        , "bpmSession":"$2"   }             }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('empr_id')"/>
+               <arg evaluator="xml" expression="get-property('bpmSession')"/>
+            </args>
+         </payloadFactory>
+         <log level="full"/>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error general crear empresa" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+</api>
+                        

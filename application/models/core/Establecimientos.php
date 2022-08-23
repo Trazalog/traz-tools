@@ -241,15 +241,29 @@ class Establecimientos extends CI_Model {
     }
 
     $batch_req = [];
-    foreach ($data['encargados'] as $key) {
-      $aux['pano_id'] = $pano_id;
-      $aux['user_id'] =  $key;
+    if(is_array($data['encargados'])){
+      $url_encargados = REST_PAN.'/_post_panol_encargado_batch_req';
 
-      $batch_req['_post_panol_encargado_batch_req']['_post_panol_encargado'][] = $aux;
+      foreach ($data['encargados'] as $key) {
+        $aux['pano_id'] = $pano_id;
+        $aux['user_id'] =  $key;
+  
+        $batch_req['_post_panol_encargado_batch_req']['_post_panol_encargado'][] = $aux;
+      }
+
+      $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $batch_req);
+
+    }else{
+      $url_encargados = REST_PAN.'/panol/encargado';
+
+      $aux['pano_id'] = $pano_id;
+      $aux['user_id'] =  $data['encargados'];
+
+      $encargados['_post_panol_encargado'] = $aux;
+
+      $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $encargados);
     }
 
-    $url_encargados = REST_PAN.'/_post_panol_encargado_batch_req';
-    $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $batch_req);
 
     log_message('DEBUG','#TRAZA | #CORE | guardarPanol | GUARDAR $encargados: >> '.json_encode($rsp_encargados));
     
@@ -262,4 +276,13 @@ class Establecimientos extends CI_Model {
     }
     return $rsp;
   }
+
+  public function getPanoles()
+    {
+        $empr_id = empresa();
+        $url = REST_PAN.'/panol/empresa/'.$empr_id;
+				$array = $this->rest->callAPI("GET",$url);
+				$resp =  json_decode($array['data']);
+				return $resp;
+    }
 }
