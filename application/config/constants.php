@@ -226,8 +226,6 @@ define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 
 define('REST_SEIN', HOST.'/services/SeinDataService');
 
-
-
 #TRAZ-COMP-CALENDAR
 define('DURACION_JORNADA', '08:00');
 define('HORA_FIN_JORNADA', '18:00');

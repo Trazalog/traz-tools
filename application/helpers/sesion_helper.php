@@ -207,7 +207,8 @@ log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
 
 		}
 		else{
-				redirect(DNATO.'main/logout');
+				 redirect(DNATO.'main/logout');
+				//echo base_url('Login/log_out');
 				log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
 
 				return;
@@ -228,6 +229,7 @@ if(isset($_SESSION['tiempo']) ) {
 
     //Tiempo en segundos para dar vida a la sesión.
     $inactivo = 4000;//40min en este caso.
+	
 
     //Calculamos tiempo de vida inactivo.
     $vida_session = time() - $_SESSION['tiempo'];
@@ -242,8 +244,8 @@ if(isset($_SESSION['tiempo']) ) {
             //Destruimos sesión.
             session_destroy();              
             //Redirigimos pagina.
-			redirect(DNATO.'main/logout');
-
+		//	redirect(DNATO.'main/logout');
+			 echo base_url('Login/log_out');
 			log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
 
 		
