@@ -1,6 +1,9 @@
 <!-- jQuery 3 -->
 <script src="<?php echo base_url() ?>lib/bower_components/jquery/dist/jquery.min.js"></script>
 
+<!-- jQuery SUM() -->
+<script src="//cdn.datatables.net/plug-ins/1.12.1/api/sum().js"></script>
+
 <!-- jQuery UI 1.11.4 -->
 <script src="<?php echo base_url() ?>lib/bower_components/jquery-ui/jquery-ui.min.js"></script>
 
