@@ -26,6 +26,7 @@ if(!function_exists('modal'))
     }
 }
 
+
 if (!function_exists('bolita')) {
     function bolita($texto, $color, $detalle = null)
     {
