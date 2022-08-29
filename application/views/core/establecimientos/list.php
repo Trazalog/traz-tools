@@ -139,7 +139,9 @@
           result.forEach(e => {
             $(tabla).append(
               "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
-                "<td><button type='button' title='Eliminar Depósito' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
+                "<td class='accionesDepositos'><button type='button' title='Ver Depósito' class='btn btn-primary btn-circle btnVerDetalle' onclick='detalleDeposito(this)' id='btnVerDetalleDeposito'><span class='glyphicon glyphicon-eye-open' aria-hidden='true' ></span></button>" +
+                "<button type='button' title='Editar Depósito' class='btn btn-primary btn-circle btnEditar' onclick='editarDeposito(this)' id='btnEditar'><span class='glyphicon glyphicon-pencil' aria-hidden='true' ></span></button>" +
+                "<button type='button' title='Eliminar Depósito' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button></td>" +
                 "<td>" + e.descripcion + "</td>" +
               "</tr>"
             );

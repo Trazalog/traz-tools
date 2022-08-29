@@ -150,29 +150,164 @@ class Establecimientos extends CI_Model {
     $valores = $rsp->depositos->deposito;
     return $valores;
   }
+  /**
+	* Agrega un deposito con encargado/s
+	* @param array datos deposito
+	* @return array resultado de servicio de guardado
+	*/
+  public function guardarDeposito($data){
+    log_message('DEBUG','#TRAZA | #CORE | Establecimientos | guardarDeposito($deposito)');
+    $url = REST_CORE . '/deposito/establecimiento';
+    
+    $deposito['esta_id'] = $data['esta_id'];
+    $deposito['descripcion'] = $data['descripcion'];
+    $deposito['empr_id'] = empresa();
 
-  public function guardarDeposito($deposito)
-  {
     $post['_post_deposito_establecimiento'] = $deposito;
-    log_message('DEBUG','#TRAZA | #CORE | guardarDeposito | GUARDAR $post: >> '.json_encode($post));
-    $resource = '/deposito/establecimiento';
-    $url = REST_CORE . $resource;
-    $aux = $this->rest->callApi('POST', $url, $post);
-    $aux = json_decode($aux["status"]);
-    return $aux;
-  }
+    $rsp_deposito = $this->rest->callApi('POST', $url, $post);
 
-  public function borrarDeposito($depo_id)
-  {
+    log_message('DEBUG','#TRAZA | #CORE | guardarDeposito() | GUARDAR $deposito: >> '.json_encode($rsp_deposito));
+
+    if($rsp_deposito['status']){
+      $depo_id = json_decode($rsp_deposito['data'])->respuesta->depo_id;
+      $rsp['deposito']['status'] = $rsp_deposito['status'];
+      $rsp['deposito']['msj'] = "Se añadio el deposito correctamente";
+    }else{
+      $rsp['deposito']['status'] = $rsp_deposito['status'];
+      $rsp['deposito']['data'] = $rsp_deposito['data'];
+      $rsp['deposito']['msj'] = "Se produjo un error al guardar el deposito";
+    }
+    if(!empty($depo_id)){
+        $batch_req = [];
+        if(is_array($data['encargadosDeposito'])){
+        $url_encargados = REST_CORE.'/_post_deposito_encargado_batch_req';
+
+        foreach ($data['encargadosDeposito'] as $key) {
+          $aux['depo_id'] = $depo_id;
+          $aux['user_id'] =  $key;
+    
+          $batch_req['_post_deposito_encargado_batch_req']['_post_deposito_encargado'][] = $aux;
+        }
+
+        $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $batch_req);
+
+      }else{
+        $url_encargados = REST_CORE.'/deposito/encargado';
+
+        $aux['depo_id'] = $depo_id;
+        $aux['user_id'] =  $data['encargadosDeposito'];
+        
+        $encargadosDeposito['_post_deposito_encargado'] = $aux;
+        
+        $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $encargadosDeposito);
+      }
+
+      log_message('DEBUG','#TRAZA | #CORE | guardarDeposito() | GUARDAR $encargados: >> '.json_encode($rsp_encargados));
+      
+      if($rsp_encargados['status']){
+        $rsp['encargados']['status'] = $rsp_encargados['status'];
+        $rsp['encargados']['msj'] = "Se agregaron los encargados correctamente";
+      }else{
+        $rsp['encargados']['status'] = $rsp_encargados['status'];
+        $rsp['encargados']['data'] = $rsp_encargados['data'];
+        $rsp['encargados']['msj'] = "Se produjo un error al guardar los encargados";
+      }
+    }
+    return $rsp;
+  }
+  /**
+	* Editar un deposito y la relacion con sus encargado/s
+	* @param array datos deposito
+	* @return array resultado de servicio de guardado
+	*/
+  public function editarDeposito($data){
+    log_message('DEBUG','#TRAZA | #CORE | Establecimientos | editarDeposito($deposito)');
+    $url = REST_CORE . '/deposito/establecimiento';
+    
+    $deposito['esta_id'] = $data['esta_id'];
+    $deposito['descripcion'] = $data['descripcion'];
+    $deposito['depo_id'] = $data['depo_id'];
+    $deposito['empr_id'] = empresa();
+
+    $put['_put_deposito_establecimiento'] = $deposito;
+    $rsp_deposito = $this->rest->callApi('PUT', $url, $put);
+
+    log_message('DEBUG','#TRAZA | #CORE | editarDeposito() | editar $deposito: >> '.json_encode($rsp_deposito));
+
+    if($rsp_deposito['status']){
+      $rsp['deposito']['status'] = $rsp_deposito['status'];
+      $rsp['deposito']['msj'] = "Se edito el deposito correctamente";
+    }else{
+      $rsp['deposito']['status'] = $rsp_deposito['status'];
+      $rsp['deposito']['data'] = $rsp_deposito['data'];
+      $rsp['deposito']['msj'] = "Se produjo un error al editar el deposito";
+    }
+    //Elimino la relacion con los encargados
+    $rspDeleteEncargados = $this->borrarEncargadosDeposito($depo_id);
+
+    $batch_req = [];
+    if(is_array($data['encargadosDeposito'])){
+      $url_encargados = REST_CORE.'/_post_deposito_encargado_batch_req';
+
+      foreach ($data['encargadosDeposito'] as $key) {
+        $aux['depo_id'] = $data['depo_id'];
+        $aux['user_id'] =  $key;
+  
+        $batch_req['_post_deposito_encargado_batch_req']['_post_deposito_encargado'][] = $aux;
+      }
+      $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $batch_req);
+
+    }else{
+      $url_encargados = REST_CORE.'/deposito/encargado';
+
+      $aux['depo_id'] = $data['depo_id'];
+      $aux['user_id'] =  $data['encargadosDeposito'];
+      
+      $encargadosDeposito['_post_deposito_encargado'] = $aux;
+      
+      $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $encargadosDeposito);
+    }
+
+    log_message('DEBUG','#TRAZA | #CORE | editarDeposito() | GUARDAR $encargados: >> '.json_encode($rsp_encargados));
+    
+    if($rsp_encargados['status']){
+      $rsp['encargados']['status'] = $rsp_encargados['status'];
+      $rsp['encargados']['msj'] = "Se agregaron los encargados correctamente";
+    }else{
+      $rsp['encargados']['status'] = $rsp_encargados['status'];
+      $rsp['encargados']['data'] = $rsp_encargados['data'];
+      $rsp['encargados']['msj'] = "Se produjo un error al guardar los encargados";
+    }
+    return $rsp;
+  }
+  /**
+	* Elimina el deposito y la relacion con sus encargado/s
+	* @param integer depo_id
+	* @return array resultado de servicio de guardado
+	*/
+  public function borrarDeposito($depo_id){
+    $rspEncargados = $this->borrarEncargadosDeposito($depo_id);
     $post['_delete_deposito'] = array("depo_id" => $depo_id);
-    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | ETAPAS | borrarArticuloEntrada() $post: >> '.json_encode($post));
+    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | Establecimientos | borrarDeposito() $post: >> '.json_encode($post));
     $resource = '/deposito';
     $url = REST_CORE . $resource;
     $aux = $this->rest->callAPI("DELETE", $url, $post);
     $aux = json_decode($aux["status"]);
     return $aux;
   }
-
+  /**
+	* Elimina la relacion de los encargados con lso depositos
+	* @param integer depo_id
+	* @return array resultado de servicio de guardado
+	*/
+  public function borrarEncargadosDeposito($depo_id){
+    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | Establecimientos | borrarEncargadosDeposito()');
+    $url = REST_CORE.'/deposito/encargado';
+    $encargados['depo_id'] = $depo_id;
+    $del['_delete_deposito_encargado'] = $encargados;
+    $aux = $this->rest->callApi('DELETE', $url, $del);
+    return $aux;
+  }
   public function listarPanolesXEstablecimiento($esta_id) 
   {
     log_message('DEBUG', 'Establecimientos/listarPanolesXEstablecimiento(esta_id)-> ' . $esta_id);
@@ -236,7 +371,7 @@ class Establecimientos extends CI_Model {
       $rsp['panol']['status'] = $rsp_panol['status'];
       $rsp['panol']['msj'] = "Se añadio el pañol correctamente";
     }else{
-      $rsp['panol']['data'] = $resptiposInfraccion['data'];
+      $rsp['panol']['data'] = $rsp_panol['data'];
       $rsp['panol']['msj'] = "Se produjo un error al guardar el pañol";
     }
 
@@ -271,7 +406,7 @@ class Establecimientos extends CI_Model {
       $rsp['encargados']['status'] = $rsp_encargados['status'];
       $rsp['encargados']['msj'] = "Se agregaron los encargados correctamente";
     }else{
-      $rsp['encargados']['data'] = $resptiposInfraccion['data'];
+      $rsp['encargados']['data'] = $rsp_encargados['data'];
       $rsp['encargados']['msj'] = "Se produjo un error al guardar los encargados";
     }
     return $rsp;

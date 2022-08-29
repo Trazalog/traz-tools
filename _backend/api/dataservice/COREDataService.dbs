@@ -173,7 +173,7 @@
    </query>
    <query id="getDepositoPorEstablecimiento" useConfig="ToolsDataSource">
       <sql>select de.depo_id ,de.descripcion &#xd;from alm.alm_depositos de &#xd;WHERE de.esta_id = cast(:esta_id as integer)&#xd;and de.empr_id = cast(:empr_id as integer)&#xd;and de.eliminado = false</sql>
-      <result outputType="json">{&#xd;   "depositos": {&#xd;      "deposito": [&#xd;        {&#xd;          "depo_id": "$depo_id",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <result outputType="json">{&#xd;    "depositos": {&#xd;        "deposito": [&#xd;            {&#xd;                "depo_id": "$depo_id",&#xd;                "descripcion": "$descripcion",&#xd;                "@getDepositoEncargados": "$depo_id-&gt;depo_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
    </query>
@@ -182,7 +182,8 @@
       <param name="depo_id" sqlType="STRING"/>
    </query>
    <query id="setDepositoPorEstablecimiento" useConfig="ToolsDataSource">
-      <sql>insert into alm.alm_depositos&#xd;(&#xd;    descripcion, &#xd;    empr_id, &#xd;    esta_id)&#xd;VALUES(&#xd;    :descripcion,&#xd;    cast(:empr_id as integer),&#xd;    cast(:esta_id as integer)&#xd;);</sql>
+      <sql>insert into alm.alm_depositos&#xd;(&#xd;    descripcion, &#xd;    empr_id, &#xd;    esta_id)&#xd;VALUES(&#xd;    :descripcion,&#xd;    cast(:empr_id as integer),&#xd;    cast(:esta_id as integer)&#xd;)&#xd;returning depo_id;</sql>
+      <result outputType="json">{"respuesta":{"depo_id":"$depo_id"}}</result>
       <param name="descripcion" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
@@ -302,6 +303,32 @@
    <query id="deleteEmpresa" useConfig="ToolsDataSource">
       <sql>UPDATE core.empresas &#xd;SET eliminado = TRUE&#xd;WHERE empr_id = cast(:empr_id as integer);</sql>
       <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositosxEncargado" useConfig="ToolsDataSource">
+      <sql>select ad.depo_id,&#xd;ad.descripcion,&#xd;u.id as user_id,&#xd;CASE WHEN u.id IS NULL THEN '' ELSE u.first_name || ' '|| u.last_name END responsable&#xd;from alm.alm_depositos ad &#xd;left join core.encargados_depositos ed on ed.depo_id = ad.depo_id &#xd;left join seg.users u on u.id = ed.user_id&#xd;where u.id = cast(:user_id as integer)</sql>
+      <result outputType="json">{&#xd;    "encargados": {&#xd;        "depositos": [&#xd;            {&#xd;                "depo_id": "$depo_id",&#xd;                "descripcion": "$descripcion",&#xd;                "responsable": "$responsable",&#xd;                "user_id": "$user_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="setEncargadoDeposito" useConfig="ToolsDataSource">
+      <sql>insert into core.encargados_depositos &#xd;(&#xd;    depo_id, &#xd;    user_id&#xd;)&#xd;VALUES(&#xd;    cast(:depo_id as integer),&#xd;    cast(:user_id as integer)&#xd;);</sql>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="updateDepositoPorEstablecimiento" useConfig="ToolsDataSource">
+      <sql>update alm.alm_depositos set descripcion = :descripcion,&#xd;    empr_id = cast(:empr_id as integer), &#xd;    esta_id = cast(:esta_id as integer)&#xd;where depo_id = cast(:depo_id as integer)</sql>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositoEncargados" useConfig="ToolsDataSource">
+      <sql>select ad.depo_id,&#xd;ad.descripcion,&#xd;u.id as user_id,&#xd;CASE WHEN u.id IS NULL THEN '' ELSE u.first_name || ' '|| u.last_name END encargado&#xd;from alm.alm_depositos ad &#xd;left join core.encargados_depositos ed on ed.depo_id = ad.depo_id &#xd;left join seg.users u on u.id = ed.user_id&#xd;where ad.depo_id  = cast(:depo_id as integer)</sql>
+      <result outputType="json">{&#xd;    "encargados": {&#xd;        "encargado": [&#xd;            {&#xd;                "user_id": "$user_id",&#xd;                "encargado": "$encargado"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteDepositoEncargados" useConfig="ToolsDataSource">
+      <sql>delete from core.encargados_depositos ed &#xd;where depo_id = cast(:depo_id as integer)</sql>
+      <param name="depo_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -613,5 +640,28 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/depositos/encargado/{user_id}">
+      <call-query href="getDepositosxEncargado">
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/deposito/encargado">
+      <call-query href="setEncargadoDeposito">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/deposito/establecimiento">
+      <call-query href="updateDepositoPorEstablecimiento">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/deposito/encargado">
+      <call-query href="deleteDepositoEncargados">
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
 </data>
-

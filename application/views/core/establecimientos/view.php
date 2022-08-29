@@ -1,3 +1,9 @@
+<style>
+    .accionesDepositos{
+        width: 20%;
+        text-align: center;
+    }
+</style>
 <!-- /// ---- HEADER ----- /// -->
 <div class="box box-primary animated fadeInLeft">
     <div class="box-header with-border">
@@ -305,43 +311,107 @@
 <!---///////--- FIN MODAL DEPOSITOS ---///////--->
 
 <!---///////--- MODAL AGREGAR DEPOSITO ---///////--->
-<div class="modal fade bs-example-modal-lg" id="modalAgregarDeposito" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header bg-blue">
-        <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true" style="color:white;">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body ">
-          <div class="form-horizontal">
-            <div class="row">
-              <form class="frmDeposito" id="frmDeposito">
-                <div class="col-sm-6">
-                    <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_id">
-                    <!-- Depósito -->
-                    <div class="col-md-6 col-sm-6 col-xs-12">
-                        <div class="form-group">
-                            <label for="deposito">Depósito(<strong style="color: #dd4b39">*</strong>):</label>
-                            <input type="text" class="form-control requerido" name="descripcion" id="deposito" placeholder="Ingrese Depósito...">
-                        </div>
-                    </div>
-                    <!--________________-->
-                </div>
-              </form>
+<div class="modal modal-fade" id="modalAgregarDeposito" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-blue">
+                <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="color:white;">&times;</span>
+                </button>
             </div>
-          </div>
-      </div>
-      <div class="modal-footer">
-          <div class="form-group text-right">
-              <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarDeposito()">Guardar</button>
-              <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
-          </div>
-      </div>
+            <form class="frmDeposito" id="frmDeposito">
+                <div class="modal-body">
+                    <div class="row">
+                        <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_id">
+                        <!-- Depósito -->
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                            <div class="form-group">
+                                <label for="deposito">Depósito(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control requerido" name="descripcion" id="deposito" placeholder="Ingrese Depósito...">
+                            </div>
+                        </div>
+                        <!--________________-->
+                        <!-- Encargados -->
+                        <div class="col-md-8 col-sm-8 col-xs-12 ocultar">
+                            <div class="form-group">
+                                <label for="encargadosDeposito">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
+                                <select class="form-control select2 select2-hidden-accesible requerido" name="encargadosDeposito" id="encargadosDeposito" required style="width: 100%;" multiple>
+                                    <?php
+                                    if(!empty($listarEncargados)){
+                                        foreach ($listarEncargados->usuarios->usuario as $users) {
+                                            echo "<option data-json='".json_encode($users)."' value='".$users->id."'>".$users->first_name." ".$users->last_name."</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <!--____________-->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="form-group text-right">
+                        <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarDeposito(this)">Guardar</button>
+                        <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 <!---///////--- FIN MODAL AGREGAR DEPOSITO ---///////--->
+
+<!---///////--- MODAL EDITAR DEPOSITO ---///////--->
+<div class="modal modal-fade" id="modalEditarDeposito" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-blue">
+                <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="color:white;">&times;</span>
+                </button>
+            </div>
+            <form class="frmDepositoEditar" id="frmDepositoEditar">
+                <div class="modal-body">
+                    <div class="row">
+                        <input type="text" class="form-control habilitar hidden" name="depo_id" id="depo_idEdit">
+                        <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_idEdit">
+                        <!-- Depósito -->
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                            <div class="form-group">
+                                <label for="deposito">Depósito(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control requerido" name="descripcion" id="depositoEdit">
+                            </div>
+                        </div>
+                        <!--________________-->
+                        <!-- Encargados -->
+                        <div class="col-md-8 col-sm-8 col-xs-12 ocultar">
+                            <div class="form-group">
+                                <label for="encargadosDeposito">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
+                                <select class="form-control select2 select2-hidden-accesible requerido" name="encargadosDeposito" id="encargadosDepositoEdit" required style="width: 100%;" multiple>
+                                    <?php
+                                    if(!empty($listarEncargados)){
+                                        foreach ($listarEncargados->usuarios->usuario as $users) {
+                                            echo "<option data-json='".json_encode($users)."' value='".$users->id."'>".$users->first_name." ".$users->last_name."</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <!--____________-->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="form-group text-right">
+                        <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarDeposito(this)">Editar</button>
+                        <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!---///////--- FIN MODAL EDITAR DEPOSITO ---///////--->
 
 <!---///////--- MODAL LISTADO PAÑOLES ---///////--->
 <div class="modal fade bs-example-modal-lg" id="modalpanoles" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
@@ -744,15 +814,20 @@
         $("#establecimiento_id").val(esta_id);
     }
 
-    function guardarDeposito () {
-        if( !validarCampos('frmDeposito') ){
-        return;
+    function guardarDeposito (tag) {
+        var idForm = $(tag).closest("form").attr('id');
+        if( !validarCampos(idForm) ){
+            return;
         }
         var recurso = "";
-        var form = $('#frmDeposito')[0];
+        var form = $('#'+idForm)[0];
         var datos = new FormData(form);
         var datos = formToObject(datos);
-        recurso = 'index.php/core/Establecimiento/guardarDeposito';
+        if(idForm == 'frmDeposito'){
+            recurso = 'index.php/core/Establecimiento/guardarDeposito';
+        }else{
+            recurso = 'index.php/core/Establecimiento/editarDeposito';
+        }
         wo();
         $.ajax({
         type: 'POST',
@@ -760,17 +835,28 @@
         dataType: 'JSON',
         url: recurso,
         success: function(result) {
-            $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
-            setTimeout(function(){ 
-            wc();
-            alertify.success("Depósito agregado con éxito");
-            }, 3000);
-            $("#modalAgregarDeposito").hide(500);
-            // form.reset();
+            if(result.deposito.status && result.encargados.status){
+                $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos",() => {
+                    wc();
+                    alertify.success("Depósito agregado con éxito");
+                    $("#modalAgregarDeposito").hide(500);
+                });
+            }else{
+                wc();
+                if(!result.deposito.status){
+                    alertify.error(result.deposito.msj);
+                }
+                if(!result.encargados.status){
+                    alertify.error(result.encargados.msj);
+                }
+            }
         },
         error: function(result){
             wc();
-            alertify.error("Error agregando Depósito");
+            alertify.error("Error agregando depósito");
+        },
+        complete: function(){
+            $('#encargadosDeposito').val(null).trigger('change');
         }
         });
     }
@@ -823,7 +909,7 @@
         form.reset();
         $(".modal-header h4").remove();
         //guardo el tipo de operacion en el modal
-        $("#operacion").val("Edit");
+        $("#operacion").val("add");
         //pongo titulo al modal
         $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Agregar Pañol</h4>');
         $("#modalpanoles").modal('hide');
@@ -916,7 +1002,26 @@
             }
         });        
     }    
+    function editarDeposito(tag) {
+        var form = $('#frmDepositoEditar')[0];
+        form.reset();
+        $(".modal-header h4").remove();
+        //pongo titulo al modal
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Editar Depósito</h4>');
+        $("#modaldepositos").modal('hide');
+        $('#modalEditarDeposito').modal('show');
+        var data =	JSON.parse($(tag).closest('tr').attr('data-json'));
+        $('#depositoEdit').val(data.descripcion);
+        $('#depo_idEdit').val(data.depo_id);
+        $('#establecimiento_idEdit').val($("#id_esta").val());
+        encargados = [];
+        data.encargados.encargado.forEach(x => {
+            encargados.push(x.user_id);
+        });
+        $('#encargadosDepositoEdit').val(encargados);
+        $('#encargadosDepositoEdit').trigger('change');
 
+    }
 </script>
 
 <!-- Modal aviso eliminar deposito-->
