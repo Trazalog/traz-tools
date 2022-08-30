@@ -1,4 +1,4 @@
-<data disableStreaming="true" name="COREDataService">
+<data disableLegacyBoxcarringMode="true" disableStreaming="true" enableBatchRequests="true" enableBoxcarring="true" name="COREDataService" transports="http https local">
    <config enableOData="false" id="ToolsDataSource">
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
