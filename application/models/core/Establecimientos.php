@@ -161,6 +161,7 @@ class Establecimientos extends CI_Model {
     
     $deposito['esta_id'] = $data['esta_id'];
     $deposito['descripcion'] = $data['descripcion'];
+    $deposito['nombre'] = $data['nombreDeposito'];
     $deposito['empr_id'] = empresa();
 
     $post['_post_deposito_establecimiento'] = $deposito;
@@ -226,6 +227,7 @@ class Establecimientos extends CI_Model {
     
     $deposito['esta_id'] = $data['esta_id'];
     $deposito['descripcion'] = $data['descripcion'];
+    $deposito['nombre'] = $data['nombreDeposito'];
     $deposito['depo_id'] = $data['depo_id'];
     $deposito['empr_id'] = empresa();
 

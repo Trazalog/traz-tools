@@ -291,6 +291,7 @@
                 <thead class="thead-dark" bgcolor="#eeeeee">
                   <th>Acción</th>
                   <th>Nombre</th>
+                  <th>Encargados</th>
                 </thead>
                 <tbody >
                   <!--TABLE BODY -->
@@ -323,16 +324,36 @@
                 <div class="modal-body">
                     <div class="row">
                         <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_id">
-                        <!-- Depósito -->
-                        <div class="col-md-4 col-sm-4 col-xs-12">
+                        <!-- Nombre -->
+                        <div class="col-md-6 col-sm-6 col-xs-6">
                             <div class="form-group">
-                                <label for="deposito">Depósito(<strong style="color: #dd4b39">*</strong>):</label>
-                                <input type="text" class="form-control requerido" name="descripcion" id="deposito" placeholder="Ingrese Depósito...">
+                                <label for="nombreDeposito">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control requerido" name="nombreDeposito" id="depoNombre" placeholder="Ingrese nombre...">
                             </div>
                         </div>
                         <!--________________-->
+                        <!-- Establecimiento Asociado -->
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <label for="estaDepositoModal">Establecimiento Asociado(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control" id="estaDepositoModal" disabled>
+                            </div>
+                        </div>
+                        <!--________________-->
+                    </div>
+                    <div class="row">
+                        <!-- Depósito -->
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            <div class="form-group">
+                                <label for="deposito">Descripción(<strong style="color: #dd4b39">*</strong>):</label>
+                                <textarea class="form-control requerido" name="descripcion" id="deposito" placeholder="Ingrese descripción..."></textarea>
+                            </div>
+                        </div>
+                        <!--________________-->
+                    </div>
+                    <div class="row">
                         <!-- Encargados -->
-                        <div class="col-md-8 col-sm-8 col-xs-12 ocultar">
+                        <div class="col-md-12 col-sm-12 col-xs-12 ocultar">
                             <div class="form-group">
                                 <label for="encargadosDeposito">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
                                 <select class="form-control select2 select2-hidden-accesible requerido" name="encargadosDeposito" id="encargadosDeposito" required style="width: 100%;" multiple>
@@ -372,19 +393,39 @@
             </div>
             <form class="frmDepositoEditar" id="frmDepositoEditar">
                 <div class="modal-body">
+                    <input type="text" class="form-control habilitar hidden" name="depo_id" id="depo_idEdit">
+                    <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_idEdit">
                     <div class="row">
-                        <input type="text" class="form-control habilitar hidden" name="depo_id" id="depo_idEdit">
-                        <input type="text" class="form-control habilitar hidden" name="esta_id" id="establecimiento_idEdit">
-                        <!-- Depósito -->
-                        <div class="col-md-4 col-sm-4 col-xs-12">
+                        <!-- Nombre -->
+                        <div class="col-md-6 col-sm-6 col-xs-6">
                             <div class="form-group">
-                                <label for="deposito">Depósito(<strong style="color: #dd4b39">*</strong>):</label>
-                                <input type="text" class="form-control requerido" name="descripcion" id="depositoEdit">
+                                <label for="nombreDeposito">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control requerido" name="nombreDeposito" id="depoNombreEdit" placeholder="Ingrese nombre...">
                             </div>
                         </div>
                         <!--________________-->
+                        <!-- Establecimiento Asociado -->
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <label for="estaDepositoModal">Establecimiento Asociado(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control" id="estaDepositoEdit" disabled>
+                            </div>
+                        </div>
+                        <!--________________-->
+                    </div>
+                    <div class="row">
+                        <!-- Descripción -->
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            <div class="form-group">
+                                <label for="deposito">Descripción(<strong style="color: #dd4b39">*</strong>):</label>
+                                <textarea type="text" class="form-control requerido" name="descripcion" id="depositoEdit"></textarea>
+                            </div>
+                        </div>
+                        <!--________________-->
+                    </div>
+                    <div class="row">
                         <!-- Encargados -->
-                        <div class="col-md-8 col-sm-8 col-xs-12 ocultar">
+                        <div class="col-md-12 col-sm-12 col-xs-12 ocultar">
                             <div class="form-group">
                                 <label for="encargadosDeposito">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
                                 <select class="form-control select2 select2-hidden-accesible requerido" name="encargadosDeposito" id="encargadosDepositoEdit" required style="width: 100%;" multiple>
@@ -403,7 +444,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="form-group text-right">
-                        <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit" onclick="guardarDeposito(this)">Editar</button>
+                        <button type="" class="btn btn-primary habilitar" data-dismiss="modal" id="btnsave_edit_deposito" onclick="guardarDeposito(this)">Editar</button>
                         <button type="" class="btn btn-default cerrarModalEdit" id="" data-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
@@ -432,7 +473,7 @@
             <div class="col-sm-12 table-scroll">
               <input type="text" id="id_esta" class="hidden">
             <button class="btn btn-block btn-primary" style="width: 100px; margin-top: 10px;" onclick="agregarPanol()">Agregar</button>
-              <table id="tabla_depositos" class="table table-bordered table-striped">
+              <table id="tabla_panoles" class="table table-bordered table-striped">
                 <thead class="thead-dark" bgcolor="#eeeeee">
                   <th>Acción</th>
                   <th>Nombre</th>
@@ -799,9 +840,10 @@
         });
     }
 
-    function agregarDeposito() {
+    function agregarDeposito(tag) {
         var form = $('#frmDeposito')[0];
         form.reset();
+        $("#estaDepositoModal").val($("#establecimientoDeposito").text());
         $(".modal-header h4").remove();
         //guardo el tipo de operacion en el modal
         $("#operacion").val("Edit");
@@ -1005,6 +1047,7 @@
     function editarDeposito(tag) {
         var form = $('#frmDepositoEditar')[0];
         form.reset();
+        $("#estaDepositoEdit").val($("#establecimientoDeposito").text());
         $(".modal-header h4").remove();
         //pongo titulo al modal
         $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Editar Depósito</h4>');
@@ -1013,6 +1056,7 @@
         var data =	JSON.parse($(tag).closest('tr').attr('data-json'));
         $('#depositoEdit').val(data.descripcion);
         $('#depo_idEdit').val(data.depo_id);
+        $('#depoNombreEdit').val(data.nombre);
         $('#establecimiento_idEdit').val($("#id_esta").val());
         encargados = [];
         data.encargados.encargado.forEach(x => {
@@ -1020,7 +1064,33 @@
         });
         $('#encargadosDepositoEdit').val(encargados);
         $('#encargadosDepositoEdit').trigger('change');
-
+        $('#depositoEdit').attr('readonly',false);
+        $('#depo_idEdit').attr('readonly',false);
+        $('#encargadosDepositoEdit').attr('disabled',false);
+        $('#btnsave_edit_deposito').show();
+    }
+    function detalleDeposito(tag) {
+        var form = $('#frmDepositoEditar')[0];
+        form.reset();
+        $(".modal-header h4").remove();
+        //pongo titulo al modal
+        $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Detalle Depósito</h4>');
+        $("#modaldepositos").modal('hide');
+        $('#modalEditarDeposito').modal('show');
+        var data =	JSON.parse($(tag).closest('tr').attr('data-json'));
+        $('#depositoEdit').val(data.descripcion);
+        $('#depositoEdit').attr('readonly','readonly');
+        $('#depo_idEdit').val(data.depo_id);
+        $('#depo_idEdit').attr('readonly','readonly');
+        $('#establecimiento_idEdit').val($("#id_esta").val());
+        encargados = [];
+        data.encargados.encargado.forEach(x => {
+            encargados.push(x.user_id);
+        });
+        $('#encargadosDepositoEdit').val(encargados);
+        $('#encargadosDepositoEdit').trigger('change');
+        $('#encargadosDepositoEdit').attr('disabled','disabled');
+        $('#btnsave_edit_deposito').hide();
     }
 </script>
 
