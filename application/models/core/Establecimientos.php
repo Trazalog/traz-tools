@@ -245,7 +245,7 @@ class Establecimientos extends CI_Model {
       $rsp['deposito']['msj'] = "Se produjo un error al editar el deposito";
     }
     //Elimino la relacion con los encargados
-    $rspDeleteEncargados = $this->borrarEncargadosDeposito($depo_id);
+    $rspDeleteEncargados = $this->borrarEncargadosDeposito($data['depo_id']);
 
     $batch_req = [];
     if(is_array($data['encargadosDeposito'])){
