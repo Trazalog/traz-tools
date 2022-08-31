@@ -122,11 +122,11 @@
     $(".modal-header h4").remove();
     //guardo el tipo de operacion en el modal
     $("#operacion").val("Depositos");
-    //pongo titlo al modal
-    $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Depósitos del Establecimiento </h4>');
     datajson = $(this).parents("tr").attr("data-json");
     data = JSON.parse(datajson);
     var esta_id = data.esta_id;
+    //pongo titlo al modal
+    $(".modal-header").append(`<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Depósitos: <b id='establecimientoDeposito'>${data.nombre}</b></h4>`);
     // guardo esta_id en modal para usar en funcion agregar deposito
     $("#id_esta").val(esta_id);
     $.ajax({
@@ -134,13 +134,21 @@
       url: 'index.php/core/Establecimiento/listarDepositosXEstablecimiento?esta_id='+esta_id,
       success: function(result) {
         if (result) {
-          var tabla = $('#modaldepositos table');    
+          var tabla = $('#tabla_depositos');
           $(tabla).find('tbody').html('');
           result.forEach(e => {
+            var encargados = '';
+            e.encargados.encargado.forEach((ele) => {
+              encargados += ' ' + ele.encargado + ",";
+            });
+            encargados = encargados.slice(0, -1);
             $(tabla).append(
               "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
-                "<td><button type='button' title='Eliminar Depósito' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
+                "<td class='accionesDepositos'><button type='button' title='Ver Depósito' class='btn btn-primary btn-circle btnVerDetalle' onclick='detalleDeposito(this)' id='btnVerDetalleDeposito'><span class='glyphicon glyphicon-eye-open' aria-hidden='true' ></span></button>" +
+                "<button type='button' title='Editar Depósito' class='btn btn-primary btn-circle btnEditar' onclick='editarDeposito(this)' id='btnEditar'><span class='glyphicon glyphicon-pencil' aria-hidden='true' ></span></button>" +
+                "<button type='button' title='Eliminar Depósito' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button></td>" +
                 "<td>" + e.descripcion + "</td>" +
+                "<td>" + encargados + "</td>" +
               "</tr>"
             );
           });            
@@ -173,7 +181,7 @@
       url: 'index.php/core/Establecimiento/listarPanolesXEstablecimiento?esta_id='+esta_id,
       success: function(result) {
         if (result) {
-          var tabla = $('#modalpanoles table');
+          var tabla = $('#tabla_panoles');
           $(tabla).find('tbody').html('');
           result.forEach(e => {
             $(tabla).append(
