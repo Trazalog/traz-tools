@@ -75,8 +75,9 @@ class Equipos extends CI_Model {
   * @return array con datos de areas
   */
   function Listar_Areas(){
-    $area = 'areas';
-		$aux = $this->rest->callAPI("GET",REST_CORE."/tablas/$area");
+    // $area = 'areas';
+    // $url = REST_CORE."/tabla/unidades_medida/empresa/".empresa();
+		$aux = $this->rest->callAPI("GET",REST_CORE."/tabla/areas/empresa/".empresa());
 		$aux = json_decode($aux["data"]);
 		$areas = $aux->tablas->tabla;
 		return $areas;
