@@ -221,6 +221,7 @@ define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
+define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 
