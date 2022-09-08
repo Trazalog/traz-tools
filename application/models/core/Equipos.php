@@ -69,14 +69,12 @@ class Equipos extends CI_Model {
 		return $sectores;
   }
 
-    /**
+  /**
   * Listado de Areas
   * @param 
   * @return array con datos de areas
   */
   function Listar_Areas(){
-    // $area = 'areas';
-    // $url = REST_CORE."/tabla/unidades_medida/empresa/".empresa();
 		$aux = $this->rest->callAPI("GET",REST_CORE."/tabla/areas/empresa/".empresa());
 		$aux = json_decode($aux["data"]);
 		$areas = $aux->tablas->tabla;
@@ -139,8 +137,6 @@ class Equipos extends CI_Model {
    */
   function Editar_Equipo($data)
   {
-    // $equipo['empr_id'] = empresa();
-		// $equipo['usuario_app'] = userNick();
 		$equipo['empa_id'] = $data['empa_id'];
 		$equipo['nombre'] = $data['nombre'];
 		$equipo['descripcion'] = $data['descripcion'];
@@ -148,7 +144,6 @@ class Equipos extends CI_Model {
 		$equipo['capacidad'] = $data['contenido'];
 		$equipo['tara'] = $data['tara'];
 		$equipo['receta'] = $data['receta'];
-		// $post['_post_equipo'] = $equipo;
     $post['_put_equipo'] = $equipo;
     log_message('DEBUG','#TRAZA | TRAZ-TOOLS | EQUIPOS | Editar_Equipo() $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("PUT",REST_CORE."/equipo", $post);

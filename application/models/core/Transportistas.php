@@ -46,7 +46,8 @@ class Transportistas extends CI_Model {
   * @return array con datos de transportistas
   */
   function Listar_Tipos_Transportistas(){
-		$aux = $this->rest->callAPI("GET",REST_CORE."/tablas/tipos_transportistas");
+    $aux = $this->rest->callAPI("GET",REST_CORE."/tabla/tipos_transportistas/empresa/".empresa());
+		// $aux = $this->rest->callAPI("GET",REST_CORE."/tablas/tipos_transportistas");
 		$aux = json_decode($aux["data"]);
 		$tipos_transportistas = $aux->tablas->tabla;
 		return $tipos_transportistas;
