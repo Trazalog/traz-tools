@@ -287,11 +287,8 @@
       <sql>UPDATE core.equipos &#xd;SET eliminado = TRUE&#xd;WHERE equi_id = cast(:equi_id as integer);</sql>
       <param name="equi_id" sqlType="STRING"/>
    </query>
-   <query id="setEmpresa" returnGeneratedKeys="true" useConfig="ToolsDataSource">
-      <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id&#xd;);</sql>
-      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
-         <element column="1" name="ID" xsdType="integer"/>
-      </result>
+   <query id="setEmpresa" useConfig="ToolsDataSource">
+      <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id,&#xd;    imagepath,&#xd;    image&#xd;)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id,&#xd;    :imagepath,&#xd;    :image&#xd;);</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="cuit" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -300,6 +297,8 @@
       <param name="pais_id" sqlType="STRING"/>
       <param name="prov_id" sqlType="STRING"/>
       <param name="loca_id" sqlType="STRING"/>
+      <param name="imagepath" sqlType="STRING"/>
+      <param name="image" optional="false" sqlType="BINARY"/>
    </query>
    <query id="deleteEmpresa" useConfig="ToolsDataSource">
       <sql>UPDATE core.empresas &#xd;SET eliminado = TRUE&#xd;WHERE empr_id = cast(:empr_id as integer);</sql>
@@ -636,6 +635,8 @@
          <with-param name="pais_id" query-param="pais_id"/>
          <with-param name="prov_id" query-param="prov_id"/>
          <with-param name="loca_id" query-param="loca_id"/>
+         <with-param name="imagepath" query-param="imagepath"/>
+         <with-param name="image" query-param="image"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/empresa">
