@@ -17,7 +17,7 @@
         <property expression="$ctx:bpmconf//password"
             name="uri.var.password"
             xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
-        <log level="custom" category="INFO">
+        <log level="custom">
             <property expression="get-property('uri.var.usuario')"
                 name="usuario" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="get-property('uri.var.password')"
@@ -50,7 +50,7 @@
         <property expression="fn:concat($ctx:bpm_url,$func:recurso)"
             name="uri.var.recurso_url" scope="default" type="STRING"
             xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
-        <log level="custom" category="DEBUG">
+        <log category="DEBUG" level="custom">
             <property expression="get-property('uri.var.recurso_url')"
                 name="url a invocar"
                 xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
@@ -63,7 +63,7 @@
                     xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             </args>
         </payloadFactory>
-        <log level="custom" category="DEBUG">
+        <log category="DEBUG" level="custom">
             <property expression="json-eval($)" name="body request"
                 xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="get-property('transport', 'Cookie')"
@@ -109,7 +109,7 @@
             xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd">
             <case regex="2[0-9][0-9]"/>
             <case regex="401">
-                <log level="custom" category="DEBUG">
+                <log category="DEBUG" level="custom">
                     <property name="sesion vencida" value="sesion vencida"/>
                 </log>
                 <header name="Accept" scope="transport" value="text/html"/>
@@ -122,7 +122,7 @@
                 <property
                     expression="fn:concat($ctx:bpm_url,'/loginservice?username=',$ctx:uri.var.usuario,'&amp;password=',$ctx:uri.var.password,'&amp;redirect=false')"
                     name="uri.var.login_url" scope="default" type="STRING"/>
-                <log level="custom" category="DEBUG">
+                <log category="DEBUG" level="custom">
                     <property expression="$ctx:uri.var.login_url" name="url login"/>
                 </log>
                 <call blocking="true">
@@ -133,7 +133,7 @@
                 <log level="full"/>
                 <switch source="get-property('axis2', 'HTTP_SC')">
                     <case regex="2[0-9][0-9]">
-                        <log level="custom" category="DEBUG">
+                        <log category="DEBUG" level="custom">
                             <property name="resultado login" value="ok"/>
                         </log>
                     </case>
@@ -144,7 +144,7 @@
                         <sequence key="toolsFault"/>
                     </default>
                 </switch>
-                <log level="custom" category="DEBUG">
+                <log category="DEBUG" level="custom">
                     <property expression="$trp:Set-Cookie" name="post login session"/>
                 </log>
                 <property expression="$trp:Set-Cookie" name="bonitaCookies"/>
@@ -164,7 +164,7 @@
                         <arg evaluator="xml" expression="$func:payload" literal="false"/>
                     </args>
                 </payloadFactory>
-                <log level="custom" category="DEBUG">
+                <log category="DEBUG" level="custom">
                     <property expression="json-eval($)" name="body request"/>
                     <property expression="$ctx:uri.var.recurso_url" name="resource request"/>
                     <property
@@ -208,7 +208,7 @@
                 <sequence key="toolsFault"/>
             </default>
         </switch>
-        <log level="custom" category="DEBUG">
+        <log category="DEBUG" level="custom">
             <property expression="json-eval($)" name="response"
                 xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
         </log>

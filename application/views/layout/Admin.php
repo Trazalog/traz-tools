@@ -7,6 +7,8 @@
     <title>TRAZALOG | TOOLS</title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Manifest para el desarrollo de la PWA -->
+    <link rel="manifest" crossorigin="use-credentials" href="manifest.json">
     <!-- Bootstrap 3.3.7 -->
     <link rel="stylesheet" href="lib/bower_components/bootstrap/dist/css/bootstrap.min.css">
     <!-- Font Awesome -->
@@ -65,11 +67,13 @@
 
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-
     <link rel="stylesheet" href="<?php echo base_url() ?>lib/swal/dist/sweetalert2.min.css">
-
     <link rel="stylesheet" href="<?php echo base_url() ?>lib\timepicker\jquery.timepicker.min.css">
 
+    <link href='<?php  echo base_url();?>assets/fullcalendar/lib/main.min.css' rel='stylesheet' />
+
+    <!-- Lupa imagenes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/css/magnify.css" integrity="sha512-JxBFHHd+xyHl++SdVJYCCgxGPJKCTTaqndOl/n12qI73hgj7PuGuYDUcCgtdSHTeXSHCtW4us4Qmv+xwPqKVjQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
         .mr-2{
@@ -79,6 +83,26 @@
         .oculto {
             display: none;
         }
+
+        .trazalog:after {
+            /*content: "\A TOOLS";*/
+            content: " TOOLS";
+            font-size: 12px;
+            /*white-space: pre-line;*/
+            
+        }  
+
+        .calendar {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .panel-primary>.panel-heading {
+        color: #fff;
+        background-color: #dd4b39 !important;
+        border-color: #dd4b39 !important;
+        }   
+
     </style>
 
 
@@ -88,16 +112,27 @@
 
 <?php $this->load->view('layout/wait') ?>
 
-<body class="hold-transition skin-blue sidebar-mini"></body>
+<body class="hold-transition skin-red sidebar-mini">
 <div class="wrapper">
 
     <header class="main-header">
         <!-- Logo -->
-        <a href="#"  class="logo">
-            <!-- mini logo for sidebar mini 50x50 pixels -->
-            <span class="logo-mini"><strong><?php echo MNOM ?></strong></span>
-						<span class="logo-lg" onclick="linkTo();"><b><?php echo NOM ?></b></span>
+         <!-- Logo -->
+        <!-- <a href="#"  class="logo"> -->
+        <!-- mini logo for sidebar mini 50x50 pixels -->
+        <!--    <span class="logo-mini"><strong><?php /*echo MNOM */?></strong></span>-->
+		<!--				<span class="logo-lg" onclick="linkTo();"><b><?php /*echo NOM*/ ?></b></span>-->
         <!-- </span> -->
+        <!--</a> -->
+        <!-- Header Navbar: style can be found in header.less -->
+
+
+        <a href="<?php echo base_url() ?>"  class="logo">
+            <!-- </span> -->
+            <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px; height: auto !important;">
+            <span class="trazalog">TRAZALOG </span>
+            <!-- <span class="">TOOLS</strong></span> -->
+            <!-- </span> -->
         </a>
         <!-- Header Navbar: style can be found in header.less -->
         <nav class="navbar navbar-static-top">
@@ -141,9 +176,9 @@
 
     <footer class="main-footer">
         <div class="pull-right hidden-xs">
-            <strong>Version</strong> 0.1
+            <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
         </div>
-        <strong>Copyright &copy; 2020 <a href="">Trazalog</a>.</strong> All rights
+        <strong>Copyright &copy; <?php echo date('Y') ?> <a href="">Trazalog</a>.</strong> All rights
         reserved.
     </footer>
     <?php $this->load->view('layout/modal_generico') ?>
@@ -342,7 +377,95 @@
     <div class="control-sidebar-bg"></div>
 </div>
 <!-- ./wrapper -->
+
+
+<!--_______ MODAL ______-->
+<div class="modal" id="modalGitVersion">
+    <div class="modal-dialog">
+        <!-- modal-content -->
+        <div class="modal-content">
+            
+            <!-- /.modal-body -->
+            <div class="modal-body ">
+                <?php
+                    //echo  ApplicationVersion::getLastVersions();
+                ?>
+                <div id='calendario'></div>
+			</div> 
+            <!-- /.modal-body -->
+
+            <!-- modal-footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Aceptar</button>
+            </div>
+            <!-- modal-footer -->
+
+        </div>
+        <!-- /.modal-content -->
+    </div>
+</div>
+<!-- /.modal -->
+
+
+
+
 <script>
+
+function modalDetailVersion(){
+
+    $("#modalGitVersion").modal('show');
+
+    //
+
+    cargarCalendar();
+}
+
+function cargarCalendar(){
+
+    var tagsLastCommits = <?php echo ApplicationVersion::getLastVersions(); ?>;
+    /*console.log(tagsLastCommits);*/
+
+    let lastCommits = tagsLastCommits[0].split("\n");  
+    var dataCalendar = [];
+
+    lastCommits.forEach(function callback(elemento, indice, array) {  
+        /*console.log("Elemento: "+elemento, indice);*/
+        tagElemento = elemento.split(" ");
+        /*console.log(tagElemento[0]+" "+tagElemento[4]+" "+tagElemento[5]);*/
+        if (typeof(tagElemento[4]) != "undefined" && typeof(tagElemento[5]) != "undefined"){
+            dataCalendar[indice] = {
+                title : tagElemento[4] +" "+tagElemento[5],
+                start : tagElemento[0],
+                end : tagElemento[0]  
+
+            }
+        }
+
+    });
+    /*console.log(dataCalendar);*/
+    var data = dataCalendar.filter(Boolean);
+    var events = JSON.stringify(data);
+    var initialLocaleCode = 'es';
+    var calendarioEl = document.getElementById('calendario');
+
+    var calendario = new FullCalendar.Calendar(calendarioEl, {
+      headerToolbar: {
+        left: 'prev,next',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,listMonth'
+      },
+      initialDate: new Date(),
+      locale: initialLocaleCode,
+      navLinks: true, 
+      businessHours: true, 
+      selectable: true,
+      events: $.parseJSON(events)  
+    });
+
+    calendario.render();
+  }
+
+
 linkTo('<?php echo DEF_VIEW ?>');
 
 function collapse(e) {
@@ -381,6 +504,9 @@ function wc() {
 }
 </script>
 
+<script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
+<script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
+<script type="module" src="<?php echo base_url();?>lib/props/firebase_config.js"></script>
 </body>
 
 </html>

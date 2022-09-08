@@ -40,7 +40,7 @@ if (!function_exists('timeline')) {
                                     <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> Fecha Inicio: ' . date_format(date_create($f['assigned_date']), 'd/m/Y H:i') . ' hs | Fecha Fin: ' . date_format(date_create($f['archivedDate']), 'd/m/Y H:i') . ' hs</small></p>
                                     </div>
                                     <div class="timeline-body">';
-            if (array_key_exists('assigned_id', $f)) {
+            if (array_key_exists('assigned_id', $f) && $f['assigned_id'] != '') {
                 echo '<p>Usuario: ' . $f['assigned_id']['firstname'] . ' ' . $f['assigned_id']['lastname'] . '</p>';
             } else {
                 echo '<p>Usuario: Sin Asignar</p>';

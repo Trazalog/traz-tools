@@ -21,9 +21,8 @@
 							$ci->load->model(ALM . 'Notapedidos');
 							$data['info'] = $ci->Notapedidos->getXCaseId($tarea->caseId);
 							
-							
-							// $aux = $ci->rest->callAPI("GET",REST_PRD."/solicitudContenedores/info/".$case_id);
-							// $aux =json_decode($aux["data"]);
+							 $data_generico =$data['info'];
+					 		$aux = $data_generico;
 						break;
 
 					case BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS:
@@ -47,11 +46,28 @@
 							$aux_cont = $data_cont->contenedores->contenedor;
 						break;
 
+						
+						case BPM_PROCESS_ID_REPARACION_NEUMATICOS:
+						
+					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|REPARACION_NEUMATICOS/".$case_id : $case_id >> '.json_encode($case_id));
+					$ci->load->model(YUDIPROC . 'Yudiproctareas');
+				
+					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
+					 		$data_generico =json_decode($aux["data"]);
+					 		$aux = $data_generico->pedidoTrabajo;
+
+					
+							 $clie_id = $aux->clie_id;
+
+					$aux_clie = $ci->rest->callAPI("GET",REST_CORE."/cliente/".$clie_id);
+					$aux_clie =json_decode($aux_clie["data"]);
+
+						break;
 
 				default:
 						
-					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|chuka/".$case_id : $case_id >> '.json_encode($case_id));
-					$ci->load->model(YUDIPROC . 'Yudiproctareas');
+					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|SEIN ALM PAN TAR/".$case_id : $case_id >> '.json_encode($case_id));
+					$ci->load->model(SEIN . 'proceso_tareas');
 				
 					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
 					 		$data_generico =json_decode($aux["data"]);
@@ -66,6 +82,19 @@
 						break;
 				}
 
+				if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
+					//	echo ' - Orden Nº: '. $aux["ortr_id"]; valores viejos
+					$nombreProceso = 'Nº pedido : '.$aux["pema_id"];
+					} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
+						$nombreProceso = 'Reparación de Neumáticos';
+					}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
+						$nombreProceso = 'Control de Ingreso de Camiones: ' . $nombreTarea;
+					}  elseif (BPM_PROCESS_ID_PROCESO_PRODUCTIVO == $processId) {
+						$nombreProceso = 'PROCESO PRODUCTIVO: ' . $nombreTarea;
+					}else{
+						$nombreProceso = 'Proceso Estandar';
+					}
+
 ?>
 				<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="margin-bottom: 7px !important;">
 					<div class="panel panel-default">
@@ -73,15 +102,7 @@
 							<h4 class="panel-title">
 								<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
 									Proceso <?php
-														if (BPM_PROCESS_ID_PEDIDOS_NORMALES == $processId) {
-															echo ' - Orden Nº: '.$aux->ortr_id;
-														} elseif (BPM_PROCESS_ID_REPARACION_NEUMATICOS == $processId) {
-															echo 'Reparación de Neumáticos';
-														}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
-															echo 'Control de Ingreso de Camiones: ' . $nombreTarea;
-														}else{
-															echo 'Proceso Estandar';
-														}
+												echo $nombreProceso;
 
 													?>
 								</a>
@@ -103,7 +124,7 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="generador" name="">Nº pedido:</label>
-																		<input type="text" class="form-control habilitar" id="generador" value="<?php echo $data->info->pema_id; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="generador" value="<?php echo $aux["pema_id"]; ?>"  readonly>
 																</div>
 														</div>
 														<!--_____________________________________________-->
@@ -111,7 +132,7 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="pedido" name=""> Estado:</label>
-																		<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $data->info->estado; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="pedido" value="<?php echo $aux["estado"]; ?>"  readonly>
 																</div>
 														</div>
 														<!--_____________________________________________-->
@@ -119,7 +140,7 @@
 														<div class="col-md-6">
 															<div class="form-group">
 																	<label for="domicilio" name="">Justificacion:</label>
-																	<input type="text" class="form-control habilitar" id="domicilio" value="<?php echo $data->info->justificacion; ?>"  readonly>
+																	<input type="text" class="form-control habilitar" id="domicilio" value="<?php echo $aux["justificacion"]; ?>"  readonly>
 															</div>
 														</div>
 														<!--_____________________________________________-->
@@ -127,7 +148,7 @@
 														<div class="col-md-6">
 																<div class="form-group">
 																		<label for="fec_alta" name="">Fecha Alta:</label>
-																		<input type="text" class="form-control habilitar" id="fec_alta" value="<?php echo $data->info->fec_alta; ?>"  readonly>
+																		<input type="text" class="form-control habilitar" id="fec_alta" value="<?php echo $aux["fec_alta"]; ?>"  readonly>
 																</div>
 														</div>
 													<!--_____________________________________________-->
@@ -272,7 +293,7 @@
 												<div class="col-md-12">
 													<div class="form-group">
 														<label for="descripcion" name="">Proceso:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
+														<input type="text" class="form-control" id="descripcionH" value="<?php echo $aux->descripcion; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -280,7 +301,15 @@
 												<div class="col-md-4">
 													<div class="form-group">
 														<label for="descripcion" name="">N° de inspección:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->case_id; ?>"  readonly>
+														<input type="text" class="form-control" id="nro_inspeccionH" value="<?php echo $aux->case_id; ?>"  readonly>
+													</div>
+												</div>
+												<!--_____________________________________________-->
+												<!--_____________ PETR ID _____________-->
+												<div class="col-md-4">
+													<div class="form-group">
+														<label for="descripcion" name="">Pedido de trabajo:</label>
+														<input type="text" class="form-control" id="pedidoTrabajoH" value="<?php echo $aux->petr_id; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -292,11 +321,11 @@
 													</div>
 												</div>
 												<!--_____________________________________________-->
-												<!--_____________ PETR ID _____________-->
-												<div class="col-md-4">
+												<!--_____________ USUARIO _____________-->
+												<div class="col-md-12">
 													<div class="form-group">
-														<label for="descripcion" name="">Pedido de trabajo:</label>
-														<input type="text" class="form-control" id="descripcion" value="<?php echo $aux->petr_id; ?>"  readonly>
+														<label for="descripcion" name="">Iniciado por:</label>
+														<input type="text" class="form-control" id="usuarioH" value="<?php echo $aux->usuario_app; ?>"  readonly>
 													</div>
 												</div>
 												<!--_____________________________________________-->
@@ -372,6 +401,46 @@
 													</ul>
 												</div>
 												<!--______________________________________________-->
+												<div class="col-md-12 col-sm-12 col-xs-12">
+													<h4>Fotos Ingreso por barrera:</h4>
+													<!--CSS-->
+													<style>
+													.fotos{
+														float: left;
+														margin-right: 10px;
+														display: block;
+													}
+													#expandedImgC{
+														margin-right: auto;
+														margin-left:auto;
+														display: block;
+														max-width: 60%;
+													}
+													</style>
+													<!-- FIN CSS -->
+													<div class="row">
+														<div class="col-md-12 col-sm-12 col-xs-12">
+															<div class="fotos">
+																<?php foreach ($tarea->imgsBarrera as $key => $value) {
+																	echo "<img class='thumbnail fotos barrera' height='51' width='45' src='$value' alt='' onclick='previewC(this)'>";
+																} ?>
+															</div>
+														</div>
+													</div>
+													<script>
+													function previewC(imgs) {
+														var expandImg = document.getElementById("expandedImgC");
+														expandImg.src = imgs.src;
+													}
+													</script>
+													<hr>
+													<div class="col-sm-12 col-md-12 col-xl-12">
+														<div class="contenedor">
+															<img src="lib\imageForms\preview.png" id="expandedImgC" >
+														</div>
+													</div>
+												</div>
+												<!--______________________________________________-->
 											</div><!-- fin col-md --> 
 											<!--_____________FIN CABECERA SICPOA_____________-->
 								<?php			
@@ -382,13 +451,13 @@
 						* todo lo que pasa x aka debe ser standar de tools
 						*/
 							default :
-							$data =json_decode($aux);
+							// $data =json_decode($aux);
 
 									?>
 									<div class="col-md-12">
-									<p>Datos del Cliente:</p>
+									<p>Datos del Cliente:</p><input type="hidden" class="form-control habilitar" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
 									<hr>
-										<div class="col-md-6">
+										<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="cliente" name="">Cliente:</label>
 													<input type="text" class="form-control habilitar" id="cliente" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
@@ -396,12 +465,27 @@
 										</div>
 
 
-										<div class="col-md-6">
+										<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="dir_entrega" name="">Dirección de Entrega:</label>
 													<input type="text" class="form-control habilitar" id="dir_entrega" value="<?php echo $aux_clie->cliente->dir_entrega; ?>"  readonly>
 											</div>
 										</div>
+									<!--_____________________________________________-->
+										<div class="col-md-6 info_sec animated fadeInLeft">
+											<div class="form-group">
+													<label for="email" name="">Email:</label>
+													<input type="text" class="form-control habilitar" id="email" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
+											</div>
+										</div>
+
+
+										<div class="col-md-6 info_sec animated fadeInLeft">
+											<div class="form-group">
+													<label for="email_alternativo" name="">Email alternativo:</label>
+											</div><input type="text" class="form-control habilitar" id="email_alternativo" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
+										</div>
+
 									</div>
 									<!--_____________________________________________-->
 
@@ -409,7 +493,7 @@
 									<br>
 									<p>Datos del Proyecto:</p>
 									<hr>
-									<div class="col-md-12">
+									<div class="col-md-12 animated fadeInLeft">
 											<div class="form-group">
 													<label for="tipo_proyecto" name="">Tipo de Proyecto:</label>
 													<input type="text" class="form-control habilitar" id="tipo_proyecto" value="<?php echo $aux->tipo; ?>"  readonly>
@@ -417,7 +501,7 @@
 									</div>
 									<!--_____________________________________________-->
 
-									<div class="col-md-6">
+									<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="codigo_proyecto" name="">Codigo Proyecto:</label>
 													<input type="text" class="form-control habilitar" id="codigo_proyecto" value="<?php echo $aux->cod_proyecto; ?>"  readonly>
@@ -425,7 +509,7 @@
 									</div>
 									<!--_____________________________________________-->
 
-									<div class="col-md-6">
+									<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="descripcion" name=""> Descripcion:</label>
 													<input type="text" class="form-control habilitar" id="descripcion" value="<?php echo $aux->descripcion; ?>"  readonly>
@@ -435,7 +519,7 @@
 								</div>
 
 
-								<div class="col-md-12">
+								<div class="col-md-12 animated fadeInLeft">
 
 									<div class="col-md-6">
 											<div class="form-group">
@@ -444,7 +528,7 @@
 															
 
 																								
-     											$fecha = date("d-m-Y",strtotime($data->fec_inicio));
+     											$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_inicio)));
 
 										
 													echo $fecha ;
@@ -454,12 +538,12 @@
 									</div>
 									<!--_____________________________________________-->
 
-									<div class="col-md-6">
+									<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
 													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
 													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
 																									
-														$fecha = date("d-m-Y",$data->fec_entrega);
+														$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_entrega)));
 														
 														echo $fecha ;
 														
@@ -470,20 +554,26 @@
 								</div>
 
 
-								<div class="col-md-12">
+								<div class="col-md-12 animated fadeInLeft">
 
-									<div class="col-md-12">
+									<div class="col-md-6">
 											<div class="form-group">
 													<label for="objetivo" name="">Objetivo:</label>
 													<input type="text" class="form-control habilitar" id="objetivo" value="<?php echo $aux->objetivo; ?>"  readonly>
 											</div>
 									</div>
+									<div class="col-md-6">
+											<div class="form-group">
+													<label for="unidad_medida" name="">Unidad medida:</label>
+													<input type="text" class="form-control habilitar" id="unidad_medida" value="<?php echo $aux->unidad_medida; ?>"  readonly>
+											</div>
+									</div>
 								
 									<!--_____________________________________________-->
-									<div class="col-md-12">
+									<div class="col-md-12 animated fadeInLeft">
 									<?php
 									
-									if ($processId == BPM_PROCESS_ID_REPARACION_NEUMATICOS )
+									if ($processId !='' )
 										{
 											$info_id = $aux->info_id;
 
@@ -499,6 +589,7 @@
 
 									?>
 										<script>
+											$(".frm-select").select2();
 										var formulario = $('#form-dinamico-cabecera').attr('data-frm-id');
 										
 										
@@ -513,6 +604,7 @@
 
 										$(elemento).attr('disabled',true);
 												});
+												
 										</script>
 									
 									</div>

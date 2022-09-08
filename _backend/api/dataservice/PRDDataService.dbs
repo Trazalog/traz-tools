@@ -95,8 +95,8 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="getEtapa" useConfig="ToolsDataSource">
-      <sql>select &#xd;   etap_id, nombre, nom_recipiente, fec_alta, usuario, proc_id , link&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and&#xd;etap_id &lt; 1000&#xd;and prd.etapas.empr_id = cast(:empr_id as integer)&#xd;order by orden</sql>
-      <result outputType="json">{&#xd;    "etapas":&#xd;      {"etapa":&#xd;        [&#xd;          {&#xd;            "id": "$etap_id",&#xd;            "titulo":"$nombre",&#xd;            "nom_recipiente": "$nom_recipiente",&#xd;            "fec_alta": "$fec_alta",&#xd;            "usuario": "$usuario",&#xd;            "proc_id": "$proc_id",&#xd;            "link": "$link"           &#xd;          }&#xd;        ]&#xd;      }&#xd;  }</result>
+      <sql>select &#xd;   etap_id, nombre, nom_recipiente, fec_alta, usuario, proc_id , link, tiet_id&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and&#xd;etap_id &lt; 1000&#xd;and prd.etapas.empr_id = cast(:empr_id as integer)&#xd;order by orden</sql>
+      <result outputType="json">{&#xd;    "etapas":&#xd;      {"etapa":&#xd;        [&#xd;          {&#xd;            "id": "$etap_id",&#xd;            "titulo":"$nombre",&#xd;            "nom_recipiente": "$nom_recipiente",&#xd;            "fec_alta": "$fec_alta",&#xd;            "usuario": "$usuario",&#xd;            "proc_id": "$proc_id",&#xd;            "link": "$link",&#xd;            "tiet_id":"$tiet_id"       &#xd;          }&#xd;        ]&#xd;      }&#xd;  }</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getArticulos" useConfig="ToolsDataSource">
@@ -206,8 +206,8 @@
       <param name="tipo" sqlType="STRING"/>
    </query>
    <query id="getEmpaques" useConfig="ToolsDataSource">
-      <sql>select &#xd;   empa_id as id, nombre as titulo, unidad_medida as unidad, capacidad as volumen , tara, arti_id&#xd;from &#xd;   prd.empaque&#xd;where empr_id = cast(:empr_id as integer)</sql>
-      <result outputType="json">{&#xd; "empaques": {&#xd;    "empaque": [&#xd;           {&#xd;            "id": "$id",&#xd;            "titulo": "$titulo",&#xd;            "unidad": "$unidad",&#xd;            "volumen": "$volumen",&#xd;"tara":"$tara",&#xd;"arti_id":"$arti_id"&#xd;           }&#xd;      ]&#xd;    }&#xd;}</result>
+      <sql>select &#xd;   e.empa_id as id, e.nombre as titulo, e.unidad_medida as unidad, e.capacidad as volumen , e.tara, e.arti_id, f.cantidad, f.descripcion as receta, f.aplicacion as aplicacion_receta &#xd;from &#xd;   prd.empaque e &#xd;left join prd.formulas f on f.form_id = e.receta &#xd;where e.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "empaques": {&#xd;        "empaque": [&#xd;            {&#xd;                "id": "$id",&#xd;                "titulo": "$titulo",&#xd;                "unidad": "$unidad",&#xd;                "volumen": "$volumen",&#xd;                "tara": "$tara",&#xd;                "cantidad": "$cantidad",&#xd;                "receta": "$receta",&#xd;                "aplicacion_receta": "$aplicacion_receta",&#xd;                "arti_id": "$arti_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setFraccionamiento" useConfig="ToolsDataSource">
@@ -218,7 +218,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getLoteAFraccionar" useConfig="ToolsDataSource">
-      <sql>select ART.descripcion, ART.arti_id, DEM.lote_id, DEM.cantidad as cant_entreg, AL.codigo, t.valor as tipo&#xd;from &#xd;	alm.alm_pedidos_materiales PM,&#xd;	alm.alm_entrega_materiales EM,&#xd;	alm.alm_deta_entrega_materiales DEM,&#xd;	alm.alm_articulos ART,&#xd;	alm.alm_lotes al,&#xd;	core.tablas t &#xd;where	&#xd;	EM.pema_id = PM.pema_id and&#xd;	DEM.enma_id = EM.enma_id and&#xd;	DEM.arti_id = ART.arti_id and&#xd;	PM.batch_id = CAST(:batch_id AS INTEGER) and&#xd;	AL.lote_id = dem.lote_id and &#xd;	t.tabl_id = ART.tipo</sql>
+      <sql>select ART.descripcion, ART.arti_id, DEM.lote_id, DEM.cantidad as cant_entreg, AL.codigo, t.valor as tipo&#xd;from &#xd;	alm.alm_pedidos_materiales PM,&#xd;	alm.alm_entrega_materiales EM,&#xd;	alm.alm_deta_entrega_materiales DEM,&#xd;	alm.alm_articulos ART,&#xd;	alm.alm_lotes al,&#xd;	core.tablas t &#xd;where	&#xd;	EM.pema_id = PM.pema_id and&#xd;	DEM.enma_id = EM.enma_id and&#xd;	DEM.arti_id = ART.arti_id and&#xd;	PM.batch_id = CAST(:batch_id AS INTEGER) and&#xd;	AL.lote_id = dem.lote_id and &#xd;	t.tabl_id = ART.tiar_id</sql>
       <result outputType="json">{&#xd;   "lotes":{&#xd;      "lote":[&#xd;         {&#xd;            "art_nombre":"$descripcion",&#xd;            "arti_id":"$arti_id",&#xd;            "lote_id":"$lote_id",&#xd;            "codigo":"$codigo",&#xd;            "cant_entreg":"$cant_entreg",&#xd;            "tipo":"$tipo"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="batch_id" sqlType="STRING"/>
    </query>
@@ -258,7 +258,7 @@
       <param name="batch_id" sqlType="STRING"/>
    </query>
    <query id="getArticulosXTipo" useConfig="ToolsDataSource">
-      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;  core.tablas t&#xd;,alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;where t.valor = :tipo and t.tabl_id = AR.tipo&#xd;  group by ar.arti_id</sql>
+      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;  core.tablas t&#xd;,alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;where t.valor = :tipo and t.tabl_id = AR.tiar_id &#xd;  group by ar.arti_id</sql>
       <result outputType="json">{&#xd;  "articulos":{&#xd;     "articulo":[&#xd;        {&#xd;          "arti_id": "$arti_id",&#xd;          "descripcion": "$descripcion",&#xd;          "barcode":"$barcode",&#xd;          "um":"$um",&#xd;          "stock":"$stock"&#xd;                }&#xd;      ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
    </query>
@@ -341,7 +341,7 @@
       <param name="tipo" sqlType="STRING"/>
    </query>
    <query id="getRecipientes" useConfig="ToolsDataSource">
-      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo = case when t.tipo = 'TODOS' then r.tipo else t.tipo end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;and esta.empr_id = cast(:empr_id as integer)&#xd;order by r.nombre</sql>
+      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo = case when t.tipo = 'TODOS' then r.tipo else t.tipo end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;and r.eliminado = 0&#xd;and esta.empr_id = cast(:empr_id as integer)&#xd;order by r.nombre</sql>
       <result outputType="json">{&#xd;    "recipientes": {&#xd;        "recipiente": [&#xd;            {&#xd;                "reci_id": "$reci_id",&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "estado": "$estado",&#xd;                "depo_id": "$depo_id",&#xd;                "esta_id":"$esta_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>

@@ -13,9 +13,10 @@ class Establecimiento extends CI_Controller
 	 * @param
 	 * @return  void
 	 */
-    function index()
+    public function index()
 	{
       	log_message('INFO','#TRAZA | ESTABLECIMIENTOS | index()  >> ');
+		$data['listarEncargados'] = $this->Establecimientos->obtenerUsuarios();
 	  	// $data['listarEstablecimientos'] = $this->Establecimientos->listarEstablecimientos();
 		$data['listarPaises'] = $this->Establecimientos->listarPaises();
       	$this->load->view('core/establecimientos/view', $data);
@@ -26,15 +27,15 @@ class Establecimiento extends CI_Controller
      *
      * @return  Array  Devuelve un arreglo con los Establecimientos.
      */
-	function listarEstablecimientos()
+	public function listarEstablecimientos()
 	{
 		log_message('INFO','#TRAZA| ESTABLECIMIENTOS | listarEstablecimientos() >> ');
 		$data['listarEstablecimientos'] = $this->Establecimientos->listarEstablecimientos();
-		// $data['listarPaises'] = $this->Establecimientos->listarPaises();
+		$data['listarPaises'] = $this->Establecimientos->listarPaises();
     	$this->load->view('core/establecimientos/list', $data);
 	}
 
-	function getEstados()
+	public function getEstados()
 	{
 		log_message('INFO','#TRAZA| ESTABLECIMIENTO | getEstados() >> ');
 		$pais = $this->input->get('id_pais');
@@ -50,7 +51,7 @@ class Establecimiento extends CI_Controller
 		}
 	}
 
-	function getLocalidades()
+	public function getLocalidades()
 	{
 		log_message('INFO','#TRAZA| ESTABLECIMIENTO | getLocalidades() >> ');
 		$pais = $this->input->get('id_pais');
@@ -68,17 +69,17 @@ class Establecimiento extends CI_Controller
 	* @param array establecimiento nuevo
 	* @return bool true o false segun resultado de servicio de guardado
 	*/
-	function guardarEstablecimiento()
+	public function guardarEstablecimiento()
 	{
-    	log_message('ERROR', '#TRAZA | VALORES | guardarEstablecimiento() >> ');
+    	log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | guardarEstablecimiento() >> ');
 		$valor = $this->input->post('datos');
 		// $valor['usuario'] = userNick();
 		$valor['empr_id'] = empresa();
 		$resp = $this->Establecimientos->guardarEstablecimiento($valor);
 		if ($resp != null) {
-			return json_encode(true);
+			echo json_encode($resp);
 		} else {
-			return json_encode(false);
+			echo json_encode($resp);
 		}
 	}
 
@@ -89,7 +90,7 @@ class Establecimiento extends CI_Controller
 	*/
 	public function borrarEstablecimiento()
 	{
-		log_message('INFO','#TRAZA | CLIENTES | borrarEstablecimiento() >> ');
+		log_message('INFO','#TRAZA | ESTABLECIMIENTOS | borrarEstablecimiento() >> ');
 		$esta_id = $this->input->post('esta_id');
 		$result = $this->Establecimientos->borrarEstablecimiento($esta_id);
 		echo json_encode($result);
@@ -100,18 +101,78 @@ class Establecimiento extends CI_Controller
 	* @param array establecimiento editado
 	* @return bool true o false segun resultado de servicio de guardado
 	*/
-	function guardarEdicionEstablecimiento()
+	public function guardarEdicionEstablecimiento()
 	{
-    	log_message('ERROR', '#TRAZA | VALORES | guardarEdicionEstablecimiento() >> ');
+    	log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | guardarEdicionEstablecimiento() >> ');
 		$valor = $this->input->post('datos');
-		// $valor['usuario'] = userNick();
-		$valor['empr_id'] = empresa();
 		$resp = $this->Establecimientos->guardarEdicionEstablecimiento($valor);
 		if ($resp != null) {
-			return json_encode(true);
+			echo json_encode($resp);
 		} else {
-			return json_encode(false);
+			echo json_encode($resp);
 		}
 	}
 
+	public function listarDepositosXEstablecimiento() 
+	{
+		log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS | listarDepositosXEstablecimiento() >> ');
+        $esta_id = $this->input->get('esta_id');
+        $empr_id = empresa();
+        $resp =  $this->Establecimientos->listarDepositosXEstablecimiento($esta_id,$empr_id);
+        if ($resp != null) {
+			echo json_encode($resp);            
+		} else {
+			echo json_encode($resp);
+		}
+    }
+
+	public function guardarDeposito()
+	{
+		log_message('ERROR', '#TRAZA | #CORE | Establecimiento | guardarDeposito() >> ');
+		$data = $this->input->post('datos');
+		$data['empr_id'] = empresa();
+		$resp = $this->Establecimientos->guardarDeposito($data);
+        echo json_encode($resp);
+	}
+
+	public function borrarDepositoDeEstablecimiento()
+	{
+		log_message('INFO','#TRAZA | ETAPAS | borrarDepositoDeEstablecimiento() >> ');
+		$depo_id = $this->input->post('depo_id');
+		$result = $this->Establecimientos->borrarDeposito($depo_id);
+		echo json_encode($result);
+	}
+
+	public function listarPanolesXEstablecimiento() 
+	{
+		log_message('ERROR', '#TRAZA | ESTABLECIMIENTOS-PAÑOLES | listarPanolesXEstablecimiento() >> ');
+        $esta_id = $this->input->get('esta_id');
+        $resp =  $this->Establecimientos->listarPanolesXEstablecimiento($esta_id);
+        if ($resp != null) {
+			echo json_encode($resp);            
+		} else {
+			echo json_encode($resp);
+		}
+    }
+
+	public function borrarPanolDeEstablecimiento()
+	{
+		log_message('INFO','#TRAZA | ESTABLECIMIENTOS-PAÑOLES | borrarPanolDeEstablecimiento() >> ');
+		$pano_id = $this->input->post('panol_id');
+		$result = $this->Establecimientos->borrarPanol($pano_id);
+		echo json_encode($result);
+	}
+	/**
+	* Guarda la infomacion del pañol y los usuarios encargados
+	* @param array datos pañol y encargados
+	* @return bool true o false segun resultado de servicio de guardado
+	*/
+	public function guardarPanol(){
+		log_message('ERROR', '#TRAZA | #CORE | Establecimiento | guardarPanol() >> ');
+		$data = $this->input->post('data');
+
+		$resp = $this->Establecimientos->guardarPanol($data);
+
+        echo json_encode($resp);
+	}
 }

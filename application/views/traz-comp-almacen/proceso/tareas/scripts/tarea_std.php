@@ -57,7 +57,7 @@ function deshabilitar() {
 $('#cerrar').click(function cargarVista() {
     wo();
     $('#content').empty();
-    //	$("#content").load("<?php# echo base_url(); ?>index.php/Tarea/index/");
+  
     wc();
 });
 
@@ -256,7 +256,7 @@ function guardarComentario() {
 if (comentario.length == 0 ) {
 				
 Swal.fire({
-			icon: 'error',
+			type: 'error',
 			title: 'Error...',
 			text: 'Asegurate de escribir un comentario!',
 			footer: ''
