@@ -85,7 +85,7 @@
       <param name="herr_id" sqlType="STRING"/>
    </query>
    <query id="salidasPanol" useConfig="ToolsDataSource">
-      <sql>select SP.destino, SP.observaciones, SP.comprobante, SP.responsable&#xd;  , SP.fec_alta, H.codigo, T.valor as marca&#xd;  from pan.salida_panol SP, pan.deta_salida_panol DSP, pan.herramientas H, core.tablas T&#xd;  where&#xd;  sp.sapa_id = DSP.sapa_id&#xd;  and DSP.herr_id = H.herr_id&#xd;  and T.tabl_id = H.marca&#xd;  and SP.empr_id = cast (:empr_id as integer)</sql>
+      <sql>select SP.destino, SP.observaciones, SP.comprobante, SP.responsable&#xd;  , SP.fec_alta, H.codigo, T.valor as marca&#xd;  from pan.salida_panol SP, pan.deta_salida_panol DSP, pan.herramientas H, core.tablas T&#xd;  where&#xd;  sp.sapa_id = DSP.sapa_id&#xd;  and DSP.herr_id = H.herr_id&#xd;  and T.tabl_id = H.marca&#xd;  and SP.empr_id = cast (:empr_id as integer)&#xd;  order by SP.fec_alta DESC</sql>
       <result outputType="json"> {&#xd;    "salidas":{&#xd;        "salida":          [&#xd;            {&#xd;              "destino": "$destino",&#xd;              "observaciones": "$observaciones",&#xd;              "comprobante": "$comprobante",&#xd;              "responsable": "$responsable",&#xd;              "fec_alta": "$fec_alta",&#xd;              "codigo": "$codigo",&#xd;              "marca": "$marca"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>

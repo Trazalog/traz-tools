@@ -67,7 +67,7 @@
 				default:
 						
 					log_message('INFO','#TRAZA|INFOPROCESO_HELPER|SEIN ALM PAN TAR/".$case_id : $case_id >> '.json_encode($case_id));
-					$ci->load->model(SEIN . 'proceso_tareas');
+					$ci->load->model(SEIN . 'Proceso_tareas');
 				
 					$aux = $ci->rest->callAPI("GET",REST_PRO."/pedidoTrabajo/xcaseid/".$case_id);
 					 		$data_generico =json_decode($aux["data"]);
@@ -471,24 +471,7 @@
 													<input type="text" class="form-control habilitar" id="dir_entrega" value="<?php echo $aux_clie->cliente->dir_entrega; ?>"  readonly>
 											</div>
 										</div>
-									<!--_____________________________________________-->
-										<div class="col-md-6 info_sec animated fadeInLeft">
-											<div class="form-group">
-													<label for="email" name="">Email:</label>
-													<input type="text" class="form-control habilitar" id="email" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
-											</div>
-										</div>
-
-
-										<div class="col-md-6 info_sec animated fadeInLeft">
-											<div class="form-group">
-													<label for="email_alternativo" name="">Email alternativo:</label>
-											</div><input type="text" class="form-control habilitar" id="email_alternativo" value="<?php echo $aux_clie->cliente->nombre; ?>"  readonly>
-										</div>
-
-									</div>
-									<!--_____________________________________________-->
-
+								
 									<div class="col-md-12">
 									<br>
 									<p>Datos del Proyecto:</p>

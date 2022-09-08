@@ -400,5 +400,67 @@
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
+   <resource methods="POST" uri-template="/grupo">
+      <inSequence>
+         <log level="custom" description="msg entrada post grupo">
+            <property name="payload" expression="json-eval($.payload)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="payload" expression="json-eval($.payload)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <property name="post_group_url" value="/API/identity/group"/>
+         <log level="custom" category="DEBUG">
+            <property name="url a invocar post grupo" expression="get-property('post_group_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:post_group_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+         </call-template>
+         <loopback/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM grupo" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/profileMember">
+      <inSequence>
+         <log level="custom" description="msg entrada post profile member">
+            <property name="payload" expression="json-eval($.payload)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="payload" expression="json-eval($.payload)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <property name="post_profile_member_url" value="/API/portal/profileMember"/>
+         <log level="custom" category="DEBUG">
+            <property name="url a invocar post profile member" expression="get-property('post_profile_member_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:post_profile_member_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:payload}"/>
+         </call-template>
+         <loopback/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM profile member" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
 </api>
                         

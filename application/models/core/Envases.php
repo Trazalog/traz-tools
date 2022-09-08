@@ -2,7 +2,7 @@
 /**
 * Modelo de Envases 
 *
-* @autor Rogelio Sanchez
+* @autor Gerardo Ramos
 */
 class Envases extends CI_Model {
   /**
