@@ -15,7 +15,7 @@ class Establecimiento extends CI_Controller
 	 */
     public function index()
 	{
-      	log_message('INFO','#TRAZA | ESTABLECIMIENTOS | index()  >> ');
+      	log_message('DEBUG','#TRAZA | ESTABLECIMIENTOS | index()  >> ');
 		$data['listarEncargados'] = $this->Establecimientos->obtenerUsuarios();
 	  	// $data['listarEstablecimientos'] = $this->Establecimientos->listarEstablecimientos();
 		$data['listarPaises'] = $this->Establecimientos->listarPaises();
@@ -96,7 +96,7 @@ class Establecimiento extends CI_Controller
 		echo json_encode($result);
 	}
 
-	  /**
+	/**
 	* Guarda establecimiento editado
 	* @param array establecimiento editado
 	* @return bool true o false segun resultado de servicio de guardado
@@ -125,13 +125,26 @@ class Establecimiento extends CI_Controller
 			echo json_encode($resp);
 		}
     }
-
-	public function guardarDeposito()
-	{
-		log_message('ERROR', '#TRAZA | #CORE | Establecimiento | guardarDeposito() >> ');
+	/**
+	* Agrega un deposito con encargado/s
+	* @param array datos deposito
+	* @return array resultado de servicio de guardado
+	*/
+	public function guardarDeposito(){
+		log_message('DEBUG', '#TRAZA | #CORE | Establecimiento | guardarDeposito()');
 		$data = $this->input->post('datos');
-		$data['empr_id'] = empresa();
 		$resp = $this->Establecimientos->guardarDeposito($data);
+        echo json_encode($resp);
+	}
+	/**
+	* Edita un deposito y sus encargado/s
+	* @param array datos deposito
+	* @return array resultado de servicio de guardado 
+	*/
+	public function editarDeposito(){
+		log_message('DEBUG', '#TRAZA | #CORE | Establecimiento | editarDeposito()');
+		$data = $this->input->post('datos');
+		$resp = $this->Establecimientos->editarDeposito($data);
         echo json_encode($resp);
 	}
 
