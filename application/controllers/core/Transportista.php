@@ -8,30 +8,31 @@ class Transportista extends CI_Controller
     } 
 
     /**
-	 *  Muestra el ABM de los transportistas.
-	 *
-	 * @param
-	 * @return  void
-	 */
-
-    function index(){
-      log_message('INFO','#TRAZA | TRANSPORTISTAS | index()  >> ');
-      $data['list'] = $this->Transportistas->Listar_Transportistas();
-      $data['tipos_transportistas'] = $this->Transportistas->Listar_Tipos_Transportistas();
-      $this->load->view('core/transportistas/view', $data);
+	*  Muestra el ABM de los transportistas.
+	*
+	* @param
+	* @return  void
+	*/
+    function index()
+	{
+		log_message('INFO','#TRAZA | TRANSPORTISTAS | index()  >> ');
+		$data['list'] = $this->Transportistas->Listar_Transportistas();
+		$data['tipos_transportistas'] = $this->Transportistas->Listar_Tipos_Transportistas();
+		$this->load->view('core/transportistas/view', $data);
     }
     
- /**
-     * Devuelve un listado de las Transportistas.
-     *
-     * @return  Array   Devuelve un arreglo con las Transportistas.
-     */
-		function Listar_Transportistas()
+ 	/**
+	* Devuelve un listado de las Transportistas.
+	*
+	* @return  Array   Devuelve un arreglo con las Transportistas.
+	*/
+	function Listar_Transportistas()
 	{
 		log_message('INFO','#TRAZA| TRANSPORTISTAS | Listar_Transportistas() >> ');
 		$data['list'] = $this->Transportistas->Listar_Transportistas();
     	$this->load->view('core/transportistas/list', $data);
 	}
+
     /**
 	* Guarda transportista
 	* @param array transportista
@@ -39,16 +40,17 @@ class Transportista extends CI_Controller
 	*/
 	function Guardar_Transportista()
 	{
-    log_message('ERROR', '#TRAZA | TRANSPORTISTAS | guardar() >> $transportista_id: '.$transportista_id);
 		$transportista = $this->input->post('datos');
-    $transportista['usuario_app'] = userNick();
-    $transportista['empr_id'] = empresa();
+		$transportista['usuario_app'] = userNick();
+		$transportista['empr_id'] = empresa();
 		$resp = $this->Transportistas->Guardar_Transportista($transportista);
-		if ($resp != null) {
-			return json_encode(true);
-		} else {
-			return json_encode(false);
-		}
+		echo json_encode($resp);
+    	log_message('ERROR', '#TRAZA | TRANSPORTISTAS | guardar() >> $transportista_id: '.$transportista);
+		// if ($resp != null) {
+		// 	return json_encode(true);
+		// } else {
+		// 	return json_encode(false);
+		// }
 	}
 
 	/**
@@ -58,7 +60,7 @@ class Transportista extends CI_Controller
 	*/
 	function Editar_Transportista()
 	{
-    log_message('INFO','#TRAZA | TRANSPORTISTAS | Editar_Transportista() >> ');
+    	log_message('INFO','#TRAZA | TRANSPORTISTAS | Editar_Transportista() >> ');
 		$transportista = $this->input->post('datos');
 		$transportista['usuario_app'] = userNick();
 		$resp = $this->Transportistas->Editar_Transportista($transportista);

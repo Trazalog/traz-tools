@@ -30,7 +30,7 @@ if(!function_exists('validarUrlSinSesion')){
 
 			$urlacomp=substr($an_url->url, 0,$initialPosition+1);
 			
-			if (str_contains($url, $urlacomp)) { 
+			if (strpos($url, $urlacomp)) { 
 				$urlvalida=true;
 				log_message("DEBUG","urls valida: ".$an_url->url." comparada con ".$urlacomp);
 			}
