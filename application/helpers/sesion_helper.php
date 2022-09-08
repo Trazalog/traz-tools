@@ -1,5 +1,46 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
+
+if(!function_exists('validarUrlSinSesion')){
+
+	/**
+	 * Verifica si la url actual valida con token en lugar de sesion
+	* @author rruiz
+	*/
+	 function validarUrlSinSesion(){
+
+		$ci =& get_instance();
+		$ci->load->model( COD.'Urls' );
+
+		$url=$ci->uri->uri_string();
+		$urls=$ci->Urls->obtenerUrls();
+		$urlvalida=false;
+		log_message("DEBUG","La url es".$url);
+
+		foreach ($urls as $an_url) {
+
+			preg_match('/.{/', $an_url->url, $matches1, PREG_OFFSET_CAPTURE);
+			preg_match('/.\?/', $an_url->url, $matches2, PREG_OFFSET_CAPTURE);
+			if($matches1[0][1] < $matches2[0][1]){
+				$initialPosition =$matches1[0][1] ; 
+			}
+			else {
+				$initialPosition =$matches2[0][1] ; 
+			}
+
+			$urlacomp=substr($an_url->url, 0,$initialPosition+1);
+			
+			if (str_contains($url, $urlacomp)) { 
+				$urlvalida=true;
+				log_message("DEBUG","urls valida: ".$an_url->url." comparada con ".$urlacomp);
+			}
+		}
+
+		return $urlvalida;
+
+	}   
+}
+
 /**
 * Devuelve el id de usuario en Dnato (sistema login)
 * @param
@@ -191,28 +232,27 @@ if(!function_exists('validarSesion')){
 // // si esta vencida la sesion redirige al login
      function validarSesion(){
 
-$userdata_email = $_SESSION['email'];
-	
-	if(isset($userdata_email)){
-		;
-	$userdata_email = $_SESSION['email'];
-	}
-	else{
-		$userdata_email = '0';
-	}
-
-	if($userdata_email != '0') {
-
-log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
-
+		$userdata_email = $_SESSION['email'];
+		
+		if(isset($userdata_email)){
+			;
+			$userdata_email = $_SESSION['email'];
 		}
 		else{
-				 redirect(DNATO.'main/logout');
-				//echo base_url('Login/log_out');
-				log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
-
-				return;
+			$userdata_email = '0';
 		}
+
+		if($userdata_email != '0') {
+			log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
+
+			}
+			else{
+					redirect(DNATO.'main/logout');
+					//echo base_url('Login/log_out');
+					log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+
+					return;
+			}
 
 
    }
@@ -223,51 +263,45 @@ log_message('DEBUG','#TRAZA |LOGIN | OK  >> Sesion Iniciada!!!');
 if(!function_exists('validarInactividad')){
 	
 	function validarInactividad(){	
-//Comprobamos si esta definida la sesión 'tiempo'.
+						
+			//Comprobamos si esta definida la sesión 'tiempo'.
+			if(isset($_SESSION['tiempo']) ) {
 
-if(isset($_SESSION['tiempo']) ) {
+				//Tiempo en segundos para dar vida a la sesión.
+				$inactivo = 4000;//40min en este caso.
+				
+				//Calculamos tiempo de vida inactivo.
+				$vida_session = time() - $_SESSION['tiempo'];
 
-    //Tiempo en segundos para dar vida a la sesión.
-    $inactivo = 4000;//40min en este caso.
-	
+					//Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
+					if($vida_session > $inactivo)
+					{
 
-    //Calculamos tiempo de vida inactivo.
-    $vida_session = time() - $_SESSION['tiempo'];
+						//Removemos sesión.
+						session_unset();
+						//Destruimos sesión.
+						session_destroy();              
+						//Redirigimos pagina.
 
-        //Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
-        if($vida_session > $inactivo)
-        {
-		
-
-            //Removemos sesión.
-            session_unset();
-            //Destruimos sesión.
-            session_destroy();              
-            //Redirigimos pagina.
-		//	redirect(DNATO.'main/logout');
-			 echo base_url('Login/log_out');
-			log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
-
-		
-			//echo "<script>Swal.fire({icon: 'error',title: 'Oops...',text: 'Sesion Expirada!'})</script>";	
-			?>
-			
-			<?php
-			
-			
-            exit();
-        }else{
-			//Refresco el tiempo luego de actividad
-			validarSesion();
-			$_SESSION['tiempo'] = time();
+						//Verificamos si la presente URL no debe validarse con Sesion sino con Token
+						if (!validarUrlSinSesion() ){
+							echo base_url('Login/log_out');
+							log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');						
+							exit();
+						}
+					}else{
+						//Refresco el tiempo luego de actividad
+						
+						//Verificamos si la presente URL no debe validarse con Sesion sino con Token
+						if (!validarUrlSinSesion() ){
+							validarSesion();
+							$_SESSION['tiempo'] = time();
+						}
+					}
+			} else {
+				//Activamos sesion tiempo.
+				$_SESSION['tiempo'] = time();
+			}
 		}
-} else {
-    //Activamos sesion tiempo.
-    $_SESSION['tiempo'] = time();
-}
-}
 	}
-
-
-
 	?>
