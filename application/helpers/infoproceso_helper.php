@@ -511,10 +511,10 @@
 															
 
 																								
-     											$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_inicio)));
+     											$fecha_inicio = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_inicio)));
 
 										
-													echo $fecha ;
+													echo $fecha_inicio ;
 													
 													?>"  readonly>
 											</div>
@@ -526,9 +526,9 @@
 													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
 													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
 																									
-														$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_entrega)));
+														$fecha_entrega = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_entrega)));
 														
-														echo $fecha ;
+														echo $fecha_entrega ;
 														
 														?>"  readonly>
 											</div>
