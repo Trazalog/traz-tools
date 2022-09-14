@@ -23,8 +23,7 @@ class Clientes extends CI_Model {
     $post['_post_cliente'] = $data;
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | CLIENTES | Guardar_CLiente()  $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("POST",REST_CORE."/cliente", $post);
-    $aux = json_decode($aux["data"]);
-    return $aux->GeneratedKeys->Entry;
+    return $aux;
   }
 
   /**
@@ -62,7 +61,7 @@ class Clientes extends CI_Model {
     $post['_put_cliente'] = $cliente;
     log_message('DEBUG','#TRAZA | TRAZ-TOOLS | CLIENTES | Editar_Cliente() $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("PUT",REST_CORE."/cliente", $post);
-    $aux = json_decode($aux["status"]);
+    // $aux = json_decode($aux["status"]);
     return $aux;
   }
   
