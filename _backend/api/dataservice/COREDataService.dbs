@@ -1,4 +1,4 @@
-<data disableLegacyBoxcarringMode="true" disableStreaming="true" enableBatchRequests="true" enableBoxcarring="true" name="COREDataService" transports="http https local">
+<data enableBatchRequests="true" enableBoxcarring="true" name="COREDataService" transports="http https local">
    <config enableOData="false" id="ToolsDataSource">
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
@@ -59,8 +59,8 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getClientexEmpresayEstado" useConfig="ToolsDataSource">
-      <sql>SELECT * FROM core.clientes&#xd;WHERE EMPR_ID = CAST(:empr_id AS INTEGER) &#xd;and estado = :estado</sql>
-      <result outputType="json">{&#xd; "cliente":{&#xd;   "clientes":[&#xd;     {&#xd;      "clie_id":"$clie_id",&#xd;      "nombre":"$nombre",&#xd;      "dir_entrega":"$dir_entrega",&#xd;      "observaciones":"$observaciones",&#xd;      "ticl_id":"$ticl_id",&#xd;      "estado":"$estado"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
+      <sql>SELECT&#xd;  c.*,&#xd;  t.valor as tipo_cliente&#xd;FROM&#xd;  core.clientes c&#xd;  left join core.tablas t on t.tabl_id = c.ticl_id&#xd;WHERE&#xd;  c.empr_id = CAST(:empr_id AS INTEGER)&#xd;  and c.estado = :estado&#xd;order by&#xd;  c.clie_id ASC</sql>
+      <result outputType="json">{&#xd; "cliente":{&#xd;   "clientes":[&#xd;     {&#xd;      "clie_id":"$clie_id",&#xd;      "nombre":"$nombre",&#xd;      "dir_entrega":"$dir_entrega",&#xd;      "observaciones":"$observaciones",&#xd;      "ticl_id":"$ticl_id",&#xd;      "estado":"$estado",&#xd;      "tipo_cliente":"$tipo_cliente"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
    </query>
@@ -69,11 +69,8 @@
       <result outputType="json">{&#xd;  "equipos": {&#xd;    "equipo": [&#xd;      {&#xd;        "equi_id" : "$equi_id",&#xd;        "descripcion": "$descripcion",&#xd;        "marca": "$marca",&#xd;        "codigo": "$codigo",&#xd;        "ubicacion": "$ubicacion",&#xd;        "estado": "$estado",&#xd;        "fecha_ultimalectura": "$fecha_ultimalectura",&#xd;        "ultima_lectura": "$ultima_lectura",&#xd;        "tipo_horas": "$tipo_horas",&#xd;        "valor_reposicion": "$valor_reposicion",&#xd;        "fecha_reposicion": "$fecha_reposicion",&#xd;        "valor": "$valor",&#xd;        "comprobante": "$comprobante",&#xd;        "descrip_tecnica": "$descrip_tecnica",&#xd;        "numero_serie": "$numero_serie",&#xd;        "adjunto": "$adjunto",&#xd;        "meta_disponibilidad": "$meta_disponibilidad",&#xd;        "fecha_ingreso": "$fecha_ingreso",&#xd;        "fecha_baja": "$fecha_baja",&#xd;        "fecha_garantia": "$fecha_garantia",&#xd;        "prov_id": "$prov_id",&#xd;        "empr_id": "$empr_id",&#xd;        "sect_id": "$sect_id",&#xd;        "ubic_id": "$ubic_id",&#xd;        "grup_id": "$grup_id",&#xd;        "crit_id": "$crit_id",&#xd;        "unme_id": "$unme_id",&#xd;        "area_id": "$area_id",&#xd;        "proc_id": "$proc_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="sect_id" sqlType="STRING"/>
    </query>
-   <query id="setCliente" returnGeneratedKeys="true" useConfig="ToolsDataSource">
-      <sql>INSERT INTO core.clientes&#xd;(nombre, dir_entrega, observaciones,  usuario_app, ticl_id, empr_id)&#xd;VALUES(:nombre, :dir_entrega, :observaciones,  :usuario_app, :ticl_id, cast(:empr_id as integer))</sql>
-      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
-         <element column="1" name="ID" xsdType="integer"/>
-      </result>
+   <query id="setCliente" useConfig="ToolsDataSource">
+      <sql>INSERT INTO&#xd;  core.clientes (&#xd;    nombre,&#xd;    dir_entrega,&#xd;    observaciones,&#xd;    usuario_app,&#xd;    ticl_id,&#xd;    empr_id&#xd;  )&#xd;VALUES(&#xd;    :nombre,&#xd;    :dir_entrega,&#xd;    :observaciones,&#xd;    :usuario_app,&#xd;    :ticl_id,&#xd;    cast(:empr_id as integer)&#xd;  )</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="dir_entrega" sqlType="STRING"/>
       <param name="observaciones" sqlType="STRING"/>
