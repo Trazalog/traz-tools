@@ -4,9 +4,9 @@
         <th>Acciones</th>
         <th>Nombre</th>
         <th>Calle y Altura</th>
-        <th>Localidad</th>
-        <th>Estado</th>
         <th>País</th>
+        <th>Estado</th>
+        <th>Localidad</th>
     </thead>
     <tbody >
         <?php
@@ -23,9 +23,9 @@
                         echo '</td>';
                         echo '<td>'.$establecimiento->nombre.'</td>';
                         echo '<td>'.$establecimiento->calle.' '.$establecimiento->altura.'</td>';
-                        echo '<td>'.$establecimiento->localidad.'</td>';
-                        echo '<td>'.$establecimiento->estado.'</td>';
                         echo '<td>'.$establecimiento->pais.'</td>';
+                        echo '<td>'.$establecimiento->estado.'</td>';
+                        echo '<td>'.$establecimiento->localidad.'</td>';
                     echo '</tr>';
                 }
             }
@@ -56,9 +56,16 @@
     // form.reset();
     // $("#pais_edit").val('');
     // creo los select de estado y localidad
+    $("#estado_edit").empty();
+    $("#localidad_edit").empty();
+    var $selectPais = $("#pais_edit");
     var $selectEstado = $("#estado_edit");
     var $selectLocalidad = $("#localidad_edit");
     // a esos select les guardo solamente los valores guardados previamente
+    $selectPais.append($("<option>", {
+        value: datajson.pais_id,
+        text: datajson.pais,
+    }));
     $selectEstado.append($("<option>", {
         value: datajson.estado_id,
         text: datajson.estado,
