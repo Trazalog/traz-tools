@@ -121,19 +121,19 @@ define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 define('BPM_PROCESS_ID_TAREA_GENERICA', '6236605840529875888');
 
 #YUDICA REPARACION_NEUMATICOS
-define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
+define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '8974273316817564342');
 
 #SICPOA Control de Ingreso de Camiones
 define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5841373952148500437');
 
 #SEIN PROCESO PRODUCTIVO
-define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '6851792266678531267');
+define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '5973271304807922085');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
 
 #SEIN -tools-ALM PAN TAR
-define('SEIN', 'SEIN-tools-almpantar/');
+define('SEIN', 'sein-tools-almpantar/');
 
 
 #COMPONENTE PAÑOL
@@ -221,6 +221,7 @@ define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
+define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 

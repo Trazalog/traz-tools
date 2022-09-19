@@ -17,7 +17,7 @@
             <property name="bpmSession" expression="$ctx:empr_descripcion"/>
          </log>
          <payloadFactory media-type="json" description="crear empresa">
-            <format>       {     "_post_empresa":{        "nombre":"$1",        "cuit":"$2",        "descripcion":"$3",        "telefono":"$4",        "email":"$5",        "pais_id":"$6",        "prov_id":"$7",        "loca_id":"$8"     }  }     </format>
+            <format>       {     "_post_empresa":{        "nombre":"$1",        "cuit":"$2",        "descripcion":"$3",        "telefono":"$4",        "email":"$5",        "pais_id":"$6",        "prov_id":"$7",        "loca_id":"$8", "imagepath":"$9", "image":"$10"     }  }     </format>
             <args>
                <arg evaluator="json" expression="$.empresa.nombre"/>
                <arg evaluator="json" expression="$.empresa.cuit"/>
@@ -27,6 +27,8 @@
                <arg evaluator="json" expression="$.empresa.pais_id"/>
                <arg evaluator="json" expression="$.empresa.prov_id"/>
                <arg evaluator="json" expression="$.empresa.loca_id"/>
+               <arg evaluator="json" expression="$.empresa.imagepath"/>
+               <arg evaluator="json" expression="$.empresa.image"/>
             </args>
          </payloadFactory>
          <property name="messageType" value="application/json" scope="axis2"/>

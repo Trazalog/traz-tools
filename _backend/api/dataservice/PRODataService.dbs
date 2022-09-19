@@ -1,4 +1,4 @@
-<data enableBatchRequests="true" enableBoxcarring="true" name="PRODataService" transports="http https local">
+<data enableBatchRequests="true" enableBoxcarring="true" name="PRODataService" serviceStatus="inactive" transports="http https local">
    <config enableOData="false" id="ToolsDataSource">
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
@@ -76,6 +76,12 @@
       <sql>select distinct(ptf.info_id)&#xd;,f.nombre nom_form&#xd;,ptf.nom_tarea&#xd;from &#xd;pro.pedidos_trabajo_forms ptf &#xd;,frm.instancias_formularios i &#xd;, frm.formularios f &#xd;where  i.info_id = ptf.info_id &#xd;and f.form_id = i.form_id &#xd;and ptf.petr_id = cast(:petr_id as integer)</sql>
       <result outputType="json">{&#xd;   "forms":{&#xd;      "form":[&#xd;         {&#xd;            "info_id":"$info_id",&#xd;            "nom_tarea":"$nom_tarea",&#xd;            "nom_form":"$nom_form"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="petr_id" sqlType="STRING"/>
+   </query>
+   <query id="getProcesosForms" useConfig="ToolsDataSource">
+      <sql>select * from pro.procesos_forms pf where nombre_tarea =:nombre_tarea and eliminado= false and empr_id =cast(:empr_id as integer) order by orden</sql>
+      <result outputType="json">{&#xd; "formularios": {&#xd; "formulario": [&#xd; {&#xd; "nombre_tarea": "$nombre_tarea",&#xd; "form_id": "$form_id",&#xd; "orden": "$orden",&#xd; "empr_id": "$empr_id"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <param name="nombre_tarea" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="POST" path="/pedidoTrabajo">
       <call-query href="setPedidoTrabajo">
@@ -160,4 +166,11 @@
          <with-param name="petr_id" query-param="petr_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/proceso/tarea/{nombre_tarea}/empresa/{empr_id}">
+      <call-query href="getProcesosForms">
+         <with-param name="nombre_tarea" query-param="nombre_tarea"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
 </data>
+

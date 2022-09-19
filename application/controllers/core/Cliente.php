@@ -8,30 +8,31 @@ class Cliente extends CI_Controller
     } 
 
     /**
-	 *  Muestra el ABM de los clientes.
-	 *
-	 * @param
-	 * @return  void
-	 */
-
-    function index(){
-      log_message('INFO','#TRAZA | CLIENTES | index()  >> ');
-      $data['list'] = $this->Clientes->Listar_Clientes();
-      $data['tipos_clientes'] = $this->Clientes->Listar_Tipos_Clientes();
-      $this->load->view('core/clientes/view', $data);
+	*  Muestra el ABM de los clientes.
+	*
+	* @param
+	* @return  void
+	*/
+    function index()
+	{
+    	log_message('INFO','#TRAZA | CLIENTES | index()  >> ');
+    	$data['list'] = $this->Clientes->Listar_Clientes();
+    	$data['tipos_clientes'] = $this->Clientes->Listar_Tipos_Clientes();
+    	$this->load->view('core/clientes/view', $data);
     }
     
- /**
-     * Devuelve un listado de las Clientes.
-     *
-     * @return  Array   Devuelve un arreglo con las Clientes.
-     */
-		function Listar_Clientes()
+	/**
+	* Devuelve un listado de las Clientes.
+	*
+	* @return  Array   Devuelve un arreglo con las Clientes.
+	*/
+	function Listar_Clientes()
 	{
 		log_message('INFO','#TRAZA| CLIENTES | Listar_Clientes() >> ');
 		$data['list'] = $this->Clientes->Listar_Clientes();
     	$this->load->view('core/clientes/list', $data);
 	}
+
     /**
 	* Guarda cliente
 	* @param array cliente
@@ -39,16 +40,12 @@ class Cliente extends CI_Controller
 	*/
 	function Guardar_Cliente()
 	{
-    log_message('ERROR', '#TRAZA | CLIENTES | guardar() >> $cliente_id: '.$cliente_id);
 		$cliente = $this->input->post('datos');
-    $cliente['usuario_app'] = userNick();
-    $cliente['empr_id'] = empresa();
+		$cliente['usuario_app'] = userNick();
+		$cliente['empr_id'] = empresa();
 		$resp = $this->Clientes->Guardar_Cliente($cliente);
-		if ($resp != null) {
-			return json_encode(true);
-		} else {
-			return json_encode(false);
-		}
+		echo json_encode($resp);
+    	log_message('ERROR', '#TRAZA | CLIENTES | guardar() >> $cliente_id: '.$cliente);
 	}
 
 	/**

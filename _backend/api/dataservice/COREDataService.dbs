@@ -59,8 +59,8 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getClientexEmpresayEstado" useConfig="ToolsDataSource">
-      <sql>SELECT * FROM core.clientes&#xd;WHERE EMPR_ID = CAST(:empr_id AS INTEGER) &#xd;and estado = :estado</sql>
-      <result outputType="json">{&#xd; "cliente":{&#xd;   "clientes":[&#xd;     {&#xd;      "clie_id":"$clie_id",&#xd;      "nombre":"$nombre",&#xd;      "dir_entrega":"$dir_entrega",&#xd;      "observaciones":"$observaciones",&#xd;      "ticl_id":"$ticl_id",&#xd;      "estado":"$estado"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
+      <sql>SELECT&#xd;  c.*,&#xd;  t.valor as tipo_cliente&#xd;FROM&#xd;  core.clientes c&#xd;  left join core.tablas t on t.tabl_id = c.ticl_id&#xd;WHERE&#xd;  c.empr_id = CAST(:empr_id AS INTEGER)&#xd;  and c.estado = :estado&#xd;order by&#xd;  c.clie_id ASC</sql>
+      <result outputType="json">{&#xd; "cliente":{&#xd;   "clientes":[&#xd;     {&#xd;      "clie_id":"$clie_id",&#xd;      "nombre":"$nombre",&#xd;      "dir_entrega":"$dir_entrega",&#xd;      "observaciones":"$observaciones",&#xd;      "ticl_id":"$ticl_id",&#xd;      "estado":"$estado",&#xd;      "tipo_cliente":"$tipo_cliente"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
    </query>
@@ -69,11 +69,8 @@
       <result outputType="json">{&#xd;  "equipos": {&#xd;    "equipo": [&#xd;      {&#xd;        "equi_id" : "$equi_id",&#xd;        "descripcion": "$descripcion",&#xd;        "marca": "$marca",&#xd;        "codigo": "$codigo",&#xd;        "ubicacion": "$ubicacion",&#xd;        "estado": "$estado",&#xd;        "fecha_ultimalectura": "$fecha_ultimalectura",&#xd;        "ultima_lectura": "$ultima_lectura",&#xd;        "tipo_horas": "$tipo_horas",&#xd;        "valor_reposicion": "$valor_reposicion",&#xd;        "fecha_reposicion": "$fecha_reposicion",&#xd;        "valor": "$valor",&#xd;        "comprobante": "$comprobante",&#xd;        "descrip_tecnica": "$descrip_tecnica",&#xd;        "numero_serie": "$numero_serie",&#xd;        "adjunto": "$adjunto",&#xd;        "meta_disponibilidad": "$meta_disponibilidad",&#xd;        "fecha_ingreso": "$fecha_ingreso",&#xd;        "fecha_baja": "$fecha_baja",&#xd;        "fecha_garantia": "$fecha_garantia",&#xd;        "prov_id": "$prov_id",&#xd;        "empr_id": "$empr_id",&#xd;        "sect_id": "$sect_id",&#xd;        "ubic_id": "$ubic_id",&#xd;        "grup_id": "$grup_id",&#xd;        "crit_id": "$crit_id",&#xd;        "unme_id": "$unme_id",&#xd;        "area_id": "$area_id",&#xd;        "proc_id": "$proc_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="sect_id" sqlType="STRING"/>
    </query>
-   <query id="setCliente" returnGeneratedKeys="true" useConfig="ToolsDataSource">
-      <sql>INSERT INTO core.clientes&#xd;(nombre, dir_entrega, observaciones,  usuario_app, ticl_id, empr_id)&#xd;VALUES(:nombre, :dir_entrega, :observaciones,  :usuario_app, :ticl_id, cast(:empr_id as integer))</sql>
-      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
-         <element column="1" name="ID" xsdType="integer"/>
-      </result>
+   <query id="setCliente" useConfig="ToolsDataSource">
+      <sql>INSERT INTO&#xd;  core.clientes (&#xd;    nombre,&#xd;    dir_entrega,&#xd;    observaciones,&#xd;    usuario_app,&#xd;    ticl_id,&#xd;    empr_id&#xd;  )&#xd;VALUES(&#xd;    :nombre,&#xd;    :dir_entrega,&#xd;    :observaciones,&#xd;    :usuario_app,&#xd;    :ticl_id,&#xd;    cast(:empr_id as integer)&#xd;  )</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="dir_entrega" sqlType="STRING"/>
       <param name="observaciones" sqlType="STRING"/>
@@ -172,8 +169,8 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="getDepositoPorEstablecimiento" useConfig="ToolsDataSource">
-      <sql>select de.depo_id ,de.descripcion &#xd;from alm.alm_depositos de &#xd;WHERE de.esta_id = cast(:esta_id as integer)&#xd;and de.empr_id = cast(:empr_id as integer)&#xd;and de.eliminado = false</sql>
-      <result outputType="json">{&#xd;   "depositos": {&#xd;      "deposito": [&#xd;        {&#xd;          "depo_id": "$depo_id",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>select de.depo_id ,de.descripcion, de.nombre&#xd;from alm.alm_depositos de &#xd;WHERE de.esta_id = cast(:esta_id as integer)&#xd;and de.empr_id = cast(:empr_id as integer)&#xd;and de.eliminado = false</sql>
+      <result outputType="json">{&#xd;    "depositos": {&#xd;        "deposito": [&#xd;            {&#xd;                "depo_id": "$depo_id",&#xd;                "descripcion": "$descripcion",&#xd;                "nombre": "$nombre",&#xd;                "@getDepositoEncargados": "$depo_id-&gt;depo_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
    </query>
@@ -182,10 +179,12 @@
       <param name="depo_id" sqlType="STRING"/>
    </query>
    <query id="setDepositoPorEstablecimiento" useConfig="ToolsDataSource">
-      <sql>insert into alm.alm_depositos&#xd;(&#xd;    descripcion, &#xd;    empr_id, &#xd;    esta_id)&#xd;VALUES(&#xd;    :descripcion,&#xd;    cast(:empr_id as integer),&#xd;    cast(:esta_id as integer)&#xd;);</sql>
+      <sql>insert into alm.alm_depositos&#xd;(&#xd;    descripcion, &#xd;    empr_id, &#xd;    esta_id,&#xd;    nombre&#xd;)&#xd;VALUES(&#xd;    :descripcion,&#xd;    cast(:empr_id as integer),&#xd;    cast(:esta_id as integer),&#xd;    :nombre&#xd;)&#xd;returning depo_id;</sql>
+      <result outputType="json">{"respuesta":{"depo_id":"$depo_id"}}</result>
       <param name="descripcion" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
    </query>
    <query id="getEstablecimientos" useConfig="ToolsDataSource">
       <sql>select e.esta_id, e.nombre, e.calle, e.altura, tl.valor as localidad, tl.tabl_id as localidad_id, te.valor as estado, te.tabl_id as estado_id, tp.valor as pais, tp.tabl_id as pais_id&#xd;from prd.establecimientos e&#xd;left join core.tablas tl&#xd;on tl.tabl_id = e.localidad &#xd;left join core.tablas te &#xd;on te.tabl_id = e.estado &#xd;left join core.tablas tp &#xd;on tp.tabl_id = e.pais &#xd;where e.empr_id = cast (:empr_id as integer)&#xd;and e.eliminado = false;</sql>
@@ -214,8 +213,8 @@
       <param name="cuit" sqlType="STRING"/>
    </query>
    <query id="getEmpresas" useConfig="ToolsDataSource">
-      <sql>select&#xd;   e.*,&#xd;   tl.valor as localidad,&#xd;   te.valor as estado,&#xd;   tp.valor as pais&#xd;from&#xd;   core.empresas e &#xd;   left join&#xd;      core.tablas tl &#xd;      on tl.tabl_id = e.loca_id &#xd;   left join&#xd;      core.tablas te &#xd;      on te.tabl_id = e.prov_id &#xd;   left join&#xd;      core.tablas tp &#xd;      on tp.tabl_id = e.pais_id</sql>
-      <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "nombre":"$nombre",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit",&#xd;                "telefono":"$telefono",&#xd;                "email":"$email",&#xd;                "pais_id":"$pais_id",&#xd;                "prov_id":"$prov_id",&#xd;                "loca_id":"$loca_id",&#xd;                "imagepath":"$imagepath",&#xd;                "localidad": "$localidad",&#xd;                "estado": "$estado",&#xd;                "pais": "$pais"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
+      <sql>select&#xd;   e.*,&#xd;   tl.valor as localidad,&#xd;   te.valor as estado,&#xd;   tp.valor as pais&#xd;from&#xd;   core.empresas e &#xd;   left join&#xd;      core.tablas tl &#xd;      on tl.tabl_id = e.loca_id &#xd;   left join&#xd;      core.tablas te &#xd;      on te.tabl_id = e.prov_id &#xd;   left join&#xd;      core.tablas tp &#xd;      on tp.tabl_id = e.pais_id&#xd;order by e.empr_id ASC</sql>
+      <result outputType="json">{&#xd;    "empresas":{&#xd;        "empresa":[&#xd;            {&#xd;                "empr_id":"$empr_id",&#xd;                "nombre":"$nombre",&#xd;                "descripcion":"$descripcion",&#xd;                "cuit":"$cuit",&#xd;                "telefono":"$telefono",&#xd;                "email":"$email",&#xd;                "pais_id":"$pais_id",&#xd;                "prov_id":"$prov_id",&#xd;                "loca_id":"$loca_id",&#xd;                "image":"$image",&#xd;                "imagepath":"$imagepath",&#xd;                "localidad": "$localidad",&#xd;                "estado": "$estado",&#xd;                "pais": "$pais"&#xd;            }&#xd;        ]&#xd;    }&#xd;}&#xd;</result>
    </query>
    <query id="encargadoXPanolGet" useConfig="ToolsDataSource">
       <sql>select U.id, U.first_name, U.last_name&#xd;FROM seg.users U, pan.encargado_panol E&#xd;WHERE&#xd;E.user_id = U.id&#xd;and U.status = 'approved' &#xd;and U.banned_users = 'unban' &#xd;and E.pano_id = CAST(:pano_id AS INTEGER);</sql>
@@ -285,11 +284,8 @@
       <sql>UPDATE core.equipos &#xd;SET eliminado = TRUE&#xd;WHERE equi_id = cast(:equi_id as integer);</sql>
       <param name="equi_id" sqlType="STRING"/>
    </query>
-   <query id="setEmpresa" returnGeneratedKeys="true" useConfig="ToolsDataSource">
-      <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id&#xd;);</sql>
-      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
-         <element column="1" name="ID" xsdType="integer"/>
-      </result>
+   <query id="setEmpresa" useConfig="ToolsDataSource">
+      <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id,&#xd;    imagepath,&#xd;    image&#xd;)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id,&#xd;    :imagepath,&#xd;    :image&#xd;);</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="cuit" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -298,10 +294,39 @@
       <param name="pais_id" sqlType="STRING"/>
       <param name="prov_id" sqlType="STRING"/>
       <param name="loca_id" sqlType="STRING"/>
+      <param name="imagepath" sqlType="STRING"/>
+      <param name="image" optional="false" sqlType="BINARY"/>
    </query>
    <query id="deleteEmpresa" useConfig="ToolsDataSource">
       <sql>UPDATE core.empresas &#xd;SET eliminado = TRUE&#xd;WHERE empr_id = cast(:empr_id as integer);</sql>
       <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositosxEncargado" useConfig="ToolsDataSource">
+      <sql>select ad.depo_id,&#xd;ad.descripcion,&#xd;u.id as user_id,&#xd;CASE WHEN u.id IS NULL THEN '' ELSE u.first_name || ' '|| u.last_name END responsable&#xd;from alm.alm_depositos ad &#xd;left join core.encargados_depositos ed on ed.depo_id = ad.depo_id &#xd;left join seg.users u on u.id = ed.user_id&#xd;where u.id = cast(:user_id as integer)</sql>
+      <result outputType="json">{&#xd;    "encargados": {&#xd;        "depositos": [&#xd;            {&#xd;                "depo_id": "$depo_id",&#xd;                "descripcion": "$descripcion",&#xd;                "responsable": "$responsable",&#xd;                "user_id": "$user_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="setEncargadoDeposito" useConfig="ToolsDataSource">
+      <sql>insert into core.encargados_depositos &#xd;(&#xd;    depo_id, &#xd;    user_id&#xd;)&#xd;VALUES(&#xd;    cast(:depo_id as integer),&#xd;    cast(:user_id as integer)&#xd;);</sql>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="updateDepositoPorEstablecimiento" useConfig="ToolsDataSource">
+      <sql>update alm.alm_depositos set descripcion = :descripcion,&#xd;    empr_id = cast(:empr_id as integer), &#xd;    esta_id = cast(:esta_id as integer),&#xd;    nombre = :nombre&#xd;where depo_id = cast(:depo_id as integer)</sql>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+   </query>
+   <query id="getDepositoEncargados" useConfig="ToolsDataSource">
+      <sql>select ad.depo_id,&#xd;ad.descripcion,&#xd;u.id as user_id,&#xd;CASE WHEN u.id IS NULL THEN '' ELSE u.first_name || ' '|| u.last_name END encargado&#xd;from alm.alm_depositos ad &#xd;left join core.encargados_depositos ed on ed.depo_id = ad.depo_id &#xd;left join seg.users u on u.id = ed.user_id&#xd;where ad.depo_id  = cast(:depo_id as integer)</sql>
+      <result outputType="json">{&#xd;    "encargados": {&#xd;        "encargado": [&#xd;            {&#xd;                "user_id": "$user_id",&#xd;                "encargado": "$encargado"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteDepositoEncargados" useConfig="ToolsDataSource">
+      <sql>delete from core.encargados_depositos ed &#xd;where depo_id = cast(:depo_id as integer)</sql>
+      <param name="depo_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -490,6 +515,7 @@
          <with-param name="descripcion" query-param="descripcion"/>
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="nombre" query-param="nombre"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/deposito">
@@ -606,11 +632,38 @@
          <with-param name="pais_id" query-param="pais_id"/>
          <with-param name="prov_id" query-param="prov_id"/>
          <with-param name="loca_id" query-param="loca_id"/>
+         <with-param name="imagepath" query-param="imagepath"/>
+         <with-param name="image" query-param="image"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/empresa">
       <call-query href="deleteEmpresa">
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/depositos/encargado/{user_id}">
+      <call-query href="getDepositosxEncargado">
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/deposito/encargado">
+      <call-query href="setEncargadoDeposito">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/deposito/establecimiento">
+      <call-query href="updateDepositoPorEstablecimiento">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="nombre" query-param="nombre"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/deposito/encargado">
+      <call-query href="deleteDepositoEncargados">
+         <with-param name="depo_id" query-param="depo_id"/>
       </call-query>
    </resource>
 </data>
