@@ -197,6 +197,9 @@ define('DEF_VIEW',BPM.'Proceso');
 //Proceso pedido trabajo standar
 define('PRO_STD', 'PROCESO-STANDAR');
 
+//TAREA ejecutada por Bonita automaticamente
+define('TAREA_IT','Ejecuta el Trabajo - Tools tareas');
+
 /*
 |--------------------------------------------------------------------------
 | Variables HOST y REST
