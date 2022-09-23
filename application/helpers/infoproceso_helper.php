@@ -90,7 +90,7 @@
 					}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
 						$nombreProceso = 'Control de Ingreso de Camiones: ' . $nombreTarea;
 					}  elseif (BPM_PROCESS_ID_PROCESO_PRODUCTIVO == $processId) {
-						$nombreProceso = 'Proceso: ' . $nombreTarea;
+						$nombreProceso = 'Tarea: ' . $nombreTarea;
 					}else{
 						$nombreProceso = 'Proceso Estandar';
 					}
