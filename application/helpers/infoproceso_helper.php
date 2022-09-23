@@ -1,3 +1,9 @@
+<style>
+	#petr_id{
+  
+    font-size: 14px;
+}
+</style>
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 	/**
 	* Cabeceras con informacion variable segun proceso BPM
@@ -454,8 +460,14 @@
 							// $data =json_decode($aux);
 
 									?>
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="generador" name="">Nº pedido:</label>
+											<input type="text" class="form-control habilitar" style="font-family: Arial; font-size: 16pt;" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
+										</div>
+									</div>
 									<div class="col-md-12">
-									<p>Datos del Cliente:</p><input type="hidden" class="form-control habilitar" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
+									<p>Datos del Cliente:</p>
 									<hr>
 										<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
