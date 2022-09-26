@@ -127,7 +127,7 @@ define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '8974273316817564342');
 define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5841373952148500437');
 
 #SEIN PROCESO PRODUCTIVO
-define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '5973271304807922085');
+define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '7040695605736412413');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
@@ -196,6 +196,9 @@ define('DEF_VIEW',BPM.'Proceso');
 
 //Proceso pedido trabajo standar
 define('PRO_STD', 'PROCESO-STANDAR');
+
+//TAREA ejecutada por Bonita automaticamente
+define('TAREA_IT','Ejecuta el Trabajo - Tools tareas');
 
 /*
 |--------------------------------------------------------------------------
