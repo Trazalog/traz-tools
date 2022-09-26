@@ -1,9 +1,3 @@
-<style>
-	#petr_id{
-  
-    font-size: 14px;
-}
-</style>
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 	/**
 	* Cabeceras con informacion variable segun proceso BPM
