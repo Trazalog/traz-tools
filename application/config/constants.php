@@ -198,7 +198,7 @@ define('DEF_VIEW',BPM.'Proceso');
 define('PRO_STD', 'PROCESO-STANDAR');
 
 //TAREA ejecutada por Bonita automaticamente
-define('TAREA_IT','Ejecuta el Trabajo - Tools tareas');
+define('TAREA_IT','Ejecuta el Trabajo - Tools Tareas');
 
 /*
 |--------------------------------------------------------------------------
