@@ -32,34 +32,50 @@
     <!--_____________________________________________-->
     <div class="box-body">
         <form class="formTransportistas" id="formTransportistas">
-            <!--Nombre-->
+            <!--Razón social-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
-                    <label for="Nombre">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
-                    <input type="text" class="form-control requerido" name="nombre" id="nombre" placeholder="Ingrese Nombre...">
+                    <label for="Razon_social">Razón social(<strong style="color: #dd4b39">*</strong>):</label>
+                    <input type="text" class="form-control requerido" name="razon_social" id="razon_social" placeholder="Ingrese Razón social...">
                 </div>
             </div>
             <!--________________-->
-            <!-- Dirección de Entrega -->
+            <!-- CUIT -->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
-                    <label for="dir_entrega">Dirección Entrega:</label>
-                    <input type="text" class="form-control" name="dir_entrega" id="dir_entrega" placeholder="Ingrese Dirección...">
+                    <label for="Cuit">Cuit:</label>
+                    <input type="text" class="form-control" name="cuit" id="cuit" placeholder="Ingrese Dirección...">
                 </div>
             </div>
             <!--________________-->
-            <!--Observaciones-->
+            <!--Teléfono-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
-                <label for="Observaciones">Observaciones:</label>
-                    <textarea class="form-control" name="observaciones" id="observaciones" rows="3" placeholder="Ingrese Observaciones..."></textarea>
+                    <label for="Telefono">Teléfono(<strong style="color: #dd4b39">*</strong>):</label>
+                    <input type="text" class="form-control requerido" name="telefono" id="telefono" placeholder="Ingrese Razón social...">
                 </div>
             </div>
             <!--________________-->
-            <!--Tipo Transportista-->
+            <!--Email-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
-                    <label for="Tipo">Tipo(<strong style="color: #dd4b39">*</strong>):</label>
+                    <label for="Email">Email(<strong style="color: #dd4b39">*</strong>):</label>
+                    <input type="text" class="form-control requerido" name="email" id="email" placeholder="Ingrese Razón social...">
+                </div>
+            </div>
+            <!--________________-->
+            <!--Dirección-->
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="form-group">
+                    <label for="Direccion">Dirección(<strong style="color: #dd4b39">*</strong>):</label>
+                    <input type="text" class="form-control requerido" name="direccion" id="direccion" placeholder="Ingrese Razón social...">
+                </div>
+            </div>
+            <!--________________-->
+            <!--País-->
+            <div class="col-md-6 col-sm-6 col-xs-12">
+                <div class="form-group">
+                    <label for="Pais">País(<strong style="color: #dd4b39">*</strong>):</label>
                     <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="ticl_id" id="ticl_id">
                         <option value="" disabled selected>-Seleccione opción-</option>	
                         <?php

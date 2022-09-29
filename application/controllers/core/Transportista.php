@@ -16,7 +16,6 @@ class Transportista extends CI_Controller
     function index()
 	{
 		log_message('INFO','#TRAZA | TRANSPORTISTAS | index()  >> ');
-		$data['list'] = $this->Transportistas->Listar_Transportistas();
 		$data['tipos_transportistas'] = $this->Transportistas->Listar_Tipos_Transportistas();
 		$this->load->view('core/transportistas/view', $data);
     }

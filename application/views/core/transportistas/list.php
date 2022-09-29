@@ -3,11 +3,10 @@
 <table id="tabla_transportistas" class="table table-bordered table-striped">
 		<thead class="thead-dark" bgcolor="#eeeeee">
       <th>Acciones</th>
-      <th>id</th>
-      <th>Nombre</th>
-      <th>Dir. entrega</th>
-      <th>Observaciones</th>
-      <th>Tipo transportista</th>
+      <th>Razón social</th>
+      <th>Cuit</th>
+      <th>Teléfono</th>
+      <th>Email</th>
 		</thead>
 		<tbody >
 			<?php
@@ -21,11 +20,10 @@
                 <button type="button" title="Info" class="btn btn-primary btn-circle btnInfo" data-toggle="modal" data-target="#modaleditar" ><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></button>&nbsp
                 <button type="button" title="Eliminar" class="btn btn-primary btn-circle btnEliminar" id="btnBorrar"  ><span class="glyphicon glyphicon-trash" aria-hidden="true" ></span></button>&nbsp';
             echo '</td>';
-            echo '<td>'.$value->clie_id.'</td>';
-            echo '<td>'.$value->nombre.'</td>';
-            echo '<td>'.$value->dir_entrega.'</td>';
-            echo '<td>'.$value->observaciones.'</td>';
-            echo '<td>'.$value->ticl_id.'</td>';
+            echo '<td>'.$value->razon_social.'</td>';
+            echo '<td>'.$value->cuit.'</td>';
+            echo '<td>'.$value->telefono.'</td>';
+            echo '<td>'.$value->email.'</td>';
             echo '</tr>';
           }
 				}

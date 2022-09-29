@@ -36,7 +36,7 @@ class Transportistas extends CI_Model {
     $empr_id = empresa();
 		$aux = $this->rest->callAPI("GET",REST_CORE."/transportistas/$empr_id");
 		$aux = json_decode($aux["data"]);
-		$transportistas = $aux->transportista->transportistas;
+		$transportistas = $aux->transportistas->transportista;
 		return $transportistas;
   }
 
