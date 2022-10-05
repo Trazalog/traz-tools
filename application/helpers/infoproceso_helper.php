@@ -90,7 +90,7 @@
 					}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
 						$nombreProceso = 'Control de Ingreso de Camiones: ' . $nombreTarea;
 					}  elseif (BPM_PROCESS_ID_PROCESO_PRODUCTIVO == $processId) {
-						$nombreProceso = 'PROCESO PRODUCTIVO: ' . $nombreTarea;
+						$nombreProceso = 'Tarea: ' . $nombreTarea;
 					}else{
 						$nombreProceso = 'Proceso Estandar';
 					}
@@ -454,8 +454,14 @@
 							// $data =json_decode($aux);
 
 									?>
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="generador" name="">Nº pedido:</label>
+											<input type="text" class="form-control habilitar" style="font-family: Arial; font-size: 16pt;" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
+										</div>
+									</div>
 									<div class="col-md-12">
-									<p>Datos del Cliente:</p><input type="hidden" class="form-control habilitar" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
+									<p>Datos del Cliente:</p>
 									<hr>
 										<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
