@@ -3,7 +3,8 @@
 @media print {
   /*Estilos GENERALES*/
   #modalBodyCodigos{
-    font-size: 100% ;
+    font-size: 100%;
+    break-after:page;
   }
   #numero_orden{
     margin-top: -1%;
@@ -45,7 +46,6 @@
     text-align: center;  
   }
   #contenedorImagenYudi{
-
     width: 40%;
     text-align: center;
     float:left;
