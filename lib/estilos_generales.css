@@ -1,0 +1,75 @@
+/**
+ * ESTILOS GENERALES DE TOOLS
+ * Colocar los estilos que vayan a ser utilizados en todo el sistema aquí, para no repetir el codigo
+ * en cada vista que sean necesarios
+ * v1.0
+ */
+.btn-circle {
+    width: 30px;
+    height: 30px;
+    padding: 6px 0px;
+    border-radius: 15px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.42857;
+}
+/*ESTILOS DEL BOTON TOOGLE ON/OFF */
+/* Label */
+.checkboxtext {
+    width: 100%
+}
+/* Caja del slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+/* Oculto caract nativas */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+/* El slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked+.slider {
+  background-color: #2196F3;
+}
+input:focus+.slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+input:checked+.slider:before {
+  -webkit-transform: translateX(19px);
+  -ms-transform: translateX(19px);
+  transform: translateX(19px);
+}
+/* Redondeo slider */
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+/** FIN ESTILOS BOTON TOOGLE ON/OFF */
