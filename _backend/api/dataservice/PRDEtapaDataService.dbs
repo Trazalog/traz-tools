@@ -264,6 +264,11 @@
       <param name="proc_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getEtapasProceso" useConfig="ToolsDataSource">
+      <sql>select &#xd;   etap_id, nombre, nom_recipiente, proc_id , link&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and etap_id &lt; 1000&#xd;and proc_id = cast(:proc_id as integer)&#xd;order by orden</sql>
+      <result outputType="json">{&#xd;    "etapas":{&#xd;        "etapa":[&#xd;        {&#xd;            "etap_id" : "$etap_id",&#xd;            "nombre" : "$nombre",&#xd;            "nom_recipiente" : "$nom_recipiente",&#xd;            "proc_id" : "$proc_id",&#xd;            "link" : "$link"&#xd;        }&#xd;    ]}&#xd;}</result>
+      <param name="proc_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/productos/etapa/{etap_id}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}/empr_id/{empr_id}">
       <call-query href="getProduccion">
          <with-param name="fechasta" query-param="fechasta"/>
@@ -536,6 +541,12 @@
          <with-param name="etapa" query-param="etapa"/>
          <with-param name="proc_id" query-param="proc_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/etapas/proceso/{proc_id}">
+      <description>Obtiene las etapas por proceso productivo               &#xd;                                    </description>
+      <call-query href="getEtapasProceso">
+         <with-param name="proc_id" query-param="proc_id"/>
       </call-query>
    </resource>
 </data>

@@ -621,6 +621,7 @@
             },
             error: function(data) {
                 alert('Error');
+                wc();
             }
         });
     }

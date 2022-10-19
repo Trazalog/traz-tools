@@ -483,6 +483,7 @@
                 wc();
             },
             error: function(data) {
+                wc();
                 alert('Error');
             }
         });
@@ -519,6 +520,7 @@
                 wc();
             },
             error: function(data) {
+                wc();
                 alert('Error');
             }
         });

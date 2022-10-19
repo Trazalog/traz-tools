@@ -27,7 +27,7 @@ class Equipo extends CI_Controller
       $this->load->view('core/equipos/view', $data);
     }
     
- /**
+ 	/**
      * Devuelve un listado de las Equipos.
      *
      * @return  Array   Devuelve un arreglo con las Equipos.
@@ -38,6 +38,7 @@ class Equipo extends CI_Controller
 		$data['list'] = $this->Equipos->Listar_Equipos();
     	$this->load->view('core/equipos/list', $data);
 	}
+	
     /**
 	* Guarda equipo
 	* @param array equipo
