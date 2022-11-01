@@ -858,7 +858,7 @@
             if(result.deposito.status && result.encargados.status){
                 $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos",() => {
                     wc();
-                    alertify.success("Depósito agregado con éxito");
+                    hecho();
                     $("#modalAgregarDeposito").hide(500);
                 });
             }else{
