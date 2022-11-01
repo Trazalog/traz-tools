@@ -126,8 +126,8 @@
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="getFormulas" useConfig="ToolsDataSource">
-      <sql>SELECT * FROM prd.formulas&#xd;WHERE eliminado != true&#xd;and empr_id = cast(:empr_id as integer)</sql>
-      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>SELECT&#xd;   f.*,&#xd;   t.valor as unidad_medida &#xd;FROM&#xd;   prd.formulas f &#xd;   join&#xd;      core.tablas t &#xd;      on t.tabl_id = f.unme_id &#xd;WHERE&#xd;   f.eliminado != true &#xd;   and f.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id",&#xd;            "unidad_medida":"$unidad_medida"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="deleteFormula" useConfig="ToolsDataSource">
