@@ -889,11 +889,27 @@
         // var esta_id = $("#id_esta").val();
         // var esta_id = $("#establecimiento_id").val();
         // $("#id_establecimiento_borrar").val(esta_id);
-        $(".modal-header h4").remove();
+        /* $(".modal-header h4").remove();
         //pongo titulo al modal
         $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Eliminar Depósito </h4>');
         $("#modaldepositos").modal('hide');
-        $('#modalAvisoDeposito').modal('show');
+        $('#modalAvisoDeposito').modal('show'); */
+        Swal.fire({
+              title: '¿Realmente desea ELIMINAR el depósito del Establecimiento?',
+              text: "No podras revertir la acción!",
+              type: 'question',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Si, Eliminar!'
+            }).then((result) => {
+            	if (result.value) {
+                eliminarDepositoDeEstablecimiento();                
+              }else if (result.dismiss) {
+                    Swal.fire('Cancelado', '', 'error')
+                }
+        })
+
     }
 
     function eliminarDepositoDeEstablecimiento() {
@@ -906,18 +922,24 @@
             data:{depo_id: depo_id},
             url: 'index.php/core/Establecimiento/borrarDepositoDeEstablecimiento',
             success: function(result) {
-            $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
-            setTimeout(function(){ 
-                alertify.success("Depósito eliminado con éxito");
                 wc();
-                // alert("Hello"); 
-            }, 3000);
-            $("#modalAvisoDeposito").modal('hide');
-            },
-            error: function(result){
-            wc();
-            $("#modalAvisoDeposito").modal('hide');
-            alertify.error('Error en eliminado de Depósito...');
+                //$("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+                Swal.fire({
+                      title: "Hecho",
+                      text: "Depósito eliminado!",
+                      type: "success",
+                      showCancelButton: false,
+                      confirmButtonColor: "#3085d6",
+                      confirmButtonText: "OK",
+                  }).then((result) => {
+                      if (result.value) {
+                        $("#modaldepositos").modal('hide');
+                      }
+                  });
+                },
+                error: function(result){
+                wc();
+                alertify.error('Error en eliminado de Depósito...');
             }
         });        
     }
