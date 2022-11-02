@@ -68,7 +68,7 @@
                 <div class="form-group">
                     <label for="Unidad_medida">Unidad de medida(<strong style="color: #dd4b39">*</strong>):</label>
                     <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="unidad_medida">
-                        <option value="" disabled selected>-Seleccione opción-</option>	
+                        <option  disabled selected>-Seleccione opción-</option>	
                         <?php
                             foreach ($listadoUnidades as $unidad) {
                             echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';

@@ -233,8 +233,8 @@
       <result outputType="json">{&#xd;    "users":{&#xd;      "user":[&#xd;        {&#xd;          "id": "$id",&#xd;          "first_name": "$first_name",&#xd;          "last_name": "$last_name"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
    </query>
    <query id="getEnvasesXEmpresa" useConfig="ToolsDataSource">
-      <sql>select * from prd.empaque&#xd;where empr_id = cast(:empr_id as Integer)&#xd;and eliminado = false</sql>
-      <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unidad_medida",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$receta",&#xd;      "descripcion":"$descripcion"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
+      <sql>select p.*, t.descripcion as unme_id, f.descripcion as nombre_receta from prd.empaque p&#xd;left join core.tablas t on t.tabl_id = p.unidad_medida&#xd;left join prd.formulas f on f.form_id = p.receta&#xd;where p.empr_id = cast(:empr_id as Integer)&#xd;and p.eliminado = false</sql>
+      <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unme_id",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$nombre_receta",&#xd;      "descripcion":"$descripcion"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getUnidadesMedidas" useConfig="ToolsDataSource">
