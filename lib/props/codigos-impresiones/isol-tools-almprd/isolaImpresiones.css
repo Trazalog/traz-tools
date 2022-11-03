@@ -1,0 +1,41 @@
+/**
+ * ESTILOS IMPRESIONES ISOLA
+ * Aquie se encuentran los estilos para impresiones de la empresa ISOLA
+ * La impresora utilizada es HoneyWell 42t plus TAMAÑO DE HOJA 50.6 mm x 50.6 mm
+ * v1.0
+*/
+/*ESTILOS QR's en alta masiva*/
+.contenedorBloqueNoCo{
+    width: 100%;
+    /* display: block; */
+    break-after:page;
+    page-break-after:always;
+    min-height: 186.98px;
+    max-height: 187px;
+    page-break-before: always;
+}
+#QRsGenerados{
+    position:relative;
+    width: 100%;
+}
+.anchoFull{
+    width: 100%;
+}
+.centrar{
+    text-align: center;
+}
+p{
+    font-size: 10px;
+    margin: 0px 0px 0px 0px;
+}
+.tituloNoCo{
+    font-size: 20px;
+}
+.separarContenido{
+    margin-bottom: 3px !important;
+}
+.imagenQRNoCo{
+    height: 110px;
+}
+/* FIN ESTILOS QR's en alta masiva*/
+
