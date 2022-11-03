@@ -170,7 +170,7 @@
                                     <div class="form-group">
                                         <label for="descripcion_edit" class="col-sm-2 control-label">Descripción:</label>
                                         <div class="col-sm-10">
-                                            <textarea class="form-control habilitar requerido" name="descripcion" id="descripcion_edit"></textarea>
+                                            <textarea class="form-control habilitar requerido" name="descripcion" id="descripcion_edit" style="resize:vertical;"></textarea>
                                         </div>
                                     </div>
                                 </div>
