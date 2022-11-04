@@ -78,12 +78,13 @@
     }
         // deshabilita botones, selects e inputs de modal
     function blockEdicion(){
-      $(".habilitar").attr("readonly","readonly");
+      $(".habilitar").attr({disabled:"disabled", style:  "pointer-events: none;"});
       //$(".selec_habilitar").attr('disabled', 'disabled');
     }
     // habilita botones, selects e inputs de modal
     function habilitarEdicion(){
-      $('.habilitar').removeAttr("readonly");//
+      $('.habilitar').removeAttr("disabled");//
+      $('.habilitar').removeAttr("style");
       //$(".selec_habilitar").removeAttr("disabled");
     }
       // Levanta modal prevencion eliminar herramienta

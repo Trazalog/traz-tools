@@ -239,7 +239,7 @@
         $("#boxDatos").show();
     });
 
-    // muestra box de datos al dar click en X
+    // muestra box de datos al dar click en X de modal agregar
     $("#btnclose").on("click", function() {
         $("#boxDatos").hide(500);
         $("#botonAgregar").removeAttr("disabled");
