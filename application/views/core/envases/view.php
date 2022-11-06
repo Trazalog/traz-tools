@@ -68,7 +68,7 @@
                 <div class="form-group">
                     <label for="Unidad_medida">Unidad de medida(<strong style="color: #dd4b39">*</strong>):</label>
                     <select class="form-control select2 select2-hidden-accesible habilitar requerido" name="unidad_medida" id="unidad_medida">
-                        <option value="" disabled selected>-Seleccione opción-</option>	
+                        <option  disabled selected>-Seleccione opción-</option>	
                         <?php
                             foreach ($listadoUnidades as $unidad) {
                             echo '<option  value="'.$unidad->tabl_id.'">'.$unidad->valor.'</option>';
@@ -170,7 +170,7 @@
                                     <div class="form-group">
                                         <label for="descripcion_edit" class="col-sm-2 control-label">Descripción:</label>
                                         <div class="col-sm-10">
-                                            <textarea class="form-control habilitar requerido" name="descripcion" id="descripcion_edit"></textarea>
+                                            <textarea class="form-control habilitar requerido" name="descripcion" id="descripcion_edit" style="resize:vertical;"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -239,7 +239,7 @@
         $("#boxDatos").show();
     });
 
-    // muestra box de datos al dar click en X
+    // muestra box de datos al dar click en X de modal agregar
     $("#btnclose").on("click", function() {
         $("#boxDatos").hide(500);
         $("#botonAgregar").removeAttr("disabled");
