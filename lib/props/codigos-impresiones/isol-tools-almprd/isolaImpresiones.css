@@ -7,16 +7,12 @@
 /*ESTILOS QR's en alta masiva*/
 .contenedorBloqueNoCo{
     width: 100%;
-    /* display: block; */
-    break-after:page;
-    page-break-after:always;
-    min-height: 186.98px;
-    max-height: 187px;
-    page-break-before: always;
+    margin: 0px 0px 0px 0px;
 }
 #QRsGenerados{
     position:relative;
     width: 100%;
+    margin: 0px 0px 0px 0px;
 }
 .anchoFull{
     width: 100%;
@@ -29,10 +25,10 @@ p{
     margin: 0px 0px 0px 0px;
 }
 .tituloNoCo{
-    font-size: 20px;
+    font-size: 25px;
 }
 .separarContenido{
-    margin-bottom: 3px !important;
+    margin-bottom: 2px !important;
 }
 .imagenQRNoCo{
     height: 110px;
