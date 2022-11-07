@@ -1,7 +1,7 @@
 <!-- /// ---- HEADER ----- /// -->
 <div class="box box-primary animated fadeInLeft">
     <div class="box-header with-border">
-        <h4>Envases</h4>
+        <h4>Lista de Envases</h4>
     </div>
     <div class="box-body">
         <div class="row">
