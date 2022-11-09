@@ -29,14 +29,14 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="noConsumiblesNoEliminadosGet" useConfig="ToolsDataSource">
-      <sql>SELECT nc.* &#xd;,t.valor tipo&#xd;,(select string_agg(l.lote_id,',') &#xd; 	from nco.no_consumibles_lotes ncl&#xd; 		,prd.lotes l &#xd; 	where ncl.noco_id = nc.codigo&#xd; 	and ncl.batch_id = l.batch_id&#xd;        and ncl.fec_liberacion is null &#xd; 	) lotes&#xd;,ad.descripcion as deposito&#xd;,e.nombre as establecimiento&#xd;,aa.barcode as producto_codigo&#xd;,CASE&#xd;   WHEN aa.barcode is not null&#xd;        AND aa.descripcion is null THEN aa.barcode &#xd;   WHEN aa.barcode is null&#xd;        AND aa.descripcion is not null THEN aa.descripcion&#xd;   WHEN aa.barcode is not null &#xd;   		and aa.descripcion is not null THEN concat(aa.barcode, ' - ', aa.descripcion) &#xd;   else ''&#xd;END producto&#xd;FROM nco.no_consumibles nc&#xd;left join nco.movimientos_no_consumibles mnc on nc.codigo = mnc.noco_id&#xd;left join alm.alm_depositos ad on ad.depo_id = mnc.depo_id &#xd;left join prd.establecimientos e on ad.esta_id = e.esta_id&#xd;left join nco.no_consumibles_lotes ncl on ncl.noco_id = nc.codigo &#xd;left join alm.alm_lotes al on al.batch_id = ncl.batch_id &#xd;left join alm.alm_articulos aa on aa.arti_id = al.arti_id&#xd;,core.tablas t&#xd;,(select cast(:empr_id as integer) empr_id, :estado estado) param&#xd;where nc.tinc_id = t.tabl_id  &#xd;and nc.empr_id= param.empr_id&#xd;and nc.eliminado = false&#xd;and nc.estado = case when param.estado = 'TODOS' then nc.estado else param.estado end&#xd;and mnc.fec_alta = (select MAX(m.fec_alta) &#xd;                   from nco.movimientos_no_consumibles m &#xd;                   where m.empr_id = param.empr_id &#xd;                   and m.noco_id = nc.codigo  )&#xd;order by nc.codigo ASC;</sql>
+      <sql>SELECT nc.codigo, nc.descripcion, nc.estado,to_char(nc.fec_vencimiento, 'DD-MM-YYYY') as fec_vencimiento, to_char(nc.fec_alta, 'DD-MM-YYYY') as fec_alta,nc.usuario_app,nc.tinc_id,nc.empr_id,nc.eliminado &#xd;,t.valor tipo&#xd;,(select string_agg(l.lote_id,',') &#xd; 	from nco.no_consumibles_lotes ncl&#xd; 		,prd.lotes l &#xd; 	where ncl.noco_id = nc.codigo&#xd; 	and ncl.batch_id = l.batch_id&#xd;        and ncl.fec_liberacion is null &#xd; 	) lotes&#xd;,ad.descripcion as deposito&#xd;,e.nombre as establecimiento&#xd;,aa.barcode as producto_codigo&#xd;,CASE&#xd;   WHEN aa.barcode is not null&#xd;        AND aa.descripcion is null THEN aa.barcode &#xd;   WHEN aa.barcode is null&#xd;        AND aa.descripcion is not null THEN aa.descripcion&#xd;   WHEN aa.barcode is not null &#xd;   		and aa.descripcion is not null THEN concat(aa.barcode, ' - ', aa.descripcion) &#xd;   else ''&#xd;END producto&#xd;FROM nco.no_consumibles nc&#xd;left join nco.movimientos_no_consumibles mnc on nc.codigo = mnc.noco_id&#xd;left join alm.alm_depositos ad on ad.depo_id = mnc.depo_id &#xd;left join prd.establecimientos e on ad.esta_id = e.esta_id&#xd;left join nco.no_consumibles_lotes ncl on ncl.noco_id = nc.codigo &#xd;left join alm.alm_lotes al on al.batch_id = ncl.batch_id &#xd;left join alm.alm_articulos aa on aa.arti_id = al.arti_id&#xd;,core.tablas t&#xd;,(select cast(:empr_id as integer) empr_id, :estado estado) param&#xd;where nc.tinc_id = t.tabl_id  &#xd;and nc.empr_id= param.empr_id&#xd;and nc.eliminado = false&#xd;and nc.estado = case when param.estado = 'TODOS' then nc.estado else param.estado end&#xd;and mnc.fec_alta = (select MAX(m.fec_alta) &#xd;                   from nco.movimientos_no_consumibles m &#xd;                   where m.empr_id = param.empr_id &#xd;                   and m.noco_id = nc.codigo  )&#xd;order by nc.codigo ASC;</sql>
       <result outputType="json">{&#xd;   "noConsumibles":{&#xd;      "noConsumible":[&#xd;         {&#xd;            "codigo":"$codigo",&#xd;            "descripcion":"$descripcion",&#xd;            "estado":"$estado",&#xd;            "fec_vencimiento":"$fec_vencimiento",&#xd;            "fec_alta":"$fec_alta",&#xd;            "usuario_app":"$usuario_app",&#xd;            "tipo":"$tipo",&#xd;            "tinc_id": "$tinc_id",&#xd;            "empr_id":"$empr_id",&#xd;            "lotes":"$lotes",&#xd;            "deposito":"$deposito",&#xd;            "establecimiento":"$establecimiento",&#xd;            "producto":"$producto",&#xd;            "producto_codigo":"$producto_codigo",&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
    </query>
    <query id="trazabilidadNoConsumibleGet" useConfig="ToolsDataSource">
-      <sql>select&#xd;	nc.codigo,&#xd;	t.valor tipo,&#xd;	nc.descripcion ,&#xd;	case&#xd;		when mnc.depo_id is not null then dep.descripcion&#xd;		else t2.valor end deposito,&#xd;		mnc.fec_alta ,&#xd;		mnc.usuario_app responsable,&#xd;		mnc.estado&#xd;	from&#xd;		nco.movimientos_no_consumibles mnc&#xd;	left join alm.alm_depositos dep on&#xd;		dep.depo_id = mnc.depo_id&#xd;	left join core.tablas t2 on&#xd;		t2.tabl_id = mnc.dest_id ,&#xd;		nco.no_consumibles nc ,&#xd;		core.tablas t&#xd;	where&#xd;		nc.codigo = :codigo&#xd;                and nc.empr_id = cast(:empr_id as integer)&#xd;                and mnc.noco_id = nc.codigo&#xd;		and nc.tinc_id = t.tabl_id;</sql>
-      <result outputType="json">{&#xd;   "movimientosNoConsumible":{&#xd;      "movimientoNoConsumible":[&#xd;         {&#xd;            "codigo":"$codigo",&#xd;            "tipo":"$tipo",&#xd;            "descripcion":"$descripcion",&#xd;            "deposito":"$deposito",&#xd;            "fecAlta":"$fec_alta",&#xd;            "responsable":"$responsable",&#xd;            "estado":"$estado"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>select&#xd;	nc.codigo,&#xd;	t.valor tipo,&#xd;	nc.descripcion ,&#xd;	(select string_agg(l.lote_id,',') &#xd; 	from nco.no_consumibles_lotes ncl&#xd; 		,prd.lotes l &#xd; 	where ncl.noco_id = nc.codigo&#xd; 	and ncl.batch_id = l.batch_id&#xd;        and ncl.fec_liberacion is null &#xd; 	) lotes,&#xd;	case&#xd;		when mnc.depo_id is not null then dep.descripcion&#xd;		else t2.valor end deposito,&#xd;		to_char(mnc.fec_alta, 'DD-MM-YYYY') as fec_alta ,&#xd;		mnc.usuario_app responsable,&#xd;		mnc.estado&#xd;	from&#xd;		nco.movimientos_no_consumibles mnc&#xd;	left join alm.alm_depositos dep on&#xd;		dep.depo_id = mnc.depo_id&#xd;	left join core.tablas t2 on&#xd;		t2.tabl_id = mnc.dest_id ,&#xd;		nco.no_consumibles nc ,&#xd;		core.tablas t&#xd;	where&#xd;		nc.codigo = :codigo&#xd;                and nc.empr_id = cast(:empr_id as integer)&#xd;                and mnc.noco_id = nc.codigo&#xd;		and nc.tinc_id = t.tabl_id;</sql>
+      <result outputType="json">{&#xd;   "movimientosNoConsumible":{&#xd;      "movimientoNoConsumible":[&#xd;         {&#xd;            "codigo":"$codigo",&#xd;            "tipo":"$tipo",&#xd;            "descripcion":"$descripcion",&#xd;            "lotes":"$lotes",&#xd;            "deposito":"$deposito",&#xd;            "fecAlta":"$fec_alta",&#xd;            "responsable":"$responsable",&#xd;            "estado":"$estado"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="codigo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -90,14 +90,15 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="validarIntervaloNoConsumibles" useConfig="ToolsDataSource">
-      <sql>select case when exists &#xd;(select true from nco.no_consumibles nc where upper(nc.codigo) between upper(:noco_cod_inicial) and upper(:noco_cod_final)&#xd;and nc.empr_id = cast(:empr_id as integer)&#xd;) then 'true' else 'false'&#xd;end</sql>
+      <sql>select case when exists&#xd;(select true&#xd;from nco.no_consumibles nc &#xd;,(select :raiz raiz) param&#xd;where upper(nc.codigo) like param.raiz||'%' &#xd;and nc.empr_id = cast(:empr_id as integer)&#xd;and cast(substring(nc.codigo,length(param.raiz)+1)  as integer) between cast(:id_inicial as integer) and cast(:id_final as integer))&#xd;then 'true' else 'false'&#xd;end</sql>
       <result outputType="json">{&#xd;  "resultado" : {&#xd;      "existe": "$case"&#xd;   }&#xd;}</result>
-      <param name="noco_cod_final" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
-      <param name="noco_cod_inicial" sqlType="STRING"/>
+      <param name="raiz" sqlType="STRING"/>
+      <param name="id_inicial" sqlType="STRING"/>
+      <param name="id_final" sqlType="STRING"/>
    </query>
    <query id="getUltimoCodigo" useConfig="ToolsDataSource">
-      <sql>select nc.codigo &#xd;from nco.no_consumibles nc &#xd;where upper(nc.codigo) like upper(:prefijo ||'%')&#xd;and nc.empr_id = cast(:empr_id as integer)&#xd;order by nc.fec_alta desc&#xd;limit 1</sql>
+      <sql>select cast(substring(nc.codigo,length(param.prefijo)+1)  as integer)  ultimo, nc.codigo&#xd;from nco.no_consumibles nc &#xd;, (select :prefijo prefijo) param&#xd;where upper(nc.codigo) like upper(param.prefijo ||'%')&#xd;and substring(nc.codigo,length(param.prefijo)+1) ~ '^\d+(\.\d+)?$'&#xd;and nc.empr_id = cast(:empr_id as integer)&#xd;order by ultimo desc&#xd;limit 1</sql>
       <result outputType="json">{&#xd;    "noConsumible": {&#xd;        "codigo": "$codigo"&#xd;    }&#xd;}</result>
       <param name="prefijo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
@@ -188,11 +189,12 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/noConsumible/validar/desde/{noco_cod_inicial}/hasta/{noco_cod_final}/empresa/{empr_id}">
+   <resource method="GET" path="/noConsumible/validar/prefijo/{raiz}/desde/{id_inicial}/hasta/{id_final}/empresa/{empr_id}">
       <call-query href="validarIntervaloNoConsumibles">
-         <with-param name="noco_cod_final" query-param="noco_cod_final"/>
+         <with-param name="raiz" query-param="raiz"/>
          <with-param name="empr_id" query-param="empr_id"/>
-         <with-param name="noco_cod_inicial" query-param="noco_cod_inicial"/>
+         <with-param name="id_inicial" query-param="id_inicial"/>
+         <with-param name="id_final" query-param="id_final"/>
       </call-query>
    </resource>
    <resource method="GET" path="/noConsumibles/ultimoCodigo/{prefijo}/empresa/{empr_id}">
