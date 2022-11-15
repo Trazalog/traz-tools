@@ -265,8 +265,8 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getEtapasProceso" useConfig="ToolsDataSource">
-      <sql>select &#xd;   etap_id, nombre, nom_recipiente, proc_id , link&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and etap_id &lt; 1000&#xd;and proc_id = cast(:proc_id as integer)&#xd;order by orden</sql>
-      <result outputType="json">{&#xd;    "etapas":{&#xd;        "etapa":[&#xd;        {&#xd;            "etap_id" : "$etap_id",&#xd;            "nombre" : "$nombre",&#xd;            "nom_recipiente" : "$nom_recipiente",&#xd;            "proc_id" : "$proc_id",&#xd;            "link" : "$link"&#xd;        }&#xd;    ]}&#xd;}</result>
+      <sql>select &#xd;   etap_id, nombre, nom_recipiente, proc_id , link, tiet_id&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and etap_id &lt; 1000&#xd;and proc_id = cast(:proc_id as integer)&#xd;order by orden</sql>
+      <result outputType="json">{&#xd;    "etapas":{&#xd;        "etapa":[&#xd;        {&#xd;            "etap_id" : "$etap_id",&#xd;            "nombre" : "$nombre",&#xd;            "nom_recipiente" : "$nom_recipiente",&#xd;            "proc_id" : "$proc_id",&#xd;            "link" : "$link",&#xd;            "tiet_id":"$tiet_id"&#xd;        }&#xd;    ]}&#xd;}</result>
       <param name="proc_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/productos/etapa/{etap_id}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}/empr_id/{empr_id}">
