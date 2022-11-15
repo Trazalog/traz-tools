@@ -73,3 +73,8 @@
   border-radius: 50%;
 }
 /** FIN ESTILOS BOTON TOOGLE ON/OFF */
+/*ESTILOS CON CLASES REUTILIZABLES*/
+.centrar{
+  text-align: center;
+}
+/*FIN ESTILOS CON CLASES REUTILIZABLES*/
