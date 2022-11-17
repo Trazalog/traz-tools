@@ -136,7 +136,7 @@
       <param name="batch_id" sqlType="STRING"/>
    </query>
    <query id="getLotesEstablecimiento" useConfig="ToolsDataSource">
-      <sql>select&#xd;  lote.lote_id as id,&#xd;  lote.lote_id as titulo,&#xd;  lote.batch_id,&#xd;  arti.arti_id as producto,&#xd;  arti.descripcion as tituloproducto,&#xd;  lotealm.cantidad as stock,&#xd;  lote.fec_alta as fecha,&#xd;  '0' as envase,&#xd;  '-' as tituloenvase&#xd;from&#xd;  prd.lotes lote,&#xd;  prd.recipientes as reci,&#xd;  alm.alm_depositos as depo,&#xd;  alm.alm_lotes as lotealm,&#xd;  alm.alm_articulos as arti&#xd;where&#xd;  lote.reci_id = reci.reci_id&#xd;  and reci.depo_id = depo.depo_id&#xd;  and lote.batch_id = cast(lotealm.batch_id as INTEGER)&#xd;  and lotealm.arti_id = arti.arti_id&#xd;  and depo.esta_id = cast(:esta_id as INTEGER)&#xd;  and reci.tipo = 'DEPOSITO'&#xd;  and lote.estado = 'FINALIZADO'</sql>
+      <sql>select&#xd;  lote.lote_id as id,&#xd;  lote.lote_id as titulo,&#xd;  lote.batch_id,&#xd;  arti.arti_id as producto,&#xd;  arti.descripcion as tituloproducto,&#xd;  lotealm.cantidad as stock,&#xd;  lote.fec_alta as fecha,&#xd;  '0' as envase,&#xd;  '-' as tituloenvase&#xd;from&#xd;  prd.lotes lote,&#xd;  prd.recipientes as reci,&#xd;  alm.alm_depositos as depo,&#xd;  alm.alm_lotes as lotealm,&#xd;  alm.alm_articulos as arti&#xd;where&#xd;  lote.reci_id = reci.reci_id&#xd;  and reci.depo_id = depo.depo_id&#xd;  and lote.batch_id = cast(lotealm.batch_id as INTEGER)&#xd;  and lotealm.arti_id = arti.arti_id&#xd;  and depo.esta_id = cast(:esta_id as INTEGER)&#xd;  and reci.tipo = 'DEPOSITO'&#xd;  and lote.estado = 'En Curso'</sql>
       <result outputType="json">{&#xd;    "lotes":{&#xd;        "lote":[&#xd;            {&#xd;                "id":"$id",&#xd;                "batch_id":"$batch_id",&#xd;                "titulo":"$titulo",&#xd;                "producto":"$producto",&#xd;                "tituloproducto":"$tituloproducto",&#xd;                "fecha":"$fecha",&#xd;                "stock":"$stock",&#xd;                "envase":"$envase",&#xd;                "tituloenvase":"$tituloenvase"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="esta_id" sqlType="STRING"/>
    </query>
@@ -200,6 +200,12 @@
       <sql>select case when exists &#xd;(select true from alm.alm_entrega_materiales aem,&#xd;alm.alm_pedidos_materiales apm &#xd;where apm.pema_id = aem.pema_id and apm.batch_id = cast(:batch_id as integer)&#xd;) then 'true' else 'false'&#xd;end</sql>
       <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$case"&#xd;    }&#xd;}</result>
       <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="getLotesxEtapa" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;		AUX.*&#xd;		, CASE&#xd;			WHEN allo.cantidad IS NULL THEN &#xd;				CASE WHEN prlo.cantidad IS NULL THEN 0 &#xd;				ELSE prlo.cantidad&#xd;				end&#xd;			ELSE allo.cantidad&#xd;		END AS cantidad&#xd;		, CASE&#xd;			WHEN art.barcode IS NULL THEN &#xd;				CASE WHEN prlo.barcode IS NULL THEN ''&#xd;				ELSE prlo.barcode &#xd;				END&#xd;			ELSE art.barcode&#xd;		END AS producto&#xd;		, CASE&#xd;			WHEN art.unidad_medida IS NULL THEN &#xd;				CASE WHEN alm2.unidad_medida IS NULL THEN ''&#xd;				ELSE alm2.unidad_medida&#xd;				END&#xd;			ELSE art.unidad_medida&#xd;			END unidad&#xd;		,(select case when exists &#xd;			(select true from alm.alm_entrega_materiales aem,&#xd;			alm.alm_pedidos_materiales apm &#xd;			where apm.pema_id = aem.pema_id and apm.batch_id = AUX.batch_id&#xd;			) then 'true' else 'false'&#xd;			end) as realizo_entrega_materiales&#xd;	FROM&#xd;		(&#xd;		SELECT&#xd;			lote.batch_id&#xd;			, lote.lote_id&#xd;			, lote.fec_alta AS fecha&#xd;			, etap.nombre AS titulo&#xd;			, etap.etap_id&#xd;			, esta.nombre AS establecimiento&#xd;			, reci.nombre AS recipiente&#xd;			, lote.num_orden_prod AS orden&#xd;			, lote.estado AS estado&#xd;			, esta.esta_id&#xd;            , etap.tiet_id&#xd;		FROM&#xd;			prd.etapas etap&#xd;			, prd.establecimientos esta&#xd;			, prd.recipientes reci&#xd;			, prd.lotes lote&#xd;			, alm.alm_depositos depo&#xd;		WHERE&#xd;			lote.etap_id = etap.etap_id&#xd;			AND lote.reci_id = reci.reci_id&#xd;			AND reci.depo_id = depo.depo_id&#xd;			AND depo.esta_id = esta.esta_id&#xd;			AND etap.etap_id &lt; 1000&#xd;			AND lote.empr_id = CAST(:empr_id AS integer)&#xd;			and lote.etap_id = CAST(:etap_id AS integer)&#xd;	) AS AUX&#xd;	LEFT JOIN&#xd;	alm.alm_lotes allo ON&#xd;		allo.batch_id = AUX.batch_id&#xd;	LEFT JOIN alm.alm_articulos art ON&#xd;		allo.arti_id = art.arti_id&#xd;	LEFT JOIN prd.productos_lotes_vw prlo ON&#xd;		prlo.batch_id = AUX.batch_id&#xd;	LEFT JOIN alm.alm_articulos alm2 ON&#xd;		alm2.barcode = prlo.barcode</sql>
+      <result outputType="json">{&#xd;"lotes":&#xd;      {"lote":&#xd;        [&#xd;          {&#xd;          "titulo":"$titulo",&#xd;          "estado":"$estado"&#xd;          }          &#xd;        ]&#xd;      }&#xd; }</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="etap_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/batch/porrecipiente/{reci_id}">
       <call-query href="getBatchidPorRecipiente">
@@ -422,6 +428,13 @@
       <description>Verifica si se realizo alguna entrega de materiales para el batch_id recibido            &#xd;                                    &#xd;                                    </description>
       <call-query href="verificaEntregaMateriales">
          <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lotes/etapa/{etap_id}/{empr_id}">
+      <description>Obtiene lotes por etapa                                    &#xd;                                    </description>
+      <call-query href="getLotesxEtapa">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="etap_id" query-param="etap_id"/>
       </call-query>
    </resource>
 </data>
