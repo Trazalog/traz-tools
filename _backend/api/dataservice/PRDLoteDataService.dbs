@@ -41,7 +41,7 @@
       <param name="lote" sqlType="STRING"/>
    </query>
    <query id="loteSetV2" useConfig="ToolsDataSource">
-      <sql>select prd.crear_lote_v2(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8) &#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as integer)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint))&#xd;resultado;</sql>
+      <sql>select prd.crear_lote_noco(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8)&#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as int4)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint)&#xd;,null&#xd;,to_date(:fec_iniciado, 'DD-MM-YYYY'))&#xd;resultado;</sql>
       <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
       <param name="lote_id" sqlType="STRING"/>
       <param name="batch_id_padre" sqlType="STRING"/>
@@ -60,7 +60,7 @@
       <param name="tipo_recurso" sqlType="STRING"/>
       <param name="planificado" sqlType="STRING"/>
       <param name="batch_id" optional="true" sqlType="STRING"/>
-      <param defaultValue="#{NULL}" name="fec_planificado" optional="true" sqlType="STRING"/>
+      <param name="fec_iniciado" sqlType="STRING"/>
    </query>
    <query id="getExistencia" useConfig="ToolsDataSource">
       <sql>select alm.obtener_existencia_batch(&#xd;cast(:batch_id_origen as int8)&#xd;) existencia;</sql>
@@ -68,7 +68,7 @@
       <param name="batch_id_origen" sqlType="STRING"/>
    </query>
    <query id="loteSetV2_batch_req" useConfig="ToolsDataSource">
-      <sql>select prd.crear_lote_v2(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8)&#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as int4)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint))&#xd;resultado;</sql>
+      <sql>select prd.crear_lote_noco(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8) &#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast(:recu_id as integer)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint)&#xd;,null&#xd;,to_date(:fec_iniciado, 'DD-MM-YYYY'))&#xd;resultado;</sql>
       <param name="lote_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
       <param name="prov_id" sqlType="STRING"/>
@@ -86,9 +86,10 @@
       <param name="tipo_recurso" sqlType="STRING"/>
       <param name="planificado" sqlType="STRING"/>
       <param name="batch_id" optional="true" sqlType="STRING"/>
+      <param name="fec_iniciado" sqlType="STRING"/>
    </query>
    <query id="loteSetNoCo_batch_req" useConfig="ToolsDataSource">
-      <sql>select prd.crear_lote_noco(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8)&#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as int4)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint),:noco_list)&#xd;resultado;</sql>
+      <sql>select prd.crear_lote_noco(&#xd; :lote_id &#xd;,cast(:arti_id as integer)&#xd;,cast(:prov_id as integer)&#xd;,cast(:batch_id_padre as bigint)&#xd;,cast(:cantidad as float8)&#xd;,cast(:cantidad_padre as float8)&#xd;,:num_orden_prod&#xd;,cast(:reci_id as integer)&#xd;,cast(:etap_id as integer)&#xd;,:usuario_app&#xd;,cast(:empr_id as integer)&#xd;,:forzar_agregar&#xd;,to_date(:fec_vencimiento,'DD-MM-YYYY')&#xd;,cast (:recu_id as int4)&#xd;,:tipo_recurso&#xd;,:planificado&#xd;,cast(:batch_id as bigint)&#xd;,:noco_list&#xd;,to_date(:fec_iniciado, 'DD-MM-YYYY'))&#xd;resultado;</sql>
       <param name="lote_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
       <param name="prov_id" sqlType="STRING"/>
@@ -107,6 +108,7 @@
       <param name="planificado" sqlType="STRING"/>
       <param name="batch_id" optional="true" sqlType="STRING"/>
       <param name="noco_list" optional="true" sqlType="STRING"/>
+      <param name="fec_iniciado" sqlType="STRING"/>
    </query>
    <query id="setRecursoLote" useConfig="ToolsDataSource">
       <sql>insert into prd.recursos_lotes &#xd; (batch_id, recu_id, usuario, empr_id, cantidad, tipo, empa_id, empa_cantidad) &#xd;values&#xd; (CAST(:batch_id AS INTEGER), &#xd;  CAST(:recu_id AS INTEGER), &#xd;  :usuario, &#xd;  CAST(:empr_id AS INTEGER), &#xd;  CAST(:cantidad AS double precision), &#xd;  :tipo,&#xd;  CAST(:empa_id AS INTEGER),&#xd;  CAST(:empa_cantidad AS double precision))</sql>
@@ -255,7 +257,7 @@
          <with-param name="tipo_recurso" query-param="tipo_recurso"/>
          <with-param name="planificado" query-param="planificado"/>
          <with-param name="batch_id" query-param="batch_id"/>
-         <with-param name="fec_planificado" query-param="fec_planificado"/>
+         <with-param name="fec_iniciado" query-param="fec_iniciado"/>
       </call-query>
    </resource>
    <resource method="GET" path="/lote/existencia/{batch_id_origen}">
@@ -302,6 +304,7 @@
          <with-param name="tipo_recurso" query-param="tipo_recurso"/>
          <with-param name="planificado" query-param="planificado"/>
          <with-param name="batch_id" query-param="batch_id"/>
+         <with-param name="fec_iniciado" query-param="fec_iniciado"/>
       </call-query>
    </resource>
    <resource method="POST" path="/lote/noConsumibles/list" returnRequestStatus="true">
@@ -324,6 +327,7 @@
          <with-param name="planificado" query-param="planificado"/>
          <with-param name="batch_id" query-param="batch_id"/>
          <with-param name="noco_list" query-param="noco_list"/>
+         <with-param name="fec_iniciado" query-param="fec_iniciado"/>
       </call-query>
    </resource>
    <resource method="POST" path="/recurso/lote">
