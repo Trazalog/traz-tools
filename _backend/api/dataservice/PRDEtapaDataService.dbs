@@ -140,8 +140,8 @@
       <param name="form_id" sqlType="STRING"/>
    </query>
    <query id="getArticulosReceta" useConfig="ToolsDataSource">
-      <sql>SELECT f.*, a.descripcion, a.unidad_medida &#xd;FROM prd.formulas_articulos f&#xd;INNER JOIN alm.alm_articulos a on a.arti_id = f.arti_id &#xd;WHERE  form_id = cast(:form_id as int8)</sql>
-      <result outputType="json">{&#xd;   "articulos":{&#xd;      "articulo":[&#xd;         {&#xd;            "cantidad":"$cantidad",&#xd;            "unme_id":"$unme_id",&#xd;            "form_id":"$form_id",&#xd;            "arti_id":"$arti_id",&#xd;            "descripcion":"$descripcion",&#xd;            "unidad_medida":"$unidad_medida"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>SELECT &#xd;fa.cantidad,&#xd;fa.fec_alta,&#xd;fa.usuario, &#xd;fa.unme_id, &#xd;fa.form_id,&#xd;a.arti_id,&#xd;a.descripcion, &#xd;a.unidad_medida,&#xd;a.barcode,&#xd;coalesce(sum(al.cantidad), 0) as stock&#xd;FROM alm.alm_articulos a&#xd;inner join &#xd;alm.alm_lotes al on a.arti_id = al.arti_id&#xd;inner join &#xd;prd.formulas_articulos fa on fa.arti_id = al.arti_id &#xd;WHERE  form_id = cast(:form_id as int8)&#xd;group by a.arti_id,fa.cantidad,fa.form_id,fa.fec_alta ,fa.cantidad,fa.usuario,fa.unme_id</sql>
+      <result outputType="json">{&#xd;   "articulos":{&#xd;      "articulo":[&#xd;         {&#xd;            "cantidad":"$cantidad",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id",&#xd;            "form_id":"$form_id",&#xd;            "arti_id":"$arti_id",&#xd;            "descripcion":"$descripcion",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "barcode":"$barcode",&#xd;            "stock":"$stock"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="form_id" sqlType="STRING"/>
    </query>
    <query id="deleteArticulosFormula" useConfig="ToolsDataSource">
