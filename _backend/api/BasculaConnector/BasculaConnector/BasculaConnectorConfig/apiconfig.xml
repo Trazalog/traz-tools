@@ -2,7 +2,6 @@
 <api>
 	<api_url>http://10.142.0.13:8280/tools</api_url>
 	<dataservices_url>http://10.142.0.13:8280/services</dataservices_url>
-
     <bascula_portname>/dev/pts/0</bascula_portname>
 </api>
 

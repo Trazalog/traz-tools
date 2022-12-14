@@ -9,7 +9,7 @@
             <property expression="$ctx:apiconf//bascula_portname" name="portname" scope="default" type="STRING"/>
             <log level="custom">
                 <property expression="$ctx:portname" name="portname"/>
-            </log>
+            </log> 
             <property name="pesoBascula" scope="default" type="STRING" value="0"/>
             <BasculaConnector.pesar>
                 <portname>{$ctx:portname}</portname>
