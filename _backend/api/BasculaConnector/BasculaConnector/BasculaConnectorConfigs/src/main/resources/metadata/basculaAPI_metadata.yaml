@@ -1,0 +1,11 @@
+---
+key: "basculaAPI-1.0.0"
+name : "basculaAPI"
+displayName : "basculaAPI"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/tools/bascula"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false
+apiId : "null"

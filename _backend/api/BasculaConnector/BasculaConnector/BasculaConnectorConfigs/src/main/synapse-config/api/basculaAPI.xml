@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/tools/bascula" name="basculaAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/pesar">
+        <inSequence>
+            <log level="custom">
+                <property name="Tomando peso" value="Tomando peso Bascula"/>
+            </log>
+            <property expression="get-property('registry','conf:tools/apiconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//bascula_portname" name="portname" scope="default" type="STRING"/>
+            <log level="custom">
+                <property expression="$ctx:portname" name="portname"/>
+            </log>
+            <property name="pesoBascula" scope="default" type="STRING" value="0"/>
+            <BasculaConnector.pesar>
+                <portname>{$ctx:portname}</portname>
+            </BasculaConnector.pesar>
+            <log description="donde 3" level="custom">
+                <property expression="$ctx:pesoBascula" name="peso obtenido"/>
+            </log>
+            <loopback/>
+        </inSequence>
+        <outSequence>
+            <log level="full">
+                <property name="MESSAGE" value="FIRST"/>
+            </log>
+            <payloadFactory description="Mensaje" media-type="json">
+                <format>
+					{"respuesta": { "resultado" : "ok" , "peso":"$1" } }
+				</format>
+                <args>
+                    <arg evaluator="xml" expression="fn:number(fn:substring($ctx:pesoBascula,2,6))"/>
+                </args>
+            </payloadFactory>
+            <log level="full"/>
+            <send/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+    <!-- 
+* basculaAPI
+* Toma la lectura de una báscula conectada 
+* @author rruiz
+* @param: bascula_portname en apiconfig.xml, nombre del puerto serial donde esta instalada la báscula
+* 
+ -->
+</api>
