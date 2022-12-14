@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template xmlns="http://ws.apache.org/ns/synapse" name="pesar">
+    <parameter name="portname" description="Nombre del puerto serial donde esta conectada la báscula" />
+    <sequence>
+  	 <class name="org.wso2.carbon.connector.BasculaConnector" />        
+    </sequence>
+</template>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="peso" type="synapse/template">
+    <subComponents>
+        <component name="pesar">
+            <file>pesar.xml</file>
+            <description>Obtiene el peso de la bascula</description>
+        </component>
+    </subComponents>
+</component>
