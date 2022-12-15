@@ -103,7 +103,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getRecipientes" useConfig="ToolsDataSource">
-      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo = case when t.tipo = 'TODOS' then r.tipo else t.tipo end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;order by r.nombre</sql>
+      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo like case when t.tipo = 'TODOS' then r.tipo else t.tipo  ||'%' end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;order by r.nombre</sql>
       <result outputType="json">{&#xd;    "recipientes": {&#xd;        "recipiente": [&#xd;            {&#xd;                "reci_id": "$reci_id",&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "estado": "$estado",&#xd;                "depo_id": "$depo_id",&#xd;                "esta_id":"$esta_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
@@ -140,8 +140,8 @@
       <param name="form_id" sqlType="STRING"/>
    </query>
    <query id="getArticulosReceta" useConfig="ToolsDataSource">
-      <sql>SELECT f.*, a.descripcion, a.unidad_medida &#xd;FROM prd.formulas_articulos f&#xd;INNER JOIN alm.alm_articulos a on a.arti_id = f.arti_id &#xd;WHERE  form_id = cast(:form_id as int8)</sql>
-      <result outputType="json">{&#xd;   "articulos":{&#xd;      "articulo":[&#xd;         {&#xd;            "cantidad":"$cantidad",&#xd;            "unme_id":"$unme_id",&#xd;            "form_id":"$form_id",&#xd;            "arti_id":"$arti_id",&#xd;            "descripcion":"$descripcion",&#xd;            "unidad_medida":"$unidad_medida"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>SELECT &#xd;fa.cantidad,&#xd;fa.fec_alta,&#xd;fa.usuario, &#xd;fa.unme_id, &#xd;fa.form_id,&#xd;a.arti_id,&#xd;a.descripcion, &#xd;a.unidad_medida,&#xd;a.barcode,&#xd;coalesce(sum(al.cantidad), 0) as stock&#xd;FROM alm.alm_articulos a&#xd;inner join &#xd;alm.alm_lotes al on a.arti_id = al.arti_id&#xd;inner join &#xd;prd.formulas_articulos fa on fa.arti_id = al.arti_id &#xd;WHERE  form_id = cast(:form_id as int8)&#xd;group by a.arti_id,fa.cantidad,fa.form_id,fa.fec_alta ,fa.cantidad,fa.usuario,fa.unme_id</sql>
+      <result outputType="json">{&#xd;   "articulos":{&#xd;      "articulo":[&#xd;         {&#xd;            "cantidad":"$cantidad",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id",&#xd;            "form_id":"$form_id",&#xd;            "arti_id":"$arti_id",&#xd;            "descripcion":"$descripcion",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "barcode":"$barcode",&#xd;            "stock":"$stock"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="form_id" sqlType="STRING"/>
    </query>
    <query id="deleteArticulosFormula" useConfig="ToolsDataSource">
@@ -268,6 +268,11 @@
       <sql>select &#xd;   etap_id, nombre, nom_recipiente, proc_id , link, tiet_id&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and etap_id &lt; 1000&#xd;and proc_id = cast(:proc_id as integer)&#xd;order by orden</sql>
       <result outputType="json">{&#xd;    "etapas":{&#xd;        "etapa":[&#xd;        {&#xd;            "etap_id" : "$etap_id",&#xd;            "nombre" : "$nombre",&#xd;            "nom_recipiente" : "$nom_recipiente",&#xd;            "proc_id" : "$proc_id",&#xd;            "link" : "$link",&#xd;            "tiet_id":"$tiet_id"&#xd;        }&#xd;    ]}&#xd;}</result>
       <param name="proc_id" sqlType="STRING"/>
+   </query>
+   <query id="getAllProcesosEtapas" useConfig="ToolsDataSource">
+      <sql>select&#xd;   pro.*,&#xd;   e.etap_id as etapa_etap_id,&#xd;   e.nombre as etapa_nombre,&#xd;   e.nom_recipiente as etapa_nom_recipiente &#xd;from&#xd;   prd.procesos pro &#xd;   join&#xd;      prd.etapas as e &#xd;      on e.proc_id = pro.proc_id &#xd;      and e.eliminado = 0&#xd;where pro.empr_id = cast(:empr_id as integer)&#xd;order by&#xd;   pro.nombre,&#xd;   e.orden ASC ;</sql>
+      <result outputType="json">{&#xd;    "procesos":{&#xd;        "proceso":[&#xd;        {&#xd;            "proc_id" : "$proc_id",&#xd;            "nombre" : "$nombre",&#xd;            "etapa_etap_id" : "$etapa_etap_id",&#xd;            "etapa_nombre" : "$etapa_nombre",&#xd;            "etapa_nom_recipiente" : "$etapa_nom_recipiente"&#xd;        }&#xd;    ]}&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/productos/etapa/{etap_id}/desde/{fecdesde}/hasta/{fechasta}/producto/{producto}/empr_id/{empr_id}">
       <call-query href="getProduccion">
@@ -547,6 +552,11 @@
       <description>Obtiene las etapas por proceso productivo               &#xd;                                    </description>
       <call-query href="getEtapasProceso">
          <with-param name="proc_id" query-param="proc_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/etapas/procesos/{empr_id}">
+      <call-query href="getAllProcesosEtapas">
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>
