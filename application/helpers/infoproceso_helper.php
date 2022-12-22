@@ -286,6 +286,21 @@
 											$fecha = date("d-m-Y",strtotime($fec[0]));
 								?>			
 											<!--_____________ Cabecera SICPOA _____________-->
+											<!--CSS-->
+											<style>
+											.fotos{
+												float: left;
+												margin-right: 10px;
+												display: block;
+											}
+											#expandedImgC{
+												margin-right: auto;
+												margin-left:auto;
+												display: block;
+												max-width: 60%;
+											}
+											</style>
+											<!-- FIN CSS -->
 											<div class="col-md-12">
 												<h3>Datos ingreso por barrera:</h3>
 												<hr>
@@ -402,22 +417,13 @@
 												</div>
 												<!--______________________________________________-->
 												<div class="col-md-12 col-sm-12 col-xs-12">
-													<h4>Fotos Ingreso por barrera:</h4>
-													<!--CSS-->
-													<style>
-													.fotos{
-														float: left;
-														margin-right: 10px;
-														display: block;
-													}
-													#expandedImgC{
-														margin-right: auto;
-														margin-left:auto;
-														display: block;
-														max-width: 60%;
-													}
-													</style>
-													<!-- FIN CSS -->
+													<div class="input-group">
+														<h4>Fotos Ingreso por barrera:</h4>
+														<span style="background-color: #05b513 !important;color: white !important; cursor: pointer" id="editarFormIngreso" 
+															class="input-group-addon" title="Editar formulario de ingreso por barrera" onclick="abrirFormularioIngreso(<?php echo !empty($aux->info_id) ? $aux->info_id : ''; ?>)">
+															<i class="fa fa-edit"></i>
+														</span>
+													</div>
 													<div class="row">
 														<div class="col-md-12 col-sm-12 col-xs-12">
 															<div class="fotos">
