@@ -87,7 +87,7 @@
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="getArticulosXTipo" useConfig="ToolsDataSource">
-      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;where upper(AR.tiar_id) like upper('%'|| :tipo || '%')&#xd;and AR.empr_id = cast(:empr_id as integer)&#xd;and ar.eliminado = false &#xd;group by ar.arti_id</sql>
+      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;  core.tablas t&#xd;,alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;,(select :tipo tipo) param&#xd;where t.tabla = 'tipo_articulo'&#xd;and AR.tiar_id like case when param.tipo = 'TODOS' then AR.tiar_id else '%'|| param.tipo || '%' end&#xd;and AR.empr_id = cast(:empr_id as integer)  &#xd;group by ar.arti_id</sql>
       <result outputType="json">{&#xd;  "articulos":{&#xd;     "articulo":[&#xd;        {&#xd;          "arti_id": "$arti_id",&#xd;          "descripcion": "$descripcion",&#xd;          "barcode":"$barcode",&#xd;          "um":"$um",&#xd;          "stock":"$stock"&#xd;                }&#xd;      ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
@@ -540,11 +540,6 @@
    <resource method="GET" path="/pedidoMateriales/{case_id}">
       <call-query href="getinfoPedMatPorCaseId">
          <with-param name="case_id" query-param="case_id"/>
-      </call-query>
-   </resource>
-   <resource method="GET" path="/articulos/tipo/{tipo}">
-      <call-query href="getArticulosXTipo">
-         <with-param name="tipo" query-param="tipo"/>
       </call-query>
    </resource>
    <resource method="POST" path="/extraer_cantidad_lote">
