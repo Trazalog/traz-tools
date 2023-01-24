@@ -147,9 +147,8 @@
       <param name="depo_id" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
    </query>
-   <query id="setRecipiente" keyColumns="reci_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+   <query id="setRecipiente" useConfig="ToolsDataSource">
       <sql>INSERT INTO prd.recipientes (tipo,nombre,empr_id,depo_id) &#xd;VALUES &#xd;(:tipo,:patente, CAST(:empr_id as INTEGER), CAST(:depo_id as INTEGER))</sql>
-      <result outputType="json">{&#xd; "resultado":{"reci_id":"$reci_id"}&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="patente" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
@@ -455,12 +454,13 @@
       <param name="cantidad" sqlType="STRING"/>
    </query>
    <query id="setDetallePedidoConReceta" useConfig="ToolsDataSource">
-      <sql>INSERT INTO alm.alm_deta_pedidos_materiales&#xd;(cantidad, pema_id, arti_id, cantidad_receta, receta)&#xd;select&#xd;  	cast(:cantidad as integer), &#xd;  	cast(:pema_id as integer),&#xd;	cast(:arti_id as integer),&#xd;        cast(:cantidad_receta as integer),&#xd;  	CASE WHEN param.receta IS NULL OR param.receta = '' THEN NULL ELSE cast(param.receta as integer) end&#xd;FROM (select :receta receta) param</sql>
+      <sql>INSERT INTO alm.alm_deta_pedidos_materiales&#xd;(cantidad, pema_id, arti_id, cantidad_receta, receta, empaque)&#xd;select&#xd;  	cast(:cantidad as integer), &#xd;  	cast(:pema_id as integer),&#xd;	cast(:arti_id as integer),&#xd;    cast(:cantidad_receta as integer),&#xd;  	CASE WHEN param.receta IS NULL OR param.receta = '' THEN NULL ELSE cast(param.receta as integer) end,&#xd;  	case when parametro.empaque IS NULL OR parametro.empaque = '' THEN NULL ELSE cast(parametro.empaque as integer) end&#xd;	from (select :receta receta) param, (select :empaque empaque) parametro</sql>
       <param name="cantidad" sqlType="STRING"/>
       <param name="pema_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
       <param name="receta" sqlType="STRING"/>
       <param name="cantidad_receta" sqlType="STRING"/>
+      <param name="empaque" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
@@ -949,6 +949,7 @@
          <with-param name="arti_id" query-param="arti_id"/>
          <with-param name="receta" query-param="receta"/>
          <with-param name="cantidad_receta" query-param="cantidad_receta"/>
+         <with-param name="empaque" query-param="empaque"/>
       </call-query>
    </resource>
 </data>
