@@ -425,10 +425,6 @@
       <param name="form_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
    </query>
-   <query id="getFormulas" useConfig="ToolsDataSource">
-      <sql>SELECT * FROM prd.formulas&#xd;WHERE eliminado != true</sql>
-      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
-   </query>
    <query id="deleteFormula" useConfig="ToolsDataSource">
       <sql>UPDATE prd.formulas&#xd;SET eliminado = true &#xd;WHERE form_id = cast(:form_id as int8)</sql>
       <param name="form_id" sqlType="STRING"/>
@@ -552,6 +548,15 @@
    <query id="getEtapasProceso" useConfig="ToolsDataSource">
       <sql>select &#xd;   etap_id, nombre, nom_recipiente, proc_id , link, tiet_id&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and etap_id &lt; 1000&#xd;and proc_id = cast(:proc_id as integer)&#xd;order by orden</sql>
       <result outputType="json">{&#xd;    "etapas":{&#xd;        "etapa":[&#xd;        {&#xd;            "etap_id" : "$etap_id",&#xd;            "nombre" : "$nombre",&#xd;            "nom_recipiente" : "$nom_recipiente",&#xd;            "proc_id" : "$proc_id",&#xd;            "link" : "$link",&#xd;            "tiet_id":"$tiet_id"&#xd;        }&#xd;    ]}&#xd;}</result>
+   </query>
+   <query id="getFormulas" useConfig="ToolsDataSource">
+      <sql>SELECT * FROM prd.formulas &#xd;WHERE eliminado != true</sql>
+      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="getFormulasXempresa" useConfig="ToolsDataSource">
+      <sql>SELECT * FROM prd.formulas f&#xd;WHERE f.eliminado != true and f.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/batch/porrecipiente/{reci_id}">
       <call-query href="getBatchidPorRecipiente">
@@ -1137,6 +1142,11 @@
          <with-param name="tipo" query-param="tipo"/>
          <with-param name="estado" query-param="estado"/>
          <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/formulasxempresas/{empr_id}">
+      <call-query href="getFormulasXempresa">
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
