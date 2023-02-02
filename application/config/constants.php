@@ -227,6 +227,7 @@ define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
+define('API_SICP', HOST.'/sicpoa/api');
 
 define('REST_SEIN', HOST.'/services/SeinDataService');
 

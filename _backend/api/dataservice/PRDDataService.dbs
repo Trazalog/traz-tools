@@ -206,8 +206,8 @@
       <param name="tipo" sqlType="STRING"/>
    </query>
    <query id="getEmpaques" useConfig="ToolsDataSource">
-      <sql>select &#xd;   e.empa_id as id, e.nombre as titulo, e.unidad_medida as unidad, e.capacidad as volumen , e.tara, e.arti_id, f.cantidad, f.descripcion as receta, f.aplicacion as aplicacion_receta &#xd;from &#xd;   prd.empaque e &#xd;left join prd.formulas f on f.form_id = e.receta &#xd;where e.empr_id = cast(:empr_id as integer)</sql>
-      <result outputType="json">{&#xd;    "empaques": {&#xd;        "empaque": [&#xd;            {&#xd;                "id": "$id",&#xd;                "titulo": "$titulo",&#xd;                "unidad": "$unidad",&#xd;                "volumen": "$volumen",&#xd;                "tara": "$tara",&#xd;                "cantidad": "$cantidad",&#xd;                "receta": "$receta",&#xd;                "aplicacion_receta": "$aplicacion_receta",&#xd;                "arti_id": "$arti_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <sql>select &#xd;   e.empa_id as id, e.nombre as titulo, e.unidad_medida as unidad, e.capacidad as volumen , e.tara, e.arti_id, f.cantidad, f.descripcion as receta, f.aplicacion as aplicacion_receta, f.form_id&#xd;from &#xd;   prd.empaque e &#xd;left join prd.formulas f on f.form_id = e.receta &#xd;where e.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "empaques": {&#xd;        "empaque": [&#xd;            {&#xd;                "id": "$id",&#xd;                "titulo": "$titulo",&#xd;                "unidad": "$unidad",&#xd;                "volumen": "$volumen",&#xd;                "tara": "$tara",&#xd;                "cantidad": "$cantidad",&#xd;                "receta": "$receta",&#xd;                "aplicacion_receta": "$aplicacion_receta",&#xd;                "arti_id": "$arti_id",&#xd;                "form_id": "$form_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setFraccionamiento" useConfig="ToolsDataSource">
@@ -341,7 +341,7 @@
       <param name="tipo" sqlType="STRING"/>
    </query>
    <query id="getRecipientes" useConfig="ToolsDataSource">
-      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo = case when t.tipo = 'TODOS' then r.tipo else t.tipo end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;and r.eliminado = 0&#xd;and esta.empr_id = cast(:empr_id as integer)&#xd;order by r.nombre</sql>
+      <sql>select r.reci_id&#xd;      ,r.nombre&#xd;      ,r.tipo&#xd;      ,r.estado&#xd;      ,r.depo_id&#xd;      ,esta.esta_id&#xd;from prd.recipientes as r&#xd;join alm.alm_depositos as alde on alde.depo_id = r.depo_id &#xd;join prd.establecimientos as esta on esta.esta_id =  alde.esta_id&#xd;     ,(select :tipo as tipo) as t&#xd;     ,(select :estado as estado) as e&#xd;     ,(select CAST(:esta_id as int4) as esta_id) as estable&#xd;where r.tipo like case when t.tipo = 'TODOS' then r.tipo else t.tipo ||'%' end&#xd;and r.estado = case when e.estado = 'TODOS' then r.estado else e.estado end &#xd;and esta.esta_id = case when estable.esta_id = 0 then esta.esta_id else estable.esta_id end&#xd;and r.eliminado = 0&#xd;and esta.empr_id = cast(:empr_id as integer)&#xd;order by r.nombre</sql>
       <result outputType="json">{&#xd;    "recipientes": {&#xd;        "recipiente": [&#xd;            {&#xd;                "reci_id": "$reci_id",&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "estado": "$estado",&#xd;                "depo_id": "$depo_id",&#xd;                "esta_id":"$esta_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
@@ -424,10 +424,6 @@
       <param name="cantidad" sqlType="STRING"/>
       <param name="form_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
-   </query>
-   <query id="getFormulas" useConfig="ToolsDataSource">
-      <sql>SELECT * FROM prd.formulas&#xd;WHERE eliminado != true</sql>
-      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
    </query>
    <query id="deleteFormula" useConfig="ToolsDataSource">
       <sql>UPDATE prd.formulas&#xd;SET eliminado = true &#xd;WHERE form_id = cast(:form_id as int8)</sql>
@@ -548,6 +544,19 @@
    <query id="delDetaNotaPedido" useConfig="ToolsDataSource">
       <sql>delete from alm.alm_deta_pedidos_materiales&#xd;where pema_id = cast(:pema_id as integer)</sql>
       <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="getEtapasProceso" useConfig="ToolsDataSource">
+      <sql>select &#xd;   etap_id, nombre, nom_recipiente, proc_id , link, tiet_id&#xd;from &#xd;   prd.etapas &#xd;where eliminado = 0 &#xd;and etap_id &lt; 1000&#xd;and proc_id = cast(:proc_id as integer)&#xd;order by orden</sql>
+      <result outputType="json">{&#xd;    "etapas":{&#xd;        "etapa":[&#xd;        {&#xd;            "etap_id" : "$etap_id",&#xd;            "nombre" : "$nombre",&#xd;            "nom_recipiente" : "$nom_recipiente",&#xd;            "proc_id" : "$proc_id",&#xd;            "link" : "$link",&#xd;            "tiet_id":"$tiet_id"&#xd;        }&#xd;    ]}&#xd;}</result>
+   </query>
+   <query id="getFormulas" useConfig="ToolsDataSource">
+      <sql>SELECT * FROM prd.formulas &#xd;WHERE eliminado != true</sql>
+      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="getFormulasXempresa" useConfig="ToolsDataSource">
+      <sql>SELECT * FROM prd.formulas f&#xd;WHERE f.eliminado != true and f.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "formulas":{&#xd;      "formula":[&#xd;         {&#xd;            "form_id":"$form_id",&#xd;            "descripcion":"$descripcion",&#xd;            "cantidad":"$cantidad",&#xd;            "aplicacion":"$aplicacion",&#xd;            "fec_alta":"$fec_alta",&#xd;            "unme_id":"$unme_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/batch/porrecipiente/{reci_id}">
       <call-query href="getBatchidPorRecipiente">
@@ -1133,6 +1142,11 @@
          <with-param name="tipo" query-param="tipo"/>
          <with-param name="estado" query-param="estado"/>
          <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/formulasxempresas/{empr_id}">
+      <call-query href="getFormulasXempresa">
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
