@@ -7,6 +7,11 @@
             </log>
             <property expression="get-property('registry','conf:tools/apiconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//bascula_portname" name="portname" scope="default" type="STRING"/>
+            <property expression="$ctx:apiconf//bascula_bauds" name="bauds" scope="default" type="STRING"/>
+            <property expression="$ctx:apiconf//bascula_databits" name="databits" scope="default" type="STRING"/>
+            <property expression="$ctx:apiconf//bascula_stopbits" name="stopbits" scope="default" type="STRING"/>
+            <property expression="$ctx:apiconf//bascula_parity" name="parity" scope="default" type="STRING"/> 
+
             <log level="custom">
                 <property expression="$ctx:portname" name="portname"/>
             </log> 
