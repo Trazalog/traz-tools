@@ -45,6 +45,10 @@ public class BasculaConnector extends AbstractConnector {
 	public void openPort(MessageContext mc) throws Exception {
 
 		String portName = (String) getParameter(mc, "portname");
+		String bauds = (String) getParameter(mc, "bauds");
+		String databits = (String) getParameter(mc, "databits");
+		String stopbits = (String) getParameter(mc, "stopbits");
+		String parity = (String) getParameter(mc, "parity");
 
 		log.info("BASCCONN: Abriendo puerto serie " + portName);
 
@@ -85,10 +89,10 @@ public class BasculaConnector extends AbstractConnector {
 		//
 		try {
 			port.setSerialPortParams(
-					115200,
-					SerialPort.DATABITS_8,
-					SerialPort.STOPBITS_1,
-					SerialPort.PARITY_NONE);
+					bauds,
+					databits,
+					stopbits,
+					parity);
 
 		} catch (UnsupportedCommOperationException e) {
 			log.error("BASCCONN: Error configurando puerto: " + portName + ": " + e);
