@@ -144,7 +144,10 @@ public class BasculaConnector extends AbstractConnector {
 				if (is != null) {
 					log.info("BASCCONN: leyendo peso");
 					trama = is.readLine();
+					log.info("BASCCONN: peso leido" + trama);					
 					mc.setProperty("pesoBascula", trama);
+					log.info("BASCCONN: pesoBascula seteada" + trama);					
+					
 				}
 
 				log.info("BASCCONN: Set property a mc, pesoBascula" + " = " + trama);
@@ -154,16 +157,17 @@ public class BasculaConnector extends AbstractConnector {
 			}
 
 			// Finalizo la lectura
-				try {
-					is.close();
-					log.info("BASCCONN: cierro lectura");
-				} catch (Exception e) {
-					log.info("BASCCONN: Error cerrando inputStream ");
-					throw e;
-				}
+			try {
+				log.info("BASCCONN: cierro lectura");
+				is.close();
+				log.info("BASCCONN: cerrado");
+			} catch (Exception e) {
+				log.info("BASCCONN: Error cerrando inputStream ");
+				throw e;
+			}
 		} catch (Exception e) {
-			log.info("BASCCONN: Imposible tomar peso",e);
-			log.error(e);
+			log.info("BASCCONN: Imposible tomar peso" + e);
+			log.info(e);
 			throw new ConnectException(e);
 		}
 
