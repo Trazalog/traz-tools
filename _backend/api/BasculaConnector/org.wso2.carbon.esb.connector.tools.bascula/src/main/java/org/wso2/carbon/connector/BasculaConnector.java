@@ -82,7 +82,7 @@ public class BasculaConnector extends AbstractConnector {
 					10000   // Wait max. 10 sec. to acquire port
 			);
 		} catch (PortInUseException e) {
-			log.error("BASCCONN: Puerto ya en uso: " + e);
+			log.info("BASCCONN: Puerto ya en uso: " + e);
 			throw e;
 		}
 
@@ -98,11 +98,11 @@ public class BasculaConnector extends AbstractConnector {
 					Integer.parseInt(parity));
 
 		} catch (UnsupportedCommOperationException e) {
-			log.error("BASCCONN: Error configurando puerto: " + portName + ": " + e);
+			log.info("BASCCONN: Error configurando puerto: " + portName + ": " + e);
 			throw e;
 		}
 	   } catch (Exception e){
-	   		log.error("BASCCONN: Error fatal abriendo puerto: " +  e);
+	   		log.info("BASCCONN: Error fatal abriendo puerto: " +  e);
 			throw e;
 	   }
 	}
@@ -117,24 +117,24 @@ public class BasculaConnector extends AbstractConnector {
 			log = mc.getServiceLog();
 			BufferedReader is;
 			
-			log.debug("BASCCONN: connect");
+			log.info("BASCCONN: connect");
 			//Si es la primer vez que nos conectamos, crea la conexión para el puerto
 			if (port == null) {
 				try {
 					log.debug("BASCCONN: puerto cerrado, abriendo");
 					openPort(mc);
 				} catch (Exception e) {
-					log.error("BASCCONN: Error abriendo puertos");
+					log.info("BASCCONN: Error abriendo puertos");
 					throw e;
 				}
 			}
 
 			//Leo el peso de la bascula
 			try {
-			        log.debug("BASCCONN: leyendo peso");
+			        log.info("BASCCONN: leyendo peso");
 				is = new BufferedReader(new InputStreamReader(port.getInputStream()));
 			} catch (IOException e) {
-				log.error("BASCCONN: No se puede abrir el input stream: solo escritura");
+				log.info("BASCCONN: No se puede abrir el input stream: solo escritura");
 				is = null;
 			}
 
@@ -142,27 +142,27 @@ public class BasculaConnector extends AbstractConnector {
 			try {
 				String trama = "";
 				if (is != null) {
-					log.debug("BASCCONN: leyendo peso");
+					log.info("BASCCONN: leyendo peso");
 					trama = is.readLine();
 					mc.setProperty("pesoBascula", trama);
 				}
 
 				log.info("BASCCONN: Set property a mc, pesoBascula" + " = " + trama);
 			} catch (Exception e) {
-				log.error("BASCCONN: Error recibiendo peso "+e.getMessage());
+				log.info("BASCCONN: Error recibiendo peso "+e.getMessage());
 				throw e;
 			}
 
 			// Finalizo la lectura
 				try {
 					is.close();
-					log.debug("BASCCONN: cierro lectura");
+					log.info("BASCCONN: cierro lectura");
 				} catch (Exception e) {
-					log.error("BASCCONN: Error cerrando inputStream ");
+					log.info("BASCCONN: Error cerrando inputStream ");
 					throw e;
 				}
 		} catch (Exception e) {
-			log.error("BASCCONN: Imposible tomar peso",e);
+			log.info("BASCCONN: Imposible tomar peso",e);
 			log.error(e);
 			throw new ConnectException(e);
 		}
