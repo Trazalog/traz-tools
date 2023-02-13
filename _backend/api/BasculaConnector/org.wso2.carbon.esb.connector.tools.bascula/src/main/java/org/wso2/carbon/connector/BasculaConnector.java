@@ -44,13 +44,14 @@ public class BasculaConnector extends AbstractConnector {
 	 */
 	public void openPort(MessageContext mc) throws Exception {
 
+	try{
 		String portName = (String) getParameter(mc, "portname");
 		String bauds = (String) getParameter(mc, "bauds");
 		String databits = (String) getParameter(mc, "databits");
 		String stopbits = (String) getParameter(mc, "stopbits");
 		String parity = (String) getParameter(mc, "parity");
 
-		log.info("BASCCONN: Abriendo puerto serie " + portName);
+		log.info("BASCCONN: Abriendo puerto serie " + portName + " bauds " + bauds + " databits " + databits + " stopbits " +stopbits + " parity "+parity );
 
 		System.setProperty("gnu.io.rxtx.SerialPorts", portName);
 		Enumeration portIdentifiers = CommPortIdentifier.getPortIdentifiers();
@@ -75,6 +76,7 @@ public class BasculaConnector extends AbstractConnector {
 
 		// Use port identifier for acquiring the port
 		try {
+			log.info("BASCCONN: Abriendo puerto");
 			port = (SerialPort) portId.open(
 					"trazalogtools", // Name of the application asking for the port
 					10000   // Wait max. 10 sec. to acquire port
@@ -88,16 +90,21 @@ public class BasculaConnector extends AbstractConnector {
 		// port. We can configure it and obtain input and output streams.
 		//
 		try {
+			log.info("BASCCONN: seteando parametros a puerto");
 			port.setSerialPortParams(
-					bauds,
-					databits,
-					stopbits,
-					parity);
+					Integer.parseInt(bauds),
+					Integer.parseInt(databits),
+					Integer.parseInt(stopbits),
+					Integer.parseInt(parity));
 
 		} catch (UnsupportedCommOperationException e) {
 			log.error("BASCCONN: Error configurando puerto: " + portName + ": " + e);
 			throw e;
 		}
+	   } catch (Exception e){
+	   		log.error("BASCCONN: Error fatal abriendo puerto: " +  e);
+			throw e;
+	   }
 	}
 
 	/**
@@ -109,10 +116,12 @@ public class BasculaConnector extends AbstractConnector {
 		try {
 			log = mc.getServiceLog();
 			BufferedReader is;
-
+			
+			log.debug("BASCCONN: connect");
 			//Si es la primer vez que nos conectamos, crea la conexión para el puerto
 			if (port == null) {
 				try {
+					log.debug("BASCCONN: puerto cerrado, abriendo");
 					openPort(mc);
 				} catch (Exception e) {
 					log.error("BASCCONN: Error abriendo puertos");
@@ -122,6 +131,7 @@ public class BasculaConnector extends AbstractConnector {
 
 			//Leo el peso de la bascula
 			try {
+			        log.debug("BASCCONN: leyendo peso");
 				is = new BufferedReader(new InputStreamReader(port.getInputStream()));
 			} catch (IOException e) {
 				log.error("BASCCONN: No se puede abrir el input stream: solo escritura");
@@ -132,6 +142,7 @@ public class BasculaConnector extends AbstractConnector {
 			try {
 				String trama = "";
 				if (is != null) {
+					log.debug("BASCCONN: leyendo peso");
 					trama = is.readLine();
 					mc.setProperty("pesoBascula", trama);
 				}
@@ -145,6 +156,7 @@ public class BasculaConnector extends AbstractConnector {
 			// Finalizo la lectura
 				try {
 					is.close();
+					log.debug("BASCCONN: cierro lectura");
 				} catch (Exception e) {
 					log.error("BASCCONN: Error cerrando inputStream ");
 					throw e;
