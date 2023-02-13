@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <template xmlns="http://ws.apache.org/ns/synapse" name="pesar">
     <parameter name="portname" description="Nombre del puerto serial donde esta conectada la báscula" />
+    <parameter name="bauds" description="Ratio de baudios de la bascula" />
+    <parameter name="databits" description="Bits de datos de la trama de la bascula" />
+    <parameter name="stopbits" description="Bits de parada de la bascula" />
+    <parameter name="parity" description="Paridad soportada por la bascula" />
     <sequence>
   	 <class name="org.wso2.carbon.connector.BasculaConnector" />        
     </sequence>
