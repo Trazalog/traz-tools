@@ -1,0 +1,38 @@
+<data transports="http https" serviceGroup="" serviceNamespace="" name="TangoDataService" enableBatchRequests="true">
+  <description />
+  <config id="TangoDataSourceID">
+    <property name="driverClassName">com.microsoft.sqlserver.jdbc.SQLServerDriver</property>
+    <property name="url">jdbc:sqlserver://;serverName=10.142.0.23;instance=SQLEXPRESS;encrypt=true;trustServerCertificate=true</property>
+    <property name="username">Axoft</property>
+    <property name="password">Axoft</property>
+  </config>
+  <resource method="GET" path="/tango/cola/leer">
+    <description>Obtiene listado de transacciones de la tabla cola novedades_clientes_queue</description>
+    <call-query href="leerTablaColaTango" />
+  </resource>
+  <resource method="PUT" path="/tango/cola/actualizar">
+    <description>Actualiza fec_realizado en la tabla cola de clientes TANGO</description>
+    <call-query href="updateTablaCola">
+      <with-param name="queue_id" query-param="queue_id" />
+    </call-query>
+  </resource>
+  <query id="leerTablaColaTango" useConfig="TangoDataSourceID">
+    <sql>SELECT * from Empresa_Ejemplo.dbo.novedades_clientes_queue ncq
+where ncq.fec_realizado is null</sql>
+    <result outputType="json">{
+   "clientes": {
+      "cliente": [
+        {
+          "data_json": "$data_json",
+          "queue_id": "$queue_id"
+        }
+      ]
+   }
+}</result>
+  </query>
+  <query id="updateTablaCola" useConfig="TangoDataSourceID">
+    <sql>update Empresa_Ejemplo.dbo.novedades_clientes_queue
+set fec_realizado = getdate() where queue_id = :queue_id</sql>
+    <param name="queue_id" paramType="SCALAR" sqlType="STRING" />
+  </query>
+</data>
