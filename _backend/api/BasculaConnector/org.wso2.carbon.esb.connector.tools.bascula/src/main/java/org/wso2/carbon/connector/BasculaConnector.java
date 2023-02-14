@@ -1,24 +1,23 @@
 package org.wso2.carbon.connector;
 /*
- *  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
- *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+*  Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+*
+*  WSO2 Inc. licenses this file to you under the Apache License,
+*  Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
-import gnu.io.*;
-import org.apache.commons.logging.Log;
+import com.fazecast.jSerialComm.*; import org.apache.commons.logging.Log;
 import org.apache.synapse.MessageContext;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.ConnectException;
@@ -43,7 +42,6 @@ public class BasculaConnector extends AbstractConnector {
 	 * @throws ConnectException
 	 */
 	public void openPort(MessageContext mc) throws Exception {
-
 	try{
 		String portName = (String) getParameter(mc, "portname");
 		String bauds = (String) getParameter(mc, "bauds");
@@ -51,60 +49,30 @@ public class BasculaConnector extends AbstractConnector {
 		String stopbits = (String) getParameter(mc, "stopbits");
 		String parity = (String) getParameter(mc, "parity");
 
-		log.info("BASCCONN: Abriendo puerto serie " + portName + " bauds " + bauds + " databits " + databits + " stopbits " +stopbits + " parity "+parity );
+		try{
 
-		System.setProperty("gnu.io.rxtx.SerialPorts", portName);
-		Enumeration portIdentifiers = CommPortIdentifier.getPortIdentifiers();
+			log.info("BASCCONN: Abriendo puerto serie " + portName + " bauds " + bauds + " databits " + databits + " stopbits " +stopbits + " parity "+parity );
 
-		CommPortIdentifier portId = null;  // will be set if port found
-		while (portIdentifiers.hasMoreElements()) {
-			CommPortIdentifier pid = (CommPortIdentifier) portIdentifiers.nextElement();
-
-			log.info("BASCCONN: Leyendo port " + pid.toString());
-			if (pid.getPortType() == CommPortIdentifier.PORT_SERIAL &&
-					pid.getName().equals(portName)) {
-				log.info("BASCCONN: el puerto seleccionado es " + pid.getName());
-				portId = pid;
-				break;
-			}
-		}
-		if (portId == null) {
-			log.error("BASCCONN: Error intentando abrir puerto " + portName);
-			throw new NoSuchPortException();
-
+			SerialPort port = SerialPort.getCommPort(portName);
+		} catch ( SerialPortInvalidPortException sie)
+		{
+			log.info("BASCCONN: Puerto inválido: " + portName + ": " + sie);
+			throw sie;	
 		}
 
-		// Use port identifier for acquiring the port
-		try {
-			log.info("BASCCONN: Abriendo puerto");
-			port = (SerialPort) portId.open(
-					"trazalogtools", // Name of the application asking for the port
-					10000   // Wait max. 10 sec. to acquire port
-			);
-		} catch (PortInUseException e) {
-			log.info("BASCCONN: Puerto ya en uso: " + e);
+		log.info("BASCCONN: seteando parametros a puerto");
+		port.setBaudRate(Integer.parseInt(bauds));
+		port.setNumDataBits(Integer.parseInt(databits));
+		port.setNumStopBits(Integer.parseInt(stopbits));
+		port.setParity(Integer.parseInt(parity));
+
+		log.info("BASCCONN: abriendo puerto "+portName);
+		port.openPort();
+
+		} catch (Exception e){
+			log.info("BASCCONN: Error fatal abriendo puerto: " +  e);
 			throw e;
 		}
-
-		// Now we are granted exclusive access to the particular serial
-		// port. We can configure it and obtain input and output streams.
-		//
-		try {
-			log.info("BASCCONN: seteando parametros a puerto");
-			port.setSerialPortParams(
-					Integer.parseInt(bauds),
-					Integer.parseInt(databits),
-					Integer.parseInt(stopbits),
-					Integer.parseInt(parity));
-
-		} catch (UnsupportedCommOperationException e) {
-			log.info("BASCCONN: Error configurando puerto: " + portName + ": " + e);
-			throw e;
-		}
-	   } catch (Exception e){
-	   		log.info("BASCCONN: Error fatal abriendo puerto: " +  e);
-			throw e;
-	   }
 	}
 
 	/**
@@ -129,17 +97,13 @@ public class BasculaConnector extends AbstractConnector {
 				}
 			}
 
-			//Leo el peso de la bascula
 			try {
-			        log.info("BASCCONN: leyendo peso");
+				//Leo el peso de la bascula
+				log.info("BASCCONN: leyendo peso");
 				is = new BufferedReader(new InputStreamReader(port.getInputStream()));
-			} catch (IOException e) {
-				log.info("BASCCONN: No se puede abrir el input stream: solo escritura");
-				is = null;
-			}
 
-			// obtengo el string recibido con el peso y lo seteo en la propiedad de wso2
-			try {
+				// obtengo el string recibido con el peso y lo seteo en la propiedad de wso2
+
 				String trama = "";
 				if (is != null) {
 					log.info("BASCCONN: leyendo peso");
