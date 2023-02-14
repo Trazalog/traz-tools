@@ -419,7 +419,7 @@
 												<div class="col-md-12 col-sm-12 col-xs-12">
 													<div class="input-group">
 														<h4>Fotos Ingreso por barrera:</h4>
-														<span style="background-color: #05b513 !important;color: white !important; cursor: pointer" id="editarFormIngreso" 
+														<span style="background-color: #05b513 !important;color: white !important; cursor: pointer; display: none" id="editarFormIngreso" 
 															class="input-group-addon" title="Editar formulario de ingreso por barrera" onclick="abrirFormularioIngreso(<?php echo !empty($aux->info_id) ? $aux->info_id : ''; ?>)">
 															<i class="fa fa-edit"></i>
 														</span>

@@ -462,6 +462,15 @@
       <param name="cantidad_receta" sqlType="STRING"/>
       <param name="empaque" sqlType="STRING"/>
    </query>
+   <query id="eliminaDetallesPedidoAnterior" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_deta_pedidos_materiales &#xd;SET eliminado = true&#xd;WHERE pema_id = cast(:pema_id as int8)</sql>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="updateJustificacion" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_pedidos_materiales &#xd;SET justificacion = :justificacion&#xd;WHERE  pema_id = cast(:pema_id as int8)</sql>
+      <param name="justificacion" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -950,6 +959,17 @@
          <with-param name="receta" query-param="receta"/>
          <with-param name="cantidad_receta" query-param="cantidad_receta"/>
          <with-param name="empaque" query-param="empaque"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/eliminadetallepedidoanterior">
+      <call-query href="eliminaDetallesPedidoAnterior">
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="pedidos/updatejustificacion">
+      <call-query href="updateJustificacion">
+         <with-param name="justificacion" query-param="justificacion"/>
+         <with-param name="pema_id" query-param="pema_id"/>
       </call-query>
    </resource>
 </data>
