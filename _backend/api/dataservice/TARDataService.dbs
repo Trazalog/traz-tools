@@ -208,8 +208,8 @@
       <param name="nombre_documento" sqlType="STRING"/>
    </query>
    <query id="getHitos" useConfig="produccionDS">
-      <sql>SELECT numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id&#xd;FROM tst.hitos h&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and not h.eliminado</sql>
-      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;      {&#xd;        "numero": "$numero",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "user_id": "$user_id",&#xd;        "objetivo": "$objetivo",&#xd;        "unidad_tiempo": "$unidad_tiempo",&#xd;        "esta_id": "$esta_id",&#xd;        "documento": "$documento",&#xd;        "petr_id": "$petr_id",&#xd;        "hito_id": "$hito_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <sql>SELECT numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id, 'PETR' as origen, hito_id as orta_id&#xd;FROM tst.hitos h&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and not h.eliminado</sql>
+      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;      {&#xd;        "numero": "$numero",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "user_id": "$user_id",&#xd;        "objetivo": "$objetivo",&#xd;        "unidad_tiempo": "$unidad_tiempo",&#xd;        "esta_id": "$esta_id",&#xd;        "documento": "$documento",&#xd;        "petr_id": "$petr_id",&#xd;        "hito_id": "$hito_id",&#xd;        "@getTareasPlanificadas":"$origen-&gt;origen,$orta_id-&gt;orta_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="petr_id" sqlType="STRING"/>
    </query>
    <query id="getHito" useConfig="produccionDS">

@@ -124,16 +124,16 @@ define('BPM_PROCESS_ID_TAREA_GENERICA', '6236605840529875888');
 define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
 
 #SICPOA Control de Ingreso de Camiones
-define('BPM_PROCESS_ID_INGRESO_CAMIONES', '5841373952148500437');
+define('BPM_PROCESS_ID_INGRESO_CAMIONES', '7654696702603905131');
 
 #SEIN PROCESO PRODUCTIVO
-define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '6851792266678531267');
+define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '6149765815561286114');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
 
 #SEIN -tools-ALM PAN TAR
-define('SEIN', 'SEIN-tools-almpantar/');
+define('SEIN', 'sein-tools-almpantar/');
 
 
 #COMPONENTE PAÑOL
@@ -197,6 +197,9 @@ define('DEF_VIEW',BPM.'Proceso');
 //Proceso pedido trabajo standar
 define('PRO_STD', 'PROCESO-STANDAR');
 
+//TAREA ejecutada por Bonita automaticamente
+define('TAREA_IT','Ejecuta el Trabajo - Tools Tareas');
+
 /*
 |--------------------------------------------------------------------------
 | Variables HOST y REST
@@ -221,8 +224,10 @@ define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
+define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
+define('API_SICP', HOST.'/sicpoa/api');
 
 define('REST_SEIN', HOST.'/services/SeinDataService');
 

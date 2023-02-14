@@ -52,12 +52,6 @@ class Proveedores extends CI_Model {
     $aux = $this->rest->callApi('GET', $url); 
     $aux = json_decode($aux["data"]);
     $valores = $aux->estados->estado;
-    // $es = array();
-    // foreach ($valores as $val)
-    // {
-    //   $estado = $val['tabl_id'];
-    //   array_push($es, $estado);
-    // }
     return $valores;
   }
 
@@ -90,13 +84,11 @@ class Proveedores extends CI_Model {
     $localidad = urldecode($data['localidad']);
     $post['_post_proveedor'] = $data;
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarProveedor()  $post: >> '.json_encode($post));
-    // $post['_post_proveedor']['pais'] = urlencode($data['pais']);
     $post['_post_proveedor']['estado'] = $estado;
     $post['_post_proveedor']['localidad'] = $localidad;
     $resource = '/proveedores';
     $url = REST_ALM . $resource;
     $aux = $this->rest->callApi("POST", $url, $post); 
-    // $aux = json_decode($aux["status"]);
     return $aux;
   }
 
@@ -110,13 +102,11 @@ class Proveedores extends CI_Model {
     $localidad = urldecode($data['localidad']);
     $post['_post_proveedor'] = $data;
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarEdicionProveedor()  $post: >> '.json_encode($post));
-    // $post['_post_proveedor']['pais'] = urlencode($data['pais']);
     $post['_post_proveedor']['estado'] = $estado;
     $post['_post_proveedor']['localidad'] = $localidad;
     $resource = '/proveedor';
     $url = REST_ALM . $resource;
     $aux = $this->rest->callApi("PUT", $url, $post); 
-    // $aux = json_decode($aux["status"]);
     return $aux;
   }
 

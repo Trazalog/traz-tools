@@ -2,6 +2,9 @@
 .navbar-header-tzl{
     float: left;
 }
+.navbar-custom-menu>.navbar-nav>li>.dropdown-menu {
+    width: auto !important;
+}
 </style>
 <div class="navbar-header-tzl">
 <ul class="nav navbar-nav">

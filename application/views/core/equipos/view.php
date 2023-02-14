@@ -1,7 +1,7 @@
 <!-- /// ---- HEADER ----- /// -->
 <div class="box box-primary animated fadeInLeft">
     <div class="box-header with-border">
-        <h4>Equipos</h4>
+        <h4>Lista de Equipos</h4>
     </div>
     <div class="box-body">
         <div class="row">

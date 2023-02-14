@@ -4,9 +4,9 @@
         <th>Acciones</th>
         <th>Nombre</th>
         <th>Calle y Altura</th>
-        <th>Localidad</th>
-        <th>Estado</th>
         <th>País</th>
+        <th>Estado</th>
+        <th>Localidad</th>
     </thead>
     <tbody >
         <?php
@@ -23,9 +23,9 @@
                         echo '</td>';
                         echo '<td>'.$establecimiento->nombre.'</td>';
                         echo '<td>'.$establecimiento->calle.' '.$establecimiento->altura.'</td>';
-                        echo '<td>'.$establecimiento->localidad.'</td>';
-                        echo '<td>'.$establecimiento->estado.'</td>';
                         echo '<td>'.$establecimiento->pais.'</td>';
+                        echo '<td>'.$establecimiento->estado.'</td>';
+                        echo '<td>'.$establecimiento->localidad.'</td>';
                     echo '</tr>';
                 }
             }
@@ -56,9 +56,16 @@
     // form.reset();
     // $("#pais_edit").val('');
     // creo los select de estado y localidad
+    $("#estado_edit").empty();
+    $("#localidad_edit").empty();
+    var $selectPais = $("#pais_edit");
     var $selectEstado = $("#estado_edit");
     var $selectLocalidad = $("#localidad_edit");
     // a esos select les guardo solamente los valores guardados previamente
+    $selectPais.append($("<option>", {
+        value: datajson.pais_id,
+        text: datajson.pais,
+    }));
     $selectEstado.append($("<option>", {
         value: datajson.estado_id,
         text: datajson.estado,
@@ -144,15 +151,15 @@
             encargados = encargados.slice(0, -1);
             $(tabla).append(
               "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
-                "<td class='accionesDepositos'><button type='button' title='Ver Depósito' class='btn btn-primary btn-circle btnVerDetalle' onclick='detalleDeposito(this)' id='btnVerDetalleDeposito'><span class='glyphicon glyphicon-eye-open' aria-hidden='true' ></span></button>" +
-                "<button type='button' title='Editar Depósito' class='btn btn-primary btn-circle btnEditar' onclick='editarDeposito(this)' id='btnEditar'><span class='glyphicon glyphicon-pencil' aria-hidden='true' ></span></button>" +
-                "<button type='button' title='Eliminar Depósito' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarDeposito(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button></td>" +
+                "<td class='accionesDepositos text-light-blue dtr-control sorting_1'><i title='Ver Depósito' class='fa fa-eye btnVerDetalle' style='cursor:pointer; margin:3px;' onclick='detalleDeposito(this)' id='btnVerDetalleDeposito'></i>" +
+                "<i title='Editar Depósito' class='fa fa-pencil-square-o btnEditar' style='cursor:pointer; margin:3px;' onclick='editarDeposito(this)' id='btnEditar'></i>" +
+                "<i title='Eliminar Depósito' class='fa fa-trash btnEliminar' style='cursor:pointer; margin:3px;' onclick='eliminarDeposito(this)' id='btnBorrar'></i></td>" +
                 "<td>" + e.descripcion + "</td>" +
                 "<td>" + encargados + "</td>" +
               "</tr>"
             );
           });            
-        };
+        }; 
         $('#modaldepositos').modal('show'); 
       },
       error: function(result) {

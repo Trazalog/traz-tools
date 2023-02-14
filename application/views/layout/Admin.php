@@ -17,8 +17,8 @@
     <link rel="stylesheet" href="lib/bower_components/Ionicons/css/ionicons.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="lib/dist/css/AdminLTE.min.css">
-    <!-- css iconos redondos -->
-    <link rel="stylesheet" href="lib/iconcurved.css">
+    <!-- css GENERAL TOOLS -->
+    <link rel="stylesheet" href="lib/estilos_generales.css">
     <!-- css tabla scroll dispositivo movil -->
     <link rel="stylesheet" href="lib/table-scroll.css">
 

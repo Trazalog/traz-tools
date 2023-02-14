@@ -1,0 +1,40 @@
+<data enableBoxcarring="true" name="QRDataService" transports="http https local">
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="setToken" useConfig="ToolsDataSource">
+      <sql>insert into qru.tokens  ("token", funcionalidad, empr_id, id,usuario_app)&#xd;values (:token, :funcionalidad,cast(:empr_id as integer),:id,:usuario_app)</sql>
+      <param name="funcionalidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="id" sqlType="STRING"/>
+      <param name="token" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="getToken" useConfig="ToolsDataSource">
+      <sql>select u.url, t.id , t.funcionalidad ,t.empr_id &#xd;from qru.tokens t&#xd;,qru.urls u &#xd;where t."token" = :token &#xd;and t.funcionalidad = u.funcionalidad &#xd;and t.empr_id = u.empr_id</sql>
+      <result outputType="json">{&#xd;   "funcionalidad":{&#xd;      "url":"$url",&#xd;      "funcionalidad":"$funcionalidad",&#xd;      "id":"$id",&#xd;      "empr_id":"$empr_id"&#xd;   }&#xd;}&#xd;</result>
+      <param name="token" sqlType="STRING"/>
+   </query>
+   <query id="getUrls" useConfig="ToolsDataSource">
+      <sql>select distinct (url) url&#xd;from qru.urls</sql>
+      <result outputType="json">{&#xd; "urls":{"url": [&#xd; {&#xd; "url": "$url"&#xd; }&#xd; ]}&#xd;}</result>
+   </query>
+   <resource method="POST" path="/token">
+      <call-query href="setToken">
+         <with-param name="funcionalidad" query-param="funcionalidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="id" query-param="id"/>
+         <with-param name="token" query-param="token"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/token/{token}">
+      <call-query href="getToken">
+         <with-param name="token" query-param="token"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/urls">
+      <call-query href="getUrls"/>
+   </resource>
+</data>
+

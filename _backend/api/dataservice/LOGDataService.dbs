@@ -35,7 +35,7 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="getLotesCamion" useConfig="ToolsDataSource">
-      <sql>select lo.lote_id, lo.batch_id, lo.reci_id, al.cantidad,  e.nombre establecimiento, al.arti_id, aa.unidad_medida as um, aa.barcode, aa.descripcion&#xd;from &#xd;prd.movimientos_trasportes as mt&#xd;,prd.recipientes as re&#xd;,prd.lotes as lo&#xd;,alm.alm_lotes as al&#xd;,alm.alm_depositos as ad&#xd;,prd.establecimientos as e&#xd;,alm.alm_articulos as aa&#xd;where mt.motr_id = re.motr_id &#xd;and re.reci_id = lo.reci_id&#xd;and al.batch_id = lo.batch_id&#xd;and al.depo_id = ad.depo_id&#xd;and ad.esta_id = e.esta_id&#xd;and al.arti_id = aa.arti_id&#xd;and mt.patente = :patente&#xd;and lo.estado != 'FINALIZADO'</sql>
+      <sql>select lo.lote_id, lo.batch_id, lo.reci_id, al.cantidad,  e.nombre establecimiento, al.arti_id, t.descripcion  as um, aa.barcode, aa.descripcion&#xd;from &#xd;prd.movimientos_trasportes as mt&#xd;,prd.recipientes as re&#xd;,prd.lotes as lo&#xd;,alm.alm_lotes as al&#xd;,alm.alm_depositos as ad&#xd;,prd.establecimientos as e&#xd;,alm.alm_articulos as aa&#xd;left join core.tablas t on t.tabl_id = aa.unme_id&#xd;where mt.motr_id = re.motr_id &#xd;and re.reci_id = lo.reci_id&#xd;and al.batch_id = lo.batch_id&#xd;and al.depo_id = ad.depo_id&#xd;and ad.esta_id = e.esta_id&#xd;and al.arti_id = aa.arti_id&#xd;and mt.patente = :patente&#xd;and lo.estado != 'FINALIZADO'</sql>
       <result outputType="json">{&#xd;    "lotes":{&#xd;        "lote":[&#xd;            {&#xd;                "barcode":"$barcode",&#xd;                "descripcion":"$descripcion",&#xd;                "lote_id":"$lote_id",&#xd;                "batch_id":"$batch_id",&#xd;                "reci_id":"$reci_id",&#xd;                "cantidad":"$cantidad",&#xd;                "establecimiento":"$establecimiento",&#xd;                "arti_id":"$arti_id",&#xd;                "um":"$um"&#xd;               &#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="patente" sqlType="STRING"/>
    </query>
@@ -116,10 +116,13 @@
       <param name="patente" sqlType="STRING"/>
    </query>
    <query id="updateProveedor" useConfig="ToolsDataSource">
-      <sql>update prd.movimientos_trasportes set prov_id = cast(:prov_id as integer)&#xd;where patente = :patente&#xd;and estado = :estado</sql>
+      <sql>update prd.movimientos_trasportes &#xd;set 	prov_id = cast(:prov_id as integer),&#xd;		boleta = :boleta, &#xd;		tara = cast(:tara as float8),&#xd;		neto = cast(:neto as float8),&#xd;                accion = :accion&#xd;where motr_id = cast(:motr_id as integer)</sql>
       <param name="prov_id" sqlType="STRING"/>
-      <param name="patente" sqlType="STRING"/>
-      <param name="estado" sqlType="STRING"/>
+      <param name="boleta" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="neto" sqlType="STRING"/>
+      <param name="motr_id" sqlType="STRING"/>
+      <param name="accion" sqlType="STRING"/>
    </query>
    <query id="getMovimientoTransporte" useConfig="ToolsDataSource">
       <sql>select mt.motr_id, es.nombre establecimiento,es.esta_id , mt.cuit, mt.boleta, mt.conductor, mt.tipo, mt.acoplado, pr.nombre proveedor, tr.razon_social transportista ,to_char(mt.fecha_entrada,'dd-mm-yyyy') fecha_entrada, mt.patente,mt.bruto ,mt.tara ,mt.neto, mt.estado, mt.accion, 'tipo_movimiento' tipo_movimiento, mt.prov_id &#xd;from prd.movimientos_trasportes mt&#xd;, prd.establecimientos es&#xd;, alm.alm_proveedores pr&#xd;, core.transportistas tr&#xd;where mt.prov_id = pr.prov_id&#xd;and mt.cuit = tr.cuit&#xd;and es.esta_id = mt.esta_id&#xd;and mt.empr_id = cast(:empr_id as integer)&#xd;and mt.motr_id = cast(:motr_id as integer)</sql>
@@ -259,8 +262,11 @@
    <resource method="PUT" path="/camiones/proveedor">
       <call-query href="updateProveedor">
          <with-param name="prov_id" query-param="prov_id"/>
-         <with-param name="patente" query-param="patente"/>
-         <with-param name="estado" query-param="estado"/>
+         <with-param name="motr_id" query-param="motr_id"/>
+         <with-param name="boleta" query-param="boleta"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="neto" query-param="neto"/>
+         <with-param name="accion" query-param="accion"/>
       </call-query>
    </resource>
    <resource method="GET" path="/transporte/movimiento/motr_id/{motr_id}/{empr_id}">

@@ -117,7 +117,7 @@
                         <div class="form-group">
                             <label for="pais">País:</label>
                             <select onchange="seleccionPais()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais" style='width: 100%;'>
-                                <option value="" disabled selected>-Seleccione opción-</option>	
+                                <option value="" disabled selected>-Seleccione país-</option>	
                                 <?php
                                     foreach ($listarPaises as $pais) {
                                     echo '<option  value="'.$pais->tabl_id.'">'.$pais->valor.'</option>';
@@ -132,7 +132,7 @@
                         <div class="form-group">
                             <label for="estado">Estado:</label><br>
                             <select onchange="seleccionEstado()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado" style='width: 100%;'>
-                                <option value="" disabled selected>-Seleccione opción-</option>	
+                                <option value="" disabled selected>-Seleccione estado-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
                                     echo '<option  value="'.$tipos->tabl_id.'">'.$tipos->valor.'</option>';
@@ -147,7 +147,7 @@
                         <div class="form-group">
                             <label for="localidad">Localidad:</label><br>
                             <select class="form-control select2 select2-hidden-accesible habilitar" name="localidad" id="localidad" style='width: 100%;'>
-                                <option value="" disabled selected>-Seleccione opción-</option>	
+                                <option value="" disabled selected>-Seleccione localidad-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
                                     echo '<option  value="'.$tipos->tabl_id.'">'.$tipos->valor.'</option>';
@@ -212,8 +212,8 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label for="pais">País:</label>
-                            <select onchange="seleccionPaisEditar()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais_edit">
-                                <option value="" disabled selected>-Seleccione opción-</option>	
+                            <select onchange="seleccionPaisEditar()" class="form-control select2 select2-hidden-accesible" name="pais" id="pais_edit" style="width: 100%;">
+                                <option value="" disabled selected>-Seleccione país-</option>	
                                 <?php
                                     foreach ($listarPaises as $pais) {
                                     echo '<option  value="'.$pais->tabl_id.'">'.$pais->valor.'</option>';
@@ -227,8 +227,8 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label for="estado">Estado:</label>
-                            <select onchange="seleccionEstadoEditar()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado_edit">
-                                <option value="" disabled selected>-Seleccione opción-</option>	
+                            <select onchange="seleccionEstadoEditar()" class="form-control select2 select2-hidden-accesible habilitar" name="estado" id="estado_edit" style="width: 100%;">
+                                <option value="" disabled selected>-Seleccione estado-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
                                     echo '<option  value="'.$tipos->tabl_id.'">'.$tipos->valor.'</option>';
@@ -242,8 +242,8 @@
                     <div class="col-md-6 col-sm-6 col-xs-12">
                         <div class="form-group">
                             <label for="localidad">Localidad:</label>
-                            <select class="form-control select2 select2-hidden-accesible habilitar" name="localidad" id="localidad_edit">
-                                <option value="" disabled selected>-Seleccione opción-</option>	
+                            <select class="form-control select2 select2-hidden-accesible habilitar" name="localidad" id="localidad_edit" style="width: 100%;">
+                                <option value="" disabled selected>-Seleccione localidad-</option>	
                                 <?php
                                     foreach ($tipos_clientes as $tipos) {
                                     echo '<option  value="'.$tipos->tabl_id.'">'.$tipos->valor.'</option>';
@@ -578,15 +578,7 @@
       $(".habilitar").attr("disabled","disabled");
     }
 
-    // $("#botonEstablecimiento").on("click", function() {
-    //     $("#botonEstablecimiento").attr("disabled", "");
-    //     $("#boxDeposito").focus();
-    //     $("#boxDeposito").show();
-    // });
-
     $("#botonEstablecimiento").on("click", function() {
-        // var id_tabla = $("#selectTabla").val();
-        // $("#tabla").val(id_tabla);
         $(".modal-header h4").remove();
         //guardo el tipo de operacion en el modal
         $("#operacion").val("Edit");
@@ -629,6 +621,7 @@
             },
             error: function(data) {
                 alert('Error');
+                wc();
             }
         });
     }
@@ -754,21 +747,6 @@
             'error'
         );
         return ban; 
-        // if (!ban){
-        //     if(!alertify.errorAlert){
-        //     alertify.dialog('errorAlert',function factory(){
-        //         return{
-        //                 build:function(){
-        //                     var errorHeader = '<span class="fa fa-times-circle fa-2x" '
-        //                     +    'style="vertical-align:middle;color:#e10000;">'
-        //                     + '</span>Error...!!';
-        //                     this.setHeader(errorHeader);
-        //                 }
-        //             };
-        //         },true,'alert');
-        //     }
-        //     alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
-        // }
     }
 
     function guardarEstablecimiento() {
@@ -880,7 +858,7 @@
             if(result.deposito.status && result.encargados.status){
                 $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos",() => {
                     wc();
-                    alertify.success("Depósito agregado con éxito");
+                    hecho();
                     $("#modalAgregarDeposito").hide(500);
                 });
             }else{
@@ -911,11 +889,27 @@
         // var esta_id = $("#id_esta").val();
         // var esta_id = $("#establecimiento_id").val();
         // $("#id_establecimiento_borrar").val(esta_id);
-        $(".modal-header h4").remove();
+        /* $(".modal-header h4").remove();
         //pongo titulo al modal
         $(".modal-header").append('<h4 class="modal-title"  id="myModalLabel"><span id="modalAction" class="fa fa-fw fa-pencil"></span> Eliminar Depósito </h4>');
         $("#modaldepositos").modal('hide');
-        $('#modalAvisoDeposito').modal('show');
+        $('#modalAvisoDeposito').modal('show'); */
+        Swal.fire({
+              title: '¿Realmente desea ELIMINAR el depósito del Establecimiento?',
+              text: "No podras revertir la acción!",
+              type: 'question',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Si, Eliminar!'
+            }).then((result) => {
+            	if (result.value) {
+                eliminarDepositoDeEstablecimiento();                
+              }else if (result.dismiss) {
+                    Swal.fire('Cancelado', '', 'error')
+                }
+        })
+
     }
 
     function eliminarDepositoDeEstablecimiento() {
@@ -928,18 +922,24 @@
             data:{depo_id: depo_id},
             url: 'index.php/core/Establecimiento/borrarDepositoDeEstablecimiento',
             success: function(result) {
-            $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
-            setTimeout(function(){ 
-                alertify.success("Depósito eliminado con éxito");
                 wc();
-                // alert("Hello"); 
-            }, 3000);
-            $("#modalAvisoDeposito").modal('hide');
-            },
-            error: function(result){
-            wc();
-            $("#modalAvisoDeposito").modal('hide');
-            alertify.error('Error en eliminado de Depósito...');
+                //$("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+                Swal.fire({
+                      title: "Hecho",
+                      text: "Depósito eliminado!",
+                      type: "success",
+                      showCancelButton: false,
+                      confirmButtonColor: "#3085d6",
+                      confirmButtonText: "OK",
+                  }).then((result) => {
+                      if (result.value) {
+                        $("#modaldepositos").modal('hide');
+                      }
+                  });
+                },
+                error: function(result){
+                wc();
+                alertify.error('Error en eliminado de Depósito...');
             }
         });        
     }

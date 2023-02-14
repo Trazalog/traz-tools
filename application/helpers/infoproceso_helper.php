@@ -90,7 +90,7 @@
 					}  elseif (BPM_PROCESS_ID_INGRESO_CAMIONES == $processId) {
 						$nombreProceso = 'Control de Ingreso de Camiones: ' . $nombreTarea;
 					}  elseif (BPM_PROCESS_ID_PROCESO_PRODUCTIVO == $processId) {
-						$nombreProceso = 'PROCESO PRODUCTIVO: ' . $nombreTarea;
+						$nombreProceso = 'Tarea: ' . $nombreTarea;
 					}else{
 						$nombreProceso = 'Proceso Estandar';
 					}
@@ -286,6 +286,21 @@
 											$fecha = date("d-m-Y",strtotime($fec[0]));
 								?>			
 											<!--_____________ Cabecera SICPOA _____________-->
+											<!--CSS-->
+											<style>
+											.fotos{
+												float: left;
+												margin-right: 10px;
+												display: block;
+											}
+											#expandedImgC{
+												margin-right: auto;
+												margin-left:auto;
+												display: block;
+												max-width: 60%;
+											}
+											</style>
+											<!-- FIN CSS -->
 											<div class="col-md-12">
 												<h3>Datos ingreso por barrera:</h3>
 												<hr>
@@ -402,22 +417,13 @@
 												</div>
 												<!--______________________________________________-->
 												<div class="col-md-12 col-sm-12 col-xs-12">
-													<h4>Fotos Ingreso por barrera:</h4>
-													<!--CSS-->
-													<style>
-													.fotos{
-														float: left;
-														margin-right: 10px;
-														display: block;
-													}
-													#expandedImgC{
-														margin-right: auto;
-														margin-left:auto;
-														display: block;
-														max-width: 60%;
-													}
-													</style>
-													<!-- FIN CSS -->
+													<div class="input-group">
+														<h4>Fotos Ingreso por barrera:</h4>
+														<span style="background-color: #05b513 !important;color: white !important; cursor: pointer; display: none" id="editarFormIngreso" 
+															class="input-group-addon" title="Editar formulario de ingreso por barrera" onclick="abrirFormularioIngreso(<?php echo !empty($aux->info_id) ? $aux->info_id : ''; ?>)">
+															<i class="fa fa-edit"></i>
+														</span>
+													</div>
 													<div class="row">
 														<div class="col-md-12 col-sm-12 col-xs-12">
 															<div class="fotos">
@@ -454,8 +460,14 @@
 							// $data =json_decode($aux);
 
 									?>
+									<div class="col-md-3">
+										<div class="form-group">
+											<label for="generador" name="">Nº pedido:</label>
+											<input type="text" class="form-control habilitar" style="font-family: Arial; font-size: 16pt;" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
+										</div>
+									</div>
 									<div class="col-md-12">
-									<p>Datos del Cliente:</p><input type="hidden" class="form-control habilitar" id="petr_id" value="<?php echo $aux->petr_id; ?>"  readonly>
+									<p>Datos del Cliente:</p>
 									<hr>
 										<div class="col-md-6 animated fadeInLeft">
 											<div class="form-group">
@@ -511,10 +523,10 @@
 															
 
 																								
-     											$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_inicio)));
+     											$fecha_inicio = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_inicio)));
 
 										
-													echo $fecha ;
+													echo $fecha_inicio ;
 													
 													?>"  readonly>
 											</div>
@@ -526,9 +538,9 @@
 													<label for="fecha_entrega" name=""> Fecha Entrega:</label>
 													<input type="text" class="form-control habilitar" id="fec_entrega" value="<?php
 																									
-														$fecha = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_entrega)));
+														$fecha_entrega = date("d-m-Y",strtotime(str_replace('T', ' ', $aux->fec_entrega)));
 														
-														echo $fecha ;
+														echo $fecha_entrega ;
 														
 														?>"  readonly>
 											</div>
