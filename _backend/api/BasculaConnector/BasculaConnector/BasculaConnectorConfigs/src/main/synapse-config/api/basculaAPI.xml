@@ -10,14 +10,17 @@
             <property expression="$ctx:apiconf//bascula_bauds" name="bauds" scope="default" type="STRING"/>
             <property expression="$ctx:apiconf//bascula_databits" name="databits" scope="default" type="STRING"/>
             <property expression="$ctx:apiconf//bascula_stopbits" name="stopbits" scope="default" type="STRING"/>
-            <property expression="$ctx:apiconf//bascula_parity" name="parity" scope="default" type="STRING"/> 
-
+            <property expression="$ctx:apiconf//bascula_parity" name="parity" scope="default" type="STRING"/>
             <log level="custom">
                 <property expression="$ctx:portname" name="portname"/>
-            </log> 
+            </log>
             <property name="pesoBascula" scope="default" type="STRING" value="0"/>
             <BasculaConnector.pesar>
                 <portname>{$ctx:portname}</portname>
+                <bauds>{$ctx:bauds}</bauds>
+                <databits>{$ctx:databits}</databits>
+                <stopbits>{$ctx:stopbits}</stopbits>
+                <parity>{$ctx:parity}</parity>
             </BasculaConnector.pesar>
             <log description="donde 3" level="custom">
                 <property expression="$ctx:pesoBascula" name="peso obtenido"/>

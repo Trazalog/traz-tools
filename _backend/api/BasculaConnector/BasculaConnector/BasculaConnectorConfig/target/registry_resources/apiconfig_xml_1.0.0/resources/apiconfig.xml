@@ -2,6 +2,10 @@
 <api>
 	<api_url>http://10.142.0.13:8280/tools</api_url>
 	<dataservices_url>http://10.142.0.13:8280/services</dataservices_url>
-    <bascula_portname>/dev/pts/0</bascula_portname>
+    <bascula_portname>COM6</bascula_portname>
+    <bascula_bauds>1200</bascula_bauds>
+    <bascula_databits>8</bascula_databits>
+    <bascula_stopbits>1</bascula_stopbits>
+    <bascula_parity>0</bascula_parity>
 </api>
 
