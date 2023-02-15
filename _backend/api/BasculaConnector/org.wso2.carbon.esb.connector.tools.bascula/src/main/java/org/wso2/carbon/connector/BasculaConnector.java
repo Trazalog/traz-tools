@@ -43,31 +43,32 @@ public class BasculaConnector extends AbstractConnector {
 	 */
 	public void openPort(MessageContext mc) throws Exception {
 	try{
-		String portName = (String) getParameter(mc, "portname");
-		String bauds = (String) getParameter(mc, "bauds");
-		String databits = (String) getParameter(mc, "databits");
-		String stopbits = (String) getParameter(mc, "stopbits");
-		String parity = (String) getParameter(mc, "parity");
+			String portName = (String) getParameter(mc, "portname");
+			String bauds = (String) getParameter(mc, "bauds");
+			String databits = (String) getParameter(mc, "databits");
+			String stopbits = (String) getParameter(mc, "stopbits");
+			String parity = (String) getParameter(mc, "parity");
 
-		try{
+			try{
 
-			log.info("BASCCONN: Abriendo puerto serie " + portName + " bauds " + bauds + " databits " + databits + " stopbits " +stopbits + " parity "+parity );
+				log.info("BASCCONN: Puerto solicitado: " + portName + "(bauds " + bauds + " databits " + databits + " stopbits " +stopbits + " parity "+parity +")");
+				port = SerialPort.getCommPort(portName);
+			} catch ( SerialPortInvalidPortException sie)
+			{
+				log.info("BASCCONN: Puerto inválido: " + portName + ": " + sie);
+				throw sie;	
+			}
 
-			SerialPort port = SerialPort.getCommPort(portName);
-		} catch ( SerialPortInvalidPortException sie)
-		{
-			log.info("BASCCONN: Puerto inválido: " + portName + ": " + sie);
-			throw sie;	
-		}
-
-		log.info("BASCCONN: seteando parametros a puerto");
-		port.setBaudRate(Integer.parseInt(bauds));
-		port.setNumDataBits(Integer.parseInt(databits));
-		port.setNumStopBits(Integer.parseInt(stopbits));
-		port.setParity(Integer.parseInt(parity));
-
-		log.info("BASCCONN: abriendo puerto "+portName);
-		port.openPort();
+			log.info("BASCCONN: abriendo puerto "+portName);
+			if (port.openPort()){
+				log.info("BASCCONN: seteando parametros a puerto");
+				port.setBaudRate(Integer.parseInt(bauds));
+				port.setNumDataBits(Integer.parseInt(databits));
+				port.setNumStopBits(Integer.parseInt(stopbits));
+				port.setParity(Integer.parseInt(parity));
+			} else { 
+				log.info("BASCCONN: openport dio false");
+			} 
 
 		} catch (Exception e){
 			log.info("BASCCONN: Error fatal abriendo puerto: " +  e);
