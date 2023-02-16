@@ -60,7 +60,7 @@ public class BasculaConnector extends AbstractConnector {
 				throw sie;	
 			}
 
-			port.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 1000, 0);
+			port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 100, 0);
 
 			log.info("BASCCONN: abriendo puerto "+portName);
 			if (port.openPort()){
