@@ -36,7 +36,7 @@
 					{"respuesta": { "resultado" : "ok" , "peso":"$1" } }
 				</format>
                 <args>
-                    <arg evaluator="xml" expression="fn:number(fn:substring($ctx:pesoBascula,2,6))"/>
+                    <arg evaluator="xml" expression="fn:number(fn:substring($ctx:pesoBascula,2,7))"/>
                 </args>
             </payloadFactory>
             <log level="full"/>
