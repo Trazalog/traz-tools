@@ -17,7 +17,8 @@ package org.wso2.carbon.connector;
 * under the License.
 */
 
-import com.fazecast.jSerialComm.*; import org.apache.commons.logging.Log;
+import com.fazecast.jSerialComm.*; 
+import org.apache.commons.logging.Log;
 import org.apache.synapse.MessageContext;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.ConnectException;
@@ -55,9 +56,11 @@ public class BasculaConnector extends AbstractConnector {
 				port = SerialPort.getCommPort(portName);
 			} catch ( SerialPortInvalidPortException sie)
 			{
-				log.info("BASCCONN: Puerto inválido: " + portName + ": " + sie);
+				log.info("BASCCONN: Puerto inválido: " + portName + ": " + sie.getMessage());
 				throw sie;	
 			}
+
+			port.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 1000, 0);
 
 			log.info("BASCCONN: abriendo puerto "+portName);
 			if (port.openPort()){
@@ -71,7 +74,7 @@ public class BasculaConnector extends AbstractConnector {
 			} 
 
 		} catch (Exception e){
-			log.info("BASCCONN: Error fatal abriendo puerto: " +  e);
+			log.info("BASCCONN: Error fatal abriendo puerto: " +  e.getMessage());
 			throw e;
 		}
 	}
@@ -107,7 +110,7 @@ public class BasculaConnector extends AbstractConnector {
 
 				String trama = "";
 				if (is != null) {
-					log.info("BASCCONN: leyendo peso");
+					log.info("BASCCONN: readLine()");
 					trama = is.readLine();
 					log.info("BASCCONN: peso leido" + trama);					
 					mc.setProperty("pesoBascula", trama);
@@ -116,6 +119,9 @@ public class BasculaConnector extends AbstractConnector {
 				}
 
 				log.info("BASCCONN: Set property a mc, pesoBascula" + " = " + trama);
+			} catch (SerialPortTimeoutException spte) {
+				log.info("BASCCONN: tmout ");
+				throw spte;
 			} catch (Exception e) {
 				log.info("BASCCONN: Error recibiendo peso "+e.getMessage());
 				throw e;
@@ -130,8 +136,10 @@ public class BasculaConnector extends AbstractConnector {
 				log.info("BASCCONN: Error cerrando inputStream ");
 				throw e;
 			}
+		} catch (SerialPortTimeoutException spte) {
+			log.info("BASCCONN: Dio timeout " + spte.getMessage());
 		} catch (Exception e) {
-			log.info("BASCCONN: Imposible tomar peso" + e);
+			log.info("BASCCONN: Imposible tomar peso" + e.getMessage());
 			log.info(e);
 			throw new ConnectException(e);
 		}
