@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?><artifacts>
+    <artifact name="TangoDataSource" groupId="com.example.datasource" version="5.2.40" type="datasource/datasource" serverRole="DataServicesServer">
+        <file>datasource/TangoDataSource.xml</file>
+    </artifact>
+</artifacts>

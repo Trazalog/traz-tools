@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/tools/tango" name="TangoConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" url-mapping="/clientes/synch/in">
+        <inSequence>
+            <property name="HTTP_SC" scope="transport" type="STRING" value="200"/>
+            <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/queue/read')" name="uri.var.get_queue_url" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="mensaje" value="Hola Mundoo!"/>
+                <property expression="$ctx:uri.var.get_queue_url" name="Llamando a URL"/>
+            </log>
+            <call>
+                <endpoint>
+                    <http method="get" uri-template="{uri.var.get_queue_url}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                <then/>
+                <else>
+                    <property expression="json-eval($)" name="ERROR_MESSAGE" scope="default" type="STRING"/>
+                    <property name="TOOLS_ERROR" scope="default" type="STRING" value="GET /queue/read se produjo un problema"/>
+                    <!-- <sequence key="toolsFault"/> -->
+                </else>
+            </filter>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <log level="custom">
+                <property name="fase 2" value="valores del GET --> "/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="json-eval($.clientes.cliente[0])" name="cosita 4"/>
+            </log>
+            <iterate continueParent="true" expression="//jsonObject/clientes/cliente" id="loopea-sobre-novedades">
+                <target>
+                    <sequence>
+                        <log description="check info"/>
+                        <payloadFactory media-type="json">
+                            <format>{"clientes":{"payload": "$1","data_json" : "$2"}}</format>
+                            <args>
+                                <arg value="respuesta del post"/>
+                                <arg evaluator="json" expression="$.data_json"/>
+                            </args>
+                        </payloadFactory>
+                        <send buildmessage="true">
+                            <endpoint>
+                                <http method="get" uri-template="/testeado">
+                                    <suspendOnFailure>
+                                        <initialDuration>-1</initialDuration>
+                                        <progressionFactor>1</progressionFactor>
+                                    </suspendOnFailure>
+                                    <markForSuspension>
+                                        <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                    </markForSuspension>
+                                </http>
+                            </endpoint>
+                        </send>
+                    </sequence>
+                </target>
+            </iterate>
+            <respond/>
+        </inSequence>
+        <outSequence>
+            <aggregate id="loopea-sobre-novedades">
+                <completeCondition>
+                    <messageCount max="-1" min="-1"/>
+                </completeCondition>
+                <onComplete aggregateElementType="root" expression="json-eval($)">
+                    <log level="full"/>
+                    <respond/>
+                </onComplete>
+            </aggregate>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+</api>

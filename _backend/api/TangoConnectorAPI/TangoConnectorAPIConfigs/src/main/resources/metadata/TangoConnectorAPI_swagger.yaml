@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: TangoConnectorAPI
+  description: API Definition of TangoConnectorAPI
+  version: 1.0.0
+servers:
+- url: http://localhost:8290/tools/tango
+paths:
+  /clientes/synch/in:
+    get:
+      responses:
+        default:
+          description: Default response

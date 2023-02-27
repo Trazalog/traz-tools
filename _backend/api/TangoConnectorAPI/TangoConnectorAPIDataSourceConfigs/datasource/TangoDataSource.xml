@@ -1,0 +1,15 @@
+<datasource>
+    <name>TangoDataSource</name>
+    <description>TangoDataSource</description>
+    <jndiConfig useDataSourceFactory="false">
+        <name>TangoDataSourceJDNI</name>
+    </jndiConfig>
+    <definition type="RDBMS">
+        <configuration>
+            <driverClassName>com.microsoft.sqlserver.jdbc.SQLServerDriver</driverClassName>
+            <url>jdbc:sqlserver://;serverName=10.142.0.23;instance=SQLEXPRESS;encrypt=true;trustServerCertificate=true</url>
+            <username>Axoft</username>
+            <password>Axoft</password>
+        </configuration>
+    </definition>
+</datasource>
