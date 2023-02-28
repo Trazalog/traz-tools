@@ -7,7 +7,7 @@
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/queue/read')" name="uri.var.get_queue_url" scope="default" type="STRING"/>
             <log level="custom">
-                <property name="mensaje" value="Hola Mundoo!"/>
+                <property name="Paso 1" value="Obtengo listado de novedades sobre tabla cliente"/>
                 <property expression="$ctx:uri.var.get_queue_url" name="Llamando a URL"/>
             </log>
             <call>
@@ -35,13 +35,43 @@
             <header name="Accept" scope="transport" value="application/json"/>
             <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
             <log level="custom">
-                <property name="fase 2" value="valores del GET --> "/>
+                <property name="Paso 2" value="valores del GET --> "/>
                 <property expression="json-eval($)" name="payload"/>
-                <property expression="json-eval($.clientes.cliente[0])" name="cosita 4"/>
             </log>
             <iterate continueParent="true" expression="//jsonObject/clientes/cliente" id="loopea-sobre-novedades">
                 <target>
                     <sequence>
+                        <switch description="Accion a realizar" source="json-eval($.data_json)">
+                            <case regex="insert"/>
+                            <case regex="update">
+                                <payloadFactory media-type="json">
+                                    <format>{"clientes":{"payload": "$1","data_json" : "$2"}}</format>
+                                    <args>
+                                        <arg value="respuesta del post"/>
+                                        <arg evaluator="json" expression="$.data_json"/>
+                                    </args>
+                                </payloadFactory>
+                                <send buildmessage="true">
+                                    <endpoint>
+                                        <http method="put" uri-template="/">
+                                            <suspendOnFailure>
+                                                <initialDuration>-1</initialDuration>
+                                                <progressionFactor>1</progressionFactor>
+                                            </suspendOnFailure>
+                                            <markForSuspension>
+                                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                            </markForSuspension>
+                                        </http>
+                                    </endpoint>
+                                </send>
+                            </case>
+                            <case regex="delete"/>
+                            <default>
+                                <log level="custom">
+                                    <property name="accion" value="Se fue por el default switch accion"/>
+                                </log>
+                            </default>
+                        </switch>
                         <log description="check info"/>
                         <payloadFactory media-type="json">
                             <format>{"clientes":{"payload": "$1","data_json" : "$2"}}</format>
@@ -52,7 +82,7 @@
                         </payloadFactory>
                         <send buildmessage="true">
                             <endpoint>
-                                <http method="get" uri-template="/testeado">
+                                <http method="put" uri-template="/">
                                     <suspendOnFailure>
                                         <initialDuration>-1</initialDuration>
                                         <progressionFactor>1</progressionFactor>

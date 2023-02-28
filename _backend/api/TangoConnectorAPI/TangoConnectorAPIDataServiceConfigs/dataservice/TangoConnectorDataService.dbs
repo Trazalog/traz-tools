@@ -10,6 +10,41 @@
       <with-param name="queue_id" query-param="queue_id" />
     </call-query>
   </resource>
+  <resource path="/cliente" method="POST">
+    <description />
+    <call-query href="setCliente">
+      <with-param name="nombre" query-param="nombre" />
+      <with-param name="dir_entrega" query-param="dir_entrega" />
+      <with-param name="observaciones" query-param="observaciones" />
+      <with-param name="usuario_app" query-param="usuario_app" />
+      <with-param name="ticl_id" query-param="ticl_id" />
+      <with-param name="empr_id" query-param="empr_id" />
+      <with-param name="inte_id" query-param="inte_id" />
+    </call-query>
+  </resource>
+  <resource path="/cliente" method="PUT">
+    <description />
+    <call-query href="updateCliente">
+      <with-param name="nombre" query-param="nombre" />
+      <with-param name="dir_entrega" query-param="dir_entrega" />
+      <with-param name="observaciones" query-param="observaciones" />
+      <with-param name="usuario_app" query-param="usuario_app" />
+      <with-param name="ticl_id" query-param="ticl_id" />
+      <with-param name="inte_id" query-param="inte_id" />
+    </call-query>
+  </resource>
+  <resource path="/cliente" method="DELETE">
+    <description />
+    <call-query href="deleteCliente">
+      <with-param name="inte_id" query-param="inte_id" />
+    </call-query>
+  </resource>
+  <config id="TangoDataSource">
+    <property name="carbon_datasource_name">TangoDataSource</property>
+  </config>
+  <config id="ToolsDataSource">
+    <property name="carbon_datasource_name">ToolsDataSource</property>
+  </config>
   <query id="leerTablaCola" useConfig="TangoDataSource">
     <sql>SELECT * from Empresa_Ejemplo.dbo.novedades_clientes_queue ncq
 where ncq.fec_realizado is null</sql>
@@ -29,7 +64,49 @@ where ncq.fec_realizado is null</sql>
 set fec_realizado = getdate() where queue_id = :queue_id</sql>
     <param name="queue_id" sqlType="STRING" paramType="SCALAR" />
   </query>
-  <config id="TangoDataSource">
-    <property name="carbon_datasource_name">TangoDataSource</property>
-  </config>
+  <query id="setCliente" useConfig="ToolsDataSource">
+    <sql>INSERT INTO
+  core.clientes (
+    nombre,
+    dir_entrega,
+    observaciones,
+    usuario_app,
+    ticl_id,
+    empr_id,
+    inte_id 
+  )
+VALUES(
+    :nombre,
+    :dir_entrega,
+    :observaciones,
+    :usuario_app,
+    :ticl_id,
+    cast(:empr_id as integer),
+    cast(:inte_id as integer)
+  )</sql>
+    <param type="IN" name="nombre" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <param type="IN" name="dir_entrega" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <param type="IN" name="observaciones" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <param type="IN" name="usuario_app" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <param type="IN" name="ticl_id" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <param type="IN" name="empr_id" sqlType="STRING" paramType="SCALAR" optional="false" />
+    <param type="IN" name="inte_id" sqlType="STRING" paramType="SCALAR" optional="false" />
+  </query>
+  <query id="updateCliente" useConfig="ToolsDataSource">
+    <sql>UPDATE core.clientes
+SET nombre=:nombre,dir_entrega=:dir_entrega, observaciones=:observaciones, usuario_app=:usuario_app, ticl_id=:ticl_id
+WHERE inte_id = cast(:inte_id as integer);</sql>
+    <param name="nombre" sqlType="STRING" paramType="SCALAR" />
+    <param name="dir_entrega" sqlType="STRING" paramType="SCALAR" />
+    <param name="observaciones" sqlType="STRING" paramType="SCALAR" />
+    <param name="usuario_app" sqlType="STRING" paramType="SCALAR" />
+    <param name="ticl_id" sqlType="STRING" paramType="SCALAR" />
+    <param name="inte_id" sqlType="STRING" paramType="SCALAR" />
+  </query>
+  <query id="deleteCliente" useConfig="ToolsDataSource">
+    <sql>UPDATE core.clientes
+SET estado='ELIMINADO'
+WHERE inte_id =cast(:inte_id as integer);</sql>
+    <param name="inte_id" sqlType="STRING" paramType="SCALAR" />
+  </query>
 </data>

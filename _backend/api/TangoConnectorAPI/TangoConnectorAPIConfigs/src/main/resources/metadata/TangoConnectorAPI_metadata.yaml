@@ -1,11 +1,10 @@
----
 key: "TangoConnectorAPI-1.0.0"
-name : "TangoConnectorAPI"
-displayName : "TangoConnectorAPI"
+name: "TangoConnectorAPI"
+displayName: "TangoConnectorAPI"
 description: "Sample API"
 version: "1.0.0"
 serviceUrl: "https://{MI_HOST}:{MI_PORT}/tools/tango"
 definitionType: "OAS3"
 securityType: "BASIC"
 mutualSSLEnabled: false
-apiId : "null"
+apiId: "null"
