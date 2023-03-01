@@ -5,6 +5,7 @@
             <property name="HTTP_SC" scope="transport" type="STRING" value="200"/>
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//empr_id" name="empr_id" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/queue/read')" name="uri.var.get_queue_url" scope="default" type="STRING"/>
             <log level="custom">
                 <property name="Paso 1" value="Obtengo listado de novedades sobre tabla cliente"/>
@@ -34,6 +35,7 @@
             <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
             <header name="Accept" scope="transport" value="application/json"/>
             <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/cliente')" name="uri.var.cliente" scope="default" type="STRING"/>
             <log level="custom">
                 <property name="Paso 2" value="valores del GET --> "/>
                 <property expression="json-eval($)" name="payload"/>
@@ -41,19 +43,26 @@
             <iterate continueParent="true" expression="//jsonObject/clientes/cliente" id="loopea-sobre-novedades">
                 <target>
                     <sequence>
+                        <log level="custom">
+                            <property name="Paso 3" value="ITERANDO"/>
+                        </log>
                         <switch description="Accion a realizar" source="json-eval($.data_json)">
-                            <case regex="insert"/>
-                            <case regex="update">
+                            <case regex="insert">
                                 <payloadFactory media-type="json">
-                                    <format>{"clientes":{"payload": "$1","data_json" : "$2"}}</format>
+                                    <format>{"_post_cliente": {"nombre": "$1","dir_entrega": "$2","observaciones": "$3","usuario_app": "$4","ticl_id": "$5","empr_id": "$6","inte_id": "$7"}}</format>
                                     <args>
-                                        <arg value="respuesta del post"/>
-                                        <arg evaluator="json" expression="$.data_json"/>
+                                        <arg evaluator="json" expression="$.data_json.razon_social"/>
+                                        <arg evaluator="json" expression="$.data_json.dir_comercial"/>
+                                        <arg evaluator="json" expression="$.data_json.domicilio"/>
+                                        <arg value="TangoConnectorAPI"/>
+                                        <arg value="tipos_clientesIntegracion"/>
+                                        <arg evaluator="xml" expression="get-property('empr_id')"/>
+                                        <arg evaluator="json" expression="$.data_json.inte_id"/>
                                     </args>
                                 </payloadFactory>
                                 <send buildmessage="true">
                                     <endpoint>
-                                        <http method="put" uri-template="/">
+                                        <http method="post" uri-template="{uri.var.cliente}">
                                             <suspendOnFailure>
                                                 <initialDuration>-1</initialDuration>
                                                 <progressionFactor>1</progressionFactor>
@@ -65,34 +74,63 @@
                                     </endpoint>
                                 </send>
                             </case>
-                            <case regex="delete"/>
+                            <case regex="update">
+                                <log level="custom">
+                                    <property name="aqui" value="ENTRE AL UPDATE "/>
+                                </log>
+                                <payloadFactory media-type="json">
+                                    <format>{"_put_cliente": {"nombre": "$1","dir_entrega": "$2","observaciones": "$3","usuario_app": "$4","ticl_id": "$5","empr_id": "$6","inte_id": "$7"}}</format>
+                                    <args>
+                                        <arg evaluator="json" expression="$.data_json.razon_social"/>
+                                        <arg evaluator="json" expression="$.data_json.dir_comercial"/>
+                                        <arg evaluator="json" expression="$.data_json.domicilio"/>
+                                        <arg value="TangoConnectorAPI"/>
+                                        <arg value="tipos_clientesIntegracion"/>
+                                        <arg evaluator="xml" expression="get-property('empr_id')"/>
+                                        <arg evaluator="json" expression="$.data_json.inte_id"/>
+                                    </args>
+                                </payloadFactory>
+                                <send buildmessage="true">
+                                    <endpoint>
+                                        <http method="put" uri-template="{uri.var.cliente}">
+                                            <suspendOnFailure>
+                                                <initialDuration>-1</initialDuration>
+                                                <progressionFactor>1</progressionFactor>
+                                            </suspendOnFailure>
+                                            <markForSuspension>
+                                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                            </markForSuspension>
+                                        </http>
+                                    </endpoint>
+                                </send>
+                            </case>
+                            <case regex="delete">
+                                <payloadFactory media-type="json">
+                                    <format>{"_delete_cliente": {"inte_id": "$1"}}</format>
+                                    <args>
+                                        <arg evaluator="json" expression="$.data_json.inte_id"/>
+                                    </args>
+                                </payloadFactory>
+                                <send buildmessage="true">
+                                    <endpoint>
+                                        <http method="delete" uri-template="{uri.var.cliente}">
+                                            <suspendOnFailure>
+                                                <initialDuration>-1</initialDuration>
+                                                <progressionFactor>1</progressionFactor>
+                                            </suspendOnFailure>
+                                            <markForSuspension>
+                                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                            </markForSuspension>
+                                        </http>
+                                    </endpoint>
+                                </send>
+                            </case>
                             <default>
                                 <log level="custom">
                                     <property name="accion" value="Se fue por el default switch accion"/>
                                 </log>
                             </default>
                         </switch>
-                        <log description="check info"/>
-                        <payloadFactory media-type="json">
-                            <format>{"clientes":{"payload": "$1","data_json" : "$2"}}</format>
-                            <args>
-                                <arg value="respuesta del post"/>
-                                <arg evaluator="json" expression="$.data_json"/>
-                            </args>
-                        </payloadFactory>
-                        <send buildmessage="true">
-                            <endpoint>
-                                <http method="put" uri-template="/">
-                                    <suspendOnFailure>
-                                        <initialDuration>-1</initialDuration>
-                                        <progressionFactor>1</progressionFactor>
-                                    </suspendOnFailure>
-                                    <markForSuspension>
-                                        <retriesBeforeSuspension>0</retriesBeforeSuspension>
-                                    </markForSuspension>
-                                </http>
-                            </endpoint>
-                        </send>
                     </sequence>
                 </target>
             </iterate>

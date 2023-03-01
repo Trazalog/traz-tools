@@ -2,5 +2,6 @@
 <configs>
 	<!-- <dataservices_url>http://10.142.0.13:8280/services</dataservices_url>-->
 	<dataservices_url>http://localhost:8290/services</dataservices_url>
+	<empr_id>777</empr_id>
 </configs>
 
