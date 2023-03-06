@@ -2,6 +2,7 @@
 <api context="/tools/tango" name="TangoConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
     <resource methods="GET" url-mapping="/clientes/synch/in">
         <inSequence>
+            <!--  <property expression="json-eval($[0].data_json)" name="data_json" scope="default" type="STRING"/>-->
             <property name="HTTP_SC" scope="transport" type="STRING" value="200"/>
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
@@ -32,20 +33,33 @@
                     <!-- <sequence key="toolsFault"/> -->
                 </else>
             </filter>
-            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <!-- <property name="messageType" scope="axis2" type="STRING" value="application/json"/> -->
             <header name="Accept" scope="transport" value="application/json"/>
             <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
             <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/cliente')" name="uri.var.cliente" scope="default" type="STRING"/>
+            <property expression="json-eval($.novedades.novedad)" name="listaNovedades" scope="default" type="STRING"/>
             <log level="custom">
                 <property name="Paso 2" value="valores del GET --> "/>
                 <property expression="json-eval($)" name="payload"/>
+                <!-- <property expression="json-eval($.novedades.novedad[0])" name="DATITA"/>-->
             </log>
-            <iterate continueParent="true" expression="//jsonObject/clientes/cliente" id="loopea-sobre-novedades">
+            <log level="custom">
+                <property expression="$ctx:listaNovedades" name="Novedades"/>
+            </log>
+            <log level="custom">
+                <property expression="json-eval($ctx:listaNovedades)" name="DEBUG"/>
+            </log>
+            <iterate attachPath="json-eval($ctx:listaNovedades)" expression="json-eval($ctx:listaNovedades)" id="loopeaNovedades" preservePayload="true">
                 <target>
                     <sequence>
+                        <property expression="json-eval($.data_json)" name="novedadJson" scope="default" type="STRING"/>
                         <log level="custom">
                             <property name="Paso 3" value="ITERANDO"/>
+                            <property expression="json-eval($)" name="DataLoop"/>
+                            <property expression="json-eval($.data_json)" name="DataJSON"/>
+                            <property expression="json-eval($.placeHolder)" name="HOLDERRR"/>
                         </log>
+                        <log level="full"/>
                         <switch description="Accion a realizar" source="json-eval($.data_json)">
                             <case regex="insert">
                                 <payloadFactory media-type="json">
@@ -129,15 +143,19 @@
                                 <log level="custom">
                                     <property name="accion" value="Se fue por el default switch accion"/>
                                 </log>
+                                <respond description="corto ejec"/>
                             </default>
                         </switch>
                     </sequence>
                 </target>
             </iterate>
-            <respond/>
+            <respond description="hola"/>
         </inSequence>
         <outSequence>
-            <aggregate id="loopea-sobre-novedades">
+            <property name="FinalResponse" scope="default">
+                <finalResponse/>
+            </property>
+            <aggregate id="loopeaNovedades">
                 <completeCondition>
                     <messageCount max="-1" min="-1"/>
                 </completeCondition>
@@ -147,6 +165,10 @@
                 </onComplete>
             </aggregate>
         </outSequence>
-        <faultSequence/>
+        <faultSequence>
+            <log level="custom">
+                <property name="Paso FINAL" value="ME FUI POR EL FAULT"/>
+            </log>
+        </faultSequence>
     </resource>
 </api>
