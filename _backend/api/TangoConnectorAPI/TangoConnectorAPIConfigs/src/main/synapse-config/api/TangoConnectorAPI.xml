@@ -49,19 +49,26 @@
             <log level="custom">
                 <property expression="json-eval($ctx:listaNovedades)" name="DEBUG"/>
             </log>
-            <iterate attachPath="json-eval($ctx:listaNovedades)" expression="json-eval($ctx:listaNovedades)" id="loopeaNovedades" preservePayload="true">
+            <iterate attachPath="json-eval($ctx:listaNovedades)" expression="json-eval($ctx:listaNovedades.novedades.novedad)" id="loopeaNovedades" preservePayload="true">
                 <target>
                     <sequence>
                         <property expression="json-eval($.data_json)" name="novedadJson" scope="default" type="STRING"/>
                         <log level="custom">
                             <property name="Paso 3" value="ITERANDO"/>
-                            <property expression="json-eval($)" name="DataLoop"/>
                             <property expression="json-eval($.data_json)" name="DataJSON"/>
-                            <property expression="json-eval($.placeHolder)" name="HOLDERRR"/>
                         </log>
-                        <log level="full"/>
-                        <switch description="Accion a realizar" source="json-eval($.data_json)">
+                        <script language="js"><![CDATA[var log = mc.getServiceLog();
+						    log.info("Estoy Parseando!");
+						    var aux = mc.getProperty('novedadJson');
+					        log.info("JSON novedad sin parsear = " + aux);
+					        var dataNovedad = JSON.parse(aux);
+					        mc.setProperty("dataNovedad",dataNovedad);
+        					log.info("JSON novedad = " + dataNovedad.accion);]]></script>
+                        <switch description="Accion a realizar" source="$ctx:dataNovedad.accion">
                             <case regex="insert">
+                                <log level="custom">
+                                    <property name="aqui" value="ENTRE AL INSERT"/>
+                                </log>
                                 <payloadFactory media-type="json">
                                     <format>{"_post_cliente": {"nombre": "$1","dir_entrega": "$2","observaciones": "$3","usuario_app": "$4","ticl_id": "$5","empr_id": "$6","inte_id": "$7"}}</format>
                                     <args>
@@ -119,6 +126,9 @@
                                 </send>
                             </case>
                             <case regex="delete">
+                                <log level="custom">
+                                    <property name="aqui" value="ENTRE AL DELETE "/>
+                                </log>
                                 <payloadFactory media-type="json">
                                     <format>{"_delete_cliente": {"inte_id": "$1"}}</format>
                                     <args>
