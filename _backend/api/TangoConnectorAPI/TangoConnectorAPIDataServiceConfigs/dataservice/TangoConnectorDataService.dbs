@@ -30,6 +30,7 @@
       <with-param name="observaciones" query-param="observaciones" />
       <with-param name="usuario_app" query-param="usuario_app" />
       <with-param name="ticl_id" query-param="ticl_id" />
+      <with-param name="empr_id" query-param="empr_id" />
       <with-param name="inte_id" query-param="inte_id" />
     </call-query>
   </resource>
@@ -61,7 +62,7 @@ where ncq.fec_realizado is null</sql>
   </query>
   <query id="updateTablaCola" useConfig="TangoDataSource">
     <sql>update Empresa_Ejemplo.dbo.novedades_clientes_queue
-set fec_realizado = getdate() where queue_id = :queue_id</sql>
+set fec_realizado = getdate() where queue_id = cast(:queue_id as integer)</sql>
     <param name="queue_id" paramType="SCALAR" sqlType="STRING" />
   </query>
   <query id="setCliente" useConfig="ToolsDataSource">
@@ -94,13 +95,14 @@ VALUES(
   </query>
   <query id="updateCliente" useConfig="ToolsDataSource">
     <sql>UPDATE core.clientes
-SET nombre=:nombre,dir_entrega=:dir_entrega, observaciones=:observaciones, usuario_app=:usuario_app, ticl_id=:ticl_id
+SET nombre=:nombre,dir_entrega=:dir_entrega, observaciones=:observaciones, usuario_app=:usuario_app, ticl_id=:ticl_id, empr_id = cast(:empr_id as integer)
 WHERE inte_id = cast(:inte_id as integer);</sql>
     <param name="nombre" paramType="SCALAR" sqlType="STRING" />
     <param name="dir_entrega" paramType="SCALAR" sqlType="STRING" />
     <param name="observaciones" paramType="SCALAR" sqlType="STRING" />
     <param name="usuario_app" paramType="SCALAR" sqlType="STRING" />
     <param name="ticl_id" paramType="SCALAR" sqlType="STRING" />
+    <param name="empr_id" paramType="SCALAR" sqlType="STRING" />
     <param name="inte_id" paramType="SCALAR" sqlType="STRING" />
   </query>
   <query id="deleteCliente" useConfig="ToolsDataSource">
