@@ -28,6 +28,7 @@
                     </http>
                 </endpoint>
             </call>
+            <log level="full"/>
             <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
                 <then/>
                 <else>
@@ -49,6 +50,7 @@
                 <target>
                     <sequence>
                         <property expression="json-eval($.data_json)" name="novedadJson" scope="default" type="STRING"/>
+                        <property expression="json-eval($.queue_id)" name="queueId" scope="default" type="STRING"/>
                         <script language="js"><![CDATA[var log = mc.getServiceLog();
 							    var aux = mc.getProperty('novedadJson');
 						        var dataNovedad = JSON.parse(aux);
@@ -72,7 +74,7 @@
                                 </payloadFactory>
                                 <call blocking="true">
                                     <endpoint>
-                                        <address uri="{uri.var.cliente}">
+                                        <http method="post" uri-template="{uri.var.cliente}">
                                             <suspendOnFailure>
                                                 <initialDuration>-1</initialDuration>
                                                 <progressionFactor>-1</progressionFactor>
@@ -81,13 +83,13 @@
                                             <markForSuspension>
                                                 <retriesBeforeSuspension>0</retriesBeforeSuspension>
                                             </markForSuspension>
-                                        </address>
+                                        </http>
                                     </endpoint>
                                 </call>
                                 <log level="full"/>
                             </case>
                             <case regex="update">
-                                <log level="custom">
+                                <log description="CASE UPDATE" level="custom">
                                     <property name="ACCION" value="UPDATE"/>
                                 </log>
                                 <payloadFactory media-type="json">
@@ -102,58 +104,32 @@
                                         <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
                                     </args>
                                 </payloadFactory>
+                                <!-- <property name="messageType" scope="axis2" type="STRING" value="application/json"/> -->
+                                <!-- <header name="Accept" scope="transport" value="application/json"/> -->
+                                <!-- <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/> -->
+                                <!-- <property name="BLOCKING_SENDER_PRESERVE_REQ_HEADERS" scope="default" type="STRING" value="true"/> -->
+                                <property action="remove" name="REST_URL_POSTFIX" scope="axis2"/>
+                                <log level="full"/>
                                 <call blocking="true">
                                     <endpoint>
-                                        <http method="put" uri-template="http://localhost:8290/services/TangoConnectorDataService/cliente">
+                                        <http method="put" uri-template="{uri.var.cliente}">
+                                            <timeout>
+                                                <duration>30000</duration>
+                                                <responseAction>fault</responseAction>
+                                            </timeout>
                                             <suspendOnFailure>
-                                                <initialDuration>-1</initialDuration>
-                                                <progressionFactor>1</progressionFactor>
+                                                <errorCodes>-1</errorCodes>
+                                                <initialDuration>0</initialDuration>
+                                                <progressionFactor>1.0</progressionFactor>
+                                                <maximumDuration>0</maximumDuration>
                                             </suspendOnFailure>
                                             <markForSuspension>
+                                                <errorCodes>-1</errorCodes>
                                                 <retriesBeforeSuspension>0</retriesBeforeSuspension>
                                             </markForSuspension>
                                         </http>
                                     </endpoint>
                                 </call>
-                                <log level="custom">
-                                    <property name="SIGO EN" value="UPDATE"/>
-                                </log>
-                                <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
-                                    <then>
-                                        <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
-                                        <header name="Accept" scope="transport" value="application/json"/>
-                                        <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
-                                        <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/queue/dequeue')" name="uri.var.dequeue" scope="default" type="STRING"/>
-                                        <log level="custom">
-                                            <property expression="json-eval($.queue_id)" name="ACTUALIZANDO"/>
-                                        </log>
-                                        <payloadFactory media-type="json">
-                                            <format>{"_put_queue_dequeue": {"queue_id": "$1"}}</format>
-                                            <args>
-                                                <arg evaluator="json" expression="$.queue_id"/>
-                                            </args>
-                                        </payloadFactory>
-                                        <send buildmessage="true">
-                                            <endpoint>
-                                                <http method="put" uri-template="{uri.var.dequeue}">
-                                                    <suspendOnFailure>
-                                                        <initialDuration>-1</initialDuration>
-                                                        <progressionFactor>1</progressionFactor>
-                                                    </suspendOnFailure>
-                                                    <markForSuspension>
-                                                        <retriesBeforeSuspension>0</retriesBeforeSuspension>
-                                                    </markForSuspension>
-                                                </http>
-                                            </endpoint>
-                                        </send>
-                                    </then>
-                                    <else>
-                                        <log level="custom">
-                                            <property name="TOOLS_ERROR" value="Fallo al realizar la accion sobre tabla clientes de TOOLS"/>
-                                            <property expression="json-eval($)" name="ERROR_MESSAGE"/>
-                                        </log>
-                                    </else>
-                                </filter>
                                 <log level="full"/>
                             </case>
                             <case regex="delete">
@@ -166,19 +142,26 @@
                                         <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
                                     </args>
                                 </payloadFactory>
-                                <send buildmessage="true">
+                                <call blocking="true">
                                     <endpoint>
                                         <http method="delete" uri-template="{uri.var.cliente}">
+                                            <timeout>
+                                                <duration>30000</duration>
+                                                <responseAction>fault</responseAction>
+                                            </timeout>
                                             <suspendOnFailure>
-                                                <initialDuration>-1</initialDuration>
-                                                <progressionFactor>1</progressionFactor>
+                                                <errorCodes>-1</errorCodes>
+                                                <initialDuration>0</initialDuration>
+                                                <progressionFactor>1.0</progressionFactor>
+                                                <maximumDuration>0</maximumDuration>
                                             </suspendOnFailure>
                                             <markForSuspension>
+                                                <errorCodes>-1</errorCodes>
                                                 <retriesBeforeSuspension>0</retriesBeforeSuspension>
                                             </markForSuspension>
                                         </http>
                                     </endpoint>
-                                </send>
+                                </call>
                             </case>
                             <default>
                                 <log level="custom">
@@ -189,6 +172,7 @@
                         </switch>
                         <log level="custom">
                             <property name="Paso 3" value="Actualizo fec_realizado(tango) si no fallo en el paso previo"/>
+                            <property expression="json-eval($.queue_id)" name="ACTUALIZANDO"/>
                         </log>
                         <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
                             <then>
@@ -197,15 +181,15 @@
                                 <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
                                 <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/queue/dequeue')" name="uri.var.dequeue" scope="default" type="STRING"/>
                                 <log level="custom">
-                                    <property expression="json-eval($.queue_id)" name="ACTUALIZANDO"/>
+                                    <property expression="$ctx:queueId" name="ACTUALIZANDO"/>
                                 </log>
                                 <payloadFactory media-type="json">
                                     <format>{"_put_queue_dequeue": {"queue_id": "$1"}}</format>
                                     <args>
-                                        <arg evaluator="json" expression="$.queue_id"/>
+                                        <arg evaluator="json" expression="$ctx:queueId"/>
                                     </args>
                                 </payloadFactory>
-                                <send buildmessage="true">
+                                <call>
                                     <endpoint>
                                         <http method="put" uri-template="{uri.var.dequeue}">
                                             <suspendOnFailure>
@@ -217,7 +201,7 @@
                                             </markForSuspension>
                                         </http>
                                     </endpoint>
-                                </send>
+                                </call>
                             </then>
                             <else>
                                 <log level="custom">
@@ -227,7 +211,12 @@
                             </else>
                         </filter>
                         <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
-                            <then/>
+                            <then>
+                                <log level="custom">
+                                    <property name="PASO FINAL" value="EXITO! Se reazlizo todo correctamente"/>
+                                </log>
+                                <respond/>
+                            </then>
                             <else>
                                 <log level="custom">
                                     <property name="TOOLS_ERROR" value="Fallo al realizar la accion sobre tabla clientes de TOOLS"/>
@@ -253,15 +242,20 @@
                 <onComplete aggregateElementType="root" expression="json-eval($)">
                     <log level="custom">
                         <property name="Secuencia status " value="COMPLETA"/>
+                        <property expression="json-eval($)" name="JSON FINAL"/>
                     </log>
                     <respond/>
                 </onComplete>
             </aggregate>
         </outSequence>
         <faultSequence>
+            <call/>
             <log level="custom">
-                <property name="Paso FINAL" value="ME FUI POR EL FAULTSEQUENCE"/>
-                <property expression="get-property('ERROR_MESSAGE')" name="ERROR = "/>
+                <property name="ERROR" value="ME FUI POR EL FAULTSEQUENCE"/>
+                <property expression="get-property('ERROR_MESSAGE')" name="ERROR_MESSAGE"/>
+                <property expression="get-property('ERROR_CODE')" name="ERROR_CODE"/>
+                <property expression="get-property('ERROR_DETAIL')" name="ERROR_DETAIL"/>
+                <property expression="get-property('ERROR_EXCEPTION')" name="ERROR_EXCEPTION"/>
             </log>
         </faultSequence>
     </resource>
