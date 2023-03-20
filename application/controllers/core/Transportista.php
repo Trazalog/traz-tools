@@ -145,6 +145,7 @@ class Transportista extends CI_Controller
 	* @return bool true o false
 	*/
 	public function Validar_Cuit () {
+		log_message('INFO','#TRAZA| TRANSPORTISTAS | Validar_cuit() >> ');
 		$cuit = $this->input->post('datos');
 		$result = $this->Transportistas->Validar_cuit($cuit);
 		echo $result;

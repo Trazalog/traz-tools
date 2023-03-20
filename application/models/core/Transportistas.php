@@ -148,6 +148,7 @@ class Transportistas extends CI_Model {
   */
   function Validar_cuit($cuit) {
     $aux= array("cuit" => $cuit);
+    log_message('DEBUG','#TRAZA | TRAZ-TOOLS | TRANSPORTISTAS | Validar_cuit() $aux: >> '.json_encode($aux));
     $aux=$this->rest->callAPI("GET",REST_CORE."/transportistas/cuit/".$aux['cuit']);
     return json_encode($aux);
 
