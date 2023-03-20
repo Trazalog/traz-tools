@@ -363,8 +363,7 @@
 
                     //validos si el objeto viene vacio 
 
-                    //($.isEmptyObject(transportista)) ? $("#cuitValid").html(""): $("#cuitValid").html(`<div class="alert alert-danger" role="alert">CUIT EXISTENTE</div>`);
-
+                   
                     if ($.isEmptyObject(transportista)) {
                         $("#cuitValid").html("");
                         $("#save").removeAttr('disabled');
@@ -372,6 +371,7 @@
                         $("#cuitValid").html(`<div class="alert alert-danger" role="alert">CUIT EXISTENTE</div>`);
                         $("#save").attr({'disabled': 'disabled'});
                     }
+                    
 
                 },
                 error: function(error) {
