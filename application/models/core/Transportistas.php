@@ -141,4 +141,16 @@ class Transportistas extends CI_Model {
     return $aux;
   }
 
+  /**
+  * Valida CUIT
+  * @param	array con Info
+  * @return array resultado del servicio
+  */
+  function Validar_cuit($cuit) {
+    $aux= array("cuit" => $cuit);
+    $aux=$this->rest->callAPI("GET",REST_CORE."/transportistas/cuit/".$aux['cuit']);
+    return json_encode($aux);
+
+  }
+
 }
