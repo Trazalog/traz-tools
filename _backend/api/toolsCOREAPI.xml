@@ -98,7 +98,7 @@
                <log level="custom" category="DEBUG" description="delete empresa 6">
                   <property name="delete empresa" expression="json-eval($)"/>
                </log>
-               <property name="uri.var.empresaDELETE" expression="fn:concat($ctx:dataservices_url,'COREDataService/empresa')" scope="default"/>
+               <property name="uri.var.empresaDELETE" expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa')" scope="default"/>
                <call>
                   <endpoint>
                      <http method="DELETE" uri-template="{uri.var.empresaDELETE}"/>
@@ -177,6 +177,14 @@
          <property name="role_name" expression="fn:concat('Planificador de Tareas ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
          <property name="role_name" expression="fn:concat('Responsable de Procesos ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Supervisor de Mantenimiento ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Planificador de Mantenimiento ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Solicitante de Mantenimiento ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Mantenedor ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
          <property name="role_name" expression="fn:concat('Administrador ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
