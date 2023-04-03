@@ -34,11 +34,11 @@
     margin-left: 2%;
     margin-bottom: 2%;
   }
-  } 
-    float: left;
-    width: 100%;
-    margin-top: 10%; 
   #imagenYudiFinal{
+    margin-top: 10%; 
+    width: 100%;
+    float: left;
+  } 
   #tabla{
     width: 100%;
     border: 0,5px solid #000 ;
@@ -48,10 +48,10 @@
     border: 1px solid #000 ; 
     text-align: center;  
   }
-  } 
-    margin-bottom: 1%;
-    margin-top: 1%;
   #tabla td p{
+    margin-top: 1%;
+    margin-bottom: 1%;
+  } 
   #contenedorImagenYudi{
     float:left; 
     margin-top: 33%; 
@@ -60,13 +60,13 @@
   #pagina_web{
     margin-top: 1%;
     margin-bottom: 1%;
-    font-size: 30px;    
     text-align: center;
+    font-size: 30px;    
   }
-    margin-right: 5%;
   #imagen_footer{
-  }
+    margin-right: 5%;
     margin-top: 1%;
+  }
   /*Fin Estilos Etiqueta final*/
   /*Estilos Etiqueta pedido de trabajo*/
   #numOrdenEtiquetaPedidoTrabajo{
@@ -81,7 +81,7 @@
   }
   #contenedorImagenYudiPedidoTrabajo{
     float:left;
-    margin-top: -8%;
+    margin-top: -12%;
     margin-left: 8%;
   } 
   /*Fin Estilos pedido de trabajo*/
