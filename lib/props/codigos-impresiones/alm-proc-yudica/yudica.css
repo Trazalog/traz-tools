@@ -31,11 +31,11 @@
     float:left;
     width: 40%;
   }
-  #imagenYudi{
-    margin-top: 7% ;
-    width: 80px;
+ #imagenYudi{
+    margin-top: 7%;
+    width: 20px;
     height: 30px;
-  } 
+  }  
   #tabla{
     width: 100%;
     border: 0,5px solid #000 ;
@@ -45,16 +45,20 @@
     border: 1px solid #000 ; 
     text-align: center;  
   }
+  #imagenYudiFinal{
+    width: 100px;
+    height: 40px;
+  }
   #contenedorImagenYudi{
-    width: 40%;
-    text-align: center;
+    width: 40%; 
+    text-align: center; 
     float:left;
-  } 
+  }  
   /*Fin Estilos Etiqueta final*/
   /*Estilos Etiqueta pedido de trabajo*/
   #contenedorTablaPedidoTrabajo{
-    margin-top: -10%;
-    width: 70%;
+    margin-top: -16%;
+    width: 100%;
     float:left;
   }
   #contenedorImagenYudiPedidoTrabajo{
