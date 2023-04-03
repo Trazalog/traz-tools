@@ -1,4 +1,3 @@
- 
 
 @media print {
   /*Estilos GENERALES*/
@@ -6,35 +5,39 @@
     font-size: 100%;
     break-after:page;
   }
-  #numero_orden{
-    margin-top: -1%;
-    font-size: 60px ;
-  } 
-  #div_numero{
-    margin-top: -5%;
+   #numero_orden{
+    margin-top: -1px;
+    font-size: 60px;
   }
+  /* #div_numero{
+    margin-top: -5%;
+  } */
   #numero_orden_final{
     margin-top: -1%;
     font-size: 90px ;
   }
-  /* #div_footer{
-    padding-bottom: 10% ;
-  } */
+  #imagenYudi{
+    margin-top: 100%; 
+    width: 100%;
+    float: left;
+  } 
   /*Fin Estilos GENERALES*/
   /*Estilos Etiqueta final*/
   #contenedorTablaEtiquetaFinal{
-    margin-top: -15%;
+    margin-top: -18%;
     width:100%;
     float:left;
   }
   #numOrdenEtiquetaFinal{
     float:left;
-    width: 40%;
+    margin-top:20%;
+    margin-left: 2%;
+    margin-bottom: 2%;
   }
-  #imagenYudi{
-    margin-top: 7% ;
-    width: 80px;
-    height: 30px;
+  #imagenYudiFinal{
+    margin-top: 10%; 
+    width: 100%;
+    float: left;
   } 
   #tabla{
     width: 100%;
@@ -45,23 +48,41 @@
     border: 1px solid #000 ; 
     text-align: center;  
   }
-  #contenedorImagenYudi{
-    width: 40%;
-    text-align: center;
-    float:left;
+  #tabla td p{
+    margin-top: 1%;
+    margin-bottom: 1%;
   } 
+  #contenedorImagenYudi{
+    float:left; 
+    margin-top: 33%; 
+    margin-left: -50%;
+  }
+  #pagina_web{
+    margin-top: 1%;
+    margin-bottom: 1%;
+    text-align: center;
+    font-size: 30px;    
+  }
+  #imagen_footer{
+    margin-right: 5%;
+    margin-top: 1%;
+  }
   /*Fin Estilos Etiqueta final*/
   /*Estilos Etiqueta pedido de trabajo*/
+  #numOrdenEtiquetaPedidoTrabajo{
+    float:left;
+    margin-top: 25%;
+    margin-left: -2%;
+    margin-bottom: -15%;
+  }
   #contenedorTablaPedidoTrabajo{
-    margin-top: -10%;
-    width: 70%;
+    width: 100%;
     float:left;
   }
   #contenedorImagenYudiPedidoTrabajo{
-    width: 55%;
-    text-align: right;
     float:left;
-    margin-bottom: 18%;
+    margin-top: -12%;
+    margin-left: 8%;
   } 
   /*Fin Estilos pedido de trabajo*/
   /*Estilos Etiqueta de rechazo*/

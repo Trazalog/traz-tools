@@ -228,6 +228,8 @@ define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
+define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
+
 
 define('REST_SEIN', HOST.'/services/SeinDataService');
 

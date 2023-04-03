@@ -23,8 +23,7 @@
             <h4>Nuevo Transportista</h4>
         </div>
         <div class="box-tools pull-right border ">
-            <button type="button" id="btnclose" title="cerrar" class="btn btn-box-tool" data-widget="remove"
-                data-toggle="tooltip" title="" data-original-title="Remove">
+            <button type="button" id="btnclose" title="cerrar" class="btn btn-box-tool" data-widget="remove" data-toggle="tooltip" title="" data-original-title="Remove">
                 <i class="fa fa-times"></i>
             </button>
         </div>
@@ -44,10 +43,17 @@
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
                     <label for="Cuit">Cuit:</label>
-                    <input type="text" class="form-control" name="cuit" id="cuit" placeholder="Ingrese cuit...">
+                    <input type="text" class="form-control" name="cuit" id="cuit" placeholder="Ingrese cuit..." onkeyup="validarCuit()">
+                </div>
+                <div class="form-group">
+                    <!--<input style="display:none;" type="text" class="form-control" name="cuitValid" id="cuitValid" placeholder="cuitvalid">-->
+                    <div id="cuitValid" onclick="validarCuit()">
+
+                    </div>
                 </div>
             </div>
             <!--________________-->
+
             <!--Teléfono-->
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
@@ -77,11 +83,11 @@
                 <div class="form-group">
                     <label for="Pais">País:</label>
                     <select onchange="seleccionPais()" class="form-control select select-hidden-accesible" name="pais_id" id="pais_id" style='width: 100%;'>
-                        <option value="" disabled selected>-Seleccione País-</option>	
+                        <option value="" disabled selected>-Seleccione País-</option>
                         <?php
-                            foreach ($listarPaises as $pais) {
-                            echo '<option  value="'.$pais->tabl_id.'">'.$pais->valor.'</option>';
-                            }
+                        foreach ($listarPaises as $pais) {
+                            echo '<option  value="' . $pais->tabl_id . '">' . $pais->valor . '</option>';
+                        }
                         ?>
                     </select>
                 </div>
@@ -112,11 +118,11 @@
                 <div class="form-group">
                     <label for="Tipo_transporte">Tipo de transporte:</label>
                     <select class="form-control select select-hidden-accesible" name="tipo_transporte" id="tipo_transporte" style='width: 100%;'>
-                        <option value="" disabled selected>-Seleccione Tipo de transporte-</option>	
+                        <option value="" disabled selected>-Seleccione Tipo de transporte-</option>
                         <?php
-                            foreach ($tipos_transporte as $tipo) {
-                            echo '<option  value="'.$tipo->tabl_id.'">'.$tipo->valor.'</option>';
-                            }
+                        foreach ($tipos_transporte as $tipo) {
+                            echo '<option  value="' . $tipo->tabl_id . '">' . $tipo->valor . '</option>';
+                        }
                         ?>
                     </select>
                 </div>
@@ -126,7 +132,7 @@
             <div class="col-md-12 col-sm-12 col-xs-12">
                 <div class="form-group">
                     <label for="Observaciones">Observaciones:</label>
-                    <textarea rows="3"class="form-control" name="observaciones" id="observaciones" placeholder="Ingrese observaciones..."></textarea>
+                    <textarea rows="3" class="form-control" name="observaciones" id="observaciones" placeholder="Ingrese observaciones..."></textarea>
                 </div>
             </div>
             <!--________________-->
@@ -135,8 +141,8 @@
     <!--_________________ GUARDAR_________________-->
     <div class="modal-footer">
         <div class="form-group text-right">
-            <button type="button" class="btn btn-primary" onclick="guardar('nueva')" >Guardar</button>
-        </div>                
+            <button type="button" class="btn btn-primary" onclick="guardar('nueva')" id="save">Guardar</button>
+        </div>
     </div>
     <!--__________________________________-->
 </div>
@@ -145,7 +151,7 @@
 <!---/////---BOX 2 DATATBLE ---/////----->
 <div class="box box-primary">
     <div class="box-body">
-        <div id="example2_wrapper" class="dataTables_wrapper form-inline dt-bootstrap">                
+        <div id="example2_wrapper" class="dataTables_wrapper form-inline dt-bootstrap">
             <div class="row">
                 <div class="col-sm-6"></div>
                 <div class="col-sm-6"></div>
@@ -153,7 +159,7 @@
             <div class="row">
                 <div class="col-sm-12 table-scroll" id="cargar_tabla">
                 </div>
-            </div>                
+            </div>
         </div>
     </div>
 </div>
@@ -165,7 +171,7 @@
         <div class="modal-content">
             <div class="modal-header bg-blue">
                 <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true" style="color:white;">&times;</span>
+                    <span aria-hidden="true" style="color:white;">&times;</span>
                 </button>
             </div>
             <div class="modal-body ">
@@ -219,11 +225,11 @@
                                     <div class="form-group col-sm-12">
                                         <label for="pais_id_edit">País:</label>
                                         <select onchange="seleccionPaisEditar()" class="form-control select select-hidden-accesible selec_habilitar" name="pais_id" id="pais_id_edit" style='width: 100%;'>
-                                            <option value="" disabled selected>-Seleccione País-</option>	
+                                            <option value="" disabled selected>-Seleccione País-</option>
                                             <?php
-                                                foreach ($listarPaises as $pais) {
-                                                echo '<option  value="'.$pais->tabl_id.'">'.$pais->valor.'</option>';
-                                                }
+                                            foreach ($listarPaises as $pais) {
+                                                echo '<option  value="' . $pais->tabl_id . '">' . $pais->valor . '</option>';
+                                            }
                                             ?>
                                         </select>
                                     </div>
@@ -254,11 +260,11 @@
                                     <div class="form-group col-sm-12">
                                         <label for="tipo_transporte_edit">Tipo de transporte:</label>
                                         <select class="form-control select select-hidden-accesible selec_habilitar" name="tipo_transporte" id="tipo_transporte_edit" style='width: 100%;'>
-                                            <option value="" disabled selected>-Seleccione Tipo de transporte-</option>	
+                                            <option value="" disabled selected>-Seleccione Tipo de transporte-</option>
                                             <?php
-                                                foreach ($tipos_transporte as $tipo) {
-                                                echo '<option  value="'.$tipo->tabl_id.'">'.$tipo->valor.'</option>';
-                                                }
+                                            foreach ($tipos_transporte as $tipo) {
+                                                echo '<option  value="' . $tipo->tabl_id . '">' . $tipo->valor . '</option>';
+                                            }
                                             ?>
                                         </select>
                                     </div>
@@ -268,7 +274,7 @@
                                 <div class="col-sm-12">
                                     <div class="form-group col-sm-12">
                                         <label for="observaciones_edit">Observaciones:</label>
-                                        <textarea rows="3"class="form-control habilitar" name="observaciones" id="observaciones_edit" placeholder="Ingrese observaciones..."></textarea>
+                                        <textarea rows="3" class="form-control habilitar" name="observaciones" id="observaciones_edit" placeholder="Ingrese observaciones..."></textarea>
                                     </div>
                                 </div>
                                 <!--__________________________-->
@@ -308,37 +314,79 @@
     });
 
     // valida campos obligatorios
-    function validarCampos(form){
+    function validarCampos(form) {
         var mensaje = "";
         var ban = true;
         $('#' + form).find('.requerido').each(function() {
-        if (this.value == "" || this.value=="-1") {
-            ban = ban && false;
-            return;
-        }
-        });
-        if (!ban){
-            if(!alertify.errorAlert){
-                alertify.dialog('errorAlert',function factory(){
-                return{
-                    build:function(){
-                        var errorHeader = '<span class="fa fa-times-circle fa-2x" '
-                        +    'style="vertical-align:middle;color:#e10000;">'
-                        + '</span>Error...!!';
-                        this.setHeader(errorHeader);
-                    }
-                };
-                },true,'alert');
+            if (this.value == "" || this.value == "-1") {
+                ban = ban && false;
+                return;
             }
-            alertify.errorAlert("Por favor complete los campos Obligatorios(*)..." );
+        });
+        if (!ban) {
+            if (!alertify.errorAlert) {
+                alertify.dialog('errorAlert', function factory() {
+                    return {
+                        build: function() {
+                            var errorHeader = '<span class="fa fa-times-circle fa-2x" ' +
+                                'style="vertical-align:middle;color:#e10000;">' +
+                                '</span>Error...!!';
+                            this.setHeader(errorHeader);
+                        }
+                    };
+                }, true, 'alert');
+            }
+            alertify.errorAlert("Por favor complete los campos Obligatorios(*)...");
         }
         return ban;
     }
+    // valida que CUIT no este repetido
+    function validarCuit() {
+
+        let datos = $("#cuit").val();
+        if (!datos) {
+            $("#cuitValid").html("");
+            return false;
+        } else {
+            $.ajax({
+                type: 'POST',
+                data: {
+                    datos
+                },
+                dataType: 'JSON',
+                url: 'index.php/core/Transportista/Validar_Cuit',
+                success: function(resp) {
+                    const data = JSON.parse(resp.data);
+                    const {
+                        transportista
+                    } = data.transportistas;                   
+
+                    //validos si el objeto viene vacio 
+
+                   
+                    if ($.isEmptyObject(transportista)) {
+                        $("#cuitValid").html("");
+                        $("#save").removeAttr('disabled');
+                    } else {
+                        $("#cuitValid").html(`<div class="alert alert-danger" role="alert">CUIT EXISTENTE</div>`);
+                        $("#save").attr({'disabled': 'disabled'});
+                    }
+                    
+
+                },
+                error: function(error) {
+
+                }
+            });
+        }
+
+
+    }
     //Alta de transportista en sistmea
-    function guardar(operacion){
+    function guardar(operacion) {
         var recurso = "";
         if (operacion == "editar") {
-            if( !validarCampos('formEdicion') ){
+            if (!validarCampos('formEdicion')) {
                 return;
             }
             $("#prov_id_edit").prop('disabled', false);
@@ -346,9 +394,9 @@
             var form = $('#formEdicion')[0];
             var datos = new FormData(form);
             var datos = formToObject(datos);
-            recurso = 'index.php/core/Transportista/Editar_Transportista';           
+            recurso = 'index.php/core/Transportista/Editar_Transportista';
         } else {
-            if( !validarCampos('formTransportistas') ){
+            if (!validarCampos('formTransportistas')) {
                 return;
             }
             var form = $('#formTransportistas')[0];
@@ -359,29 +407,31 @@
         wo();
         $.ajax({
             type: 'POST',
-            data:{ datos },
+            data: {
+                datos
+            },
             dataType: 'JSON',
             url: recurso,
             success: function(resp) {
                 $("#boxDatos").hide(500);
                 $("#formTransportistas")[0].reset();
                 $("#botonAgregar").removeAttr("disabled");
-                if(resp.status){
+                if (resp.status) {
                     $("#cargar_tabla").load("index.php/core/Transportista/Listar_Transportistas", () => {
                         if (operacion == "editar") {
-                            hecho('Correcto!',resp.message);
+                            hecho('Correcto!', resp.message);
                             wc();
-                        }else{
-                            hecho('Correcto!',resp.message);
+                        } else {
+                            hecho('Correcto!', resp.message);
                             wc();
                         }
-                    });            
-                }else{
-                    error('Error!',resp.message);
+                    });
+                } else {
+                    error('Error!', resp.message);
                     wc();
                 }
             },
-            error: function(resp){
+            error: function(resp) {
                 wc();
                 alertify.error("Error agregando Transportista");
             }
@@ -396,7 +446,9 @@
         $.ajax({
             type: 'POST',
             // dataType: "json",
-            data: {id_pais: id_pais},
+            data: {
+                id_pais: id_pais
+            },
             url: 'index.php/core/Transportista/getEstados',
             success: function(rsp) {
                 var resp = JSON.parse(rsp);
@@ -422,7 +474,7 @@
                 wc();
             },
             error: function(data) {
-                wc();                
+                wc();
                 alert('Error');
             }
         });
@@ -436,7 +488,10 @@
         $.ajax({
             type: 'POST',
             // dataType: "json",
-            data: {id_pais, id_estado},
+            data: {
+                id_pais,
+                id_estado
+            },
             url: 'index.php/core/Transportista/getLocalidades',
             success: function(rsp) {
                 var resp = JSON.parse(rsp);
@@ -451,7 +506,7 @@
                     $('#loca_id').html(datos);
                 } else {
                     var datos = "<option value='' disabled selected>-Seleccione Localidad-</option>";
-                    $('#loca_id').html(datos); 
+                    $('#loca_id').html(datos);
                     alertify.error("El Estado no contiene localidades");
                 }
                 wc();
@@ -471,7 +526,9 @@
         $.ajax({
             type: 'POST',
             // dataType: "json",
-            data: {id_pais: id_pais},
+            data: {
+                id_pais: id_pais
+            },
             url: 'index.php/core/Transportista/getEstados',
             success: function(rsp) {
                 var resp = JSON.parse(rsp);
@@ -499,7 +556,7 @@
                 wc();
             },
             error: function(data) {
-                wc();                
+                wc();
                 alert('Error');
             }
         });
@@ -513,7 +570,10 @@
         $.ajax({
             type: 'POST',
             // dataType: "json",
-            data: {id_pais, id_estado},
+            data: {
+                id_pais,
+                id_estado
+            },
             url: 'index.php/core/Transportista/getLocalidades',
             success: function(rsp) {
                 var resp = JSON.parse(rsp);

@@ -98,7 +98,7 @@
                <log level="custom" category="DEBUG" description="delete sol">
                   <property name="delete empresa" expression="json-eval($)"/>
                </log>
-               <property name="uri.var.empresaDELETE" expression="fn:concat($ctx:dataservices_url,'COREDataService/empresa')" scope="default"/>
+               <property name="uri.var.empresaDELETE" expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa')" scope="default"/>
                <call>
                   <endpoint>
                      <http method="DELETE" uri-template="{uri.var.empresaDELETE}"/>
@@ -162,6 +162,32 @@
          <log level="custom" category="DEBUG" description="donde 4">
             <property name="msg actual 9 despues de BPM" expression="json-eval($)"/>
          </log>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="role_name" expression="fn:concat('Responsable de Almacén ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Solicitante de Almacén ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Responsable de Producción ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Responsable de Lote ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Responsable de Pañol ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Planificador de Tareas ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Responsable de Procesos ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Supervisor de Mantenimiento ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Planificador de Mantenimiento ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Solicitante de Mantenimiento ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Mantenedor ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('Administrador ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
          <loopback/>
       </inSequence>
       <outSequence>
