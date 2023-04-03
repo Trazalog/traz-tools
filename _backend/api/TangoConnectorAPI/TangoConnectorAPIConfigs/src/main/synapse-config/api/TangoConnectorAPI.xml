@@ -2,7 +2,7 @@
 <api context="/tools/tango" name="TangoConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
     <resource methods="GET" url-mapping="/clientes/synch/in">
         <inSequence>
-            <property name="HTTP_SC" scope="transport" type="STRING" value="200"/>
+            <!-- <property name="HTTP_SC" scope="transport" type="STRING" value="200"/>-->
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//empr_id" name="empr_id" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
@@ -69,10 +69,10 @@
                                         <arg value="TangoConnectorAPI"/>
                                         <arg value="tipos_clientesIntegracion"/>
                                         <arg evaluator="xml" expression="get-property('empr_id')"/>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.inte_id"/>
+                                        <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
                                     </args>
                                 </payloadFactory>
-                                <call blocking="true">
+                                <call>
                                     <endpoint>
                                         <http method="post" uri-template="{uri.var.cliente}">
                                             <suspendOnFailure>
@@ -86,7 +86,6 @@
                                         </http>
                                     </endpoint>
                                 </call>
-                                <log level="full"/>
                             </case>
                             <case regex="update">
                                 <log description="CASE UPDATE" level="custom">
@@ -104,33 +103,20 @@
                                         <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
                                     </args>
                                 </payloadFactory>
-                                <!-- <property name="messageType" scope="axis2" type="STRING" value="application/json"/> -->
-                                <!-- <header name="Accept" scope="transport" value="application/json"/> -->
-                                <!-- <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/> -->
-                                <!-- <property name="BLOCKING_SENDER_PRESERVE_REQ_HEADERS" scope="default" type="STRING" value="true"/> -->
-                                <property action="remove" name="REST_URL_POSTFIX" scope="axis2"/>
-                                <log level="full"/>
-                                <call blocking="true">
+                                <call>
                                     <endpoint>
                                         <http method="put" uri-template="{uri.var.cliente}">
-                                            <timeout>
-                                                <duration>30000</duration>
-                                                <responseAction>fault</responseAction>
-                                            </timeout>
                                             <suspendOnFailure>
-                                                <errorCodes>-1</errorCodes>
-                                                <initialDuration>0</initialDuration>
-                                                <progressionFactor>1.0</progressionFactor>
+                                                <initialDuration>-1</initialDuration>
+                                                <progressionFactor>-1</progressionFactor>
                                                 <maximumDuration>0</maximumDuration>
                                             </suspendOnFailure>
                                             <markForSuspension>
-                                                <errorCodes>-1</errorCodes>
                                                 <retriesBeforeSuspension>0</retriesBeforeSuspension>
                                             </markForSuspension>
                                         </http>
                                     </endpoint>
                                 </call>
-                                <log level="full"/>
                             </case>
                             <case regex="delete">
                                 <log level="custom">
@@ -142,7 +128,7 @@
                                         <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
                                     </args>
                                 </payloadFactory>
-                                <call blocking="true">
+                                <call>
                                     <endpoint>
                                         <http method="delete" uri-template="{uri.var.cliente}">
                                             <timeout>
@@ -167,12 +153,11 @@
                                 <log level="custom">
                                     <property name="accion" value="Se fue por el default switch accion"/>
                                 </log>
-                                <respond description="corto ejec"/>
                             </default>
                         </switch>
                         <log level="custom">
                             <property name="Paso 3" value="Actualizo fec_realizado(tango) si no fallo en el paso previo"/>
-                            <property expression="json-eval($.queue_id)" name="ACTUALIZANDO"/>
+                            <property expression="$ctx:queueId" name="ACTUALIZANDO"/>
                         </log>
                         <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
                             <then>
@@ -180,9 +165,6 @@
                                 <header name="Accept" scope="transport" value="application/json"/>
                                 <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
                                 <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/queue/dequeue')" name="uri.var.dequeue" scope="default" type="STRING"/>
-                                <log level="custom">
-                                    <property expression="$ctx:queueId" name="ACTUALIZANDO"/>
-                                </log>
                                 <payloadFactory media-type="json">
                                     <format>{"_put_queue_dequeue": {"queue_id": "$1"}}</format>
                                     <args>
@@ -213,9 +195,8 @@
                         <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
                             <then>
                                 <log level="custom">
-                                    <property name="PASO FINAL" value="EXITO! Se reazlizo todo correctamente"/>
+                                    <property name="RESPUESTA /queue/dequeue" value="EXITO! Se actualizo la tabla de novedades correctamente"/>
                                 </log>
-                                <respond/>
                             </then>
                             <else>
                                 <log level="custom">
@@ -224,17 +205,9 @@
                                 </log>
                             </else>
                         </filter>
-                        <respond/>
                     </sequence>
                 </target>
             </iterate>
-        </inSequence>
-        <outSequence>
-            <!-- <property name="FinalResponse" scope="default">
-                <finalResponse/>
-            </property> -->
-            <!-- <sequence key="toolsFault"/> -->
-            <!-- <sequence key="toolsFault"/> -->
             <aggregate id="loopeaNovedades">
                 <completeCondition>
                     <messageCount max="-1" min="-1"/>
@@ -243,10 +216,16 @@
                     <log level="custom">
                         <property name="Secuencia status " value="COMPLETA"/>
                         <property expression="json-eval($)" name="JSON FINAL"/>
+                        <property expression="$body" name="aggregated_body"/>
                     </log>
-                    <respond/>
+                    <send/>
                 </onComplete>
             </aggregate>
+        </inSequence>
+        <outSequence>
+            <log level="custom">
+                <property name="HOLA" value="estoy en la sec de salida"/>
+            </log>
         </outSequence>
         <faultSequence>
             <call/>
