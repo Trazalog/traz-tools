@@ -1,4 +1,4 @@
-<data enableBatchRequests="true" name="TangoConnectorDataService" serviceNamespace="" serviceGroup="" transports="http https">
+<data enableBatchRequests="true" name="TangoConnectorDataService" serviceNamespace="" serviceGroup="" transports="http https" enableBoxcarring="true">
   <description />
   <resource method="GET" path="/queue/read">
     <description>Obtiene listado de transacciones de la tabla cola novedades_clientes_queue</description>
@@ -111,4 +111,41 @@ SET estado='ELIMINADO'
 WHERE inte_id =cast(:inte_id as integer);</sql>
     <param name="inte_id" paramType="SCALAR" sqlType="STRING" />
   </query>
+  <query id="getPedidosPendientesTango" useConfig="TangoDataSource">
+    <sql>select
+	ID_GVA21 id_pedido,
+	pedi.NRO_PEDIDO num_pedido ,
+	pedi.ESTADO estado,
+	TOTAL_PEDI total_pedido,
+	cli.COD_CLIENT cod_cliente,
+	cli.CUIT cuit ,
+	cli.RAZON_SOCI razon_social,
+	pedi.FECHA_PEDI fec_pedido
+from
+	Empresa_Ejemplo.dbo.GVA21 pedi,
+	Empresa_Ejemplo.dbo.GVA14 cli
+where pedi.ID_GVA14 = cli.ID_GVA14
+and pedi.ESTADO = 2
+order by pedi.nro_pedido</sql>
+    <result outputType="json">{
+   "pedidos":{
+      "pedido":[
+         {
+            "id_pedido":"$id_pedido",
+            "num_pedido":"$num_pedido",
+            "estado":"$estado",
+            "total_pedido":"$total_pedido",
+            "cod_cliente":"$cod_cliente",
+            "cuit":"$cuit",
+            "razon_social":"$razon_social",
+            "fec_pedido":"$fec_pedido"
+         }
+      ]
+   }
+}</result>
+  </query>
+  <resource method="GET" path="/tango/pedidos/pendientes">
+    <description />
+    <call-query href="getPedidosPendientesTango" />
+  </resource>
 </data>
