@@ -2,7 +2,10 @@
   <description />
   <config id="TangoDataSourceID">
     <property name="driverClassName">com.microsoft.sqlserver.jdbc.SQLServerDriver</property>
-    <property name="url">jdbc:sqlserver://;serverName=10.142.0.23;instance=SQLEXPRESS;encrypt=true;trustServerCertificate=true</property>
+    <property name="url">
+    
+    jdbc:sqlserver://10.142.0.23:1433;instance=SQLEXPRESS;databaseName=Empresa_Ejemplo;
+    jdbc:sqlserver://;serverName=10.142.0.23;instance=SQLEXPRESS;encrypt=true;trustServerCertificate=true</property>
     <property name="username">Axoft</property>
     <property name="password">Axoft</property>
   </config>

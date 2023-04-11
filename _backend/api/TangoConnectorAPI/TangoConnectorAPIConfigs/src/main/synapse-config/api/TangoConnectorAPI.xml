@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <api context="/tools/tango" name="TangoConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
-    <resource methods="GET" url-mapping="/clientes/synch/in">
+    <resource methods="POST" url-mapping="/clientes/synch/in">
         <inSequence>
-            <!-- <property name="HTTP_SC" scope="transport" type="STRING" value="200"/>-->
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//empr_id" name="empr_id" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
@@ -11,221 +10,148 @@
             <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
             <header action="remove" name="Content-Type" scope="transport"/>
             <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/cliente')" name="uri.var.cliente" scope="default" type="STRING"/>
+            <property expression="json-eval($.novedades.novedad)" name="listaNovedades" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.data_json)" name="novedadJson" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.queue_id)" name="queueId" scope="default" type="STRING"/>
             <log level="custom">
-                <property name="Paso 1" value="Obtengo listado de novedades sobre tabla cliente"/>
-                <property expression="$ctx:uri.var.get_queue_url" name="Llamando a URL"/>
+                <property name="donde" value="Mensaje de entrada"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:novedadJson" name="data_json"/>
+                <property expression="$ctx:queueId" name="queueId"/>
             </log>
-            <call>
-                <endpoint>
-                    <http method="get" uri-template="{uri.var.get_queue_url}">
-                        <suspendOnFailure>
-                            <initialDuration>-1</initialDuration>
-                            <progressionFactor>1</progressionFactor>
-                        </suspendOnFailure>
-                        <markForSuspension>
-                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
-                        </markForSuspension>
-                    </http>
-                </endpoint>
-            </call>
-            <log level="full"/>
+            <script language="js"><![CDATA[var log = mc.getServiceLog();
+var aux = mc.getProperty('novedadJson');
+   var dataNovedad = JSON.parse(aux);
+   mc.setProperty("dataNovedad", JSON.stringify(dataNovedad));]]></script>
+            <switch description="Accion a realizar" source="json-eval($ctx:dataNovedad.accion)">
+                <case regex="insert">
+                    <log level="custom">
+                        <property name="ACCION" value="INSERT"/>
+                    </log>
+                    <payloadFactory media-type="json">
+                        <format>{"_post_cliente": {"nombre": "$1","dir_entrega": "$2","observaciones": "$3","usuario_app": "$4","ticl_id": "$5","empr_id": "$6","inte_id": "$7"}}</format>
+                        <args>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.razon_social"/>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.dir_comercial"/>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.domicilio"/>
+                            <arg value="TangoConnectorAPI"/>
+                            <arg value="tipos_clientesIntegracion"/>
+                            <arg evaluator="xml" expression="get-property('empr_id')"/>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
+                        </args>
+                    </payloadFactory>
+                    <call>
+                        <endpoint>
+                            <http method="post" uri-template="{uri.var.cliente}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>-1</progressionFactor>
+                                    <maximumDuration>0</maximumDuration>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                </case>
+                <case regex="update">
+                    <log description="CASE UPDATE" level="custom">
+                        <property name="ACCION" value="UPDATE"/>
+                    </log>
+                    <payloadFactory media-type="json">
+                        <format>{"_put_cliente": {"nombre": "$1","dir_entrega": "$2","observaciones": "$3","usuario_app": "$4","ticl_id": "$5","empr_id": "$6","inte_id": "$7"}}</format>
+                        <args>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.razon_social"/>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.dir_comercial"/>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.domicilio"/>
+                            <arg value="TangoConnectorAPI"/>
+                            <arg value="tipos_clientesIntegracion"/>
+                            <arg evaluator="xml" expression="get-property('empr_id')"/>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
+                        </args>
+                    </payloadFactory>
+                    <call>
+                        <endpoint>
+                            <http method="put" uri-template="{uri.var.cliente}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>-1</progressionFactor>
+                                    <maximumDuration>0</maximumDuration>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                </case>
+                <case regex="delete">
+                    <log level="custom">
+                        <property name="ACCION" value="DELETE"/>
+                    </log>
+                    <payloadFactory media-type="json">
+                        <format>{"_delete_cliente": {"inte_id": "$1"}}</format>
+                        <args>
+                            <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
+                        </args>
+                    </payloadFactory>
+                    <call>
+                        <endpoint>
+                            <http method="delete" uri-template="{uri.var.cliente}">
+                                <timeout>
+                                    <duration>30000</duration>
+                                    <responseAction>fault</responseAction>
+                                </timeout>
+                                <suspendOnFailure>
+                                    <errorCodes>-1</errorCodes>
+                                    <initialDuration>0</initialDuration>
+                                    <progressionFactor>1.0</progressionFactor>
+                                    <maximumDuration>0</maximumDuration>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <errorCodes>-1</errorCodes>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                </case>
+                <default>
+                    <log level="custom">
+                        <property name="accion" value="Se fue por el default switch accion"/>
+                    </log>
+                </default>
+            </switch>
+            <log level="custom">
+                <property name="Paso 3" value="Actualizo fec_realizado(tango) si no fallo en el paso previo"/>
+                <property expression="$ctx:queueId" name="ACTUALIZANDO"/>
+            </log>
             <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
                 <then/>
                 <else>
-                    <property expression="json-eval($)" name="ERROR_MESSAGE" scope="default" type="STRING"/>
-                    <property name="TOOLS_ERROR" scope="default" type="STRING" value="GET /queue/read se produjo un problema"/>
-                    <!-- <sequence key="toolsFault"/> -->
+                    <log level="custom">
+                        <property name="TOOLS_ERROR" value="Fallo al realizar la accion sobre tabla clientes de TOOLS"/>
+                        <property expression="json-eval($)" name="ERROR_MESSAGE"/>
+                    </log>
                 </else>
             </filter>
-            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
-            <header name="Accept" scope="transport" value="application/json"/>
-            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
-            <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/cliente')" name="uri.var.cliente" scope="default" type="STRING"/>
-            <property expression="json-eval($.novedades.novedad)" name="listaNovedades" scope="default" type="STRING"/>
-            <log level="custom">
-                <property name="Paso 2" value="Loopeo sobre get Response --> "/>
-                <property expression="$ctx:listaNovedades" name="payload"/>
-            </log>
-            <iterate continueParent="true" expression="json-eval($.novedades.novedad)" id="loopeaNovedades" sequential="true">
-                <target>
-                    <sequence>
-                        <property expression="json-eval($.data_json)" name="novedadJson" scope="default" type="STRING"/>
-                        <property expression="json-eval($.queue_id)" name="queueId" scope="default" type="STRING"/>
-                        <script language="js"><![CDATA[var log = mc.getServiceLog();
-							    var aux = mc.getProperty('novedadJson');
-						        var dataNovedad = JSON.parse(aux);
-						        mc.setProperty("dataNovedad", JSON.stringify(dataNovedad));]]></script>
-                        <switch description="Accion a realizar" source="json-eval($ctx:dataNovedad.accion)">
-                            <case regex="insert">
-                                <log level="custom">
-                                    <property name="ACCION" value="INSERT"/>
-                                </log>
-                                <payloadFactory media-type="json">
-                                    <format>{"_post_cliente": {"nombre": "$1","dir_entrega": "$2","observaciones": "$3","usuario_app": "$4","ticl_id": "$5","empr_id": "$6","inte_id": "$7"}}</format>
-                                    <args>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.razon_social"/>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.dir_comercial"/>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.domicilio"/>
-                                        <arg value="TangoConnectorAPI"/>
-                                        <arg value="tipos_clientesIntegracion"/>
-                                        <arg evaluator="xml" expression="get-property('empr_id')"/>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
-                                    </args>
-                                </payloadFactory>
-                                <call>
-                                    <endpoint>
-                                        <http method="post" uri-template="{uri.var.cliente}">
-                                            <suspendOnFailure>
-                                                <initialDuration>-1</initialDuration>
-                                                <progressionFactor>-1</progressionFactor>
-                                                <maximumDuration>0</maximumDuration>
-                                            </suspendOnFailure>
-                                            <markForSuspension>
-                                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
-                                            </markForSuspension>
-                                        </http>
-                                    </endpoint>
-                                </call>
-                            </case>
-                            <case regex="update">
-                                <log description="CASE UPDATE" level="custom">
-                                    <property name="ACCION" value="UPDATE"/>
-                                </log>
-                                <payloadFactory media-type="json">
-                                    <format>{"_put_cliente": {"nombre": "$1","dir_entrega": "$2","observaciones": "$3","usuario_app": "$4","ticl_id": "$5","empr_id": "$6","inte_id": "$7"}}</format>
-                                    <args>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.razon_social"/>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.dir_comercial"/>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.domicilio"/>
-                                        <arg value="TangoConnectorAPI"/>
-                                        <arg value="tipos_clientesIntegracion"/>
-                                        <arg evaluator="xml" expression="get-property('empr_id')"/>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
-                                    </args>
-                                </payloadFactory>
-                                <call>
-                                    <endpoint>
-                                        <http method="put" uri-template="{uri.var.cliente}">
-                                            <suspendOnFailure>
-                                                <initialDuration>-1</initialDuration>
-                                                <progressionFactor>-1</progressionFactor>
-                                                <maximumDuration>0</maximumDuration>
-                                            </suspendOnFailure>
-                                            <markForSuspension>
-                                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
-                                            </markForSuspension>
-                                        </http>
-                                    </endpoint>
-                                </call>
-                            </case>
-                            <case regex="delete">
-                                <log level="custom">
-                                    <property name="ACCION" value="DELETE"/>
-                                </log>
-                                <payloadFactory media-type="json">
-                                    <format>{"_delete_cliente": {"inte_id": "$1"}}</format>
-                                    <args>
-                                        <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
-                                    </args>
-                                </payloadFactory>
-                                <call>
-                                    <endpoint>
-                                        <http method="delete" uri-template="{uri.var.cliente}">
-                                            <timeout>
-                                                <duration>30000</duration>
-                                                <responseAction>fault</responseAction>
-                                            </timeout>
-                                            <suspendOnFailure>
-                                                <errorCodes>-1</errorCodes>
-                                                <initialDuration>0</initialDuration>
-                                                <progressionFactor>1.0</progressionFactor>
-                                                <maximumDuration>0</maximumDuration>
-                                            </suspendOnFailure>
-                                            <markForSuspension>
-                                                <errorCodes>-1</errorCodes>
-                                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
-                                            </markForSuspension>
-                                        </http>
-                                    </endpoint>
-                                </call>
-                            </case>
-                            <default>
-                                <log level="custom">
-                                    <property name="accion" value="Se fue por el default switch accion"/>
-                                </log>
-                            </default>
-                        </switch>
-                        <log level="custom">
-                            <property name="Paso 3" value="Actualizo fec_realizado(tango) si no fallo en el paso previo"/>
-                            <property expression="$ctx:queueId" name="ACTUALIZANDO"/>
-                        </log>
-                        <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
-                            <then>
-                                <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
-                                <header name="Accept" scope="transport" value="application/json"/>
-                                <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
-                                <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/queue/dequeue')" name="uri.var.dequeue" scope="default" type="STRING"/>
-                                <payloadFactory media-type="json">
-                                    <format>{"_put_queue_dequeue": {"queue_id": "$1"}}</format>
-                                    <args>
-                                        <arg evaluator="json" expression="$ctx:queueId"/>
-                                    </args>
-                                </payloadFactory>
-                                <call>
-                                    <endpoint>
-                                        <http method="put" uri-template="{uri.var.dequeue}">
-                                            <suspendOnFailure>
-                                                <initialDuration>-1</initialDuration>
-                                                <progressionFactor>1</progressionFactor>
-                                            </suspendOnFailure>
-                                            <markForSuspension>
-                                                <retriesBeforeSuspension>0</retriesBeforeSuspension>
-                                            </markForSuspension>
-                                        </http>
-                                    </endpoint>
-                                </call>
-                            </then>
-                            <else>
-                                <log level="custom">
-                                    <property name="TOOLS_ERROR" value="Fallo al realizar la accion sobre tabla clientes de TOOLS"/>
-                                    <property expression="json-eval($)" name="ERROR_MESSAGE"/>
-                                </log>
-                            </else>
-                        </filter>
-                        <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
-                            <then>
-                                <log level="custom">
-                                    <property name="RESPUESTA /queue/dequeue" value="EXITO! Se actualizo la tabla de novedades correctamente"/>
-                                </log>
-                            </then>
-                            <else>
-                                <log level="custom">
-                                    <property name="TOOLS_ERROR" value="Fallo al realizar la accion sobre tabla clientes de TOOLS"/>
-                                    <property expression="json-eval($)" name="ERROR_MESSAGE"/>
-                                </log>
-                            </else>
-                        </filter>
-                    </sequence>
-                </target>
-            </iterate>
-            <aggregate id="loopeaNovedades">
-                <completeCondition>
-                    <messageCount max="-1" min="-1"/>
-                </completeCondition>
-                <onComplete aggregateElementType="root" expression="json-eval($)">
-                    <log level="custom">
-                        <property name="Secuencia status " value="COMPLETA"/>
-                        <property expression="json-eval($)" name="JSON FINAL"/>
-                        <property expression="$body" name="aggregated_body"/>
-                    </log>
-                    <send/>
-                </onComplete>
-            </aggregate>
+            <loopback/>
         </inSequence>
         <outSequence>
-            <log level="custom">
-                <property name="HOLA" value="estoy en la sec de salida"/>
+            <log level="full">
+                <property name="MESSAGE" value="FIRST"/>
             </log>
+            <payloadFactory description="Mensaje error" media-type="json">
+                <format>{"queue_id":$1}</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('queueId')"/>
+                </args>
+            </payloadFactory>
+            <log level="full"/>
+            <send/>
         </outSequence>
         <faultSequence>
             <call/>
