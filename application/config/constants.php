@@ -127,7 +127,7 @@ define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
 define('BPM_PROCESS_ID_INGRESO_CAMIONES', '7654696702603905131');
 
 #SEIN PROCESO PRODUCTIVO
-define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '6149765815561286114');
+define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '7479581693351276814');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
@@ -228,6 +228,8 @@ define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
+define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
+
 
 define('REST_SEIN', HOST.'/services/SeinDataService');
 
@@ -235,3 +237,5 @@ define('REST_SEIN', HOST.'/services/SeinDataService');
 define('DURACION_JORNADA', '08:00');
 define('HORA_FIN_JORNADA', '18:00');
 define('HORA_INICIO_JORNADA','10:00');
+
+
