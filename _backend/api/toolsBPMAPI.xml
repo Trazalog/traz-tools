@@ -400,7 +400,7 @@
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
-   <resource methods="POST" uri-template="/group">
+   <resource methods="POST" uri-template="/grupo">
       <inSequence>
          <log level="custom" description="msg entrada post grupo">
             <property name="payload" expression="json-eval($.payload)"/>
@@ -459,37 +459,6 @@
       </outSequence>
       <faultSequence>
          <property name="TOOLS_ERROR" value="Error en API BPM profile member" type="STRING"/>
-         <sequence key="toolsFault"/>
-      </faultSequence>
-   </resource>
-   <resource methods="POST" uri-template="/role">
-      <inSequence>
-         <log level="custom" description="msg entrada post rol">
-            <property name="payload" expression="json-eval($.payload)"/>
-            <property name="session" expression="json-eval($.session)"/>
-         </log>
-         <property name="payload" expression="json-eval($.payload)"/>
-         <property name="session" expression="json-eval($.session)"/>
-         <property name="post_role_url" value="/API/identity/role"/>
-         <log level="custom" category="DEBUG">
-            <property name="url a invocar post rol" expression="get-property('post_role_url')"/>
-         </log>
-         <call-template target="bpmAPICallTemplate">
-            <with-param name="recurso" value="{$ctx:post_role_url}"/>
-            <with-param name="session" value="{$ctx:session}"/>
-            <with-param name="method" value="POST"/>
-            <with-param name="payload" value="{$ctx:payload}"/>
-         </call-template>
-         <loopback/>
-      </inSequence>
-      <outSequence>
-         <log level="full">
-            <property name="MESSAGE" value="FIRST"/>
-         </log>
-         <send/>
-      </outSequence>
-      <faultSequence>
-         <property name="TOOLS_ERROR" value="Error en API BPM rol" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
