@@ -1,0 +1,75 @@
+@App:name('TangoSynch')
+@App:description('Description of the plan')
+
+@sink(type = 'http-call', 
+      publisher.url = "http://localhost:8290/tools/tango/clientes/synch/in", 
+      method = "POST", 
+      sink.id = "1", 
+      headers = "Content-Type:json",
+      blocking.io='true',
+      on.error='WAIT',
+	@map(type = 'json'))
+define stream HTTPSinkStream (queue_id int, data_json string);
+
+@source(type = 'cdc', 
+        url = "jdbc:sqlserver://10.142.0.23:1433;databaseName=Empresa_Ejemplo;", 
+        username = "Axoft", 
+        password = "Axoft", 
+        table.name = "dbo.novedades_clientes_queue", 
+        on.error='wait',
+        database.server.name = "10.142.0.23\SQLEXPRESS", 
+        mode = "polling", 
+        polling.column = "fec_alta", 
+        polling.interval = '1',
+        jdbc.driver.name = "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+	@map(type = 'keyvalue'))
+define stream NovedadTangoStream (queue_id int, data_json string);
+
+-- Define sink to handle HTTP-call errors
+@sink(type='log', 
+      prefix='HTTP-call error occurred: ', 
+      on.error='wait',
+      @map(type='json', 
+           enclosing.element='$',
+           @attributes(error='$.ERROR')))
+define stream ErrorSink (id int, name string, ERROR string);
+
+@source(type = 'http-call-response', 
+        sink.id = "1", 
+        http.status.code = '2\d+',
+        on.error='wait',
+	@map(type = 'json'))
+define stream HTTPResponseStream (queue_id int);
+
+        
+-- Update processed_flag column in SQL Server table for each processed record
+@store(type='rdbms',
+      jdbc.driver.name='com.microsoft.sqlserver.jdbc.SQLServerDriver',
+      jdbc.url='jdbc:sqlserver://10.142.0.23:1433;databaseName=Empresa_Ejemplo;schema=dbo',
+      database.server.name = "10.142.0.23\SQLEXPRESS",
+      username='Axoft',
+      password='Axoft')
+define table novedades_clientes_queue (queue_id int,procesado int);
+
+
+@sink(type = 'log') 
+define stream LogStream (queue_id int, data_json string);
+
+
+@info(name = 'log')
+from NovedadTangoStream 
+select * 
+insert into LogStream;
+
+@info(name = 'novedades')
+from NovedadTangoStream 
+select * 
+insert into HTTPSinkStream;
+
+@info(name = 'post-grabacion')
+from HTTPResponseStream 
+select queue_id
+update novedades_clientes_queue 
+set novedades_clientes_queue.procesado = 1
+on novedades_clientes_queue.queue_id == queue_id
+

@@ -134,6 +134,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/js/jquery.magnify.min.js" integrity="sha512-YKxHqn7D0M5knQJO2xKHZpCfZ+/Ta7qpEHgADN+AkY2U2Y4JJtlCEHzKWV5ZE87vZR3ipdzNJ4U/sfjIaoHMfw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/js/jquery.magnify-mobile.js" integrity="sha512-c4nn0tYA6CqgF8nQZqysAS9lu+tegNtXt0gTwFI5smPpuODc+DJk8HDm/cjaUP6HRAqLKUPIAVnnK9llAKa0+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+<!-- Recorder Audios -->
+<script src="<?php echo base_url(); ?>lib/recorderjs/dist/recorder.js"></script>
 <script>
     function conexion() {
         return true;
