@@ -6,7 +6,22 @@ info:
 servers:
 - url: http://localhost:8290/tools/tango
 paths:
-  /clientes/synch/in:
+  /synch/in:
+    post:
+      requestBody:
+        description: Sample Payload
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+        required: false
+      responses:
+        default:
+          description: Default response
+  /synch/out:
     post:
       requestBody:
         description: Sample Payload

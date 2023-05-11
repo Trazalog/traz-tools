@@ -1,5 +1,11 @@
 <data enableBatchRequests="true" name="TangoConnectorDataService" serviceNamespace="" serviceGroup="" transports="http https" enableBoxcarring="true">
   <description />
+  <config id="ToolsDataSource">
+    <property name="carbon_datasource_name">ToolsDataSource</property>
+  </config>
+  <config id="TangoDataSource">
+    <property name="carbon_datasource_name">TangoDataSource</property>
+  </config>
   <resource method="GET" path="/queue/read">
     <description>Obtiene listado de transacciones de la tabla cola novedades_clientes_queue</description>
     <call-query href="leerTablaCola" />
@@ -40,12 +46,6 @@
       <with-param name="inte_id" query-param="inte_id" />
     </call-query>
   </resource>
-  <config id="TangoDataSource">
-    <property name="carbon_datasource_name">TangoDataSource</property>
-  </config>
-  <config id="ToolsDataSource">
-    <property name="carbon_datasource_name">ToolsDataSource</property>
-  </config>
   <resource method="GET" path="/tango/pedidos/pendientes">
     <description />
     <call-query href="getPedidosPendientesTango" />
@@ -54,9 +54,120 @@
     <description />
     <call-query href="setDetalleLineaPedidoTango">
       <with-param name="descripcion" query-param="descripcion" />
-      <with-param name=" desc_adicional" query-param=" desc_adicional" />
+      <with-param name="desc_adicional" query-param="desc_adicional" />
       <with-param name="num_comp" query-param="num_comp" />
-      <with-param name=" num_renglon" query-param=" num_renglon" />
+      <with-param name="num_renglon" query-param="num_renglon" />
+    </call-query>
+  </resource>
+  <resource method="POST" path="/stock/movimiento/cabecera">
+      <call-query href="movimientoStock">
+         <with-param name="numComprobante" query-param="numComprobante"/>
+                  <with-param name="numComprobante2" query-param="numComprobante2"/>
+         <with-param name="nroTalonario" query-param="nroTalonario"/>
+         <with-param name="tipoMov" query-param="tipoMov"/>
+         <with-param name="id_movimiento" query-param="id_movimiento"/>
+         <with-param name="talonario" query-param="talonario"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/stock/movimiento/detalle">
+      <call-query href="cabeceraMovimientoStock">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="cantidadPend" query-param="cantidadPend"/>
+         <with-param name="codArticulo" query-param="codArticulo"/>
+         <with-param name="deposito" query-param="deposito"/>
+         <with-param name="depositoDDE" query-param="depositoDDE"/>
+         <with-param name="numComprobante" query-param="numComprobante"/>
+         <with-param name="tipoMovimientoAbreviado" query-param="tipoMovimientoAbreviado"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/talonario">
+      <call-query href="talonario">
+         <with-param name="numTalonario" query-param="numTalonario"/>
+         <with-param name="talonario" query-param="talonario"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/articulo/deposito">
+      <call-query href="nuevoArticuloDeposito">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="codArticulo" query-param="codArticulo"/>
+         <with-param name="deposito" query-param="deposito"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/articulo/deposito">
+      <call-query href="actualizaArticuloDeposito">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="codArticulo" query-param="codArticulo"/>
+         <with-param name="deposito" query-param="deposito"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/numeroComprobante/{tipoComprobante}">
+      <call-query href="numeroComprobante">
+         <with-param name="tipoComprobante" query-param="tipoComprobante"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/existe/">
+      <call-query href="existeEnDeposito">
+         <with-param name="codArticulo" query-param="codArticulo"/>
+         <with-param name="codDeposito" query-param="codDeposito"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulo/porcodbarra/{codBarra}">
+      <call-query href="codArticulo">
+         <with-param name="codBarra" query-param="codBarra"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/comprobante/proximo/">
+      <call-query href="nextNumComprobante">
+         <with-param name="talonario" query-param="talonario"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/stock/movimiento/cabecera/">
+      <call-query href="movimientoStock">
+         <with-param name="nroTalonario" query-param="nroTalonario"/>
+         <with-param name="numComprobante" query-param="numComprobante"/>
+         <with-param name="numComprobante2" query-param="numComprobante2"/>
+         <with-param name="tipoMov" query-param="tipoMov"/>
+         <with-param name="id_movimiento" query-param="id_movimiento"/>
+         <with-param name="talonario" query-param="talonario"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/stock/movimiento/detalle">
+      <call-query href="detalleMovimientoStock">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="cantidadPend" query-param="cantidadPend"/>
+         <with-param name="codArticulo" query-param="codArticulo"/>
+         <with-param name="deposito" query-param="deposito"/>
+         <with-param name="depositoDDE" query-param="depositoDDE"/>
+         <with-param name="numComprobante" query-param="numComprobante"/>
+         <with-param name="tipoMovimientoAbreviado" query-param="tipoMovimientoAbreviado"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/talonario/">
+      <call-query href="talonario">
+         <with-param name="numTalonario" query-param="numTalonario"/>
+         <with-param name="talonario" query-param="talonario"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/articulo/deposito/">
+      <call-query href="nuevoArticuloDeposito">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="codArticulo" query-param="codArticulo"/>
+         <with-param name="deposito" query-param="deposito"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/articulo/deposito/">
+      <call-query href="actualizaArticuloDeposito">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="codArticulo" query-param="codArticulo"/>
+         <with-param name="deposito" query-param="deposito"/>
+      </call-query>
+   </resource>
+    <resource method="POST" path="/tango/pedido/linea">
+    <call-query href="setLineaPedidoTango">
+      <with-param name=" cant_pedida " query-param=" cant_pedida " />
+      <with-param name=" cod_articulo" query-param=" cod_articulo" />
+      <with-param name="num_renglon" query-param="num_renglon" />
+      <with-param name=" num_pedido " query-param=" num_pedido " />
     </call-query>
   </resource>
   <query id="leerTablaCola" useConfig="TangoDataSource">
@@ -177,9 +288,9 @@ INSERT INTO dbo.GVA45
 ("DESC", DESC_ADIC, N_COMP, N_RENGLON, T_COMP)
 VALUES(:descripcion, :desc_adicional,:num_comp, :num_renglon, 'PED');</sql>
     <param name="descripcion" paramType="SCALAR" sqlType="STRING" />
-    <param name=" desc_adicional" paramType="SCALAR" sqlType="STRING" />
+    <param name="desc_adicional" paramType="SCALAR" sqlType="STRING" />
     <param name="num_comp" paramType="SCALAR" sqlType="STRING" />
-    <param name=" num_renglon" paramType="SCALAR" sqlType="STRING" />
+    <param name="num_renglon" paramType="SCALAR" sqlType="STRING" />
   </query>
   <query id="setLineaPedidoTango" useConfig="TangoDataSource" returnGeneratedKeys="true" keyColumns="id_gva03">
     <sql>INSERT INTO dbo.GVA03
@@ -192,13 +303,58 @@ VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido );
     <param name="num_renglon" paramType="SCALAR" sqlType="STRING" />
     <param name=" num_pedido " paramType="SCALAR" sqlType="STRING" />
   </query>
-  <resource method="POST" path="/tango/pedido/linea">
-    <description />
-    <call-query href="setLineaPedidoTango">
-      <with-param name=" cant_pedida " query-param=" cant_pedida " />
-      <with-param name=" cod_articulo" query-param=" cod_articulo" />
-      <with-param name="num_renglon" query-param="num_renglon" />
-      <with-param name=" num_pedido " query-param=" num_pedido " />
-    </call-query>
-  </resource>
+  
+     <query id="numeroComprobante" useConfig="TangoDataSource">
+      <sql>SELECT ISNULL(MAX(cast (NCOMP_IN_S as int))+1,1) AS numeroComprobante FROM STA14 WHERE T_COMP = ?</sql>
+      <param name="tipoComprobante" sqlType="STRING"/>
+   </query>
+   <query id="codArticulo" useConfig="TangoDataSource">
+      <sql>select cod_articu as codArticulo from sta11 where cod_articu =?</sql>
+      <param name="codBarra" sqlType="STRING"/>
+   </query>
+   <query id="existeEnDeposito" useConfig="TangoDataSource">
+      <sql>select count(1) existe from STA19 where COD_ARTICU = ? and COD_DEPOSI =?</sql>
+      <param name="codArticulo" sqlType="STRING"/>
+      <param name="codDeposito" sqlType="STRING"/>
+   </query>
+   <query id="nextNumComprobante" useConfig="TangoDataSource">
+      <sql>select cast (proximo as int) as proximo from sta17 where talonario = ?</sql>
+      <param name="talonario" sqlType="INTEGER"/>
+   </query>
+   <query id="movimientoStock" useConfig="TangoDataSource">
+      <sql>insert into sta14 (cod_pro_cl,cotiz,exportado,fecha_mov,lote,mon_cte,nro_sucurs, n_comp ,ncomp_in_s,n_remito,observacio,talonario ,t_comp,tcomp_in_s)VALUES ('' ,'1','0' ,GETDATE(),'0',-1,'0' ,FORMAT(:numComprobante2,' 0000000000000'),FORMAT(:numComprobante,'00000000'),FORMAT(:nroTalonario, '000000000000'),:id_movimiento,:talonario,:tipoMov,'LE')</sql>
+      <param name="numComprobante" sqlType="INTEGER"/>
+      <param name="numComprobante2" sqlType="INTEGER"/>
+      <param name="nroTalonario" sqlType="INTEGER"/>
+      <param name="tipoMov" sqlType="STRING"/>
+      <param name="id_movimiento" sqlType="STRING"/>
+      <param name="talonario" sqlType="INTEGER"/>
+   </query>
+   <query id="detalleMovimientoStock" useConfig="TangoDataSource">
+      <sql>insert into sta20 (cantidad ,cant_dev ,cant_oc ,cant_pend ,can_equi_v ,cod_articu ,cod_deposi ,deposi_dde ,equivalenc ,fecha_mov ,ncomp_in_s ,n_rengl_oc ,n_rengl_s ,precio ,tipo_mov ,tcomp_in_s) values( CAST(REPLACE(?,'.0','') AS INT)  ,'0' ,'0' ,CAST(REPLACE(?,'.0','') AS INT)  ,'1' ,?  ,?  ,?  ,'1' ,GETDATE() ,FORMAT(CAST(? AS INT),'00000000')  ,'0' ,1 ,'0' ,?,'LE')</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="cantidadPend" sqlType="STRING"/>
+      <param name="codArticulo" sqlType="STRING"/>
+      <param name="deposito" sqlType="STRING"/>
+      <param name="depositoDDE" sqlType="STRING"/>
+      <param name="numComprobante" sqlType="INTEGER"/>
+      <param name="tipoMovimientoAbreviado" sqlType="STRING"/>
+   </query>
+   <query id="talonario" useConfig="TangoDataSource">
+      <sql>update sta17 set proximo = CAST(? AS INT) + 1 where talonario = ?</sql>
+      <param name="numTalonario" sqlType="INTEGER"/>
+      <param name="talonario" sqlType="STRING"/>
+   </query>
+   <query id="nuevoArticuloDeposito" useConfig="TangoDataSource">
+      <sql>insert into sta19 (cant_stock,COD_ARTICU,COD_DEPOSI) values(CAST(REPLACE(?,'.0','') AS INT),?,?)</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="codArticulo" sqlType="STRING"/>
+      <param name="deposito" sqlType="STRING"/>
+   </query>
+   <query id="actualizaArticuloDeposito" useConfig="TangoDataSource">
+      <sql>update sta19 set cant_stock = cant_stock + CAST(REPLACE(?,'.0','') AS INT) where cod_articu = ? and cod_deposi = ?</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="codArticulo" sqlType="STRING"/>
+      <param name="deposito" sqlType="STRING"/>
+   </query>
 </data>
