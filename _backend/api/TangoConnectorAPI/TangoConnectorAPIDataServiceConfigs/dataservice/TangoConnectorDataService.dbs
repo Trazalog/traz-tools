@@ -244,7 +244,10 @@ WHERE inte_id =cast(:inte_id as integer);</sql>
 	cli.COD_CLIENT cod_cliente,
 	cli.CUIT cuit ,
 	cli.RAZON_SOCI razon_social,
-	pedi.FECHA_PEDI fec_pedido
+	pedi.FECHA_PEDI fec_pedido,
+	concat(cast(pedi.NRO_PEDIDO as varchar),' - ',cli.RAZON_SOCI collate Latin1_General_BIN) label,
+	pedi.NRO_PEDIDO  value,
+	0 eliminado 
 from dbo.GVA21 pedi,
 	dbo.GVA14 cli
 where pedi.ID_GVA14 = cli.ID_GVA14
@@ -261,22 +264,9 @@ order by pedi.nro_pedido</sql>
             "cod_cliente":"$cod_cliente",
             "cuit":"$cuit",
             "razon_social":"$razon_social",
-            "fec_pedido":"$fec_pedido"
-         }
-      ]
-   }
-}{
-   "pedidos":{
-      "pedido":[
-         {
-            "id_pedido":"$id_pedido",
-            "num_pedido":"$num_pedido",
-            "estado":"$estado",
-            "total_pedido":"$total_pedido",
-            "cod_cliente":"$cod_cliente",
-            "cuit":"$cuit",
-            "razon_social":"$razon_social",
-            "fec_pedido":"$fec_pedido"
+            "fec_pedido":"$fec_pedido",
+            "value":"$value",
+            "label":"$label"
          }
       ]
    }
