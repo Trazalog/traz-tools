@@ -1,0 +1,9 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<configs>
+	<!-- <dataservices_url>http://10.142.0.13:8280/services</dataservices_url>-->
+	<dataservices_url>http://localhost:8290/services/TangoConnectorDataService</dataservices_url>
+	<pedidos_cod_articulo>0100200530</pedidos_cod_articulo>
+	<pedidos_descripcion>Etiq. Nro: </pedidos_descripcion>
+	<empr_id>777</empr_id>
+</configs>
+

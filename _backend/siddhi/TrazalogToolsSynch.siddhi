@@ -1,0 +1,74 @@
+@App:name('TrazalogToolsSynch')
+@App:description('De Tools a Tango')
+
+@sink(type = 'http-call', 
+      publisher.url = "http://localhost:8290/tools/tango/clientes/synch/out", 
+      method = "POST", 
+      sink.id = "1", 
+      headers = "Content-Type:json",
+      blocking.io='true',
+      on.error='WAIT',
+	@map(type = 'json'))
+define stream HTTPSinkStream (queue_id int, data_json string);
+
+@source(type = 'cdc', 
+        url = "jdbc:postgresql://10.142.0.13:5432/tools_prod_t", 
+        username = "postgres", 
+        password = "!Password00", 
+        table.name = "int.synch_queue", 
+        on.error='wait',
+        database.server.name = "10.142.0.13\tools_prod_t", 
+        mode = "polling", 
+        polling.column = "fec_alta", 
+        polling.interval = '1',
+        jdbc.driver.name = "org.postgresql.Driver",
+	@map(type = 'keyvalue'))
+define stream NovedadTangoStream (queue_id int, data_json string);
+
+-- Define sink to handle HTTP-call errors
+@sink(type='log', 
+      prefix='HTTP-call error occurred: ', 
+      on.error='wait',
+      @map(type='json', 
+           enclosing.element='$',
+           @attributes(error='$.ERROR')))
+define stream ErrorSink (id int, name string, ERROR string);
+
+@source(type = 'http-call-response', 
+        sink.id = "1", 
+        http.status.code = '2\d+',
+        on.error='wait',
+	@map(type = 'json'))
+define stream HTTPResponseStream (queue_id int);
+
+        
+-- Update processed_flag column in SQL Server table for each processed record
+@store(type='rdbms',
+      jdbc.driver.name='org.postgresql.Driver',
+      jdbc.url='jdbc:postgresql://10.142.0.13:5432/tools_prod_t',
+      username='postgres',
+      password='!Password00')
+define table int.synch_queue (queue_id int,procesado int);
+
+
+@sink(type = 'log') 
+define stream LogStream (queue_id int, data_json string);
+
+
+@info(name = 'log')
+from NovedadTangoStream 
+select * 
+insert into LogStream;
+
+@info(name = 'novedades')
+from NovedadTangoStream 
+select * 
+insert into HTTPSinkStream;
+
+@info(name = 'post-grabacion')
+from HTTPResponseStream 
+select queue_id
+update int.synch_queue 
+set int.synch_queue.procesado = 1
+on int.synch_queue.queue_id == queue_id
+
