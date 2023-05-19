@@ -1,13 +1,13 @@
 
 @media print {
- 
+  /*Estilos GENERALES*/
   #modalBodyCodigos{
-    font-size: 75%;
+    font-size: 100%;
     break-after:page;
   }
    #numero_orden{
     margin-top: -1px;
-    font-size: 60px;
+    font-size: 10px;
   }
   /* #div_numero{
     margin-top: -5%;
@@ -19,7 +19,8 @@
   #imagenYudi{
     margin-top: 100%; 
     width: 100%;
-    /* float: left; */
+    float: left;
+    
   } 
   /*Fin Estilos GENERALES*/
   /*Estilos Etiqueta final*/
@@ -71,18 +72,27 @@
   /*Estilos Etiqueta pedido de trabajo*/
   #numOrdenEtiquetaPedidoTrabajo{
     float:left;
-    margin-top: 25%;
-    margin-left: -2%;
-    margin-bottom: -15%;
+    margin-top: 20%;
+    margin-left: -1%;
+    margin-bottom: -5%;   
   }
   #contenedorTablaPedidoTrabajo{
     width: 100%;
-    float:left;
+    height: 50%;
+    margin-top: -5%;
+/*     float:left; */
+  }
+  #contenedorTablaPedidoTrabajo #tabla{
+    font-size: 12px;
+  }
+  #codigoImage{
+    width: 95%;
+    height: 90%;
   }
   #contenedorImagenYudiPedidoTrabajo{
     float:left;
-    margin-top: -12%;
-    margin-left: 8%;
+    margin-top: -15%;
+    margin-left: 30%;
   } 
   /*Fin Estilos pedido de trabajo*/
   /*Estilos Etiqueta de rechazo*/
@@ -136,6 +146,4 @@
     align-items: center;
   }
   /*Fin Estilos Etiqueta de rechazo*/
-
-  
 }
