@@ -1,8 +1,8 @@
 
 @media print {
-  /*Estilos GENERALES*/
+ 
   #modalBodyCodigos{
-    font-size: 100%;
+    font-size: 75%;
     break-after:page;
   }
    #numero_orden{
@@ -19,7 +19,7 @@
   #imagenYudi{
     margin-top: 100%; 
     width: 100%;
-    float: left;
+    /* float: left; */
   } 
   /*Fin Estilos GENERALES*/
   /*Estilos Etiqueta final*/
@@ -136,4 +136,6 @@
     align-items: center;
   }
   /*Fin Estilos Etiqueta de rechazo*/
+
+  
 }
