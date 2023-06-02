@@ -12,6 +12,7 @@
             <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
             <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
             <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/cliente')" name="uri.var.cliente" scope="default" type="STRING"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/articulo')" name="uri.var.cliente" scope="default" type="STRING"/>
             <property expression="json-eval($.novedades.novedad)" name="listaNovedades" scope="default" type="STRING"/>
             <property expression="json-eval($.event.data_json)" name="novedadJson" scope="default" type="STRING"/>
             <property expression="json-eval($.event.queue_id)" name="queueId" scope="default" type="STRING"/>
@@ -53,7 +54,7 @@
                                     <arg value="false"/>
                                     <arg value="false"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.unidad_medida"/>
-                                    <arg evaluator="json" expression="$ctx:dataNovedad.tipo_articulo"/>
+                                    <arg value="tipo_articuloIntegracion"/>
                                     <arg evaluator="xml" expression="get-property('empr_id')"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.inte_id"/>
                                 </args>
@@ -97,7 +98,7 @@
                                     <arg value="false"/>
                                     <arg value="false"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.unidad_medida"/>
-                                    <arg evaluator="json" expression="$ctx:dataNovedad.tipo_articulo"/>
+                                    <arg value="tipo_articuloIntegracion"/>
                                     <arg evaluator="xml" expression="get-property('empr_id')"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.inte_id"/>
                                 </args>
