@@ -1,8 +1,8 @@
 <datasource>
   <name>ToolsDataSource</name>
-  <description>Conexion con PostgreSQL de TOOLS</description>
+  <description>Tools Data Source</description>
   <jndiConfig useDataSourceFactory="false">
-    <name>ToolsDataSourceJNDI</name>
+    <name>ToolsDatasourceJNDI</name>
   </jndiConfig>
   <definition type="RDBMS">
     <configuration>
