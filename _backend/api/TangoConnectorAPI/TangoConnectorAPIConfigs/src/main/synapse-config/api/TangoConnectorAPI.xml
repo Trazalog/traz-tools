@@ -59,7 +59,7 @@
                                     <arg value="AC"/>
                                     <arg value="false"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.unidad_medida"/>
-                                    <arg value="tipo_articuloIntegracion"/>
+                                    <arg evaluator="xml" expression="fn:concat($ctx:empr_id,'-','tipo_articuloIntegracion')"/>
                                     <arg evaluator="xml" expression="get-property('empr_id')"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.id_articulo"/>
                                 </args>
@@ -115,7 +115,7 @@
                                     <arg value="AC"/>
                                     <arg value="false"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.unidad_medida"/>
-                                    <arg value="tipo_articuloIntegracion"/>
+                                    <arg evaluator="xml" expression="fn:concat($ctx:empr_id,'-','tipo_articuloIntegracion')"/>
                                     <arg evaluator="xml" expression="get-property('empr_id')"/>
                                     <arg evaluator="json" expression="$ctx:dataNovedad.id_articulo"/>
                                 </args>
@@ -401,6 +401,9 @@
         <inSequence>
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//talonario" name="pTalonario" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//tipo_comprobante_in_s" name="pComprobanteInS" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//tipo_comprobante" name="pComprobante" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/request_box')" name="uri.var.tangodssurl" scope="default" type="STRING"/>
             <header name="Accept" scope="transport" value="application/json"/>
             <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
@@ -419,18 +422,20 @@
             <script language="js"><![CDATA[var aux = mc.getProperty('novedadJson');
 	        var dataNovedad = JSON.parse(aux);
 	        mc.setPayloadJSON(JSON.stringify(dataNovedad));]]></script>
-            <switch description="Objeto de dato a actualizar" source="json-eval($.event.tabla)">
+            <log level="custom">
+                <property name="donde" value="post parseo data_json"/>
+                <property expression="json-eval($)" name="payload"/>
+            </log>
+            <switch description="Objeto de dato a actualizar" source="json-eval($.tabla)">
                 <case regex="movimientosStock">
                     <log level="custom">
                         <property name="tabla" value="movimientosStock"/>
                     </log>
-                    <property description="Talonario" name="pTalonario" scope="default" type="STRING" value="6"/>
-                    <property description="Comprobante" name="pComprobante" scope="default" type="STRING" value="REM"/>
-                    <property description="Tipo Movimiento" expression="json-eval($.event.accion)" name="pTipoMovimiento" scope="default" type="STRING"/>
-                    <property description="Cantidad" expression="json-eval($.event.cantidad)" name="pCantidad" scope="default" type="STRING"/>
-                    <property description="Deposito" expression="json-eval($.event.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
-                    <property description="Cod Articulo" expression="json-eval($.event.cod_articulo)" name="pCodArticulo" scope="default" type="STRING"/>
-                    <property description="Id Movimiento" expression="json-eval($.event.id_movimiento)" name="pIdMovimiento" scope="default" type="STRING"/>
+                    <property description="Tipo Movimiento" expression="json-eval($.accion)" name="pTipoMovimiento" scope="default" type="STRING"/>
+                    <property description="Cantidad" expression="json-eval($.cantidad)" name="pCantidad" scope="default" type="STRING"/>
+                    <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
+                    <property description="Cod Articulo" expression="json-eval($.cod_articulo)" name="pCodArticulo" scope="default" type="STRING"/>
+                    <property description="Id Movimiento" expression="json-eval($.id_movimiento)" name="pIdMovimiento" scope="default" type="STRING"/>
                     <switch source="get-property('pTipoMovimiento')">
                         <case regex="ENTRADA">
                             <property description="tipo mov E" name="pTipoMovAbreviado" scope="default" type="STRING" value="E"/>
@@ -491,26 +496,28 @@
 										         "numComprobante":$2,
 										         "numComprobante2":$2,
 										         "tipoMov":"$3",
-										         "id_movimiento":"$4",
-										         "talonario":$5
+										         "tipoMovInS":"$4",
+										         "id_movimiento":"$5",
+										         "talonario":$6
 										      },
 										      "_post_stock_movimiento_detalle":{
-										         "cantidad":"$6",
-										         "cantidadPend":"$7",
-										         "codArticulo":"$8",
-										         "deposito":"$9",
-										         "depositoDDE":"$10",
-										         "numComprobante":$11,
-										         "tipoMovimientoAbreviado":"$12"
+										         "cantidad":"$7",
+										         "cantidadPend":"$8",
+										         "codArticulo":"$9",
+										         "deposito":"$10",
+										         "depositoDDE":"$11",
+										         "numComprobante":$12,
+										         "tipoMovimientoAbreviado":"$13",
+												 "tipoMovInS":"$4"
 										      },
 										      "_put_talonario":{
-										         "numTalonario":$13,
-										         "talonario":"$14"
+										         "numTalonario":$14,
+										         "talonario":"$15"
 										      },
 										      "_post_articulo_deposito":{
-										         "cantidad":"$15",
-										         "codArticulo":"$16",
-										         "deposito":"$17"
+										         "cantidad":"$16",
+										         "codArticulo":"$17",
+										         "deposito":"$18"
 										      }
 										   }
 										}
@@ -519,6 +526,7 @@
                                     <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pNumeroComprobante')"/>
                                     <arg evaluator="xml" expression="get-property('pComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pComprobanteInS')"/>
                                     <arg evaluator="xml" expression="get-property('pIdMovimiento')"/>
                                     <arg evaluator="xml" expression="get-property('pTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pCantidad')"/>
@@ -562,26 +570,28 @@
 										         "numComprobante":$2,
 										         "numComprobante2":$2,
 										         "tipoMov":"$3",
-										         "id_movimiento":"$4",
-										         "talonario":$5
+										         "tipoMovInS":"$4",										         
+										         "id_movimiento":"$5",
+										         "talonario":$6
 										      },
 										      "_post_stock_movimiento_detalle":{
-										         "cantidad":"$6",
-										         "cantidadPend":"$7",
-										         "codArticulo":"$8",
-										         "deposito":"$9",
-										         "depositoDDE":"$10",
-										         "numComprobante":$11,
-										         "tipoMovimientoAbreviado":"$12"
+										         "cantidad":"$7",
+										         "cantidadPend":"$8",
+										         "codArticulo":"$9",
+										         "deposito":"$10",
+										         "depositoDDE":"$11",
+										         "numComprobante":$12,
+										         "tipoMovimientoAbreviado":"$13",
+												 "tipoMovInS":"$4"
 										      },
 										      "_put_talonario":{
-										         "numTalonario":$13,
-										         "talonario":"$14"
+										         "numTalonario":$14,
+										         "talonario":"$15"
 										      },
-										      "_post_articulo_deposito":{
-										         "cantidad":"$15",
-										         "codArticulo":"$16",
-										         "deposito":"$17"
+										      "_put_articulo_deposito":{
+										         "cantidad":"$16",
+										         "codArticulo":"$17",
+										         "deposito":"$18"
 										      }
 										   }
 										}
@@ -591,6 +601,7 @@
                                     <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pNumeroComprobante')"/>
                                     <arg evaluator="xml" expression="get-property('pComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pComprobanteInS')"/>
                                     <arg evaluator="xml" expression="get-property('pIdMovimiento')"/>
                                     <arg evaluator="xml" expression="get-property('pTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pCantidad')"/>
@@ -633,10 +644,10 @@
                     </log>
                     <property expression="$ctx:apiconf//pedidos_cod_articulo" name="pCodArticulo" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property expression="$ctx:apiconf//pedidos_descripcion" name="pDescripcion" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
-                    <property description="numPedido" expression="json-eval($.event.num_pedido)" name="pNumPedido" scope="default" type="STRING"/>
-                    <property description="Deposito" expression="json-eval($.event.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
-                    <property description="Id Pedido Trabajo Tzl" expression="json-eval($.event.id_pedido_trabajo)" name="pIdPedidoTrabajo" scope="default" type="STRING"/>
-                    <property description="Banda" expression="json-eval($.event.banda)" name="pBanda" scope="default" type="STRING"/>
+                    <property description="numPedido" expression="json-eval($.num_pedido)" name="pNumPedido" scope="default" type="STRING"/>
+                    <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
+                    <property description="Id Pedido Trabajo Tzl" expression="json-eval($.id_pedido_trabajo)" name="pIdPedidoTrabajo" scope="default" type="STRING"/>
+                    <property description="Banda" expression="json-eval($.banda)" name="pBanda" scope="default" type="STRING"/>
                     <dblookup description="Lookup valores Tango">
                         <connection>
                             <pool>
