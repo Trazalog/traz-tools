@@ -35,9 +35,10 @@
       <param name="proc_id" sqlType="STRING"/>
    </query>
    <query id="getPedidosTrabajo" useConfig="ToolsDataSource">
-      <sql>select pt.petr_id ,pt.cod_proyecto ,pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD HH24:MI') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD HH24:MI') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id , t.descripcion tipo_trabajo,C.nombre,c.dir_entrega &#xd;from pro.pedidos_trabajo pt&#xd;, core.clientes C&#xd;, core.tablas t &#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and pt.clie_id = C.clie_id&#xd;and pt.tipt_id = t.tabl_id &#xd;and not pt.eliminado&#xd;order by pt.fec_alta desc</sql>
+      <sql>select pt.petr_id ,pt.cod_proyecto ,pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id , t.descripcion tipo_trabajo,C.nombre,c.dir_entrega &#xd;from pro.pedidos_trabajo pt&#xd;, core.clientes C&#xd;, core.tablas t&#xd;,(SELECT :clave clave) AS param&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and pt.clie_id = C.clie_id&#xd;and pt.tipt_id = t.tabl_id &#xd;and not pt.eliminado&#xd;and (upper(c.nombre) like '%' || upper(param.clave) || '%' &#xd;or upper(pt.estado) like '%' || upper(param.clave) || '%'&#xd;or upper(pt.cod_proyecto) like '%' || upper(param.clave) || '%'&#xd;or CAST(pt.petr_id AS TEXT) like '%' || upper(param.clave) || '%'&#xd;or upper(c.dir_entrega) like '%' || upper(param.clave) || '%'&#xd;or upper(t.descripcion) like '%' || upper(param.clave) || '%'&#xd;	)&#xd;order by pt.fec_alta desc</sql>
       <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="empr_id" sqlType="STRING"/>
+      <param name="clave" sqlType="STRING"/>
    </query>
    <query id="updateEstadoPedido" useConfig="ToolsDataSource">
       <sql>update pro.pedidos_trabajo set estado = :estado&#xd;where petr_id  = cast(:petr_id as integer)</sql>
@@ -84,10 +85,66 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getPedidosTrabajoNoFinalizado" useConfig="ToolsDataSource">
-      <sql>select pt.petr_id ,pt.cod_proyecto ,pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD HH24:MI') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD HH24:MI') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id, t.descripcion tipo_trabajo,C.nombre,c.dir_entrega &#xd;from pro.pedidos_trabajo pt&#xd;join pro.procesos p  on pt.estado != cast(:estado as varchar)&#xd;join core.clientes C on pt.clie_id = C.clie_id&#xd;join core.tablas t on pt.tipt_id = t.tabl_id&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and not pt.eliminado&#xd;group by pt.fec_alta, pt.petr_id, t.descripcion, c.nombre, c.dir_entrega&#xd;order by pt.fec_alta desc</sql>
-      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <sql>select pt.petr_id ,pt.cod_proyecto ,case when  pt.int_pedi_id ='' or pt.int_pedi_id is null then 'N/A' else pt.int_pedi_id end int_pedi_id,pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id, t.descripcion tipo_trabajo,C.nombre,c.dir_entrega &#xd;from pro.pedidos_trabajo pt&#xd;join pro.procesos p  on pt.estado != cast(:estado as varchar)&#xd;join core.clientes C on pt.clie_id = C.clie_id&#xd;join core.tablas t on pt.tipt_id = t.tabl_id&#xd;,(SELECT :clave clave) AS param&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and not pt.eliminado&#xd;and (upper(c.nombre) like '%' || upper(param.clave) || '%' --case when param.clave is null or param.clave = '' then '%' else '%' || upper(param.clave) || '%' end&#xd;or upper(pt.estado) like '%' || upper(param.clave) || '%'&#xd;or upper(pt.cod_proyecto) like '%' || upper(param.clave) || '%'&#xd;or CAST(pt.petr_id AS TEXT) like '%' || upper(param.clave) || '%'&#xd;or upper(c.dir_entrega) like '%' || upper(param.clave) || '%'&#xd;or upper(t.descripcion) like '%' || upper(param.clave) || '%'&#xd;	)&#xd;group by pt.fec_alta, pt.petr_id, t.descripcion, c.nombre, c.dir_entrega&#xd;order by pt.fec_alta desc</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "int_pedi_id":"$int_pedi_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="estado" sqlType="STRING"/>
+      <param name="clave" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTrabajoPaginados" useConfig="ToolsDataSource">
+      <sql>select pt.petr_id ,pt.cod_proyecto ,case when &#xd; pt.int_pedi_id ='' or pt.int_pedi_id is null then 'N/A' else pt.int_pedi_id end int_pedi_id,pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id, t.descripcion tipo_trabajo,C.nombre,c.dir_entrega, pt.int_pedi_id &#xd;from pro.pedidos_trabajo pt&#xd;join pro.procesos p  on pt.estado != cast(:estado as varchar)&#xd;join core.clientes C on pt.clie_id = C.clie_id&#xd;join core.tablas t on pt.tipt_id = t.tabl_id&#xd;,(SELECT :clave clave) AS param&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and not pt.eliminado&#xd;and (upper(c.nombre) like '%' || upper(param.clave) || '%' --case when param.clave is null or param.clave = '' then '%' else '%' || upper(param.clave) || '%' end&#xd;or upper(pt.estado) like '%' || upper(param.clave) || '%'&#xd;or upper(pt.cod_proyecto) like '%' || upper(param.clave) || '%'&#xd;or CAST(pt.petr_id AS TEXT) like '%' || upper(param.clave) || '%'&#xd;or upper(c.dir_entrega) like '%' || upper(param.clave) || '%'&#xd;or upper(t.descripcion) like '%' || upper(param.clave) || '%'&#xd;	)&#xd;group by pt.fec_alta, pt.petr_id, t.descripcion, c.nombre, c.dir_entrega&#xd;order by pt.fec_alta desc&#xd;limit cast(:length as integer) offset cast(:start as integer)</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "int_pedi_id":"$int_pedi_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="length" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="clave" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTrabajoFinalizadosPaginados" useConfig="ToolsDataSource">
+      <sql>select pt.petr_id ,pt.cod_proyecto ,case when pt.int_pedi_id ='' or pt.int_pedi_id is null then 'N/A' else pt.int_pedi_id end int_pedi_id, pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id , t.descripcion tipo_trabajo,C.nombre,c.dir_entrega, pt.int_pedi_id  &#xd;from pro.pedidos_trabajo pt&#xd;, core.clientes C&#xd;, core.tablas t&#xd;,(SELECT :clave clave) AS param&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and pt.clie_id = C.clie_id&#xd;and pt.tipt_id = t.tabl_id &#xd;and not pt.eliminado&#xd;and (upper(c.nombre) like '%' || upper(param.clave) || '%' &#xd;or upper(pt.estado) like '%' || upper(param.clave) || '%'&#xd;or upper(pt.cod_proyecto) like '%' || upper(param.clave) || '%'&#xd;or CAST(pt.petr_id AS TEXT) like '%' || upper(param.clave) || '%'&#xd;or upper(c.dir_entrega) like '%' || upper(param.clave) || '%'&#xd;or upper(t.descripcion) like '%' || upper(param.clave) || '%'&#xd;	)&#xd;order by pt.fec_alta desc&#xd;limit cast(:length as integer) offset cast(:start as integer)</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "int_pedi_id":"$int_pedi_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="clave" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="length" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTrabajoPaginadosAsc" useConfig="ToolsDataSource">
+      <sql>select pt.petr_id ,pt.cod_proyecto ,case when &#xd; pt.int_pedi_id ='' or pt.int_pedi_id is null then 'N/A' else pt.int_pedi_id end int_pedi_id,pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id, t.descripcion tipo_trabajo,C.nombre,c.dir_entrega, pt.int_pedi_id &#xd;from pro.pedidos_trabajo pt&#xd;join pro.procesos p  on pt.estado != cast(:estado as varchar)&#xd;join core.clientes C on pt.clie_id = C.clie_id&#xd;join core.tablas t on pt.tipt_id = t.tabl_id&#xd;,(SELECT :clave clave) AS param&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and not pt.eliminado&#xd;and (upper(c.nombre) like '%' || upper(param.clave) || '%' --case when param.clave is null or param.clave = '' then '%' else '%' || upper(param.clave) || '%' end&#xd;or upper(pt.estado) like '%' || upper(param.clave) || '%'&#xd;or upper(pt.cod_proyecto) like '%' || upper(param.clave) || '%'&#xd;or CAST(pt.petr_id AS TEXT) like '%' || upper(param.clave) || '%'&#xd;or upper(c.dir_entrega) like '%' || upper(param.clave) || '%'&#xd;or upper(t.descripcion) like '%' || upper(param.clave) || '%'&#xd;	)&#xd;group by pt.fec_alta, pt.petr_id, t.descripcion, c.nombre, c.dir_entrega&#xd;order by case when :orden = "c.nombre" then c.nombre end asc limit cast(:length as integer) offset cast(:start as integer)</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "int_pedi_id":"$int_pedi_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="clave" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="length" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+      <param name="orden" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTrabajoFinalizadosPaginadosAsc" useConfig="ToolsDataSource">
+      <sql>select pt.petr_id ,pt.cod_proyecto ,case when pt.int_pedi_id ='' or pt.int_pedi_id is null then 'N/A' else pt.int_pedi_id end int_pedi_id, pt.descripcion ,pt.estado ,pt.objetivo ,to_char(pt.fec_inicio,'YYYY-MM-DD') as fec_inicio, to_char(pt.fec_entrega, 'YYYY-MM-DD') as fec_entrega,pt.usuario ,&#xd;pt.umti_id ,pt.info_id ,pt.proc_id,pt.empr_id ,pt.clie_id ,pt.case_id ,pt.case_id_final ,pt.tipt_id , t.descripcion tipo_trabajo,C.nombre,c.dir_entrega, pt.int_pedi_id  &#xd;from pro.pedidos_trabajo pt&#xd;, core.clientes C&#xd;, core.tablas t&#xd;,(SELECT :clave clave) AS param&#xd;where pt.empr_id = cast(:empr_id as integer)&#xd;and pt.clie_id = C.clie_id&#xd;and pt.tipt_id = t.tabl_id &#xd;and not pt.eliminado&#xd;and (upper(c.nombre) like '%' || upper(param.clave) || '%' &#xd;or upper(pt.estado) like '%' || upper(param.clave) || '%'&#xd;or upper(pt.cod_proyecto) like '%' || upper(param.clave) || '%'&#xd;or CAST(pt.petr_id AS TEXT) like '%' || upper(param.clave) || '%'&#xd;or upper(c.dir_entrega) like '%' || upper(param.clave) || '%'&#xd;or upper(t.descripcion) like '%' || upper(param.clave) || '%'&#xd;	)&#xd;order by tipo_trabajo asc&#xd;limit cast(:length as integer) offset cast(:start as integer)</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "int_pedi_id":"$int_pedi_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="clave" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="length" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTrabajoPaginadosAscV2" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    pt.petr_id,&#xd;    pt.cod_proyecto,&#xd;CASE&#xd;        WHEN pt.int_pedi_id = ''&#xd;        OR pt.int_pedi_id IS NULL THEN 'N/A'&#xd;        ELSE pt.int_pedi_id&#xd;    END AS int_pedi_id,&#xd;    pt.descripcion,&#xd;    pt.estado,&#xd;    pt.objetivo,&#xd;    to_char(pt.fec_inicio, 'YYYY-MM-DD') AS fec_inicio,&#xd;    to_char(pt.fec_entrega, 'YYYY-MM-DD') AS fec_entrega,&#xd;    pt.usuario,&#xd;    pt.umti_id,&#xd;    pt.info_id,&#xd;    pt.proc_id,&#xd;    pt.empr_id,&#xd;    pt.clie_id,&#xd;    pt.case_id,&#xd;    pt.case_id_final,&#xd;    pt.tipt_id,&#xd;    t.descripcion AS tipo_trabajo,&#xd;    C.nombre,&#xd;    C.dir_entrega,&#xd;    pt.int_pedi_id&#xd;FROM&#xd;    pro.pedidos_trabajo pt&#xd;    JOIN pro.procesos p ON pt.estado != CAST(:estado AS varchar)&#xd;    JOIN core.clientes C ON pt.clie_id = C.clie_id&#xd;    JOIN core.tablas t ON pt.tipt_id = t.tabl_id&#xd;    JOIN (&#xd;        SELECT&#xd;            :clave clave,&#xd;            :filtro filtro&#xd;    ) AS param ON TRUE&#xd;WHERE&#xd;    pt.empr_id = CAST(:empr_id AS integer)&#xd;    AND NOT pt.eliminado&#xd;    AND (&#xd;        UPPER(C.nombre) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(pt.estado) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(pt.cod_proyecto) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR CAST(pt.petr_id AS TEXT) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(C.dir_entrega) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(t.descripcion) LIKE '%' || UPPER(param.clave) || '%'&#xd;    )&#xd;GROUP BY&#xd;    pt.fec_alta,&#xd;    pt.petr_id,&#xd;    t.descripcion,&#xd;    C.nombre,&#xd;    C.dir_entrega,&#xd;    param.filtro&#xd;ORDER BY&#xd;    case when param.filtro = 'petr_id' THEN pt.petr_id  end asc,    &#xd;    case when param.filtro = 'cod_proyecto' THEN pt.cod_proyecto end asc,&#xd;    case when param.filtro = 'nombre' THEN c.nombre end asc,&#xd;    case when param.filtro = 'dir_entrega' then c.dir_entrega end asc,&#xd;    case when param.filtro = 'tipo_trabajo' then t.descripcion end asc,&#xd;    case when param.filtro = 'fec_inicio' then pt.fec_inicio  end asc&#xd;LIMIT&#xd;    CAST(:length AS integer) OFFSET CAST(:start AS integer)</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "int_pedi_id":"$int_pedi_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="clave" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="length" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+      <param name="filtro" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTrabajoPaginadosDscV2" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    pt.petr_id,&#xd;    pt.cod_proyecto,&#xd;CASE&#xd;        WHEN pt.int_pedi_id = ''&#xd;        OR pt.int_pedi_id IS NULL THEN 'N/A'&#xd;        ELSE pt.int_pedi_id&#xd;    END AS int_pedi_id,&#xd;    pt.descripcion,&#xd;    pt.estado,&#xd;    pt.objetivo,&#xd;    to_char(pt.fec_inicio, 'YYYY-MM-DD') AS fec_inicio,&#xd;    to_char(pt.fec_entrega, 'YYYY-MM-DD') AS fec_entrega,&#xd;    pt.usuario,&#xd;    pt.umti_id,&#xd;    pt.info_id,&#xd;    pt.proc_id,&#xd;    pt.empr_id,&#xd;    pt.clie_id,&#xd;    pt.case_id,&#xd;    pt.case_id_final,&#xd;    pt.tipt_id,&#xd;    t.descripcion AS tipo_trabajo,&#xd;    C.nombre,&#xd;    C.dir_entrega,&#xd;    pt.int_pedi_id&#xd;FROM&#xd;    pro.pedidos_trabajo pt&#xd;    JOIN pro.procesos p ON pt.estado != CAST(:estado AS varchar)&#xd;    JOIN core.clientes C ON pt.clie_id = C.clie_id&#xd;    JOIN core.tablas t ON pt.tipt_id = t.tabl_id&#xd;    JOIN (&#xd;        SELECT&#xd;            :clave clave,&#xd;            :filtro filtro&#xd;    ) AS param ON TRUE&#xd;WHERE&#xd;    pt.empr_id = CAST(:empr_id AS integer)&#xd;    AND NOT pt.eliminado&#xd;    AND (&#xd;        UPPER(C.nombre) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(pt.estado) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(pt.cod_proyecto) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR CAST(pt.petr_id AS TEXT) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(C.dir_entrega) LIKE '%' || UPPER(param.clave) || '%'&#xd;        OR UPPER(t.descripcion) LIKE '%' || UPPER(param.clave) || '%'&#xd;    )&#xd;GROUP BY&#xd;    pt.fec_alta,&#xd;    pt.petr_id,&#xd;    t.descripcion,&#xd;    C.nombre,&#xd;    C.dir_entrega,&#xd;    param.filtro&#xd;ORDER BY&#xd;    case when param.filtro = 'petr_id' THEN pt.petr_id  end desc,    &#xd;    case when param.filtro = 'cod_proyecto' THEN pt.cod_proyecto end desc,&#xd;    case when param.filtro = 'nombre' THEN c.nombre end desc,&#xd;    case when param.filtro = 'dir_entrega' then c.dir_entrega end desc,&#xd;    case when param.filtro = 'tipo_trabajo' then t.descripcion end desc,&#xd;    case when param.filtro = 'fec_inicio' then pt.fec_inicio  end desc&#xd;LIMIT&#xd;    CAST(:length AS integer) OFFSET CAST(:start AS integer)</sql>
+      <result outputType="json">{&#xd;  "pedidos_trabajo": {&#xd;    "pedido_trabajo": [&#xd;      {&#xd;        "petr_id": "$petr_id",&#xd;        "cod_proyecto": "$cod_proyecto",&#xd;        "descripcion": "$descripcion",&#xd;        "estado": "$estado",&#xd;        "objetivo": "$objetivo",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "fec_entrega": "$fec_entrega",&#xd;        "usuario": "$usuario",&#xd;        "umti_id": "$umti_id",&#xd;        "info_id": "$info_id",&#xd;        "proc_id": "$proc_id",&#xd;        "empr_id": "$empr_id",&#xd;        "clie_id": "$clie_id",&#xd;        "nombre":  "$nombre",&#xd;        "case_id": "$case_id",&#xd;        "case_id_final": "$case_id_final",&#xd;        "tipo_trabajo":"$tipo_trabajo",&#xd;        "tipt_id":"$tipt_id",&#xd;        "dir_entrega":"$dir_entrega",&#xd;        "int_pedi_id":"$int_pedi_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="clave" sqlType="STRING"/>
+      <param name="filtro" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="length" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
    </query>
    <resource method="POST" path="/pedidoTrabajo">
       <call-query href="setPedidoTrabajo">
@@ -123,9 +180,10 @@
          <with-param name="proc_id" query-param="proc_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/pedidoTrabajo/{empr_id}">
+   <resource method="GET" path="/pedidoTrabajo/{empr_id}/{clave}">
       <call-query href="getPedidosTrabajo">
          <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="clave" query-param="clave"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/pedidoTrabajo/estado/{petr_id}">
@@ -178,10 +236,66 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/pedidoTrabajoNoFinalizado/{empr_id}/{estado}">
+   <resource method="GET" path="/pedidoTrabajoNoFinalizado/{empr_id}/{estado}/{clave}">
       <call-query href="getPedidosTrabajoNoFinalizado">
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="estado" query-param="estado"/>
+         <with-param name="clave" query-param="clave"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajoPaginado/{empr_id}/{estado}/{length}/{start}/{clave}">
+      <call-query href="getPedidosTrabajoPaginados">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="clave" query-param="clave"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajoFinalizadosPaginado/{empr_id}/{length}/{start}/{clave}">
+      <call-query href="getPedidosTrabajoFinalizadosPaginados">
+         <with-param name="clave" query-param="clave"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajoFinalizadosPaginadoAsc/{empr_id}/{length}/{start}/{clave}">
+      <call-query href="getPedidosTrabajoFinalizadosPaginadosAsc">
+         <with-param name="clave" query-param="clave"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajoPaginadoAscV2/{empr_id}/{estado}/{length}/{start}/{clave}/{filtro}">
+      <call-query href="getPedidosTrabajoPaginadosAscV2">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="clave" query-param="clave"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
+         <with-param name="filtro" query-param="filtro"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajoPaginadoAsc/{empr_id}/{estado}/{length}/{start}/{clave}">
+      <call-query href="getPedidosTrabajoPaginadosAsc">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="clave" query-param="clave"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
+         <with-param name="orden" query-param="orden"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoTrabajoPaginadoDscV2/{empr_id}/{estado}/{length}/{start}/{clave}/{filtro}">
+      <call-query href="getPedidosTrabajoPaginadosDscV2">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="clave" query-param="clave"/>
+         <with-param name="filtro" query-param="filtro"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
       </call-query>
    </resource>
 </data>
