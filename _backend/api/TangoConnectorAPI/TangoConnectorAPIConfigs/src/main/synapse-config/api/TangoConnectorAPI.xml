@@ -685,7 +685,8 @@
 										         "descripcion":"$6",
 										         "desc_adicional":"$7",
 										         "num_comp":"$8",
-										         "num_renglon":"$9"
+										         "num_renglon":"$9",
+										         "talonario":"$10"
 										      }
 										   }
 										}
@@ -700,6 +701,7 @@
                             <arg evaluator="xml" expression="fn:concat('Banda: ',get-property('pBanda'))"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
                         </args>
                     </payloadFactory>
                     <header name="Action" scope="default" value="urn:request_box"/>

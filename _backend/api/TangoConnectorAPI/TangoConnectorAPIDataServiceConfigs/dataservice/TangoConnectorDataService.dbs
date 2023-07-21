@@ -28,6 +28,7 @@
       <with-param name="desc_adicional" query-param="desc_adicional" />
       <with-param name="num_comp" query-param="num_comp" />
       <with-param name="num_renglon" query-param="num_renglon" />
+      <with-param name="talonario" query-param="talonario" />
     </call-query>
   </resource>
   <resource method="POST" path="/stock/movimiento/cabecera">
@@ -200,16 +201,16 @@ where ncq.fec_realizado is null</sql>
 set fec_realizado = getdate() where queue_id = cast(:queue_id as integer)</sql>
     <param name="queue_id" paramType="SCALAR" sqlType="STRING" />
   </query>
- 
   <query id="setDetalleLineaPedidoTango" useConfig="TangoDataSource" returnGeneratedKeys="true" keyColumns="ID_GVA45">
     <sql>
 INSERT INTO dbo.GVA45
 ("DESC", DESC_ADIC, N_COMP, N_RENGLON, T_COMP)
-VALUES(:descripcion, :desc_adicional,:num_comp, :num_renglon, 'PED');</sql>
+VALUES(:descripcion, :desc_adicional,:num_comp, :num_renglon, 'PED',:talonario);</sql>
     <param name="descripcion" paramType="SCALAR" sqlType="STRING" />
     <param name="desc_adicional" paramType="SCALAR" sqlType="STRING" />
     <param name="num_comp" paramType="SCALAR" sqlType="STRING" />
     <param name="num_renglon" paramType="SCALAR" sqlType="STRING" />
+    <param name="talonario" paramType="SCALAR" sqlType="STRING" />
   </query>
   <query id="setLineaPedidoTango" useConfig="TangoDataSource" returnGeneratedKeys="true" keyColumns="id_gva03">
     <sql>INSERT INTO dbo.GVA03
