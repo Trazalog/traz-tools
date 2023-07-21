@@ -16,36 +16,7 @@
       <with-param name="queue_id" query-param="queue_id" />
     </call-query>
   </resource>
-  <resource method="POST" path="/cliente">
-    <description />
-    <call-query href="setCliente">
-      <with-param name="nombre" query-param="nombre" />
-      <with-param name="dir_entrega" query-param="dir_entrega" />
-      <with-param name="observaciones" query-param="observaciones" />
-      <with-param name="usuario_app" query-param="usuario_app" />
-      <with-param name="ticl_id" query-param="ticl_id" />
-      <with-param name="empr_id" query-param="empr_id" />
-      <with-param name="inte_id" query-param="inte_id" />
-    </call-query>
-  </resource>
-  <resource method="PUT" path="/cliente">
-    <description />
-    <call-query href="updateCliente">
-      <with-param name="nombre" query-param="nombre" />
-      <with-param name="dir_entrega" query-param="dir_entrega" />
-      <with-param name="observaciones" query-param="observaciones" />
-      <with-param name="usuario_app" query-param="usuario_app" />
-      <with-param name="ticl_id" query-param="ticl_id" />
-      <with-param name="empr_id" query-param="empr_id" />
-      <with-param name="inte_id" query-param="inte_id" />
-    </call-query>
-  </resource>
-  <resource method="DELETE" path="/cliente">
-    <description />
-    <call-query href="deleteCliente">
-      <with-param name="inte_id" query-param="inte_id" />
-    </call-query>
-  </resource>
+  
   <resource method="GET" path="/tango/pedidos/pendientes">
     <description />
     <call-query href="getPedidosPendientesTango" />
@@ -170,71 +141,6 @@
       <with-param name=" num_pedido " query-param=" num_pedido " />
     </call-query>
   </resource>
-  <query id="leerTablaCola" useConfig="TangoDataSource">
-    <sql>SELECT * from Empresa_Ejemplo.dbo.novedades_clientes_queue ncq
-where ncq.fec_realizado is null</sql>
-    <result outputType="json">{
-    "novedades" :{
-        "novedad": [
-          {
-            "queue_id": "$queue_id",
-            "data_json": "$data_json"
-          }
-        ]
-    }    
-}</result>
-  </query>
-  <query id="updateTablaCola" useConfig="TangoDataSource">
-    <sql>update Empresa_Ejemplo.dbo.novedades_clientes_queue
-set fec_realizado = getdate() where queue_id = cast(:queue_id as integer)</sql>
-    <param name="queue_id" paramType="SCALAR" sqlType="STRING" />
-  </query>
-  <query id="setCliente" useConfig="ToolsDataSource">
-    <sql>INSERT INTO
-  core.clientes (
-    nombre,
-    dir_entrega,
-    observaciones,
-    usuario_app,
-    ticl_id,
-    empr_id,
-    inte_id 
-  )
-VALUES(
-    :nombre,
-    :dir_entrega,
-    :observaciones,
-    :usuario_app,
-    :ticl_id,
-    cast(:empr_id as integer),
-    cast(:inte_id as integer)
-  )</sql>
-    <param type="IN" name="nombre" paramType="SCALAR" sqlType="STRING" optional="false" />
-    <param type="IN" name="dir_entrega" paramType="SCALAR" sqlType="STRING" optional="false" />
-    <param type="IN" name="observaciones" paramType="SCALAR" sqlType="STRING" optional="false" />
-    <param type="IN" name="usuario_app" paramType="SCALAR" sqlType="STRING" optional="false" />
-    <param type="IN" name="ticl_id" paramType="SCALAR" sqlType="STRING" optional="false" />
-    <param type="IN" name="empr_id" paramType="SCALAR" sqlType="STRING" optional="false" />
-    <param type="IN" name="inte_id" paramType="SCALAR" sqlType="STRING" optional="false" />
-  </query>
-  <query id="updateCliente" useConfig="ToolsDataSource">
-    <sql>UPDATE core.clientes
-SET nombre=:nombre,dir_entrega=:dir_entrega, observaciones=:observaciones, usuario_app=:usuario_app, ticl_id=:ticl_id, empr_id = cast(:empr_id as integer)
-WHERE inte_id = cast(:inte_id as integer);</sql>
-    <param name="nombre" paramType="SCALAR" sqlType="STRING" />
-    <param name="dir_entrega" paramType="SCALAR" sqlType="STRING" />
-    <param name="observaciones" paramType="SCALAR" sqlType="STRING" />
-    <param name="usuario_app" paramType="SCALAR" sqlType="STRING" />
-    <param name="ticl_id" paramType="SCALAR" sqlType="STRING" />
-    <param name="empr_id" paramType="SCALAR" sqlType="STRING" />
-    <param name="inte_id" paramType="SCALAR" sqlType="STRING" />
-  </query>
-  <query id="deleteCliente" useConfig="ToolsDataSource">
-    <sql>UPDATE core.clientes
-SET estado='ELIMINADO'
-WHERE inte_id =cast(:inte_id as integer);</sql>
-    <param name="inte_id" paramType="SCALAR" sqlType="STRING" />
-  </query>
   <query id="getPedidosPendientesTango" useConfig="TangoDataSource">
     <sql>select
 	ID_GVA21 id_pedido,
@@ -272,6 +178,26 @@ order by pedi.nro_pedido</sql>
    }
 }</result>
   </query>
+  <query id="leerTablaCola" useConfig="TangoDataSource">
+    <sql>SELECT * from Empresa_Ejemplo.dbo.novedades_clientes_queue ncq
+where ncq.fec_realizado is null</sql>
+    <result outputType="json">{
+    "novedades" :{
+        "novedad": [
+          {
+            "queue_id": "$queue_id",
+            "data_json": "$data_json"
+          }
+        ]
+    }    
+}</result>
+  </query>
+  <query id="updateTablaCola" useConfig="TangoDataSource">
+    <sql>update Empresa_Ejemplo.dbo.novedades_clientes_queue
+set fec_realizado = getdate() where queue_id = cast(:queue_id as integer)</sql>
+    <param name="queue_id" paramType="SCALAR" sqlType="STRING" />
+  </query>
+ 
   <query id="setDetalleLineaPedidoTango" useConfig="TangoDataSource" returnGeneratedKeys="true" keyColumns="ID_GVA45">
     <sql>
 INSERT INTO dbo.GVA45
