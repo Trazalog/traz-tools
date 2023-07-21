@@ -644,6 +644,7 @@
                     </log>
                     <property expression="$ctx:apiconf//pedidos_cod_articulo" name="pCodArticulo" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property expression="$ctx:apiconf//pedidos_descripcion" name="pDescripcion" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+                    <property expression="$ctx:apiconf//talon_ped" name="pTalonPed" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property description="numPedido" expression="json-eval($.num_pedido)" name="pNumPedido" scope="default" type="STRING"/>
                     <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
                     <property description="Id Pedido Trabajo Tzl" expression="json-eval($.id_pedido_trabajo)" name="pIdPedidoTrabajo" scope="default" type="STRING"/>
@@ -666,6 +667,7 @@
                         <property expression="get-property('pNumPedido')" name="numPedido"/>
                         <property expression="get-property('pIdPedidoTrabajo')" name="idPedTrazajoTzl"/>
                         <property expression="get-property('pBanda')" name="banda"/>
+                        <property expression="get-property('pTalonPed')" name="talon ped"/>
                     </log>
                     <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
                     <payloadFactory media-type="json">
@@ -676,13 +678,14 @@
 										         "cant_pedida":"$1",
 										         "cod_articulo":"$2",
 										         "num_renglon":"$3",
-										         "num_pedido":"$4"
+										         "num_pedido":"$4",
+										         "talon_ped":"$5""
 										      },
 										      "_post_tango_pedido_linea_detalle":{
-										         "descripcion":"$5",
-										         "desc_adicional":"$6",
-										         "num_comp":"$7",
-										         "num_renglon":"$8"
+										         "descripcion":"$6",
+										         "desc_adicional":"$7",
+										         "num_comp":"$8",
+										         "num_renglon":"$9"
 										      }
 										   }
 										}
@@ -692,8 +695,9 @@
                             <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
-                            <arg evaluator="xml" expression="fn:concat(get-property('pDescripcion'),get-property('pIdPedidoTrabajo'), 'Banda: ',get-property('pBanda'))"/>
-                            <arg value="A"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="fn:concat(get-property('pDescripcion'),get-property('pIdPedidoTrabajo'))"/>
+                            <arg evaluator="xml" expression="fn:concat('Banda: ',get-property('pBanda'))"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
                         </args>

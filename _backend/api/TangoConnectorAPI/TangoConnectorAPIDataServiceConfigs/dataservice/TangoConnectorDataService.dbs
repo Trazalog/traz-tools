@@ -137,10 +137,11 @@
    </resource>
     <resource method="POST" path="/tango/pedido/linea">
     <call-query href="setLineaPedidoTango">
-      <with-param name=" cant_pedida " query-param=" cant_pedida " />
-      <with-param name=" cod_articulo" query-param=" cod_articulo" />
+      <with-param name="cant_pedida" query-param="cant_pedida" />
+      <with-param name="cod_articulo" query-param="cod_articulo" />
       <with-param name="num_renglon" query-param="num_renglon" />
-      <with-param name=" num_pedido " query-param=" num_pedido " />
+      <with-param name="num_pedido" query-param="num_pedido" />
+      <with-param name="talon_ped" query-param="talon_ped" />
     </call-query>
   </resource>
   <query id="getPedidosPendientesTango" useConfig="TangoDataSource">
@@ -212,14 +213,15 @@ VALUES(:descripcion, :desc_adicional,:num_comp, :num_renglon, 'PED');</sql>
   </query>
   <query id="setLineaPedidoTango" useConfig="TangoDataSource" returnGeneratedKeys="true" keyColumns="id_gva03">
     <sql>INSERT INTO dbo.GVA03
-(CANT_PEDID, COD_ARTICU, N_RENGLON, NRO_PEDIDO)
-VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido );
+(CANT_PEDID, COD_ARTICU, N_RENGLON, NRO_PEDIDO,TALON_PED)
+VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :talon_ped );
 
 </sql>
-    <param name=" cant_pedida " paramType="SCALAR" sqlType="STRING" />
-    <param name=" cod_articulo" paramType="SCALAR" sqlType="STRING" />
+    <param name="cant_pedida" paramType="SCALAR" sqlType="STRING" />
+    <param name="cod_articulo" paramType="SCALAR" sqlType="STRING" />
     <param name="num_renglon" paramType="SCALAR" sqlType="STRING" />
-    <param name=" num_pedido " paramType="SCALAR" sqlType="STRING" />
+    <param name="num_pedido" paramType="SCALAR" sqlType="STRING" />
+    <param name="talon_ped" paramType="SCALAR" sqlType="STRING" />
   </query>
   
      <query id="numeroComprobante" useConfig="TangoDataSource">
