@@ -1,10 +1,12 @@
-@App:name('TrazalogToolsSynch')
-@App:description('De Tools a Tango')
+@App:name('TrazalogToolsYudiSynch')
+
+
+@App:description('Pedidos de Trabajo terminados de Tools a Yudica Tango')
 
 @sink(type = 'http-call', 
-      publisher.url = "http://localhost:8290/tools/tango/clientes/synch/out", 
+      publisher.url = "http://localhost:8290/tools/tango/synch/out", 
       method = "POST", 
-      sink.id = "1", 
+      sink.id = "2", 
       headers = "Content-Type:json",
       blocking.io='true',
       on.error='WAIT',
@@ -13,16 +15,15 @@ define stream HTTPSinkStream (queue_id int, data_json string);
 
 @source(type = 'cdc', 
         url = "jdbc:postgresql://10.142.0.13:5432/tools_prod_t", 
-        username = "postgres", 
+        username = "postgres",
         password = "!Password00", 
-        table.name = "int.synch_queue", 
+        operation ='insert',
+        table.name = "int.yudi_synch_queue", 
         on.error='wait',
-        database.server.name = "10.142.0.13\tools_prod_t", 
-        mode = "polling", 
-        polling.column = "fec_alta", 
-        polling.interval = '1',
         jdbc.driver.name = "org.postgresql.Driver",
+        plugin.name = "pgoutput",
 	@map(type = 'keyvalue'))
+	
 define stream NovedadTangoStream (queue_id int, data_json string);
 
 -- Define sink to handle HTTP-call errors
@@ -35,7 +36,7 @@ define stream NovedadTangoStream (queue_id int, data_json string);
 define stream ErrorSink (id int, name string, ERROR string);
 
 @source(type = 'http-call-response', 
-        sink.id = "1", 
+        sink.id = "2", 
         http.status.code = '2\d+',
         on.error='wait',
 	@map(type = 'json'))
@@ -48,7 +49,7 @@ define stream HTTPResponseStream (queue_id int);
       jdbc.url='jdbc:postgresql://10.142.0.13:5432/tools_prod_t',
       username='postgres',
       password='!Password00')
-define table int.synch_queue (queue_id int,procesado int);
+define table yudi_synch_queue (queue_id int,procesado int);
 
 
 @sink(type = 'log') 
@@ -59,7 +60,7 @@ define stream LogStream (queue_id int, data_json string);
 from NovedadTangoStream 
 select * 
 insert into LogStream;
-
+    
 @info(name = 'novedades')
 from NovedadTangoStream 
 select * 
@@ -68,7 +69,7 @@ insert into HTTPSinkStream;
 @info(name = 'post-grabacion')
 from HTTPResponseStream 
 select queue_id
-update int.synch_queue 
-set int.synch_queue.procesado = 1
-on int.synch_queue.queue_id == queue_id
+update yudi_synch_queue 
+set yudi_synch_queue.procesado = 1
+on yudi_synch_queue.queue_id == queue_id
 

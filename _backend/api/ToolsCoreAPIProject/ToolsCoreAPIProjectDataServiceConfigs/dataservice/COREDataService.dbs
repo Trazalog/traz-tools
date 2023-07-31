@@ -1,0 +1,184 @@
+<data enableBatchRequests="true" name="CoreDataService" transports="http https local">
+ <query id="setCliente" useConfig="ToolsDataSource">
+    <sql>INSERT INTO
+  core.clientes (
+    nombre,
+    dir_entrega,
+    observaciones,
+    usuario_app,
+    ticl_id,
+    empr_id,
+    inte_id 
+  )
+VALUES(
+    :nombre,
+    :dir_entrega,
+    :observaciones,
+    :usuario_app,
+    :ticl_id,
+    cast(:empr_id as integer),
+    cast(:inte_id as integer)
+  )</sql>
+    <param type="IN" name="nombre" paramType="SCALAR" sqlType="STRING" optional="false" />
+    <param type="IN" name="dir_entrega" paramType="SCALAR" sqlType="STRING" optional="false" />
+    <param type="IN" name="observaciones" paramType="SCALAR" sqlType="STRING" optional="false" />
+    <param type="IN" name="usuario_app" paramType="SCALAR" sqlType="STRING" optional="false" />
+    <param type="IN" name="ticl_id" paramType="SCALAR" sqlType="STRING" optional="false" />
+    <param type="IN" name="empr_id" paramType="SCALAR" sqlType="STRING" optional="false" />
+    <param type="IN" name="inte_id" paramType="SCALAR" sqlType="STRING" optional="false" />
+  </query>
+  <query id="updateCliente" useConfig="ToolsDataSource">
+    <sql>UPDATE core.clientes
+SET nombre=:nombre,dir_entrega=:dir_entrega, observaciones=:observaciones, usuario_app=:usuario_app, ticl_id=:ticl_id, empr_id = cast(:empr_id as integer)
+WHERE inte_id = cast(:inte_id as integer);</sql>
+    <param name="nombre" paramType="SCALAR" sqlType="STRING" />
+    <param name="dir_entrega" paramType="SCALAR" sqlType="STRING" />
+    <param name="observaciones" paramType="SCALAR" sqlType="STRING" />
+    <param name="usuario_app" paramType="SCALAR" sqlType="STRING" />
+    <param name="ticl_id" paramType="SCALAR" sqlType="STRING" />
+    <param name="empr_id" paramType="SCALAR" sqlType="STRING" />
+    <param name="inte_id" paramType="SCALAR" sqlType="STRING" />
+  </query>
+  <query id="deleteCliente" useConfig="ToolsDataSource">
+    <sql>UPDATE core.clientes
+SET estado='ELIMINADO'
+WHERE inte_id =cast(:inte_id as integer);</sql>
+    <param name="inte_id" paramType="SCALAR" sqlType="STRING" />
+  </query>
+  
+  <query id="setTabla" useConfig="ToolsDataSource">
+    <sql>INSERT INTO core.tablas
+(tabla, valor, valor2, valor3,descripcion,empr_id, tabl_id_padre)
+select tabla
+, valor
+, valor2
+, valor3
+, descripcion
+,case when empr_id is null or empr_id='' then null else cast(empr_id as integer) end
+,tabl_id_padre 
+from
+(select
+:tabla tabla
+,:valor valor
+,:valor2 valor2
+,:valor3 valor3
+,:descripcion descripcion
+,:empr_id empr_id 
+,:tabl_id_padre tabl_id_padre) param
+returning tabl_id</sql>
+    <result outputType="json">{
+    "tabla": {
+        "tabl_id": "$tabl_id"
+    }
+}</result>
+    <param name="tabla" sqlType="STRING" />
+    <param name="valor" sqlType="STRING" />
+    <param name="valor2" sqlType="STRING" />
+    <param name="valor3" sqlType="STRING" />
+    <param name="descripcion" sqlType="STRING" />
+    <param name="empr_id" sqlType="STRING" />
+    <param name="tabl_id_padre" sqlType="STRING" />
+  </query>
+  <query id="getTabla" useConfig="ToolsDataSource">
+    <sql>SELECT * FROM core.tablas WHERE tabla = :tabla and eliminado = false</sql>
+    <result outputType="json">{
+    "tablas":{
+        "tabla":[
+            {
+                "tabl_id":"$tabl_id",
+                "valor":"$valor",
+                "valor2":"$valor2",
+                "valor3":"$valor3",
+                "descripcion":"$descripcion",
+                "tabl_id_padre":"$tabl_id_padre"
+            }
+        ]
+    }
+}</result>
+    <param name="tabla" sqlType="STRING" />
+  </query>
+  <query id="getTablaEmpresa" useConfig="ToolsDataSource">
+    <sql>select
+	t.*
+from
+	core.tablas t ,
+	(select :empr_id empr_id,:tabla tabla) param
+where
+	t.tabla = case when param.empr_id is null or param.empr_id = '' then param.tabla else param.empr_id ||'-'||param.tabla end
+and t.eliminado = false</sql>
+    <result outputType="json">{
+    "tablas":{
+        "tabla":[
+            {
+                "tabl_id":"$tabl_id",
+                "valor":"$valor",
+                "valor2":"$valor2",
+                "valor3":"$valor3",
+                "descripcion":"$descripcion",
+                "tabl_id_padre":"$tabl_id_padre"
+            }
+        ]
+    }
+}</result>
+    <param name="empr_id" sqlType="STRING" />
+    <param name="tabla" sqlType="STRING" />
+  </query>
+  <resource method="POST" path="/cliente">
+    <description />
+    <call-query href="setCliente">
+      <with-param name="nombre" query-param="nombre" />
+      <with-param name="dir_entrega" query-param="dir_entrega" />
+      <with-param name="observaciones" query-param="observaciones" />
+      <with-param name="usuario_app" query-param="usuario_app" />
+      <with-param name="ticl_id" query-param="ticl_id" />
+      <with-param name="empr_id" query-param="empr_id" />
+      <with-param name="inte_id" query-param="inte_id" />
+    </call-query>
+  </resource>
+  <resource method="PUT" path="/cliente">
+    <description />
+    <call-query href="updateCliente">
+      <with-param name="nombre" query-param="nombre" />
+      <with-param name="dir_entrega" query-param="dir_entrega" />
+      <with-param name="observaciones" query-param="observaciones" />
+      <with-param name="usuario_app" query-param="usuario_app" />
+      <with-param name="ticl_id" query-param="ticl_id" />
+      <with-param name="empr_id" query-param="empr_id" />
+      <with-param name="inte_id" query-param="inte_id" />
+    </call-query>
+  </resource>
+  <resource method="DELETE" path="/cliente">
+    <description />
+    <call-query href="deleteCliente">
+      <with-param name="inte_id" query-param="inte_id" />
+    </call-query>
+  </resource>
+  <resource method="POST" path="/tablas">
+    <call-query href="setTabla">
+      <with-param name="tabla" query-param="tabla" />
+      <with-param name="valor" query-param="valor" />
+      <with-param name="valor2" query-param="valor2" />
+      <with-param name="valor3" query-param="valor3" />
+      <with-param name="descripcion" query-param="descripcion" />
+      <with-param name="empr_id" query-param="empr_id" />
+      <with-param name="tabl_id_padre" query-param="tabl_id_padre" />
+    </call-query>
+  </resource>
+  <resource method="GET" path="/tabla/{tabla}">
+    <description>Listado de la tabla sin empresa                           
+                                    </description>
+    <call-query href="getTabla">
+      <with-param name="tabla" query-param="tabla" />
+    </call-query>
+  </resource>
+  <resource method="GET" path="/tabla/{tabla}/empresa/{empr_id}">
+    <description>Listado de la tabla por empresa       </description>
+    <call-query href="getTablaEmpresa">
+      <with-param name="empr_id" query-param="empr_id" />
+      <with-param name="tabla" query-param="tabla" />
+    </call-query>
+  </resource>
+  <config id="ToolsDataSource">
+    <property name="carbon_datasource_name">ToolsDataSource</property>
+  </config>
+</data>
