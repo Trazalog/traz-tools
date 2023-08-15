@@ -4,8 +4,6 @@
         <inSequence>
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
-            <property expression="$ctx:apiconf//empr_id" name="empr_id" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
-            <property expression="$ctx:apiconf//prov_id" name="prov_id" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <header name="Accept" scope="transport" value="application/json"/>
             <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
             <header action="remove" name="Content-Type" scope="transport"/>
@@ -16,11 +14,15 @@
             <property expression="fn:concat($ctx:dataservices_url,'/ALMDataService/stock/ajuste/int/detalle')" name="uri.var.movCliente" scope="default" type="STRING"/>
             <property expression="json-eval($.event.data_json)" name="novedadJson" scope="default" type="STRING"/>
             <property expression="json-eval($.event.queue_id)" name="queueId" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.empr_id)" name="empr_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.prov_id)" name="prov_id" scope="default" type="STRING"/>
             <log level="custom">
                 <property name="donde" value="Mensaje de entrada"/>
                 <property expression="json-eval($)" name="payload"/>
                 <property expression="$ctx:novedadJson" name="data_json"/>
                 <property expression="$ctx:queueId" name="queueId"/>
+                <property expression="$ctx:empr_id" name="empr_id"/>
+                <property expression="$ctx:prov_id" name="prov_id"/>
             </log>
             <script language="js"><![CDATA[var log = mc.getServiceLog();
 				var aux = mc.getProperty('novedadJson');
@@ -412,11 +414,15 @@
             <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
             <property expression="json-eval($.event.data_json)" name="novedadJson" scope="default" type="STRING"/>
             <property expression="json-eval($.event.queue_id)" name="queueId" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.empr_id)" name="empr_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.prov_id)" name="prov_id" scope="default" type="STRING"/>
             <log level="custom">
                 <property name="donde" value="Mensaje de entrada"/>
                 <property expression="json-eval($)" name="payload"/>
                 <property expression="$ctx:novedadJson" name="data_json"/>
                 <property expression="$ctx:queueId" name="queueId"/>
+                <property expression="$ctx:empr_id" name="empr_id"/>
+                <property expression="$ctx:prov_id" name="prov_id"/>
                 <property expression="get-property('uri.var.tangodssurl')" name="url"/>
             </log>
             <script language="js"><![CDATA[var aux = mc.getProperty('novedadJson');
