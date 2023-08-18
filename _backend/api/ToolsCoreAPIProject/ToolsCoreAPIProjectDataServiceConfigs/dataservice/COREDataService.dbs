@@ -1,4 +1,4 @@
-<data enableBatchRequests="true" name="CoreDataService" transports="http https local">
+<data enableBatchRequests="true" name="COREDataService" transports="http https local">
  <query id="setCliente" useConfig="ToolsDataSource">
     <sql>INSERT INTO
   core.clientes (
