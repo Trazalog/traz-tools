@@ -53,7 +53,8 @@ class Envases extends CI_Model {
   * @return array con datos de formulas
   */
   function Listar_Formulas(){
-		$aux = $this->rest->callAPI("GET",REST_PRD."/getFormulas");
+    $empr_id = empresa();
+		$aux = $this->rest->callAPI("GET",REST_PRD."/formulasxempresas/$empr_id");
 		$aux = json_decode($aux["data"]);
 		$formulas = $aux->formulas->formula;
 		return $formulas;

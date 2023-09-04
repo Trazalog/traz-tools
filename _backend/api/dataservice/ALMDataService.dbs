@@ -76,12 +76,6 @@
       <param name="empr_id" sqlType="STRING"/>
       <param name="batch_id" sqlType="STRING"/>
    </query>
-   <query id="setDetaNotaPedido" useConfig="ToolsDataSource">
-      <sql>insert into alm.alm_deta_pedidos_materiales(pema_id, arti_id, cantidad) &#xd;values(CAST(:pema_id AS INTEGER), CAST(:arti_id AS INTEGER), CAST(:cantidad AS FLOAT8))</sql>
-      <param name="pema_id" sqlType="STRING"/>
-      <param name="arti_id" sqlType="STRING"/>
-      <param name="cantidad" sqlType="STRING"/>
-   </query>
    <query id="getArticuloPorId" useConfig="ToolsDataSource">
       <sql>select &#xd;   arti_id, barcode, descripcion &#xd;from &#xd;   alm.alm_articulos &#xd;where &#xd;   arti_id = CAST(:arti_id AS INTEGER)</sql>
       <result outputType="json">{&#xd; "articulo":{&#xd;     "arti_id": "$arti_id",&#xd;     "barcode": "$barcode",&#xd;     "descripcion": "$descripcion"&#xd;  }&#xd;} </result>
@@ -93,7 +87,7 @@
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="getArticulosXTipo" useConfig="ToolsDataSource">
-      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;where upper(AR.tiar_id) like upper('%'|| :tipo || '%')&#xd;and AR.empr_id = cast(:empr_id as integer)&#xd;and ar.eliminado = false &#xd;group by ar.arti_id</sql>
+      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;  core.tablas t&#xd;,alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;,(select :tipo tipo) param&#xd;where t.tabla = 'tipo_articulo'&#xd;and AR.tiar_id like case when param.tipo = 'TODOS' then AR.tiar_id else '%'|| param.tipo || '%' end&#xd;and AR.empr_id = cast(:empr_id as integer)  &#xd;group by ar.arti_id</sql>
       <result outputType="json">{&#xd;  "articulos":{&#xd;     "articulo":[&#xd;        {&#xd;          "arti_id": "$arti_id",&#xd;          "descripcion": "$descripcion",&#xd;          "barcode":"$barcode",&#xd;          "um":"$um",&#xd;          "stock":"$stock"&#xd;                }&#xd;      ]&#xd;    }&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
@@ -153,9 +147,8 @@
       <param name="depo_id" sqlType="STRING"/>
       <param name="esta_id" sqlType="STRING"/>
    </query>
-   <query id="setRecipiente" keyColumns="reci_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+   <query id="setRecipiente" useConfig="ToolsDataSource">
       <sql>INSERT INTO prd.recipientes (tipo,nombre,empr_id,depo_id) &#xd;VALUES &#xd;(:tipo,:patente, CAST(:empr_id as INTEGER), CAST(:depo_id as INTEGER))</sql>
-      <result outputType="json">{&#xd; "resultado":{"reci_id":"$reci_id"}&#xd;}</result>
       <param name="tipo" sqlType="STRING"/>
       <param name="patente" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
@@ -454,6 +447,30 @@
       <result outputType="json">{&#xd;    "lotes": {&#xd;        "stock": [&#xd;            {&#xd;                "artdescription": "$artdescription",&#xd;                "artbarcode": "$artbarcode",&#xd;                "arttype": "$arttype",&#xd;                "fecha_nueva": "$fecha_nueva",&#xd;                "un_medida": "$un_medida",&#xd;                "lote_id": "$lote_id",&#xd;                "prov_id": "$prov_id",&#xd;                "arti_id": "$arti_id",&#xd;                "depo_id": "$depo_id",&#xd;                "codigo": "$codigo",&#xd;                "cantidad": "$cantidad",&#xd;                "estado": "$estado",&#xd;                "fec_vencimiento": "$fec_vencimiento",&#xd;                "fec_alta": "$fec_alta",&#xd;                "batch_id": "$batch_id",&#xd;                "depositodescrip": "$depositodescrip",&#xd;                "reci_id": "$reci_id",&#xd;                "nom_reci": "$nom_reci"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="setDetaNotaPedido" useConfig="ToolsDataSource">
+      <sql>insert into alm.alm_deta_pedidos_materiales(pema_id, arti_id, cantidad)values(cast(:pema_id as integer),cast(:arti_id as integer), cast(:cantidad as integer))</sql>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+   </query>
+   <query id="setDetallePedidoConReceta" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_deta_pedidos_materiales&#xd;(cantidad, pema_id, arti_id, cantidad_receta, receta, empaque)&#xd;select&#xd;  	cast(:cantidad as integer), &#xd;  	cast(:pema_id as integer),&#xd;	cast(:arti_id as integer),&#xd;    cast(:cantidad_receta as integer),&#xd;  	CASE WHEN param.receta IS NULL OR param.receta = '' THEN NULL ELSE cast(param.receta as integer) end,&#xd;  	case when parametro.empaque IS NULL OR parametro.empaque = '' THEN NULL ELSE cast(parametro.empaque as integer) end&#xd;	from (select :receta receta) param, (select :empaque empaque) parametro</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="receta" sqlType="STRING"/>
+      <param name="cantidad_receta" sqlType="STRING"/>
+      <param name="empaque" sqlType="STRING"/>
+   </query>
+   <query id="eliminaDetallesPedidoAnterior" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_deta_pedidos_materiales &#xd;SET eliminado = true&#xd;WHERE pema_id = cast(:pema_id as int8)</sql>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="updateJustificacion" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_pedidos_materiales &#xd;SET justificacion = :justificacion&#xd;WHERE  pema_id = cast(:pema_id as int8)</sql>
+      <param name="justificacion" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -524,13 +541,6 @@
          <with-param name="batch_id" query-param="batch_id"/>
       </call-query>
    </resource>
-   <resource method="POST" path="/notapedido/detalle">
-      <call-query href="setDetaNotaPedido">
-         <with-param name="pema_id" query-param="pema_id"/>
-         <with-param name="arti_id" query-param="arti_id"/>
-         <with-param name="cantidad" query-param="cantidad"/>
-      </call-query>
-   </resource>
    <resource method="GET" path="/articulo/info/{arti_id}">
       <call-query href="getArticuloPorId">
          <with-param name="arti_id" query-param="arti_id"/>
@@ -539,11 +549,6 @@
    <resource method="GET" path="/pedidoMateriales/{case_id}">
       <call-query href="getinfoPedMatPorCaseId">
          <with-param name="case_id" query-param="case_id"/>
-      </call-query>
-   </resource>
-   <resource method="GET" path="/articulos/tipo/{tipo}">
-      <call-query href="getArticulosXTipo">
-         <with-param name="tipo" query-param="tipo"/>
       </call-query>
    </resource>
    <resource method="POST" path="/extraer_cantidad_lote">
@@ -939,5 +944,32 @@
          <with-param name="user_id" query-param="user_id"/>
       </call-query>
    </resource>
+   <resource method="POST" path="/notapedido/detalle">
+      <call-query href="setDetaNotaPedido">
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/detalle/conreceta">
+      <call-query href="setDetallePedidoConReceta">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="receta" query-param="receta"/>
+         <with-param name="cantidad_receta" query-param="cantidad_receta"/>
+         <with-param name="empaque" query-param="empaque"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/eliminadetallepedidoanterior">
+      <call-query href="eliminaDetallesPedidoAnterior">
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="pedidos/updatejustificacion">
+      <call-query href="updateJustificacion">
+         <with-param name="justificacion" query-param="justificacion"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
 </data>
-

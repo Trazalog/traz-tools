@@ -209,6 +209,16 @@
       <param name="empr_id" sqlType="STRING"/>
       <param name="etap_id" sqlType="STRING"/>
    </query>
+   <query id="getArticulosBatchReceta" useConfig="ToolsDataSource">
+      <sql>select aa.arti_id,&#xd;aa.barcode,&#xd;aa.descripcion,&#xd;f.descripcion as receta,&#xd;adpm.cantidad,&#xd;adpm.cantidad_receta,&#xd;(select coalesce(sum(al.cantidad),0) &#xd; from alm.alm_lotes al &#xd; where al.arti_id = aa.arti_id&#xd;) as stock&#xd;from alm.alm_pedidos_materiales apm &#xd;left join alm.alm_deta_pedidos_materiales adpm on apm.pema_id = adpm.pema_id&#xd;left join alm.alm_articulos aa on aa.arti_id = adpm.arti_id&#xd;left join prd.formulas f on f.form_id = adpm.receta &#xd;where apm.batch_id = CAST(:batch_id AS INTEGER)&#xd;group by aa.arti_id, aa.barcode, aa.descripcion,f.descripcion, adpm.cantidad, adpm.cantidad_receta;</sql>
+      <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id":"$arti_id",&#xd;                "barcode":"$barcode",&#xd;                "descripcion": "$descripcion",&#xd;                "receta":"$receta",&#xd;                "cantidad":"$cantidad",&#xd;                "cantidad_receta":"$cantidad_receta",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="getArticulosBatchEmpaque" useConfig="ToolsDataSource">
+      <sql>select aa.arti_id,&#xd;aa.barcode,&#xd;aa.descripcion,&#xd;f.descripcion as receta,&#xd;adpm.cantidad,&#xd;adpm.cantidad_receta,&#xd;(select coalesce(sum(al.cantidad),0) &#xd; from alm.alm_lotes al &#xd; where al.arti_id = aa.arti_id&#xd;) as stock&#xd;from alm.alm_pedidos_materiales apm &#xd;left join alm.alm_deta_pedidos_materiales adpm on apm.pema_id = adpm.pema_id&#xd;left join alm.alm_articulos aa on aa.arti_id = adpm.arti_id&#xd;left join prd.empaque e on adpm.empaque  =  e.empa_id  &#xd;left join prd.formulas f on f.form_id = e.receta&#xd;where apm.batch_id = CAST(:batch_id AS INTEGER)&#xd;group by aa.arti_id, aa.barcode, aa.descripcion,f.descripcion, adpm.cantidad, adpm.cantidad_receta;</sql>
+      <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id":"$arti_id",&#xd;                "barcode":"$barcode",&#xd;                "descripcion": "$descripcion",&#xd;                "receta":"$receta",&#xd;                "cantidad":"$cantidad",&#xd;                "cantidad_receta":"$cantidad_receta",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/batch/porrecipiente/{reci_id}">
       <call-query href="getBatchidPorRecipiente">
          <with-param name="reci_id" query-param="reci_id"/>
@@ -439,6 +449,16 @@
       <call-query href="getLotesxEtapa">
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="etap_id" query-param="etap_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lote/articulosReceta/batch/{batch_id}">
+      <call-query href="getArticulosBatchReceta">
+         <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lote/articulosEmpaque/batch/{batch_id}">
+      <call-query href="getArticulosBatchEmpaque">
+         <with-param name="batch_id" query-param="batch_id"/>
       </call-query>
    </resource>
 </data>

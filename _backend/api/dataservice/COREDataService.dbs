@@ -2,6 +2,9 @@
    <config enableOData="false" id="ToolsDataSource">
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
+   <config enableOData="false" id="AssetPlannerDataSource">
+      <property name="carbon_datasource_name">AssetPlannerDataSource</property>
+   </config>
    <query id="getMenuByUserPermission" useConfig="ToolsDataSource">
       <sql>SELECT DISTINCT(m.*)&#xd;FROM (WITH RECURSIVE menu_tree AS(&#xd;SELECT&#xd;	m.modulo , m.opcion, m.opcion_padre, m.texto , m.url , m.javascript , m.url_icono , m.texto_onmouseover, 1 AS nivel, m.orden || '.' || m.modulo || '.' || m.opcion AS camino&#xd;FROM&#xd;	seg.menues M&#xd;WHERE&#xd;	M.opcion_padre IS NULL&#xd;	AND eliminado = 0&#xd;UNION&#xd;SELECT&#xd;	m.modulo , m.opcion , m.opcion_padre , m.texto , m.url , m.javascript , m.url_icono , m.texto_onmouseover, (t.nivel + 1) AS nivel, t.camino || '&gt;' || m.orden || '.' || m.modulo || '.' || m.opcion AS PATH&#xd;FROM&#xd;	seg.menues M&#xd;INNER JOIN menu_tree t ON&#xd;	m.opcion_padre = t.opcion&#xd;	AND m.modulo = t.modulo&#xd;WHERE&#xd;	m.eliminado = 0 )&#xd;SELECT&#xd;	t.*&#xd;	,case WHEN meme."role" IS NOT null OR meme."group" IS NOT NULL THEN true ELSE false END habilitado&#xd;FROM&#xd;	(SELECT mt.* FROM menu_tree mt) t&#xd;	LEFT JOIN (select * from seg.menues_users_vw&#xd;			   where email=:email or email='TODOS' ) meme&#xd;	on meme.opcion = t.opcion&#xd;	AND meme.modulo = t.modulo&#xd;	and (meme.group = :group or meme.group='TODOS')&#xd;) m ORDER BY m.camino</sql>
       <result outputType="json">{&#xd;   "menu_items":{&#xd;      "menu_item":[&#xd;         {&#xd;            "modulo":"$modulo",&#xd;            "opcion":"$opcion",&#xd;            "opcion_padre":"$opcion_padre",&#xd;            "texto":"$texto",&#xd;            "url":"$url",&#xd;            "javascript":"$javascript",&#xd;            "url_icono":"$url_icono",&#xd;            "texto_onmouseover":"$texto_onmouseover",&#xd;            "nivel":"$nivel",&#xd;            "camino":"$camino",&#xd;            "habilitado":"$habilitado"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
@@ -347,6 +350,17 @@
       <sql>select&#xd;  t.tran_id,&#xd;  t.cuit,&#xd;  t.razon_social,&#xd;  t.direccion,&#xd;  t.telefono,&#xd;  t.email,&#xd;  t.tipo_transporte,&#xd;  t.observaciones,&#xd;  tp.valor as pais,&#xd;  tp.tabl_id as pais_id,&#xd;  te.valor as estado,&#xd;  te.tabl_id as prov_id,&#xd;  tl.valor as localidad,&#xd;  tl.tabl_id as loca_id&#xd;from&#xd;  core.transportistas t&#xd;  left join core.tablas tl on tl.tabl_id = t.loca_id&#xd;  left join core.tablas te on te.tabl_id = t.prov_id&#xd;  left join core.tablas tp on tp.tabl_id = t.pais_id&#xd;where&#xd;  t.eliminado = false&#xd;  and t.empr_id = cast(:empr_id as integer)&#xd;order by t.tran_id asc;</sql>
       <result outputType="json">{&#xd;   "transportistas": {&#xd;      "transportista": [&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "cuit": "$cuit",&#xd;          "razon_social": "$razon_social",&#xd;          "direccion": "$direccion",&#xd;          "telefono": "$telefono",&#xd;          "email": "$email",&#xd;          "tipo_transporte": "$tipo_transporte",&#xd;          "observaciones": "$observaciones",&#xd;          "pais": "$pais",&#xd;          "pais_id": "$pais_id",&#xd;          "estado": "$estado",&#xd;          "prov_id": "$prov_id",&#xd;          "localidad": "$localidad",&#xd;          "loca_id": "$loca_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="validaBPMCaseYEmprAsset" useConfig="AssetPlannerDataSource">
+      <sql>select case_id&#xd;from case_empresa&#xd; where case_id = cast(:case_id as INTEGER) &#xd; and empr_id = cast(:empr_id as INTEGER)</sql>
+      <result outputType="json">{"respuesta":{ "case_id":"$case_id" }}</result>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getTransportistasCuit" useConfig="ToolsDataSource">
+      <sql>SELECT tran_id, cuit FROM core.transportistas where cuit like :cuit</sql>
+      <result outputType="json">{&#xd;    "transportistas": {&#xd;        "transportista": [&#xd;            {&#xd;                "tran_id": "$tran_id",&#xd;                "cuit": "$cuit"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="cuit" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -704,5 +718,15 @@
          <with-param name="tran_id" query-param="tran_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/assetbandeja/linea/validar/case_id/{case_id}/empr_id/{empr_id}">
+      <call-query href="validaBPMCaseYEmprAsset">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/cuit/{cuit}">
+      <call-query href="getTransportistasCuit">
+         <with-param name="cuit" query-param="cuit"/>
+      </call-query>
+   </resource>
 </data>
-

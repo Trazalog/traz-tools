@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/tools/tango" name="TangoConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" url-mapping="/synch/in">
+        <inSequence>
+            <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
+            <header action="remove" name="Content-Type" scope="transport"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/COREDataService/cliente')" name="uri.var.cliente" scope="default" type="STRING"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/ALMDataService/articulo')" name="uri.var.articulo" scope="default" type="STRING"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/ALMDataService/stock/ajuste/int/detalle')" name="uri.var.movCliente" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.data_json)" name="novedadJson" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.queue_id)" name="queueId" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.empr_id)" name="empr_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.prov_id)" name="prov_id" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="donde" value="Mensaje de entrada"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:novedadJson" name="data_json"/>
+                <property expression="$ctx:queueId" name="queueId"/>
+                <property expression="$ctx:empr_id" name="empr_id"/>
+                <property expression="$ctx:prov_id" name="prov_id"/>
+            </log>
+            <script language="js"><![CDATA[var log = mc.getServiceLog();
+				var aux = mc.getProperty('novedadJson');
+				var dataNovedad = JSON.parse(aux);
+				mc.setProperty("dataNovedad", JSON.stringify(dataNovedad));]]></script>
+            <switch description="Objeto de dato a actualizar" source="json-eval($ctx:dataNovedad.tabla)">
+                <case regex="articulos">
+                    <switch description="Accion a realizar" source="json-eval($ctx:dataNovedad.accion)">
+                        <case regex="insert">
+                            <log level="custom">
+                                <property name="ACCION" value="INSERT"/>
+                            </log>
+                            <payloadFactory media-type="json">
+                                <format>
+									{
+									"_post_articulo":{
+									"barcode":"$1",
+									"descripcion":"$2",
+									"es_caja":"$3",
+									"cantidad_caja":"$4",
+									"punto_pedido":"$5",
+									"estado":"$6",
+									"es_loteado":"$7",
+									"unme_id":"$8",
+									"tiar_id":"$9",
+									"empr_id":"$10",
+									"inte_id":"$11"
+									}}
+								</format>
+                                <args>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.barcode"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.descripcion"/>
+                                    <arg value="false"/>
+                                    <arg value="0"/>
+                                    <arg value="0"/>
+                                    <arg value="AC"/>
+                                    <arg value="false"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.unidad_medida"/>
+                                    <arg evaluator="xml" expression="fn:concat($ctx:empr_id,'-','tipo_articuloIntegracion')"/>
+                                    <arg evaluator="xml" expression="get-property('empr_id')"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_articulo"/>
+                                </args>
+                            </payloadFactory>
+                            <log level="custom">
+                                <property name="donde" value="Por crear articulo"/>
+                                <property expression="json-eval($)" name="payload"/>
+                                <property expression="$ctx:tabla" name="tabla"/>
+                                <property expression="$ctx:uri.var.articulo" name="uri"/>
+                            </log>
+                            <call>
+                                <endpoint>
+                                    <http method="post" uri-template="{uri.var.articulo}">
+                                        <suspendOnFailure>
+                                            <initialDuration>-1</initialDuration>
+                                            <progressionFactor>-1</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <case regex="update">
+                            <log description="CASE UPDATE" level="custom">
+                                <property name="ACCION" value="UPDATE"/>
+                            </log>
+                            <payloadFactory media-type="json">
+                                <format>
+									{
+									"_put_articulo":{
+									"barcode":"$1",
+									"descripcion":"$2",
+									"es_caja":"$3",
+									"cantidad_caja":"$4",
+									"punto_pedido":"$5",
+									"estado":"$6",
+									"es_loteado":"$7",
+									"unme_id":"$8",
+									"tiar_id":"$9",
+									"empr_id":"$10",
+									"inte_id":"$11"
+									}}
+								</format>
+                                <args>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.barcode"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.descripcion"/>
+                                    <arg value="false"/>
+                                    <arg value="0"/>
+                                    <arg value="0"/>
+                                    <arg value="AC"/>
+                                    <arg value="false"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.unidad_medida"/>
+                                    <arg evaluator="xml" expression="fn:concat($ctx:empr_id,'-','tipo_articuloIntegracion')"/>
+                                    <arg evaluator="xml" expression="get-property('empr_id')"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_articulo"/>
+                                </args>
+                            </payloadFactory>
+                            <property expression="fn:concat($ctx:uri.var.articulo,'/inte_id')" name="uri.var.artinte" scope="default" type="STRING"/>
+                            <log level="custom">
+                                <property name="donde" value="Por updatear articulo"/>
+                                <property expression="json-eval($)" name="payload"/>
+                                <property expression="$ctx:tabla" name="tabla"/>
+                                <property expression="$ctx:uri.var.artinte" name="uri"/>
+                            </log>
+                            <call>
+                                <endpoint>
+                                    <http method="put" uri-template="{uri.var.artinte}">
+                                        <suspendOnFailure>
+                                            <initialDuration>-1</initialDuration>
+                                            <progressionFactor>-1</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <case regex="delete">
+                            <log level="custom">
+                                <property name="ACCION" value="DELETE"/>
+                            </log>
+                            <payloadFactory media-type="json">
+                                <format>
+									{"_delete_articulo": {"inte_id": "$1"}}
+								</format>
+                                <args>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_articulo"/>
+                                </args>
+                            </payloadFactory>
+                            <property expression="fn:concat($ctx:uri.var.articulo,'/inte_id')" name="uri.var.artinte" scope="default" type="STRING"/>
+                            <log level="custom">
+                                <property name="donde" value="Por eliminar articulo"/>
+                                <property expression="json-eval($)" name="payload"/>
+                                <property expression="$ctx:tabla" name="tabla"/>
+                                <property expression="$ctx:uri.var.artinte" name="uri"/>
+                            </log>
+                            <call>
+                                <endpoint>
+                                    <http method="delete" uri-template="{uri.var.artinte}">
+                                        <timeout>
+                                            <duration>30000</duration>
+                                            <responseAction>fault</responseAction>
+                                        </timeout>
+                                        <suspendOnFailure>
+                                            <errorCodes>-1</errorCodes>
+                                            <initialDuration>0</initialDuration>
+                                            <progressionFactor>1.0</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <errorCodes>-1</errorCodes>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <default>
+                            <log level="custom">
+                                <property name="accion" value="Se fue por el default switch accion"/>
+                            </log>
+                        </default>
+                    </switch>
+                </case>
+                <case regex="clientes">
+                    <switch description="Accion a realizar" source="json-eval($ctx:dataNovedad.accion)">
+                        <case regex="insert">
+                            <log level="custom">
+                                <property name="ACCION" value="INSERT"/>
+                            </log>
+                            <payloadFactory media-type="json">
+                                <format>
+									{"_post_cliente": {"nombre": "$1","dir_entrega":
+									"$2","observaciones": "$3","usuario_app": "$4","ticl_id":
+									"$5","empr_id": "$6","inte_id": "$7"}}
+								</format>
+                                <args>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.razon_social"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.dir_comercial"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.domicilio"/>
+                                    <arg value="TangoConnectorAPI"/>
+                                    <arg value="tipos_clientesIntegracion"/>
+                                    <arg evaluator="xml" expression="get-property('empr_id')"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
+                                </args>
+                            </payloadFactory>
+                            <call>
+                                <endpoint>
+                                    <http method="post" uri-template="{uri.var.cliente}">
+                                        <suspendOnFailure>
+                                            <initialDuration>-1</initialDuration>
+                                            <progressionFactor>-1</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <case regex="update">
+                            <log description="CASE UPDATE" level="custom">
+                                <property name="ACCION" value="UPDATE"/>
+                            </log>
+                            <payloadFactory media-type="json">
+                                <format>
+									{"_put_cliente": {"nombre": "$1","dir_entrega":
+									"$2","observaciones": "$3","usuario_app": "$4","ticl_id":
+									"$5","empr_id": "$6","inte_id": "$7"}}
+								</format>
+                                <args>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.razon_social"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.dir_comercial"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.domicilio"/>
+                                    <arg value="TangoConnectorAPI"/>
+                                    <arg value="tipos_clientesIntegracion"/>
+                                    <arg evaluator="xml" expression="get-property('empr_id')"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
+                                </args>
+                            </payloadFactory>
+                            <call>
+                                <endpoint>
+                                    <http method="put" uri-template="{uri.var.cliente}">
+                                        <suspendOnFailure>
+                                            <initialDuration>-1</initialDuration>
+                                            <progressionFactor>-1</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <case regex="delete">
+                            <log level="custom">
+                                <property name="ACCION" value="DELETE"/>
+                            </log>
+                            <payloadFactory media-type="json">
+                                <format>
+									{"_delete_cliente": {"inte_id": "$1"}}
+								</format>
+                                <args>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_cliente"/>
+                                </args>
+                            </payloadFactory>
+                            <call>
+                                <endpoint>
+                                    <http method="delete" uri-template="{uri.var.cliente}">
+                                        <timeout>
+                                            <duration>30000</duration>
+                                            <responseAction>fault</responseAction>
+                                        </timeout>
+                                        <suspendOnFailure>
+                                            <errorCodes>-1</errorCodes>
+                                            <initialDuration>0</initialDuration>
+                                            <progressionFactor>1.0</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <errorCodes>-1</errorCodes>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <default>
+                            <log level="custom">
+                                <property name="accion" value="Se fue por el default switch accion"/>
+                            </log>
+                        </default>
+                    </switch>
+                </case>
+                <case regex="movimientosStock">
+                    <switch description="Accion a realizar" source="json-eval($ctx:dataNovedad.accion)">
+                        <case regex="insert">
+                            <log level="custom">
+                                <property name="ACCION" value="INSERT"/>
+                            </log>
+                            <payloadFactory media-type="json">
+                                <format>
+									{
+									   "_post_stock_ajuste_int_detalle":{
+									      "tipo_ajuste":"$1",
+									      "justificacion":"$2",
+									      "arti_inte_id":"$3",
+									      "depo_inte_id":"$4",
+									      "prov_id":"$5",
+									      "empr_id":"$6",
+									      "cantidad":"$7"
+									   }
+									}
+
+								</format>
+                                <args>
+                                    <arg value="tipos_ajuste_stockTango"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_mov"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_articulo"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.id_deposito"/>
+                                    <arg evaluator="xml" expression="get-property('prov_id')"/>
+                                    <arg evaluator="xml" expression="get-property('empr_id')"/>
+                                    <arg evaluator="json" expression="$ctx:dataNovedad.cantidad"/>
+                                </args>
+                            </payloadFactory>
+                            <call>
+                                <endpoint>
+                                    <http method="post" uri-template="{uri.var.movCliente}">
+                                        <suspendOnFailure>
+                                            <initialDuration>-1</initialDuration>
+                                            <progressionFactor>-1</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <default>
+                            <log level="custom">
+                                <property name="accion" value="Se fue por el default switch accion"/>
+                            </log>
+                        </default>
+                    </switch>
+                </case>
+                <default/>
+            </switch>
+            <log level="custom">
+                <property name="Paso 3" value="Actualizo fec_realizado(tango) si no fallo en el paso previo"/>
+                <property expression="$ctx:queueId" name="ACTUALIZANDO"/>
+            </log>
+            <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                <then/>
+                <else>
+                    <log level="custom">
+                        <property name="TOOLS_ERROR" value="Fallo al realizar la accion de sincronización con Trazalog Tools"/>
+                        <property expression="json-eval($)" name="ERROR_MESSAGE"/>
+                    </log>
+                </else>
+            </filter>
+            <loopback/>
+        </inSequence>
+        <outSequence>
+            <log level="full">
+                <property name="MESSAGE" value="FIRST"/>
+            </log>
+            <payloadFactory description="Mensaje error" media-type="json">
+                <format>
+					{"queue_id":$1}
+				</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('queueId')"/>
+                </args>
+            </payloadFactory>
+            <log level="full"/>
+            <send/>
+        </outSequence>
+        <faultSequence>
+            <call/>
+            <log level="custom">
+                <property name="ERROR" value="ME FUI POR EL FAULTSEQUENCE"/>
+                <property expression="get-property('ERROR_MESSAGE')" name="ERROR_MESSAGE"/>
+                <property expression="get-property('ERROR_CODE')" name="ERROR_CODE"/>
+                <property expression="get-property('ERROR_DETAIL')" name="ERROR_DETAIL"/>
+                <property expression="get-property('ERROR_EXCEPTION')" name="ERROR_EXCEPTION"/>
+            </log>
+        </faultSequence>
+    </resource>
+    <resource methods="POST" url-mapping="/synch/out">
+        <inSequence>
+            <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//talonario" name="pTalonario" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//tipo_comprobante_in_s" name="pComprobanteInS" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//tipo_comprobante" name="pComprobante" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/request_box')" name="uri.var.tangodssurl" scope="default" type="STRING"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
+            <header action="remove" name="Content-Type" scope="transport"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property expression="json-eval($.event.data_json)" name="novedadJson" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.queue_id)" name="queueId" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.empr_id)" name="empr_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.event.prov_id)" name="prov_id" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="donde" value="Mensaje de entrada"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:novedadJson" name="data_json"/>
+                <property expression="$ctx:queueId" name="queueId"/>
+                <property expression="$ctx:empr_id" name="empr_id"/>
+                <property expression="$ctx:prov_id" name="prov_id"/>
+                <property expression="get-property('uri.var.tangodssurl')" name="url"/>
+            </log>
+            <script language="js"><![CDATA[var aux = mc.getProperty('novedadJson');
+	        var dataNovedad = JSON.parse(aux);
+	        mc.setPayloadJSON(JSON.stringify(dataNovedad));]]></script>
+            <log level="custom">
+                <property name="donde" value="post parseo data_json"/>
+                <property expression="json-eval($)" name="payload"/>
+            </log>
+            <switch description="Objeto de dato a actualizar" source="json-eval($.tabla)">
+                <case regex="movimientosStock">
+                    <log level="custom">
+                        <property name="tabla" value="movimientosStock"/>
+                    </log>
+                    <property description="Tipo Movimiento" expression="json-eval($.accion)" name="pTipoMovimiento" scope="default" type="STRING"/>
+                    <property description="Cantidad" expression="json-eval($.cantidad)" name="pCantidad" scope="default" type="STRING"/>
+                    <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
+                    <property description="Cod Articulo" expression="json-eval($.cod_articulo)" name="pCodArticulo" scope="default" type="STRING"/>
+                    <property description="Id Movimiento" expression="json-eval($.id_movimiento)" name="pIdMovimiento" scope="default" type="STRING"/>
+                    <switch source="get-property('pTipoMovimiento')">
+                        <case regex="ENTRADA">
+                            <property description="tipo mov E" name="pTipoMovAbreviado" scope="default" type="STRING" value="E"/>
+                        </case>
+                        <default>
+                            <property name="pTipoMovAbreviado" scope="default" type="STRING" value="S"/>
+                        </default>
+                    </switch>
+                    <dblookup description="Lookup valores Tango">
+                        <connection>
+                            <pool>
+                                <dsName>TangoDataSourceJDNI</dsName>
+                            </pool>
+                        </connection>
+                        <statement>
+                            <sql><![CDATA[SELECT MAX(cast(NCOMP_IN_S as int))+1 AS numeroComprobante FROM STA14 WHERE T_COMP =?]]></sql>
+                            <parameter expression="get-property('pComprobante')" type="VARCHAR"/>
+                            <result column="numeroComprobante" name="pNumeroComprobante"/>
+                        </statement>
+                        <statement>
+                            <sql><![CDATA[select cod_articu from sta11 where cod_articu =?]]></sql>
+                            <parameter expression="get-property('pCodBarra')" type="VARCHAR"/>
+                            <result column="cod_articu" name="pCodArticulo"/>
+                        </statement>
+                        <statement>
+                            <sql><![CDATA[select count(1) existe from STA19 where COD_ARTICU = ? and COD_DEPOSI =?]]></sql>
+                            <parameter expression="get-property('pCodArticulo')" type="VARCHAR"/>
+                            <parameter expression="get-property('pDeposito')" type="VARCHAR"/>
+                            <result column="existe" name="pExisteEnDeposito"/>
+                        </statement>
+                        <statement>
+                            <sql><![CDATA[select convert (int,proximo) as prox from sta17 where talonario = ?]]></sql>
+                            <parameter expression="get-property('pTalonario')" type="VARCHAR"/>
+                            <result column="prox" name="pNumeroTalonario"/>
+                        </statement>
+                    </dblookup>
+                    <log description="Datos operacion" level="custom">
+                        <property name="donde" value="Datos Operacion:"/>
+                        <property expression="get-property('pNumeroComprobante')" name="comprobante"/>
+                        <property expression="get-property('pCodArticulo')" name="articulo"/>
+                        <property expression="get-property('pCantidad')" name="cantidad"/>
+                        <property expression="get-property('pTipoMovAbreviado')" name="tipomovabreviado"/>
+                        <property expression="get-property('pDeposito')" name="deposito"/>
+                        <property expression="get-property('pTalonario')" name="talonario"/>
+                        <property expression="get-property('pExisteEnDeposito')" name="existeendeposito"/>
+                        <property expression="get-property('pTipoMovimiento')" name="tipomov"/>
+                        <property expression="get-property('pNumeroTalonario')" name="numerotalonario"/>
+                    </log>
+                    <switch description="Inserta o actualiza el articulo en el deposito" source="get-property('pExisteEnDeposito')">
+                        <case regex="0">
+                            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                            <payloadFactory media-type="json">
+                                <format>
+										{
+										   "request_box":{
+										      "_post_stock_movimiento_cabecera":{
+										         "nroTalonario":$1,
+										         "numComprobante":$2,
+										         "numComprobante2":$2,
+										         "tipoMov":"$3",
+										         "tipoMovInS":"$4",
+										         "id_movimiento":"$5",
+										         "talonario":$6
+										      },
+										      "_post_stock_movimiento_detalle":{
+										         "cantidad":"$7",
+										         "cantidadPend":"$8",
+										         "codArticulo":"$9",
+										         "deposito":"$10",
+										         "depositoDDE":"$11",
+										         "numComprobante":$12,
+										         "tipoMovimientoAbreviado":"$13",
+												 "tipoMovInS":"$4"
+										      },
+										      "_put_talonario":{
+										         "numTalonario":$14,
+										         "talonario":"$15"
+										      },
+										      "_post_articulo_deposito":{
+										         "cantidad":"$16",
+										         "codArticulo":"$17",
+										         "deposito":"$18"
+										      }
+										   }
+										}
+								</format>
+                                <args>
+                                    <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pNumeroComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pComprobanteInS')"/>
+                                    <arg evaluator="xml" expression="get-property('pIdMovimiento')"/>
+                                    <arg evaluator="xml" expression="get-property('pTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
+                                    <arg evaluator="xml" expression="get-property('pDeposito')"/>
+                                    <arg evaluator="xml" expression="get-property('pDeposito')"/>
+                                    <arg evaluator="xml" expression="get-property('pNumeroComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pTipoMovAbreviado')"/>
+                                    <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
+                                    <arg evaluator="xml" expression="get-property('pDeposito')"/>
+                                </args>
+                            </payloadFactory>
+                            <header name="Action" scope="default" value="urn:request_box"/>
+                            <log description="Mensaje final ins" level="full"/>
+                            <call>
+                                <endpoint>
+                                    <http method="post" uri-template="{uri.var.tangodssurl}">
+                                        <suspendOnFailure>
+                                            <initialDuration>-1</initialDuration>
+                                            <progressionFactor>-1</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </case>
+                        <default>
+                            <payloadFactory media-type="json">
+                                <format>
+																			{
+										   "request_box":{
+										      "_post_stock_movimiento_cabecera":{
+										         "nroTalonario":$1,
+										         "numComprobante":$2,
+										         "numComprobante2":$2,
+										         "tipoMov":"$3",
+										         "tipoMovInS":"$4",										         
+										         "id_movimiento":"$5",
+										         "talonario":$6
+										      },
+										      "_post_stock_movimiento_detalle":{
+										         "cantidad":"$7",
+										         "cantidadPend":"$8",
+										         "codArticulo":"$9",
+										         "deposito":"$10",
+										         "depositoDDE":"$11",
+										         "numComprobante":$12,
+										         "tipoMovimientoAbreviado":"$13",
+												 "tipoMovInS":"$4"
+										      },
+										      "_put_talonario":{
+										         "numTalonario":$14,
+										         "talonario":"$15"
+										      },
+										      "_put_articulo_deposito":{
+										         "cantidad":"$16",
+										         "codArticulo":"$17",
+										         "deposito":"$18"
+										      }
+										   }
+										}
+
+								</format>
+                                <args>
+                                    <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pNumeroComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pComprobanteInS')"/>
+                                    <arg evaluator="xml" expression="get-property('pIdMovimiento')"/>
+                                    <arg evaluator="xml" expression="get-property('pTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
+                                    <arg evaluator="xml" expression="get-property('pDeposito')"/>
+                                    <arg evaluator="xml" expression="get-property('pDeposito')"/>
+                                    <arg evaluator="xml" expression="get-property('pNumeroComprobante')"/>
+                                    <arg evaluator="xml" expression="get-property('pTipoMovAbreviado')"/>
+                                    <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pTalonario')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
+                                    <arg evaluator="xml" expression="get-property('pDeposito')"/>
+                                </args>
+                            </payloadFactory>
+                            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                            <header name="Action" scope="default" value="urn:request_box"/>
+                            <log description="Mensaje final upd" level="full"/>
+                            <call>
+                                <endpoint>
+                                    <http method="post" uri-template="{uri.var.tangodssurl}">
+                                        <suspendOnFailure>
+                                            <initialDuration>-1</initialDuration>
+                                            <progressionFactor>-1</progressionFactor>
+                                            <maximumDuration>0</maximumDuration>
+                                        </suspendOnFailure>
+                                        <markForSuspension>
+                                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                        </markForSuspension>
+                                    </http>
+                                </endpoint>
+                            </call>
+                        </default>
+                    </switch>
+                </case>
+                <case regex="lineasPedido">
+                    <log level="custom">
+                        <property name="tabla" value="lineasPedido"/>
+                    </log>
+                    <property expression="$ctx:apiconf//pedidos_cod_articulo" name="pCodArticulo" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+                    <property expression="$ctx:apiconf//pedidos_descripcion" name="pDescripcion" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+                    <property expression="$ctx:apiconf//talon_ped" name="pTalonPed" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+                    <property description="numPedido" expression="json-eval($.num_pedido)" name="pNumPedido" scope="default" type="STRING"/>
+                    <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
+                    <property description="Id Pedido Trabajo Tzl" expression="json-eval($.id_pedido_trabajo)" name="pIdPedidoTrabajo" scope="default" type="STRING"/>
+                    <property description="Banda" expression="json-eval($.banda)" name="pBanda" scope="default" type="STRING"/>
+                    <dblookup description="Lookup valores Tango">
+                        <connection>
+                            <pool>
+                                <dsName>TangoDataSourceJDNI</dsName>
+                            </pool>
+                        </connection>
+                        <statement>
+                            <sql><![CDATA[SELECT CASE WHEN MAX(cast(N_RENGLON as int))+1 IS NULL THEN 1 ELSE MAX(cast(N_RENGLON as int))+1  END AS numeroRenglon FROM GVA03 WHERE NRO_PEDIDO = ?]]></sql>
+                            <parameter expression="get-property('pNumPedido')" type="VARCHAR"/>
+                            <result column="numeroRenglon" name="pNumRenglon"/>
+                        </statement>
+                    </dblookup>
+                    <log description="Datos operacion" level="custom">
+                        <property name="donde" value="Datos Operacion:"/>
+                        <property expression="get-property('pNumRenglon')" name="numRenglon"/>
+                        <property expression="get-property('pNumPedido')" name="numPedido"/>
+                        <property expression="get-property('pIdPedidoTrabajo')" name="idPedTrazajoTzl"/>
+                        <property expression="get-property('pBanda')" name="banda"/>
+                        <property expression="get-property('pTalonPed')" name="talon ped"/>
+                    </log>
+                    <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                    <payloadFactory media-type="json">
+                        <format>
+										{
+										   "request_box":{
+										      "_post_tango_pedido_linea":{
+										         "cant_pedida":"$1",
+										         "cod_articulo":"$2",
+										         "num_renglon":"$3",
+										         "num_pedido":"$4",
+										         "talon_ped":"$5""
+										      },
+										      "_post_tango_pedido_linea_detalle":{
+										         "descripcion":"$6",
+										         "desc_adicional":"$7",
+										         "num_comp":"$8",
+										         "num_renglon":"$9",
+										         "talonario":"$10"
+										      }
+										   }
+										}
+								</format>
+                        <args>
+                            <arg value="1"/>
+                            <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
+                            <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
+                            <arg evaluator="xml" expression="get-property('pNumPedido')"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="fn:concat(get-property('pDescripcion'),get-property('pIdPedidoTrabajo'))"/>
+                            <arg evaluator="xml" expression="fn:concat('Banda: ',get-property('pBanda'))"/>
+                            <arg evaluator="xml" expression="get-property('pNumPedido')"/>
+                            <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                        </args>
+                    </payloadFactory>
+                    <header name="Action" scope="default" value="urn:request_box"/>
+                    <log description="Mensaje final ins" level="full"/>
+                    <call>
+                        <endpoint>
+                            <http method="post" uri-template="{uri.var.tangodssurl}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>-1</progressionFactor>
+                                    <maximumDuration>0</maximumDuration>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                </case>
+                <default/>
+            </switch>
+            <log level="full"/>
+            <loopback/>
+        </inSequence>
+        <outSequence>
+            <log level="full">
+                <property name="MESSAGE" value="FIRST"/>
+            </log>
+            <payloadFactory description="Mensaje error" media-type="json">
+                <format>
+					{"queue_id":$1}
+				</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('queueId')"/>
+                </args>
+            </payloadFactory>
+            <log level="full"/>
+            <send/>
+        </outSequence>
+        <faultSequence>
+            <call/>
+            <log level="custom">
+                <property name="ERROR" value="ME FUI POR EL FAULTSEQUENCE"/>
+                <property expression="get-property('ERROR_MESSAGE')" name="ERROR_MESSAGE"/>
+                <property expression="get-property('ERROR_CODE')" name="ERROR_CODE"/>
+                <property expression="get-property('ERROR_DETAIL')" name="ERROR_DETAIL"/>
+                <property expression="get-property('ERROR_EXCEPTION')" name="ERROR_EXCEPTION"/>
+            </log>
+        </faultSequence>
+    </resource>
+</api>

@@ -1,0 +1,76 @@
+@App:name('TrazalogToolsJlmiSynch')
+
+
+
+@App:description('Entrega materiales y  terminados de Tools a Yudica Tango')
+
+@sink(type = 'http-call', 
+      publisher.url = "http://localhost:8290/tools/tango/synch/out", 
+      method = "POST", 
+      sink.id = "2", 
+      headers = "Content-Type:json",
+      blocking.io='true',
+      on.error='WAIT',
+	@map(type = 'json'))
+define stream HTTPSinkStream (queue_id int, data_json string);
+
+@source(type = 'cdc', 
+        url = "jdbc:postgresql://10.142.0.13:5432/tools_prod_t", 
+        username = "postgres",
+        password = "!Password00", 
+        operation ='insert',
+        table.name = "int.jlmi_synch_queue", 
+        on.error='wait',
+        jdbc.driver.name = "org.postgresql.Driver",
+        plugin.name = "pgoutput",
+	@map(type = 'keyvalue'))
+	
+define stream NovedadToolsStream (queue_id int, data_json string);
+
+-- Define sink to handle HTTP-call errors
+@sink(type='log', 
+      prefix='HTTP-call error occurred: ', 
+      on.error='wait',
+      @map(type='json', 
+           enclosing.element='$',
+           @attributes(error='$.ERROR')))
+define stream ErrorSink (id int, name string, ERROR string);
+
+@source(type = 'http-call-response', 
+        sink.id = "2", 
+        http.status.code = '2\d+',
+        on.error='wait',
+	@map(type = 'json'))
+define stream HTTPResponseStream (queue_id int);
+
+        
+-- Update processed_flag column in SQL Server table for each processed record
+@store(type='rdbms',
+      jdbc.driver.name='org.postgresql.Driver',
+      jdbc.url='jdbc:postgresql://10.142.0.13:5432/tools_prod_t',
+      username='postgres',
+      password='!Password00')
+define table jlmi_synch_queue (queue_id int,procesado int);
+
+
+@sink(type = 'log') 
+define stream LogStream (queue_id int, data_json string);
+
+
+@info(name = 'log')
+from NovedadToolsStream 
+select * 
+insert into LogStream;
+    
+@info(name = 'novedades')
+from NovedadToolsStream 
+select * 
+insert into HTTPSinkStream;
+
+@info(name = 'post-grabacion')
+from HTTPResponseStream 
+select queue_id
+update jlmi_synch_queue 
+set jlmi_synch_queue.procesado = 1
+on jlmi_synch_queue.queue_id == queue_id
+
