@@ -17,7 +17,7 @@ VALUES(
     :usuario_app,
     :ticl_id,
     cast(:empr_id as integer),
-    cast(:inte_id as integer)
+    :inte_id
   )</sql>
     <param type="IN" name="nombre" paramType="SCALAR" sqlType="STRING" optional="false" />
     <param type="IN" name="dir_entrega" paramType="SCALAR" sqlType="STRING" optional="false" />
@@ -30,7 +30,7 @@ VALUES(
   <query id="updateCliente" useConfig="ToolsDataSource">
     <sql>UPDATE core.clientes
 SET nombre=:nombre,dir_entrega=:dir_entrega, observaciones=:observaciones, usuario_app=:usuario_app, ticl_id=:ticl_id, empr_id = cast(:empr_id as integer)
-WHERE inte_id = cast(:inte_id as integer);</sql>
+WHERE inte_id = :inte_id;</sql>
     <param name="nombre" paramType="SCALAR" sqlType="STRING" />
     <param name="dir_entrega" paramType="SCALAR" sqlType="STRING" />
     <param name="observaciones" paramType="SCALAR" sqlType="STRING" />
@@ -42,7 +42,7 @@ WHERE inte_id = cast(:inte_id as integer);</sql>
   <query id="deleteCliente" useConfig="ToolsDataSource">
     <sql>UPDATE core.clientes
 SET estado='ELIMINADO'
-WHERE inte_id =cast(:inte_id as integer);</sql>
+WHERE inte_id = :inte_id;</sql>
     <param name="inte_id" paramType="SCALAR" sqlType="STRING" />
   </query>
   

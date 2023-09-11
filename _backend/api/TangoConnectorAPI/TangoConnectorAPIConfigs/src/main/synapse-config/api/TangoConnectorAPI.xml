@@ -69,7 +69,7 @@
                             <log level="custom">
                                 <property name="donde" value="Por crear articulo"/>
                                 <property expression="json-eval($)" name="payload"/>
-                                <property expression="$ctx:tabla" name="tabla"/>
+                                <property expression="$ctx:dataNovedad.tabla" name="tabla"/>
                                 <property expression="$ctx:uri.var.articulo" name="uri"/>
                             </log>
                             <call>
@@ -126,7 +126,7 @@
                             <log level="custom">
                                 <property name="donde" value="Por updatear articulo"/>
                                 <property expression="json-eval($)" name="payload"/>
-                                <property expression="$ctx:tabla" name="tabla"/>
+                                <property expression="$ctx:dataNovedad.tabla" name="tabla"/>
                                 <property expression="$ctx:uri.var.artinte" name="uri"/>
                             </log>
                             <call>
@@ -160,7 +160,7 @@
                             <log level="custom">
                                 <property name="donde" value="Por eliminar articulo"/>
                                 <property expression="json-eval($)" name="payload"/>
-                                <property expression="$ctx:tabla" name="tabla"/>
+                                <property expression="$ctx:dataNovedad.tabla" name="tabla"/>
                                 <property expression="$ctx:uri.var.artinte" name="uri"/>
                             </log>
                             <call>
