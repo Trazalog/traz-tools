@@ -1,6 +1,6 @@
 {
     "short_name": "Traz-tools",
-    "name":"Notificationes push Traz-tools",
+    "name":"Notificationes push Traz-tools", 
     "display": "standalone",
     "version":"0.1r",
     "manifest_version":2,
