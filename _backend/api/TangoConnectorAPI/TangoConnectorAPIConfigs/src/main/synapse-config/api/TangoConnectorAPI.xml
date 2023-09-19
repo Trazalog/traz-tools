@@ -404,8 +404,6 @@
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//talonario" name="pTalonario" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
-            <property expression="$ctx:apiconf//tipo_comprobante_in_s" name="pComprobanteInS" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
-            <property expression="$ctx:apiconf//tipo_comprobante" name="pComprobante" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/request_box')" name="uri.var.tangodssurl" scope="default" type="STRING"/>
             <header name="Accept" scope="transport" value="application/json"/>
             <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
@@ -445,8 +443,16 @@
                     <switch source="get-property('pTipoMovimiento')">
                         <case regex="ENTRADA">
                             <property description="tipo mov E" name="pTipoMovAbreviado" scope="default" type="STRING" value="E"/>
+                            <property description="tipo mov E" name="pComprobanteInS" scope="default" type="STRING" value="EN"/>
+                            <property description="tipo mov E" name="pComprobante" scope="default" type="STRING" value="ENT"/>
+                            <property description="Cantidad mov entrada" name="pCantidadSum" scope="default" type="STRING" value="$ctx:pCantidad"/>
                         </case>
                         <default>
+                            <property description="tipo mov E" name="pComprobanteInS" scope="default" type="STRING" value="SA"/>
+                            <property description="tipo mov E" name="pComprobante" scope="default" type="STRING" value="SAL"/>
+                            <script language="js"><![CDATA[var value1 = mc.getProperty("pCantidad");
+							            var result = value1 * -1;
+							            mc.setProperty("pCantidadSum", result);]]></script>
                             <property name="pTipoMovAbreviado" scope="default" type="STRING" value="S"/>
                         </default>
                     </switch>
@@ -544,7 +550,7 @@
                                     <arg evaluator="xml" expression="get-property('pTipoMovAbreviado')"/>
                                     <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pTalonario')"/>
-                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidadSum')"/>
                                     <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
                                     <arg evaluator="xml" expression="get-property('pDeposito')"/>
                                 </args>
@@ -619,7 +625,7 @@
                                     <arg evaluator="xml" expression="get-property('pTipoMovAbreviado')"/>
                                     <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pTalonario')"/>
-                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidadSum')"/>
                                     <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
                                     <arg evaluator="xml" expression="get-property('pDeposito')"/>
                                 </args>
