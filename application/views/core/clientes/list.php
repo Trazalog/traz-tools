@@ -70,6 +70,8 @@
     $('#nombre_edit').val(datajson.nombre);
     $('#dir_entrega_edit').val(datajson.dir_entrega);
     $('#observaciones_edit').val(datajson.observaciones);
+    $('#ticl_id_edit').val(datajson.ticl_id);
+    $('#ticl_id_edit').trigger('change');
     // var $selectTipo = $("#ticl_id_edit");
     // // a ese select le guardo solamente el valor guardado previamente
     // $selectTipo.append($("<option>", {
