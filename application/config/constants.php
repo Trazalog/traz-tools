@@ -90,7 +90,7 @@ define('FILES', 'files/');
 
 # DNATO
 define('LOGIN', true);
-define('DNATO', 'http://localhost/traz-comp-dnato/');
+define('DNATO', 'http://localhost:8088/traz-comp-dnato/');
 
 define('TOOLS_ADMIN_USER','admin@gmail.com');
 
