@@ -90,7 +90,7 @@ define('FILES', 'files/');
 
 # DNATO
 define('LOGIN', true);
-define('DNATO', 'http://localhost/traz-comp-dnato/');
+define('DNATO', 'http://localhost:8088/traz-comp-dnato/');
 
 define('TOOLS_ADMIN_USER','admin@gmail.com');
 
@@ -118,7 +118,7 @@ define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
 
 define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
 
-define('BPM_PROCESS_ID_TAREA_GENERICA', '6236605840529875888');
+define('BPM_PROCESS_ID_TAREA_GENERICA', '5822241643386814582');
 
 #YUDICA REPARACION_NEUMATICOS
 define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
