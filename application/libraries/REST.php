@@ -57,8 +57,8 @@ class REST
             curl_setopt($curl, CURLOPT_HEADER, true);
             curl_setopt($curl, CURLINFO_HEADER_OUT, true);
             //SON PARA YUDICA, NO TIENE CERTIF SSL
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
 
             //Tell cURL that it should only spend 10 seconds
             //trying to connect to the URL in question.
