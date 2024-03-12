@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/tools/firebase" name="FirebaseConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/send">
+        <inSequence>
+            <log level="custom">
+                <property name="ingreso" value="Comienza secuencia notificacion"/>
+            </log>
+            <sequence key="MessageCreateSeq"/>
+            <log level="custom">
+                <property name="paso 2" value="Inicializacion firebase connector"/>
+            </log>
+            <googlefirebase.init>
+                <accountType>service_account</accountType>
+                <projectId>traz-prod-assetplanner</projectId>
+                <privateKeyId>83c0df3685e59f6d128ebbd28ed03beab02df3cd</privateKeyId>
+                <privateKey>-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDyoeiNCk2TgEua\nf3aMwv/5AuLRjgNaj1QGoLTQwIs4xHxn7DCSKW6YpUlozEEHaTYcKI4AnPKnC6xd\nobUnXZ8ARFNXIJ7zbmaGYTaf3LKZqIL1L46L4zXOmbAqk74DvU/ZV+9erfZLNcLu\nP+5mhch7VPp9Vo81dnfbJ6yzotY3VkdzHLwgPygSA6w+Cc0aHrf3u9GQUeyZnnb3\nSRm5cJZ+TY3fIQZ9cWGC6nEV89yWZBmI0pS6gc+MtS7rO9JSLjggqpaqRxfL4Net\n9gPy6SDfOVwt4trJFaKia8esO5vurCdlaz5+ATpcaeGK1mQSO0ktsM8GGUhKUUF+\nPv4ZbA0DAgMBAAECggEAKxzD0pPbFvN7+5bcfMSFcTynCu89/1BqcMcLefBMjKi1\nJk4cj0wXX7423g01HNkACV7XZJp+r1nupbB/HOCQyR5a5KdiNwUN6KDLcPppLc54\nfpKVtJuJyw0Z9WbNI6L21jq+yMcGdXS3D1iCxurMpcWCwNSpm6lSQLm7ASxU/f3Z\nIGyNZW9TwTa9zzCl+rpawmJBXJGv16wG4sSTBRG1ZshmRUhkO9feYD8p8ThqANu1\nDwjLiabOU0OP/4jZWlcMneh3iAWdN74Y0rgeaEhM0UY3z3Gk92Sdc31iASD6bXSN\n468E6oFSZc0DaAPqkiWU4NG9KL0l8TjAiYjN0joRkQKBgQD510NqtEpakz7gMNEb\nyfdY5+oUk41jhN4vcwbSxDHHDMKXQG8fizJMIBi3r+9w3Uq3hxVfUpB4g/Q01NZd\nlmykpv6JSzulRmNPRWIYdldOo5Bwe0LzkBMWIqKZMGW75U6pdYPLk4mzHJfgGCwy\nyhJ/ytTHYJKreS99bJ8TBHSuawKBgQD4nScqjgl8Nal+KjrX4t2VWGMZliWVmpcz\nmpsvEc7hjBp+YEpp4D1R7THVLWxmETdTkbalGGXxI2aHv4rJaRER7SaJIPAHRvY7\nmf+X2hKZdWNiasWeQg3wlqyuCzailSjr30709beih0IeLhGRoo2Jjwh7Oe5RDZJf\nIq0wSS4RyQKBgFzZp3BseIWY23EuM0iEkqwz5EapX45wvrIbqZmC2I0FLPxRMfsj\nHBo2g3kgpXfohfAW/9ZhNNfVEljgEJrPYKkAdvBHSW9u7VF0k7RLpr7PAssKxCMI\nlE9Rp+QOnIBsBAPubICn4DD0m2zpDuQBPUbI9rLyLRAVBZUzXRsQONzpAoGAX2Mk\nmN5AY2jPbDnVs+k2bUupUjLansjehI0oR2oEv2Ma8ywMwQypWlqwiQNRmOO4H5dD\nxZpT2q5jc2gZXueyBffAllKN5azjYsDWYTPpePmiNSuUQQFFCe81t91TjBPAzKc0\nSyZP28sboiq40PDWb1XywhzbBDw50cijPGiHhYkCgYBlFsQlZ8vMrvuE2vlHpbMz\nrUKp49rz4fx44gunfcMtaEhCXoEGvDx1tzERWiZH2xPN1nLkzsgfY3v9WztVLwgJ\noGDaCe42prf4N0jVx4c4oXa4zWNPCtbuG9b/9PumdM/UFs88Jva+LK+bLQUc6o1s\nt361b5g/JKOAQKLsyCLAwA==\n-----END PRIVATE KEY-----\n</privateKey>
+                <clientEmail>firebase-adminsdk-3ag87@traz-prod-assetplanner.iam.gserviceaccount.com</clientEmail>
+                <clientId>111525873352450769468</clientId>
+                <authUri>https://accounts.google.com/o/oauth2/auth</authUri>
+                <tokenUri>https://oauth2.googleapis.com/token</tokenUri>
+                <authProviderCertUrl>https://www.googleapis.com/oauth2/v1/certs</authProviderCertUrl>
+                <clientCertUrl>https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-3ag87%40traz-prod-assetplanner.iam.gserviceaccount.com</clientCertUrl>
+            </googlefirebase.init>
+            <log level="custom">
+                <property name="paso 3" value="Armo notificacion a enviar"/>
+            </log>
+            <googlefirebase.sendMessage>
+                <messagingType>topic</messagingType>
+                <dryRunMode>false</dryRunMode>
+                <topicName>status</topicName>
+                <condition>'status' in topics</condition>
+                <dataFieldsOfMessage>{$ctx:dataFieldsOfMessage}</dataFieldsOfMessage>
+                <notificationTitle>{$ctx:notificationTitle}</notificationTitle>
+                <notificationBody>{$ctx:notificationBody}</notificationBody>
+                <androidPriority>{$ctx:androidPriority}</androidPriority>
+                <timeToLiveDuration>{$ctx:timeToLiveDuration}</timeToLiveDuration>
+                <restrictedPackageName>{$ctx:restrictedPackageName}</restrictedPackageName>
+                <collapseKey>{$ctx:collapseKey}</collapseKey>
+                <dataFieldsOfAndroidConfig>{$ctx:dataFieldsOfAndroidConfig}</dataFieldsOfAndroidConfig>
+                <androidNotificationTitle>{$ctx:androidNotificationTitle}</androidNotificationTitle>
+                <androidNotificationBody>{$ctx:androidNotificationBody}</androidNotificationBody>
+                <androidClickAction>{$ctx:androidClickAction}</androidClickAction>
+                <androidIcon>{$ctx:androidIcon}</androidIcon>
+                <androidColor>{$ctx:androidColor}</androidColor>
+                <androidTag>{$ctx:androidTag}</androidTag>
+                <androidSound>{$ctx:androidSound}</androidSound>
+                <androidTitleLocalizationKey>{$ctx:androidTitleLocalizationKey}</androidTitleLocalizationKey>
+                <androidBodyLocalizationKey>{$ctx:androidBodyLocalizationKey}</androidBodyLocalizationKey>
+                <androidTitleLocalizationArgs>{$ctx:androidTitleLocalizationArgs}</androidTitleLocalizationArgs>
+                <androidBodyLocalizationArgs>{$ctx:androidBodyLocalizationArgs}</androidBodyLocalizationArgs>
+                <apnsHeaders>{$ctx:apnsHeaders}</apnsHeaders>
+                <apnsCustomData>{$ctx:apnsCustomData}</apnsCustomData>
+                <apnsBadge>{$ctx:apnsBadge}</apnsBadge>
+                <apnsSound>{$ctx:apnsSound}</apnsSound>
+                <apnsContentAvailable>{$ctx:apnsContentAvailable}</apnsContentAvailable>
+                <apnsCategory>{$ctx:apnsCategory}</apnsCategory>
+                <apnsThreadId>{$ctx:apnsThreadId}</apnsThreadId>
+                <apnsAlertTitle>{$ctx:apnsAlertTitle}</apnsAlertTitle>
+                <apnsAlertBody>{$ctx:apnsAlertBody}</apnsAlertBody>
+                <webPushHeaders>{$ctx:webPushHeaders}</webPushHeaders>
+                <webPushData>{$ctx:webPushData}</webPushData>
+                <webPushNotificationTitle>{$ctx:webPushNotificationTitle}</webPushNotificationTitle>
+                <webPushNotificationBody>{$ctx:webPushNotificationBody}</webPushNotificationBody>
+                <webPushNotificationIcon>{$ctx:webPushNotificationIcon}</webPushNotificationIcon>
+                <webPushNotificationBadge>{$ctx:webPushNotificationBadge}</webPushNotificationBadge>
+                <webPushNotificationImage>{$ctx:webPushNotificationImage}</webPushNotificationImage>
+                <webPushNotificationLanguage>{$ctx:webPushNotificationLanguage}</webPushNotificationLanguage>
+                <webPushNotificationTag>{$ctx:webPushNotificationTag}</webPushNotificationTag>
+                <webPushNotificationDirection>{$ctx:webPushNotificationDirection}</webPushNotificationDirection>
+                <webPushNotificationRenotify>{$ctx:webPushNotificationRenotify}</webPushNotificationRenotify>
+                <webPushNotificationInteraction>{$ctx:webPushNotificationInteraction}</webPushNotificationInteraction>
+                <webPushNotificationSilent>{$ctx:webPushNotificationSilent}</webPushNotificationSilent>
+                <webPushNotificationTimestamp>{$ctx:webPushNotificationTimestamp}</webPushNotificationTimestamp>
+                <webPushNotificationVibrate>{$ctx:webPushNotificationVibrate}</webPushNotificationVibrate>
+            </googlefirebase.sendMessage>
+            <log level="custom">
+                <property name="paso 4" value="Envio la notifacion"/>
+            </log>
+            <respond/>
+        </inSequence>
+        <outSequence/>
+        <faultSequence/>
+    </resource>
+</api>

@@ -38,33 +38,6 @@
  // Retrieve an instance of Firebase Messaging so that it can handle background
  // messages.
  const messaging = firebase.messaging();
-//  if ("serviceWorker" in navigator) {
-//   navigator.serviceWorker.register("./firebase-messaging-sw.js")
-//     .then(function(registration) {
-//       debugger;
-//       console.log("Registration successful, scope is:", registration.scope);
-//       getToken({vapidKey: 'BBr_p7ZaAscFxO9ljqvTGnsf-_7L8NY7W_VOaWxHFcjjmmfeYYOTTeVogvzExptd0O0gpvGrIAVh9HQwbHiD6w8', serviceWorkerRegistration : registration })
-//         .then((currentToken) => {
-//           if (currentToken) {
-//             console.log('Token obtenido: ', currentToken);
-  
-//             // Track the token -> client mapping, by sending to backend server
-//             // show on the UI that permission is secured
-//           } else {
-//             console.log('No se encontro un token. Solicita permiso para generar uno.');
-  
-//             // shows on the UI that permission is required 
-//           }
-//         }).catch((err) => {
-//           console.log('An error occurred while retrieving token. ', err);
-//           // catch error while creating client token
-//         });  
-//       })
-//       .catch(function(err) {
-//         console.log("Service worker registration failed, error:"  , err );
-//     }); 
-//   }
-
 // If you would like to customize notifications that are received in the
 // background (Web app is closed or not in browser focus) then you should
 // implement this optional method.
