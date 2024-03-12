@@ -2,49 +2,54 @@
 <sequence name="MessageCreateSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
     <log level="custom">
         <property name="Inicio" value="Parseo de data en post"/>
+        <property expression="json-eval($)" name="dumpJson"/>
+    </log>
+    <log level="custom">
+        <property expression="json-eval($.xformValues.notificationTitle)" name="notificationTITLE"/>
     </log>
     <propertyGroup>
-        <property expression="json-eval($.dataFieldsOfMessage)" name="dataFieldsOfMessage" scope="default" type="STRING"/>
-        <property expression="json-eval($.notificationTitle)" name="notificationTitle" scope="default" type="STRING"/>
-        <property expression="json-eval($.notificationBody)" name="notificationBody" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidPriority)" name="androidPriority" scope="default" type="STRING"/>
-        <property expression="json-eval($.timeToLiveDuration)" name="timeToLiveDuration" scope="default" type="STRING"/>
-        <property expression="json-eval($.restrictedPackageName)" name="restrictedPackageName" scope="default" type="STRING"/>
-        <property expression="json-eval($.collapseKey)" name="collapseKey" scope="default" type="STRING"/>
-        <property expression="json-eval($.dataFieldsOfAndroidConfig)" name="dataFieldsOfAndroidConfig" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidNotificationTitle)" name="androidNotificationTitle" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidNotificationBody)" name="androidNotificationBody" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidClickAction)" name="androidClickAction" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidIcon)" name="androidIcon" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidColor)" name="androidColor" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidTag)" name="androidTag" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidSound)" name="androidSound" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidTitleLocalizationKey)" name="androidTitleLocalizationKey" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidBodyLocalizationKey)" name="androidBodyLocalizationKey" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidTitleLocalizationArgs)" name="androidTitleLocalizationArgs" scope="default" type="STRING"/>
-        <property expression="json-eval($.androidBodyLocalizationArgs)" name="androidBodyLocalizationArgs" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsHeaders)" name="apnsHeaders" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsCustomData)" name="apnsCustomData" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsBadge)" name="apnsBadge" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsSound)" name="apnsSound" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsContentAvailable)" name="apnsContentAvailable" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsCategory)" name="apnsCategory" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsThreadId)" name="apnsThreadId" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsAlertTitle)" name="apnsAlertTitle" scope="default" type="STRING"/>
-        <property expression="json-eval($.apnsAlertBody)" name="apnsAlertBody" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushHeaders)" name="webPushHeaders" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushData)" name="webPushData" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationTitle)" name="webPushNotificationTitle" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationBody)" name="webPushNotificationBody" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationIcon)" name="webPushNotificationIcon" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationBadge)" name="webPushNotificationBadge" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationImage)" name="webPushNotificationImage" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationLanguage)" name="webPushNotificationLanguage" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationTag)" name="webPushNotificationTag" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationDirection)" name="webPushNotificationDirection" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationRenotify)" name="webPushNotificationRenotify" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationInteraction)" name="webPushNotificationInteraction" scope="default" type="STRING"/>
-        <property expression="json-eval($.webPushNotificationSilent)" name="webPushNotificationSilent" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.registrationToken)" name="registrationToken" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.dataFieldsOfMessage)" name="dataFieldsOfMessage" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.notificationTitle)" name="notificationTitle" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.notificationBody)" name="notificationBody" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidPriority)" name="androidPriority" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.timeToLiveDuration)" name="timeToLiveDuration" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.restrictedPackageName)" name="restrictedPackageName" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.collapseKey)" name="collapseKey" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.dataFieldsOfAndroidConfig)" name="dataFieldsOfAndroidConfig" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidNotificationTitle)" name="androidNotificationTitle" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidNotificationBody)" name="androidNotificationBody" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidClickAction)" name="androidClickAction" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidIcon)" name="androidIcon" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidColor)" name="androidColor" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidTag)" name="androidTag" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidSound)" name="androidSound" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidTitleLocalizationKey)" name="androidTitleLocalizationKey" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidBodyLocalizationKey)" name="androidBodyLocalizationKey" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidTitleLocalizationArgs)" name="androidTitleLocalizationArgs" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.androidBodyLocalizationArgs)" name="androidBodyLocalizationArgs" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsHeaders)" name="apnsHeaders" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsCustomData)" name="apnsCustomData" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsBadge)" name="apnsBadge" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsSound)" name="apnsSound" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsContentAvailable)" name="apnsContentAvailable" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsCategory)" name="apnsCategory" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsThreadId)" name="apnsThreadId" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsAlertTitle)" name="apnsAlertTitle" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.apnsAlertBody)" name="apnsAlertBody" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushHeaders)" name="webPushHeaders" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushData)" name="webPushData" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationTitle)" name="webPushNotificationTitle" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationBody)" name="webPushNotificationBody" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationIcon)" name="webPushNotificationIcon" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationBadge)" name="webPushNotificationBadge" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationImage)" name="webPushNotificationImage" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationLanguage)" name="webPushNotificationLanguage" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationTag)" name="webPushNotificationTag" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationDirection)" name="webPushNotificationDirection" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationRenotify)" name="webPushNotificationRenotify" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationInteraction)" name="webPushNotificationInteraction" scope="default" type="STRING"/>
+        <property expression="json-eval($.xformValues.webPushNotificationSilent)" name="webPushNotificationSilent" scope="default" type="STRING"/>
     </propertyGroup>
     <log level="custom">
         <property name="Fin" value="Data parseada"/>

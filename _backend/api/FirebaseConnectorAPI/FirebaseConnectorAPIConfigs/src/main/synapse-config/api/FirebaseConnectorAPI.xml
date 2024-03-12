@@ -27,6 +27,7 @@
             <googlefirebase.sendMessage>
                 <messagingType>topic</messagingType>
                 <dryRunMode>false</dryRunMode>
+                <registrationToken>{$ctx:registrationToken}</registrationToken>
                 <topicName>status</topicName>
                 <condition>'status' in topics</condition>
                 <dataFieldsOfMessage>{$ctx:dataFieldsOfMessage}</dataFieldsOfMessage>
