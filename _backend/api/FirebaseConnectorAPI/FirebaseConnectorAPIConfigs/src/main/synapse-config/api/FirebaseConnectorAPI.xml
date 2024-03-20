@@ -25,11 +25,9 @@
                 <property name="paso 3" value="Armo notificacion a enviar"/>
             </log>
             <googlefirebase.sendMessage>
-                <messagingType>topic</messagingType>
+                <messagingType>token</messagingType>
                 <dryRunMode>false</dryRunMode>
                 <registrationToken>{$ctx:registrationToken}</registrationToken>
-                <topicName>status</topicName>
-                <condition>'status' in topics</condition>
                 <dataFieldsOfMessage>{$ctx:dataFieldsOfMessage}</dataFieldsOfMessage>
                 <notificationTitle>{$ctx:notificationTitle}</notificationTitle>
                 <notificationBody>{$ctx:notificationBody}</notificationBody>
