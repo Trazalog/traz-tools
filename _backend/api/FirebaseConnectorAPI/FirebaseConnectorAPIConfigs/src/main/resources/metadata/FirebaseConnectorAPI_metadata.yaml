@@ -1,0 +1,10 @@
+key: "FirebaseConnectorAPI-1.0.0"
+name: "FirebaseConnectorAPI"
+displayName: "FirebaseConnectorAPI"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/tools/firebase"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false
+apiId: "null"
