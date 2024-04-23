@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/report/serialization" name="ReportParseAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET">
+        <inSequence>
+            <log level="custom">
+                <property name="Paso 1" value="logeo y obtengo token de seguridad"/>
+                <property expression="json-eval($)" name="debug"/>
+            </log>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <payloadFactory media-type="json">
+                <format>{"password":"Test1234."}</format>
+                <args/>
+            </payloadFactory>
+            <call>
+                <endpoint>
+                    <http method="post" uri-template="https://api.elemetrica.com/v2/accounts/api@test.com/login">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <log level="custom">
+                <property name="Paso 2" value="invoco endpoint para obtener csv"/>
+                <property expression="json-eval($)" name="debug"/>
+            </log>
+            <property expression="json-eval($.token)" name="authToken" scope="default" type="STRING"/>
+            <header expression="get-property('authToken')" name="X-Coin" scope="transport"/>
+            <call>
+                <endpoint>
+                    <http method="get" uri-template="https://api.elemetrica.com/v2/accounts/api@test.com/other-endpoint">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <respond/>
+        </inSequence>
+        <outSequence/>
+        <faultSequence/>
+    </resource>
+</api>
