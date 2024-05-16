@@ -1,0 +1,78 @@
+map_S_root_S_root = function(){ 
+var outputroot={};
+
+var count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e = 0;
+outputroot =  {};
+outputroot.invoice =  [];
+
+for(i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e in inputroot){
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e] =  {};
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].storeName = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['﻿Nombre Local'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].subgroup = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Subgrupo;
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].numberInvoice = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['ID Factura Local'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].closingDate = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Fecha Fin Transacción'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].openDate = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Fecha Inicio Transacción'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].shortDate = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Fecha Corta Transacción'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].clientName = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Nombre del Cliente'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].clientId = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Cédula del Cliente'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].diners = Number(inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Comensales);
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].othersTags =  [];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].othersTags[0] =  {};
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].othersTags[0].name = 'Tipoorden';
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].othersTags[0].value = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Tipoorden;
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails =  [];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0] =  {};
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].productCode = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Código Interno del Producto'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].productDescription = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Descripción del Producto'];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].subtotal = Number(inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Subtotal);
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].discount = Number(inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Descuento);
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].tax = Number(inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Impuestos);
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].total = Number(inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Total);
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].unit = Number(inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e]['Unidades Vendidas']);
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].invoceDetails[0].price = Number(inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Precio);
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags =  [];
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags[0] =  {};
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags[0].Mesonero =  {};
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags[0].Mesonero.value = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Mesonero;
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags[0].Area =  {};
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags[0].Area.value = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Area;
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags[0].Turno =  {};
+outputroot.invoice[count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].meserTags[0].Turno.value = inputroot[i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e].Turno;
+
+count_i_inputroot_df89ef18_93f0_496c_b828_d741b56fe41e++;
+}
+return outputroot;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

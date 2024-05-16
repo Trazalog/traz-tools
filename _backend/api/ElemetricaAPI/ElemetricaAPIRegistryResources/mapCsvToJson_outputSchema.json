@@ -1,0 +1,175 @@
+{
+  "$schema" : "http://wso2.org/json-schema/wso2-data-mapper-v5.0.0/schema#",
+  "outputType" : "JSON",
+  "id" : "http://wso2jsonschema.org",
+  "title" : "root",
+  "type" : "object",
+  "properties" : {
+    "invoice" : {
+      "id" : "http://wso2jsonschema.org/invoice",
+      "type" : "array",
+      "items" : [ {
+        "id" : "http://wso2jsonschema.org/invoice/0",
+        "type" : "object",
+        "properties" : {
+          "storeName" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/storeName",
+            "type" : "string"
+          },
+          "subgroup" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/subgroup",
+            "type" : "string"
+          },
+          "numberInvoice" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/numberInvoice",
+            "type" : "string"
+          },
+          "closingDate" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/closingDate",
+            "type" : "string"
+          },
+          "openDate" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/openDate",
+            "type" : "string"
+          },
+          "shortDate" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/shortDate",
+            "type" : "string"
+          },
+          "clientName" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/clientName",
+            "type" : "string"
+          },
+          "clientId" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/clientId",
+            "type" : "string"
+          },
+          "diners" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/diners",
+            "type" : "number"
+          },
+          "othersTags" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/othersTags",
+            "type" : "array",
+            "items" : [ {
+              "id" : "http://wso2jsonschema.org/invoice/0/othersTags/0",
+              "type" : "object",
+              "properties" : {
+                "name" : {
+                  "id" : "Tipo orden",
+                  "type" : "string"
+                },
+                "value" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/othersTags/0/value",
+                  "type" : "string",
+                  "nullable" : "true"
+                }
+              }
+            } ]
+          },
+          "invoceDetails" : {
+            "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails",
+            "type" : "array",
+            "items" : [ {
+              "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0",
+              "type" : "object",
+              "properties" : {
+                "productCode" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/productCode",
+                  "type" : "string"
+                },
+                "productDescription" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/productDescription",
+                  "type" : "string"
+                },
+                "category" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/category",
+                  "type" : "string"
+                },
+                "subtotal" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/subtotal",
+                  "type" : "number"
+                },
+                "discount" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/discount",
+                  "type" : "number"
+                },
+                "tax" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/tax",
+                  "type" : "number"
+                },
+                "total" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/total",
+                  "type" : "number"
+                },
+                "unit" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/unit",
+                  "type" : "number"
+                },
+                "price" : {
+                  "id" : "http://wso2jsonschema.org/invoice/0/invoceDetails/0/price",
+                  "type" : "number"
+                }
+              }
+            } ]
+          },
+          "meserTags" : {
+            "id" : "",
+            "type" : "array",
+            "items" : [ {
+              "id" : "/0",
+              "type" : "object",
+              "properties" : {
+                "Mesonero" : {
+                  "id" : "",
+                  "type" : "object",
+                  "value" : {
+                    "type" : "string"
+                  },
+                  "properties" : {
+                    "value" : {
+                      "id" : "null/0",
+                      "type" : "string",
+                      "nullable" : "true"
+                    }
+                  }
+                },
+                "Area" : {
+                  "id" : "",
+                  "type" : "object",
+                  "value" : {
+                    "type" : "string"
+                  },
+                  "properties" : {
+                    "value" : {
+                      "id" : "null/0",
+                      "type" : "string",
+                      "nullable" : "true"
+                    }
+                  }
+                },
+                "Turno" : {
+                  "id" : "",
+                  "type" : "object",
+                  "value" : {
+                    "type" : "string"
+                  },
+                  "properties" : {
+                    "value" : {
+                      "id" : "null/0",
+                      "type" : "string",
+                      "nullable" : "true"
+                    }
+                  }
+                }
+              },
+              "value" : {
+                "type" : "string"
+              }
+            } ]
+          }
+        }
+      } ]
+    }
+  }
+}

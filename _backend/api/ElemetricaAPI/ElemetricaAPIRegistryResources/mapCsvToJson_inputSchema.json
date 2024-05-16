@@ -1,0 +1,101 @@
+{
+  "$schema" : "http://wso2.org/json-schema/wso2-data-mapper-v5.0.0/schema#",
+  "inputType" : "CSV",
+  "id" : "http://wso2jsonschema.org",
+  "title" : "root",
+  "type" : "array",
+  "items" : [ {
+    "properties" : {
+      "﻿Nombre Local" : {
+        "id" : "http://wso2jsonschema.org/0/﻿Nombre Local",
+        "type" : "string"
+      },
+      "Subgrupo" : {
+        "id" : "http://wso2jsonschema.org/0/Subgrupo",
+        "type" : "string"
+      },
+      "ID Factura Local" : {
+        "id" : "http://wso2jsonschema.org/0/ID Factura Local",
+        "type" : "string"
+      },
+      "Fecha Inicio Transacción" : {
+        "id" : "http://wso2jsonschema.org/0/Fecha Inicio Transacción",
+        "type" : "string"
+      },
+      "Fecha Fin Transacción" : {
+        "id" : "http://wso2jsonschema.org/0/Fecha Fin Transacción",
+        "type" : "string"
+      },
+      "Fecha Corta Transacción" : {
+        "id" : "http://wso2jsonschema.org/0/Fecha Corta Transacción",
+        "type" : "string"
+      },
+      "Código Interno del Producto" : {
+        "id" : "http://wso2jsonschema.org/0/Código Interno del Producto",
+        "type" : "string"
+      },
+      "Descripción del Producto" : {
+        "id" : "http://wso2jsonschema.org/0/Descripción del Producto",
+        "type" : "string"
+      },
+      "Descripción de la Categoría" : {
+        "id" : "http://wso2jsonschema.org/0/Descripción de la Categoría",
+        "type" : "string"
+      },
+      "Cédula del Cliente" : {
+        "id" : "http://wso2jsonschema.org/0/Cédula del Cliente",
+        "type" : "string"
+      },
+      "Nombre del Cliente" : {
+        "id" : "http://wso2jsonschema.org/0/Nombre del Cliente",
+        "type" : "string"
+      },
+      "Area" : {
+        "id" : "http://wso2jsonschema.org/0/Area",
+        "type" : "string"
+      },
+      "Mesonero" : {
+        "id" : "http://wso2jsonschema.org/0/Mesonero",
+        "type" : "string"
+      },
+      "Tipoorden" : {
+        "id" : "http://wso2jsonschema.org/0/Tipoorden",
+        "type" : "string"
+      },
+      "Turno" : {
+        "id" : "http://wso2jsonschema.org/0/Turno",
+        "type" : "string"
+      },
+      "Subtotal" : {
+        "id" : "http://wso2jsonschema.org/0/Subtotal",
+        "type" : "string"
+      },
+      "Descuento" : {
+        "id" : "http://wso2jsonschema.org/0/Descuento",
+        "type" : "string"
+      },
+      "Impuestos" : {
+        "id" : "http://wso2jsonschema.org/0/Impuestos",
+        "type" : "string"
+      },
+      "Total" : {
+        "id" : "http://wso2jsonschema.org/0/Total",
+        "type" : "string"
+      },
+      "Unidades Vendidas" : {
+        "id" : "http://wso2jsonschema.org/0/Unidades Vendidas",
+        "type" : "string"
+      },
+      "Precio" : {
+        "id" : "http://wso2jsonschema.org/0/Precio",
+        "type" : "string"
+      },
+      "Comensales" : {
+        "id" : "http://wso2jsonschema.org/0/Comensales",
+        "type" : "string"
+      }
+    },
+    "id" : "http://wso2jsonschema.org/0",
+    "type" : "object"
+  } ]
+}
