@@ -1,0 +1,10 @@
+key: "ReportParseAPI-1.0.0"
+name: "ReportParseAPI"
+displayName: "ReportParseAPI"
+description: "Sample API"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/report/serialization"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false
+apiId: "null"

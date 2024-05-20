@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/invoice" name="ReportParseAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" uri-template="/details">
+        <inSequence>
+            <log level="custom">
+                <property name="Paso 1" value="logeo y obtengo token de seguridad"/>
+                <property name="Donde" value="Seteo de las propertys con los parametros de la llamada"/>
+            </log>
+            <property name="uri.var.baseurl" scope="default" type="STRING" value="https://api.elemetrica.com/v2/"/>
+            <property expression="get-property('query.param.invoiceDetails')" name="invoiceDetails" scope="default" type="STRING"/>
+            <property expression="get-property('query.param.openDate')" name="openDate" scope="default" type="STRING"/>
+            <property expression="get-property('query.param.closingDate')" name="closingDate" scope="default" type="STRING"/>
+            <property expression="get-property('query.param.categoryId')" name="categoryId" scope="default" type="STRING"/>
+            <property expression="get-property('query.param.storeName')" name="storeName" scope="default" type="STRING"/>
+            <property expression="get-property('query.param.identifiers')" name="identifiers" scope="default" type="STRING"/>
+            <property expression="get-property('query.param.indicators')" name="indicators" scope="default" type="STRING"/>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <payloadFactory media-type="json">
+                <format>{"password":"Test1234."}</format>
+                <args/>
+            </payloadFactory>
+            <call>
+                <endpoint>
+                    <http method="post" uri-template="{uri.var.baseurl}accounts/api@test.com/login">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <property expression="json-eval($.token)" name="authToken" scope="default" type="STRING"/>
+            <header expression="get-property('authToken')" name="X-Coin" scope="transport"/>
+            <header name="Accept" scope="transport" value="text/plain"/>
+            <property name="messageType" scope="axis2" type="STRING" value="text/plain;charset=ISO-8859-1"/>
+            <property name="setCharacterEncoding" scope="axis2" type="STRING" value="false"/>
+            <property expression="fn:concat(get-property('uri.var.baseurl'), 'reports/download?type=', get-property('invoiceDetails'), '&amp;begin_date=', get-property('openDate'), '&amp;category_id=', get-property('categoryId'), '&amp;end_date=', get-property('closingDate'), '&amp;identifiers=', get-property('identifiers'), '&amp;indicators=', get-property('indicators'), '&amp;locals=', get-property('storeName'))" name="uri.var.report" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="Paso 2" value="invoco endpoint para obtener csv"/>
+                <property name="Donde" value="Realizo la request HTTP GET con el token obtenido"/>
+                <property expression="$ctx:uri.var.report" name="URL endpoint elemetrica"/>
+                <property expression="json-eval($.token)" name="authTokenObtenido"/>
+            </log>
+            <call>
+                <endpoint>
+                    <http method="get" uri-template="{uri.var.report}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <log level="custom">
+                <property name="Paso 3" value="Remover las primeras 4 lineas del reporte"/>
+                <property name="Donde" value="Script mediator que removera titulo e intervalo del reporte"/>
+            </log>
+            <script language="js"><![CDATA[var log = mc.getServiceLog();
+			        var payload = mc.getPayloadXML();
+			        var lines = payload.split('\n');
+			        lines.splice(0, 4);// remove 4 first lines because of title and blanks
+			        var newPayload = lines.join('\n');
+			        mc.setProperty('newPayload',newPayload);]]></script>
+            <payloadFactory description="updatePayload" media-type="text">
+                <format>$1</format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:newPayload"/>
+                </args>
+            </payloadFactory>
+            <log level="custom">
+                <property name="Paso 4" value="Mapeo la data del CSV a JSON"/>
+                <property name="Donde" value="Datamapper mediator que realizara la transformacion"/>
+            </log>
+            <datamapper config="gov:datamapper/mapCsvToJson.dmc" description="MapeoData" inputSchema="gov:datamapper/mapCsvToJson_inputSchema.json" inputType="CSV" outputSchema="gov:datamapper/mapCsvToJson_outputSchema.json" outputType="JSON" xsltStyleSheet="gov:datamapper/mapCsvToJson_xsltStyleSheet.xml"/>
+            <log level="custom">
+                <property name="Paso final" value="Respondo con el JSON listo"/>
+            </log>
+            <respond/>
+        </inSequence>
+        <outSequence/>
+        <faultSequence/>
+    </resource>
+</api>
