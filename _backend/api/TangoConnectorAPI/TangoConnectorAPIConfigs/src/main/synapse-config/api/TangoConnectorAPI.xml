@@ -69,7 +69,7 @@
                             <log level="custom">
                                 <property name="donde" value="Por crear articulo"/>
                                 <property expression="json-eval($)" name="payload"/>
-                                <property expression="$ctx:dataNovedad.tabla" name="tabla"/>
+                                <property expression="$ctx:tabla" name="tabla"/>
                                 <property expression="$ctx:uri.var.articulo" name="uri"/>
                             </log>
                             <call>
@@ -126,7 +126,7 @@
                             <log level="custom">
                                 <property name="donde" value="Por updatear articulo"/>
                                 <property expression="json-eval($)" name="payload"/>
-                                <property expression="$ctx:dataNovedad.tabla" name="tabla"/>
+                                <property expression="$ctx:tabla" name="tabla"/>
                                 <property expression="$ctx:uri.var.artinte" name="uri"/>
                             </log>
                             <call>
@@ -160,7 +160,7 @@
                             <log level="custom">
                                 <property name="donde" value="Por eliminar articulo"/>
                                 <property expression="json-eval($)" name="payload"/>
-                                <property expression="$ctx:dataNovedad.tabla" name="tabla"/>
+                                <property expression="$ctx:tabla" name="tabla"/>
                                 <property expression="$ctx:uri.var.artinte" name="uri"/>
                             </log>
                             <call>
@@ -404,6 +404,8 @@
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//dataservices_url" name="dataservices_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="$ctx:apiconf//talonario" name="pTalonario" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//tipo_comprobante_in_s" name="pComprobanteInS" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//tipo_comprobante" name="pComprobante" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
             <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/request_box')" name="uri.var.tangodssurl" scope="default" type="STRING"/>
             <header name="Accept" scope="transport" value="application/json"/>
             <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
@@ -443,16 +445,8 @@
                     <switch source="get-property('pTipoMovimiento')">
                         <case regex="ENTRADA">
                             <property description="tipo mov E" name="pTipoMovAbreviado" scope="default" type="STRING" value="E"/>
-                            <property description="tipo mov E" name="pComprobanteInS" scope="default" type="STRING" value="EN"/>
-                            <property description="tipo mov E" name="pComprobante" scope="default" type="STRING" value="ENT"/>
-                            <property description="Cantidad mov entrada" name="pCantidadSum" scope="default" type="STRING" value="$ctx:pCantidad"/>
                         </case>
                         <default>
-                            <property description="tipo mov E" name="pComprobanteInS" scope="default" type="STRING" value="SA"/>
-                            <property description="tipo mov E" name="pComprobante" scope="default" type="STRING" value="SAL"/>
-                            <script language="js"><![CDATA[var value1 = mc.getProperty("pCantidad");
-							            var result = value1 * -1;
-							            mc.setProperty("pCantidadSum", result);]]></script>
                             <property name="pTipoMovAbreviado" scope="default" type="STRING" value="S"/>
                         </default>
                     </switch>
@@ -463,7 +457,7 @@
                             </pool>
                         </connection>
                         <statement>
-                            <sql><![CDATA[SELECT MAX(cast(NCOMP_IN_S as int))+1 AS numeroComprobante FROM STA14 WHERE T_COMP =?]]></sql>
+                            <sql><![CDATA[SELECT COALESCE(MAX(CAST(NCOMP_IN_S AS int)) + 1, 1) AS numeroComprobante FROM STA14 WHERE T_COMP = ?]]></sql>
                             <parameter expression="get-property('pComprobante')" type="VARCHAR"/>
                             <result column="numeroComprobante" name="pNumeroComprobante"/>
                         </statement>
@@ -550,7 +544,7 @@
                                     <arg evaluator="xml" expression="get-property('pTipoMovAbreviado')"/>
                                     <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pTalonario')"/>
-                                    <arg evaluator="xml" expression="get-property('pCantidadSum')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
                                     <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
                                     <arg evaluator="xml" expression="get-property('pDeposito')"/>
                                 </args>
@@ -625,7 +619,7 @@
                                     <arg evaluator="xml" expression="get-property('pTipoMovAbreviado')"/>
                                     <arg evaluator="xml" expression="get-property('pNumeroTalonario')"/>
                                     <arg evaluator="xml" expression="get-property('pTalonario')"/>
-                                    <arg evaluator="xml" expression="get-property('pCantidadSum')"/>
+                                    <arg evaluator="xml" expression="get-property('pCantidad')"/>
                                     <arg evaluator="xml" expression="get-property('pCodArticulo')"/>
                                     <arg evaluator="xml" expression="get-property('pDeposito')"/>
                                 </args>
@@ -661,6 +655,8 @@
                     <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
                     <property description="Id Pedido Trabajo Tzl" expression="json-eval($.id_pedido_trabajo)" name="pIdPedidoTrabajo" scope="default" type="STRING"/>
                     <property description="Banda" expression="json-eval($.banda)" name="pBanda" scope="default" type="STRING"/>
+                    <property description="NumSerie" expression="json-eval($.num_serie)" name="pNumSerie" scope="default" type="STRING"/>
+                    <property description="Marca" expression="json-eval($.marca)" name="pMarca" scope="default" type="STRING"/>
                     <dblookup description="Lookup valores Tango">
                         <connection>
                             <pool>
@@ -679,6 +675,8 @@
                         <property expression="get-property('pNumPedido')" name="numPedido"/>
                         <property expression="get-property('pIdPedidoTrabajo')" name="idPedTrazajoTzl"/>
                         <property expression="get-property('pBanda')" name="banda"/>
+                        <property expression="get-property('pNumSerie')" name="numSerie"/>
+                        <property expression="get-property('pMarca')" name="marca"/>
                         <property expression="get-property('pTalonPed')" name="talon ped"/>
                     </log>
                     <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
@@ -691,7 +689,7 @@
 										         "cod_articulo":"$2",
 										         "num_renglon":"$3",
 										         "num_pedido":"$4",
-										         "talon_ped":"$5""
+										         "talon_ped":"$5"
 										      },
 										      "_post_tango_pedido_linea_detalle":{
 										         "descripcion":"$6",
@@ -709,8 +707,8 @@
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pTalonPed')"/>
-                            <arg evaluator="xml" expression="fn:concat(get-property('pDescripcion'),get-property('pIdPedidoTrabajo'))"/>
-                            <arg evaluator="xml" expression="fn:concat('Banda: ',get-property('pBanda'))"/>
+                            <arg evaluator="xml" expression="fn:concat('T-',get-property('pIdPedidoTrabajo'),' S-',get-property('pNumSerie'))"/>
+                            <arg evaluator="xml" expression="fn:concat(get-property('pBanda'),' ',get-property('pMarca'))"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
                             <arg evaluator="xml" expression="get-property('pTalonPed')"/>
