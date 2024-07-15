@@ -63,22 +63,22 @@ class Valores extends CI_Model {
   * @return ID valor generado
   */
   function guardarValor($data){
-    $post['_post_valor'] = $data;
+    $post['_post_tablas'] = $data;
     // $post['_post_valor']['empr_id'] = '';
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarValor()  $post: >> '.json_encode($post));
     $usuario = $this->session->userdata();
     // SI HAY ALGO CON "-" QUE LO CORTE
-    if (strpos($post['_post_valor']['tabla'], "-")) {
-      $nombres = explode("-", $post['_post_valor']['tabla']);
-      $post['_post_valor']['empr_id'] = $nombres[0];
-      $post['_post_valor']['tabla'] = $nombres[1];
+    if (strpos($post['_post_tablas']['tabla'], "-")) {
+      $nombres = explode("-", $post['_post_tablas']['tabla']);
+      $post['_post_tablas']['empr_id'] = $nombres[0];
+      $post['_post_tablas']['tabla'] = $nombres[1];
     }
     // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
     if ($usuario['email'] != TOOLS_ADMIN_USER) {
-      $post['_post_valor']['empr_id'] = empresa();
+      $post['_post_tablas']['empr_id'] = empresa();
     }
-    if ($post['_post_valor']['empr_id'] == "999999") {
-      $post['_post_valor']['empr_id'] = "";
+    if ($post['_post_tablas']['empr_id'] == "999999") {
+      $post['_post_tablas']['empr_id'] = "";
     }
     $aux = $this->rest->callAPI("POST",REST_CORE."/tablas", $post);
     $aux = json_decode($aux["data"]);
@@ -91,7 +91,7 @@ class Valores extends CI_Model {
   * @return ID valor generado
   */
   function editarValor($data){
-    $post['_post_valor'] = $data;
+    $post['_put_tabla'] = $data;
     log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarValor()  $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("PUT",REST_CORE."/tabla", $post);
     $aux = json_decode($aux["data"]);

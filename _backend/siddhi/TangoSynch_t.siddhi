@@ -1,0 +1,78 @@
+@App:name('TangoSynch_t')
+
+@App:description('tango synch de test')
+
+@sink(type = 'http-call', 
+      	publisher.url = "http://localhost:8280/tools/tango/1.0/synch/in", 
+      	method = "POST", 
+      	sink.id = "3",
+	headers = "'Content-Type:application/json','Authorization:Bearer eyJ4NXQiOiJOMkpqTWpOaU0yRXhZalJrTnpaalptWTFZVEF4Tm1GbE5qZzRPV1UxWVdRMll6YzFObVk1TlEiLCJraWQiOiJNREpsTmpJeE4yRTFPR1psT0dWbU1HUXhPVEZsTXpCbU5tRmpaalEwWTJZd09HWTBOMkkwWXpFNFl6WmpOalJoWW1SbU1tUTBPRGRpTkRoak1HRXdNQV9SUzI1NiIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhZG1pbiIsImF1dCI6IkFQUExJQ0FUSU9OIiwiYXVkIjoib0wwRGVMNEZWZnpOOE1CUlRiSmloZXROMGtzYSIsIm5iZiI6MTY5MTUxMzk3OSwiYXpwIjoib0wwRGVMNEZWZnpOOE1CUlRiSmloZXROMGtzYSIsInNjb3BlIjoiZGVmYXVsdCIsImlzcyI6Imh0dHBzOlwvXC9sb2NhbGhvc3Q6OTQ0M1wvb2F1dGgyXC90b2tlbiIsImV4cCI6MzE1NTI5MTUxMzk3OSwiaWF0IjoxNjkxNTEzOTc5LCJqdGkiOiI0NDZjOGNhZS03OTY4LTRkMTEtYTBmOC1hNzYwYTRmYWFhMmEifQ.bxi2644U9HNwyYqFyqI77WnIxhG7SFSXLbXMiQM4A3_jiRQM6rH4Yq8TiQfaapTg9knsIrRe2A-ZTOwKMkJkV8csM8w0c53sOlm0cAOyYG8A9BWqamoFu82m9AH3kuoDreegYRg_O5bBq2CloHiviTMteU1l3XSJMt-GY5czgVkgVmbeoAU3I58XJcvz7WfyRTCti557VcSab-Tkw9PNhUvs4c4EYJXrevXUneKl8VeglXdjigWgJBkbetuMwroEB1BBkDgW9-0bLHeT2HfYheuQzv5Nhp-So9dq6zE2mXsllrvwpExy1GJsHvHLTzloJr26Vj0GTgHR0HOFekpm8A'",	
+	blocking.io='true',
+      	on.error='wait',
+	@map(type = 'json'))
+define stream HTTPSinkStream (queue_id int, data_json string,empr_id string,prov_id string);
+
+@source(type = 'cdc', 
+        url = "jdbc:sqlserver://10.142.0.23:1433;databaseName=Empresa_Ejemplo;", 
+        username = "Axoft", 
+        password = "Axoft", 
+        table.name = "dbo.novedades_clientes_queue", 
+        on.error='wait',
+        database.server.name = "10.142.0.23\SQLEXPRESS", 
+        mode = "polling", 
+        polling.column = 'fec_alta', 
+        polling.interval = '1',
+        jdbc.driver.name = "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+	@map(type = 'keyvalue'))
+define stream NovedadTangoStream (queue_id int, data_json string);
+
+-- Define sink to handle HTTP-call errors
+@sink(type='log', 
+      prefix='HTTP-call error occurred: ', 
+      on.error='wait',
+      sink.id = "3", 
+      http.status.code = '[3-5][0-9][0-9]\d+',
+      @map(type='json', 
+           enclosing.element='$',
+           @attributes(error='$.ERROR')))
+define stream ErrorSink (id int, name string, ERROR string);
+
+@source(type = 'http-call-response', 
+        sink.id = "3", 
+        http.status.code = '2\d+',
+        on.error='wait',
+	@map(type = 'json'))
+define stream HTTPResponseStream (queue_id int);
+
+        
+-- Update processed_flag column in SQL Server table for each processed record
+@store(type='rdbms',
+      jdbc.driver.name='com.microsoft.sqlserver.jdbc.SQLServerDriver',
+      jdbc.url='jdbc:sqlserver://10.142.0.23:1433;databaseName=Empresa_Ejemplo;schema=dbo',
+      database.server.name = "10.142.0.23\SQLEXPRESS",
+      username='Axoft',
+      password='Axoft')
+define table novedades_clientes_queue (queue_id int,procesado int);
+
+
+@sink(type = 'log') 
+define stream LogStream (queue_id int, data_json string, empr_id string, prov_id string);
+
+
+@info(name = 'log')
+from NovedadTangoStream 
+select queue_id, data_json,"2" as empr_id, "33" as prov_id 
+insert into LogStream;
+
+@info(name = 'novedades')
+from NovedadTangoStream 
+select queue_id, data_json,"2" as empr_id, "33" as prov_id  
+insert into HTTPSinkStream;
+
+@info(name = 'post-grabacion')
+from HTTPResponseStream 
+select queue_id
+update novedades_clientes_queue 
+set novedades_clientes_queue.procesado = 1
+on novedades_clientes_queue.queue_id == queue_id
+  

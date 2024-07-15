@@ -219,6 +219,11 @@
       <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id":"$arti_id",&#xd;                "barcode":"$barcode",&#xd;                "descripcion": "$descripcion",&#xd;                "receta":"$receta",&#xd;                "cantidad":"$cantidad",&#xd;                "cantidad_receta":"$cantidad_receta",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="batch_id" sqlType="STRING"/>
    </query>
+   <query id="getLotesEstablecimientoStock" useConfig="ToolsDataSource">
+      <sql>select&#xd;  lote.lote_id as id,&#xd;  lote.lote_id as titulo,&#xd;  lote.batch_id,&#xd;  arti.arti_id as producto,&#xd;  arti.descripcion as tituloproducto,&#xd;  lotealm.cantidad as stock,&#xd;  lote.fec_alta as fecha,&#xd;  '0' as envase,&#xd;  '-' as tituloenvase&#xd;from&#xd;  prd.lotes lote,&#xd;  prd.recipientes as reci,&#xd;  alm.alm_depositos as depo,&#xd;  alm.alm_lotes as lotealm,&#xd;  alm.alm_articulos as arti&#xd;where&#xd;  lote.reci_id = reci.reci_id&#xd;  and reci.depo_id = depo.depo_id&#xd;  and lote.batch_id = cast(lotealm.batch_id as INTEGER)&#xd;  and lotealm.arti_id = arti.arti_id&#xd;  and depo.esta_id = cast(:esta_id as INTEGER)&#xd;  and reci.tipo = 'DEPOSITO'&#xd;  and lote.estado = 'En Curso'&#xd;  and lotealm.cantidad &gt; 0</sql>
+      <result outputType="json">{&#xd;    "lotes":{&#xd;        "lote":[&#xd;            {&#xd;                "id":"$id",&#xd;                "batch_id":"$batch_id",&#xd;                "titulo":"$titulo",&#xd;                "producto":"$producto",&#xd;                "tituloproducto":"$tituloproducto",&#xd;                "fecha":"$fecha",&#xd;                "stock":"$stock",&#xd;                "envase":"$envase",&#xd;                "tituloenvase":"$tituloenvase"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/batch/porrecipiente/{reci_id}">
       <call-query href="getBatchidPorRecipiente">
          <with-param name="reci_id" query-param="reci_id"/>
@@ -459,6 +464,11 @@
    <resource method="GET" path="/lote/articulosEmpaque/batch/{batch_id}">
       <call-query href="getArticulosBatchEmpaque">
          <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lotes_establecimiento_stock/{esta_id}">
+      <call-query href="getLotesEstablecimientoStock">
+         <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
 </data>

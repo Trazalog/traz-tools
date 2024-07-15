@@ -1,8 +1,5 @@
 <data enableBatchRequests="true" name="TangoConnectorDataService" serviceNamespace="" serviceGroup="" transports="http https" enableBoxcarring="true">
   <description />
-  <config id="ToolsDataSource">
-    <property name="carbon_datasource_name">ToolsDataSource</property>
-  </config>
   <config id="TangoDataSource">
     <property name="carbon_datasource_name">TangoDataSource</property>
   </config>
@@ -28,6 +25,7 @@
       <with-param name="desc_adicional" query-param="desc_adicional" />
       <with-param name="num_comp" query-param="num_comp" />
       <with-param name="num_renglon" query-param="num_renglon" />
+      <with-param name="talonario" query-param="talonario" />
     </call-query>
   </resource>
   <resource method="POST" path="/stock/movimiento/cabecera">
@@ -36,6 +34,7 @@
                   <with-param name="numComprobante2" query-param="numComprobante2"/>
          <with-param name="nroTalonario" query-param="nroTalonario"/>
          <with-param name="tipoMov" query-param="tipoMov"/>
+         <with-param name="tipoMovInS" query-param="tipoMovInS"/>
          <with-param name="id_movimiento" query-param="id_movimiento"/>
          <with-param name="talonario" query-param="talonario"/>
       </call-query>
@@ -111,6 +110,7 @@
          <with-param name="depositoDDE" query-param="depositoDDE"/>
          <with-param name="numComprobante" query-param="numComprobante"/>
          <with-param name="tipoMovimientoAbreviado" query-param="tipoMovimientoAbreviado"/>
+         <with-param name="tipoMovInS" query-param="tipoMovInS"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/talonario/">
@@ -135,10 +135,11 @@
    </resource>
     <resource method="POST" path="/tango/pedido/linea">
     <call-query href="setLineaPedidoTango">
-      <with-param name=" cant_pedida " query-param=" cant_pedida " />
-      <with-param name=" cod_articulo" query-param=" cod_articulo" />
+      <with-param name="cant_pedida" query-param="cant_pedida" />
+      <with-param name="cod_articulo" query-param="cod_articulo" />
       <with-param name="num_renglon" query-param="num_renglon" />
-      <with-param name=" num_pedido " query-param=" num_pedido " />
+      <with-param name="num_pedido" query-param="num_pedido" />
+      <with-param name="talon_ped" query-param="talon_ped" />
     </call-query>
   </resource>
   <query id="getPedidosPendientesTango" useConfig="TangoDataSource">
@@ -197,27 +198,28 @@ where ncq.fec_realizado is null</sql>
 set fec_realizado = getdate() where queue_id = cast(:queue_id as integer)</sql>
     <param name="queue_id" paramType="SCALAR" sqlType="STRING" />
   </query>
- 
   <query id="setDetalleLineaPedidoTango" useConfig="TangoDataSource" returnGeneratedKeys="true" keyColumns="ID_GVA45">
     <sql>
 INSERT INTO dbo.GVA45
 ("DESC", DESC_ADIC, N_COMP, N_RENGLON, T_COMP)
-VALUES(:descripcion, :desc_adicional,:num_comp, :num_renglon, 'PED');</sql>
+VALUES(:descripcion, :desc_adicional,:num_comp, :num_renglon, 'PED',:talonario);</sql>
     <param name="descripcion" paramType="SCALAR" sqlType="STRING" />
     <param name="desc_adicional" paramType="SCALAR" sqlType="STRING" />
     <param name="num_comp" paramType="SCALAR" sqlType="STRING" />
     <param name="num_renglon" paramType="SCALAR" sqlType="STRING" />
+    <param name="talonario" paramType="SCALAR" sqlType="STRING" />
   </query>
   <query id="setLineaPedidoTango" useConfig="TangoDataSource" returnGeneratedKeys="true" keyColumns="id_gva03">
     <sql>INSERT INTO dbo.GVA03
-(CANT_PEDID, COD_ARTICU, N_RENGLON, NRO_PEDIDO)
-VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido );
+(CANT_PEDID, COD_ARTICU, N_RENGLON, NRO_PEDIDO,TALON_PED)
+VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :talon_ped );
 
 </sql>
-    <param name=" cant_pedida " paramType="SCALAR" sqlType="STRING" />
-    <param name=" cod_articulo" paramType="SCALAR" sqlType="STRING" />
+    <param name="cant_pedida" paramType="SCALAR" sqlType="STRING" />
+    <param name="cod_articulo" paramType="SCALAR" sqlType="STRING" />
     <param name="num_renglon" paramType="SCALAR" sqlType="STRING" />
-    <param name=" num_pedido " paramType="SCALAR" sqlType="STRING" />
+    <param name="num_pedido" paramType="SCALAR" sqlType="STRING" />
+    <param name="talon_ped" paramType="SCALAR" sqlType="STRING" />
   </query>
   
      <query id="numeroComprobante" useConfig="TangoDataSource">
@@ -238,16 +240,17 @@ VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido );
       <param name="talonario" sqlType="INTEGER"/>
    </query>
    <query id="movimientoStock" useConfig="TangoDataSource">
-      <sql>insert into sta14 (cod_pro_cl,cotiz,exportado,fecha_mov,lote,mon_cte,nro_sucurs, n_comp ,ncomp_in_s,n_remito,observacio,talonario ,t_comp,tcomp_in_s)VALUES ('' ,'1','0' ,GETDATE(),'0',-1,'0' ,FORMAT(:numComprobante2,' 0000000000000'),FORMAT(:numComprobante,'00000000'),FORMAT(:nroTalonario, '000000000000'),:id_movimiento,:talonario,:tipoMov,'LE')</sql>
+      <sql>insert into sta14 (cod_pro_cl,cotiz,exportado,fecha_mov,lote,mon_cte,nro_sucurs, n_comp ,ncomp_in_s,n_remito,observacio,talonario ,t_comp,tcomp_in_s)VALUES ('' ,'1','0' ,CONVERT(VARCHAR(10), GETDATE(), 111),'0',-1,'0' ,FORMAT(:numComprobante2,' 0000000000000'),FORMAT(:numComprobante,'00000000'),FORMAT(:nroTalonario, '000000000000'),:id_movimiento,:talonario,:tipoMov,:tipoMovInS)</sql>
       <param name="numComprobante" sqlType="INTEGER"/>
       <param name="numComprobante2" sqlType="INTEGER"/>
       <param name="nroTalonario" sqlType="INTEGER"/>
       <param name="tipoMov" sqlType="STRING"/>
+      <param name="tipoMovInS" sqlType="STRING"/>
       <param name="id_movimiento" sqlType="STRING"/>
       <param name="talonario" sqlType="INTEGER"/>
    </query>
    <query id="detalleMovimientoStock" useConfig="TangoDataSource">
-      <sql>insert into sta20 (cantidad ,cant_dev ,cant_oc ,cant_pend ,can_equi_v ,cod_articu ,cod_deposi ,deposi_dde ,equivalenc ,fecha_mov ,ncomp_in_s ,n_rengl_oc ,n_rengl_s ,precio ,tipo_mov ,tcomp_in_s) values( CAST(REPLACE(?,'.0','') AS INT)  ,'0' ,'0' ,CAST(REPLACE(?,'.0','') AS INT)  ,'1' ,?  ,?  ,?  ,'1' ,GETDATE() ,FORMAT(CAST(? AS INT),'00000000')  ,'0' ,1 ,'0' ,?,'LE')</sql>
+      <sql>insert into sta20 (cantidad ,cant_dev ,cant_oc ,cant_pend ,can_equi_v ,cod_articu ,cod_deposi ,deposi_dde ,equivalenc ,fecha_mov ,ncomp_in_s ,n_rengl_oc ,n_rengl_s ,precio ,tipo_mov ,tcomp_in_s) values( CAST(REPLACE(?,'.0','') AS INT)  ,'0' ,'0' ,CAST(REPLACE(?,'.0','') AS INT)  ,'1' ,?  ,?  ,?  ,'1' ,CONVERT(VARCHAR(10), GETDATE(), 111) ,FORMAT(CAST(? AS INT),'00000000')  ,'0' ,1 ,'0' ,?,?)</sql>
       <param name="cantidad" sqlType="STRING"/>
       <param name="cantidadPend" sqlType="STRING"/>
       <param name="codArticulo" sqlType="STRING"/>
@@ -255,6 +258,7 @@ VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido );
       <param name="depositoDDE" sqlType="STRING"/>
       <param name="numComprobante" sqlType="INTEGER"/>
       <param name="tipoMovimientoAbreviado" sqlType="STRING"/>
+      <param name="tipoMovInS" sqlType="STRING"/>      
    </query>
    <query id="talonario" useConfig="TangoDataSource">
       <sql>update sta17 set proximo = CAST(? AS INT) + 1 where talonario = ?</sql>
