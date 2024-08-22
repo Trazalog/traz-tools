@@ -415,11 +415,24 @@ class Establecimientos extends CI_Model {
   }
 
   public function getPanoles()
-    {
-        $empr_id = empresa();
-        $url = REST_PAN.'/panol/empresa/'.$empr_id;
-				$array = $this->rest->callAPI("GET",$url);
-				$resp =  json_decode($array['data']);
-				return $resp;
+  {
+    $empr_id = empresa();
+    $url = REST_PAN.'/panol/empresa/'.$empr_id;
+    $array = $this->rest->callAPI("GET",$url);
+    $resp =  json_decode($array['data']);
+    return $resp;
+  }
+
+  public function tieneDepositoAsociado($user_id) {
+    $url = REST_CORE.'/depositos/encargado/'.$user_id;
+    $array = $this->rest->callAPI("GET",$url);
+    $rsp =  json_decode($array['data']);
+    $depositos = $rsp->encargados->depositos;
+    // Verificar si la estructura de la respuesta es correcta y si hay depósitos
+    if (isset($rsp->encargados->depositos) && is_array($rsp->encargados->depositos) && count($rsp->encargados->depositos) > 0) {
+      return false; // El usuario tiene depósitos asociados
+    } else {
+      return true; // No tiene depósitos asociados
     }
+  }
 }
