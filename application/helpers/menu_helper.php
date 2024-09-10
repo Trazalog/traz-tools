@@ -105,7 +105,7 @@ if(!function_exists('menu')){
                         if($habilitado == "true") {
 
                             $nivel2_Hab .= '<li class="treeview">';
-                            $nivel2_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i><span>$value->texto<(span></a>";
+                            $nivel2_Hab .= "<a href='#' title='$value->texto_onmouseover' onclick='linkTo(\"$value->url\")'><i class='$value->url_icono'></i><span>$value->texto</span></a>";
                             $nivel2_Hab .= '</li>';
 
                             $menu_nivel2_Hab .= $nivel2_Hab;

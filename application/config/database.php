@@ -95,3 +95,26 @@ $db['default'] = array(
     'port' => '5432',
     'dsn' => 'pgsql:host=10.142.0.13;port=5432;dbname=tools_prod_t',
 );
+
+$db['asset_db'] = array(
+    'dsn'   => '',
+    'hostname' => '10.142.0.13',
+    'username' => 'rootremote',
+    'password' => '!Password00',
+    'database' => 'assetv2',
+    'dbdriver' => 'mysqli',
+    'dbprefix' => '',
+    'pconnect' => FALSE,
+    'db_debug' => TRUE,
+    'cache_on' => FALSE,
+    'cachedir' => '',
+    'char_set' => 'utf8',
+    'dbcollat' => 'utf8_general_ci',
+    'swap_pre' => '',
+    'encrypt' => FALSE,
+    'compress' => FALSE,
+    'stricton' => FALSE,
+    'failover' => array(),
+    'save_queries' => TRUE,
+    'port' => '3306'
+);
