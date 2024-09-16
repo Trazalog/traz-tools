@@ -1,8 +1,5 @@
 <data enableBatchRequests="true" name="TangoConnectorDataService" serviceNamespace="" serviceGroup="" transports="http https" enableBoxcarring="true">
   <description />
-  <config id="ToolsDataSource">
-    <property name="carbon_datasource_name">ToolsDataSource</property>
-  </config>
   <config id="TangoDataSource">
     <property name="carbon_datasource_name">TangoDataSource</property>
   </config>
@@ -243,7 +240,7 @@ VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :t
       <param name="talonario" sqlType="INTEGER"/>
    </query>
    <query id="movimientoStock" useConfig="TangoDataSource">
-      <sql>insert into sta14 (cod_pro_cl,cotiz,exportado,fecha_mov,lote,mon_cte,nro_sucurs, n_comp ,ncomp_in_s,n_remito,observacio,talonario ,t_comp,tcomp_in_s)VALUES ('' ,'1','0' ,GETDATE(),'0',-1,'0' ,FORMAT(:numComprobante2,' 0000000000000'),FORMAT(:numComprobante,'00000000'),FORMAT(:nroTalonario, '000000000000'),:id_movimiento,:talonario,:tipoMov,:tipoMovInS)</sql>
+      <sql>insert into sta14 (cod_pro_cl,cotiz,exportado,fecha_mov,lote,mon_cte,nro_sucurs, n_comp ,ncomp_in_s,n_remito,observacio,talonario ,t_comp,tcomp_in_s)VALUES ('' ,'1','0' ,CONVERT(VARCHAR(10), GETDATE(), 111),'0',-1,'0' ,FORMAT(:numComprobante2,' 0000000000000'),FORMAT(:numComprobante,'00000000'),FORMAT(:nroTalonario, '000000000000'),:id_movimiento,:talonario,:tipoMov,:tipoMovInS)</sql>
       <param name="numComprobante" sqlType="INTEGER"/>
       <param name="numComprobante2" sqlType="INTEGER"/>
       <param name="nroTalonario" sqlType="INTEGER"/>
@@ -253,7 +250,7 @@ VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :t
       <param name="talonario" sqlType="INTEGER"/>
    </query>
    <query id="detalleMovimientoStock" useConfig="TangoDataSource">
-      <sql>insert into sta20 (cantidad ,cant_dev ,cant_oc ,cant_pend ,can_equi_v ,cod_articu ,cod_deposi ,deposi_dde ,equivalenc ,fecha_mov ,ncomp_in_s ,n_rengl_oc ,n_rengl_s ,precio ,tipo_mov ,tcomp_in_s) values( CAST(REPLACE(?,'.0','') AS INT)  ,'0' ,'0' ,CAST(REPLACE(?,'.0','') AS INT)  ,'1' ,?  ,?  ,?  ,'1' ,GETDATE() ,FORMAT(CAST(? AS INT),'00000000')  ,'0' ,1 ,'0' ,?,?)</sql>
+      <sql>insert into sta20 (cantidad ,cant_dev ,cant_oc ,cant_pend ,can_equi_v ,cod_articu ,cod_deposi ,deposi_dde ,equivalenc ,fecha_mov ,ncomp_in_s ,n_rengl_oc ,n_rengl_s ,precio ,tipo_mov ,tcomp_in_s) values( CAST(REPLACE(?,'.0','') AS INT)  ,'0' ,'0' ,CAST(REPLACE(?,'.0','') AS INT)  ,'1' ,?  ,?  ,?  ,'1' ,CONVERT(VARCHAR(10), GETDATE(), 111) ,FORMAT(CAST(? AS INT),'00000000')  ,'0' ,1 ,'0' ,?,?)</sql>
       <param name="cantidad" sqlType="STRING"/>
       <param name="cantidadPend" sqlType="STRING"/>
       <param name="codArticulo" sqlType="STRING"/>
