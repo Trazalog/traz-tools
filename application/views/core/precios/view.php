@@ -31,3 +31,10 @@
     </div>
 </div>
 <!---/////--- FIN BOX 2 DATATABLE---//////----->
+<script>
+    // $(document).ready(function () {
+    //     $(".select2").select2();
+    // });
+    // carga tabla de precios
+    $("#cargar_tabla").load("index.php/core/Precio/listarPrecios");
+</script>

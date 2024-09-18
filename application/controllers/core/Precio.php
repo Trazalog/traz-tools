@@ -17,8 +17,19 @@ class Precio extends CI_Controller
 	{
     	log_message('INFO','#TRAZA | PRECIOS | index()  >> ');
     	// $data['list'] = $this->Precios->Listar_Precios();
-    	// $data['tipos_precios'] = $this->Precios->Listar_Tipos_Precios();
+    	$data['listas_precios'] = $this->Precios->getListasPrecios();
     	$this->load->view('core/precios/view', $data);
     }
-
+	/**
+     * Devuelve un listado de los Precios.
+     *
+     * @return  Array  Devuelve un arreglo con los Precios.
+     */
+	public function listarPrecios()
+	{
+		log_message('INFO','#TRAZA| ESTABLECIMIENTOS | listarPrecios() >> ');
+		$data['listas_precios'] = $this->Precios->getListasPrecios();
+		// $data['listarPaises'] = $this->Precios->listarPaises();
+    	$this->load->view('core/precios/list', $data);
+	}
 }
