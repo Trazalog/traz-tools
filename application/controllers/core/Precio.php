@@ -32,4 +32,24 @@ class Precio extends CI_Controller
 		// $data['listarPaises'] = $this->Precios->listarPaises();
     	$this->load->view('core/precios/list', $data);
 	}
+	/**
+     * Guarda el listado de los Precios.
+     *
+     * @return  Array  Devuelve un arreglo con los Precios.
+     */
+	public function verificarNombre()
+	{
+        // Obtener el nombre enviado por AJAX
+        $nombre = $this->input->post('nombre');
+
+        // Llamar al modelo para verificar si el nombre existe
+        $existe = $this->Precios->existeNombre($nombre);
+
+        // Enviar la respuesta
+        if ($existe) {
+            echo 'existe';  // Enviar "existe" si el nombre ya está registrado
+        } else {
+            echo 'no_existe';  // Enviar "no_existe" si no está registrado
+        }
+	}
 }

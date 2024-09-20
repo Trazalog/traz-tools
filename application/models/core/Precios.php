@@ -26,4 +26,22 @@ class Precios extends CI_Model {
 		$listas_precios = $aux->listas->lista;
 		return $listas_precios;
   }
+
+  /**
+  * Función para verificar si el nombre ya existe en la base de datos
+  * @param 
+  * @return true o false
+  */
+  public function existeNombre($nombre) {
+    $aux = $this->rest->callAPI("GET",REST_CORE."/lista_precio_valida_nombre/$nombre");
+		$aux = json_decode($aux["data"]);
+		// $query = $aux->lista;
+
+    // Si hay al menos un resultado, el nombre existe
+    if (isset($aux->lista) && !empty($aux->lista->nombre) && $aux->lista->nombre === $nombre) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
