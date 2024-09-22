@@ -4,7 +4,8 @@ class Precio extends CI_Controller
 {
     function __construct(){
       parent::__construct();
-      $this->load->model('core/Precios');    
+      $this->load->model('core/Precios');
+      $this->load->model(ALM.'traz-comp/Componentes');
     } 
 
     /**
@@ -14,12 +15,13 @@ class Precio extends CI_Controller
 	* @return  void
 	*/
     function index()
-	{
+	{        
     	log_message('INFO','#TRAZA | PRECIOS | index()  >> ');
-    	// $data['list'] = $this->Precios->Listar_Precios();
     	$data['listas_precios'] = $this->Precios->getListasPrecios();
+        $data['items'] = $this->Componentes->listaArticulos();
     	$this->load->view('core/precios/view', $data);
     }
+
 	/**
      * Devuelve un listado de los Precios.
      *
@@ -27,11 +29,13 @@ class Precio extends CI_Controller
      */
 	public function listarPrecios()
 	{
+        $this->load->model(ALM.'traz-comp/Componentes');
 		log_message('INFO','#TRAZA| ESTABLECIMIENTOS | listarPrecios() >> ');
 		$data['listas_precios'] = $this->Precios->getListasPrecios();
-		// $data['listarPaises'] = $this->Precios->listarPaises();
+		// $data['items'] = $this->Componentes->listaArticulos();
     	$this->load->view('core/precios/list', $data);
 	}
+
 	/**
      * Guarda el listado de los Precios.
      *

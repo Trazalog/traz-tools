@@ -85,28 +85,47 @@
                     </div>
                     <div class="row">
                         <!-- Vigente Desde -->
-                        <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="col-md-3 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="vigenteDesde">Vigente Desde:</label>
                                 <input type="date" class="form-control requerido" name="vigenteDesde" id="vigenteDesde" value="<?= date('Y-m-d') ?>">
                             </div>
                         </div>
                         <!-- Vigente Hasta -->
-                        <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="col-md-3 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="vigenteHasta">Vigente Hasta:</label>
                                 <input type="date" class="form-control requerido" name="vigenteHasta" id="vigenteHasta">
                             </div>
                         </div>
                         <!-- Agregar Artículo (Select) -->
-                        <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="col-md-3 col-sm-6 col-xs-12">
                             <div class="form-group">
-                                <label for="agregarArticulo">Agregar Artículo:</label>
-                                <select class="form-control" name="agregarArticulo" id="agregarArticulo">
-                                    <option value="">Seleccione un artículo</option>
-                                    <!-- Permitir agregar nuevos articulos con buscador por código o descripción, similar al de Recepción de materiales, pero para agregarlo debe apretar el botón. se agrega al final de la lista  -->
-                                </select>
+                                <label for="lote">Seleccionar Articulo <strong style="color: #dd4b39">*</strong>:</label>
+                                <?php $this->load->view(ALM.'articulo/componente'); ?>
                             </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <button class="btn btn-primary ml-2" type="button" id="agregarArticulo">Agregar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered" id="tablaArticulos">
+                                <thead>
+                                    <tr>
+                                        <th>Acciones</th>
+                                        <th>Código Artículo</th>
+                                        <th>Descripción</th>
+                                        <th>Precio Unitario</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Aquí se añadirán las filas dinámicas -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </form>
@@ -127,24 +146,19 @@
         $(".select2").select2();
     });
 
-    // carga tabla de precios
     $("#cargar_tabla").load("index.php/core/Precio/listarPrecios");
 
-    function guardarListaPrecio2() {    
-        // Si no se ingresa un detalle, asignar "Versión original"
-        if (empty($detalle)) {
-            $detalle = 'Versión original';
-        }
-    }
+    // function guardarListaPrecio2() {
+    //     if (empty($detalle)) {
+    //         $detalle = 'Versión original';
+    //     }
+    // }
 
     function guardarListaPrecio() {
         var nombre = $('#nombre').val();
         var tipo = $('#tipo').val();
         var version = 1;
         var detalle = $('#detalle').val() || 'Versión original';
-        // var vigenteDesde = $('#vigenteDesde').val();
-        var vigenteHasta = $('#vigenteHasta').val();
-        var agregarArticulo = $('#agregarArticulo').val();
         var recurso = 'index.php/core/Precio/verificarNombre';
         $.ajax({
             url: recurso,
@@ -153,15 +167,12 @@
                 nombre: nombre,
                 tipo: tipo,
                 version: version,
-                detalle: detalle,
-                vigenteHasta: vigenteHasta,
-                agregarArticulo: agregarArticulo
+                detalle: detalle
             },
             success: function(response) {
                 if (response.success) {
                     alert('Lista de precios guardada correctamente.');
-                    $('#modalListaPrecio').modal('hide');  // Cerrar el modal
-                    // Aquí puedes recargar la lista o actualizar la vista
+                    $('#modalListaPrecio').modal('hide');
                 } else {
                     alert('Error al guardar la lista de precios: ' + response.message);
                 }
@@ -179,17 +190,65 @@
             $.ajax({
                 url: recurso,
                 method: 'POST',
-                data: { nombre: nombre },  // Enviar el nombre como parámetro
+                data: { nombre: nombre },
                 success: function(response) {
                     if (response == 'existe') {
-                        $('#mensajeError').show();  // Mostrar mensaje si el nombre existe
+                        $('#mensajeError').show();
                     } else {
-                        $('#mensajeError').hide();  // Ocultar el mensaje si no existe
+                        $('#mensajeError').hide();
                     }
                 }
             });
         } else {
-            $('#mensajeError').hide();  // Ocultar el mensaje si no hay texto
+            $('#mensajeError').hide();
         }
     }
+
+    document.getElementById('agregarArticulo').addEventListener('click', function() {
+        const inputArticulo = document.getElementById('inputarti');
+        const articuloSeleccionado = document.querySelector(`#articulos option[value="${inputArticulo.value}"]`);
+        if (articuloSeleccionado) {
+            const dataJson = JSON.parse(articuloSeleccionado.getAttribute('data-json'));
+            const codigoArticulo = dataJson.barcode;
+            const descripcionArticulo = dataJson.descripcion;
+            const nuevaFila = `
+                <tr>
+                    <td>
+                        <button class="btn btn-danger btn-sm eliminarArticulo">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                    <td>${codigoArticulo}</td>
+                    <td>${descripcionArticulo}</td>
+                    <td>
+                        <input type="text" class="form-control precioUnitario" placeholder="0,00" oninput="formatearPrecio(this)">
+                    </td>
+                </tr>
+            `;
+            document.querySelector('#tablaArticulos tbody').insertAdjacentHTML('beforeend', nuevaFila);
+            inputArticulo.value = '';
+            actualizarBotonesEliminar();
+        } else {
+            alert('Seleccione un artículo válido.');
+        }
+    });
+
+    function actualizarBotonesEliminar() {
+        document.querySelectorAll('.eliminarArticulo').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                this.closest('tr').remove();
+            });
+        });
+    }
+
+    function formatearPrecio(input) {
+        const posicionCursor = input.selectionStart;
+        let valor = input.value.replace(/\./g, '').replace(',', '.');
+        if (!isNaN(valor) && valor !== '') {
+            valor = parseFloat(valor).toFixed(2);
+            input.value = valor.replace('.', ',');
+        }
+        input.setSelectionRange(posicionCursor, posicionCursor);
+    }
+
 </script>
