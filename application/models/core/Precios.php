@@ -2,7 +2,6 @@
 /**
 * Modelo de Precios 
 *
-* @autor Gerardo Ramos
 */
 class Precios extends CI_Model {
   /**
@@ -35,13 +34,33 @@ class Precios extends CI_Model {
   public function existeNombre($nombre) {
     $aux = $this->rest->callAPI("GET",REST_CORE."/lista_precio_valida_nombre/$nombre");
 		$aux = json_decode($aux["data"]);
-		// $query = $aux->lista;
-
-    // Si hay al menos un resultado, el nombre existe
     if (isset($aux->lista) && !empty($aux->lista->nombre) && $aux->lista->nombre === $nombre) {
       return true;
     } else {
       return false;
     }
   }
+
+  public function agregarListaPrecio($data) {
+    $post = array(
+        'nombre' => $data['nombre'],
+        'tipo' => $data['tipo'],
+        'version' => $data['version'],
+        'detalle' => $data['detalle'],
+        'empr_id' => intval($data['empr_id']),  // Convertir empr_id a int
+        'usr_alta' => $data['usr_alta'],
+        'usr_app_alta' => $data['usr_app_alta'],
+        'usr_ult_modif' => $data['usr_ult_modif'],
+        'usr_app_ult_modif' => $data['usr_app_ult_modif'],
+        'fec_ult_modif' => $data['fec_ult_modif']  // Dejar como string con formato timestamp
+    );
+
+    log_message('DEBUG', '#TRAZA| LISTA PRECIOS | agregarListaPrecio() $post: ' . json_encode($post));
+    
+    $resource = '/lista_precio';
+    $url = REST_CORE . $resource;
+    $aux = $this->rest->callApi("POST", $url, json_encode($post)); 
+    return $aux;
+  }
+
 }

@@ -6,9 +6,6 @@
     <div class="box-body">
         <div class="row">
             <div class="col-md-2 col-lg-1 col-xs-12">
-                <!-- <button type="button" id="botonAgregar" class="btn btn-primary" aria-label="Left Align">
-                    Agregar
-                </button><br> -->
                 <button type="button" id="botonListaPrecios" class="btn btn-primary" data-toggle="modal" data-target="#modalListaPrecio" aria-label="Left Align">
                 Agregar
                 </button><br>
@@ -57,7 +54,7 @@
                                 <small id="mensajeError" style="color: red; display: none;">El nombre ya existe en la base de datos.</small>
                             </div>
                         </div>
-                        <!-- Tipo (Select Venta/Compra) -->
+                        <!-- Tipo -->
                         <div class="col-md-4 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="Tipo">Tipo(<strong style="color: #dd4b39">*</strong>):</label>
@@ -67,7 +64,7 @@
                                 </select>
                             </div>
                         </div>
-                        <!-- Versión -->
+                        <!-- Version -->
                         <div class="col-md-4 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="Version">Versión:</label>
@@ -76,6 +73,7 @@
                         </div>
                     </div>
                     <div class="row">
+                        <!-- Detalle -->
                         <div class="col-md-12 col-sm-12 col-xs-12">
                             <div class="form-group">
                                 <label for="Detalle">Detalle:</label>
@@ -98,7 +96,7 @@
                                 <input type="date" class="form-control requerido" name="vigenteHasta" id="vigenteHasta">
                             </div>
                         </div>
-                        <!-- Agregar Artículo (Select) -->
+                        <!-- Agregar Artículo -->
                         <div class="col-md-3 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="lote">Seleccionar Articulo <strong style="color: #dd4b39">*</strong>:</label>
@@ -123,7 +121,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Aquí se añadirán las filas dinámicas -->
                                 </tbody>
                             </table>
                         </div>
@@ -148,26 +145,20 @@
 
     $("#cargar_tabla").load("index.php/core/Precio/listarPrecios");
 
-    // function guardarListaPrecio2() {
-    //     if (empty($detalle)) {
-    //         $detalle = 'Versión original';
-    //     }
-    // }
-
     function guardarListaPrecio() {
         var nombre = $('#nombre').val();
-        var tipo = $('#tipo').val();
         var version = 1;
         var detalle = $('#detalle').val() || 'Versión original';
-        var recurso = 'index.php/core/Precio/verificarNombre';
+        var tipo = $('#tipo').val();
+        var recurso = 'index.php/core/Precio/agregarListaPrecio';
         $.ajax({
             url: recurso,
             method: 'POST',
             data: {
                 nombre: nombre,
-                tipo: tipo,
                 version: version,
-                detalle: detalle
+                detalle: detalle,
+                tipo: tipo,
             },
             success: function(response) {
                 if (response.success) {
