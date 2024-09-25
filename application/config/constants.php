@@ -129,12 +129,14 @@ define('BPM_PROCESS_ID_INGRESO_CAMIONES', '7654696702603905131');
 #SEIN PROCESO PRODUCTIVO
 define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '6149765815561286114');
 
+#TRAZ-TOOLS-MAN Proceso de Mantenimiento AssetPlanner
+define('BPM_PROCESS_ID_MANTENIMIENTO', '8664799170016058315');
+
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
 
 #SEIN -tools-ALM PAN TAR
 define('SEIN', 'sein-tools-almpantar/');
-
 
 #COMPONENTE PAÑOL
 define('PAN', 'traz-comp-pan/');
@@ -151,6 +153,9 @@ define('COD', 'traz-comp-codigos/');
 
 #COMPONENTE NOTIFICACIONES
 define('NOTI', 'traz-comp-notificaciones/');
+
+#COMPONENTE MANTENIMIENTO
+define('MAN', 'traz-tools-man/');
 
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_PROCESO_PRODUCTIVO => ['nombre' => 'Servicios Industriales - Proceso Productivo', 'color' => '#0275d8', 'proyecto'=>SEIN, 'model'=>'Proceso_tareas'],
@@ -240,3 +245,9 @@ define('HORA_INICIO_JORNADA','10:00');
 
 #TOKEN_API_MANAGER TEST
 define('TOKEN_API_MANAGER','eyJ4NXQiOiJOMkpqTWpOaU0yRXhZalJrTnpaalptWTFZVEF4Tm1GbE5qZzRPV1UxWVdRMll6YzFObVk1TlEiLCJraWQiOiJNREpsTmpJeE4yRTFPR1psT0dWbU1HUXhPVEZsTXpCbU5tRmpaalEwWTJZd09HWTBOMkkwWXpFNFl6WmpOalJoWW1SbU1tUTBPRGRpTkRoak1HRXdNQV9SUzI1NiIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhZG1pbiIsImF1dCI6IkFQUExJQ0FUSU9OIiwiYXVkIjoib0wwRGVMNEZWZnpOOE1CUlRiSmloZXROMGtzYSIsIm5iZiI6MTY5MTUxMzk3OSwiYXpwIjoib0wwRGVMNEZWZnpOOE1CUlRiSmloZXROMGtzYSIsInNjb3BlIjoiZGVmYXVsdCIsImlzcyI6Imh0dHBzOlwvXC9sb2NhbGhvc3Q6OTQ0M1wvb2F1dGgyXC90b2tlbiIsImV4cCI6MzE1NTI5MTUxMzk3OSwiaWF0IjoxNjkxNTEzOTc5LCJqdGkiOiI0NDZjOGNhZS03OTY4LTRkMTEtYTBmOC1hNzYwYTRmYWFhMmEifQ.bxi2644U9HNwyYqFyqI77WnIxhG7SFSXLbXMiQM4A3_jiRQM6rH4Yq8TiQfaapTg9knsIrRe2A-ZTOwKMkJkV8csM8w0c53sOlm0cAOyYG8A9BWqamoFu82m9AH3kuoDreegYRg_O5bBq2CloHiviTMteU1l3XSJMt-GY5czgVkgVmbeoAU3I58XJcvz7WfyRTCti557VcSab-Tkw9PNhUvs4c4EYJXrevXUneKl8VeglXdjigWgJBkbetuMwroEB1BBkDgW9-0bLHeT2HfYheuQzv5Nhp-So9dq6zE2mXsllrvwpExy1GJsHvHLTzloJr26Vj0GTgHR0HOFekpm8A');
+
+#ROWS DATATABLE
+define('DT_SIZE_ROWS', false);
+
+#Empresas que les aparecera los formularios de mantenimiento autonomo
+define('EMPRESAS_FORM', 1);
