@@ -40,8 +40,7 @@ class Precio extends CI_Controller
      *
      * @return  Array  Devuelve un arreglo con los Precios.
      */
-	public function verificarNombre()
-	{        
+	public function verificarNombre(){        
         $nombre = $this->input->post('nombre');
         $existe = $this->Precios->existeNombre($nombre);
         if ($existe) {
@@ -50,13 +49,18 @@ class Precio extends CI_Controller
             echo 'no_existe';
         }
 	}
-
+    /**
+     * Guarda cabecera y su detalle de la nueva lista de Precios.
+     * @return Array resultado de la operacion.
+    */
     public function agregarListaPrecio() {
+        log_message('DEBUG','#TRAZA | CORE | Precio | agregarListaPrecio()');
         $nombre = $this->input->post('nombre');
         $tipo = $this->input->post('tipo');
         $version = $this->input->post('version');
         $detalle = $this->input->post('detalle');
-        $empr_id = intval(empresa());
+        $articulos = $this->input->post('articulos');
+        $empr_id = empresa();
         $usr_alta = userNick();
         $usr_app_alta = userNick();
         $usr_ult_modif = userNick();
@@ -76,13 +80,29 @@ class Precio extends CI_Controller
             'usr_app_ult_modif' => $usr_app_ult_modif,
             'fec_ult_modif' => $fec_ult_modif
         );
+        //PASO 1 genero la cabecera de la lista de precios
+        $lipr_id = $this->Precios->agregarListaPrecio($data);
+        //PASO 2 genero la version de la lista de precios, validando paso anterior
+        if($lipr_id){
+            $velp_id = $this->Precios->agregarVersionListaPrecio($lipr_id, $data);
+        }else{
+            log_message('DEBUG','#TRAZA | CORE | Precio | agregarListaPrecio() >> PASO 1 FALLIDO');
+            echo json_encode(array('status' => false, 'message' => 'Error al agregar la cabecera de la lista de precios.'));
+            exit;
+        }
+        //PASO 3 genero el detalle(articulos) de la lista de precios, validando paso anterior
+        if($velp_id){
+            $response = $this->Precios->agregarDetalleListaPrecio($velp_id, $articulos);
+        }else{
+            log_message('DEBUG','#TRAZA | CORE | Precio | agregarListaPrecio() >> PASO 2 FALLIDO');
+            echo json_encode(array('status' => false, 'message' => 'Error al agregar la version de la lista de precios.'));
+            exit;
+        }
         
-        $response = $this->Precios->agregarListaPrecio($data);
-    
-        if ($response['status'] == 'success') {
-            echo json_encode(array('status' => 'success', 'message' => 'Lista de precios enviada con éxito.'));
+        if ($response['status']) {
+            echo json_encode(array('status' => true, 'message' => 'Lista de precios enviada con éxito.'));
         } else {
-            echo json_encode(array('status' => 'error', 'message' => 'Error al enviar la lista de precios.'));
+            echo json_encode(array('status' => false, 'message' => 'Error al crear el detalle de la lista de precios.'));
         }
     }    
     

@@ -1,3 +1,11 @@
+<style>
+    th {
+        white-space: nowrap;
+    }
+    table {
+        table-layout: auto;
+    }
+</style>
 <!-- /// ---- HEADER ----- /// -->
 <div class="box box-primary animated fadeInLeft">
     <div class="box-header with-border">
@@ -50,12 +58,12 @@
                         <div class="col-md-4 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="nombre">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
-                                <input type="text" class="form-control requerido" name="nombre" id="nombre" placeholder="Ingrese Nombre..." onkeyup="verificarNombre()">
+                                <input type="text" class="form-control requerido" name="nombre" id="nombre" placeholder="Ingrese nombre de la lista" onkeyup="verificarNombre()">
                                 <small id="mensajeError" style="color: red; display: none;">El nombre ya existe en la base de datos.</small>
                             </div>
                         </div>
                         <!-- Tipo -->
-                        <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="col-md-2 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="Tipo">Tipo(<strong style="color: #dd4b39">*</strong>):</label>
                                 <select class="form-control requerido" name="tipo" id="tipo">
@@ -65,47 +73,45 @@
                             </div>
                         </div>
                         <!-- Version -->
-                        <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="col-md-1 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="Version">Versión:</label>
                                 <input type="text" class="form-control" name="version" id="version" value="1" readonly>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <!-- Detalle -->
-                        <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="col-md-5 col-sm-6 col-xs-12">
                             <div class="form-group">
-                                <label for="Detalle">Detalle:</label>
-                                <textarea class="form-control" name="detalle" id="detalle" rows="3" placeholder="Ingrese los detalles"></textarea>
+                                <label for="Detalle">Descripción versión:</label>
+                                <input type="text" class="form-control" name="detalle" id="detalle" placeholder="Ingrese la descripción para la nueva versión">
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <!-- Vigente Desde -->
-                        <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="col-md-2 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="vigenteDesde">Vigente Desde:</label>
-                                <input type="date" class="form-control requerido" name="vigenteDesde" id="vigenteDesde" value="<?= date('Y-m-d') ?>">
+                                <input type="date" class="form-control requerido" name="vigenteDesde" id="vigenteDesde" value="<?= date('Y-m-d') ?>" readonly>
                             </div>
                         </div>
                         <!-- Vigente Hasta -->
-                        <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="col-md-2 col-sm-6 col-xs-12">
                             <div class="form-group">
                                 <label for="vigenteHasta">Vigente Hasta:</label>
-                                <input type="date" class="form-control requerido" name="vigenteHasta" id="vigenteHasta">
+                                <input type="date" class="form-control requerido" name="vigenteHasta" id="vigenteHasta" readonly>
                             </div>
                         </div>
                         <!-- Agregar Artículo -->
-                        <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="col-md-6 col-sm-6 col-xs-12">
                             <div class="form-group">
-                                <label for="lote">Seleccionar Articulo <strong style="color: #dd4b39">*</strong>:</label>
+                                <label for="lote">Seleccionar Artículo <strong style="color: #dd4b39">*</strong>:</label>
                                 <?php $this->load->view(ALM.'articulo/componente'); ?>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6 col-xs-12">
-                            <div class="form-group">
-                                <button class="btn btn-primary ml-2" type="button" id="agregarArticulo">Agregar</button>
+                        <div class="col-md-2 col-sm-6 col-xs-12">
+                            <div style="padding-top: 25px" class="form-group">
+                                <button class="btn btn-primary ml-2" type="button" id="agregarArticulo"><i class="fa fa-plus"></i>  Agregar</button>
                             </div>
                         </div>
                     </div>
@@ -141,6 +147,23 @@
 <script>
     $(document).ready(function () {
         $(".select2").select2();
+        $('#tablaArticulos').DataTable({
+        "columnDefs": [
+            { "orderable": true, "targets": [1, 2] }, 
+            { "orderable": false, "targets": [0, 3] }
+        ],
+        "order": [[1, 'asc']],
+        "autoWidth": false,
+        "columns": [
+            { "width": "auto" }, // Acciones
+            { "width": "auto" }, // Código Artículo
+            { "width": "auto" }, // Descripción
+            { "width": "120px" } // Precio Unitario
+        ],
+        "createdRow": function(row, data, dataIndex) {
+            $(row).addClass('centrar');
+        }
+    });
     });
 
     $("#cargar_tabla").load("index.php/core/Precio/listarPrecios");
@@ -151,25 +174,38 @@
         var detalle = $('#detalle').val() || 'Versión original';
         var tipo = $('#tipo').val();
         var recurso = 'index.php/core/Precio/agregarListaPrecio';
+        
+        var articulosTabla = [];
+        $('#tablaArticulos').find('tbody tr').each(function() {
+            var col = $(this).find('td');
+            var dataJson = $(this).find('span').attr('data-json');
+            var data = {};
+            data.arti_id = JSON.parse(dataJson).arti_id;
+            data.precio = col.last().find('input').val().replace(',', '.');
+            articulosTabla.push(data);
+        });
+
         $.ajax({
             url: recurso,
             method: 'POST',
+            dataType: "json",
             data: {
                 nombre: nombre,
                 version: version,
                 detalle: detalle,
                 tipo: tipo,
+                articulos: articulosTabla
             },
             success: function(response) {
-                if (response.success) {
-                    alert('Lista de precios guardada correctamente.');
+                if (response.status) {
+                    hecho("Hecho",'Lista de precios guardada correctamente.');
                     $('#modalListaPrecio').modal('hide');
                 } else {
-                    alert('Error al guardar la lista de precios: ' + response.message);
+                    error('Error','Error en el procedimiento de guardado: ' + response.message);
                 }
             },
             error: function() {
-                alert('Error al realizar la solicitud.');
+                error('Error','Error al realizar la solicitud.');
             }
         });
     }
@@ -202,32 +238,31 @@
             const dataJson = JSON.parse(articuloSeleccionado.getAttribute('data-json'));
             const codigoArticulo = dataJson.barcode;
             const descripcionArticulo = dataJson.descripcion;
-            const nuevaFila = `
-                <tr>
-                    <td>
-                        <button class="btn btn-danger btn-sm eliminarArticulo">
-                            <i class="fa fa-trash"></i>
-                        </button>
-                    </td>
-                    <td>${codigoArticulo}</td>
-                    <td>${descripcionArticulo}</td>
-                    <td>
-                        <input type="text" class="form-control precioUnitario" placeholder="0,00" oninput="formatearPrecio(this)">
-                    </td>
-                </tr>
-            `;
-            document.querySelector('#tablaArticulos tbody').insertAdjacentHTML('beforeend', nuevaFila);
+            const dataCodificada = JSON.stringify({
+                arti_id: dataJson.arti_id
+            });
+
+            const table = $('#tablaArticulos').DataTable();
+            table.row.add([
+                `<button class="btn btn-danger btn-sm eliminarArticulo">
+                    <i class="fa fa-trash"></i>
+                </button>`,
+                `<span data-json='${dataCodificada}'>${codigoArticulo}</span>`,
+                descripcionArticulo,
+                `<input type="text" class="form-control precioUnitario" placeholder="0,00" oninput="formatearPrecio(this)">`
+            ]).draw(false);
             inputArticulo.value = '';
             actualizarBotonesEliminar();
         } else {
-            alert('Seleccione un artículo válido.');
+            error("Error",'Seleccione un artículo válido.');
         }
     });
 
     function actualizarBotonesEliminar() {
         document.querySelectorAll('.eliminarArticulo').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                this.closest('tr').remove();
+                const row = this.closest('tr');
+                $('#tablaArticulos').DataTable().row(row).remove().draw(false);
             });
         });
     }
