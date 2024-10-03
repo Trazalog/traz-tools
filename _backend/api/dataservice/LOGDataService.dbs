@@ -130,6 +130,24 @@
       <param name="empr_id" sqlType="STRING"/>
       <param name="motr_id" sqlType="STRING"/>
    </query>
+   <query id="setRemito" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.remitos (&#xd;    nro_remito,&#xd;    clie_id,&#xd;    empr_id,&#xd;    usr_alta,&#xd;    usr_app_alta,&#xd;    usr_ult_modif,&#xd;    usr_app_ult_modif,&#xd;    fec_ult_modif&#xd;)&#xd;VALUES (&#xd;    cast(:nro_remito as integer),&#xd;    cast(:clie_id as integer),&#xd;    cast(:empr_id as integer),&#xd;    :usr_alta,&#xd;    :usr_app_alta,&#xd;    :usr_ult_modif,&#xd;    :usr_app_ult_modif,&#xd;    TO_DATE(:fec_ult_modif, 'YYYY-MM-DD')&#xd;)returning remi_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;    "remi_id":"$remi_id"&#xd;  }&#xd;}</result>
+      <param name="nro_remito" sqlType="STRING"/>
+      <param name="clie_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usr_alta" sqlType="STRING"/>
+      <param name="usr_app_alta" sqlType="STRING"/>
+      <param name="usr_ult_modif" sqlType="STRING"/>
+      <param name="usr_app_ult_modif" sqlType="STRING"/>
+      <param name="fec_ult_modif" sqlType="STRING"/>
+   </query>
+   <query id="setDetalleRemito" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.lineas_remitos (&#xd;    remi_id,&#xd;    core_id,&#xd;    cantidad&#xd;)&#xd;VALUES (&#xd;    cast(:remi_id as integer),&#xd;    cast(:core_id as integer),&#xd;    cast(:cantidad as float)&#xd;)</sql>
+      <param name="remi_id" sqlType="STRING"/>
+      <param name="core_id" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/transporte/movimiento/list/{tipo_movimiento}/{empr_id}">
       <call-query href="getMovimientosTransporte">
          <with-param name="tipo_movimiento" query-param="tipo_movimiento"/>
@@ -273,6 +291,25 @@
       <call-query href="getMovimientoTransporte">
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="motr_id" query-param="motr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/remito">
+      <call-query href="setRemito">
+         <with-param name="nro_remito" query-param="nro_remito"/>
+         <with-param name="clie_id" query-param="clie_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usr_alta" query-param="usr_alta"/>
+         <with-param name="usr_app_alta" query-param="usr_app_alta"/>
+         <with-param name="usr_ult_modif" query-param="usr_ult_modif"/>
+         <with-param name="usr_app_ult_modif" query-param="usr_app_ult_modif"/>
+         <with-param name="fec_ult_modif" query-param="fec_ult_modif"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/remito_detalle">
+      <call-query href="setDetalleRemito">
+         <with-param name="remi_id" query-param="remi_id"/>
+         <with-param name="core_id" query-param="core_id"/>
+         <with-param name="cantidad" query-param="cantidad"/>
       </call-query>
    </resource>
 </data>
