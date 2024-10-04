@@ -371,7 +371,7 @@
       <param name="image" sqlType="STRING"/>
    </query>
    <query id="getListasPrecios" useConfig="ToolsDataSource">
-      <sql>SELECT lp.* &#xd;FROM core.listas_precios lp&#xd;WHERE lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY lp.nombre ASC;</sql>
+      <sql>SELECT lp.lipr_id, lp.nombre, lp.detalle, lp.tipo, lp.tipo, lp.empr_id, to_char(lp.fec_alta, 'YYYY-MM-DD HH24:MI') fec_alta, lp.usr_alta, lp.usr_app_alta, to_char(lp.fec_ult_modif,'YYYY-MM-DD HH24:MI') fec_ult_modif, lp.usr_ult_modif, lp.usr_app_ult_modif&#xd;FROM core.listas_precios lp&#xd;WHERE lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY lp.nombre ASC;</sql>
       <result outputType="json">{&#xd;   "listas": {&#xd;      "lista": [&#xd;        {&#xd;          "lipr_id": "$lipr_id",&#xd;          "nombre": "$nombre",&#xd;          "detalle": "$detalle",&#xd;          "tipo": "$tipo",&#xd;          "empr_id": "$empr_id",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usr_alta": "$usr_alta",&#xd;          "usr_app_alta": "$usr_app_alta",&#xd;          "fec_ult_modif": "$fec_ult_modif",&#xd;          "usr_ult_modif": "$usr_ult_modif",&#xd;          "usr_app_ult_modif": "$usr_app_ult_modif",&#xd;          "@getArticulosListaPrecios":"$lipr_id-&gt;lipr_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -422,8 +422,8 @@
       <param name="precio" sqlType="STRING"/>
    </query>
    <query id="getArticulosListaPrecios" useConfig="ToolsDataSource">
-      <sql>select vlp.velp_id, vlp.nro_version, vlp.descripcion, cr.precio, cr.core_id, r.arti_id &#xd;from core.versiones_listas_precios vlp&#xd;left join core.costos_recursos cr on vlp.velp_id = cr.velp_id&#xd;left join prd.recursos r on r.recu_id = cr.recu_id &#xd;where vlp.lipr_id = cast(:lipr_id as integer)</sql>
-      <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "precio": "$precio",&#xd;        "arti_id": "$arti_id",&#xd;        "core_id": "$core_id",&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <sql>select vlp.velp_id, vlp.nro_version, vlp.descripcion, cr.precio, cr.core_id, r.arti_id, aa.barcode, aa.descripcion as producto&#xd;from core.versiones_listas_precios vlp&#xd;left join core.costos_recursos cr on vlp.velp_id = cr.velp_id&#xd;left join prd.recursos r on r.recu_id = cr.recu_id &#xd;left join alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where vlp.lipr_id = cast(:lipr_id as integer)</sql>
+      <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "precio": "$precio",&#xd;        "arti_id": "$arti_id",&#xd;        "barcode": "$barcode",&#xd;        "producto": "$producto",&#xd;        "core_id": "$core_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="lipr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
