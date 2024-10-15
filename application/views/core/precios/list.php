@@ -22,14 +22,14 @@
             echo "<tr data-tipo='".$precio->tipo."' data-json='".json_encode($precio)."'>";
               echo '<td>';
               echo '<button type="button" title="Ver" class="btn btn-primary btn-circle btnVer" data-toggle="modal" data-target="#modalVerListaPrecio" ><span class="glyphicon glyphicon-search" aria-hidden="true" ></span></button>&nbsp';
-              if ($precio->version > 1) {
+              if ($precio->nro_version > 1) {
                   echo '<button type="button" title="Versiones" class="btn btn-primary btn-circle btnVersiones" data-toggle="modal" data-target="#modalVersiones"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></button>&nbsp';
               }
               echo '<button type="button" title="Crear Versión" class="btn btn-primary btn-circle btnCrearVersion" data-toggle="modal" data-target="#modalEditarPrecio"><span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span></button>&nbsp';
               echo '</td>';
               echo '<td>'.$precio->nombre.'</td>';
-              echo '<td>'.$precio->version.'</td>';
-              echo '<td>'.$precio->detalle.'</td>';
+              echo '<td>'.$precio->nro_version.'</td>';
+              echo '<td>'.$precio->descripcion.'</td>';
               echo '<td>'.$precio->tipo.'</td>';
               echo '<td>'.$fechaFormateada.'</td>';
             echo '</tr>';

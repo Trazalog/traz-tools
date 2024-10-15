@@ -268,7 +268,13 @@
             var col = $(this).find('td');
             var dataJson = $(this).find('span').attr('data-json');
             var data = {};
-            data.arti_id = JSON.parse(dataJson).arti_id;
+            if (dataJson) {
+                var parsedData = JSON.parse(dataJson);
+                data.arti_id = parsedData.arti_id;
+            } else {
+                console.error("data-json is undefined or invalid.");
+                return;
+            }
             data.precio = col.last().find('input').val().replace(',', '.');
             articulosTabla.push(data);
         });
