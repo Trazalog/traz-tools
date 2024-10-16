@@ -30,7 +30,7 @@ class Precio extends CI_Controller
 	public function listarPrecios()
 	{
         $this->load->model(ALM.'traz-comp/Componentes');
-		log_message('INFO','#TRAZA| ESTABLECIMIENTOS | listarPrecios() >> ');
+		log_message('INFO','#TRAZA| CORE | PRECIO | listarPrecios() >> ');
 		$data['listas_precios'] = $this->Precios->getListasPrecios();
     	$this->load->view('core/precios/list', $data);
 	}

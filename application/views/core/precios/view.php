@@ -143,6 +143,7 @@
     </div>
 </div>
 <!---/////--- FIN MODAL NUEVA LISTA DE PRECIO ---/////----->
+
 <!---/////---MODAL VER LISTA DE PRECIO ---/////----->
 <div class="modal fade bs-example-modal-lg" id="modalVerListaPrecio" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog modal-lg" role="document">
@@ -200,11 +201,6 @@
                                 <input type="date" class="form-control requerido" name="vigenteHastaVer" id="vigenteHastaVer" readonly>
                             </div>
                         </div>
-                        <!-- <div class="col-md-2 col-sm-6 col-xs-12">
-                            <div style="padding-top: 25px" class="form-group">
-                                <button class="btn btn-primary ml-2" type="button" id="agregarArticulo"><i class="fa fa-plus"></i>  Agregar</button>
-                            </div>
-                        </div> -->
                     </div>
                     <div class="row">
                         <div class="col-md-12 col-sm-12 col-xs-12">
