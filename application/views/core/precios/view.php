@@ -143,6 +143,7 @@
     </div>
 </div>
 <!---/////--- FIN MODAL NUEVA LISTA DE PRECIO ---/////----->
+
 <!---/////---MODAL VER LISTA DE PRECIO ---/////----->
 <div class="modal fade bs-example-modal-lg" id="modalVerListaPrecio" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog modal-lg" role="document">
@@ -200,15 +201,10 @@
                                 <input type="date" class="form-control requerido" name="vigenteHastaVer" id="vigenteHastaVer" readonly>
                             </div>
                         </div>
-                        <!-- <div class="col-md-2 col-sm-6 col-xs-12">
-                            <div style="padding-top: 25px" class="form-group">
-                                <button class="btn btn-primary ml-2" type="button" id="agregarArticulo"><i class="fa fa-plus"></i>  Agregar</button>
-                            </div>
-                        </div> -->
                     </div>
                     <div class="row">
                         <div class="col-md-12 col-sm-12 col-xs-12">
-                            <table class="table table-bordered" id="tablaDetalleVer">
+                            <table class="table table-bordered" id="tablaDetalleVer" style="width: 100%;">
                                 <thead>
                                     <tr>
                                         <th>Código Artículo</th>
@@ -268,11 +264,17 @@
             var col = $(this).find('td');
             var dataJson = $(this).find('span').attr('data-json');
             var data = {};
-            data.arti_id = JSON.parse(dataJson).arti_id;
+            if (dataJson) {
+                var parsedData = JSON.parse(dataJson);
+                data.arti_id = parsedData.arti_id;
+            } else {
+                console.error("data-json is undefined or invalid.");
+                return;
+            }
             data.precio = col.last().find('input').val().replace(',', '.');
             articulosTabla.push(data);
         });
-
+        wo();
         $.ajax({
             url: recurso,
             method: 'POST',
@@ -286,6 +288,10 @@
             },
             success: function(response) {
                 if (response.status) {
+                    // $("#cargar_tabla").load("index.php/core/Equipo/Listar_Equipos");
+                    wc();
+                    // $("#boxDatos").hide(500);
+                    $("#formLista")[0].reset();
                     hecho("Hecho",'Lista de precios guardada correctamente.');
                     $('#modalListaPrecio').modal('hide');
                 } else {

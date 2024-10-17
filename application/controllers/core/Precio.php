@@ -30,7 +30,7 @@ class Precio extends CI_Controller
 	public function listarPrecios()
 	{
         $this->load->model(ALM.'traz-comp/Componentes');
-		log_message('INFO','#TRAZA| ESTABLECIMIENTOS | listarPrecios() >> ');
+		log_message('INFO','#TRAZA| CORE | PRECIO | listarPrecios() >> ');
 		$data['listas_precios'] = $this->Precios->getListasPrecios();
     	$this->load->view('core/precios/list', $data);
 	}
@@ -102,7 +102,7 @@ class Precio extends CI_Controller
         if ($response['status']) {
             echo json_encode(array('status' => true, 'message' => 'Lista de precios enviada con éxito.'));
         } else {
-            echo json_encode(array('status' => false, 'message' => 'Error al crear el detalle de la lista de precios.'));
+            echo json_encode(array('status' => false, 'message' => 'Error al agregar los artículos de la lista de precios.'));
         }
     }    
     
