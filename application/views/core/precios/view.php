@@ -274,7 +274,7 @@
             data.precio = col.last().find('input').val().replace(',', '.');
             articulosTabla.push(data);
         });
-
+        wo();
         $.ajax({
             url: recurso,
             method: 'POST',
@@ -288,6 +288,10 @@
             },
             success: function(response) {
                 if (response.status) {
+                    // $("#cargar_tabla").load("index.php/core/Equipo/Listar_Equipos");
+                    wc();
+                    // $("#boxDatos").hide(500);
+                    $("#formLista")[0].reset();
                     hecho("Hecho",'Lista de precios guardada correctamente.');
                     $('#modalListaPrecio').modal('hide');
                 } else {
