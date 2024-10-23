@@ -95,10 +95,9 @@ if(!function_exists('userIdBpm')){
 if(!function_exists('usrIdTransportistaByNick')){
 
 	function usrIdTransportistaByNick(){
-
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST_PRD."/transportista/id/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_RESI."/transportista/id/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->transportista->tran_id;
 	}
@@ -115,34 +114,30 @@ if(!function_exists('usrIdGeneradorByNick')){
 
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_RESI."/solicitantesTransporte/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->solicitantes_transporte->sotr_id;
 	}
 }
 
 /**
-* Devuelve coincidencia de deposito con usuario asignado a deposito
-* @param
+* Devuelve coincidencia de deposito con usuario asignado a deposito para mostrar en BANDEJA DE ENTRADA
+* @param string $nombreTarea; @param integer $depo_id
 * @return bool true o false
 */
 if(!function_exists('filtrarbyDepo')){
 
-	function filtrarbyDepo($nombreTarea, $depo_id = null)
-	{
+	function filtrarbyDepo($nombreTarea, $depo_id = null){
 		$ci =& get_instance();
-    $userdata  = $ci->session->userdata();
-
+    	$userdata  = $ci->session->userdata();
 		$mostrar = true;
-
 		// si usuario es usuario de deposito
 		if (($nombreTarea == "Certifica Vuelco")) {
-
-				$user_depo_id = $userdata['depo_id'];
-				//no coincide usuario deposito con deposito asignado
-				if (!($user_depo_id == $depo_id)) {
-					$mostrar = false;
-				}
+			$user_depo_id = $userdata['depo_id'];
+			//no coincide usuario deposito con deposito asignado
+			if (!($user_depo_id == $depo_id)) {
+				$mostrar = false;
+			}
 		}
 
 		return $mostrar;
