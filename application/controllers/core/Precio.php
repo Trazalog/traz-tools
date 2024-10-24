@@ -54,8 +54,13 @@ class Precio extends CI_Controller
      * @return Array resultado de la operacion.
     */
     public function agregarListaPrecio() {
-        log_message('DEBUG','#TRAZA | CORE | Precio | agregarListaPrecio()');
+        log_message('DEBUG','#TRAZA | CORE | Precio | agregarListaPrecio()');        
         $nombre = $this->input->post('nombre');
+        $existe = $this->Precios->existeNombre($nombre);
+        if ($existe) {
+            echo json_encode(array('status' => false, 'message' => 'El nombre de la lista de precios ya existe.'));
+            return;
+        }
         $tipo = $this->input->post('tipo');
         $version = $this->input->post('version');
         $detalle = $this->input->post('detalle');
@@ -104,6 +109,6 @@ class Precio extends CI_Controller
         } else {
             echo json_encode(array('status' => false, 'message' => 'Error al agregar los artículos de la lista de precios.'));
         }
-    }    
+    }
     
 }
