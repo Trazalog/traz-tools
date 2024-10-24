@@ -34,3 +34,6 @@
 [submodule "application/modules/sein-tools-almpantar"]
 	path = application/modules/sein-tools-almpantar
 	url = https://github.com/Trazalog/sein-tools-almpantar.git
+[submodule "application/modules/traz-tools-man"]
+	path = application/modules/traz-tools-man
+	url = https://github.com/Trazalog/traz-tools-man.git

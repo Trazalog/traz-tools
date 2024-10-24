@@ -92,7 +92,7 @@ class Valores extends CI_Model {
   */
   function editarValor($data){
     $post['_put_tabla'] = $data;
-    log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | guardarValor()  $post: >> '.json_encode($post));
+    log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | editarValor()  $post: >> '.json_encode($post));
     $aux = $this->rest->callAPI("PUT",REST_CORE."/tabla", $post);
     $aux = json_decode($aux["data"]);
     return $aux->GeneratedKeys->Entry;

@@ -362,6 +362,110 @@
       <result outputType="json">{&#xd;    "transportistas": {&#xd;        "transportista": [&#xd;            {&#xd;                "tran_id": "$tran_id",&#xd;                "cuit": "$cuit"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="cuit" sqlType="STRING"/>
    </query>
+   <query id="setUserAsset" useConfig="AssetPlannerDataSource">
+      <sql>INSERT into sisusers(usrNick, usrName, usrLastName, usrPassword, usrimag) &#xd;values (:nick, :name, :lastName, :pass, :image)</sql>
+      <param name="nick" sqlType="STRING"/>
+      <param name="name" sqlType="STRING"/>
+      <param name="lastName" sqlType="STRING"/>
+      <param name="pass" sqlType="STRING"/>
+      <param name="image" sqlType="STRING"/>
+   </query>
+   <query id="getListasPrecios" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;    lp.lipr_id, &#xd;    lp.nombre, &#xd;    lp.detalle, &#xd;    lp.tipo, &#xd;    lp.empr_id, &#xd;    to_char(lp.fec_alta, 'YYYY-MM-DD HH24:MI') as fec_alta, &#xd;    lp.usr_alta, &#xd;    lp.usr_app_alta, &#xd;    to_char(lp.fec_ult_modif,'YYYY-MM-DD HH24:MI') as fec_ult_modif, &#xd;    lp.usr_ult_modif, &#xd;    lp.usr_app_ult_modif, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion&#xd;FROM &#xd;    core.listas_precios lp&#xd;LEFT JOIN &#xd;    core.versiones_listas_precios vlp &#xd;    ON lp.lipr_id = vlp.lipr_id&#xd;WHERE &#xd;    lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY &#xd;    lp.nombre ASC;</sql>
+      <result outputType="json">{&#xd;   "listas": {&#xd;      "lista": [&#xd;        {&#xd;          "lipr_id": "$lipr_id",&#xd;          "nombre": "$nombre",&#xd;          "detalle": "$detalle",&#xd;          "tipo": "$tipo",&#xd;          "empr_id": "$empr_id",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usr_alta": "$usr_alta",&#xd;          "usr_app_alta": "$usr_app_alta",&#xd;          "fec_ult_modif": "$fec_ult_modif",&#xd;          "usr_ult_modif": "$usr_ult_modif",&#xd;          "usr_app_ult_modif": "$usr_app_ult_modif",&#xd;          "nro_version": "$nro_version",&#xd;          "descripcion": "$descripcion",&#xd;          "@getArticulosListaPrecios":"$lipr_id-&gt;lipr_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="validaNombreListaPrecio" useConfig="ToolsDataSource">
+      <sql>SELECT nombre&#xd;FROM core.listas_precios &#xd;WHERE nombre = :nombre&#xd;LIMIT 1;</sql>
+      <result outputType="json">{&#xd;   "lista": {&#xd;      "nombre": "$nombre"&#xd;   }&#xd;}</result>
+      <param name="nombre" sqlType="STRING"/>
+   </query>
+   <query id="setListaPrecio" useConfig="ToolsDataSource">
+      <sql>INSERT INTO core.listas_precios&#xd;(&#xd;    nombre,&#xd;    tipo,&#xd;    detalle,&#xd;    empr_id,&#xd;    usr_alta,&#xd;    usr_app_alta,&#xd;    usr_ult_modif,&#xd;    usr_app_ult_modif,&#xd;    fec_ult_modif&#xd;)&#xd;VALUES (&#xd;    :nombre,&#xd;    :tipo,&#xd;    :detalle,&#xd;    cast(:empr_id as integer),&#xd;    :usr_alta,&#xd;    :usr_app_alta,&#xd;    :usr_ult_modif,&#xd;    :usr_app_ult_modif,&#xd;    TO_DATE(:fec_ult_modif, 'YYYY-MM-DD')&#xd;)returning lipr_id</sql>
+      <result outputType="json">{&#xd;   "respuesta":{&#xd;       "lipr_id":"$lipr_id"&#xd;   }&#xd;}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="detalle" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usr_alta" sqlType="STRING"/>
+      <param name="usr_app_alta" sqlType="STRING"/>
+      <param name="usr_ult_modif" sqlType="STRING"/>
+      <param name="usr_app_ult_modif" sqlType="STRING"/>
+      <param name="fec_ult_modif" sqlType="STRING"/>
+   </query>
+   <query id="getUserByPhone" useConfig="ToolsDataSource">
+      <sql>select&#xd;        id user_id,&#xd;	email correo,&#xd;	first_name nombre ,&#xd;	last_name apellido,&#xd;	"role" rol_seguridad,&#xd;	last_login ultimo_login,&#xd;	status estado ,&#xd;	banned_users es_baneado,&#xd;	telefono telefono,&#xd;	dni documento,&#xd;	usernick nick,&#xd;	u.depo_id,&#xd;	ad.nombre deposito,&#xd;	image imagen&#xd;from&#xd;	seg.users u&#xd;left join alm.alm_depositos ad on ad.depo_id = u.depo_id&#xd;where telefono = :phone_number&#xd;order by u.id desc -- HAY QUE MEJORAR Y VALIDAR POR EMPRESA&#xd;limit 1</sql>
+      <result outputType="json">{&#xd;   "usuario":{&#xd;      "user_id":"$user_id",&#xd;      "correo":"$correo",&#xd;      "nombre":"$nombre",&#xd;      "apellido":"$apellido",&#xd;      "rol_seguridad":"$rol_seguridad",&#xd;      "ultimo_login":"$ultimo_login",&#xd;      "estado":"$estado",&#xd;      "es_baneado":"$es_baneado",&#xd;      "telefono":"$telefono",&#xd;      "documento":"$documento",&#xd;      "nick":"$nick",&#xd;      "depo_id":"$depo_id",&#xd;      "deposito":"$deposito",&#xd;      "imagen":"$imagen"&#xd;   }&#xd;}</result>
+      <param name="phone_number" sqlType="STRING"/>
+   </query>
+   <query id="getUltimoListaPrecio" useConfig="ToolsDataSource">
+      <sql>SELECT lipr_id &#xd;FROM core.listas_precios&#xd;WHERE empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY fec_alta DESC&#xd;LIMIT 1;</sql>
+      <result outputType="json">{&#xd;   "lista": {&#xd;      "lipr_id": "$lipr_id"&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setVersionListaPrecio" useConfig="ToolsDataSource">
+      <sql>INSERT INTO core.versiones_listas_precios &#xd;(&#xd;    lipr_id, &#xd;    nro_version, &#xd;    descripcion,&#xd;    usr_alta,&#xd;    usr_app_alta,&#xd;    usr_ult_modif,&#xd;    usr_app_ult_modif,&#xd;    fec_ult_modif&#xd;) &#xd;VALUES &#xd;(&#xd;    CAST(:lipr_id AS INTEGER), &#xd;    CAST(:nro_version AS INTEGER), &#xd;    :descripcion,&#xd;    :usr_alta,&#xd;    :usr_app_alta,&#xd;    :usr_ult_modif,&#xd;    :usr_app_ult_modif,&#xd;    TO_DATE(:fec_ult_modif, 'YYYY-MM-DD')&#xd;)returning velp_id;</sql>
+      <result outputType="json">{&#xd;   "respuesta":{&#xd;       "velp_id":"$velp_id"&#xd;   }&#xd;}</result>
+      <param name="lipr_id" sqlType="STRING"/>
+      <param name="nro_version" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="usr_alta" sqlType="STRING"/>
+      <param name="usr_app_alta" sqlType="STRING"/>
+      <param name="usr_ult_modif" sqlType="STRING"/>
+      <param name="usr_app_ult_modif" sqlType="STRING"/>
+      <param name="fec_ult_modif" sqlType="STRING"/>
+   </query>
+   <query id="setCostoRecurso" useConfig="ToolsDataSource">
+      <sql>INSERT INTO core.costos_recursos&#xd;(&#xd;    recu_id,&#xd;    velp_id,&#xd;    precio&#xd;)&#xd;VALUES (&#xd;    cast(:recu_id as integer),&#xd;    cast(:velp_id as integer),&#xd;    cast(:precio as float)&#xd;);</sql>
+      <param name="recu_id" sqlType="STRING"/>
+      <param name="velp_id" sqlType="STRING"/>
+      <param name="precio" sqlType="STRING"/>
+   </query>
+   <query id="getArticulosListaPrecios" useConfig="ToolsDataSource">
+      <sql>select vlp.velp_id, vlp.nro_version, vlp.descripcion, cr.precio, cr.core_id, r.arti_id, aa.barcode, aa.descripcion as producto&#xd;from core.versiones_listas_precios vlp&#xd;left join core.costos_recursos cr on vlp.velp_id = cr.velp_id&#xd;left join prd.recursos r on r.recu_id = cr.recu_id &#xd;left join alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where vlp.lipr_id = cast(:lipr_id as integer)</sql>
+      <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "precio": "$precio",&#xd;        "arti_id": "$arti_id",&#xd;        "barcode": "$barcode",&#xd;        "producto": "$producto",&#xd;        "core_id": "$core_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="lipr_id" sqlType="STRING"/>
+   </query>
+   <query id="getClientexPatron" useConfig="ToolsDataSource">
+      <sql>SELECT c.clie_id, c.nombre&#xd;FROM core.clientes c&#xd;WHERE c.nombre ILIKE '%' || :patron || '%' &#xd;  AND c.empr_id = CAST(:empr_id AS integer)&#xd;  AND c.estado = 'ACTIVO';</sql>
+      <result outputType="json">{&#xd; "clientes": {&#xd;           "cliente": [&#xd;                       {&#xd;                        "clie_id": "$clie_id",&#xd;                        "nombre": "$nombre"&#xd;                       }&#xd;                      ]&#xd;               }&#xd;}</result>
+      <param name="patron" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getRemitos" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;    r.remi_id, &#xd;    r.nro_remito, &#xd;    r.fec_alta, &#xd;    c.nombre AS cliente,&#xd;    r.clie_id,&#xd;    SUM(cr.precio * lr.cantidad) AS importe_total&#xd;FROM &#xd;    alm.remitos r&#xd;LEFT JOIN &#xd;    core.clientes c ON c.clie_id = r.clie_id&#xd;LEFT JOIN &#xd;    alm.lineas_remitos lr ON lr.remi_id = r.remi_id&#xd;LEFT JOIN &#xd;    core.costos_recursos cr ON cr.core_id = lr.core_id&#xd;, (SELECT LOWER(:search) AS search_param, &#xd;	:clie_id as clie_id,&#xd;	:fec_desde as fec_desde,&#xd;	:fec_hasta as fec_hasta&#xd;) param  &#xd;WHERE &#xd;    CAST(:empr_id AS integer) = r.empr_id&#xd;    AND (&#xd;        CAST(r.nro_remito AS TEXT) ILIKE '%' || param.search_param || '%' OR&#xd;        LOWER(c.nombre) ILIKE '%' || param.search_param || '%'&#xd;    )&#xd;    AND (&#xd;        param.clie_id = 'TODOS' OR r.clie_id = CAST(NULLIF(param.clie_id, 'TODOS') AS integer)&#xd;    )&#xd;    AND (&#xd;        param.fec_desde = 'TODOS' OR r.fec_alta::DATE &gt;= TO_DATE(NULLIF(param.fec_desde, 'TODOS'), 'YYYY-MM-DD')&#xd;    )&#xd;    AND (&#xd;        param.fec_hasta = 'TODOS' OR r.fec_alta::DATE &lt;= TO_DATE(NULLIF(param.fec_hasta, 'TODOS'), 'YYYY-MM-DD')&#xd;    )&#xd;GROUP BY &#xd;    r.remi_id, r.nro_remito, r.fec_alta, c.nombre&#xd;ORDER BY &#xd;    r.fec_alta DESC&#xd;LIMIT CAST(:limit AS integer) OFFSET CAST(:offset AS integer);</sql>
+      <result outputType="json">{&#xd; "remitos": {&#xd;          "remito": [&#xd;                    {&#xd;                      "remi_id": "$remi_id",&#xd;                      "nro_remito": "$nro_remito",&#xd;                      "fec_alta": "$fec_alta",&#xd;                      "cliente": "$cliente", &#xd;                      "importe_total": "$importe_total"&#xd;                     }&#xd;                    ]&#xd;               }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="clie_id" sqlType="STRING"/>
+      <param name="fec_desde" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
+   </query>
+   <query id="getCantidadRemitos" useConfig="ToolsDataSource">
+      <sql>SELECT COUNT(*) AS total&#xd;FROM alm.remitos r&#xd;WHERE CAST(:empr_id AS integer) = r.empr_id;</sql>
+      <result outputType="json">{&#xd; "remitos": {&#xd; "remito": [&#xd; {&#xd; "total": "$total"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="cantidadRemitosFiltrados" useConfig="ToolsDataSource">
+      <sql>SELECT COUNT(*) AS total&#xd;FROM alm.remitos r&#xd;LEFT JOIN &#xd;    core.clientes c ON c.clie_id = r.clie_id&#xd;    , (SELECT LOWER(:search) AS search_param) param  &#xd;WHERE CAST(:empr_id AS integer) = r.empr_id and CAST(r.nro_remito AS TEXT) ILIKE '%' || param.search_param || '%' OR&#xd;        LOWER(c.nombre) ILIKE '%' || param.search_param || '%' ;</sql>
+      <result outputType="json">{&#xd; "remitos": {&#xd; "remito": [&#xd; {&#xd; "total": "$total" }&#xd; ]&#xd; }&#xd;}</result>
+      <param name="search" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getLineasRemito" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;    r.remi_id, &#xd;    r.nro_remito, &#xd;    r.fec_alta,&#xd;    lr.cantidad,&#xd;    cr.precio,&#xd;    aa.descripcion &#xd;FROM &#xd;    alm.remitos r&#xd;LEFT JOIN &#xd;    alm.lineas_remitos lr ON lr.remi_id = r.remi_id&#xd;LEFT JOIN &#xd;    core.costos_recursos cr ON cr.core_id = lr.core_id&#xd;LEFT JOIN &#xd;    prd.recursos re ON re.recu_id = cr.recu_id &#xd;left join &#xd;	alm.alm_articulos aa on aa.arti_id = re.arti_id &#xd;WHERE &#xd;    CAST(:empr_id AS integer) = r.empr_id&#xd;    and cast(:remi_id as integer) = r.remi_id &#xd;GROUP BY &#xd;    r.remi_id, r.nro_remito, r.fec_alta,  lr.cantidad, cr.precio, aa.descripcion &#xd;ORDER BY &#xd;    r.fec_alta desc</sql>
+      <result outputType="json">{&#xd; "lineas": {&#xd;           "linea": [&#xd;                     {&#xd;                       "remi_id": "$remi_id",&#xd;                       "nro_remito": "$nro_remito",&#xd;                       "cantidad": "$cantidad",&#xd;                       "precio": "$precio",&#xd;                       "descripcion": "$descripcion"&#xd;                      }&#xd;                     ]&#xd;             }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="remi_id" sqlType="STRING"/>
+   </query>
+   <query id="getVersionxRemi_id" useConfig="ToolsDataSource">
+      <sql>SELECT DISTINCT ON (r.remi_id) &#xd;    r.remi_id, &#xd;    cr.velp_id, &#xd;    vlp.descripcion, &#xd;    vlp.nro_version, &#xd;    lp.nombre, &#xd;    lp.detalle,&#xd;    lp.tipo,&#xd;    lp.fec_alta,&#xd;    STRING_AGG(aa.barcode || ' | ' || aa.descripcion || ' | ' || cr.precio, ', ') AS articulos&#xd;FROM alm.remitos r &#xd;LEFT JOIN alm.lineas_remitos lr ON lr.remi_id = r.remi_id&#xd;LEFT JOIN core.costos_recursos cr ON cr.core_id = lr.core_id&#xd;LEFT JOIN prd.recursos r2 ON r2.recu_id = cr.recu_id &#xd;LEFT JOIN alm.alm_articulos aa ON aa.arti_id = r2.arti_id&#xd;LEFT JOIN core.versiones_listas_precios vlp ON vlp.velp_id = cr.velp_id&#xd;LEFT JOIN core.listas_precios lp ON lp.lipr_id = vlp.lipr_id&#xd;WHERE r.empr_id = CAST(:empr_id AS integer) &#xd;  AND r.remi_id = CAST(:remi_id AS integer)&#xd;GROUP BY r.remi_id, cr.velp_id, vlp.descripcion, vlp.nro_version, lp.nombre, lp.detalle, lp.tipo,&#xd;    lp.fec_alta&#xd;ORDER BY r.remi_id;</sql>
+      <result outputType="json">{&#xd; "versiones": {&#xd;               "version": [&#xd;                            {&#xd;                              "remi_id": "$remi_id",&#xd;                              "velp_id": "$velp_id",&#xd;                              "descripcion": "$descripcion",&#xd;                              "nro_version": "$nro_version",&#xd;                              "nombre": "$nombre",&#xd;                              "detalle": "$detalle",&#xd;                              "articulos": "$articulos",&#xd;                              "tipo": "$tipo",&#xd;                              "fec_alta": "$fec_alta"&#xd;                             }&#xd;                           ]&#xd;               }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="remi_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -727,6 +831,108 @@
    <resource method="GET" path="/transportistas/cuit/{cuit}">
       <call-query href="getTransportistasCuit">
          <with-param name="cuit" query-param="cuit"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/assetuser/add">
+      <description>Agrega un usuario en MariaDB              &#xd;                                    </description>
+      <call-query href="setUserAsset">
+         <with-param name="nick" query-param="nick"/>
+         <with-param name="name" query-param="name"/>
+         <with-param name="lastName" query-param="lastName"/>
+         <with-param name="pass" query-param="pass"/>
+         <with-param name="image" query-param="image"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/listas_precios/{empr_id}">
+      <call-query href="getListasPrecios">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lista_precio_valida_nombre/{nombre}">
+      <call-query href="validaNombreListaPrecio">
+         <with-param name="nombre" query-param="nombre"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/usuario/porTelefono/{phone_number}">
+      <call-query href="getUserByPhone">
+         <with-param name="phone_number" query-param="phone_number"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lista_precio">
+      <call-query href="setListaPrecio">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="detalle" query-param="detalle"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usr_alta" query-param="usr_alta"/>
+         <with-param name="usr_app_alta" query-param="usr_app_alta"/>
+         <with-param name="usr_ult_modif" query-param="usr_ult_modif"/>
+         <with-param name="usr_app_ult_modif" query-param="usr_app_ult_modif"/>
+         <with-param name="fec_ult_modif" query-param="fec_ult_modif"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lista_precio/ultimo/{empr_id}">
+      <call-query href="getUltimoListaPrecio">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/version_lista_precio">
+      <call-query href="setVersionListaPrecio">
+         <with-param name="lipr_id" query-param="lipr_id"/>
+         <with-param name="nro_version" query-param="nro_version"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="usr_alta" query-param="usr_alta"/>
+         <with-param name="usr_app_alta" query-param="usr_app_alta"/>
+         <with-param name="usr_ult_modif" query-param="usr_ult_modif"/>
+         <with-param name="usr_app_ult_modif" query-param="usr_app_ult_modif"/>
+         <with-param name="fec_ult_modif" query-param="fec_ult_modif"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/costo_recurso">
+      <call-query href="setCostoRecurso">
+         <with-param name="recu_id" query-param="recu_id"/>
+         <with-param name="velp_id" query-param="velp_id"/>
+         <with-param name="precio" query-param="precio"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/cliente/patron/{patron}/{empr_id}">
+      <call-query href="getClientexPatron">
+         <with-param name="patron" query-param="patron"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/remitos/{empr_id}/{limit}/{offset}/desde/{fec_desde}/hasta/{fec_hasta}/cliente/{clie_id}/search/{search}">
+      <call-query href="getRemitos">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="clie_id" query-param="clie_id"/>
+         <with-param name="fec_desde" query-param="fec_desde"/>
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/remitos/cantidad/{empr_id}">
+      <call-query href="getCantidadRemitos">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/remitosFiltrados/cantidad/{search}/{empr_id}">
+      <call-query href="cantidadRemitosFiltrados">
+         <with-param name="search" query-param="search"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/remitos/lineas/{empr_id}/{remi_id}">
+      <call-query href="getLineasRemito">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="remi_id" query-param="remi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/remitos/versiones/{empr_id}/{remi_id}">
+      <call-query href="getVersionxRemi_id">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="remi_id" query-param="remi_id"/>
       </call-query>
    </resource>
 </data>
