@@ -115,6 +115,12 @@
 
         // Código para rellenar el modal
         $(document).on("click", ".btnVer", function() {
+
+            // Destruir DataTable si ya está inicializado
+            if ($.fn.DataTable.isDataTable('#tablaDetalleVer')) {
+                $('#tablaDetalleVer').DataTable().clear().destroy();
+            }
+
             $("#tablaDetalleVer tbody").empty();
             data = $(this).parents("tr").attr("data-json");
             datajson = JSON.parse(data);
@@ -130,11 +136,6 @@
                 detalle_lista.forEach(function(item, index){
                     $("#tablaDetalleVer tbody").append("<tr><td>"+item.barcode+"</td><td>"+item.producto+"</td><td>"+item.precio+"</td></tr>");
                 });
-            }
-
-            // Destruir DataTable si ya está inicializado
-            if ($.fn.DataTable.isDataTable('#tablaDetalleVer')) {
-                tablaDetalleVer.destroy();
             }
 
             // Inicializar DataTable nuevamente
