@@ -259,7 +259,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setMovimientoInterno" returnGeneratedKeys="true" useConfig="ToolsDataSource">
-      <sql>INSERT&#xd;	INTO&#xd;	alm.movimientos_internos (num_comprobante,&#xd;	fec_envio,&#xd;        estado,&#xd;	patente,&#xd;	acoplado,&#xd;	conductor,&#xd;	usuario,&#xd;	usuario_app,&#xd;	depo_id_origen,&#xd;	depo_id_destino,&#xd;	empr_id)&#xd;VALUES(:num_comprobante,&#xd; to_date(:fec_envio, 'YYYY-MM-DD'),&#xd;        'EN_CURSO',&#xd;	:patente,&#xd;	:acoplado,&#xd;	:conductor,&#xd;	current_user,&#xd;	:usuario_app,&#xd;	CAST(:depo_id_origen AS INTEGER ),&#xd;	cast(:depo_id_destino AS INTEGER),&#xd;	cast(:empr_id as integer))</sql>
+      <sql>INSERT&#xd;	INTO&#xd;	alm.movimientos_internos (num_comprobante,&#xd;	fec_envio,&#xd;        estado,&#xd;	patente,&#xd;	acoplado,&#xd;	conductor,&#xd;	usuario,&#xd;	usuario_app,&#xd;	depo_id_origen,&#xd;	depo_id_destino,&#xd;	empr_id,&#xd;        observaciones_recepcion)&#xd;VALUES(:num_comprobante,&#xd; to_date(:fec_envio, 'YYYY-MM-DD'),&#xd;        'EN_CURSO',&#xd;	:patente,&#xd;	:acoplado,&#xd;	:conductor,&#xd;	current_user,&#xd;	:usuario_app,&#xd;	CAST(:depo_id_origen AS INTEGER ),&#xd;	cast(:depo_id_destino AS INTEGER),&#xd;	cast(:empr_id as integer),&#xd;        :observaciones_recepcion)</sql>
       <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
          <element column="1" name="ID" xsdType="integer"/>
       </result>
@@ -272,6 +272,7 @@
       <param name="depo_id_origen" sqlType="STRING"/>
       <param name="depo_id_destino" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
+      <param name="observaciones_recepcion" sqlType="STRING"/>
    </query>
    <query id="setDetaMovimientoInterno" useConfig="ToolsDataSource">
       <sql>INSERT&#xd;	INTO&#xd;	alm.deta_movimientos_internos (	&#xd;	codigo,&#xd;	cantidad_cargada,	&#xd;	usuario_app,&#xd;	arti_id,&#xd;	lote_id_origen,&#xd;	moin_id)&#xd;VALUES(	:codigo,&#xd;	cast(:cantidad as FLOAT4),	&#xd;	:usuario_app,&#xd;	CAST(:arti_id AS INTEGER),&#xd;	CAST(:lote_id_origen AS INTEGER),&#xd;	CAST(:moin_id AS INTEGER)&#xd;)</sql>
@@ -499,6 +500,19 @@
       <sql>select aa.barcode, &#xd;aa.descripcion, &#xd;al.cantidad, &#xd;adrm.p_pesos, &#xd;adrm.p_dolar, &#xd;(adrm.p_pesos * al.cantidad) as t_pesos, (adrm.p_dolar*al.cantidad) as t_dolar'&#xd;from   alm.alm_articulos aa&#xd;join   alm.alm_lotes al on aa.arti_id = al.arti_id AND al.cantidad != 0&#xd;join   alm.alm_deta_recepcion_materiales adrm on al.lote_id  = adrm.lote_id and adrm.cantidad !=0&#xd;where  al.empr_id = cast(:empr_id as integer)  &#xd;and  aa.eliminado = false&#xd;and  adrm.p_pesos is not NULL&#xd;and  adrm.p_dolar is not NULL&#xd;group_by adrm.p_pesos, adrm.p_dolar,aa.barcode, aa.descripcion, al.cantidad</sql>
       <result outputType="json">{&#xd;    "stock": {&#xd;        "stockv": [&#xd;            {&#xd;                "description": "$description",&#xd;                "barcode": "$barcode",&#xd;                "codigo": "$codigo",&#xd;                "cantidad": "$cantidad",&#xd;                "p_pesos": "$p_pesos",&#xd;                "p_dolar": "$p_dolar",&#xd;                "t_pesos": "$t_pesos",&#xd;                "t_dolar": "$t_dolar"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" optional="false" sqlType="STRING"/>
+   </query>
+   <query id="getSiguienteNroComprobante" useConfig="ToolsDataSource">
+      <sql>SELECT COALESCE(MAX(CAST(num_comprobante AS integer)), 0) + 1 AS siguiente_comprobante&#xd;FROM alm.movimientos_internos&#xd;WHERE empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "siguiente_numerocomprobante": {&#xd;        "numerocomprobante": [&#xd;            {&#xd;                "siguiente_comprobante": "$siguiente_comprobante"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getMovimientoxdemiId" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id&#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen&#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id = CAST(:demi_id1 AS integer)&#xd;UNION ALL&#xd;SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id  &#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen &#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id != CAST(:demi_id2 AS integer) &#xd;    AND mi.moin_id = (&#xd;        SELECT moin_id &#xd;        FROM alm.deta_movimientos_internos &#xd;        WHERE demi_id = CAST(:demi_id3 AS integer)&#xd;    )&#xd;    AND mi.empr_id = CAST(:empr_id AS integer);</sql>
+      <result outputType="json">{&#xd;   "movimientosInternos":{&#xd;      "movimientoInterno":[&#xd;         {&#xd;            "moin_id":"$moin_id",&#xd;            "num_comprobante":"$num_comprobante",&#xd;            "depo_id_origen":"$depo_id_origen",&#xd;            "depo_id_destino":"$depo_id_destino",&#xd;            "patente":"$patente",&#xd;            "acoplado":"$acoplado",&#xd;            "conductor":"$conductor",&#xd;            "arti_id":"$arti_id",&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "descripcion_articulo":"$descripcion_articulo",&#xd;            "desc_lote_destino":"$desc_lote_destino",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "descr_depo_origen":"$descr_depo_origen",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "observaciones_recepcion":"$observaciones_recepcion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="demi_id1" sqlType="STRING"/>
+      <param name="demi_id2" sqlType="STRING"/>
+      <param name="demi_id3" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
@@ -778,6 +792,7 @@
          <with-param name="depo_id_origen" query-param="depo_id_origen"/>
          <with-param name="depo_id_destino" query-param="depo_id_destino"/>
          <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="observaciones_recepcion" query-param="observaciones_recepcion"/>
       </call-query>
    </resource>
    <resource method="POST" path="/movimientoInterno/detalle">
@@ -1037,6 +1052,19 @@
          <with-param name="tiar_id" query-param="tiar_id"/>
          <with-param name="unme_id" query-param="unme_id"/>
          <with-param name="inte_id" query-param="inte_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientosalida/nrocomprobante/{empr_id}">
+      <call-query href="getSiguienteNroComprobante">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getmovimientointerno/demi/{demi_id1}/{demi_id2}/{demi_id3}/{empr_id}">
+      <call-query href="getMovimientoxdemiId">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="demi_id1" query-param="demi_id1"/>
+         <with-param name="demi_id2" query-param="demi_id2"/>
+         <with-param name="demi_id3" query-param="demi_id3"/>
       </call-query>
    </resource>
 </data>
