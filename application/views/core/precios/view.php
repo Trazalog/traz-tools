@@ -5,6 +5,17 @@
     table {
         table-layout: auto;
     }
+
+
+    /*Símbolo de porcentaje */
+    .input-group {
+        display: flex;
+        align-items: center;
+    }
+
+    .input-group-text {
+        padding: 0.375rem 0.75rem; 
+    }
 </style>
 <!-- /// ---- HEADER ----- /// -->
 <div class="box box-primary animated fadeInLeft">
@@ -242,6 +253,7 @@
             <div class="modal-body">
                 <form class="formLista" id="formLista">
                     <div class="row">
+                    <input type="hidden" class="form-control" name="lipr_id" id="lipr_id" hidden>
                         <!-- Nombre -->
                         <div class="col-md-4 col-sm-6 col-xs-12">
                             <div class="form-group">
@@ -300,6 +312,35 @@
                         </div>
                     </div>
                     <div class="row">
+                        <!-- Coeficiente -->
+                        <div class="col-md-2 col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <label for="coeficiente">+ Coeficiente:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control requerido" name="coeficiente" id="coeficiente" placeholder="Ingrese coeficiente">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Aplicar Coeficiente -->
+                        <div class="col-md-2 col-sm-6 col-xs-12">
+                            <div style="padding-top: 20px" class="form-group">
+                                <button class="btn btn-primary" type="button" id="aplicarCoeficiente">
+                                    <i class="fa fa-arrow-down"></i> Aplicar
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Valores originales -->
+                        <div class="col-md-2 col-sm-6 col-xs-12">
+                            <div style="padding-top: 20px" class="form-group">
+                                <button class="btn btn-primary" type="button" id="valorOriginal">
+                                    <i class="fa fa-reply"></i> Valores originales
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-12 col-sm-12 col-xs-12">
                             <table class="table table-bordered" id="tablaArticulosCrearVersion">
                                 <thead>
@@ -319,6 +360,7 @@
             </div>
             <div class="modal-footer">
                 <div class="form-group text-right">
+                    <button type="button" class="btn btn-primary habilitar" data-dismiss="modal" id="btn_newVersion" onclick="guardarNuevaVersion()">Guardar</button>
                     <button type="button" class="btn btn-default cerrarModalEdit" data-dismiss="modal">Cancelar</button>
                 </div>
             </div>
@@ -481,6 +523,19 @@
         }
     });
 
+
+    // cambio el id de inputarti de la view componente para que no existan 2 id iguales con crear version y agregar a articulo
+    $('#modalCrearVersion').on('show.bs.modal', function () {
+        // Cambia el id de inputarti solo para este modal
+        $('#inputarti').attr('id', 'inputartiCrearVersion');
+    });
+
+    // Después de cerrar el modal, restauramos el id original
+    $('#modalCrearVersion').on('hide.bs.modal', function () {
+        // Restablece el id de inputarti
+        $('#inputartiCrearVersion').attr('id', 'inputarti');
+    }); 
+
     function actualizarBotonesEliminar() {
         document.querySelectorAll('.eliminarArticulo').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -575,8 +630,6 @@
             });
         });
     }
-
-    
 
 
 </script>
