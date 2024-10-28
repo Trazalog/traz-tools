@@ -56,11 +56,17 @@ class Precio extends CI_Controller
     public function agregarListaPrecio() {
         log_message('DEBUG','#TRAZA | CORE | Precio | agregarListaPrecio()');        
         $nombre = $this->input->post('nombre');
+
+        //si viene el lipr_id es porque ya existe la lista de precio y es una nueva version
+        $lipr_id =  $this->input->post('lipr_id'); 
+        
+        //valida si ya existe la lista de precios
         $existe = $this->Precios->existeNombre($nombre);
-        if ($existe) {
-            echo json_encode(array('status' => false, 'message' => 'El nombre de la lista de precios ya existe.'));
-            return;
-        }
+            if ($existe  && empty($lipr_id)) {
+                echo json_encode(array('status' => false, 'message' => 'El nombre de la lista de precios ya existe.'));
+                return;
+            }
+        
         $tipo = $this->input->post('tipo');
         $version = $this->input->post('version');
         $detalle = $this->input->post('detalle');
@@ -85,8 +91,26 @@ class Precio extends CI_Controller
             'usr_app_ult_modif' => $usr_app_ult_modif,
             'fec_ult_modif' => $fec_ult_modif
         );
-        //PASO 1 genero la cabecera de la lista de precios
-        $lipr_id = $this->Precios->agregarListaPrecio($data);
+
+
+        //si existe lipr_id no guardo la cabecera
+        if(empty($lipr_id)){
+            //PASO 1 genero la cabecera de la lista de precios
+            $lipr_id = $this->Precios->agregarListaPrecio($data);
+        }
+        else{
+            // si crea una nueva version actualizo la fecha hasta de la version anterior 
+            $datos = array(
+                'lipr_id' => $lipr_id,
+                'fec_hasta' => date('Y-m-d H:i:s')
+            );
+            $rsp = $this->Precios->updateFechaHastaPrecios($datos);
+
+            if(!$rsp['status']){
+                echo json_encode(array('status' => true, 'message' => 'Error actualizar fecha de version anterior.'));
+            }   
+        }
+
         //PASO 2 genero la version de la lista de precios, validando paso anterior
         if($lipr_id){
             $velp_id = $this->Precios->agregarVersionListaPrecio($lipr_id, $data);

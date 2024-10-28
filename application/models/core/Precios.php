@@ -142,4 +142,18 @@ class Precios extends CI_Model {
     $recu_id = $aux->recurso->recu_id;
     return $recu_id;
   }
+
+  /**
+  * actualizar fecha hasta de version lista precios
+  * @param Integer $lipr_id id del lista de precios
+  * @return 
+  */
+  public function updateFechaHastaPrecios($datos){
+    log_message('DEBUG', "#TRAZA | CORE | Precios | updateFechaHastaPrecios($datos)");
+    $post['_put_fechaversion'] = $datos;
+    $resource = '/fechaversion';
+    $url = REST_CORE . $resource;
+    $rsp = $this->rest->callApi("PUT", $url, $post);
+    return $rsp;
+  }
 }
