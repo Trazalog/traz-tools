@@ -369,6 +369,63 @@
 </div>
 <!---/////--- FIN MODAL CREAR VERSION DE LISTA DE PRECIO ---/////----->
 
+<!---/////---MODAL VER VERSIONES ANTERIORES DE LISTA DE PRECIO ---/////----->
+<div class="modal fade bs-example-modal-lg" id="modalVersiones" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-blue">
+                <h4 class="modal-title" id="myLargeModalLabel">Versiones anteriores de Lista de Precios</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="color:white;">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="formLista" id="formLista">
+                    <div class="row">
+                        <!-- Nombre -->
+                        <div class="col-md-4 col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <label for="nombreVersiones">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control" name="nombreVersiones" id="nombreVersiones" readonly>
+                            </div>
+                        </div>
+                        <!-- Tipo -->
+                        <div class="col-md-2 col-sm-6 col-xs-12">
+                            <div class="form-group">
+                                <label for="tipoVersiones">Tipo(<strong style="color: #dd4b39">*</strong>):</label>
+                                <input type="text" class="form-control" name="tipoVersiones" id="tipoVersiones" readonly>
+                            </div>
+                        </div>                        
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            <table class="table table-bordered" id="tablaDetalleVersiones" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Acciones</th>
+                                        <th>Versión</th>
+                                        <th>Detalle Versión</th>
+                                        <th>Vigente Desde</th>
+                                        <th>Vigente Hasta</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="form-group text-right">
+                    <button type="button" class="btn btn-default cerrarModalEdit" data-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!---/////--- FIN MODAL VER VERSIONES ANTERIORES DE LISTA DE PRECIO ---/////----->
+
 <script>
     $(document).ready(function () {
         $(".select2").select2();

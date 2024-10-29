@@ -23,7 +23,7 @@
               echo '<td>';
               echo '<button type="button" title="Ver" class="btn btn-primary btn-circle btnVer" data-toggle="modal" data-target="#modalVerListaPrecio" ><span class="glyphicon glyphicon-search" aria-hidden="true" ></span></button>&nbsp';
               if ($precio->nro_version > 1) {
-                //   echo '<button type="button" title="Versiones" class="btn btn-primary btn-circle btnVersiones" data-toggle="modal" data-target="#modalVersiones"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></button>&nbsp';
+                echo '<button type="button" title="Versiones" class="btn btn-primary btn-circle btnVersiones" data-toggle="modal" data-target="#modalVersiones"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></button>&nbsp';
               }
               echo '<button type="button" title="Crear Versión" class="btn btn-primary btn-circle btnCrearVersion" data-toggle="modal" data-target="#modalCrearVersion"><span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span></button>&nbsp';
               echo '</td>';
@@ -402,5 +402,47 @@ $(document).ready(function() {
             }
         });
     }
+
+    $(document).ready(function() {
+        $(document).on("click", ".btnVersiones", function() {
+            $("#tablaDetalleVersiones tbody").empty();
+            let data = $(this).parents("tr").attr("data-json");
+            let datajson = JSON.parse(data);
+
+            $("#nombreVersiones").val(datajson.nombre);
+            $("#tipoVersiones").val(datajson.tipo);
+            var recurso = 'index.php/core/Precio/obtenerVersiones';
+            var lipr_id = datajson.lipr_id;
+            console.log(lipr_id);
+            
+            $.ajax({
+                url: recurso,
+                type: "POST",
+                data: { lipr_id: lipr_id },
+                dataType: "json",
+                success: function(response) {
+                    // Recorrer el array de versiones y agregarlas al tbody
+                    response.forEach(function(version) {
+                        $("#tablaDetalleVersiones tbody").append(
+                            `<tr>
+                                <td>
+                                    <button class="btn btn-danger btn-sm VER">
+                                        <i class="glyphicon glyphicon-search"></i>
+                                    </button>
+                                </td>
+                                <td>${version.nro_version}</td>
+                                <td>${version.descripcion}</td>
+                                <td>${version.fec_alta}</td>
+                                <td>${version.fec_alta}</td>
+                            </tr>`
+                        );
+                    });
+                },
+                error: function() {
+                    alert("Error al obtener las versiones de la lista de precios.");
+                }
+            });
+        });
+    });
 
 </script>
