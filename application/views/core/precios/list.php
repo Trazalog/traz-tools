@@ -43,8 +43,8 @@
 <script>
     var tablaDetalleVer; // Declarar la variable fuera para que pueda ser accedida globalmente.
     // DataTable($('#tabla_precios'));
-$(document).ready(function() {
-            $('#tabla_precios').DataTable({
+    $(document).ready(function() {
+        $('#tabla_precios').DataTable({
             responsive: true,
             language: {
                 url: '<?php base_url() ?>lib/bower_components/datatables.net/js/es-ar.json' //Ubicacion del archivo con el json del idioma.
@@ -96,8 +96,7 @@ $(document).ready(function() {
                 }
             ]
         });
-    }); 
-    
+    });    
  
     $(document).ready(function(){
         $('input[name="tipoFiltro"]').on('change', function() {
@@ -404,7 +403,7 @@ $(document).ready(function() {
     }
 
     $(document).ready(function() {
-        $(document).on("click", ".btnVersiones", function() {
+        $(document).off("click", ".btnVersiones").on("click", ".btnVersiones", function() {
             $("#tablaDetalleVersiones tbody").empty();
             let data = $(this).parents("tr").attr("data-json");
             let datajson = JSON.parse(data);
@@ -413,7 +412,7 @@ $(document).ready(function() {
             $("#tipoVersiones").val(datajson.tipo);
             var recurso = 'index.php/core/Precio/obtenerVersiones';
             var lipr_id = datajson.lipr_id;
-            console.log(lipr_id);
+            // console.log(lipr_id);
             
             $.ajax({
                 url: recurso,
@@ -423,6 +422,8 @@ $(document).ready(function() {
                 success: function(response) {
                     // Recorrer el array de versiones y agregarlas al tbody
                     response.forEach(function(version) {
+                        let fec_alta = new Date(version.fec_alta).toLocaleDateString("es-AR");
+                        let fec_hasta = version.fec_hasta ? new Date(version.fec_hasta).toLocaleDateString("es-AR") : "-";
                         $("#tablaDetalleVersiones tbody").append(
                             `<tr>
                                 <td>
@@ -432,8 +433,8 @@ $(document).ready(function() {
                                 </td>
                                 <td>${version.nro_version}</td>
                                 <td>${version.descripcion}</td>
-                                <td>${version.fec_alta}</td>
-                                <td>${version.fec_alta}</td>
+                                <td>${fec_alta}</td>
+                                <td>${fec_hasta}</td>
                             </tr>`
                         );
                     });
