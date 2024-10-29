@@ -476,6 +476,16 @@
       <param name="lipr_id" sqlType="STRING"/>
       <param name="fec_hasta" sqlType="STRING"/>
    </query>
+   <query id="getArticulosListaPreciosVersion" useConfig="ToolsDataSource">
+      <sql>select&#xd;    cr.core_id, &#xd;    cr.precio, &#xd;    r.arti_id, &#xd;    aa.barcode, &#xd;    aa.descripcion as producto&#xd;from &#xd;    core.costos_recursos cr&#xd;left join &#xd;    prd.recursos r on r.recu_id = cr.recu_id &#xd;left join &#xd;    alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where &#xd;    cr.velp_id = cast(:velp_id as integer)</sql>
+      <result outputType="json">{&#xd;  "detalles_articulos_version": {&#xd;    "detalle_articulos_version": [&#xd;      {&#xd;        "arti_id": "$arti_id",&#xd;        "precio": "$precio",&#xd;        "barcode": "$barcode",&#xd;        "producto": "$producto",&#xd;        "core_id": "$core_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="velp_id" sqlType="STRING"/>
+   </query>
+   <query id="getVersionesListaPrecio" useConfig="ToolsDataSource">
+      <sql>select &#xd;    vlp.velp_id,&#xd;    vlp.lipr_id, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion, &#xd;    vlp.fec_alta, &#xd;    vlp.fec_hasta&#xd;from &#xd;    core.versiones_listas_precios vlp&#xd;where &#xd;    vlp.lipr_id = cast(:lipr_id as integer)&#xd;order by&#xd;    vlp.nro_version DESC;</sql>
+      <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "lipr_id": "$lipr_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_alta": "$fec_alta",&#xd;        "fec_hasta": "$fec_hasta",&#xd;        "@getArticulosListaPreciosVersion":"$velp_id-&gt;velp_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="lipr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -957,7 +967,7 @@
       </call-query>
    </resource>
    <resource method="GET" path="/versiones_lista_precio/{lipr_id}">
-      <call-query href="getArticulosListaPrecios">
+      <call-query href="getVersionesListaPrecio">
          <with-param name="lipr_id" query-param="lipr_id"/>
       </call-query>
    </resource>
