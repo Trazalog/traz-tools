@@ -425,7 +425,7 @@
                         let fec_alta = new Date(version.fec_alta).toLocaleDateString("es-AR");
                         let fec_hasta = version.fec_hasta ? new Date(version.fec_hasta).toLocaleDateString("es-AR") : "-";
                         $("#tablaDetalleVersiones tbody").append(
-                            `<tr>
+                            `<tr data-json='${JSON.stringify(version)}'>
                                 <td>
                                     <button class="btn btn-danger btn-sm VER">
                                         <i class="glyphicon glyphicon-search"></i>
@@ -444,6 +444,112 @@
                 }
             });
         });
+
+        // Evento para abrir el modal y cargar la información de la versión
+        $(document).on("click", ".btn-danger.btn-sm.VER", function() {
+            event.preventDefault();
+            // Lógica para abrir el modal y cargar la información
+            const versionData = $(this).closest('tr').attr("data-json");
+            const version = JSON.parse(versionData);
+            
+            // Aquí llama a la función que ya tienes para cargar el modal
+            cargarDatosModal(version);
+        });
     });
+
+    // Función para cargar los datos en el modal
+    function cargarDatosModal(datajson) {
+        // Destruir DataTable si ya está inicializado
+        if ($.fn.DataTable.isDataTable('#tablaDetalleVer')) {
+            $('#tablaDetalleVer').DataTable().destroy(); // Destruye la instancia existente
+        }
+
+        $("#tablaDetalleVer tbody").empty(); // Limpiar la tabla
+
+        // Cargar datos en el modal
+        $("#nombreVer").val(datajson.descripcion);
+        // $("#tipoVer").val(datajson.tipo);
+        $("#versionVer").val("v"+datajson.nro_version);
+        $("#detalleVer").val(datajson.descripcion);
+
+        let fec_alta = new Date(datajson.fec_alta).toLocaleDateString("es-AR");
+        let fec_hasta = datajson.fec_hasta ? new Date(datajson.fec_hasta).toLocaleDateString("es-AR") : "-";
+
+        $("#vigenteDesdeVer").val(fec_alta); // Formato de fecha (ej. dd/mm/aaaa)
+        $("#vigenteHastaVer").val(fec_hasta); // Mostrar "-" si es null
+
+        // Verificar si hay detalles de artículos
+        if (datajson.detalles_articulos_version && datajson.detalles_articulos_version.detalle_articulos_version) {
+            const detalle_articulos = datajson.detalles_articulos_version.detalle_articulos_version;
+
+            // Cargar los detalles en la tabla
+            detalle_articulos.forEach(function(item) {
+                $("#tablaDetalleVer tbody").append(
+                    `<tr>
+                        <td>${item.barcode}</td>
+                        <td>${item.producto}</td>
+                        <td>${item.precio}</td>
+                    </tr>`
+                );
+            });
+        }
+
+        // Inicializar DataTable nuevamente
+        tablaDetalleVer = $('#tablaDetalleVer').DataTable({
+            responsive: true,
+            language: {
+                url: '<?php echo base_url(); ?>lib/bower_components/datatables.net/js/es-ar.json'
+            },
+            dom: 'lBfrtip',
+            buttons: [
+                {
+                    extend: 'excel',
+                    exportOptions: {
+                        columns: [0, 1, 2] // Índices de las columnas que quieres exportar.
+                    },
+                    footer: true,
+                    title: 'Detalle de la Lista de Precios',
+                    filename: 'Detalle_Lista_Precios',
+                    text: '<button class="btn btn-success ml-2 mb-2 mt-3">Exportar a Excel <i class="fa fa-file-excel-o"></i></button>'
+                },
+                {
+                    extend: 'pdf',
+                    exportOptions: {
+                        columns: [0, 1, 2]
+                    },
+                    footer: true,
+                    title: 'Detalle de la Lista de Precios',
+                    filename: 'Detalle_Lista_Precios',
+                    text: '<button class="btn btn-danger ml-2 mb-2 mt-3">Exportar a PDF <i class="fa fa-file-pdf-o"></i></button>'
+                },
+                {
+                    extend: 'copy',
+                    exportOptions: {
+                        columns: [0, 1, 2]
+                    },
+                    footer: true,
+                    title: 'Detalle de la Lista de Precios',
+                    filename: 'Detalle_Lista_Precios',
+                    text: '<button class="btn btn-primary ml-2 mb-2 mt-3">Copiar <i class="fa fa-copy"></i></button>'
+                },
+                {
+                    extend: 'print',
+                    exportOptions: {
+                        columns: [0, 1, 2]
+                    },
+                    footer: true,
+                    title: 'Detalle de la Lista de Precios',
+                    filename: 'Detalle_Lista_Precios',
+                    text: '<button class="btn btn-default ml-2 mb-2 mt-3">Imprimir <i class="fa fa-print"></i></button>'
+                }
+            ]
+        });
+
+         // Ocultar el modal de versiones si está abierto
+        $("#modalVersiones").modal('hide');
+        
+        // Mostrar el modal de lista de precios
+        $("#modalVerListaPrecio").modal('show');
+    }
 
 </script>
