@@ -134,5 +134,13 @@ class Precio extends CI_Controller
             echo json_encode(array('status' => false, 'message' => 'Error al agregar los artículos de la lista de precios.'));
         }
     }
+
+    public function obtenerVersiones() {
+        $lipr_id = $this->input->post('lipr_id');
+    
+        $versiones = $this->Precios->obtenerVersionesPorLiprId($lipr_id);
+    
+        echo json_encode($versiones);
+    }
     
 }
