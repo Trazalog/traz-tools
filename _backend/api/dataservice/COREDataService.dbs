@@ -422,8 +422,8 @@
       <param name="precio" sqlType="STRING"/>
    </query>
    <query id="getArticulosListaPrecios" useConfig="ToolsDataSource">
-      <sql>select vlp.velp_id, vlp.nro_version, vlp.descripcion, cr.precio, cr.core_id, r.arti_id, aa.barcode, aa.descripcion as producto&#xd;from core.versiones_listas_precios vlp&#xd;left join core.costos_recursos cr on vlp.velp_id = cr.velp_id&#xd;left join prd.recursos r on r.recu_id = cr.recu_id &#xd;left join alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where vlp.lipr_id = cast(:lipr_id as integer)</sql>
-      <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "precio": "$precio",&#xd;        "arti_id": "$arti_id",&#xd;        "barcode": "$barcode",&#xd;        "producto": "$producto",&#xd;        "core_id": "$core_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <sql>select vlp.velp_id, vlp.nro_version, vlp.descripcion, vlp.fec_alta, vlp.fec_hasta, cr.precio, cr.core_id, r.arti_id, aa.barcode, aa.descripcion as producto&#xd;from core.versiones_listas_precios vlp&#xd;left join core.costos_recursos cr on vlp.velp_id = cr.velp_id&#xd;left join prd.recursos r on r.recu_id = cr.recu_id &#xd;left join alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where vlp.lipr_id = cast(:lipr_id as integer)</sql>
+      <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_alta": "$fec_alta",&#xd;        "fec_hasta": "$fec_hasta",&#xd;        "precio": "$precio",&#xd;        "arti_id": "$arti_id",&#xd;        "barcode": "$barcode",&#xd;        "producto": "$producto",&#xd;        "core_id": "$core_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="lipr_id" sqlType="STRING"/>
    </query>
    <query id="getClientexPatron" useConfig="ToolsDataSource">
@@ -465,6 +465,16 @@
       <result outputType="json">{&#xd; "versiones": {&#xd;               "version": [&#xd;                            {&#xd;                              "remi_id": "$remi_id",&#xd;                              "velp_id": "$velp_id",&#xd;                              "descripcion": "$descripcion",&#xd;                              "nro_version": "$nro_version",&#xd;                              "nombre": "$nombre",&#xd;                              "detalle": "$detalle",&#xd;                              "articulos": "$articulos",&#xd;                              "tipo": "$tipo",&#xd;                              "fec_alta": "$fec_alta"&#xd;                             }&#xd;                           ]&#xd;               }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="remi_id" sqlType="STRING"/>
+   </query>
+   <query id="getCases" useConfig="ToolsDataSource">
+      <sql>select * from core.case_empresa ce where empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "casos": {&#xd;        "caso" : [&#xd;            {&#xd;                "case_id": "$case_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="updateFechaVersionPrecios" useConfig="ToolsDataSource">
+      <sql>update core.versiones_listas_precios&#xd;set fec_hasta = TO_DATE(:fec_hasta, 'YYYY-MM-DD')&#xd;where lipr_id = cast (:lipr_id as integer);</sql>
+      <param name="lipr_id" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -933,6 +943,22 @@
       <call-query href="getVersionxRemi_id">
          <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="remi_id" query-param="remi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/casos/empresa/{empr_id}">
+      <call-query href="getCases">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/fechaversion">
+      <call-query href="updateFechaVersionPrecios">
+         <with-param name="lipr_id" query-param="lipr_id"/>
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/versiones_lista_precio/{lipr_id}">
+      <call-query href="getArticulosListaPrecios">
+         <with-param name="lipr_id" query-param="lipr_id"/>
       </call-query>
    </resource>
 </data>
