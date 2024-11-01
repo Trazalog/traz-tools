@@ -257,46 +257,38 @@ if(!function_exists('validarSesion')){
 
 if(!function_exists('validarInactividad')){
 	
-	function validarInactividad(){	
-						
-			//Comprobamos si esta definida la sesión 'tiempo'.
-			if(isset($_SESSION['tiempo']) ) {
-
-				//Tiempo en segundos para dar vida a la sesión.
-				$inactivo = 4000;//40min en este caso.
-				
-				//Calculamos tiempo de vida inactivo.
-				$vida_session = time() - $_SESSION['tiempo'];
-
-					//Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
-					if($vida_session > $inactivo)
-					{
-
-						//Removemos sesión.
-						session_unset();
-						//Destruimos sesión.
-						session_destroy();              
-						//Redirigimos pagina.
-
-						//Verificamos si la presente URL no debe validarse con Sesion sino con Token
-						if (!validarUrlSinSesion() ){
-							echo base_url('Login/log_out');
-							log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');						
-							exit();
-						}
-					}else{
-						//Refresco el tiempo luego de actividad
-						
-						//Verificamos si la presente URL no debe validarse con Sesion sino con Token
-						if (!validarUrlSinSesion() ){
-							validarSesion();
-							$_SESSION['tiempo'] = time();
-						}
-					}
-			} else {
-				//Activamos sesion tiempo.
-				$_SESSION['tiempo'] = time();
+	function validarInactividad(){			
+		//Comprobamos si esta definida la sesión 'tiempo'.
+		if(isset($_SESSION['tiempo']) ) {
+			//Tiempo en segundos para dar vida a la sesión.
+			$inactivo = 4000;//40min en este caso.
+			//Calculamos tiempo de vida inactivo.
+			$vida_session = time() - $_SESSION['tiempo'];
+			//Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
+			if($vida_session > $inactivo){
+				//Removemos sesión.
+				session_unset();
+				//Destruimos sesión.
+				session_destroy();              
+				//Redirigimos pagina.
+				//Verificamos si la presente URL no debe validarse con Sesion sino con Token
+				if (!validarUrlSinSesion() ){
+					echo base_url('Login/log_out');
+					log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');						
+					exit();
+				}
+			}else{
+				//Refresco el tiempo luego de actividad
+				//Verificamos si la presente URL no debe validarse con Sesion sino con Token
+				if (!validarUrlSinSesion() ){
+					validarSesion();
+					$_SESSION['tiempo'] = time();
+				}
 			}
+		} else {
+			//Activamos sesion tiempo.
+			$_SESSION['tiempo'] = time();
 		}
 	}
-	?>
+}
+?>

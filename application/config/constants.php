@@ -234,8 +234,8 @@ define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
 define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
-define('REST_RESI', 'http://10.142.0.16:8280/services/semaresiduosDS');
-define('REST_PRD_RESI', 'http://10.142.0.16:8280/services/sema/PRDDataService');
+define('REST_RESI', HOST.'/services/semaresiduosDS');
+define('REST_PRD_RESI', HOST.'/services/sema/PRDDataService');
 
 
 define('REST_SEIN', HOST.'/services/SeinDataService');

@@ -1,0 +1,1853 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="semaresiduosDS" transports="http https local">
+   <config enableOData="false" id="semaresiduosDS">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="departamentosSet" useConfig="semaresiduosDS">
+      <sql>insert into &#xd;   core.departamentos &#xd;   (nombre, descripcion) &#xd;values&#xd;   (:nombre, :descripcion)&#xd;returning &#xd;    depa_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":&#xd;     {&#xd;       "depa_id": "$depa_id"&#xd;     }&#xd;}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+   </query>
+   <query id="zonasGet" useConfig="semaresiduosDS">
+      <sql>select &#xd;zonas.zona_id, zonas.nombre, zonas.descripcion, zonas.depa_id, departamentos.nombre as depa_nom from core.zonas&#xd;join core.departamentos on core.zonas.depa_id = core.departamentos.depa_id where eliminado = 0</sql>
+      <result outputType="json">{&#xd;   "zonas":{&#xd;      "zona":[&#xd;         {&#xd;            "zona_id":"$zona_id",&#xd;            "nombre":"$nombre",&#xd;            "descripción":"$descripcion",&#xd;            "depa_id": "$depa_id",&#xd;            "depa_nom": "$depa_nom"          &#xd;         }      &#xd;      ]   &#xd;   }&#xd;}</result>
+   </query>
+   <query id="transportistasSet" useConfig="semaresiduosDS">
+      <sql>insert into log.transportistas(razon_social,descripcion,direccion,telefono,contacto,resolucion,registro,fec_alta_efectiva,fec_baja_efectiva,usuario_app, cuit)&#xd;values(:razon_social,:descripcion,:direccion,:telefono,:contacto,:resolucion,:registro,TO_DATE(:fec_alta_efectiva,'YYYY-MM-DD'),TO_DATE(:fec_baja_efectiva,'YYYY-MM-DD'),:usuario_app, :cuit)&#xd;returning tran_id</sql>
+      <result outputType="json">{&#xd;	"respuesta":{&#xd;		"tran_id": "$tran_id"&#xd;	}&#xd;}</result>
+      <param name="razon_social" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="contacto" sqlType="STRING"/>
+      <param name="resolucion" sqlType="STRING"/>
+      <param name="registro" sqlType="STRING"/>
+      <param name="fec_alta_efectiva" sqlType="STRING"/>
+      <param name="fec_baja_efectiva" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+   </query>
+   <query id="departamentosGet" useConfig="semaresiduosDS">
+      <sql>select depa_id, nombre from core.departamentos</sql>
+      <result outputType="json">{&#xd;   "departamentos":{&#xd;      "departamento":[&#xd;         {&#xd;            "depa_id":"$depa_id",&#xd;            "nombre":"$nombre"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="zonasSet" useConfig="semaresiduosDS">
+      <sql>insert into &#xd;   core.zonas(nombre, descripcion, imagen, usuario_app, depa_id)&#xd;   values(:nombre, :descripcion, :imagen, :usuario_app, CAST(:depa_id AS INTEGER))&#xd;    returning zona_id</sql>
+      <result outputType="json">{ "respuesta":{&#xd;     "zona_id": "$zona_id"&#xd;    }&#xd;  }</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="depa_id" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+   </query>
+   <query id="circuitosGet" useConfig="semaresiduosDS">
+      <sql>select &#xd;   C.circ_id, C.codigo, C.descripcion, C.chof_id, &#xd;   C.zona_id, CONCAT(CH.apellido, ', ', CH.nombre) as chofer, C.vehi_id, E.dominio &#xd;from &#xd;   log.circuitos C, log.choferes CH, core.equipos E&#xd;where &#xd;   C.vehi_id = E.equi_id &#xd;and   &#xd;   C.chof_id = CH.chof_id &#xd;and   &#xd;   C.eliminado = 0   &#xd;ORDER BY C.circ_id</sql>
+      <result outputType="json">{&#xd;   "circuitos":{&#xd;      "circuito":[&#xd;         {&#xd;            "circ_id":"$circ_id",&#xd;            "codigo":"$codigo",&#xd;            "descripcion":"$descripcion",            &#xd;            "chof_id":"$chof_id",&#xd;            "chofer": "$chofer", &#xd;            "zona_id":"$zona_id",&#xd;            "vehi_id":"$vehi_id",            &#xd;            "dominio": "$dominio",&#xd;            "@tiposCargaCicuitoGet":"$circ_id-&gt;circ_id",&#xd;            "@puntosPorCircuito": "$circ_id-&gt;circ_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="choferesGet" useConfig="semaresiduosDS">
+      <sql>select CH.chof_id, CH.nombre, CH.apellido, CH.documento, CH.fec_nacimiento, CH.direccion, &#xd;      CH.celular, CH.codigo, CH.carnet as carn_id, CH.vencimiento, &#xd;      CH.habilitacion, CH.tran_id, CH.cach_id,&#xd;      T.razon_social,&#xd;      TCAR.valor as carnet, &#xd;      TCAT.valor as categoria&#xd;    from log.choferes CH, log.transportistas T, core.tablas as TCAR, core.tablas as TCAT&#xd;    where CH.tran_id = T.tran_id &#xd;    and CH.carnet = TCAR.tabl_id &#xd;    and CH.cach_id = TCAT.tabl_id &#xd;    and CH.eliminado = 0</sql>
+      <result outputType="json"> {&#xd;      "choferes":{&#xd;          "chofer":[&#xd;            {&#xd;              "chof_id": "$chof_id", &#xd;              "nombre": "$nombre", &#xd;              "apellido": "$apellido", &#xd;              "documento": "$documento", &#xd;              "fec_nacimiento": "$fec_nacimiento", &#xd;              "direccion": "$direccion", &#xd;              "celular": "$celular", &#xd;              "codigo": "$codigo", &#xd;              "carn_id": "$carn_id", &#xd;              "vencimiento": "$vencimiento", &#xd;              "habilitacion": "$habilitacion",              &#xd;              "tran_id": "$tran_id", &#xd;              "cach_id": "$cach_id",&#xd;              "razon_social": "$razon_social",&#xd;              "carnet": "$carnet",&#xd;              "categoria": "$categoria"&#xd;            }&#xd;          ]&#xd;      }    &#xd;    }</result>
+   </query>
+   <query id="choferesSet" useConfig="semaresiduosDS">
+      <sql>insert into &#xd;   log.choferes(nombre, apellido, documento, fec_nacimiento, direccion, celular, codigo, carnet, vencimiento, habilitacion, imagen, tran_id, cach_id, usuario_app)&#xd;values(:nombre, :apellido, :documento, TO_DATE(:fec_nacimiento,'YYYY-MM-DD'), :direccion, :celular, :codigo, :carnet, TO_DATE(:vencimiento,'YYYY-MM-DD'), :habilitacion, :imagen, CAST(:tran_id AS INTEGER), :cach_id, :usuario_app)&#xd;returning chof_id</sql>
+      <result outputType="json">{"respuesta":{&#xd;    "chof_id": "$chof_id"&#xd;  }&#xd;}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="apellido" sqlType="STRING"/>
+      <param name="documento" sqlType="STRING"/>
+      <param name="fec_nacimiento" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="carnet" sqlType="STRING"/>
+      <param name="vencimiento" sqlType="STRING"/>
+      <param name="habilitacion" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="cach_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="celular" sqlType="STRING"/>
+   </query>
+   <query id="transportistasGet" useConfig="semaresiduosDS">
+      <sql>select tran_id,razon_social,descripcion,direccion,telefono,contacto,resolucion,registro,fec_alta_efectiva,fec_baja_efectiva,fec_alta,usuario,usuario_app, cuit, user_id &#xd;from log.transportistas&#xd;where eliminado = 0</sql>
+      <result outputType="json">{&#xd;   "transportistas":{&#xd;      "transportista":[&#xd;         {&#xd;            "tran_id":"$tran_id",&#xd;            "razon_social":"$razon_social",&#xd;            "descripcion":"$descripcion",&#xd;            "direccion":"$direccion",&#xd;            "telefono":"$telefono",&#xd;            "contacto":"$contacto",&#xd;            "resolucion":"$resolucion",&#xd;            "registro":"$registro",&#xd;            "fec_alta_efectiva":"$fec_alta_efectiva",&#xd;            "fec_baja_efectiva":"$fec_baja_efectiva",&#xd;            "fec_alta":"$fec_alta",&#xd;            "usuario":"$usuario",&#xd;            "usuario_app":"$usuario_app",&#xd;            "cuit": "$cuit",&#xd;            "user_id": "$user_id",&#xd;            "@transportistaTipoCarga": "$tran_id-&gt;tran_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="contenedoresGet" useConfig="semaresiduosDS">
+      <sql>select C.cont_id, C.codigo, C.descripcion, C.capacidad, C.anio_elaboracion, C.tara, C.habilitacion as habil_id, C.fec_alta, C.esco_id, C.reci_id, T.valor as estado, T2.valor as habilitacion &#xd;  from log.contenedores C, core.tablas T, core.tablas T2&#xd;  where C.esco_id = T.tabl_id &#xd;  and C.habilitacion = T2.tabl_id&#xd;  and C.eliminado = 0</sql>
+      <result outputType="json">{&#xd;    "contenedores":{&#xd;      "contenedor":&#xd;          [&#xd;            {&#xd;              "cont_id": "$cont_id",&#xd;              "codigo": "$codigo",&#xd;              "descripcion": "$descripcion",&#xd;              "capacidad": "$capacidad",&#xd;              "anio_elaboracion": "$anio_elaboracion",&#xd;              "tara": "$tara",&#xd;              "habil_id": "$habil_id",&#xd;              "fec_alta": "$fec_alta",&#xd;              "esco_id": "$esco_id",&#xd;              "reci_id": "$reci_id",          &#xd;              "estado": "$estado",&#xd;              "habilitacion": "$habilitacion",&#xd;              "@contenedoresGetTipoCargaPorId": "$cont_id-&gt;cont_id"&#xd;            }&#xd;          ]&#xd;    }&#xd;  }</result>
+   </query>
+   <query id="contenedoresSet" useConfig="semaresiduosDS">
+      <sql>insert into log.contenedores(codigo, descripcion, capacidad, anio_elaboracion, tara, habilitacion, fec_alta, usuario_app, esco_id, tran_id, imagen)&#xd;  values(CAST(:codigo as INTEGER), :descripcion, CAST(:capacidad as float8), TO_DATE(:anio_elaboracion,'YYYY-MM-DD'), CAST(:tara as float8), :habilitacion, TO_DATE(:fec_alta,'YYYY-MM-DD'), :usuario_app, :esco_id, CAST(:tran_id AS INTEGER), :imagen)&#xd;  returning cont_id</sql>
+      <result outputType="json">{&#xd; "respuesta":{&#xd;    "cont_id": "$cont_id"&#xd; }&#xd;}</result>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="capacidad" sqlType="STRING"/>
+      <param name="anio_elaboracion" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="habilitacion" sqlType="STRING"/>
+      <param name="fec_alta" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="esco_id" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+   </query>
+   <query id="solicitanteTransporteGet" useConfig="semaresiduosDS">
+      <sql>select &#xd;  ST.sotr_id, ST.razon_social, ST.cuit, ST.domicilio, ST.num_registro, &#xd;  ST.lat, ST.lng, ST.zona_id, ST.rubr_id, ST.tist_id, ST.depa_id, ST.user_id, &#xd;  D.nombre as depa_nombre, Z.nombre as zona_nombre &#xd;from &#xd; log.solicitantes_transporte ST, core.departamentos D, core.zonas Z&#xd;where &#xd;  ST.depa_id = D.depa_id &#xd;and &#xd;  ST.zona_id = Z.zona_id &#xd;and &#xd;  ST.eliminado = 0</sql>
+      <result outputType="json">{&#xd;  "solicitantes_transporte": {&#xd;        "solicitante": [&#xd;          {&#xd;            "sotr_id": "$sotr_id",&#xd;            "razon_social": "$razon_social",&#xd;            "cuit": "$cuit",&#xd;            "domicilio": "$domicilio",&#xd;            "num_registro": "$num_registro",&#xd;            "lat": "$lat",&#xd;            "lng": "$lng",&#xd;            "zona_id": "$zona_id",&#xd;            "zona_nombre": "$zona_nombre",&#xd;            "depa_id": "$depa_id",&#xd;            "depa_nombre": "$depa_nombre", &#xd;            "rubr_id": "$rubr_id",&#xd;            "tist_id": "$tist_id",&#xd;            "user_id": "$user_id",&#xd;            "@solicitanteTransporteGetTipoCarga": "$sotr_id-&gt;sotr_id"	            &#xd;          }&#xd;        ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="solicitanteTransporteSet" useConfig="semaresiduosDS">
+      <sql>insert into log.solicitantes_transporte(razon_social, cuit, domicilio, num_registro, lat, lng, usuario_app, zona_id, rubr_id, tist_id, depa_id)&#xd;  values(:razon_social, :cuit, :domicilio, :num_registro, :lat, :lng, :usuario_app, CAST(:zona_id AS INTEGER), :rubr_id, :tist_id, CAST(:depa_id AS INTEGER))&#xd;returning sotr_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;     "sotr_id": "$sotr_id"&#xd;  }&#xd;} </result>
+      <param name="razon_social" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="domicilio" sqlType="STRING"/>
+      <param name="num_registro" sqlType="STRING"/>
+      <param name="lat" sqlType="STRING"/>
+      <param name="lng" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="zona_id" sqlType="STRING"/>
+      <param name="rubr_id" sqlType="STRING"/>
+      <param name="tist_id" sqlType="STRING"/>
+      <param name="depa_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteUpdate" useConfig="semaresiduosDS">
+      <sql>update &#xd;  log.solicitantes_transporte &#xd;  set &#xd;  razon_social=:razon_social, cuit=:cuit, domicilio = :domicilio, num_registro=:num_registro, lat=:lat, lng=:lng, usuario_app=:usuario_app, zona_id=CAST(:zona_id AS INTEGER), rubr_id=:rubr_id, tist_id=:tist_id&#xd;  where (sotr_id=CAST(:sotr_id AS INTEGER))</sql>
+      <param name="razon_social" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="domicilio" sqlType="STRING"/>
+      <param name="num_registro" sqlType="STRING"/>
+      <param name="lat" sqlType="STRING"/>
+      <param name="lng" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="zona_id" sqlType="STRING"/>
+      <param name="rubr_id" sqlType="STRING"/>
+      <param name="tist_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteEstado" useConfig="semaresiduosDS">
+      <sql>update &#xd;  log.solicitantes_transporte &#xd;set &#xd;  eliminado = CAST(:eliminado AS INTEGER)&#xd;where &#xd;  sotr_id = CAST(:sotr_id AS INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistaUpdate" useConfig="semaresiduosDS">
+      <sql>update log.transportistas &#xd;set &#xd;  razon_social=:razon_social, &#xd;  descripcion=:descripcion, &#xd;  direccion=:direccion, &#xd;  telefono=:telefono,&#xd;  contacto=:contacto, &#xd;  resolucion=:resolucion, &#xd;  registro=:registro, &#xd;  fec_alta=TO_DATE(:fec_alta,'YYYY-MM-DD'), &#xd;  fec_baja_efectiva=TO_DATE(:fec_baja_efectiva,'YYYY-MM-DD'), &#xd;  usuario_app=:usuario_app, &#xd;  cuit=:cuit&#xd;where &#xd;  tran_id = CAST(:tran_id AS INTEGER)</sql>
+      <param name="razon_social" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="contacto" sqlType="STRING"/>
+      <param name="resolucion" sqlType="STRING"/>
+      <param name="registro" sqlType="STRING"/>
+      <param name="fec_baja_efectiva" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="fec_alta" sqlType="STRING"/>
+   </query>
+   <query id="transportistasEstado" useConfig="semaresiduosDS">
+      <sql>update &#xd;  log.transportistas &#xd;  set eliminado = CAST(:eliminado AS INTEGER)&#xd;  where tran_id = CAST(:tran_id AS INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="zonaUpdate" useConfig="semaresiduosDS">
+      <sql>update &#xd;   core.zonas&#xd;  set nombre=:nombre, descripcion=:descripcion, usuario_app=:usuario_app, depa_id=CAST(:depa_id AS INTEGER)&#xd;  where zona_id = CAST(:zona_id AS INTEGER)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="depa_id" sqlType="STRING"/>
+      <param name="zona_id" sqlType="STRING"/>
+   </query>
+   <query id="zonaUpdateImagen" useConfig="semaresiduosDS">
+      <sql>update &#xd;   core.zonas&#xd;  set imagen = :imagen&#xd;  where zona_id = CAST(:zona_id AS INTEGER)</sql>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param name="zona_id" sqlType="STRING"/>
+   </query>
+   <query id="choferUpdate" useConfig="semaresiduosDS">
+      <sql>update log.choferes&#xd;   set nombre=:nombre, apellido=:apellido, documento=:documento, fec_nacimiento=TO_DATE(:fec_nacimiento,'YYYY-MM-DD'), direccion=:direccion, celular=:celular, codigo=:codigo, carnet=:carnet, vencimiento=TO_DATE(:vencimiento,'YYYY-MM-DD'), habilitacion=:habilitacion, imagen = :imagen, tran_id=CAST(:tran_id AS INTEGER), cach_id=:cach_id, usuario_app = :usuario_app &#xd;   where chof_id = CAST(:chof_id AS INTEGER)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="apellido" sqlType="STRING"/>
+      <param name="documento" sqlType="STRING"/>
+      <param name="fec_nacimiento" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="celular" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="carnet" sqlType="STRING"/>
+      <param name="vencimiento" sqlType="STRING"/>
+      <param name="habilitacion" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="cach_id" sqlType="STRING"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="choferesUpdateImagen" useConfig="semaresiduosDS">
+      <sql>update &#xd;    log.choferes&#xd;    set imagen = :imagen&#xd;    where chof_id = CAST(:chof_id AS INTEGER)</sql>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param name="chof_id" sqlType="STRING"/>
+   </query>
+   <query id="puntosCriticosGet" useConfig="semaresiduosDS">
+      <sql>select nombre, descripcion, lat, lng, zona_id from log.puntos_criticos</sql>
+      <result outputType="json">{&#xd;   "puntos_criticos":{&#xd;      "punto":[&#xd;         {&#xd;            "nombre":"$nombre",&#xd;            "descripcion":"$descripcion",&#xd;            "lat":"$lat",&#xd;            "lng":"$lng",&#xd;            "zona_id":"$zona_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="puntosCriticosSet" useConfig="semaresiduosDS">
+      <sql>insert into log.puntos_criticos (nombre, descripcion, lat, lng, usuario_app) &#xd;  values(:nombre, :descripcion, :lat, :lng, :usuario_app)&#xd;returning pucr_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;     "pucr_id": "$pucr_id"&#xd;  }&#xd;}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="lat" sqlType="STRING"/>
+      <param name="lng" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="puntosCriticosEstado" useConfig="semaresiduosDS">
+      <sql>update &#xd;    log.puntos_criticos &#xd;    set eliminado = CAST(:eliminado AS INTEGER)&#xd;    where pucr_id = CAST(:pucr_id AS INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="pucr_id" sqlType="STRING"/>
+   </query>
+   <query id="tablasSet" useConfig="semaresiduosDS">
+      <sql>insert into core.tablas(tabla, valor) values(:tabla, :valor)&#xd;   returning tabl_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;     "tabl_id": "$tabl_id"&#xd;  }&#xd;}</result>
+      <param name="tabla" sqlType="STRING"/>
+      <param name="valor" sqlType="STRING"/>
+   </query>
+   <query id="tablasGet" useConfig="semaresiduosDS">
+      <sql>select * from core.tablas where tabla = :tabla</sql>
+      <result outputType="json">{&#xd;    "valores":{&#xd;        "valor":[&#xd;          {&#xd;            "tabl_id": "$tabl_id",&#xd;            "valor": "$valor",&#xd;            "valor2": "$valor2",&#xd;            "valor3": "$valor3",&#xd;            "descripcion": "$descripcion"&#xd;          }&#xd;        ]&#xd;    }&#xd;  }</result>
+      <param name="tabla" sqlType="STRING"/>
+   </query>
+   <query id="puntosCriticosUpdate" useConfig="semaresiduosDS">
+      <sql>update log.puntos_criticos set nombre=:nombre, descripcion=:descripcion, lat=:lat, lng=:lng, usuario_app=:usuario_app,zona_id=cast(:zona_id as INTEGER)&#xd;    where pucr_id = CAST(:pucr_id AS INTEGER)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="lat" sqlType="STRING"/>
+      <param name="lng" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="zona_id" sqlType="STRING"/>
+      <param name="pucr_id" sqlType="STRING"/>
+   </query>
+   <query id="choferesGetPorTransportistas" useConfig="semaresiduosDS">
+      <sql>select &#xd; chof_id, documento, concat(apellido, ', ',nombre) as nom_chofer&#xd;from log.choferes &#xd;  where tran_id = CAST(:tran_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;   "choferes":{&#xd;      "chofer":[&#xd;         {&#xd;            "chof_id":"$chof_id",&#xd;   "documento":"$documento",         "nom_chofer":"$nom_chofer"         &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistasGetTodo" useConfig="semaresiduosDS">
+      <sql>select tran_id, razon_social from log.transportistas</sql>
+      <result outputType="json">{"transportistas":&#xd;    {&#xd;      "transportista":[&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social",&#xd;          "@choferesGetPorTransportistas": "$tran_id-&gt;tran_id",&#xd;          "@vehiculosGetPorTransportistas" : "$tran_id-&gt;tran_id" &#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+   </query>
+   <query id="vehiculosGetPorTransportistas" useConfig="semaresiduosDS">
+      <sql>select &#xd;  equi_id, descripcion, marca, dominio &#xd;from &#xd;  core.equipos &#xd;where &#xd;  tran_id = CAST(:tran_id AS INTEGER) and estado = 'AC'</sql>
+      <result outputType="json">{&#xd;    "vehiculos":{&#xd;      "vehiculo":[&#xd;          {&#xd;            "equi_id": "$equi_id",&#xd;            "descripcion": "$descripcion",&#xd;            "marca": "$marca",&#xd;            "dominio": "$dominio"&#xd;          }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculosSet" useConfig="semaresiduosDS">
+      <sql>insert into core.equipos (descripcion, marca, codigo, ubicacion, tran_id, dominio, fecha_ingreso, tara, imagen, cont_id)&#xd;        SELECT :descripcion, :marca, :codigo, :ubicacion, CAST(:tran_id AS INTEGER), :dominio, TO_DATE(:fecha_ingreso,'YYYY-MM-DD'), CAST(:tara as float8), :imagen,&#xd;        CASE&#xd;          WHEN cont.ID = 'X'&#xd;        THEN NULL&#xd;        ELSE CAST (cont.id AS integer) END&#xd;        FROM  (SELECT :cont_id ID) cont&#xd;  returning equi_id</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;     "equi_id": "$equi_id"&#xd;  }&#xd;}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="marca" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="ubicacion" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="dominio" sqlType="STRING"/>
+      <param name="fecha_ingreso" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param defaultValue="X" name="cont_id" optional="true" sqlType="STRING"/>
+   </query>
+   <query id="transportistasSetTipoCarga" useConfig="semaresiduosDS">
+      <sql>insert into log.tipos_carga_transportistas(tran_id, tica_id) values(CAST(:tran_id AS INTEGER), :tica_id)</sql>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+   </query>
+   <query id="circuitosSet" useConfig="semaresiduosDS">
+      <sql>insert into &#xd;  log.circuitos(codigo, descripcion, imagen, usuario_app, chof_id, vehi_id)&#xd;  values(:codigo, :descripcion, :imagen, :usuario_app, CAST(:chof_id AS INTEGER), CAST(:vehi_id AS INTEGER))&#xd;returning circ_id</sql>
+      <result outputType="json">{&#xd; "respuesta": {&#xd;   "circ_id": "$circ_id"&#xd; }&#xd;}</result>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="vehi_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="circuitosGetPorZonaId" useConfig="semaresiduosDS">
+      <sql>select circ_id, codigo, descripcion from log.circuitos where zona_id = CAST(:zona_id AS INTEGER)</sql>
+      <result outputType="json">{  &#xd;  "zonas":{         &#xd;    "zona":[ &#xd;         {&#xd;          "cir_id": "$circ_id",&#xd;          "codigo": "$codigo",          &#xd;          "descripcion": "$descripcion"          &#xd;         }      &#xd;    ]&#xd;  }      &#xd;}</result>
+      <param name="zona_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculosGetActivos" useConfig="semaresiduosDS">
+      <sql>select equi_id, descripcion, marca, dominio, codigo, ubicacion, tran_id, fecha_ingreso, tara from core.equipos where estado = 'AC' and tran_id is not null</sql>
+      <result outputType="json">{&#xd;  "vehiculos":{&#xd;      "vehiculo":[&#xd;          {&#xd;            "equi_id": "$equi_id",&#xd;            "descripcion": "$descripcion",&#xd;            "marca": "$marca",&#xd;            "dominio": "$dominio",&#xd;            "codigo":"$codigo",&#xd;            "ubicacion":"$ubicacion",&#xd;            "tran_id":"$tran_id",&#xd;            "fecha_ingreso":"$fecha_ingreso",&#xd;            "tara": "$tara"&#xd;          }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="zonaGetPorDepto" useConfig="semaresiduosDS">
+      <sql>select &#xd;  zonas.zona_id, zonas.nombre from core.zonas &#xd;where &#xd;  eliminado = 0  &#xd;and &#xd;  depa_id = CAST(:depa_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;   "zonas":{&#xd;      "zona":[&#xd;         {&#xd;            "zona_id":"$zona_id",&#xd;            "zona_nom":"$nombre"         &#xd;         }      &#xd;      ]   &#xd;   }&#xd;}</result>
+      <param name="depa_id" sqlType="STRING"/>
+   </query>
+   <query id="puntosPorCircuito" useConfig="semaresiduosDS">
+      <sql>select  &#xd;  PC.nombre, PC.descripcion, PC.lat, PC.lng &#xd;from &#xd;  log.puntos_criticos PC, log.circuitos_puntos_criticos CPC&#xd;where &#xd;  PC.pucr_id = CPC.pucr_id &#xd;and&#xd;  CPC.circ_id = CAST(:circ_id AS INTEGER)&#xd;and &#xd;  CPC.eliminado = 0</sql>
+      <result outputType="json">{&#xd;  "puntos":{&#xd;    "punto":[&#xd;      {&#xd;        "nombre": "$nombre",&#xd;        "descripcion": "$descripcion",&#xd;        "lat": "$lat",&#xd;        "lng": "$lng"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="contEntregadosSet" useConfig="semaresiduosDS">
+      <sql>insert into &#xd;  log.contenedores_entregados(porc_llenado, mts_cubicos, fec_entrega, usuario_app, cont_id, soco_id, ortr_id, tica_id)&#xd;  values(CAST(:porc_llenado AS float8), CAST(:mts_cubicos AS float8), TO_DATE(:fec_entrega, 'YYYY-MM-DD'), :usuario_app, CAST(:cont_id AS INTEGER), CAST(:soco_id AS INTEGER), CAST(:ortr_id AS INTEGER), :tica_id) returning coen_id</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;      "coen_id": "$coen_id"&#xd;    }&#xd;}</result>
+      <param name="porc_llenado" sqlType="STRING"/>
+      <param name="mts_cubicos" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+      <param name="soco_id" sqlType="STRING"/>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+      <param name="fec_entrega" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteGetPorUsr" useConfig="semaresiduosDS">
+      <sql>select sotr_id &#xd;from log.solicitantes_transporte ST&#xd;where ST.user_id = (select U.email from seg.users U &#xd;                    where U.usernick = :usuario_app)</sql>
+      <result outputType="json">{&#xd;    "solicitantes_transporte": {     &#xd;            "sotr_id": "$sotr_id"&#xd;    }&#xd;}</result>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="circuitosSetTipoCarga" useConfig="semaresiduosDS">
+      <sql>insert into log.tipos_carga_circuitos(circ_id, tica_id) values(CAST(:circ_id AS INTEGER), :tica_id)</sql>
+      <param name="circ_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+   </query>
+   <query id="circuitosUpdateZona" useConfig="semaresiduosDS">
+      <sql>update log.circuitos set zona_id = CAST(:zona_id AS INTEGER)&#xd;  where circ_id = CAST(:circ_id AS INTEGER)</sql>
+      <param name="zona_id" sqlType="STRING"/>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="getLotetodos" useConfig="semaresiduosDS">
+      <sql>select reci_id, nombre from prd.recipientes where tipo = 'DEPOSITO' and estado = 'VACIO'</sql>
+      <result outputType="json">{&#xd;  "recipientes":&#xd;        {"recipiente":&#xd;          [&#xd;            {&#xd;            "reci_id": "$reci_id",&#xd;            "nombre":"$nombre"&#xd;            }          &#xd;          ]&#xd;        }&#xd;}</result>
+   </query>
+   <query id="ordTransProxId" useConfig="semaresiduosDS">
+      <sql>select (max(ortr_id) + 1) as nueva_ortr_id from log.ordenes_transporte</sql>
+      <result outputType="json">{&#xd; "respuesta":{&#xd;   "nueva_ortr_id": "$nueva_ortr_id"&#xd; }&#xd;}</result>
+   </query>
+   <query id="setPuntosCriticosCircuitos" useConfig="semaresiduosDS">
+      <sql>insert into &#xd;  log.circuitos_puntos_criticos (circ_id, pucr_id) values&#xd;  (CAST(:circ_id AS INTEGER), CAST(:pucr_id AS INTEGER));</sql>
+      <param name="circ_id" sqlType="STRING"/>
+      <param name="pucr_id" sqlType="STRING"/>
+   </query>
+   <query id="tiposCargaCicuitoGet" useConfig="semaresiduosDS">
+      <sql>select &#xd; TCC.circ_id, TCC.tica_id , T.valor&#xd;from &#xd;  log.tipos_carga_circuitos TCC , core.tablas T&#xd;where    &#xd;  circ_id = CAST(:circ_id as INTEGER)&#xd;and &#xd;  TCC.tica_id = T.tabl_id&#xd;group by T.valor,tica_id, circ_id</sql>
+      <result outputType="json">{&#xd;  "tiposCarga":{&#xd;    "carga":[&#xd;      {&#xd;        "circ_id": "$circ_id",&#xd;        "tica_id": "$tica_id",&#xd;        "valor": "$valor"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="circuitosGetPorId" useConfig="semaresiduosDS">
+      <sql>select &#xd;  circ_id, codigo, descripcion, imagen, chof_id, vehi_id, zona_id &#xd;from &#xd;  log.circuitos &#xd;where &#xd;  circ_id = CAST(:circ_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;   "circuito":   &#xd;          {&#xd;            "circ_id": "$circ_id", &#xd;            "codigo": "$codigo", &#xd;            "descripcion": "$descripcion", &#xd;            "imagen": "$imagen", &#xd;            "chof_id": "$chof_id", &#xd;            "vehi_id": "$vehi_id", &#xd;            "zona_id": "$zona_id",&#xd;            "@tiposCargaCicuitoGet":"$circ_id-&gt;circ_id"           &#xd;          }  &#xd;}</result>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorSet" useConfig="semaresiduosDS">
+      <sql>insert into log.solicitudes_contenedor(estado, observaciones, usuario_app, sotr_id,tran_id) values('SOLICITADA', :observaciones, :usuario_app, cast(:sotr_id as INTEGER),cast(:tran_id as INTEGER)) returning soco_id</sql>
+      <result outputType="json"> {&#xd;"respuesta": {&#xd;"soco_id": "$soco_id"&#xd;}&#xd;}</result>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorTipoCarga" useConfig="semaresiduosDS">
+      <sql>insert into log.contenedores_solicitados(cantidad, otro, usuario_app, tica_id, soco_id) values(CAST(:cantidad AS INTEGER), :otro, :usuario_app, :tica_id, CAST(:soco_id AS INTEGER))</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="otro" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorProximo" useConfig="semaresiduosDS">
+      <sql>select COALESCE(NULL,(max(soco_id) + 1), 1) as nuevo_soco_id from log.solicitudes_contenedor</sql>
+      <result outputType="json">{&#xd;  "respuesta":{&#xd;    "nuevo_soco_id": "$nuevo_soco_id"&#xd;  }&#xd;}</result>
+   </query>
+   <query id="contenedoresSolicitadosGet" useConfig="semaresiduosDS">
+      <sql>select &#xd;  CS.coso_id, CS.cantidad, CS.motivo_rechazo, CS.otro, CS.fec_alta, CS.tica_id, CS.soco_id, coalesce (CS.cantidad_acordada, null, 0) as cantidad_acordada, CS.reci_id, T.valor as rsu from log.contenedores_solicitados CS, core.tablas T&#xd;  where CS.tica_id = T.tabl_id &#xd;  and soco_id = CAST(:soco_id as INTEGER)</sql>
+      <result outputType="json">  {&#xd;    "contSolicitados":{&#xd;      "contenedor":[&#xd;        {&#xd;          "coso_id": "$coso_id", &#xd;          "cantidad": "$cantidad", &#xd;          "motivo_rechazo": "$motivo_rechazo",&#xd;          "otro": "$otro", &#xd;          "fec_alta": "$fec_alta", &#xd;          "tica_id": "$tica_id",&#xd;          "soco_id": "$soco_id",&#xd;          "valor": "$rsu",&#xd;          "cantidad_acordada": "$cantidad_acordada",&#xd;          "reci_id": "$reci_id" &#xd;        }&#xd;      ]&#xd;    }  &#xd;  }</result>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorGet" useConfig="semaresiduosDS">
+      <sql>select soco_id, estado, observaciones, fec_alta, sotr_id from log.solicitudes_contenedor SC where usuario_app = :usuario_app</sql>
+      <result outputType="json">{&#xd;   "sols_cont":{&#xd;      "sol_cont":[&#xd;         {&#xd;            "soco_id":"$soco_id",&#xd;            "estado":"$estado",&#xd;            "observaciones":"$observaciones",&#xd;            "fec_alta":"$fec_alta",&#xd;            "sotr_id":"$sotr_id",&#xd;            "@contenedoresSolicitadosGet":"$soco_id-&gt;soco_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="ordTransSet" useConfig="semaresiduosDS">
+      <sql>INSERT&#xd;	INTO&#xd;	log.ordenes_transporte (fec_retiro, estado, difi_id, sotr_id, equi_id, chof_id, teot_id, tran_id, usuario_app)&#xd;SELECT&#xd;	TO_DATE(:fec_retiro, 'YYYY-MM-DD')&#xd;	, 'EN_TRANSITO'&#xd;	, :difi_id&#xd;	, CAST(:sotr_id AS INTEGER)&#xd;	, CAST(:equi_id AS INTEGER)&#xd;	, :chof_id&#xd;	, CASE&#xd;		WHEN teot.teotid IS NULL OR teot.teotid= '' THEN NULL&#xd;		ELSE CAST (teot.teotid AS integer)&#xd;	END&#xd;        ,cast(:tran_id as integer)&#xd;	, :usuario_app&#xd;FROM&#xd;	(SELECT	:teot_id teotid) teot &#xd;RETURNING ortr_id</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;      "ortr_id": "$ortr_id"&#xd;    }&#xd;}</result>
+      <param name="fec_retiro" sqlType="STRING"/>
+      <param name="difi_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="equi_id" sqlType="STRING"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param defaultValue="" name="teot_id" optional="true" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistaTipoCarga" useConfig="semaresiduosDS">
+      <sql>select &#xd;  TCT.tran_id, TCT.tica_id, T.valor &#xd;from &#xd;  log.tipos_carga_transportistas TCT, core.tablas T&#xd;where &#xd;  TCT.tica_id = T.tabl_id &#xd;and &#xd;  TCT.tran_id = CAST(:tran_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;  "tiposCarga": {&#xd;      "cargas": [&#xd;          {&#xd;          "tran_id": "$tran_id",&#xd;          "tica_id": "$tica_id",&#xd;          "valor": "$valor"&#xd;          }&#xd;      ]&#xd;  }&#xd;}</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosGet" useConfig="semaresiduosDS">
+      <sql>select (coalesce(COUNT(CE.coen_id), null, 0)) as cant_entregados, CE.tica_id, T.valor &#xd;	from log.contenedores_entregados CE, core.tablas T&#xd;	where CE.soco_id = cast(:soco_id as INTEGER) and CE.tica_id = T.tabl_id&#xd;	group by CE.tica_id, T.valor</sql>
+      <result outputType="json">{&#xd;    "contenedores":{&#xd;      "contenedor":[&#xd;        {&#xd;          "cant_entregados": "$cant_entregados",&#xd;          "tica_id": "$tica_id",&#xd;          "valor": "$valor"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteGetPorSoco_id" useConfig="semaresiduosDS">
+      <sql>select &#xd;		razon_social, domicilio from log.solicitantes_transporte ST, log.solicitudes_contenedor SC&#xd;	where &#xd;		ST.sotr_id = SC.sotr_id and &#xd;		SC.soco_id = cast(:soco_id as integer)</sql>
+      <result outputType="json">{&#xd;    "solicitante":{&#xd;      "razon_social": "$razon_social",&#xd;      "domicilio": "$domicilio"&#xd;    }&#xd;  }</result>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosTodos" useConfig="semaresiduosDS">
+      <sql>select CE.porc_llenado, CE.fec_retiro, T.valor, CE.tica_id, E.dominio, CONCAT(CH.apellido, ', ', CH.nombre) as chofer  &#xd;	from log.contenedores_entregados CE, log.ordenes_transporte OT, core.equipos E, log.choferes CH, core.tablas T&#xd;	where CE.ortr_id = OT.ortr_id &#xd;	and OT.equi_id = E.equi_id &#xd;	and OT.chof_id = CH.documento &#xd;	and CE.tica_id = T.tabl_id</sql>
+      <result outputType="json"> {&#xd;    "contenedoresEntregados": {&#xd;      "contenedores": [&#xd;        {&#xd;        "porc_llenado": "$porc_llenado",&#xd;        "fec_retiro": "$fec_retiro",&#xd;        "rsu": "$valor",&#xd;        "tica_id": "$tica_id",&#xd;        "dominio": "$dominio",&#xd;        "chofer": "$chofer"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+   </query>
+   <query id="contenedoresGetPorTransp" useConfig="semaresiduosDS">
+      <sql>select&#xd;    C.cont_id, C.codigo, C.descripcion, C.capacidad, C.tara,&#xd;    T.valor as estado,&#xd;    T2.valor as habilitacion&#xd;  from&#xd;    log.contenedores C, core.tablas T, core.tablas T2&#xd;  where&#xd;      C.esco_id = T.tabl_id&#xd;  and C.habilitacion = T2.tabl_id&#xd;  -- por transportista&#xd;  and C.tran_id = CAST(:tran_id  as INTEGER)</sql>
+      <result outputType="json"> {&#xd;    "contenedores": {&#xd;        "contenedor": [&#xd;            {&#xd;              "cont_id": "$cont_id",&#xd;              "codigo": "$codigo",&#xd;              "descripcion": "$descripcion",&#xd;              "capacidad": "$capacidad",&#xd;              "tara": "$tara",&#xd;              "estado": "$estado",&#xd;              "habilitacion": "$habilitacion"&#xd;            }&#xd;        ]&#xd;        }&#xd;    }</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosSet" useConfig="semaresiduosDS">
+      <sql>insert into log.contenedores_entregados(fec_entrega, cont_id, usuario_app, soco_id, tica_id ,equi_id_entrega)&#xd;  values(TO_DATE(:fec_entrega, 'YYYY-MM-DD'), CAST(:cont_id as INTEGER), :usuario_app, CAST(:soco_id AS INTEGER), :tica_id, cast(:equi_id_entrega as INTEGER))</sql>
+      <param name="fec_entrega" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="soco_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+      <param name="equi_id_entrega" sqlType="STRING"/>
+   </query>
+   <query id="zonaDelete" useConfig="semaresiduosDS">
+      <sql>update core.zonas set eliminado = CAST(:eliminado as INTEGER) where zona_id = CAST(:zona_id as INTEGER)</sql>
+      <param name="zona_id" sqlType="STRING"/>
+      <param name="eliminado" sqlType="STRING"/>
+   </query>
+   <query id="circuitosUpdate" useConfig="semaresiduosDS">
+      <sql>update log.circuitos set &#xd;  codigo = sq.codigo, &#xd;  descripcion = sq.descripcion,&#xd;  imagen = sq.imagen,&#xd;  usuario_app = sq.usuario_app , &#xd;  chof_id = CAST(sq.chof_id as integer), &#xd;  vehi_id = CAST(sq.vehi_id as integer), &#xd;  zona_id = case when sq.zona_id = '' or sq.zona_id is null then null else cast(sq.zona_id as integer) end&#xd;from (&#xd;  select :codigo codigo&#xd;          ,:descripcion descripcion&#xd;          ,:imagen imagen&#xd;          ,:usuario_app usuario_app&#xd;          ,:chof_id chof_id&#xd;          ,:vehi_id vehi_id &#xd;          ,:zona_id zona_id) as sq&#xd;where circ_id = CAST(:circ_id AS INTEGER)</sql>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="circ_id" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="vehi_id" sqlType="STRING"/>
+      <param name="zona_id" sqlType="STRING"/>
+   </query>
+   <query id="circuitosEstado" useConfig="semaresiduosDS">
+      <sql>update &#xd;  log.circuitos &#xd;set &#xd;  eliminado = CAST(:eliminado AS INTEGER)&#xd;where &#xd;  circ_id = CAST(:circ_id as INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="zonasEstado" useConfig="semaresiduosDS">
+      <sql>update core.zonas set eliminado = CAST(:eliminado as INTEGER) where zona_id = CAST(:zona_id as INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="zona_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorCaseidPut" useConfig="semaresiduosDS">
+      <sql>update log.solicitudes_contenedor&#xd;set case_id = :case_id&#xd;where soco_id =  cast(:soco_id as integer)</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresTipoCarga" useConfig="semaresiduosDS">
+      <sql>insert into &#xd;  log.tipos_carga_contenedores(cont_id,tica_id) values(CAST(:cont_id AS INTEGER),:tica_id)</sql>
+      <param name="cont_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresGetTipoCargaPorId" useConfig="semaresiduosDS">
+      <sql>select C.cont_id, C.tica_id, T.valor as rsu&#xd;  from &#xd;    log.tipos_carga_contenedores C, core.tablas T&#xd;  where &#xd;    C.tica_id = T.tabl_id &#xd;  and  &#xd;    cont_id = CAST(:cont_id as INTEGER)&#xd;  and &#xd;    C.eliminado = 0</sql>
+      <result outputType="json">{ &#xd;    "tipos_carga":{&#xd;        "tipoCarga":[&#xd;          {&#xd;            "cont_id": "$cont_id",&#xd;            "tica_id": "$tica_id",&#xd;            "rsu": "$rsu"&#xd;          }&#xd;        ]&#xd;    }&#xd;  }</result>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresGetPorId" useConfig="semaresiduosDS">
+      <sql>select C.cont_id, C.codigo, C.descripcion, C.capacidad, C.anio_elaboracion, C.tara, C.habilitacion as habil_id, C.fec_alta, C.esco_id, C.reci_id, T.valor as estado, T2.valor as habilitacion &#xd;  from log.contenedores C, core.tablas T, core.tablas T2&#xd;  where C.esco_id = T.tabl_id &#xd;  and C.habilitacion = T2.tabl_id&#xd;  and C.cont_id = CAST(:cont_id as INTEGER)</sql>
+      <result outputType="json">{"contenedor": &#xd;    {&#xd;      "cont_id": "$cont_id",&#xd;      "codigo": "$codigo",&#xd;      "descripcion": "$descripcion",&#xd;      "capacidad": "$capacidad",&#xd;      "anio_elaboracion": "$anio_elaboracion",&#xd;      "tara": "$tara",&#xd;      "habil_id": "$habil_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "esco_id": "$esco_id",&#xd;      "reci_id": "$reci_id",&#xd;      "estado": "$estado",&#xd;      "habilitacion": "$habilitacion", &#xd;      "@contenedoresGetTipoCargaPorId": "$cont_id-&gt;cont_id"&#xd;    }&#xd;  }</result>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresTipoCargaEstado" useConfig="semaresiduosDS">
+      <sql>update log.tipos_carga_contenedores set eliminado = CAST(:eliminado AS iNTEGER)&#xd;  where cont_id = CAST(:cont_id as INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresUpdate" useConfig="semaresiduosDS">
+      <sql>update log.contenedores &#xd;  set codigo = CAST(:codigo as INTEGER), descripcion = :descripcion, capacidad = CAST(:capacidad as float8), tara = CAST(:tara as float8), habilitacion = :habilitacion, usuario_app = :usuario_app, esco_id = :esco_id, anio_elaboracion = TO_DATE(:anio_elaboracion,'YYYY-MM-DD'), imagen = :imagen&#xd;  where cont_id = CAST(:cont_id as INTEGER)</sql>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="capacidad" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="habilitacion" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="esco_id" sqlType="STRING"/>
+      <param name="anio_elaboracion" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+   </query>
+   <query id="transportistaGetPorGenerador" useConfig="semaresiduosDS">
+      <sql>select TR.tran_id,TR.razon_social &#xd;  from  &#xd;      log.solicitudes_contenedor SC, log.contenedores_entregados CE, log.contenedores C, log.transportistas TR&#xd;  where &#xd;      SC.soco_id = CE.soco_id and&#xd;      CE.cont_id = C.cont_id and&#xd;      C.tran_id = TR.tran_id and&#xd;      SC.usuario_app = :usuario_app&#xd;      limit (1)</sql>
+      <result outputType="json">{"transportistas":&#xd;    {&#xd;      "transportista":[&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="solicitudRetiroProx" useConfig="semaresiduosDS">
+      <sql>select &#xd;  COALESCE(NULL,(max(sore_id) + 1), 1) as nuevo_sore_id &#xd;from &#xd;  log.solicitudes_retiro</sql>
+      <result outputType="json">{"respuesta": {"nuevo_sore_id": "$nuevo_sore_id"}}</result>
+   </query>
+   <query id="contenedoresEntregadosPorTicaId" useConfig="semaresiduosDS">
+      <sql>select C.cont_id, C.codigo, C.descripcion&#xd;  from log.contenedores C, log.contenedores_entregados CE  &#xd;  where C.cont_id = CE.cont_id&#xd;  and CE.ortr_id is null &#xd;  and CE.tica_id = :tica_id	&#xd;  and CE.usuario_app = :usuario_app</sql>
+      <result outputType="json">{&#xd;    "contenedores":{&#xd;      "contenedor":[&#xd;        {&#xd;          "cont_id": "$cont_id",&#xd;          "codigo": "$codigo",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="tica_id&#x9;" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+   </query>
+   <query id="solicitudRetiroSet" useConfig="semaresiduosDS">
+      <sql>insert into log.solicitudes_retiro(usuario_app,sotr_id) values(:usuario_app,cast(:sotr_id as integer))&#xd;returning sore_id</sql>
+      <result outputType="json">{&#xd;  "respuesta": {&#xd;       "sore_id": "$sore_id"&#xd;   }&#xd;}</result>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistaGetPorId" useConfig="semaresiduosDS">
+      <sql>select tran_id,razon_social,descripcion,direccion,telefono,contacto,resolucion,registro,fec_alta_efectiva,fec_baja_efectiva,fec_alta,usuario,usuario_app from log.transportistas&#xd;  where tran_id = CAST(:tran_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;      "transportista":&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social",&#xd;          "descripcion": "$descripcion",&#xd;          "direccion": "$direccion",&#xd;          "telefono": "$telefono",&#xd;          "contacto": "$contacto",&#xd;          "resolucion": "$resolucion",&#xd;          "registro": "$registro",&#xd;          "fec_alta_efectiva": "$fec_alta_efectiva",&#xd;          "fec_baja_efectiva": "$fec_baja_efectiva",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usuario": "$usuario",&#xd;          "usuario_app": "$usuario_app",&#xd;          "@transportistaTipoCarga": "$tran_id-&gt;tran_id"&#xd;        }      &#xd;  }</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="zonaGetPorId" useConfig="semaresiduosDS">
+      <sql>select &#xd;  zonas.zona_id, zonas.nombre, zonas.imagen, zonas.descripcion, zonas.depa_id, departamentos.nombre as depa_nom from core.zonas&#xd;  join core.departamentos on core.zonas.depa_id = core.departamentos.depa_id &#xd;  where eliminado = 0  and zona_id = CAST(:zona_id AS INTEGER)</sql>
+      <result outputType="json">{  &#xd;    "zona":&#xd;        {&#xd;          "zona_id":"$zona_id",&#xd;          "nombre":"$nombre",&#xd;          "imagen": "$imagen",&#xd;          "descripcion":"$descripcion",&#xd;          "depa_id": "$depa_id",&#xd;          "depa_nom": "$depa_nom"          &#xd;    }  &#xd;  }</result>
+      <param name="zona_id" sqlType="STRING"/>
+   </query>
+   <query id="zonaGetImagen" useConfig="semaresiduosDS">
+      <sql>select imagen from core.zonas&#xd;  where zona_id = CAST(:zona_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;        "imagen": "$imagen"&#xd;    }&#xd;  }</result>
+      <param name="zona_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistasDeleteTipoCarga" useConfig="semaresiduosDS">
+      <sql>delete from log.tipos_carga_transportistas where tran_id = CAST(:tran_id AS INTEGER)</sql>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorDelete" useConfig="semaresiduosDS">
+      <sql>update log.solicitudes_contenedor&#xd;set eliminado = 1&#xd;where soco_id = cast(:soco_id as integer)</sql>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosRetirarUpdate" useConfig="semaresiduosDS">
+      <sql>update log.contenedores_entregados set &#xd;sore_id = CAST(:sore_id AS INTEGER)&#xd;,porc_llenado = CAST(:porc_llenado AS FLOAT4)&#xd;,mts_cubicos = CAST(:mts_cubicos AS FLOAT4)  &#xd;where cont_id = CAST(:cont_id AS INTEGER)</sql>
+      <param name="sore_id" sqlType="STRING"/>
+      <param name="porc_llenado" sqlType="STRING"/>
+      <param name="mts_cubicos" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEstado" useConfig="semaresiduosDS">
+      <sql>update log.contenedores &#xd;  set eliminado = cast(:eliminado as INTEGER) &#xd;  where cont_id = cast(:cont_id as INTEGER)</sql>
+      <param name="eliminado" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudRetiroDelete" useConfig="semaresiduosDS">
+      <sql>update log.solicitudes_retiro&#xd;set eliminado = 1&#xd;where soco_id = cast(:sore_id as integer)</sql>
+      <param name="sore_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudRetiroCaseidPut" useConfig="semaresiduosDS">
+      <sql>update log.solicitudes_retiro&#xd;set case_id = :case_id&#xd;where sore_id =  cast(:sore_id as integer)</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="sore_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresRetiradosUpdate" useConfig="semaresiduosDS">
+      <sql>update log.contenedores_entregados set &#xd;ortr_id = CAST(:ortr_id AS INTEGER)&#xd;where cont_id = CAST(:cont_id AS INTEGER)&#xd;and ortr_id is null</sql>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="ordenTransporteDelete" useConfig="semaresiduosDS">
+      <sql>update log.ordenes_transporte&#xd;set eliminado = 1&#xd;where ortr_id = cast(:ortr_id as integer)</sql>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <query id="ordenTransporteCaseYFirmaUpdate" useConfig="semaresiduosDS">
+      <sql>update log.ordenes_transporte&#xd;set case_id = :case_id&#xd; , firma_digital = :firma_digital where ortr_id =  cast(:ortr_id as integer)</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="firma_digital" sqlType="STRING"/>
+   </query>
+   <query id="ordenTransporteCaseidUpdate" useConfig="semaresiduosDS">
+      <sql>update log.ordenes_transporte&#xd;set case_id = :case_id&#xd;where ortr_id =  cast(:ortr_id as integer)</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <query id="circuitosGetImagen" useConfig="semaresiduosDS">
+      <sql>select imagen from log.circuitos where circ_id = CAST(:circ_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;  "circuito":{&#xd;      "imagen": "$imagen"&#xd;   }&#xd;}</result>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="circuitoDeleteTipoCarga" useConfig="semaresiduosDS">
+      <sql>delete from log.tipos_carga_circuitos where circ_id = cast(:circ_id as integer)</sql>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="deletePuntosPorCircuito" useConfig="semaresiduosDS">
+      <sql>delete  from log.circuitos_puntos_criticos where circ_id = CAST(:circ_id AS INTEGER)</sql>
+      <param name="circ_id" sqlType="STRING"/>
+   </query>
+   <query id="puntosCriticosGetId" useConfig="semaresiduosDS">
+      <sql>select pucr_id from log.puntos_criticos where nombre = :nombre</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;      "pucr_id": "$pucr_id"&#xd;    }&#xd;  }</result>
+      <param name="nombre" sqlType="STRING"/>
+   </query>
+   <query id="inspectoresSet" useConfig="semaresiduosDS">
+      <sql>insert&#xd;	into&#xd;	sma.inspectores (&#xd;	nombre,&#xd;	apellido,&#xd;	direccion,&#xd;	email,&#xd;	dni,&#xd;	movilidad_asignada,&#xd;	usuario_app,&#xd;	depa_id)&#xd;values(&#xd;	:nombre,&#xd;	:apellido,&#xd;	:direccion,&#xd;	:email,&#xd;	:dni,&#xd;	:movilidad_asignada,&#xd;	:usuario_app,&#xd;	:depa_id)&#xd;returning insp_id</sql>
+      <result outputType="json">{"respuesta":{"insp_id":"$insp_id"}}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="apellido" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="dni" sqlType="STRING"/>
+      <param name="movilidad_asignada" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="depa_id" sqlType="STRING"/>
+   </query>
+   <query id="inspectoresUpdate" useConfig="semaresiduosDS">
+      <sql>update&#xd;	sma.inspectores&#xd;set&#xd;	nombre = :nombre,&#xd;	apellido = :apellido,&#xd;	direccion = :direccion,&#xd;	email = :email,&#xd;	dni = :dni,&#xd;	movilidad_asignada = :movilidad_asignada,&#xd;	usuario_app = :usuario_app,&#xd;	depa_id = :depa_id&#xd;where&#xd;	insp_id = cast(:insp_id as integer)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="apellido" sqlType="STRING"/>
+      <param name="direccion" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="dni" sqlType="STRING"/>
+      <param name="movilidad_asignada" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="insp_id" sqlType="STRING"/>
+      <param name="depa_id" sqlType="STRING"/>
+   </query>
+   <query id="inspectoresDelete" useConfig="semaresiduosDS">
+      <sql>update&#xd;	sma.inspectores&#xd;set&#xd;	eliminado = true&#xd;where&#xd;	insp_id = cast(:insp_id as integer)</sql>
+      <param name="insp_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculoUpdate" useConfig="semaresiduosDS">
+      <sql>update core.equipos set descripcion = :descripcion, marca = :marca, codigo = :codigo, ubicacion = :ubicacion, tran_id = CAST(:tran_id AS INTEGER), dominio = :dominio, fecha_ingreso = TO_DATE(:fecha_ingreso,'YYYY-MM-DD'), tara = CAST(:tara as float8), imagen = :imagen&#xd;  where equi_id = CAST(:equi_id AS INTEGER)</sql>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="marca" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="ubicacion" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="dominio" sqlType="STRING"/>
+      <param name="fecha_ingreso" sqlType="STRING"/>
+      <param name="equi_id" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+   </query>
+   <query id="vehiculoDelete" useConfig="semaresiduosDS">
+      <sql>update core.equipos set estado = 'AN'&#xd;  where equi_id = CAST(:equi_id AS INTEGER)</sql>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="choferesGetImagen" useConfig="semaresiduosDS">
+      <sql>select imagen from log.choferes where chof_id = CAST(:chof_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "choferes":{&#xd;      "imagen": "$imagen"&#xd;    }&#xd;  }</result>
+      <param name="chof_id" sqlType="STRING"/>
+   </query>
+   <query id="choferesDelete" useConfig="semaresiduosDS">
+      <sql>update &#xd;    log.choferes &#xd;    set eliminado = 1&#xd;    where chof_id = CAST(:chof_id AS INTEGER)</sql>
+      <param name="chof_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedoresPorCase" useConfig="semaresiduosDS">
+      <sql>select cs.coso_id, cs.cantidad, cs.fec_alta,  cs.tica_id, cs.soco_id, cs.reci_id, cs.cantidad_acordada,&#xd;t.valor, cs.motivo_rechazo&#xd;from log.contenedores_solicitados cs, core.tablas t &#xd;where cs.soco_id = (select soco_id from log.solicitudes_contenedor sc where sc.case_id = :case_id )&#xd;and cs.tica_id = t.tabl_id</sql>
+      <result outputType="json">{&#xd;  "contenedores":{&#xd;  	"contenedor":[  		&#xd;  	  {&#xd;  		"coso_id": "$coso_id",&#xd;  		"cantidad": "$cantidad",&#xd;  		"fec_alta": "$fec_alta",&#xd;  		"tica_id": "$tica_id",&#xd;  		"soco_id": "$soco_id",&#xd;  		"reci_id": "$reci_id",&#xd;  		"cantidad_acordada": "$cantidad_acordada",&#xd;  		"valor": "$valor",&#xd;                "motivo_rechazo": "$motivo_rechazo"&#xd;  	  }&#xd;  	]&#xd;  }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorGetInfo" useConfig="semaresiduosDS">
+      <sql>select &#xd;  SC.soco_id, SC.estado, SC.observaciones, to_char(SC.fec_alta, 'DD-MM-YYYY') fec_alta, SC.sotr_id, &#xd;  ST.razon_social, ST.domicilio &#xd;  from log.solicitudes_contenedor SC, log.solicitantes_transporte ST&#xd;  where SC.sotr_id = ST.sotr_id &#xd;  and SC.case_id = :case_id &#xd;  and SC.eliminado = 0</sql>
+      <result outputType="json">{&#xd;    "solicitud":{&#xd;      "soco_id": "$soco_id",&#xd;      "estado": "$estado",&#xd;      "observaciones": "$observaciones",&#xd;      "fec_alta": "$fec_alta",&#xd;      "sotr_id": "$sotr_id",&#xd;      "razon_social": "$razon_social",&#xd;      "domicilio": "$domicilio"&#xd;    } &#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="incidenciasSet" useConfig="semaresiduosDS">
+      <sql>insert&#xd;	into&#xd;	ins.incidencias (descripcion,&#xd;	fecha,&#xd;	num_acta,&#xd;	adjunto,&#xd;	usuario_app,&#xd;	tiin_id,&#xd;	tica_id,&#xd;	difi_id,&#xd;	ortr_id)&#xd;values(:descripcion,&#xd;	to_date(:fecha,'YYYY-MM-DD'),&#xd;	:num_acta,&#xd;	:adjunto,&#xd;	:usuario_app,&#xd;	:tiin_id ,&#xd;	:tica_id ,&#xd;	:difi_id ,&#xd;	cast(:ortr_id as integer)) returning inci_id</sql>
+      <result outputType="json">{"respuesta":{"inci_id":"$inci_id"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="num_acta" sqlType="STRING"/>
+      <param name="adjunto" optional="false" sqlType="BINARY"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="tiin_id" sqlType="STRING"/>
+      <param name="tica_id" optional="false" sqlType="STRING"/>
+      <param name="difi_id" sqlType="STRING"/>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <query id="ordenTransporteListaxId" useConfig="semaresiduosDS">
+      <sql>select&#xd;	ot.ortr_id,&#xd;	ot.fec_retiro,&#xd;	ot.case_id,&#xd;	ot.fec_alta,&#xd;	st.razon_social ,&#xd;	st.cuit ,&#xd;        st.sotr_id,&#xd;	e.dominio,&#xd;	c.chof_id,&#xd;        c.documento chof_dni,&#xd;        t.tran_id,&#xd;        t.cuit tran_cuit    &#xd;from&#xd;	log.ordenes_transporte ot,&#xd;	log.solicitantes_transporte st ,&#xd;	log.choferes c ,&#xd;	core.equipos e,&#xd;        log.transportistas t&#xd;where ot.sotr_id = st.sotr_id&#xd;and ot.chof_id = c.documento &#xd;and ot.equi_id = e.equi_id&#xd;and t.tran_id = ot.tran_id&#xd;and cast(ot.ortr_id as varchar) like '%'||:ortr_id || '%'</sql>
+      <result outputType="json">{&#xd;   "ordenTransporte":{&#xd;      "ordenesTransporte":[&#xd;         {&#xd;            "ortr_id":"$ortr_id",&#xd;            "fec_retiro":"$fec_retiro",&#xd;            "case_id":"$case_id",&#xd;            "fec_alta":"$fec_alta",&#xd;            "razon_social":"$razon_social",&#xd;            "cuit":"$cuit",&#xd;            "sotr_id":"$sotr_id",&#xd;            "dominio":"$dominio",&#xd;            "chof_id":"$chof_id",&#xd;            "chof_dni":"$chof_dni",&#xd;            "tran_id":"$tran_id",&#xd;            "tran_cuit":"$tran_cuit"&#xd;&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresSolicitadosUpdateCantidad" useConfig="semaresiduosDS">
+      <sql>update log.contenedores_solicitados CS &#xd;set cantidad_acordada = CAST(:cantidad_acordada as INTEGER) &#xd;where CS.soco_id = CAST(:soco_id as INTEGER)&#xd;and CS.tica_id  = :tica_id</sql>
+      <param name="cantidad_acordada" sqlType="STRING"/>
+      <param name="soco_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+   </query>
+   <query id="incidenciasGet" useConfig="semaresiduosDS">
+      <sql>select&#xd;	i.inci_id&#xd;	,i.descripcion&#xd;	,i.fecha&#xd;	,i.num_acta&#xd;	,i.adjunto&#xd;	,i.usuario_app &#xd;	,ti.valor as tipo_incidencia&#xd;	,tc.valor as tipo_carga&#xd;	,td.valor as disposicion_final&#xd;	from&#xd;	ins.incidencias i&#xd;left join  core.tablas ti on ti.tabl_id = i.tiin_id&#xd;left join   core.tablas tc on tc.tabl_id = i.tica_id&#xd;left join core.tablas td on td.tabl_id = i.difi_id &#xd;	where&#xd;	i.eliminado = 0&#xd;order by&#xd;	i.inci_id</sql>
+      <result outputType="json">{&#xd;   "incidencias":{&#xd;      "incidencia":[&#xd;         {&#xd;            "inci_id":"$inci_id",&#xd;            "descripcion":"$descripcion",&#xd;            "fecha":"$fecha",&#xd;            "num_acta":"$num_acta",&#xd;            "adjunto":"$adjunto",&#xd;            "usuario_app":"$usuario_app",&#xd;            "tipo_incidencia":"$tipo_incidencia",&#xd;            "tipo_carga":"$tipo_carga",&#xd;            "disposicion_final":"$disposicion_final"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="incidenciasDelete" useConfig="semaresiduosDS">
+      <sql>update ins.incidencias&#xd;set eliminado = 1&#xd;where inci_id = cast(:inci_id as integer)</sql>
+      <param name="inci_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedoresSetMotivo" useConfig="semaresiduosDS">
+      <sql>update log.contenedores_solicitados &#xd;  set motivo_rechazo = :motivo_rechazo&#xd;  where soco_id = CAST(:soco_id as INTEGER)</sql>
+      <param name="motivo_rechazo" sqlType="STRING"/>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteGetPorCaseId" useConfig="semaresiduosDS">
+      <sql>select  ST.sotr_id, ST.razon_social, ST.cuit, ST.domicilio, ST.num_registro, &#xd;		TTIPO.valor as tipo_generador, 		&#xd;		DEPA.nombre as departamento,&#xd;		ZONA.nombre as zona,&#xd;		TRUB.valor as rubro&#xd;  from &#xd;      log.solicitantes_transporte ST, &#xd;      core.tablas TTIPO, &#xd;      core.departamentos DEPA, &#xd;      core.zonas ZONA,&#xd;      core.tablas TRUB&#xd;  where ST.sotr_id = (select SC.sotr_id from log.solicitudes_contenedor SC where SC.case_id = :case_id)&#xd;  and ST.tist_id = TTIPO.tabl_id &#xd;  and ST.depa_id = DEPA.depa_id&#xd;  and ST.zona_id = ZONA.zona_id &#xd;  and ST.rubr_id = TRUB.tabl_id</sql>
+      <result outputType="json">{&#xd;  "generador":{&#xd;      "sotr_id": "$sotr_id",&#xd;      "razon_social": "$razon_social",&#xd;      "cuit": "$cuit",&#xd;      "domicilio": "$domicilio",&#xd;      "num_registro": "$num_registro",&#xd;      "tipo_generador": "$tipo_generador",&#xd;      "departamento": "$departamento",&#xd;      "zona": "$zona",&#xd;      "rubro": "$rubro",&#xd;      "@solicitanteTransporteGetTipoCarga": "$sotr_id-&gt;sotr_id"&#xd;  }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistaGetPorCaseId" useConfig="semaresiduosDS">
+      <sql>select &#xd;  TR.razon_social, TR.cuit, TR.direccion, TR.resolucion, TR.registro &#xd;from &#xd;  log.transportistas TR&#xd;where &#xd;  TR.tran_id = (select SC.tran_id from log.solicitudes_contenedor SC where case_id = :case_id)</sql>
+      <result outputType="json">{&#xd;    "transportista":{&#xd;      "razon_social": "$razon_social",&#xd;      "cuit": "$cuit",&#xd;      "direccion": "$direccion",&#xd;      "resolucion": "$resolucion",&#xd;      "registro": "$registro"&#xd;    }  &#xd;  }</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresARetirarPorEquipoGet" useConfig="semaresiduosDS">
+      <sql>select ce.cont_id &#xd;       ,t.valor tipo_carga&#xd;       ,ce.porc_llenado &#xd;       ,ce.mts_cubicos &#xd;from log.contenedores_entregados ce&#xd;	,core.tablas t &#xd;	,core.equipos eq&#xd;	,log.solicitudes_retiro sr &#xd;where eq.equi_id = ce.equi_id &#xd;and ce.equi_id = cast(:equi_id as integer) &#xd;and ce.sore_id = sr.sore_id &#xd;and sr.sotr_id = cast(:sotr_id as integer)&#xd;and ce.tica_id =t.tabl_id &#xd;and ce.ortr_id is null</sql>
+      <result outputType="json">{&#xd;   "contenedores":{"contenedor":[&#xd;      {&#xd;         "cont_id":"$cont_id",&#xd;         "tipo_carga":"$tipo_carga",&#xd;         "porc_llenado":"$porc_llenado",&#xd;         "mts_cubicos":"$mts_cubicos"&#xd;      }&#xd;   ]&#xd;}}</result>
+      <param name="equi_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculoAsignadoARetiro" useConfig="semaresiduosDS">
+      <sql>select eq.dominio dominio&#xd;       , eq.codigo codigo&#xd;       , eq.marca ||' '||eq.descripcion descripcion&#xd;       , :sotr_id sotr_id &#xd;       , eq.equi_id equi_id&#xd;       , eq.tran_id tran_id&#xd;from core.equipos eq&#xd;where eq.dominio = :dominio</sql>
+      <result outputType="json">{&#xd;   "vehiculoAsignadoARetiro":{&#xd;       "dominio":"$dominio",&#xd;      "tran_id":"$tran_id",&#xd;      "codigo":"$codigo",&#xd;      "descripcion":"$descripcion",&#xd;      "@contenedoresARetirarPorEquipoGet":"$equi_id-&gt;equi_id,$sotr_id-&gt;sotr_id"&#xd;   }&#xd;}&#xd;</result>
+      <param name="dominio" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteGetTipoCarga" useConfig="semaresiduosDS">
+      <sql>select &#xd;  T.valor, T.tabl_id &#xd;from &#xd;  log.tipos_carga_generadores TCG, core.tablas T&#xd;where &#xd;  TCG.tica_id = T.tabl_id &#xd;and &#xd;  TCG.sotr_id = CAST(:sotr_id as INTEGER)</sql>
+      <result outputType="json">{"tiposCarga":    &#xd;  {&#xd;    "carga":[&#xd;      {&#xd;      "tabl_id": "$tabl_id",&#xd;      "valor": "$valor" 		&#xd;      } &#xd;    ]&#xd;  }&#xd;} </result>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteSetTipoCarga" useConfig="semaresiduosDS">
+      <sql>insert into log.tipos_carga_generadores(sotr_id, tica_id) &#xd;values(cast(:sotr_id as INTEGER), :tica_id)</sql>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteDeleteTipoCarga" useConfig="semaresiduosDS">
+      <sql>delete from log.tipos_carga_generadores where sotr_id = cast(:sotr_id as integer)</sql>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosGetPorCaseId" useConfig="semaresiduosDS">
+      <sql>select CE.coen_id, CE.cont_id, CE.porc_llenado, CE.mts_cubicos, CE.tica_id, T.valor &#xd;  from log.contenedores_entregados CE, core.tablas T&#xd;  where CE.sore_id = (select SR.sore_id from log.solicitudes_retiro SR where SR.case_id = :case_id ) &#xd;  and CE.tica_id = T.tabl_id &#xd;  and CE.ortr_id is null&#xd;  and CE.equi_id is null</sql>
+      <result outputType="json">{&#xd;  "contenedoresEntregados":{&#xd;     "contenedor":[&#xd;        {&#xd;           "coen_id": "$coen_id",&#xd;           "cont_id": "$cont_id",&#xd;           "porc_llenado": "$porc_llenado",&#xd;           "mts_cubicos": "$mts_cubicos",&#xd;           "tica_id": "$tica_id",&#xd;           "valor": "$valor"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteGetPorCaseIdRetiro" useConfig="semaresiduosDS">
+      <sql>select  ST.sotr_id, ST.razon_social, ST.cuit, ST.domicilio, ST.num_registro,&#xd;          TTIPO.valor as tipo_generador,&#xd;          DEPA.nombre as departamento,&#xd;          ZONA.nombre as zona,&#xd;          TRUB.valor as rubro&#xd;  from &#xd;        log.solicitantes_transporte ST,&#xd;        core.tablas TTIPO,&#xd;        core.departamentos DEPA, &#xd;        core.zonas ZONA,&#xd;        core.tablas TRUB&#xd;  where      &#xd;      ST.sotr_id = (select SR.sotr_id from log.solicitudes_retiro SR where SR.case_id = :case_id)&#xd;  and &#xd;      ST.tist_id = TTIPO.tabl_id	&#xd;  and &#xd;      ST.depa_id = DEPA.depa_id&#xd;  and &#xd;      ST.zona_id = ZONA.zona_id &#xd;  and &#xd;      ST.rubr_id = TRUB.tabl_id</sql>
+      <result outputType="json">{&#xd;    "generador":{&#xd;      "sotr_id": "$sotr_id",&#xd;      "razon_social": "$razon_social",&#xd;      "cuit": "$cuit",&#xd;      "domicilio": "$domicilio",&#xd;      "num_registro": "$num_registro",&#xd;      "tipo_generador": "$tipo_generador",&#xd;      "departamento": "$departamento",&#xd;      "zona": "$zona",&#xd;      "rubro": "$rubro",&#xd;      "@solicitanteTransporteGetTipoCarga": "$sotr_id-&gt;sotr_id"&#xd;    }&#xd;  }</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistaGetPorCaseIdRetiro" useConfig="semaresiduosDS">
+      <sql>select TR.razon_social, TR.cuit, TR.direccion, TR.resolucion, TR.registro &#xd;  from log.transportistas TR, log.contenedores C&#xd;  where TR.tran_id = C.tran_id &#xd;  and C.cont_id = (select CE.cont_id &#xd;          from log.contenedores_entregados CE&#xd;          where CE.sore_id = (select SR.sore_id &#xd;                    from log.solicitudes_retiro SR &#xd;                    where SR.case_id  = :case_id)&#xd;          order by Ce.cont_id limit 1)</sql>
+      <result outputType="json">{&#xd;    "transportista":{&#xd;      "razon_social": "$razon_social",&#xd;      "cuit": "$cuit",&#xd;      "direccion": "$direccion",&#xd;      "resolucion": "$resolucion",&#xd;      "registro": "$registro"&#xd;    }  &#xd;  }</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudRetiroGetPorCaseRetiro" useConfig="semaresiduosDS">
+      <sql>select SR.sore_id, SR.fec_alta &#xd;  from log.solicitudes_retiro SR&#xd;  where case_id = :case_id</sql>
+      <result outputType="json">{&#xd;    "solicitud_retiro":{&#xd;      "sore_id": "$sore_id",&#xd;      "fec_alta": "$fec_alta"&#xd;    }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosAsignaarVehiculo" useConfig="semaresiduosDS">
+      <sql>update log.contenedores_entregados &#xd;  set equi_id = CAST(:equi_id as INTEGER)&#xd;  where coen_id = CAST(:coen_id as INTEGER)</sql>
+      <param name="equi_id" sqlType="STRING"/>
+      <param name="coen_id" sqlType="STRING"/>
+   </query>
+   <query id="templatesOrdenTransporteGetList" useConfig="semaresiduosDS">
+      <sql>SELECT&#xd;	tot.teot_id&#xd;	, zo.descripcion zona&#xd;        , tot.observaciones&#xd;	, zo.zona_id zona_id&#xd;	, ci.codigo || ' ' || ci.descripcion circuito&#xd;	, ci.zona_id&#xd;        , ci.circ_id circ_id&#xd;	, t.valor tipo_carga&#xd;	, t.tabl_id tica_id&#xd;	, t2.valor disposicion_final&#xd;	, t2.tabl_id difi_id&#xd;	, tr.descripcion || ' cuit:' || tr.cuit transportista&#xd;	, tr.tran_id tran_id&#xd;	, ch.documento chof_id&#xd;	, ch.apellido || ', ' || ch.nombre nombre_chofer&#xd;	, eq.dominio || ' ' || eq.codigo || ' ' || eq.marca || ' ' || eq.descripcion equipo&#xd;	, eq.equi_id equi_id&#xd;	, eq.cont_id cont_id&#xd;	, ot.ortr_id &#xd;FROM&#xd;	log.circuitos ci&#xd;LEFT JOIN core.zonas zo ON&#xd;	zo.zona_id = ci.zona_id&#xd;	, log.templates_orden_transporte tot&#xd;LEFT JOIN log.ordenes_transporte ot ON tot.teot_id = ot.teot_id &#xd;AND date_trunc('day',ot.fec_alta) = date_trunc('day',now()) &#xd;	, log.choferes ch&#xd;	, core.tablas t&#xd;	, core.tablas t2&#xd;	, log.transportistas tr&#xd;	, core.equipos eq&#xd;WHERE&#xd;	tot.chof_id = ch.documento&#xd;	AND tot.circ_id = ci.circ_id&#xd;	AND tot.tica_id = t.tabl_id&#xd;	AND tot.difi_id = t2.tabl_id&#xd;	AND tot.equi_id = eq.equi_id&#xd;	AND eq.tran_id = tr.tran_id&#xd;        AND tot.eliminado = 0&#xd;	AND tot.sotr_id = CAST(:sotr_id AS integer)</sql>
+      <result outputType="json">{&#xd;   "templatesOrdenTransporte":{&#xd;      "templateOrdenTransporte":[&#xd;         {&#xd;          "teot_id":"$teot_id",&#xd;          "zona":"$zona",&#xd;          "zona_id":"$zona_id",&#xd;          "circuito":"$circuito",&#xd;          "circ_id":"$circ_id",&#xd;          "tipo_carga":"$tipo_carga",&#xd;          "tica_id":"$tica_id",&#xd;          "disposicion_final":"$disposicion_final",&#xd;          "difi_id":"$difi_id",&#xd;          "transportista":"$transportista",&#xd;          "tran_id":"$tran_id",&#xd;          "chof_id":"$chof_id",&#xd;          "nombre_chofer":"$nombre_chofer",&#xd;          "equipo":"$equipo",&#xd;          "equi_id":"$equi_id",&#xd;          "cont_id":"$cont_id",&#xd;          "ortr_id":"$ortr_id",&#xd;          "observaciones": "$observaciones"       }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="templatesOrdenTransporteGet" useConfig="semaresiduosDS">
+      <sql>SELECT&#xd;	tot.teot_id&#xd;	, zo.descripcion zona&#xd;	, zo.zona_id zona_id&#xd;	, ci.codigo || ' ' || ci.descripcion circuito&#xd;	, ci.zona_id&#xd;        , ci.circ_id circ_id&#xd;	, t.valor tipo_carga&#xd;	, t.tabl_id tica_id&#xd;	, t2.valor disposicion_final&#xd;	, t2.tabl_id difi_id&#xd;	, tr.descripcion || ' cuit:' || tr.cuit transportista&#xd;	, tr.tran_id tran_id&#xd;	, ch.documento chof_id&#xd;	, ch.apellido || ', ' || ch.nombre nombre_chofer&#xd;	, eq.dominio || ' ' || eq.codigo || ' ' || eq.marca || ' ' || eq.descripcion equipo&#xd;	, eq.equi_id equi_id&#xd;	, eq.cont_id cont_id&#xd;	, ot.ortr_id &#xd;FROM&#xd;	log.circuitos ci&#xd;LEFT JOIN core.zonas zo ON&#xd;	zo.zona_id = ci.zona_id&#xd;	, log.templates_orden_transporte tot&#xd;LEFT JOIN log.ordenes_transporte ot ON tot.teot_id = ot.teot_id &#xd;AND date_trunc('day',ot.fec_alta) = date_trunc('day',now()) &#xd;	, log.choferes ch&#xd;	, core.tablas t&#xd;	, core.tablas t2&#xd;	, log.transportistas tr&#xd;	, core.equipos eq&#xd;WHERE&#xd;	tot.chof_id = ch.documento&#xd;	AND tot.circ_id = ci.circ_id&#xd;	AND tot.tica_id = t.tabl_id&#xd;	AND tot.difi_id = t2.tabl_id&#xd;	AND tot.equi_id = eq.equi_id&#xd;	AND eq.tran_id = tr.tran_id&#xd;AND tot.eliminado = 0&#xd;and tot.teot_id = cast(:teot_id as integer)</sql>
+      <result outputType="json">{&#xd;   "templateOrdenTransporte":{&#xd;      "teot_id":"$teot_id",&#xd;      "zona":"$zona",&#xd;      "zona_id":"$zona_id",&#xd;      "circuito":"$circuito",&#xd;      "circ_id":"$circ_id",&#xd;      "tipo_carga":"$tipo_carga",&#xd;      "tica_id":"$tica_id",&#xd;      "disposicion_final":"$disposicion_final",&#xd;      "difi_id":"$difi_id",&#xd;      "transportista":"$transportista",&#xd;      "tran_id":"$tran_id",&#xd;      "chof_id":"$chof_id",&#xd;      "nombre_chofer":"$nombre_chofer",&#xd;      "equipo":"$equipo",&#xd;      "equi_id":"$equi_id",&#xd;      "cont_id":"$cont_id",&#xd;      "ortr_id":"$ortr_id"&#xd;   }&#xd;}</result>
+      <param name="teot_id" sqlType="STRING"/>
+   </query>
+   <query id="templatesOrdenTransporteSet" useConfig="semaresiduosDS">
+      <sql>INSERT&#xd;	INTO&#xd;	log.templates_orden_transporte ( observaciones, usuario_app, circ_id, equi_id, chof_id, tica_id, difi_id, sotr_id )&#xd;VALUES( :observaciones, :usuario_app, CAST(:circ_id AS integer), CAST( :equi_id AS integer), :chof_id, :tica_id, :difi_id, CAST( :sotr_id AS integer) ) returning teot_id</sql>
+      <result outputType="json">{"respuesta":{"teot_id":"$teot_id"}}</result>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="circ_id" sqlType="STRING"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+      <param name="difi_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="templatesOrdenTransporteUpdate" useConfig="semaresiduosDS">
+      <sql>UPDATE log.templates_orden_transporte&#xd;SET observaciones=:observaciones&#xd;, usuario_app=:usuario_app&#xd;, circ_id=cast(:circ_id AS integer)&#xd;, equi_id=cast(:equi_id AS integer)&#xd;, chof_id=:chof_id &#xd;, tica_id=:tica_id &#xd;, difi_id=:difi_id &#xd;WHERE teot_id = CAST(:teot_id AS integer);</sql>
+      <param name="observaciones" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="circ_id" sqlType="STRING"/>
+      <param name="equi_id" sqlType="STRING"/>
+      <param name="chof_id" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+      <param name="difi_id" sqlType="STRING"/>
+      <param name="teot_id" sqlType="STRING"/>
+   </query>
+   <query id="templatesOrdenTransporteDelete" useConfig="semaresiduosDS">
+      <sql>UPDATE log.templates_orden_transporte&#xd;SET eliminado = 1&#xd;WHERE teot_id = CAST(:teot_id AS integer);</sql>
+      <param name="teot_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudContenedorEstadoUpdate" useConfig="semaresiduosDS">
+      <sql>update log.solicitudes_contenedor&#xd;set estado = :estado&#xd;where soco_id = cast(:soco_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitudRetiroEstadoUpdate" useConfig="semaresiduosDS">
+      <sql>update log.solicitudes_retiro&#xd;set estado = :estado&#xd;where sore_id = cast(:sore_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="sore_id" sqlType="STRING"/>
+   </query>
+   <query id="ordenTransporteEstadoUpdate" useConfig="semaresiduosDS">
+      <sql>update log.ordenes_transporte&#xd;set estado = :estado&#xd;where ortr_id = cast(:ortr_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <query id="ordenTransporteInfoEntrega" useConfig="semaresiduosDS">
+      <sql>select OT.ortr_id, OT.fec_alta, OT.estado, &#xd;        E.dominio, E.descripcion, E.imagen as img_vehiculo, E.tara , &#xd;        CH.imagen as img_chofer, concat(CH.nombre, ' ', CH.apellido) as nom_chofer, CH.documento &#xd;  from log.ordenes_transporte OT, core.equipos E, log.choferes CH&#xd;  where OT.case_id = :case_id &#xd;  and OT.equi_id = E.equi_id &#xd;  and OT.chof_id = CH.documento</sql>
+      <result outputType="json"> {&#xd;    "ordenTransporte":{&#xd;      "ortr_id": "$ortr_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "estado": "$estado",&#xd;      "dominio": "$dominio",&#xd;      "descripcion": "$descripcion",&#xd;      "img_vehiculo": "$img_vehiculo",&#xd;      "tara": "$tara",&#xd;      "img_chofer": "$img_chofer",&#xd;      "nom_chofer": "$nom_chofer",&#xd;      "documento": "$documento"      &#xd;    }&#xd;  }</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosInfoEntregaCase" useConfig="semaresiduosDS">
+      <sql>select &#xd;      CE.coen_id, CE.porc_llenado, CE.mts_cubicos,C.cont_id, C.codigo, T.valor as tipo_carga&#xd;  from &#xd;      log.contenedores C, log.contenedores_entregados CE, core.tablas T&#xd;  where &#xd;      C.cont_id = CE.cont_id &#xd;  and &#xd;      CE.ortr_id = (select OT.ortr_id from log.ordenes_transporte OT&#xd;                    where OT.case_id = :case_id )&#xd;  and &#xd;      CE.tica_id = T.tabl_id &#xd;            &#xd;  and &#xd;      CE.peso_neto is null&#xd;  and &#xd;      CE.difi_id is null&#xd;  and &#xd;      CE.depo_id is null</sql>
+      <result outputType="json">{&#xd;    "contenedores":{&#xd;        "contenedor":[&#xd;          {&#xd;            "coen_id": "$coen_id",&#xd;            "porc_llenado": "$porc_llenado",&#xd;            "mts_cubicos": "$mts_cubicos",&#xd;            "cont_id": "$cont_id",&#xd;            "codigo": "$codigo",&#xd;            "tipo_carga": "$tipo_carga"            &#xd;          }&#xd;        ] &#xd;    }&#xd;  }</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="solicitanteTransporteGetPorCaseIdIngreso" useConfig="semaresiduosDS">
+      <sql>select  ST.sotr_id, ST.razon_social, ST.cuit, ST.domicilio, ST.num_registro,&#xd;          TTIPO.valor as tipo_generador,&#xd;          DEPA.nombre as departamento,&#xd;          ZONA.nombre as zona,&#xd;          TRUB.valor as rubro&#xd;  from &#xd;        log.solicitantes_transporte ST,&#xd;        core.tablas TTIPO,&#xd;        core.departamentos DEPA, &#xd;        core.zonas ZONA,&#xd;        core.tablas TRUB&#xd;  where      &#xd;      ST.sotr_id = (select OT.sotr_id &#xd;                    from log.ordenes_transporte OT&#xd;                    where OT.case_id = :case_id)&#xd;  and &#xd;      ST.tist_id = TTIPO.tabl_id	&#xd;  and &#xd;      ST.depa_id = DEPA.depa_id&#xd;  and &#xd;      ST.zona_id = ZONA.zona_id &#xd;  and &#xd;      ST.rubr_id = TRUB.tabl_id &#xd;  and &#xd;      ST.eliminado = 0</sql>
+      <result outputType="json">{&#xd;    "generador":{&#xd;      "sotr_id": "$sotr_id",&#xd;      "razon_social": "$razon_social",&#xd;      "cuit": "$cuit",&#xd;      "domicilio": "$domicilio",&#xd;      "num_registro": "$num_registro",&#xd;      "tipo_generador": "$tipo_generador",&#xd;      "departamento": "$departamento",&#xd;      "zona": "$zona",&#xd;      "rubro": "$rubro",&#xd;      "@solicitanteTransporteGetTipoCarga": "$sotr_id-&gt;sotr_id"&#xd;    }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistaGetPorCaseIdIngreso" useConfig="semaresiduosDS">
+      <sql>select TR.razon_social, TR.cuit, TR.direccion, TR.resolucion, TR.registro &#xd;  from log.transportistas TR&#xd;  where tran_id = (select OT.tran_id &#xd;            from log.ordenes_transporte OT&#xd;            where OT.case_id = :case_id )</sql>
+      <result outputType="json">{&#xd;    "transportista":{&#xd;      "razon_social": "$razon_social",&#xd;      "cuit": "$cuit",&#xd;      "direccion": "$direccion",&#xd;      "resolucion": "$resolucion",&#xd;      "registro": "$registro"&#xd;    }  &#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="ordTransGetPorCase" useConfig="semaresiduosDS">
+      <sql>select OT.ortr_id, OT.fec_retiro, OT.case_id, OT.fec_alta, &#xd;  OT.difi_id, T.valor as difi_nombre, OT.sotr_id&#xd;  from log.ordenes_transporte OT, core.tablas T&#xd;  where OT.case_id = :case_id &#xd;  and OT.difi_id = T.tabl_id</sql>
+      <result outputType="json">{"ordenTransporte":&#xd;  {&#xd;    "ortr_id": "$ortr_id",&#xd;    "fec_retiro": "$fec_retiro",&#xd;    "case_id": "$case_id",&#xd;    "fec_alta": "$fec_alta",&#xd;    "difi_id": "$difi_id",&#xd;    "difi_nombre": "$difi_nombre",&#xd;    "sotr_id": "$sotr_id"      &#xd;  }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosRegistraIngreso" useConfig="semaresiduosDS">
+      <sql>update &#xd;  log.contenedores_entregados &#xd;set &#xd;  peso_neto = CAST(:peso_neto AS FLOAT4), difi_id = :difi_id, depo_id = CAST(:depo_id as INTEGER) &#xd;where &#xd;  coen_id = CAST(:coen_id as INTEGER)</sql>
+      <param name="peso_neto" sqlType="STRING"/>
+      <param name="difi_id" sqlType="STRING"/>
+      <param name="coen_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosGetImgPorCoen_id" useConfig="semaresiduosDS">
+      <sql>select imagen &#xd;  from log.contenedores C, log.contenedores_entregados CE &#xd;  where C.cont_id = CE.cont_id &#xd;  and CE.coen_id = CAST(:coen_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;	  "imag_contenedor":{&#xd;		  "imagen": "$imagen"&#xd;    }&#xd;  }</result>
+      <param name="coen_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresImagenPorId" useConfig="semaresiduosDS">
+      <sql>select imagen from log.contenedores&#xd;  where cont_id = CAST(:cont_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;        "imagen": "$imagen"&#xd;    }&#xd;  }</result>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculosGetImagen" useConfig="semaresiduosDS">
+      <sql>select imagen from core.equipos where equi_id = CAST(:equi_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "vehiculos":{&#xd;      "imagen": "$imagen"&#xd;    }&#xd;  }</result>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosInfoVuelcoCase" useConfig="semaresiduosDS">
+      <sql>select &#xd;      CE.coen_id, CE.porc_llenado, CE.depo_id, CE.mts_cubicos,C.cont_id, C.codigo, T.valor as tipo_carga&#xd;  from &#xd;      log.contenedores C, log.contenedores_entregados CE, core.tablas T&#xd;  where &#xd;      C.cont_id = CE.cont_id &#xd;  and &#xd;      CE.ortr_id = (select OT.ortr_id from log.ordenes_transporte OT&#xd;                    where OT.case_id = :case_id )&#xd;  and &#xd;      CE.tica_id = T.tabl_id             &#xd;  and &#xd;      CE.peso_neto is not null&#xd;  and &#xd;      CE.depo_id is not null&#xd;  and &#xd;      CE.tiva_id is null</sql>
+      <result outputType="json"> {&#xd;    "contenedores":{&#xd;        "contenedor":[&#xd;          {&#xd;            "coen_id": "$coen_id",&#xd;            "porc_llenado": "$porc_llenado",&#xd;            "depo_id": "$depo_id",&#xd;            "mts_cubicos": "$mts_cubicos",&#xd;            "cont_id": "$cont_id",&#xd;            "codigo": "$codigo",&#xd;            "tipo_carga": "$tipo_carga"            &#xd;          }&#xd;        ] &#xd;    }&#xd;  }</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosInfoSalidaGet" useConfig="semaresiduosDS">
+      <sql>SELECT&#xd;	OT.ortr_id&#xd;	, OT.fec_alta&#xd;	, OT.estado&#xd;	, E.dominio&#xd;	, E.descripcion&#xd;	, E.imagen AS img_vehiculo&#xd;	, E.tara&#xd;	, CH.imagen AS img_chofer&#xd;	, concat(CH.nombre, ' ', CH.apellido) AS nom_chofer&#xd;	, CH.documento&#xd;	, ce.cont_id &#xd;	, con.codigo codigo_contenedor&#xd;	, ce.peso_neto &#xd;	, ce.observaciones_descarga &#xd;	, t.descripcion contenido_descarga&#xd;FROM&#xd;	log.ordenes_transporte OT&#xd;	, core.equipos E&#xd;	, log.choferes CH&#xd;	, log.contenedores_entregados ce &#xd;	, core.tablas t&#xd;	, log.contenedores con&#xd;WHERE&#xd;	OT.case_id = :case_id&#xd;	AND OT.equi_id = E.equi_id&#xd;	AND OT.chof_id = CH.documento&#xd;	AND OT.eliminado = 0&#xd;	AND CE.fec_salida IS NULL &#xd;	AND ce.fec_descarga IS NOT NULL&#xd;	AND ce.ortr_id = ot.ortr_id &#xd;	AND t.tabl_id = ce.tiva_id &#xd;	AND con.cont_id = ce.cont_id</sql>
+      <result outputType="json">{&#xd;   "contenedor":{&#xd;      "ortr_id":"$ortr_id",&#xd;      "fec_alta":"$fec_alta",&#xd;      "estado":"$estado",&#xd;      "dominio":"$dominio",&#xd;      "descripcion":"$descripcion",&#xd;      "img_vehiculo":"$img_vehiculo",&#xd;      "tara":"$tara",&#xd;      "img_chofer":"$img_chofer",&#xd;      "nom_chofer":"$nom_chofer",&#xd;      "documento":"$documento",&#xd;      "cont_id":"$cont_id",&#xd;      "codigo_contenedor":"$codigo_contenedor",&#xd;      "peso_neto":"$peso_neto",&#xd;      "observaciones_descarga":"$observaciones_descarga",&#xd;      "contenido_descarga":"$contenido_descarga"&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosSalidaUpdate" useConfig="semaresiduosDS">
+      <sql>update log.contenedores_entregados&#xd;set fec_salida= now()&#xd;where ortr_id = cast(:ortr_id as integer)&#xd;and cont_id =cast(:cont_id as integer)</sql>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="establecimientosGetTodos" useConfig="semaresiduosDS">
+      <sql>select E.esta_id, E.nombre from prd.establecimientos E</sql>
+      <result outputType="json">{&#xd;    "establecimientos":{     &#xd;      "establecimiento":  [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+   </query>
+   <query id="depositosDescargaGet" useConfig="semaresiduosDS">
+      <sql>select CE.depo_id, DE.descripcion&#xd;  from log.contenedores_entregados CE, alm.alm_depositos DE&#xd;  where Ce.ortr_id = CAST(:ortr_id as INTEGER)&#xd;  and DE.depo_id = CE.depo_id&#xd;  and CE.tiva_id is null&#xd;  and CE.fec_descarga is null</sql>
+      <result outputType="json">{&#xd;    "deposito":{&#xd;      "depo_id": "$depo_id",&#xd;      "descripcion": "$descripcion"&#xd;    }&#xd;  }</result>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <query id="depositosGetPorEstablecimiento" useConfig="semaresiduosDS">
+      <sql>select D.depo_id, D.descripcion&#xd;  from alm.alm_depositos D&#xd;  where esta_id = cast(:esta_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "depositos":{&#xd;        "deposito":[&#xd;          {&#xd;            "depo_id": "$depo_id",&#xd;            "descripcion": "$descripcion"&#xd;          }&#xd;        ]&#xd;    }&#xd;  }</result>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistaGetIdPorNick" useConfig="semaresiduosDS">
+      <sql>select T.tran_id&#xd;  from log.transportistas T&#xd;  where T.user_id = (select U.email&#xd;            from seg.users U&#xd;            where U.usernick = :usernick)</sql>
+      <result outputType="json">{&#xd;    "transportista":{&#xd;      "tran_id": "$tran_id"&#xd;    }&#xd;  }</result>
+      <param name="usernick" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresDisponiblesPorTransportista" useConfig="semaresiduosDS">
+      <sql>SELECT&#xd;	C.cont_id&#xd;	, C.codigo&#xd;	, C.descripcion&#xd;	, C.capacidad&#xd;	, C.anio_elaboracion&#xd;	, C.tara&#xd;	, C.habilitacion AS habil_id&#xd;	, C.fec_alta&#xd;	, C.esco_id&#xd;	, C.reci_id&#xd;	, T.valor AS estado&#xd;	, T2.valor AS habilitacion&#xd;FROM&#xd;	log.contenedores C&#xd;	, core.tablas T&#xd;	, core.tablas T2&#xd;WHERE&#xd;	C.esco_id = T.tabl_id&#xd;	AND C.habilitacion = T2.tabl_id&#xd;	AND C.eliminado = 0&#xd;	AND c.tran_id = cast(:tran_id as integer)	&#xd;	AND NOT exists ( SELECT 1 &#xd;				   FROM log.contenedores_entregados ce &#xd;				   WHERE ce.cont_id = c.cont_id &#xd;				   AND ce.fec_descarga IS null)</sql>
+      <result outputType="json">&#xd;{&#xd;    "contenedores":{&#xd;      "contenedor":&#xd;          [&#xd;            {&#xd;              "cont_id": "$cont_id",&#xd;              "codigo": "$codigo",&#xd;              "descripcion": "$descripcion",&#xd;              "capacidad": "$capacidad",&#xd;              "anio_elaboracion": "$anio_elaboracion",&#xd;              "tara": "$tara",&#xd;              "habil_id": "$habil_id",&#xd;              "fec_alta": "$fec_alta",&#xd;              "esco_id": "$esco_id",&#xd;              "reci_id": "$reci_id",          &#xd;              "estado": "$estado",&#xd;              "habilitacion": "$habilitacion",&#xd;              "@contenedoresGetTipoCargaPorId": "$cont_id-&gt;cont_id"&#xd;            }&#xd;          ]&#xd;    }&#xd;  }</result>
+      <param name="tran_id&#x9;" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosDescargarEnRecipiente" useConfig="semaresiduosDS">
+      <sql>SELECT prd.cambiar_recipiente(ce.batch_id,cast(:reci_id_destino as integer),2000,1,:usuario_app,'false'::varchar) resultado&#xd;FROM log.contenedores_entregados ce &#xd;WHERE ce.ortr_id = cast(:ortr_id as integer) &#xd;AND ce.cont_id = cast(:cont_id as integer);</sql>
+      <result element="respuesta" rowName="">
+         <element column="resultado" name="resultado" xsdType="string"/>
+      </result>
+      <param name="reci_id_destino" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosDescargarUpdate" useConfig="semaresiduosDS">
+      <sql>update log.contenedores_entregados&#xd;set foto=:foto&#xd;,tiva_id=:tiva_id&#xd;,observaciones_descarga=:observaciones_descarga&#xd;,fec_descarga = now()&#xd;where ortr_id = cast(:ortr_id as integer)&#xd;and cont_id =cast(:cont_id as integer)</sql>
+      <param name="foto" optional="false" sqlType="BINARY"/>
+      <param name="tiva_id" sqlType="STRING"/>
+      <param name="observaciones_descarga" sqlType="STRING"/>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosRestantesDescargar" useConfig="semaresiduosDS">
+      <sql>select count(ce.cont_id) as noEntregados from log.contenedores_entregados ce,  log.ordenes_transporte OT&#xd;  where ce.fec_descarga IS null&#xd;  AND ce.ortr_id = ot.ortr_id&#xd;  and OT.case_id = :case_id</sql>
+      <result outputType="json">{&#xd;  "contenedores":{&#xd;    "noEntregados": "$noEntregados"&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosGetPorTipoCargaNick" useConfig="semaresiduosDS">
+      <sql>SELECT&#xd;    C.cont_id&#xd;    , C.codigo&#xd;    , C.descripcion&#xd;  FROM&#xd;    log.contenedores C&#xd;    , log.contenedores_entregados CE&#xd;    , log.solicitantes_transporte st&#xd;    , seg.users u&#xd;    , log.solicitudes_contenedor sc&#xd;  WHERE&#xd;    C.cont_id = CE.cont_id&#xd;    AND CE.ortr_id IS NULL&#xd;    AND CE.tica_id = :tica_id&#xd;    AND st.sotr_id = sc.sotr_id&#xd;    AND sc.soco_id = ce.soco_id&#xd;    AND st.user_id = u.email&#xd;    AND u.usernick = :usernick&#xd;    AND C.tran_id = cast(:tran_id as integer)</sql>
+      <result outputType="json">{&#xd;    "contenedores":{&#xd;      "contenedor":[&#xd;        {&#xd;          "cont_id": "$cont_id",&#xd;          "codigo": "$codigo",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="tica_id" sqlType="STRING"/>
+      <param name="usernick" sqlType="STRING"/>
+      <param name="tran_id" optional="false" sqlType="STRING"/>
+   </query>
+   <resource method="POST" path="/departamentos">
+      <call-query href="departamentosSet">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/zonas">
+      <call-query href="zonasGet"/>
+   </resource>
+   <resource method="POST" path="/transportistas">
+      <call-query href="transportistasSet">
+         <with-param name="razon_social" query-param="razon_social"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="contacto" query-param="contacto"/>
+         <with-param name="resolucion" query-param="resolucion"/>
+         <with-param name="registro" query-param="registro"/>
+         <with-param name="fec_alta_efectiva" query-param="fec_alta_efectiva"/>
+         <with-param name="fec_baja_efectiva" query-param="fec_baja_efectiva"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="cuit" query-param="cuit"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/departamentos">
+      <call-query href="departamentosGet"/>
+   </resource>
+   <resource method="POST" path="/zonas">
+      <call-query href="zonasSet">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="depa_id" query-param="depa_id"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="imagen" query-param="imagen"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/circuitos/{circ_id}">
+      <call-query href="circuitosGetPorId">
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/choferes">
+      <call-query href="choferesGet"/>
+   </resource>
+   <resource method="POST" path="/choferes">
+      <call-query href="choferesSet">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="apellido" query-param="apellido"/>
+         <with-param name="documento" query-param="documento"/>
+         <with-param name="fec_nacimiento" query-param="fec_nacimiento"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="carnet" query-param="carnet"/>
+         <with-param name="vencimiento" query-param="vencimiento"/>
+         <with-param name="habilitacion" query-param="habilitacion"/>
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="cach_id" query-param="cach_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="celular" query-param="celular"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas">
+      <call-query href="transportistasGet"/>
+   </resource>
+   <resource method="GET" path="/contenedores">
+      <call-query href="contenedoresGet"/>
+   </resource>
+   <resource method="POST" path="/contenedores">
+      <call-query href="contenedoresSet">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="capacidad" query-param="capacidad"/>
+         <with-param name="anio_elaboracion" query-param="anio_elaboracion"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="habilitacion" query-param="habilitacion"/>
+         <with-param name="fec_alta" query-param="fec_alta"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="esco_id" query-param="esco_id"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="imagen" query-param="imagen"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitantesTransporte">
+      <call-query href="solicitanteTransporteGet"/>
+   </resource>
+   <resource method="POST" path="/solicitantesTransporte">
+      <call-query href="solicitanteTransporteSet">
+         <with-param name="razon_social" query-param="razon_social"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="domicilio" query-param="domicilio"/>
+         <with-param name="num_registro" query-param="num_registro"/>
+         <with-param name="lat" query-param="lat"/>
+         <with-param name="lng" query-param="lng"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="zona_id" query-param="zona_id"/>
+         <with-param name="rubr_id" query-param="rubr_id"/>
+         <with-param name="tist_id" query-param="tist_id"/>
+         <with-param name="depa_id" query-param="depa_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/solicitantesTransporte">
+      <call-query href="solicitanteTransporteUpdate">
+         <with-param name="razon_social" query-param="razon_social"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="domicilio" query-param="domicilio"/>
+         <with-param name="num_registro" query-param="num_registro"/>
+         <with-param name="lat" query-param="lat"/>
+         <with-param name="lng" query-param="lng"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="zona_id" query-param="zona_id"/>
+         <with-param name="rubr_id" query-param="rubr_id"/>
+         <with-param name="tist_id" query-param="tist_id"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/solicitantesTransporte/estado">
+      <call-query href="solicitanteTransporteEstado">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/transportistas">
+      <call-query href="transportistaUpdate">
+         <with-param name="razon_social" query-param="razon_social"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="contacto" query-param="contacto"/>
+         <with-param name="resolucion" query-param="resolucion"/>
+         <with-param name="registro" query-param="registro"/>
+         <with-param name="fec_baja_efectiva" query-param="fec_baja_efectiva"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="fec_alta" query-param="fec_alta"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/transportistas/estado">
+      <call-query href="transportistasEstado">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/zonas">
+      <call-query href="zonaUpdate">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="depa_id" query-param="depa_id"/>
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/zonas/update/imagen">
+      <call-query href="zonaUpdateImagen">
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/choferes">
+      <call-query href="choferUpdate">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="apellido" query-param="apellido"/>
+         <with-param name="documento" query-param="documento"/>
+         <with-param name="fec_nacimiento" query-param="fec_nacimiento"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="celular" query-param="celular"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="carnet" query-param="carnet"/>
+         <with-param name="vencimiento" query-param="vencimiento"/>
+         <with-param name="habilitacion" query-param="habilitacion"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="cach_id" query-param="cach_id"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/choferes/update/imagen">
+      <call-query href="choferesUpdateImagen">
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/puntosCriticos">
+      <call-query href="puntosCriticosSet">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="lat" query-param="lat"/>
+         <with-param name="lng" query-param="lng"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/puntosCriticos/estado">
+      <call-query href="puntosCriticosEstado">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="pucr_id" query-param="pucr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/puntosCriticos">
+      <call-query href="puntosCriticosGet"/>
+   </resource>
+   <resource method="POST" path="/tablas">
+      <call-query href="tablasSet">
+         <with-param name="tabla" query-param="tabla"/>
+         <with-param name="valor" query-param="valor"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/tablas/{tabla}">
+      <call-query href="tablasGet">
+         <with-param name="tabla" query-param="tabla"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/puntosCriticos">
+      <call-query href="puntosCriticosUpdate">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="lat" query-param="lat"/>
+         <with-param name="lng" query-param="lng"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="zona_id" query-param="zona_id"/>
+         <with-param name="pucr_id" query-param="pucr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/choferes/{tran_id}">
+      <call-query href="choferesGetPorTransportistas">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/todo">
+      <call-query href="transportistasGetTodo"/>
+   </resource>
+   <resource method="GET" path="/choferes/transp/{tran_id}">
+      <call-query href="choferesGetPorTransportistas">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculos/transp/{tran_id}">
+      <call-query href="vehiculosGetPorTransportistas">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/vehiculos">
+      <call-query href="vehiculosSet">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="marca" query-param="marca"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="ubicacion" query-param="ubicacion"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="dominio" query-param="dominio"/>
+         <with-param name="fecha_ingreso" query-param="fecha_ingreso"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/transportistas/tipo/carga">
+      <call-query href="transportistasSetTipoCarga">
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/circuitos">
+      <call-query href="circuitosSet">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="vehi_id" query-param="vehi_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/circuitos/{zona_id}">
+      <call-query href="circuitosGetPorZonaId">
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculos">
+      <call-query href="vehiculosGetActivos"/>
+   </resource>
+   <resource method="GET" path="/zonas/departamento/{depa_id}">
+      <call-query href="zonaGetPorDepto">
+         <with-param name="depa_id" query-param="depa_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/puntosCriticos/{circ_id}">
+      <call-query href="puntosPorCircuito">
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/contEntregados">
+      <call-query href="contEntregadosSet">
+         <with-param name="porc_llenado" query-param="porc_llenado"/>
+         <with-param name="mts_cubicos" query-param="mts_cubicos"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+         <with-param name="soco_id" query-param="soco_id"/>
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="fec_entrega" query-param="fec_entrega"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitantesTransporte/{usuario_app}">
+      <call-query href="solicitanteTransporteGetPorUsr">
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/circuitos/tipoCarga">
+      <call-query href="circuitosSetTipoCarga">
+         <with-param name="circ_id" query-param="circ_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/circuitos/zonas">
+      <call-query href="circuitosUpdateZona">
+         <with-param name="zona_id" query-param="zona_id"/>
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lote/todos/deposito">
+      <call-query href="getLotetodos"/>
+   </resource>
+   <resource method="GET" path="/ordenTransporte/prox">
+      <call-query href="ordTransProxId"/>
+   </resource>
+   <resource method="POST" path="/puntosCriticos/circuito">
+      <call-query href="setPuntosCriticosCircuitos">
+         <with-param name="circ_id" query-param="circ_id"/>
+         <with-param name="pucr_id" query-param="pucr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/circuitos">
+      <call-query href="circuitosGet"/>
+   </resource>
+   <resource method="POST" path="/solicitudContenedor">
+      <call-query href="solicitudContenedorSet">
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/solicitudContenedor/tipoCarga">
+      <call-query href="solicitudContenedorTipoCarga">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="otro" query-param="otro"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudContenedor/prox">
+      <call-query href="solicitudContenedorProximo"/>
+   </resource>
+   <resource method="GET" path="/solicitudContenedores/{usuario_app}">
+      <call-query href="solicitudContenedorGet">
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/ordenTransporte">
+      <call-query href="ordTransSet">
+         <with-param name="fec_retiro" query-param="fec_retiro"/>
+         <with-param name="difi_id" query-param="difi_id"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+         <with-param name="equi_id" query-param="equi_id"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="teot_id" query-param="teot_id"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/{tran_id}/tipo/carga">
+      <call-query href="transportistaTipoCarga">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresSolicitados/{soco_id}">
+      <call-query href="contenedoresSolicitadosGet">
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/{soco_id}">
+      <call-query href="contenedoresEntregadosGet">
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitantesTransporte/solicitud/{soco_id}">
+      <call-query href="solicitanteTransporteGetPorSoco_id">
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/todos">
+      <call-query href="contenedoresEntregadosTodos"/>
+   </resource>
+   <resource method="GET" path="/contenedores/transportista/{tran_id}">
+      <call-query href="contenedoresGetPorTransp">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/contenedores/entregados/entregar">
+      <call-query href="contenedoresEntregadosSet">
+         <with-param name="fec_entrega" query-param="fec_entrega"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="soco_id" query-param="soco_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="equi_id_entrega" query-param="equi_id_entrega"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/zonas/delete">
+      <call-query href="zonaDelete">
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/circuitos/estado">
+      <call-query href="circuitosEstado">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/circuitos">
+      <call-query href="circuitosUpdate">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="circ_id" query-param="circ_id"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="vehi_id" query-param="vehi_id"/>
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/zonas/estado">
+      <call-query href="zonasEstado">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/solicitudContenedor/caseid">
+      <call-query href="solicitudContenedorCaseidPut">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/contenedores/tipoCarga">
+      <call-query href="contenedoresTipoCarga">
+         <with-param name="cont_id" query-param="cont_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedores/{cont_id}">
+      <call-query href="contenedoresGetPorId">
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedores/tipoCarga/estado">
+      <call-query href="contenedoresTipoCargaEstado">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedores">
+      <call-query href="contenedoresUpdate">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="capacidad" query-param="capacidad"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="habilitacion" query-param="habilitacion"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="esco_id" query-param="esco_id"/>
+         <with-param name="anio_elaboracion" query-param="anio_elaboracion"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+         <with-param name="imagen" query-param="imagen"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/generador/{usuario_app}">
+      <call-query href="transportistaGetPorGenerador">
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudRetiro/prox">
+      <call-query href="solicitudRetiroProx"/>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/{tica_id}">
+      <call-query href="contenedoresEntregadosPorTicaId">
+         <with-param name="tica_id" query-param="tica_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/tipocarga/{tica_id}">
+      <call-query href="contenedoresEntregadosPorTicaId">
+         <with-param name="tica_id" query-param="tica_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/contenedoresEntregados/tipocarga/">
+      <call-query href="contenedoresEntregadosPorTicaId">
+         <with-param name="tica_id&#x9;" query-param="tica_id&#x9;"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/tipocarga/{tica_id}/usr/{usuario_app}">
+      <call-query href="contenedoresEntregadosPorTicaId">
+         <with-param name="tica_id&#x9;" query-param="tica_id&#x9;"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/solicitudRetiro">
+      <call-query href="solicitudRetiroSet">
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/{tran_id}">
+      <call-query href="transportistaGetPorId">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/zonas/{zona_id}">
+      <call-query href="zonaGetPorId">
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/zona/get/imagen/{zona_id}">
+      <call-query href="zonaGetImagen">
+         <with-param name="zona_id" query-param="zona_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/transportista/tipo/carga">
+      <call-query href="transportistasDeleteTipoCarga">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/solicitudContenedor">
+      <call-query href="solicitudContenedorDelete">
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedores/entregados/retirar">
+      <call-query href="contenedoresEntregadosRetirarUpdate">
+         <with-param name="sore_id" query-param="sore_id"/>
+         <with-param name="porc_llenado" query-param="porc_llenado"/>
+         <with-param name="mts_cubicos" query-param="mts_cubicos"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedores/estado">
+      <call-query href="contenedoresEstado">
+         <with-param name="eliminado" query-param="eliminado"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/solicitudRetiro">
+      <call-query href="solicitudRetiroDelete">
+         <with-param name="sore_id" query-param="sore_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/solicitudRetiro/caseid">
+      <call-query href="solicitudRetiroCaseidPut">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="sore_id" query-param="sore_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedores/retirados">
+      <call-query href="contenedoresRetiradosUpdate">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/ordenTransporte">
+      <call-query href="ordenTransporteDelete">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/ordenTransporte/caseYFirma">
+      <call-query href="ordenTransporteCaseYFirmaUpdate">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="firma_digital" query-param="firma_digital"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/ordenTransporte/caseid">
+      <call-query href="ordenTransporteCaseidUpdate">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/circuitos/imagen/{circ_id}">
+      <call-query href="circuitosGetImagen">
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/circuitos/tipoCarga">
+      <call-query href="circuitoDeleteTipoCarga">
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/puntosCriticos">
+      <call-query href="deletePuntosPorCircuito">
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/puntosCriticos/circuito">
+      <call-query href="deletePuntosPorCircuito">
+         <with-param name="circ_id" query-param="circ_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/puntosCriticos/nombre/{nombre}">
+      <call-query href="puntosCriticosGetId">
+         <with-param name="nombre" query-param="nombre"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/inspectores">
+      <call-query href="inspectoresUpdate">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="apellido" query-param="apellido"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="dni" query-param="dni"/>
+         <with-param name="movilidad_asignada" query-param="movilidad_asignada"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="insp_id" query-param="insp_id"/>
+         <with-param name="depa_id" query-param="depa_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/inspectores">
+      <call-query href="inspectoresSet">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="apellido" query-param="apellido"/>
+         <with-param name="direccion" query-param="direccion"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="dni" query-param="dni"/>
+         <with-param name="movilidad_asignada" query-param="movilidad_asignada"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="depa_id" query-param="depa_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/inspectores">
+      <call-query href="inspectoresDelete">
+         <with-param name="insp_id" query-param="insp_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/vehiculos">
+      <call-query href="vehiculoUpdate">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="marca" query-param="marca"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="ubicacion" query-param="ubicacion"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="dominio" query-param="dominio"/>
+         <with-param name="fecha_ingreso" query-param="fecha_ingreso"/>
+         <with-param name="equi_id" query-param="equi_id"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="imagen" query-param="imagen"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/vehiculos">
+      <call-query href="vehiculoDelete">
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/choferes/imagen/{chof_id}">
+      <call-query href="choferesGetImagen">
+         <with-param name="chof_id" query-param="chof_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/choferes">
+      <call-query href="choferesDelete">
+         <with-param name="chof_id" query-param="chof_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresSolicitados/case/{case_id}">
+      <call-query href="solicitudContenedoresPorCase">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudContenedores/info/{case_id}">
+      <call-query href="solicitudContenedorGetInfo">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/incidencias">
+      <call-query href="incidenciasSet">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="fecha" query-param="fecha"/>
+         <with-param name="num_acta" query-param="num_acta"/>
+         <with-param name="adjunto" query-param="adjunto"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="tiin_id" query-param="tiin_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="difi_id" query-param="difi_id"/>
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ordenesTransporte/lista/{ortr_id}">
+      <call-query href="ordenTransporteListaxId">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedoresSolicitados/cantidad">
+      <call-query href="contenedoresSolicitadosUpdateCantidad">
+         <with-param name="cantidad_acordada" query-param="cantidad_acordada"/>
+         <with-param name="soco_id" query-param="soco_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/incidencias">
+      <call-query href="incidenciasGet"/>
+   </resource>
+   <resource method="DELETE" path="/incidencias">
+      <call-query href="incidenciasDelete">
+         <with-param name="inci_id" query-param="inci_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedoresSolicitados/rechazados/motivo">
+      <call-query href="solicitudContenedoresSetMotivo">
+         <with-param name="motivo_rechazo" query-param="motivo_rechazo"/>
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitantesTransporte/case/{case_id}">
+      <call-query href="solicitanteTransporteGetPorCaseId">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/case/{case_id}">
+      <call-query href="transportistaGetPorCaseId">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculo/asignadoARetiro/{dominio}/solicitanteTransporte/{sotr_id}">
+      <call-query href="vehiculoAsignadoARetiro">
+         <with-param name="dominio" query-param="dominio"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/solicitantesTransporte/tipoCarga">
+      <call-query href="solicitanteTransporteSetTipoCarga">
+         <with-param name="sotr_id" query-param="sotr_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/solicitantesTransporte/tipoCarga">
+      <call-query href="solicitanteTransporteDeleteTipoCarga">
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/case/{case_id}">
+      <call-query href="contenedoresEntregadosGetPorCaseId">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitantesTransporte/proceso/retiro/case/{case_id}">
+      <call-query href="solicitanteTransporteGetPorCaseIdRetiro">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/proceso/retiro/case/{case_id}">
+      <call-query href="transportistaGetPorCaseIdRetiro">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudRetiro/proceso/retiro/case/{case_id}">
+      <call-query href="solicitudRetiroGetPorCaseRetiro">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedoresEntregados/vehiculo">
+      <call-query href="contenedoresEntregadosAsignaarVehiculo">
+         <with-param name="equi_id" query-param="equi_id"/>
+         <with-param name="coen_id" query-param="coen_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/templatesOrdenTransporte/list/solicitanteTransporte/{sotr_id}">
+      <call-query href="templatesOrdenTransporteGetList">
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/templatesOrdenTransporte/{teot_id}">
+      <call-query href="templatesOrdenTransporteGet">
+         <with-param name="teot_id" query-param="teot_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/templatesOrdenTransporte">
+      <call-query href="templatesOrdenTransporteSet">
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="circ_id" query-param="circ_id"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="difi_id" query-param="difi_id"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/templatesOrdenTransporte">
+      <call-query href="templatesOrdenTransporteUpdate">
+         <with-param name="observaciones" query-param="observaciones"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="circ_id" query-param="circ_id"/>
+         <with-param name="equi_id" query-param="equi_id"/>
+         <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="difi_id" query-param="difi_id"/>
+         <with-param name="teot_id" query-param="teot_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/templatesOrdenTransporte">
+      <call-query href="templatesOrdenTransporteDelete">
+         <with-param name="teot_id" query-param="teot_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/solicitudesContenedor/estado/">
+      <call-query href="solicitudContenedorEstadoUpdate">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/solicitudesRetiro/estado/">
+      <call-query href="solicitudRetiroEstadoUpdate">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="sore_id" query-param="sore_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/ordenesTransporte/estado/">
+      <call-query href="ordenTransporteEstadoUpdate">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ordenTransporte/info/entrega/case/{case_id}">
+      <call-query href="ordenTransporteInfoEntrega">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/info/entrega/case/{case_id}">
+      <call-query href="contenedoresEntregadosInfoEntregaCase">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitantesTransporte/proceso/ingreso/case/{case_id}">
+      <call-query href="solicitanteTransporteGetPorCaseIdIngreso">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/proceso/ingreso/case/{case_id}">
+      <call-query href="transportistaGetPorCaseIdIngreso">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ordenTransporte/case/{case_id}">
+      <call-query href="ordTransGetPorCase">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedoresEntregados/registra/ingreso">
+      <call-query href="contenedoresEntregadosRegistraIngreso">
+         <with-param name="peso_neto" query-param="peso_neto"/>
+         <with-param name="difi_id" query-param="difi_id"/>
+         <with-param name="coen_id" query-param="coen_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/ingreso/{coen_id}">
+      <call-query href="contenedoresEntregadosGetImgPorCoen_id">
+         <with-param name="coen_id" query-param="coen_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedores/get/imagen/{cont_id}">
+      <call-query href="contenedoresImagenPorId">
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculos/imagen/{equi_id}">
+      <call-query href="vehiculosGetImagen">
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/info/vuelco/case/{case_id}">
+      <call-query href="contenedoresEntregadosInfoVuelcoCase">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/info/salida/case/{case_id}">
+      <call-query href="contenedoresEntregadosInfoSalidaGet">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedoresEntregados/salida">
+      <call-query href="contenedoresEntregadosSalidaUpdate">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos">
+      <call-query href="establecimientosGetTodos"/>
+   </resource>
+   <resource method="GET" path="/deposito/descarga/{ortr_id}">
+      <call-query href="depositosDescargaGet">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/depositos/establecimiento/{esta_id}">
+      <call-query href="depositosGetPorEstablecimiento">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportista/id/{usernick}">
+      <call-query href="transportistaGetIdPorNick">
+         <with-param name="usernick" query-param="usernick"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedores/disponibles/transportista/{tran_id}">
+      <call-query href="contenedoresDisponiblesPorTransportista">
+         <with-param name="tran_id&#x9;" query-param="tran_id&#x9;"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedoresEntregados/descargar">
+      <call-query href="contenedoresEntregadosDescargarUpdate">
+         <with-param name="foto" query-param="foto"/>
+         <with-param name="tiva_id" query-param="tiva_id"/>
+         <with-param name="observaciones_descarga" query-param="observaciones_descarga"/>
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/contenedoresEntregados/descargar/recipiente">
+      <call-query href="contenedoresEntregadosDescargarEnRecipiente">
+         <with-param name="reci_id_destino" query-param="reci_id_destino"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/restantes/descarga/case/{case_id}">
+      <call-query href="contenedoresEntregadosRestantesDescargar">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregados/tipocarga/{tica_id}/user/{usernick}/{tran_id}">
+      <call-query href="contenedoresEntregadosGetPorTipoCargaNick">
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="usernick" query-param="usernick"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+</data>
