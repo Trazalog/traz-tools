@@ -44,6 +44,7 @@
     var tablaDetalleVer; // Declarar la variable fuera para que pueda ser accedida globalmente.
     // DataTable($('#tabla_precios'));
     $(document).ready(function() {
+        tablaArticulosCrearVersion = $('#tablaArticulosCrearVersion').DataTable();
         $('#tabla_precios').DataTable({
             responsive: true,
             language: {
@@ -194,7 +195,7 @@
         });
     });
 
-    var tablaArticulosCrearVersion; // Declarar la variable fuera para que pueda ser accedida globalmente.
+   
     $(document).ready(function(){        
         
         //---- boton crear Version ----// 
