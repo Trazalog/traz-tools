@@ -95,10 +95,9 @@ if(!function_exists('userIdBpm')){
 if(!function_exists('usrIdTransportistaByNick')){
 
 	function usrIdTransportistaByNick(){
-
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST_PRD."/transportista/id/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_RESI."/transportista/id/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->transportista->tran_id;
 	}
@@ -115,34 +114,30 @@ if(!function_exists('usrIdGeneradorByNick')){
 
 		$ci =& get_instance();
 		$usernick = userNick();
-		$aux = $ci->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/".$usernick);
+		$aux = $ci->rest->callAPI("GET",REST_RESI."/solicitantesTransporte/".$usernick);
 		$aux =json_decode($aux["data"]);
 		return $aux->solicitantes_transporte->sotr_id;
 	}
 }
 
 /**
-* Devuelve coincidencia de deposito con usuario asignado a deposito
-* @param
+* Devuelve coincidencia de deposito con usuario asignado a deposito para mostrar en BANDEJA DE ENTRADA
+* @param string $nombreTarea; @param integer $depo_id
 * @return bool true o false
 */
 if(!function_exists('filtrarbyDepo')){
 
-	function filtrarbyDepo($nombreTarea, $depo_id = null)
-	{
+	function filtrarbyDepo($nombreTarea, $depo_id = null){
 		$ci =& get_instance();
-    $userdata  = $ci->session->userdata();
-
+    	$userdata  = $ci->session->userdata();
 		$mostrar = true;
-
 		// si usuario es usuario de deposito
 		if (($nombreTarea == "Certifica Vuelco")) {
-
-				$user_depo_id = $userdata['depo_id'];
-				//no coincide usuario deposito con deposito asignado
-				if (!($user_depo_id == $depo_id)) {
-					$mostrar = false;
-				}
+			$user_depo_id = $userdata['depo_id'];
+			//no coincide usuario deposito con deposito asignado
+			if (!($user_depo_id == $depo_id)) {
+				$mostrar = false;
+			}
 		}
 
 		return $mostrar;
@@ -262,46 +257,38 @@ if(!function_exists('validarSesion')){
 
 if(!function_exists('validarInactividad')){
 	
-	function validarInactividad(){	
-						
-			//Comprobamos si esta definida la sesión 'tiempo'.
-			if(isset($_SESSION['tiempo']) ) {
-
-				//Tiempo en segundos para dar vida a la sesión.
-				$inactivo = 4000;//40min en este caso.
-				
-				//Calculamos tiempo de vida inactivo.
-				$vida_session = time() - $_SESSION['tiempo'];
-
-					//Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
-					if($vida_session > $inactivo)
-					{
-
-						//Removemos sesión.
-						session_unset();
-						//Destruimos sesión.
-						session_destroy();              
-						//Redirigimos pagina.
-
-						//Verificamos si la presente URL no debe validarse con Sesion sino con Token
-						if (!validarUrlSinSesion() ){
-							echo base_url('Login/log_out');
-							log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');						
-							exit();
-						}
-					}else{
-						//Refresco el tiempo luego de actividad
-						
-						//Verificamos si la presente URL no debe validarse con Sesion sino con Token
-						if (!validarUrlSinSesion() ){
-							validarSesion();
-							$_SESSION['tiempo'] = time();
-						}
-					}
-			} else {
-				//Activamos sesion tiempo.
-				$_SESSION['tiempo'] = time();
+	function validarInactividad(){			
+		//Comprobamos si esta definida la sesión 'tiempo'.
+		if(isset($_SESSION['tiempo']) ) {
+			//Tiempo en segundos para dar vida a la sesión.
+			$inactivo = 4000;//40min en este caso.
+			//Calculamos tiempo de vida inactivo.
+			$vida_session = time() - $_SESSION['tiempo'];
+			//Compraración para redirigir página, si la vida de sesión sea mayor a el tiempo insertado en inactivo.
+			if($vida_session > $inactivo){
+				//Removemos sesión.
+				session_unset();
+				//Destruimos sesión.
+				session_destroy();              
+				//Redirigimos pagina.
+				//Verificamos si la presente URL no debe validarse con Sesion sino con Token
+				if (!validarUrlSinSesion() ){
+					echo base_url('Login/log_out');
+					log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');						
+					exit();
+				}
+			}else{
+				//Refresco el tiempo luego de actividad
+				//Verificamos si la presente URL no debe validarse con Sesion sino con Token
+				if (!validarUrlSinSesion() ){
+					validarSesion();
+					$_SESSION['tiempo'] = time();
+				}
 			}
+		} else {
+			//Activamos sesion tiempo.
+			$_SESSION['tiempo'] = time();
 		}
 	}
-	?>
+}
+?>
