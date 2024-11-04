@@ -188,4 +188,14 @@ class Establecimiento extends CI_Controller
 
         echo json_encode($resp);
 	}
+
+	public function verificarDepositos() {
+        // Obtener el ID del usuario logueado
+		$data = $this->session->userdata();
+  		$user_id = $data['id'];        
+        // Verificar si el usuario tiene depósitos asociados
+        $tieneDeposito = $this->Establecimientos->tieneDepositoAsociado($user_id);        
+        // Devolver el resultado en formato JSON
+        echo json_encode(['tieneDeposito' => $tieneDeposito]);
+    }
 }

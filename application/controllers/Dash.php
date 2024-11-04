@@ -7,26 +7,27 @@ class Dash extends CI_Controller {
 		$this->load->helper('menu_helper');
 		$this->load->helper('file');
 		$this->load->model('Dashs');
-
-
-			$this->load->helper('sesion_helper');
-			
-			//verifica si esta inactivo
-			//40minutos de inactividad y redirecciona a login
-			validarInactividad();
-		
+		$this->load->helper('sesion_helper');
+		//verifica si esta inactivo
+		//40minutos de inactividad y redirecciona a login
+		validarInactividad();
 	}
 
 	function index(){
-
+		log_message("DEBUG","#TRAZA | CORE | Dash | index()");
 		$data = $this->session->userdata();
-
-		log_message('DEBUG','#TRAZA|DASH|index() $data: >> '.json_encode($data));
-
-		$data['memberships'] = $this->Dashs->obtenerMemberships();
-		$aux = $this->Dashs->obtenerMenu();
-		$data['menu'] = menu($aux);
-		$this->load->view('layout/Admin',$data);
+		if(isset($data['empr_id'])){
+			
+			log_message('DEBUG','#TRAZA | CORE | Dash | index() $data: >> '.json_encode($data));
+				
+			$data['memberships'] = $this->Dashs->obtenerMemberships();
+			$aux = $this->Dashs->obtenerMenu();
+			$data['menu'] = menu($aux);
+			$this->load->view('layout/Admin',$data);
+		}else{
+			log_message("DEBUG","#TRAZA | CORE | Dash | index() >> Sesion vencida");
+			redirect(DNATO."main/login");
+		}
 	}
 
 

@@ -109,32 +109,28 @@ define('BPM', 'traz-comp-bpm/');
 define('BONITA_URL', 'http://10.142.0.13:8080/bonita/');
 
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
-
 define('BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS', '6866538875650512673');
-
-define('BPM_PROCESS_ID_PEDIDO_CONTENEDORES', '7158449738201115927');
-
-define('BPM_PROCESS_ID_RETIRO_CONTENEDORES', '6698304776086614055');
-
-define('BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE', '7522690032220353691');
-
 define('BPM_PROCESS_ID_TAREA_GENERICA', '5822241643386814582');
-
 #YUDICA REPARACION_NEUMATICOS
 define('BPM_PROCESS_ID_REPARACION_NEUMATICOS', '6450700179097987411');
-
 #SICPOA Control de Ingreso de Camiones
 define('BPM_PROCESS_ID_INGRESO_CAMIONES', '7654696702603905131');
-
 #SEIN PROCESO PRODUCTIVO
 define('BPM_PROCESS_ID_PROCESO_PRODUCTIVO', '6149765815561286114');
+#TRAZ-TOOLS-MAN Proceso de Mantenimiento AssetPlanner
+define('BPM_PROCESS_ID_MANTENIMIENTO', '8664799170016058315');
+#SEMA-DESA-RESIDUOS Proceso de Solicitud de Contenedores
+define('BPM_PROCESS_ID_SOLICITUD_CONTENEDORES', '8163057805246541677');
+#SEMA-DESA-RESIDUOS Proceso de Solicitud de Retiro de Contenedores
+define('BPM_PROCESS_ID_SOLICITUD_RETIRO_CONTENEDORES', '6929606572460285556');
+#SEMA-DESA-RESIDUOS Proceso de Generacion Orden de Transporte
+define('BPM_PROCESS_ID_ORDEN_TRANSPORTE', '5000318715739374358');
 
 #YUDICA REPARACION_NEUMATICOS
 define('YUDIPROC', 'yudi-tools-almproc/');
 
 #SEIN -tools-ALM PAN TAR
 define('SEIN', 'sein-tools-almpantar/');
-
 
 #COMPONENTE PAÑOL
 define('PAN', 'traz-comp-pan/');
@@ -152,6 +148,12 @@ define('COD', 'traz-comp-codigos/');
 #COMPONENTE NOTIFICACIONES
 define('NOTI', 'traz-comp-notificaciones/');
 
+#COMPONENTE MANTENIMIENTO
+define('MAN', 'traz-tools-man/');
+
+#COMPONENTE RESIDUOS
+define('RESI', 'traz-tools-resi/');
+
 define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_PROCESO_PRODUCTIVO => ['nombre' => 'Servicios Industriales - Proceso Productivo', 'color' => '#0275d8', 'proyecto'=>SEIN, 'model'=>'Proceso_tareas'],
     BPM_PROCESS_ID_REPARACION_NEUMATICOS => ['nombre' => 'Proceso de Reparación de Neumáticos', 'color' => '#0275d8', 'proyecto'=>YUDIPROC, 'model'=>'Yudiproctareas'],
@@ -159,7 +161,10 @@ define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS => ['nombre' => 'Ped. Materiales Ext', 'color' => '#F39C12', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas'],
-    BPM_PROCESS_ID_INGRESO_CAMIONES  => ['nombre' => 'SICPOA', 'color' => '#00A65A', 'proyecto'=>SICP, 'model'=>'Sicpoatareas']
+    BPM_PROCESS_ID_INGRESO_CAMIONES  => ['nombre' => 'SICPOA', 'color' => '#00A65A', 'proyecto'=>SICP, 'model'=>'Sicpoatareas'],
+    BPM_PROCESS_ID_SOLICITUD_CONTENEDORES => ['nombre' => 'TERSU-BPM01 - Solicitud de Contenedores', 'color' => '#FF3300', 'proyecto'=> RESI.'general/', 'model'=>'PedidoContenedores'],
+    BPM_PROCESS_ID_SOLICITUD_RETIRO_CONTENEDORES => ['nombre' => 'TERSU-BPM02 - Solicitud de Retiro de Contenedores', 'color' => '#ABC51A', 'proyecto'=> RESI.'general/', 'model'=>'RetiroContenedores'],
+    BPM_PROCESS_ID_ORDEN_TRANSPORTE => ['nombre' => 'TERSU-BPM03 - Generación Orden de Transporte', 'color' => '#1A56C5', 'proyecto'=> RESI.'general/', 'model'=>'EntregaOrdenTransportes']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
@@ -229,6 +234,8 @@ define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
 define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
+define('REST_RESI', HOST.'/services/semaresiduosDS');
+define('REST_PRD_RESI', HOST.'/services/sema/PRDDataService');
 
 
 define('REST_SEIN', HOST.'/services/SeinDataService');
@@ -240,3 +247,9 @@ define('HORA_INICIO_JORNADA','10:00');
 
 #TOKEN_API_MANAGER TEST
 define('TOKEN_API_MANAGER','eyJ4NXQiOiJOMkpqTWpOaU0yRXhZalJrTnpaalptWTFZVEF4Tm1GbE5qZzRPV1UxWVdRMll6YzFObVk1TlEiLCJraWQiOiJNREpsTmpJeE4yRTFPR1psT0dWbU1HUXhPVEZsTXpCbU5tRmpaalEwWTJZd09HWTBOMkkwWXpFNFl6WmpOalJoWW1SbU1tUTBPRGRpTkRoak1HRXdNQV9SUzI1NiIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhZG1pbiIsImF1dCI6IkFQUExJQ0FUSU9OIiwiYXVkIjoib0wwRGVMNEZWZnpOOE1CUlRiSmloZXROMGtzYSIsIm5iZiI6MTY5MTUxMzk3OSwiYXpwIjoib0wwRGVMNEZWZnpOOE1CUlRiSmloZXROMGtzYSIsInNjb3BlIjoiZGVmYXVsdCIsImlzcyI6Imh0dHBzOlwvXC9sb2NhbGhvc3Q6OTQ0M1wvb2F1dGgyXC90b2tlbiIsImV4cCI6MzE1NTI5MTUxMzk3OSwiaWF0IjoxNjkxNTEzOTc5LCJqdGkiOiI0NDZjOGNhZS03OTY4LTRkMTEtYTBmOC1hNzYwYTRmYWFhMmEifQ.bxi2644U9HNwyYqFyqI77WnIxhG7SFSXLbXMiQM4A3_jiRQM6rH4Yq8TiQfaapTg9knsIrRe2A-ZTOwKMkJkV8csM8w0c53sOlm0cAOyYG8A9BWqamoFu82m9AH3kuoDreegYRg_O5bBq2CloHiviTMteU1l3XSJMt-GY5czgVkgVmbeoAU3I58XJcvz7WfyRTCti557VcSab-Tkw9PNhUvs4c4EYJXrevXUneKl8VeglXdjigWgJBkbetuMwroEB1BBkDgW9-0bLHeT2HfYheuQzv5Nhp-So9dq6zE2mXsllrvwpExy1GJsHvHLTzloJr26Vj0GTgHR0HOFekpm8A');
+
+#ROWS DATATABLE
+define('DT_SIZE_ROWS', false);
+
+#Empresas que les aparecera los formularios de mantenimiento autonomo
+define('EMPRESAS_FORM', 1);
