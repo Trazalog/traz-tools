@@ -204,7 +204,7 @@
              // Destruir DataTable si ya está inicializado
             if ( $.fn.DataTable.isDataTable('#tablaArticulosCrearVersion') && tablaArticulosCrearVersion ) {
                 tablaArticulosCrearVersion.destroy();
-            } 
+            }  
 
             $("#tablaArticulosCrearVersion tbody").empty();
             data = $(this).parents("tr").attr("data-json");
