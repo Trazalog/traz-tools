@@ -162,9 +162,9 @@ define('BPM_PROCESS', json_encode(array(
     '6866538875650512673' => ['nombre' => 'Proc. Mantenimiento', 'color' => '#00A65A', 'proyecto'=>BPM, 'model'=>'Gentareas'],
     BPM_PROCESS_ID_TAREA_GENERICA  => ['nombre' => 'Tarea Genérica', 'color' => '#00A65A', 'proyecto'=>TST, 'model'=>'Tsttareas'],
     BPM_PROCESS_ID_INGRESO_CAMIONES  => ['nombre' => 'SICPOA', 'color' => '#00A65A', 'proyecto'=>SICP, 'model'=>'Sicpoatareas'],
-    BPM_PROCESS_ID_SOLICITUD_CONTENEDORES => ['nombre' => 'TERSU-BPM01 - Solicitud de Contenedores', 'color' => '#FF3300', 'proyecto'=> RESI.'general/', 'model'=>'PedidoContenedores'],
-    BPM_PROCESS_ID_SOLICITUD_RETIRO_CONTENEDORES => ['nombre' => 'TERSU-BPM02 - Solicitud de Retiro de Contenedores', 'color' => '#ABC51A', 'proyecto'=> RESI.'general/', 'model'=>'RetiroContenedores'],
-    BPM_PROCESS_ID_ORDEN_TRANSPORTE => ['nombre' => 'TERSU-BPM03 - Generación Orden de Transporte', 'color' => '#1A56C5', 'proyecto'=> RESI.'general/', 'model'=>'EntregaOrdenTransportes']
+    BPM_PROCESS_ID_SOLICITUD_CONTENEDORES => ['nombre' => 'TERSU-BPM01 - Solicitud de Contenedores', 'color' => '#FF3300', 'proyecto'=> RESI.'general/', 'model'=>'Pedidocontenedores'],
+    BPM_PROCESS_ID_SOLICITUD_RETIRO_CONTENEDORES => ['nombre' => 'TERSU-BPM02 - Solicitud de Retiro de Contenedores', 'color' => '#ABC51A', 'proyecto'=> RESI.'general/', 'model'=>'Retirocontenedores'],
+    BPM_PROCESS_ID_ORDEN_TRANSPORTE => ['nombre' => 'TERSU-BPM03 - Generación Orden de Transporte', 'color' => '#1A56C5', 'proyecto'=> RESI.'general/', 'model'=>'Entregaordentransportes']
 )));
 
 define('BPM_ADMIN_USER', 'admin');
