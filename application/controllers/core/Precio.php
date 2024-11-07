@@ -102,6 +102,7 @@ class Precio extends CI_Controller
             // si crea una nueva version actualizo la fecha hasta de la version anterior 
             $datos = array(
                 'lipr_id' => $lipr_id,
+                'version' => (string) ($version - 1),
                 'fec_hasta' => date('Y-m-d H:i:s')
             );
             $rsp = $this->Precios->updateFechaHastaPrecios($datos);
@@ -133,6 +134,14 @@ class Precio extends CI_Controller
         } else {
             echo json_encode(array('status' => false, 'message' => 'Error al agregar los artículos de la lista de precios.'));
         }
+    }
+
+    public function obtenerVersiones() {
+        $lipr_id = $this->input->post('lipr_id');
+    
+        $versiones = $this->Precios->obtenerVersionesPorLiprId($lipr_id);
+    
+        echo json_encode($versiones);
     }
     
 }

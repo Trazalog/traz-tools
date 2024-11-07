@@ -20,10 +20,10 @@ class Dashs extends CI_Model {
   * @return array items de menu y permisos de distintos tipos de usuarios
   */
   function obtenerMenu(){
-
+    log_message("DEBUG","#TRAZA | CORE | Dashs | obtenerMenu()");
     $email = $this->session->userdata('email');
     $grupo = $this->session->userdata('groupBpm');;
-    $aux = $this->rest->callAPI("GET",REST_CORE."/menuitems/porEmail/$email/porGrupo/$grupo");
+    $aux = $this->rest->callAPI("GET",REST_CORE."/menuitems/porEmail/$email/porGrupo/".urlencode($grupo));
     $aux =json_decode($aux["data"]);
     return $aux;
   }
@@ -33,8 +33,7 @@ class Dashs extends CI_Model {
   * @param
   * @return
   */
-  function obtenerMemberships()
-  {
+  function obtenerMemberships(){
     $userIdBpm = userIdBpm();
     $aux = $this->rest->callAPI("GET",REST_BPM."/memberships/xUserid/".$userIdBpm."/session/dd");
     $aux = json_decode($aux["data"]);

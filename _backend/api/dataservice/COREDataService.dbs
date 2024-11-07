@@ -371,7 +371,7 @@
       <param name="image" sqlType="STRING"/>
    </query>
    <query id="getListasPrecios" useConfig="ToolsDataSource">
-      <sql>SELECT &#xd;    lp.lipr_id, &#xd;    lp.nombre, &#xd;    lp.detalle, &#xd;    lp.tipo, &#xd;    lp.empr_id, &#xd;    to_char(lp.fec_alta, 'YYYY-MM-DD HH24:MI') as fec_alta, &#xd;    lp.usr_alta, &#xd;    lp.usr_app_alta, &#xd;    to_char(lp.fec_ult_modif,'YYYY-MM-DD HH24:MI') as fec_ult_modif, &#xd;    lp.usr_ult_modif, &#xd;    lp.usr_app_ult_modif, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion&#xd;FROM &#xd;    core.listas_precios lp&#xd;LEFT JOIN &#xd;    core.versiones_listas_precios vlp &#xd;    ON lp.lipr_id = vlp.lipr_id&#xd;WHERE &#xd;    lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY &#xd;    lp.nombre ASC;</sql>
+      <sql>SELECT &#xd;    lp.lipr_id, &#xd;    lp.nombre, &#xd;    lp.detalle, &#xd;    lp.tipo, &#xd;    lp.empr_id, &#xd;    to_char(lp.fec_alta, 'YYYY-MM-DD HH24:MI') AS fec_alta, &#xd;    lp.usr_alta, &#xd;    lp.usr_app_alta, &#xd;    to_char(lp.fec_ult_modif, 'YYYY-MM-DD HH24:MI') AS fec_ult_modif, &#xd;    lp.usr_ult_modif, &#xd;    lp.usr_app_ult_modif, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion&#xd;FROM &#xd;    core.listas_precios lp&#xd;LEFT JOIN &#xd;    core.versiones_listas_precios vlp &#xd;    ON lp.lipr_id = vlp.lipr_id&#xd;    AND vlp.nro_version = (&#xd;        SELECT MAX(vlp_inner.nro_version)&#xd;        FROM core.versiones_listas_precios vlp_inner&#xd;        WHERE vlp_inner.lipr_id = lp.lipr_id&#xd;    )&#xd;WHERE &#xd;    lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY &#xd;    lp.nombre ASC;</sql>
       <result outputType="json">{&#xd;   "listas": {&#xd;      "lista": [&#xd;        {&#xd;          "lipr_id": "$lipr_id",&#xd;          "nombre": "$nombre",&#xd;          "detalle": "$detalle",&#xd;          "tipo": "$tipo",&#xd;          "empr_id": "$empr_id",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usr_alta": "$usr_alta",&#xd;          "usr_app_alta": "$usr_app_alta",&#xd;          "fec_ult_modif": "$fec_ult_modif",&#xd;          "usr_ult_modif": "$usr_ult_modif",&#xd;          "usr_app_ult_modif": "$usr_app_ult_modif",&#xd;          "nro_version": "$nro_version",&#xd;          "descripcion": "$descripcion",&#xd;          "@getArticulosListaPrecios":"$lipr_id-&gt;lipr_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -471,10 +471,21 @@
       <result outputType="json">{&#xd;    "casos": {&#xd;        "caso" : [&#xd;            {&#xd;                "case_id": "$case_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
-   <query id="updateFechaVersionPrecios" useConfig="ToolsDataSource">
-      <sql>update core.versiones_listas_precios&#xd;set fec_hasta = TO_DATE(:fec_hasta, 'YYYY-MM-DD')&#xd;where lipr_id = cast (:lipr_id as integer);</sql>
+   <query id="getArticulosListaPreciosVersion" useConfig="ToolsDataSource">
+      <sql>select&#xd;    cr.core_id, &#xd;    cr.precio, &#xd;    r.arti_id, &#xd;    aa.barcode, &#xd;    aa.descripcion as producto&#xd;from &#xd;    core.costos_recursos cr&#xd;left join &#xd;    prd.recursos r on r.recu_id = cr.recu_id &#xd;left join &#xd;    alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where &#xd;    cr.velp_id = cast(:velp_id as integer)</sql>
+      <result outputType="json">{&#xd;  "detalles_articulos_version": {&#xd;    "detalle_articulos_version": [&#xd;      {&#xd;        "arti_id": "$arti_id",&#xd;        "precio": "$precio",&#xd;        "barcode": "$barcode",&#xd;        "producto": "$producto",&#xd;        "core_id": "$core_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="velp_id" sqlType="STRING"/>
+   </query>
+   <query id="getVersionesListaPrecio" useConfig="ToolsDataSource">
+      <sql>select &#xd;    vlp.velp_id,&#xd;    vlp.lipr_id, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion, &#xd;    vlp.fec_alta, &#xd;    vlp.fec_hasta&#xd;from &#xd;    core.versiones_listas_precios vlp&#xd;where &#xd;    vlp.lipr_id = cast(:lipr_id as integer)&#xd;order by&#xd;    vlp.nro_version DESC;</sql>
+      <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "lipr_id": "$lipr_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_alta": "$fec_alta",&#xd;        "fec_hasta": "$fec_hasta",&#xd;        "@getArticulosListaPreciosVersion":"$velp_id-&gt;velp_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="lipr_id" sqlType="STRING"/>
+   </query>
+   <query id="updateFechaVersionPrecios" useConfig="ToolsDataSource">
+      <sql>UPDATE core.versiones_listas_precios&#xd;SET &#xd;    fec_hasta = TO_DATE(:fec_hasta, 'YYYY-MM-DD')&#xd;WHERE &#xd;    lipr_id = CAST(:lipr_id AS INTEGER)&#xd;AND&#xd;    nro_version = CAST(:version AS INTEGER);</sql>
       <param name="fec_hasta" sqlType="STRING"/>
+      <param name="version" sqlType="STRING"/>
+      <param name="lipr_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -950,14 +961,15 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
-   <resource method="PUT" path="/fechaversion">
-      <call-query href="updateFechaVersionPrecios">
+   <resource method="GET" path="/versiones_lista_precio/{lipr_id}">
+      <call-query href="getVersionesListaPrecio">
          <with-param name="lipr_id" query-param="lipr_id"/>
-         <with-param name="fec_hasta" query-param="fec_hasta"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/versiones_lista_precio/{lipr_id}">
-      <call-query href="getArticulosListaPrecios">
+   <resource method="PUT" path="/fechaversion">
+      <call-query href="updateFechaVersionPrecios">
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+         <with-param name="version" query-param="version"/>
          <with-param name="lipr_id" query-param="lipr_id"/>
       </call-query>
    </resource>

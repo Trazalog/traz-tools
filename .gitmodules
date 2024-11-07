@@ -37,3 +37,6 @@
 [submodule "application/modules/traz-tools-man"]
 	path = application/modules/traz-tools-man
 	url = https://github.com/Trazalog/traz-tools-man.git
+[submodule "application/modules/traz-tools-resi"]
+	path = application/modules/traz-tools-resi
+	url = https://github.com/Trazalog/traz-tools-resi

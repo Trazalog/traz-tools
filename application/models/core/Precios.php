@@ -156,4 +156,12 @@ class Precios extends CI_Model {
     $rsp = $this->rest->callApi("PUT", $url, $post);
     return $rsp;
   }
+
+  public function obtenerVersionesPorLiprId($lipr_id) {
+    $aux = $this->rest->callAPI("GET", REST_CORE . "/versiones_lista_precio/$lipr_id");
+    $aux = json_decode($aux["data"]);
+		$versiones = $aux->detalles_lista_precio->detalle_lista_precio;
+		return $versiones;
+  }
+  
 }
