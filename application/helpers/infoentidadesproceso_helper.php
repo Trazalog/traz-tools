@@ -14,44 +14,40 @@
         $processId = $tarea->processId;
 
         switch ($processId) {
+          case BPM_PROCESS_ID_SOLICITUD_CONTENEDORES:
+              log_message('DEBUG','#TRAZA | INFOENTIDADESPROCESO_HELPER | infoentidadesproceso($tarea) >> '.json_encode($tarea));
+              log_message('DEBUG','#TRAZA | INFOENTIDADESPROCESO_HELPER | infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
+              $aux_gen = $ci2->rest->callAPI("GET",REST_RESI."/solicitantesTransporte/case/".$ent_case_id);
+              $aux_gen =json_decode($aux_gen["data"]);
 
-            case BPM_PROCESS_ID_PEDIDO_CONTENEDORES:
+              $aux_tran = $ci2->rest->callAPI("GET",REST_RESI."/transportistas/case/".$ent_case_id);
+              $aux_tran =json_decode($aux_tran["data"]);
+            break;
 
-                log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) >> '.json_encode($tarea));
-                log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
-                $aux_gen = $ci2->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/case/".$ent_case_id);
-                $aux_gen =json_decode($aux_gen["data"]);
+          case BPM_PROCESS_ID_SOLICITUD_RETIRO_CONTENEDORES:
+              log_message('DEBUG','#TRAZA | INFOENTIDADESPROCESO_HELPER | infoentidadesproceso($tarea) >> '.json_encode($tarea));
+              log_message('DEBUG','#TRAZA | INFOENTIDADESPROCESO_HELPER | infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
+              $aux_gen = $ci2->rest->callAPI("GET",REST_RESI."/solicitantesTransporte/proceso/retiro/case/".$ent_case_id);
+              $aux_gen =json_decode($aux_gen["data"]);
 
-                $aux_tran = $ci2->rest->callAPI("GET",REST_PRD."/transportistas/case/".$ent_case_id);
-                $aux_tran =json_decode($aux_tran["data"]);
-              break;
+              $aux_tran = $ci2->rest->callAPI("GET",REST_RESI."/transportistas/proceso/retiro/case/".$ent_case_id);
+              $aux_tran =json_decode($aux_tran["data"]);
+            break;
 
-            case BPM_PROCESS_ID_RETIRO_CONTENEDORES:
+          case BPM_PROCESS_ID_ORDEN_TRANSPORTE:
+              log_message('DEBUG','#TRAZA | INFOENTIDADESPROCESO_HELPER | infoentidadesproceso($tarea) >> '.json_encode($tarea));
+              log_message('DEBUG','#TRAZA | INFOENTIDADESPROCESO_HELPER | infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
 
-                log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) >> '.json_encode($tarea));
-                log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
-                $aux_gen = $ci2->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/proceso/retiro/case/".$ent_case_id);
-                $aux_gen =json_decode($aux_gen["data"]);
+              $aux_gen = $ci2->rest->callAPI("GET",REST_RESI."/solicitantesTransporte/proceso/ingreso/case/".$ent_case_id);
+              $aux_gen =json_decode($aux_gen["data"]);
 
-                $aux_tran = $ci2->rest->callAPI("GET",REST_PRD."/transportistas/proceso/retiro/case/".$ent_case_id);
-                $aux_tran =json_decode($aux_tran["data"]);
-              break;
+              $aux_tran = $ci2->rest->callAPI("GET",REST_RESI."/transportistas/proceso/ingreso/case/".$ent_case_id);
+              $aux_tran =json_decode($aux_tran["data"]);
+            break;
 
-            case BPM_PROCESS_ID_ENTREGA_ORDEN_TRANSPORTE:
-
-                log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) >> '.json_encode($tarea));
-                log_message('DEBUG','#TRAZA|INFOENTIDADESPROCESO_HELPER|infoentidadesproceso($tarea) $ent_case_id: >> '.json_encode($ent_case_id));
-
-                $aux_gen = $ci2->rest->callAPI("GET",REST_PRD."/solicitantesTransporte/proceso/ingreso/case/".$ent_case_id);
-                $aux_gen =json_decode($aux_gen["data"]);
-
-                $aux_tran = $ci2->rest->callAPI("GET",REST_PRD."/transportistas/proceso/ingreso/case/".$ent_case_id);
-                $aux_tran =json_decode($aux_tran["data"]);
-              break;
-
-            default:
-              # code...
-              break;
+          default:
+            # code...
+            break;
         }
 
 ?>
@@ -67,30 +63,25 @@
 					</div>
 					<div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
 						<div class="panel-body">
-
               <div>
-
                   <!-- Nav tabs -->
                   <ul class="nav nav-tabs" role="tablist">
-                    <li role="presentation" class="active"><a href="#generador" aria-controls="generador" role="tab" data-toggle="tab">Generador</a></li>
-                    <li role="presentation"><a href="#transportista" aria-controls="transportista" role="tab" data-toggle="tab">Transportista</a></li>
+                    <li role="presentation" class="active"><a href="#tab_generador" aria-controls="tab_generador" role="tab" data-toggle="tab">Generador</a></li>
+                    <li role="presentation" class="privado"><a href="#tab_transportista" aria-controls="tab_transportista" role="tab" data-toggle="tab">Transportista</a></li>
                   </ul>
-
                   <!-- Tab panes -->
                   <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane active" id="generador">
+                    <div class="tab-pane active" id="tab_generador">
                       <!--_____________ Formulario Generador _____________-->
-                      <form class="formNombre1" id="IDnombre">  
+                      <form class="formNombre1" id="formGenerador">  
                         <div class="col-md-12">
-        
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="razon_social" name="">Razon Social:</label>
+                                    <label for="razon_social" name="">Razón Social:</label>
                                     <input type="text" class="form-control habilitar" id="razon_social" value="<?php echo $aux_gen->generador->razon_social; ?>"  readonly>
                                 </div>
                             </div>
                             <!--_____________________________________________-->
-                            
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="cuit" name=""> CUIT:</label>
@@ -98,15 +89,13 @@
                                 </div>
                             </div>
                             <!--_____________________________________________-->
-        
                             <div class="col-md-6">
                               <div class="form-group">
-                                  <label for="domicilio" name="">Direccion:</label>
+                                  <label for="domicilio" name="">Dirección:</label>
                                   <input type="text" class="form-control habilitar" id="domicilio" value="<?php echo $aux_gen->generador->domicilio; ?>"  readonly>
                               </div>
                             </div>
                             <!--_____________________________________________-->
-        
                             <div class="col-md-6">
                               <div class="form-group">
                                   <label for="num_registro" name="">Nº Registro:</label>
@@ -122,7 +111,6 @@
                               </div>
                             </div>
                             <!--_____________________________________________-->
-
                             <div class="col-md-6">
                               <div class="form-group">
                                   <label for="departamento" name="">Departamento:</label>
@@ -130,7 +118,6 @@
                               </div>
                             </div>
                             <!--_____________________________________________-->
-
                             <div class="col-md-6">
                               <div class="form-group">
                                   <label for="zona" name="">Zona:</label>
@@ -138,7 +125,6 @@
                               </div>
                             </div>
                             <!--_____________________________________________-->
-
                             <div class="col-md-6">
                               <div class="form-group">
                                   <label for="rubro" name="">Rubro:</label>
@@ -146,33 +132,28 @@
                               </div>
                             </div>
                             <!--_____________________________________________-->
-
                             <div class="col-md-6">
                               <div class="form-group">
                                   <label for="rubro" name="">Tipos de RSU:</label>
                                   <input type="text" class="form-control habilitar" id="rubro" value="<?php 
-                                  foreach ($aux_gen->generador->tiposCarga->carga as $tipocarga) {
-                                        echo $tipocarga->valor.', ';
-                                      }
+                                    foreach ($aux_gen->generador->tiposCarga->carga as $tipocarga) {
+                                      echo $tipocarga->valor.', ';
+                                    }
                                    ?>"  readonly>
                               </div>
                             </div>
                             <!--_____________________________________________-->
-                            
                         </div>
                       </form>
                       <!--_____________ Fin Formulario Generador _____________-->
-                    
                     </div>
-                    <div role="tabpanel" class="tab-pane" id="transportista">
-                      
+                    <div class="tab-pane" id="tab_transportista">
                       <!--_____________ Formulario Transportista _____________-->
-                      <form class="formNombre1" id="IDnombre">
+                      <form class="formNombre1" id="formTransportista">
                         <div class="col-md-12">
-        
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="razon_social_tran" name="">Razon Social:</label>
+                                    <label for="razon_social_tran" name="">Razón Social:</label>
                                     <input type="text" class="form-control habilitar" id="razon_social_tran" value="<?php echo $aux_tran->transportista->razon_social; ?>"  readonly>
                                 </div>
                             </div>
@@ -188,7 +169,7 @@
         
                             <div class="col-md-6">
                               <div class="form-group">
-                                  <label for="direccion" name="">Direccion:</label>
+                                  <label for="direccion" name="">Dirección:</label>
                                   <input type="text" class="form-control habilitar" id="direccion" value="<?php echo $aux_tran->transportista->direccion; ?>"  readonly>
                               </div>
                             </div>
@@ -204,7 +185,7 @@
 
                             <div class="col-md-6">
                               <div class="form-group">
-                                  <label for="resolucion" name="">Resolucion:</label>
+                                  <label for="resolucion" name="">Resolución:</label>
                                   <input type="text" class="form-control habilitar" id="resolucion" value="<?php echo $aux_tran->transportista->resolucion; ?>"  readonly>
                               </div>
                             </div>

@@ -148,6 +148,26 @@
       <param name="core_id" sqlType="STRING"/>
       <param name="cantidad" sqlType="STRING"/>
    </query>
+   <query id="getSotrEmprId" useConfig="ToolsDataSource">
+      <sql>SELECt empr_id&#xd;FROM log.solicitantes_transporte st &#xd;where st.sotr_id = cast(:sotr_id as integer)</sql>
+      <result outputType="json">{&#xd;  "solicitanteTransporte":&#xd;   {"emprId":"$empr_id"}&#xd;}</result>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudContenedorNicks" useConfig="ToolsDataSource">
+      <sql>SELECT u1.usernick tran_nick, u2.usernick sotr_nick&#xd;FROM log.solicitudes_contenedor sc  &#xd;,log.solicitantes_transporte st &#xd;,log.transportistas tr&#xd;,seg.users u1&#xd;,seg.users u2&#xd;WHERE sc.soco_id =  CAST ( :soco_id AS integer)&#xd;AND tr.tran_id = sc.tran_id  &#xd;AND st.sotr_id = sc.sotr_id  &#xd;AND u1.email = tr.user_id &#xd;AND u2.email = st.user_id</sql>
+      <result outputType="json">{&#xd; "solicitudContenedor": {&#xd; "tran_nick": "$tran_nick",&#xd; "sotr_nick": "$sotr_nick"&#xd; }&#xd;}</result>
+      <param name="soco_id" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudRetiroNicks" useConfig="ToolsDataSource">
+      <sql>SELECT u1.usernick tran_nick, u2.usernick sotr_nick&#xd;FROM log.solicitudes_retiro sr   &#xd;,log.solicitantes_transporte st &#xd;,log.transportistas tr&#xd;,log.contenedores_entregados ce&#xd;,log.contenedores c &#xd;,seg.users u1&#xd;,seg.users u2&#xd;WHERE sr.sore_id =  CAST ( :sore_id AS integer)&#xd;AND st.sotr_id = sr.sotr_id   &#xd;AND ce.sore_id = sr.sore_id&#xd;AND c.cont_id =ce.cont_id &#xd;AND c.tran_id = tr.tran_id &#xd;AND u1.email = tr.user_id &#xd;AND u2.email = st.user_id &#xd;LIMIT 1</sql>
+      <result outputType="json">{&#xd; "solicitudRetiro": {&#xd; "tran_nick": "$tran_nick",&#xd; "sotr_nick": "$sotr_nick"&#xd; }&#xd;}</result>
+      <param name="sore_id" sqlType="STRING"/>
+   </query>
+   <query id="getOrdenTransporteNicks" useConfig="ToolsDataSource">
+      <sql>SELECT u1.usernick tran_nick, u2.usernick sotr_nick&#xd;FROM log.ordenes_transporte ot &#xd;,log.solicitantes_transporte st &#xd;,log.transportistas tr&#xd;,seg.users u1&#xd;,seg.users u2&#xd;WHERE ot.ortr_id =  CAST ( :ortr_id AS integer)&#xd;AND tr.tran_id = ot.tran_id &#xd;AND st.sotr_id = ot.sotr_id &#xd;AND u1.email = tr.user_id &#xd;AND u2.email = st.user_id</sql>
+      <result outputType="json">{&#xd; "ordenTransporte": {&#xd; "tran_nick": "$tran_nick",&#xd; "sotr_nick": "$sotr_nick"&#xd; }&#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/transporte/movimiento/list/{tipo_movimiento}/{empr_id}">
       <call-query href="getMovimientosTransporte">
          <with-param name="tipo_movimiento" query-param="tipo_movimiento"/>
@@ -310,6 +330,26 @@
          <with-param name="remi_id" query-param="remi_id"/>
          <with-param name="core_id" query-param="core_id"/>
          <with-param name="cantidad" query-param="cantidad"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitanteTransporte/{sotr_id}/emprId">
+      <call-query href="getSotrEmprId">
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudContenedor/nicks/{soco_id}">
+      <call-query href="getSolicitudContenedorNicks">
+         <with-param name="soco_id" query-param="soco_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudRetiro/nicks/{sore_id}">
+      <call-query href="getSolicitudRetiroNicks">
+         <with-param name="sore_id" query-param="sore_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ordenTransporte/nicks/{ortr_id}">
+      <call-query href="getOrdenTransporteNicks">
+         <with-param name="ortr_id" query-param="ortr_id"/>
       </call-query>
    </resource>
 </data>
