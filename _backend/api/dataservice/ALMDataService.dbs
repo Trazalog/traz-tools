@@ -514,6 +514,17 @@
       <param name="demi_id2" sqlType="STRING"/>
       <param name="demi_id3" sqlType="STRING"/>
    </query>
+   <query id="setUpdateLoteV2" useConfig="ToolsDataSource">
+      <sql>CALL alm.crear_o_updatear_lote(&#xd;cast(:prov_id as integer), &#xd;cast(:arti_id as integer), &#xd;cast(:depo_id as integer), &#xd;cast(:empr_id as integer), &#xd;:cod_lote, &#xd;cast(:cantidad as float),&#xd;to_date(:fec_vencimiento, 'YYYY-MM-DD')&#xd;);</sql>
+      <result outputType="json">{"GeneratedKeys":{"Entry":[{"ID":$lote_id}]}}</result>
+      <param name="fec_vencimiento" sqlType="STRING"/>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="cod_lote" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -1065,6 +1076,17 @@
          <with-param name="demi_id1" query-param="demi_id1"/>
          <with-param name="demi_id2" query-param="demi_id2"/>
          <with-param name="demi_id3" query-param="demi_id3"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lote/crearactualizarlote">
+      <call-query href="setUpdateLoteV2">
+         <with-param name="fec_vencimiento" query-param="fec_vencimiento"/>
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="cod_lote" query-param="cod_lote"/>
+         <with-param name="cantidad" query-param="cantidad"/>
       </call-query>
    </resource>
 </data>
