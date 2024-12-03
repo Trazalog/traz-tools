@@ -479,17 +479,22 @@
         var recurso = 'index.php/core/Precio/agregarListaPrecio';
         
         var articulosTabla = [];
-        $('#tablaArticulos').find('tbody tr').each(function() {
-            var col = $(this).find('td');
-            var dataJson = $(this).find('span').attr('data-json');
+        var table = $('#tablaArticulos').DataTable();
+
+        table.rows().nodes().each(function(row, index) {
+            var col = $(row).find('td');
+            var dataJson = $(row).find('span').attr('data-json');
+
             var data = {};
             if (dataJson) {
                 var parsedData = JSON.parse(dataJson);
                 data.arti_id = parsedData.arti_id;
             } else {
                 console.error("data-json is undefined or invalid.");
-                return;
+                return; 
             }
+
+            // Obtener el precio desde la última columna (ajusta el selector si el precio está en otro lugar)
             data.precio = col.last().find('input').val().replace(',', '.');
             articulosTabla.push(data);
         });
