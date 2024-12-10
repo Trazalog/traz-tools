@@ -188,6 +188,14 @@
          <sequence key="toolsCreateRole"/>
          <property name="role_name" expression="fn:concat('Administrador ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('SMA - Transportista ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('SMA - Generador ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('SMA - Operario Descarga ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
+         <property name="role_name" expression="fn:concat('SMA - Operador de Bascula ',$ctx:empr_nombre)" type="STRING"/>
+         <sequence key="toolsCreateRole"/>
          <loopback/>
       </inSequence>
       <outSequence>

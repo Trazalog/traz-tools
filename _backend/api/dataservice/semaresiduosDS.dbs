@@ -13,7 +13,7 @@
       <result outputType="json">{&#xd;   "zonas":{&#xd;      "zona":[&#xd;         {&#xd;            "zona_id":"$zona_id",&#xd;            "nombre":"$nombre",&#xd;            "descripción":"$descripcion",&#xd;            "depa_id": "$depa_id",&#xd;            "depa_nom": "$depa_nom"          &#xd;         }      &#xd;      ]   &#xd;   }&#xd;}</result>
    </query>
    <query id="transportistasSet" useConfig="semaresiduosDS">
-      <sql>insert into log.transportistas(razon_social,descripcion,direccion,telefono,contacto,resolucion,registro,fec_alta_efectiva,fec_baja_efectiva,usuario_app, cuit)&#xd;values(:razon_social,:descripcion,:direccion,:telefono,:contacto,:resolucion,:registro,TO_DATE(:fec_alta_efectiva,'YYYY-MM-DD'),TO_DATE(:fec_baja_efectiva,'YYYY-MM-DD'),:usuario_app, :cuit)&#xd;returning tran_id</sql>
+      <sql>insert into log.transportistas(razon_social,descripcion,direccion,telefono,contacto,resolucion,registro,fec_alta_efectiva,fec_baja_efectiva,usuario_app, cuit, empr_id)&#xd;values(:razon_social,:descripcion,:direccion,:telefono,:contacto,:resolucion,:registro,TO_DATE(:fec_alta_efectiva,'YYYY-MM-DD'),TO_DATE(:fec_baja_efectiva,'YYYY-MM-DD'),:usuario_app, :cuit, cast(:empr_id as integer))&#xd;returning tran_id</sql>
       <result outputType="json">{&#xd;	"respuesta":{&#xd;		"tran_id": "$tran_id"&#xd;	}&#xd;}</result>
       <param name="razon_social" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -26,6 +26,7 @@
       <param name="fec_baja_efectiva" sqlType="STRING"/>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="cuit" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="departamentosGet" useConfig="semaresiduosDS">
       <sql>select depa_id, nombre from core.departamentos</sql>
@@ -94,7 +95,7 @@
       <result outputType="json">{&#xd;  "solicitantes_transporte": {&#xd;        "solicitante": [&#xd;          {&#xd;            "sotr_id": "$sotr_id",&#xd;            "razon_social": "$razon_social",&#xd;            "cuit": "$cuit",&#xd;            "domicilio": "$domicilio",&#xd;            "num_registro": "$num_registro",&#xd;            "lat": "$lat",&#xd;            "lng": "$lng",&#xd;            "zona_id": "$zona_id",&#xd;            "zona_nombre": "$zona_nombre",&#xd;            "depa_id": "$depa_id",&#xd;            "depa_nombre": "$depa_nombre", &#xd;            "rubr_id": "$rubr_id",&#xd;            "tist_id": "$tist_id",&#xd;            "user_id": "$user_id",&#xd;            "@solicitanteTransporteGetTipoCarga": "$sotr_id-&gt;sotr_id"	            &#xd;          }&#xd;        ]&#xd;   }&#xd;}</result>
    </query>
    <query id="solicitanteTransporteSet" useConfig="semaresiduosDS">
-      <sql>insert into log.solicitantes_transporte(razon_social, cuit, domicilio, num_registro, lat, lng, usuario_app, zona_id, rubr_id, tist_id, depa_id)&#xd;  values(:razon_social, :cuit, :domicilio, :num_registro, :lat, :lng, :usuario_app, CAST(:zona_id AS INTEGER), :rubr_id, :tist_id, CAST(:depa_id AS INTEGER))&#xd;returning sotr_id</sql>
+      <sql>insert into log.solicitantes_transporte(razon_social, cuit, domicilio, num_registro, lat, lng, usuario_app, zona_id, rubr_id, tist_id, depa_id, empr_id)&#xd;  values(:razon_social, :cuit, :domicilio, :num_registro, :lat, :lng, :usuario_app, CAST(:zona_id AS INTEGER), :rubr_id, :tist_id, CAST(:depa_id AS INTEGER), CAST(:empr_id AS INTEGER))&#xd;returning sotr_id</sql>
       <result outputType="json">{&#xd;  "respuesta":{&#xd;     "sotr_id": "$sotr_id"&#xd;  }&#xd;} </result>
       <param name="razon_social" sqlType="STRING"/>
       <param name="cuit" sqlType="STRING"/>
@@ -107,6 +108,7 @@
       <param name="rubr_id" sqlType="STRING"/>
       <param name="tist_id" sqlType="STRING"/>
       <param name="depa_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="solicitanteTransporteUpdate" useConfig="semaresiduosDS">
       <sql>update &#xd;  log.solicitantes_transporte &#xd;  set &#xd;  razon_social=:razon_social, cuit=:cuit, domicilio = :domicilio, num_registro=:num_registro, lat=:lat, lng=:lng, usuario_app=:usuario_app, zona_id=CAST(:zona_id AS INTEGER), rubr_id=:rubr_id, tist_id=:tist_id&#xd;  where (sotr_id=CAST(:sotr_id AS INTEGER))</sql>
@@ -182,10 +184,6 @@
       <sql>update &#xd;    log.choferes&#xd;    set imagen = :imagen&#xd;    where chof_id = CAST(:chof_id AS INTEGER)</sql>
       <param name="imagen" optional="false" sqlType="BINARY"/>
       <param name="chof_id" sqlType="STRING"/>
-   </query>
-   <query id="puntosCriticosGet" useConfig="semaresiduosDS">
-      <sql>select nombre, descripcion, lat, lng, zona_id from log.puntos_criticos</sql>
-      <result outputType="json">{&#xd;   "puntos_criticos":{&#xd;      "punto":[&#xd;         {&#xd;            "nombre":"$nombre",&#xd;            "descripcion":"$descripcion",&#xd;            "lat":"$lat",&#xd;            "lng":"$lng",&#xd;            "zona_id":"$zona_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
    </query>
    <query id="puntosCriticosSet" useConfig="semaresiduosDS">
       <sql>insert into log.puntos_criticos (nombre, descripcion, lat, lng, usuario_app) &#xd;  values(:nombre, :descripcion, :lat, :lng, :usuario_app)&#xd;returning pucr_id</sql>
@@ -928,6 +926,7 @@
          <with-param name="fec_baja_efectiva" query-param="fec_baja_efectiva"/>
          <with-param name="usuario_app" query-param="usuario_app"/>
          <with-param name="cuit" query-param="cuit"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/departamentos">
@@ -1005,6 +1004,7 @@
          <with-param name="rubr_id" query-param="rubr_id"/>
          <with-param name="tist_id" query-param="tist_id"/>
          <with-param name="depa_id" query-param="depa_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/solicitantesTransporte">
@@ -1104,9 +1104,6 @@
          <with-param name="eliminado" query-param="eliminado"/>
          <with-param name="pucr_id" query-param="pucr_id"/>
       </call-query>
-   </resource>
-   <resource method="GET" path="/puntosCriticos">
-      <call-query href="puntosCriticosGet"/>
    </resource>
    <resource method="POST" path="/tablas">
       <call-query href="tablasSet">
