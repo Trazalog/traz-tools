@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><artifacts>
+    <artifact name="apiconfig_xml" groupId="com.example.resource" version="1.0.0" type="registry/resource" serverRole="EnterpriseIntegrator">
+        <item>
+            <file>apiconfig.xml</file>
+            <path>/_system/config/tools</path>
+            <mediaType>application/xml</mediaType>
+            <properties/>
+        </item>
+    </artifact>
+</artifacts>
