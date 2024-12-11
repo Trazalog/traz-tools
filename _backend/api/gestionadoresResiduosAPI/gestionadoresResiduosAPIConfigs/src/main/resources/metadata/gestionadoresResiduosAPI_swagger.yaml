@@ -1,0 +1,38 @@
+openapi: 3.0.1
+info:
+  title: gestionadoresResiduosAPI
+  description: API Definition of gestionadoresResiduosAPI
+  version: 1.0.0
+servers:
+- url: http://localhost:8290/tools/log
+paths:
+  /transportista:
+    post:
+      requestBody:
+        description: Sample Payload
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+        required: false
+      responses:
+        default:
+          description: Default response
+  /generador:
+    post:
+      requestBody:
+        description: Sample Payload
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+        required: false
+      responses:
+        default:
+          description: Default response
