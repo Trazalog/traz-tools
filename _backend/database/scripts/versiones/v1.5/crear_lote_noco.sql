@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION prd.crear_lote_noco(p_lote_id character varying, p_arti_id integer, p_prov_id integer, p_batch_id_padre bigint, p_cantidad double precision, p_cantidad_padre double precision, p_num_orden_prod character varying, p_reci_id integer, p_etap_id integer, p_usuario_app character varying, p_empr_id integer, p_forzar_agregar character varying DEFAULT 'false'::character varying, p_fec_vencimiento date DEFAULT NULL::date, p_recu_id integer DEFAULT NULL::integer, p_tipo_recurso character varying DEFAULT NULL::character varying, p_planificado character varying DEFAULT 'false'::character varying, p_batch_id bigint DEFAULT NULL::bigint, p_noco_list character varying DEFAULT NULL::character varying)
+CREATE OR REPLACE FUNCTION prd.crear_lote_noco(p_lote_id character varying, p_arti_id integer, p_prov_id integer, p_batch_id_padre bigint, p_cantidad double precision, p_cantidad_padre double precision, p_num_orden_prod character varying, p_reci_id integer, p_etap_id integer, p_usuario_app character varying, p_empr_id integer, p_forzar_agregar character varying DEFAULT 'false'::character varying, p_fec_vencimiento date DEFAULT NULL::date, p_recu_id integer DEFAULT NULL::integer, p_tipo_recurso character varying DEFAULT NULL::character varying, p_planificado character varying DEFAULT 'false'::character varying, p_batch_id bigint DEFAULT NULL::bigint, p_noco_list character varying DEFAULT NULL::character varying, p_fec_iniciado date DEFAULT NULL::date)
  RETURNS character varying
  LANGUAGE plpgsql
 AS $function$
@@ -60,16 +60,13 @@ DECLARE
  v_step varchar = '0';
  v_noco_id_aux varchar;
  v_index integer = 1;
- verificarRecipiente CURSOR (p_batch_id INTEGER
-			   ,p_arti_id INTEGER
-			   ,p_lote_id VARCHAR) for
+ verificarRecipiente CURSOR (p_batch_id INTEGER) for
 						   	select lo.batch_id
 							,case when al.arti_id is null then 0 else al.arti_id end arti_id
 							,case when lo.lote_id is null then '' else lo.lote_id end lote_id
 							from prd.lotes lo
 							left join alm.alm_lotes al on lo.batch_id = al.batch_id
 							where reci_id  = p_reci_id
-							and ((al.arti_id != p_arti_id or al.arti_id is null) or (lo.lote_id != p_lote_id or lo.lote_id is null))
 							and lo.estado = 'En Curso';
 
 
@@ -108,7 +105,7 @@ BEGIN
 	    	v_step='2';
     
 			if v_estado_recipiente = 'LLENO' then
-				open verificarRecipiente(p_reci_id,p_arti_id,p_lote_id);
+				open verificarRecipiente(p_reci_id);
 				loop
 					fetch verificarRecipiente into v_batch_id_aux ,v_arti_id,v_lote_id;
 					exit when NOT FOUND;
@@ -199,6 +196,7 @@ BEGIN
 	    				,estado = v_estado
 	    				,num_orden_prod = p_num_orden_prod
 	    				,reci_id = p_reci_id
+	    				,fec_iniciado = p_fec_iniciado
 	    			where batch_id = v_batch_id
 	    			returning 1)
 	    			
@@ -228,7 +226,9 @@ BEGIN
 					,etap_id
 					,usuario_app
 					,reci_id
-					,empr_id)	
+					,empr_id
+					,fec_iniciado 
+					)	
 					values (
 					p_lote_id
 					,v_estado
@@ -237,6 +237,7 @@ BEGIN
 					,p_usuario_app
 					,p_reci_id
 					,p_empr_id
+					,p_fec_iniciado
 					)
 					returning batch_id
 				)
