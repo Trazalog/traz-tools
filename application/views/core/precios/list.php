@@ -204,7 +204,7 @@
              // Destruir DataTable si ya está inicializado
             if ( $.fn.DataTable.isDataTable('#tablaArticulosCrearVersion') && tablaArticulosCrearVersion ) {
                 tablaArticulosCrearVersion.destroy();
-            } 
+            }  
 
             $("#tablaArticulosCrearVersion tbody").empty();
             data = $(this).parents("tr").attr("data-json");
@@ -300,14 +300,14 @@
         if (isNaN(coeficiente)) {
             alert("Ingrese un coeficiente válido.");
             return;
-        }
+        } 
 
         $('#tablaArticulosCrearVersion tbody tr').each(function() {
             const precioUnitarioInput = $(this).find('.precioUnitario');
-            let precioActual = parseFloat(precioUnitarioInput.val().replace(',', '.'));
+            const precioOriginal = parseFloat(precioUnitarioInput.data('precio-original').replace(',', '.'));
 
-            if (!isNaN(precioActual)) {
-                const nuevoPrecio = precioActual * (1 + coeficiente);
+            if (!isNaN(precioOriginal)) {
+                const nuevoPrecio = precioOriginal * (1 + coeficiente);
                 precioUnitarioInput.val(nuevoPrecio.toFixed(2).replace('.', ','));
             }
         });
@@ -348,21 +348,23 @@
         var recurso = 'index.php/core/Precio/agregarListaPrecio';
         var lipr_id = $("#lipr_id").val();
         var articulosTabla = [];
-        $('#tablaArticulosCrearVersion').find('tbody tr').each(function() {
-          
-            var col = $(this).find('td');
-            var dataJson = $(this).find('span').attr('data-json');
+        var table = $('#tablaArticulosCrearVersion').DataTable();
+
+        table.rows().nodes().each(function(row, index) {
+            var col = $(row).find('td');
+            var dataJson = $(row).find('span').attr('data-json');
+
             var data = {};
             if (dataJson) {
                 var parsedData = JSON.parse(dataJson);
                 data.arti_id = parsedData.arti_id;
             } else {
                 console.error("data-json is undefined or invalid.");
-                return;
+                return; 
             }
 
+            // Obtener el precio desde la última columna (ajusta el selector si el precio está en otro lugar)
             data.precio = col.last().find('input').val().replace(',', '.');
-           // console.log(data.precio);
             articulosTabla.push(data);
         });
 
@@ -388,8 +390,9 @@
                     
                     wc();
                     hecho("Hecho",'Lista de precios guardada correctamente.');
-                    // resetFormAndSelect2();
+                    $('#coeficiente').val('');
                     $('#modalCrearVersion').modal('hide');
+
                     cargarTablaPrecios();
                 } else {
                     wc();
