@@ -225,10 +225,6 @@
       <result outputType="json">{&#xd;   "choferes":{&#xd;      "chofer":[&#xd;         {&#xd;            "chof_id":"$chof_id",&#xd;   "documento":"$documento",         "nom_chofer":"$nom_chofer"         &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="tran_id" sqlType="STRING"/>
    </query>
-   <query id="transportistasGetTodo" useConfig="semaresiduosDS">
-      <sql>select tran_id, razon_social from log.transportistas</sql>
-      <result outputType="json">{"transportistas":&#xd;    {&#xd;      "transportista":[&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social",&#xd;          "@choferesGetPorTransportistas": "$tran_id-&gt;tran_id",&#xd;          "@vehiculosGetPorTransportistas" : "$tran_id-&gt;tran_id" &#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
-   </query>
    <query id="vehiculosGetPorTransportistas" useConfig="semaresiduosDS">
       <sql>select &#xd;  equi_id, descripcion, marca, dominio &#xd;from &#xd;  core.equipos &#xd;where &#xd;  tran_id = CAST(:tran_id AS INTEGER) and estado = 'AC'</sql>
       <result outputType="json">{&#xd;    "vehiculos":{&#xd;      "vehiculo":[&#xd;          {&#xd;            "equi_id": "$equi_id",&#xd;            "descripcion": "$descripcion",&#xd;            "marca": "$marca",&#xd;            "dominio": "$dominio"&#xd;          }&#xd;      ]&#xd;    }&#xd;  }</result>
@@ -375,8 +371,8 @@
       <param name="tran_id" sqlType="STRING"/>
    </query>
    <query id="transportistaTipoCarga" useConfig="semaresiduosDS">
-      <sql>select &#xd;  TCT.tran_id, TCT.tica_id, T.valor &#xd;from &#xd;  log.tipos_carga_transportistas TCT, core.tablas T&#xd;where &#xd;  TCT.tica_id = T.tabl_id &#xd;and &#xd;  TCT.tran_id = CAST(:tran_id as INTEGER)</sql>
-      <result outputType="json">{&#xd;  "tiposCarga": {&#xd;      "cargas": [&#xd;          {&#xd;          "tran_id": "$tran_id",&#xd;          "tica_id": "$tica_id",&#xd;          "valor": "$valor"&#xd;          }&#xd;      ]&#xd;  }&#xd;}</result>
+      <sql>select &#xd;  TCT.tran_id, TCT.tica_id, T.valor, T.tabl_id &#xd;from &#xd;  log.tipos_carga_transportistas TCT, core.tablas T&#xd;where &#xd;  TCT.tica_id = T.tabl_id &#xd;and &#xd;  TCT.tran_id = CAST(:tran_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;  "tiposCarga": {&#xd;      "cargas": [&#xd;          {&#xd;          "tran_id": "$tran_id",&#xd;          "tica_id": "$tica_id",&#xd;          "valor": "$valor",&#xd;          "tabl_id": "$tabl_id"&#xd;          }&#xd;      ]&#xd;  }&#xd;}</result>
       <param name="tran_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosGet" useConfig="semaresiduosDS">
@@ -523,9 +519,10 @@
       <param name="cont_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEstado" useConfig="semaresiduosDS">
-      <sql>update log.contenedores &#xd;  set eliminado = cast(:eliminado as INTEGER) &#xd;  where cont_id = cast(:cont_id as INTEGER)</sql>
+      <sql>update log.contenedores &#xd;  set eliminado = cast(:eliminado as INTEGER)&#xd;,motivo = :motivo&#xd;  where cont_id = cast(:cont_id as INTEGER)</sql>
       <param name="eliminado" sqlType="STRING"/>
       <param name="cont_id" sqlType="STRING"/>
+      <param name="motivo" sqlType="STRING"/>
    </query>
    <query id="solicitudRetiroDelete" useConfig="semaresiduosDS">
       <sql>update log.solicitudes_retiro&#xd;set eliminado = 1&#xd;where soco_id = cast(:sore_id as integer)</sql>
@@ -625,7 +622,7 @@
       <param name="chof_id" sqlType="STRING"/>
    </query>
    <query id="choferesDelete" useConfig="semaresiduosDS">
-      <sql>update &#xd;    log.choferes &#xd;    set eliminado = 1&#xd;    where chof_id = CAST(:chof_id AS INTEGER)</sql>
+      <sql>update &#xd;    log.choferes &#xd;    set eliminado = 1, motivo = :motivo&#xd;    where chof_id = CAST(:chof_id AS INTEGER)</sql>
       <param name="chof_id" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedoresPorCase" useConfig="semaresiduosDS">
@@ -904,6 +901,11 @@
       <param name="usernick" sqlType="STRING"/>
       <param name="tran_id" optional="false" sqlType="STRING"/>
    </query>
+   <query id="transportistaEmpresa" useConfig="semaresiduosDS">
+      <sql>select * from log.transportistas&#xd;where empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "transportistas":{&#xd;      "transportista":[&#xd;         {&#xd;            "tran_id":"$tran_id",&#xd;            "razon_social":"$razon_social",&#xd;            "descripcion":"$descripcion",&#xd;            "direccion":"$direccion",&#xd;            "telefono":"$telefono",&#xd;            "contacto":"$contacto",&#xd;            "resolucion":"$resolucion",&#xd;            "registro":"$registro",&#xd;            "fec_alta_efectiva":"$fec_alta_efectiva",&#xd;            "fec_baja_efectiva":"$fec_baja_efectiva",&#xd;            "fec_alta":"$fec_alta",&#xd;            "usuario":"$usuario",&#xd;            "usuario_app":"$usuario_app",&#xd;            "cuit": "$cuit",&#xd;            "user_id": "$user_id",&#xd;            "@transportistaTipoCarga": "$tran_id-&gt;tran_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/departamentos">
       <call-query href="departamentosSet">
          <with-param name="nombre" query-param="nombre"/>
@@ -1131,9 +1133,6 @@
       <call-query href="choferesGetPorTransportistas">
          <with-param name="tran_id" query-param="tran_id"/>
       </call-query>
-   </resource>
-   <resource method="GET" path="/transportistas/todo">
-      <call-query href="transportistasGetTodo"/>
    </resource>
    <resource method="GET" path="/choferes/transp/{tran_id}">
       <call-query href="choferesGetPorTransportistas">
@@ -1451,6 +1450,7 @@
       <call-query href="contenedoresEstado">
          <with-param name="eliminado" query-param="eliminado"/>
          <with-param name="cont_id" query-param="cont_id"/>
+         <with-param name="motivo" query-param="motivo"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/solicitudRetiro">
@@ -1845,6 +1845,11 @@
          <with-param name="tica_id" query-param="tica_id"/>
          <with-param name="usernick" query-param="usernick"/>
          <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportista/empresa/{empr_id}">
+      <call-query href="transportistaEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>
