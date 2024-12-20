@@ -248,8 +248,8 @@
       <param name="cantidad" sqlType="STRING"/>
    </query>
    <query id="getLotePorArticuloYDeposito" useConfig="ToolsDataSource">
-      <sql>select al.codigo, al.lote_id, al.batch_id &#xd;from alm.alm_lotes al, (select :depo_id depo_id) param &#xd;where al.arti_id = cast(:arti_id as integer) and al.eliminado = false&#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end</sql>
-      <result outputType="json">{&#xd;    "lotes": {&#xd;        "lote": [&#xd;            {&#xd;                "codigo": "$codigo",&#xd;                "lote_id": "$lote_id",&#xd;                "batch_id": "$batch_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <sql>select al.codigo, al.lote_id, al.batch_id, ap.nombre proveedor&#xd;from alm.alm_lotes al&#xd;left join alm.alm_proveedores ap on ap.prov_id = al.prov_id &#xd;cross join (select :depo_id depo_id) param&#xd;where al.arti_id = cast(:arti_id as integer) and al.eliminado = false&#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end</sql>
+      <result outputType="json">{&#xd;  "lotes": {&#xd;    "lote": [&#xd;      {&#xd;        "codigo": "$codigo",&#xd;        "lote_id": "$lote_id",&#xd;        "batch_id": "$batch_id",&#xd;        "proveedor": "$proveedor"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="arti_id" sqlType="STRING"/>
       <param name="depo_id" sqlType="STRING"/>
    </query>
@@ -434,10 +434,11 @@
       <param name="id_user" sqlType="STRING"/>
    </query>
    <query id="setDetaNotaPedido" useConfig="ToolsDataSource">
-      <sql>insert into alm.alm_deta_pedidos_materiales(pema_id, arti_id, cantidad)values(cast(:pema_id as integer),cast(:arti_id as integer), cast(:cantidad as integer))</sql>
+      <sql>insert into alm.alm_deta_pedidos_materiales(pema_id, arti_id, cantidad, depo_id)values(cast(:pema_id as integer),cast(:arti_id as integer), cast(:cantidad as integer), cast(:depo_id as integer))</sql>
       <param name="pema_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
       <param name="cantidad" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
    </query>
    <query id="setDetallePedidoConReceta" useConfig="ToolsDataSource">
       <sql>INSERT INTO alm.alm_deta_pedidos_materiales&#xd;(cantidad, pema_id, arti_id, cantidad_receta, receta, empaque)&#xd;select&#xd;  	cast(:cantidad as integer), &#xd;  	cast(:pema_id as integer),&#xd;	cast(:arti_id as integer),&#xd;    cast(:cantidad_receta as integer),&#xd;  	CASE WHEN param.receta IS NULL OR param.receta = '' THEN NULL ELSE cast(param.receta as integer) end,&#xd;  	case when parametro.empaque IS NULL OR parametro.empaque = '' THEN NULL ELSE cast(parametro.empaque as integer) end&#xd;	from (select :receta receta) param, (select :empaque empaque) parametro</sql>
@@ -989,6 +990,7 @@
          <with-param name="pema_id" query-param="pema_id"/>
          <with-param name="arti_id" query-param="arti_id"/>
          <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="depo_id" query-param="depo_id"/>
       </call-query>
    </resource>
    <resource method="POST" path="/pedidos/detalle/conreceta">

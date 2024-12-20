@@ -624,6 +624,7 @@
    <query id="choferesDelete" useConfig="semaresiduosDS">
       <sql>update &#xd;    log.choferes &#xd;    set eliminado = 1, motivo = :motivo&#xd;    where chof_id = CAST(:chof_id AS INTEGER)</sql>
       <param name="chof_id" sqlType="STRING"/>
+      <param name="motivo" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedoresPorCase" useConfig="semaresiduosDS">
       <sql>select cs.coso_id, cs.cantidad, cs.fec_alta,  cs.tica_id, cs.soco_id, cs.reci_id, cs.cantidad_acordada,&#xd;t.valor, cs.motivo_rechazo&#xd;from log.contenedores_solicitados cs, core.tablas t &#xd;where cs.soco_id = (select soco_id from log.solicitudes_contenedor sc where sc.case_id = :case_id )&#xd;and cs.tica_id = t.tabl_id</sql>
@@ -1570,6 +1571,7 @@
    <resource method="DELETE" path="/choferes">
       <call-query href="choferesDelete">
          <with-param name="chof_id" query-param="chof_id"/>
+         <with-param name="motivo" query-param="motivo"/>
       </call-query>
    </resource>
    <resource method="GET" path="/contenedoresSolicitados/case/{case_id}">
