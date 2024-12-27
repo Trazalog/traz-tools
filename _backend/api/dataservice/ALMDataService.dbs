@@ -74,8 +74,8 @@
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="getinfoPedMatPorCaseId" useConfig="ToolsDataSource">
-      <sql>select &#xd; PM.pema_id, PM.fecha, PM.justificacion, PM.estado, LO.lote_id &#xd;from &#xd; alm.alm_pedidos_materiales PM&#xd;join prd.lotes LO on LO.batch_id = PM.batch_id &#xd;where &#xd; case_id = CAST(:case_id as INTEGER)</sql>
-      <result outputType="json">{&#xd;    "info":{&#xd;      "pema_id": "$pema_id",&#xd;      "lote_id": "$lote_id",&#xd;      "fecha": "$fecha",&#xd;      "justificacion": "$justificacion",&#xd;      "estado": "$estado"&#xd;    }&#xd;}</result>
+      <sql>select &#xd; PM.pema_id, PM.fecha, PM.justificacion, PM.estado, LO.lote_id&#xd;from &#xd; alm.alm_pedidos_materiales PM&#xd;join prd.lotes LO on LO.batch_id = PM.batch_id&#xd;where &#xd; case_id = CAST(:case_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "info":{&#xd;      "pema_id": "$pema_id",&#xd;      "lote_id": "$lote_id",&#xd;      "fecha": "$fecha",&#xd;      "justificacion": "$justificacion",&#xd;      "estado": "$estado"&#xd;       }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="getArticulosXTipo" useConfig="ToolsDataSource">

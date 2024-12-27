@@ -144,6 +144,27 @@
 													<input type="text" class="form-control habilitar" id="fec_alta" value="<?php echo $aux["fec_alta"]; ?>"  readonly>
 												</div>
 										</div>
+									
+										<!--_____________________________________________-->
+										<div class="col-md-12">
+												<div class="form-group">
+													<label for="" name="">Asignado a depósito:</label>
+												</div>
+										</div>
+										<!--_____________________________________________-->
+										<div class="col-md-6">
+												<div class="form-group">
+													<label for="establecimiento" name="">Establecimiento:</label>
+													<input type="text" class="form-control habilitar" id="establecimiento" value="<?php echo $aux["establecimiento"]; ?>"  readonly>
+												</div>
+										</div>
+										<!--_____________________________________________-->
+										<div class="col-md-6">
+												<div class="form-group">
+													<label for="deposito" name="">Depósito:</label>
+													<input type="text" class="form-control habilitar" id="deposito" value="<?php echo $aux["deposito"]; ?>"  readonly>
+												</div>
+										</div>
 										<!--_____________________________________________-->
 									</div>
 								</form>
