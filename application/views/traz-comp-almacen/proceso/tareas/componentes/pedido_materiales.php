@@ -205,7 +205,7 @@ function get_detalle() {
 <script>
 //('#tabladetalle2').dataTable({});
 function guardar_pedido() {
-
+debugger;
     if (!validarCampos()) {
         alert('Completar Campos');
         return;
