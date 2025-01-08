@@ -132,13 +132,13 @@
                               </div>
                             </div>
                             <!--_____________________________________________-->
-                            <div class="col-md-6">
+                            <div class="col-md-6" style="display: none;">
                               <div class="form-group">
                                   <label for="rubro" name="">Tipos de RSU:</label>
                                   <input type="text" class="form-control habilitar" id="rubro" value="<?php 
-                                    foreach ($aux_gen->generador->tiposCarga->carga as $tipocarga) {
-                                      echo $tipocarga->valor.', ';
-                                    }
+                                    // foreach ($aux_gen->generador->tiposCarga->carga as $tipocarga) {
+                                    //   echo $tipocarga->valor.', ';
+                                    // }
                                    ?>"  readonly>
                               </div>
                             </div>
