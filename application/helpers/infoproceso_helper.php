@@ -467,10 +467,11 @@
 										<table id="" class="table table-bordered table-striped">
                         					<thead class="thead-dark" bgcolor="#eeeeee">
 												<th>Contenedor</th>
-												<th>Codigo</th>
+												<th>Descripción</th>
+												<th>Código</th>
 												<th>Tipo RSU</th>
 												<th>% Llenado</th>
-												<th>mts3</th> 
+												<th>Mts3</th> 
                         					</thead>                       
 											<tbody>		
 										<?php						
@@ -479,6 +480,7 @@
 												{
 														echo '<tr>';
 														echo '<td>'.$fila->cont_id.'</td>';
+														echo '<td>'.$fila->descripcion.'</td>';
 														echo '<td>'.$fila->codigo.'</td>';
 														echo '<td>'.$fila->tipo_carga.'</td>';
 														echo '<td>'.$fila->porc_llenado.'</td>';

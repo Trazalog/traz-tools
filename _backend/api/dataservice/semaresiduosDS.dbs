@@ -337,12 +337,13 @@
       <param name="tran_id" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedorTipoCarga" useConfig="semaresiduosDS">
-      <sql>insert into log.contenedores_solicitados(cantidad, otro, usuario_app, tica_id, soco_id) values(CAST(:cantidad AS INTEGER), :otro, :usuario_app, :tica_id, CAST(:soco_id AS INTEGER))</sql>
+      <sql>insert into log.contenedores_solicitados(cantidad, otro, usuario_app, tica_id, soco_id, volumen) values(CAST(:cantidad AS INTEGER), :otro, :usuario_app, :tica_id, CAST(:soco_id AS INTEGER), CAST(:volumen AS FLOAT))</sql>
       <param name="cantidad" sqlType="STRING"/>
       <param name="otro" sqlType="STRING"/>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="tica_id" sqlType="STRING"/>
       <param name="soco_id" sqlType="STRING"/>
+      <param name="volumen" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedorProximo" useConfig="semaresiduosDS">
       <sql>select COALESCE(NULL,(max(soco_id) + 1), 1) as nuevo_soco_id from log.solicitudes_contenedor</sql>
@@ -354,8 +355,8 @@
       <param name="soco_id" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedorGet" useConfig="semaresiduosDS">
-      <sql>select soco_id, estado, observaciones, fec_alta, sotr_id from log.solicitudes_contenedor SC where usuario_app = :usuario_app</sql>
-      <result outputType="json">{&#xd;   "sols_cont":{&#xd;      "sol_cont":[&#xd;         {&#xd;            "soco_id":"$soco_id",&#xd;            "estado":"$estado",&#xd;            "observaciones":"$observaciones",&#xd;            "fec_alta":"$fec_alta",&#xd;            "sotr_id":"$sotr_id",&#xd;            "@contenedoresSolicitadosGet":"$soco_id-&gt;soco_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>SELECT sc.soco_id, sc.estado, sc.observaciones, to_char(sc.fec_alta, 'YYYY-MM-DD') fec_alta, sc.sotr_id, cs.cantidad, t.razon_social transportista, t2.valor tipo_residuo&#xd;FROM log.solicitudes_contenedor sc, log.contenedores_solicitados cs , log.transportistas t, core.tablas t2 &#xd;WHERE sc.usuario_app = :usuario_app&#xd;AND sc.soco_id = cs.soco_id&#xd;AND sc.tran_id = t.tran_id&#xd;AND cs.tica_id = t2.tabl_id</sql>
+      <result outputType="json">{&#xd;   "sols_cont":{&#xd;      "sol_cont":[&#xd;         {&#xd;            "soco_id":"$soco_id",&#xd;            "estado":"$estado",&#xd;            "observaciones":"$observaciones",&#xd;            "fec_alta":"$fec_alta",&#xd;            "sotr_id":"$sotr_id",&#xd;            "cantidad":"$cantidad",&#xd;            "transportista":"$transportista",&#xd;            "tipo_residuo":"$tipo_residuo",&#xd;            "@contenedoresSolicitadosGet":"$soco_id-&gt;soco_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="usuario_app" sqlType="STRING"/>
    </query>
    <query id="ordTransSet" useConfig="semaresiduosDS">
@@ -710,8 +711,8 @@
       <param name="sotr_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosGetPorCaseId" useConfig="semaresiduosDS">
-      <sql>select CE.coen_id, CE.cont_id, CE.porc_llenado, CE.mts_cubicos, CE.tica_id, T.valor &#xd;  from log.contenedores_entregados CE, core.tablas T&#xd;  where CE.sore_id = (select SR.sore_id from log.solicitudes_retiro SR where SR.case_id = :case_id ) &#xd;  and CE.tica_id = T.tabl_id &#xd;  and CE.ortr_id is null&#xd;  and CE.equi_id is null</sql>
-      <result outputType="json">{&#xd;  "contenedoresEntregados":{&#xd;     "contenedor":[&#xd;        {&#xd;           "coen_id": "$coen_id",&#xd;           "cont_id": "$cont_id",&#xd;           "porc_llenado": "$porc_llenado",&#xd;           "mts_cubicos": "$mts_cubicos",&#xd;           "tica_id": "$tica_id",&#xd;           "valor": "$valor"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
+      <sql>select CE.coen_id, CE.cont_id, CE.porc_llenado, CE.mts_cubicos, CE.tica_id, T.valor, C.codigo codigo_contenedor, C.descripcion desc_contenedor&#xd;  from log.contenedores_entregados CE, log.contenedores C, core.tablas T&#xd;  where CE.sore_id = (select SR.sore_id from log.solicitudes_retiro SR where SR.case_id = :case_id ) &#xd;  and CE.cont_id = C.cont_id&#xd;  and CE.tica_id = T.tabl_id &#xd;  and CE.ortr_id is null&#xd;  and CE.equi_id is null</sql>
+      <result outputType="json">{&#xd;  "contenedoresEntregados":{&#xd;     "contenedor":[&#xd;        {&#xd;           "coen_id": "$coen_id",&#xd;           "cont_id": "$cont_id",&#xd;           "porc_llenado": "$porc_llenado",&#xd;           "mts_cubicos": "$mts_cubicos",&#xd;           "tica_id": "$tica_id",&#xd;           "codigo_contenedor" : "$codigo_contenedor",&#xd;           "desc_contenedor" : "$desc_contenedor",&#xd;           "valor": "$valor"&#xd;        }&#xd;      ]&#xd;    }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="solicitanteTransporteGetPorCaseIdRetiro" useConfig="semaresiduosDS">
@@ -792,8 +793,8 @@
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosInfoEntregaCase" useConfig="semaresiduosDS">
-      <sql>select &#xd;      CE.coen_id, CE.porc_llenado, CE.mts_cubicos,C.cont_id, C.codigo, T.valor as tipo_carga&#xd;  from &#xd;      log.contenedores C, log.contenedores_entregados CE, core.tablas T&#xd;  where &#xd;      C.cont_id = CE.cont_id &#xd;  and &#xd;      CE.ortr_id = (select OT.ortr_id from log.ordenes_transporte OT&#xd;                    where OT.case_id = :case_id )&#xd;  and &#xd;      CE.tica_id = T.tabl_id &#xd;            &#xd;  and &#xd;      CE.peso_neto is null&#xd;  and &#xd;      CE.difi_id is null&#xd;  and &#xd;      CE.depo_id is null</sql>
-      <result outputType="json">{&#xd;    "contenedores":{&#xd;        "contenedor":[&#xd;          {&#xd;            "coen_id": "$coen_id",&#xd;            "porc_llenado": "$porc_llenado",&#xd;            "mts_cubicos": "$mts_cubicos",&#xd;            "cont_id": "$cont_id",&#xd;            "codigo": "$codigo",&#xd;            "tipo_carga": "$tipo_carga"            &#xd;          }&#xd;        ] &#xd;    }&#xd;  }</result>
+      <sql>select CE.coen_id, CE.porc_llenado, CE.mts_cubicos,C.cont_id, C.codigo, T.valor as tipo_carga, C.descripcion&#xd;from log.contenedores C, log.contenedores_entregados CE, core.tablas T&#xd;where C.cont_id = CE.cont_id &#xd;and CE.ortr_id = (select OT.ortr_id from log.ordenes_transporte OT where OT.case_id = :case_id )&#xd;and CE.tica_id = T.tabl_id&#xd;and CE.peso_neto is null&#xd;and CE.difi_id IS null&#xd;and CE.depo_id is NULL</sql>
+      <result outputType="json">{&#xd;    "contenedores":{&#xd;        "contenedor":[&#xd;          {&#xd;            "coen_id": "$coen_id",&#xd;            "porc_llenado": "$porc_llenado",&#xd;            "mts_cubicos": "$mts_cubicos",&#xd;            "cont_id": "$cont_id",&#xd;            "codigo": "$codigo",&#xd;            "tipo_carga": "$tipo_carga",&#xd;            "descripcion": "$descripcion"&#xd;          }&#xd;        ] &#xd;    }&#xd;  }</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="solicitanteTransporteGetPorCaseIdIngreso" useConfig="semaresiduosDS">
@@ -906,6 +907,11 @@
       <sql>select * from log.transportistas&#xd;where empr_id = cast(:empr_id as integer)</sql>
       <result outputType="json">{&#xd;   "transportistas":{&#xd;      "transportista":[&#xd;         {&#xd;            "tran_id":"$tran_id",&#xd;            "razon_social":"$razon_social",&#xd;            "descripcion":"$descripcion",&#xd;            "direccion":"$direccion",&#xd;            "telefono":"$telefono",&#xd;            "contacto":"$contacto",&#xd;            "resolucion":"$resolucion",&#xd;            "registro":"$registro",&#xd;            "fec_alta_efectiva":"$fec_alta_efectiva",&#xd;            "fec_baja_efectiva":"$fec_baja_efectiva",&#xd;            "fec_alta":"$fec_alta",&#xd;            "usuario":"$usuario",&#xd;            "usuario_app":"$usuario_app",&#xd;            "cuit": "$cuit",&#xd;            "user_id": "$user_id",&#xd;            "@transportistaTipoCarga": "$tran_id-&gt;tran_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getChoferesPorTransportista" useConfig="semaresiduosDS">
+      <sql>select CH.chof_id, CH.nombre, CH.apellido, CH.documento, CH.fec_nacimiento, CH.direccion, &#xd;      CH.celular, CH.codigo, CH.carnet as carn_id, CH.vencimiento, &#xd;      CH.habilitacion, CH.tran_id, CH.cach_id,&#xd;      T.razon_social,&#xd;      TCAR.valor as carnet, &#xd;      TCAT.valor as categoria&#xd;    from log.choferes CH, log.transportistas T, core.tablas as TCAR, core.tablas as TCAT&#xd;    where CH.tran_id = T.tran_id &#xd;    and CH.carnet = TCAR.tabl_id &#xd;    and CH.cach_id = TCAT.tabl_id &#xd;    and CH.eliminado = 0&#xd;    and CH.tran_id = CAST(:tran_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;  "choferes": {&#xd;    "chofer": [&#xd;      {&#xd;        "chof_id": "$chof_id",&#xd;        "nombre": "$nombre",&#xd;        "apellido": "$apellido",&#xd;        "documento": "$documento",&#xd;        "fec_nacimiento": "$fec_nacimiento",&#xd;        "direccion": "$direccion",&#xd;        "celular": "$celular",&#xd;        "codigo": "$codigo",&#xd;        "carn_id": "$carn_id",&#xd;        "vencimiento": "$vencimiento",&#xd;        "habilitacion": "$habilitacion",&#xd;        "tran_id": "$tran_id",&#xd;        "cach_id": "$cach_id",&#xd;        "razon_social": "$razon_social",&#xd;        "carnet": "$carnet",&#xd;        "categoria": "$categoria"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <param name="tran_id" sqlType="STRING"/>
    </query>
    <resource method="POST" path="/departamentos">
       <call-query href="departamentosSet">
@@ -1135,11 +1141,6 @@
          <with-param name="tran_id" query-param="tran_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/choferes/transp/{tran_id}">
-      <call-query href="choferesGetPorTransportistas">
-         <with-param name="tran_id" query-param="tran_id"/>
-      </call-query>
-   </resource>
    <resource method="GET" path="/vehiculos/transp/{tran_id}">
       <call-query href="vehiculosGetPorTransportistas">
          <with-param name="tran_id" query-param="tran_id"/>
@@ -1252,6 +1253,7 @@
          <with-param name="usuario_app" query-param="usuario_app"/>
          <with-param name="tica_id" query-param="tica_id"/>
          <with-param name="soco_id" query-param="soco_id"/>
+         <with-param name="volumen" query-param="volumen"/>
       </call-query>
    </resource>
    <resource method="GET" path="/solicitudContenedor/prox">
@@ -1852,6 +1854,11 @@
    <resource method="GET" path="/transportista/empresa/{empr_id}">
       <call-query href="transportistaEmpresa">
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/choferes/transportista/{tran_id}">
+      <call-query href="getChoferesPorTransportista">
+         <with-param name="tran_id" query-param="tran_id"/>
       </call-query>
    </resource>
 </data>
