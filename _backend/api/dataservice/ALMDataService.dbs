@@ -527,6 +527,11 @@
       <param name="estado" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getAjustexdeajId" useConfig="ToolsDataSource">
+      <sql>select a.ajus_id, a.tipo_ajuste, a.justificacion  &#xd;from &#xd;alm.ajustes a left join alm.deta_ajustes da on da.ajus_id = a.ajus_id &#xd;where da.deaj_id  = cast(:deaj_id as integer)</sql>
+      <result outputType="json">{&#xd;   "ajustes": {&#xd;      "ajuste": [&#xd;         {&#xd;            "ajus_id": "$ajus_id",&#xd;            "tipo_ajuste": "$tipo_ajuste",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="deaj_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -1091,6 +1096,11 @@
          <with-param name="moin_id" query-param="moin_id"/>
          <with-param name="estado" query-param="estado"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ajuste/{deaj_id}">
+      <call-query href="getAjustexdeajId">
+         <with-param name="deaj_id" query-param="deaj_id"/>
       </call-query>
    </resource>
 </data>
