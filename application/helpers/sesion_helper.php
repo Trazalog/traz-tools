@@ -140,6 +140,30 @@ if(!function_exists('filtrarbyDepo')){
 			}
 		}
 
+		// si usuario es usuario de deposito
+		if (($nombreTarea == "Aprueba pedido de Recursos Materiales") || ($nombreTarea == "Entrega pedido pendiente") ) {
+
+			$user_id = $userdata['id'];
+			$ci =& get_instance();
+
+			// obtiene los depósitos asignados al usuario
+			$aux = $ci->rest->callAPI("GET",REST_CORE.'/depositos/encargado/'.$user_id);
+			$aux =  json_decode($aux['data']);
+    		$depositos = $aux->encargados->depositos;
+
+			// Recorre todos los depósitos y verifica si no coinciden con $depo_id
+			if ($depo_id != "" && is_array($depositos)) {
+				$mostrar = false;
+				foreach ($depositos as $deposito) {
+					if ($deposito->depo_id == $depo_id) {
+						$mostrar = true;
+					}
+				}
+			} else {
+				$mostrar = true; // Si no hay $depo_id se tiene que mostrar
+			}
+		}
+
 		return $mostrar;
 	}
 }
