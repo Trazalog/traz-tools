@@ -422,7 +422,7 @@
       <param name="precio" sqlType="STRING"/>
    </query>
    <query id="getArticulosListaPrecios" useConfig="ToolsDataSource">
-      <sql>select vlp.velp_id, vlp.nro_version, vlp.descripcion, vlp.fec_alta, vlp.fec_hasta, cr.precio, cr.core_id, r.arti_id, aa.barcode, aa.descripcion as producto&#xd;from core.versiones_listas_precios vlp&#xd;left join core.costos_recursos cr on vlp.velp_id = cr.velp_id&#xd;left join prd.recursos r on r.recu_id = cr.recu_id &#xd;left join alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where vlp.lipr_id = cast(:lipr_id as integer)</sql>
+      <sql>select vlp.velp_id, vlp.nro_version, vlp.descripcion, vlp.fec_alta, vlp.fec_hasta, cr.precio, cr.core_id, r.arti_id, aa.barcode, aa.descripcion as producto&#xd;from core.versiones_listas_precios vlp&#xd;left join core.costos_recursos cr on vlp.velp_id = cr.velp_id&#xd;left join prd.recursos r on r.recu_id = cr.recu_id &#xd;left join alm.alm_articulos aa on r.arti_id = aa.arti_id &#xd;where vlp.lipr_id = cast(:lipr_id as integer) and aa.eliminado = false</sql>
       <result outputType="json">{&#xd;  "detalles_lista_precio": {&#xd;    "detalle_lista_precio": [&#xd;      {&#xd;        "velp_id": "$velp_id",&#xd;        "nro_version": "$nro_version",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_alta": "$fec_alta",&#xd;        "fec_hasta": "$fec_hasta",&#xd;        "precio": "$precio",&#xd;        "arti_id": "$arti_id",&#xd;        "barcode": "$barcode",&#xd;        "producto": "$producto",&#xd;        "core_id": "$core_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="lipr_id" sqlType="STRING"/>
    </query>
