@@ -248,7 +248,7 @@
       <param name="cantidad" sqlType="STRING"/>
    </query>
    <query id="getLotePorArticuloYDeposito" useConfig="ToolsDataSource">
-      <sql>select al.codigo, al.lote_id, al.batch_id, ap.nombre proveedor, al.cantidad&#xd;from alm.alm_lotes al&#xd;left join alm.alm_proveedores ap on ap.prov_id = al.prov_id &#xd;cross join (select :depo_id depo_id) param&#xd;where al.arti_id = cast(:arti_id as integer) and al.eliminado = false&#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end</sql>
+      <sql>select al.codigo, al.lote_id, al.batch_id, ap.nombre proveedor, al.cantidad&#xd;from alm.alm_lotes al&#xd;left join alm.alm_proveedores ap on ap.prov_id = al.prov_id&#xd;left join prd.lotes l on al.batch_id = l.batch_id &#xd;cross join (select :depo_id depo_id) param&#xd;where al.arti_id = cast(:arti_id as integer) and al.eliminado = false and l.estado = 'En Curso'&#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end</sql>
       <result outputType="json">{&#xd;  "lotes": {&#xd;    "lote": [&#xd;      {&#xd;        "codigo": "$codigo",&#xd;        "lote_id": "$lote_id",&#xd;        "batch_id": "$batch_id",&#xd;        "proveedor": "$proveedor",&#xd;        "cantidad":"$cantidad"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="arti_id" sqlType="STRING"/>
       <param name="depo_id" sqlType="STRING"/>
