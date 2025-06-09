@@ -14,7 +14,7 @@
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="setPedido" useConfig="ToolsDataSource">
-      <sql>INSERT INTO alm.alm_pedidos_materiales&#xd;(fecha, justificacion, case_id, estado, empr_id, batch_id)&#xd;VALUES(TO_DATE(:fecha, 'YYYY-MM-DD'), :justificacion, cast(:case_id as integer), :estado, cast(:empr_id as integer), cast(:batch_id as integer)) returning pema_id;</sql>
+      <sql>INSERT INTO   alm.alm_pedidos_materiales&#xd;(fecha, justificacion, case_id, estado, empr_id, batch_id)&#xd;VALUES(TO_DATE(:fecha, 'YYYY-MM-DD'), :justificacion, cast(:case_id as integer), :estado, cast(:empr_id as integer), cast(:batch_id as integer)) returning pema_id;</sql>
       <result outputType="json">{&#xd;  "respuesta": {&#xd;    "pema_id":"$pema_id"&#xd;  }&#xd;}</result>
       <param name="fecha" sqlType="STRING"/>
       <param name="justificacion" sqlType="STRING"/>
@@ -296,10 +296,11 @@
       <param name="moin_id" sqlType="STRING"/>
    </query>
    <query id="updateDetaMovimientoInterno" useConfig="ToolsDataSource">
-      <sql>UPDATE&#xd;	alm.deta_movimientos_internos&#xd;SET&#xd;	cantidad_recibida = cast(:cantidad_recibida as float),&#xd;        lote_id_destino = cast(:lote_id_destino as integer)&#xd;WHERE&#xd;	demi_id = cast(:demi_id as integer)</sql>
+      <sql>UPDATE&#xd;	alm.deta_movimientos_internos&#xd;SET&#xd;	cantidad_recibida = cast(:cantidad_recibida as float),&#xd;        lote_id_destino = cast(:lote_id_destino as integer),&#xd;        justificacion = :justificacion&#xd;WHERE&#xd;	demi_id = cast(:demi_id as integer)</sql>
       <param name="cantidad_recibida" sqlType="STRING"/>
       <param name="demi_id" sqlType="STRING"/>
       <param name="lote_id_destino" sqlType="STRING"/>
+      <param name="justificacion" sqlType="STRING"/>
    </query>
    <query id="deleteMovimientoInterno" useConfig="ToolsDataSource">
       <sql>UPDATE&#xd;	alm.movimientos_internos&#xd;SET&#xd;	eliminado = true&#xd;WHERE&#xd;	moin_id = cast( :moin_id as integer)</sql>
@@ -531,6 +532,11 @@
       <sql>select a.ajus_id, a.tipo_ajuste, a.justificacion  &#xd;from &#xd;alm.ajustes a left join alm.deta_ajustes da on da.ajus_id = a.ajus_id &#xd;where da.deaj_id  = cast(:deaj_id as integer)</sql>
       <result outputType="json">{&#xd;   "ajustes": {&#xd;      "ajuste": [&#xd;         {&#xd;            "ajus_id": "$ajus_id",&#xd;            "tipo_ajuste": "$tipo_ajuste",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="deaj_id" sqlType="STRING"/>
+   </query>
+   <query id="getDataMovimientoInternoXdemiId" useConfig="ToolsDataSource">
+      <sql>select  dm.cantidad_cargada,&#xd;        dm.justificacion,&#xd;        dm.cantidad_recibida,&#xd;	dm.lote_id_origen ,&#xd;	dm.lote_id_destino,&#xd;        dm.demi_id&#xd;from alm.deta_movimientos_internos dm &#xd;where dm.demi_id = cast(:demi_id as integer)</sql>
+      <result outputType="json">{&#xd;     "detallesMovimientosInternos":{ "detalleMovimientoInterno":[&#xd;         {&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "cantidad_recibida":"$cantidad_recibida",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "lote_id_destino":"$lote_id_destino",&#xd;            "demi_id":"$demi_id",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;}}</result>
+      <param name="demi_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
@@ -841,6 +847,7 @@
          <with-param name="cantidad_recibida" query-param="cantidad_recibida"/>
          <with-param name="demi_id" query-param="demi_id"/>
          <with-param name="lote_id_destino" query-param="lote_id_destino"/>
+         <with-param name="justificacion" query-param="justificacion"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/movimientoInterno">
@@ -1101,6 +1108,11 @@
    <resource method="GET" path="/ajuste/{deaj_id}">
       <call-query href="getAjustexdeajId">
          <with-param name="deaj_id" query-param="deaj_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientoInternoData/{demi_id}">
+      <call-query href="getDataMovimientoInternoXdemiId">
+         <with-param name="demi_id" query-param="demi_id"/>
       </call-query>
    </resource>
 </data>
