@@ -457,7 +457,7 @@
                             </pool>
                         </connection>
                         <statement>
-                            <sql><![CDATA[SELECT COALESCE(MAX(CAST(NCOMP_IN_S AS int)) + 1, 1) AS numeroComprobante FROM STA14 WHERE T_COMP = ?]]></sql>
+                            <sql><![CDATA[SELECT MAX(cast(NCOMP_IN_S as int))+1 AS numeroComprobante FROM STA14 WHERE T_COMP =?]]></sql>
                             <parameter expression="get-property('pComprobante')" type="VARCHAR"/>
                             <result column="numeroComprobante" name="pNumeroComprobante"/>
                         </statement>
@@ -651,12 +651,14 @@
                     <property expression="$ctx:apiconf//pedidos_cod_articulo" name="pCodArticulo" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property expression="$ctx:apiconf//pedidos_descripcion" name="pDescripcion" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property expression="$ctx:apiconf//talon_ped" name="pTalonPed" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+                    <property expression="$ctx:apiconf//uni_medida" name="pUniMedida" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property description="numPedido" expression="json-eval($.num_pedido)" name="pNumPedido" scope="default" type="STRING"/>
                     <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
                     <property description="Id Pedido Trabajo Tzl" expression="json-eval($.id_pedido_trabajo)" name="pIdPedidoTrabajo" scope="default" type="STRING"/>
                     <property description="Banda" expression="json-eval($.banda)" name="pBanda" scope="default" type="STRING"/>
                     <property description="NumSerie" expression="json-eval($.num_serie)" name="pNumSerie" scope="default" type="STRING"/>
                     <property description="Marca" expression="json-eval($.marca)" name="pMarca" scope="default" type="STRING"/>
+                    <property description="Medida" expression="json-eval($.medida)" name="pMedida" scope="default" type="STRING"/>
                     <dblookup description="Lookup valores Tango">
                         <connection>
                             <pool>
@@ -668,16 +670,23 @@
                             <parameter expression="get-property('pNumPedido')" type="VARCHAR"/>
                             <result column="numeroRenglon" name="pNumRenglon"/>
                         </statement>
+                        <statement>
+                            <sql><![CDATA[SELECT CASE WHEN MAX(cast(N_RENGLON as int))+2 IS NULL THEN 2 ELSE MAX(cast(N_RENGLON as int))+2  END AS numeroRenglonPlus2 FROM GVA03 WHERE NRO_PEDIDO = ?]]></sql>
+                            <parameter expression="get-property('pNumPedido')" type="VARCHAR"/>
+                            <result column="numeroRenglonPlus2" name="pNumRenglonPlus2"/>
+                        </statement>
                     </dblookup>
                     <log description="Datos operacion" level="custom">
                         <property name="donde" value="Datos Operacion:"/>
                         <property expression="get-property('pNumRenglon')" name="numRenglon"/>
+                        <property expression="get-property('pNumRenglonPlus2')" name="numRenglonPlus2"/>
                         <property expression="get-property('pNumPedido')" name="numPedido"/>
                         <property expression="get-property('pIdPedidoTrabajo')" name="idPedTrazajoTzl"/>
                         <property expression="get-property('pBanda')" name="banda"/>
                         <property expression="get-property('pNumSerie')" name="numSerie"/>
                         <property expression="get-property('pMarca')" name="marca"/>
                         <property expression="get-property('pTalonPed')" name="talon ped"/>
+                        <property expression="get-property('pUniMedida')" name="uni medida ped"/>
                     </log>
                     <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
                     <payloadFactory media-type="json">
@@ -689,15 +698,31 @@
 										         "cod_articulo":"$2",
 										         "num_renglon":"$3",
 										         "num_pedido":"$4",
-										         "talon_ped":"$5"
+										         "talon_ped":"$5",
+                                                 "uni_medida":"$6"
+										      },
+                                              "_post_tango_pedido_linea":{
+										         "cant_pedida":"$7",
+										         "cod_articulo":"$8",
+										         "num_renglon":"$9",
+										         "num_pedido":"$10",
+										         "talon_ped":"$11",
+                                                 "uni_medida":"$12"
 										      },
 										      "_post_tango_pedido_linea_detalle":{
-										         "descripcion":"$6",
-										         "desc_adicional":"$7",
-										         "num_comp":"$8",
-										         "num_renglon":"$9",
-										         "talonario":"$10"
-										      }
+										         "descripcion":"$13",
+										         "desc_adicional":"$14",
+										         "num_comp":"$15",
+										         "num_renglon":"$16",
+										         "talonario":"$17"
+										      },
+                                              "_post_tango_pedido_linea_detalle":{
+                                                "descripcion":"$18",
+                                                "desc_adicional":"$19",
+                                                "num_comp":"$20",
+                                                "num_renglon":"$21",
+                                                "talonario":"$22"
+                                                }
 										   }
 										}
 								</format>
@@ -707,10 +732,22 @@
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="get-property('pUniMedida')"/>
+                            <arg value="0"/>
+                            <arg value=""/>
+                            <arg evaluator="xml" expression="get-property('pNumRenglonPlus2')"/>
+                            <arg evaluator="xml" expression="get-property('pNumPedido')"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="get-property('pUniMedida')"/>
                             <arg evaluator="xml" expression="fn:concat('T-',get-property('pIdPedidoTrabajo'),' S-',get-property('pNumSerie'))"/>
                             <arg evaluator="xml" expression="fn:concat(get-property('pBanda'),' ',get-property('pMarca'))"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="fn:concat('Med:',get-property('pMedida'))"/>
+                            <arg value=""/>
+                            <arg evaluator="xml" expression="get-property('pNumPedido')"/>
+                            <arg evaluator="xml" expression="get-property('pNumRenglonPlus2')"/>
                             <arg evaluator="xml" expression="get-property('pTalonPed')"/>
                         </args>
                     </payloadFactory>

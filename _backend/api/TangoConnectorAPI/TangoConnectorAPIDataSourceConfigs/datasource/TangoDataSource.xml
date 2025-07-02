@@ -7,9 +7,9 @@
   <definition type="RDBMS">
     <configuration>
       <driverClassName>com.microsoft.sqlserver.jdbc.SQLServerDriver</driverClassName>
-      <url>jdbc:sqlserver://;serverName=10.142.0.23;instance=SQLEXPRESS;databaseName=Empresa_Ejemplo;encrypt=true;trustServerCertificate=true</url>
-      <username>Axoft</username>
-      <password>Axoft</password>
+      <url>jdbc:sqlserver://;serverName=SVR_RAEL;instance=SQLEXPRESS;databaseName=RAEL_SA_LLAVE_NUEVA;encrypt=true;trustServerCertificate=true</url>
+      <username>sa</username>
+      <password>Abc123.</password>
     </configuration>
   </definition>
 </datasource>
