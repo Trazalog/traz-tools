@@ -25,6 +25,7 @@
       <with-param name="num_comp" query-param="num_comp" />
       <with-param name="num_renglon" query-param="num_renglon" />
       <with-param name="talonario" query-param="talonario" />
+      <with-param name="id_gva03" query-param="id_gva03" />
     </call-query>
   </resource>
   <resource path="/stock/movimiento/cabecera" method="POST">
@@ -140,6 +141,9 @@
       <with-param name="num_pedido" query-param="num_pedido" />
       <with-param name="talon_ped" query-param="talon_ped" />
       <with-param name="uni_medida" query-param="uni_medida" />
+      <with-param name="med_seleccionada" query-param="med_seleccionada" />
+      <with-param name="id_articulo" query-param="id_articulo" />
+      <with-param name="id_pedido" query-param="id_pedido" />
     </call-query>
   </resource>
   <resource path="/tango/pedido/idPedido/{nro_pedido}" method="GET">
@@ -152,6 +156,13 @@
     <description />
     <call-query href="getIdArticulo">
       <with-param name="cod_articu" query-param="cod_articu" />
+    </call-query>
+  </resource>
+  <resource path="/tango/idLineaPedido/{nro_renglon}/{nro_pedido}" method="GET">
+    <description />
+    <call-query href="getLineaPedido">
+      <with-param name="nro_renglon" query-param="nro_renglon" />
+      <with-param name="nro_pedido" query-param="nro_pedido" />
     </call-query>
   </resource>
   <query id="getPedidosPendientesTango" useConfig="TangoDataSource">
@@ -213,18 +224,22 @@ set fec_realizado = getdate() where queue_id = cast(:queue_id as integer)</sql>
   <query id="setDetalleLineaPedidoTango" useConfig="TangoDataSource" keyColumns="ID_GVA45" returnGeneratedKeys="true">
     <sql>
 INSERT INTO dbo.GVA45
-("DESC", DESC_ADIC, N_COMP, N_RENGLON, T_COMP, TALONARIO)
-VALUES(LEFT(:descripcion, 30), LEFT(:desc_adicional,20),:num_comp, :num_renglon, 'PED',:talonario);</sql>
+("DESC", DESC_ADIC, N_COMP, N_RENGLON, T_COMP, TALONARIO, ID_GVA03)
+VALUES(LEFT(:descripcion, 30), LEFT(:desc_adicional,20),:num_comp, :num_renglon, 'PED',:talonario, :id_gva03);</sql>
     <param name="descripcion" sqlType="STRING" paramType="SCALAR" />
     <param name="desc_adicional" sqlType="STRING" paramType="SCALAR" />
     <param name="num_comp" sqlType="STRING" paramType="SCALAR" />
     <param name="num_renglon" sqlType="STRING" paramType="SCALAR" />
     <param name="talonario" sqlType="STRING" paramType="SCALAR" />
+    <param name="id_gva03" sqlType="STRING" paramType="SCALAR" />
   </query>
   <query id="setLineaPedidoTango" useConfig="TangoDataSource" keyColumns="id_gva03" returnGeneratedKeys="true">
     <sql>INSERT INTO dbo.GVA03
-(CANT_PEDID, COD_ARTICU, N_RENGLON, NRO_PEDIDO,TALON_PED, CANT_A_FAC, CANT_A_DES, CAN_EQUI_V, CANT_PEN_D, CANT_PEN_F, ID_MEDIDA_VENTAS, NRO_ORDEN)
-VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :talon_ped, cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float), :uni_medida, :num_renglon);
+(CANT_PEDID, COD_ARTICU, N_RENGLON, NRO_PEDIDO,TALON_PED, CANT_A_FAC, CANT_A_DES, CAN_EQUI_V, CANT_PEN_D, CANT_PEN_F, ID_MEDIDA_VENTAS, ID_MEDIDA_STOCK,
+UNIDAD_MEDIDA_SELECCIONADA, NRO_ORDEN, ID_GVA21, ID_STA11)
+VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :talon_ped, 
+cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),
+:uni_medida, :uni_medida, :med_seleccionada, :num_renglon, :id_pedido, :id_articulo);
 
 </sql>
     <param name="cant_pedida" sqlType="STRING" paramType="SCALAR" />
@@ -233,6 +248,9 @@ VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :t
     <param name="num_pedido" sqlType="STRING" paramType="SCALAR" />
     <param name="talon_ped" sqlType="STRING" paramType="SCALAR" />
     <param name="uni_medida" sqlType="STRING" paramType="SCALAR" />
+    <param name="med_seleccionada" sqlType="STRING" paramType="SCALAR" />
+    <param name="id_pedido" sqlType="STRING" paramType="SCALAR" />
+    <param name="id_articulo" sqlType="STRING" paramType="SCALAR" />
   </query>
   <query id="numeroComprobante" useConfig="TangoDataSource">
     <sql>SELECT ISNULL(MAX(cast (NCOMP_IN_S as int))+1,1) AS numeroComprobante FROM STA14 WHERE T_COMP = ?</sql>
@@ -309,6 +327,16 @@ VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :t
     <param name="cod_articu" sqlType="STRING" />
     <result outputType="json">
         { "articulos": { "articulo": [ { "id_articulo": "$id_articulo" } ] } }
+    </result>
+  </query>
+  <query id="getLineaPedido" useConfig="TangoDataSource">
+    <sql>
+	SELECT g.ID_GVA03 as id_linea_pedido from GVA03 g WHERE g.N_RENGLON = ? and  LTRIM(RTRIM(g.NRO_PEDIDO)) = LTRIM(RTRIM(?));
+    </sql>
+    <param name="nro_renglon" sqlType="STRING" />
+    <param name="nro_pedido" sqlType="STRING" />
+    <result outputType="json">
+       { "idlineaedido": { "linea": [ { "id_linea_pedido": "$id_linea_pedido" } ] } }
     </result>
   </query>
 </data>
