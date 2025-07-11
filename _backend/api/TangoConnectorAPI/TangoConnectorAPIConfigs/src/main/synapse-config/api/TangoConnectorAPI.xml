@@ -457,7 +457,7 @@
                             </pool>
                         </connection>
                         <statement>
-                            <sql><![CDATA[SELECT COALESCE(MAX(CAST(NCOMP_IN_S AS int)) + 1, 1) AS numeroComprobante FROM STA14 WHERE T_COMP = ?]]></sql>
+                            <sql><![CDATA[SELECT MAX(cast(NCOMP_IN_S as int))+1 AS numeroComprobante FROM STA14 WHERE T_COMP =?]]></sql>
                             <parameter expression="get-property('pComprobante')" type="VARCHAR"/>
                             <result column="numeroComprobante" name="pNumeroComprobante"/>
                         </statement>
@@ -651,12 +651,14 @@
                     <property expression="$ctx:apiconf//pedidos_cod_articulo" name="pCodArticulo" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property expression="$ctx:apiconf//pedidos_descripcion" name="pDescripcion" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property expression="$ctx:apiconf//talon_ped" name="pTalonPed" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+                    <property expression="$ctx:apiconf//uni_medida" name="pUniMedida" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
                     <property description="numPedido" expression="json-eval($.num_pedido)" name="pNumPedido" scope="default" type="STRING"/>
                     <property description="Deposito" expression="json-eval($.cod_deposito)" name="pDeposito" scope="default" type="STRING"/>
                     <property description="Id Pedido Trabajo Tzl" expression="json-eval($.id_pedido_trabajo)" name="pIdPedidoTrabajo" scope="default" type="STRING"/>
                     <property description="Banda" expression="json-eval($.banda)" name="pBanda" scope="default" type="STRING"/>
                     <property description="NumSerie" expression="json-eval($.num_serie)" name="pNumSerie" scope="default" type="STRING"/>
                     <property description="Marca" expression="json-eval($.marca)" name="pMarca" scope="default" type="STRING"/>
+                    <property description="Medida" expression="json-eval($.medida)" name="pMedida" scope="default" type="STRING"/>
                     <dblookup description="Lookup valores Tango">
                         <connection>
                             <pool>
@@ -668,16 +670,77 @@
                             <parameter expression="get-property('pNumPedido')" type="VARCHAR"/>
                             <result column="numeroRenglon" name="pNumRenglon"/>
                         </statement>
+                        <statement>
+                            <sql><![CDATA[SELECT CASE WHEN MAX(cast(N_RENGLON as int))+2 IS NULL THEN 2 ELSE MAX(cast(N_RENGLON as int))+2  END AS numeroRenglonPlus2 FROM GVA03 WHERE NRO_PEDIDO = ?]]></sql>
+                            <parameter expression="get-property('pNumPedido')" type="VARCHAR"/>
+                            <result column="numeroRenglonPlus2" name="pNumRenglonPlus2"/>
+                        </statement>
                     </dblookup>
+                    <property action="remove" name="Server" scope="transport"/>
+                    <header action="remove" name="Content-Type" scope="transport"/>
+                    <header name="Accept" scope="transport" value="application/json"/>
+                    <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/tango/pedido/idPedido/', fn:normalize-space($ctx:pNumPedido))" name="uri.var.getidPedido" scope="default" type="STRING"/>
+                    <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                    <call>
+                        <endpoint>
+                            <http method="get" uri-template="{uri.var.getidPedido}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>1</progressionFactor>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                    <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                        <then/>
+                        <else>
+                            <property name="TOOLS_ERROR" scope="default" type="STRING" value="GET /TangoConnectorDataService/tango/pedido/idPedido/instancia con problemas"/>
+                            <sequence key="toolsFault"/>
+                        </else>
+                    </filter>
+                    <property expression="json-eval($.pedidos.pedido[0].id_pedido)" name="id_pedido" scope="default" type="STRING"/>
+                    <property action="remove" name="Server" scope="transport"/>
+                    <header action="remove" name="Content-Type" scope="transport"/>
+                    <header name="Accept" scope="transport" value="application/json"/>
+                    <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/tango/articulo/', $ctx:pCodArticulo)" name="uri.var.getIdArticulo" scope="default" type="STRING"/>
+                    <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                    <call>
+                        <endpoint>
+                            <http method="get" uri-template="{uri.var.getIdArticulo}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>1</progressionFactor>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                    <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                        <then/>
+                        <else>
+                            <property name="TOOLS_ERROR" scope="default" type="STRING" value="GET /TangoConnectorDataService/tango/articulo/ instancia con problemas"/>
+                            <sequence key="toolsFault"/>
+                        </else>
+                    </filter>
+                    <property expression="json-eval($.articulos.articulo[0].id_articulo)" name="id_articulo" scope="default" type="STRING"/>
                     <log description="Datos operacion" level="custom">
                         <property name="donde" value="Datos Operacion:"/>
                         <property expression="get-property('pNumRenglon')" name="numRenglon"/>
+                        <property expression="get-property('pNumRenglonPlus2')" name="numRenglonPlus2"/>
                         <property expression="get-property('pNumPedido')" name="numPedido"/>
                         <property expression="get-property('pIdPedidoTrabajo')" name="idPedTrazajoTzl"/>
                         <property expression="get-property('pBanda')" name="banda"/>
                         <property expression="get-property('pNumSerie')" name="numSerie"/>
                         <property expression="get-property('pMarca')" name="marca"/>
                         <property expression="get-property('pTalonPed')" name="talon ped"/>
+                        <property expression="get-property('pUniMedida')" name="uni medida ped"/>
+                        <property expression="get-property('id_articulo')" name="id_articulo"/>
+                        <property expression="get-property('id_pedido')" name="id_pedido"/>
                     </log>
                     <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
                     <payloadFactory media-type="json">
@@ -689,14 +752,22 @@
 										         "cod_articulo":"$2",
 										         "num_renglon":"$3",
 										         "num_pedido":"$4",
-										         "talon_ped":"$5"
+										         "talon_ped":"$5",
+                                                 "uni_medida":"$6",
+                                                 "med_seleccionada":"$7",
+                                                 "id_pedido": "$8",
+                                                 "id_articulo": "$9"
 										      },
-										      "_post_tango_pedido_linea_detalle":{
-										         "descripcion":"$6",
-										         "desc_adicional":"$7",
-										         "num_comp":"$8",
-										         "num_renglon":"$9",
-										         "talonario":"$10"
+										      "_post_tango_pedido_linea":{
+										         "cant_pedida":"$10",
+										         "cod_articulo":"$11",
+										         "num_renglon":"$12",
+										         "num_pedido":"$13",
+										         "talon_ped":"$14",
+                                                 "uni_medida":"$15",
+                                                 "med_seleccionada":"$16",
+                                                 "id_pedido": "$17",
+                                                 "id_articulo": "$18"
 										      }
 										   }
 										}
@@ -707,11 +778,106 @@
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="get-property('pUniMedida')"/>
+                            <arg value="V"/>
+                            <arg evaluator="xml" expression="get-property('id_pedido')"/>
+                            <arg evaluator="xml" expression="get-property('id_articulo')"/>
+                            <arg value="0"/>
+                            <arg value=""/>
+                            <arg evaluator="xml" expression="get-property('pNumRenglonPlus2')"/>
+                            <arg evaluator="xml" expression="get-property('pNumPedido')"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="get-property('pUniMedida')"/>
+                            <arg value="V"/>
+                            <arg evaluator="xml" expression="get-property('id_pedido')"/>
+                            <arg evaluator="xml" expression="get-property('id_articulo')"/>
+                        </args>
+                    </payloadFactory>
+                    <header name="Action" scope="default" value="urn:request_box"/>
+                    <log description="Mensaje final ins" level="full"/>
+                    <call>
+                        <endpoint>
+                            <http method="post" uri-template="{uri.var.tangodssurl}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>-1</progressionFactor>
+                                    <maximumDuration>0</maximumDuration>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                    <property action="remove" name="Server" scope="transport"/>
+                    <header action="remove" name="Content-Type" scope="transport"/>
+                    <header name="Accept" scope="transport" value="application/json"/>
+                    <property expression="fn:concat($ctx:dataservices_url,'/TangoConnectorDataService/tango/idLineaPedido/',$ctx:pNumRenglon ,'/',fn:normalize-space($ctx:pNumPedido))" name="uri.var.getLineaPedido" scope="default" type="STRING"/>
+                    <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                    <call>
+                        <endpoint>
+                            <http method="get" uri-template="{uri.var.getLineaPedido}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>1</progressionFactor>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                    <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                        <then/>
+                        <else>
+                            <property name="TOOLS_ERROR" scope="default" type="STRING" value="GET /TangoConnectorDataService/tango/idLineaPedido/ instancia con problemas"/>
+                            <sequence key="toolsFault"/>
+                        </else>
+                    </filter>
+                    <log description="get Id Pedido" level="custom">
+                        <property expression="$ctx:uri.var.getLineaPedido" name="url get linea pedido"/>
+                        <property expression="json-eval($.idlineaedido.linea[0].id_linea_pedido)" name="id_linea_pedido"/>
+                    </log>
+                    <property expression="json-eval($.idlineaedido.linea[0].id_linea_pedido)" name="id_linea_pedido" scope="default" type="STRING"/>
+                    <script language="js"><![CDATA[var idLineaPedido = parseInt(mc.getProperty("id_linea_pedido"), 10);
+					    mc.setProperty("id_linea_pedido", idLineaPedido.toString()); // <- por si usás el original
+					    mc.setProperty("id_linea_pedidoPlus", (idLineaPedido + 1).toString());]]></script>
+                    <payloadFactory media-type="json">
+                        <format>
+										{
+										   "request_box":{
+										      "_post_tango_pedido_linea_detalle":{
+										         "descripcion":"$1",
+										         "desc_adicional":"$2",
+										         "num_comp":"$3",
+										         "num_renglon":"$4",
+										         "talonario":"$5",
+										         "id_gva03":"$6"
+										      },
+										      "_post_tango_pedido_linea_detalle":{
+										         "descripcion":"$7",
+										         "desc_adicional":"$8",
+										         "num_comp":"$9",
+										         "num_renglon":"$10",
+										         "talonario":"$11",
+										         "id_gva03":"$12"
+										      }
+										   }
+										}
+								</format>
+                        <args>
                             <arg evaluator="xml" expression="fn:concat('T-',get-property('pIdPedidoTrabajo'),' S-',get-property('pNumSerie'))"/>
                             <arg evaluator="xml" expression="fn:concat(get-property('pBanda'),' ',get-property('pMarca'))"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pNumRenglon')"/>
                             <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="get-property('id_linea_pedido')"/>
+                            <arg evaluator="xml" expression="fn:concat('Med:',get-property('pMedida'))"/>
+                            <arg value=""/>
+                            <arg evaluator="xml" expression="get-property('pNumPedido')"/>
+                            <arg evaluator="xml" expression="get-property('pNumRenglonPlus2')"/>
+                            <arg evaluator="xml" expression="get-property('pTalonPed')"/>
+                            <arg evaluator="xml" expression="get-property('id_linea_pedidoPlus')"/>
                         </args>
                     </payloadFactory>
                     <header name="Action" scope="default" value="urn:request_box"/>
