@@ -4,7 +4,7 @@ info:
   description: API Definition of TangoConnectorAPI
   version: 1.0.0
 servers:
-- url: http://localhost:8290/tools/tango
+- url: http://localhost:8290/tools/tango/delta
 paths:
   /synch/in:
     post:
