@@ -2,13 +2,10 @@
 <configs>
 	<!-- <dataservices_url>http://10.142.0.13:8280/services</dataservices_url>-->
 	<dataservices_url>http://localhost:8290/services</dataservices_url>
-	<pedidos_cod_articulo>0100200530</pedidos_cod_articulo>
-	<pedidos_descripcion>Etiq. Nro: </pedidos_descripcion>
-	<empr_id>1</empr_id>
-	<prov_id>1020</prov_id>
+	<pedidos_cod_articulo>PPRAD010</pedidos_cod_articulo>
+	<pedidos_descripcion> </pedidos_descripcion>
 	<talonario>4</talonario>
-	<tipo_comprobante>ARM</tipo_comprobante>
-	<tipo_comprobante_in_s>AR</tipo_comprobante_in_s>
-	<talon_ped>6</talon_ped>
+	<talon_ped>101</talon_ped>
+	<uni_medida>6</uni_medida>
 </configs>
 
