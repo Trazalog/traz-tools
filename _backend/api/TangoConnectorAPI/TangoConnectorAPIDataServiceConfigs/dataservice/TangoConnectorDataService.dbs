@@ -239,7 +239,7 @@ VALUES(LEFT(:descripcion, 30), LEFT(:desc_adicional,20),:num_comp, :num_renglon,
 UNIDAD_MEDIDA_SELECCIONADA, NRO_ORDEN, ID_GVA21, ID_STA11)
 VALUES( cast(:cant_pedida as float), :cod_articulo,:num_renglon, :num_pedido, :talon_ped, 
 cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),cast(:cant_pedida as float),
-:uni_medida, :uni_medida, :med_seleccionada, :num_renglon, :id_pedido, :id_articulo);
+:uni_medida, :uni_medida, :med_seleccionada, :num_renglon, :id_pedido, NULLIF(:id_articulo, ''));
 
 </sql>
     <param name="cant_pedida" sqlType="STRING" paramType="SCALAR" />
