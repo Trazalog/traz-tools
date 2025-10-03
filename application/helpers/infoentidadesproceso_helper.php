@@ -143,6 +143,47 @@
                               </div>
                             </div>
                             <!--_____________________________________________-->
+                            <!--_____________________________________________-->
+                            <?php
+                              // Verificamos si existe el path correcto
+                              $expediente_valor = $aux_gen->generador->transportistas_formularios->transportista_formulario[0]->valor ?? '';
+                              ?>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="expediente" name="">Expediente:</label>
+                                    <input type="text" class="form-control habilitar" id="expediente" 
+                                          value="<?php echo $expediente_valor; ?>"  
+                                          readonly>
+                                </div>
+                              </div>
+                            <!--_____________________________________________-->
+                            <?php
+                              // Verificamos si existe el path correcto
+                              $evaluador = $aux_gen->generador->transportistas_formularios->transportista_formulario[1]->valor ?? '';
+                              ?>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="evaluador" name="">Evaluador:</label>
+                                    <input type="text" class="form-control habilitar" id="evaluador" 
+                                          value="<?php echo $evaluador; ?>"  
+                                          readonly>
+                                </div>
+                              </div>
+                            <!--_____________________________________________-->
+                             <!--_____________________________________________-->
+                            <?php
+                              // Verificamos si existe el path correcto
+                              $anio = $aux_gen->generador->transportistas_formularios->transportista_formulario[2]->valor ?? '';
+                              ?>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="anio" name="">Año:</label>
+                                    <input type="text" class="form-control habilitar" id="anio" 
+                                          value="<?php echo $anio; ?>"  
+                                          readonly>
+                                </div>
+                              </div>
+                            <!--_____________________________________________-->
                         </div>
                       </form>
                       <!--_____________ Fin Formulario Generador _____________-->

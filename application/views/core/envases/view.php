@@ -275,6 +275,23 @@ function validarCampos(form){
     }
     return ban;
 }
+
+$("#tara").on("input", function() {
+    this.value = this.value.replace(",", ".");
+});
+
+$("#contenido").on("input", function() {
+    this.value = this.value.replace(",", ".");
+});
+
+$("#tara_edit").on("input", function() {
+    this.value = this.value.replace(",", ".");
+});
+
+$("#contenido_edit").on("input", function() {
+    this.value = this.value.replace(",", ".");
+});
+
 //Alta de envase en sistmea
 function guardar(operacion){
   var recurso = "";
