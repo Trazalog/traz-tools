@@ -146,7 +146,9 @@
                             <!--_____________________________________________-->
                             <?php
                               // Verificamos si existe el path correcto
-                              $expediente_valor = $aux_gen->generador->transportistas_formularios->transportista_formulario[0]->valor ?? '';
+                             $expediente_valor = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[0]->valor) 
+                              ? $aux_gen->generador->transportistas_formularios->transportista_formulario[0]->valor 
+                              : '';
                               ?>
                               <div class="col-md-6">
                                 <div class="form-group">
@@ -159,7 +161,9 @@
                             <!--_____________________________________________-->
                             <?php
                               // Verificamos si existe el path correcto
-                              $evaluador = $aux_gen->generador->transportistas_formularios->transportista_formulario[1]->valor ?? '';
+                             $evaluador = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[1]->valor) 
+                              ? $aux_gen->generador->transportistas_formularios->transportista_formulario[1]->valor 
+                              : '';
                               ?>
                               <div class="col-md-6">
                                 <div class="form-group">
@@ -173,7 +177,9 @@
                              <!--_____________________________________________-->
                             <?php
                               // Verificamos si existe el path correcto
-                              $anio = $aux_gen->generador->transportistas_formularios->transportista_formulario[2]->valor ?? '';
+                              $anio = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[2]->valor) 
+                              ? $aux_gen->generador->transportistas_formularios->transportista_formulario[2]->valor 
+                              : '';
                               ?>
                               <div class="col-md-6">
                                 <div class="form-group">
