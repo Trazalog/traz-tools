@@ -237,7 +237,7 @@
    </query>
    <query id="getEnvasesXEmpresa" useConfig="ToolsDataSource">
       <sql>select p.*, t.descripcion as unme_id, f.descripcion as nombre_receta from prd.empaque p&#xd;left join core.tablas t on t.tabl_id = p.unidad_medida&#xd;left join prd.formulas f on f.form_id = p.receta&#xd;where p.empr_id = cast(:empr_id as Integer)&#xd;and p.eliminado = false</sql>
-      <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unme_id",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$nombre_receta",&#xd;      "descripcion":"$descripcion"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
+      <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unme_id",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$nombre_receta",&#xd;      "descripcion":"$descripcion",&#xd;      "rece_id":"$receta"&#xd;     } &#xd;   ]&#xd;  }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getUnidadesMedidas" useConfig="ToolsDataSource">
@@ -486,6 +486,21 @@
       <param name="fec_hasta" sqlType="STRING"/>
       <param name="version" sqlType="STRING"/>
       <param name="lipr_id" sqlType="STRING"/>
+   </query>
+   <query id="getEntidadesNegocio" useConfig="ToolsDataSource">
+      <sql>SELECT id, nombre, stored_procedure, template FROM sta.entidades_negocio ORDER BY nombre</sql>
+      <result outputType="json">{"response":{"entidades":[{"id":"$id","nombre":"$nombre","stored_procedure":"$stored_procedure","template":"$template"}]}}</result>
+   </query>
+   <query id="procesarCargaMasiva" useConfig="ToolsDataSource">
+      <sql>CALL ?(?, ?)</sql>
+      <result outputType="json">{"response":{"resultado":[{"success":"$success","message":"$message","registros_procesados":"$registros_procesados","registros_exitosos":"$registros_exitosos","registros_fallidos":"$registros_fallidos","errores":"$errores"}]}}</result>
+      <param name="stored_procedure" sqlType="STRING"/>
+      <param name="url_archivo" sqlType="STRING"/>
+      <param name="empr_id" sqlType="INTEGER"/>
+   </query>
+   <query id="getHealthCheck" useConfig="ToolsDataSource">
+      <sql>SELECT 'OK' as status, CURRENT_TIMESTAMP as timestamp</sql>
+      <result outputType="json">{"response":{"health":[{"status":"$status","timestamp":"$timestamp"}]}}</result>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -972,5 +987,18 @@
          <with-param name="version" query-param="version"/>
          <with-param name="lipr_id" query-param="lipr_id"/>
       </call-query>
+   </resource>
+   <resource method="GET" path="/entidades_negocio">
+      <call-query href="getEntidadesNegocio"/>
+   </resource>
+   <resource method="POST" path="/carga_masiva/archivo">
+      <call-query href="procesarCargaMasiva">
+         <with-param name="stored_procedure" query-param="stored_procedure"/>
+         <with-param name="url_archivo" query-param="url_archivo"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/health">
+      <call-query href="getHealthCheck"/>
    </resource>
 </data>
