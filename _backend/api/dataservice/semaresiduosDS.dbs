@@ -947,6 +947,47 @@
       <result outputType="json">{&#xd;   "transportistas_formularios":{&#xd;      "transportista_formulario":[&#xd;         {&#xd;            "label":"$label",&#xd;            "valor":"$valor"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="info_id" sqlType="STRING"/>
    </query>
+   <query id="getTransportistaPorSotrID" useConfig="semaresiduosDS">
+      <sql>select st.sotr_id, st.razon_social, st.cuit&#xd;from log.solicitantes_transporte st &#xd;where st.sotr_id = cast(:sotr_id as integer);</sql>
+      <result outputType="json">{&#xd;   "transportistas":{&#xd;      "transportista":[&#xd;         {&#xd;            "sotr_id":"$sotr_id",&#xd;            "razon_social":"$razon_social",&#xd;            "cuit":"$cuit"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="validaDniEvaluador" useConfig="semaresiduosDS">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            FROM log.evaluadores e &#xd;            WHERE e.dni = CAST(:dni AS INTEGER)&#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="dni" sqlType="STRING"/>
+   </query>
+   <query id="setEvaluador" useConfig="semaresiduosDS">
+      <sql>INSERT INTO log.evaluadores (dni, nombre, formacion, telefono, email)&#xd;      VALUES &#xd;      (&#xd;         CAST(:dni AS INTEGER),&#xd;         :nombre,&#xd;         :formacion,&#xd;         CAST(:telefono AS INTEGER),&#xd;         :email&#xd;      )</sql>
+      <param name="dni" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="formacion" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+   </query>
+   <query id="getEvaluador" useConfig="semaresiduosDS">
+      <sql>select e.dni, e.email, e.telefono, e.nombre,e.formacion as id_formacion, t.valor as formacion &#xd;from log.evaluadores e &#xd;left join core.tablas t on t.tabl_id = e.formacion&#xd;where e.eliminado = false</sql>
+      <result outputType="json">{&#xd;   "evaluadores":{&#xd;      "evaluador":[&#xd;         {&#xd;            "dni":"$dni",&#xd;            "nombre":"$nombre",&#xd;            "formacion":"$formacion",&#xd;            "email":"$email",&#xd;            "telefono":"$telefono",&#xd;            "id_formacion":"$id_formacion"&#xd;     &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="updateEvaluador" useConfig="semaresiduosDS">
+      <sql>UPDATE log.evaluadores&#xd;SET&#xd;    nombre    = :nombre,&#xd;    formacion = :formacion,&#xd;    telefono  = CAST(:telefono AS INTEGER),&#xd;    email     = :email&#xd;WHERE dni = CAST(:dni AS INTEGER);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="formacion" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="dni" sqlType="STRING"/>
+   </query>
+   <query id="validaDeleteEvaluador" useConfig="semaresiduosDS">
+      <sql>SELECT DISTINCT f.info_id, st.razon_social&#xd;FROM frm.instancias_formularios f&#xd;join log.solicitantes_transporte st on st.info_id = f.info_id &#xd;WHERE form_id = cast(:form_id as integer) &#xd;  AND valor ILIKE '%' || cast(:dni as integer) || '%';</sql>
+      <result outputType="json">{&#xd;   "respuestas":{&#xd;      "respuesta":[&#xd;         {&#xd;            "info_id":"$info_id",&#xd;            "razon_social":"$razon_social"&#xd;     &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="form_id" sqlType="STRING"/>
+      <param name="dni" sqlType="STRING"/>
+   </query>
+   <query id="updateEstadoEvaluador" useConfig="semaresiduosDS">
+      <sql>UPDATE log.evaluadores&#xd;SET&#xd;	eliminado = cast(:estado as boolean)&#xd;WHERE dni = CAST(:dni AS INTEGER);</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="dni" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/departamentos">
       <call-query href="departamentosSet">
          <with-param name="nombre" query-param="nombre"/>
@@ -1928,6 +1969,49 @@
    <resource method="GET" path="/getForm/Transportista/{info_id}">
       <call-query href="getDataFormTransportista">
          <with-param name="info_id" query-param="info_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getSolicitanteTransporte/{sotr_id}">
+      <call-query href="getTransportistaPorSotrID">
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/validaEvaluador/{dni}">
+      <call-query href="validaDniEvaluador">
+         <with-param name="dni" query-param="dni"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/evaluadores">
+      <call-query href="setEvaluador">
+         <with-param name="dni" query-param="dni"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="formacion" query-param="formacion"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/evaluadores">
+      <call-query href="getEvaluador"/>
+   </resource>
+   <resource method="PUT" path="/evaluadores">
+      <call-query href="updateEvaluador">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="formacion" query-param="formacion"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="dni" query-param="dni"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/validaDeleteEvaluador/{form_id}/{dni}">
+      <call-query href="validaDeleteEvaluador">
+         <with-param name="form_id" query-param="form_id"/>
+         <with-param name="dni" query-param="dni"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/evaluadorEstado">
+      <call-query href="updateEstadoEvaluador">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="dni" query-param="dni"/>
       </call-query>
    </resource>
 </data>
