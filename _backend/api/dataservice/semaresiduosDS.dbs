@@ -988,6 +988,38 @@
       <param name="estado" sqlType="STRING"/>
       <param name="dni" sqlType="STRING"/>
    </query>
+   <query id="setConsultor" useConfig="semaresiduosDS">
+      <sql>INSERT INTO log.consultores (registro, nombre, profesion, vigencia , telefono, email)&#xd;      VALUES &#xd;      (&#xd;         cast(:registro as INTEGER),&#xd;         :nombre,&#xd;         :profesion,&#xd;         cast(:vigencia as DATE), &#xd;         CAST(:telefono AS INTEGER),&#xd;         :email&#xd;      )</sql>
+      <param name="registro" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="profesion" sqlType="STRING"/>
+      <param name="vigencia" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+   </query>
+   <query id="validaRegistroConsultor" useConfig="semaresiduosDS">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            FROM log.consultores c &#xd;            WHERE c.registro = cast(:registro as integer) &#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="registro" sqlType="STRING"/>
+   </query>
+   <query id="getConsultores" useConfig="semaresiduosDS">
+      <sql>select c.nombre, c.email, c.telefono, c.registro,c.profesion as id_profesion, t.valor as profesion,c.vigencia&#xd;from log.consultores c &#xd;left join core.tablas t on t.tabl_id = c.profesion&#xd;where c.eliminado = false</sql>
+      <result outputType="json">{&#xd;   "consultores":{&#xd;      "consultor":[&#xd;         {&#xd;            "registro":"$registro",&#xd;            "nombre":"$nombre",&#xd;            "profesion":"$profesion",&#xd;            "email":"$email",&#xd;            "telefono":"$telefono",&#xd;            "id_profesion":"$id_profesion",&#xd;            "vigencia":"$vigencia"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="updateEstadoConsultor" useConfig="semaresiduosDS">
+      <sql>UPDATE log.consultores&#xd;SET&#xd;	eliminado = cast(:estado as bool)&#xd;WHERE registro = cast(:registro as integer) ;</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="registro" sqlType="STRING"/>
+   </query>
+   <query id="updateConsultor" useConfig="semaresiduosDS">
+      <sql>UPDATE log.consultores&#xd;set &#xd;nombre = :nombre, &#xd;profesion = :profesion, &#xd;telefono = CAST(:telefono AS INTEGER), &#xd;vigencia = CAST(:vigencia as DATE),&#xd;email = :email &#xd;WHERE registro = cast(:registro as integer);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="profesion" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="vigencia" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="registro" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/departamentos">
       <call-query href="departamentosSet">
          <with-param name="nombre" query-param="nombre"/>
@@ -2012,6 +2044,40 @@
       <call-query href="updateEstadoEvaluador">
          <with-param name="estado" query-param="estado"/>
          <with-param name="dni" query-param="dni"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/consultor">
+      <call-query href="setConsultor">
+         <with-param name="registro" query-param="registro"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="profesion" query-param="profesion"/>
+         <with-param name="vigencia" query-param="vigencia"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/validaRegistroConsultor/{registro}">
+      <call-query href="validaRegistroConsultor">
+         <with-param name="registro" query-param="registro"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/consultores">
+      <call-query href="getConsultores"/>
+   </resource>
+   <resource method="PUT" path="/consultorEstado">
+      <call-query href="updateEstadoConsultor">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="registro" query-param="registro"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/consultores">
+      <call-query href="updateConsultor">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="profesion" query-param="profesion"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="vigencia" query-param="vigencia"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="registro" query-param="registro"/>
       </call-query>
    </resource>
 </data>
