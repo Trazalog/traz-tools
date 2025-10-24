@@ -1020,6 +1020,11 @@
       <param name="email" sqlType="STRING"/>
       <param name="registro" sqlType="STRING"/>
    </query>
+   <query id="validaRegistroTransportista" useConfig="semaresiduosDS">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            FROM log.solicitantes_transporte st  &#xd;            WHERE st.num_registro = :num_registro  &#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="num_registro" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/departamentos">
       <call-query href="departamentosSet">
          <with-param name="nombre" query-param="nombre"/>
@@ -2078,6 +2083,11 @@
          <with-param name="vigencia" query-param="vigencia"/>
          <with-param name="email" query-param="email"/>
          <with-param name="registro" query-param="registro"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/validaRegistroTransportista/{num_registro}">
+      <call-query href="validaRegistroTransportista">
+         <with-param name="num_registro" query-param="num_registro"/>
       </call-query>
    </resource>
 </data>
