@@ -152,7 +152,7 @@
                               ?>
                               <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="expediente" name="">Expediente:</label>
+                                    <label for="expediente" name="">N° Expediente:</label>
                                     <input type="text" class="form-control habilitar" id="expediente" 
                                           value="<?php echo $expediente_valor; ?>"  
                                           readonly>
@@ -161,15 +161,15 @@
                             <!--_____________________________________________-->
                             <?php
                               // Verificamos si existe el path correcto
-                             $evaluador = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[1]->valor) 
+                             $telefono = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[1]->valor) 
                               ? $aux_gen->generador->transportistas_formularios->transportista_formulario[1]->valor 
                               : '';
                               ?>
                               <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="evaluador" name="">Evaluador:</label>
-                                    <input type="text" class="form-control habilitar" id="evaluador" 
-                                          value="<?php echo $evaluador; ?>"  
+                                    <label for="telefono" name="">Teléfono:</label>
+                                    <input type="text" class="form-control habilitar" id="telefono" 
+                                          value="<?php echo $telefono; ?>"  
                                           readonly>
                                 </div>
                               </div>
@@ -177,15 +177,63 @@
                              <!--_____________________________________________-->
                             <?php
                               // Verificamos si existe el path correcto
-                              $anio = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[2]->valor) 
+                              $email = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[2]->valor) 
                               ? $aux_gen->generador->transportistas_formularios->transportista_formulario[2]->valor 
                               : '';
                               ?>
                               <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="anio" name="">Año:</label>
-                                    <input type="text" class="form-control habilitar" id="anio" 
-                                          value="<?php echo $anio; ?>"  
+                                    <label for="email" name="">Email:</label>
+                                    <input type="text" class="form-control habilitar" id="email" 
+                                          value="<?php echo $email; ?>"  
+                                          readonly>
+                                </div>
+                              </div>
+                            <!--_____________________________________________-->
+
+                            <?php
+                              // Verificamos si existe el path correcto
+                              $domicilio_legal = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[3]->valor) 
+                              ? $aux_gen->generador->transportistas_formularios->transportista_formulario[3]->valor 
+                              : '';
+                              ?>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="domicilio_legal" name="">Domicilio Legal:</label>
+                                    <input type="text" class="form-control habilitar" id="domicilio_legal" 
+                                          value="<?php echo $domicilio_legal; ?>"  
+                                          readonly>
+                                </div>
+                              </div>
+                            <!--_____________________________________________-->
+
+                             <?php
+                              // Verificamos si existe el path correcto
+                              $responsable_tecnico = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[4]->valor) 
+                              ? $aux_gen->generador->transportistas_formularios->transportista_formulario[4]->valor 
+                              : '';
+                              ?>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="responsable_tecnico" name="">Responsable Técnico:</label>
+                                    <input type="text" class="form-control habilitar" id="responsable_tecnico" 
+                                          value="<?php echo $responsable_tecnico; ?>"  
+                                          readonly>
+                                </div>
+                              </div>
+                            <!--_____________________________________________-->
+
+                            <?php
+                              // Verificamos si existe el path correcto
+                              $evaluador = isset($aux_gen->generador->transportistas_formularios->transportista_formulario[5]->valor) 
+                              ? $aux_gen->generador->transportistas_formularios->transportista_formulario[5]->valor 
+                              : '';
+                              ?>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="evaluador" name="">Evaluador:</label>
+                                    <input type="text" class="form-control habilitar" id="evaluador" 
+                                          value="<?php echo $evaluador; ?>"  
                                           readonly>
                                 </div>
                               </div>
