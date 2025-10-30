@@ -788,8 +788,8 @@
       <param name="ortr_id" sqlType="STRING"/>
    </query>
    <query id="ordenTransporteInfoEntrega" useConfig="semaresiduosDS">
-      <sql>select OT.ortr_id, OT.fec_alta, OT.estado, &#xd;        E.dominio, E.descripcion, E.imagen as img_vehiculo, E.tara , &#xd;        CH.imagen as img_chofer, concat(CH.nombre, ' ', CH.apellido) as nom_chofer, CH.documento &#xd;  from log.ordenes_transporte OT, core.equipos E, log.choferes CH&#xd;  where OT.case_id = :case_id &#xd;  and OT.equi_id = E.equi_id &#xd;  and OT.chof_id = CH.documento</sql>
-      <result outputType="json"> {&#xd;    "ordenTransporte":{&#xd;      "ortr_id": "$ortr_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "estado": "$estado",&#xd;      "dominio": "$dominio",&#xd;      "descripcion": "$descripcion",&#xd;      "img_vehiculo": "$img_vehiculo",&#xd;      "tara": "$tara",&#xd;      "img_chofer": "$img_chofer",&#xd;      "nom_chofer": "$nom_chofer",&#xd;      "documento": "$documento"      &#xd;    }&#xd;  }</result>
+      <sql>select OT.ortr_id, OT.fec_alta, OT.estado, &#xd;        E.dominio, E.descripcion, E.imagen as img_vehiculo, E.tara , E.tran_id, &#xd;        CH.imagen as img_chofer, concat(CH.nombre, ' ', CH.apellido) as nom_chofer, CH.documento &#xd;  from log.ordenes_transporte OT, core.equipos E, log.choferes CH&#xd;  where OT.case_id = :case_id &#xd;  and OT.equi_id = E.equi_id &#xd;  and OT.chof_id = CH.documento</sql>
+      <result outputType="json"> {&#xd;    "ordenTransporte":{&#xd;      "ortr_id": "$ortr_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "estado": "$estado",&#xd;      "dominio": "$dominio",&#xd;      "descripcion": "$descripcion",&#xd;      "img_vehiculo": "$img_vehiculo",&#xd;      "tara": "$tara",&#xd;      "img_chofer": "$img_chofer",&#xd;      "nom_chofer": "$nom_chofer",&#xd;      "documento": "$documento",&#xd;"tran_id":"$tran_id"      &#xd;    }&#xd;  }</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosInfoEntregaCase" useConfig="semaresiduosDS">
@@ -820,8 +820,8 @@
       <param name="depo_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosGetImgPorCoen_id" useConfig="semaresiduosDS">
-      <sql>select imagen &#xd;  from log.contenedores C, log.contenedores_entregados CE &#xd;  where C.cont_id = CE.cont_id &#xd;  and CE.coen_id = CAST(:coen_id as INTEGER)</sql>
-      <result outputType="json">{&#xd;	  "imag_contenedor":{&#xd;		  "imagen": "$imagen"&#xd;    }&#xd;  }</result>
+      <sql>select imagen, tara &#xd;  from log.contenedores C, log.contenedores_entregados CE &#xd;  where C.cont_id = CE.cont_id &#xd;  and CE.coen_id = CAST(:coen_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;	  "imag_contenedor":{&#xd;		  "imagen": "$imagen",&#xd;"tara":"$tara"&#xd;    }&#xd;  }</result>
       <param name="coen_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresImagenPorId" useConfig="semaresiduosDS">
@@ -989,7 +989,7 @@
       <param name="dni" sqlType="STRING"/>
    </query>
    <query id="setConsultor" useConfig="semaresiduosDS">
-      <sql>INSERT INTO log.consultores (registro, nombre, profesion, vigencia , telefono, email)&#xd;      VALUES &#xd;      (&#xd;         cast(:registro as INTEGER),&#xd;         :nombre,&#xd;         :profesion,&#xd;         cast(:vigencia as DATE), &#xd;         CAST(:telefono AS INTEGER),&#xd;         :email&#xd;      )</sql>
+      <sql>INSERT INTO log.consultores (registro, nombre, profesion, vigencia , telefono, email)&#xd;      VALUES &#xd;      (&#xd;         cast(:registro as INTEGER),&#xd;         :nombre,&#xd;         :profesion,&#xd;         cast(:vigencia as DATE), &#xd;         :telefono,&#xd;         :email&#xd;      )</sql>
       <param name="registro" sqlType="STRING"/>
       <param name="nombre" sqlType="STRING"/>
       <param name="profesion" sqlType="STRING"/>
@@ -1012,7 +1012,7 @@
       <param name="registro" sqlType="STRING"/>
    </query>
    <query id="updateConsultor" useConfig="semaresiduosDS">
-      <sql>UPDATE log.consultores&#xd;set &#xd;nombre = :nombre, &#xd;profesion = :profesion, &#xd;telefono = CAST(:telefono AS INTEGER), &#xd;vigencia = CAST(:vigencia as DATE),&#xd;email = :email &#xd;WHERE registro = cast(:registro as integer);</sql>
+      <sql>UPDATE log.consultores&#xd;set &#xd;nombre = :nombre, &#xd;profesion = :profesion, &#xd;telefono = :telefono, &#xd;vigencia = CAST(:vigencia as DATE),&#xd;email = :email &#xd;WHERE registro = cast(:registro as integer);</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="profesion" sqlType="STRING"/>
       <param name="telefono" sqlType="STRING"/>
@@ -1024,6 +1024,11 @@
       <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            FROM log.solicitantes_transporte st  &#xd;            WHERE st.num_registro = :num_registro  &#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
       <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
       <param name="num_registro" sqlType="STRING"/>
+   </query>
+   <query id="getDataVehiculo" useConfig="semaresiduosDS">
+      <sql>select e.equi_id, e.tara, e.imagen 	&#xd;from core.equipos e &#xd;where e.equi_id = cast(:equi_id as integer);</sql>
+      <result outputType="json">{&#xd;   "equipos":{&#xd;      "equipo":[&#xd;         {&#xd;            "equi_id":"$equi_id",&#xd;            "tara":"$tara",&#xd;            "imagen":"$imagen"&#xd;         &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="equi_id" sqlType="STRING"/>
    </query>
    <resource method="POST" path="/departamentos">
       <call-query href="departamentosSet">
@@ -2088,6 +2093,11 @@
    <resource method="GET" path="/validaRegistroTransportista/{num_registro}">
       <call-query href="validaRegistroTransportista">
          <with-param name="num_registro" query-param="num_registro"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculo/equi/{equi_id}">
+      <call-query href="getDataVehiculo">
+         <with-param name="equi_id" query-param="equi_id"/>
       </call-query>
    </resource>
 </data>
