@@ -237,7 +237,6 @@ define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
 define('REST_RESI', HOST.'/services/semaresiduosDS');
 define('REST_PRD_RESI', HOST.'/services/sema/PRDDataService');
 
-
 define('REST_SEIN', HOST.'/services/SeinDataService');
 
 #TRAZ-COMP-CALENDAR
@@ -260,3 +259,6 @@ define('DT_SIZE_ROWS', false);
 
 #Empresas que les aparecera los formularios de mantenimiento autonomo
 define('EMPRESAS_FORM', 1);
+
+// RESIDUOS - IDs de las Empresas autirizadas que pueden usar abm transportistas
+define('EMPRESAS_RESI_ADMIN', json_encode([1]));
