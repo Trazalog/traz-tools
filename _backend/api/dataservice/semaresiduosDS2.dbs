@@ -123,6 +123,11 @@
       <result outputType="json">{&#xd;   "contenedores":{&#xd;      "contenedor":[&#xd;         {&#xd;            "cont_id":"$cont_id",&#xd;            "porc_llenado":"$porc_llenado",&#xd;            "mts_cubicos":"$mts_cubicos",&#xd;            "tipoResiduo":"$tipoResiduo",&#xd;            "registroContenedor":"$registroContenedor",&#xd;            "dominioPesada":"$dominioPesada",&#xd;            "peso_neto":"$peso_neto",&#xd;            "pesoContenedor":"$pesoContenedor",&#xd;            "taraContenedor":"$taraContenedor",&#xd;            "taraEquipo":"$taraEquipo",&#xd;            "fec_entrega":"$fec_entrega",&#xd;            "fec_descarga":"$fec_descarga",&#xd;            "observaciones_descarga":"$observaciones_descarga"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}&#xd;</result>
       <param name="ortr_id" sqlType="STRING"/>
    </query>
+   <query id="getOrdenesTransporteporEquiId" useConfig="semaresiduosDS2">
+      <sql>select &#xd;    ot.ortr_id, &#xd;    ot.estado, &#xd;    e.dominio, &#xd;    c.nombre, &#xd;    c.apellido, &#xd;    ot.tran_id, &#xd;    c.codigo as registroChofer, &#xd;    ot.sotr_id, &#xd;    ot.fec_alta, &#xd;    e.codigo as registroEquipo,&#xd;    e.tara,     &#xd;    t.valor as difi_descripcion,&#xd;    t.valor2 as difi_cuil,&#xd;    t.valor3 as difi_registro    &#xd;  from log.ordenes_transporte ot&#xd;  join core.tablas t on ot.difi_id = t.tabl_id &#xd;  join log.choferes c on c.documento = ot.chof_id &#xd;  join core.equipos e on ot.equi_id = e.equi_id&#xd;  where ot.equi_id = cast(:equi_id as integer)&#xd;  order by ot.fec_alta desc&#xd;  limit 1;</sql>
+      <result outputType="json">{&#xd;   "orden_transportes":{&#xd;      "orden_transporte":[&#xd;         {&#xd;            "ortr_id":"$ortr_id",&#xd;            "estado":"$estado",&#xd;            "dominio":"$dominio",&#xd;            "nombre":"$nombre",&#xd;            "apellido":"$apellido",&#xd;            "sotr_id":"$sotr_id",&#xd;            "tran_id":"$tran_id",&#xd;            "fec_alta":"$fec_alta",&#xd;            "registroChofer":"$registroChofer",&#xd;            "registroEquipo":"$registroEquipo",&#xd;            "difi_descripcion":"$difi_descripcion",&#xd;            "difi_cuil":"$difi_cuil",&#xd;            "difi_registro":"$difi_registro",&#xd;            "tara":"$tara"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/consultor">
       <call-query href="setConsultor">
          <with-param name="registro" query-param="registro"/>
@@ -242,6 +247,11 @@
    <resource method="GET" path="/contenedores/entregadosPorOrdenTransporte/{ortr_id}">
       <call-query href="contenedoresentregadosPorOrtrId">
          <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/orden/transporte/equipo/{equi_id}">
+      <call-query href="getOrdenesTransporteporEquiId">
+         <with-param name="equi_id" query-param="equi_id"/>
       </call-query>
    </resource>
 </data>
