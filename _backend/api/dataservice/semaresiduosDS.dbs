@@ -628,13 +628,13 @@
       <param name="motivo" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedoresPorCase" useConfig="semaresiduosDS">
-      <sql>select cs.coso_id, cs.cantidad, cs.fec_alta,  cs.tica_id, cs.soco_id, cs.reci_id, cs.cantidad_acordada,&#xd;t.valor, cs.motivo_rechazo&#xd;from log.contenedores_solicitados cs, core.tablas t &#xd;where cs.soco_id = (select soco_id from log.solicitudes_contenedor sc where sc.case_id = :case_id )&#xd;and cs.tica_id = t.tabl_id</sql>
-      <result outputType="json">{&#xd;  "contenedores":{&#xd;  	"contenedor":[  		&#xd;  	  {&#xd;  		"coso_id": "$coso_id",&#xd;  		"cantidad": "$cantidad",&#xd;  		"fec_alta": "$fec_alta",&#xd;  		"tica_id": "$tica_id",&#xd;  		"soco_id": "$soco_id",&#xd;  		"reci_id": "$reci_id",&#xd;  		"cantidad_acordada": "$cantidad_acordada",&#xd;  		"valor": "$valor",&#xd;                "motivo_rechazo": "$motivo_rechazo"&#xd;  	  }&#xd;  	]&#xd;  }&#xd;}</result>
+      <sql>select cs.coso_id, cs.cantidad, cs.fec_alta,  cs.tica_id, cs.soco_id, cs.reci_id, cs.cantidad_acordada, cs.volumen,&#xd;t.valor, cs.motivo_rechazo&#xd;from log.contenedores_solicitados cs, core.tablas t &#xd;where cs.soco_id = (select soco_id from log.solicitudes_contenedor sc where sc.case_id = :case_id )&#xd;and cs.tica_id = t.tabl_id</sql>
+      <result outputType="json">{&#xd;  "contenedores":{&#xd;  	"contenedor":[  		&#xd;  	  {&#xd;  		"coso_id": "$coso_id",&#xd;  		"cantidad": "$cantidad",&#xd;  		"fec_alta": "$fec_alta",&#xd;  		"tica_id": "$tica_id",&#xd;  		"soco_id": "$soco_id",&#xd;  		"reci_id": "$reci_id",&#xd;  		"cantidad_acordada": "$cantidad_acordada",&#xd;  		"valor": "$valor",&#xd;  		"volumen": "$volumen",&#xd;                "motivo_rechazo": "$motivo_rechazo"&#xd;  	  }&#xd;  	]&#xd;  }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedorGetInfo" useConfig="semaresiduosDS">
-      <sql>select &#xd;  SC.soco_id, SC.estado, SC.observaciones, to_char(SC.fec_alta, 'DD-MM-YYYY') fec_alta, SC.sotr_id, &#xd;  ST.razon_social, ST.domicilio &#xd;  from log.solicitudes_contenedor SC, log.solicitantes_transporte ST&#xd;  where SC.sotr_id = ST.sotr_id &#xd;  and SC.case_id = :case_id &#xd;  and SC.eliminado = 0</sql>
-      <result outputType="json">{&#xd;    "solicitud":{&#xd;      "soco_id": "$soco_id",&#xd;      "estado": "$estado",&#xd;      "observaciones": "$observaciones",&#xd;      "fec_alta": "$fec_alta",&#xd;      "sotr_id": "$sotr_id",&#xd;      "razon_social": "$razon_social",&#xd;      "domicilio": "$domicilio"&#xd;    } &#xd;}</result>
+      <sql>select &#xd;  SC.soco_id, SC.estado, SC.observaciones, to_char(SC.fec_alta, 'DD-MM-YYYY') fec_alta, SC.sotr_id, CS.volumen,&#xd;  ST.razon_social, ST.domicilio &#xd;  from log.solicitudes_contenedor SC, log.solicitantes_transporte ST, log.contenedores_solicitados CS &#xd;  where SC.sotr_id = ST.sotr_id&#xd;  and SC.soco_id = CS.soco_id &#xd;  and SC.case_id = :case_id &#xd;  and SC.eliminado = 0</sql>
+      <result outputType="json">{&#xd;    "solicitud":{&#xd;      "soco_id": "$soco_id",&#xd;      "estado": "$estado",&#xd;      "observaciones": "$observaciones",&#xd;      "fec_alta": "$fec_alta",&#xd;      "sotr_id": "$sotr_id",&#xd;      "razon_social": "$razon_social",&#xd;      "domicilio": "$domicilio",&#xd;      "volumen": "$volumen"&#xd;    } &#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="incidenciasSet" useConfig="semaresiduosDS">
@@ -959,7 +959,7 @@
       <param name="dni" sqlType="STRING"/>
    </query>
    <query id="setEvaluador" useConfig="semaresiduosDS">
-      <sql>INSERT INTO log.evaluadores (dni, nombre, formacion, telefono, email)&#xd;      VALUES &#xd;      (&#xd;         CAST(:dni AS INTEGER),&#xd;         :nombre,&#xd;         :formacion,&#xd;         CAST(:telefono AS INTEGER),&#xd;         :email&#xd;      )</sql>
+      <sql>INSERT INTO log.evaluadores (dni, nombre, formacion, telefono, email)&#xd;      VALUES &#xd;      (&#xd;         CAST(:dni AS INTEGER),&#xd;         :nombre,&#xd;         :formacion,&#xd;         :telefono,&#xd;         :email&#xd;      )</sql>
       <param name="dni" sqlType="STRING"/>
       <param name="nombre" sqlType="STRING"/>
       <param name="formacion" sqlType="STRING"/>
