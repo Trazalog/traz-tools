@@ -633,7 +633,7 @@
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="solicitudContenedorGetInfo" useConfig="semaresiduosDS">
-      <sql>select &#xd;  SC.soco_id, SC.estado, SC.observaciones, to_char(SC.fec_alta, 'DD-MM-YYYY') fec_alta, SC.sotr_id, CS.volumen,&#xd;  ST.razon_social, ST.domicilio &#xd;  from log.solicitudes_contenedor SC, log.solicitantes_transporte ST, log.contenedores_solicitados CS &#xd;  where SC.sotr_id = ST.sotr_id&#xd;  and SC.soco_id = CS.soco_id &#xd;  and SC.case_id = :case_id &#xd;  and SC.eliminado = 0</sql>
+      <sql>select &#xd;  SC.soco_id, SC.estado, SC.observaciones, to_char(SC.fec_alta, 'DD-MM-YYYY') fec_alta, SC.sotr_id, CS.volumen,&#xd;  ST.razon_social, ST.domicilio &#xd;  from log.solicitudes_contenedor SC, log.solicitantes_transporte ST, log.contenedores_solicitados CS &#xd;  where SC.sotr_id = ST.sotr_id&#xd;  and SC.soco_id = CS.soco_id &#xd;  and SC.case_id = :case_id &#xd;  and SC.eliminado = 0 limit 1</sql>
       <result outputType="json">{&#xd;    "solicitud":{&#xd;      "soco_id": "$soco_id",&#xd;      "estado": "$estado",&#xd;      "observaciones": "$observaciones",&#xd;      "fec_alta": "$fec_alta",&#xd;      "sotr_id": "$sotr_id",&#xd;      "razon_social": "$razon_social",&#xd;      "domicilio": "$domicilio",&#xd;      "volumen": "$volumen"&#xd;    } &#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
@@ -789,7 +789,7 @@
    </query>
    <query id="ordenTransporteInfoEntrega" useConfig="semaresiduosDS">
       <sql>select OT.ortr_id, OT.fec_alta, OT.estado, &#xd;        E.dominio, E.descripcion, E.imagen as img_vehiculo, E.tara , E.tran_id, &#xd;        CH.imagen as img_chofer, concat(CH.nombre, ' ', CH.apellido) as nom_chofer, CH.documento &#xd;  from log.ordenes_transporte OT, core.equipos E, log.choferes CH&#xd;  where OT.case_id = :case_id &#xd;  and OT.equi_id = E.equi_id &#xd;  and OT.chof_id = CH.documento</sql>
-      <result outputType="json"> {&#xd;    "ordenTransporte":{&#xd;      "ortr_id": "$ortr_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "estado": "$estado",&#xd;      "dominio": "$dominio",&#xd;      "descripcion": "$descripcion",&#xd;      "img_vehiculo": "$img_vehiculo",&#xd;      "tara": "$tara",&#xd;      "img_chofer": "$img_chofer",&#xd;      "nom_chofer": "$nom_chofer",&#xd;      "documento": "$documento",&#xd;"tran_id":"$tran_id"      &#xd;    }&#xd;  }</result>
+      <result outputType="json"> {&#xd;    "ordenTransporte":{&#xd;      "ortr_id": "$ortr_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "estado": "$estado",&#xd;      "dominio": "$dominio",&#xd;      "descripcion": "$descripcion",&#xd;      "img_vehiculo": "$img_vehiculo",&#xd;      "tara": "$tara",&#xd;      "img_chofer": "$img_chofer",&#xd;      "nom_chofer": "$nom_chofer",&#xd;      "documento": "$documento",&#xd;      "tran_id":"$tran_id"&#xd;    }&#xd;  }</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosInfoEntregaCase" useConfig="semaresiduosDS">
@@ -836,8 +836,8 @@
       <param name="equi_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosInfoVuelcoCase" useConfig="semaresiduosDS">
-      <sql>select &#xd;      CE.coen_id, CE.porc_llenado, CE.depo_id, CE.mts_cubicos,C.cont_id, C.codigo, T.valor as tipo_carga&#xd;  from &#xd;      log.contenedores C, log.contenedores_entregados CE, core.tablas T&#xd;  where &#xd;      C.cont_id = CE.cont_id &#xd;  and &#xd;      CE.ortr_id = (select OT.ortr_id from log.ordenes_transporte OT&#xd;                    where OT.case_id = :case_id )&#xd;  and &#xd;      CE.tica_id = T.tabl_id             &#xd;  and &#xd;      CE.peso_neto is not null&#xd;  and &#xd;      CE.depo_id is not null&#xd;  and &#xd;      CE.tiva_id is null</sql>
-      <result outputType="json"> {&#xd;    "contenedores":{&#xd;        "contenedor":[&#xd;          {&#xd;            "coen_id": "$coen_id",&#xd;            "porc_llenado": "$porc_llenado",&#xd;            "depo_id": "$depo_id",&#xd;            "mts_cubicos": "$mts_cubicos",&#xd;            "cont_id": "$cont_id",&#xd;            "codigo": "$codigo",&#xd;            "tipo_carga": "$tipo_carga"            &#xd;          }&#xd;        ] &#xd;    }&#xd;  }</result>
+      <sql>select &#xd;      CE.coen_id, CE.porc_llenado, CE.depo_id, CE.mts_cubicos,C.cont_id, C.codigo, T.valor as tipo_carga, C.descripcion&#xd;  from &#xd;      log.contenedores C, log.contenedores_entregados CE, core.tablas T&#xd;  where &#xd;      C.cont_id = CE.cont_id &#xd;  and &#xd;      CE.ortr_id = (select OT.ortr_id from log.ordenes_transporte OT&#xd;                    where OT.case_id = :case_id )&#xd;  and &#xd;      CE.tica_id = T.tabl_id             &#xd;  and &#xd;      CE.peso_neto is not null&#xd;  and &#xd;      CE.depo_id is not null&#xd;  and &#xd;      CE.tiva_id is null</sql>
+      <result outputType="json"> {&#xd;    "contenedores":{&#xd;        "contenedor":[&#xd;          {&#xd;            "coen_id": "$coen_id",&#xd;            "porc_llenado": "$porc_llenado",&#xd;            "depo_id": "$depo_id",&#xd;            "mts_cubicos": "$mts_cubicos",&#xd;            "cont_id": "$cont_id",&#xd;            "codigo": "$codigo",&#xd;            "tipo_carga": "$tipo_carga",&#xd;            "descripcion": "$descripcion"            &#xd;          }&#xd;        ] &#xd;    }&#xd;  }</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosInfoSalidaGet" useConfig="semaresiduosDS">

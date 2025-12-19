@@ -63,7 +63,7 @@
 					$data =json_decode($aux["data"]);
 					$aux = $data->ordenTransporte;
 					
-					$aux_cont = $ci->rest->callAPI("GET",REST_RESI."/contenedoresEntregados/info/entrega/case/".$case_id);
+					$aux_cont = $ci->rest->callAPI("GET",REST_RESI2."/contenedores/entregadosPorOrdenTransporte/".$aux->ortr_id);
 					$data_cont =json_decode($aux_cont["data"]);
 					$aux_cont = $data_cont->contenedores->contenedor;
 				break;
@@ -478,11 +478,13 @@
 											if($aux_cont){
 												foreach($aux_cont as $fila)
 												{
+													$tipo_carga = ($fila->tipo_carga) ? $fila->tipo_carga : $fila->tipoResiduo;
+													$codigo = ($fila->codigo) ? $fila->codigo : $fila->registroContenedor;
 														echo '<tr>';
 														echo '<td>'.$fila->cont_id.'</td>';
 														echo '<td>'.$fila->descripcion.'</td>';
-														echo '<td>'.$fila->codigo.'</td>';
-														echo '<td>'.$fila->tipo_carga.'</td>';
+														echo '<td>'.$codigo.'</td>';
+														echo '<td>'.$tipo_carga.'</td>';
 														echo '<td>'.$fila->porc_llenado.'</td>';
 														echo '<td>'.$fila->mts_cubicos.'</td>';
 														echo '</tr>';
