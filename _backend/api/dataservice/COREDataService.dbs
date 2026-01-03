@@ -237,7 +237,7 @@
    </query>
    <query id="getEnvasesXEmpresa" useConfig="ToolsDataSource">
       <sql>select p.*, t.descripcion as unme_id, f.descripcion as nombre_receta from prd.empaque p&#xd;left join core.tablas t on t.tabl_id = p.unidad_medida&#xd;left join prd.formulas f on f.form_id = p.receta&#xd;where p.empr_id = cast(:empr_id as Integer)&#xd;and p.eliminado = false</sql>
-      <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unme_id",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$nombre_receta",&#xd;      "descripcion":"$descripcion",&#xd;      "rece_id":"$receta"&#xd;     } &#xd;   ]&#xd;  }&#xd;}</result>
+      <result outputType="json">{&#xd; "envase":{&#xd;   "envases":[&#xd;     {&#xd;      "empa_id":"$empa_id",&#xd;      "nombre":"$nombre",&#xd;      "unidad_medida":"$unme_id",&#xd;      "capacidad":"$capacidad",&#xd;      "empr_id":"$empr_id",&#xd;      "usuario_app":"$usuario_app",&#xd;      "fech_alta":"$fech_alta",&#xd;      "tara":"$tara",&#xd;      "arti_id":"$arti_id",&#xd;      "receta":"$nombre_receta",&#xd;      "descripcion":"$descripcion"&#xd;     }&#xd;   ]&#xd;  }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getUnidadesMedidas" useConfig="ToolsDataSource">
@@ -505,35 +505,6 @@
    <query id="getHealthCheck" useConfig="ToolsDataSource">
       <sql>SELECT 'OK' as status, CURRENT_TIMESTAMP as timestamp</sql>
       <result outputType="json">{"response":{"health":[{"status":"$status","timestamp":"$timestamp"}]}}</result>
-   </query>
-   <query id="setUsuario" returnGeneratedKeys="true" useConfig="ToolsDataSource">
-      <sql>INSERT INTO seg.users&#xd;(&#xd;    first_name,&#xd;    last_name,&#xd;    email,&#xd;    password,&#xd;    role,&#xd;    status,&#xd;    banned_users,&#xd;    telefono,&#xd;    dni,&#xd;    usernick,&#xd;    depo_id,&#xd;    image_name,&#xd;    image&#xd;)&#xd;VALUES(&#xd;    :first_name,&#xd;    :last_name,&#xd;    :email,&#xd;    :password,&#xd;    :role,&#xd;    :status,&#xd;    :banned_users,&#xd;    :telefono,&#xd;    :dni,&#xd;    :usernick,&#xd;    CASE WHEN :depo_id IS NULL OR :depo_id='' THEN NULL ELSE CAST(:depo_id AS INTEGER) END,&#xd;    :image_name,&#xd;    :image&#xd;)</sql>
-      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
-         <element column="1" name="ID" xsdType="integer"/>
-      </result>
-      <param name="first_name" sqlType="STRING"/>
-      <param name="last_name" sqlType="STRING"/>
-      <param name="email" sqlType="STRING"/>
-      <param name="password" sqlType="STRING"/>
-      <param name="role" sqlType="STRING"/>
-      <param name="status" sqlType="STRING"/>
-      <param name="banned_users" sqlType="STRING"/>
-      <param name="telefono" sqlType="STRING"/>
-      <param name="dni" sqlType="STRING"/>
-      <param name="usernick" sqlType="STRING"/>
-      <param defaultValue="#{NULL}" name="depo_id" optional="true" sqlType="STRING"/>
-      <param name="image_name" sqlType="STRING"/>
-      <param name="image" sqlType="BINARY"/>
-   </query>
-   <query id="checkUsuarioDuplicado" useConfig="ToolsDataSource">
-      <sql>SELECT CASE WHEN COUNT(*) &gt; 0 THEN 'true' ELSE 'false' END as existe&#xd;FROM seg.users&#xd;WHERE email = :email</sql>
-      <result outputType="json">{"respuesta":{"existe":"$existe"}}</result>
-      <param name="email" sqlType="STRING"/>
-   </query>
-   <query id="setUserBusiness" useConfig="ToolsDataSource">
-      <sql>INSERT INTO seg.users_business&#xd;(&#xd;    email,&#xd;    busines&#xd;)&#xd;VALUES(&#xd;    :email,&#xd;    :busines&#xd;)</sql>
-      <param name="email" sqlType="STRING"/>
-      <param name="busines" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
@@ -1036,33 +1007,5 @@
    </resource>
    <resource method="GET" path="/health">
       <call-query href="getHealthCheck"/>
-   </resource>
-   <resource method="POST" path="/usuario">
-      <call-query href="setUsuario">
-         <with-param name="first_name" query-param="first_name"/>
-         <with-param name="last_name" query-param="last_name"/>
-         <with-param name="email" query-param="email"/>
-         <with-param name="password" query-param="password"/>
-         <with-param name="role" query-param="role"/>
-         <with-param name="status" query-param="status"/>
-         <with-param name="banned_users" query-param="banned_users"/>
-         <with-param name="telefono" query-param="telefono"/>
-         <with-param name="dni" query-param="dni"/>
-         <with-param name="usernick" query-param="usernick"/>
-         <with-param name="depo_id" query-param="depo_id"/>
-         <with-param name="image_name" query-param="image_name"/>
-         <with-param name="image" query-param="image"/>
-      </call-query>
-   </resource>
-   <resource method="GET" path="/usuario/duplicado/{email}">
-      <call-query href="checkUsuarioDuplicado">
-         <with-param name="email" query-param="email"/>
-      </call-query>
-   </resource>
-   <resource method="POST" path="/users_business">
-      <call-query href="setUserBusiness">
-         <with-param name="email" query-param="email"/>
-         <with-param name="busines" query-param="busines"/>
-      </call-query>
    </resource>
 </data>

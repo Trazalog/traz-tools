@@ -567,7 +567,7 @@
          </log>
          <script language="js">var payload = mc.getPayloadJSON();  mc.setProperty("ORIGINAL_PAYLOAD",JSON.stringify(payload));</script>
          <payloadFactory media-type="json" description="crear ot">
-            <format>       {          "_post_ordentransporte":{          "fec_retiro":"$1",         "difi_id":"$2",       "sotr_id":"$3",       "equi_id":"$4",       "chof_id":"$5",        "usuario_app": "$6"  ,"tran_id":"$7"  }     }     </format>
+            <format>       {          "_post_ordentransporte":{          "fec_retiro":"$1",         "difi_id":"$2",       "sotr_id":"$3",       "equi_id":"$4",       "chof_id":"$5",        "usuario_app": "$6"  ,"tran_id":"$7" ,"teot_id":"$8"  }     }     </format>
             <args>
                <arg evaluator="json" expression="$.ordenTransporte.fec_retiro"/>
                <arg evaluator="json" expression="$.ordenTransporte.difi_id"/>
@@ -576,6 +576,7 @@
                <arg evaluator="json" expression="$.ordenTransporte.chof_id"/>
                <arg evaluator="json" expression="$.ordenTransporte.usuario_app"/>
                <arg evaluator="json" expression="$.ordenTransporte.tran_id"/>
+               <arg evaluator="json" expression="$.ordenTransporte.teot_id"/>
             </args>
          </payloadFactory>
          <property name="messageType" value="application/json" scope="axis2"/>
