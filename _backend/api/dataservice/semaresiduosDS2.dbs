@@ -133,6 +133,30 @@
       <result outputType="json"> {&#xd;    "ordenTransporte":{&#xd;      "ortr_id": "$ortr_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "estado": "$estado",&#xd;      "dominio": "$dominio",&#xd;      "descripcion": "$descripcion",&#xd;      "img_vehiculo": "$img_vehiculo",&#xd;      "tara": "$tara",&#xd;      "img_chofer": "$img_chofer",&#xd;      "nom_chofer": "$nom_chofer",&#xd;      "documento": "$documento",&#xd;      "tran_id":"$tran_id",&#xd;      "dominiopesado":"$dominiopesado"&#xd;    }&#xd;  }</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
+   <query id="choferesGetPorTransportistas" useConfig="semaresiduosDS2">
+      <sql>select &#xd; chof_id, documento, concat(apellido, ', ',nombre) as nom_chofer&#xd;from log.choferes &#xd;  where tran_id = CAST(:tran_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;   "choferes":{&#xd;      "chofer":[&#xd;         {&#xd;            "chof_id":"$chof_id",&#xd;   "documento":"$documento",         "nom_chofer":"$nom_chofer"         &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculosGetPorTransportistas" useConfig="semaresiduosDS2">
+      <sql>select &#xd;  equi_id, descripcion, marca, dominio, codigo as registro &#xd;from &#xd;  core.equipos &#xd;where &#xd;  tran_id = CAST(:tran_id AS INTEGER) and estado = 'AC' and cont_id is not null</sql>
+      <result outputType="json">{&#xd;    "vehiculos":{&#xd;      "vehiculo":[&#xd;          {&#xd;            "equi_id": "$equi_id",&#xd;            "descripcion": "$descripcion",&#xd;            "marca": "$marca",&#xd;            "dominio": "$dominio",&#xd;            "registro": "$registro"&#xd;          }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistasGetTodo" useConfig="semaresiduosDS2">
+      <sql>select tran_id, razon_social from log.transportistas</sql>
+      <result outputType="json">{"transportistas":&#xd;    {&#xd;      "transportista":[&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social",&#xd;          "@choferesGetPorTransportistas": "$tran_id-&gt;tran_id",&#xd;          "@vehiculosGetPorTransportistas" : "$tran_id-&gt;tran_id" &#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+   </query>
+   <resource method="GET" path="/choferes/{tran_id}">
+      <call-query href="choferesGetPorTransportistas">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculos/transp/{tran_id}">
+      <call-query href="vehiculosGetPorTransportistas">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
    <resource method="POST" path="/consultor">
       <call-query href="setConsultor">
          <with-param name="registro" query-param="registro"/>
@@ -263,5 +287,8 @@
       <call-query href="ordenTransporteInfoEntregaVuelco">
          <with-param name="case_id" query-param="case_id"/>
       </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/todo">
+      <call-query href="transportistasGetTodo"/>
    </resource>
 </data>
