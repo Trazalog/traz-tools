@@ -144,8 +144,18 @@
       <param name="tran_id" sqlType="STRING"/>
    </query>
    <query id="transportistasGetTodo" useConfig="semaresiduosDS2">
-      <sql>select tran_id, razon_social from log.transportistas</sql>
-      <result outputType="json">{"transportistas":&#xd;    {&#xd;      "transportista":[&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social",&#xd;          "@choferesGetPorTransportistas": "$tran_id-&gt;tran_id",&#xd;          "@vehiculosGetPorTransportistas" : "$tran_id-&gt;tran_id" &#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <sql>select tran_id, razon_social, empr_id from log.transportistas</sql>
+      <result outputType="json">{"transportistas":&#xd;    {&#xd;      "transportista":[&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social",&#xd;          "empr_id":"$empr_id",&#xd;          "@choferesGetPorTransportistas": "$tran_id-&gt;tran_id",&#xd;          "@vehiculosGetPorTransportistas" : "$tran_id-&gt;tran_id"&#xd;             }&#xd;      ]&#xd;    }&#xd;  }</result>
+   </query>
+   <query id="getSolicitanteTransporte" useConfig="semaresiduosDS2">
+      <sql>select sotr_id&#xd;from log.solicitantes_transporte&#xd;where empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "solicitante_transportes":{&#xd;      "solicitante_transporte":[&#xd;         {&#xd;            "sotr_id":"$sotr_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosInfoSalidaGetV2" useConfig="semaresiduosDS2">
+      <sql>SELECT&#xd;    OT.ortr_id,&#xd;    OT.fec_alta,&#xd;    OT.estado,&#xd;    E.dominio,&#xd;    E.descripcion,&#xd;    E.imagen AS img_vehiculo,&#xd;    E.tara,&#xd;    CH.imagen AS img_chofer,&#xd;    concat(CH.nombre, ' ', CH.apellido) AS nom_chofer,&#xd;    CH.documento,&#xd;    ce.cont_id,&#xd;    con.codigo AS codigo_contenedor,&#xd;    ce.peso_neto,&#xd;    ce.observaciones_descarga,&#xd;    t.descripcion AS contenido_descarga,&#xd;    ce.equi_id_pesado &#xd;FROM log.ordenes_transporte OT&#xd;JOIN log.contenedores_entregados ce&#xd;  ON ce.ortr_id = ot.ortr_id&#xd;JOIN log.contenedores con&#xd;  ON con.cont_id = ce.cont_id&#xd;JOIN log.choferes CH&#xd;  ON OT.chof_id = CH.documento&#xd;LEFT JOIN core.equipos E&#xd;  ON E.equi_id = ce.equi_id_pesado&#xd;JOIN core.tablas t&#xd;  ON t.tabl_id = ce.tica_id&#xd;WHERE&#xd;    OT.case_id = :case_id&#xd;    AND OT.eliminado = 0&#xd;    AND ce.fec_salida IS NULL&#xd;    AND ce.fec_descarga IS NOT NULL;</sql>
+      <result outputType="json">{&#xd;   "contenedor":{&#xd;      "ortr_id":"$ortr_id",&#xd;      "fec_alta":"$fec_alta",&#xd;      "estado":"$estado",&#xd;      "dominio":"$dominio",&#xd;      "descripcion":"$descripcion",&#xd;      "img_vehiculo":"$img_vehiculo",&#xd;      "tara":"$tara",&#xd;      "img_chofer":"$img_chofer",&#xd;      "nom_chofer":"$nom_chofer",&#xd;      "documento":"$documento",&#xd;      "cont_id":"$cont_id",&#xd;      "codigo_contenedor":"$codigo_contenedor",&#xd;      "peso_neto":"$peso_neto",&#xd;      "observaciones_descarga":"$observaciones_descarga",&#xd;      "contenido_descarga":"$contenido_descarga",&#xd;      "equi_id_pesado":"$equi_id_pesado"&#xd;&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/choferes/{tran_id}">
       <call-query href="choferesGetPorTransportistas">
@@ -290,5 +300,10 @@
    </resource>
    <resource method="GET" path="/transportistas/todo">
       <call-query href="transportistasGetTodo"/>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregadosV2/info/salida/case/{case_id}">
+      <call-query href="contenedoresEntregadosInfoSalidaGetV2">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
    </resource>
 </data>
