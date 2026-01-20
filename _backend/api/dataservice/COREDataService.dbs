@@ -487,6 +487,25 @@
       <param name="version" sqlType="STRING"/>
       <param name="lipr_id" sqlType="STRING"/>
    </query>
+   <query id="getEntidadesNegocio" useConfig="ToolsDataSource">
+      <sql>SELECT nombre, stored_procedure, template, fec_alta, usuario FROM sta.entidades_negocio ORDER BY nombre</sql>
+      <result outputType="json">{"response":{"entidades":[{"nombre":"$nombre","stored_procedure":"$stored_procedure","template":"$template","fec_alta":"$fec_alta","usuario":"$usuario"}]}}</result>
+   </query>
+   <query id="procesarCargaMasiva" useConfig="ToolsDataSource">
+      <sql>SELECT sta.ejecutar_carga_masiva(:stored_procedure, :url_archivo, CAST(:empr_id AS INTEGER)) as resultado</sql>
+      <result outputType="json">{"response":{"resultado":[{"output":"$resultado"}]}}</result>
+      <param name="stored_procedure" sqlType="STRING"/>
+      <param name="url_archivo" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <element column="resultado" name="output" xsdType="string"/>
+   </query>
+   <query id="limpiarLogsTemporales" useConfig="ToolsDataSource">
+      <sql>DELETE FROM temp_log_messages</sql>
+   </query>
+   <query id="getHealthCheck" useConfig="ToolsDataSource">
+      <sql>SELECT 'OK' as status, CURRENT_TIMESTAMP as timestamp</sql>
+      <result outputType="json">{"response":{"health":[{"status":"$status","timestamp":"$timestamp"}]}}</result>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -972,5 +991,21 @@
          <with-param name="version" query-param="version"/>
          <with-param name="lipr_id" query-param="lipr_id"/>
       </call-query>
+   </resource>
+   <resource method="GET" path="/entidades_negocio">
+      <call-query href="getEntidadesNegocio"/>
+   </resource>
+   <resource method="POST" path="/carga_masiva/archivo">
+      <call-query href="procesarCargaMasiva">
+         <with-param name="stored_procedure" query-param="_post_carga_masiva_archivo.stored_procedure"/>
+         <with-param name="url_archivo" query-param="_post_carga_masiva_archivo.url_archivo"/>
+         <with-param name="empr_id" query-param="_post_carga_masiva_archivo.empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/carga_masiva/limpiar">
+      <call-query href="limpiarLogsTemporales"/>
+   </resource>
+   <resource method="GET" path="/health">
+      <call-query href="getHealthCheck"/>
    </resource>
 </data>

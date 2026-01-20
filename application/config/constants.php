@@ -235,8 +235,9 @@ define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
 define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
 define('REST_RESI', HOST.'/services/semaresiduosDS');
-define('REST_PRD_RESI', HOST.'/services/sema/PRDDataService');
+define('REST_RESI2', HOST.'/services/semaresiduosDS2');
 
+define('REST_PRD_RESI', HOST.'/services/sema/PRDDataService');
 
 define('REST_SEIN', HOST.'/services/SeinDataService');
 
@@ -250,13 +251,16 @@ define('HORA_INICIO_JORNADA','10:00');
 define('TOKEN_API_MANAGER','eyJ4NXQiOiJOMkpqTWpOaU0yRXhZalJrTnpaalptWTFZVEF4Tm1GbE5qZzRPV1UxWVdRMll6YzFObVk1TlEiLCJraWQiOiJNREpsTmpJeE4yRTFPR1psT0dWbU1HUXhPVEZsTXpCbU5tRmpaalEwWTJZd09HWTBOMkkwWXpFNFl6WmpOalJoWW1SbU1tUTBPRGRpTkRoak1HRXdNQV9SUzI1NiIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhZG1pbiIsImF1dCI6IkFQUExJQ0FUSU9OIiwiYXVkIjoidnE2NUlBNHRqUWY4eV94UDlKdUVKcHJ4WDhZYSIsIm5iZiI6MTY5NTMwODk4MiwiYXpwIjoidnE2NUlBNHRqUWY4eV94UDlKdUVKcHJ4WDhZYSIsInNjb3BlIjoiZGVmYXVsdCIsImlzcyI6Imh0dHBzOlwvXC8xOTIuMTY4LjU0LjY5Ojk0NDNcL29hdXRoMlwvdG9rZW4iLCJleHAiOjMxNTUyOTUzMDg5ODIsImlhdCI6MTY5NTMwODk4MiwianRpIjoiNmY4YzcyYzItYzM5Mi00ODkwLWEzOTctYzBmODhmMGRlYTNjIn0.i41y_3n8i2c0ai9GqqD2IPiZpcGK5F7oYFK6k0UEkbUu3_ROQAWBaDXc_Gdbg_OwBXTlziTNGIvS7YOcTmhsP9t4oaWhba72KUa_92zNfOSdlLgtOQEIJTRuIy5MO86zMUtqhGRAs7fDRNVumrTTWICLvuDBHAcpXJfdADBGLnRv6ZCC2LEC_XxmbFP9KV8z9Oo0mVcz8GUZIeUZDPeLcBuA8LEBgK-ym7-s2v9WcjpyvdCjMszBXWJ6hpc4J9dg2eDSoAh3YvI9vIboKyeyfpfjreu8LMuXPUjSalEyj0q1RgmsPNMkSGLCzWKMYK2sCm3FovjjdRxyJOmh378hRA');
 
 #TOKEN_TANGO TEST
-define('TOKEN_TANGO','65598088-7C16-4DD5-896E-843E638611C7');
+define('TOKEN_TANGO','D8EB5C71-BF7B-4F06-A242-3F887176FC60');
 
 #COMPANY TANGO
-define('COMPANY_TANGO', '2');
+define('COMPANY_TANGO', '3');
 
 #ROWS DATATABLE
 define('DT_SIZE_ROWS', false);
 
 #Empresas que les aparecera los formularios de mantenimiento autonomo
 define('EMPRESAS_FORM', 1);
+
+// RESIDUOS - IDs de las Empresas autirizadas que pueden usar abm transportistas
+define('EMPRESAS_RESI_ADMIN', json_encode([1]));

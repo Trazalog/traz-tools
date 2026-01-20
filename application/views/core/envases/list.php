@@ -74,6 +74,7 @@
       $('#descripcion_edit').val(datajson.descripcion);
       $('#contenido_edit').val(datajson.capacidad);
       $('#tara_edit').val(datajson.tara);
+      $('#receta_edit').val(datajson.rece_id);
       $('#ticl_id_edit option[value="'+ datajson.ticl_id +'"]').attr("selected",true);
     }
         // deshabilita botones, selects e inputs de modal

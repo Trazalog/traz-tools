@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<api context="/tools/tango/delta" name="TangoConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
+<api context="/tools/tango" name="TangoConnectorAPI" xmlns="http://ws.apache.org/ns/synapse">
     <resource methods="POST" url-mapping="/synch/in">
         <inSequence>
             <property expression="get-property('registry','conf:tools/tangoconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
@@ -782,15 +782,15 @@
                             <arg value="V"/>
                             <arg evaluator="xml" expression="get-property('id_pedido')"/>
                             <arg evaluator="xml" expression="get-property('id_articulo')"/>
-                            <arg value="0"/>
+                            <arg value=""/>
                             <arg value=""/>
                             <arg evaluator="xml" expression="get-property('pNumRenglonPlus2')"/>
                             <arg evaluator="xml" expression="get-property('pNumPedido')"/>
                             <arg evaluator="xml" expression="get-property('pTalonPed')"/>
                             <arg evaluator="xml" expression="get-property('pUniMedida')"/>
-                            <arg value="V"/>
+                            <arg value=""/>
                             <arg evaluator="xml" expression="get-property('id_pedido')"/>
-                            <arg evaluator="xml" expression="get-property('id_articulo')"/>
+                            <arg value=""/>
                         </args>
                     </payloadFactory>
                     <header name="Action" scope="default" value="urn:request_box"/>
