@@ -8,6 +8,8 @@ class Dash extends CI_Controller {
 		$this->load->helper('file');
 		$this->load->model('Dashs');
 		$this->load->helper('sesion_helper');
+		$this->load->model(PRD.'Tablas');
+		
 		//verifica si esta inactivo
 		//40minutos de inactividad y redirecciona a login
 		validarInactividad();
@@ -23,6 +25,11 @@ class Dash extends CI_Controller {
 			$data['memberships'] = $this->Dashs->obtenerMemberships();
 			$aux = $this->Dashs->obtenerMenu();
 			$data['menu'] = menu($aux);
+
+			//copyright de footer configurado en core.tablas 
+			$footer = $this->Tablas->obtenerTabla('configuraciones_uitoolsfotterCopyright');
+			$data['copyright'] = $footer['data'][0]->valor;
+
 			$this->load->view('layout/Admin',$data);
 		}else{
 			log_message("DEBUG","#TRAZA | CORE | Dash | index() >> Sesion vencida");
