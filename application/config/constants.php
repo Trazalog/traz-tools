@@ -264,3 +264,6 @@ define('EMPRESAS_FORM', 1);
 
 // RESIDUOS - IDs de las Empresas autirizadas que pueden usar abm transportistas
 define('EMPRESAS_RESI_ADMIN', json_encode([1]));
+
+// RESIDUOS - IDs para camiones con tolva/contenedor
+define('TIPOS_VEHICULOS_TOLVA', 999999);

@@ -279,7 +279,7 @@
       <param name="circ_id" sqlType="STRING"/>
    </query>
    <query id="contEntregadosSet" useConfig="semaresiduosDS">
-      <sql>insert into &#xd;  log.contenedores_entregados(porc_llenado, mts_cubicos, fec_entrega, usuario_app, cont_id, soco_id, ortr_id, tica_id)&#xd;  values(CAST(:porc_llenado AS float8), CAST(:mts_cubicos AS float8), TO_DATE(:fec_entrega, 'YYYY-MM-DD'), :usuario_app, CAST(:cont_id AS INTEGER), CAST(:soco_id AS INTEGER), CAST(:ortr_id AS INTEGER), :tica_id) returning coen_id</sql>
+      <sql>insert into &#xd;  log.contenedores_entregados(porc_llenado, mts_cubicos, fec_entrega, usuario_app, cont_id, soco_id, ortr_id, tica_id)&#xd;values(&#xd;  CAST(:porc_llenado AS float8), &#xd;  CAST(:mts_cubicos AS float8), &#xd;  TO_DATE(:fec_entrega, 'YYYY-MM-DD'), &#xd;  :usuario_app, &#xd;  CAST(:cont_id AS INTEGER), &#xd;  CASE &#xd;    WHEN :soco_id IS NOT NULL AND :soco_id != '' &#xd;    THEN CAST(:soco_id AS INTEGER) &#xd;    ELSE NULL &#xd;  END,&#xd;  CAST(:ortr_id AS INTEGER), &#xd;  :tica_id&#xd;) returning coen_id</sql>
       <result outputType="json">{&#xd;    "respuesta":{&#xd;      "coen_id": "$coen_id"&#xd;    }&#xd;}</result>
       <param name="porc_llenado" sqlType="STRING"/>
       <param name="mts_cubicos" sqlType="STRING"/>
@@ -808,8 +808,8 @@
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="ordTransGetPorCase" useConfig="semaresiduosDS">
-      <sql>select OT.ortr_id, OT.fec_retiro, OT.case_id, OT.fec_alta, &#xd;  OT.difi_id, T.valor as difi_nombre, OT.sotr_id&#xd;  from log.ordenes_transporte OT, core.tablas T&#xd;  where OT.case_id = :case_id &#xd;  and OT.difi_id = T.tabl_id</sql>
-      <result outputType="json">{"ordenTransporte":&#xd;  {&#xd;    "ortr_id": "$ortr_id",&#xd;    "fec_retiro": "$fec_retiro",&#xd;    "case_id": "$case_id",&#xd;    "fec_alta": "$fec_alta",&#xd;    "difi_id": "$difi_id",&#xd;    "difi_nombre": "$difi_nombre",&#xd;    "sotr_id": "$sotr_id"      &#xd;  }&#xd;}</result>
+      <sql>select OT.ortr_id, OT.fec_retiro, OT.case_id, OT.fec_alta, &#xd;  OT.difi_id, T.valor as difi_nombre, OT.sotr_id, OT.teot_id&#xd;  from log.ordenes_transporte OT, core.tablas T&#xd;  where OT.case_id = :case_id &#xd;  and OT.difi_id = T.tabl_id</sql>
+      <result outputType="json">{"ordenTransporte":&#xd;  {&#xd;    "ortr_id": "$ortr_id",&#xd;    "fec_retiro": "$fec_retiro",&#xd;    "case_id": "$case_id",&#xd;    "fec_alta": "$fec_alta",&#xd;    "difi_id": "$difi_id",&#xd;    "difi_nombre": "$difi_nombre",&#xd;    "sotr_id": "$sotr_id",&#xd;    "teot_id": "$teot_id"      &#xd;  }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
    <query id="contenedoresEntregadosRegistraIngreso" useConfig="semaresiduosDS">
