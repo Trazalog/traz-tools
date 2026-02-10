@@ -157,6 +157,32 @@
       <result outputType="json">{&#xd;   "contenedor":{&#xd;      "ortr_id":"$ortr_id",&#xd;      "fec_alta":"$fec_alta",&#xd;      "estado":"$estado",&#xd;      "dominio":"$dominio",&#xd;      "descripcion":"$descripcion",&#xd;      "img_vehiculo":"$img_vehiculo",&#xd;      "tara":"$tara",&#xd;      "img_chofer":"$img_chofer",&#xd;      "nom_chofer":"$nom_chofer",&#xd;      "documento":"$documento",&#xd;      "cont_id":"$cont_id",&#xd;      "codigo_contenedor":"$codigo_contenedor",&#xd;      "peso_neto":"$peso_neto",&#xd;      "observaciones_descarga":"$observaciones_descarga",&#xd;      "contenido_descarga":"$contenido_descarga",&#xd;      "equi_id_pesado":"$equi_id_pesado"&#xd;&#xd;   }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>
    </query>
+   <query id="getIncidenciaFiltro" useConfig="semaresiduosDS2">
+      <sql>WITH params AS (&#xd;    SELECT &#xd;        CAST(NULLIF(:fecha_desde,'TODOS') AS DATE) AS fecha_desde,&#xd;        CAST(NULLIF(:fecha_hasta,'TODOS') AS DATE) AS fecha_hasta,&#xd;        CAST(NULLIF(:tran_id,'TODOS') AS INTEGER)  AS tran_id,&#xd;        CAST(NULLIF(:sotr_id,'TODOS') AS INTEGER)  AS sotr_id,&#xd;        NULLIF(:tiin_id,'TODOS')  AS tiin_id&#xd;)&#xd;SELECT&#xd;    i.inci_id,&#xd;    i.descripcion,&#xd;    i.fecha,&#xd;    i.num_acta,&#xd;    i.adjunto,&#xd;    i.usuario_app,&#xd;    ti.valor AS tipo_incidencia,&#xd;    tc.valor AS tipo_carga,&#xd;    td.valor AS disposicion_final,&#xd;    ot.tran_id,&#xd;    ot.ortr_id,&#xd;    ot.sotr_id,&#xd;    t.razon_social as transportista,&#xd;    st.razon_social as solicitante&#xd;FROM ins.incidencias i&#xd;LEFT JOIN core.tablas ti ON ti.tabl_id = i.tiin_id&#xd;LEFT JOIN core.tablas tc ON tc.tabl_id = i.tica_id&#xd;LEFT JOIN core.tablas td ON td.tabl_id = i.difi_id&#xd;LEFT JOIN log.ordenes_transporte ot ON ot.ortr_id = i.ortr_id&#xd;left join log.transportistas t on t.tran_id = ot.tran_id&#xd;left join log.solicitantes_transporte st on st.sotr_id = ot.sotr_id&#xd;CROSS JOIN params p&#xd;WHERE&#xd;    i.eliminado = 0&#xd;    AND (p.fecha_desde IS NULL OR i.fec_alta &gt;= p.fecha_desde)&#xd;    AND (p.fecha_hasta IS NULL OR i.fec_alta &lt;= p.fecha_hasta)&#xd;    AND (p.tran_id IS NULL OR ot.tran_id = p.tran_id)&#xd;    AND (p.sotr_id IS NULL OR ot.sotr_id = p.sotr_id)&#xd;    AND (p.tiin_id IS NULL OR i.tiin_id = p.tiin_id)&#xd;ORDER BY i.inci_id;</sql>
+      <result outputType="json">{&#xd;   "incidencias":{&#xd;      "incidencia":[&#xd;         {&#xd;            "inci_id":"$inci_id",&#xd;            "descripcion":"$descripcion",&#xd;            "fecha":"$fecha",&#xd;            "num_acta":"$num_acta",&#xd;            "adjunto":"$adjunto",&#xd;            "usuario_app":"$usuario_app",&#xd;            "tipo_incidencia":"$tipo_incidencia",&#xd;            "tipo_carga":"$tipo_carga",&#xd;            "disposicion_final":"$disposicion_final",&#xd;            "transportista":"$transportista",&#xd;            "solicitante":"$solicitante",&#xd;            "ortr_id":"$ortr_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="fecha_desde" sqlType="STRING"/>
+      <param name="fecha_hasta" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="tiin_id" sqlType="STRING"/>
+   </query>
+   <query id="getIncidenciaFiltroPaginado" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    i.inci_id,&#xd;    i.descripcion,&#xd;    i.fecha,&#xd;    i.num_acta,&#xd;    i.adjunto,&#xd;    i.usuario_app,&#xd;    ti.valor as tipo_incidencia,&#xd;    tc.valor as tipo_carga,&#xd;    td.valor as disposicion_final,&#xd;    ot.tran_id,&#xd;    ot.ortr_id,&#xd;    ot.sotr_id,&#xd;    t.razon_social as transportista,&#xd;    st.razon_social as solicitante,&#xd;    COUNT(*) OVER() as total_records&#xd;FROM &#xd;    ins.incidencias i &#xd;LEFT JOIN &#xd;    core.tablas ti ON ti.tabl_id = i.tiin_id &#xd;LEFT JOIN &#xd;    core.tablas tc ON tc.tabl_id = i.tica_id &#xd;LEFT JOIN &#xd;    core.tablas td ON td.tabl_id = i.difi_id &#xd;LEFT JOIN &#xd;    log.ordenes_transporte ot ON ot.ortr_id = i.ortr_id &#xd;LEFT JOIN &#xd;    log.transportistas t ON t.tran_id = ot.tran_id &#xd;LEFT JOIN &#xd;    log.solicitantes_transporte st ON st.sotr_id = ot.sotr_id,&#xd;    (SELECT :fecha_desde fecha_desde_param) AS p1,&#xd;    (SELECT :fecha_hasta fecha_hasta_param) AS p2,&#xd;    (SELECT :tran_id tran_id_param) AS p3,&#xd;    (SELECT :sotr_id sotr_id_param) AS p4,&#xd;    (SELECT :tiin_id tiin_id_param) AS p5,  &#xd;    (SELECT :search search_param) AS p6&#xd;WHERE &#xd;    i.eliminado = 0&#xd;    AND (&#xd;        p1.fecha_desde_param = 'TODOS' &#xd;        OR p1.fecha_desde_param = '' &#xd;        OR i.fecha &gt;= CAST(p1.fecha_desde_param AS DATE)&#xd;    )&#xd;    AND (&#xd;        p2.fecha_hasta_param = 'TODOS' &#xd;        OR p2.fecha_hasta_param = '' &#xd;        OR i.fecha &lt;= CAST(p2.fecha_hasta_param AS DATE)&#xd;    )&#xd;    AND (&#xd;        p3.tran_id_param = 'TODOS' &#xd;        OR p3.tran_id_param = '' &#xd;        OR ot.tran_id = CAST(p3.tran_id_param AS INTEGER)&#xd;    )&#xd;    AND (&#xd;        p4.sotr_id_param = 'TODOS' &#xd;        OR p4.sotr_id_param = '' &#xd;        OR ot.sotr_id = CAST(p4.sotr_id_param AS INTEGER)&#xd;    )&#xd;    AND (&#xd;        p5.tiin_id_param = 'TODOS' &#xd;        OR p5.tiin_id_param = '' &#xd;        OR i.tiin_id = p5.tiin_id_param&#xd;    )&#xd;    AND (&#xd;        p6.search_param = 'TODOS' &#xd;        OR p6.search_param = '' &#xd;        OR LOWER(i.descripcion) LIKE LOWER('%' || p6.search_param || '%')&#xd;        OR LOWER(t.razon_social) LIKE LOWER('%' || p6.search_param || '%')&#xd;        OR LOWER(st.razon_social) LIKE LOWER('%' || p6.search_param || '%')&#xd;        OR CAST(i.inci_id AS TEXT) LIKE ('%' || p6.search_param || '%')&#xd;    )&#xd;ORDER BY &#xd;    i.inci_id DESC&#xd;LIMIT &#xd;    CAST(:limit AS INTEGER) &#xd;OFFSET &#xd;    CAST(:offset AS INTEGER);</sql>
+      <result outputType="json">{&#xd;   "incidencias":{&#xd;      "incidencia":[&#xd;         {&#xd;            "inci_id":"$inci_id",&#xd;            "descripcion":"$descripcion",&#xd;            "fecha":"$fecha",&#xd;            "num_acta":"$num_acta",&#xd;            "adjunto":"$adjunto",&#xd;            "usuario_app":"$usuario_app",&#xd;            "tipo_incidencia":"$tipo_incidencia",&#xd;            "tipo_carga":"$tipo_carga",&#xd;            "disposicion_final":"$disposicion_final",&#xd;            "transportista":"$transportista",&#xd;            "solicitante":"$solicitante",&#xd;            "ortr_id":"$ortr_id",&#xd;              }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="fecha_desde" sqlType="STRING"/>
+      <param name="fecha_hasta" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="tiin_id" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+   </query>
+   <query id="getInfoOtEquipoMunicipio" useConfig="semaresiduosDS2">
+      <sql>select ot.ortr_id, c.descripcion , c.tara ,tot.teot_id ,c.cont_id, e.equi_id, e.dominio, e.imagen, c.descripcion as contenedor, c.imagen as imagencontenedor, ce.coen_id&#xd;from log.ordenes_transporte ot &#xd;join log.templates_orden_transporte tot on tot.teot_id = ot.teot_id &#xd;join core.equipos e on e.equi_id = tot.equi_id &#xd;join log.contenedores c on c.cont_id = e.cont_id&#xd;join log.contenedores_entregados ce on ce.ortr_id = ot.ortr_id&#xd;where ot.ortr_id = cast(:ortr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "orden_transportes":{&#xd;      "orden_transporte":[&#xd;         {&#xd;            "ortr_id":"$ortr_id",&#xd;            "dominio":"$dominio",&#xd;            "cont_id":"$cont_id",&#xd;            "equi_id":"$equi_id",&#xd;            "teot_id":"$teot_id",&#xd;            "tara":"$tara",&#xd;            "imagen":"$imagen",&#xd;            "contenedor":"$contenedor",&#xd;            "imagencontenedor":"$imagencontenedor",&#xd;            "coen_id":"$coen_id",&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/choferes/{tran_id}">
       <call-query href="choferesGetPorTransportistas">
          <with-param name="tran_id" query-param="tran_id"/>
@@ -304,6 +330,23 @@
    <resource method="GET" path="/contenedoresEntregadosV2/info/salida/case/{case_id}">
       <call-query href="contenedoresEntregadosInfoSalidaGetV2">
          <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/incidencias/fecha_desde/{fecha_desde}/fecha_hasta/{fecha_hasta}/transportista/{tran_id}/solicitante/{sotr_id}/tipo_infraccion/{tiin_id}/limit/{limit}/offset/{offset}/search/{search}">
+      <call-query href="getIncidenciaFiltroPaginado">
+         <with-param name="fecha_desde" query-param="fecha_desde"/>
+         <with-param name="fecha_hasta" query-param="fecha_hasta"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+         <with-param name="tiin_id" query-param="tiin_id"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/orden/transporte/municipio/{ortr_id}">
+      <call-query href="getInfoOtEquipoMunicipio">
+         <with-param name="ortr_id" query-param="ortr_id"/>
       </call-query>
    </resource>
 </data>
