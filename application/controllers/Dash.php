@@ -30,6 +30,13 @@ class Dash extends CI_Controller {
 			$footer = $this->Tablas->obtenerTabla('configuraciones_uitoolsfotterCopyright');
 			$data['copyright'] = $footer['data'][0]->valor;
 
+			//logo de navbar configurado en core.tablas 
+			$footer = $this->Tablas->obtenerTabla('configuraciones_uitoolsLogoNavbar');
+			$data['logo_navbar'] = $footer['data'][0]->valor;
+			$data['estilo_logo_navbar'] = $footer['data'][0]->valor2;
+			$data['texto_logo_navbar'] = $footer['data'][0]->valor3;
+
+
 			$this->load->view('layout/Admin',$data);
 		}else{
 			log_message("DEBUG","#TRAZA | CORE | Dash | index() >> Sesion vencida");
