@@ -127,10 +127,23 @@
         <!-- Header Navbar: style can be found in header.less -->
 
 
+        <!-- CONFIGURACION DE LOGO NAVBAR - DATOS CONFIGURADOS EN CORE.TABLAS  -->
         <a href="<?php echo base_url() ?>"  class="logo">
             <!-- </span> -->
-            <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px; height: auto !important;">
-            <span class="trazalog">TRAZALOG </span>
+            <img src="<?php echo base_url() . $logo_navbar ?>" alt="tools" class="brand-image img-circle" style="<?php echo $estilo_logo_navbar ?>">
+           
+            <?php
+
+                /* ESTILOS SOLO PARA TRAZALOG TOOLS */
+                if( $texto_logo_navbar == 'TRAZALOG')
+                {
+                    echo '<span class="trazalog">'.$texto_logo_navbar.'</span>';
+                }elseif($texto_logo_navbar != ''){
+                    echo '<span>'.$texto_logo_navbar.'</span>';
+                }
+            ?>
+
+            <!-- <span class="trazalog">TRAZALOG</span> -->
             <!-- <span class="">TOOLS</strong></span> -->
             <!-- </span> -->
         </a>
