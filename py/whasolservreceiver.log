@@ -1,0 +1,77 @@
+Received message 'TTOOLS-SOLSERV-4' from whatsapp:+5492644631016
+Session step is 0
+obteniendo datos equ de 4
+equi url http://10.142.0.11:8283/services/MANDataService/equipo/4
+Received message 'TTOOLS-SOLSERV-4' from whatsapp:+5492644631016
+Session step is 0
+obteniendo datos equ de 4
+equi url http://10.142.0.11:8283/services/MANDataService/equipo/4
+Traceback (most recent call last):
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/util/connection.py", line 85, in create_connection
+    raise err
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/util/connection.py", line 73, in create_connection
+    sock.connect(sa)
+TimeoutError: [Errno 110] Connection timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 493, in _make_request
+    conn.request(
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/connection.py", line 445, in request
+    self.endheaders()
+  File "/usr/lib/python3.12/http/client.py", line 1331, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1091, in _send_output
+    self.send(msg)
+  File "/usr/lib/python3.12/http/client.py", line 1035, in send
+    self.connect()
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/connection.py", line 276, in connect
+    self.sock = self._new_conn()
+                ^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/connection.py", line 207, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<urllib3.connection.HTTPConnection object at 0x7a9d765e5670>, 'Connection to 10.142.0.11 timed out. (connect timeout=None)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='10.142.0.11', port=8283): Max retries exceeded with url: /services/MANDataService/equipo/4 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7a9d765e5670>, 'Connection to 10.142.0.11 timed out. (connect timeout=None)'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/win/dev/git/traz-comp-whareceiver/py/WhaSolServReceiver.py", line 29, in obtener_datos_equipo
+    equipment_response = requests.get(equi_url,headers=headers)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/requests/api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/win/dev/git/traz-comp-whareceiver/.venv/lib/python3.12/site-packages/requests/adapters.py", line 688, in send
+    raise ConnectTimeout(e, request=request)
+requests.exceptions.ConnectTimeout: HTTPConnectionPool(host='10.142.0.11', port=8283): Max retries exceeded with url: /services/MANDataService/equipo/4 (Caused by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x7a9d765e5670>, 'Connection to 10.142.0.11 timed out. (connect timeout=None)'))
+
