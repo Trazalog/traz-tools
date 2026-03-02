@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?><artifact name="ALMDataService" version="1.0.0" type="service/dataservice" serverRole="EnterpriseServiceBus">
+    <file>ALMDataService-1.0.0.dbs</file>
+</artifact>

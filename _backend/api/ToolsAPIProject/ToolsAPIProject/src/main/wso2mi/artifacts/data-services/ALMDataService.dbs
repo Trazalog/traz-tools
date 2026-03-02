@@ -1,0 +1,1118 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="ALMDataService" transports="http https local">
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="getArticulos" useConfig="ToolsDataSource">
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock, unidad_medida as um, (array_agg(C.batch_id order by batch_id))[1] as batch_id&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = false&#xd;GROUP BY A.arti_id</sql>
+      <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock",&#xd;                "batch_id": "$batch_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setDetallePedido" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_deta_pedidos_materiales&#xd;(cantidad, pema_id, arti_id)&#xd;VALUES(cast(:cantidad as float4), cast(:pema_id as integer), cast(:arti_id as integer));</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="setPedido" useConfig="ToolsDataSource">
+      <sql>INSERT INTO   alm.alm_pedidos_materiales&#xd;(fecha, justificacion, case_id, estado, empr_id, batch_id)&#xd;VALUES(TO_DATE(:fecha, 'YYYY-MM-DD'), :justificacion, cast(:case_id as integer), :estado, cast(:empr_id as integer), cast(:batch_id as integer)) returning pema_id;</sql>
+      <result outputType="json">{&#xd;  "respuesta": {&#xd;    "pema_id":"$pema_id"&#xd;  }&#xd;}</result>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="justificacion" sqlType="STRING"/>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteDetalle" useConfig="ToolsDataSource">
+      <sql>DELETE FROM alm.alm_deta_pedidos_materiales&#xd;WHERE pema_id = cast(:pema_id as integer)</sql>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="getPedido" useConfig="ToolsDataSource">
+      <sql>select *&#xd;from alm.alm_pedidos_materiales&#xd;where pema_id = cast(:pema_id as integer)&#xd;and empr_id = cast(:empr_id as integer)&#xd;and not eliminado</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "case_id":"$case_id",&#xd;            "estado":"$estado",&#xd;            "batch_id":"$batch_id",&#xd;            "fecha":"$fecha",&#xd;            "justificacion":"$justificacion",&#xd;            "motivo_rechazo":"$motivo_rechazo",&#xd;            "@getDetallePedido":"$pema_id-&gt;pema_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getDetallePedido" useConfig="ToolsDataSource">
+      <sql>select pm.*,coalesce(pm.resto,0) as xresto, a.barcode, a.descripcion&#xd;from alm.alm_deta_pedidos_materiales pm&#xd;join alm.alm_articulos a&#xd;on a.arti_id = pm.arti_id&#xd;where pema_id = cast(:pema_id as integer)&#xd;and not pm.eliminado</sql>
+      <result outputType="json">{&#xd;  "detalles": {&#xd;    "detalle": [&#xd;        {&#xd;            "depe_id":"$depe_id",&#xd;            "cantidad":"$cantidad",&#xd;            "resto":"$xresto",&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "pema_id":"$pema_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="getPedidoXBatch" useConfig="ToolsDataSource">
+      <sql>SELECT *&#xd;FROM alm.alm_pedidos_materiales&#xd;WHERE batch_id = cast(:batch_id as integer)&#xd;and not eliminado</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "case_id":"$case_id",&#xd;            "estado":"$estado",&#xd;            "batch_id":"$batch_id",&#xd;            "fecha":"$fecha",&#xd;            "justificacion":"$justificacion",&#xd;            "motivo_rechazo":"$motivo_rechazo",&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="getEstablecimiento" useConfig="ToolsDataSource">
+      <sql>SELECT *&#xd; FROM&#xd;prd.establecimientos&#xd;where eliminado = false</sql>
+      <result outputType="json">{&#xd; "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "lng": "$lng",&#xd;          "lat": "$lat",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usuario": "$usuario"&#xd;        }&#xd;      ]&#xd; }&#xd;}</result>
+   </query>
+   <query id="getLote" useConfig="ToolsDataSource">
+      <sql>select RECI.reci_id, reci.nombre, reci.estado from prd.recipientes Reci, alm.alm_depositos Depo&#xd;where reci.depo_id = depo.depo_id AND&#xd;depo.esta_id = CAST(:esta_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;"recipientes":&#xd;      {"recipiente":&#xd;        [&#xd;          {&#xd;          "id": "$reci_id",&#xd;          "titulo":"$nombre",&#xd;          "estado":"$estado"&#xd;          }          &#xd;        ]&#xd;      }&#xd; }</result>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="getArticulos2" useConfig="ToolsDataSource">
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = 1&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
+      <result outputType="json">{&#xd;    "materias": {&#xd;        "materia": [&#xd;            {&#xd;                "id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+   </query>
+   <query id="getArticulo" useConfig="ToolsDataSource">
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = 1&#xd;AND A.eliminado = FALSE&#xd;AND A.arti_id = CAST(:arti_id as INTEGER)&#xd;GROUP BY A.arti_id</sql>
+      <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="setNotaPedido" keyColumns="pema_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+      <sql>insert into alm.alm_pedidos_materiales(fecha, empr_id, batch_id) &#xd;values(TO_DATE(:fecha, 'YYYY-MM-DD'), CAST(:empr_id AS INTEGER), CAST(:batch_id AS INTEGER))</sql>
+      <result outputType="json">{&#xd; "nota_id": { &#xd;   "pedido_id": "$pema_id" &#xd; }&#xd;}&#xd;&#xd;</result>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="getArticuloPorId" useConfig="ToolsDataSource">
+      <sql>select &#xd;   arti_id, barcode, descripcion &#xd;from &#xd;   alm.alm_articulos &#xd;where &#xd;   arti_id = CAST(:arti_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd; "articulo":{&#xd;     "arti_id": "$arti_id",&#xd;     "barcode": "$barcode",&#xd;     "descripcion": "$descripcion"&#xd;  }&#xd;} </result>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="getinfoPedMatPorCaseId" useConfig="ToolsDataSource">
+      <sql>select &#xd; PM.pema_id, PM.fecha, PM.justificacion, PM.estado, LO.lote_id&#xd;from &#xd; alm.alm_pedidos_materiales PM&#xd;join prd.lotes LO on LO.batch_id = PM.batch_id&#xd;where &#xd; case_id = CAST(:case_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "info":{&#xd;      "pema_id": "$pema_id",&#xd;      "lote_id": "$lote_id",&#xd;      "fecha": "$fecha",&#xd;      "justificacion": "$justificacion",&#xd;      "estado": "$estado"&#xd;       }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getArticulosXTipo" useConfig="ToolsDataSource">
+      <sql>select &#xd;  ar.arti_id&#xd;  , AR.descripcion&#xd;  , AR.barcode&#xd;  , ar.unidad_medida um&#xd;  , COALESCE(sum(lo.cantidad),0) stock&#xd;from &#xd;  core.tablas t&#xd;,alm.alm_articulos AR&#xd;left join alm.alm_lotes lo on lo.arti_id  = ar.arti_id &#xd;  and lo.eliminado = false &#xd;  and lo.estado = 'AC'&#xd;  and lo.fec_vencimiento &gt;=  date_trunc('day',now())&#xd;,(select :tipo tipo) param&#xd;where t.tabla = 'tipo_articulo'&#xd;and AR.tiar_id like case when param.tipo = 'TODOS' then AR.tiar_id else '%'|| param.tipo || '%' end&#xd;and AR.empr_id = cast(:empr_id as integer)  &#xd;group by ar.arti_id</sql>
+      <result outputType="json">{&#xd;  "articulos":{&#xd;     "articulo":[&#xd;        {&#xd;          "arti_id": "$arti_id",&#xd;          "descripcion": "$descripcion",&#xd;          "barcode":"$barcode",&#xd;          "um":"$um",&#xd;          "stock":"$stock"&#xd;                }&#xd;      ]&#xd;    }&#xd;}</result>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="extraerCantidadLote" useConfig="ToolsDataSource">
+      <sql>update alm.alm_lotes&#xd;set cantidad = cantidad - CAST(:cantidad as FLOAT8)&#xd;where batch_id = CAST(:batch_id as VARCHAR)&#xd;and empr_id = CAST(:empr_id as INTEGER)</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="movimientoStock" useConfig="ToolsDataSource">
+      <sql>insert&#xd;	into&#xd;	alm.alm_lotes (prov_id,&#xd;	arti_id,&#xd;	depo_id,&#xd;	codigo,&#xd;	fec_vencimiento,&#xd;	cantidad,&#xd;	empr_id,&#xd;	user_id,&#xd;	estado,batch_id)&#xd;select prov_id,&#xd;	arti_id,&#xd;	depo_id,&#xd;	codigo,&#xd;	fec_vencimiento,&#xd;	cast(:cantidad as float8),&#xd;	empr_id,&#xd;	user_id,&#xd;	estado&#xd; ,cast(:batch_id as VARCHAR) from alm.alm_lotes&#xd;where batch_id = CAST(:old_batch_id as VARCHAR)</sql>
+      <param name="batch_id" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="old_batch_id" sqlType="STRING"/>
+   </query>
+   <query id="setTabla" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.utl_tablas&#xd;(tabla, valor, descripcion)&#xd;VALUES(:tabla, :valor, :descripcion);</sql>
+      <param name="tabla" sqlType="STRING"/>
+      <param name="valor" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+   </query>
+   <query id="getEstablecimiento2" useConfig="ToolsDataSource">
+      <sql>SELECT * FROM prd.establecimientos&#xd;WHERE esta_id = CAST(:esta_id as INTEGER)</sql>
+      <result outputType="json">{&#xd;    "establecimientos":{&#xd;        "establecimiento":[&#xd;            {&#xd;                "esta_id":"$esta_id",&#xd;                "nombre":"$nombre"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="setEstablecimiento" useConfig="ToolsDataSource">
+      <sql>INSERT INTO prd.establecimientos (nombre, lng, lat, calle, altura, localidad, pais, fec_alta, usuario, empr_id) &#xd;VALUES(:nombre, :longitud, :latitud, :calles, :altura, :localidad, :pais, now(), :usuario, CAST(:empr_id as integer));</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="longitud" sqlType="STRING"/>
+      <param name="latitud" sqlType="STRING"/>
+      <param name="calles" sqlType="STRING"/>
+      <param name="altura" sqlType="STRING"/>
+      <param name="localidad" sqlType="STRING"/>
+      <param name="pais" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="delEstablecimiento" useConfig="ToolsDataSource">
+      <sql>UPDATE&#xd;prd.establecimientos &#xd;set eliminado = true&#xd;where esta_id = CAST(:esta_id as integer)</sql>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="getContenidoRecipiente" useConfig="ToolsDataSource">
+      <sql>select al.arti_id, arti.barcode, al.codigo as lote_id, al.cantidad &#xd;from prd.lotes  pl&#xd;join alm.alm_lotes al on pl.batch_id = al.batch_id &#xd;join alm.alm_articulos arti on arti.arti_id = al.arti_id&#xd;where reci_id = CAST(:reci_id as integer)</sql>
+      <result outputType="json">{&#xd;    "batches":{&#xd;       "batch":[&#xd;           {&#xd;               "arti_id":"$arti_id",&#xd;               "barcode":"$barcode",&#xd;               "cantidad":"$cantidad",&#xd;               "lote_id":"$lote_id"&#xd;           }&#xd;       ] &#xd;    }&#xd;}</result>
+      <param name="reci_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositosEstablecimiento" useConfig="ToolsDataSource">
+      <sql>SELECT a.depo_id, a.descripcion, e.esta_id, e.nombre&#xd;FROM alm.alm_depositos a &#xd;join prd.establecimientos e on e.esta_id = a.esta_id&#xd;WHERE e.esta_id = CAST(:esta_id as integer)&#xd;AND a.eliminado = false</sql>
+      <result outputType="json">{&#xd;   "depositos":{&#xd;      "deposito":[&#xd;         {&#xd;            "depo_id":"$depo_id",&#xd;            "descripcion":"$descripcion",&#xd;            "esta_id":"$esta_id",&#xd;            "esta_nombre":"$nombre"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="getRecipientesDepositoEstablecimiento" useConfig="ToolsDataSource">
+      <sql>SELECT r.reci_id, r.nombre as reci_nombre, a.depo_id, a.descripcion as depo_descripcion, e.esta_id, e.nombre as esta_nombre&#xd;FROM prd.recipientes r&#xd;JOIN alm.alm_depositos a ON a.depo_id = r.depo_id&#xd;JOIN prd.establecimientos e ON e.esta_id = a.esta_id&#xd;WHERE r.eliminado = 0&#xd;AND a.depo_id = CAST(:depo_id as integer) AND a.eliminado = false&#xd;AND e.esta_id = CAST(:esta_id as integer)</sql>
+      <result outputType="json">{&#xd;   "recipientes":{&#xd;      "recipiente":[&#xd;         {&#xd;            "reci_id":"$reci_id",&#xd;            "reci_nombre":"$reci_nombre",&#xd;            "depo_id":"$depo_id",&#xd;            "depo_descripcion":"$depo_descripcion",&#xd;            "esta_id":"$esta_id",&#xd;            "esta_nombre":"$esta_nombre"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+   </query>
+   <query id="setRecipiente" useConfig="ToolsDataSource">
+      <sql>INSERT INTO prd.recipientes (tipo,nombre,empr_id,depo_id) &#xd;VALUES &#xd;(:tipo,:patente, CAST(:empr_id as INTEGER), CAST(:depo_id as INTEGER))</sql>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="patente" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="setRecipienteConMotrId" keyColumns="reci_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+      <sql>INSERT INTO prd.recipientes (tipo,nombre,empr_id,depo_id, motr_id) &#xd;VALUES &#xd;(:tipo,:patente, CAST(:empr_id as INTEGER), CAST(:depo_id as INTEGER), CAST(:motr_id as INTEGER))</sql>
+      <result outputType="json">{&#xd; "resultado":{"reci_id":"$reci_id"}&#xd;}</result>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="patente" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="motr_id" sqlType="STRING"/>
+   </query>
+   <query id="getAllRecipientes" useConfig="ToolsDataSource">
+      <sql>SELECT r.reci_id, r.tipo as reci_tipo, r.nombre as reci_nombre, cast(r.fec_alta as date) as reci_fec_alta, &#xd;d.depo_id, d.descripcion as depo_descripcion, e.esta_id, e.nombre as esta_nombre&#xd;FROM prd.recipientes r &#xd;join alm.alm_depositos d on d.depo_id = r.depo_id&#xd;join prd.establecimientos e on e.esta_id = d.esta_id&#xd;where r.eliminado = 0&#xd;order by r.fec_alta desc, d.esta_id asc, r.tipo asc, d.descripcion asc, r.nombre asc</sql>
+      <result outputType="json">{&#xd;   "recipientes":{&#xd;      "recipiente":[&#xd;         {&#xd;            "reci_id":"$reci_id", &#xd;            "reci_tipo":"$reci_tipo", &#xd;            "reci_nombre":"$reci_nombre", &#xd;            "reci_fec_alta":"$reci_fec_alta ", &#xd;            "depo_id":"$depo_id", &#xd;            "depo_descripcion":"$depo_descripcion", &#xd;            "esta_id":"$esta_id", &#xd;            "esta_nombre":"$esta_nombre"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="deleteRecipiente" useConfig="ToolsDataSource">
+      <sql>UPDATE prd.recipientes&#xd;SET eliminado = 1 &#xd;WHERE reci_id = cast(:reci_id as int8)</sql>
+      <param name="reci_id" sqlType="STRING"/>
+   </query>
+   <query id="updateRecipiente" useConfig="ToolsDataSource">
+      <sql>UPDATE prd.recipientes&#xd;SET tipo = :reci_tipo, nombre = :reci_nombre&#xd;WHERE reci_id = cast(:reci_id as int8)</sql>
+      <param name="reci_tipo" sqlType="STRING"/>
+      <param name="reci_nombre" sqlType="STRING"/>
+      <param name="reci_id" sqlType="STRING"/>
+   </query>
+   <query id="getRecipientesFull" useConfig="ToolsDataSource">
+      <sql>select re.reci_id&#xd;      ,re.nombre&#xd;      ,re.tipo&#xd;      ,ta.valor care_id&#xd;      ,ta.descripcion categoria_recipiente&#xd;      ,re.estado&#xd;      ,re.depo_id&#xd;      ,es.esta_id&#xd;       ,re.row&#xd;        ,re.col&#xd;from prd.recipientes as re&#xd;     ,alm.alm_depositos as de  &#xd;	 ,prd.establecimientos as es &#xd;	 ,core.tablas ta&#xd;     ,(select :tipo as tipo) as tipo&#xd;     ,(SELECT :care_id AS care_id) AS care&#xd;     ,(select :estado as estado) as estado&#xd;     ,(select :esta_id  as esta_id) as esta&#xd;     ,(SELECT :depo_id AS depo_id) AS depo&#xd;where de.depo_id = re.depo_id&#xd;AND es.esta_id =  de.esta_id&#xd;AND re.care_id = ta.tabl_id &#xd;AND re.tipo = case when tipo.tipo = 'TODOS' then re.tipo else tipo.tipo end&#xd;and re.estado = case when estado.estado = 'TODOS' then re.estado else estado.estado end &#xd;and re.care_id = case when care.care_id = 'TODOS' then re.care_id else care.care_id end &#xd;and re.depo_id = case when depo.depo_id = 'TODOS' then re.depo_id else CAST(depo.depo_id AS integer) end &#xd;and es.esta_id = case when esta.esta_id = 'TODOS' then es.esta_id else CAST(esta.esta_id AS integer) END</sql>
+      <result outputType="json">{&#xd;    "recipientes": {&#xd;        "recipiente": [&#xd;            {&#xd;                "reci_id": "$reci_id",&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "care_id":"$care_id",&#xd;                "categoria_recipiente":"$categoria_recipiente",&#xd;                "estado": "$estado",&#xd;                "depo_id": "$depo_id",&#xd;                "esta_id":"$esta_id",&#xd;                "row":"$row",&#xd;                "col":"$col"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="care_id" sqlType="STRING"/>
+   </query>
+   <query id="getEstablecimeintosXEmpresa" useConfig="ToolsDataSource">
+      <sql>select *&#xd;from prd.establecimientos e &#xd;where e.empr_id =  cast(:empr_id as integer)&#xd;and e.eliminado = false</sql>
+      <result outputType="json">{&#xd; "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "lng": "$lng",&#xd;          "lat": "$lat",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usuario": "$usuario"&#xd;        }&#xd;      ]&#xd; }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosTareas" useConfig="ToolsDataSource">
+      <sql>select apm.*&#xd;from tst.rel_tareas_pedidos rtp , alm.alm_pedidos_materiales apm &#xd;where rtp.pema_id = apm.pema_id &#xd;and rtp.tapl_id = cast(:tapl_id as integer)&#xd;and not eliminado</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "estado":"$estado",&#xd;            "fecha":"$fecha",&#xd;            "pema_id":"$pema_id",&#xd;            "case_id":"$case_id",&#xd;            "empr_id":"$empr_id",&#xd;            "@getDetallePedido":"$pema_id-&gt;pema_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="tapl_id" sqlType="STRING"/>
+   </query>
+   <query id="setPedidoTarea" useConfig="ToolsDataSource">
+      <sql>INSERT INTO tst.rel_tareas_pedidos&#xd;(tapl_id, pema_id)&#xd;VALUES(cast(:tapl_id as integer) ,cast(:pema_id as integer));</sql>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="tapl_id" sqlType="STRING"/>
+   </query>
+   <query id="setOrigenPedido" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.origen_pedido_materiales&#xd;(tipo, orig_id, pema_id)&#xd;VALUES(:tipo, cast(:orig_id as integer), cast(:pema_id as integer));</sql>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="orig_id" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="setNuevoPedido" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_pedidos_materiales&#xd;(fecha, estado, empr_id)&#xd;VALUES(TO_DATE(:fecha, 'YYYY-MM-DD'), :estado, cast(:empr_id as integer)) returning pema_id;</sql>
+      <result outputType="json">{&#xd;  "respuesta": {&#xd;    "pema_id":"$pema_id"&#xd;  }&#xd;}</result>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="extraerCantidadLote" useConfig="ToolsDataSource">
+      <sql>update alm_lotes&#xd;set cantidad = cantidad - :cantidad &#xd;where codigo = :batch_id &#xd;and empr_id = :empr_id</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositosPorEstablecimiento" useConfig="ToolsDataSource">
+      <sql>select de.depo_id ,de.descripcion, de.nombre&#xd;from alm.alm_depositos de &#xd;left join core.encargados_depositos ed on ed.depo_id  = de.depo_id  &#xd;WHERE de.esta_id = cast(:esta_id as integer)&#xd;and de.empr_id = cast(:empr_id as integer)&#xd;and ed.user_id = cast(:user_id as integer)&#xd;and de.eliminado = false</sql>
+      <result outputType="json">{"depositos": {&#xd;   "deposito":[&#xd;       {&#xd;        "descripcion":"$descripcion"&#xd;        ,"depo_id":"$depo_id"&#xd;       }&#xd;     ]&#xd;}&#xd;}</result>
+      <param name="esta_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="crearLote" useConfig="ToolsDataSource">
+      <sql>insert&#xd;	into&#xd;	lotes (prov_id,&#xd;	arti_id,&#xd;	depo_id,&#xd;	codigo,&#xd;	fec_vencimiento,&#xd;	cantidad,&#xd;	empr_id,&#xd;	user_id,&#xd;	estado)&#xd;values(:prov_id ,&#xd;:arti_id ,&#xd;:depo_id ,&#xd;:codigo,&#xd;to_date(:fec_ven, 'YYYY-MM-DD'),&#xd;:cantidad ,&#xd;:empr_id ,&#xd;:user_id ,&#xd;:estado)</sql>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="fec_ven" sqlType="STRING"/>
+   </query>
+   <query id="getTiposAjustes" useConfig="ToolsDataSource">
+      <sql>select valor nombre&#xd;      ,valor2 tipo&#xd;      ,tabl_id id &#xd;      from core.tablas&#xd;       where tabla = 'tipos_ajuste_stock'</sql>
+      <result outputType="json">{&#xd;    "tiposAjuste": {&#xd;        "tipoAjuste": [&#xd;            {&#xd;                "nombre": "$nombre",&#xd;                "tipo": "$tipo",&#xd;                "id": "$id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+   </query>
+   <query id="crearAjuste" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.ajustes&#xd;( tipo_ajuste&#xd;, justificacion&#xd;, usuario_app&#xd;, empr_id)&#xd;VALUES&#xd;( :tipo_ajuste&#xd;, :justificacion&#xd;, :usuario_app&#xd;, cast(:empr_id as integer) )</sql>
+      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
+         <element column="1" name="ID" xsdType="integer"/>
+      </result>
+      <param name="tipo_ajuste" sqlType="STRING"/>
+      <param name="justificacion" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="crearDetalleAjuste" useConfig="ToolsDataSource">
+      <sql>call alm.ajuste_detalle_ingresar(&#xd; cast(:ajus_id as integer)&#xd;,cast(:lote_id as integer)&#xd;,cast (:cantidad as float) );</sql>
+      <param name="ajus_id" sqlType="STRING"/>
+      <param name="lote_id" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+   </query>
+   <query id="getLotePorArticuloYDeposito" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;    al.codigo, &#xd;    al.lote_id, &#xd;    al.batch_id, &#xd;    ap.nombre AS proveedor, &#xd;    al.cantidad&#xd;FROM &#xd;    alm.alm_lotes al&#xd;LEFT JOIN &#xd;    alm.alm_proveedores ap ON ap.prov_id = al.prov_id&#xd;LEFT JOIN &#xd;    prd.lotes l ON al.batch_id = l.batch_id&#xd;CROSS JOIN &#xd;    (SELECT :depo_id AS depo_id) param&#xd;WHERE &#xd;    al.arti_id = CAST(:arti_id AS INTEGER) &#xd;    AND al.eliminado = FALSE &#xd;    AND (&#xd;        (al.batch_id IS NOT NULL AND l.estado = 'En Curso') &#xd;        OR al.batch_id IS NULL &#xd;    )&#xd;    AND al.depo_id = CASE &#xd;        WHEN param.depo_id = 'TODOS' THEN al.depo_id &#xd;        ELSE CAST(param.depo_id AS INTEGER) &#xd;    END;</sql>
+      <result outputType="json">{&#xd;  "lotes": {&#xd;    "lote": [&#xd;      {&#xd;        "codigo": "$codigo",&#xd;        "lote_id": "$lote_id",&#xd;        "batch_id": "$batch_id",&#xd;        "proveedor": "$proveedor",&#xd;        "cantidad":"$cantidad"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="getEstablecimientosXEmpresa" useConfig="ToolsDataSource">
+      <sql>SELECT *&#xd; FROM&#xd;prd.establecimientos&#xd;where empr_id = cast(:empr_id as integer)&#xd;and eliminado = false</sql>
+      <result outputType="json">{&#xd; "establecimientos": {&#xd; "establecimiento": [&#xd; {&#xd; "esta_id": "$esta_id",&#xd; "nombre": "$nombre",&#xd; "calle": "$calle",&#xd; "altura": "$altura",&#xd; "localidad": "$localidad",&#xd; "estado": "$estado",&#xd; "pais": "$pais"&#xd; }&#xd; ]&#xd; }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setMovimientoInterno" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+      <sql>INSERT&#xd;	INTO&#xd;	alm.movimientos_internos (num_comprobante,&#xd;	fec_envio,&#xd;        estado,&#xd;	patente,&#xd;	acoplado,&#xd;	conductor,&#xd;	usuario,&#xd;	usuario_app,&#xd;	depo_id_origen,&#xd;	depo_id_destino,&#xd;	empr_id,&#xd;        observaciones_recepcion)&#xd;VALUES(:num_comprobante,&#xd; to_date(:fec_envio, 'YYYY-MM-DD'),&#xd;        'EN_CURSO',&#xd;	:patente,&#xd;	:acoplado,&#xd;	:conductor,&#xd;	current_user,&#xd;	:usuario_app,&#xd;	CAST(:depo_id_origen AS INTEGER ),&#xd;	cast(:depo_id_destino AS INTEGER),&#xd;	cast(:empr_id as integer),&#xd;        :observaciones_recepcion)</sql>
+      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
+         <element column="1" name="ID" xsdType="integer"/>
+      </result>
+      <param name="num_comprobante" sqlType="STRING"/>
+      <param name="fec_envio" sqlType="STRING"/>
+      <param name="patente" sqlType="STRING"/>
+      <param name="acoplado" sqlType="STRING"/>
+      <param name="conductor" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="depo_id_origen" sqlType="STRING"/>
+      <param name="depo_id_destino" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="observaciones_recepcion" sqlType="STRING"/>
+   </query>
+   <query id="setDetaMovimientoInterno" useConfig="ToolsDataSource">
+      <sql>INSERT&#xd;	INTO&#xd;	alm.deta_movimientos_internos (	&#xd;	codigo,&#xd;	cantidad_cargada,	&#xd;	usuario_app,&#xd;	arti_id,&#xd;	lote_id_origen,&#xd;	moin_id)&#xd;VALUES(	:codigo,&#xd;	cast(:cantidad as FLOAT4),	&#xd;	:usuario_app,&#xd;	CAST(:arti_id AS INTEGER),&#xd;	CAST(:lote_id_origen AS INTEGER),&#xd;	CAST(:moin_id AS INTEGER)&#xd;)</sql>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="lote_id_origen" sqlType="STRING"/>
+      <param name="moin_id" sqlType="STRING"/>
+   </query>
+   <query id="getDetalleMovimientoInterno" useConfig="ToolsDataSource">
+      <sql>select  dm.codigo "cod_lote" ,&#xd;        aa.arti_id ,&#xd;		aa.barcode ,&#xd;		aa.descripcion ,&#xd;		al.prov_id ,&#xd;		ap.nombre nom_proveedor,&#xd;		dm.cantidad_cargada,&#xd;                dm.cantidad_recibida,&#xd;		dm.lote_id_origen ,&#xd;		dm.lote_id_destino,&#xd;                dm.demi_id&#xd;from alm.deta_movimientos_internos dm &#xd;,alm.alm_articulos aa &#xd;,alm.alm_lotes al &#xd;,alm.alm_proveedores ap &#xd;where aa.arti_id = dm.arti_id&#xd;and al.lote_id = dm.lote_id_origen &#xd;and ap.prov_id = al.prov_id &#xd;and dm.moin_id = cast(:moin_id as integer)</sql>
+      <result outputType="json">{&#xd;     "detallesMovimientosInternos":{ "detalleMovimientoInterno":[&#xd;         {&#xd;            "cod_lote":"$cod_lote",&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "prov_id":"$prov_id",&#xd;            "nom_proveedor": "$nom_proveedor",&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "cantidad_recibida":"$cantidad_recibida",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "lote_id_destino":"$lote_id_destino",&#xd;            "demi_id":"$demi_id"&#xd;         }&#xd;      ]&#xd;}}</result>
+      <param name="moin_id" optional="false" sqlType="INTEGER"/>
+   </query>
+   <query id="updateMovimientoInterno" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.movimientos_internos&#xd;SET estado = :estado,&#xd;fec_recepcion = to_date(:fec_recepcion, 'YYYY-MM-DD'),&#xd;observaciones_recepcion = :observaciones_recepcion&#xd;WHERE moin_id = cast(:moin_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="fec_recepcion" sqlType="STRING"/>
+      <param name="observaciones_recepcion" sqlType="STRING"/>
+      <param name="moin_id" sqlType="STRING"/>
+   </query>
+   <query id="updateDetaMovimientoInterno" useConfig="ToolsDataSource">
+      <sql>UPDATE&#xd;	alm.deta_movimientos_internos&#xd;SET&#xd;	cantidad_recibida = cast(:cantidad_recibida as float),&#xd;        lote_id_destino = cast(:lote_id_destino as integer),&#xd;        justificacion = :justificacion&#xd;WHERE&#xd;	demi_id = cast(:demi_id as integer)</sql>
+      <param name="cantidad_recibida" sqlType="STRING"/>
+      <param name="demi_id" sqlType="STRING"/>
+      <param name="lote_id_destino" sqlType="STRING"/>
+      <param name="justificacion" sqlType="STRING"/>
+   </query>
+   <query id="deleteMovimientoInterno" useConfig="ToolsDataSource">
+      <sql>UPDATE&#xd;	alm.movimientos_internos&#xd;SET&#xd;	eliminado = true&#xd;WHERE&#xd;	moin_id = cast( :moin_id as integer)</sql>
+      <param name="moin_id" sqlType="STRING"/>
+   </query>
+   <query id="setUpdateLote" useConfig="ToolsDataSource">
+      <sql>insert&#xd;	into&#xd;	alm.alm_lotes (prov_id,&#xd;	arti_id,&#xd;	depo_id,&#xd;	codigo,&#xd;	fec_vencimiento,&#xd;	cantidad,&#xd;	empr_id,&#xd;	estado)&#xd;select&#xd;	cast(:prov_id as integer),&#xd;	cast(:arti_id as integer),&#xd;	cast( :depo_id as integer),&#xd;	:cod_lote,&#xd;	to_date(:fec_vencimiento, 'YYYY-MM-DD'),&#xd;	can.cant ,&#xd;	cast(:empr_id as integer) ,&#xd;	'AC'&#xd;from (select cast( :cantidad as float) cant) can &#xd;on conflict on constraint alm_lotes_un &#xd;do update set cantidad = alm_lotes.cantidad + excluded.cantidad&#xd;returning lote_id</sql>
+      <result outputType="json">{"GeneratedKeys":{"Entry":[{"ID":$lote_id}]}}</result>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="cod_lote" sqlType="STRING"/>
+      <param name="fec_vencimiento" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+   </query>
+   <query id="updateLoteDescontar" returnUpdatedRowCount="true" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_lotes &#xd;SET cantidad = cantidad - cast(:cantidad as float) &#xd;WHERE lote_id = cast (:lote_id as integer)</sql>
+      <result element="UpdatedRowCount" rowName="" useColumnNumbers="true">
+         <element column="1" name="Value" xsdType="integer"/>
+      </result>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="lote_id" sqlType="STRING"/>
+   </query>
+   <query id="getPedidosXOrigen" useConfig="ToolsDataSource">
+      <sql>select apm.pema_id as id_notaPedido,apm.fecha,apm.justificacion,apm.estado&#xd;from alm.alm_pedidos_materiales apm &#xd;join alm.origen_pedido_materiales opm on opm.pema_id = apm.pema_id &#xd;where opm.tipo = :tipo and opm.orig_id = cast(:orig_id as integer)</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;      {&#xd;        "id_notaPedido": "$id_notaPedido",&#xd;        "fecha": "$fecha",&#xd;        "justificacion": "$justificacion",&#xd;        "estado": "$estado"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="orig_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositosPorEmpresa" useConfig="ToolsDataSource">
+      <sql>select ad.depo_id,&#xd;ad.descripcion,&#xd;ad.nombre,&#xd;u.id as user_id,&#xd;ad.empr_id,&#xd;CASE WHEN u.id IS NULL THEN '' ELSE u.first_name || ' '|| u.last_name END encargado&#xd;from alm.alm_depositos ad &#xd;left join core.encargados_depositos ed on ed.depo_id = ad.depo_id &#xd;left join seg.users u on u.id = ed.user_id&#xd;where u.id = cast(:user_id as integer) and ad.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{"depositos": {&#xd;   "deposito":[&#xd;       {&#xd;        "descripcion":"$descripcion",&#xd;        "nombre": "$nombre",&#xd;        "depo_id":"$depo_id"&#xd;       }&#xd;     ]&#xd;}&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="getLoteId" useConfig="ToolsDataSource">
+      <sql>select lote_id &#xd;from alm.alm_lotes&#xd;where prov_id=cast(:prov_id as integer)&#xd;and arti_id=cast(:arti_id as integer)&#xd;and depo_id=cast(:depo_id as integer)&#xd;and empr_id=cast(:empr_id as integer)&#xd;and codigo=:cod_lote</sql>
+      <result outputType="json">{&#xd; "lote": {&#xd; "lote_id": "$lote_id"&#xd; }&#xd;}</result>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="cod_lote" sqlType="STRING"/>
+   </query>
+   <query id="getHistoricoMovimientos" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    mh.*,&#xd;    TO_CHAR(mh.fec_alta, 'YYYY-MM-DD HH24:MI:SS') AS fec_alta_formatted&#xd;FROM&#xd;    alm.movimientos_historicos_vw mh,&#xd;    (&#xd;        SELECT&#xd;            :depo_id AS depo_id,&#xd;            :tipo AS tipo,&#xd;            :arti_id AS arti_id,&#xd;            :lote_id AS lote_id,&#xd;            :empr_id AS empr_id&#xd;    ) param&#xd;WHERE&#xd;    mh.fec_alta BETWEEN TO_DATE(:fec1, 'YYYY-MM-DD') AND TO_DATE(:fec2, 'YYYY-MM-DD')&#xd;    AND CAST(param.empr_id AS INTEGER) = mh.empr_id&#xd;    AND mh.depo_id = CASE&#xd;        WHEN param.depo_id = 'TODOS' THEN mh.depo_id&#xd;        ELSE CAST(param.depo_id AS INTEGER)&#xd;    END&#xd;    AND mh.tipo_mov = CASE&#xd;        WHEN param.tipo = 'TODOS' THEN mh.tipo_mov&#xd;        ELSE param.tipo&#xd;    END&#xd;    AND mh.arti_id = CASE&#xd;        WHEN param.arti_id = 'TODOS' THEN mh.arti_id&#xd;        ELSE CAST(param.arti_id AS INTEGER)&#xd;    END&#xd;    AND mh.lote_id = CASE&#xd;        WHEN param.lote_id = 'TODOS' THEN mh.lote_id&#xd;        ELSE CAST(param.lote_id AS INTEGER)&#xd;    END&#xd;ORDER BY&#xd;    mh.fec_alta DESC;</sql>
+      <result outputType="json">{&#xd;  "movimientos":{&#xd;    "movimiento":[&#xd;      {&#xd;        "referencia": "$referencia",&#xd;        "codigo": "$codigo",&#xd;        "descripcion": "$descripcion",&#xd;        "cantidad": "$cantidad",&#xd;        "stock_actual": "$stock_actual",&#xd;        "deposito": "$deposito",&#xd;        "fec_alta": "$fec_alta",&#xd;        "tipo_mov": "$tipo_mov",&#xd;        "lote":"$lote",&#xd;        "fec_alta_formatted":"$fec_alta_formatted"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="fec1" sqlType="STRING"/>
+      <param name="fec2" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="lote_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getLotesVencimientos" useConfig="ToolsDataSource">
+      <sql>select&#xd;aa.barcode&#xd;,aa.descripcion&#xd;,t.valor as desc_tipo_articulo&#xd;,al.fec_vencimiento&#xd;,al.batch_id &#xd;,concat(al.cantidad,' ', aa.unidad_medida) as cantidad&#xd;,ad.descripcion as deposito&#xd;,case &#xd;	when ( (CAST(al.fec_vencimiento AS DATE) - CAST('now' AS DATE)) &lt; 10 and (CAST(al.fec_vencimiento AS DATE) - CAST('now' AS DATE)) &gt; 0 ) &#xd;		then 'Critico' &#xd;	when (CAST(al.fec_vencimiento AS DATE) - CAST('now' AS DATE)) &lt;= 0 &#xd;		then 'Vencido' 	&#xd;	else &#xd;	  	'Activo' &#xd;	end as estado&#xd;from &#xd;alm.alm_lotes al&#xd;,alm.alm_articulos aa &#xd;,core.tablas t&#xd;,alm.alm_depositos ad &#xd;,(select :depo_id depo_id) as param&#xd;where al.arti_id = aa.arti_id &#xd;and aa.tipo = t.tabl_id&#xd;and al.depo_id = ad.depo_id &#xd;and aa.tipo = :tipo&#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end&#xd;and aa.arti_id = cast(:arti_id as integer)&#xd;and al.fec_vencimiento between to_date(:fec1,'YYYY-MM-DD') and TO_DATE(:fec2,'YYYY-MM-DD')</sql>
+      <result outputType="json">{&#xd;  "lotes":{&#xd;    "lote":[&#xd;      {&#xd;        "barcode": "$barcode",&#xd;        "descripcion": "$descripcion",&#xd;        "desc_tipo_articulo": "$desc_tipo_articulo",&#xd;        "fec_vencimiento": "$fec_vencimiento",&#xd;        "cantidad": "$cantidad",&#xd;        "deposito": "$deposito",&#xd;        "estado": "$estado"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="fec1" sqlType="STRING"/>
+      <param name="fec2" sqlType="STRING"/>
+   </query>
+   <query id="getStockXArticuloYDeposito" useConfig="ToolsDataSource">
+      <sql>select&#xd;    a.arti_id,&#xd;	a.descripcion,&#xd;	a.barcode,&#xd;	t.valor tipo,&#xd;	t.tabl_id tipo_id,&#xd;	l.depo_id,&#xd;	ad.descripcion deposito,&#xd;	coalesce(sum(cantidad), 0) as cantidad,&#xd;	a.unme_id,&#xd;	t2.descripcion unidad_medida  &#xd;	from&#xd;	alm.alm_articulos a,&#xd;	alm.alm_lotes l,&#xd;	alm.alm_depositos ad, &#xd;	core.tablas t,&#xd;	core.tablas t2,&#xd;	(&#xd;	select&#xd;		:arti_id arti_id,&#xd;		:depo_id depo_id,&#xd;		:tipo tipo) param&#xd;where&#xd;	a.tiar_id = t.tabl_id&#xd;	and t.tabl_id =&#xd;	case&#xd;		when param.tipo = 'TODOS' then t.tabl_id&#xd;		else param.tipo end&#xd;		and l.arti_id = a.arti_id&#xd;		and l.depo_id =&#xd;		case&#xd;			when param.depo_id = 'TODOS' then l.depo_id&#xd;			else cast(param.depo_id as integer) end&#xd;		and a.arti_id =&#xd;			case&#xd;				when param.arti_id = 'TODOS' then a.arti_id&#xd;				else cast(param.arti_id as integer) end&#xd;		and a.unme_id = t2.tabl_id&#xd;		and l.depo_id = ad.depo_id &#xd;		and a.eliminado = false&#xd;group by&#xd;	a.arti_id,&#xd;	l.depo_id,&#xd;	ad.descripcion,&#xd;	t.valor, &#xd;	t.tabl_id,&#xd;	t2.descripcion</sql>
+      <result outputType="json">{&#xd;   "stock":{&#xd;      "articulo":[&#xd;         {&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "tipo":"$tipo",&#xd;            "tipo_id":"$tipo_id",&#xd;            "depo_id":"$depo_id",&#xd;            "deposito":"$deposito",&#xd;            "cantidad":"$cantidad",&#xd;            "unme_id":"$unme_id",&#xd;            "unidad_medida":"$unidad_medida"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+   </query>
+   <query id="getArticulosYTiposXEtapa" useConfig="ToolsDataSource">
+      <sql>SELECT art.* from(&#xd;SELECT a.arti_id,&#xd;a.barcode,&#xd;a.descripcion,&#xd;'Entrada' as tipo,&#xd;a.unidad_medida,&#xd;a.es_caja,&#xd;a.cantidad_caja,&#xd;em.etap_id,&#xd;a.empr_id, &#xd;a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_materiales em ON a.arti_id = em.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,&#xd;a.barcode, &#xd;a.descripcion,&#xd;'Producto' as tipo, &#xd;a.unidad_medida, &#xd;a.es_caja,&#xd;a.cantidad_caja,&#xd;ep.etap_id,&#xd;a.empr_id, &#xd;a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_productos ep &#xd;ON a.arti_id = ep.arti_id &#xd;UNION ALL &#xd;SELECT a.arti_id,&#xd;a.barcode, &#xd;a.descripcion,&#xd;'Salida' as tipo, &#xd;a.unidad_medida, &#xd;a.es_caja,&#xd;a.cantidad_caja,&#xd;es.etap_id,&#xd;a.empr_id, &#xd;a.eliminado &#xd;FROM alm.alm_articulos a&#xd;JOIN prd.etapas_salidas es &#xd;ON a.arti_id = es.arti_id&#xd;)art&#xd;,(SELECT :etap_id etap_id, :empr_id empr_id) param&#xd;WHERE art.etap_id = cast(param.etap_id as INTEGER) and art.empr_id = cast(param.empr_id as INTEGER) and art.eliminado = false&#xd;order by descripcion</sql>
+      <result outputType="json">{&#xd;   "articulos":{&#xd;      "articulo":[&#xd;         {&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "tipo":"$tipo",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "es_caja":"$es_caja",&#xd;            "cantidad_caja":"$cantidad_caja"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="etap_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getEstablecimientos" useConfig="ToolsDataSource">
+      <sql>select e.esta_id, e.nombre, e.calle, e.altura, tl.valor as localidad, te.valor as estado, tp.valor as pais&#xd;from prd.establecimientos e&#xd;left join core.tablas tl&#xd;on tl.tabl_id = e.localidad &#xd;left join core.tablas te &#xd;on te.tabl_id = e.estado &#xd;left join core.tablas tp &#xd;on tp.tabl_id = e.pais &#xd;where e.empr_id = cast (:empr_id as integer)&#xd;and e.eliminado = false;</sql>
+      <result outputType="json">{&#xd;   "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getProveedores" useConfig="ToolsDataSource">
+      <sql>SELECT al.*, tl.valor as localidad, te.valor as estado, tp.valor as pais&#xd;FROM alm.alm_proveedores al&#xd;left join core.tablas tl&#xd;on tl.tabl_id = al.loca_id&#xd;left join core.tablas te &#xd;on te.tabl_id = al.esta_id &#xd;left join core.tablas tp &#xd;on tp.tabl_id = al.pais_id &#xd;WHERE&#xd;al.empr_id = CAST(:empr_id as INTEGER)&#xd;AND al.eliminado = FALSE;</sql>
+      <result outputType="json">{&#xd;    "proveedores": {&#xd;        "proveedor": [&#xd;            {&#xd;                "id":"$prov_id",&#xd;                "titulo":"$nombre",&#xd;                "cuit":"$cuit",&#xd;                "domicilio":"$domicilio",&#xd;                "localidad":"$localidad",&#xd;                "localidad_id":"$loca_id",&#xd;                "estado":"$estado",&#xd;                "estado_id":"$esta_id",&#xd;                "pais":"$pais",&#xd;                "pais_id":"$pais_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteProveedor" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_proveedores &#xd;SET eliminado = true &#xd;WHERE prov_id = cast(:prov_id as integer);</sql>
+      <param name="prov_id" sqlType="STRING"/>
+   </query>
+   <query id="getRecipientesXEmpresa" useConfig="ToolsDataSource">
+      <sql>select&#xd;	r.reci_id,&#xd;	r.tipo as reci_tipo,&#xd;	r.nombre as reci_nombre,&#xd;	cast(r.fec_alta as date) as reci_fec_alta,&#xd;	d.depo_id,&#xd;	d.descripcion as depo_descripcion,&#xd;	e.esta_id,&#xd;	e.nombre as esta_nombre&#xd;from&#xd;	prd.recipientes r&#xd;join alm.alm_depositos d on&#xd;	d.depo_id = r.depo_id&#xd;join prd.establecimientos e on&#xd;	e.esta_id = d.esta_id&#xd;where&#xd;	r.eliminado = 0&#xd;and r.empr_id = cast(:empr_id as integer) &#xd;order by&#xd;	r.fec_alta desc,&#xd;	d.esta_id asc,&#xd;	r.tipo asc,&#xd;	d.descripcion asc,&#xd;	r.nombre asc</sql>
+      <result outputType="json">{&#xd;   "recipientes":{&#xd;      "recipiente":[&#xd;         {&#xd;            "reci_id":"$reci_id", &#xd;            "reci_tipo":"$reci_tipo", &#xd;            "reci_nombre":"$reci_nombre", &#xd;            "reci_fec_alta":"$reci_fec_alta ", &#xd;            "depo_id":"$depo_id", &#xd;            "depo_descripcion":"$depo_descripcion", &#xd;            "esta_id":"$esta_id", &#xd;            "esta_nombre":"$esta_nombre"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setProveedor" useConfig="ToolsDataSource">
+      <sql>insert into alm.alm_proveedores (&#xd;	nombre, &#xd;	cuit,&#xd;	domicilio,&#xd;        telefono,&#xd;        email,&#xd;	pais_id,&#xd;	esta_id,&#xd;	loca_id,&#xd;    empr_id )&#xd;select&#xd;  	:nombre, &#xd;  	:cuit,&#xd;	:domicilio,&#xd;        :telefono,&#xd;        :email,&#xd;  	CASE WHEN param.pais IS NULL OR param.pais='' THEN NULL ELSE param.pais end,&#xd;  	CASE WHEN param.estado IS NULL OR param.estado ='' THEN NULL ELSE param.estado end,&#xd;  	CASE WHEN param.localidad IS NULL OR param.localidad ='' THEN NULL ELSE param.localidad end,&#xd;  	cast(:empr_id as integer)&#xd;FROM (select&#xd;  	:pais pais,&#xd;  	:estado estado,&#xd;  	:localidad localidad) param</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="domicilio" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="pais" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="localidad" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="updateProveedor" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_proveedores&#xd;set nombre = :nombre,&#xd;    cuit = :cuit,&#xd;    domicilio = :domicilio,&#xd;    telefono = :telefono,&#xd;    email = :email,&#xd;    pais_id = CASE WHEN param.pais IS NULL OR param.pais='' THEN NULL ELSE param.pais end,&#xd;    esta_id = CASE WHEN param.estado IS NULL OR param.estado='' THEN NULL ELSE param.estado end,&#xd;    loca_id = CASE WHEN param.localidad IS NULL OR param.localidad ='' THEN NULL ELSE param.localidad end&#xd;FROM (select&#xd;  	:pais pais,&#xd;  	:estado estado,&#xd;  	:localidad localidad) param&#xd;where prov_id = CAST(:prov_id as integer)</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="cuit" sqlType="STRING"/>
+      <param name="domicilio" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="localidad" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="pais" sqlType="STRING"/>
+      <param name="prov_id" sqlType="STRING"/>
+   </query>
+   <query id="validaArticulo" useConfig="ToolsDataSource">
+      <sql>select case when exists &#xd;(select true from alm.alm_articulos aa where upper(aa.barcode) like upper(:barcode)&#xd;and aa.empr_id = cast(:empr_id as integer)&#xd;) then 'true' else 'false'&#xd;end</sql>
+      <result outputType="json">{&#xd;    "resultado" : {&#xd;        "existe": "$case"&#xd;    }&#xd;}</result>
+      <param name="barcode" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getStock" useConfig="ToolsDataSource">
+      <sql>SELECT  &#xd;aa.descripcion as artdescription,&#xd;aa.barcode as artbarcode,&#xd;T.descripcion as arttype,&#xd;al.fec_alta as fecha_nueva,&#xd;T1.descripcion as un_medida,&#xd;al.*,&#xd;alm.alm_depositos.depo_id,&#xd;alm.alm_depositos.descripcion as depositodescrip,&#xd;prd.recipientes.reci_id,&#xd;prd.recipientes.nombre as nom_reci,&#xd;P.nombre as proveedor&#xd;FROM alm.alm_articulos aa&#xd;JOIN alm.alm_lotes al ON aa.arti_id = al.arti_id AND al.cantidad != 0&#xd;JOIN alm.alm_depositos ON al.depo_id = alm_depositos.depo_id&#xd;left JOIN alm.alm_proveedores P on P.prov_id = al.prov_id&#xd;LEFT JOIN core.tablas T ON T.tabl_id = aa.tiar_id &#xd;LEFT JOIN core.tablas T1 ON T1.tabl_id = aa.unme_id &#xd;LEFT JOIN prd.lotes ON al.batch_id = prd.lotes.batch_id&#xd;LEFT JOIN prd.recipientes ON prd.lotes.reci_id = prd.recipientes.reci_id&#xd;LEFT JOIN core.encargados_depositos E ON alm.alm_depositos.depo_id = E.depo_id&#xd;WHERE al.empr_id = cast(:empr_id as integer) and aa.eliminado != true and E.user_id = cast(:id_user as integer)&#xd;AND COALESCE(al.cantidad, 0) &gt; 0</sql>
+      <result outputType="json">{&#xd;    "lotes": {&#xd;        "stock": [&#xd;            {&#xd;                "artdescription": "$artdescription",&#xd;                "artbarcode": "$artbarcode",&#xd;                "arttype": "$arttype",&#xd;                "fecha_nueva": "$fecha_nueva",&#xd;                "un_medida": "$un_medida",&#xd;                "lote_id": "$lote_id",&#xd;                "prov_id": "$prov_id",&#xd;                "arti_id": "$arti_id",&#xd;                "depo_id": "$depo_id",&#xd;                "codigo": "$codigo",&#xd;                "cantidad": "$cantidad",&#xd;                "estado": "$estado",&#xd;                "fec_vencimiento": "$fec_vencimiento",&#xd;                "fec_alta": "$fec_alta",&#xd;                "batch_id": "$batch_id",&#xd;                "depositodescrip": "$depositodescrip",&#xd;                "reci_id": "$reci_id",&#xd;                "nom_reci": "$nom_reci",&#xd;                "proveedor": "$proveedor",&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="id_user" sqlType="STRING"/>
+   </query>
+   <query id="setDetaNotaPedido" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_deta_pedidos_materiales (pema_id, arti_id, cantidad, depo_id)&#xd;VALUES (&#xd;    CAST(:pema_id AS INTEGER),&#xd;    CAST(:arti_id AS INTEGER),&#xd;    CAST(:cantidad AS INTEGER),&#xd;    CAST(NULLIF(:depo_id, '') AS INTEGER)&#xd;);</sql>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+   </query>
+   <query id="setDetallePedidoConReceta" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_deta_pedidos_materiales&#xd;(cantidad, pema_id, arti_id, cantidad_receta, receta, empaque)&#xd;select&#xd;  	cast(:cantidad as integer), &#xd;  	cast(:pema_id as integer),&#xd;	cast(:arti_id as integer),&#xd;    cast(:cantidad_receta as integer),&#xd;  	CASE WHEN param.receta IS NULL OR param.receta = '' THEN NULL ELSE cast(param.receta as integer) end,&#xd;  	case when parametro.empaque IS NULL OR parametro.empaque = '' THEN NULL ELSE cast(parametro.empaque as integer) end&#xd;	from (select :receta receta) param, (select :empaque empaque) parametro</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="receta" sqlType="STRING"/>
+      <param name="cantidad_receta" sqlType="STRING"/>
+      <param name="empaque" sqlType="STRING"/>
+   </query>
+   <query id="eliminaDetallesPedidoAnterior" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_deta_pedidos_materiales &#xd;SET eliminado = true&#xd;WHERE pema_id = cast(:pema_id as int8)</sql>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="updateJustificacion" useConfig="ToolsDataSource">
+      <sql>UPDATE alm.alm_pedidos_materiales &#xd;SET justificacion = :justificacion&#xd;WHERE  pema_id = cast(:pema_id as int8)</sql>
+      <param name="justificacion" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="updateArticulo" useConfig="ToolsDataSource">
+      <sql>update alm.alm_articulos &#xd;set barcode=a.barcode&#xd;, descripcion=a.descripcion&#xd;, es_caja=CAST(a.es_caja as BOOLEAN)&#xd;, es_loteado=CAST(a.es_loteado as BOOLEAN)&#xd;, unidad_medida=a.unidad_medida&#xd;,tiar_id=a.tipo_articulo&#xd;,empr_id=CAST(a.empr_id as INTEGER)&#xd;from (select  :barcode barcode, :descripcion descripcion,:es_caja es_caja, :es_loteado es_loteado , :unidad_medida unidad_medida ,:tipo_articulo tipo_articulo, :empr_id empr_id , :arti_id arti_id , :inte_id inte_id ) a&#xd;where alm.alm_articulos.arti_id = case when a.arti_id is null or a.arti_id ='' then 0 else CAST(a.arti_id as INTEGER) end&#xd;or alm.alm_articulos.inte_id = case when a.inte_id is null or a.inte_id='' then 'VALOR_IMPOSIBLE_JAMAS_POSIBLE' else a.inte_id end</sql>
+      <param name="barcode" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="es_caja" sqlType="STRING"/>
+      <param name="es_loteado" sqlType="STRING"/>
+      <param name="unidad_medida" sqlType="STRING"/>
+      <param name="tipo_articulo" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="inte_id" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="arti_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteArticulo" useConfig="ToolsDataSource">
+      <sql>update alm.alm_articulos&#xd;set eliminado=true&#xd;from (select :arti_id arti_id , :inte_id inte_id ) a&#xd;where alm.alm_articulos.arti_id = case when a.arti_id is null or a.arti_id ='' then 0 else CAST(a.arti_id as INTEGER) end&#xd;or alm.alm_articulos.inte_id = case when a.inte_id is null or a.inte_id='' then 'VALOR_IMPOSIBLE_JAMAS_POSIBLE' else a.inte_id end</sql>
+      <param defaultValue="#{NULL}" name="arti_id" optional="false" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="inte_id" optional="false" sqlType="STRING"/>
+   </query>
+   <query id="setArticulo" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+      <sql>insert	into	alm.alm_articulos(barcode,	descripcion,	es_caja,	cantidad_caja,	punto_pedido,	estado,	empr_id,	es_loteado,	tiar_id,	unme_id,	inte_id)select param.barcode,	param.descripcion,	param.es_caja,	param.cantidad_caja,	param.punto_pedido,	param.estado,	param.empr_id,	param.es_loteado,	int.traducir_valor_tabla_in(param.empr_id,'tipo_articulo',param.tiar_id),	int.traducir_valor_tabla_in(param.empr_id,'unidades_medida',param.unme_id),	param.inte_idfrom( select :barcode barcode,	:descripcion descripcion,	cast(:es_caja as boolean) es_caja ,	cast(:cantidad_caja as float) cantidad_caja,	cast(:punto_pedido as float) punto_pedido,	:estado estado,	cast(:empr_id as integer) empr_id,	cast(:es_loteado as boolean)es_loteado,	:tiar_id tiar_id,	:unme_id unme_id,	:inte_id inte_id) param</sql>
+      <param name="barcode" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="es_caja" sqlType="STRING"/>
+      <param name="cantidad_caja" sqlType="STRING"/>
+      <param name="punto_pedido" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="es_loteado" sqlType="STRING"/>
+      <param name="tiar_id" sqlType="STRING"/>
+      <param name="unme_id" sqlType="STRING"/>
+      <param name="inte_id" sqlType="STRING"/>
+   </query>
+   <query id="getStockValorizado" useConfig="ToolsDataSource">
+      <sql>select aa.barcode, &#xd;aa.descripcion, &#xd;al.cantidad, &#xd;adrm.p_pesos, &#xd;adrm.p_dolar, &#xd;(adrm.p_pesos * al.cantidad) as t_pesos, (adrm.p_dolar*al.cantidad) as t_dolar'&#xd;from   alm.alm_articulos aa&#xd;join   alm.alm_lotes al on aa.arti_id = al.arti_id AND al.cantidad != 0&#xd;join   alm.alm_deta_recepcion_materiales adrm on al.lote_id  = adrm.lote_id and adrm.cantidad !=0&#xd;where  al.empr_id = cast(:empr_id as integer)  &#xd;and  aa.eliminado = false&#xd;and  adrm.p_pesos is not NULL&#xd;and  adrm.p_dolar is not NULL&#xd;group_by adrm.p_pesos, adrm.p_dolar,aa.barcode, aa.descripcion, al.cantidad</sql>
+      <result outputType="json">{&#xd;    "stock": {&#xd;        "stockv": [&#xd;            {&#xd;                "description": "$description",&#xd;                "barcode": "$barcode",&#xd;                "codigo": "$codigo",&#xd;                "cantidad": "$cantidad",&#xd;                "p_pesos": "$p_pesos",&#xd;                "p_dolar": "$p_dolar",&#xd;                "t_pesos": "$t_pesos",&#xd;                "t_dolar": "$t_dolar"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" optional="false" sqlType="STRING"/>
+   </query>
+   <query id="getSiguienteNroComprobante" useConfig="ToolsDataSource">
+      <sql>SELECT COALESCE(MAX(CAST(num_comprobante AS integer)), 0) + 1 AS siguiente_comprobante&#xd;FROM alm.movimientos_internos&#xd;WHERE empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "siguiente_numerocomprobante": {&#xd;        "numerocomprobante": [&#xd;            {&#xd;                "siguiente_comprobante": "$siguiente_comprobante"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getMovimientoxdemiId" useConfig="ToolsDataSource">
+      <sql>SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id&#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen&#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id = CAST(:demi_id1 AS integer)&#xd;UNION ALL&#xd;SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id  &#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen &#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id != CAST(:demi_id2 AS integer) &#xd;    AND mi.moin_id = (&#xd;        SELECT moin_id &#xd;        FROM alm.deta_movimientos_internos &#xd;        WHERE demi_id = CAST(:demi_id3 AS integer)&#xd;    )&#xd;    AND mi.empr_id = CAST(:empr_id AS integer);</sql>
+      <result outputType="json">{&#xd;   "movimientosInternos":{&#xd;      "movimientoInterno":[&#xd;         {&#xd;            "moin_id":"$moin_id",&#xd;            "num_comprobante":"$num_comprobante",&#xd;            "depo_id_origen":"$depo_id_origen",&#xd;            "depo_id_destino":"$depo_id_destino",&#xd;            "patente":"$patente",&#xd;            "acoplado":"$acoplado",&#xd;            "conductor":"$conductor",&#xd;            "arti_id":"$arti_id",&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "descripcion_articulo":"$descripcion_articulo",&#xd;            "desc_lote_destino":"$desc_lote_destino",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "descr_depo_origen":"$descr_depo_origen",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "observaciones_recepcion":"$observaciones_recepcion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="demi_id1" sqlType="STRING"/>
+      <param name="demi_id2" sqlType="STRING"/>
+      <param name="demi_id3" sqlType="STRING"/>
+   </query>
+   <query id="setUpdateLoteV2" useConfig="ToolsDataSource">
+      <sql>CALL alm.crear_o_updatear_lote(&#xd;cast(:prov_id as integer), &#xd;cast(:arti_id as integer), &#xd;cast(:depo_id as integer), &#xd;cast(:empr_id as integer), &#xd;:cod_lote, &#xd;cast(:cantidad as float),&#xd;to_date(:fec_vencimiento, 'YYYY-MM-DD')&#xd;);</sql>
+      <result outputType="json">{"GeneratedKeys":{"Entry":[{"ID":$lote_id}]}}</result>
+      <param name="fec_vencimiento" sqlType="STRING"/>
+      <param name="prov_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="cod_lote" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+   </query>
+   <query id="getMovimientosInternos" useConfig="ToolsDataSource">
+      <sql>SELECT  mi.moin_id moin_id_int&#xd;	,mi.num_comprobante &#xd;	,mi.depo_id_origen &#xd;	,mi.depo_id_destino &#xd;	,mi.patente &#xd;	,mi.acoplado &#xd;        ,mi.conductor &#xd;        ,mi.estado&#xd;        ,to_char(mi.fec_envio,'YYYY-MM-DD') fec_envio &#xd;        ,to_char(mi.fec_recepcion,'YYYY-MM-DD') fec_recepcion&#xd;        ,mi.observaciones_recepcion&#xd;        ,ad.descripcion AS nombre_depo_destino&#xd;FROM alm.movimientos_internos mi&#xd;LEFT JOIN alm.alm_depositos ad ON mi.depo_id_destino = ad.depo_id&#xd;,(select :depo_id_destino depo_id_destino,:depo_id_origen depo_id_origen,:moin_id moin_id,:estado estado) dep&#xd;where mi.depo_id_destino = case when dep.depo_id_destino ='TODOS' then mi.depo_id_destino else cast(dep.depo_id_destino as integer) end&#xd;and mi.depo_id_origen = case when dep.depo_id_origen ='TODOS' then mi.depo_id_origen else cast(dep.depo_id_origen as integer) end&#xd;and mi.estado = case when dep.estado ='TODOS' then mi.estado else dep.estado end&#xd;and mi.moin_id =  case when dep.moin_id ='TODOS' then mi.moin_id else cast(dep.moin_id as integer) end&#xd;and mi.empr_id=cast(:empr_id as integer)&#xd;and mi.eliminado=false&#xd;;</sql>
+      <result outputType="json">{&#xd;   "movimientosInternos": {&#xd;      "movimientoInterno": [&#xd;         {&#xd;            "moin_id": "$moin_id_int",&#xd;            "num_comprobante": "$num_comprobante",&#xd;            "depo_id_origen": "$depo_id_origen",&#xd;            "depo_id_destino": "$depo_id_destino",&#xd;            "estado": "$estado",&#xd;            "patente": "$patente",&#xd;            "acoplado": "$acoplado",&#xd;            "conductor": "$conductor",&#xd;            "@getDetalleMovimientoInterno": "$moin_id-&gt;moin_id_int",&#xd;            "fec_envio": "$fec_envio",&#xd;            "fec_recepcion": "$fec_recepcion",&#xd;            "observaciones_recepcion": "$observaciones_recepcion",&#xd;            "nombre_depo_destino": "$nombre_depo_destino"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="depo_id_destino" sqlType="STRING"/>
+      <param name="depo_id_origen" sqlType="STRING"/>
+      <param name="moin_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getAjustexdeajId" useConfig="ToolsDataSource">
+      <sql>select a.ajus_id, a.tipo_ajuste, a.justificacion  &#xd;from &#xd;alm.ajustes a left join alm.deta_ajustes da on da.ajus_id = a.ajus_id &#xd;where da.deaj_id  = cast(:deaj_id as integer)</sql>
+      <result outputType="json">{&#xd;   "ajustes": {&#xd;      "ajuste": [&#xd;         {&#xd;            "ajus_id": "$ajus_id",&#xd;            "tipo_ajuste": "$tipo_ajuste",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="deaj_id" sqlType="STRING"/>
+   </query>
+   <query id="getDataMovimientoInternoXdemiId" useConfig="ToolsDataSource">
+      <sql>select  dm.cantidad_cargada,&#xd;        dm.justificacion,&#xd;        dm.cantidad_recibida,&#xd;	dm.lote_id_origen ,&#xd;	dm.lote_id_destino,&#xd;        dm.demi_id&#xd;from alm.deta_movimientos_internos dm &#xd;where dm.demi_id = cast(:demi_id as integer)</sql>
+      <result outputType="json">{&#xd;     "detallesMovimientosInternos":{ "detalleMovimientoInterno":[&#xd;         {&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "cantidad_recibida":"$cantidad_recibida",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "lote_id_destino":"$lote_id_destino",&#xd;            "demi_id":"$demi_id",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;}}</result>
+      <param name="demi_id" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/articulos/{empr_id}">
+      <call-query href="getArticulos">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos">
+      <call-query href="setPedido">
+         <with-param name="fecha" query-param="fecha"/>
+         <with-param name="justificacion" query-param="justificacion"/>
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/detalle">
+      <call-query href="setDetallePedido">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/pedidos/detalle">
+      <call-query href="deleteDetalle">
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidos/{pema_id}/{empr_id}">
+      <call-query href="getPedido">
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidos/batch/{batch_id}">
+      <call-query href="getPedidoXBatch">
+         <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimiento">
+      <call-query href="getEstablecimiento"/>
+   </resource>
+   <resource method="GET" path="/lote/{esta_id}">
+      <call-query href="getLote">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulos">
+      <call-query href="getArticulos2"/>
+   </resource>
+   <resource method="GET" path="/articulos/obtener/{arti_id}">
+      <call-query href="getArticulo">
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/notapedido">
+      <call-query href="setNotaPedido">
+         <with-param name="fecha" query-param="fecha"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulo/info/{arti_id}">
+      <call-query href="getArticuloPorId">
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidoMateriales/{case_id}">
+      <call-query href="getinfoPedMatPorCaseId">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/extraer_cantidad_lote">
+      <call-query href="extraerCantidadLote">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lotes/movimiento_stock">
+      <call-query href="movimientoStock">
+         <with-param name="batch_id" query-param="batch_id"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="old_batch_id" query-param="old_batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimiento/{esta_id}">
+      <call-query href="getEstablecimiento2">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/establecimientos">
+      <call-query href="setEstablecimiento">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="longitud" query-param="longitud"/>
+         <with-param name="latitud" query-param="latitud"/>
+         <with-param name="calles" query-param="calles"/>
+         <with-param name="altura" query-param="altura"/>
+         <with-param name="localidad" query-param="localidad"/>
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="usuario" query-param="usuario"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/establecimientos">
+      <call-query href="delEstablecimiento">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/recipientes/contenido/{reci_id}">
+      <call-query href="getContenidoRecipiente">
+         <with-param name="reci_id" query-param="reci_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/depositos_establecimiento/{esta_id}">
+      <call-query href="getDepositosEstablecimiento">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/recipientes/deposito/{depo_id}/establecimiento/{esta_id}">
+      <call-query href="getRecipientesDepositoEstablecimiento">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/recipientes">
+      <call-query href="setRecipiente">
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="patente" query-param="patente"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/recipientes/movimientoTransporte">
+      <call-query href="setRecipienteConMotrId">
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="patente" query-param="patente"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="motr_id" query-param="motr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getAllRecipientes">
+      <call-query href="getAllRecipientes"/>
+   </resource>
+   <resource method="PUT" path="/deleteRecipiente">
+      <call-query href="deleteRecipiente">
+         <with-param name="reci_id" query-param="reci_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/updateRecipiente">
+      <call-query href="updateRecipiente">
+         <with-param name="reci_tipo" query-param="reci_tipo"/>
+         <with-param name="reci_nombre" query-param="reci_nombre"/>
+         <with-param name="reci_id" query-param="reci_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/recipientes/establecimiento/{esta_id}/deposito/{depo_id}/estado/{estado}/tipo/{tipo}/categoria/{care_id}">
+      <call-query href="getRecipientesFull">
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="care_id" query-param="care_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/tabla">
+      <call-query href="setTabla">
+         <with-param name="tabla" query-param="tabla"/>
+         <with-param name="valor" query-param="valor"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulo/nombre/{batch_id}">
+      <call-query href="getArticuloPorId">
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidos/tareas/{tapl_id}">
+      <call-query href="getPedidosTareas">
+         <with-param name="tapl_id" query-param="tapl_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidos/detalle/{pema_id}">
+      <call-query href="getDetallePedido">
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/tareas">
+      <call-query href="setPedidoTarea">
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="tapl_id" query-param="tapl_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos/empresa/{empr_id}">
+      <call-query href="getEstablecimeintosXEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/notapedido/origen">
+      <call-query href="setOrigenPedido">
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="orig_id" query-param="orig_id"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/notapedido/nuevo">
+      <call-query href="setNuevoPedido">
+         <with-param name="fecha" query-param="fecha"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lote/extraer">
+      <call-query href="extraerCantidadLote">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lote/crear">
+      <call-query href="crearLote">
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="fec_ven" query-param="fec_ven"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/stock/ajuste/tipo/list">
+      <call-query href="getTiposAjustes"/>
+   </resource>
+   <resource method="GET" path="/establecimiento/{esta_id}/deposito/list">
+      <call-query href="getDepositosPorEstablecimiento">
+         <with-param name="esta_id" query-param="esta_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/stock/ajuste">
+      <call-query href="crearAjuste">
+         <with-param name="tipo_ajuste" query-param="tipo_ajuste"/>
+         <with-param name="justificacion" query-param="justificacion"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/stock/ajuste/detalle">
+      <call-query href="crearDetalleAjuste">
+         <with-param name="ajus_id" query-param="ajus_id"/>
+         <with-param name="lote_id" query-param="lote_id"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="deposito/{depo_id}/articulo/{arti_id}/lote/list">
+      <call-query href="getLotePorArticuloYDeposito">
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos/empresa/{empr_id}">
+      <call-query href="getEstablecimientosXEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulos/empresa/{empr_id}">
+      <call-query href="getArticulos">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/movimientoInterno">
+      <call-query href="setMovimientoInterno">
+         <with-param name="num_comprobante" query-param="num_comprobante"/>
+         <with-param name="fec_envio" query-param="fec_envio"/>
+         <with-param name="patente" query-param="patente"/>
+         <with-param name="acoplado" query-param="acoplado"/>
+         <with-param name="conductor" query-param="conductor"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="depo_id_origen" query-param="depo_id_origen"/>
+         <with-param name="depo_id_destino" query-param="depo_id_destino"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="observaciones_recepcion" query-param="observaciones_recepcion"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/movimientoInterno/detalle">
+      <call-query href="setDetaMovimientoInterno">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="lote_id_origen" query-param="lote_id_origen"/>
+         <with-param name="moin_id" query-param="moin_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientoInterno/detalle/{moin_id}">
+      <call-query href="getDetalleMovimientoInterno">
+         <with-param name="moin_id" query-param="moin_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/movimientoInterno">
+      <call-query href="updateMovimientoInterno">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="fec_recepcion" query-param="fec_recepcion"/>
+         <with-param name="observaciones_recepcion" query-param="observaciones_recepcion"/>
+         <with-param name="moin_id" query-param="moin_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/movimientoInterno/detalle">
+      <call-query href="updateDetaMovimientoInterno">
+         <with-param name="cantidad_recibida" query-param="cantidad_recibida"/>
+         <with-param name="demi_id" query-param="demi_id"/>
+         <with-param name="lote_id_destino" query-param="lote_id_destino"/>
+         <with-param name="justificacion" query-param="justificacion"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/movimientoInterno">
+      <call-query href="deleteMovimientoInterno">
+         <with-param name="moin_id" query-param="moin_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lote/agregarActualizar">
+      <call-query href="setUpdateLote">
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="cod_lote" query-param="cod_lote"/>
+         <with-param name="fec_vencimiento" query-param="fec_vencimiento"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lote/descontar">
+      <call-query href="updateLoteDescontar">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="lote_id" query-param="lote_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/notapedidos/origen/{tipo}/{orig_id}">
+      <call-query href="getPedidosXOrigen">
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="orig_id" query-param="orig_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulos/tipo/{tipo}/{empr_id}">
+      <call-query href="getArticulosXTipo">
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/empresa/{empr_id}/encargado/{user_id}/depositos/list">
+      <call-query href="getDepositosPorEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lote/id/prov_id/{prov_id}/arti_id/{arti_id}/depo_id/{depo_id}/empr_id/{empr_id}/cod_lote/{cod_lote}">
+      <call-query href="getLoteId">
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="cod_lote" query-param="cod_lote"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientos/tipo/{tipo}/desde/{fec1}/hasta/{fec2}/deposito/{depo_id}/articulo/{arti_id}/lote/{lote_id}/empresa/{empr_id}">
+      <call-query href="getHistoricoMovimientos">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="fec1" query-param="fec1"/>
+         <with-param name="fec2" query-param="fec2"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="lote_id" query-param="lote_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lotes/articulos/{arti_id}/tipo/{tipo}/deposito/{depo_id}/vencimiento/desde/{fec1}/hasta/{fec2}">
+      <call-query href="getLotesVencimientos">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="fec1" query-param="fec1"/>
+         <with-param name="fec2" query-param="fec2"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/stock/articulo/{arti_id}/deposito/{depo_id}/tipo/{tipo}">
+      <call-query href="getStockXArticuloYDeposito">
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="tipo" query-param="tipo"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulos/etapa/{etap_id}/empresa/{empr_id}">
+      <call-query href="getArticulosYTiposXEtapa">
+         <with-param name="etap_id" query-param="etap_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/establecimientos/{empr_id}">
+      <call-query href="getEstablecimientos">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/proveedores/{empr_id}">
+      <call-query href="getProveedores">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/proveedor">
+      <call-query href="deleteProveedor">
+         <with-param name="prov_id" query-param="prov_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/recipientes/empresa/{empr_id}">
+      <call-query href="getRecipientesXEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/proveedores">
+      <call-query href="setProveedor">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="domicilio" query-param="domicilio"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="localidad" query-param="localidad"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/proveedor">
+      <call-query href="updateProveedor">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="cuit" query-param="cuit"/>
+         <with-param name="domicilio" query-param="domicilio"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="localidad" query-param="localidad"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pais" query-param="pais"/>
+         <with-param name="prov_id" query-param="prov_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/articulo/validar/{barcode}/empresa/{empr_id}">
+      <call-query href="validaArticulo">
+         <with-param name="barcode" query-param="barcode"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/lotes/stock/empresa/{empr_id}/usuario/{id_user}">
+      <call-query href="getStock">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="id_user" query-param="id_user"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/depositos/empresa/{empr_id}/encargado/{user_id}/establecimiento/{esta_id}">
+      <call-query href="getDepositosPorEstablecimiento">
+         <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/notapedido/detalle">
+      <call-query href="setDetaNotaPedido">
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/detalle/conreceta">
+      <call-query href="setDetallePedidoConReceta">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="receta" query-param="receta"/>
+         <with-param name="cantidad_receta" query-param="cantidad_receta"/>
+         <with-param name="empaque" query-param="empaque"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/eliminadetallepedidoanterior">
+      <call-query href="eliminaDetallesPedidoAnterior">
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="pedidos/updatejustificacion">
+      <call-query href="updateJustificacion">
+         <with-param name="justificacion" query-param="justificacion"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/articulo">
+      <call-query href="setArticulo">
+         <with-param name="barcode" query-param="barcode"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="es_caja" query-param="es_caja"/>
+         <with-param name="es_loteado" query-param="es_loteado"/>
+         <with-param name="unidad_medida" query-param="unidad_medida"/>
+         <with-param name="tipo_articulo" query-param="tipo_articulo"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="inte_id" query-param="inte_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/articulo">
+      <call-query href="updateArticulo">
+         <with-param name="barcode" query-param="barcode"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="es_caja" query-param="es_caja"/>
+         <with-param name="es_loteado" query-param="es_loteado"/>
+         <with-param name="unidad_medida" query-param="unidad_medida"/>
+         <with-param name="tipo_articulo" query-param="tipo_articulo"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="inte_id" query-param="inte_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/articulo">
+      <call-query href="deleteArticulo">
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="inte_id" query-param="inte_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/articulo">
+      <call-query href="setArticulo">
+         <with-param name="barcode" query-param="barcode"/>
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="es_caja" query-param="es_caja"/>
+         <with-param name="cantidad_caja" query-param="cantidad_caja"/>
+         <with-param name="punto_pedido" query-param="punto_pedido"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="es_loteado" query-param="es_loteado"/>
+         <with-param name="tiar_id" query-param="tiar_id"/>
+         <with-param name="unme_id" query-param="unme_id"/>
+         <with-param name="inte_id" query-param="inte_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientosalida/nrocomprobante/{empr_id}">
+      <call-query href="getSiguienteNroComprobante">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getmovimientointerno/demi/{demi_id1}/{demi_id2}/{demi_id3}/{empr_id}">
+      <call-query href="getMovimientoxdemiId">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="demi_id1" query-param="demi_id1"/>
+         <with-param name="demi_id2" query-param="demi_id2"/>
+         <with-param name="demi_id3" query-param="demi_id3"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/lote/crearactualizarlote">
+      <call-query href="setUpdateLoteV2">
+         <with-param name="fec_vencimiento" query-param="fec_vencimiento"/>
+         <with-param name="prov_id" query-param="prov_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="cod_lote" query-param="cod_lote"/>
+         <with-param name="cantidad" query-param="cantidad"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientosInternos/estado/{estado}/origen/{depo_id_origen}/destino/{depo_id_destino}/moin_id/{moin_id}/empresa/{empr_id}">
+      <call-query href="getMovimientosInternos">
+         <with-param name="depo_id_destino" query-param="depo_id_destino"/>
+         <with-param name="depo_id_origen" query-param="depo_id_origen"/>
+         <with-param name="moin_id" query-param="moin_id"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ajuste/{deaj_id}">
+      <call-query href="getAjustexdeajId">
+         <with-param name="deaj_id" query-param="deaj_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientoInternoData/{demi_id}">
+      <call-query href="getDataMovimientoInternoXdemiId">
+         <with-param name="demi_id" query-param="demi_id"/>
+      </call-query>
+   </resource>
+</data>

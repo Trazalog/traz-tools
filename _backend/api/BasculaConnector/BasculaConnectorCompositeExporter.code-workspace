@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"name": "BasculaConnectorCompositeExporter",
+			"path": "BasculaConnector/BasculaConnectorCompositeExporter"
+		},
+		{
+			"name": "FirebaseConnectorAPICompositeExporter",
+			"path": "../FirebaseConnectorAPI/FirebaseConnectorAPICompositeExporter"
+		},
+		{
+			"name": "TangoConnectorAPICompositeExporter",
+			"path": "../TangoConnectorAPI/TangoConnectorAPICompositeExporter"
+		},
+		{
+			"name": "ToolsCoreAPIProjectCompositeExporter",
+			"path": "../ToolsCoreAPIProject/ToolsCoreAPIProjectCompositeExporter"
+		},
+		{
+			"name": "gestionadoresResiduosAPICompositeExporter",
+			"path": "../gestionadoresResiduosAPI/gestionadoresResiduosAPICompositeExporter"
+		},
+		{
+			"name": "ToolsAPIProject",
+			"path": "../ToolsAPIProject"
+		},
+		{
+			"name": "ToolsAPIProject",
+			"path": "../ToolsAPIProject/ToolsAPIProject"
+		}
+	],
+	"settings": {}
+}
