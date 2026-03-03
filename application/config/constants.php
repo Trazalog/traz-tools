@@ -266,4 +266,4 @@ define('EMPRESAS_FORM', 1);
 define('EMPRESAS_RESI_ADMIN', json_encode([1]));
 
 // RESIDUOS - IDs para camiones con tolva/contenedor
-define('TIPOS_VEHICULOS_TOLVA', 999999);
+define('TIPOS_VEHICULOS_TOLVA', 999);
