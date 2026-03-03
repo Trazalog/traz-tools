@@ -127,10 +127,23 @@
         <!-- Header Navbar: style can be found in header.less -->
 
 
+        <!-- CONFIGURACION DE LOGO NAVBAR - DATOS CONFIGURADOS EN CORE.TABLAS  -->
         <a href="<?php echo base_url() ?>"  class="logo">
             <!-- </span> -->
-            <img src="<?php echo base_url() ?>imagenes/trazalog/07ded14d.png" alt="Trazalog Tools" class="brand-image img-circle" style="width: 34px; height: auto !important;">
-            <span class="trazalog">TRAZALOG </span>
+            <img src="<?php echo base_url() . $logo_navbar ?>" alt="tools" class="brand-image img-circle" style="<?php echo $estilo_logo_navbar ?>">
+           
+            <?php
+
+                /* ESTILOS SOLO PARA TRAZALOG TOOLS */
+                if( $texto_logo_navbar == 'TRAZALOG')
+                {
+                    echo '<span class="trazalog">'.$texto_logo_navbar.'</span>';
+                }elseif($texto_logo_navbar != ''){
+                    echo '<span>'.$texto_logo_navbar.'</span>';
+                }
+            ?>
+
+            <!-- <span class="trazalog">TRAZALOG</span> -->
             <!-- <span class="">TOOLS</strong></span> -->
             <!-- </span> -->
         </a>
@@ -176,10 +189,15 @@
 
     <footer class="main-footer">
         <div class="pull-right hidden-xs">
-            <i style="cursor: pointer;" onclick="modalDetailVersion();"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
+            <i style="cursor: pointer;" id="btnVersion"><strong>Versión </strong> <?php echo  ApplicationVersion::getVerision(); ?></i> 
         </div>
-        <strong>Copyright &copy; <?php echo date('Y') ?> <a href="">Trazalog</a>.</strong> All rights
-        reserved.
+        <?php if ($copyright == 'true'): ?>
+            <strong>
+                Copyright &copy; <?= date('Y') ?>
+                <a href="http://trazalog.com/">Trazalog</a>.
+            </strong>
+            All rights reserved.
+        <?php endif; ?>
     </footer>
     <?php $this->load->view('layout/modal_generico') ?>
     <!-- Control Sidebar -->
@@ -390,7 +408,19 @@
                 <?php
                     //echo  ApplicationVersion::getLastVersions();
                 ?>
-                <div id='calendario'></div>
+                <!-- <div id='calendario'></div> -->
+                 <div class="text-center text-muted" style="font-size: 12px; margin-top: 15px;">
+                        © 2026 <strong>Trazalog SAS</strong>. Todos los derechos reservados.<br><br>
+
+                        <strong>Propiedad Intelectual y Derechos de Autor</strong><br>
+                        Todo el contenido de este software, incluyendo pero no limitado a: código fuente,
+                        algoritmos, interfaces de usuario, diseños gráficos, logotipos, textos y archivos de audio,
+                        es propiedad exclusiva de <strong>Trazalog SAS</strong> y está protegido por las leyes
+                        internacionales de derechos de autor y propiedad intelectual.
+                        Queda prohibida la reproducción, distribución, modificación o ingeniería inversa de
+                        cualquier parte de este producto sin la autorización previa y por escrito del titular
+                        de los derechos.
+                    </div>
 			</div> 
             <!-- /.modal-body -->
 
@@ -411,14 +441,12 @@
 
 <script>
 
-function modalDetailVersion(){
+        $(function () {
+            $('#btnVersion').on('click', function () {
+                $('#modalGitVersion').modal('show');
+            });
+        });
 
-    $("#modalGitVersion").modal('show');
-
-    //
-
-    cargarCalendar();
-}
 
 function cargarCalendar(){
 

@@ -1,0 +1,1 @@
+aiohappyeyeballs aiohttp aiohttp-retry aiosignal async-timeout attrs blinker certifi charset-normalizer click flask frozenlist idna importlib-metadata itsdangerous jinja2 MarkupSafe multidict propcache PyJWT requests twilio typing-extensions urllib3 werkzeug yarl zipp 
