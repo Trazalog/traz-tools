@@ -215,9 +215,9 @@ define('TAREA_IT','Ejecuta el Trabajo - Tools Tareas');
 |http://10.142.0.13:8280/tools/bpm/groups/123
 34.75.34.174
 */
-//define('HOST', 'http://10.142.0.13:8280');
+define('HOST', 'http://10.142.0.13:8280');
 
-define('HOST', 'https://34.75.34.174:9443');
+//define('HOST', 'https://34.75.34.174:9443');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
