@@ -1,0 +1,5 @@
+{
+    "MI.JAVA_HOME": "/home/rodolfo/.wso2-mi/java/jdk-21.0.10+7",
+    "MI.SERVER_PATH": "/home/rodolfo/.wso2-mi/micro-integrator/wso2mi-4.4.0",
+    "MI.LEGACY_EXPRESSION_ENABLED": false
+}

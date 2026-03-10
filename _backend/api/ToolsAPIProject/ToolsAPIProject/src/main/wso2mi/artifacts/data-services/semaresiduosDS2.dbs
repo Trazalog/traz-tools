@@ -1,0 +1,352 @@
+<data name="semaresiduosDS2" transports="http https local">
+   <config enableOData="false" id="semaresiduosDS2">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <query id="setConsultor" useConfig="semaresiduosDS2">
+      <sql>INSERT INTO log.consultores (registro, nombre, profesion, vigencia , telefono, email)&#xd;      VALUES &#xd;      (&#xd;         cast(:registro as INTEGER),&#xd;         :nombre,&#xd;         :profesion,&#xd;         cast(:vigencia as DATE), &#xd;         :telefono,&#xd;         :email&#xd;      )</sql>
+      <param name="registro" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="profesion" sqlType="STRING"/>
+      <param name="vigencia" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+   </query>
+   <query id="validaRegistroConsultor" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            FROM log.consultores c &#xd;            WHERE c.registro = cast(:registro as integer) &#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="registro" sqlType="STRING"/>
+   </query>
+   <query id="getConsultores" useConfig="semaresiduosDS2">
+      <sql>select c.nombre, c.email, c.telefono, c.registro,c.profesion as id_profesion, t.valor as profesion,c.vigencia&#xd;from log.consultores c &#xd;left join core.tablas t on t.tabl_id = c.profesion&#xd;where c.eliminado = false</sql>
+      <result outputType="json">{&#xd;   "consultores":{&#xd;      "consultor":[&#xd;         {&#xd;            "registro":"$registro",&#xd;            "nombre":"$nombre",&#xd;            "profesion":"$profesion",&#xd;            "email":"$email",&#xd;            "telefono":"$telefono",&#xd;            "id_profesion":"$id_profesion",&#xd;            "vigencia":"$vigencia"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+   </query>
+   <query id="updateEstadoConsultor" useConfig="semaresiduosDS2">
+      <sql>UPDATE log.consultores&#xd;SET&#xd;	eliminado = cast(:estado as bool)&#xd;WHERE registro = cast(:registro as integer) ;</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="registro" sqlType="STRING"/>
+   </query>
+   <query id="updateConsultor" useConfig="semaresiduosDS2">
+      <sql>UPDATE log.consultores&#xd;set &#xd;nombre = :nombre, &#xd;profesion = :profesion, &#xd;telefono = :telefono, &#xd;vigencia = CAST(:vigencia as DATE),&#xd;email = :email &#xd;WHERE registro = cast(:registro as integer);</sql>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="profesion" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="vigencia" sqlType="STRING"/>
+      <param name="email" sqlType="STRING"/>
+      <param name="registro" sqlType="STRING"/>
+   </query>
+   <query id="validaRegistroTransportista" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            FROM log.solicitantes_transporte st  &#xd;            WHERE st.num_registro = :num_registro  &#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="num_registro" sqlType="STRING"/>
+   </query>
+   <query id="getDataVehiculo" useConfig="semaresiduosDS2">
+      <sql>select e.equi_id, e.tara, e.imagen 	&#xd;from core.equipos e &#xd;where e.equi_id = cast(:equi_id as integer);</sql>
+      <result outputType="json">{&#xd;   "equipos":{&#xd;      "equipo":[&#xd;         {&#xd;            "equi_id":"$equi_id",&#xd;            "tara":"$tara",&#xd;            "imagen":"$imagen"&#xd;         &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="setInfoIdTransportista" useConfig="semaresiduosDS2">
+      <sql>UPDATE log.transportistas &#xd;SET info_id = CAST(:info_id AS INTEGER)&#xd;WHERE (tran_id =CAST(:tran_id AS INTEGER))</sql>
+      <param name="info_id" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="validaCuitTransportista" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            FROM log.transportistas t  &#xd;            WHERE t.cuit = :cuit&#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="cuit" sqlType="STRING"/>
+   </query>
+   <query id="validaDominioEquipo" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            from core.equipos e   &#xd;            WHERE e.dominio  = :dominio&#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="dominio" sqlType="STRING"/>
+   </query>
+   <query id="setInfoIdEquipo" useConfig="semaresiduosDS2">
+      <sql>UPDATE core.equipos e&#xd;SET info_id = CAST(:info_id AS INTEGER)&#xd;WHERE (equi_id =CAST(:equi_id AS INTEGER))</sql>
+      <param name="info_id" sqlType="STRING"/>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculosSetDos" useConfig="semaresiduosDS2">
+      <sql>insert into core.equipos (descripcion, marca, codigo, ubicacion, tran_id, dominio, fecha_ingreso, tara, imagen, cont_id)&#xd;        SELECT :descripcion, :marca, :codigo, :ubicacion, CAST(:tran_id AS INTEGER), :dominio, TO_DATE(:fecha_ingreso,'YYYY-MM-DD'), CAST(:tara as float8), :imagen,&#xd;        CASE&#xd;          WHEN cont.ID = 'X'&#xd;        THEN NULL&#xd;        ELSE CAST (cont.id AS integer) END&#xd;        FROM  (SELECT :cont_id ID) cont&#xd;  returning equi_id</sql>
+      <result outputType="json">{&#xd;    "respuesta": {&#xd;        "equi_id": "$equi_id"&#xd;    }&#xd;}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="marca" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="ubicacion" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="dominio" sqlType="STRING"/>
+      <param name="fecha_ingreso" sqlType="STRING"/>
+      <param name="tara" sqlType="STRING"/>
+      <param name="imagen" optional="false" sqlType="BINARY"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="getDataFormDinamico" useConfig="semaresiduosDS2">
+      <sql>select if2.label, if2.valor&#xd;from frm.instancias_formularios if2 &#xd;where if2.info_id = cast(:info_id as integer);</sql>
+      <result outputType="json">{&#xd;   "formularios":{&#xd;      "formulario":[&#xd;         {&#xd;            "label":"$label",&#xd;            "valor":"$valor"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="info_id" sqlType="STRING"/>
+   </query>
+   <query id="validaCodigoContenedor" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    CASE &#xd;        WHEN EXISTS (&#xd;            SELECT 1 &#xd;            from log.contenedores c  &#xd;            WHERE c.codigo   = cast(:codigo as integer)&#xd;        )&#xd;        THEN 'true'&#xd;        ELSE 'false'&#xd;    END AS existe;</sql>
+      <result outputType="json">{&#xd;    "resultado": {&#xd;        "existe": "$existe"&#xd;    }&#xd;}</result>
+      <param name="codigo" sqlType="STRING"/>
+   </query>
+   <query id="setInfoIdContenedor" useConfig="semaresiduosDS2">
+      <sql>UPDATE log.contenedores &#xd;SET info_id = CAST(:info_id AS INTEGER)&#xd;WHERE (cont_id =CAST(:cont_id AS INTEGER))</sql>
+      <param name="info_id" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+   </query>
+   <query id="getOrdenesTransporte" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    ot.ortr_id, &#xd;    ot.chof_id, &#xd;    ot.tran_id, &#xd;    ot.equi_id, &#xd;    ot.estado, &#xd;    ot.difi_id, &#xd;    ot.sotr_id, &#xd;    ot.fec_alta, &#xd;    t.valor as difi_descripcion, &#xd;    t.valor2 as difi_cuil, &#xd;    t.valor3 as difi_registro, &#xd;    st.razon_social as transportista, &#xd;    c.nombre as chofer, &#xd;    c.apellido as apellidoChofer, &#xd;    c.codigo as registroChofer, &#xd;    e.descripcion as descripcionequipo, &#xd;    e.dominio, &#xd;    e.codigo as registroEquipo, &#xd;    e.tara,&#xd;    e2.descripcion as generador &#xd;FROM &#xd;    log.ordenes_transporte ot &#xd;INNER JOIN &#xd;    core.tablas t ON ot.difi_id = t.tabl_id &#xd;INNER JOIN &#xd;    log.solicitantes_transporte st on ot.sotr_id = st.sotr_id &#xd;inner join &#xd;	core.empresas e2 on e2.empr_id = st.empr_id &#xd;INNER JOIN &#xd;    log.choferes c on c.documento = ot.chof_id &#xd;INNER JOIN &#xd;    core.equipos e on e.equi_id = ot.equi_id, &#xd;    (SELECT :search clave) AS param,&#xd;    (SELECT :sotr_id as sotr_id_param) AS parametro &#xd;WHERE &#xd;    (&#xd;                param.clave IS NULL &#xd;        OR param.clave = '' &#xd;        OR param.clave = 'todos' &#xd;        OR CAST(ot.ortr_id AS TEXT) LIKE '%' || upper(param.clave) || '%' &#xd;        OR UPPER(c.nombre) LIKE '%' || upper(param.clave) || '%' &#xd;        OR UPPER(c.apellido) LIKE '%' || upper(param.clave) || '%' &#xd;        OR UPPER(st.razon_social) LIKE '%' || upper(param.clave) || '%' &#xd;        OR UPPER(e.descripcion) LIKE '%' || upper(param.clave) || '%' &#xd;        OR UPPER(t.valor) LIKE '%' || upper(param.clave) || '%'&#xd;        OR UPPER(e2.descripcion) LIKE '%' || upper(param.clave) || '%'&#xd;    ) &#xd;    AND (&#xd;     	parametro.sotr_id_param = 'todos'&#xd;        OR ot.sotr_id = CAST(parametro.sotr_id_param AS INTEGER)&#xd;    ) &#xd;ORDER BY &#xd;    ot.ortr_id, :order&#xd;LIMIT &#xd;    CAST(:length AS INTEGER) &#xd;OFFSET &#xd;    CAST(:start AS INTEGER);</sql>
+      <result outputType="json">{&#xd;   "ordenes_transportes":{&#xd;      "orden_transporte":[&#xd;         {&#xd;            "ortr_id":"$ortr_id",&#xd;            "chof_id":"$chof_id",&#xd;            "registroChofer":"$registroChofer",&#xd;            "dominio":"$dominio",&#xd;            "tara":"$tara",&#xd;            "registroEquipo":"$registroEquipo",&#xd;            "sotr_id":"$sotr_id",&#xd;            "fec_alta":"$fec_alta",&#xd;            "transportista":"$transportista",&#xd;            "chofer":"$chofer",&#xd;            "apellidoChofer":"$apellidoChofer",&#xd;            "tran_id":"$tran_id",&#xd;            "difi_descripcion":"$difi_descripcion",&#xd;            "difi_cuil":"$difi_cuil",&#xd;            "difi_registro":"$difi_registro",&#xd;            "generador":"$generador"&#xd;            &#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="search" sqlType="STRING"/>
+      <param name="order" sqlType="STRING"/>
+      <param name="length" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="totalOrdenTransporte" useConfig="semaresiduosDS2">
+      <sql>SELECT COUNT(*) AS total&#xd;FROM log.ordenes_transporte ot,&#xd;(select :sotr_id as sotr_id) as param&#xd;where param.sotr_id = 'todos'&#xd;        OR ot.sotr_id = CAST(param.sotr_id AS INTEGER);</sql>
+      <result outputType="json">{&#xd;   "totales":{&#xd;      "total":[&#xd;         {&#xd;            "total":"$total"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="totalOrdenTransporteFiltrado" useConfig="semaresiduosDS2">
+      <sql>WITH parametros AS (&#xd;      SELECT &#xd;        COALESCE(:search, '') AS search_value,&#xd;        COALESCE(:sotr_id, '') AS sotr_id_value&#xd;    )&#xd;    SELECT COUNT(*) AS total&#xd;    FROM log.ordenes_transporte ot&#xd;    INNER JOIN core.tablas t ON ot.difi_id = t.tabl_id &#xd;    INNER JOIN log.solicitantes_transporte st ON ot.sotr_id = st.sotr_id &#xd;    INNER JOIN core.empresas e2 ON e2.empr_id = st.empr_id &#xd;    INNER JOIN log.choferes c ON c.documento = ot.chof_id &#xd;    INNER JOIN core.equipos e ON e.equi_id = ot.equi_id&#xd;    CROSS JOIN parametros p&#xd;    WHERE 1=1&#xd;      AND (&#xd;        p.search_value = '' &#xd;        OR CAST(ot.ortr_id AS TEXT) LIKE '%' || UPPER(p.search_value) || '%'&#xd;        OR UPPER(c.nombre) LIKE '%' || UPPER(p.search_value) || '%'&#xd;        OR UPPER(c.apellido) LIKE '%' || UPPER(p.search_value) || '%'&#xd;        OR UPPER(st.razon_social) LIKE '%' || UPPER(p.search_value) || '%'&#xd;        OR UPPER(e.descripcion) LIKE '%' || UPPER(p.search_value) || '%'&#xd;        OR UPPER(t.valor) LIKE '%' || UPPER(p.search_value) || '%'&#xd;        OR UPPER(e2.descripcion) LIKE '%' || UPPER(p.search_value) || '%'&#xd;      )&#xd;      AND (&#xd;        p.sotr_id_value = '' &#xd;        OR p.sotr_id_value = 'todos'&#xd;        OR ot.sotr_id = CAST(p.sotr_id_value AS INTEGER)&#xd;      )</sql>
+      <result outputType="json">{&#xd;   "totales":{&#xd;      "total":[&#xd;         {&#xd;            "total":"$total"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="search" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitanteTransportePorSotrId" useConfig="semaresiduosDS2">
+      <sql>select st.razon_social, st.cuit, st.num_registro, st.tist_id, z.nombre as zona, d.nombre as municipio &#xd;from log.solicitantes_transporte st&#xd;inner join core.zonas z on z.zona_id = st.zona_id&#xd;inner join core.departamentos d on z.depa_id = d.depa_id  &#xd;where st.sotr_id = cast(:sotr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "solicitante_transportistas":{&#xd;      "solicitante_transportista":[&#xd;         {&#xd;            "razon_social":"$razon_social",&#xd;            "cuit":"$cuit",&#xd;            "tist_id":"$tist_id",&#xd;"zona":"$zona",&#xd;"municipio":"$municipio",&#xd;            "num_registro":"$num_registro"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="sotr_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresentregadosPorOrtrId" useConfig="semaresiduosDS2">
+      <sql>select ce.cont_id, &#xd;ce.porc_llenado ,&#xd;ce.mts_cubicos, &#xd;t.valor as tipoResiduo, &#xd;c.codigo as registroContenedor, &#xd;e.dominio as dominioPesada, &#xd;ce.peso_neto, &#xd;c.capacidad as pesoContenedor, &#xd;c.tara as taraContenedor,&#xd;e.tara as taraEquipo,&#xd;ce.observaciones_descarga,&#xd;ce.fec_entrega,&#xd;ce.fec_descarga,&#xd;c.descripcion &#xd;from log.contenedores_entregados ce &#xd;inner join core.tablas t on t.tabl_id = ce.tica_id&#xd;inner join log.contenedores c on c.cont_id = ce.cont_id&#xd;left join core.equipos e on e.equi_id = ce.equi_id_pesado &#xd;where ce.ortr_id = cast(:ortr_id as integer);</sql>
+      <result outputType="json">{&#xd;   "contenedores":{&#xd;      "contenedor":[&#xd;         {&#xd;            "cont_id":"$cont_id",&#xd;            "porc_llenado":"$porc_llenado",&#xd;            "mts_cubicos":"$mts_cubicos",&#xd;            "tipoResiduo":"$tipoResiduo",&#xd;            "registroContenedor":"$registroContenedor",&#xd;            "dominioPesada":"$dominioPesada",&#xd;            "peso_neto":"$peso_neto",&#xd;            "pesoContenedor":"$pesoContenedor",&#xd;            "taraContenedor":"$taraContenedor",&#xd;            "taraEquipo":"$taraEquipo",&#xd;            "fec_entrega":"$fec_entrega",&#xd;            "fec_descarga":"$fec_descarga",&#xd;            "observaciones_descarga":"$observaciones_descarga",&#xd;            "descripcion":"$descripcion"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}&#xd;</result>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <query id="getOrdenesTransporteporEquiId" useConfig="semaresiduosDS2">
+      <sql>select &#xd;    ot.ortr_id, &#xd;    ot.estado, &#xd;    e.dominio, &#xd;    c.nombre, &#xd;    c.apellido, &#xd;    ot.tran_id, &#xd;    c.codigo as registroChofer, &#xd;    ot.sotr_id, &#xd;    ot.fec_alta, &#xd;    e.codigo as registroEquipo,&#xd;    e.tara,     &#xd;    t.valor as difi_descripcion,&#xd;    t.valor2 as difi_cuil,&#xd;    t.valor3 as difi_registro    &#xd;  from log.ordenes_transporte ot&#xd;  join core.tablas t on ot.difi_id = t.tabl_id &#xd;  join log.choferes c on c.documento = ot.chof_id &#xd;  join core.equipos e on ot.equi_id = e.equi_id&#xd;  where ot.equi_id = cast(:equi_id as integer)&#xd;  order by ot.fec_alta desc&#xd;  limit 1;</sql>
+      <result outputType="json">{&#xd;   "orden_transportes":{&#xd;      "orden_transporte":[&#xd;         {&#xd;            "ortr_id":"$ortr_id",&#xd;            "estado":"$estado",&#xd;            "dominio":"$dominio",&#xd;            "nombre":"$nombre",&#xd;            "apellido":"$apellido",&#xd;            "sotr_id":"$sotr_id",&#xd;            "tran_id":"$tran_id",&#xd;            "fec_alta":"$fec_alta",&#xd;            "registroChofer":"$registroChofer",&#xd;            "registroEquipo":"$registroEquipo",&#xd;            "difi_descripcion":"$difi_descripcion",&#xd;            "difi_cuil":"$difi_cuil",&#xd;            "difi_registro":"$difi_registro",&#xd;            "tara":"$tara"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="ordenTransporteInfoEntregaVuelco" useConfig="semaresiduosDS2">
+      <sql>select OT.ortr_id, OT.fec_alta, OT.estado, &#xd;        E.dominio, E.descripcion, E.imagen as img_vehiculo, E.tara , E.tran_id, &#xd;        CH.imagen as img_chofer, concat(CH.nombre, ' ', CH.apellido) as nom_chofer, CH.documento, e2.dominio as dominiopesado &#xd;  from log.ordenes_transporte OT&#xd;  join core.equipos E on E.equi_id = OT.equi_id &#xd;  join log.choferes CH on CH.documento = OT.chof_id&#xd;  left JOIN log.contenedores_entregados ce ON ce.ortr_id = OT.ortr_id&#xd;  left JOIN core.equipos e2 ON e2.equi_id = ce.equi_id_pesado&#xd;  where OT.case_id = :case_id limit 1</sql>
+      <result outputType="json"> {&#xd;    "ordenTransporte":{&#xd;      "ortr_id": "$ortr_id",&#xd;      "fec_alta": "$fec_alta",&#xd;      "estado": "$estado",&#xd;      "dominio": "$dominio",&#xd;      "descripcion": "$descripcion",&#xd;      "img_vehiculo": "$img_vehiculo",&#xd;      "tara": "$tara",&#xd;      "img_chofer": "$img_chofer",&#xd;      "nom_chofer": "$nom_chofer",&#xd;      "documento": "$documento",&#xd;      "tran_id":"$tran_id",&#xd;      "dominiopesado":"$dominiopesado"&#xd;    }&#xd;  }</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="choferesGetPorTransportistas" useConfig="semaresiduosDS2">
+      <sql>select &#xd; chof_id, documento, concat(apellido, ', ',nombre) as nom_chofer&#xd;from log.choferes &#xd;  where tran_id = CAST(:tran_id AS INTEGER)</sql>
+      <result outputType="json">{&#xd;   "choferes":{&#xd;      "chofer":[&#xd;         {&#xd;            "chof_id":"$chof_id",&#xd;   "documento":"$documento",         "nom_chofer":"$nom_chofer"         &#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="vehiculosGetPorTransportistas" useConfig="semaresiduosDS2">
+      <sql>select &#xd;  equi_id, descripcion, marca, dominio, codigo as registro &#xd;from &#xd;  core.equipos &#xd;where &#xd;  tran_id = CAST(:tran_id AS INTEGER) and estado = 'AC' and cont_id is not null</sql>
+      <result outputType="json">{&#xd;    "vehiculos":{&#xd;      "vehiculo":[&#xd;          {&#xd;            "equi_id": "$equi_id",&#xd;            "descripcion": "$descripcion",&#xd;            "marca": "$marca",&#xd;            "dominio": "$dominio",&#xd;            "registro": "$registro"&#xd;          }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="tran_id" sqlType="STRING"/>
+   </query>
+   <query id="transportistasGetTodo" useConfig="semaresiduosDS2">
+      <sql>select tran_id, razon_social, empr_id from log.transportistas</sql>
+      <result outputType="json">{"transportistas":&#xd;    {&#xd;      "transportista":[&#xd;        {&#xd;          "tran_id": "$tran_id",&#xd;          "razon_social": "$razon_social",&#xd;          "empr_id":"$empr_id",&#xd;          "@choferesGetPorTransportistas": "$tran_id-&gt;tran_id",&#xd;          "@vehiculosGetPorTransportistas" : "$tran_id-&gt;tran_id"&#xd;             }&#xd;      ]&#xd;    }&#xd;  }</result>
+   </query>
+   <query id="getSolicitanteTransporte" useConfig="semaresiduosDS2">
+      <sql>select sotr_id&#xd;from log.solicitantes_transporte&#xd;where empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "solicitante_transportes":{&#xd;      "solicitante_transporte":[&#xd;         {&#xd;            "sotr_id":"$sotr_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosInfoSalidaGetV2" useConfig="semaresiduosDS2">
+      <sql>SELECT&#xd;    OT.ortr_id,&#xd;    OT.fec_alta,&#xd;    OT.estado,&#xd;    E.dominio,&#xd;    E.descripcion,&#xd;    E.imagen AS img_vehiculo,&#xd;    E.tara,&#xd;    CH.imagen AS img_chofer,&#xd;    concat(CH.nombre, ' ', CH.apellido) AS nom_chofer,&#xd;    CH.documento,&#xd;    ce.cont_id,&#xd;    con.codigo AS codigo_contenedor,&#xd;    ce.peso_neto,&#xd;    ce.observaciones_descarga,&#xd;    t.descripcion AS contenido_descarga,&#xd;    ce.equi_id_pesado &#xd;FROM log.ordenes_transporte OT&#xd;JOIN log.contenedores_entregados ce&#xd;  ON ce.ortr_id = ot.ortr_id&#xd;JOIN log.contenedores con&#xd;  ON con.cont_id = ce.cont_id&#xd;JOIN log.choferes CH&#xd;  ON OT.chof_id = CH.documento&#xd;LEFT JOIN core.equipos E&#xd;  ON E.equi_id = ce.equi_id_pesado&#xd;JOIN core.tablas t&#xd;  ON t.tabl_id = ce.tica_id&#xd;WHERE&#xd;    OT.case_id = :case_id&#xd;    AND OT.eliminado = 0&#xd;    AND ce.fec_salida IS NULL&#xd;    AND ce.fec_descarga IS NOT NULL;</sql>
+      <result outputType="json">{&#xd;   "contenedor":{&#xd;      "ortr_id":"$ortr_id",&#xd;      "fec_alta":"$fec_alta",&#xd;      "estado":"$estado",&#xd;      "dominio":"$dominio",&#xd;      "descripcion":"$descripcion",&#xd;      "img_vehiculo":"$img_vehiculo",&#xd;      "tara":"$tara",&#xd;      "img_chofer":"$img_chofer",&#xd;      "nom_chofer":"$nom_chofer",&#xd;      "documento":"$documento",&#xd;      "cont_id":"$cont_id",&#xd;      "codigo_contenedor":"$codigo_contenedor",&#xd;      "peso_neto":"$peso_neto",&#xd;      "observaciones_descarga":"$observaciones_descarga",&#xd;      "contenido_descarga":"$contenido_descarga",&#xd;      "equi_id_pesado":"$equi_id_pesado"&#xd;&#xd;   }&#xd;}</result>
+      <param name="case_id" sqlType="STRING"/>
+   </query>
+   <query id="getIncidenciaFiltro" useConfig="semaresiduosDS2">
+      <sql>WITH params AS (&#xd;    SELECT &#xd;        CAST(NULLIF(:fecha_desde,'TODOS') AS DATE) AS fecha_desde,&#xd;        CAST(NULLIF(:fecha_hasta,'TODOS') AS DATE) AS fecha_hasta,&#xd;        CAST(NULLIF(:tran_id,'TODOS') AS INTEGER)  AS tran_id,&#xd;        CAST(NULLIF(:sotr_id,'TODOS') AS INTEGER)  AS sotr_id,&#xd;        NULLIF(:tiin_id,'TODOS')  AS tiin_id&#xd;)&#xd;SELECT&#xd;    i.inci_id,&#xd;    i.descripcion,&#xd;    i.fecha,&#xd;    i.num_acta,&#xd;    i.adjunto,&#xd;    i.usuario_app,&#xd;    ti.valor AS tipo_incidencia,&#xd;    tc.valor AS tipo_carga,&#xd;    td.valor AS disposicion_final,&#xd;    ot.tran_id,&#xd;    ot.ortr_id,&#xd;    ot.sotr_id,&#xd;    t.razon_social as transportista,&#xd;    st.razon_social as solicitante&#xd;FROM ins.incidencias i&#xd;LEFT JOIN core.tablas ti ON ti.tabl_id = i.tiin_id&#xd;LEFT JOIN core.tablas tc ON tc.tabl_id = i.tica_id&#xd;LEFT JOIN core.tablas td ON td.tabl_id = i.difi_id&#xd;LEFT JOIN log.ordenes_transporte ot ON ot.ortr_id = i.ortr_id&#xd;left join log.transportistas t on t.tran_id = ot.tran_id&#xd;left join log.solicitantes_transporte st on st.sotr_id = ot.sotr_id&#xd;CROSS JOIN params p&#xd;WHERE&#xd;    i.eliminado = 0&#xd;    AND (p.fecha_desde IS NULL OR i.fec_alta &gt;= p.fecha_desde)&#xd;    AND (p.fecha_hasta IS NULL OR i.fec_alta &lt;= p.fecha_hasta)&#xd;    AND (p.tran_id IS NULL OR ot.tran_id = p.tran_id)&#xd;    AND (p.sotr_id IS NULL OR ot.sotr_id = p.sotr_id)&#xd;    AND (p.tiin_id IS NULL OR i.tiin_id = p.tiin_id)&#xd;ORDER BY i.inci_id;</sql>
+      <result outputType="json">{&#xd;   "incidencias":{&#xd;      "incidencia":[&#xd;         {&#xd;            "inci_id":"$inci_id",&#xd;            "descripcion":"$descripcion",&#xd;            "fecha":"$fecha",&#xd;            "num_acta":"$num_acta",&#xd;            "adjunto":"$adjunto",&#xd;            "usuario_app":"$usuario_app",&#xd;            "tipo_incidencia":"$tipo_incidencia",&#xd;            "tipo_carga":"$tipo_carga",&#xd;            "disposicion_final":"$disposicion_final",&#xd;            "transportista":"$transportista",&#xd;            "solicitante":"$solicitante",&#xd;            "ortr_id":"$ortr_id"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="fecha_desde" sqlType="STRING"/>
+      <param name="fecha_hasta" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="tiin_id" sqlType="STRING"/>
+   </query>
+   <query id="getIncidenciaFiltroPaginado" useConfig="semaresiduosDS2">
+      <sql>SELECT &#xd;    i.inci_id,&#xd;    i.descripcion,&#xd;    i.fecha,&#xd;    i.num_acta,&#xd;    i.adjunto,&#xd;    i.usuario_app,&#xd;    ti.valor as tipo_incidencia,&#xd;    tc.valor as tipo_carga,&#xd;    td.valor as disposicion_final,&#xd;    ot.tran_id,&#xd;    ot.ortr_id,&#xd;    ot.sotr_id,&#xd;    t.razon_social as transportista,&#xd;    st.razon_social as solicitante,&#xd;    COUNT(*) OVER() as total_records&#xd;FROM &#xd;    ins.incidencias i &#xd;LEFT JOIN &#xd;    core.tablas ti ON ti.tabl_id = i.tiin_id &#xd;LEFT JOIN &#xd;    core.tablas tc ON tc.tabl_id = i.tica_id &#xd;LEFT JOIN &#xd;    core.tablas td ON td.tabl_id = i.difi_id &#xd;LEFT JOIN &#xd;    log.ordenes_transporte ot ON ot.ortr_id = i.ortr_id &#xd;LEFT JOIN &#xd;    log.transportistas t ON t.tran_id = ot.tran_id &#xd;LEFT JOIN &#xd;    log.solicitantes_transporte st ON st.sotr_id = ot.sotr_id,&#xd;    (SELECT :fecha_desde fecha_desde_param) AS p1,&#xd;    (SELECT :fecha_hasta fecha_hasta_param) AS p2,&#xd;    (SELECT :tran_id tran_id_param) AS p3,&#xd;    (SELECT :sotr_id sotr_id_param) AS p4,&#xd;    (SELECT :tiin_id tiin_id_param) AS p5,  &#xd;    (SELECT :search search_param) AS p6&#xd;WHERE &#xd;    i.eliminado = 0&#xd;    AND (&#xd;        p1.fecha_desde_param = 'TODOS' &#xd;        OR p1.fecha_desde_param = '' &#xd;        OR i.fecha &gt;= CAST(p1.fecha_desde_param AS DATE)&#xd;    )&#xd;    AND (&#xd;        p2.fecha_hasta_param = 'TODOS' &#xd;        OR p2.fecha_hasta_param = '' &#xd;        OR i.fecha &lt;= CAST(p2.fecha_hasta_param AS DATE)&#xd;    )&#xd;    AND (&#xd;        p3.tran_id_param = 'TODOS' &#xd;        OR p3.tran_id_param = '' &#xd;        OR ot.tran_id = CAST(p3.tran_id_param AS INTEGER)&#xd;    )&#xd;    AND (&#xd;        p4.sotr_id_param = 'TODOS' &#xd;        OR p4.sotr_id_param = '' &#xd;        OR ot.sotr_id = CAST(p4.sotr_id_param AS INTEGER)&#xd;    )&#xd;    AND (&#xd;        p5.tiin_id_param = 'TODOS' &#xd;        OR p5.tiin_id_param = '' &#xd;        OR i.tiin_id = p5.tiin_id_param&#xd;    )&#xd;    AND (&#xd;        p6.search_param = 'TODOS' &#xd;        OR p6.search_param = '' &#xd;        OR LOWER(i.descripcion) LIKE LOWER('%' || p6.search_param || '%')&#xd;        OR LOWER(t.razon_social) LIKE LOWER('%' || p6.search_param || '%')&#xd;        OR LOWER(st.razon_social) LIKE LOWER('%' || p6.search_param || '%')&#xd;        OR CAST(i.inci_id AS TEXT) LIKE ('%' || p6.search_param || '%')&#xd;    )&#xd;ORDER BY &#xd;    i.inci_id DESC&#xd;LIMIT &#xd;    CAST(:limit AS INTEGER) &#xd;OFFSET &#xd;    CAST(:offset AS INTEGER);</sql>
+      <result outputType="json">{&#xd;   "incidencias":{&#xd;      "incidencia":[&#xd;         {&#xd;            "inci_id":"$inci_id",&#xd;            "descripcion":"$descripcion",&#xd;            "fecha":"$fecha",&#xd;            "num_acta":"$num_acta",&#xd;            "adjunto":"$adjunto",&#xd;            "usuario_app":"$usuario_app",&#xd;            "tipo_incidencia":"$tipo_incidencia",&#xd;            "tipo_carga":"$tipo_carga",&#xd;            "disposicion_final":"$disposicion_final",&#xd;            "transportista":"$transportista",&#xd;            "solicitante":"$solicitante",&#xd;            "ortr_id":"$ortr_id",&#xd;              }&#xd;      ]&#xd;   }&#xd;}</result>
+      <param name="fecha_desde" sqlType="STRING"/>
+      <param name="fecha_hasta" sqlType="STRING"/>
+      <param name="tran_id" sqlType="STRING"/>
+      <param name="sotr_id" sqlType="STRING"/>
+      <param name="tiin_id" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+   </query>
+   <query id="getInfoOtEquipoMunicipio" useConfig="semaresiduosDS2">
+      <sql>select ot.ortr_id, c.descripcion , c.tara ,tot.teot_id ,c.cont_id, e.equi_id, e.dominio, e.imagen, c.descripcion as contenedor, c.imagen as imagencontenedor, ce.coen_id&#xd;from log.ordenes_transporte ot &#xd;join log.templates_orden_transporte tot on tot.teot_id = ot.teot_id &#xd;join core.equipos e on e.equi_id = tot.equi_id &#xd;join log.contenedores c on c.cont_id = e.cont_id&#xd;join log.contenedores_entregados ce on ce.ortr_id = ot.ortr_id&#xd;where ot.ortr_id = cast(:ortr_id as integer)</sql>
+      <result outputType="json">{&#xd;   "orden_transportes":{&#xd;      "orden_transporte":[&#xd;         {&#xd;            "ortr_id":"$ortr_id",&#xd;            "dominio":"$dominio",&#xd;            "cont_id":"$cont_id",&#xd;            "equi_id":"$equi_id",&#xd;            "teot_id":"$teot_id",&#xd;            "tara":"$tara",&#xd;            "imagen":"$imagen",&#xd;            "contenedor":"$contenedor",&#xd;            "imagencontenedor":"$imagencontenedor",&#xd;            "coen_id":"$coen_id",&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/choferes/{tran_id}">
+      <call-query href="choferesGetPorTransportistas">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculos/transp/{tran_id}">
+      <call-query href="vehiculosGetPorTransportistas">
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/consultor">
+      <call-query href="setConsultor">
+         <with-param name="registro" query-param="registro"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="profesion" query-param="profesion"/>
+         <with-param name="vigencia" query-param="vigencia"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="email" query-param="email"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/validaRegistroConsultor/{registro}">
+      <call-query href="validaRegistroConsultor">
+         <with-param name="registro" query-param="registro"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/consultores">
+      <call-query href="getConsultores"/>
+   </resource>
+   <resource method="PUT" path="/consultorEstado">
+      <call-query href="updateEstadoConsultor">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="registro" query-param="registro"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/consultores">
+      <call-query href="updateConsultor">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="profesion" query-param="profesion"/>
+         <with-param name="telefono" query-param="telefono"/>
+         <with-param name="vigencia" query-param="vigencia"/>
+         <with-param name="email" query-param="email"/>
+         <with-param name="registro" query-param="registro"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/validaRegistroTransportista/{num_registro}">
+      <call-query href="validaRegistroTransportista">
+         <with-param name="num_registro" query-param="num_registro"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/vehiculo/equi/{equi_id}">
+      <call-query href="getDataVehiculo">
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/transportista/infoId">
+      <call-query href="setInfoIdTransportista">
+         <with-param name="info_id" query-param="info_id"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/valida/transportista/{cuit}">
+      <call-query href="validaCuitTransportista">
+         <with-param name="cuit" query-param="cuit"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/valida/dominio/{dominio}">
+      <call-query href="validaDominioEquipo">
+         <with-param name="dominio" query-param="dominio"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/equipo/infoId">
+      <call-query href="setInfoIdEquipo">
+         <with-param name="info_id" query-param="info_id"/>
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/vehiculosSet">
+      <call-query href="vehiculosSetDos">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="marca" query-param="marca"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="ubicacion" query-param="ubicacion"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="dominio" query-param="dominio"/>
+         <with-param name="fecha_ingreso" query-param="fecha_ingreso"/>
+         <with-param name="tara" query-param="tara"/>
+         <with-param name="imagen" query-param="imagen"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedor/validaCodigo/{codigo}">
+      <call-query href="validaCodigoContenedor">
+         <with-param name="codigo" query-param="codigo"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/contenedor/infoId">
+      <call-query href="setInfoIdContenedor">
+         <with-param name="info_id" query-param="info_id"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ordenes/transporte/{start}/{length}/{search}/{order}/{sotr_id}">
+      <call-query href="getOrdenesTransporte">
+         <with-param name="search" query-param="search"/>
+         <with-param name="order" query-param="order"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/TotalOrdenTransporte/{sotr_id}">
+      <call-query href="totalOrdenTransporte">
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/TotalOrdenTransporteFiltrado/{search}/{sotr_id}">
+      <call-query href="totalOrdenTransporteFiltrado">
+         <with-param name="search" query-param="search"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitanteTransporte/{sotr_id}">
+      <call-query href="getSolicitanteTransportePorSotrId">
+         <with-param name="sotr_id" query-param="sotr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/contenedores/entregadosPorOrdenTransporte/{ortr_id}">
+      <call-query href="contenedoresentregadosPorOrtrId">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/orden/transporte/equipo/{equi_id}">
+      <call-query href="getOrdenesTransporteporEquiId">
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ordenTransporte/vuelco/info/entrega/case/{case_id}">
+      <call-query href="ordenTransporteInfoEntregaVuelco">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/transportistas/todo">
+      <call-query href="transportistasGetTodo"/>
+   </resource>
+   <resource method="GET" path="/contenedoresEntregadosV2/info/salida/case/{case_id}">
+      <call-query href="contenedoresEntregadosInfoSalidaGetV2">
+         <with-param name="case_id" query-param="case_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/incidencias/fecha_desde/{fecha_desde}/fecha_hasta/{fecha_hasta}/transportista/{tran_id}/solicitante/{sotr_id}/tipo_infraccion/{tiin_id}/limit/{limit}/offset/{offset}/search/{search}">
+      <call-query href="getIncidenciaFiltroPaginado">
+         <with-param name="fecha_desde" query-param="fecha_desde"/>
+         <with-param name="fecha_hasta" query-param="fecha_hasta"/>
+         <with-param name="tran_id" query-param="tran_id"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
+         <with-param name="tiin_id" query-param="tiin_id"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/orden/transporte/municipio/{ortr_id}">
+      <call-query href="getInfoOtEquipoMunicipio">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+</data>

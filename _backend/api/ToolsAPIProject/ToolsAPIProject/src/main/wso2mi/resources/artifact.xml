@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<artifacts>
+  <!-- Un artifact por archivo: el plugin solo procesa el primer <item> de cada artifact.
+       Los archivos deben estar en resources/conf/tools/ (path conf + "tools" + file). -->
+  <artifact name="registry_conf_tools_apiconfig" groupId="com.microintegrator.projects" version="1.0.0" type="registry/resource" serverRole="EnterpriseIntegrator">
+    <item>
+      <file>apiconfig.xml</file>
+      <path>/_system/config/tools</path>
+      <mediaType>application/xml</mediaType>
+      <properties/>
+    </item>
+  </artifact>
+  <artifact name="registry_conf_tools_bpmconf" groupId="com.microintegrator.projects" version="1.0.0" type="registry/resource" serverRole="EnterpriseIntegrator">
+    <item>
+      <file>bpmconf.xml</file>
+      <path>/_system/config/tools</path>
+      <mediaType>application/xml</mediaType>
+      <properties/>
+    </item>
+  </artifact>
+  <artifact name="registry_conf_tools_armarSession" groupId="com.microintegrator.projects" version="1.0.0" type="registry/resource" serverRole="EnterpriseIntegrator">
+    <item>
+      <file>armarSession.js</file>
+      <path>/_system/config/tools</path>
+      <mediaType>application/javascript</mediaType>
+      <properties/>
+    </item>
+  </artifact>
+  <artifact name="registry_conf_tools_setIdEnHijos" groupId="com.microintegrator.projects" version="1.0.0" type="registry/resource" serverRole="EnterpriseIntegrator">
+    <item>
+      <file>setIdEnHijos.js</file>
+      <path>/_system/config/tools</path>
+      <mediaType>application/javascript</mediaType>
+      <properties/>
+    </item>
+  </artifact>
+</artifacts>

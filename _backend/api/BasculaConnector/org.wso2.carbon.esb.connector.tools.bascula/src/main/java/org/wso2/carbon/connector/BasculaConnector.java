@@ -1,14 +1,15 @@
 package org.wso2.carbon.connector;
 
-import com.fazecast.jSerialComm.*; 
+import java.io.InputStream; 
+
 import org.apache.commons.logging.Log;
 import org.apache.synapse.MessageContext;
 import org.wso2.carbon.connector.core.AbstractConnector;
 import org.wso2.carbon.connector.core.ConnectException;
 
-import java.io.InputStream;
-import java.io.IOException;
-import java.util.Enumeration;
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortInvalidPortException;
+import com.fazecast.jSerialComm.SerialPortTimeoutException;
 
 
 /* Conector para leer el peso de una báscula vía port serial COM
@@ -47,7 +48,9 @@ public class BasculaConnector extends AbstractConnector {
 				throw sie;	
 			}
 
-			port.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+			// Configurar timeout: TIMEOUT_READ_SEMI_BLOCKING con timeout de 1000ms
+			// Esto permite leer datos disponibles sin bloquear indefinidamente
+			port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 1000, 0);
 
 			log.info("BASCCONN: abriendo puerto "+portName);
 			if (port.openPort()){
@@ -72,7 +75,7 @@ public class BasculaConnector extends AbstractConnector {
 	 */
 	@Override
 	public void connect(MessageContext mc) throws ConnectException {
-		InputStream is;
+		InputStream is = null;
 		try {
 			log = mc.getServiceLog();
 			
@@ -91,44 +94,82 @@ public class BasculaConnector extends AbstractConnector {
 			try {
 				//Leo el peso de la bascula
 				log.info("BASCCONN: leyendo peso");
-				is= port.getInputStream();
-				log.info("BASCCONN: leyendo peso");
-
+				is = port.getInputStream();
+				
+				// CRÍTICO: Limpiar el buffer antes de leer para evitar datos antiguos
+				// Descarta todos los bytes disponibles en el buffer para leer solo datos frescos
+				int availableBytes = is.available();
+				if (availableBytes > 0) {
+					log.info("BASCCONN: Limpiando buffer - descartando " + availableBytes + " bytes antiguos");
+					// Leer y descartar todos los bytes antiguos del buffer
+					byte[] buffer = new byte[availableBytes];
+					is.read(buffer, 0, availableBytes);
+					log.info("BASCCONN: Buffer limpiado, esperando datos frescos");
+				}
+				
+				// Pequeña pausa para asegurar que lleguen datos frescos de la báscula
+				Thread.sleep(50);
+				
+				// Verificar que hay datos disponibles después de limpiar
+				int newAvailableBytes = is.available();
+				if (newAvailableBytes == 0) {
+					log.warn("BASCCONN: No hay datos disponibles después de limpiar buffer");
+					// Esperar un poco más para recibir datos
+					Thread.sleep(100);
+					newAvailableBytes = is.available();
+				}
+				
+				if (newAvailableBytes == 0) {
+					log.warn("BASCCONN: Aún no hay datos disponibles, puede que la báscula no esté enviando");
+					mc.setProperty("pesoBascula", "");
+					return;
+				}
+				
+				log.info("BASCCONN: Leyendo " + newAvailableBytes + " bytes disponibles");
+				
+				// Leer solo la cantidad de databits especificada
+				int bytesToRead = Integer.parseInt(databits);
 				String trama = "";
-								//br = new BufferedReader(new InputStreamReader(port.getInputStream()));
 				char c; 
-				for (int cant=0 ; cant<Integer.parseInt(databits) ; cant++){
+				for (int cant = 0; cant < bytesToRead && cant < newAvailableBytes; cant++){
 					c = (char) is.read(); 
-					log.info("BASCCONN: c "+c);
-					trama += c + ""; 
+					log.debug("BASCCONN: c[" + cant + "]=" + c);
+					trama += c; 
+				}
+				
+				// Si no se leyeron suficientes bytes, completar con lo que haya
+				if (trama.length() < bytesToRead) {
+					log.warn("BASCCONN: Solo se leyeron " + trama.length() + " de " + bytesToRead + " bytes esperados");
 				}
 
-				log.info("BASCCONN: peso leido" + trama);					
+				log.info("BASCCONN: peso leido: " + trama);					
 				mc.setProperty("pesoBascula", trama);
-				log.info("BASCCONN: Set property a mc, pesoBascula" + " = " + trama);
+				log.info("BASCCONN: Set property a mc, pesoBascula = " + trama);
 			} catch (SerialPortTimeoutException spte) {
-				log.info("BASCCONN: tmout ");
+				log.info("BASCCONN: timeout en lectura");
 				throw spte;
+			} catch (InterruptedException ie) {
+				log.info("BASCCONN: Interrupción durante espera");
+				Thread.currentThread().interrupt();
+				throw new ConnectException(ie);
 			} catch (Exception e) {
-				log.info("BASCCONN: Error recibiendo peso "+e.getMessage());
+				log.info("BASCCONN: Error recibiendo peso: " + e.getMessage());
 				throw e;
-			}
-
-			// Finalizo la lectura
-			try {
-				log.info("BASCCONN: cierro lectura");
-				//br.close();
-				is.close();
-				log.info("BASCCONN: cerrado");
-			} catch (Exception e) {
-				log.info("BASCCONN: Error cerrando inputStream ");
-				throw e;
+			} finally {
+				// No cerramos el InputStream aquí para mantener el puerto abierto
+				// El puerto se mantiene abierto para lecturas posteriores
+				if (is != null) {
+					// No cerramos el stream, solo lo dejamos disponible
+					log.debug("BASCCONN: Lectura completada, manteniendo stream abierto");
+				}
 			}
 		} catch (SerialPortTimeoutException spte) {
 			log.info("BASCCONN: Dio timeout " + spte.getMessage());
+			mc.setProperty("pesoBascula", "");
 		} catch (Exception e) {
-			log.info("BASCCONN: Imposible tomar peso" + e.getMessage());
-			log.info(e);
+			log.info("BASCCONN: Imposible tomar peso: " + e.getMessage());
+			log.error("BASCCONN: Error completo", e);
+			mc.setProperty("pesoBascula", "");
 			throw new ConnectException(e);
 		}
 

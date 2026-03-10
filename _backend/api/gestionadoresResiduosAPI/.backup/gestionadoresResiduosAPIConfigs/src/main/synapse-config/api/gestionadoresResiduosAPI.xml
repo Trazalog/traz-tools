@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/tools/log" name="gestionadoresResiduosAPI" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/transportista">
+        <inSequence>
+            <property expression="get-property('registry','conf:tools/apiconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//api_url" name="api_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//dataservices_url" name="ds_base_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="fn:concat($ctx:ds_base_url,'/semaresiduosDS')" name="dataservices_url" scope="default" type="STRING"/>
+            <!-- GUARDO DATA DE LA EMPRESA -->
+            <property expression="json-eval($.transportista.razon_social)" name="razon_social" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.descripcion)" name="descripcion" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.direccion)" name="direccion" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.telefono)" name="telefono" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.contacto)" name="contacto" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.cuit)" name="cuit" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.resolucion)" name="resolucion" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.email)" name="email" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.registro)" name="registro" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.fec_alta_efectiva)" name="fec_alta_efectiva" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.fec_baja_efectiva)" name="fec_baja_efectiva" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.usuario_app)" name="usuario_app" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.pais_id)" name="pais_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.prov_id)" name="prov_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.loca_id)" name="loca_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.imagepath)" name="imagepath" scope="default" type="STRING"/>
+            <property expression="json-eval($.transportista.image)" name="image" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="Inicio" value="transaccion transportista"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:api_url" name="api url"/>
+                <property expression="$ctx:dataservices_url" name="ds url"/>
+            </log>
+            <payloadFactory description="solicitud API empresa" media-type="json">
+                <format>       {          "empresa":{               "nombre": "$1",                "cuit": "$2",                "descripcion": "$3"      ,"telefono":"$4"      ,"email":"$5"      ,"pais_id":"$6"      ,"prov_id":"$7"      ,"loca_id":"$8"      ,"imagepath":"$9"      ,"image":"$10" }     }     </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:razon_social"/>
+                    <arg evaluator="xml" expression="$ctx:cuit"/>
+                    <arg evaluator="xml" expression="$ctx:descripcion"/>
+                    <arg evaluator="xml" expression="$ctx:telefono"/>
+                    <arg evaluator="xml" expression="$ctx:email"/>
+                    <arg evaluator="xml" expression="$ctx:pais_id"/>
+                    <arg evaluator="xml" expression="$ctx:prov_id"/>
+                    <arg evaluator="xml" expression="$ctx:loca_id"/>
+                    <arg evaluator="xml" expression="$ctx:imagepath"/>
+                    <arg evaluator="xml" expression="$ctx:image"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property expression="fn:concat($ctx:api_url,'/core/empresa')" name="uri.var.core_api" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="PASO 1" value="Antes de POST request COREAPI"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:uri.var.core_api" name="COREAPI url"/>
+            </log>
+            <call description="POST COREAPI">
+                <endpoint>
+                    <http method="post" uri-template="{uri.var.core_api}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                <then/>
+                <else>
+                    <property expression="json-eval($)" name="ERROR_MESSAGE" scope="default" type="STRING"/>
+                    <property name="TOOLS_ERROR" scope="default" type="STRING" value="POST API /core/empresa con problemas"/>
+                    <sequence key="toolsFault"/>
+                </else>
+            </filter>
+            <!-- GUARDO EMPR_ID EN RESPUESTA DE CORE API -->
+            <property expression="json-eval($.respuesta.empr_id)" name="empr_id" scope="default" type="STRING"/>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <payloadFactory description="solicitud transportista" media-type="json">
+                <format>       {          "_post_transportistas":{               "razon_social": "$1",                "descripcion": "$2",                "direccion": "$3"      ,"telefono":"$4"      ,"contacto":"$5"      ,"registro":"$6"      ,"fec_alta_efectiva":"$7"      ,"fec_baja_efectiva":"$8"      ,"usuario_app":"$9"      ,"cuit":"$10"      ,"resolucion":"$11"      ,"empr_id":"$12" }     }     </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:razon_social"/>
+                    <arg evaluator="xml" expression="$ctx:descripcion"/>
+                    <arg evaluator="xml" expression="$ctx:direccion"/>
+                    <arg evaluator="xml" expression="$ctx:telefono"/>
+                    <arg evaluator="xml" expression="$ctx:contacto"/>
+                    <arg evaluator="xml" expression="$ctx:registro"/>
+                    <arg evaluator="xml" expression="$ctx:fec_alta_efectiva"/>
+                    <arg evaluator="xml" expression="$ctx:fec_baja_efectiva"/>
+                    <arg evaluator="xml" expression="$ctx:usuario_app"/>
+                    <arg evaluator="xml" expression="$ctx:cuit"/>
+                    <arg evaluator="xml" expression="$ctx:resolucion"/>
+                    <arg evaluator="xml" expression="$ctx:empr_id"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/transportistas')" name="uri.var.transportista_url" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="PASO 2" value="antes POST transportista DS"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:api_url" name="api url"/>
+                <property expression="$ctx:dataservices_url" name="ds url"/>
+            </log>
+            <call description="POST DS TRANSPORTISTA">
+                <endpoint>
+                    <http method="post" uri-template="{uri.var.transportista_url}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                <then/>
+                <else>
+                    <property expression="json-eval($)" name="ERROR_MESSAGE" scope="default" type="STRING"/>
+                    <header name="Accept" scope="transport" value="application/json"/>
+                    <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                    <payloadFactory description="borrar solicitud" media-type="json">
+                        <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
+                        <args>
+                            <arg evaluator="xml" expression="get-property('empr_id')"/>
+                        </args>
+                    </payloadFactory>
+                    <property expression="fn:concat($ctx:ds_base_url,'/COREDataService/empresa')" name="uri.var.empresaDELETE" scope="default" type="STRING"/>
+                    <log description="delete empresa fallo POST transportista" level="custom">
+                        <property expression="json-eval($)" name="payload"/>
+                        <property expression="$ctx:uri.var.empresaDELETE" name="URL delete empresa"/>
+                    </log>
+                    <call>
+                        <endpoint>
+                            <http method="delete" uri-template="{uri.var.empresaDELETE}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>1</progressionFactor>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                    <property name="TOOLS_ERROR" scope="default" type="STRING" value="POST /transportistas con problemas"/>
+                    <sequence key="toolsFault"/>
+                </else>
+            </filter>
+            <log level="custom">
+                <property name="donde" value="despues de crear transportista"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="json-eval($.respuesta.tran_id)" name="tran_id generado"/>
+            </log>
+            <property expression="json-eval($.respuesta.tran_id)" name="tran_id" scope="default" type="STRING"/>
+            <log category="DEBUG" description="salida insequence" level="full"/>
+            <loopback/>
+        </inSequence>
+        <outSequence>
+            <log level="full">
+                <property name="MESSAGE" value="FIRST"/>
+            </log>
+            <payloadFactory description="Mensaje error" media-type="json">
+                <format>{"respuesta":              { "resultado" : "ok"              , "tran_id":"$1"}             }</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('tran_id')"/>
+                </args>
+            </payloadFactory>
+            <log level="full"/>
+            <send/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+    <resource methods="POST" uri-template="/generador">
+        <inSequence>
+            <property expression="get-property('registry','conf:tools/apiconfig.xml')" name="apiconf" scope="default" type="OM" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//api_url" name="api_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="$ctx:apiconf//dataservices_url" name="ds_base_url" scope="default" type="STRING" xmlns:ns="http://org.apache.synapse/xsd" xmlns:ns2="http://org.apache.synapse/xsd"/>
+            <property expression="fn:concat($ctx:ds_base_url,'/semaresiduosDS')" name="dataservices_url" scope="default" type="STRING"/>
+            <!-- GUARDO DATA DE LA EMPRESA -->
+            <property expression="json-eval($.generador.razon_social)" name="razon_social" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.cuit)" name="cuit" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.depa_id)" name="depa_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.rubr_id)" name="rubr_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.tist_id)" name="tist_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.domicilio)" name="direccion" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.zona_id)" name="zona_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.num_registro)" name="num_registro" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.lat)" name="lat" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.lng)" name="lng" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.usuario_app)" name="usuario_app" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.contacto)" name="contacto" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.resolucion)" name="resolucion" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.email)" name="email" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.telefono)" name="telefono" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.pais_id)" name="pais_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.prov_id)" name="prov_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.loca_id)" name="loca_id" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.imagepath)" name="imagepath" scope="default" type="STRING"/>
+            <property expression="json-eval($.generador.image)" name="image" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="Inicio" value="transaccion generador"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:api_url" name="api url"/>
+                <property expression="$ctx:dataservices_url" name="ds url"/>
+            </log>
+            <payloadFactory description="solicitud transportista" media-type="json">
+                <format>       {          "empresa":{               "nombre": "$1",                "cuit": "$2",                "descripcion": "$3"      ,"telefono":"$4"      ,"email":"$5"      ,"pais_id":"$6"      ,"prov_id":"$7"      ,"loca_id":"$8"      ,"imagepath":"$9"      ,"image":"$10" }     }     </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:razon_social"/>
+                    <arg evaluator="xml" expression="$ctx:cuit"/>
+                    <arg evaluator="xml" expression="$ctx:razon_social"/>
+                    <arg evaluator="xml" expression="$ctx:telefono"/>
+                    <arg evaluator="xml" expression="$ctx:email"/>
+                    <arg evaluator="xml" expression="$ctx:pais_id"/>
+                    <arg evaluator="xml" expression="$ctx:prov_id"/>
+                    <arg evaluator="xml" expression="$ctx:loca_id"/>
+                    <arg evaluator="xml" expression="$ctx:imagepath"/>
+                    <arg evaluator="xml" expression="$ctx:image"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property expression="fn:concat($ctx:api_url,'/core/empresa')" name="uri.var.core_api" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="PASO 1" value="Antes de POST request COREAPI"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:uri.var.core_api" name="COREAPI url"/>
+            </log>
+            <call description="POST COREAPI">
+                <endpoint>
+                    <http method="post" uri-template="{uri.var.core_api}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                <then/>
+                <else>
+                    <property expression="json-eval($)" name="ERROR_MESSAGE" scope="default" type="STRING"/>
+                    <property name="TOOLS_ERROR" scope="default" type="STRING" value="POST API /core/empresa con problemas"/>
+                    <sequence key="toolsFault"/>
+                </else>
+            </filter>
+            <!-- GUARDO EMPR_ID EN RESPUESTA DE CORE API -->
+            <property expression="json-eval($.respuesta.empr_id)" name="empr_id" scope="default" type="STRING"/>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <payloadFactory description="solicitud transportista" media-type="json">
+                <format>       {          "_post_solicitantesTransporte":{               "razon_social": "$1",                "cuit": "$2"      ,"depa_id":"$3"      ,"rubr_id":"$4"      ,"tist_id":"$5"      ,"domicilio":"$6"      ,"zona_id":"$7"      ,"num_registro":"$8"      ,"lat":"$9"      ,"lng":"$10"      ,"usuario_app":"$11"      ,"empr_id":"$12" }     }     </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:razon_social"/>
+                    <arg evaluator="xml" expression="$ctx:cuit"/>
+                    <arg evaluator="xml" expression="$ctx:depa_id"/>
+                    <arg evaluator="xml" expression="$ctx:rubr_id"/>
+                    <arg evaluator="xml" expression="$ctx:tist_id"/>
+                    <arg evaluator="xml" expression="$ctx:direccion"/>
+                    <arg evaluator="xml" expression="$ctx:zona_id"/>
+                    <arg evaluator="xml" expression="$ctx:num_registro"/>
+                    <arg evaluator="xml" expression="$ctx:lat"/>
+                    <arg evaluator="xml" expression="$ctx:lng"/>
+                    <arg evaluator="xml" expression="$ctx:usuario_app"/>
+                    <arg evaluator="xml" expression="$ctx:empr_id"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+            <property expression="fn:concat($ctx:dataservices_url,'/solicitantesTransporte')" name="uri.var.generador_url" scope="default" type="STRING"/>
+            <log level="custom">
+                <property name="PASO 2" value="antes POST /solicitantesTransporte DS"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="$ctx:uri.var.generador_url" name="URL"/>
+            </log>
+            <call description="POST DS GENERADOR">
+                <endpoint>
+                    <http method="post" uri-template="{uri.var.generador_url}">
+                        <suspendOnFailure>
+                            <initialDuration>-1</initialDuration>
+                            <progressionFactor>1</progressionFactor>
+                        </suspendOnFailure>
+                        <markForSuspension>
+                            <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                        </markForSuspension>
+                    </http>
+                </endpoint>
+            </call>
+            <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')">
+                <then/>
+                <else>
+                    <property expression="json-eval($)" name="ERROR_MESSAGE" scope="default" type="STRING"/>
+                    <header name="Accept" scope="transport" value="application/json"/>
+                    <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+                    <payloadFactory description="borrar solicitud" media-type="json">
+                        <format>{ "_delete_empresa": { "empr_id":"$1"} }</format>
+                        <args>
+                            <arg evaluator="xml" expression="get-property('empr_id')"/>
+                        </args>
+                    </payloadFactory>
+                    <property expression="fn:concat($ctx:ds_base_url,'/COREDataService/empresa')" name="uri.var.empresaDELETE" scope="default" type="STRING"/>
+                    <log description="delete empresa fallo POST /solicitantesTransporte" level="custom">
+                        <property expression="json-eval($)" name="payload"/>
+                        <property expression="$ctx:uri.var.empresaDELETE" name="URL delete empresa"/>
+                    </log>
+                    <call>
+                        <endpoint>
+                            <http method="delete" uri-template="{uri.var.empresaDELETE}">
+                                <suspendOnFailure>
+                                    <initialDuration>-1</initialDuration>
+                                    <progressionFactor>1</progressionFactor>
+                                </suspendOnFailure>
+                                <markForSuspension>
+                                    <retriesBeforeSuspension>0</retriesBeforeSuspension>
+                                </markForSuspension>
+                            </http>
+                        </endpoint>
+                    </call>
+                    <property name="TOOLS_ERROR" scope="default" type="STRING" value="POST /solicitantesTransporte con problemas"/>
+                    <sequence key="toolsFault"/>
+                </else>
+            </filter>
+            <log level="custom">
+                <property name="donde" value="despues de crear generador"/>
+                <property expression="json-eval($)" name="payload"/>
+                <property expression="json-eval($.respuesta.sotr_id)" name="sotr_id generado"/>
+            </log>
+            <property expression="json-eval($.respuesta.sotr_id)" name="sotr_id" scope="default" type="STRING"/>
+            <log category="DEBUG" description="salida insequence" level="full"/>
+            <loopback/>
+        </inSequence>
+        <outSequence>
+            <log level="full">
+                <property name="MESSAGE" value="FIRST"/>
+            </log>
+            <payloadFactory description="Mensaje error" media-type="json">
+                <format>{"respuesta":              { "resultado" : "ok"              , "sotr_id":"$1"}             }</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('sotr_id')"/>
+                </args>
+            </payloadFactory>
+            <log level="full"/>
+            <send/>
+        </outSequence>
+        <faultSequence/>
+    </resource>
+</api>
