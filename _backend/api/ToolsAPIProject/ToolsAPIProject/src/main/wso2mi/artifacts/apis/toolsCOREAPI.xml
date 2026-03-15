@@ -188,13 +188,13 @@
          <sequence key="toolsCreateRole"/>
          <property name="role_name" expression="fn:concat('Administrador ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('Transportista ',$ctx:empr_nombre)" type="STRING"/>
+         <property name="role_name" expression="fn:concat('SMA - Transportista ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('Generador ',$ctx:empr_nombre)" type="STRING"/>
+         <property name="role_name" expression="fn:concat('SMA - Generador ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('Operario Descarga ',$ctx:empr_nombre)" type="STRING"/>
+         <property name="role_name" expression="fn:concat('SMA - Operario Descarga ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('Operador de Bascula ',$ctx:empr_nombre)" type="STRING"/>
+         <property name="role_name" expression="fn:concat('SMA - Operador de Bascula ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
          <loopback/>
       </inSequence>
@@ -210,11 +210,235 @@
             </args>
          </payloadFactory>
          <log level="full"/>
-         <send/>
+         <respond/>
       </outSequence>
       <faultSequence>
          <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
          <property name="TOOLS_ERROR" value="Error general crear empresa" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/usuario">
+      <inSequence>
+         <property name="bpmSession" expression="json-eval($.bpmSession)" type="STRING"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="api_url" expression="$ctx:apiconf//api_url"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="usr_nick" expression="json-eval($.usuario.usernick)"/>
+         <property name="usr_email" expression="json-eval($.usuario.email)"/>
+         <property name="usr_business" expression="json-eval($.usuario.business)"/>
+         <property name="usr_firstname" expression="json-eval($.usuario.firstname)"/>
+         <property name="usr_lastname" expression="json-eval($.usuario.lastname)"/>
+         <property name="usr_password" expression="json-eval($.usuario.password)"/>
+         <property name="usr_role" expression="json-eval($.usuario.role)"/>
+         <property name="usr_status" expression="json-eval($.usuario.status)"/>
+         <property name="usr_banned_users" expression="json-eval($.usuario.banned_users)"/>
+         <property name="usr_telefono" expression="json-eval($.usuario.telefono)"/>
+         <property name="usr_dni" expression="json-eval($.usuario.dni)"/>
+         <property name="usr_depo_id" expression="json-eval($.usuario.depo_id)"/>
+         <property name="usr_image_name" expression="json-eval($.usuario.image_name)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.check_duplicado_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/usuario/duplicado/',$ctx:usr_email)" scope="default"/>
+         <property name="usr_image" expression="json-eval($.usuario.image)"/>
+         <log level="custom">
+            <property name="donde" value="dentro de crear usuario"/>
+            <property name="payload" expression="json-eval($)"/>
+            <property name="api url" expression="$ctx:api_url"/>
+            <property name="ds url" expression="$ctx:dataservices_url"/>
+            <property name="bpmSession" expression="$ctx:bpmSession"/>
+            <property name="usr_nick" expression="$ctx:usr_nick"/>
+            <property name="usr_email" expression="$ctx:usr_email"/>
+            <property name="dup url" expression="$ctx:uri.var.check_duplicado_url"/>
+         </log>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.check_duplicado_url}"/>
+            </endpoint>
+         </call>
+         <property name="existe_usuario" expression="json-eval($.respuesta.existe)"/>
+         <filter source="get-property('existe_usuario')" regex="true">
+            <then>
+               <property name="ERROR_MESSAGE" value="El usuario ya existe" type="STRING"/>
+               <property name="TOOLS_ERROR" value="Usuario duplicado" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else/>
+         </filter>
+         <log level="custom">
+            <property name="donde 1.5" value="propiedades guardadas"/>
+            <property name="usr_firstname" expression="$ctx:usr_firstname"/>
+            <property name="usr_lastname" expression="$ctx:usr_lastname"/>
+            <property name="usr_email" expression="$ctx:usr_email"/>
+            <property name="usr_password" expression="$ctx:usr_password"/>
+         </log>
+         <property name="usr_depo_id_clean" expression="fn:concat('', get-property('usr_depo_id'))" scope="default" type="STRING"/>
+         <filter source="get-property('usr_depo_id_clean')" regex="^null$|^$">
+            <then>
+               <property name="usr_depo_id_clean" value="" scope="default" type="STRING"/>
+            </then>
+         </filter>
+         <payloadFactory media-type="json" description="crear usuario">
+            <format>{     "_post_usuario":{        "first_name":"$1",        "last_name":"$2",        "email":"$3",        "password_plain":"$4",        "role":"$5",        "status":"$6",        "banned_users":"$7",        "telefono":"$8",        "dni":"$9",        "usernick":"$10",        "image_name":"$11",        "image":"$12"     }  }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('usr_firstname')"/>
+               <arg evaluator="xml" expression="get-property('usr_lastname')"/>
+               <arg evaluator="xml" expression="get-property('usr_email')"/>
+               <arg evaluator="xml" expression="get-property('usr_password')"/>
+               <arg evaluator="xml" expression="get-property('usr_role')"/>
+               <arg evaluator="xml" expression="get-property('usr_status')"/>
+               <arg evaluator="xml" expression="get-property('usr_banned_users')"/>
+               <arg evaluator="xml" expression="get-property('usr_telefono')"/>
+               <arg evaluator="xml" expression="get-property('usr_dni')"/>
+               <arg evaluator="xml" expression="get-property('usr_nick')"/>
+               <arg evaluator="xml" expression="get-property('usr_image_name')"/>
+               <arg evaluator="xml" expression="get-property('usr_image')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.crear_usuario_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/usuario')" scope="default"/>
+         <log level="custom">
+            <property name="donde 2" value="pre post crear_usuario"/>
+            <property name="payload" expression="json-eval($)"/>
+            <property name="api url" expression="$ctx:uri.var.crear_usuario_url"/>
+         </log>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.crear_usuario_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /usuario con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <property name="usr_id" expression="json-eval($.GeneratedKeys.Entry[0].ID)"/>
+         <log level="custom" description="donde 3">
+            <property name="msg actual 3 despues crear usuario" expression="json-eval($)"/>
+            <property name="usr_id" expression="$ctx:usr_id"/>
+         </log>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <payloadFactory media-type="json" description="insertar users_business">
+            <format>{     "_post_users_business":{        "email":"$1",        "busines":"$2"     }  }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('usr_email')"/>
+               <arg evaluator="xml" expression="get-property('usr_business')"/>
+            </args>
+         </payloadFactory>
+         <property name="uri.var.crear_users_business_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/users_business')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.crear_users_business_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /users_business con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <payloadFactory media-type="json" description="crear usuario bonita">
+            <format>{     "session":"$1",     "payload":{     "userName":"$2",     "password":"$3",     "password_confirm":"$3",     "icon":"",     "firstname":"$4",     "lastname":"$5",     "title":"Sr",     "job_title":"Human resources benefits",     "manager_id":"" }} </format>
+            <args>
+               <arg evaluator="xml" expression="get-property('bpmSession')"/>
+               <arg evaluator="xml" expression="get-property('usr_nick')"/>
+               <arg evaluator="xml" expression="get-property('usr_password')"/>
+               <arg evaluator="xml" expression="get-property('usr_firstname')"/>
+               <arg evaluator="xml" expression="get-property('usr_lastname')"/>
+            </args>
+         </payloadFactory>
+         <log level="custom" category="DEBUG" description="donde 4">
+            <property name="msg actual 4 antes de BPM usuario" expression="json-eval($)"/>
+         </log>
+         <property name="uri.var.crear_usuario_bpm" expression="fn:concat($ctx:api_url,'/bpm/users')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.crear_usuario_bpm}"/>
+            </endpoint>
+         </call>
+         <log level="custom" category="DEBUG" description="resp bonita 5">
+            <property name="resp" expression="get-property('axis2', 'HTTP_SC')"/>
+         </log>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+               <payloadFactory media-type="json" description="borrar usuario en BD">
+                  <format>{ "_delete_usuario": { "usr_id":"$1"} }</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('usr_id')"/>
+                  </args>
+               </payloadFactory>
+               <log level="custom" category="DEBUG" description="delete usuario 6">
+                  <property name="delete usuario" expression="json-eval($)"/>
+               </log>
+               <property name="TOOLS_ERROR" value="POST /bpm/users con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <log level="custom" category="DEBUG" description="donde 7">
+            <property name="msg actual 7 despues crear usuario en BPM" expression="json-eval($)"/>
+         </log>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <payloadFactory media-type="json" description="crear usuario en Asset Planner">
+            <format>{     "_post_assetuser_add":{        "nick":"$1",        "name":"$2",        "lastName":"$3",        "pass":"$4",        "image":"$5"     }  }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('usr_nick')"/>
+               <arg evaluator="xml" expression="get-property('usr_firstname')"/>
+               <arg evaluator="xml" expression="get-property('usr_lastname')"/>
+               <arg evaluator="xml" expression="get-property('usr_password')"/>
+               <arg evaluator="xml" expression="get-property('usr_image')"/>
+            </args>
+         </payloadFactory>
+         <property name="uri.var.crear_asset_user_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/assetuser/add')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.crear_asset_user_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <log level="custom" category="WARN">
+                  <property name="warning" value="No se pudo crear usuario en Asset Planner, continuando de todas formas"/>
+               </log>
+            </else>
+         </filter>
+         <loopback/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <payloadFactory media-type="json" description="Mensaje ok">
+            <format>{"respuesta":              { "resultado" : "ok"              , "usr_id":"$1"                        , "bpmSession":"$2"   }             }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('usr_id')"/>
+               <arg evaluator="xml" expression="get-property('bpmSession')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="HTTP_SC" value="200" scope="axis2"/>
+         <log level="full"/>
+         <respond/>
+      </outSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error general crear usuario" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>

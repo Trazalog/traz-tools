@@ -1,0 +1,11 @@
+<datasource>
+    <name>AssetPlannerDataSource</name>
+    <definition type="RDBMS">
+        <configuration>
+            <driverClassName>com.mysql.jdbc.Driver</driverClassName>
+            <url>jdbc:mysql://10.142.0.13:3306/assetv2</url>
+            <username>rootremote</username>
+            <password>!Password00</password>
+        </configuration>
+    </definition>
+</datasource>

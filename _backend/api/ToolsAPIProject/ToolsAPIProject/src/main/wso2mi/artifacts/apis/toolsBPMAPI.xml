@@ -185,6 +185,11 @@
    </resource>
    <resource methods="GET" uri-template="/groups/{session}">
       <inSequence>
+         <log level="custom" description="toolsbpmAPI GET /groups entrando">
+            <property name="api" value="toolsbpmAPI"/>
+            <property name="resource" value="GET /groups/{session}"/>
+            <property name="uri.var.session" expression="$ctx:uri.var.session"/>
+         </log>
          <header name="Accept" scope="transport" value="application/json"/>
          <property name="groups_url" value="/API/identity/group?p=0&amp;c=1000&amp;d=parent_group_id&amp;o=displayName%20ASC" scope="default" type="STRING"/>
          <call-template target="bpmAPICallTemplate">
