@@ -58,6 +58,32 @@ class Valores extends CI_Model {
   }
 
   /**
+  * Obtener contenido descripcion de tabla por tabla e id empresa
+  * @param  varchar tabla, valor de tabla
+  * @return array con datos de descripcion de tabla
+  */  
+  function getTablaValor($tabla, $valor){
+    
+    log_message('DEBUG','#TRAZA| TRAZ-TOOLS | VALORES | getTablaValor() $tabla, $valor: >> '.json_encode($tabla)." - ".json_encode($valor));
+    $empre_id = '';
+    $usuario = $this->session->userdata();
+    // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
+    if ($usuario['email'] != TOOLS_ADMIN_USER) {
+      $empre_id = empresa();
+    }
+    $resource = "/tabla/".$tabla."/valor/".$valor."/empresa/".$empre_id;
+    $url = REST_CORE . $resource;
+    $aux = $this->rest->callApi('GET', $url); 
+
+    // var_dump(json_decode($aux["data"]));
+
+    $aux = json_decode($aux["data"]);
+    // var_dump($aux->configuracion->valor);
+    
+    return $aux->configuracion->valor;
+  }
+
+  /**
   * Genera un valor nuevo
   * @param array con datos del valor
   * @return ID valor generado
