@@ -1,0 +1,11 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<configs>
+	<!-- <dataservices_url>http://10.142.0.13:8280/services</dataservices_url>-->
+	<dataservices_url>http://localhost:8290/services</dataservices_url>
+	<pedidos_cod_articulo>PPRAD010</pedidos_cod_articulo>
+	<pedidos_descripcion> </pedidos_descripcion>
+	<talonario>4</talonario>
+	<talon_ped>101</talon_ped>
+	<uni_medida>6</uni_medida>
+</configs>
+

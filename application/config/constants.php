@@ -107,7 +107,6 @@ define('TAREAS_DEFAULT_PROC', 'TST001');
 define('BPM', 'traz-comp-bpm/');
 
 define('BONITA_URL', 'http://10.142.0.13:8080/bonita/');
-
 define('BPM_PROCESS_ID_PEDIDOS_NORMALES', '8803232493891311406');
 define('BPM_PROCESS_ID_PEDIDOS_EXTRAORDINARIOS', '6866538875650512673');
 define('BPM_PROCESS_ID_TAREA_GENERICA', '5822241643386814582');
@@ -212,8 +211,11 @@ define('TAREA_IT','Ejecuta el Trabajo - Tools Tareas');
 |
 | Variables Locales
 |http://10.142.0.13:8280/tools/bpm/groups/123
+34.75.34.174
 */
 define('HOST', 'http://10.142.0.13:8280');
+
+//define('HOST', 'https://34.75.34.174:9443');
 define('RESTPT', HOST.'/services/produccionTest/'); //(3 reservicios sin resolver)
 define('API_URL', HOST.'/tools/log');
 define('REST_ALM', HOST.'/services/ALMDataService');
@@ -264,3 +266,6 @@ define('EMPRESAS_FORM', 1);
 
 // RESIDUOS - IDs de las Empresas autirizadas que pueden usar abm transportistas
 define('EMPRESAS_RESI_ADMIN', json_encode([1]));
+
+// RESIDUOS - IDs para camiones con tolva/contenedor
+define('TIPOS_VEHICULOS_TOLVA', 999);
