@@ -49,6 +49,25 @@ class Valor extends CI_Controller
 		}
 	}
 
+	/**
+	* Obtener descrpcion de una tabla por ID
+	* @param varchar id_tabla
+	* @return varchar descripcion de tabla
+	*/
+	function getTablaValor(){
+
+		log_message('INFO','#TRAZA| VALORES | getTablaValor() >> ');
+		$tabla = $this->input->post('id_tabla');
+		$valor = $this->input->post('id_valor');
+		$resp = $this->Valores->getTablaValor($tabla, $valor);
+		if ($resp != null) {
+			echo json_encode($resp);
+		} else {
+			echo json_encode($resp);
+		}
+	}
+
+
     /**
 	* Guarda valor de lista
 	* @param array valor de lista

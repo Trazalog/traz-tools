@@ -538,6 +538,15 @@
       <result outputType="json">{&#xd;     "detallesMovimientosInternos":{ "detalleMovimientoInterno":[&#xd;         {&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "cantidad_recibida":"$cantidad_recibida",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "lote_id_destino":"$lote_id_destino",&#xd;            "demi_id":"$demi_id",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;}}</result>
       <param name="demi_id" sqlType="STRING"/>
    </query>
+   <query id="getHistoricoEntMateriales" useConfig="ToolsDataSource">
+      <sql>select to_char(adem.fec_alta, 'DD-MM-YYYY HH24:MI') fec_alta&#xd;	,apm.pema_id &#xd;	,aa.barcode &#xd;	,aa.descripcion desc_articulo&#xd;	,case when aa.es_loteado IS true then al.CODIGO else 'S/L' end AS lote &#xd;	,adem.cantidad&#xd;	,aa.unidad_medida&#xd;	,ad.descripcion deposito&#xd;	,t.descripcion  obra&#xd;from (select :fec_desde fec_desde, :fec_hasta fec_hasta, :obra obra, :depo as depo ) as param&#xd;,alm.alm_deta_entrega_materiales adem&#xd;inner join alm.alm_entrega_materiales aem on aem.enma_id = adem.enma_id &#xd;inner join alm.alm_lotes al on al.lote_id = adem.lote_id &#xd;inner join alm.alm_articulos aa on aa.arti_id = al.arti_id &#xd;inner join alm.alm_depositos ad on ad.depo_id = al.depo_id &#xd;inner join alm.alm_pedidos_materiales apm on apm.pema_id = aem.pema_id &#xd;left join frm.instancias_formularios if2 on if2.info_id = aem.info_id and if2."name" = 'obra'&#xd;left join core.tablas t on t.tabl_id = if2.valor&#xd;WHERE&#xd;    adem.fec_alta &gt;= to_timestamp(&#xd;        CASE WHEN param.fec_desde IS NULL OR param.fec_desde = '' OR param.fec_desde = 'TODOS' &#xd;             THEN '1900-01-01' ELSE param.fec_desde||' 00:00' END,&#xd;        'YYYY-MM-DD HH24:MI'&#xd;    )&#xd;	AND adem.fec_alta &lt;= TO_TIMESTAMP(&#xd;	        CASE WHEN param.fec_hasta IS NULL OR param.fec_hasta = '' OR param.fec_hasta = 'TODOS' &#xd;	             THEN '2100-01-01' ELSE param.fec_hasta||' 23:59' END,&#xd;	        'YYYY-MM-DD HH24:MI'&#xd;	    )&#xd;	AND ((param.obra IS NULL OR param.obra = '' OR param.obra = 'TODOS' )&#xd;		OR	if2.valor =param.obra &#xd;		) &#xd;	AND (&#xd;     param.depo IS NULL OR param.depo = '' OR param.depo = 'TODOS'&#xd;    OR ad.depo_id = cast ( param.depo as integer)&#xd;)	&#xd;and adem.empr_id =cast(:empr_id as integer)&#xd;order by adem.fec_alta desc</sql>
+      <result outputType="json">{&#xd;  "historicosEntrega":{ "historicoEntrega":[&#xd;  {&#xd;    "fec_alta":"$fec_alta",&#xd;    "pema_id":"$pema_id",&#xd;    "barcode":"$barcode",&#xd;    "desc_articulo":"$desc_articulo",&#xd;    "lote":"$lote",&#xd;    "cantidad": "$cantidad",&#xd;    "unidad_medida":"$unidad_medida",&#xd;    "deposito":"$deposito",&#xd;    "obra":"$obra"&#xd;  }]&#xd;}}</result>
+      <param name="fec_desde" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
+      <param name="obra" sqlType="STRING"/>
+      <param name="depo" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -1113,6 +1122,15 @@
    <resource method="GET" path="/movimientoInternoData/{demi_id}">
       <call-query href="getDataMovimientoInternoXdemiId">
          <with-param name="demi_id" query-param="demi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="entrega/fec_desde/{fec_desde}/fec_hasta/{fec_hasta}/obra/{obra}/depo/{depo}/empr/{empr_id}">
+      <call-query href="getHistoricoEntMateriales">
+         <with-param name="fec_desde" query-param="fec_desde"/>
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+         <with-param name="obra" query-param="obra"/>
+         <with-param name="depo" query-param="depo"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>
