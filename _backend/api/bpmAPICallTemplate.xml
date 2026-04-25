@@ -203,6 +203,60 @@
                     </case>
                 </switch>
             </case>
+            <!-- Bonita puede devolver 400, 403, 409, etc. para usuario duplicado; solo 401 va al login arriba -->
+            <case regex="4[0-9][0-9]">
+                <script language="js"><![CDATA[
+                    var ok = false;
+                    var un = "";
+                    try {
+                        var p = mc.getPayloadJSON();
+                        if (typeof p === 'string') { p = JSON.parse(p); }
+                        var msg = String(p.message || "");
+                        var cx = (p.cause && p.cause.exception) ? String(p.cause.exception) : "";
+                        if (msg.indexOf("already exists") >= 0 || cx.indexOf("AlreadyExistsException") >= 0) {
+                            ok = true;
+                        }
+                        var m1 = msg.match(/User '([^']+)'/);
+                        if (m1) { un = m1[1]; }
+                        if (!un && p.cause && p.cause.message) {
+                            var m2 = String(p.cause.message).match(/name \"([^\"]+)\"/);
+                            if (m2) { un = m2[1]; }
+                        }
+                    } catch (e1) {}
+                    mc.setProperty("BPM_IS_ALREADY_EXISTS", ok ? "true" : "false");
+                    mc.setProperty("BPM_EXISTING_USERNAME", un);
+                    if (ok && un) {
+                        mc.setProperty("BPM_GET_USER_RECURSO", "/API/identity/user?f=userName%3d" + encodeURIComponent(un));
+                    }
+                ]]></script>
+                <filter source="get-property('BPM_IS_ALREADY_EXISTS')" regex="true">
+                    <then>
+                        <filter source="get-property('BPM_EXISTING_USERNAME')" regex="^.+$">
+                            <then>
+                                <payloadFactory media-type="json">
+                                    <format>{}</format>
+                                </payloadFactory>
+                                <property expression="fn:concat($ctx:bpm_url,get-property('BPM_GET_USER_RECURSO'))" name="uri.var.recurso_url" scope="default" type="STRING"/>
+                                <header name="Accept" scope="transport" value="application/json"/>
+                                <call>
+                                    <endpoint>
+                                        <http method="GET" uri-template="{uri.var.recurso_url}"/>
+                                    </endpoint>
+                                </call>
+                                <property name="HTTP_SC" scope="axis2" type="STRING" value="200"/>
+                            </then>
+                            <else>
+                                <property name="TOOLS_ERROR" type="STRING" value="Error Bonita caido"/>
+                                <sequence key="toolsFault"/>
+                            </else>
+                        </filter>
+                    </then>
+                    <else>
+                        <property name="TOOLS_ERROR" type="STRING" value="Error Bonita caido"/>
+                        <sequence key="toolsFault"/>
+                    </else>
+                </filter>
+            </case>
             <default>
                 <property name="TOOLS_ERROR" type="STRING" value="Error Bonita caido"/>
                 <sequence key="toolsFault"/>
@@ -260,4 +314,3 @@
         </filter>
     </sequence>
 </template>
-
