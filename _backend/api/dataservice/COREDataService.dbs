@@ -370,6 +370,27 @@
       <param name="pass" sqlType="STRING"/>
       <param name="image" sqlType="STRING"/>
    </query>
+   <query id="setEmpresaAsset" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO empresas&#xd;(&#xd;    descripcion,&#xd;    empcuit,&#xd;    empdir,&#xd;    emptelefono,&#xd;    empemail,&#xd;    cliImagePath,&#xd;    localidadid,&#xd;    provinciaid,&#xd;    paisid,&#xd;    emlogo,&#xd;    clienteid&#xd;)&#xd;VALUES(&#xd;    :descripcion,&#xd;    :empcuit,&#xd;    :empdir,&#xd;    :emptelefono,&#xd;    :empemail,&#xd;    :cliImagePath,&#xd;    CASE WHEN :localidadid REGEXP '^[0-9]+$' THEN CAST(:localidadid AS UNSIGNED) ELSE NULL END,&#xd;    CASE WHEN :provinciaid REGEXP '^[0-9]+$' THEN CAST(:provinciaid AS UNSIGNED) ELSE NULL END,&#xd;    CASE WHEN :paisid REGEXP '^[0-9]+$' THEN CAST(:paisid AS UNSIGNED) ELSE NULL END,&#xd;    :emlogo,&#xd;    CASE WHEN :clienteid REGEXP '^[0-9]+$' THEN CAST(:clienteid AS UNSIGNED) ELSE (SELECT COALESCE(MAX(a.clienteid), 0) + 1 FROM empresas AS a) END&#xd;);</sql>
+      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
+         <element column="1" name="ID" xsdType="integer"/>
+      </result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="empcuit" sqlType="STRING"/>
+      <param name="empdir" sqlType="STRING"/>
+      <param name="emptelefono" sqlType="STRING"/>
+      <param name="empemail" sqlType="STRING"/>
+      <param name="cliImagePath" sqlType="STRING"/>
+      <param name="localidadid" sqlType="STRING"/>
+      <param name="provinciaid" sqlType="STRING"/>
+      <param name="paisid" sqlType="STRING"/>
+      <param name="emlogo" optional="true" sqlType="BINARY"/>
+      <param name="clienteid" sqlType="STRING"/>
+   </query>
+   <query id="deleteEmpresaAsset" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM empresas WHERE id_empresa = cast(:id_empresa as INTEGER)</sql>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
    <query id="getListasPrecios" useConfig="ToolsDataSource">
       <sql>SELECT &#xd;    lp.lipr_id, &#xd;    lp.nombre, &#xd;    lp.detalle, &#xd;    lp.tipo, &#xd;    lp.empr_id, &#xd;    to_char(lp.fec_alta, 'YYYY-MM-DD HH24:MI') AS fec_alta, &#xd;    lp.usr_alta, &#xd;    lp.usr_app_alta, &#xd;    to_char(lp.fec_ult_modif, 'YYYY-MM-DD HH24:MI') AS fec_ult_modif, &#xd;    lp.usr_ult_modif, &#xd;    lp.usr_app_ult_modif, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion&#xd;FROM &#xd;    core.listas_precios lp&#xd;LEFT JOIN &#xd;    core.versiones_listas_precios vlp &#xd;    ON lp.lipr_id = vlp.lipr_id&#xd;    AND vlp.nro_version = (&#xd;        SELECT MAX(vlp_inner.nro_version)&#xd;        FROM core.versiones_listas_precios vlp_inner&#xd;        WHERE vlp_inner.lipr_id = lp.lipr_id&#xd;    )&#xd;WHERE &#xd;    lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY &#xd;    lp.nombre ASC;</sql>
       <result outputType="json">{&#xd;   "listas": {&#xd;      "lista": [&#xd;        {&#xd;          "lipr_id": "$lipr_id",&#xd;          "nombre": "$nombre",&#xd;          "detalle": "$detalle",&#xd;          "tipo": "$tipo",&#xd;          "empr_id": "$empr_id",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usr_alta": "$usr_alta",&#xd;          "usr_app_alta": "$usr_app_alta",&#xd;          "fec_ult_modif": "$fec_ult_modif",&#xd;          "usr_ult_modif": "$usr_ult_modif",&#xd;          "usr_app_ult_modif": "$usr_app_ult_modif",&#xd;          "nro_version": "$nro_version",&#xd;          "descripcion": "$descripcion",&#xd;          "@getArticulosListaPrecios":"$lipr_id-&gt;lipr_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
@@ -528,6 +549,11 @@
       <sql>INSERT INTO seg.users_business&#xd;(&#xd;    email,&#xd;    busines&#xd;)&#xd;VALUES(&#xd;    :email,&#xd;    :busines&#xd;)</sql>
       <param name="email" sqlType="STRING"/>
       <param name="busines" sqlType="STRING"/>
+   </query>
+   <query id="getUsernickByEmail" useConfig="ToolsDataSource">
+      <sql>SELECT usernick FROM seg.users WHERE email = :email LIMIT 1</sql>
+      <result outputType="json">{"respuesta":{"usernick":"$usernick"}}</result>
+      <param name="email" sqlType="STRING"/>
    </query>
    <query id="getTablaValorXEmp" useConfig="ToolsDataSource">
       <sql>select&#xd;t.descripcion valor&#xd;from&#xd;core.tablas t ,&#xd;(select :empr_id empr_id,:tabla tabla, :valor valor) param&#xd;where&#xd;t.tabl_id = case&#xd;when param.empr_id is null or param.empr_id = ''&#xd;then param.tabla||param.valor&#xd;else param.empr_id ||'-'||param.tabla ||param.valor&#xd;end&#xd;and t.eliminado = false</sql>
@@ -831,6 +857,26 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
+   <resource method="POST" path="/empresa/asset">
+      <call-query href="setEmpresaAsset">
+         <with-param name="descripcion" query-param="descripcion"/>
+         <with-param name="empcuit" query-param="empcuit"/>
+         <with-param name="empdir" query-param="empdir"/>
+         <with-param name="emptelefono" query-param="emptelefono"/>
+         <with-param name="empemail" query-param="empemail"/>
+         <with-param name="cliImagePath" query-param="cliImagePath"/>
+         <with-param name="localidadid" query-param="localidadid"/>
+         <with-param name="provinciaid" query-param="provinciaid"/>
+         <with-param name="paisid" query-param="paisid"/>
+         <with-param name="emlogo" query-param="emlogo"/>
+         <with-param name="clienteid" query-param="clienteid"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/empresa/asset">
+      <call-query href="deleteEmpresaAsset">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+      </call-query>
+   </resource>
    <resource method="GET" path="/depositos/encargado/{user_id}">
       <call-query href="getDepositosxEncargado">
          <with-param name="user_id" query-param="user_id"/>
@@ -1054,6 +1100,16 @@
    </resource>
    <resource method="GET" path="/usuario/duplicado/{email}">
       <call-query href="checkUsuarioDuplicado">
+         <with-param name="email" query-param="email"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/usuario/duplicado">
+      <call-query href="checkUsuarioDuplicado">
+         <with-param name="email" query-param="email"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/usuario/usernick">
+      <call-query href="getUsernickByEmail">
          <with-param name="email" query-param="email"/>
       </call-query>
    </resource>
