@@ -828,5 +828,305 @@
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
+   <resource methods="POST" uri-template="/rol/asignar">
+      <inSequence>
+         <property name="rol_email" expression="json-eval($.email)" type="STRING"/>
+         <property name="rol_group" expression="json-eval($.group)" type="STRING"/>
+         <property name="rol_role" expression="json-eval($.role)" type="STRING"/>
+         <property name="rol_group_id" expression="json-eval($.group_id)" type="STRING"/>
+         <property name="rol_role_id" expression="json-eval($.role_id)" type="STRING"/>
+         <property name="rol_bpmSession" expression="json-eval($.bpmSession)" type="STRING"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="api_url" expression="$ctx:apiconf//api_url"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="Server" scope="transport" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <payloadFactory media-type="json" description="usernick por email rol asignar">
+            <format>{     "_post_usuario_usernick":{        "email":"$1"     }  }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('rol_email')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="uri.var.usernick_by_email_url" expression="fn:concat($ctx:dataservices_url, '/COREDataService/usuario/usernick')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.usernick_by_email_url}"/>
+            </endpoint>
+         </call>
+         <property name="NO_ENTITY_BODY" action="remove" scope="axis2"/>
+         <property name="rol_usernick" expression="json-eval($.respuesta.usernick)" scope="default" type="STRING"/>
+         <filter source="boolean(get-property('rol_usernick'))" regex="false">
+            <then>
+               <property name="ERROR_MESSAGE" value="Usernick no encontrado" type="STRING"/>
+               <property name="TOOLS_ERROR" value="Usuario no encontrado por email" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+         </filter>
+         <property name="uri.var.bpm_api" expression="$ctx:api_url" scope="default"/>
+         <property name="uri.var.bpm_usernick" expression="$ctx:rol_usernick" scope="default"/>
+         <property name="uri.var.bpm_session" expression="$ctx:rol_bpmSession" scope="default"/>
+         <property name="HTTP_METHOD" value="GET" scope="axis2" type="STRING"/>
+         <property name="NO_ENTITY_BODY" value="true" scope="axis2" type="BOOLEAN"/>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.bpm_api}/bpm/users/{uri.var.bpm_usernick}/session/{uri.var.bpm_session}"/>
+            </endpoint>
+         </call>
+         <property name="NO_ENTITY_BODY" action="remove" scope="axis2"/>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="Usuario no encontrado en BPM" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            try {
+               var p = mc.getPayloadJSON();
+               var uid = '';
+               var pl = (p && p.payload != null) ? p.payload : null;
+               if (pl != null) {
+                  // Rhino puede no evaluar "instanceof Array" como esperamos.
+                  // Soportamos: array JSON, objeto único y estructuras Java-like.
+                  if (pl.id != null) {
+                     uid = String(pl.id);
+                  } else if (pl.length != null && Number(pl.length) > 0 && pl[0] != null) {
+                     uid = String(pl[0].id != null ? pl[0].id : '');
+                  }
+               }
+               mc.setProperty('rol_user_id', uid);
+            } catch (e) {
+               mc.setProperty('rol_user_id', '');
+            }
+         ]]></script>
+         <filter source="boolean(get-property('rol_user_id'))" regex="false">
+            <then>
+               <property name="ERROR_MESSAGE" value="Respuesta BPM sin id de usuario" type="STRING"/>
+               <property name="TOOLS_ERROR" value="No se obtuvo user_id de BPM (lista vacía o formato inesperado)" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+         </filter>
+         <payloadFactory media-type="json" description="insert membership BD">
+            <format>{ "_post_membership": { "email":"$1", "group":"$2", "role":"$3" } }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('rol_email')"/>
+               <arg evaluator="xml" expression="get-property('rol_group')"/>
+               <arg evaluator="xml" expression="get-property('rol_role')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.insert_membership_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/membership')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.insert_membership_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST membership BD con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <payloadFactory media-type="json" description="asignar membership BPM">
+            <format>{ "session":"$1", "payload":{ "user_id":"$2", "group_id":"$3", "role_id":"$4" } }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('rol_bpmSession')"/>
+               <arg evaluator="xml" expression="get-property('rol_user_id')"/>
+               <arg evaluator="xml" expression="get-property('rol_group_id')"/>
+               <arg evaluator="xml" expression="get-property('rol_role_id')"/>
+            </args>
+         </payloadFactory>
+         <property name="uri.var.post_memberships_bpm_url" expression="fn:concat($ctx:api_url,'/bpm/memberships')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.post_memberships_bpm_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+               <payloadFactory media-type="json" description="rollback delete membership BD">
+                  <format>{ "email":"$1", "group":"$2", "role":"$3" }</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('rol_email')"/>
+                     <arg evaluator="xml" expression="get-property('rol_group')"/>
+                     <arg evaluator="xml" expression="get-property('rol_role')"/>
+                  </args>
+               </payloadFactory>
+               <property name="uri.var.delete_membership_rollback" expression="fn:concat($ctx:dataservices_url,'/COREDataService/membership/delete')" scope="default"/>
+               <call>
+                  <endpoint>
+                     <http method="POST" uri-template="{uri.var.delete_membership_rollback}"/>
+                  </endpoint>
+               </call>
+               <property name="TOOLS_ERROR" value="POST BPM memberships con problemas, rollback BD realizado" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <payloadFactory media-type="json" description="respuesta ok asignar">
+            <format>{"respuesta":{"resultado":"ok"}}</format>
+            <args/>
+         </payloadFactory>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error general rol/asignar" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/rol/desasignar">
+      <inSequence>
+         <property name="rol_email" expression="json-eval($.email)" type="STRING"/>
+         <property name="rol_group" expression="json-eval($.group)" type="STRING"/>
+         <property name="rol_role" expression="json-eval($.role)" type="STRING"/>
+         <property name="rol_group_id" expression="json-eval($.group_id)" type="STRING"/>
+         <property name="rol_role_id" expression="json-eval($.role_id)" type="STRING"/>
+         <property name="rol_bpmSession" expression="json-eval($.bpmSession)" type="STRING"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="api_url" expression="$ctx:apiconf//api_url"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="Server" scope="transport" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <payloadFactory media-type="json" description="usernick por email rol desasignar">
+            <format>{     "_post_usuario_usernick":{        "email":"$1"     }  }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('rol_email')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="uri.var.usernick_by_email_url" expression="fn:concat($ctx:dataservices_url, '/COREDataService/usuario/usernick')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.usernick_by_email_url}"/>
+            </endpoint>
+         </call>
+         <property name="NO_ENTITY_BODY" action="remove" scope="axis2"/>
+         <property name="rol_usernick" expression="json-eval($.respuesta.usernick)" scope="default" type="STRING"/>
+         <filter source="boolean(get-property('rol_usernick'))" regex="false">
+            <then>
+               <property name="ERROR_MESSAGE" value="Usernick no encontrado" type="STRING"/>
+               <property name="TOOLS_ERROR" value="Usuario no encontrado por email" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+         </filter>
+         <property name="uri.var.bpm_api" expression="$ctx:api_url" scope="default"/>
+         <property name="uri.var.bpm_usernick" expression="$ctx:rol_usernick" scope="default"/>
+         <property name="uri.var.bpm_session" expression="$ctx:rol_bpmSession" scope="default"/>
+         <property name="HTTP_METHOD" value="GET" scope="axis2" type="STRING"/>
+         <property name="NO_ENTITY_BODY" value="true" scope="axis2" type="BOOLEAN"/>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.bpm_api}/bpm/users/{uri.var.bpm_usernick}/session/{uri.var.bpm_session}"/>
+            </endpoint>
+         </call>
+         <property name="NO_ENTITY_BODY" action="remove" scope="axis2"/>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="Usuario no encontrado en BPM" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            try {
+               var p = mc.getPayloadJSON();
+               var uid = '';
+               var pl = (p && p.payload != null) ? p.payload : null;
+               if (pl != null) {
+                  // Rhino puede no evaluar "instanceof Array" como esperamos.
+                  // Soportamos: array JSON, objeto único y estructuras Java-like.
+                  if (pl.id != null) {
+                     uid = String(pl.id);
+                  } else if (pl.length != null && Number(pl.length) > 0 && pl[0] != null) {
+                     uid = String(pl[0].id != null ? pl[0].id : '');
+                  }
+               }
+               mc.setProperty('rol_user_id', uid);
+            } catch (e) {
+               mc.setProperty('rol_user_id', '');
+            }
+         ]]></script>
+         <filter source="boolean(get-property('rol_user_id'))" regex="false">
+            <then>
+               <property name="ERROR_MESSAGE" value="Respuesta BPM sin id de usuario" type="STRING"/>
+               <property name="TOOLS_ERROR" value="No se obtuvo user_id de BPM (lista vacía o formato inesperado)" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+         </filter>
+         <payloadFactory media-type="json" description="delete membership BPM">
+            <format>{ "user_id":"$1", "group_id":"$2", "role_id":"$3", "session":"$4" }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('rol_user_id')"/>
+               <arg evaluator="xml" expression="get-property('rol_group_id')"/>
+               <arg evaluator="xml" expression="get-property('rol_role_id')"/>
+               <arg evaluator="xml" expression="get-property('rol_bpmSession')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="uri.var.delete_membership_bpm_url" expression="fn:concat($ctx:api_url,'/bpm/membership')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="DELETE" uri-template="{uri.var.delete_membership_bpm_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="DELETE BPM membership con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <payloadFactory media-type="json" description="delete membership BD">
+            <format>{ "email":"$1", "group":"$2", "role":"$3" }</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('rol_email')"/>
+               <arg evaluator="xml" expression="get-property('rol_group')"/>
+               <arg evaluator="xml" expression="get-property('rol_role')"/>
+            </args>
+         </payloadFactory>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="uri.var.delete_membership_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/membership/delete')" scope="default"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.delete_membership_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="DELETE membership BD con problemas" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <payloadFactory media-type="json" description="respuesta ok desasignar">
+            <format>{"respuesta":{"resultado":"ok"}}</format>
+            <args/>
+         </payloadFactory>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error general rol/desasignar" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
 </api>
                         

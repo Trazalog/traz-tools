@@ -609,7 +609,7 @@
                   try {
                      var payload = mc.getPayloadJSON();
                      var actors = payload.payload;
-                     var nombreActor = mc.getProperty('nombre_actor');
+                     var nombreActor = String(mc.getProperty('nombre_actor'));
                      if (!actors || actors.length === 0) {
                         mc.setProperty('TOOLS_ERROR', 'No se encontraron actores en el proceso');
                         mc.setProperty('ERROR_MESSAGE', '');
@@ -650,7 +650,7 @@
                   try {
                      var payload = mc.getPayloadJSON();
                      var roles = payload.payload;
-                     var nombreRol = mc.getProperty('nombre_rol');
+                     var nombreRol = String(mc.getProperty('nombre_rol'));
                      if (!roles || roles.length === 0) {
                         mc.setProperty('TOOLS_ERROR', 'Rol no encontrado: ' + nombreRol);
                         mc.setProperty('ERROR_MESSAGE', '');
@@ -694,7 +694,7 @@
                   try {
                      var payload = mc.getPayloadJSON();
                      var groups = payload.payload;
-                     var nombreGrupo = mc.getProperty('nombre_grupo');
+                     var nombreGrupo = String(mc.getProperty('nombre_grupo'));
                      if (!nombreGrupo || String(nombreGrupo).trim() === '') {
                         mc.setProperty('TOOLS_ERROR', 'nombre_grupo es obligatorio');
                         mc.setProperty('ERROR_MESSAGE', '');
@@ -827,7 +827,7 @@
                   try {
                      var payload = mc.getPayloadJSON();
                      var actors = payload.payload;
-                     var nombreActor = mc.getProperty('nombre_actor');
+                     var nombreActor = String(mc.getProperty('nombre_actor'));
                      if (!actors || actors.length === 0) {
                         mc.setProperty('TOOLS_ERROR', 'No se encontraron actores en el proceso');
                         mc.setProperty('ERROR_MESSAGE', '');
@@ -871,7 +871,7 @@
                   try {
                      var payload = mc.getPayloadJSON();
                      var roles = payload.payload;
-                     var nombreRol = mc.getProperty('nombre_rol');
+                     var nombreRol = String(mc.getProperty('nombre_rol'));
                      if (!roles || roles.length === 0) {
                         mc.setProperty('TOOLS_ERROR', 'Rol no encontrado: ' + nombreRol);
                         mc.setProperty('ERROR_MESSAGE', '');
@@ -1002,7 +1002,7 @@
                   try {
                      var payload = mc.getPayloadJSON();
                      var actors = payload.payload;
-                     var nombreActor = mc.getProperty('nombre_actor');
+                     var nombreActor = String(mc.getProperty('nombre_actor'));
                      if (!actors || actors.length === 0) {
                         mc.setProperty('TOOLS_ERROR', 'No se encontraron actores en el proceso');
                         mc.setProperty('ERROR_MESSAGE', '');
@@ -1046,7 +1046,7 @@
                   try {
                      var payload = mc.getPayloadJSON();
                      var groups = payload.payload;
-                     var nombreGrupo = mc.getProperty('nombre_grupo');
+                     var nombreGrupo = String(mc.getProperty('nombre_grupo'));
                      if (!nombreGrupo || String(nombreGrupo).trim() === '') {
                         mc.setProperty('TOOLS_ERROR', 'nombre_grupo es obligatorio');
                         mc.setProperty('ERROR_MESSAGE', '');
