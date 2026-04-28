@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="toolsBpmActorGrupo" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom">
+        <property name="toolsBpmActorGrupo" value="POST /bpm/actor/grupo"/>
+        <property expression="$ctx:actormap_nombre_proceso" name="nombre_proceso" xmlns:ns="http://org.apache.synapse/xsd"/>
+        <property expression="$ctx:actormap_nombre_actor" name="nombre_actor" xmlns:ns="http://org.apache.synapse/xsd"/>
+    </log>
+    <header name="Accept" scope="transport" value="application/json"/>
+    <property name="FORCE_ERROR_ON_SOAP_FAULT" scope="default" type="STRING" value="true"/>
+    <payloadFactory media-type="json">
+        <format>{"session":"$1","nombre_proceso":"$2","nombre_actor":"$3","nombre_grupo":"$4"}</format>
+        <args>
+            <arg evaluator="xml" expression="get-property('bpmSession')" xmlns:ns="http://org.apache.synapse/xsd"/>
+            <arg evaluator="xml" expression="get-property('actormap_nombre_proceso')" xmlns:ns="http://org.apache.synapse/xsd"/>
+            <arg evaluator="xml" expression="get-property('actormap_nombre_actor')" xmlns:ns="http://org.apache.synapse/xsd"/>
+            <arg evaluator="xml" expression="get-property('actormap_nombre_grupo')" xmlns:ns="http://org.apache.synapse/xsd"/>
+        </args>
+    </payloadFactory>
+    <property name="messageType" scope="axis2" value="application/json"/>
+    <property expression="fn:concat($ctx:api_url,'/bpm/actor/grupo')" name="uri.var.bpm_actor_grupo_url" scope="default" xmlns:ns="http://org.apache.synapse/xsd"/>
+    <call>
+        <endpoint>
+            <http method="POST" uri-template="{uri.var.bpm_actor_grupo_url}"/>
+        </endpoint>
+    </call>
+    <filter regex="2[0-9][0-9]" source="get-property('axis2', 'HTTP_SC')" xmlns:ns="http://org.apache.synapse/xsd">
+        <then/>
+        <else>
+            <property name="TOOLS_ERROR" type="STRING" value="POST /bpm/actor/grupo con problemas"/>
+            <sequence key="toolsFault"/>
+        </else>
+    </filter>
+</sequence>

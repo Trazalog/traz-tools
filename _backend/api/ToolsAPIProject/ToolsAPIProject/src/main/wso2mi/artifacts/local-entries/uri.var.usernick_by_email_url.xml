@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<localEntry key="uri.var.usernick_by_email_url" xmlns="http://ws.apache.org/ns/synapse">
+   <variable name="uri.var.usernick_by_email_url" expression="${vars['uri.var.ds_base']}/COREDataService/usuario/usernick?email=${vars['uri.var.email_encoded']}" type="STRING"/>
+</localEntry>
