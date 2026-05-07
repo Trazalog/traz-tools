@@ -2,114 +2,141 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+---
 
-**traz-tools** is Trazalog Tools — an industrial asset/process management platform. It serves sectors such as industrial maintenance, agro-industry, and oil & gas.
+## Qué es Trazalog Tools
 
-The system is composed of three main layers:
-1. **Frontend** — CodeIgniter 3 (PHP) HMVC web application (repo root)
-2. **Integration/API layer** — WSO2 Micro Integrator (WSO2 MI) projects under `_backend/api/`
-3. **BPM** — Bonita BPM engine process definitions under `_backend/bpm/`
+**Trazalog Tools** es una suite de gestión industrial para PyMEs argentinas (mantenimiento, almacenes, workflows BPM, residuos). En v3 incorpora una **capa MCP (Model Context Protocol)** que expone operaciones del sistema a agentes de IA de forma estandarizada. El foco estratégico actual es el sector de **proveedores de servicios mineros en San Juan**, Argentina, que enfrenta demanda urgente de profesionalización ante el arranque de grandes proyectos mineros (~2027).
 
-Supporting components:
-- **Siddhi apps** (`_backend/siddhi/`) — WSO2 Streaming Integrator event processing apps for data synchronization (e.g., Tango ERP sync)
-- **Flutter mobile app** (`_backend/flutter/traza_app/`) — companion mobile app
+**v2** corre en producción en `cloudtrazalog.com`. **v3** está en desarrollo activo en la rama `develop-v3`.
 
 ---
 
-## Architecture
+## Stack técnico
 
-### Data Flow
+### v2 (producción actual)
+- **Frontend**: PHP 7.x / CodeIgniter 3 HMVC
+- **API layer**: WSO2 Micro Integrator (MI) — port 8280
+- **BPM**: Bonita BPM — port 8080/bonita
+- **Base de datos**: MySQL / MariaDB
+- **JDK**: 11 (WSO2 MI)
 
-```
-Browser → CodeIgniter (PHP) → wso2_helper → REST.php library → WSO2 MI (port 8280)
-                                                                    ├── Data Services (.dbs) → DB
-                                                                    ├── API sequences → Bonita BPM (port 8080)
-                                                                    └── Connectors (Tango, Bascula, Firebase, WhatsApp)
-```
-
-All database access from the PHP frontend goes through WSO2 MI Data Services at `http://<host>:8280/services/`. Direct DB queries from PHP do **not** occur for business data.
-
-### Frontend (CodeIgniter HMVC)
-
-- Modules in `application/modules/` using a custom HMVC loader (`MY_Loader.php`, `MY_Router.php`)
-- Module naming conventions:
-  - `traz-comp-*` — shared components (BPM, almacenes/warehouses, calendar, codigos/QR, formularios/forms, notificaciones, PAN, tareas-estandar)
-  - `traz-tools-*` — functional tools (man=maintenance, resi=residuos/waste)
-  - `traz-prod-trazasoft` — Trazasoft product module
-  - `ddpe-tools-pro`, `sein-tools-almpantar`, `yudi-tools-almproc` — client-specific modules
-- Auto-loaded libraries: `session`, `REST`, `BPM`, `database`
-- Auto-loaded helpers: `url`, `componente`, `fecha`, `timeline`, `info`, `develop`, `validacion`, `admin`, `menu`, `sesion`, `lenguaje`, `infoentidadesproceso`, `infoproceso`, `wso2`, `form`, `arbol`, `gitv`
-- Default controller: `Dash` (main dashboard after login)
-- `application/libraries/REST.php` — cURL wrapper for all HTTP calls
-- `application/libraries/BPM.php` — Bonita BPM integration
-- `application/helpers/wso2_helper.php` — `wso2($url, $method, $data)` function; main abstraction for all WSO2 MI calls. Automatically unwraps `request_box` responses for non-BPM calls.
-
-### WSO2 Micro Integrator (API Layer)
-
-- Primary project: `_backend/api/ToolsAPIProject/ToolsAPIProject/` — Maven-based WSO2 MI project (use `./mvnw` or `mvn`)
-- APIs defined in `src/main/wso2mi/artifacts/apis/`:
-  - `toolsCOREAPI.xml` — core user/session/config operations
-  - `toolsBPMAPI.xml` — BPM process integration
-  - `toolsLogAPI.xml` — logging
-  - `toolsMANAPI.xml` — maintenance module
-- Data Services (`.dbs`) in `src/main/wso2mi/artifacts/data-services/` — each module has its own: `COREDataService`, `ALMDataService`, `MANDataService`, `FRMDataService`, `LOGDataService`, etc.
-- Connectors in `_backend/api/`: `BasculaConnector`, `TangoConnectorAPI`, `FirebaseConnectorAPI`, `gestionadoresResiduosAPI`
-- `_backend/api/apiconfig.xml` — defines `api_url` and `dataservices_url` endpoints
-- `_backend/api/bpmconf.xml` — defines Bonita BPM URL and credentials
-
-### BPM (Bonita)
-
-- Process definitions (`.bos`) and deployable archives (`.bar`) in `_backend/bpm/`
-- Bonita runs at `http://localhost:8080/bonita`
-- Process instances are created from PHP via `BPM.php` library and the `toolsBPMAPI.xml` in WSO2 MI
+### v3 (en desarrollo)
+- **Frontend**: PHP 7.x / CodeIgniter 3 (migración gradual, misma base)
+- **API layer / MCP server**: WSO2 API Manager 4.6.0 — admin port 9443, gateway port 8243
+- **BPM**: Bonita BPM (sin cambios)
+- **Base de datos**: PostgreSQL (TEST/PROD nuevo) — MySQL/MariaDB en DEV legacy
+- **JDK**: 21 Temurin (requerido por WSO2 API Manager 4.6.0)
 
 ---
 
-## Development Setup
+## Estructura del repo
 
-### PHP Frontend
+```
+/                           — Frontend PHP / CodeIgniter 3
+├── application/
+│   ├── modules/            — Módulos HMVC (traz-comp-*, traz-tools-*, traz-prod-*)
+│   ├── libraries/          — REST.php (cURL wrapper), BPM.php (Bonita)
+│   ├── helpers/            — wso2_helper.php (función wso2()), otros helpers globales
+│   └── config/             — config.php, database.php, autoload.php
+├── _backend/
+│   ├── api/
+│   │   └── ToolsAPIProject/ — Maven project WSO2 MI/APIM (usa ./mvnw)
+│   ├── bpm/                — Procesos Bonita (.bos, .bar)
+│   ├── siddhi/             — Apps WSO2 Streaming Integrator (.siddhi)
+│   └── flutter/traza_app/  — App móvil companion
+├── doc/
+│   └── v3/                 — Documentos de arquitectura y estrategia v3
+└── scripts/                — Scripts de utilidad (deploy, setup, etc.)
+```
 
-The app runs as a standard Apache/Nginx + PHP site. No build step required.
+---
+
+## Convenciones de código
+
+- **PHP**: PSR-12. Sin direct DB queries desde PHP — todos los datos van por WSO2 MI.
+- **APIs**: URLs en kebab-case, JSON keys en snake_case.
+- **BD**: nombres de tablas y columnas en snake_case.
+- **Logging PHP**: `log_message('DEBUG', '#TRAZA | <MODULO> | <Clase> | <metodo>() ...')`.
+- **WSO2 calls**: siempre usar `wso2($url, $method, $data)` de `wso2_helper.php`. Desempaqueta `request_box` automáticamente para endpoints non-BPM.
+- **Módulos**: estructura `controllers/`, `models/`, `views/`. Constants de prefijo para cross-module loading (`PRD`, `FRM`, `ALM`, etc.).
+
+---
+
+## Convenciones de branching
+
+| Rama | Propósito |
+|---|---|
+| `master` | Producción — solo recibe merges desde `develop` (v2) o `develop-v3` (cutover final) |
+| `develop` | Soporte v2 — no recibe cambios estructurales nuevos |
+| `develop-v3` | Desarrollo activo v3 — rama base para todo trabajo nuevo |
+| `feature/<id>` | Features individuales — PR a `develop-v3` (v3) o `develop` (v2) |
+
+**Regla clave**: `develop` se sincroniza a `develop-v3` semanalmente (E7-CICD-06). No hacer esa sync manualmente.
+
+---
+
+## Documentos de referencia (doc/v3/)
+
+- [`doc/v3/TRAZALOG_v3_CICD_STRATEGY.md`](doc/v3/TRAZALOG_v3_CICD_STRATEGY.md) — Estrategia de branching y CI/CD. Sección 2 define el modelo de ramas.
+- [`doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md`](doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md) — Arquitectura de la capa MCP sobre WSO2 APIM 4.6.0.
+- [`doc/v3/TRAZALOG_v3_PRICING_STRATEGY.docx`](doc/v3/TRAZALOG_v3_PRICING_STRATEGY.docx) — Estrategia de pricing v3 (modelo freemium + MCP usage-based).
+- [`doc/v3/investigacion-sector-minero-trazalog-v3-2.md`](doc/v3/investigacion-sector-minero-trazalog-v3-2.md) — Investigación de mercado sector minero San Juan.
+
+---
+
+## Comandos comunes
+
+### Levantar entorno local (PHP frontend)
 
 ```bash
-# Install PHP dependencies (CodeIgniter is vendored, but check composer.json)
 composer install
-
-# Configure base URL and DB connection
-# application/config/config.php  — base_url is auto-detected from HTTP_HOST
-# application/config/database.php — set DB credentials
+# Configurar application/config/database.php con credenciales locales
+# Servir con Apache/Nginx + PHP — no hay build step
 ```
 
-Configure WSO2 endpoint in `_backend/api/apiconfig.xml` and update `application/libraries/REST.php` or the module that reads the config if the WSO2 host changes.
+[TODO: completar con PM — detallar stack docker/local, vars de entorno, archivo .env si aplica]
 
-### WSO2 Micro Integrator
-
-The `ToolsAPIProject` is a Maven project. Use **WSO2 Integration Studio** (Eclipse-based) or **VS Code with WSO2 MI extension** to develop.
+### WSO2 API Manager 4.6.0 (v3)
 
 ```bash
-# Build the CAR (Composite Application Archive) for deployment
+# Admin console: https://localhost:9443/carbon
+# API Publisher: https://localhost:9443/publisher
+# Developer Portal: https://localhost:9443/devportal
+# Gateway (invocación APIs): https://localhost:8243/
+
+# Iniciar WSO2 APIM
+$APIM_HOME/bin/api-manager.sh start   # Linux/Mac
+# Requiere JDK 21 Temurin en $JAVA_HOME
+```
+
+[TODO: completar con PM — proceso de deploy del CAR en APIM 4.6.0, pasos de configuración de MCP server]
+
+### Build del API project (Maven)
+
+```bash
 cd _backend/api/ToolsAPIProject/ToolsAPIProject
 ./mvnw clean install
-
-# The deployable .car file is output to target/
+# El archivo .car deployable queda en target/
+# Deploy: copiar .car a $APIM_HOME/repository/deployment/server/carbonapps/
 ```
 
-Deploy the generated `.car` file to a running WSO2 MI instance by placing it in `<MI_HOME>/repository/deployment/server/carbonapps/`.
+### Tests
 
-### Siddhi Apps
+[TODO: completar con PM — suite de tests v3 en construcción. Por ahora testing manual.]
 
-Siddhi apps (`_backend/siddhi/*.siddhi`) are deployed to WSO2 Streaming Integrator. Copy the `.siddhi` file to `<SI_HOME>/deployment/siddhi-files/`.
+### Deploy a staging-v3
 
-### Bonita BPM
-
-Import `.bos` files into Bonita Studio. Deploy `.bar` files to a running Bonita server.
+[TODO: completar con PM — entorno staging-v3 no configurado aún. Ver E7-CICD-04.]
 
 ---
 
-## Key Conventions
+## Data flow
 
-- **Logging**: Use `log_message('DEBUG', '#TRAZA | <MODULE> | <Class> | <method>() ...')` pattern throughout PHP code for consistent traceability.
-- **WSO2 calls from PHP**: Always use the `wso2($url, $method, $data)` helper. Response data is automatically unwrapped from `request_box` for non-BPM endpoints.
-- **Module structure**: Each module follows `controllers/`, `models/`, `views/` layout. Some modules include a `libraries/` directory for module-specific third-party libs (e.g., KoolReport for PDF reports).
-- **Constants**: Module prefixes (like `PRD`, `FRM`, `ALM`) are used as path constants when loading models/helpers across modules (e.g., `$this->load->model(PRD.'Tablas')`).
+```
+Browser → CodeIgniter (PHP) → wso2_helper → REST.php → WSO2 APIM 4.6.0 (port 8243)
+                                                            ├── Data Services (.dbs) → PostgreSQL (v3) / MySQL (v2)
+                                                            ├── MCP Server (Model Context Protocol) → AI Agents
+                                                            ├── API sequences → Bonita BPM (port 8080)
+                                                            └── Connectors (Tango, Bascula, Firebase, WhatsApp)
+```
