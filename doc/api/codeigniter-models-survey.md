@@ -322,32 +322,231 @@ Gestiona el backlog de tareas de mantenimiento pendientes de planificar. No form
 
 ---
 
+## Convenciones del proyecto (WSO2 MI)
+
+Estas convenciones aplican a todos los artefactos nuevos o extendidos en
+`_backend/api/ToolsAPIProject/ToolsAPIProject/`.
+
+### Nomenclatura de DataServices
+
+```
+<COD.MODULO>DataService.dbs              → hasta 30 operaciones
+<COD.MODULO><GrupoFuncional>DataService.dbs  → split cuando supera 30 ops
+```
+
+Ejemplos para el módulo MAN:
+- `MANDataService.dbs` — existente (KPIs + SolicitudServicio, 24 ops)
+- `MANEquiposDataService.dbs` — nuevo (Equipos CRUD + lookups)
+- `MANPreventivoDataService.dbs` — nuevo (Preventivos CRUD)
+- `MANInsumoDataService.dbs` — nuevo (Stock AP + Órdenes de insumos)
+
+### Datasources
+
+Siempre referenciar un datasource configurado. Para este módulo:
+- `AssetPlannerDataSource` → MySQL `assetv2` (host `10.142.0.13:3306`)
+- `ToolsDataSource` → PostgreSQL `tools_prod_t` (si se necesita cruzar datos)
+
+### Nomenclatura de queries
+
+| Operación | Prefijo | Ejemplo |
+|-----------|---------|---------|
+| SELECT (lista o detalle) | `get` | `getEquipos`, `getEquipo` |
+| INSERT | `set` | `setEquipo`, `setPreventivo` |
+| UPDATE | `update` | `updateEquipo`, `updatePreventivoCase` |
+| DELETE (lógico o físico) | `delete` | `deleteEquipo`, `deleteSolicitudServicio` |
+
+### URLs de recursos en DataServices
+
+Usar path params (`/segmento/{param}`) — nunca query strings (`?param=valor`).
+
+```xml
+<!-- Correcto -->
+<resource method="GET" path="/solicitudes/empresa/{empr_id}">
+<resource method="GET" path="/solicitudes/empresa/{empr_id}/sector/{sect_id}">
+<resource method="GET" path="/equipos/{equi_id}">
+
+<!-- Incorrecto -->
+<resource method="GET" path="/solicitudes?empr_id={empr_id}">
+```
+
+### APIs externas (toolsMANAPI.xml)
+
+Todos los endpoints del módulo MAN se exponen bajo `/tools/man` en
+`toolsMANAPI.xml`. Las llamadas al DataService se hacen vía `<call>` con
+`<endpoint>` apuntando a `http://localhost:9763/services/<DataService>`.
+
+---
+
 ## Mapa de implementación v3 — Sprint 2
 
-### DataServices nuevos a crear
+### Estado actual: MANDataService (24 operaciones existentes)
 
-| DataService | Operaciones | Base | Fuente en CI3 |
-|-------------|-------------|------|---------------|
-| `AssetPlannerEquiposDS` | `list_equipos`, `get_equipo`, `insert_equipo`, `update_equipo`, `baja_equipo` | MySQL `assetv2` | `Equipos.php` |
-| `AssetPlannerOTsDS` | `list_ots`, `list_ots_paginado`, `insert_solicitud`, `update_case_id` | MySQL `assetv2` | `Sservicios.php` |
-| `AssetPlannerPreventivosDS` | `list_preventivos`, `get_preventivo`, `insert_preventivo`, `update_preventivo` | MySQL `assetv2` | `Preventivos.php` |
-| `AssetPlannerKpisDS` | `get_mttr`, `get_mttf`, `get_fallas`, `get_lecturas_historial` | MySQL `assetv2` | `Kpis.php` (parcial) |
-| `AssetPlannerStockDS` | `get_stock_ap`, `get_depositos` | MySQL `assetv2` | `Ordeninsumos.php` |
+Archivo: `_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/MANDataService.dbs`
+Datasource: `AssetPlannerDataSource`
+
+| Query ID (existente) | Tipo | Recurso DBS |
+|----------------------|------|-------------|
+| `getKPIDisponibiidadPorFecha` | GET | `/kpiDisponibilidadxFecha/{id_empresa}/fecinicio/{fi}/fecfin/{ff}/...` |
+| `getKPIDisponibiidadPorFechaPorEquipo` | GET | `/kpiDisponibilidadxFechaxEquipo/...` |
+| `getKPIMttrporFecha` | GET | `/KpiMttrxFecha/empresa/{id}/fec_inicio/{fi}/fec_fin/{ff}` |
+| `getKPIMttrporFechaxEquipo` | GET | `/KpiMttrxFechaxEquipo/...` |
+| `getKPIMttfporFecha` | GET | `/KpiMttfxFecha/...` |
+| `getKPIMttfporFechaporEquipo` | GET | `/KpiMttfxFechaxEquipo/...` |
+| `getTiempoTotal` | GET | `/getTiempoTotal/{fecha_inicio}/{fecha_fin}` |
+| `getTiempoTotalReparacion` | GET | `/getTiempoTotalReparacion/{fi}/{ff}/{fi3}/{ff3}/{empr}/{sect}/{grup}` |
+| `getTiempoTotalReparacionxEquipo` | GET | `/getTiempoTotalReparacionxEquipo/{fi}/{ff}/{fi3}/{ff3}/{equi}` |
+| `getCantidadEquiposxEmpresa` | GET | `/getCantEquiposxEmpresa/{empr_id}` |
+| `getCantidadFallosxEquipo` | GET | `/getCantidadFallosxEquipo/{fi}/{ff}/{empr}/{equi}` |
+| `getCantidadFallos` | GET | `/getCantidadFallos/{fi}/{ff}/{empr}/{sect}/{grup}` |
+| `getEstadoEquipo` | GET | `/getEstadoEquipo/{id_equipo}` |
+| `getCantEquiposxEmpresaxSectorxGrupo` | GET | `/getCantEquiposxEmpresaxSectorxGrupo/{empr}/{sect}/{grup}/{fi}/{ff}` |
+| `getFechaAltaEquipo` | GET | `/getFechaAltaEquipo/{id_empresa}/{id_equipo}` |
+| `getSolicitudServcio` | GET | `/getSolicitudServicioNoConforme/{id_empresa}` |
+| `getNotificaciones` | GET | `/getNotificaciones/{user_id}` |
+| `setsolicitudServicio` | POST | `/solicitudServicio` |
+| `getLastsolicitudServicio` | GET | `/solicitudServicio/ultima/{equi_id}` |
+| `putSolicitudServicioCase` | PUT | `/solicitudServicio/caseid` |
+| `deleteSolicitudServicio` | DELETE | `/solicitudServicio` |
+| `getEquipo` | GET | `/equipo/{equi_id}` |
+| `getAdjuntosSolReparacion` | GET | `/solicitudServicio/adjuntos/solicitud/{id_solicitud}` |
+| `setAdjuntosSolReparacion` | POST | `/solicitudServicio/adjuntos` |
+
+> **Capacidad restante:** 30 − 24 = **6 operaciones** disponibles antes de requerir split.
+> Agregar solo operaciones que no tengan grupo funcional propio (e.g., `getOrdenTrabajo`).
+
+---
+
+### DataServices nuevos a crear (extensión del proyecto)
+
+Todos los archivos van en:
+`_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/`
+
+#### MANEquiposDataService.dbs (nuevo)
+
+Datasource: `AssetPlannerDataSource` | Fuente CI3: `Equipos.php`
+
+| Query ID | Tipo | Recurso DBS | Tablas |
+|----------|------|-------------|--------|
+| `getEquipos` | GET | `/equipos/empresa/{empr_id}` | `equipos`, `sector`, `grupo`, `criticidad` |
+| `getEquipoDetalle` | GET | `/equipos/{equi_id}` | `equipos` + catálogos |
+| `setEquipo` | POST | `/equipos` | `equipos` |
+| `updateEquipo` | PUT | `/equipos/{equi_id}` | `equipos` |
+| `deleteEquipo` | DELETE | `/equipos/{equi_id}` | `equipos` (soft delete) |
+| `getCriticidades` | GET | `/equipos/lookup/criticidades` | `criticidad` |
+| `getGruposEquipo` | GET | `/equipos/lookup/grupos` | `grupo` |
+| `getSectores` | GET | `/equipos/lookup/sectores` | `sector` |
+| `getUnidadesIndustriales` | GET | `/equipos/lookup/unidades` | `unidad_industrial` |
+| `getMarcas` | GET | `/equipos/lookup/marcas` | `marcas` |
+| `getProcesos` | GET | `/equipos/lookup/procesos` | `proceso` |
+
+Total estimado: **11 ops**
+
+#### MANPreventivoDataService.dbs (nuevo)
+
+Datasource: `AssetPlannerDataSource` | Fuente CI3: `Preventivos.php`
+
+| Query ID | Tipo | Recurso DBS | Tablas |
+|----------|------|-------------|--------|
+| `getPreventivos` | GET | `/preventivos/empresa/{empr_id}` | `preventivo`, `equipos`, `grupo`, `tareas`, `periodo` |
+| `getPreventivo` | GET | `/preventivos/{prev_id}` | `preventivo` + detalle |
+| `setPreventivo` | POST | `/preventivos` | `preventivo` |
+| `updatePreventivo` | PUT | `/preventivos/{prev_id}` | `preventivo` |
+| `deletePreventivo` | DELETE | `/preventivos/{prev_id}` | `preventivo` (soft delete) |
+| `getPreventivoHerramientas` | GET | `/preventivos/{prev_id}/herramientas` | `tbl_preventivoherramientas` |
+| `getPreventivoInsumos` | GET | `/preventivos/{prev_id}/insumos` | `tbl_preventivoinsumos` |
+| `setPreventivoHerramienta` | POST | `/preventivos/herramientas` | `tbl_preventivoherramientas` |
+| `deletePreventivoHerramienta` | DELETE | `/preventivos/herramientas/{id}` | `tbl_preventivoherramientas` |
+| `setPreventivoInsumo` | POST | `/preventivos/insumos` | `tbl_preventivoinsumos` |
+| `deletePreventivoInsumo` | DELETE | `/preventivos/insumos/{id}` | `tbl_preventivoinsumos` |
+
+Total estimado: **11 ops**
+
+#### MANInsumoDataService.dbs (nuevo)
+
+Datasource: `AssetPlannerDataSource` | Fuente CI3: `Ordeninsumos.php`
+
+Cubre el stock de insumos/materiales del módulo Asset Planner (`get_stock_ap`).
+
+| Query ID | Tipo | Recurso DBS | Tablas |
+|----------|------|-------------|--------|
+| `getStockAP` | GET | `/insumos/stock/empresa/{empr_id}` | `tbl_lote`, `articles`, `abmdeposito` |
+| `getStockDeposito` | GET | `/insumos/stock/deposito/{dep_id}` | `tbl_lote`, `articles` |
+| `getDepositos` | GET | `/insumos/depositos/empresa/{empr_id}` | `abmdeposito` |
+| `getArticulos` | GET | `/insumos/articulos` | `articles`, `tbl_lote` |
+| `getOrdenesInsumos` | GET | `/insumos/ordenes/empresa/{empr_id}` | `orden_insumos` |
+| `getOrdenInsumo` | GET | `/insumos/ordenes/{ord_id}` | `orden_insumos`, `deta_ordeninsumos` |
+| `setOrdenInsumo` | POST | `/insumos/ordenes` | `orden_insumos` |
+| `setDetalleOrdenInsumo` | POST | `/insumos/ordenes/detalle` | `deta_ordeninsumos` |
+
+Total estimado: **8 ops**
+
+---
+
+### Extensión de toolsMANAPI.xml
+
+Archivo: `_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml`
+
+Todos los recursos nuevos se agregan bajo el path base `/tools/man`. Las llamadas internas al DataService usan el endpoint local WSO2 MI.
+
+#### Recursos nuevos — Equipos
+
+```
+GET  /tools/man/equipos/empresa/{empr_id}           → MANEquiposDataService/equipos/empresa/{empr_id}
+GET  /tools/man/equipos/{equi_id}                   → MANEquiposDataService/equipos/{equi_id}
+POST /tools/man/equipos                             → MANEquiposDataService/equipos
+PUT  /tools/man/equipos/{equi_id}                   → MANEquiposDataService/equipos/{equi_id}
+DELETE /tools/man/equipos/{equi_id}                 → MANEquiposDataService/equipos/{equi_id}
+GET  /tools/man/equipos/lookup/criticidades         → MANEquiposDataService/equipos/lookup/criticidades
+GET  /tools/man/equipos/lookup/grupos               → MANEquiposDataService/equipos/lookup/grupos
+GET  /tools/man/equipos/lookup/sectores             → MANEquiposDataService/equipos/lookup/sectores
+```
+
+#### Recursos nuevos — Preventivos
+
+```
+GET  /tools/man/preventivos/empresa/{empr_id}       → MANPreventivoDataService/preventivos/empresa/{empr_id}
+GET  /tools/man/preventivos/{prev_id}               → MANPreventivoDataService/preventivos/{prev_id}
+POST /tools/man/preventivos                         → Sequence: createPreventivoCargadoSequence
+PUT  /tools/man/preventivos/{prev_id}               → MANPreventivoDataService/preventivos/{prev_id}
+GET  /tools/man/preventivos/{prev_id}/herramientas  → MANPreventivoDataService/preventivos/{prev_id}/herramientas
+GET  /tools/man/preventivos/{prev_id}/insumos       → MANPreventivoDataService/preventivos/{prev_id}/insumos
+```
+
+#### Recursos nuevos — Stock AP / Insumos
+
+```
+GET  /tools/man/insumos/stock/empresa/{empr_id}     → MANInsumoDataService/insumos/stock/empresa/{empr_id}
+GET  /tools/man/insumos/stock/deposito/{dep_id}     → MANInsumoDataService/insumos/stock/deposito/{dep_id}
+GET  /tools/man/insumos/depositos/empresa/{empr_id} → MANInsumoDataService/insumos/depositos/empresa/{empr_id}
+GET  /tools/man/insumos/ordenes/empresa/{empr_id}   → MANInsumoDataService/insumos/ordenes/empresa/{empr_id}
+POST /tools/man/insumos/ordenes                     → Sequence: createOrdenInsumoSequence
+```
+
+> **Nota:** Los recursos de KPIs y SolicitudServicio ya existen en `toolsMANAPI.xml`. No duplicar — solo agregar los nuevos.
+
+---
 
 ### Sequences nuevas a crear
 
+Archivo destino: `_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/sequences/`
+
 | Sequence | Descripción | Complejidad |
 |----------|-------------|-------------|
-| `createOTSequence` | INSERT solicitud → POST Bonita `/process` → UPDATE case_id | Alta (BPM + 2 DBs) |
-| `createPreventivoCargadoSequence` | INSERT preventivo + herramientas + insumos | Media (3 INSERTs) |
-| `insertLecturaSequence` | INSERT historial_lecturas + UPDATE equipos.ultima_lectura | Baja (2 tablas) |
+| `createOTSequence` | POST `/tools/man/solicitudes` → INSERT `solicitud_reparacion` → POST Bonita `/process` → UPDATE `case_id` | Alta (BPM + DB) |
+| `createPreventivoCargadoSequence` | POST `/tools/man/preventivos` → INSERT `preventivo` + herramientas + insumos | Media (3 INSERTs) |
+| `insertLecturaSequence` | INSERT `historial_lecturas` + UPDATE `equipos.ultima_lectura` | Baja (2 tablas) |
+| `createOrdenInsumoSequence` | INSERT `orden_insumos` + líneas de `deta_ordeninsumos` | Media (N INSERTs) |
+
+`createOTSequence` reutiliza `bpmAPICallTemplate` de `toolsBPMAPI.xml` (ya implementado).
+
+---
 
 ### Diferidos a Python Phase 2
 
 | Funcionalidad | Razón |
 |---------------|-------|
 | Disponibilidad con historial de estados (`estadoEquipoAlta/Baja`) | Lógica iterativa no expresable en SQL/DBS |
-| PMs disparados por horas (`revisaEstadoPreventivosPorHoras`) | Evaluación de umbrales con historial |
+| PMs disparados por horas (`revisaEstadoPreventivosPorHoras`) | Evaluación de umbrales con historial de lecturas |
 | Análisis predictivo (Predictivos) | Requiere modelos ML |
 | Alertas por límites de parámetros | Comparación dinámica contra `setupparam` |
 
@@ -356,6 +555,6 @@ Gestiona el backlog de tareas de mantenimiento pendientes de planificar. No form
 ## Notas de campo
 
 - **Base MySQL `assetv2`**: Todos los modelos de esta encuesta usan `AssetPlannerDataSource` (MySQL, host `10.142.0.13:3306`). Credenciales en texto plano en `AssetPlannerDataSource.xml` — ver security flag en `inventory-2026.md`.
-- **`historial_lecturas`**: Es la tabla pivote entre Lecturas, KPIs y cierre de OTs. Requiere atención en la definición de índices al migrar.
-- **`sisusers`**: Tabla de usuarios referenciada en múltiples modelos; verificar si existe en `assetv2` o se une a través de la DB PostgreSQL `tools_prod_t`.
-- **Bonita BPM en `create_ot`**: El flujo completo requiere crear el caso en Bonita (`POST /bonita/API/bpm/process/{id}/instantiation`) antes de confirmar la solicitud. Esto implica manejo de sesión BPM en la Sequence (ya implementado en `bpmAPICallTemplate` de `toolsBPMAPI.xml`).
+- **`historial_lecturas`**: Tabla pivote entre Lecturas, KPIs y cierre de OTs. Requiere atención en índices al migrar.
+- **`sisusers`**: Referenciada en múltiples modelos; verificar si existe en `assetv2` o si el join debe cruzar a `tools_prod_t` vía Sequence.
+- **Bonita BPM en `createOTSequence`**: Requiere crear caso en Bonita antes de confirmar la solicitud. El manejo de sesión BPM (cookie + refresh en 401) ya está implementado en `bpmAPICallTemplate` de `toolsBPMAPI.xml`.
