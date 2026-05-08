@@ -490,6 +490,183 @@ Los siguientes modelos son ABM de tablas de referencia (< 130 líneas, sin lógi
 
 ---
 
+## Validación de uso activo (controllers → modelos)
+
+Metodología: `grep -rn -e "Modelo->" application/controllers/` excluyendo `traz-comp-almacen/`.
+Estado: **ACTIVO** = llamado desde al menos un controller raíz | **SIN REF** = sin llamada en controllers | **INTERNO** = helper usado por otro método del mismo modelo.
+
+### Equipos
+
+| Método | Estado | Nota |
+|--------|--------|------|
+| `equiposPaginados` | **ACTIVO** | Método activo de lista; `equipos_List()` está **comentado** en el controller |
+| `equipos_List` | SIN REF | Comentado — usar `equiposPaginados` |
+| `getEquipoId` | ACTIVO | GET por PK |
+| `insert_equipo` | ACTIVO | |
+| `update_editar` | ACTIVO | Versión con joins — activa |
+| `update_cambio` | ACTIVO | |
+| `update_estado` | ACTIVO | |
+| `baja_equipos` | ACTIVO | |
+| `setLecturas` | ACTIVO | INSERT lectura desde equipo |
+| `guardaInfo_idLectura` | ACTIVO | |
+| `getareas` / `getcriti` / `getgrupos` / `getmarcas` / `getprocesos` / `getunidads` / `getetapas` | ACTIVO | Lookups usados en formularios |
+| `getContratistasEquipo` / `getcontra` | ACTIVO | |
+| `getEqPorIds` | ACTIVO | Batch por IDs |
+| `validaUnicidadCodigo` | ACTIVO | |
+| `getdatosfichas` / `getpencil` | ACTIVO | |
+| `getFormxIdGrupo` / `getMeta` / `asignarMeta` | ACTIVO | |
+| `getsector` | **SIN REF** | |
+| `update_equipo` | **SIN REF** | Probablemente versión anterior de `update_editar` |
+| `update_e` | **SIN REF** | Versión anterior incompleta |
+| `kpiCalcularDisponibilidad` / `kpiSacarEquiposOperativos` | **SIN REF** | Lógica KPI no usada desde PHP |
+| `anteriorHistorialLectura` / `posteriorHistorialLectura` | **SIN REF** | |
+| `insert_componentes` / `insert_componenteequip` / `insert_equipinfo` | **SIN REF** | |
+| `Buscar` / `diferencia` / `getEstadoAnterior` / `getHistorialLecturasMes` / `getinfo` | **SIN REF** | |
+
+### Sservicios (OTs correctivas)
+
+| Método | Estado |
+|--------|--------|
+| `getServiciosList` / `solicitudespaginadas` | ACTIVO |
+| `setservicios` | ACTIVO |
+| `setCaseId` | ACTIVO |
+| `activSolicitudes` / `confSolicitudes` | ACTIVO |
+| `eliminar_solicitud` / `eliminar_orden_trabajo` / `elimSolicitudes` / `eliminar` | ACTIVO |
+| `get_SolicTerminadas` | ACTIVO |
+| `getAdjuntosSolServicio` / `setAdjunto` | ACTIVO |
+| `getEquipoSector` / `getEquipSectores` / `getOperarios` / `getSectores` / `getTareasStandar` | ACTIVO |
+| `getSSs` / `getsolImps` / `validaUsuario` / `getInfoEquipos` | ACTIVO |
+| `getEquipos` (Sservicios) | ACTIVO |
+| `getequipos` (lowercase) | **SIN REF** | Probablemente versión anterior de `getEquipos` |
+| `procesos` | **SIN REF** | |
+
+### Otrabajos (OTs programadas / externas)
+
+| Método | Estado | Nota |
+|--------|--------|------|
+| `otrabajos_List` / `filtrarListado` | ACTIVO | |
+| `guardar_agregar` / `setotrabajos` | ACTIVO | |
+| `getpencil` / `update_edita` / `update_ordtrab` / `eliminacion` | ACTIVO | |
+| `getOTHerramientas` / `getOTInsumos` / `getOTadjuntos` | ACTIVO | |
+| `insertOTHerram` / `deleteHerramOT` / `insertOTInsum` / `deleteInsumOT` | ACTIVO | |
+| `setCaseidenOT` / `setCaseidenOTNueva` | ACTIVO | |
+| `cambiarEstado` / `updOT` / `update_guardar` | ACTIVO | |
+| `getViewDataSolServicio` / `getViewDataPreventivo` / `getViewDataBacklog` / `getViewDataPredictivo` | ACTIVO | Vistas de detalle por tipo OT |
+| `getequipo` / `getEquiposNuevaOT` / `getInfoEquiposNuevaOT` | ACTIVO | |
+| `getasigna` / `getusuario` / `getgrupo` / `getproveedor` / `traer_sucursal` / `traer_cli` | ACTIVO | |
+| `getDescTareaSTD` / `cargartareas` / `updateTarea` / `updateResponsables` / `agregar_tareas` | ACTIVO | |
+| `getIdSolReparacion` / `getCaseIdOT` / `getCaseIdenSServicios` / `getIdSServicioporCaseId` | ACTIVO | |
+| `getDatosOrigenOT` / `getOrigenOt` / `obtenerOT` / `ObtenerOTporCaseId` | ACTIVO | |
+| `setotrabajos` / `insert_pedido` / `agregar_pedidos` / `get_pedido` / `getpedidos` | ACTIVO | |
+| `getArticulos` / `getcliente` / `getnums` | ACTIVO | |
+| `TareaRealizadas` / `ModificarFechas` / `ModificarUsuarios` / `CambioParcials` / `agregar_pedidos_fecha` | ACTIVO | |
+| `EliminarTareas` / `eliminar` / `eliminarAdjunto` / `setAdjunto` / `guardarPosicion` | ACTIVO | |
+| `getEquipoDisponibilidad` / `update_cambio` / `update_predictivo` / `agregar_proveedor` / `agregar_usuario` | ACTIVO | |
+| `getLecturasOrden` / `getprint` | ACTIVO | |
+| `getViewDataOt` | **SIN REF** | Vista genérica sin uso directo |
+| `getViewDataInfoSolServicio` / `getViewDataTareaPreventivo` / `getViewDataTareaBacklog` / `getViewDataTareaPredictivo` | **SIN REF** | Sub-vistas sin llamada directa |
+| `getViewDataComponenteEquipoBacklog` | **SIN REF** | |
+| `getPreventivoHerramientas` / `getPreventivoInsumos` (en Otrabajos) | **SIN REF** | Duplicados — usar los de `Preventivos.php` |
+| `kpiCantTipoOrdenTrabajo` | **SIN REF** | KPI sin controller |
+| `validarProcesoEnOT` | **SIN REF** | |
+| `getdatos` | **SIN REF** | |
+
+### Ordenservicios
+
+| Método | Estado |
+|--------|--------|
+| `getOrdServiciosList` / `getorden` / `getOServicioPorIdOT` | ACTIVO |
+| `setOrdenServicios` / `setEstados` / `borrarOrden` | ACTIVO |
+| `getRRHHOrdenTrabajo` / `getOperariosOrden` | ACTIVO |
+| `getLecturasOrden` / `getTareasOrden` / `getHerramOrdenes` / `getInsumosPorOT` | ACTIVO |
+| `borrarHerramOrden` / `borrarRecursosOrden` | ACTIVO |
+| `getEquipos` / `getHerramientas` / `getComponentes` / `getDepositos` / `getContratistas` | ACTIVO |
+| `getArticulos` / `getLotesActivos` / `getOperarios` / `getTareas` / `getSolEquipCausas` | ACTIVO |
+| `getDatosOrdenServicios` / `getsolicitudes` / `getSolServiciosList` | ACTIVO |
+| `guardarEvidencia` / `getEvidenciasOrden` / `getIdOrdenPorOT` | ACTIVO |
+| `getequiposBycomodato` / `getsolImps` | ACTIVO |
+| `getOrdenInactivas` | **SIN REF** | |
+| `getResponsableOT` | **SIN REF** | Reemplazado por `getRRHHOrdenTrabajo` |
+| `validaOperarios` | **SIN REF** | |
+
+### Preventivos
+
+| Método | Estado | Nota |
+|--------|--------|------|
+| `preventivos_List` / `getInfoPreventivo` | ACTIVO | |
+| `insert_preventivo` / `insert_preventivoorden` | ACTIVO | |
+| `insertPrevHerram` / `deleteHerramPrev` | ACTIVO | Versión activa |
+| `insertPrevInsum` / `deleteInsumPrev` | ACTIVO | Versión activa |
+| `getPreventivoHerramientas` / `getPreventivoInsumos` | ACTIVO | |
+| `update_preventivo` / `update_editar` (primera ocurrencia) | ACTIVO | |
+| `updateAdjunto` / `eliminarAdjunto` | ACTIVO | |
+| `getequipo` / `getEquipoNuevoPrevent` / `getperiodo` / `gettarea` / `gettareaxPatron` | ACTIVO | |
+| `getcomponente` / `getherramienta` / `getHerramientasB` / `getinsumo` / `traerinsumo` | ACTIVO | |
+| `getUnidTiempos` / `getProductos` / `insert_herramienta` | ACTIVO | |
+| `getPreventivosPorHora` / `getdatos` | ACTIVO | |
+| `revisaEstadoPreventivosPorHoras` | **SIN REF** (controller) | Llamado internamente por `getPreventivosPorHora` |
+| `getLecturaActual` | **SIN REF** | Helper interno |
+| `insert_preventivoherramientas` / `insert_preventivoinsumos` | **SIN REF** | Versiones antiguas — reemplazadas por `insertPrevHerram`/`insertPrevInsum` |
+| `editar_preventivoherramientas` / `editar_preventivoinsumos` | **SIN REF** | Ídem |
+| `cambiaEstadoPreventivo` | **SIN REF** | |
+| `geteditar` / `get_pedido` / `agregar_insumo` / `insumo` | **SIN REF** | |
+| `update_editar` (segunda ocurrencia — duplicado) | **SIN REF** | |
+
+### Predictivos
+
+| Método | Estado |
+|--------|--------|
+| `predictivo_List` / `getInfopred` / `getInfoEquipos` | ACTIVO |
+| `insert_predictivo` / `updatePredictivos` / `updateAdjunto` | ACTIVO |
+| `insertPredHerram` / `deleteHerramPred` / `insertPredInsum` / `deleteInsumPred` | ACTIVO |
+| `getPredictivoHerramientas` / `getPredictivoInsumos` | ACTIVO |
+| `getEquipos` / `getUnidTiempos` | ACTIVO |
+| `baja_predictivos` | **SIN REF** | |
+| `getInfoPredId` | **SIN REF** | Probable versión anterior de `getInfopred` |
+| `gettarea` | **SIN REF** | |
+
+### Lecturas
+
+Todos los métodos son activos: `deleteLectura`, `getEquipo`, `getLecturasCargadas`, `getParametrosAsoc`, `guardar_lectura`, `lectura_List`.
+> Nota: el método activo es **`guardar_lectura`**, no `insert_lectura` (nombre inexistente en este modelo).
+
+### KPIs
+
+| Método | Estado | Nota |
+|--------|--------|------|
+| `estadoEquipoAlta` / `estadoEquipoBaja` | ACTIVO | Lógica iterativa — **Python Phase 2** en v3 |
+| `fechaAltaEquipo` | ACTIVO | |
+| `getCantEquiposxEmpresaxSectorxGrupo` | ACTIVO | |
+| `getCantidadFallos` / `getCantidadFallosxEquipo` | ACTIVO | |
+| `getEquipos` / `getEquiposGrupoSector` / `getEquiposKpi` | ACTIVO | |
+| `getEstadoEquipo` | ACTIVO | |
+| `getGruposEmpresa` / `getSectoresEmpresa` | ACTIVO | |
+| `getHistorialLecturas` | ACTIVO | |
+| `getTiempoTotal` / `getTiempoTotalReparacion` / `getTiempoTotalReparacionxEquipo` | ACTIVO | Ya en MANDataService.dbs |
+| `getDisponibilidadxFecha` / `getDisponibilidadxFechaxEquipo` | **SIN REF (PHP)** | ⚠️ Ya en MANDataService.dbs — acceso vía WSO2 únicamente |
+| `getMttrxFecha` / `getMttrxFechaxEquipo` | **SIN REF (PHP)** | ⚠️ Ídem — ya migrados a MANDataService.dbs |
+| `getMttfxFecha` / `getMttfxFechaxEquipo` | **SIN REF (PHP)** | ⚠️ Ídem |
+| `getCantEquiposxEmpresa` (sin sector/grupo) | **SIN REF** | Versión simplificada sin uso |
+
+### Backlogs
+
+Todos los métodos son activos (ninguno sin referencia).
+
+### Ordeninsumos
+
+| Método | Estado | Nota |
+|--------|--------|------|
+| `getList` / `getConsult` / `getsolImps` | ACTIVO | |
+| `getcodigo` / `getdescrip` / `getsolicitante` | ACTIVO | |
+| `getdeposito` / `getequipos` / `getequiposBycomodato` | ACTIVO | |
+| `insert_orden` / `insert_detaordeninsumo` | ACTIVO | |
+| `lote` | ACTIVO | Reserva de lote (incluye validación + UPDATE internamente) |
+| `alerta` / `getOT` / `total` | ACTIVO | |
+| `getlotecant` | **INTERNO** | Usado internamente por `lote()`, no desde controller |
+| `lotecantidad` / `traeIdLote` / `update_tbllote` | **INTERNO** | Helpers internos de `lote()` |
+
+---
+
 ## Mapa de implementación v3 — Sprint 2
 
 ### Estado actual: MANDataService.dbs (24 ops existentes)
@@ -525,6 +702,8 @@ Archivo: `.../data-services/MANDataService.dbs` | Datasource: `AssetPlannerDataS
 
 **Capacidad restante:** 30 − 24 = **6 ops** antes de split.
 
+> ⚠️ **Hallazgo validación KPIs:** `getDisponibilidadxFecha`, `getMttrxFecha`, `getMttfxFecha` y sus variantes por equipo **no son llamados desde ningún controller PHP activo**. Solo se acceden vía WSO2 (ya están en este DBS). Esto confirma que la migración PHP→WSO2 para estos KPIs **ya está hecha**. No hay que crear nuevas operaciones para estos.
+
 ---
 
 ### DataServices nuevos a crear
@@ -534,103 +713,108 @@ Todos en `.../src/main/wso2mi/artifacts/data-services/`
 #### MANEquiposDataService.dbs
 
 Datasource: `AssetPlannerDataSource` | Fuente CI3: `Equipos.php`, `Componentes.php`, `Herramientas.php`, catálogos
+> Solo se incluyen métodos validados como activos en controllers.
 
-| Query ID | HTTP | Recurso DBS | Tablas clave |
-|----------|------|-------------|--------------|
-| `getEquipos` | GET | `/equipos/empresa/{empr_id}` | `equipos`, `sector`, `grupo`, `criticidad` |
-| `getEquipo` | GET | `/equipos/{equi_id}` | `equipos` + catálogos |
-| `setEquipo` | POST | `/equipos` | `equipos` |
-| `updateEquipo` | PUT | `/equipos/{equi_id}` | `equipos` |
-| `deleteEquipo` | DELETE | `/equipos/{equi_id}` | `equipos` |
-| `getCriticidades` | GET | `/equipos/lookup/criticidades` | `criticidad` |
-| `getGruposEquipo` | GET | `/equipos/lookup/grupos` | `grupo` |
-| `getSectores` | GET | `/equipos/lookup/sectores` | `sector` |
-| `getUnidadesIndustriales` | GET | `/equipos/lookup/unidades` | `unidad_industrial` |
-| `getMarcas` | GET | `/equipos/lookup/marcas` | `marcas` |
-| `getProcesos` | GET | `/equipos/lookup/procesos` | `proceso` |
-| `getAreas` | GET | `/equipos/lookup/areas` | `area` |
-| `getComponentesEquipo` | GET | `/equipos/{equi_id}/componentes` | `componenteequipo`, `componentes` |
-| `setComponenteEquipo` | POST | `/equipos/componentes` | `componenteequipo` |
-| `deleteComponenteEquipo` | DELETE | `/equipos/componentes/{id}` | `componenteequipo` |
-| `getLecturasEquipo` | GET | `/equipos/{equi_id}/lecturas/desde/{fi}/hasta/{ff}` | `historial_lecturas` |
-| `getParametrosEquipo` | GET | `/equipos/{equi_id}/parametros` | `parametroequipo`, `parametros` |
-| `getHerramientas` | GET | `/equipos/lookup/herramientas` | `herramientas` |
-| `setHerramienta` | POST | `/equipos/herramientas` | `herramientas` |
-| `updateHerramienta` | PUT | `/equipos/herramientas/{id}` | `herramientas` |
+| Query ID | HTTP | Recurso DBS | Método CI3 origen | Tablas clave |
+|----------|------|-------------|-------------------|--------------|
+| `getEquipos` | GET | `/equipos/empresa/{empr_id}` | `equiposPaginados` | `equipos`, `sector`, `grupo`, `criticidad` |
+| `getEquipo` | GET | `/equipos/{equi_id}` | `getEquipoId` | `equipos` + catálogos |
+| `setEquipo` | POST | `/equipos` | `insert_equipo` | `equipos` |
+| `updateEquipo` | PUT | `/equipos/{equi_id}` | `update_editar` | `equipos` |
+| `updateEquipoEstado` | PUT | `/equipos/{equi_id}/estado` | `update_estado` | `equipos` |
+| `deleteEquipo` | DELETE | `/equipos/{equi_id}` | `baja_equipos` | `equipos` |
+| `getCriticidades` | GET | `/equipos/lookup/criticidades` | `getcriti` | `criticidad` |
+| `getGruposEquipo` | GET | `/equipos/lookup/grupos` | `getgrupos` | `grupo` |
+| `getAreas` | GET | `/equipos/lookup/areas` | `getareas` | `area` |
+| `getUnidadesIndustriales` | GET | `/equipos/lookup/unidades` | `getunidads` | `unidad_industrial` |
+| `getMarcas` | GET | `/equipos/lookup/marcas` | `getmarcas` | `marcas` |
+| `getProcesos` | GET | `/equipos/lookup/procesos` | `getprocesos` | `proceso` |
+| `getComponentesEquipo` | GET | `/equipos/{equi_id}/componentes` | `Componentes::componentes_List` | `componenteequipo`, `componentes` |
+| `setComponenteEquipo` | POST | `/equipos/componentes` | `Componentes::agregar_componente` | `componenteequipo` |
+| `deleteComponenteEquipo` | DELETE | `/equipos/componentes/{id}` | `Componentes::bajaComponente` | `componenteequipo` |
+| `getLecturasEquipo` | GET | `/equipos/{equi_id}/lecturas/desde/{fi}/hasta/{ff}` | `Lecturas::getLecturasCargadas` | `historial_lecturas` |
+| `getParametrosEquipo` | GET | `/equipos/{equi_id}/parametros` | `Lecturas::getParametrosAsoc` | `parametroequipo`, `parametros` |
+| `getHerramientas` | GET | `/equipos/lookup/herramientas` | `Herramientas::listar_herramientas` | `herramientas` |
 
-**Total estimado: ~20 ops**
+**Total: ~18 ops** ✓
+> ⚠️ **`equipos_List()` está comentado** en el controller `Equipo.php`. El método activo es `equiposPaginados` — el DataService debe implementar la paginación.
+> `getsector` (sin 'S' mayúscula) no aparece en controllers activos; usar `getSectores` de `Sservicios` si se necesita lookup de sectores.
 
 #### MANOrdenTrabajoDataService.dbs
 
-Datasource: `AssetPlannerDataSource` | Fuente CI3: `Otrabajos.php`, `Ordenservicios.php`, `Backlogs.php`
+Datasource: `AssetPlannerDataSource` | Fuente CI3: `Otrabajos.php`, `Ordenservicios.php`
+> Solo métodos validados como activos. `getViewDataTarea*` y helpers sin referencia en controller se omiten.
 
-| Query ID | HTTP | Recurso DBS | Tablas clave |
-|----------|------|-------------|--------------|
-| `getOrdenesTrabajo` | GET | `/ordenes-trabajo/empresa/{empr_id}` | `orden_trabajo`, `tbl_tipoordentrabajo`, `equipos` |
-| `getOrdenesTrabajoPorTipo` | GET | `/ordenes-trabajo/empresa/{empr_id}/tipo/{tipo_id}` | ídem |
-| `getOrdenTrabajo` | GET | `/ordenes-trabajo/{id_orden}` | `orden_trabajo` + joins |
-| `setOrdenTrabajo` | POST | `/ordenes-trabajo` | `orden_trabajo` |
-| `updateOrdenTrabajo` | PUT | `/ordenes-trabajo/{id_orden}` | `orden_trabajo` |
-| `updateOrdenTrabajoEstado` | PUT | `/ordenes-trabajo/{id_orden}/estado` | `orden_trabajo` |
-| `updateOrdenTrabajoCaseId` | PUT | `/ordenes-trabajo/{id_orden}/caseid` | `orden_trabajo` |
-| `deleteOrdenTrabajo` | DELETE | `/ordenes-trabajo/{id_orden}` | `orden_trabajo` |
-| `getOrdenTrabajoHerramientas` | GET | `/ordenes-trabajo/{id}/herramientas` | `tbl_otherramientas` |
-| `getOrdenTrabajoInsumos` | GET | `/ordenes-trabajo/{id}/insumos` | `tbl_otinsumos`, `articles` |
-| `setOrdenTrabajoHerramienta` | POST | `/ordenes-trabajo/herramientas` | `tbl_otherramientas` |
-| `deleteOrdenTrabajoHerramienta` | DELETE | `/ordenes-trabajo/herramientas/{id}` | `tbl_otherramientas` |
-| `setOrdenTrabajoInsumo` | POST | `/ordenes-trabajo/insumos` | `tbl_otinsumos` |
-| `deleteOrdenTrabajoInsumo` | DELETE | `/ordenes-trabajo/insumos/{id}` | `tbl_otinsumos` |
-| `getTiposOrdenTrabajo` | GET | `/ordenes-trabajo/lookup/tipos` | `tbl_tipoordentrabajo` |
-| `getOrdenesServicio` | GET | `/ordenes-servicio/empresa/{empr_id}` | `orden_servicio`, `asignausuario` |
-| `getOrdenServicio` | GET | `/ordenes-servicio/{id_orden}` | `orden_servicio` |
-| `setOrdenServicio` | POST | `/ordenes-servicio` | `orden_servicio` |
-| `getProveedores` | GET | `/ordenes-trabajo/lookup/proveedores` | `proveedores` |
-| `getContratistas` | GET | `/ordenes-trabajo/lookup/contratistas` | `contratistas` |
+| Query ID | HTTP | Recurso DBS | Método CI3 origen | Tablas clave |
+|----------|------|-------------|-------------------|--------------|
+| `getOrdenesTrabajo` | GET | `/ordenes-trabajo/empresa/{empr_id}` | `otrabajos_List` | `orden_trabajo`, `tbl_tipoordentrabajo`, `equipos` |
+| `getOrdenesTrabajoPorTipo` | GET | `/ordenes-trabajo/empresa/{empr_id}/tipo/{tipo_id}` | `filtrarListado` | ídem |
+| `getOrdenTrabajo` | GET | `/ordenes-trabajo/{id_orden}` | `getpencil` | `orden_trabajo` + joins |
+| `setOrdenTrabajo` | POST | `/ordenes-trabajo` | `guardar_agregar` | `orden_trabajo` |
+| `updateOrdenTrabajo` | PUT | `/ordenes-trabajo/{id_orden}` | `update_edita` / `update_ordtrab` | `orden_trabajo` |
+| `updateOrdenTrabajoEstado` | PUT | `/ordenes-trabajo/{id_orden}/estado` | `cambiarEstado` | `orden_trabajo` |
+| `updateOrdenTrabajoCaseId` | PUT | `/ordenes-trabajo/{id_orden}/caseid` | `setCaseidenOT` | `orden_trabajo` |
+| `deleteOrdenTrabajo` | DELETE | `/ordenes-trabajo/{id_orden}` | `eliminacion` | `orden_trabajo` |
+| `getOrdenTrabajoHerramientas` | GET | `/ordenes-trabajo/{id_orden}/herramientas` | `getOTHerramientas` | `tbl_otherramientas` |
+| `getOrdenTrabajoInsumos` | GET | `/ordenes-trabajo/{id_orden}/insumos` | `getOTInsumos` | `tbl_otinsumos`, `articles` |
+| `setOrdenTrabajoHerramienta` | POST | `/ordenes-trabajo/herramientas` | `insertOTHerram` | `tbl_otherramientas` |
+| `deleteOrdenTrabajoHerramienta` | DELETE | `/ordenes-trabajo/herramientas/{id}` | `deleteHerramOT` | `tbl_otherramientas` |
+| `setOrdenTrabajoInsumo` | POST | `/ordenes-trabajo/insumos` | `insertOTInsum` | `tbl_otinsumos` |
+| `deleteOrdenTrabajoInsumo` | DELETE | `/ordenes-trabajo/insumos/{id}` | `deleteInsumOT` | `tbl_otinsumos` |
+| `getTiposOrdenTrabajo` | GET | `/ordenes-trabajo/lookup/tipos` | lookup `tbl_tipoordentrabajo` | `tbl_tipoordentrabajo` |
+| `getViewDataSolServicio` | GET | `/ordenes-trabajo/{id_orden}/vista/solicitud` | `getViewDataSolServicio` | `orden_trabajo`, `solicitud_reparacion` |
+| `getViewDataPreventivo` | GET | `/ordenes-trabajo/{id_orden}/vista/preventivo` | `getViewDataPreventivo` | `orden_trabajo`, `preventivo` |
+| `getViewDataBacklog` | GET | `/ordenes-trabajo/{id_orden}/vista/backlog` | `getViewDataBacklog` | `orden_trabajo`, `tbl_back` |
+| `getOrdenesServicio` | GET | `/ordenes-servicio/empresa/{empr_id}` | `Ordenservicios::getOrdServiciosList` | `orden_servicio`, `asignausuario` |
+| `setOrdenServicio` | POST | `/ordenes-servicio` | `Ordenservicios::setOrdenServicios` | `orden_servicio` |
+| `getProveedores` | GET | `/ordenes-trabajo/lookup/proveedores` | lookup `proveedores` | `proveedores` |
+| `getContratistas` | GET | `/ordenes-trabajo/lookup/contratistas` | lookup `contratistas` | `contratistas` |
 
-**Total estimado: ~20 ops** ✓ dentro del límite.
-
-> Si `orden_servicio` + RRHH crece, evaluar split en `MANEjecucionDataService`.
+**Total: ~22 ops** ✓ dentro del límite.
+> `kpiCantTipoOrdenTrabajo` y `getViewData*Tarea*` omitidos — sin referencia en controllers activos.
 
 #### MANPreventivoDataService.dbs
 
 Datasource: `AssetPlannerDataSource` | Fuente CI3: `Preventivos.php`, `Predictivos.php`
+> `insert_preventivoherramientas` / `editar_preventivoherramientas` omitidos — reemplazados por `insertPrevHerram`/`deleteHerramPrev` en controllers activos.
 
-| Query ID | HTTP | Recurso DBS | Tablas clave |
-|----------|------|-------------|--------------|
-| `getPreventivos` | GET | `/preventivos/empresa/{empr_id}` | `preventivo`, `equipos`, `grupo`, `tareas`, `periodo` |
-| `getPreventivo` | GET | `/preventivos/{prev_id}` | `preventivo` + detalle |
-| `setPreventivo` | POST | `/preventivos` | `preventivo` |
-| `updatePreventivo` | PUT | `/preventivos/{prev_id}` | `preventivo` |
-| `deletePreventivo` | DELETE | `/preventivos/{prev_id}` | `preventivo` |
-| `getPreventivoHerramientas` | GET | `/preventivos/{prev_id}/herramientas` | `tbl_preventivoherramientas` |
-| `getPreventivoInsumos` | GET | `/preventivos/{prev_id}/insumos` | `tbl_preventivoinsumos` |
-| `setPreventivoHerramienta` | POST | `/preventivos/herramientas` | `tbl_preventivoherramientas` |
-| `deletePreventivoHerramienta` | DELETE | `/preventivos/herramientas/{id}` | `tbl_preventivoherramientas` |
-| `setPreventivoInsumo` | POST | `/preventivos/insumos` | `tbl_preventivoinsumos` |
-| `deletePreventivoInsumo` | DELETE | `/preventivos/insumos/{id}` | `tbl_preventivoinsumos` |
-| `getPredictivos` | GET | `/predictivos/empresa/{empr_id}` | `predictivo`, `equipos` |
-| `getPredictivo` | GET | `/predictivos/{pred_id}` | `predictivo` |
-| `setPredictivo` | POST | `/predictivos` | `predictivo` |
-| `updatePredictivo` | PUT | `/predictivos/{pred_id}` | `predictivo` |
+| Query ID | HTTP | Recurso DBS | Método CI3 origen | Tablas clave |
+|----------|------|-------------|-------------------|--------------|
+| `getPreventivos` | GET | `/preventivos/empresa/{empr_id}` | `preventivos_List` | `preventivo`, `equipos`, `grupo`, `tareas`, `periodo` |
+| `getPreventivo` | GET | `/preventivos/{prev_id}` | `getInfoPreventivo` | `preventivo` + detalle |
+| `setPreventivo` | POST | `/preventivos` | `insert_preventivo` | `preventivo` |
+| `updatePreventivo` | PUT | `/preventivos/{prev_id}` | `update_preventivo` | `preventivo` |
+| `getPreventivoHerramientas` | GET | `/preventivos/{prev_id}/herramientas` | `getPreventivoHerramientas` | `tbl_preventivoherramientas` |
+| `getPreventivoInsumos` | GET | `/preventivos/{prev_id}/insumos` | `getPreventivoInsumos` | `tbl_preventivoinsumos` |
+| `setPreventivoHerramienta` | POST | `/preventivos/herramientas` | `insertPrevHerram` | `tbl_preventivoherramientas` |
+| `deletePreventivoHerramienta` | DELETE | `/preventivos/herramientas/{id}` | `deleteHerramPrev` | `tbl_preventivoherramientas` |
+| `setPreventivoInsumo` | POST | `/preventivos/insumos` | `insertPrevInsum` | `tbl_preventivoinsumos` |
+| `deletePreventivoInsumo` | DELETE | `/preventivos/insumos/{id}` | `deleteInsumPrev` | `tbl_preventivoinsumos` |
+| `getPredictivos` | GET | `/predictivos/empresa/{empr_id}` | `predictivo_List` | `predictivo`, `equipos` |
+| `getPredictivo` | GET | `/predictivos/{pred_id}` | `getInfopred` | `predictivo` |
+| `setPredictivo` | POST | `/predictivos` | `insert_predictivo` | `predictivo` |
+| `updatePredictivo` | PUT | `/predictivos/{pred_id}` | `updatePredictivos` | `predictivo` |
+| `getPredictivoHerramientas` | GET | `/predictivos/{pred_id}/herramientas` | `getPredictivoHerramientas` | `tbl_predictivoherramientas` |
+| `getPredictivoInsumos` | GET | `/predictivos/{pred_id}/insumos` | `getPredictivoInsumos` | `tbl_predictivoinsumos` |
 
-**Total estimado: ~15 ops**
+**Total: ~16 ops** ✓
 
 #### MANInsumoDataService.dbs
 
 Datasource: `AssetPlannerDataSource` | Fuente CI3: `Ordeninsumos.php`
+> `getlotecant`, `lotecantidad`, `traeIdLote`, `update_tbllote` omitidos — son helpers internos de `lote()`, no endpoints independientes.
 
-| Query ID | HTTP | Recurso DBS | Tablas clave |
-|----------|------|-------------|--------------|
-| `getStockAP` | GET | `/insumos/stock/empresa/{empr_id}` | `tbl_lote`, `articles`, `abmdeposito` |
-| `getStockDeposito` | GET | `/insumos/stock/deposito/{dep_id}` | `tbl_lote`, `articles` |
-| `getDepositos` | GET | `/insumos/depositos/empresa/{empr_id}` | `abmdeposito` |
-| `getArticulos` | GET | `/insumos/articulos` | `articles`, `tbl_lote` |
-| `getOrdenesInsumos` | GET | `/insumos/ordenes/empresa/{empr_id}` | `orden_insumos` |
-| `getOrdenInsumo` | GET | `/insumos/ordenes/{ord_id}` | `orden_insumos`, `deta_ordeninsumos` |
-| `setOrdenInsumo` | POST | `/insumos/ordenes` | `orden_insumos` |
-| `setDetalleOrdenInsumo` | POST | `/insumos/ordenes/detalle` | `deta_ordeninsumos` |
+| Query ID | HTTP | Recurso DBS | Método CI3 origen | Tablas clave |
+|----------|------|-------------|-------------------|--------------|
+| `getStockAP` | GET | `/insumos/stock/empresa/{empr_id}` | `getdeposito` | `tbl_lote`, `articles`, `abmdeposito` |
+| `getArticulos` | GET | `/insumos/articulos` | `getdescrip` / `getcodigo` | `articles`, `tbl_lote` |
+| `getOrdenesInsumos` | GET | `/insumos/ordenes/empresa/{empr_id}` | `getList` | `orden_insumos` |
+| `getOrdenInsumo` | GET | `/insumos/ordenes/{ord_id}` | `getConsult` / `getsolImps` | `orden_insumos`, `deta_ordeninsumos` |
+| `setOrdenInsumo` | POST | `/insumos/ordenes` | `insert_orden` | `orden_insumos` |
+| `setDetalleOrdenInsumo` | POST | `/insumos/ordenes/detalle` | `insert_detaordeninsumo` | `deta_ordeninsumos` |
 
-**Total estimado: ~8 ops**
+**Total: ~6 ops** ✓
+> La **reserva de lote** (`lote()`) es una Sequence (validación + UPDATE) — ver sección de Sequences.
 
 ---
 
