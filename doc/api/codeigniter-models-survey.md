@@ -389,12 +389,19 @@ KPIs calculados sobre `orden_trabajo` e `historial_lecturas`.
 | `getMttrxFecha($fi, $ff)` / `...xEquipo` | MTTR | `orden_trabajo` |
 | `getMttfxFecha($fi, $ff)` / `...xEquipo` | MTTF | `orden_trabajo` |
 | `getCantidadFallos(...)` / `...xEquipo` | Frecuencia fallas | `orden_trabajo` |
-| `estadoEquipoAlta(...)` / `estadoEquipoBaja(...)` | Disponibilidad con historial | iterativo — Python Phase 2 |
+| `estadoEquipoAlta(...)` / `estadoEquipoBaja(...)` | Ajuste de ventana de fechas | Helper para el dashboard PHP — expresable en SQL (ver nota abajo) |
 | `getHistorialLecturas($id, $fi, $ff)` | Tendencias de sensores | `historial_lecturas` |
 
+**Arquitectura real del cálculo KPI:**
+
+Los queries de WSO2 (`getKPIDisponibiidadPorFecha`, `getKPIMttrporFecha`, etc.) leen de **`historial_lecturas_mem`** — una tabla cache/materializada en MySQL, distinta de `historial_lecturas`. Esto significa que el cálculo de Disponibilidad, MTTR y MTTF ya está resuelto como **DataService SQL puro** en `MANDataService.dbs`. No es iterativo ni requiere Python.
+
+`estadoEquipoAlta` / `estadoEquipoBaja` son helpers usados únicamente por el dashboard PHP mensual (`calcularDisponibilidad` en `Kpi.php`). Su lógica es: "encontrar la primera/última fecha en `historial_lecturas` para ajustar la ventana de fechas". Esto es expresable como SQL simple (`MIN(fecha)` / última fila con estado `IN`).
+
 **Categorización v3:**
-- MTTR, MTTF, Fallas, Lecturas → **MANDataService** (ya tiene 15 queries KPI; agregar los faltantes dentro del límite de 30)
-- Disponibilidad con historial de estados → **Python Phase 2**
+- Disponibilidad, MTTR, MTTF, Fallas → **DataService SQL puro** — ya implementados en `MANDataService.dbs` usando `historial_lecturas_mem`. **No diferir a Python.**
+- `estadoEquipoAlta/Baja` (ajuste de ventana de fecha) → **DataService SQL puro** — agregar `getEquipoFechaAlta` / `getEquipoFechaBaja` a `MANEquiposDataService` o extender los existentes en `MANDataService`
+- Lecturas/tendencias → **DataService SQL puro** (SELECT sobre `historial_lecturas` con rango de fechas)
 
 ---
 
@@ -634,7 +641,7 @@ Todos los métodos son activos: `deleteLectura`, `getEquipo`, `getLecturasCargad
 
 | Método | Estado | Nota |
 |--------|--------|------|
-| `estadoEquipoAlta` / `estadoEquipoBaja` | ACTIVO | Lógica iterativa — **Python Phase 2** en v3 |
+| `estadoEquipoAlta` / `estadoEquipoBaja` | ACTIVO | Helper de ajuste de fechas — expresable como SQL (`MIN`/`MAX fecha` en `historial_lecturas`). **No es Python Phase 2.** |
 | `fechaAltaEquipo` | ACTIVO | |
 | `getCantEquiposxEmpresaxSectorxGrupo` | ACTIVO | |
 | `getCantidadFallos` / `getCantidadFallosxEquipo` | ACTIVO | |
@@ -643,9 +650,9 @@ Todos los métodos son activos: `deleteLectura`, `getEquipo`, `getLecturasCargad
 | `getGruposEmpresa` / `getSectoresEmpresa` | ACTIVO | |
 | `getHistorialLecturas` | ACTIVO | |
 | `getTiempoTotal` / `getTiempoTotalReparacion` / `getTiempoTotalReparacionxEquipo` | ACTIVO | Ya en MANDataService.dbs |
-| `getDisponibilidadxFecha` / `getDisponibilidadxFechaxEquipo` | **SIN REF (PHP)** | ⚠️ Ya en MANDataService.dbs — acceso vía WSO2 únicamente |
-| `getMttrxFecha` / `getMttrxFechaxEquipo` | **SIN REF (PHP)** | ⚠️ Ídem — ya migrados a MANDataService.dbs |
-| `getMttfxFecha` / `getMttfxFechaxEquipo` | **SIN REF (PHP)** | ⚠️ Ídem |
+| `getDisponibilidadxFecha` / `getDisponibilidadxFechaxEquipo` | **WRAPPER WSO2** | Llama a `MANDataService` via `$ci->rest->callAPI()`. El SQL usa `historial_lecturas_mem` (cache). No es PHP iterativo. |
+| `getMttrxFecha` / `getMttrxFechaxEquipo` | **WRAPPER WSO2** | Ídem — wrapper REST sobre MANDataService |
+| `getMttfxFecha` / `getMttfxFechaxEquipo` | **WRAPPER WSO2** | Ídem |
 | `getCantEquiposxEmpresa` (sin sector/grupo) | **SIN REF** | Versión simplificada sin uso |
 
 ### Backlogs
@@ -882,10 +889,11 @@ GET  /tools/man/calendario/mes/{mes}/year/{year}  → getCalendarioMesSequence
 
 | Funcionalidad | Modelo origen | Razón |
 |---------------|--------------|-------|
-| Disponibilidad con historial de estados | `Kpis.php`: `estadoEquipoAlta/Baja` | Lógica iterativa sobre historial de registros |
-| PMs disparados por horas | `Preventivos.php`: `revisaEstadoPreventivosPorHoras` | Evaluación de umbrales con historial |
+| PMs disparados por horas | `Preventivos.php`: `revisaEstadoPreventivosPorHoras` | Evaluación de umbrales con historial de lecturas — lógica de negocio con estado |
 | Análisis predictivo / condición | `Predictivos.php` | Requiere modelos ML |
 | Alertas por límites de parámetros | `Lecturas.php`: `setupparam` | Comparación dinámica contra umbrales configurados |
+
+> ⚠️ **Corrección importante:** la Disponibilidad y todos los KPIs de `Kpis.php` (`getMttrxFecha`, `getMttfxFecha`, `getDisponibilidadxFecha`) **no son Python Phase 2**. El WSO2 `MANDataService.dbs` ya los resuelve con SQL sobre `historial_lecturas_mem` (tabla cache MySQL). `estadoEquipoAlta/Baja` son helpers del dashboard PHP mensual, expresables con `MIN(fecha)`/última fila de `historial_lecturas` — van en `MANDataService` como dos queries SQL simples.
 
 ---
 
