@@ -159,9 +159,65 @@
    <resource methods="GET" uri-template="/roles/{session}">
       <inSequence>
          <header name="Accept" scope="transport" value="application/json"/>
-         <property name="roles_url" value="/API/identity/role?p=0&amp;c=1000&amp;o=displayName%20ASC" scope="default" type="STRING"/>
+         <property name="p_query" expression="get-property('query.param.p')" scope="default" type="STRING"/>
+         <property name="c_query" expression="get-property('query.param.c')" scope="default" type="STRING"/>
+         <script language="js"><![CDATA[
+            var p = mc.getProperty("p_query");
+            var c = mc.getProperty("c_query");
+            if (p === null || p === "" || typeof p === "undefined") { p = "0"; }
+            if (c === null || c === "" || typeof c === "undefined") { c = "1000"; }
+            mc.setProperty("p_param", String(p));
+            mc.setProperty("c_param", String(c));
+         ]]></script>
+         <property name="roles_url" expression="fn:concat('/API/identity/role?p=', $ctx:p_param, '&amp;c=', $ctx:c_param, '&amp;o=displayName%20ASC')" scope="default" type="STRING"/>
+         <log level="custom" description="toolsbpmAPI GET /roles paginado">
+            <property name="p_param" expression="$ctx:p_param"/>
+            <property name="c_param" expression="$ctx:c_param"/>
+            <property name="roles_url" expression="$ctx:roles_url"/>
+         </log>
          <call-template target="bpmAPICallTemplate">
             <with-param name="recurso" value="{$ctx:roles_url}"/>
+            <with-param name="session" value="{$ctx:uri.var.session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <log level="custom" category="DEBUG">
+            <property name="msg" expression="json-eval($)"/>
+            <property name="session" expression="$ctx:uri.var.session"/>
+         </log>
+         <property name="session" expression="$ctx:uri.var.session"/>
+         <respond/>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="TOOLS_ERROR" value="Error en API BPM" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/role/porNombre/{session}">
+      <inSequence>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="name_query" expression="get-property('query.param.name')" scope="default" type="STRING"/>
+         <property name="c_query" expression="get-property('query.param.c')" scope="default" type="STRING"/>
+         <script language="js"><![CDATA[
+            var n = mc.getProperty("name_query");
+            var c = mc.getProperty("c_query");
+            if (n === null || typeof n === "undefined") { n = ""; }
+            if (c === null || c === "" || typeof c === "undefined") { c = "10"; }
+            mc.setProperty("name_param", String(n));
+            mc.setProperty("c_param", String(c));
+         ]]></script>
+         <property name="role_search_url" expression="fn:concat('/API/identity/role?p=0&amp;c=', $ctx:c_param, '&amp;s=', $ctx:name_param)" scope="default" type="STRING"/>
+         <log level="custom" description="toolsbpmAPI GET /role/porNombre">
+            <property name="name_param" expression="$ctx:name_param"/>
+            <property name="role_search_url" expression="$ctx:role_search_url"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:role_search_url}"/>
             <with-param name="session" value="{$ctx:uri.var.session}"/>
             <with-param name="method" value="GET"/>
          </call-template>
@@ -299,6 +355,7 @@
    <resource methods="GET" uri-template="/users/{usr}/session/{session}">
       <inSequence>
          <log level="custom" description="msg entrada">
+            <property name="donde" value="request GET /users/{usr}/session/{session}"/>
             <property name="user" expression="$ctx:uri.var.usr"/>
             <property name="session" expression="$ctx:uri.var.session"/>
          </log>
@@ -490,6 +547,577 @@
       </outSequence>
       <faultSequence>
          <property name="TOOLS_ERROR" value="Error en API BPM rol" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/actor/membership">
+      <inSequence>
+         <log level="custom" description="msg entrada agregar membership (rol+grupo) a actor">
+            <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
+            <property name="nombre_actor" expression="json-eval($.nombre_actor)"/>
+            <property name="nombre_rol" expression="json-eval($.nombre_rol)"/>
+            <property name="nombre_grupo" expression="json-eval($.nombre_grupo)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
+         <property name="nombre_actor" expression="json-eval($.nombre_actor)"/>
+         <property name="nombre_rol" expression="json-eval($.nombre_rol)"/>
+         <property name="nombre_grupo" expression="json-eval($.nombre_grupo)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="getprocess_url" expression="fn:concat('/API/bpm/process?p=0&amp;c=10&amp;s=',$ctx:nombre_proceso,'&amp;f=activationState%3DENABLED')" scope="default" type="STRING"/>
+         <log level="custom" category="DEBUG">
+            <property name="url get process (actor membership)" expression="get-property('getprocess_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:getprocess_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="session" expression="json-eval($.session)"/>
+         <script language="js"><![CDATA[
+            try {
+               var payload = mc.getPayloadJSON();
+               var procs = payload && payload.payload;
+               var procId = null;
+               if (Array.isArray(procs) && procs.length > 0) {
+                  procId = procs[0].id || procs[0].processId;
+               } else if (procs && (procs.id || procs.processId)) {
+                  procId = procs.id || procs.processId;
+               }
+               if (!procId) {
+                  mc.setProperty('TOOLS_ERROR', 'Proceso no encontrado: ' + mc.getProperty('nombre_proceso'));
+                  mc.setProperty('ERROR_MESSAGE', 'No existe proceso con ese nombre o no está habilitado');
+               } else {
+                  mc.setProperty('bpmProcessId', String(procId));
+               }
+            } catch (e) {
+               mc.setProperty('TOOLS_ERROR', 'Error al obtener proceso');
+               mc.setProperty('ERROR_MESSAGE', e.toString());
+            }
+         ]]></script>
+         <filter regex="true" source="boolean(get-property('bpmProcessId'))">
+            <then>
+               <property name="getactors_url" expression="fn:concat('/API/bpm/actor?p=0&amp;c=100&amp;f=process_id%3D',$ctx:bpmProcessId)" scope="default" type="STRING"/>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:getactors_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <script language="js"><![CDATA[
+                  try {
+                     var payload = mc.getPayloadJSON();
+                     var actors = payload.payload;
+                     var nombreActor = String(mc.getProperty('nombre_actor'));
+                     if (!actors || actors.length === 0) {
+                        mc.setProperty('TOOLS_ERROR', 'No se encontraron actores en el proceso');
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else {
+                        var found = false;
+                        for (var i = 0; i < actors.length; i++) {
+                           if (actors[i].name === nombreActor) {
+                              mc.setProperty('actorId', String(actors[i].id));
+                              found = true;
+                              break;
+                           }
+                        }
+                        if (!found) {
+                           mc.setProperty('TOOLS_ERROR', 'Actor no encontrado: ' + nombreActor);
+                           mc.setProperty('ERROR_MESSAGE', 'Verifique el nombre del actor en el proceso');
+                        }
+                     }
+                  } catch (e) {
+                     mc.setProperty('TOOLS_ERROR', 'Error al obtener actores');
+                     mc.setProperty('ERROR_MESSAGE', e.toString());
+                  }
+               ]]></script>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <filter regex="true" source="boolean(get-property('actorId'))">
+            <then>
+               <property name="getroles_url" expression="fn:concat('/API/identity/role?p=0&amp;c=1000&amp;s=',$ctx:nombre_rol)" scope="default" type="STRING"/>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:getroles_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <script language="js"><![CDATA[
+                  try {
+                     var payload = mc.getPayloadJSON();
+                     var roles = payload.payload;
+                     var nombreRol = String(mc.getProperty('nombre_rol'));
+                     if (!roles || roles.length === 0) {
+                        mc.setProperty('TOOLS_ERROR', 'Rol no encontrado: ' + nombreRol);
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else {
+                        var found = false;
+                        for (var i = 0; i < roles.length; i++) {
+                           if (roles[i].name === nombreRol) {
+                              mc.setProperty('roleId', String(roles[i].id));
+                              found = true;
+                              break;
+                           }
+                        }
+                        if (!found) {
+                           mc.setProperty('TOOLS_ERROR', 'Rol no encontrado: ' + nombreRol);
+                           mc.setProperty('ERROR_MESSAGE', 'Verifique el nombre del rol');
+                        }
+                     }
+                  } catch (e) {
+                     mc.setProperty('TOOLS_ERROR', 'Error al obtener roles');
+                     mc.setProperty('ERROR_MESSAGE', e.toString());
+                  }
+               ]]></script>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <filter regex="true" source="boolean(get-property('roleId'))">
+            <then>
+               <property name="getgroups_url" expression="fn:concat('/API/identity/group?p=0&amp;c=1000&amp;s=',$ctx:nombre_grupo)" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property name="url get groups actor membership" expression="get-property('getgroups_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:getgroups_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <script language="js"><![CDATA[
+                  try {
+                     var payload = mc.getPayloadJSON();
+                     var groups = payload.payload;
+                     var nombreGrupo = String(mc.getProperty('nombre_grupo'));
+                     if (!nombreGrupo || String(nombreGrupo).trim() === '') {
+                        mc.setProperty('TOOLS_ERROR', 'nombre_grupo es obligatorio');
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else if (!groups || groups.length === 0) {
+                        mc.setProperty('TOOLS_ERROR', 'Grupo no encontrado: ' + nombreGrupo);
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else {
+                        var found = false;
+                        for (var i = 0; i < groups.length; i++) {
+                           var g = groups[i];
+                           if (g.name === nombreGrupo || g.displayName === nombreGrupo) {
+                              mc.setProperty('groupId', String(g.id));
+                              found = true;
+                              break;
+                           }
+                        }
+                        if (!found) {
+                           mc.setProperty('TOOLS_ERROR', 'Grupo no encontrado: ' + nombreGrupo);
+                           mc.setProperty('ERROR_MESSAGE', 'Use el name o displayName del grupo en Bonita');
+                        }
+                     }
+                  } catch (e) {
+                     mc.setProperty('TOOLS_ERROR', 'Error al obtener grupos');
+                     mc.setProperty('ERROR_MESSAGE', e.toString());
+                  }
+               ]]></script>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <filter regex="true" source="boolean(get-property('groupId'))">
+            <then>
+               <payloadFactory media-type="json" description="payload actorMember membership">
+                  <format>{"actor_id":"$1","role_id":"$2","group_id":"$3","user_id":"-1"}</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('actorId')"/>
+                     <arg evaluator="xml" expression="get-property('roleId')"/>
+                     <arg evaluator="xml" expression="get-property('groupId')"/>
+                  </args>
+               </payloadFactory>
+               <script language="js"><![CDATA[
+                  var pl = mc.getPayloadJSON();
+                  mc.setProperty('actorMemberPayload', JSON.stringify(pl));
+               ]]></script>
+               <property name="post_actormember_url" value="/API/bpm/actorMember" scope="default" type="STRING"/>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:post_actormember_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="payload" value="{$ctx:actorMemberPayload}"/>
+                  <with-param name="method" value="POST"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <respond/>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" value="" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en API BPM al agregar membership a actor" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/actor/rol">
+      <inSequence>
+         <log level="custom" description="msg entrada agregar rol a actor">
+            <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
+            <property name="nombre_actor" expression="json-eval($.nombre_actor)"/>
+            <property name="nombre_rol" expression="json-eval($.nombre_rol)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
+         <property name="nombre_actor" expression="json-eval($.nombre_actor)"/>
+         <property name="nombre_rol" expression="json-eval($.nombre_rol)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="getprocess_url" expression="fn:concat('/API/bpm/process?p=0&amp;c=10&amp;s=',$ctx:nombre_proceso,'&amp;f=activationState%3DENABLED')" scope="default" type="STRING"/>
+         <log level="custom" category="DEBUG">
+            <property name="url get process" expression="get-property('getprocess_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:getprocess_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="session" expression="json-eval($.session)"/>
+         <script language="js"><![CDATA[
+            try {
+               var payload = mc.getPayloadJSON();
+               var procs = payload && payload.payload;
+               var procId = null;
+               if (Array.isArray(procs) && procs.length > 0) {
+                  procId = procs[0].id || procs[0].processId;
+               } else if (procs && (procs.id || procs.processId)) {
+                  procId = procs.id || procs.processId;
+               }
+               if (!procId) {
+                  mc.setProperty('TOOLS_ERROR', 'Proceso no encontrado: ' + mc.getProperty('nombre_proceso'));
+                  mc.setProperty('ERROR_MESSAGE', 'No existe proceso con ese nombre o no está habilitado');
+               } else {
+                  mc.setProperty('bpmProcessId', String(procId));
+               }
+            } catch (e) {
+               mc.setProperty('TOOLS_ERROR', 'Error al obtener proceso');
+               mc.setProperty('ERROR_MESSAGE', e.toString());
+            }
+         ]]></script>
+         <filter regex="true" source="boolean(get-property('bpmProcessId'))">
+            <then>
+               <property name="getactors_url" expression="fn:concat('/API/bpm/actor?p=0&amp;c=100&amp;f=process_id%3D',$ctx:bpmProcessId)" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property name="url get actors" expression="get-property('getactors_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:getactors_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <script language="js"><![CDATA[
+                  try {
+                     var payload = mc.getPayloadJSON();
+                     var actors = payload.payload;
+                     var nombreActor = String(mc.getProperty('nombre_actor'));
+                     if (!actors || actors.length === 0) {
+                        mc.setProperty('TOOLS_ERROR', 'No se encontraron actores en el proceso');
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else {
+                        var found = false;
+                        for (var i = 0; i < actors.length; i++) {
+                           if (actors[i].name === nombreActor) {
+                              mc.setProperty('actorId', String(actors[i].id));
+                              found = true;
+                              break;
+                           }
+                        }
+                        if (!found) {
+                           mc.setProperty('TOOLS_ERROR', 'Actor no encontrado: ' + nombreActor);
+                           mc.setProperty('ERROR_MESSAGE', 'Verifique el nombre del actor en el proceso');
+                        }
+                     }
+                  } catch (e) {
+                     mc.setProperty('TOOLS_ERROR', 'Error al obtener actores');
+                     mc.setProperty('ERROR_MESSAGE', e.toString());
+                  }
+               ]]></script>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <filter regex="true" source="boolean(get-property('actorId'))">
+            <then>
+               <property name="getroles_url" expression="fn:concat('/API/identity/role?p=0&amp;c=1000&amp;s=',$ctx:nombre_rol)" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property name="url get roles" expression="get-property('getroles_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:getroles_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <script language="js"><![CDATA[
+                  try {
+                     var payload = mc.getPayloadJSON();
+                     var roles = payload.payload;
+                     var nombreRol = String(mc.getProperty('nombre_rol'));
+                     if (!roles || roles.length === 0) {
+                        mc.setProperty('TOOLS_ERROR', 'Rol no encontrado: ' + nombreRol);
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else {
+                        var found = false;
+                        for (var i = 0; i < roles.length; i++) {
+                           if (roles[i].name === nombreRol) {
+                              mc.setProperty('roleId', String(roles[i].id));
+                              found = true;
+                              break;
+                           }
+                        }
+                        if (!found) {
+                           mc.setProperty('TOOLS_ERROR', 'Rol no encontrado: ' + nombreRol);
+                           mc.setProperty('ERROR_MESSAGE', 'Verifique el nombre del rol');
+                        }
+                     }
+                  } catch (e) {
+                     mc.setProperty('TOOLS_ERROR', 'Error al obtener roles');
+                     mc.setProperty('ERROR_MESSAGE', e.toString());
+                  }
+               ]]></script>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <filter regex="true" source="boolean(get-property('roleId'))">
+            <then>
+               <payloadFactory media-type="json" description="payload actorMember">
+                  <format>{"actor_id":"$1","role_id":"$2","group_id":"-1","user_id":"-1"}</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('actorId')"/>
+                     <arg evaluator="xml" expression="get-property('roleId')"/>
+                  </args>
+               </payloadFactory>
+               <script language="js"><![CDATA[
+                  var pl = mc.getPayloadJSON();
+                  mc.setProperty('actorMemberPayload', JSON.stringify(pl));
+               ]]></script>
+               <property name="post_actormember_url" value="/API/bpm/actorMember" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property name="url post actorMember" expression="get-property('post_actormember_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:post_actormember_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="payload" value="{$ctx:actorMemberPayload}"/>
+                  <with-param name="method" value="POST"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <respond/>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" value="" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en API BPM al agregar rol a actor" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/actor/grupo">
+      <inSequence>
+         <log level="custom" description="msg entrada agregar grupo a actor (sin rol)">
+            <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
+            <property name="nombre_actor" expression="json-eval($.nombre_actor)"/>
+            <property name="nombre_grupo" expression="json-eval($.nombre_grupo)"/>
+            <property name="session" expression="json-eval($.session)"/>
+         </log>
+         <property name="nombre_proceso" expression="json-eval($.nombre_proceso)"/>
+         <property name="nombre_actor" expression="json-eval($.nombre_actor)"/>
+         <property name="nombre_grupo" expression="json-eval($.nombre_grupo)"/>
+         <property name="session" expression="json-eval($.session)"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="getprocess_url" expression="fn:concat('/API/bpm/process?p=0&amp;c=10&amp;s=',$ctx:nombre_proceso,'&amp;f=activationState%3DENABLED')" scope="default" type="STRING"/>
+         <log level="custom" category="DEBUG">
+            <property name="url get process (actor grupo)" expression="get-property('getprocess_url')"/>
+         </log>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:getprocess_url}"/>
+            <with-param name="session" value="{$ctx:session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="session" expression="json-eval($.session)"/>
+         <script language="js"><![CDATA[
+            try {
+               var payload = mc.getPayloadJSON();
+               var procs = payload && payload.payload;
+               var procId = null;
+               if (Array.isArray(procs) && procs.length > 0) {
+                  procId = procs[0].id || procs[0].processId;
+               } else if (procs && (procs.id || procs.processId)) {
+                  procId = procs.id || procs.processId;
+               }
+               if (!procId) {
+                  mc.setProperty('TOOLS_ERROR', 'Proceso no encontrado: ' + mc.getProperty('nombre_proceso'));
+                  mc.setProperty('ERROR_MESSAGE', 'No existe proceso con ese nombre o no está habilitado');
+               } else {
+                  mc.setProperty('bpmProcessId', String(procId));
+               }
+            } catch (e) {
+               mc.setProperty('TOOLS_ERROR', 'Error al obtener proceso');
+               mc.setProperty('ERROR_MESSAGE', e.toString());
+            }
+         ]]></script>
+         <filter regex="true" source="boolean(get-property('bpmProcessId'))">
+            <then>
+               <property name="getactors_url" expression="fn:concat('/API/bpm/actor?p=0&amp;c=100&amp;f=process_id%3D',$ctx:bpmProcessId)" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property name="url get actors (actor grupo)" expression="get-property('getactors_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:getactors_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <script language="js"><![CDATA[
+                  try {
+                     var payload = mc.getPayloadJSON();
+                     var actors = payload.payload;
+                     var nombreActor = String(mc.getProperty('nombre_actor'));
+                     if (!actors || actors.length === 0) {
+                        mc.setProperty('TOOLS_ERROR', 'No se encontraron actores en el proceso');
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else {
+                        var found = false;
+                        for (var i = 0; i < actors.length; i++) {
+                           if (actors[i].name === nombreActor) {
+                              mc.setProperty('actorId', String(actors[i].id));
+                              found = true;
+                              break;
+                           }
+                        }
+                        if (!found) {
+                           mc.setProperty('TOOLS_ERROR', 'Actor no encontrado: ' + nombreActor);
+                           mc.setProperty('ERROR_MESSAGE', 'Verifique el nombre del actor en el proceso');
+                        }
+                     }
+                  } catch (e) {
+                     mc.setProperty('TOOLS_ERROR', 'Error al obtener actores');
+                     mc.setProperty('ERROR_MESSAGE', e.toString());
+                  }
+               ]]></script>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <filter regex="true" source="boolean(get-property('actorId'))">
+            <then>
+               <property name="getgroups_url" expression="fn:concat('/API/identity/group?p=0&amp;c=1000&amp;s=',$ctx:nombre_grupo)" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property name="url get groups (actor grupo)" expression="get-property('getgroups_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:getgroups_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <script language="js"><![CDATA[
+                  try {
+                     var payload = mc.getPayloadJSON();
+                     var groups = payload.payload;
+                     var nombreGrupo = String(mc.getProperty('nombre_grupo'));
+                     if (!nombreGrupo || String(nombreGrupo).trim() === '') {
+                        mc.setProperty('TOOLS_ERROR', 'nombre_grupo es obligatorio');
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else if (!groups || groups.length === 0) {
+                        mc.setProperty('TOOLS_ERROR', 'Grupo no encontrado: ' + nombreGrupo);
+                        mc.setProperty('ERROR_MESSAGE', '');
+                     } else {
+                        var found = false;
+                        for (var i = 0; i < groups.length; i++) {
+                           var g = groups[i];
+                           if (g.name === nombreGrupo || g.displayName === nombreGrupo) {
+                              mc.setProperty('groupId', String(g.id));
+                              found = true;
+                              break;
+                           }
+                        }
+                        if (!found) {
+                           mc.setProperty('TOOLS_ERROR', 'Grupo no encontrado: ' + nombreGrupo);
+                           mc.setProperty('ERROR_MESSAGE', 'Use el name o displayName del grupo en Bonita');
+                        }
+                     }
+                  } catch (e) {
+                     mc.setProperty('TOOLS_ERROR', 'Error al obtener grupos');
+                     mc.setProperty('ERROR_MESSAGE', e.toString());
+                  }
+               ]]></script>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <filter regex="true" source="boolean(get-property('groupId'))">
+            <then>
+               <payloadFactory media-type="json" description="payload actorMember solo grupo">
+                  <format>{"actor_id":"$1","role_id":"-1","group_id":"$2","user_id":"-1"}</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('actorId')"/>
+                     <arg evaluator="xml" expression="get-property('groupId')"/>
+                  </args>
+               </payloadFactory>
+               <script language="js"><![CDATA[
+                  var pl = mc.getPayloadJSON();
+                  mc.setProperty('actorMemberPayload', JSON.stringify(pl));
+               ]]></script>
+               <property name="post_actormember_url" value="/API/bpm/actorMember" scope="default" type="STRING"/>
+               <log level="custom" category="DEBUG">
+                  <property name="url post actorMember (solo grupo)" expression="get-property('post_actormember_url')"/>
+               </log>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:post_actormember_url}"/>
+                  <with-param name="session" value="{$ctx:session}"/>
+                  <with-param name="payload" value="{$ctx:actorMemberPayload}"/>
+                  <with-param name="method" value="POST"/>
+               </call-template>
+               <property name="session" expression="json-eval($.session)"/>
+               <respond/>
+            </then>
+            <else>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <outSequence>
+         <log level="full">
+            <property name="MESSAGE" value="FIRST"/>
+         </log>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" value="" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en API BPM al agregar grupo a actor" type="STRING"/>
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource methods="POST" uri-template="/usuario" xmlns="http://ws.apache.org/ns/synapse">
+   <inSequence>
+      <variable name="usr_firstname" expression="${payload.usuario.firstname}" type="STRING"/>
+      <variable name="usr_lastname" expression="${payload.usuario.lastname}" type="STRING"/>
+      <variable name="usr_password" expression="${payload.usuario.password}" type="STRING"/>
+      <variable name="usr_role" expression="${payload.usuario.role}" type="STRING"/>
+      <variable name="usr_status" expression="${payload.usuario.status}" type="STRING"/>
+      <variable name="usr_banned_users" expression="${payload.usuario.banned_users}" type="STRING"/>
+      <variable name="usr_telefono" expression="${payload.usuario.telefono}" type="STRING"/>
+      <variable name="usr_dni" expression="${payload.usuario.dni}" type="STRING"/>
+      <variable name="usr_depo_id" expression="${payload.usuario.depo_id}" type="STRING"/>
+      <variable name="usr_image_name" expression="${payload.usuario.image_name}" type="STRING"/>
+      <variable name="usr_image" expression="${payload.usuario.image}" type="STRING"/>
+      <variable name="usr_email" expression="${payload.usuario.email}" type="STRING"/>
+      <variable name="usr_nick" expression="${payload.usuario.usernick}" type="STRING"/>
+      <variable name="usr_business" expression="${payload.usuario.business}" type="STRING"/>
+
+      <log category="INFO">
+         <message>Checking for duplicate user with email: ${vars.usr_email}</message>
+      </log>
+
+      <variable name="uri.var.ds_base" expression="${configs.dataservices_url}" type="STRING"/>
+      
+      <script language="js"><![CDATA[
+         var email = mc.getVariable('usr_email');
+         if (email != null && email != '') {
+            mc.setVariable('uri.var.email_encoded', encodeURIComponent(email));
+         } else {
+            mc.setVariable('uri.var.email_encoded', '');
+         }
+      ]]></script>
+
+      <variable name="uri.var.check_duplicado_url" expression="${vars['uri.var.ds_base']}/COREDataService/usuario/duplicado?email=${vars['uri.var.email_encoded']}" type="STRING"/>
+      
+      <log category="INFO">
+         <message>Calling duplicate check URL: ${vars['uri.var.check_duplicado_url']}</message>
+      </log>
+
+      <http.get configKey="DataServiceConnection">
+         <relativePath>/COREDataService/usuario/duplicado?email=${vars['uri.var.email_encoded']}</relativePath>
+         <headers>[]</headers>
+         <forceScAccepted>false</forceScAccepted>
+         <disableChunking>false</disableChunking>
+         <forceHttp10>false</forceHttp10>
+         <noKeepAlive>false</noKeepAlive>
+         <forcePostPutNobody>false</forcePostPutNobody>
+         <forceHttpContentLength>false</forceHttpContentLength>
+      </http.get>
+
+      <variable name="existe_usuario" expression="${payload.respuesta.existe}" type="STRING"/>
+      
+      <filter xpath="${vars.existe_usuario == 'true'}">
+         <then>
+            <variable name="ERROR_MESSAGE" value="El usuario ya existe" type="STRING"/>
+            <variable name="TOOLS_ERROR" value="Usuario duplicado" type="STRING"/>
+            <sequence key="toolsFault"/>
+         </then>
+         <else/>
+      </filter>
+   </inSequence>
+</resource>

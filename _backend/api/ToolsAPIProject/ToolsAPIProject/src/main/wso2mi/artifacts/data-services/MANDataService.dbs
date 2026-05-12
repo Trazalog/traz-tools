@@ -1,246 +1,397 @@
-<api xmlns="http://ws.apache.org/ns/synapse" name="toolsMANAPI" context="/tools/man">
-   <resource methods="POST" uri-template="/solicitudServicio?bpmSession={bpmSession}">
-      <inSequence>
-         <property name="uri.var.bpmSession" expression="$ctx:uri.var.bpmSession" type="STRING"/>
-         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
-         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="api_url" expression="$ctx:apiconf//api_url"/>
-         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
-         <property name="equi_id" expression="json-eval($.solicitudServicio.equi_id)"/>
-         <property name="empr_id" expression="json-eval($.solicitudServicio.empr_id)"/>
-         <log level="custom" category="DEBUG">
-            <property name="donde 1" value="iniciando solicitudServicio"/>
-            <property name="payload" expression="json-eval($)"/>
-            <property name="payload" expression="$ctx:equi_id"/>
-            <property name="api url" expression="$ctx:api_url"/>
-            <property name="ds url" expression="$ctx:dataservices_url"/>
-         </log>
-         <script language="js">var payload = mc.getPayloadJSON();  mc.setProperty("ORIGINAL_PAYLOAD",JSON.stringify(payload));</script>
-         <payloadFactory media-type="json" description="crear solicitud">
-            <format>                   {                "solicitudRepracion":{                    "f_solicitado": "$1"                    ,"id_equipo":"$2"                    ,"estado":"S"                    ,"usrId":"$3"                    ,"solicitante":"$4"                    ,"causa":"$5"                    ,"foto":"$6"                    ,"id_empresa":"$7"                }            }            </format>
-            <args>
-               <arg evaluator="json" expression="$.solicitudServicio.fec_solicitud"/>
-               <arg evaluator="json" expression="$.solicitudServicio.equi_id"/>
-               <arg evaluator="json" expression="$.solicitudServicio.user_id"/>
-               <arg evaluator="json" expression="$.solicitudServicio.solicitante"/>
-               <arg evaluator="json" expression="$.solicitudServicio.causa"/>
-               <arg evaluator="json" expression="$.solicitudServicio.foto"/>
-               <arg evaluator="json" expression="$.solicitudServicio.empr_id"/>
-            </args>
-         </payloadFactory>
-         <property name="messageType" value="application/json" scope="axis2"/>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <property name="uri.var.solicitudServicio_url" expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio')" scope="default"/>
-         <log level="custom" category="DEBUG">
-            <property name="donde 2" value="dentro de solicitudServicio"/>
-            <property name="payload" expression="json-eval($)"/>
-            <property name="api url" expression="$ctx:uri.var.solicitudServicio_url"/>
-         </log>
-         <call>
-            <endpoint>
-               <http method="POST" uri-template="{uri.var.solicitudServicio_url}"/>
-            </endpoint>
-         </call>
-         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
-            <then/>
-            <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <property name="TOOLS_ERROR" value="POST /solicitudServicio con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="custom" category="DEBUG" description="donde 3">
-            <property name="msg actual 3 despues solicitud servicio" expression="json-eval($)"/>
-         </log>
-         <property name="messageType" value="application/json" scope="axis2"/>
-         <property name="Server" scope="transport" action="remove"/>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <header name="Accept-Encoding" scope="transport" value="gzip,deflate"/>
-         <header name="Content-Type" scope="transport" action="remove"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <property name="uri.var.id_nuevaSolicitud_url" expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio/ultima/',$ctx:equi_id)" scope="default"/>
-         <log level="custom" category="DEBUG">
-            <property name="donde" value="dentro de id solicitud"/>
-            <property name="payload" expression="json-eval($)"/>
-            <property name="api url" expression="$ctx:uri.var.id_nuevaSolicitud_url"/>
-         </log>
-         <call>
-            <endpoint>
-               <http method="GET" uri-template="{uri.var.id_nuevaSolicitud_url}"/>
-            </endpoint>
-         </call>
-         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
-            <then/>
-            <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <property name="TOOLS_ERROR" value="POST /solicitudServicio/ultima con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="custom" description="donde 4">
-            <property name="msg actual 4 despues Sservicio para obtener sose_id" expression="json-eval($)"/>
-            <property name="sose_id" expression="json-eval($.resultado.sose_id)"/>
-         </log>
-         <property name="sose_id" expression="json-eval($.resultado.sose_id)"/>
-         <property name="setIdEnHijos_elemento_origen" value="solicitudServicio" type="STRING"/>
-         <property name="setIdEnHijos_elemento_destino" value="_post_solicitudServicio_adjuntos_batch_req" type="STRING"/>
-         <property name="setIdEnHijos_arreglo_origen" value="adjuntos" type="STRING"/>
-         <property name="setIdEnHijos_arreglo_destino" value="_post_solicitudServicio_adjuntos" type="STRING"/>
-         <property name="setIdEnHijos_propiedad_destino" value="id_solicitud" type="STRING"/>
-         <property name="setIdEnHijos_id_padre" expression="$ctx:sose_id" type="STRING"/>
-         <script language="js" key="conf:tools/setIdEnHijos.js" function="setIdEnHijos"/>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <log level="custom" description="donde 5">
-            <property name="msg actual 5 antes de BATCH REQ de adjuntos" expression="json-eval($)"/>
-         </log>
-         <property name="uri.var.batchReqAdjuntos_url" expression="fn:concat($ctx:dataservices_url,'/MANDataService/_post_solicitudservicio_adjuntos_batch_req')" scope="default"/>
-         <log level="custom">
-            <property name="payload" expression="json-eval($)"/>
-            <property name="invocar url" expression="$ctx:uri.var.batchReqAdjuntos_url"/>
-         </log>
-         <call>
-            <endpoint>
-               <http method="POST" uri-template="{uri.var.batchReqAdjuntos_url}"/>
-            </endpoint>
-         </call>
-         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
-            <then/>
-            <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <header name="Accept" scope="transport" value="application/json"/>
-               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-               <property name="TOOLS_ERROR" value="POST /_post_solicitudservicio_adjuntos_batch_req con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <payloadFactory media-type="json" description="crear solicitud">
-            <format>                 { "nombre_proceso": "Proceso de Mantenimiento AssetPlanner SIM"     ,"payload" : { "idSolicitudServicio":"$1","idOT":"0"}     ,"session" :"$2" ,"emprId":"$3"         }     </format>
-            <args>
-               <arg evaluator="xml" expression="get-property('sose_id')"/>
-               <arg evaluator="xml" expression="get-property('uri.var.bpmSession')"/>
-               <arg evaluator="xml" expression="get-property('empr_id')"/>
-            </args>
-         </payloadFactory>
-         <log level="custom" description="donde 4">
-            <property name="msg actual 5 antes de BPM" expression="json-eval($)"/>
-         </log>
-         <property name="uri.var.instanciaBPM_url" expression="fn:concat($ctx:api_url,'/bpm/proceso/instancia')" scope="default"/>
-         <call>
-            <endpoint>
-               <http method="POST" uri-template="{uri.var.instanciaBPM_url}"/>
-            </endpoint>
-         </call>
-         <log level="custom" description="resp bonita 4">
-            <property name="resp" expression="get-property('axis2', 'HTTP_SC')"/>
-         </log>
-         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
-            <then/>
-            <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <header name="Accept" scope="transport" value="application/json"/>
-               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-               <payloadFactory media-type="json" description="borrar solicitud">
-                  <format>{ "_delete_solicitudServicio": { "soco_id":"$1"} }</format>
-                  <args>
-                     <arg evaluator="xml" expression="get-property('sose_id')"/>
-                  </args>
-               </payloadFactory>
-               <log level="custom" description="delete sol">
-                  <property name="delete" expression="json-eval($)"/>
-               </log>
-               <property name="uri.var.solicitudServicioDELETE" expression="fn:concat($ctx:dataservices_url,'/solicitudServicio')" scope="default"/>
-               <call>
-                  <endpoint>
-                     <http method="DELETE" uri-template="{uri.var.solicitudServicioDELETE}"/>
-                  </endpoint>
-               </call>
-               <property name="TOOLS_ERROR" value="POST /bpm/proceso/instancia con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="custom" description="donde 4">
-            <property name="msg actual 6 despues de BPM" expression="json-eval($)"/>
-         </log>
-         <property name="uri.var.caseid" expression="json-eval($.payload.caseId)" type="STRING"/>
-         <property name="uri.var.bpmSession" expression="json-eval($.session)" type="STRING"/>
-         <header name="Accept" scope="transport" value="application/json"/>
-         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-         <payloadFactory media-type="json" description="crear solicitud">
-            <format>                               {      "_put_solicitudServicio_caseid":{        "case_id":"$1",         "sose_id":"$2"        }      }      </format>
-            <args>
-               <arg evaluator="json" expression="$.payload.caseId"/>
-               <arg evaluator="xml" expression="get-property('sose_id')"/>
-            </args>
-         </payloadFactory>
-         <log level="custom" description="donde 4">
-            <property name="msg actual 7 despues de BPM antes de actualizar caseid" expression="json-eval($)"/>
-         </log>
-         <property name="uri.var.solicitudServicioCaseId_url" expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio/caseid')" scope="default"/>
-         <call>
-            <endpoint>
-               <http method="PUT" uri-template="{uri.var.solicitudServicioCaseId_url}"/>
-            </endpoint>
-         </call>
-         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
-            <then/>
-            <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <header name="Accept" scope="transport" value="application/json"/>
-               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-               <payloadFactory media-type="json" description="borrar solicitud">
-                  <format>{ "_delete_solicitudServicio": { "soco_id":"$1"} }</format>
-                  <args>
-                     <arg evaluator="xml" expression="get-property('setIdEnHijos_id_padre')"/>
-                  </args>
-               </payloadFactory>
-               <property name="uri.var.solicitudServicioDELETE" expression="fn:concat($ctx:dataservices_url,'/solicitudServicio')" scope="default"/>
-               <call>
-                  <endpoint>
-                     <http method="DELETE" uri-template="{uri.var.solicitudServicioDELETE}"/>
-                  </endpoint>
-               </call>
-               <header name="Accept" scope="transport" value="application/json"/>
-               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
-               <property name="uri.var.borrarInstanciaBPM_url" expression="fn:concat($ctx:api_url,'/bpm/proceso/instancia/')" scope="default"/>
-               <log level="custom" category="DEBUG" description="donde 10">
-                  <property name="msg actual 10 eliminando caso de BPM" expression="json-eval($)"/>
-                  <property name="url actual 10 eliminando caso de BPM" expression="$ctx:uri.var.borrarInstanciaBPM_url"/>
-               </log>
-               <call>
-                  <endpoint>
-                     <http method="DELETE" uri-template="{uri.var.borrarInstanciaBPM_url}"/>
-                  </endpoint>
-               </call>
-               <property name="TOOLS_ERROR" value="PUT /solicitudServicio/caseid con problemas" type="STRING"/>
-               <sequence key="toolsFault"/>
-            </else>
-         </filter>
-         <log level="full" category="DEBUG" description="salida insequence"/>
-         <loopback/>
-      </inSequence>
-      <outSequence>
-         <log level="full" category="DEBUG">
-            <property name="MESSAGE" value="FIRST"/>
-         </log>
-         <payloadFactory media-type="json" description="Mensaje error">
-            <format>{"resultado":              { "resultado" : "ok"              , "sose_id":"$1"                 , "case_id":"$2"           , "bpmSession":"$3"   }             }</format>
-            <args>
-               <arg evaluator="xml" expression="get-property('sose_id')"/>
-               <arg evaluator="xml" expression="get-property('uri.var.caseid')"/>
-               <arg evaluator="xml" expression="get-property('uri.var.bpmSession')"/>
-            </args>
-         </payloadFactory>
-         <log level="full"/>
-         <send/>
-      </outSequence>
-      <faultSequence>
-         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-         <property name="TOOLS_ERROR" value="Error general generando Solicitud de Contendores" type="STRING"/>
-         <sequence key="toolsFault"/>
-      </faultSequence>
+<data enableBatchRequests="true" enableBoxcarring="true" name="MANDataService" transports="http https local">
+   <description>DataService  para AssetPlanner&#xd;                                &#xd;                                &#xd;                                &#xd;                                &#xd;                                &#xd;                                &#xd;                                </description>
+   <config enableOData="false" id="AssetPlannerDataSource">
+      <property name="carbon_datasource_name">AssetPlannerDataSource</property>
+   </config>
+   <query id="getKPIDisponibiidadPorFecha" useConfig="AssetPlannerDataSource">
+      <sql>select activas.horas_activas / totales.horas_totales * 100 as disponibilidad&#xd;from&#xd;(select sum(his_lec.horas) horas_activas&#xd;from&#xd;(&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin, str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa,&#xd;	h.fec_inicio_usr,&#xd;	h.fec_fin_usr&#xd;from&#xd;    (select param.fec_inicio fec_inicio_usr, param.fec_fin fec_fin_usr,&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;	,(select&#xd;            :fec_inicio fec_inicio,&#xd;            :fec_fin fec_fin&#xd;    )&#xd;      param&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa= :id_empresa&#xd;and his_lec.estado = 'AC'&#xd;and (his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;or (&#xd;	  	(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 	and his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and his_lec.fecha_inicio &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	)&#xd;	 	or(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and&#xd;	 		(&#xd;	 		his_lec.fecha_inicio &lt; str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= str_to_date( concat(fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;			)&#xd;	 	)&#xd;	))&#xd;	) activas&#xd;,(select sum(his_lec.horas) horas_totales&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin, str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa,&#xd;	h.fec_inicio_usr,&#xd;	h.fec_fin_usr&#xd;from &#xd;(select param.fec_inicio fec_inicio_usr, param.fec_fin fec_fin_usr,&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;	,(select&#xd;            :fec_inicio2 fec_inicio,&#xd;            :fec_fin2 fec_fin&#xd;    )&#xd;      param&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa= :id_empresa2&#xd;and (his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;or (&#xd;	  	(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 	and his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and his_lec.fecha_inicio &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	)&#xd;	 	or(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and&#xd;	 		(&#xd;	 		his_lec.fecha_inicio &lt; str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;			)&#xd;	 	)&#xd;	))) totales</sql>
+      <result outputType="json">{"respuesta":{ "disponibilidad":"$disponibilidad" }}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+   </query>
+   <query id="getKPIDisponibiidadPorFechaPorEquipo" useConfig="AssetPlannerDataSource">
+      <sql>select activas.horas_activas / totales.horas_totales * 100 as disponibilidad&#xd;from&#xd;(select sum(his_lec.horas) horas_activas&#xd;from&#xd;(&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin, str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa,&#xd;	h.fec_inicio_usr,&#xd;	h.fec_fin_usr&#xd;from&#xd;    (select param.fec_inicio fec_inicio_usr, param.fec_fin fec_fin_usr,&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;	,(select&#xd;            :fec_inicio fec_inicio,&#xd;            :fec_fin fec_fin&#xd;    )&#xd;      param&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa= :id_empresa&#xd;and his_lec.id_equipo = :id_equipo&#xd;and his_lec.estado = 'AC'&#xd;and (his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;or (&#xd;	  	(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 	and his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and his_lec.fecha_inicio &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	)&#xd;	 	or(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and&#xd;	 		(&#xd;	 		his_lec.fecha_inicio &lt; str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= str_to_date( concat(fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;			)&#xd;	 	)&#xd;	))&#xd;	) activas&#xd;,(select sum(his_lec.horas) horas_totales&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin, str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa,&#xd;	h.fec_inicio_usr,&#xd;	h.fec_fin_usr&#xd;from &#xd;(select param.fec_inicio fec_inicio_usr, param.fec_fin fec_fin_usr,&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;	,(select&#xd;            :fec_inicio2 fec_inicio,&#xd;            :fec_fin2 fec_fin&#xd;    )&#xd;      param&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa= :id_empresa2&#xd;and his_lec.id_equipo = :id_equipo2&#xd;and (his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;or (&#xd;	  	(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 	and his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and his_lec.fecha_inicio &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	)&#xd;	 	or(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and&#xd;	 		(&#xd;	 		his_lec.fecha_inicio &lt; str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;			)&#xd;	 	)&#xd;	))) totales</sql>
+      <result outputType="json">{"respuesta":{ "disponibilidad":"$disponibilidad"}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+      <param name="id_equipo2" sqlType="STRING"/>
+   </query>
+   <query id="getKPIMttrporFecha" useConfig="AssetPlannerDataSource">
+      <sql>select inactivas.horas_inactivas / fallos.numero_fallos as mttr&#xd;from&#xd;(&#xd;select sum(his_lec.horas) horas_inactivas&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa&#xd;and his_lec.estado = 'RE'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) inactivas&#xd;,(select COUNT(his_lec.estado) AS numero_fallos&#xd;from (&#xd;select h.id_lectura,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa2&#xd;and his_lec.estado = 'RE'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio2,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin2,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fallos</sql>
+      <result outputType="json">{"respuesta":{ "mttr":"$mttr" }}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+   </query>
+   <query id="getKPIMttrporFechaxEquipo" useConfig="AssetPlannerDataSource">
+      <sql>select inactivas.horas_inactivas / fallos.numero_fallos as mttr&#xd;from&#xd;(&#xd;select sum(his_lec.horas) horas_inactivas&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa&#xd;and his_lec.id_equipo = :id_equipo&#xd;and his_lec.estado = 'RE'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) inactivas&#xd;,(select COUNT(his_lec.estado) AS numero_fallos&#xd;from (&#xd;select h.id_lectura,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa2&#xd;and his_lec.id_equipo = :id_equipo2&#xd;and his_lec.estado = 'RE'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio2,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin2,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fallos</sql>
+      <result outputType="json">{"respuesta":{ "mttr":"$mttr" }}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="id_equipo2" sqlType="STRING"/>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+   </query>
+   <query id="getKPIMttfporFecha" useConfig="AssetPlannerDataSource">
+      <sql>select activas.horas_activas / fallos.numero_fallos as mttf&#xd;from&#xd;(&#xd;select sum(his_lec.horas) horas_activas&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa&#xd;and his_lec.estado = 'AC'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) activas&#xd;,(select COUNT(his_lec.estado) AS numero_fallos&#xd;from (&#xd;select h.id_lectura,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa2&#xd;and his_lec.estado = 'RE'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio2,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin2,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fallos</sql>
+      <result outputType="json">{"respuesta":{ "mttf":"$mttf" }}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+   </query>
+   <query id="getKPIMttfporFechaporEquipo" useConfig="AssetPlannerDataSource">
+      <sql>select activas.horas_activas / fallos.numero_fallos as mttf&#xd;from&#xd;(&#xd;select sum(his_lec.horas) horas_activas&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa&#xd;and his_lec.id_equipo = :id_equipo&#xd;and his_lec.estado = 'RE'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) activas&#xd;,(select COUNT(his_lec.estado) AS numero_fallos&#xd;from (&#xd;select h.id_lectura,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin,CURRENT_TIMESTAMP) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,CURRENT_TIMESTAMP))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa&#xd;from (select&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa=:id_empresa2&#xd;and his_lec.id_equipo = :id_equipo2&#xd;and his_lec.estado = 'RE'&#xd;and his_lec.fecha_inicio &gt;= str_to_date( concat( :fec_inicio2,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &lt;= str_to_date( concat(:fec_fin2,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fallos</sql>
+      <result outputType="json">{"respuesta":{ "mttf":"$mttf" }}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="id_equipo2" sqlType="STRING"/>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+   </query>
+   <query id="getTiempoTotal" useConfig="AssetPlannerDataSource">
+      <sql>SELECT &#xd;    count_labourdays(&#xd;        STR_TO_DATE(CONCAT(:fecha_inicio, ' 00:00:00'), '%Y-%m-%d %H:%i:%s'),&#xd;        STR_TO_DATE(CONCAT(:fecha_fin, ' 23:59:59'), '%Y-%m-%d %H:%i:%s')&#xd;    ) as tiempo_total;</sql>
+      <result outputType="json">{"respuesta":{ "tiempo_total":"$tiempo_total" }}</result>
+      <param name="fecha_inicio" sqlType="STRING"/>
+      <param name="fecha_fin" sqlType="STRING"/>
+   </query>
+   <query id="getTiempoTotalReparacion" useConfig="AssetPlannerDataSource">
+      <sql>SELECT  IFNULL(sum(tiempo_reparac), 0) as tiempo_total_reparacion&#xd;FROM(&#xd;	select e.id_equipo, histo.tiempo_reparac, histo.fec_ini, histo.fec_fi &#xd;	from equipos e&#xd;	inner join(&#xd;		SELECT&#xd;			reparac.id_equipo,&#xd;			reparac.inicio_reparacion fec_ini,&#xd;			reparac.fin_reparacion fec_fi,&#xd;			ROUND(count_labourdays(cast(reparac.inicio_reparacion as datetime) , cast(reparac.fin_reparacion AS datetime)), 2) as tiempo_reparac,&#xd;			param.id_grupo,&#xd;			param.id_sector&#xd;		FROM&#xd;			(&#xd;			SELECT&#xd;				:fec_inicio fec_inicio,&#xd;				:fec_fin fec_fin,&#xd;				:id_grupo id_grupo,&#xd;		   		:id_sector id_sector&#xd;    			)&#xd;      		param,&#xd;			(&#xd;			SELECT&#xd;				reparaciones.id_equipo ,&#xd;				reparaciones.inicio_reparacion,&#xd;				reparaciones.fin_reparacion	&#xd;			FROM&#xd;				(&#xd;				SELECT&#xd;					id_equipo,&#xd;					CASE&#xd;						WHEN (fecha_inicio_reparacion &lt; str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;						AND fecha_inicio_reparacion &gt; fecha_fin_reparacion&#xd;						OR fecha_inicio_reparacion &lt; str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s')) &#xd;				        THEN str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;						ELSE fecha_inicio_reparacion&#xd;					END AS inicio_reparacion,&#xd;					CASE&#xd;						WHEN (fecha_fin_reparacion &gt; str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;						AND fecha_inicio_reparacion &gt; fecha_fin_reparacion&#xd;						OR fecha_fin_reparacion &gt; str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s'))&#xd;				        THEN str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;						ELSE fecha_fin_reparacion&#xd;					END AS fin_reparacion&#xd;				FROM&#xd;					(&#xd;					SELECT&#xd;						param.fec_fin AS fecha_fin,&#xd;						param.fec_inicio AS fecha_inicio,&#xd;						id_equipo,&#xd;						fecha AS fecha_inicio_reparacion,&#xd;						IFNULL(&#xd;				           		(SELECT MIN(fecha) &#xd;				            	FROM historial_lecturas_mem AS r2 &#xd;				            	WHERE r2.id_equipo = r1.id_equipo &#xd;				            	AND r2.fecha &gt; r1.fecha &#xd;				            	AND (r2.estado = 'AC' or r2.estado = 'RE' or r2.estado= 'AN' or r2.estado= 'IN')&#xd;				           		), &#xd;				           		NOW() &#xd;				            ) AS fecha_fin_reparacion&#xd;					FROM&#xd;						historial_lecturas_mem AS r1,&#xd;						(&#xd;						SELECT&#xd;							:fec_inicio3 fec_inicio,&#xd;							:fec_fin3 fec_fin&#xd;				    			)&#xd;				      		param&#xd;					WHERE&#xd;						(r1.estado = 'RE' OR r1.estado = 'A' or r1.estado = 'IN') &#xd;						AND r1.fecha &lt;= str_to_date( concat( param.fec_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;				) AS intervalo_reparacion&#xd;				WHERE&#xd;					(fecha_inicio_reparacion &lt;= str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;						AND fecha_fin_reparacion &gt;= str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s'))&#xd;				ORDER BY&#xd;					inicio_reparacion) AS reparaciones&#xd;      		) reparac) histo&#xd;      		on histo.id_equipo = e.id_equipo&#xd;      		where e.id_empresa = cast(:id_empresa as integer)&#xd;      		and CASE&#xd;					WHEN (histo.id_sector != 'all')&#xd;				        THEN cast(histo.id_sector as integer) = e.id_sector &#xd;				        else 1&#xd;				        END&#xd;			and CASE&#xd;					WHEN (histo.id_grupo != 'all')&#xd;				        THEN cast(histo.id_grupo as integer) = e.id_grupo &#xd;				        else 1&#xd;				        END&#xd;	)tiempo_reparacion</sql>
+      <result outputType="json">{"respuesta":{ "tiempo_total_reparacion":"$tiempo_total_reparacion" }}</result>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="fec_inicio3" sqlType="STRING"/>
+      <param name="fec_fin3" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_grupo" sqlType="STRING"/>
+      <param name="id_sector" sqlType="STRING"/>
+   </query>
+   <query id="getCantidadEquiposxEmpresa" useConfig="AssetPlannerDataSource">
+      <sql>select count(1) as cantidad&#xd;	from equipos e &#xd;	where e.id_empresa = :empr_id and (e.estado = 'AC' or e.estado = 'RE')</sql>
+      <result outputType="json">{"respuesta":{ "cantidad":"$cantidad" }}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getTiempoTotalReparacionxEquipo" useConfig="AssetPlannerDataSource">
+      <sql>SELECT IFNULL(sum(tiempo_reparacion.tiempo_reparac), 0) as tiempo_total_reparacion&#xd;	FROM(&#xd;		SELECT&#xd;			reparac.id_equipo,&#xd;			reparac.inicio_reparacion fec_ini,&#xd;			reparac.fin_reparacion fec_fi,&#xd;			ROUND(count_labourdays(cast(reparac.inicio_reparacion as datetime) , cast(reparac.fin_reparacion AS datetime)), 2) as tiempo_reparac&#xd;		FROM&#xd;			(&#xd;			SELECT&#xd;				:fec_inicio fec_inicio,&#xd;				:fec_fin fec_fin&#xd;    			)&#xd;      		param,&#xd;			(&#xd;			SELECT&#xd;				reparaciones.id_equipo ,&#xd;				reparaciones.inicio_reparacion,&#xd;				reparaciones.fin_reparacion	&#xd;			FROM&#xd;				(&#xd;				SELECT&#xd;					id_equipo,&#xd;					CASE&#xd;						WHEN (fecha_inicio_reparacion &lt; str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;						AND fecha_inicio_reparacion &gt; fecha_fin_reparacion&#xd;						OR fecha_inicio_reparacion &lt; str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s')) &#xd;				        THEN str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;						ELSE fecha_inicio_reparacion&#xd;					END AS inicio_reparacion,&#xd;					CASE&#xd;						WHEN (fecha_fin_reparacion &gt; str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;						AND fecha_inicio_reparacion &gt; fecha_fin_reparacion&#xd;						OR fecha_fin_reparacion &gt; str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s'))&#xd;				        THEN str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;						ELSE fecha_fin_reparacion&#xd;					END AS fin_reparacion&#xd;				FROM&#xd;					(&#xd;					SELECT&#xd;						param.fec_fin AS fecha_fin,&#xd;						param.fec_inicio AS fecha_inicio,&#xd;						id_equipo,&#xd;						fecha AS fecha_inicio_reparacion,&#xd;						IFNULL(&#xd;				           		(SELECT MIN(fecha) &#xd;				            	FROM historial_lecturas_mem AS r2 &#xd;				            	WHERE r2.id_equipo = r1.id_equipo &#xd;				            	AND r2.fecha &gt; r1.fecha &#xd;				            	AND (r2.estado = 'AC' or r2.estado = 'RE' or r2.estado= 'AN' or r2.estado= 'IN')&#xd;				           		), &#xd;				           		NOW() &#xd;				            ) AS fecha_fin_reparacion&#xd;					FROM&#xd;						historial_lecturas_mem AS r1,&#xd;						(&#xd;						SELECT&#xd;							:fec_inicio3 fec_inicio,&#xd;							:fec_fin3 fec_fin&#xd;				    			)&#xd;				      		param&#xd;					WHERE&#xd;						(r1.estado = 'RE' or r1.estado = 'IN')&#xd;						AND r1.fecha &lt;= str_to_date( concat( param.fec_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;						AND r1.id_equipo = :id_equipo &#xd;				) AS intervalo_reparacion&#xd;				WHERE&#xd;					(fecha_inicio_reparacion &lt;= str_to_date( concat( fecha_fin , ' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;						AND fecha_fin_reparacion &gt;= str_to_date( concat( fecha_inicio, ' 00:00:00') , '%Y-%m-%d %H:%i:%s'))&#xd;				ORDER BY&#xd;					inicio_reparacion) AS reparaciones&#xd;      		) reparac&#xd;	)tiempo_reparacion</sql>
+      <result outputType="json">{"respuesta":{ "tiempo_total_reparacion":"$tiempo_total_reparacion" }}</result>
+      <param name="fec_inicio" sqlType="STRING"/>
+      <param name="fec_fin" sqlType="STRING"/>
+      <param name="fec_inicio3" sqlType="STRING"/>
+      <param name="fec_fin3" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+   </query>
+   <query id="getCantidadFallosxEquipo" useConfig="AssetPlannerDataSource">
+      <sql>select COUNT(his_lec.estado) AS numero_fallos&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin, str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa,&#xd;	h.fec_inicio_usr,&#xd;	h.fec_fin_usr&#xd;from &#xd;(select param.fec_inicio fec_inicio_usr, param.fec_fin fec_fin_usr,&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;	,(select&#xd;            :fec_inicio2 fec_inicio,&#xd;            :fec_fin2 fec_fin&#xd;    )&#xd;      param&#xd;where e.id_equipo = hl.id_equipo) h) his_lec&#xd;where his_lec.id_empresa= :id_empresa2&#xd;and his_lec.id_equipo= :id_equipo&#xd;and his_lec.estado = 'RE'&#xd;and (his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;or (&#xd;	  	(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 	and his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_inicio &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	)&#xd;	 	or(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and&#xd;	 		(&#xd;	 		his_lec.fecha_inicio &lt; str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;			)&#xd;	 	)&#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= his_lec.fecha_inicio and  his_lec.fecha_fin BETWEEN  str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') and str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) &#xd;	 	)&#xd;	))</sql>
+      <result outputType="json">{"respuesta":{ "numero_fallos":"$numero_fallos" }}</result>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+   </query>
+   <query id="getCantidadFallos" useConfig="AssetPlannerDataSource">
+      <sql>select COUNT(his_lec.estado) AS numero_fallos&#xd;from (&#xd;select h.id_lectura ,&#xd;	h.id_equipo,&#xd;	h.fecha_inicio, &#xd;	IFNULL(h.fecha_fin, str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) fecha_fin,&#xd;	TIMESTAMPDIFF( MINUTE , h.fecha_inicio, IFNULL(h.fecha_fin,str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')))/24 horas,&#xd;	h.estado,&#xd;	h.id_empresa,&#xd;	h.fec_inicio_usr,&#xd;	h.fec_fin_usr&#xd;from &#xd;(select param.fec_inicio fec_inicio_usr, param.fec_fin fec_fin_usr,&#xd;	hl.id_lectura,&#xd;	e.id_equipo,&#xd;	hl.fecha fecha_inicio, &#xd;	(select hl2.fecha&#xd;	from historial_lecturas_mem hl2&#xd;	where hl2.id_equipo = hl.id_equipo&#xd;	and hl2.id_lectura &gt; hl.id_lectura&#xd;	order by hl2.id_lectura&#xd;	limit 1) fecha_fin&#xd;	,hl.estado&#xd;	,e.id_empresa&#xd;from historial_lecturas_mem hl &#xd;	, equipos e&#xd;	,(select&#xd;            :fec_inicio2 fec_inicio,&#xd;            :fec_fin2 fec_fin, &#xd;            :id_grupo id_grupo,&#xd;		   	:id_sector id_sector&#xd;    )&#xd;      param&#xd;where e.id_equipo = hl.id_equipo &#xd;and CASE&#xd;					WHEN (param.id_sector != 'all')&#xd;				        THEN cast(param.id_sector as integer) = e.id_sector &#xd;				        else 1&#xd;				        END&#xd;			and CASE&#xd;					WHEN (param.id_grupo != 'all')&#xd;				        THEN cast(param.id_grupo as integer) = e.id_grupo &#xd;				        else 1&#xd;				        END) h) his_lec&#xd;where his_lec.id_empresa= :id_empresa2&#xd;and his_lec.estado = 'RE'&#xd;and (his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s')&#xd;and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s') and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;or (&#xd;	  	(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 	and his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_inicio &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio) &#xd;	 	)&#xd;	 	or(his_lec.fecha_inicio &gt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and&#xd;	 		(&#xd;	 		his_lec.fecha_inicio &lt; str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')and his_lec.fecha_fin &gt;= his_lec.fecha_inicio&#xd;			)&#xd;	 	)&#xd;	 	or(&#xd;	 		his_lec.fecha_inicio &lt;= str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') &#xd;	 		and( his_lec.fecha_fin &lt;= str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')&#xd;	 		and his_lec.fecha_fin &gt;= his_lec.fecha_inicio and  his_lec.fecha_fin BETWEEN  str_to_date( concat( fec_inicio_usr,' 00:00:00') , '%Y-%m-%d %H:%i:%s') and str_to_date( concat( fec_fin_usr,' 23:59:59') , '%Y-%m-%d %H:%i:%s')) &#xd;	 	)&#xd;	))</sql>
+      <result outputType="json">{"respuesta":{ "numero_fallos":"$numero_fallos" }}</result>
+      <param name="fec_inicio2" sqlType="STRING"/>
+      <param name="fec_fin2" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="id_grupo" sqlType="STRING"/>
+      <param name="id_sector" sqlType="STRING"/>
+   </query>
+   <query id="getEstadoEquipo" useConfig="AssetPlannerDataSource">
+      <sql>select e.estado from equipos e where e.id_equipo = :id_equipo</sql>
+      <result outputType="json">{"estados":{ "estado":"$estado" }}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+   </query>
+   <query id="getCantEquiposxEmpresaxSectorxGrupo" useConfig="AssetPlannerDataSource">
+      <sql>SELECT COUNT(*) AS cantidad&#xd;FROM (&#xd;    SELECT e.id_equipo, date(hl.fecha)as fecha&#xd;    FROM &#xd;    (select &#xd;    	:id_sector id_sector,&#xd;    	:id_grupo id_grupo&#xd;    )param,&#xd;    equipos e&#xd;    INNER JOIN historial_lecturas_mem hl ON e.id_equipo = hl.id_equipo and e.estado != 'AN'&#xd;    WHERE e.id_empresa = :id_empresa&#xd;    and CASE&#xd;					WHEN (param.id_sector != 'all')&#xd;				        THEN cast(param.id_sector as integer) = e.id_sector &#xd;				        else 1&#xd;				        END&#xd;			and CASE&#xd;					WHEN (param.id_grupo != 'all')&#xd;				        THEN cast(param.id_grupo as integer) = e.id_grupo &#xd;				        else 1&#xd;				        END&#xd;    GROUP BY e.id_equipo&#xd;    HAVING MIN(hl.fecha) &#xd;) AS equipos_con_primera_lectura&#xd;where (:fecha_inicio &gt;= equipos_con_primera_lectura.fecha or :fecha_fin &gt;= equipos_con_primera_lectura.fecha);</sql>
+      <result outputType="json">{"respuesta":{ "cantidad":"$cantidad" }}</result>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="id_grupo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="fecha_inicio" sqlType="STRING"/>
+      <param name="fecha_fin" sqlType="STRING"/>
+   </query>
+   <query id="getFechaAltaEquipo" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, date(hl.fecha)as fecha&#xd;    FROM &#xd;    equipos e&#xd;    INNER JOIN historial_lecturas_mem hl ON e.id_equipo = hl.id_equipo&#xd;    WHERE e.id_empresa = :id_empresa and hl.id_equipo = :id_equipo and hl.estado = 'AC'&#xd;    GROUP BY e.id_equipo&#xd;    HAVING MIN(hl.fecha);</sql>
+      <result outputType="json">{"respuesta":{ "fecha":"$fecha" }}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudServcio" useConfig="AssetPlannerDataSource">
+      <sql>select solicitud_reparacion.id_solicitud as id_solicitud,&#xd;	solicitud_reparacion.numero as numero,&#xd;	solicitud_reparacion.id_tipo as id_tipo,&#xd;	solicitud_reparacion.solicitante as solicitante,&#xd;	solicitud_reparacion.id_equipo as id_equipo,&#xd;	solicitud_reparacion.correctivo as correctivo,&#xd;	solicitud_reparacion.causa as causa,&#xd;        solicitud_reparacion.observaciones as observaciones,&#xd;	solicitud_reparacion.estado as estado,&#xd;	solicitud_reparacion.usrId as usrId,&#xd;        solicitud_reparacion.id_empresa as id_empresa,&#xd;	solicitud_reparacion.urgente as urgente,&#xd;        DATE_FORMAT(solicitud_reparacion.f_solicitado , '%Y-%m-%d %H:%i:%s') AS f_solicitado ,&#xd;        equipos.codigo AS equipo,&#xd;        sector.descripcion AS sector,&#xd;        grupo.descripcion AS grupo,&#xd;        equipos.ubicacion as ubicacion,&#xd;        orden_trabajo.case_id as case_id,&#xd;        orden_trabajo.id_usuario_a as id_usuario_a,&#xd;        sisusers.usrName AS mantenedor,&#xd;        DATE_FORMAT(orden_trabajo.fecha_terminada, '%Y-%m-%d %H:%i:%s') AS fecha_terminada,&#xd;        DATE_FORMAT(orden_trabajo.fecha_inicio, '%Y-%m-%d %H:%i:%s') AS f_inicio,&#xd;        DATE_FORMAT(orden_trabajo.f_asignacion, '%Y-%m-%d %H:%i:%s') AS f_asignacion&#xd;from solicitud_reparacion&#xd;JOIN equipos ON solicitud_reparacion.id_equipo = equipos.id_equipo&#xd;JOIN sector ON equipos.id_sector = sector.id_sector&#xd;LEFT JOIN grupo ON equipos.id_grupo = grupo.id_grupo&#xd;LEFT JOIN orden_trabajo ON solicitud_reparacion.case_id = orden_trabajo.case_id&#xd;LEFT JOIN sisusers ON orden_trabajo.id_usuario_a = sisusers.usrId&#xd;WHERE solicitud_reparacion.estado != 'AN' &#xd;and solicitud_reparacion.estado != 'CN'&#xd;AND solicitud_reparacion.id_empresa = cast(:id_empresa as integer);</sql>
+      <result outputType="json">{&#xd;    "solicitudes": {&#xd;        "solicitud": [&#xd;            {&#xd;                "id_solicitud": "$id_solicitud",&#xd;                "numero": "$numero",&#xd;                "id_tipo":"$id_tipo",&#xd;                "solicitante":"$solicitante",&#xd;                "id_equipo":"$id_equipo",&#xd;                "correctivo":"$correctivo",&#xd;                "causa":"$causa",&#xd;                "observaciones":"$observaciones",&#xd;                "estado":"$estado",&#xd;                "usrId":"$usrId",&#xd;                "id_empresa" :"$id_empresa",&#xd;                "urgente":"$urgente",&#xd;                "equipo":"$equipo", &#xd;                "sector":"$sector",&#xd;                "grupo":"$grupo",&#xd;                "ubicacion":"$ubicacion",&#xd;                "case_id":"$case_id",&#xd;                "id_usuario_a":"$id_usuario_a",&#xd;                "mantenedor":"$mantenedor",&#xd;                "fecha_terminada":"$fecha_terminada",&#xd;                "f_inicio":"$f_inicio",&#xd;                "f_asignacion":"$f_asignacion",&#xd;                "f_solicitado":"$f_solicitado"&#xd;            } &#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getNotificaciones" useConfig="AssetPlannerDataSource">
+      <sql>SELECT data_json, queue_id &#xd;FROM synch_notificacion_queue &#xd;WHERE leido = 0 &#xd;AND user_id =  cast(:user_id as integer);</sql>
+      <result outputType="json">{&#xd;    "notificaciones": {&#xd;        "notificacion": [&#xd;            {&#xd;                "queue_id": "$queue_id",&#xd;                "data_json": "$data_json"&#xd;            } &#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="user_id" sqlType="STRING"/>
+   </query>
+   <query id="setsolicitudServicio" useConfig="AssetPlannerDataSource">
+      <sql>INSERT&#xd;	INTO&#xd;	solicitud_reparacion&#xd;(f_solicitado &#xd; ,id_equipo&#xd; ,estado&#xd; ,usrId&#xd; ,solicitante&#xd; ,causa&#xd; ,foto&#xd; ,id_empresa&#xd; ,f_sugerido&#xd; ,hora_sug&#xd; ,fecha_conformidad&#xd; ,observ_conformidad)&#xd;VALUES(:f_solicitado &#xd; ,:id_equipo&#xd; ,:estado&#xd; ,:usrId&#xd; ,:solicitante&#xd; ,:causa&#xd; ,:foto&#xd; ,:id_empresa&#xd; ,'1899-01-01 00:00:00'&#xd; ,0&#xd; ,'1899-01-01 00:00:00'&#xd; ,'')</sql>
+      <param name="f_solicitado" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="solicitante" sqlType="STRING"/>
+      <param name="causa" sqlType="STRING"/>
+      <param name="foto" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getLastsolicitudServicio" useConfig="AssetPlannerDataSource">
+      <sql>select max(sr.id_solicitud) sose_id, sr.id_equipo equiid&#xd;from solicitud_reparacion sr &#xd;where sr.id_equipo = :equi_id</sql>
+      <result outputType="json">{&#xd; "resultado":{"sose_id":"$sose_id",&#xd;              "equi_id":"$equiid"&#xd;              }&#xd;}</result>
+      <param name="equi_id" optional="false" sqlType="INTEGER"/>
+   </query>
+   <query id="putSolicitudServicioCase" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>update solicitud_reparacion&#xd;set case_id = :case_id&#xd;where id_solicitud= :sose_id</sql>
+      <result element="UpdatedRowCount" rowName="" useColumnNumbers="true">
+         <element column="1" name="Value" xsdType="integer"/>
+      </result>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="sose_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteSolicitudServicio" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM solicitud_reparacion&#xd;WHERE id_solicitud = :sose_id</sql>
+      <result element="UpdatedRowCount" rowName="" useColumnNumbers="true">
+         <element column="1" name="Value" xsdType="integer"/>
+      </result>
+      <param name="sose_id" sqlType="STRING"/>
+   </query>
+   <query id="getEquipo" useConfig="AssetPlannerDataSource">
+      <sql>select e.id_equipo,e.codigo,e.descripcion,e.estado, e2.id_empresa empr_id,e2.descripcion empresa,m.marcadescrip marca, s.descripcion sector,g.descripcion grupo,c.descripcion criticidad,a.descripcion area,p.descripcion proceso&#xd;from equipos e &#xd;join marcasequipos m on m.marcaid = e.marca &#xd;join empresas e2 on e2.id_empresa = e.id_empresa &#xd;join sector s on s.id_sector = e.id_sector &#xd;join grupo g on g.id_grupo =e.id_grupo&#xd;join criticidad c on c.id_criti = e.id_criticidad &#xd;join area a on a.id_area = e.id_area &#xd;join proceso p on p.id_proceso = e.id_proceso &#xd;where e.id_equipo =:equi_id</sql>
+      <result outputType="json">{&#xd;   "equipo":{&#xd;      "id_equipo":"$id_equipo",&#xd;      "codigo":"$codigo",&#xd;      "descripcion":"$descripcion",&#xd;      "estado":"$estado",&#xd;      "empr_id":"$empr_id",&#xd;      "empresa":"$empresa",&#xd;      "marca":"$marca",&#xd;      "sector":"$sector",&#xd;      "grupo":"$grupo",&#xd;      "criticidad":"$criticidad",&#xd;      "area":"$area",&#xd;      "proceso":"$proceso"&#xd;   }&#xd;}&#xd;</result>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="setAdjuntosSolReparacion" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO solicitud_reparacion_adjuntos&#xd;(id_solicitud &#xd; ,url&#xd; ,adjunto&#xd; ,nombre)&#xd;VALUES(:id_solicitud &#xd; ,:url&#xd; ,:adjunto&#xd; ,:nombre)</sql>
+      <param name="id_solicitud" sqlType="STRING"/>
+      <param name="url" sqlType="STRING"/>
+      <param name="adjunto" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+   </query>
+   <query id="getAdjuntosSolReparacion" useConfig="AssetPlannerDataSource">
+      <sql>select * from solicitud_reparacion_adjuntos WHERE id_solicitud = :id_solicitud</sql>
+      <result outputType="json">{&#xd;    "adjuntos": {&#xd;        "adjunto": [{&#xd;            "id_adjunto": "$id_adjunto",&#xd;            "url": "$url",&#xd;            "adjunto": "$adjunto",&#xd;            "nombre": "$nombre"&#xd;        }]&#xd;    }&#xd;}</result>
+      <param name="id_solicitud" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/kpiDisponibilidadxFecha/{id_empresa}/fecinicio/{fec_inicio}/fecfin/{fec_fin}/idempr/{id_empresa2}/fecinicio2/{fec_inicio2}/fecfin2/{fec_fin2}">
+      <description>obtengo porcentaje de disponibilidad de los equipos por una fecha                                  &#xd;                                    &#xd;                                    </description>
+      <call-query href="getKPIDisponibiidadPorFecha">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+      </call-query>
    </resource>
-</api>
-                        
+   <resource method="GET" path="/kpiDisponibilidadxFechaxEquipo/{id_empresa}/idEquipo/{id_equipo}/fecinicio/{fec_inicio}/fecfin/{fec_fin}/idempr/{id_empresa2}/idEquipo2/{id_equipo2}/fecinicio2/{fec_inicio2}/fecfin2/{fec_fin2}">
+      <description>obtengo la disponibilidad por fecha y por id_equipo                                 &#xd;                                    &#xd;                                    </description>
+      <call-query href="getKPIDisponibiidadPorFechaPorEquipo">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="id_equipo" query-param="id_equipo"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+         <with-param name="id_equipo2" query-param="id_equipo2"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/KpiMttrxFecha/empresa/{id_empresa}/fec_inicio/{fec_inicio}/fec_fin/{fec_fin}">
+      <call-query href="getKPIMttrporFecha">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/KpiMttrxFechaxEquipo/empresa/{id_empresa}/equipo/{id_equipo}/fecinicio/{fec_inicio}/fecfin/{fec_fin}/empresa2/{id_empresa2}/equipo2/{id_equipo2}/fecinicio2/{fec_inicio2}/fecfin2/{fec_fin2}">
+      <call-query href="getKPIMttrporFechaxEquipo">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="id_equipo" query-param="id_equipo"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="id_equipo2" query-param="id_equipo2"/>
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/KpiMttrxFecha/empresa/{id_empresa}/fec_inicio/{fec_inicio}/fec_fin/{fec_fin}/empresa2/{id_empresa2}/fec_inicio2/{fec_inicio2}/fec_fin2/{fec_fin2}">
+      <call-query href="getKPIMttrporFecha">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/KpiMttfxFecha/empresa/{id_empresa}/fec_inicio/{fec_inicio}/fec_fin/{fec_fin}/empresa2/{id_empresa2}/fec_inicio2/{fec_inicio2}/fec_fin2/{fec_fin2}">
+      <call-query href="getKPIMttfporFecha">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/KpiMttfxFechaxEquipo/empresa/{id_empresa}/equipo/{id_equipo}/fecinicio/{fec_inicio}/fecfin/{fec_fin}/empresa2/{id_empresa2}/equipo2/{id_equipo2}/fecinicio2/{fec_inicio2}/fecfin2/{fec_fin2}">
+      <call-query href="getKPIMttfporFechaporEquipo">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="id_equipo" query-param="id_equipo"/>
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="id_equipo2" query-param="id_equipo2"/>
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getTiempoTotal/{fecha_inicio}/{fecha_fin}">
+      <call-query href="getTiempoTotal">
+         <with-param name="fecha_inicio" query-param="fecha_inicio"/>
+         <with-param name="fecha_fin" query-param="fecha_fin"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getTiempoTotalReparacion/{fec_inicio}/{fec_fin}/{fec_inicio3}/{fec_fin3}/{id_empresa}/{id_sector}/{id_grupo}">
+      <call-query href="getTiempoTotalReparacion">
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="fec_inicio3" query-param="fec_inicio3"/>
+         <with-param name="fec_fin3" query-param="fec_fin3"/>
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="id_grupo" query-param="id_grupo"/>
+         <with-param name="id_sector" query-param="id_sector"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getCantEquiposxEmpresa/{empr_id}">
+      <call-query href="getCantidadEquiposxEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getTiempoTotalReparacionxEquipo/{fec_inicio}/{fec_fin}/{fec_inicio3}/{fec_fin3}/{id_equipo}">
+      <call-query href="getTiempoTotalReparacionxEquipo">
+         <with-param name="fec_inicio" query-param="fec_inicio"/>
+         <with-param name="fec_fin" query-param="fec_fin"/>
+         <with-param name="fec_inicio3" query-param="fec_inicio3"/>
+         <with-param name="fec_fin3" query-param="fec_fin3"/>
+         <with-param name="id_equipo" query-param="id_equipo"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getCantidadFallosxEquipo/{fec_inicio2}/{fec_fin2}/{id_empresa2}/{id_equipo}">
+      <call-query href="getCantidadFallosxEquipo">
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="id_equipo" query-param="id_equipo"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getCantidadFallos/{fec_inicio2}/{fec_fin2}/{id_empresa2}/{id_sector}/{id_grupo}">
+      <call-query href="getCantidadFallos">
+         <with-param name="fec_inicio2" query-param="fec_inicio2"/>
+         <with-param name="fec_fin2" query-param="fec_fin2"/>
+         <with-param name="id_empresa2" query-param="id_empresa2"/>
+         <with-param name="id_grupo" query-param="id_grupo"/>
+         <with-param name="id_sector" query-param="id_sector"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getEstadoEquipo/{id_equipo}">
+      <call-query href="getEstadoEquipo">
+         <with-param name="id_equipo" query-param="id_equipo"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getCantEquiposxEmpresaxSectorxGrupo/{id_empresa}/{id_sector}/{id_grupo}/{fecha_inicio}/{fecha_fin}">
+      <call-query href="getCantEquiposxEmpresaxSectorxGrupo">
+         <with-param name="id_sector" query-param="id_sector"/>
+         <with-param name="id_grupo" query-param="id_grupo"/>
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="fecha_inicio" query-param="fecha_inicio"/>
+         <with-param name="fecha_fin" query-param="fecha_fin"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getFechaAltaEquipo/{id_empresa}/{id_equipo}">
+      <call-query href="getFechaAltaEquipo">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+         <with-param name="id_equipo" query-param="id_equipo"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getSolicitudServicioNoConforme/{id_empresa}">
+      <call-query href="getSolicitudServcio">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getNotificaciones/{user_id}">
+      <call-query href="getNotificaciones">
+         <with-param name="user_id" query-param="user_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/solicitudServicio" returnRequestStatus="true">
+      <call-query href="setsolicitudServicio">
+         <with-param name="f_solicitado" query-param="f_solicitado"/>
+         <with-param name="id_equipo" query-param="id_equipo"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="usrId" query-param="usrId"/>
+         <with-param name="solicitante" query-param="solicitante"/>
+         <with-param name="causa" query-param="causa"/>
+         <with-param name="foto" query-param="foto"/>
+         <with-param name="id_empresa" query-param="id_empresa"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudServicio/ultima/{equi_id}">
+      <call-query href="getLastsolicitudServicio">
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/solicitudServicio/caseid">
+      <call-query href="putSolicitudServicioCase">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="sose_id" query-param="sose_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/solicitudServicio">
+      <call-query href="deleteSolicitudServicio">
+         <with-param name="sose_id" query-param="sose_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/equipo/{equi_id}">
+      <call-query href="getEquipo">
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/solicitudServicio/adjuntos/solicitud/{id_solicitud}">
+      <call-query href="getAdjuntosSolReparacion">
+         <with-param name="id_solicitud" query-param="id_solicitud"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/solicitudServicio/adjuntos">
+      <call-query href="setAdjuntosSolReparacion">
+         <with-param name="id_solicitud" query-param="id_solicitud"/>
+         <with-param name="url" query-param="url"/>
+         <with-param name="adjunto" query-param="adjunto"/>
+         <with-param name="nombre" query-param="nombre"/>
+      </call-query>
+   </resource>
+</data>
