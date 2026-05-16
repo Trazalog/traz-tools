@@ -594,6 +594,7 @@ Feature: list_overdue_preventives MCP tool
 - [ ] Tests unitarios pasan (cobertura > 80%)
 - [ ] Tests de API (Hurl) verifican OAuth + rate limiting
 - [ ] MCP Inspector valida el schema de la tool
+- [ ] Tool tiene annotation correcta (`readOnlyHint` o `destructiveHint`) — ver [`doc/mcp/tool-annotations-standard.md`](../../doc/mcp/tool-annotations-standard.md)
 - [ ] Documentación de la tool actualizada en `packages/mcp-tools/README.md`
 - [ ] Smoke test pasa en staging-v3
 ```
