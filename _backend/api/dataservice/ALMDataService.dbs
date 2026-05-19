@@ -547,6 +547,40 @@
       <param name="depo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getStockPaginado" useConfig="ToolsDataSource">
+      <sql>SELECT  &#xd;    aa.descripcion as artdescription,&#xd;    aa.barcode as artbarcode,&#xd;    T.descripcion as arttype,&#xd;    al.fec_alta as fecha_nueva,&#xd;    T1.descripcion as un_medida,&#xd;    al.*,&#xd;    alm_depositos.depo_id,&#xd;    alm_depositos.descripcion as depositodescrip,&#xd;    E2.nombre as establecimiento,&#xd;    prd.recipientes.reci_id,&#xd;    prd.recipientes.nombre as nom_reci,&#xd;    P.nombre as proveedor&#xd;FROM alm.alm_articulos aa&#xd;JOIN alm.alm_lotes al ON aa.arti_id = al.arti_id&#xd;JOIN alm.alm_depositos ON al.depo_id = alm_depositos.depo_id&#xd;LEFT JOIN prd.establecimientos E2 ON alm_depositos.esta_id = E2.esta_id&#xd;LEFT JOIN alm.alm_proveedores P ON P.prov_id = al.prov_id&#xd;LEFT JOIN core.tablas T ON T.tabl_id = aa.tiar_id &#xd;LEFT JOIN core.tablas T1 ON T1.tabl_id = aa.unme_id &#xd;LEFT JOIN prd.lotes ON al.batch_id = prd.lotes.batch_id&#xd;LEFT JOIN prd.recipientes ON prd.lotes.reci_id = prd.recipientes.reci_id&#xd;JOIN core.encargados_depositos E ON alm_depositos.depo_id = E.depo_id&#xd;,(SELECT &#xd;    :depo_id as depo_id, &#xd;    :reci_id as reci_id, &#xd;    :art_type as art_type, &#xd;    :stock0 as stock0, &#xd;    :search as search,&#xd;    :fec_desde as fec_desde,&#xd;    :fec_hasta as fec_hasta,&#xd;    :establecimiento as esta_id,&#xd;    :art_barcode as a_barcode,&#xd;    :art_descrip as a_desc&#xd; ) AS filter&#xd;WHERE al.empr_id = CAST(:empr_id AS INTEGER) &#xd;  AND aa.eliminado != true &#xd;  AND E.user_id = CAST(:id_user AS INTEGER)&#xd;  AND al.depo_id = CASE WHEN filter.depo_id = 'TODOS' THEN al.depo_id ELSE CAST(filter.depo_id AS INTEGER) END&#xd;  AND COALESCE(prd.recipientes.reci_id, 0) = CASE WHEN filter.reci_id = 'TODOS' THEN COALESCE(prd.recipientes.reci_id, 0) ELSE CAST(filter.reci_id AS INTEGER) END&#xd;  AND aa.tiar_id = CASE WHEN filter.art_type = 'TODOS' THEN aa.tiar_id ELSE filter.art_type END&#xd;  AND alm_depositos.esta_id = CASE WHEN filter.esta_id = 'TODOS' THEN alm_depositos.esta_id ELSE CAST(filter.esta_id AS INTEGER) END&#xd;  AND (filter.fec_desde = '' OR al.fec_alta &gt;= CAST(filter.fec_desde AS DATE))&#xd;  AND (filter.fec_hasta = '' OR al.fec_alta &lt;= CAST(filter.fec_hasta AS DATE))&#xd;  AND (filter.a_barcode = '' OR aa.barcode = filter.a_barcode)&#xd;  AND (filter.a_desc = '' OR aa.descripcion = filter.a_desc)&#xd;  AND (filter.search = '' OR aa.descripcion ILIKE '%' || filter.search || '%' OR aa.barcode ILIKE '%' || filter.search || '%')&#xd;  AND (CASE WHEN filter.stock0 = 'true' THEN 1 ELSE (CASE WHEN COALESCE(al.cantidad, 0) &gt; 0 THEN 1 ELSE 0 END) END) = 1&#xd;ORDER BY al.fec_alta DESC&#xd;LIMIT CAST(:limit AS INTEGER) OFFSET CAST(:offset AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "lotes": {&#xd;        "stock": [&#xd;            {&#xd;                "artdescription": "$artdescription",&#xd;                "artbarcode": "$artbarcode",&#xd;                "arttype": "$arttype",&#xd;                "fecha_nueva": "$fecha_nueva",&#xd;                "un_medida": "$un_medida",&#xd;                "lote_id": "$lote_id",&#xd;                "prov_id": "$prov_id",&#xd;                "arti_id": "$arti_id",&#xd;                "depo_id": "$depo_id",&#xd;                "codigo": "$codigo",&#xd;                "cantidad": "$cantidad",&#xd;                "estado": "$estado",&#xd;                "fec_vencimiento": "$fec_vencimiento",&#xd;                "fec_alta": "$fec_alta",&#xd;                "batch_id": "$batch_id",&#xd;                "depositodescrip": "$depositodescrip",&#xd;                "reci_id": "$reci_id",&#xd;                "nom_reci": "$nom_reci",&#xd;                "proveedor": "$proveedor",&#xd;                "establecimiento": "$establecimiento",&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="id_user" sqlType="STRING"/>
+      <param name="stock0" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="reci_id" sqlType="STRING"/>
+      <param name="art_type" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="fec_desde" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
+      <param name="establecimiento" sqlType="STRING"/>
+      <param name="art_barcode" sqlType="STRING"/>
+      <param name="art_descrip" sqlType="STRING"/>
+   </query>
+   <query id="totalPaginadoStock" useConfig="ToolsDataSource">
+      <sql>SELECT COUNT(*) as total&#xd;FROM alm.alm_articulos aa&#xd;JOIN alm.alm_lotes al ON aa.arti_id = al.arti_id&#xd;JOIN alm.alm_depositos ON al.depo_id = alm.alm_depositos.depo_id&#xd;LEFT JOIN prd.lotes ON al.batch_id = prd.lotes.batch_id&#xd;LEFT JOIN prd.recipientes ON prd.lotes.reci_id = prd.recipientes.reci_id&#xd;JOIN core.encargados_depositos E ON alm.alm_depositos.depo_id = E.depo_id&#xd;,(SELECT &#xd;    :depo_id as depo_id, &#xd;    :reci_id as reci_id, &#xd;    :art_type as art_type, &#xd;    :stock0 as stock0, &#xd;    :search as search,&#xd;    :fec_desde as fec_desde,&#xd;    :fec_hasta as fec_hasta,&#xd;    :establecimiento as esta_id,&#xd;    :art_barcode as a_barcode,&#xd;    :art_descrip as a_desc&#xd; ) AS filter&#xd;WHERE al.empr_id = CAST(:empr_id AS INTEGER) &#xd;  AND aa.eliminado != true &#xd;  AND E.user_id = CAST(:id_user AS INTEGER)&#xd;  AND al.depo_id = CASE WHEN filter.depo_id = 'TODOS' THEN al.depo_id ELSE CAST(filter.depo_id AS INTEGER) END&#xd;  AND COALESCE(prd.recipientes.reci_id, 0) = CASE WHEN filter.reci_id = 'TODOS' THEN COALESCE(prd.recipientes.reci_id, 0) ELSE CAST(filter.reci_id AS INTEGER) END&#xd;  AND aa.tiar_id = CASE WHEN filter.art_type = 'TODOS' THEN aa.tiar_id ELSE filter.art_type END&#xd;  AND alm.alm_depositos.esta_id = CASE WHEN filter.esta_id = 'TODOS' THEN alm.alm_depositos.esta_id ELSE CAST(filter.esta_id AS INTEGER) END&#xd;  AND (filter.fec_desde = '' OR al.fec_alta &gt;= CAST(filter.fec_desde AS DATE))&#xd;  AND (filter.fec_hasta = '' OR al.fec_alta &lt;= CAST(filter.fec_hasta AS DATE))&#xd;  AND (filter.a_barcode = '' OR aa.barcode = filter.a_barcode)&#xd;  AND (filter.a_desc = '' OR aa.descripcion = filter.a_desc)&#xd;  AND (filter.search = '' OR aa.descripcion ILIKE '%' || filter.search || '%' OR aa.barcode ILIKE '%' || filter.search || '%')&#xd;  AND (CASE WHEN filter.stock0 = 'true' THEN 1 ELSE (CASE WHEN COALESCE(al.cantidad, 0) &gt; 0 THEN 1 ELSE 0 END) END) = 1</sql>
+      <result outputType="json">{&#xd; "totales": {&#xd; "total": "$total"&#xd; }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="reci_id" sqlType="STRING"/>
+      <param name="art_type" sqlType="STRING"/>
+      <param name="stock0" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="id_user" sqlType="STRING"/>
+      <param name="fec_desde" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
+      <param name="establecimiento" sqlType="STRING"/>
+      <param name="art_barcode" sqlType="STRING"/>
+      <param name="art_descrip" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -1131,6 +1165,40 @@
          <with-param name="obra" query-param="obra"/>
          <with-param name="depo" query-param="depo"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="lotes/stock/paginado">
+      <call-query href="getStockPaginado">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="id_user" query-param="id_user"/>
+         <with-param name="stock0" query-param="stock0"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="reci_id" query-param="reci_id"/>
+         <with-param name="art_type" query-param="art_type"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="fec_desde" query-param="fec_desde"/>
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+         <with-param name="establecimiento" query-param="establecimiento"/>
+         <with-param name="art_barcode" query-param="art_barcode"/>
+         <with-param name="art_descrip" query-param="art_descrip"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/total/stock">
+      <call-query href="totalPaginadoStock">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="reci_id" query-param="reci_id"/>
+         <with-param name="art_type" query-param="art_type"/>
+         <with-param name="stock0" query-param="stock0"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="id_user" query-param="id_user"/>
+         <with-param name="fec_desde" query-param="fec_desde"/>
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+         <with-param name="establecimiento" query-param="establecimiento"/>
+         <with-param name="art_barcode" query-param="art_barcode"/>
+         <with-param name="art_descrip" query-param="art_descrip"/>
       </call-query>
    </resource>
 </data>
