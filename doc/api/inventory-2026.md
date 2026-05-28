@@ -21,7 +21,7 @@
 **DataSources activos:**
 - `ToolsDataSource` → PostgreSQL `tools_prod_t` @ `10.142.0.13:5432` (JNDI: `ToolsDatasourceJNDI`)
 - `AssetPlannerDataSource` → MySQL `assetv2` @ `10.142.0.13:3306`
-- `produccionDS` → ⚠️ referenciado en TARDataService/TareasSTD pero **no está en** `data-sources/`. Presumiblemente definido en el servidor WSO2 fuera del proyecto Maven.
+- ~~`produccionDS`~~ → **normalizado a `ToolsDataSource`** en [E1-API-11] (2026-05-28). Era el mismo datasource renombrado por copia entre ambientes. TARDataService y TareasSTD ya usan `ToolsDataSource`.
 - `semaresiduosDS` → ⚠️ mismo caso. Base de datos de gestión de residuos, datasource externo al proyecto.
 
 ---
@@ -412,7 +412,7 @@ Complemento de semaresiduosDS: consultores, validaciones de registro, incidencia
 
 | Campo | Valor |
 |---|---|
-| BD | `produccionDS` (⚠️ no en data-sources/) |
+| BD | PostgreSQL `tools_prod_t` (ToolsDataSource) — normalizado desde `produccionDS` en E1-API-11 |
 | Queries | 41 |
 | Módulo | traz-comp-tareas-estandar — Tareas planificadas |
 
@@ -426,7 +426,7 @@ Complemento de semaresiduosDS: consultores, validaciones de registro, incidencia
 
 | Campo | Valor |
 |---|---|
-| BD | `produccionDS` (⚠️ no en data-sources/) |
+| BD | PostgreSQL `tools_prod_t` (ToolsDataSource) — normalizado desde `produccionDS` en E1-API-11 |
 | Queries | 30 |
 | Módulo | traz-comp-tareas-estandar — Tareas estándar |
 
@@ -496,7 +496,7 @@ El catálogo MCP MVP para Sprint 2 requiere 6 herramientas MCP: **Equipos, OTs, 
 - `toolsALMAPI` — ALMDataService es el DBS más completo del proyecto (80 queries) pero sin API REST encima
 
 **Datasources pendientes de resolver:**
-- `produccionDS` no está en git → TARDataService (preventivos) puede fallar en un deploy nuevo si no se configura en el servidor. ⚠️ **Riesgo para Sprint 2.**
+- ~~`produccionDS`~~ → **resuelto en E1-API-11 (2026-05-28)**: normalizado a `ToolsDataSource` en TARDataService, TareasSTD y ProduccionDataService. Riesgo de deploy eliminado.
 
 ---
 
@@ -516,13 +516,13 @@ Ordenado por impacto MCP MVP vs esfuerzo de implementación:
 
 ### Prioridad 3 — Crear API nueva + resolver datasource faltante (mayor esfuerzo)
 
-3. **Crear `toolsTARAPI`**: wrapper REST sobre TARDataService. **Prerequisito:** resolver y versionar `produccionDS` en el proyecto Maven (actualmente datasource externo sin configuración en git). Cubre `get_preventivos` y `create_preventivo`. Estimado: 3-4 días de API + tiempo de investigar `produccionDS`.
+3. **Crear `toolsTARAPI`**: wrapper REST sobre TARDataService. ~~Prerequisito: resolver `produccionDS`~~ → resuelto en E1-API-11. Cubre `get_preventivos` y `create_preventivo`. Estimado: 3-4 días.
 
 ### Deuda técnica identificada
 
 | Item | Riesgo | Acción recomendada |
 |---|---|---|
-| `produccionDS` no versionado en git | Alto — deploy nuevo fallará | Agregar configuración a `data-sources/` o documentar con [TODO] |
+| ~~`produccionDS` no versionado en git~~ | ~~Alto~~ → **Resuelto** | Normalizado a `ToolsDataSource` en E1-API-11 (2026-05-28) |
 | `semaresiduosDS` (datasource externo) | Medio — mismo problema | Ídem |
 | TARDataService y TareasSTD duplicados (70% overlap) | Bajo — confusión | Consolidar en un único DBS en v3 |
 | ProduccionDataService y PRDDataService overlap | Bajo | Consolidar en v3 |
