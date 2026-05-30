@@ -449,7 +449,7 @@ class BPM
 
 				log_message('DEBUG', '#TRAZA | #BPM >> Obtener Bandeja de Entrada userID: ' . userId());
 
-				$resource = 'API/identity/membership?p=0&c=10&f=user\_id%3d';
+				$resource = 'API/identity/membership?p=0&c=100&f=user\_id%3d';
 
 				$url = BONITA_URL . $resource .$userIdBpm .'&d=role\_id';
 

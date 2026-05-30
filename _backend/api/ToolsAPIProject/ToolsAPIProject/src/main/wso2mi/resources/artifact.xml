@@ -34,4 +34,12 @@
       <properties/>
     </item>
   </artifact>
+  <artifact name="registry_conf_identity_dnato_public_key" groupId="com.microintegrator.projects" version="1.0.0" type="registry/resource" serverRole="EnterpriseIntegrator">
+    <item>
+      <file>dnato-public-key.pem</file>
+      <path>/_system/config/identity</path>
+      <mediaType>text/plain</mediaType>
+      <properties/>
+    </item>
+  </artifact>
 </artifacts>
