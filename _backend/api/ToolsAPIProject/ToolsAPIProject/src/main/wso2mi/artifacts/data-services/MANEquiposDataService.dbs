@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data enableBatchRequests="false" enableBoxcarring="false" name="MANEquiposDataService" transports="http https local">
+   <description>DataService para Equipos — Asset Planner MCP MVP [E1-API-04]</description>
+   <config enableOData="false" id="AssetPlannerDataSource">
+      <property name="carbon_datasource_name">AssetPlannerDataSource</property>
+   </config>
+
+   <!-- Lista de equipos activos por empresa. Excluye estado AN (anulado).
+        Mismo join que getEquipoIsolated — sin filtro de id_equipo. -->
+   <query id="getEquipos" useConfig="AssetPlannerDataSource">
+      <sql>select e.id_equipo, e.codigo, e.descripcion, e.estado,&#xd;       e2.id_empresa empr_id, e2.descripcion empresa,&#xd;       m.marcadescrip marca,&#xd;       s.descripcion sector,&#xd;       g.descripcion grupo,&#xd;       c.descripcion criticidad,&#xd;       a.descripcion area,&#xd;       p.descripcion proceso&#xd;from equipos e&#xd;join marcasequipos m on m.marcaid = e.marca&#xd;join empresas e2 on e2.id_empresa = e.id_empresa&#xd;join sector s on s.id_sector = e.id_sector&#xd;join grupo g on g.id_grupo = e.id_grupo&#xd;join criticidad c on c.id_criti = e.id_criticidad&#xd;join area a on a.id_area = e.id_area&#xd;join proceso p on p.id_proceso = e.id_proceso&#xd;where e.id_empresa = :id_empresa&#xd;and e.estado != 'AN'&#xd;order by e.codigo</sql>
+      <result outputType="json">{&#xd;    "equipos": {&#xd;        "equipo": [&#xd;            {&#xd;                "id_equipo": "$id_equipo",&#xd;                "codigo": "$codigo",&#xd;                "descripcion": "$descripcion",&#xd;                "estado": "$estado",&#xd;                "empr_id": "$empr_id",&#xd;                "empresa": "$empresa",&#xd;                "marca": "$marca",&#xd;                "sector": "$sector",&#xd;                "grupo": "$grupo",&#xd;                "criticidad": "$criticidad",&#xd;                "area": "$area",&#xd;                "proceso": "$proceso"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+
+   <resource method="GET" path="/mcp/equipos/{id_empresa}">
+      <call-query href="getEquipos">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+      </call-query>
+   </resource>
+</data>
