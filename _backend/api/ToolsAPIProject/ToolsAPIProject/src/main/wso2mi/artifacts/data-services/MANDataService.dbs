@@ -183,6 +183,23 @@
       <result outputType="json">{&#xd;   "equipo":{&#xd;      "id_equipo":"$id_equipo",&#xd;      "codigo":"$codigo",&#xd;      "descripcion":"$descripcion",&#xd;      "estado":"$estado",&#xd;      "empr_id":"$empr_id",&#xd;      "empresa":"$empresa",&#xd;      "marca":"$marca",&#xd;      "sector":"$sector",&#xd;      "grupo":"$grupo",&#xd;      "criticidad":"$criticidad",&#xd;      "area":"$area",&#xd;      "proceso":"$proceso"&#xd;   }&#xd;}&#xd;</result>
       <param name="equi_id" sqlType="STRING"/>
    </query>
+   <!-- E9-IDENT-06: variante con filtro por empresa para uso exclusivo MCP.
+        La query original (getEquipo) se mantiene intacta para no romper v2 que
+        llama /equipo/{id} sin pasar id_empresa. -->
+   <query id="getEquipoIsolated" useConfig="AssetPlannerDataSource">
+      <sql>select e.id_equipo,e.codigo,e.descripcion,e.estado, e2.id_empresa empr_id,e2.descripcion empresa,m.marcadescrip marca, s.descripcion sector,g.descripcion grupo,c.descripcion criticidad,a.descripcion area,p.descripcion proceso&#xd;from equipos e &#xd;join marcasequipos m on m.marcaid = e.marca &#xd;join empresas e2 on e2.id_empresa = e.id_empresa &#xd;join sector s on s.id_sector = e.id_sector &#xd;join grupo g on g.id_grupo =e.id_grupo&#xd;join criticidad c on c.id_criti = e.id_criticidad &#xd;join area a on a.id_area = e.id_area &#xd;join proceso p on p.id_proceso = e.id_proceso &#xd;where e.id_equipo = :equi_id&#xd;AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{&#xd;   "equipo":{&#xd;      "id_equipo":"$id_equipo",&#xd;      "codigo":"$codigo",&#xd;      "descripcion":"$descripcion",&#xd;      "estado":"$estado",&#xd;      "empr_id":"$empr_id",&#xd;      "empresa":"$empresa",&#xd;      "marca":"$marca",&#xd;      "sector":"$sector",&#xd;      "grupo":"$grupo",&#xd;      "criticidad":"$criticidad",&#xd;      "area":"$area",&#xd;      "proceso":"$proceso"&#xd;   }&#xd;}&#xd;</result>
+      <param name="equi_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <!-- E1-API-05: detalle de solicitud por id + empresa — aislamiento garantizado -->
+   <query id="getSolicitudServicioById" useConfig="AssetPlannerDataSource">
+      <sql>select solicitud_reparacion.id_solicitud as id_solicitud,&#xd;	solicitud_reparacion.numero as numero,&#xd;	solicitud_reparacion.id_tipo as id_tipo,&#xd;	solicitud_reparacion.solicitante as solicitante,&#xd;	solicitud_reparacion.id_equipo as id_equipo,&#xd;	solicitud_reparacion.correctivo as correctivo,&#xd;	solicitud_reparacion.causa as causa,&#xd;        solicitud_reparacion.observaciones as observaciones,&#xd;	solicitud_reparacion.estado as estado,&#xd;	solicitud_reparacion.usrId as usrId,&#xd;        solicitud_reparacion.id_empresa as id_empresa,&#xd;	solicitud_reparacion.urgente as urgente,&#xd;        DATE_FORMAT(solicitud_reparacion.f_solicitado , '%Y-%m-%d %H:%i:%s') AS f_solicitado,&#xd;        equipos.codigo AS equipo,&#xd;        sector.descripcion AS sector,&#xd;        grupo.descripcion AS grupo,&#xd;        equipos.ubicacion as ubicacion,&#xd;        orden_trabajo.case_id as case_id,&#xd;        orden_trabajo.id_usuario_a as id_usuario_a,&#xd;        sisusers.usrName AS mantenedor,&#xd;        DATE_FORMAT(orden_trabajo.fecha_terminada, '%Y-%m-%d %H:%i:%s') AS fecha_terminada,&#xd;        DATE_FORMAT(orden_trabajo.fecha_inicio, '%Y-%m-%d %H:%i:%s') AS f_inicio,&#xd;        DATE_FORMAT(orden_trabajo.f_asignacion, '%Y-%m-%d %H:%i:%s') AS f_asignacion&#xd;from solicitud_reparacion&#xd;JOIN equipos ON solicitud_reparacion.id_equipo = equipos.id_equipo&#xd;JOIN sector ON equipos.id_sector = sector.id_sector&#xd;LEFT JOIN grupo ON equipos.id_grupo = grupo.id_grupo&#xd;LEFT JOIN orden_trabajo ON solicitud_reparacion.case_id = orden_trabajo.case_id&#xd;LEFT JOIN sisusers ON orden_trabajo.id_usuario_a = sisusers.usrId&#xd;WHERE solicitud_reparacion.id_empresa = cast(:id_empresa as integer)&#xd;AND solicitud_reparacion.id_solicitud = cast(:id_solicitud as integer)</sql>
+      <result outputType="json">{&#xd;    "solicitudes": {&#xd;        "solicitud": [&#xd;            {&#xd;                "id_solicitud": "$id_solicitud",&#xd;                "numero": "$numero",&#xd;                "id_tipo":"$id_tipo",&#xd;                "solicitante":"$solicitante",&#xd;                "id_equipo":"$id_equipo",&#xd;                "correctivo":"$correctivo",&#xd;                "causa":"$causa",&#xd;                "observaciones":"$observaciones",&#xd;                "estado":"$estado",&#xd;                "usrId":"$usrId",&#xd;                "id_empresa" :"$id_empresa",&#xd;                "urgente":"$urgente",&#xd;                "equipo":"$equipo",&#xd;                "sector":"$sector",&#xd;                "grupo":"$grupo",&#xd;                "ubicacion":"$ubicacion",&#xd;                "case_id":"$case_id",&#xd;                "id_usuario_a":"$id_usuario_a",&#xd;                "mantenedor":"$mantenedor",&#xd;                "fecha_terminada":"$fecha_terminada",&#xd;                "f_inicio":"$f_inicio",&#xd;                "f_asignacion":"$f_asignacion",&#xd;                "f_solicitado":"$f_solicitado"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="id_empresa"   sqlType="STRING"/>
+      <param name="id_solicitud" sqlType="STRING"/>
+   </query>
+
    <query id="setAdjuntosSolReparacion" useConfig="AssetPlannerDataSource">
       <sql>INSERT INTO solicitud_reparacion_adjuntos&#xd;(id_solicitud &#xd; ,url&#xd; ,adjunto&#xd; ,nombre)&#xd;VALUES(:id_solicitud &#xd; ,:url&#xd; ,:adjunto&#xd; ,:nombre)</sql>
       <param name="id_solicitud" sqlType="STRING"/>
@@ -379,6 +396,18 @@
    <resource method="GET" path="/equipo/{equi_id}">
       <call-query href="getEquipo">
          <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/mcp/equipo/{id_empresa}/{equi_id}">
+      <call-query href="getEquipoIsolated">
+         <with-param name="equi_id" query-param="equi_id"/>
+         <with-param name="id_empresa" query-param="id_empresa"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/mcp/ot/{id_empresa}/{id_solicitud}">
+      <call-query href="getSolicitudServicioById">
+         <with-param name="id_empresa"   query-param="id_empresa"/>
+         <with-param name="id_solicitud" query-param="id_solicitud"/>
       </call-query>
    </resource>
    <resource method="GET" path="/solicitudServicio/adjuntos/solicitud/{id_solicitud}">

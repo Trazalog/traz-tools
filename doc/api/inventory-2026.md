@@ -530,4 +530,38 @@ Ordenado por impacto MCP MVP vs esfuerzo de implementación:
 
 ---
 
+---
+
+## 7. DataServices restringidos para MCP [E9-IDENT-06]
+
+> **⚠️ NO exponer como tool MCP hasta que el DataService tenga filtro `empr_id` en TODAS sus queries.**
+
+Los siguientes DataServices tienen queries **sin filtro de empresa** o con **empr_id hardcodeado**.
+Son DataServices de Fase B — su remediación está programada para Sprint 3+.
+
+| DataService | Problema identificado | Estado | Acción requerida antes de exponer MCP |
+|---|---|---|---|
+| `semaresiduosDS` | Múltiples queries sin filtro empresa | TODO Sprint 3+ | Auditar 159 queries + agregar filtro |
+| `ProduccionDataService` | Queries sin empr_id en subconjunto de producción | TODO Sprint 3+ | Auditar + filtrar |
+| `PRDDataService` | 96 queries, revisión parcial | TODO Sprint 3+ | Auditar + filtrar |
+| `PRDLoteDataService` | Queries de lotes sin verificación cross-empresa | TODO Sprint 3+ | Auditar + filtrar |
+| `PRDEtapaDataService` | Queries de etapas productivas | TODO Sprint 3+ | Auditar + filtrar |
+| `TARDataService` | Queries de tareas planificadas | TODO Sprint 3+ | Auditar + filtrar |
+| `LOGDataService` | Queries de logística de transporte | TODO Sprint 3+ | Auditar + filtrar |
+| `FRMDataService` | Formularios sin filtro empresa | TODO Sprint 3+ | Auditar + filtrar |
+| `TareasSTD` | Subconjunto de TARDataService | TODO Sprint 3+ | Auditar + filtrar |
+| `TrazabilidadDataService` | Queries de trazabilidad sin empr_id | TODO Sprint 3+ | Auditar + filtrar |
+| `semaresiduosDS2` | Complemento de semaresiduosDS | TODO Sprint 3+ | Auditar + filtrar |
+| `QRDataService` | Tokens QR sin scope de empresa | TODO Sprint 3+ | Evaluar si aplica empr_id |
+| `COREDataService` | Queries de usuarios/roles — scope por usuario | TODO Sprint 3+ | Auditar caso por caso |
+
+### DataServices de Fase A — ya remediados (Sprint 2, E9-IDENT-06)
+
+| DataService | Fix aplicado |
+|---|---|
+| `MANDataService` | Agregado `getEquipoIsolated` con `AND e.id_empresa = :id_empresa` para uso MCP. La query original `getEquipo` se preserva para v2. |
+| `ALMDataService` | `getArticulos2` y `getArticulo`: eliminado `empr_id = 1` hardcoded → reemplazado por `:empr_id` inyectable. |
+
+---
+
 *Generado automáticamente por análisis estático. Para preguntas sobre la arquitectura, ver `doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md`.*

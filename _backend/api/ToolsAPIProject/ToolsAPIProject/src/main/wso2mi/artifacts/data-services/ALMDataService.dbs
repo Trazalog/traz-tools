@@ -52,13 +52,17 @@
       <result outputType="json">{&#xd;"recipientes":&#xd;      {"recipiente":&#xd;        [&#xd;          {&#xd;          "id": "$reci_id",&#xd;          "titulo":"$nombre",&#xd;          "estado":"$estado"&#xd;          }          &#xd;        ]&#xd;      }&#xd; }</result>
       <param name="esta_id" sqlType="STRING"/>
    </query>
+   <!-- E9-IDENT-06: corregido empr_id hardcoded → parámetro inyectable -->
    <query id="getArticulos2" useConfig="ToolsDataSource">
-      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = 1&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
       <result outputType="json">{&#xd;    "materias": {&#xd;        "materia": [&#xd;            {&#xd;                "id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
+   <!-- E9-IDENT-06: corregido empr_id hardcoded → parámetro inyectable -->
    <query id="getArticulo" useConfig="ToolsDataSource">
-      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = 1&#xd;AND A.eliminado = FALSE&#xd;AND A.arti_id = CAST(:arti_id as INTEGER)&#xd;GROUP BY A.arti_id</sql>
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;AND A.arti_id = CAST(:arti_id as INTEGER)&#xd;GROUP BY A.arti_id</sql>
       <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="setNotaPedido" keyColumns="pema_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
@@ -584,11 +588,14 @@
          <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/articulos">
-      <call-query href="getArticulos2"/>
+   <resource method="GET" path="/articulos/{empr_id}">
+      <call-query href="getArticulos2">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
    </resource>
-   <resource method="GET" path="/articulos/obtener/{arti_id}">
+   <resource method="GET" path="/articulos/obtener/{empr_id}/{arti_id}">
       <call-query href="getArticulo">
+         <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="arti_id" query-param="arti_id"/>
       </call-query>
    </resource>
