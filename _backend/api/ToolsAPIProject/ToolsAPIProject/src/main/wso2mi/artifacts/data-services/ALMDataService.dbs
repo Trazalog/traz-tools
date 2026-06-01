@@ -357,6 +357,19 @@
       <param name="lote_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getHistoricoMovimientosPaginado" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    mh.*,&#xd;    TO_CHAR(mh.fec_alta, 'YYYY-MM-DD HH24:MI:SS') AS fec_alta_formatted,&#xd;    COUNT(*) OVER() AS total_count&#xd;FROM&#xd;    alm.movimientos_historicos_vw mh,&#xd;    (&#xd;        SELECT&#xd;            :depo_id AS depo_id,&#xd;            :tipo AS tipo,&#xd;            :arti_id AS arti_id,&#xd;            :lote_id AS lote_id,&#xd;            :empr_id AS empr_id&#xd;    ) param&#xd;WHERE&#xd;    mh.fec_alta BETWEEN TO_DATE(:fec1, 'YYYY-MM-DD') AND TO_DATE(:fec2, 'YYYY-MM-DD')&#xd;    AND CAST(param.empr_id AS INTEGER) = mh.empr_id&#xd;    AND mh.depo_id = CASE&#xd;        WHEN param.depo_id = 'TODOS' THEN mh.depo_id&#xd;        ELSE CAST(param.depo_id AS INTEGER)&#xd;    END&#xd;    AND mh.tipo_mov = CASE&#xd;        WHEN param.tipo = 'TODOS' THEN mh.tipo_mov&#xd;        ELSE param.tipo&#xd;    END&#xd;    AND mh.arti_id = CASE&#xd;        WHEN param.arti_id = 'TODOS' THEN mh.arti_id&#xd;        ELSE CAST(param.arti_id AS INTEGER)&#xd;    END&#xd;    AND mh.lote_id = CASE&#xd;        WHEN param.lote_id = 'TODOS' THEN mh.lote_id&#xd;        ELSE CAST(param.lote_id AS INTEGER)&#xd;    END&#xd;ORDER BY&#xd;    mh.fec_alta DESC&#xd;LIMIT CAST(:limit AS INTEGER) OFFSET CAST(:offset AS INTEGER);</sql>
+      <result outputType="json">{&#xd;  "movimientos":{&#xd;    "movimiento":[&#xd;      {&#xd;        "referencia": "$referencia",&#xd;        "codigo": "$codigo",&#xd;        "descripcion": "$descripcion",&#xd;        "cantidad": "$cantidad",&#xd;        "stock_actual": "$stock_actual",&#xd;        "deposito": "$deposito",&#xd;        "fec_alta": "$fec_alta",&#xd;        "tipo_mov": "$tipo_mov",&#xd;        "lote":"$lote",&#xd;        "fec_alta_formatted":"$fec_alta_formatted"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="lote_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="fec1" sqlType="STRING"/>
+      <param name="fec2" sqlType="STRING"/>
+   </query>
    <query id="getLotesVencimientos" useConfig="ToolsDataSource">
       <sql>select&#xd;aa.barcode&#xd;,aa.descripcion&#xd;,t.valor as desc_tipo_articulo&#xd;,al.fec_vencimiento&#xd;,al.batch_id &#xd;,concat(al.cantidad,' ', aa.unidad_medida) as cantidad&#xd;,ad.descripcion as deposito&#xd;,case &#xd;	when ( (CAST(al.fec_vencimiento AS DATE) - CAST('now' AS DATE)) &lt; 10 and (CAST(al.fec_vencimiento AS DATE) - CAST('now' AS DATE)) &gt; 0 ) &#xd;		then 'Critico' &#xd;	when (CAST(al.fec_vencimiento AS DATE) - CAST('now' AS DATE)) &lt;= 0 &#xd;		then 'Vencido' 	&#xd;	else &#xd;	  	'Activo' &#xd;	end as estado&#xd;from &#xd;alm.alm_lotes al&#xd;,alm.alm_articulos aa &#xd;,core.tablas t&#xd;,alm.alm_depositos ad &#xd;,(select :depo_id depo_id) as param&#xd;where al.arti_id = aa.arti_id &#xd;and aa.tipo = t.tabl_id&#xd;and al.depo_id = ad.depo_id &#xd;and aa.tipo = :tipo&#xd;and al.depo_id = case when param.depo_id = 'TODOS' then al.depo_id else cast(param.depo_id as integer) end&#xd;and aa.arti_id = cast(:arti_id as integer)&#xd;and al.fec_vencimiento between to_date(:fec1,'YYYY-MM-DD') and TO_DATE(:fec2,'YYYY-MM-DD')</sql>
       <result outputType="json">{&#xd;  "lotes":{&#xd;    "lote":[&#xd;      {&#xd;        "barcode": "$barcode",&#xd;        "descripcion": "$descripcion",&#xd;        "desc_tipo_articulo": "$desc_tipo_articulo",&#xd;        "fec_vencimiento": "$fec_vencimiento",&#xd;        "cantidad": "$cantidad",&#xd;        "deposito": "$deposito",&#xd;        "estado": "$estado"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
