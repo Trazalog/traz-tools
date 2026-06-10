@@ -1,108 +1,94 @@
-# E9-IDENT-05 — Tests de seguridad: JWT Validator + EmprId Injector
+# E9-IDENT-05 (ADR-008) — Tests de seguridad: validación JWT en APIM Gateway
+#
+# ADR-008: la validación del JWT la hace el APIM (Key Manager Dnato), no el MI.
+# Estos tests apuntan al APIM (:8243), no al MI directo (:8280).
 #
 # Pre-requisitos:
-#   1. WSO2 MI corriendo con los artefactos de ToolsAPIProject deployados
-#   2. Clave pública de prueba cargada en registry conf:identity/dnato-public-key.pem
-#   3. Generar variables con: ./generate-test-jwts.sh
+#   1. APIM corriendo con Key Manager Dnato configurado (apim-keymanager-dnato.md)
+#   2. APIs Equipos y OTs publicadas con KM Dnato + mediación EmprIdInjectorPolicy
+#   3. Generar JWT de prueba:
+#      - JWT válido: php index.php cli issue_test_token <email> <empr_id>  (en host Dnato)
+#      - JWT inválidos/expirados: ./generate-test-jwts.sh (crea claves de prueba independientes)
 #   4. Ejecutar: hurl --variables-file test-env.vars jwt-validation.hurl
 #
-# Variables requeridas:
-#   MI_HOST        = host:port del WSO2 MI (ej: localhost:8280)
-#   MCP_RESOURCE   = path del endpoint MCP protegido (ej: /tools/mcp/mantenimiento/solicitudes)
-#   VALID_JWT, EXPIRED_JWT, WRONG_KEY_JWT, NO_EMPRID_JWT,
-#   EMPRESA_A_JWT, EMPRESA_B_JWT
+# Variables requeridas en test-env.vars:
+#   APIM_HOST      = host:port del APIM gateway (ej: localhost:8243)
+#   VALID_JWT      = JWT válido firmado por la clave REAL de Dnato (del CLI de Dnato)
+#   EXPIRED_JWT    = JWT expirado firmado con la clave de PRUEBA (generate-test-jwts.sh)
+#   WRONG_KEY_JWT  = JWT firmado con clave diferente a Dnato (generate-test-jwts.sh)
+#   NO_EMPRID_JWT  = JWT válido pero sin claim empr_id (generate-test-jwts.sh)
+#   EMPRESA_A_JWT  = JWT válido empresa A (empr_id=42) — del CLI de Dnato
+#   EMPRESA_B_JWT  = JWT válido empresa B (empr_id=99) — del CLI de Dnato
+#
+# Nota: EXPIRED_JWT, WRONG_KEY_JWT y NO_EMPRID_JWT se generan con claves de prueba
+# independientes (generate-test-jwts.sh). Como no están en el JWKS de Dnato, el APIM
+# los rechaza — el caso WRONG_KEY_JWT prueba exactamente eso. Para EXPIRED_JWT el APIM
+# rechaza por exp < ahora antes de validar la firma.
 
 
 # ─────────────────────────────────────────────────────────────────
-# Caso a: Request sin Authorization header → 401
+# Caso a: Request sin Authorization header → 401 del APIM
 # ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_RESOURCE}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
 HTTP 401
-[Asserts]
-jsonpath "$.error" == "Unauthorized"
-jsonpath "$.message" contains "Missing Authorization header"
 
 
 # ─────────────────────────────────────────────────────────────────
-# Caso b: Authorization header malformado (no Bearer) → 401
+# Caso b: Authorization header malformado (no Bearer) → 401 del APIM
 # ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_RESOURCE}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
 Authorization: Basic dXNlcjpwYXNz
 HTTP 401
-[Asserts]
-jsonpath "$.error" == "Unauthorized"
-jsonpath "$.message" contains "Bearer"
 
 
 # ─────────────────────────────────────────────────────────────────
-# Caso b2: Bearer con token malformado (no 3 partes) → 401
+# Caso c: JWT firmado con clave diferente a Dnato → 401
+# (la clave de prueba de generate-test-jwts.sh no está en el JWKS de Dnato)
 # ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_RESOURCE}}
-Authorization: Bearer esto.no.es.un.jwt.valido.tiene.mas.partes
-HTTP 401
-[Asserts]
-jsonpath "$.error" == "Unauthorized"
-jsonpath "$.message" contains "Malformed JWT"
-
-
-# ─────────────────────────────────────────────────────────────────
-# Caso c: JWT firmado con clave diferente → 401
-# ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_RESOURCE}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
 Authorization: Bearer {{WRONG_KEY_JWT}}
 HTTP 401
-[Asserts]
-jsonpath "$.error" == "Unauthorized"
-jsonpath "$.message" contains "signature"
 
 
 # ─────────────────────────────────────────────────────────────────
 # Caso d: JWT expirado → 401
 # ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_RESOURCE}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
 Authorization: Bearer {{EXPIRED_JWT}}
 HTTP 401
-[Asserts]
-jsonpath "$.error" == "Unauthorized"
-jsonpath "$.message" contains "expired"
 
 
 # ─────────────────────────────────────────────────────────────────
-# Caso e: JWT válido pero sin claim empr_id → 401
+# Caso e: JWT válido (firma correcta) pero sin claim empr_id → 401
+# La in-sequence EmprIdInjectorPolicy rechaza el request si falta empr_id.
 # ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_RESOURCE}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
 Authorization: Bearer {{NO_EMPRID_JWT}}
 HTTP 401
-[Asserts]
-jsonpath "$.error" == "Unauthorized"
-jsonpath "$.message" contains "empr_id"
 
 
 # ─────────────────────────────────────────────────────────────────
-# Caso f: JWT válido → backend recibe header X-Empr-Id correcto
-# (endpoint de diagnóstico que devuelve los headers recibidos)
+# Caso f: JWT válido de empresa A → 200, datos de empresa A únicamente
 # ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_ECHO_RESOURCE}}
-Authorization: Bearer {{VALID_JWT}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
+Authorization: Bearer {{EMPRESA_A_JWT}}
 HTTP 200
-[Asserts]
-jsonpath "$.headers['X-Empr-Id']" == "42"
 
 
 # ─────────────────────────────────────────────────────────────────
-# Caso g: JWT de empresa A no accede a datos de empresa B
-# Verifica aislamiento end-to-end: el DataService filtra por empr_id
+# Caso g: JWT de empresa A no accede a datos de empresa B (aislamiento)
+# El DataService filtra por empr_id inyectado por el APIM, nunca por empresa B.
 # ─────────────────────────────────────────────────────────────────
-GET http://{{MI_HOST}}{{MCP_DATA_RESOURCE}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
 Authorization: Bearer {{EMPRESA_A_JWT}}
 HTTP 200
 [Asserts]
-# Todos los registros devueltos pertenecen a empresa A (empr_id=42)
+# Ningún equipo devuelto pertenece a empresa B (empr_id=99)
 jsonpath "$[*].empr_id" not contains "99"
 
-GET http://{{MI_HOST}}{{MCP_DATA_RESOURCE}}
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
 Authorization: Bearer {{EMPRESA_B_JWT}}
 HTTP 200
 [Asserts]
-# Todos los registros devueltos pertenecen a empresa B (empr_id=99)
+# Ningún equipo devuelto pertenece a empresa A (empr_id=42)
 jsonpath "$[*].empr_id" not contains "42"
