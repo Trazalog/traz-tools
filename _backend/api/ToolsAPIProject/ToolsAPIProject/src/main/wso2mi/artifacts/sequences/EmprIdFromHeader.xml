@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EmprIdFromHeader — lee empr_id del header X-Empr-Id inyectado por el APIM.
+
+  ADR-008 (Mayo 2026): el APIM Gateway valida el JWT de Dnato e inyecta
+  X-Empr-Id antes de proxear al MI. Esta sequence reemplaza la combinación
+  jwtValidator + emprIdInjector en los resources MCP de toolsMANAPI.xml.
+
+  Setea la property jwt_empr_id (nombre heredado) para compatibilidad con
+  la lógica downstream de toolsMANAPI.xml (URL building, DataService calls).
+  El MI NO valida el JWT; confía en el header inyectado por el APIM.
+-->
+<sequence name="emprIdFromHeader" xmlns="http://ws.apache.org/ns/synapse">
+
+    <property name="jwt_empr_id"
+              expression="$trp:X-Empr-Id"
+              scope="default" type="STRING"/>
+
+    <filter xpath="get-property('jwt_empr_id') = '' or not(boolean(get-property('jwt_empr_id')))">
+        <then>
+            <payloadFactory media-type="json">
+                <format>{"error":"Internal Error","message":"X-Empr-Id header ausente — configuracion de gateway incorrecta"}</format>
+                <args/>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+            <respond/>
+        </then>
+    </filter>
+
+    <log level="custom" category="DEBUG">
+        <property name="text"    value="#TRAZA | MCP | EmprIdFromHeader | empr_id cargado desde header APIM"/>
+        <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+    </log>
+
+</sequence>

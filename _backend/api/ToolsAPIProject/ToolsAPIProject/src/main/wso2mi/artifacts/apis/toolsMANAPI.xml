@@ -1,13 +1,12 @@
 <api xmlns="http://ws.apache.org/ns/synapse" name="toolsMANAPI" context="/tools/man">
    <!-- E1-API-04: MCP tool get_equipo — Virtual MCP Server Equipos
-        Auth: JWT validado por jwtValidator (E9-IDENT-05). empr_id viene del claim JWT,
-        nunca del caller. DataService: MANDataService.getEquipoIsolated. -->
+        Auth: validado por el APIM Gateway (Key Manager Dnato, ADR-008). empr_id inyectado
+        como X-Empr-Id por la in-sequence EmprIdInjectorPolicy del APIM.
+        DataService: MANDataService.getEquipoIsolated. -->
    <resource methods="GET" uri-template="/mcp/equipo/{equi_id}">
       <inSequence>
-         <!-- Validate JWT → sets jwt_empr_id in context. 401 + stop if invalid. -->
-         <sequence key="jwtValidator"/>
-         <!-- Add X-Empr-Id transport header for downstream logging -->
-         <sequence key="emprIdInjector"/>
+         <!-- ADR-008: APIM ya validó el JWT e inyectó X-Empr-Id. Solo leer el header. -->
+         <sequence key="emprIdFromHeader"/>
 
          <!-- Load DataService URL from registry config -->
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
@@ -60,8 +59,8 @@
    <!-- E1-API-04: MCP tool get_equipos — lista de equipos activos de la empresa del JWT -->
    <resource methods="GET" uri-template="/mcp/equipos">
       <inSequence>
-         <sequence key="jwtValidator"/>
-         <sequence key="emprIdInjector"/>
+         <!-- ADR-008: APIM ya validó el JWT e inyectó X-Empr-Id. Solo leer el header. -->
+         <sequence key="emprIdFromHeader"/>
 
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="apiconf"
@@ -124,8 +123,8 @@
         Bug en rollback v2 (URL sin MANDataService) corregido en esta versión. -->
    <resource methods="POST" uri-template="/mcp/ot">
       <inSequence>
-         <sequence key="jwtValidator"/>
-         <sequence key="emprIdInjector"/>
+         <!-- ADR-008: APIM ya validó el JWT e inyectó X-Empr-Id. Solo leer el header. -->
+         <sequence key="emprIdFromHeader"/>
 
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="apiconf"
@@ -311,8 +310,8 @@
    <!-- GET /mcp/ot — lista de OTs de la empresa del JWT (excluye AN y CN) -->
    <resource methods="GET" uri-template="/mcp/ot">
       <inSequence>
-         <sequence key="jwtValidator"/>
-         <sequence key="emprIdInjector"/>
+         <!-- ADR-008: APIM ya validó el JWT e inyectó X-Empr-Id. Solo leer el header. -->
+         <sequence key="emprIdFromHeader"/>
 
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="apiconf"
@@ -358,8 +357,8 @@
    <!-- GET /mcp/ot/{id_solicitud} — detalle de OT filtrado por empresa del JWT -->
    <resource methods="GET" uri-template="/mcp/ot/{id_solicitud}">
       <inSequence>
-         <sequence key="jwtValidator"/>
-         <sequence key="emprIdInjector"/>
+         <!-- ADR-008: APIM ya validó el JWT e inyectó X-Empr-Id. Solo leer el header. -->
+         <sequence key="emprIdFromHeader"/>
 
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="apiconf"
