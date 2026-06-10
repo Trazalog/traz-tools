@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EmprIdInjectorPolicy — in-sequence para APIs MCP en el APIM Gateway
+
+  CÓMO USAR: subir este XML como "In Flow" mediation en el Publisher para
+  cada API MCP (Equipos, Ordenes de Trabajo). Se aplica después de que el
+  Key Manager Dnato ya validó el JWT (firma, exp, iss, aud).
+
+  QUÉ HACE:
+    1. Decodifica el payload del JWT (ya validado) del header Authorization.
+    2. Extrae el claim empr_id.
+    3. Inyecta X-Empr-Id como transport header hacia el MI backend.
+    4. Si empr_id falta → 401 (el MI nunca recibe el request).
+
+  ADR-008 (Mayo 2026) — E9-IDENT-05
+-->
+<sequence name="EmprIdInjectorPolicy" xmlns="http://ws.apache.org/ns/synapse">
+
+    <property name="apim_auth_header"
+              expression="$trp:Authorization"
+              scope="default" type="STRING"/>
+
+    <script language="js"><![CDATA[
+        var Base64     = Java.type("java.util.Base64");
+        var JavaString = Java.type("java.lang.String");
+
+        function mediator(mc) {
+            try {
+                var authHeader = mc.getProperty("apim_auth_header");
+                if (!authHeader) {
+                    mc.setProperty("empr_id_ok",    "false");
+                    mc.setProperty("empr_id_error", "Authorization header ausente post-validacion APIM");
+                    return true;
+                }
+
+                var token = authHeader.toString().trim().substring(7).trim();
+                var parts = token.split("\\.");
+                if (parts.length !== 3) {
+                    mc.setProperty("empr_id_ok",    "false");
+                    mc.setProperty("empr_id_error", "JWT malformado post-validacion (sin 3 partes)");
+                    return true;
+                }
+
+                var decoder     = Base64.getUrlDecoder();
+                var payloadJson = new JavaString(decoder.decode(parts[1]), "UTF-8");
+                var payload     = JSON.parse(payloadJson);
+
+                if (!payload.empr_id && payload.empr_id !== 0) {
+                    mc.setProperty("empr_id_ok",    "false");
+                    mc.setProperty("empr_id_error", "Claim empr_id ausente en JWT validado");
+                    return true;
+                }
+
+                mc.setProperty("empr_id_ok",   "true");
+                mc.setProperty("apim_empr_id", payload.empr_id.toString());
+
+            } catch (e) {
+                mc.setProperty("empr_id_ok",    "false");
+                mc.setProperty("empr_id_error", "Excepcion al extraer empr_id: " + e.message);
+            }
+            return true;
+        }
+    ]]></script>
+
+    <filter xpath="get-property('empr_id_ok') = 'false'">
+        <then>
+            <payloadFactory media-type="json">
+                <format>{"error":"Unauthorized","message":"$1"}</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('empr_id_error')"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="401"/>
+            <respond/>
+        </then>
+    </filter>
+
+    <header name="X-Empr-Id"
+            scope="transport"
+            expression="get-property('apim_empr_id')"/>
+
+    <log level="custom" category="DEBUG">
+        <property name="text"    value="#TRAZA | APIM | EmprIdInjector | X-Empr-Id inyectado"/>
+        <property name="empr_id" expression="get-property('apim_empr_id')"/>
+    </log>
+
+</sequence>
