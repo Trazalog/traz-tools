@@ -16,6 +16,14 @@
 -->
 <sequence name="EmprIdInjectorPolicy" xmlns="http://ws.apache.org/ns/synapse">
 
+    <!-- DEFENSA EN PROFUNDIDAD (ADR-008):
+         Eliminar cualquier X-Empr-Id entrante ANTES de procesar el token.
+         El cliente NO puede inyectar este header — solo el APIM, después de validar el JWT.
+         Cualquier valor enviado por el cliente se descarta aquí incondicionalmente. -->
+    <property name="X-Empr-Id"
+              scope="transport"
+              action="remove"/>
+
     <property name="apim_auth_header"
               expression="$trp:Authorization"
               scope="default" type="STRING"/>
@@ -25,6 +33,11 @@
         var JavaString = Java.type("java.lang.String");
 
         function mediator(mc) {
+            // Fail-closed: si el script no llega a setear "true" explícitamente,
+            // el filtro de 401 se dispara. Protege contra errores inesperados del runtime.
+            mc.setProperty("empr_id_ok",    "false");
+            mc.setProperty("empr_id_error", "Script no ejecutado completamente");
+
             try {
                 var authHeader = mc.getProperty("apim_auth_header");
                 if (!authHeader) {
