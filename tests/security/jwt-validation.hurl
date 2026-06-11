@@ -92,3 +92,18 @@ HTTP 200
 [Asserts]
 # Ningún equipo devuelto pertenece a empresa A (empr_id=42)
 jsonpath "$[*].empr_id" not contains "42"
+
+
+# ─────────────────────────────────────────────────────────────────
+# Caso h: Anti-spoofing — JWT empresa A + header X-Empr-Id: 999 en el request
+# La EmprIdInjectorPolicy descarta el header entrante y lo sobreescribe con el
+# valor del claim del JWT. El MI recibe X-Empr-Id: 42, NO 999.
+# Verifica que los datos devueltos son de empresa A (42), no de la 999 falsa.
+# ─────────────────────────────────────────────────────────────────
+GET https://{{APIM_HOST}}/equipos/1.0/mcp/equipos
+Authorization: Bearer {{EMPRESA_A_JWT}}
+X-Empr-Id: 999
+HTTP 200
+[Asserts]
+# El APIM descartó el X-Empr-Id: 999 entrante; los datos son de empresa 42
+jsonpath "$[*].empr_id" not contains "999"
