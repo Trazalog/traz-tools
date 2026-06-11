@@ -1,8 +1,8 @@
 openapi: 3.0.3
 
 info:
-  title: Órdenes de Trabajo API — Trazalog MCP
-  version: "1.0.0"
+  title: Ordenes de Trabajo API - Trazalog MCP
+  version: "1.0"
   description: |
     Gestión de Órdenes de Trabajo (OTs) correctivas en Asset Planner.
 

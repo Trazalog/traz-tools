@@ -14,7 +14,7 @@ quedan tareas procedimentales que requieren acceso al entorno y confirmación an
 | B2 | Registrar Key Manager Dnato en la consola Admin del APIM | Config | **PENDIENTE** | PM + Ops |
 | B3 | Subir in-sequence EmprIdInjectorPolicy a las APIs Equipos y OTs | Config | **PENDIENTE** | PM |
 | B4 | Deploy del CAR actualizado al MI (incluye EmprIdFromHeader.xml) | Deploy | **PENDIENTE** | PM + Ops |
-| B5 | Actualizar tests Hurl para apuntar al APIM (:8243) en vez del MI (:8280) | Código | **PENDIENTE** | ver T6 |
+| B5 | Actualizar tests Hurl para apuntar al APIM (:8243) en vez del MI (:8280) | Código | **DONE** | Sprint 2 |
 
 ---
 
@@ -56,28 +56,38 @@ APIs legacy porque el KM se asocia por API (no globalmente).
 
 ### B4 — Deploy del CAR al MI
 
-El CAR incluye el nuevo artefacto `EmprIdFromHeader.xml` y la versión actualizada de
-`toolsMANAPI.xml` (con `emprIdFromHeader` en lugar de `jwtValidator + emprIdInjector`).
+El CAR incluye los siguientes artefactos nuevos/modificados (incluye los 3 fixes de hardening):
+
+| Artefacto | Cambio |
+|---|---|
+| `EmprIdFromHeader.xml` | **Nuevo** — reemplaza jwtValidator+emprIdInjector |
+| `toolsMANAPI.xml` | Modificado — 5 resources usan emprIdFromHeader |
+| `JwtValidator.xml` | Modificado — comentario ADR-008 (no se invoca en MCP) |
+
+> **Fix 3 incluido:** `EmprIdFromHeader.xml` responde 503 + log WARN si falta `X-Empr-Id`.
+> Antes del deploy del CAR, ejecutar `tests/security/mi-fallback.hurl` contra el MI con el
+> CAR actual para confirmar la línea base (actualmente devuelve 400; post-deploy devuelve 503).
 
 ```bash
 cd _backend/api/ToolsAPIProject/ToolsAPIProject
 ./mvnw clean install
-# Verificar que el build pasa sin errores
+# Verificar que el build pasa sin errores (incluye los fixes de Sprint 2)
 # Luego: con confirmación del PM:
 cp target/ToolsAPIProject_1.0.0.car $WSO2MI_HOME/repository/deployment/server/carbonapps/
 ```
 
 **Impacto:** hasta que se deploy el CAR nuevo, el MI sigue teniendo `jwtValidator` en el flujo.
 Si el APIM ya está configurado con el KM Dnato pero el MI no tiene `EmprIdFromHeader.xml`, las
-APIs MCP van a fallar (el MI llama a `emprIdFromHeader` que no existe). Sincronizar ambos pasos.
+APIs MCP van a fallar (el MI llama a `emprIdFromHeader` que no existe). Sincronizar B4 y B3.
 
 ---
 
-### B5 — Tests Hurl
+### B5 — Tests Hurl ✅ DONE (Sprint 2)
 
-Ver `tests/security/jwt-validation.hurl` — apunta a `:8280` (MI directo). Con ADR-008, los
-tests de validación de token deben apuntar a `:8243` (APIM). Los tests de aislamiento del
-DataService (`dataservice-isolation.hurl`) no cambian. Ver T6 para el detalle.
+`tests/security/jwt-validation.hurl` actualizado: apunta a `{{APIM_HOST}}` (`:8243`), casos
+a-h. Caso h verifica anti-spoofing (Fix 1). `tests/security/mi-fallback.hurl` (nuevo): verifica
+Fix 3 llamando al MI directo (`:8280`) sin `X-Empr-Id` → 503. Los tests de aislamiento del
+DataService (`dataservice-isolation.hurl`) no cambian.
 
 ---
 

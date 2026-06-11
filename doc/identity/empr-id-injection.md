@@ -41,7 +41,7 @@ del JWT validado y lo inyecta como `X-Empr-Id`; el MI lo lee del header (no del 
        ├─ [sequence: emprIdFromHeader]
        │    ⑩ Lee X-Empr-Id del header de transporte
        │    ⑪ Guarda en property de contexto: jwt_empr_id = "42"
-       │    ⑫ Si X-Empr-Id falta o está vacío → 400 error de configuración
+       │    ⑫ Si X-Empr-Id falta o está vacío → 503 identity_header_missing
        │
        ├─ [lógica del endpoint]
        │    ⑬ Construye URL de DataService usando jwt_empr_id
@@ -192,22 +192,10 @@ de contexto `jwt_empr_id`, que todo el código downstream ya usa.
 
 ### Archivo: `_backend/api/ToolsAPIProject/.../sequences/EmprIdFromHeader.xml`
 
-Ver el artefacto en el repo (ya modificado en esta tarea).
-
-**Contenido:**
+Ver el artefacto en el repo. Versión Sprint 2 (Fix 3 — ADR-008):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  EmprIdFromHeader — lee el claim empr_id del header X-Empr-Id inyectado
-  por el APIM Gateway (post-validación por Key Manager Dnato — ADR-008).
-  
-  Reemplaza la combinación jwtValidator + emprIdInjector en el flujo MCP.
-  El APIM ya validó el JWT; el MI solo lee el header ya inyectado.
-  
-  Setea la property jwt_empr_id (nombre heredado de jwtValidator para
-  compatibilidad con el código downstream de toolsMANAPI.xml).
--->
 <sequence name="emprIdFromHeader" xmlns="http://ws.apache.org/ns/synapse">
 
     <property name="jwt_empr_id"
@@ -216,12 +204,18 @@ Ver el artefacto en el repo (ya modificado en esta tarea).
 
     <filter xpath="get-property('jwt_empr_id') = '' or not(boolean(get-property('jwt_empr_id')))">
         <then>
+            <!-- WARN explícito: 503 indica falla de configuración del APIM, no del cliente. -->
+            <log level="custom" category="WARN">
+                <property name="text"  value="#TRAZA | MI | EmprIdFromHeader | X-Empr-Id MISSING — APIM mediation may not be applied. Check Key Manager Dnato and in-sequence association."/>
+                <property name="api"   expression="get-property('SYNAPSE_REST_API')"/>
+                <property name="path"  expression="get-property('REST_FULL_REQUEST_PATH')"/>
+            </log>
             <payloadFactory media-type="json">
-                <format>{"error":"Internal Error","message":"X-Empr-Id header ausente — configuración de gateway incorrecta"}</format>
+                <format>{"error":"identity_header_missing","message":"X-Empr-Id no presente. La mediacion del APIM no se aplico. Verificar configuracion del Key Manager Dnato y la in-sequence EmprIdInjectorPolicy."}</format>
                 <args/>
             </payloadFactory>
             <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
-            <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="503"/>
             <respond/>
         </then>
     </filter>
@@ -266,22 +260,31 @@ que tocar la lógica downstream.
 
 ## 4. Tipo del claim empr_id
 
-El JWT de Dnato emite `empr_id` como entero (`JwtIssuer.php:53` recibe `int $empr_id`).
-La policy del APIM hace `.toString()` explícito antes de setear el header.
-El MI lee el header como STRING (tipo de transporte). El DataService lo usa como parámetro string.
-No hay inconsistencia en el flujo actual.
+**Fix ADR-008 Sprint 2 (junio 2026):** `JwtIssuer.php` ahora castea `empr_id` a string
+explícitamente (`(string) $empr_id`) antes de incluirlo en el payload del JWT. El tipo es
+consistente en todo el flujo:
 
-**Recomendación:** en un Sprint futuro, fijar `empr_id` como string en el payload de Dnato
-(`(string) $empr_id` en JwtIssuer.php) para mayor consistencia semántica. No es bloqueante.
+```
+Dnato JWT payload → empr_id: "42" (string)
+  → EmprIdInjectorPolicy (.toString() ya era explícito — sin cambios)
+  → X-Empr-Id: 42  (header de transporte, siempre string)
+  → EmprIdFromHeader → jwt_empr_id = "42" (string en contexto MI)
+  → DataService :empr_id = "42" (parámetro string)
+```
+
+No hay conversiones implícitas de tipo en el camino. Test verificado en `JwtIssuerTest::testEmprIdIsString()`.
 
 ---
 
 ## 5. Seguridad del header X-Empr-Id
 
 **El cliente no puede falsificar `X-Empr-Id`:**
-- El APIM sobreescribe el header `X-Empr-Id` en cada request basándose en el claim del JWT ya
-  validado. Si el cliente envía `X-Empr-Id: 99`, el APIM lo ignora y lo reemplaza con el valor
-  del claim del token.
+- **Fix ADR-008 Sprint 2:** la `EmprIdInjectorPolicy` del APIM ejecuta un **`remove` explícito
+  del header `X-Empr-Id` entrante como primer paso**, antes de procesar el token. Aunque
+  después el script fallara por algún edge case, el header malicioso ya fue eliminado.
+  A continuación sobreescribe el header con el valor del claim del JWT ya validado.
+- Si el cliente envía `X-Empr-Id: 999`, el APIM lo descarta incondicionalmente y setea el
+  valor correcto del claim del token (test Hurl: `jwt-validation.hurl` Caso h).
 - El MI **confía** en `X-Empr-Id` porque solo llega tráfico desde el APIM (no expuesto
   directamente en internet). En DEV/TEST esto se garantiza por configuración de red (el puerto
   8280 del MI no es accesible desde fuera del gateway).
@@ -290,9 +293,44 @@ No hay inconsistencia en el flujo actual.
 
 ---
 
-## 6. Cómo testear el flujo completo
+## 6. Comportamiento ante falla de mediación APIM
 
-### 6.1 Test de inyección (verificar que X-Empr-Id llega al MI)
+Si el MI recibe un request MCP **sin el header `X-Empr-Id`** (porque la in-sequence del APIM
+no se aplicó, el KM Dnato no está configurado, o se accede al MI directamente sin pasar por
+el APIM), la sequence `emprIdFromHeader` responde con:
+
+```
+HTTP 503 Service Unavailable
+{
+  "error": "identity_header_missing",
+  "message": "X-Empr-Id no presente. La mediacion del APIM no se aplico. Verificar configuracion del Key Manager Dnato y la in-sequence EmprIdInjectorPolicy."
+}
+```
+
+Además escribe un log nivel **WARN** (visible en los logs del MI, no solo DEBUG) con la API
+y el path del request para facilitar el diagnóstico.
+
+**Interpretación de un 503 con `identity_header_missing`:**
+- El cliente no hizo nada mal.
+- El problema es de configuración del APIM: la in-sequence `EmprIdInjectorPolicy` no está
+  asociada a la API o el Key Manager Dnato no está configurado correctamente.
+- **Acción:** revisar blocker B2 (KM Dnato en Admin) y B3 (in-sequence en Publisher).
+
+**Por qué 503 y no 400/401:**
+- `400 Bad Request`: implicaría que el cliente envió algo mal. El cliente no envía `X-Empr-Id`
+  (no debería hacerlo). Es engañoso.
+- `401 Unauthorized`: implicaría problema de autenticación. El token podría estar bien; el
+  problema es de config del APIM. Engañoso.
+- `503 Service Unavailable`: dice "el servicio no puede responder por configuración interna".
+  Es exactamente lo que pasa.
+
+Test: `tests/security/mi-fallback.hurl` (llama al MI directamente en `:8280`).
+
+---
+
+## 7. Cómo testear el flujo completo
+
+### 7.1 Test de inyección (verificar que X-Empr-Id llega al MI)
 
 Agregar temporalmente un `<log>` en el MI que imprima los headers recibidos, o usar el endpoint
 de echo del MI si existe. Verificar que el header `X-Empr-Id` llega con el valor del claim del
@@ -308,7 +346,7 @@ curl -k -H "Authorization: Bearer $JWT" \
 # Verificar en logs del MI que empr_id = 42 y que los datos son de empresa 42
 ```
 
-### 6.2 Test de aislamiento (empresa A no ve datos de empresa B)
+### 7.2 Test de aislamiento (empresa A no ve datos de empresa B)
 
 ```bash
 JWT_A=$(php index.php cli issue_test_token <email_A> 42)
@@ -325,7 +363,7 @@ curl -k -H "Authorization: Bearer $JWT_B" \
 # Verificar: ningún equipo tiene empr_id != 99
 ```
 
-### 6.3 Test de seguridad (token inválido no llega al MI)
+### 7.3 Test de seguridad (token inválido no llega al MI)
 
 ```bash
 # Sin token → 401 del APIM, el MI no registra ningún log para este request
@@ -339,9 +377,37 @@ curl -k -H "Authorization: Bearer eyJhbGciOiJSUzI1NiJ9.eyJlbXByX2lkIjo5OX0.INVAL
 Confirmar en los logs del MI que estos requests **no generan ninguna entrada de log**
 (el APIM los rechaza antes de que lleguen al MI).
 
+### 7.4 Test anti-spoofing (Fix 1 — defensa en profundidad)
+
+Verificar que enviar `X-Empr-Id` en el request no tiene efecto:
+
+```bash
+JWT=$(php index.php cli issue_test_token <email> 42)  # JWT de empresa 42
+
+# Enviar X-Empr-Id: 999 junto con JWT de empresa 42
+# Resultado esperado: datos de empresa 42 (la del JWT), no de 999
+curl -k -H "Authorization: Bearer $JWT" \
+     -H "X-Empr-Id: 999" \
+     https://localhost:8243/equipos/1.0/mcp/equipos
+
+# Verificar que ningún equipo tiene empr_id=999
+```
+
+Test automatizado: `tests/security/jwt-validation.hurl` Caso h.
+
+### 7.5 Test de fallback 503 (Fix 3 — MI sin header)
+
+```bash
+# Llamar al MI directamente sin X-Empr-Id → 503 identity_header_missing
+curl http://localhost:8280/tools/man/mcp/equipos
+# Esperado: HTTP 503, body {"error":"identity_header_missing",...}
+```
+
+Test automatizado: `tests/security/mi-fallback.hurl`.
+
 ---
 
-## 7. Relación con los tests Hurl existentes
+## 8. Relación con los tests Hurl existentes
 
 Los tests en `tests/security/jwt-validation.hurl` apuntaban al MI directamente (`:8280`). Con
 ADR-008 los tests de **validación del token** deben apuntar al **APIM** (`:8243`), ya que es el

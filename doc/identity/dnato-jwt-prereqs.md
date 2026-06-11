@@ -45,7 +45,7 @@ bloqueante de código nuevo en Dnato, son decisiones de valores + verificación 
   "exp":       1749574800,
   "sub":       "<usernick>",
   "email":     "<email>",
-  "empr_id":   42,
+  "empr_id":   "42",
   "role":      "<role>",
   "userIdBpm": "<id Bonita>",
   "groupBpm":  "<empresa sin prefijo numérico>"
@@ -54,10 +54,9 @@ bloqueante de código nuevo en Dnato, son decisiones de valores + verificación 
 
 Header: `{ "alg": "RS256", "typ": "JWT", "kid": "dnato-rs256-v1" }`
 
-> **Nota:** `empr_id` se emite como **entero** (`JwtIssuer.php:53` recibe `int $empr_id`). El
-> validador anterior del MI y los DataServices lo tratan como string. WSO2 al extraer un claim
-> numérico para inyectarlo como header lo serializa a string, así que no es bloqueante, pero
-> conviene fijarlo: ver [empr-id-injection.md](empr-id-injection.md) §"Tipo del claim".
+> **Fix ADR-008 Sprint 2:** `empr_id` se emite ahora como **string** — `JwtIssuer.php:53`
+> castea `(string) $empr_id` antes de construir el payload. El tipo es consistente en todo el
+> flujo (JWT → header → DataService). Test: `JwtIssuerTest::testEmprIdIsString()`.
 
 ### 1.2 Respuesta JWKS actual
 
@@ -102,7 +101,7 @@ auto-firmados de `generate-test-jwts.sh` una vez que el APIM valida contra el JW
 | 1 | Firmar con algoritmo asimétrico (RS256) | ✅ Cumple | Ninguna |
 | 2 | Exponer JWKS endpoint | ✅ Cumple | Ninguna (solo verificar accesibilidad de red, ver §3) |
 | 3 | Claims `iss`, `aud`, `exp`, `iat` | ✅ Cumple | Ninguna |
-| 4 | Claim custom `empr_id` | ✅ Cumple | Fijar tipo (string) — recomendado, no bloqueante |
+| 4 | Claim custom `empr_id` como string | ✅ Cumple (fix Sprint 2) | `(string) $empr_id` en `JwtIssuer.php` — aplicado |
 | 5 | `iss` = URL de Dnato (recomendación ADR) | ⚠️ Es string opaco | **Decisión** — ver §2.1 |
 | 6 | `aud` = identificador del APIM (recomendación ADR) | ⚠️ Es `trazalog-mcp` | **Decisión** — ver §2.2 |
 | 7 | Claim de consumer key (`azp`/`consumerKey`) para validación de suscripción | ❌ No presente | **Diferir** — ver §2.3 |
@@ -174,7 +173,7 @@ Tareas opcionales / de seguimiento (no bloquean la demo):
 
 | Tarea | Tipo | Prioridad | Cuándo |
 |---|---|---|---|
-| Fijar `empr_id` como string en el payload (consistencia) | Código menor | Baja | Sprint 2, si hay tiempo |
+| Fijar `empr_id` como string en el payload (consistencia) | Código menor | — | **Aplicada en Sprint 2** (junio 2026) |
 | Verificar accesibilidad de red del JWKS desde el APIM | Operativo | **Alta** | Antes de configurar el KM |
 | Migrar `iss` a URL | Decisión + código | Baja | Solo si lo exige una integración futura |
 | Agregar claim `azp`/`consumerKey` para validación de suscripción | Código | Media | Diferido a fase de monetización |
