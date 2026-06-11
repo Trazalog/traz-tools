@@ -18,12 +18,21 @@
 
     <filter xpath="get-property('jwt_empr_id') = '' or not(boolean(get-property('jwt_empr_id')))">
         <then>
+            <!-- WARN explícito: 503 indica falla de configuración del APIM, no del cliente.
+                 400 sería engañoso (cliente no envió nada mal).
+                 401 sería engañoso (auth podría estar bien, el problema es config).
+                 503 dice "la mediación del gateway no se aplicó". -->
+            <log level="custom" category="WARN">
+                <property name="text"  value="#TRAZA | MI | EmprIdFromHeader | X-Empr-Id MISSING — APIM mediation may not be applied. Check Key Manager Dnato and in-sequence association."/>
+                <property name="api"   expression="get-property('SYNAPSE_REST_API')"/>
+                <property name="path"  expression="get-property('REST_FULL_REQUEST_PATH')"/>
+            </log>
             <payloadFactory media-type="json">
-                <format>{"error":"Internal Error","message":"X-Empr-Id header ausente — configuracion de gateway incorrecta"}</format>
+                <format>{"error":"identity_header_missing","message":"X-Empr-Id no presente. La mediacion del APIM no se aplico. Verificar configuracion del Key Manager Dnato y la in-sequence EmprIdInjectorPolicy."}</format>
                 <args/>
             </payloadFactory>
             <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
-            <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="503"/>
             <respond/>
         </then>
     </filter>
