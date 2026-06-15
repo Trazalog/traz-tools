@@ -172,26 +172,42 @@ Resultado esperado:
 
 ## 4. Decisiones de configuración importantes
 
-### 4.1 Subscription validation y comportamiento con `[[apim.jwt.issuer]]`
+### 4.1 Subscription validation con `[[apim.jwt.issuer]]` — implementación real
 
-Con el mecanismo `[[apim.jwt.issuer]]`, la subscription validation del APIM se comporta así:
+Con `[[apim.jwt.issuer]]`, la APIM gateway valida firma + `iss` pero la subscription
+validation sigue activa y requiere un `consumerKey` en el claim `azp` del JWT. Sin `azp`,
+el gateway devuelve **HTTP 403** código 900908 "Resource forbidden" aunque la firma sea válida.
 
-- El gateway valida firma + `iss` y pasa el JWT al handler de la API.
-- Si la API tiene subscription validation habilitada (default) y el JWT no tiene `azp` (consumer key) → **HTTP 403** código 900908 "Resource forbidden".
-- Si la API tiene subscription validation deshabilitada → el JWT válido pasa directamente.
+**No es posible deshabilitar subscription validation por-API** sin un Key Manager registrado
+con `enableSubscriptionValidation = false`. El `[[apim.jwt.issuer]]` no tiene esa opción.
 
-**Para las APIs MCP en el Publisher, desactivar subscription validation:**
-En `Runtime → Application Level Security`: desmarcar "Subscription Validation" (o equivalente).
+**Solución implementada (MVP DEV — 2026-06-15):**
 
-**Por qué deshabilitarla en MVP:** Los JWTs de Dnato no contienen el claim `azp`/`consumerKey`
-que el APIM necesita para validar suscripciones por aplicación. Sin ese claim, la subscription
-validation falla en el 100% de los requests. La seguridad multi-tenant la provee el claim
-`empr_id` inyectado como `X-Empr-Id` en la in-sequence (B3).
+1. Se creó una aplicación APIM "TrazalogDnatoMCP" en el DevPortal.
+2. Se generaron OAuth2 keys → `consumerKey = z_CtMHRzWPSgY8aXWYxFuzsOli4a`.
+3. La aplicación está suscrita a ambas APIs MCP (Equipos 1.0 y OTs 1.0).
+4. Los JWTs de Dnato deben incluir `azp: "z_CtMHRzWPSgY8aXWYxFuzsOli4a"` para pasar la
+   subscription validation en DEV.
 
-**Camino de activación (Sprint monetización):**
-1. Dnato agrega claim `azp: <client_id>` al JWT.
-2. Se registran las aplicaciones cliente como "out-of-band" en el APIM.
-3. Las APIs MCP se suscriben a tiers específicos.
+> **JWT mínimo válido en DEV:**
+> ```json
+> {
+>   "iss": "trazalog-dnato",
+>   "aud": "trazalog-mcp",
+>   "sub": "<email>",
+>   "azp": "z_CtMHRzWPSgY8aXWYxFuzsOli4a",
+>   "empr_id": <id>,
+>   "exp": <timestamp>,
+>   "iat": <timestamp>
+> }
+> ```
+
+**Camino en TEST/PROD (Sprint monetización):**
+1. Crear una aplicación APIM por ambiente (TEST, PROD).
+2. Anotar el `consumerKey` generado en ese ambiente.
+3. Configurar Dnato para incluir `azp: <consumerKey>` en los JWTs emitidos.
+4. Suscribir la aplicación a las APIs MCP del ambiente.
+5. (Opcional) Migrar a múltiples aplicaciones por tenant para rate-limiting por empresa.
 
 ### 4.2 Coexistencia con el Resident Key Manager (APIs legacy)
 
