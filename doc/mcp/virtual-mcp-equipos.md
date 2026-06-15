@@ -1,8 +1,13 @@
 # Virtual MCP Server — Equipos [E2-MCP-01]
 
-**API fuente:** `doc/api/equipos.yaml` (publicada en E1-API-10)  
+**API fuente:** `EquiposAPI-TrazalogMCP v1.0` (publicada en E1-API-10)  
 **Annotations standard:** `doc/mcp/tool-annotations-standard.md`  
 **Estado:** Pendiente configuración en consola WSO2
+
+> **Nota de versión:** Los pasos de configuración corresponden a **WSO2 API Manager 4.6.0**.
+> En esta versión el MCP Server se crea como una API independiente (tipo MCP) generada
+> desde la API REST existente — no existe la opción "Enable AI Capabilities" descrita
+> en documentación de versiones anteriores.
 
 ---
 
@@ -25,7 +30,7 @@ invocar todas las tools listadas en la sección 2.
 | `get_equipo` | `get_equipo` | ✅ `true` | ❌ `false` | ✅ `true` | ❌ `false` | Devuelve el detalle técnico completo de un equipo: marca, sector, criticidad, área y proceso. Usar cuando ya se conoce el `equi_id`. |
 
 **Justificación de annotations:**
-- Ambas son SELECT puro sobre MySQL assetv2 sin efectos laterales → `readOnlyHint=true`.
+- Ambas son SELECT puro sin efectos laterales → `readOnlyHint=true`.
 - No inician procesos externos → `openWorldHint=false`.
 - El mismo equipo devuelve los mismos datos en invocaciones sucesivas → `idempotentHint=true`.
 
@@ -35,35 +40,30 @@ invocar todas las tools listadas en la sección 2.
 
 ### 3.1 Prerequisito
 
-La API `Equipos 1.0` debe estar publicada siguiendo `doc/api/openapi-publish-procedure.md §2`.
-Verificar que aparece como `Published` en el Publisher.
+La API `EquiposAPI-TrazalogMCP v1.0` debe estar en estado `Published` en el Publisher.
+Verificar en `https://localhost:9443/publisher`.
 
-### 3.2 Habilitar AI en la API
+### 3.2 Crear el MCP Server desde la API existente
 
 1. Ir a `https://localhost:9443/publisher`
-2. Abrir la API **Equipos** (versión 1.0)
-3. En el menú lateral izquierdo → click en **`AI`**
-4. Click en **`Enable AI Capabilities`** (toggle)
-5. En **`API Type`** → seleccionar **`MCP`**
-6. En **`MCP Server Mode`** → seleccionar **`Virtual MCP Server`**
-7. Click **`Save`**
+2. Click en **`Create API`** (botón superior derecho)
+3. Seleccionar **`MCP Server`**
+4. Seleccionar **`Create MCP Server from Existing API`**
+5. En el formulario completar:
+   - **Name:** `trazalog-equipos`
+   - **Context:** `/trazalog-equipos`
+   - **Version:** `1.0`
+   - **Existing API:** seleccionar `EquiposAPI-TrazalogMCP` versión `1.0`
+6. Click **`Create`**
 
-### 3.3 Configurar el Virtual MCP Server
+El Publisher genera automáticamente las tools `get_equipos` y `get_equipo`
+a partir de las operaciones `GET /mcp/equipos` y `GET /mcp/equipo/{equi_id}`.
 
-1. En la pestaña **`AI`** → sección **`MCP Server Configuration`**:
-   - **Server Name:** `trazalog-equipos`
-   - **Server Description:** `Acceso al catálogo de equipos industriales de Asset Planner. Consultar antes de crear una Orden de Trabajo.`
-2. Click **`Save`**
+### 3.3 Configurar los tool annotations
 
-### 3.4 Configurar tools por operación
+Una vez creado el MCP Server, en la pantalla de configuración de tools:
 
-#### Tool `get_equipos`
-
-1. En **`AI`** → **`MCP Tool Configurations`** → operación `GET /mcp/equipos`
-2. Verificar campos pre-llenados desde el OpenAPI spec:
-   - **Tool Name:** `get_equipos`
-   - **Description:** *(pre-llenada desde operationId/description del yaml)*
-3. Configurar annotations:
+#### Tool `get_equipos` (operación `GET /mcp/equipos`)
 
 | Annotation | Valor |
 |---|---|
@@ -72,14 +72,10 @@ Verificar que aparece como `Published` en el Publisher.
 | `idempotentHint` | ☑ **true** |
 | `openWorldHint` | ☐ false |
 
-4. Click **`Save`**
+**Description** (verificar que esté pre-llenada desde el yaml):
+> Lista todos los equipos activos de la empresa. Usar para encontrar el `id_equipo` antes de crear una OT.
 
-#### Tool `get_equipo`
-
-1. Operación `GET /mcp/equipo/{equi_id}`
-2. Verificar:
-   - **Tool Name:** `get_equipo`
-3. Annotations:
+#### Tool `get_equipo` (operación `GET /mcp/equipo/{equi_id}`)
 
 | Annotation | Valor |
 |---|---|
@@ -88,33 +84,35 @@ Verificar que aparece como `Published` en el Publisher.
 | `idempotentHint` | ☑ **true** |
 | `openWorldHint` | ☐ false |
 
-4. Click **`Save`**
+**Description:**
+> Devuelve el detalle técnico completo de un equipo. Usar cuando ya se conoce el `equi_id`.
 
-### 3.5 Publicar el Virtual MCP Server
+Click **`Save`** después de configurar cada tool.
+
+### 3.4 Asignar Business Plan
+
+1. En el menú lateral → **`Business Plans`** (o **`Subscriptions`**)
+2. Seleccionar al menos un plan (ej. `Unlimited`)
+3. Click **`Save`**
+
+### 3.5 Deploy al Gateway
+
+1. En el menú lateral → **`Deployments`**
+2. Click **`Deploy New Revision`**
+3. Seleccionar environment **`Default`**, vhost `localhost`
+4. Click **`Deploy`**
+
+### 3.6 Publicar
 
 1. Click **`Publish`** en la esquina superior derecha
-2. El estado de la API cambia a `Published`
-3. El Virtual MCP Server `trazalog-equipos` aparece en el **MCP Hub**
+2. El estado cambia a `Published`
+3. El MCP Server `trazalog-equipos` aparece en el MCP Hub
 
-### 3.6 Verificar desde el MCP Hub
+### 3.7 Verificar desde el MCP Hub
 
-1. Ir a `https://localhost:9443/mcp-hub`
+1. Ir a `https://localhost:9443/devportal` (o la sección MCP Hub si existe en 4.6.0)
 2. Buscar `trazalog-equipos`
 3. Confirmar que se listan dos tools: `get_equipos` y `get_equipo`
-4. Copiar la configuración del server para Claude Desktop o VS Code:
-
-```json
-{
-  "mcpServers": {
-    "trazalog-equipos": {
-      "url": "https://localhost:8243/equipos/1.0/mcp",
-      "headers": {
-        "Authorization": "Bearer <JWT_DNATO>"
-      }
-    }
-  }
-}
-```
 
 ---
 
@@ -127,10 +125,28 @@ Con Claude Desktop conectado al server:
 "Listar los equipos disponibles"
 → Debe invocar get_equipos sin pedir confirmación (readOnlyHint=true)
 
-"Mostrar los datos del equipo COMP-001"  
+"Mostrar los datos del equipo COMP-001"
 → Debe invocar get_equipos para buscar el id, luego get_equipo con ese id
   Sin pedir confirmación en ninguno de los pasos (ambos readOnlyHint=true)
 ```
+
+Configuración para Claude Desktop / VS Code:
+
+```json
+{
+  "mcpServers": {
+    "trazalog-equipos": {
+      "url": "https://localhost:8243/trazalog-equipos/1.0/mcp",
+      "headers": {
+        "Authorization": "Bearer <JWT_DNATO>"
+      }
+    }
+  }
+}
+```
+
+> **Nota:** La URL exacta del endpoint MCP depende del contexto configurado en el paso 3.2.
+> Verificar en el MCP Hub o en la pantalla de Deployments del Publisher.
 
 ---
 
@@ -143,4 +159,4 @@ El JWT Bearer del cliente determina la empresa:
 - Token empresa B → `get_equipos` devuelve solo equipos de empresa B
 
 El gateway extrae `empr_id` del claim JWT y lo inyecta internamente
-(E9-IDENT-05). El agente nunca lo ve ni lo pasa.
+vía `EmprIdInjectorPolicy` (E9-IDENT-05). El agente nunca lo ve ni lo pasa.

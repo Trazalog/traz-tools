@@ -1,8 +1,13 @@
 # Virtual MCP Server — Órdenes de Trabajo [E2-MCP-02]
 
-**API fuente:** `doc/api/ot.yaml` (publicada en E1-API-10)  
+**API fuente:** `OrdenesdeTrabajoAPI-TrazalogMCP v1.0` (publicada en E1-API-10)  
 **Annotations standard:** `doc/mcp/tool-annotations-standard.md`  
 **Estado:** Pendiente configuración en consola WSO2
+
+> **Nota de versión:** Los pasos de configuración corresponden a **WSO2 API Manager 4.6.0**.
+> En esta versión el MCP Server se crea como una API independiente (tipo MCP) generada
+> desde la API REST existente — no existe la opción "Enable AI Capabilities" descrita
+> en documentación de versiones anteriores.
 
 ---
 
@@ -48,35 +53,28 @@ central del Sprint 2 MCP MVP.
 
 ### 4.1 Prerequisito
 
-La API `Ordenes de Trabajo 1.0` debe estar publicada siguiendo
-`doc/api/openapi-publish-procedure.md §3`. Estado: `Published`.
+La API `OrdenesdeTrabajoAPI-TrazalogMCP v1.0` debe estar en estado `Published` en el Publisher.
+Verificar en `https://localhost:9443/publisher`.
 
-### 4.2 Habilitar AI en la API
+### 4.2 Crear el MCP Server desde la API existente
 
 1. Ir a `https://localhost:9443/publisher`
-2. Abrir la API **Ordenes de Trabajo** (versión 1.0)
-3. Menú lateral → **`AI`**
-4. **`Enable AI Capabilities`** → activar
-5. **`API Type`** → `MCP`
-6. **`MCP Server Mode`** → `Virtual MCP Server`
-7. Click **`Save`**
+2. Click en **`Create API`** (botón superior derecho)
+3. Seleccionar **`MCP Server`**
+4. Seleccionar **`Create MCP Server from Existing API`**
+5. En el formulario completar:
+   - **Name:** `trazalog-ots`
+   - **Context:** `/trazalog-ots`
+   - **Version:** `1.0`
+   - **Existing API:** seleccionar `OrdenesdeTrabajoAPI-TrazalogMCP` versión `1.0`
+6. Click **`Create`**
 
-### 4.3 Configurar el Virtual MCP Server
+El Publisher genera automáticamente las tools `create_ot`, `get_ots` y `get_ot`
+a partir de las operaciones de la API REST.
 
-1. **`AI`** → **`MCP Server Configuration`**:
-   - **Server Name:** `trazalog-ots`
-   - **Server Description:** `Gestión de Órdenes de Trabajo correctivas en Asset Planner. Permite crear OTs para equipos con fallas y consultar el estado de las OTs existentes.`
-2. Click **`Save`**
+### 4.3 Configurar los tool annotations
 
-### 4.4 Configurar tools por operación
-
-#### Tool `create_ot` — ⚠️ revisar con atención
-
-1. **`AI`** → **`MCP Tool Configurations`** → operación `POST /mcp/ot`
-2. Verificar:
-   - **Tool Name:** `create_ot`
-   - **Description:** *(pre-llenada desde el yaml — verificar que dice "Crea una OT correctiva...")*
-3. Annotations:
+#### Tool `create_ot` (operación `POST /mcp/ot`) — ⚠️ revisar con atención
 
 | Annotation | Valor | Razón |
 |---|---|---|
@@ -85,12 +83,10 @@ La API `Ordenes de Trabajo 1.0` debe estar publicada siguiendo
 | `idempotentHint` | ☐ **false** | Cada call crea una OT nueva con ID distinto |
 | `openWorldHint` | ☑ **true** | Instancia proceso en Bonita BPM (efecto externo) |
 
-4. Click **`Save`**
+**Description:**
+> Crea una Orden de Trabajo correctiva para un equipo con falla. Inicia el proceso de mantenimiento en el sistema BPM. Requiere el ID del equipo y una descripción de la falla.
 
-#### Tool `get_ots`
-
-1. Operación `GET /mcp/ot`
-2. Annotations:
+#### Tool `get_ots` (operación `GET /mcp/ot`)
 
 | Annotation | Valor |
 |---|---|
@@ -99,12 +95,10 @@ La API `Ordenes de Trabajo 1.0` debe estar publicada siguiendo
 | `idempotentHint` | ☑ **true** |
 | `openWorldHint` | ☐ false |
 
-3. Click **`Save`**
+**Description:**
+> Lista las Órdenes de Trabajo abiertas de la empresa. Usar para verificar OTs existentes antes de crear una nueva.
 
-#### Tool `get_ot`
-
-1. Operación `GET /mcp/ot/{id_solicitud}`
-2. Annotations:
+#### Tool `get_ot` (operación `GET /mcp/ot/{id_solicitud}`)
 
 | Annotation | Valor |
 |---|---|
@@ -113,26 +107,29 @@ La API `Ordenes de Trabajo 1.0` debe estar publicada siguiendo
 | `idempotentHint` | ☑ **true** |
 | `openWorldHint` | ☐ false |
 
+**Description:**
+> Obtiene el detalle completo de una OT: estado, equipo, mantenedor asignado, fechas.
+
+Click **`Save`** después de configurar cada tool.
+
+### 4.4 Asignar Business Plan
+
+1. En el menú lateral → **`Business Plans`** (o **`Subscriptions`**)
+2. Seleccionar al menos un plan (ej. `Unlimited`)
 3. Click **`Save`**
 
-### 4.5 Publicar el Virtual MCP Server
+### 4.5 Deploy al Gateway
 
-1. Click **`Publish`**
-2. El server `trazalog-ots` aparece en el MCP Hub
-3. Configuración para Claude Desktop:
+1. En el menú lateral → **`Deployments`**
+2. Click **`Deploy New Revision`**
+3. Seleccionar environment **`Default`**, vhost `localhost`
+4. Click **`Deploy`**
 
-```json
-{
-  "mcpServers": {
-    "trazalog-ots": {
-      "url": "https://localhost:8243/ordenes-trabajo/1.0/mcp",
-      "headers": {
-        "Authorization": "Bearer <JWT_DNATO>"
-      }
-    }
-  }
-}
-```
+### 4.6 Publicar
+
+1. Click **`Publish`** en la esquina superior derecha
+2. El estado cambia a `Published`
+3. El MCP Server `trazalog-ots` aparece en el MCP Hub
 
 ---
 
@@ -167,24 +164,34 @@ Prompt: "Confirmá que la OT se creó"
 → Devuelve detalle con estado="S", equipo="COMP-001"
 ```
 
+Configuración para Claude Desktop / VS Code:
+
+```json
+{
+  "mcpServers": {
+    "trazalog-ots": {
+      "url": "https://localhost:8243/trazalog-ots/1.0/mcp",
+      "headers": {
+        "Authorization": "Bearer <JWT_DNATO>"
+      }
+    }
+  }
+}
+```
+
+> **Nota:** Verificar la URL exacta en el MCP Hub o en Deployments del Publisher
+> una vez completada la configuración.
+
 ### Verificaciones de aislamiento
 
 ```bash
 # OTs de empresa A con token empresa A → OTs de A
 curl -k -H "Authorization: Bearer $JWT_EMPRESA_A" \
-     https://localhost:8243/ordenes-trabajo/1.0/mcp/ot
+     https://localhost:8243/trazalog-ots/1.0/mcp/ot
 
 # OTs de empresa A con token empresa B → lista vacía
 curl -k -H "Authorization: Bearer $JWT_EMPRESA_B" \
-     https://localhost:8243/ordenes-trabajo/1.0/mcp/ot
-# Expect: { "solicitudes": { "solicitud": [] } }
-
-# create_ot con token empresa A → OT creada en empresa A (no en B)
-curl -k -X POST \
-     -H "Authorization: Bearer $JWT_EMPRESA_A" \
-     -H "Content-Type: application/json" \
-     -d '{"equipo_id":"10","descripcion":"Test aislamiento"}' \
-     https://localhost:8243/ordenes-trabajo/1.0/mcp/ot
+     https://localhost:8243/trazalog-ots/1.0/mcp/ot
 ```
 
 ---
