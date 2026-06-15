@@ -84,134 +84,143 @@ se puede usar `http://` en la JWKS URL. No exponer el endpoint JWKS por HTTP pú
 
 ---
 
-## 3. Agregar Dnato como Key Manager en la consola Admin
+## 3. Registrar Dnato como emisor JWT en `deployment.toml`
 
-1. Ir a **`https://localhost:9443/admin`** e iniciar sesión con credenciales de admin.
-2. En el menú izquierdo, seleccionar **`Key Managers`**.
-3. Hacer click en **`Add Key Manager`**.
-4. Completar el formulario con los siguientes valores:
+> **Nota de implementación:** APIM 4.6.0 incluye conectores para Auth0, Okta, Keycloak, Azure,
+> ForgeRock, PingFederate y WSO2 IS, pero **no tiene un conector genérico para IdPs custom**.
+> La Admin UI y la Admin REST API no permiten registrar un KM externo sin un conector instalado.
+> El mecanismo correcto para IdPs custom que solo emiten JWTs es `[[apim.jwt.issuer]]` en
+> `deployment.toml`. Este mecanismo registra el emisor en la capa de validación del gateway
+> (XML `<TokenIssuers>`) y NO en la lista de Key Managers de la Admin UI — lo cual es
+> correcto para el flujo ADR-008.
 
-### 3.1 General Details
+### 3.1 Configuración en `deployment.toml`
 
-| Campo | Valor |
-|---|---|
-| **Name** | `Dnato` |
-| **Display Name** | `Dnato — Identity Provider Trazalog` |
-| **Description** | `Valida JWTs emitidos por Dnato para tráfico MCP (RS256, JWKS). ADR-008.` |
-| **Key Manager Type** | `Custom` (o `Default` según versión — el tipo que no requiere plugin custom) |
+Agregar al final de `$APIM_HOME/repository/conf/deployment.toml`:
 
-> En APIM 4.6.0, para un IdP externo que solo firma JWTs (sin endpoints de intercambio de
-> tokens propios en el APIM), usar tipo **`Default`** o **`Resident Key Manager`** configurado
-> con los datos de Dnato. Si el portal muestra una lista de tipos (Okta, Auth0, Keycloak…),
-> elegir el que corresponda a un IdP genérico/custom. Si solo aparecen los vendors listados y
-> ningún "custom/generic", ver la Nota de resolución en §3.4.
+```toml
+[[apim.jwt.issuer]]
+name = "trazalog-dnato"
+consumer_key_claim = "azp"
+scopes_claim = "scope"
+jwks.url = "https://<dnato-host>/oauth/.well-known/jwks.json"
 
-### 3.2 Token Endpoint Configuration
+[[apim.jwt.issuer.claim_mapping]]
+remote_claim = "empr_id"
+local_claim = "empr_id"
+```
 
-Estos campos son requeridos por el formulario pero **no se usan en el flujo de validación de
-JWTs directos**. Poner la URL base de Dnato como placeholder para que el formulario acepte:
+| Campo TOML | Valor | Descripción |
+|---|---|---|
+| `name` | `trazalog-dnato` | Debe coincidir **exactamente** con el claim `iss` del JWT |
+| `jwks.url` | URL del endpoint JWKS de Dnato | El gateway fetcha las claves para verificar la firma |
+| `consumer_key_claim` | `azp` | Dnato no emite este claim en MVP — no bloqueante |
+| `scopes_claim` | `scope` | Dnato no emite `scope` en MVP — no bloqueante |
+| `claim_mapping` | `empr_id → empr_id` | Permite que el gateway propague el claim al backend |
 
-| Campo | Valor |
-|---|---|
-| **Well-known URL** | `https://<dnato-host>/.well-known/openid-configuration` *(si existe)* |
-| **Issuer** | `trazalog-dnato` *(debe coincidir exactamente con el claim `iss` del JWT)* |
-| **Client Registration Endpoint** | `https://<dnato-host>/oauth/register` *(placeholder — no se usa)* |
-| **Introspection Endpoint** | `https://<dnato-host>/oauth/introspect` *(placeholder — no se usa)* |
-| **Token Endpoint** | `https://<dnato-host>/oauth/token` *(real — `POST /oauth/token` existe en Dnato)* |
-| **Revoke Endpoint** | dejar vacío o placeholder |
-| **JWKS URL** | `https://<dnato-host>/oauth/.well-known/jwks.json` *(este sí es crítico)* |
+> **DEV:** el endpoint JWKS de Dnato no responde en DEV (PHP 8.3 + DB prod). Usar un servidor
+> JWKS minimal en puerto 8090:
+> ```bash
+> php -S localhost:8090 /tmp/jwks-server.php &
+> ```
+> El archivo `/tmp/jwks-server.php` sirve el JWKS con la clave pública `kid=dnato-rs256-v1`.
+> En DEV, la `jwks.url` apunta a `http://localhost:8090/.well-known/jwks.json`.
 
-### 3.3 Claim Configuration
+### 3.2 Reiniciar el APIM
 
-| Campo | Valor |
-|---|---|
-| **Consumer Key Claim** | `azp` *(WSO2 default; Dnato no emite este claim en MVP — ver §4.1)* |
-| **Scopes Claim** | `scope` *(Dnato no emite `scope` en MVP — no bloqueante)* |
-| **Subject Claim** | `sub` |
+```bash
+$APIM_HOME/bin/api-manager.sh restart
+```
 
-> **Audience Validation:** si el formulario incluye un campo "Audiences", agregar `trazalog-mcp`.
-> El APIM rechazará tokens cuyo claim `aud` no coincida con ninguno de los valores configurados.
+### 3.3 Verificar que la configuración se aplicó
 
-### 3.4 Token Handling Method
+```bash
+grep -A 10 "TokenIssuers" $APIM_HOME/repository/conf/api-manager.xml
+```
 
-| Campo | Valor |
-|---|---|
-| **Token Handling Method** | `JSON Web Token (JWT)` |
-| **Enable Subscription Validation** | **DESACTIVADO** (unchecked) — ver §4.1 |
+Resultado esperado:
+```xml
+<TokenIssuers>
+  <TokenIssuer issuer ="trazalog-dnato">
+    <JWKSConfiguration>
+      <URL>http://localhost:8090/.well-known/jwks.json</URL>
+    </JWKSConfiguration>
+    <ConsumerKeyClaim>azp</ConsumerKeyClaim>
+    <ScopesClaim>scope</ScopesClaim>
+    <ClaimMappings disable-default-claim-mapping = "false">
+      <ClaimMapping>
+        <RemoteClaim>empr_id</RemoteClaim>
+        <LocalClaim>empr_id</LocalClaim>
+      </ClaimMapping>
+    </ClaimMappings>
+  </TokenIssuer>
+</TokenIssuers>
+```
 
-> **Por qué deshabilitar subscription validation:** en el MVP, Dnato no emite el consumer key
-> en el claim `azp`/`consumerKey`. La validación de suscripción requiere que el JWT contenga
-> ese claim mapeado a una aplicación registrada en el APIM. Sin él, la validación de suscripción
-> fallará en el 100% de los requests. Diferir a cuando se implemente monetización (ver §4.1).
+### 3.4 Comportamiento del gateway con `[[apim.jwt.issuer]]`
 
-### 3.5 Certificate
-
-| Campo | Valor |
-|---|---|
-| **Tipo** | `JWKS` (usar JWKS URL en lugar de certificado estático) |
-| **JWKS URL** | *(ya configurado en §3.2)* |
-
-> No usar certificado PEM estático para el MVP si el JWKS URL está disponible. El JWKS permite
-> rotación de claves sin reconfigurar el APIM.
-
-### 3.6 Grant Types permitidos
-
-Habilitar al menos:
-- `authorization_code` (flujo real — Dnato implementa OAuth 2.1 con PKCE)
-- `refresh_token` (si Dnato lo implementa — actualmente no en el repo, habilitar en Sprint 3+)
-
-No es necesario habilitar `client_credentials` ni otros para el MVP.
-
-### 3.7 Guardar
-
-Click en **`Add`** (o **`Save`**). El Key Manager `Dnato` aparece en la lista con estado activo.
+- El gateway valida **firma RS256** contra el JWKS y valida que `iss` = `trazalog-dnato`.
+- Un JWT con firma inválida o `iss` desconocido → **HTTP 401** (Invalid Credentials).
+- Un JWT válido de Dnato en una API con subscription validation habilitada → **HTTP 403**
+  (Resource forbidden, código 900908). Ver §4.1.
+- La **restricción por-API** (que solo las APIs MCP acepten tokens Dnato) se configura en
+  el Publisher: asociar cada API MCP a este issuer (ver §5).
+- Las APIs legacy con tokens opacos del Resident KM **no se ven afectadas**: el gateway
+  valida el tipo de token antes de buscar el emisor JWT.
 
 ---
 
 ## 4. Decisiones de configuración importantes
 
-### 4.1 Subscription validation DESACTIVADA (MVP)
+### 4.1 Subscription validation y comportamiento con `[[apim.jwt.issuer]]`
 
-**Por qué:** la validación de suscripción requiere que el JWT contenga el consumer key de
-una aplicación OAuth registrada en el APIM (claim `azp` o `consumerKey`), mapeada
-vía "Provisioning Out-of-Band OAuth2 Clients". Los JWTs de Dnato no contienen ese claim.
+Con el mecanismo `[[apim.jwt.issuer]]`, la subscription validation del APIM se comporta así:
 
-**Impacto en seguridad:** el APIM sigue validando firma (RS256 vs JWKS), `exp`, `iss` y `aud`.
-El aislamiento multi-tenant lo garantiza el claim `empr_id` inyectado como `X-Empr-Id`. El
-único control que se pierde es el rate-limiting por aplicación y la visibilidad de suscripciones
-en el Developer Portal — funcionalidades que corresponden a la fase de monetización, no al MVP.
+- El gateway valida firma + `iss` y pasa el JWT al handler de la API.
+- Si la API tiene subscription validation habilitada (default) y el JWT no tiene `azp` (consumer key) → **HTTP 403** código 900908 "Resource forbidden".
+- Si la API tiene subscription validation deshabilitada → el JWT válido pasa directamente.
+
+**Para las APIs MCP en el Publisher, desactivar subscription validation:**
+En `Runtime → Application Level Security`: desmarcar "Subscription Validation" (o equivalente).
+
+**Por qué deshabilitarla en MVP:** Los JWTs de Dnato no contienen el claim `azp`/`consumerKey`
+que el APIM necesita para validar suscripciones por aplicación. Sin ese claim, la subscription
+validation falla en el 100% de los requests. La seguridad multi-tenant la provee el claim
+`empr_id` inyectado como `X-Empr-Id` en la in-sequence (B3).
 
 **Camino de activación (Sprint monetización):**
 1. Dnato agrega claim `azp: <client_id>` al JWT.
 2. Se registran las aplicaciones cliente como "out-of-band" en el APIM.
-3. Se activa `Enable Subscription Validation` en el KM Dnato.
-4. Las APIs MCP se suscriben a tiers específicos.
+3. Las APIs MCP se suscriben a tiers específicos.
 
 ### 4.2 Coexistencia con el Resident Key Manager (APIs legacy)
 
-Las APIs legacy del APIM usan el **Resident Key Manager** (el interno). Este no se toca.
-En el Publisher, al configurar cada API:
-- **APIs legacy:** el campo Key Managers muestra `Resident Key Manager` seleccionado (default).
-- **APIs MCP:** se cambia a **únicamente `Dnato`** (des-seleccionar Resident KM).
+Las APIs legacy con tokens opacos del Resident KM no se ven afectadas. El mecanismo
+`[[apim.jwt.issuer]]` solo actúa cuando llega un JWT con `iss = trazalog-dnato`; los
+tokens opacos tienen un formato diferente y siguen el flujo de introspección del Resident KM.
 
-Ambos Key Managers están activos simultáneamente a nivel de APIM. El gateway determina cuál
-usar por el `iss` del token y la configuración de la API específica.
-
-> No hay ningún `deployment.toml` global que cambiar para esta coexistencia. Es configuración
-> por API en el Publisher.
+> El `deployment.toml` de DEV (`$APIM_HOME/repository/conf/deployment.toml`) tiene la
+> configuración activa en la sección `[[apim.jwt.issuer]]`. En TEST/PROD, cambiar
+> `jwks.url` a la URL real de Dnato antes del deploy.
 
 ---
 
-## 5. Asociar el Key Manager Dnato a las APIs MCP en el Publisher
+## 5. Configurar las APIs MCP en el Publisher para Dnato
 
-Una vez creado el KM Dnato:
+Una vez aplicada la configuración `[[apim.jwt.issuer]]` (§3) y reiniciado el APIM:
 
 1. Ir a `https://localhost:9443/publisher`
 2. Seleccionar la API (Equipos 1.0 o Ordenes de Trabajo 1.0)
 3. **`Develop`** → **`API Configurations`** → **`Runtime`**
-4. En **`Application Level Security`**: marcar **`OAuth2`**
-5. En **`Key Managers`**: seleccionar **`Dnato`** y **des-seleccionar `Resident Key Manager`**
-6. **`Save`** → **`Publish`**
+4. En **`Application Level Security`**:
+   - Mantener `OAuth2` marcado
+   - Desactivar "Subscription Validation" (evita el 403 por falta de `azp` — ver §4.1)
+5. **`Save`** → **`Publish`**
+
+> Con `[[apim.jwt.issuer]]`, el gateway ya acepta tokens Dnato para cualquier API que tenga
+> OAuth2 habilitado. La restricción "solo APIs MCP aceptan tokens Dnato" se logra
+> indirectamente: las APIs legacy esperan tokens opacos del Resident KM (que tienen formato
+> diferente), no JWTs de Dnato.
 
 Repetir para cada API MCP.
 
@@ -279,32 +288,21 @@ curl -k -H "Authorization: Bearer $RESIDENT_KM_TOKEN" <URL de API legacy>
 
 ---
 
-## 7. Configuración en deployment.toml (solo si es necesario)
+## 7. Configuración en deployment.toml
 
-Para la configuración del Key Manager Dnato **no se requiere tocar `deployment.toml`**.
-La configuración se hace completamente desde la consola Admin (§3).
+La configuración del emisor Dnato **sí requiere editar `deployment.toml`** (ver §3.1).
+Este es el mecanismo oficial de APIM 4.6.0 para registrar emisores JWT custom sin plugin.
 
 **Configuraciones que explícitamente NO se aplican:**
 
 ```toml
-# ❌ NO APLICAR — ADR-008 lo prohíbe. Afecta TODAS las APIs del APIM.
+# ❌ NO APLICAR — ADR-008 lo prohíbe. Afecta TODAS las APIs del APIM globalmente.
 # [apim.oauth_config]
 # enable_outbound_auth_header = true
 ```
 
-Si en algún momento se necesita tunear el comportamiento del JWT validation a nivel global
-(ej: deshabilitar validación de suscripción globalmente, cambiar el claim de consumer key),
-el parámetro correcto y scoped es:
-
-```toml
-# Solo si la UI no provee el toggle (versiones más viejas de APIM):
-# Aplica SOLO al tenant que lo configura, no es global de la instancia.
-[apim.jwt_authentication]
-# enable_subscription_validation = false   # default false para External KMs sin consumerKey
-# consumer_dialect_uri = "http://wso2.org/claims"
-```
-
-En APIM 4.6.0 este parámetro se gestiona vía UI (§3.4), no requiere editar el TOML.
+La sección `[[apim.jwt.issuer]]` (§3.1) es diferente y sí se aplica:
+es por-issuer, no global, y no afecta el comportamiento de otras APIs.
 
 ---
 
