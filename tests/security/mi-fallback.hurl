@@ -39,9 +39,11 @@ jsonpath "$.error" == "identity_header_missing"
 
 
 # ─────────────────────────────────────────────────────────────────
-# Caso C: Request al MI con X-Empr-Id presente → procesa normalmente
-# (validar que el fix 3 no rompe el flujo feliz cuando el header SÍ viene)
+# Caso C: Request al MI con X-Empr-Id presente → Fix 3 no se dispara
+# (En DEV sin BD el DataService devuelve 404; lo importante es que NO sea 503)
 # ─────────────────────────────────────────────────────────────────
 GET http://{{MI_HOST}}/tools/man/mcp/equipos
 X-Empr-Id: 42
-HTTP 200
+HTTP *
+[Asserts]
+status != 503
