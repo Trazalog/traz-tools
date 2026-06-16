@@ -1,218 +1,158 @@
 # Virtual MCP Server — Órdenes de Trabajo [E2-MCP-02]
 
-**API fuente:** `OrdenesdeTrabajoAPI-TrazalogMCP v1.0` (publicada en E1-API-10)  
-**Annotations standard:** `doc/mcp/tool-annotations-standard.md`  
+**API fuente:** `OrdenesdeTrabajoAPI-TrazalogMCP v1.0` (publicada en E1-API-10)
 **Estado:** Pendiente configuración en consola WSO2
 
-> **Nota de versión:** Los pasos de configuración corresponden a **WSO2 API Manager 4.6.0**.
-> En esta versión el MCP Server se crea como una API independiente (tipo MCP) generada
-> desde la API REST existente — no existe la opción "Enable AI Capabilities" descrita
-> en documentación de versiones anteriores.
+> **Nota de versión (APIM 4.6.0):** El Publisher expone MCP Servers como un tipo de
+> API independiente. Los tool annotations (`readOnlyHint`, etc.) **no tienen campos
+> editables en la UI** — se definen en la OpenAPI spec o vía REST API, no en el Publisher.
 
 ---
 
-## 1. Nombre del Virtual MCP Server
+## 1. Tools del server
 
-```
-trazalog-ots
-```
-
-Nombre visible en el MCP Hub. Incluye la tool `create_ot` — el demo tool
-central del Sprint 2 MCP MVP.
-
----
-
-## 2. Tools del server
-
-| Tool name | `operationId` fuente | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` | Descripción para el agente |
-|---|---|---|---|---|---|---|
-| `create_ot` | `create_ot` | ❌ `false` | ❌ `false` | ❌ `false` | ✅ `true` | Crea una Orden de Trabajo correctiva para un equipo con falla. Inicia el proceso de mantenimiento en el sistema BPM. Requiere el ID del equipo y una descripción de la falla. |
-| `get_ots` | `get_ots` | ✅ `true` | ❌ `false` | ✅ `true` | ❌ `false` | Lista las Órdenes de Trabajo abiertas de la empresa (excluye cerradas y anuladas). Usar para verificar OTs existentes antes de crear una nueva. |
-| `get_ot` | `get_ot` | ✅ `true` | ❌ `false` | ✅ `true` | ❌ `false` | Obtiene el detalle completo de una OT: estado, equipo, mantenedor asignado, fechas. Usar para confirmar que la OT recién creada se registró correctamente. |
-
-**Justificación de annotations:**
-
-- **`create_ot`:** `readOnlyHint=false` (INSERT en BD + inicio de proceso BPM). `openWorldHint=true` porque instancia un proceso en Bonita BPM — efecto externo real. `destructiveHint=false` porque crea datos nuevos sin destruir existentes y el proceso BPM puede cancelarse. `idempotentHint=false` porque cada invocación crea una OT distinta con un `id_solicitud` diferente.
-
-- **`get_ots` / `get_ot`:** SELECT puro, sin efectos laterales → `readOnlyHint=true`, `openWorldHint=false`, `idempotentHint=true`.
+| Tool name | Operación fuente | Descripción para el agente |
+|---|---|---|
+| `create_ot` | `POST /mcp/ot` | Crea una Orden de Trabajo correctiva para un equipo con falla. Inicia el proceso de mantenimiento en el BPM. Requiere el ID del equipo y una descripción de la falla. |
+| `get_ots` | `GET /mcp/ot` | Lista las Órdenes de Trabajo abiertas de la empresa. Usar para verificar OTs existentes antes de crear una nueva. |
+| `get_ot` | `GET /mcp/ot/{id_solicitud}` | Obtiene el detalle completo de una OT: estado, equipo, mantenedor asignado, fechas. |
 
 ---
 
-## 3. Comportamiento del agente según annotations
+## 2. Pasos de configuración en WSO2 API Manager 4.6.0
 
-| Situación | Comportamiento esperado del cliente MCP |
-|---|---|
-| Usuario: "¿qué OTs están abiertas?" | Invoca `get_ots` directamente, sin pedir confirmación |
-| Usuario: "Muéstrame la OT 1842" | Invoca `get_ot` directamente, sin pedir confirmación |
-| Usuario: "Crear una OT para el compresor COMP-001" | **Puede** mostrar los detalles al usuario antes de ejecutar (`openWorldHint=true`). Claude generalmente pregunta "¿Confirma crear la OT?" antes de invocar `create_ot` |
-| Agente autónomo detecta falla | `create_ot` requiere aprobación humana explícita en flujos agenticos bien implementados |
+### 2.1 Prerequisito
 
----
+`OrdenesdeTrabajoAPI-TrazalogMCP v1.0` en estado **Published** en el Publisher.
 
-## 4. Pasos de configuración en WSO2 API Manager 4.6.0
+### 2.2 Crear el MCP Server
 
-### 4.1 Prerequisito
-
-La API `OrdenesdeTrabajoAPI-TrazalogMCP v1.0` debe estar en estado `Published` en el Publisher.
-Verificar en `https://localhost:9443/publisher`.
-
-### 4.2 Crear el MCP Server desde la API existente
+**Opción A — desde la vista de la API existente (recomendada):**
 
 1. Ir a `https://localhost:9443/publisher`
-2. Click en **`Create API`** (botón superior derecho)
-3. Seleccionar **`MCP Server`**
+2. Abrir la API `OrdenesdeTrabajoAPI-TrazalogMCP`
+3. En la pantalla de overview buscar el botón **`Generate MCP Server`**
+4. Seguir el wizard (ver paso 2.3)
+
+**Opción B — desde el menú de MCP Servers:**
+
+1. Ir a `https://localhost:9443/publisher`
+2. En el menú superior o lateral → **`MCP Servers`**
+3. Click **`Create MCP Server`**
 4. Seleccionar **`Create MCP Server from Existing API`**
-5. En el formulario completar:
-   - **Name:** `trazalog-ots`
-   - **Context:** `/trazalog-ots`
-   - **Version:** `1.0`
-   - **Existing API:** seleccionar `OrdenesdeTrabajoAPI-TrazalogMCP` versión `1.0`
-6. Click **`Create`**
+5. Seguir el wizard (ver paso 2.3)
 
-El Publisher genera automáticamente las tools `create_ot`, `get_ots` y `get_ot`
-a partir de las operaciones de la API REST.
+### 2.3 Wizard de creación
 
-### 4.3 Configurar los tool annotations
+**Paso 1 — Seleccionar API y operaciones:**
 
-#### Tool `create_ot` (operación `POST /mcp/ot`) — ⚠️ revisar con atención
+- **Select an API to create MCP Server from:** `OrdenesdeTrabajoAPI-TrazalogMCP` (versión 1.0)
+- **Select Operations for Tool Generation:** tildar las tres operaciones:
+  - `POST /mcp/ot`
+  - `GET /mcp/ot`
+  - `GET /mcp/ot/{id_solicitud}`
+- Click **`Next`**
 
-| Annotation | Valor | Razón |
-|---|---|---|
-| `readOnlyHint` | ☐ **false** | INSERT en BD + inicia proceso BPM |
-| `destructiveHint` | ☐ **false** | Crea datos nuevos, BPM proceso es cancelable |
-| `idempotentHint` | ☐ **false** | Cada call crea una OT nueva con ID distinto |
-| `openWorldHint` | ☑ **true** | Instancia proceso en Bonita BPM (efecto externo) |
+**Paso 2 — Datos básicos del MCP Server:**
 
-**Description:**
-> Crea una Orden de Trabajo correctiva para un equipo con falla. Inicia el proceso de mantenimiento en el sistema BPM. Requiere el ID del equipo y una descripción de la falla.
-
-#### Tool `get_ots` (operación `GET /mcp/ot`)
-
-| Annotation | Valor |
+| Campo | Valor |
 |---|---|
-| `readOnlyHint` | ☑ **true** |
-| `destructiveHint` | ☐ false |
-| `idempotentHint` | ☑ **true** |
-| `openWorldHint` | ☐ false |
+| **Name** | `trazalog-ots` |
+| **Version** | `1.0` |
+| **Context** | `/trazalog-ots` |
+| **Display Name** | `Órdenes de Trabajo Trazalog` *(opcional)* |
 
-**Description:**
-> Lista las Órdenes de Trabajo abiertas de la empresa. Usar para verificar OTs existentes antes de crear una nueva.
+- Click **`Create`** (o **`Create & Publish`** si querés omitir pasos manuales)
 
-#### Tool `get_ot` (operación `GET /mcp/ot/{id_solicitud}`)
+### 2.4 Configurar Tools
 
-| Annotation | Valor |
+Después de la creación, ir al menú lateral → **`Tools`**:
+
+- Tools generadas automáticamente: `create_ot`, `get_ots`, `get_ot`
+- Para cada tool podés editar:
+  - **Tool Name** — dejar como está
+  - **Description** — editar si la descripción generada no refleja bien el comportamiento
+
+Las descriptions importantes a verificar:
+
+| Tool | Description esperada |
 |---|---|
-| `readOnlyHint` | ☑ **true** |
-| `destructiveHint` | ☐ false |
-| `idempotentHint` | ☑ **true** |
-| `openWorldHint` | ☐ false |
+| `create_ot` | Debe mencionar que **crea** una OT e **inicia un proceso BPM** |
+| `get_ots` | Debe mencionar que **lista** OTs abiertas de la empresa |
+| `get_ot` | Debe mencionar que obtiene el **detalle** de una OT por ID |
 
-**Description:**
-> Obtiene el detalle completo de una OT: estado, equipo, mantenedor asignado, fechas.
+Los campos de annotations (`readOnlyHint`, `destructiveHint`, etc.) **no están
+disponibles en la UI** de APIM 4.6.0. Sus valores provienen de la spec OpenAPI.
 
-Click **`Save`** después de configurar cada tool.
+### 2.5 Configurar Endpoint
 
-### 4.4 Asignar Business Plan
+Menú lateral → **`Endpoints`**:
 
-1. En el menú lateral → **`Business Plans`** (o **`Subscriptions`**)
-2. Seleccionar al menos un plan (ej. `Unlimited`)
-3. Click **`Save`**
+- **Production Endpoint:** `http://localhost:8290/tools/man`
+- *(Sandbox opcional)*
+- Click **`Save`**
 
-### 4.5 Deploy al Gateway
+### 2.6 Configurar Subscriptions / Business Plans
 
-1. En el menú lateral → **`Deployments`**
-2. Click **`Deploy New Revision`**
-3. Seleccionar environment **`Default`**, vhost `localhost`
-4. Click **`Deploy`**
+Menú lateral → **`Subscriptions`**:
 
-### 4.6 Publicar
+- En la sección **Business Plans** → seleccionar `Unlimited` (u otro plan disponible)
+- Click **`Save`**
 
-1. Click **`Publish`** en la esquina superior derecha
-2. El estado cambia a `Published`
-3. El MCP Server `trazalog-ots` aparece en el MCP Hub
+### 2.7 Deploy al Gateway
+
+Menú lateral → **`Deployments`**:
+
+1. Click **`Deploy New Revision`**
+2. Seleccionar environment: **`Default`** / vhost `localhost`
+3. Click **`Deploy`**
+
+### 2.8 Publicar
+
+1. Click **`Publish`** (esquina superior derecha o sección Lifecycle)
+2. Estado cambia a **`Published`**
 
 ---
 
-## 5. Test de humo desde cliente MCP
+## 3. Verificar
 
-### Flujo demo completo (combina trazalog-equipos + trazalog-ots)
-
+La URL del endpoint MCP será:
 ```
-# 1. Buscar el equipo (desde trazalog-equipos)
-Prompt: "Listar equipos disponibles"
-→ get_equipos (sin confirmación, readOnlyHint=true)
-→ Devuelve lista con id_equipo="10" para COMP-001
-
-# 2. Ver OTs existentes (sin confirmación)
-Prompt: "¿Hay OTs abiertas para el compresor?"
-→ get_ots (sin confirmación, readOnlyHint=true)
-→ Devuelve lista filtrada por empresa (o vacía si no hay)
-
-# 3. Crear OT (con confirmación del usuario por openWorldHint=true)
-Prompt: "Abrir una OT para COMP-001, hay un ruido extraño en el rodamiento"
-→ Claude muestra: "Voy a crear una OT con estos datos:
-    - Equipo: COMP-001 (id: 10)
-    - Descripción: Ruido extraño en rodamiento
-    ¿Confirmas?"
-→ Usuario: "Sí"
-→ create_ot con { equipo_id: "10", descripcion: "Ruido extraño en rodamiento" }
-→ Devuelve: { ot_id: "1842", case_id: "5301", estado: "S" }
-
-# 4. Confirmar la OT creada (sin confirmación)
-Prompt: "Confirmá que la OT se creó"
-→ get_ot con id_solicitud="1842"
-→ Devuelve detalle con estado="S", equipo="COMP-001"
+https://localhost:8243/trazalog-ots/1.0/mcp
 ```
 
-Configuración para Claude Desktop / VS Code:
-
-```json
-{
-  "mcpServers": {
-    "trazalog-ots": {
-      "url": "https://localhost:8243/trazalog-ots/1.0/mcp",
-      "headers": {
-        "Authorization": "Bearer <JWT_DNATO>"
-      }
-    }
-  }
-}
-```
-
-> **Nota:** Verificar la URL exacta en el MCP Hub o en Deployments del Publisher
-> una vez completada la configuración.
-
-### Verificaciones de aislamiento
-
+Test rápido:
 ```bash
-# OTs de empresa A con token empresa A → OTs de A
-curl -k -H "Authorization: Bearer $JWT_EMPRESA_A" \
-     https://localhost:8243/trazalog-ots/1.0/mcp/ot
-
-# OTs de empresa A con token empresa B → lista vacía
-curl -k -H "Authorization: Bearer $JWT_EMPRESA_B" \
-     https://localhost:8243/trazalog-ots/1.0/mcp/ot
+curl -k -H "Authorization: Bearer <JWT_DNATO>" \
+  https://localhost:8243/trazalog-ots/1.0/mcp/ot
 ```
 
 ---
 
-## 6. Aislamiento multi-empresa
+## 4. Flujo demo completo
 
-Misma garantía que en `trazalog-equipos`:
+```
+1. Buscar equipo → get_equipos (desde trazalog-equipos)
+2. Ver OTs abiertas → get_ots (sin confirmación)
+3. Crear OT → create_ot (Claude confirma antes por openWorldHint)
+4. Verificar OT → get_ot
+```
 
-- El JWT Bearer determina la empresa — no existe parámetro de empresa en la interfaz del agente
-- `create_ot` inserta en la empresa del JWT, no en ninguna empresa pasada por el agente
+---
+
+## 5. Aislamiento multi-empresa
+
+El JWT Bearer del cliente determina la empresa.
+- `create_ot` inserta en la empresa del JWT
 - `get_ots` y `get_ot` solo devuelven datos de la empresa del JWT
 
-Ver implementación en E9-IDENT-05 (gateway) y E9-IDENT-06 (DataService).
+Ver E9-IDENT-05 (gateway) y E9-IDENT-06 (DataService).
 
 ---
 
-## 7. Nota sobre el rollback
+## 6. Rollback de create_ot
 
-Si `create_ot` falla después del INSERT (Bonita no disponible):
-
-- La solicitud en la BD se elimina automáticamente (Opción A, aprobada en ADR-003)
-- El agente recibe un error HTTP 500 desde el gateway
+Si falla después del INSERT (Bonita no disponible):
+- La solicitud se elimina automáticamente de la BD (ADR-003, Opción A)
+- El agente recibe HTTP 500
 - La OT no queda en estado inconsistente
-- El agente puede reintentar si el usuario lo solicita
