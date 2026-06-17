@@ -502,7 +502,7 @@
    </query>
    <query id="getMovimientoxdemiId" useConfig="ToolsDataSource">
       <sql>SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id&#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen&#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id = CAST(:demi_id1 AS integer)&#xd;UNION ALL&#xd;SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id  &#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen &#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id != CAST(:demi_id2 AS integer) &#xd;    AND mi.moin_id = (&#xd;        SELECT moin_id &#xd;        FROM alm.deta_movimientos_internos &#xd;        WHERE demi_id = CAST(:demi_id3 AS integer)&#xd;    )&#xd;    AND mi.empr_id = CAST(:empr_id AS integer);</sql>
-      <result outputType="json">{&#xd;   "movimientosInternos":{&#xd;      "movimientoInterno":[&#xd;         {&#xd;            "moin_id":"$moin_id",&#xd;            "num_comprobante":"$num_comprobante",&#xd;            "depo_id_origen":"$depo_id_origen",&#xd;            "depo_id_destino":"$depo_id_destino",&#xd;            "patente":"$patente",&#xd;            "acoplado":"$acoplado",&#xd;            "conductor":"$conductor",&#xd;            "arti_id":"$arti_id",&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "descripcion_articulo":"$descripcion_articulo",&#xd;            "desc_lote_destino":"$desc_lote_destino",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "descr_depo_origen":"$descr_depo_origen",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "observaciones_recepcion":"$observaciones_recepcion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <result outputType="json">{&#xd;   "movimientosInternos":{&#xd;      "movimientoInterno":[&#xd;         {&#xd;            "moin_id":"$moin_id",&#xd;            "num_comprobante":"$num_comprobante",&#xd;            "depo_id_origen":"$depo_id_origen",&#xd;            "depo_id_destino":"$depo_id_destino",&#xd;            "patente":"$patente",&#xd;            "acoplado":"$acoplado",&#xd;            "conductor":"$conductor",&#xd;            "arti_id":"$arti_id",&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "cantidad_recibida":"$cantidad_recibida",&#xd;            "descripcion_articulo":"$descripcion_articulo",&#xd;            "desc_lote_destino":"$desc_lote_destino",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "descr_depo_origen":"$descr_depo_origen",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "observaciones_recepcion":"$observaciones_recepcion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="demi_id1" sqlType="STRING"/>
       <param name="demi_id2" sqlType="STRING"/>
@@ -529,8 +529,8 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getAjustexdeajId" useConfig="ToolsDataSource">
-      <sql>select a.ajus_id, a.tipo_ajuste, a.justificacion  &#xd;from &#xd;alm.ajustes a left join alm.deta_ajustes da on da.ajus_id = a.ajus_id &#xd;where da.deaj_id  = cast(:deaj_id as integer)</sql>
-      <result outputType="json">{&#xd;   "ajustes": {&#xd;      "ajuste": [&#xd;         {&#xd;            "ajus_id": "$ajus_id",&#xd;            "tipo_ajuste": "$tipo_ajuste",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>SELECT a.ajus_id, a.tipo_ajuste, a.justificacion, da.cantidad, da.fec_alta,&#xd;       art.descripcion, art.barcode, art.unidad_medida &#xd;FROM alm.ajustes a&#xd;LEFT JOIN alm.deta_ajustes da ON da.ajus_id = a.ajus_id&#xd;LEFT JOIN alm.alm_lotes lot ON lot.lote_id = da.lote_id&#xd;LEFT JOIN alm.alm_articulos art ON art.arti_id = lot.arti_id&#xd;WHERE a.ajus_id = (&#xd;    SELECT ajus_id &#xd;    FROM alm.deta_ajustes &#xd;    WHERE deaj_id = CAST(:deaj_id AS INTEGER)&#xd;)</sql>
+      <result outputType="json">{&#xd;   "ajustes": {&#xd;      "ajuste": [&#xd;         {&#xd;            "ajus_id": "$ajus_id",&#xd;            "tipo_ajuste": "$tipo_ajuste",&#xd;            "justificacion": "$justificacion",&#xd;            "cantidad": "$cantidad",&#xd;            "fec_alta": "$fec_alta",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "unidad_medida":"$unidad_medida"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="deaj_id" sqlType="STRING"/>
    </query>
    <query id="getDataMovimientoInternoXdemiId" useConfig="ToolsDataSource">
@@ -593,6 +593,11 @@
       <param name="fec2" sqlType="STRING"/>
       <param name="limit" sqlType="STRING"/>
       <param name="offset" sqlType="STRING"/>
+   </query>
+   <query id="getEntregaxBatch" useConfig="ToolsDataSource">
+      <sql>select apm.pema_id,&#xd;       apm.estado,&#xd;       aem.comprobante,&#xd;       aem.solicitante,&#xd;       aem.fecha as fec_alta,&#xd;       adem.cantidad,&#xd;       aa.barcode,&#xd;       aem.enma_id,&#xd;       aa.descripcion as articulo,&#xd;       ad.descripcion as deposito,&#xd;       l.lote_id as lote&#xd;from  prd.lotes_hijos lh&#xd;inner join prd.lotes l on l.batch_id = lh.batch_id_padre&#xd;inner join alm.alm_pedidos_materiales apm on apm.batch_id = lh.batch_id_padre &#xd;inner join alm.alm_entrega_materiales aem on aem.pema_id = apm.pema_id&#xd;inner join alm.alm_deta_entrega_materiales adem on adem.enma_id = aem.enma_id &#xd;inner join alm.alm_articulos aa on aa.arti_id = adem.arti_id&#xd;inner join alm.alm_lotes al on adem.lote_id = al.lote_id &#xd;inner join alm.alm_depositos ad on ad.depo_id = adem.depo_id &#xd;where lh.batch_id = cast(:batch_id as integer)</sql>
+      <result outputType="json">{&#xd;  "entregas": {&#xd;    "entrega": [&#xd;      {&#xd;        "pema_id": "$pema_id",&#xd;        "enma_id":"$enma_id",&#xd;        "estado": "$estado",&#xd;        "cantidad": "$cantidad",&#xd;        "comprobante": "$comprobante",&#xd;        "deposito": "$deposito",&#xd;        "fec_alta": "$fec_alta",&#xd;        "solicitante": "$solicitante",&#xd;        "barcode": "$barcode",&#xd;        "articulo": "$articulo",&#xd;        "lote":"$lote"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="batch_id" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
@@ -1225,6 +1230,11 @@
          <with-param name="fec2" query-param="fec2"/>
          <with-param name="limit" query-param="limit"/>
          <with-param name="offset" query-param="offset"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/entrega/batch/{batch_id}">
+      <call-query href="getEntregaxBatch">
+         <with-param name="batch_id" query-param="batch_id"/>
       </call-query>
    </resource>
 </data>
