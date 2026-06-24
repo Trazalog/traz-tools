@@ -1,7 +1,7 @@
 # Virtual MCP Server — Equipos [E2-MCP-01]
 
 **API fuente:** `EquiposAPI-TrazalogMCP v1.0` (publicada en E1-API-10)
-**Estado:** Pendiente configuración en consola WSO2
+**Estado:** Configurado y verificado en APIM 4.6.0 ✅
 
 > **Nota de versión (APIM 4.6.0):** El Publisher expone MCP Servers como un tipo de
 > API independiente. Los tool annotations (`readOnlyHint`, etc.) **no tienen campos
@@ -102,30 +102,99 @@ Menú lateral → **`Deployments`**:
 1. Click **`Publish`** (esquina superior derecha o sección Lifecycle)
 2. Estado cambia a **`Published`**
 
+> **⚠️ Importante:** Después de publicar el MCP Server, los MCP Servers no aparecen
+> en el listado de la Publisher REST API (`/api/am/publisher/v4/apis`). Son una
+> entidad separada del tipo HTTP. Verificar via los logs del gateway o testeando
+> el endpoint directamente.
+
 ---
 
-## 3. Verificar
+## 3. Endpoint MCP verificado
 
-Desde el Developer Portal o MCP Hub:
+El endpoint del Virtual MCP Server es:
 
-```
-https://localhost:9443/devportal
-```
-
-Buscar `trazalog-equipos` y confirmar que aparecen dos tools.
-
-La URL del endpoint MCP será:
 ```
 https://localhost:8243/trazalog-equipos/1.0/mcp
 ```
 
+**Versión de protocolo MCP soportada:** `2025-06-18`
+
+> **Nota:** El context path del MCP Server (`/trazalog-equipos`) es diferente al
+> context de la API HTTP fuente (`/equiposapi-trazalogmcp`). Son entidades distintas
+> en WSO2 APIM 4.6.0.
+
 ---
 
-## 4. Test rápido
+## 4. Tests verificados
+
+### 4.1 Initialize (handshake MCP)
 
 ```bash
-curl -k -H "Authorization: Bearer <JWT_DNATO>" \
-  https://localhost:8243/trazalog-equipos/1.0/mcp/equipos
+curl -k -X POST https://localhost:8243/trazalog-equipos/1.0/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-06-18",
+      "capabilities": {},
+      "clientInfo": {
+        "name": "test-client",
+        "version": "1.0.0"
+      }
+    },
+    "id": 1
+  }'
+```
+
+Respuesta esperada:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+      "tools": {
+        "listChanged": false
+      }
+    },
+    "serverInfo": {
+      "name": "trazalog-equipos",
+      "version": "1.0",
+      "description": "This is an MCP Server"
+    }
+  }
+}
+```
+
+### 4.2 Tools/list
+
+```bash
+curl -k -X POST https://localhost:8243/trazalog-equipos/1.0/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":2}'
+```
+
+Respuesta esperada: lista con tools `get_equipo` y `get_equipos` con sus
+`inputSchema` completos (descripción, tipo y parámetros requeridos).
+
+### 4.3 Tools/call — get_equipos
+
+```bash
+curl -k -X POST https://localhost:8243/trazalog-equipos/1.0/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_DNATO>" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "get_equipos",
+      "arguments": {}
+    },
+    "id": 3
+  }'
 ```
 
 Debe devolver la lista de equipos de la empresa del JWT.
@@ -137,3 +206,15 @@ Debe devolver la lista de equipos de la empresa del JWT.
 El JWT Bearer del cliente determina la empresa.
 El gateway extrae `empr_id` del claim JWT vía `EmprIdInjectorPolicy` (E9-IDENT-05).
 El agente nunca ve ni pasa el parámetro de empresa.
+
+---
+
+## 6. Para ngrok + Claude.ai
+
+URL a exponer via ngrok:
+
+```
+https://localhost:8243/trazalog-equipos/1.0/mcp
+```
+
+Configurar en Claude.ai → Settings → Integrations → MCP Servers con esa URL.
