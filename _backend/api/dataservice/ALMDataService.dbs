@@ -582,7 +582,7 @@
       <param name="art_descrip" sqlType="STRING"/>
    </query>
    <query id="getHistoricoMovimientosPaginado" useConfig="ToolsDataSource">
-      <sql>SELECT&#xd;    mh.*,&#xd;    TO_CHAR(mh.fec_alta, 'YYYY-MM-DD HH24:MI:SS') AS fec_alta_formatted,&#xd;    COUNT(*) OVER() AS total_count&#xd;FROM&#xd;    alm.movimientos_historicos_vw mh,&#xd;    (&#xd;        SELECT&#xd;            :depo_id AS depo_id,&#xd;            :tipo AS tipo,&#xd;            :arti_id AS arti_id,&#xd;            :lote_id AS lote_id,&#xd;            :empr_id AS empr_id&#xd;    ) param&#xd;WHERE&#xd;    mh.fec_alta BETWEEN TO_DATE(:fec1, 'YYYY-MM-DD') AND TO_DATE(:fec2, 'YYYY-MM-DD')&#xd;    AND CAST(param.empr_id AS INTEGER) = mh.empr_id&#xd;    AND mh.depo_id = CASE&#xd;        WHEN param.depo_id = 'TODOS' THEN mh.depo_id&#xd;        ELSE CAST(param.depo_id AS INTEGER)&#xd;    END&#xd;    AND mh.tipo_mov = CASE&#xd;        WHEN param.tipo = 'TODOS' THEN mh.tipo_mov&#xd;        ELSE param.tipo&#xd;    END&#xd;    AND mh.arti_id = CASE&#xd;        WHEN param.arti_id = 'TODOS' THEN mh.arti_id&#xd;        ELSE CAST(param.arti_id AS INTEGER)&#xd;    END&#xd;    AND mh.lote_id = CASE&#xd;        WHEN param.lote_id = 'TODOS' THEN mh.lote_id&#xd;        ELSE CAST(param.lote_id AS INTEGER)&#xd;    END&#xd;ORDER BY&#xd;    mh.fec_alta desc&#xd;    LIMIT CAST(:limit AS INTEGER) OFFSET CAST(:offset AS INTEGER);</sql>
+      <sql>SELECT&#xd;    mh.*,&#xd;    TO_CHAR(mh.fec_alta, 'YYYY-MM-DD HH24:MI:SS') AS fec_alta_formatted,&#xd;    COUNT(*) OVER() AS total_count&#xd;FROM&#xd;    alm.movimientos_historicos_vw mh,&#xd;    (&#xd;        SELECT&#xd;            :depo_id AS depo_id,&#xd;            :tipo AS tipo,&#xd;            :arti_id AS arti_id,&#xd;            :lote_id AS lote_id,&#xd;            :empr_id AS empr_id,&#xd;            :search AS search&#xd;    ) param&#xd;WHERE&#xd;    mh.fec_alta BETWEEN TO_DATE(:fec1, 'YYYY-MM-DD')&#xd;                    AND TO_DATE(:fec2, 'YYYY-MM-DD')&#xd;    AND CAST(param.empr_id AS INTEGER) = mh.empr_id&#xd;    AND mh.depo_id = CASE&#xd;        WHEN param.depo_id = 'TODOS' THEN mh.depo_id&#xd;        ELSE CAST(param.depo_id AS INTEGER)&#xd;    END&#xd;    AND mh.tipo_mov = CASE&#xd;        WHEN param.tipo = 'TODOS' THEN mh.tipo_mov&#xd;        ELSE param.tipo&#xd;    END&#xd;    AND mh.arti_id = CASE&#xd;        WHEN param.arti_id = 'TODOS' THEN mh.arti_id&#xd;        ELSE CAST(param.arti_id AS INTEGER)&#xd;    END&#xd;    AND mh.lote_id = CASE&#xd;        WHEN param.lote_id = 'TODOS' THEN mh.lote_id&#xd;        ELSE CAST(param.lote_id AS INTEGER)&#xd;    END&#xd;    AND (&#xd;        param.search IS NULL&#xd;        OR param.search = ''&#xd;        OR UPPER(mh.descripcion) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.codigo) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.lote) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.deposito) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.tipo_mov) LIKE UPPER('%' || param.search || '%')&#xd;    )&#xd;ORDER BY&#xd;    mh.fec_alta DESC&#xd;LIMIT CAST(:limit AS INTEGER)&#xd;OFFSET CAST(:offset AS INTEGER);</sql>
       <result outputType="json">{&#xd;  "movimientos":{&#xd;    "movimiento":[&#xd;      {&#xd;        "referencia": "$referencia",&#xd;        "codigo": "$codigo",&#xd;        "descripcion": "$descripcion",&#xd;        "cantidad": "$cantidad",&#xd;        "stock_actual": "$stock_actual",&#xd;        "deposito": "$deposito",&#xd;        "fec_alta": "$fec_alta",&#xd;        "tipo_mov": "$tipo_mov",&#xd;        "lote":"$lote",&#xd;        "fec_alta_formatted":"$fec_alta_formatted",&#xd;        "total_count":"$total_count"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="depo_id" sqlType="STRING"/>
       <param name="tipo" sqlType="STRING"/>
@@ -593,6 +593,7 @@
       <param name="fec2" sqlType="STRING"/>
       <param name="limit" sqlType="STRING"/>
       <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
    </query>
    <query id="getEntregaxBatch" useConfig="ToolsDataSource">
       <sql>select apm.pema_id,&#xd;       apm.estado,&#xd;       aem.comprobante,&#xd;       aem.solicitante,&#xd;       aem.fecha as fec_alta,&#xd;       adem.cantidad,&#xd;       aa.barcode,&#xd;       aem.enma_id,&#xd;       aa.descripcion as articulo,&#xd;       ad.descripcion as deposito,&#xd;       l.lote_id as lote&#xd;from  prd.lotes_hijos lh&#xd;inner join prd.lotes l on l.batch_id = lh.batch_id_padre&#xd;inner join alm.alm_pedidos_materiales apm on apm.batch_id = lh.batch_id_padre &#xd;inner join alm.alm_entrega_materiales aem on aem.pema_id = apm.pema_id&#xd;inner join alm.alm_deta_entrega_materiales adem on adem.enma_id = aem.enma_id &#xd;inner join alm.alm_articulos aa on aa.arti_id = adem.arti_id&#xd;inner join alm.alm_lotes al on adem.lote_id = al.lote_id &#xd;inner join alm.alm_depositos ad on ad.depo_id = adem.depo_id &#xd;where lh.batch_id = cast(:batch_id as integer)</sql>
@@ -1219,7 +1220,7 @@
          <with-param name="art_descrip" query-param="art_descrip"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/movimientos/paginados/tipo/{tipo}/desde/{fec1}/hasta/{fec2}/deposito/{depo_id}/articulo/{arti_id}/lote/{lote_id}/empresa/{empr_id}/{offset}/{limit}">
+   <resource method="GET" path="/movimientos/paginados/tipo/{tipo}/desde/{fec1}/hasta/{fec2}/deposito/{depo_id}/articulo/{arti_id}/lote/{lote_id}/empresa/{empr_id}/{offset}/{limit}/{search}">
       <call-query href="getHistoricoMovimientosPaginado">
          <with-param name="depo_id" query-param="depo_id"/>
          <with-param name="tipo" query-param="tipo"/>
@@ -1230,6 +1231,7 @@
          <with-param name="fec2" query-param="fec2"/>
          <with-param name="limit" query-param="limit"/>
          <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
       </call-query>
    </resource>
    <resource method="GET" path="/entrega/batch/{batch_id}">
