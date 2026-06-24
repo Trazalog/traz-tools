@@ -29,7 +29,12 @@
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
-         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- ADR-008 fix: un GET sin body NO debe enviar Content-Type: application/json;
+              rompe el JsonStreamBuilder del DSS (NullPointerException: charsetName → 500).
+              El Accept ya define el formato de salida JSON. -->
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
 
          <call>
@@ -80,7 +85,12 @@
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
-         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- ADR-008 fix: un GET sin body NO debe enviar Content-Type: application/json;
+              rompe el JsonStreamBuilder del DSS (NullPointerException: charsetName → 500).
+              El Accept ya define el formato de salida JSON. -->
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
 
          <call>
@@ -329,7 +339,12 @@
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
-         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- ADR-008 fix: un GET sin body NO debe enviar Content-Type: application/json;
+              rompe el JsonStreamBuilder del DSS (NullPointerException: charsetName → 500).
+              El Accept ya define el formato de salida JSON. -->
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
          <call>
             <endpoint>
@@ -377,7 +392,12 @@
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
-         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- ADR-008 fix: un GET sin body NO debe enviar Content-Type: application/json;
+              rompe el JsonStreamBuilder del DSS (NullPointerException: charsetName → 500).
+              El Accept ya define el formato de salida JSON. -->
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
          <call>
             <endpoint>
