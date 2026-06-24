@@ -1,34 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  EmprIdFromHeader — lee empr_id del header X-Empr-Id inyectado por el APIM.
+  EmprIdFromHeader — deriva empr_id del backend JWT que firma e inyecta el APIM.
 
-  ADR-008 (Mayo 2026): el APIM Gateway valida el JWT de Dnato e inyecta
-  X-Empr-Id antes de proxear al MI. Esta sequence reemplaza la combinación
-  jwtValidator + emprIdInjector en los resources MCP de toolsMANAPI.xml.
+  ADR-008 (jun-2026, Opción 1): la operation policy del gateway NO puede leer el JWT
+  (APIM elimina Authorization tras validar y el backend JWT se agrega recién al despachar).
+  Por eso el empr_id se deriva acá, del header X-JWT-Assertion: el backend JWT que APIM
+  genera tras validar el token de Dnato. Es la propagación de identidad canónica de WSO2.
 
-  Setea la property jwt_empr_id (nombre heredado) para compatibilidad con
-  la lógica downstream de toolsMANAPI.xml (URL building, DataService calls).
-  El MI NO valida el JWT; confía en el header inyectado por el APIM.
+  SEGURIDAD:
+  - X-JWT-Assertion lo firma APIM; el cliente no puede falsificarlo a través del gateway.
+  - NO se confía en X-Empr-Id del cliente (sin la policy del gateway que lo eliminaba,
+    sería spoofeable). Solo el X-JWT-Assertion es fuente de verdad.
+  - PROD: validar la firma de la assertion contra el cert del gateway y asegurar que el
+    MI (8290) no sea alcanzable directamente por clientes.
+
+  Setea jwt_empr_id (nombre heredado) para compatibilidad con toolsMANAPI.xml.
 -->
 <sequence name="emprIdFromHeader" xmlns="http://ws.apache.org/ns/synapse">
 
-    <property name="jwt_empr_id"
-              expression="$trp:X-Empr-Id"
+    <property name="x_jwt_assertion"
+              expression="$trp:X-JWT-Assertion"
               scope="default" type="STRING"/>
+
+    <!-- Rhino/Nashorn-safe: Packages.java.* funciona en ambos motores.
+         split(".") literal. Fail-closed: jwt_empr_id queda vacío si algo falla. -->
+    <script language="js"><![CDATA[
+        mc.setProperty("jwt_empr_id", "");
+        try {
+            var assertion = mc.getProperty("x_jwt_assertion");
+            if (assertion) {
+                var parts = ("" + assertion).split(".");
+                if (parts.length === 3) {
+                    var bytes   = Packages.java.util.Base64.getUrlDecoder().decode(parts[1]);
+                    var payload = JSON.parse("" + new Packages.java.lang.String(bytes, "UTF-8"));
+                    if (payload.empr_id || payload.empr_id === 0) {
+                        mc.setProperty("jwt_empr_id", "" + payload.empr_id);
+                    }
+                }
+            }
+        } catch (e) {
+            mc.setProperty("dbg_err", "" + e);
+        }
+    ]]></script>
 
     <filter xpath="get-property('jwt_empr_id') = '' or not(boolean(get-property('jwt_empr_id')))">
         <then>
-            <!-- WARN explícito: 503 indica falla de configuración del APIM, no del cliente.
-                 400 sería engañoso (cliente no envió nada mal).
-                 401 sería engañoso (auth podría estar bien, el problema es config).
-                 503 dice "la mediación del gateway no se aplicó". -->
             <log level="custom" category="WARN">
-                <property name="text"  value="#TRAZA | MI | EmprIdFromHeader | X-Empr-Id MISSING — APIM mediation may not be applied. Check Key Manager Dnato and in-sequence association."/>
-                <property name="api"   expression="get-property('SYNAPSE_REST_API')"/>
-                <property name="path"  expression="get-property('REST_FULL_REQUEST_PATH')"/>
+                <property name="text" value="#TRAZA | MI | EmprIdFromHeader | empr_id NO resuelto desde X-JWT-Assertion — verificar backend JWT del APIM con claim empr_id"/>
+                <property name="path" expression="get-property('REST_FULL_REQUEST_PATH')"/>
             </log>
             <payloadFactory media-type="json">
-                <format>{"error":"identity_header_missing","message":"X-Empr-Id no presente. La mediacion del APIM no se aplico. Verificar configuracion del Key Manager Dnato y la in-sequence EmprIdInjectorPolicy."}</format>
+                <format>{"error":"identity_missing","message":"empr_id no resuelto desde X-JWT-Assertion. Verificar que el APIM genere backend JWT con el claim empr_id."}</format>
                 <args/>
             </payloadFactory>
             <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
@@ -38,7 +60,7 @@
     </filter>
 
     <log level="custom" category="DEBUG">
-        <property name="text"    value="#TRAZA | MCP | EmprIdFromHeader | empr_id cargado desde header APIM"/>
+        <property name="text"    value="#TRAZA | MCP | EmprIdFromHeader | empr_id desde X-JWT-Assertion"/>
         <property name="empr_id" expression="get-property('jwt_empr_id')"/>
     </log>
 
