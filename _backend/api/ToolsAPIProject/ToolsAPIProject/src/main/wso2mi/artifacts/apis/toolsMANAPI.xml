@@ -191,6 +191,11 @@
 
          <!-- Paso 2: GET id de la solicitud recién creada -->
          <header name="Accept" scope="transport" value="application/json"/>
+         <!-- ADR-008 fix: limpiar Content-Type heredado del POST anterior; un GET sin body con
+              Content-Type json rompe el JsonStreamBuilder del DSS (NPE charsetName -> 500). -->
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
          <property name="uri.var.ultimaSolicitud_url"
                    expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio/ultima/',get-property('equipo_id'))"/>
