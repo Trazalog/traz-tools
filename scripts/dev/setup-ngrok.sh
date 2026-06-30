@@ -42,6 +42,8 @@ if [[ "${1:-}" == "--reset" ]]; then
   sed -i 's/^hostname = .*/hostname = "localhost"/' "$DEPLOYMENT_TOML"
   # Restaurar el issuer URL-based a la URL local
   sed -i 's|^name = "https://[^"]*\.ngrok[^"]*"|name = "http://localhost/oauth"|g' "$DEPLOYMENT_TOML"
+  # Restaurar https_endpoint del gateway al valor local
+  sed -i 's|^https_endpoint = "https://[^"]*\.ngrok[^"]*"|https_endpoint = "https://localhost:8243"|' "$DEPLOYMENT_TOML"
   echo "deployment.toml restaurado."
   echo ""
   echo "Reiniciando APIM..."
@@ -88,12 +90,12 @@ echo "=== Paso 2: Obtener URLs de ngrok ==="
 
 TUNNELS=$(curl -s "$NGROK_API_URL" 2>/dev/null)
 
-# Buscar el túnel que apunta a :8243 (APIM gateway)
+# Buscar el túnel que apunta a :8280 (APIM gateway HTTP — ngrok termina TLS por su lado)
 NGROK_APIM_URL=$(echo "$TUNNELS" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 for t in d.get('tunnels', []):
-    if ':8243' in t.get('config',{}).get('addr',''):
+    if ':8280' in t.get('config',{}).get('addr',''):
         u = t.get('public_url','')
         if u.startswith('https://'):
             print(u)
@@ -114,7 +116,7 @@ for t in d.get('tunnels', []):
 " 2>/dev/null)
 
 if [[ -z "$NGROK_APIM_URL" ]]; then
-  echo "ERROR: No se encontró túnel ngrok para puerto 8243 (APIM)."
+  echo "ERROR: No se encontró túnel ngrok para puerto 8280 (APIM)."
   echo "Túneles activos:"
   echo "$TUNNELS" | python3 -c "import sys,json; [print(t.get('public_url','?'), '->', t.get('config',{}).get('addr','?')) for t in json.load(sys.stdin).get('tunnels',[])]" 2>/dev/null
   exit 1
@@ -136,7 +138,7 @@ echo "  Dnato:        $NGROK_DNATO_URL  (hostname: $NGROK_DNATO_HOST)"
 echo ""
 echo "=== Paso 3: Actualizar deployment.toml ==="
 
-DNATO_ISSUER_NGROK="${NGROK_DNATO_URL}/oauth"
+DNATO_ISSUER_NGROK="${NGROK_DNATO_URL}/traz-comp-dnato/oauth"
 CURRENT_HOSTNAME=$(grep '^hostname' "$DEPLOYMENT_TOML" | sed 's/hostname = "\(.*\)"/\1/')
 CURRENT_ISSUER=$(grep '^name = "http' "$DEPLOYMENT_TOML" | head -1 | sed 's/name = "\(.*\)"/\1/')
 
@@ -146,11 +148,13 @@ echo "  issuer actual:   $CURRENT_ISSUER → $DNATO_ISSUER_NGROK"
 # Backup antes de modificar
 cp "$DEPLOYMENT_TOML" "${DEPLOYMENT_TOML}.bak.$(date +%Y%m%d%H%M%S)"
 
-# Actualizar hostname del servidor (afecta resource_metadata en WWW-Authenticate)
+# Actualizar hostname del servidor
 sed -i "s|^hostname = .*|hostname = \"$NGROK_APIM_HOST\"|" "$DEPLOYMENT_TOML"
 
+# Actualizar https_endpoint del gateway (afecta resource_metadata en WWW-Authenticate y PRM resource)
+sed -i "s|^https_endpoint = .*|https_endpoint = \"$NGROK_APIM_URL\"|" "$DEPLOYMENT_TOML"
+
 # Actualizar el [[apim.jwt.issuer]] name URL-based (para validar JWTs de Dnato ngrok)
-# Solo modifica la línea `name = "http...` bajo el bloque de JWT issuer
 sed -i "s|^name = \"http[^\"]*\"|name = \"$DNATO_ISSUER_NGROK\"|g" "$DEPLOYMENT_TOML"
 
 echo "  deployment.toml actualizado. Backup en ${DEPLOYMENT_TOML}.bak.*"
@@ -185,7 +189,7 @@ echo "  APIM listo."
 echo ""
 echo "=== Paso 5: Actualizar Resident KM issuer → $NGROK_DNATO_URL/oauth ==="
 
-DNATO_ISSUER="${NGROK_DNATO_URL}/oauth"
+DNATO_ISSUER="${NGROK_DNATO_URL}/traz-comp-dnato/oauth"
 
 curl -s -k -u $APIM_ADMIN_CREDENTIALS \
   -X PUT "$APIM_ADMIN_URL/api/am/admin/v4/key-managers/$RESIDENT_KM_ID" \
@@ -242,17 +246,14 @@ echo ""
 echo "  AHORA: Exportar variables de entorno para Dnato antes de iniciar Apache:"
 echo ""
 echo "  ┌─────────────────────────────────────────────────────────────────┐"
-echo "  │  export DNATO_PUBLIC_URL=\"${NGROK_DNATO_URL}\"                 │"
+echo "  │  export DNATO_PUBLIC_URL=\"${NGROK_DNATO_URL}/traz-comp-dnato\" │"
 echo "  │  export DNATO_ISSUER=\"${DNATO_ISSUER}\"                        │"
-echo "  │  # (luego reiniciar Apache para que las vars tomen efecto)      │"
-echo "  │  sudo systemctl restart apache2                                  │"
+echo "  │  # Luego configurar en XAMPP httpd-vhosts.conf y reiniciar:    │"
+echo "  │  sudo /opt/lampp/lampp restartapache                            │"
 echo "  └─────────────────────────────────────────────────────────────────┘"
 echo ""
-echo "  Si Apache corre como servicio, configurar las vars en /etc/apache2/envvars"
-echo "  o en el VirtualHost con SetEnv."
-echo ""
-echo "  También iniciar el JWKS server PHP (si no está corriendo):"
-echo "  php -S localhost:8090 /tmp/jwks-server.php &"
+echo "  En XAMPP: agregar SetEnv en el VirtualHost traz-comp.local en"
+echo "  /opt/lampp/etc/extra/httpd-vhosts.conf (ver instrucciones abajo)."
 echo ""
 
 # ─── RESUMEN ─────────────────────────────────────────────────────────────────
