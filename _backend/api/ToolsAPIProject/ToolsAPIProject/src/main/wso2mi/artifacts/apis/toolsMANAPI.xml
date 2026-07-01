@@ -17,15 +17,15 @@
                    name="dataservices_url"
                    expression="$ctx:apiconf//dataservices_url"/>
 
-         <!-- Build URL: empr_id from validated JWT claim, NOT from caller -->
+         <!-- Build URL: usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
          <property name="uri.var.getEquipo_url"
-                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/equipo/',get-property('jwt_empr_id'),'/',get-property('uri.var.equi_id'))"/>
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/equipo/',get-property('jwt_mysql_empresa_id'),'/',get-property('uri.var.equi_id'))"/>
 
          <log level="custom" category="DEBUG">
-            <property name="text"    value="#TRAZA | MCP | get_equipo | iniciando"/>
-            <property name="equi_id" expression="get-property('uri.var.equi_id')"/>
-            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
-            <property name="url"     expression="$ctx:uri.var.getEquipo_url"/>
+            <property name="text"              value="#TRAZA | MCP | get_equipo | iniciando"/>
+            <property name="equi_id"           expression="get-property('uri.var.equi_id')"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="url"               expression="$ctx:uri.var.getEquipo_url"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
@@ -75,13 +75,14 @@
                    name="dataservices_url"
                    expression="$ctx:apiconf//dataservices_url"/>
 
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
          <property name="uri.var.getEquipos_url"
-                   expression="fn:concat($ctx:dataservices_url,'/MANEquiposDataService/mcp/equipos/',get-property('jwt_empr_id'))"/>
+                   expression="fn:concat($ctx:dataservices_url,'/MANEquiposDataService/mcp/equipos/',get-property('jwt_mysql_empresa_id'))"/>
 
          <log level="custom" category="DEBUG">
-            <property name="text"    value="#TRAZA | MCP | get_equipos | iniciando"/>
-            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
-            <property name="url"     expression="$ctx:uri.var.getEquipos_url"/>
+            <property name="text"              value="#TRAZA | MCP | get_equipos | iniciando"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="url"               expression="$ctx:uri.var.getEquipos_url"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
@@ -157,7 +158,7 @@
          <log level="custom" category="DEBUG">
             <property name="text"      value="#TRAZA | MCP | create_ot | iniciando"/>
             <property name="equipo_id" expression="get-property('equipo_id')"/>
-            <property name="empr_id"   expression="get-property('jwt_empr_id')"/>
+            <property name="empr_id"   expression="get-property('jwt_mysql_empresa_id')"/>
          </log>
 
          <!-- Paso 1: INSERT solicitud_reparacion -->
@@ -167,7 +168,7 @@
                <arg evaluator="xml" expression="get-property('f_solicitado')"/>
                <arg evaluator="xml" expression="get-property('equipo_id')"/>
                <arg evaluator="xml" expression="get-property('descripcion')"/>
-               <arg evaluator="xml" expression="get-property('jwt_empr_id')"/>
+               <arg evaluator="xml" expression="get-property('jwt_mysql_empresa_id')"/>
             </args>
          </payloadFactory>
          <header name="Accept" scope="transport" value="application/json"/>
@@ -220,7 +221,7 @@
             <format>{"nombre_proceso":"Proceso de Mantenimiento AssetPlanner SIM","payload":{"idSolicitudServicio":"$1","idOT":"0"},"session":"","emprId":"$2"}</format>
             <args>
                <arg evaluator="xml" expression="get-property('sose_id')"/>
-               <arg evaluator="xml" expression="get-property('jwt_empr_id')"/>
+               <arg evaluator="xml" expression="get-property('jwt_mysql_empresa_id')"/>
             </args>
          </payloadFactory>
          <header name="Accept" scope="transport" value="application/json"/>
@@ -336,11 +337,11 @@
                    name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
 
          <property name="uri.var.listaOTs_url"
-                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/getSolicitudServicioNoConforme/',get-property('jwt_empr_id'))"/>
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/getSolicitudServicioNoConforme/',get-property('jwt_mysql_empresa_id'))"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | MCP | get_ots | lista"/>
-            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="empr_id" expression="get-property('jwt_mysql_empresa_id')"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
@@ -388,12 +389,12 @@
                    name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
 
          <property name="uri.var.detalleOT_url"
-                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/ot/',get-property('jwt_empr_id'),'/',get-property('uri.var.id_solicitud'))"/>
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/ot/',get-property('jwt_mysql_empresa_id'),'/',get-property('uri.var.id_solicitud'))"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"         value="#TRAZA | MCP | get_ot | detalle"/>
             <property name="id_solicitud" expression="get-property('uri.var.id_solicitud')"/>
-            <property name="empr_id"      expression="get-property('jwt_empr_id')"/>
+            <property name="empr_id"      expression="get-property('jwt_mysql_empresa_id')"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>

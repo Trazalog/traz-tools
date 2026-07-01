@@ -300,6 +300,11 @@
       <sql>UPDATE core.equipos &#xd;SET eliminado = TRUE&#xd;WHERE equi_id = cast(:equi_id as integer);</sql>
       <param name="equi_id" sqlType="STRING"/>
    </query>
+   <query id="getEmpresaById" useConfig="ToolsDataSource">
+      <sql>SELECT empr_id, descripcion, cuit, telefono, email, empr_id_mysql FROM core.empresas WHERE empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "empresa":{&#xd;        "empr_id":"$empr_id",&#xd;        "descripcion":"$descripcion",&#xd;        "cuit":"$cuit",&#xd;        "telefono":"$telefono",&#xd;        "email":"$email",&#xd;        "empr_id_mysql":"$empr_id_mysql"&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <query id="setEmpresa" returnGeneratedKeys="true" useConfig="ToolsDataSource">
       <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id,&#xd;    imagepath,&#xd;    image&#xd;)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id,&#xd;    :imagepath,&#xd;    :image&#xd;);</sql>
       <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
@@ -810,6 +815,11 @@ WHERE email = :email AND "group" = :group AND "role" = :role</sql>
    <resource method="DELETE" path="/transportista">
       <call-query href="deleteTransportista">
          <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/empresa/{empr_id}">
+      <call-query href="getEmpresaById">
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/empresas">

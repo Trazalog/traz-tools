@@ -26,6 +26,7 @@
          split(".") literal. Fail-closed: jwt_empr_id queda vacío si algo falla. -->
     <script language="js"><![CDATA[
         mc.setProperty("jwt_empr_id", "");
+        mc.setProperty("jwt_mysql_empresa_id", "");
         try {
             var assertion = mc.getProperty("x_jwt_assertion");
             if (assertion) {
@@ -35,6 +36,9 @@
                     var payload = JSON.parse("" + new Packages.java.lang.String(bytes, "UTF-8"));
                     if (payload.empr_id || payload.empr_id === 0) {
                         mc.setProperty("jwt_empr_id", "" + payload.empr_id);
+                    }
+                    if (payload.empr_id_mysql || payload.empr_id_mysql === 0) {
+                        mc.setProperty("jwt_mysql_empresa_id", "" + payload.empr_id_mysql);
                     }
                 }
             }
@@ -60,8 +64,9 @@
     </filter>
 
     <log level="custom" category="DEBUG">
-        <property name="text"    value="#TRAZA | MCP | EmprIdFromHeader | empr_id desde X-JWT-Assertion"/>
-        <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+        <property name="text"              value="#TRAZA | MCP | EmprIdFromHeader | identidad resuelta desde X-JWT-Assertion"/>
+        <property name="empr_id"           expression="get-property('jwt_empr_id')"/>
+        <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
     </log>
 
 </sequence>
