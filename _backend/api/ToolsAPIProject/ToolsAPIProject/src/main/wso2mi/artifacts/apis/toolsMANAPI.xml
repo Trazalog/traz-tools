@@ -323,10 +323,11 @@
       </faultSequence>
    </resource>
 
-   <!-- GET /mcp/ot — lista de OTs de la empresa del JWT (excluye AN y CN) -->
+   <!-- GET /mcp/ot — lista OTs de la empresa del JWT.
+        Param ?estado= opcional. Sin estado: todo excepto AN.
+        Valores: S=Solicitada, A=Asignada, E=En ejecucion, C=Cerrada, CN=Conf. no conforme. -->
    <resource methods="GET" uri-template="/mcp/ot">
       <inSequence>
-         <!-- ADR-008: APIM ya validó el JWT e inyectó X-Empr-Id. Solo leer el header. -->
          <sequence key="emprIdFromHeader"/>
 
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
@@ -336,18 +337,26 @@
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
 
+         <!-- Leer ?estado= del request entrante; vacío si no viene -->
+         <property name="ot_estado_filter"
+                   expression="get-property('query.param.estado')"
+                   scope="default" type="STRING"/>
+         <filter xpath="not(boolean(get-property('ot_estado_filter')))">
+            <then>
+               <property name="ot_estado_filter" value="" scope="default" type="STRING"/>
+            </then>
+         </filter>
+
          <property name="uri.var.listaOTs_url"
-                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/getSolicitudServicioNoConforme/',get-property('jwt_mysql_empresa_id'))"/>
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/ots/',get-property('jwt_mysql_empresa_id'),'?estado=',get-property('ot_estado_filter'))"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | MCP | get_ots | lista"/>
             <property name="empr_id" expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="estado"  expression="get-property('ot_estado_filter')"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
-         <!-- ADR-008 fix: un GET sin body NO debe enviar Content-Type: application/json;
-              rompe el JsonStreamBuilder del DSS (NullPointerException: charsetName → 500).
-              El Accept ya define el formato de salida JSON. -->
          <property name="messageType" scope="axis2" action="remove"/>
          <property name="ContentType" scope="axis2" action="remove"/>
          <header name="Content-Type" scope="transport" action="remove"/>
