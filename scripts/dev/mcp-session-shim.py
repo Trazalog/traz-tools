@@ -122,18 +122,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if STALE_HOST and STALE_HOST != LIVE_HOST and resp_body:
             resp_body = resp_body.replace(STALE_HOST.encode(), LIVE_HOST.encode())
 
-        # Reconocer la extensión io.modelcontextprotocol/ui en la respuesta del initialize.
-        # Claude (2025-11-25) la declara; APIM no la reconoce en capabilities. Si Claude queda
-        # en "modo UI" esperando el ack del server, se puede trabar al ejecutar tools. Aquí se
-        # inyecta el ack en result.capabilities.extensions. Desactivable con SHIM_ACK_UI=0.
-        if (is_initialize and os.environ.get("SHIM_ACK_UI", "1") == "1"
-                and resp_body and status == 200):
+        # NEGOCIAR EL PROTOCOLO HACIA ABAJO en la respuesta del initialize.
+        # APIM no declara versión propia: ecoa la que manda el cliente (verificado). Cuando
+        # Claude manda 2025-11-25, APIM "acepta" esa versión sin implementar su semántica de
+        # ejecución (MCP Apps/UI), y el path de tool-call de Claude se rompe. Por spec, el server
+        # PUEDE responder una versión MENOR y el cliente se adapta. El shim reescribe la versión
+        # negociada a SHIM_PROTOCOL (default 2025-06-18, previa a la extensión UI) y quita la
+        # extensión UI de capabilities, para que Claude use el path de ejecución antiguo.
+        # Desactivable con SHIM_PROTOCOL="" (deja pasar lo que ecoa APIM).
+        target_proto = os.environ.get("SHIM_PROTOCOL", "2025-06-18")
+        if is_initialize and target_proto and resp_body and status == 200:
             try:
                 doc = json.loads(resp_body)
-                caps = doc.setdefault("result", {}).setdefault("capabilities", {})
-                caps.setdefault("extensions", {})["io.modelcontextprotocol/ui"] = {
-                    "mimeTypes": ["text/html;profile=mcp-app"]
-                }
+                result = doc.setdefault("result", {})
+                result["protocolVersion"] = target_proto
+                caps = result.get("capabilities", {})
+                if isinstance(caps, dict):
+                    caps.pop("extensions", None)  # UI no existe pre-2025-11-25
                 resp_body = json.dumps(doc).encode()
             except Exception:
                 pass
