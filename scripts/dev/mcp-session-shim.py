@@ -55,6 +55,15 @@ ENFORCE_AUTH = os.environ.get("SHIM_ENFORCE_AUTH", "1") == "1"
 _HOP = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
         "te", "trailers", "transfer-encoding", "upgrade", "host", "content-length"}
 
+# APIM 4.6.0 hace ECO de los headers del REQUEST dentro de la RESPONSE (bug conocido).
+# Una respuesta con Authorization/Accept/X-Forwarded-* confunde al cliente MCP de Claude
+# (aborta tras initialize sin mandar tools/call). Se eliminan de la respuesta.
+_RESP_STRIP = {"authorization", "accept", "accept-encoding", "accept-language",
+               "host", "user-agent", "te", "trailers", "x-anthropic-client",
+               "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto",
+               "x-cloud-trace-context", "traceparent", "content-length",
+               "transfer-encoding", "connection", "date", "server"}
+
 
 class Handler(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
@@ -117,7 +126,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         self.send_response(status)
         for k, v in resp_headers:
-            if k.lower() in _HOP:
+            # Descartar hop-by-hop y los headers de request que APIM ecoa en la respuesta
+            if k.lower() in _HOP or k.lower() in _RESP_STRIP:
                 continue
             # También reescribir el host viejo en headers (ej. WWW-Authenticate resource_metadata)
             if STALE_HOST and STALE_HOST != LIVE_HOST:
