@@ -159,6 +159,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception:
                 pass
 
+        # Entregar respuestas de MÉTODOS con id (initialize, tools/list, tools/call) como
+        # SSE si el cliente aceptó text/event-stream. El cliente MCP de Claude (Streamable
+        # HTTP) puede requerir el resultado en un stream SSE; APIM responde application/json.
+        # Se envuelve el JSON-RPC como un evento SSE. Desactivable con SHIM_SSE=0.
+        accept = self.headers.get("Accept", "")
+        want_sse = (os.environ.get("SHIM_SSE", "1") == "1"
+                    and "text/event-stream" in accept
+                    and status == 200
+                    and resp_body.strip().startswith(b"{"))
+        content_type_override = None
+        if want_sse:
+            try:
+                # Compactar el JSON a UNA línea (SSE: data debe ir en una sola línea).
+                compact = json.dumps(json.loads(resp_body), separators=(",", ":")).encode()
+                resp_body = b"event: message\r\ndata: " + compact + b"\r\n\r\n"
+                content_type_override = "text/event-stream"
+            except Exception:
+                want_sse = False
+
         # ¿La respuesta ya trae Mcp-Session-Id?
         has_session = any(k.lower() == "mcp-session-id" for k, _ in resp_headers)
 
@@ -167,10 +186,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
             # Descartar hop-by-hop y los headers de request que APIM ecoa en la respuesta
             if k.lower() in _HOP or k.lower() in _RESP_STRIP:
                 continue
+            # Si vamos a servir SSE, no reenviar el Content-Type original
+            if content_type_override and k.lower() == "content-type":
+                continue
             # También reescribir el host viejo en headers (ej. WWW-Authenticate resource_metadata)
             if STALE_HOST and STALE_HOST != LIVE_HOST:
                 v = v.replace(STALE_HOST, LIVE_HOST)
             self.send_header(k, v)
+        if content_type_override:
+            self.send_header("Content-Type", content_type_override)
+            self.send_header("Cache-Control", "no-cache")
 
         # Inyectar Mcp-Session-Id si el server no lo trajo.
         # En el initialize es lo que destraba a Claude; en el resto es inofensivo
