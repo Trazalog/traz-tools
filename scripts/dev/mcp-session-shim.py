@@ -40,6 +40,17 @@ APIM_BASE   = f"http://localhost:{APIM_PORT}"
 STALE_HOST = os.environ.get("SHIM_STALE_HOST", "3928-35-237-63-54.ngrok-free.app")
 LIVE_HOST  = os.environ.get("SHIM_LIVE_HOST",  "05b1-35-237-63-54.ngrok-free.app")
 
+# Host público del gateway APIM (para el resource_metadata del WWW-Authenticate).
+APIM_PUBLIC_HOST = os.environ.get("SHIM_APIM_HOST", "4ff0-35-237-63-54.ngrok-free.app")
+
+# APIM deja pasar initialize/tools-list SIN auth (solo tools/call exige token). El cliente
+# de Claude no hace "lazy auth": si nunca recibe un 401, registra el conector como abierto,
+# NUNCA pide login, y al invocar una tool (que sí necesita token) aborta sin autenticar.
+# Para forzar el flujo OAuth al conectar, el shim exige auth en TODO el endpoint /mcp:
+# sin Authorization → 401 + WWW-Authenticate (apunta al PRM). Así Claude descubre OAuth,
+# pide login, y reintenta con token. Se puede desactivar con SHIM_ENFORCE_AUTH=0.
+ENFORCE_AUTH = os.environ.get("SHIM_ENFORCE_AUTH", "1") == "1"
+
 # Headers hop-by-hop que no se reenvían
 _HOP = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
         "te", "trailers", "transfer-encoding", "upgrade", "host", "content-length"}
@@ -57,6 +68,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # ¿Es un initialize? (para saber si hay que garantizar session id)
         is_initialize = b'"method":"initialize"' in body or b'"method": "initialize"' in body
+
+        # Forzar OAuth: si es el endpoint /mcp y no trae token → 401 con WWW-Authenticate.
+        # Esto hace que Claude descubra el auth server y pida login al conectar, en vez de
+        # registrar el conector como abierto y fallar al invocar tools.
+        if (ENFORCE_AUTH and "/mcp" in self.path
+                and self.command == "POST"
+                and not self.headers.get("Authorization")):
+            prm = f'https://{APIM_PUBLIC_HOST}/trazalog-equipos/1.0/.well-known/oauth-protected-resource'
+            www = (f'Bearer resource_metadata="{prm}", error="invalid_token", '
+                   f'error_description="Access token is missing"')
+            payload = b'{"jsonrpc":"2.0","id":null,"error":{"code":-32001,"message":"Authorization required"}}'
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", www)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
 
         # Reenviar a APIM preservando path, método, headers y body
         target = APIM_BASE + self.path
