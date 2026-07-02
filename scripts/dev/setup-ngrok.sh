@@ -95,7 +95,8 @@ NGROK_APIM_URL=$(echo "$TUNNELS" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 for t in d.get('tunnels', []):
-    if ':8280' in t.get('config',{}).get('addr',''):
+    # El túnel APIM se llama 'apim' (puede apuntar a 8280 directo o al shim en 8899)
+    if t.get('name','') == 'apim':
         u = t.get('public_url','')
         if u.startswith('https://'):
             print(u)
@@ -162,6 +163,16 @@ echo "  deployment.toml actualizado. Backup en ${DEPLOYMENT_TOML}.bak.*"
 # ─── PASO 4: REINICIAR APIM ──────────────────────────────────────────────────
 echo ""
 echo "=== Paso 4: Reiniciar APIM ==="
+
+# Inyectar URLs como Java system properties para que el CAR OAuthDiscovery las lea en runtime.
+# El CAR usa get-property('system','trazalog.mcp.resource.url') y trazalog.dnato.oauth.url.
+MCP_RESOURCE_URL="$NGROK_APIM_URL/trazalog-equipos/1.0/mcp"
+DNATO_AS_URL="$NGROK_DNATO_URL/traz-comp-dnato/oauth"
+export JAVA_OPTS="${JAVA_OPTS:-} -Dtrazalog.mcp.resource.url=${MCP_RESOURCE_URL} -Dtrazalog.dnato.oauth.url=${DNATO_AS_URL}"
+echo "  JAVA_OPTS inyectado:"
+echo "    trazalog.mcp.resource.url  = $MCP_RESOURCE_URL"
+echo "    trazalog.dnato.oauth.url   = $DNATO_AS_URL"
+
 "$APIM_HOME/bin/api-manager.sh" stop 2>/dev/null || true
 sleep 5
 "$APIM_HOME/bin/api-manager.sh" start
@@ -185,6 +196,37 @@ done
 echo ""
 echo "  APIM listo."
 
+# ─── PASO 3b: VERIFICAR / DEPLOY CAR OAuthDiscovery (PRM RFC 9728) ───────────
+# El CAR en $APIM_HOME/repository/deployment/server/carbonapps/ es la fuente
+# definitiva. Se deploya via Carbon Application Deployer (sobrevive registry sync).
+# Las URLs vienen de JAVA_OPTS ya inyectado en el Paso 4.
+echo ""
+echo "=== Paso 3b: Verificar CAR OAuthDiscovery en carbonapps/ ==="
+
+CARBONAPPS_DIR="$APIM_HOME/repository/deployment/server/carbonapps"
+CAR_SOURCE="$(dirname "$(readlink -f "$0")")/../../_backend/api/ApimDiscoveryProject"
+CAR_FILE="$CARBONAPPS_DIR/trazalog-discovery-1.0.0.car"
+
+mkdir -p "$CARBONAPPS_DIR"
+
+if [[ ! -f "$CAR_FILE" ]]; then
+    echo "  CAR no encontrado, construyendo y desplegando..."
+    APIM_HOME="$APIM_HOME" bash "$CAR_SOURCE/build.sh"
+else
+    echo "  CAR ya presente: $CAR_FILE"
+fi
+
+# Verificar que el PRM responda
+echo -n "  Verificando PRM..."
+PRM_RESPONSE=$(curl -s "http://localhost:8280/.well-known/oauth-protected-resource" 2>/dev/null)
+PRM_RESOURCE=$(echo "$PRM_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('resource','?'))" 2>/dev/null || echo "?")
+if [[ "$PRM_RESOURCE" == *"trazalog-equipos"* ]]; then
+    echo " OK"
+    echo "    resource = $PRM_RESOURCE"
+else
+    echo " WARNING: PRM no responde o URL vacía (resource='$PRM_RESOURCE'). Verificar logs APIM."
+fi
+
 # ─── PASO 5: ACTUALIZAR KM ISSUER ────────────────────────────────────────────
 echo ""
 echo "=== Paso 5: Actualizar Resident KM issuer → $NGROK_DNATO_URL/oauth ==="
@@ -201,23 +243,22 @@ curl -s -k -u $APIM_ADMIN_CREDENTIALS \
     \"description\": \"This is Resident Key Manager\",
     \"enabled\": true,
     \"issuer\": \"$DNATO_ISSUER\",
-    \"tokenEndpoint\": \"https://localhost:9443/oauth2/token\",
-    \"revokeEndpoint\": \"https://localhost:9443/oauth2/revoke\",
-    \"certificates\": {\"type\": \"JWKS\", \"value\": \"https://localhost:9443/oauth2/jwks\"},
+    \"tokenEndpoint\": \"${DNATO_ISSUER}/token\",
+    \"revokeEndpoint\": \"${DNATO_ISSUER}/revoke\",
+    \"certificates\": {\"type\": \"JWKS\", \"value\": \"${DNATO_ISSUER}/.well-known/jwks.json\"},
     \"availableGrantTypes\": [\"authorization_code\"],
-    \"enableTokenGeneration\": true,
+    \"enableTokenGeneration\": false,
     \"enableMapOAuthConsumerApps\": false,
-    \"enableOAuthAppCreation\": true,
+    \"enableOAuthAppCreation\": false,
     \"enableSelfValidationJWT\": true,
+    \"availableGrantTypes\": [\"authorization_code\"],
     \"additionalProperties\": {
       \"ServerURL\": \"https://localhost:9443/services/\",
-      \"TokenURL\": \"https://localhost:9443/oauth2/token\",
-      \"RevokeURL\": \"https://localhost:9443/oauth2/revoke\",
       \"self_validate_jwt\": true,
       \"validation_enable\": true,
-      \"enable_token_hash\": false,
-      \"VALIDITY_PERIOD\": \"3600\"
-    }
+      \"enable_token_hash\": false
+    },
+    \"tokenValidation\": [{\"type\": \"JWT\", \"enable\": true, \"value\": {\"body\": {}, \"header\": {}}}]
   }" 2>/dev/null | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
