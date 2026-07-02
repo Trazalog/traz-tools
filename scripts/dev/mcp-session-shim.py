@@ -24,6 +24,7 @@ import http.server
 import socketserver
 import urllib.request
 import urllib.error
+import json
 import os
 import sys
 import uuid
@@ -120,6 +121,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Reescribir host Dnato viejo → actual en el body (PRM nativo de APIM trae el viejo)
         if STALE_HOST and STALE_HOST != LIVE_HOST and resp_body:
             resp_body = resp_body.replace(STALE_HOST.encode(), LIVE_HOST.encode())
+
+        # Reconocer la extensión io.modelcontextprotocol/ui en la respuesta del initialize.
+        # Claude (2025-11-25) la declara; APIM no la reconoce en capabilities. Si Claude queda
+        # en "modo UI" esperando el ack del server, se puede trabar al ejecutar tools. Aquí se
+        # inyecta el ack en result.capabilities.extensions. Desactivable con SHIM_ACK_UI=0.
+        if (is_initialize and os.environ.get("SHIM_ACK_UI", "1") == "1"
+                and resp_body and status == 200):
+            try:
+                doc = json.loads(resp_body)
+                caps = doc.setdefault("result", {}).setdefault("capabilities", {})
+                caps.setdefault("extensions", {})["io.modelcontextprotocol/ui"] = {
+                    "mimeTypes": ["text/html;profile=mcp-app"]
+                }
+                resp_body = json.dumps(doc).encode()
+            except Exception:
+                pass
 
         # ¿La respuesta ya trae Mcp-Session-Id?
         has_session = any(k.lower() == "mcp-session-id" for k, _ in resp_headers)
