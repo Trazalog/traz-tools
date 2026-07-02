@@ -79,6 +79,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ¿Es un initialize? (para saber si hay que garantizar session id)
         is_initialize = b'"method":"initialize"' in body or b'"method": "initialize"' in body
 
+        # REESCRIBIR EL PROTOCOLO DEL REQUEST ENTRANTE a SHIM_PROTOCOL (default 2025-06-18).
+        # APIM (revertido al comportamiento nativo) solo soporta hasta 2025-06-18 y RECHAZA con
+        # error -32602 "Unsupported protocol version" cuando Claude manda 2025-11-25. Reescribir
+        # la versión pedida a una soportada hace que APIM procese la sesión nativamente en 06-18
+        # (sin mismatch), responda 06-18, y Claude use el path de ejecución que funciona.
+        target_proto = os.environ.get("SHIM_PROTOCOL", "2025-06-18")
+        if is_initialize and target_proto and body:
+            try:
+                doc = json.loads(body)
+                params = doc.get("params")
+                if isinstance(params, dict) and params.get("protocolVersion"):
+                    params["protocolVersion"] = target_proto
+                    body = json.dumps(doc).encode()
+            except Exception:
+                pass
+
         # Forzar OAuth: si es el endpoint /mcp y no trae token → 401 con WWW-Authenticate.
         # Esto hace que Claude descubra el auth server y pida login al conectar, en vez de
         # registrar el conector como abierto y fallar al invocar tools.
