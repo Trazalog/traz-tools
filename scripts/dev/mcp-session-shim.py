@@ -101,7 +101,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if (ENFORCE_AUTH and "/mcp" in self.path
                 and self.command == "POST"
                 and not self.headers.get("Authorization")):
-            prm = f'https://{APIM_PUBLIC_HOST}/trazalog-equipos/1.0/.well-known/oauth-protected-resource'
+            # PRM por-API derivado del path: /{api}/{ver}/mcp → /{api}/{ver}/.well-known/...
+            # Sirve para cualquier MCP server (trazalog-equipos, trazalog-ots, etc.).
+            base_path = self.path.split("/mcp", 1)[0]
+            prm = f'https://{APIM_PUBLIC_HOST}{base_path}/.well-known/oauth-protected-resource'
             www = (f'Bearer resource_metadata="{prm}", error="invalid_token", '
                    f'error_description="Access token is missing"')
             payload = b'{"jsonrpc":"2.0","id":null,"error":{"code":-32001,"message":"Authorization required"}}'
