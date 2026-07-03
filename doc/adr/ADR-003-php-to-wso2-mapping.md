@@ -29,6 +29,12 @@ Cada operación que se expone como MCP tool necesita una decisión explícita so
 
 ## Flujo de autenticación y propagación de empr_id
 
+> **Superseded en este punto por [ADR-009](ADR-009-backend-jwt-assertion.md).** El mecanismo
+> `emprIdInjector` / header `X-Empr-Id` descrito abajo quedó deprecado: la operation policy
+> del gateway no puede leer el JWT (APIM descarta el `Authorization` tras validarlo). El
+> `empr_id` se deriva ahora del backend JWT `X-JWT-Assertion` (`apim.jwt.enable=true`). Ver
+> ADR-009. Lo demás de este ADR (estrategia de mapeo PHP→WSO2) sigue vigente.
+
 Antes de la tabla de decisiones, es necesario entender cómo llega el `empr_id` a cada operación:
 
 ```
