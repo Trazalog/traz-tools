@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OAuthDiscovery — RFC 9728 PRM (Protected Resource Metadata).
+  Deployado como CAR en $APIM_HOME/repository/deployment/server/carbonapps/.
+
+  URLs leídas de Java system properties (set vía JAVA_OPTS antes de arrancar APIM):
+    -Dtrazalog.mcp.resource.url=https://<apim-host>/trazalog-equipos/1.0/mcp
+    -Dtrazalog.dnato.oauth.url=https://<dnato-host>/traz-comp-dnato/oauth
+
+  Para DEV (ngrok): setup-ngrok.sh exporta JAVA_OPTS con las URLs del túnel.
+  Para STAGING/PROD: setenv configurado en el host con las URLs definitivas.
+-->
+<api xmlns="http://ws.apache.org/ns/synapse"
+     name="OAuthDiscovery"
+     context="/.well-known">
+
+    <!-- RFC 9728 §3.1 path-based: /.well-known/oauth-protected-resource/{resource-path} -->
+    <resource methods="GET" url-mapping="/oauth-protected-resource/*">
+        <inSequence>
+            <property name="prm_resource" expression="get-property('system','trazalog.mcp.resource.url')" scope="default"/>
+            <property name="prm_as"       expression="get-property('system','trazalog.dnato.oauth.url')" scope="default"/>
+            <property name="HTTP_SC"      value="200" scope="axis2"/>
+            <property name="messageType"  value="application/json" scope="axis2"/>
+            <property name="ContentType"  value="application/json" scope="axis2"/>
+            <payloadFactory media-type="json">
+                <format>{"resource":"$1","authorization_servers":["$2"],"scopes_supported":[]}</format>
+                <args>
+                    <arg expression="$ctx:prm_resource"/>
+                    <arg expression="$ctx:prm_as"/>
+                </args>
+            </payloadFactory>
+            <respond/>
+        </inSequence>
+        <outSequence><send/></outSequence>
+    </resource>
+
+    <!-- RFC 9728 §3.1 host-based fallback: /.well-known/oauth-protected-resource -->
+    <resource methods="GET" url-mapping="/oauth-protected-resource">
+        <inSequence>
+            <property name="prm_resource" expression="get-property('system','trazalog.mcp.resource.url')" scope="default"/>
+            <property name="prm_as"       expression="get-property('system','trazalog.dnato.oauth.url')" scope="default"/>
+            <property name="HTTP_SC"      value="200" scope="axis2"/>
+            <property name="messageType"  value="application/json" scope="axis2"/>
+            <property name="ContentType"  value="application/json" scope="axis2"/>
+            <payloadFactory media-type="json">
+                <format>{"resource":"$1","authorization_servers":["$2"],"scopes_supported":[]}</format>
+                <args>
+                    <arg expression="$ctx:prm_resource"/>
+                    <arg expression="$ctx:prm_as"/>
+                </args>
+            </payloadFactory>
+            <respond/>
+        </inSequence>
+        <outSequence><send/></outSequence>
+    </resource>
+
+</api>
