@@ -1,127 +1,162 @@
-# Estándar de Annotations para MCP Tools — Trazalog v3
+# Tool Annotations Standard — MCP Trazalog v3
 
-**Versión:** 1.0  
-**Fecha:** 2026-05  
-**Aplica a:** Todos los Virtual MCP Servers publicados en WSO2 API Manager 4.6.0
+Estándar obligatorio para todas las tools MCP de Trazalog v3.
 
----
-
-## 1. Qué son las annotations
-
-Las annotations son metadatos que el MCP Gateway adjunta a cada tool definition.
-Los MCP clients (Claude, ChatGPT, Copilot) las usan para:
-
-- Decidir si confirmar una acción con el usuario antes de ejecutarla
-- Detectar tools potencialmente peligrosas o irreversibles
-- Optimizar el plan de ejecución del agente
-
-Son **hints** (sugerencias), no restricciones técnicas. El agente puede
-ignorarlas, pero los clientes bien implementados las respetan.
+**Origen:** sección 10.5 del DDR-004 (MCP Architecture Doc). La omisión de
+`readOnlyHint` y `destructiveHint` causa el 30% de los rechazos en el
+Connectors Directory de Claude. Este estándar se aplica desde el primer commit.
 
 ---
 
-## 2. Annotations disponibles (MCP spec 2025-11-05)
+## Las dos annotations obligatorias
 
-| Annotation | Tipo | Descripción |
-|---|---|---|
-| `readOnlyHint` | `boolean` | `true` si la tool no modifica estado. El agente puede invocarla sin confirmación del usuario. |
-| `destructiveHint` | `boolean` | `true` si la tool puede causar cambios irreversibles (solo relevante cuando `readOnlyHint=false`). El cliente debe pedir confirmación explícita. |
-| `idempotentHint` | `boolean` | `true` si invocarla múltiples veces con los mismos parámetros produce el mismo resultado. |
-| `openWorldHint` | `boolean` | `true` si la tool interactúa con sistemas externos fuera de Trazalog (envía emails, inicia procesos BPM, hace pagos). |
+### `readOnlyHint: true`
 
----
+Indica que la tool **solo lee datos** — no crea, no modifica, no elimina,
+no tiene side effects observables en el sistema.
 
-## 3. Criterios de asignación para Trazalog
+**Cuándo aplicar:** consultas, listados, búsquedas, cálculos de KPIs, reportes.
 
-### 3.1 `readOnlyHint`
+### `destructiveHint: true`
 
-| Valor | Cuándo usar |
-|---|---|
-| `true` | Operaciones GET o consultas SQL puras que no modifican ninguna tabla |
-| `false` | Cualquier operación que inserta, actualiza, elimina o desencadena procesos |
+Indica que la tool **modifica el estado del sistema** — puede crear registros,
+actualizar datos, cancelar operaciones, enviar notificaciones, o desencadenar
+procesos que no se pueden deshacer sin intervención explícita.
 
-**Regla:** Si hay un DataService con `INSERT`, `UPDATE`, o `DELETE`, o si la sequence llama a un proceso BPM → `readOnlyHint=false`.
+**Cuándo aplicar:** creaciones, modificaciones, cancelaciones, envíos,
+activaciones, cualquier acción que persiste en la base de datos.
 
-### 3.2 `destructiveHint`
-
-| Valor | Cuándo usar |
-|---|---|
-| `true` | Eliminaciones físicas, envío de comunicaciones externas (emails, WhatsApp), cierres definitivos de proceso, acciones con consecuencias legales |
-| `false` | Creación de datos (INSERT), actualizaciones reversibles, inicio de procesos BPM que pueden cancelarse |
-
-**Regla MVP:** Solo `destructiveHint=true` para operaciones DELETE. Crear una OT inicia un proceso BPM pero es cancelable → `destructiveHint=false`.
-
-### 3.3 `idempotentHint`
-
-| Valor | Cuándo usar |
-|---|---|
-| `true` | GET puro o UPSERT (mismo resultado si se llama múltiples veces) |
-| `false` | INSERT que crea una fila nueva por invocación (ej: create_ot crea una OT nueva cada vez) |
-
-### 3.4 `openWorldHint`
-
-| Valor | Cuándo usar |
-|---|---|
-| `true` | La operación inicia un proceso BPM, envía una notificación, hace una llamada a un sistema externo |
-| `false` | La operación solo lee/escribe en la BD de Trazalog sin efectos externos |
-
-**Regla:** Cualquier operación que llame a `bpmAPICallTemplate` o a servicios de Bonita → `openWorldHint=true`.
+> **Regla:** toda tool tiene exactamente una de las dos. Nunca ambas, nunca ninguna.
 
 ---
 
-## 4. Tabla de referencia rápida por patrón de operación
+## Árbol de decisión para tools futuras
 
-| Patrón | `readOnly` | `destructive` | `idempotent` | `openWorld` |
-|---|---|---|---|---|
-| `get_*` (SELECT puro) | `true` | `false` | `true` | `false` |
-| `create_*` (INSERT solo) | `false` | `false` | `false` | `false` |
-| `create_*` + BPM | `false` | `false` | `false` | `true` |
-| `update_*` (UPDATE reversible) | `false` | `false` | `true` | `false` |
-| `delete_*` (DELETE lógico/físico) | `false` | `true` | `true` | `false` |
-| `send_*` / `notify_*` | `false` | `true` | `false` | `true` |
-
----
-
-## 5. Cómo configurar annotations en WSO2 API Manager 4.6.0
-
-Las annotations se configuran por operación en la pestaña **AI** de cada API en el Publisher:
+Ante una tool nueva, responder en orden:
 
 ```
-Publisher → [API] → AI → MCP Tool Configurations → [Operación]
-  ├── Tool Name: (pre-llenado desde operationId del OpenAPI spec)
-  ├── Description: (pre-llenado desde description del OpenAPI spec)
-  └── Annotations:
-        ├── readOnlyHint: ☐ / ☑
-        ├── destructiveHint: ☐ / ☑
-        ├── idempotentHint: ☐ / ☑
-        └── openWorldHint: ☐ / ☑
+1. ¿La tool escribe, modifica o elimina algo en la BD?
+   ├── SÍ → destructiveHint: true
+   └── NO → continuar
+
+2. ¿La tool envía un mensaje, email, notificación o dispara un proceso externo?
+   ├── SÍ → destructiveHint: true
+   └── NO → continuar
+
+3. ¿La tool solo lee datos (consulta, listado, búsqueda, cálculo)?
+   └── SÍ → readOnlyHint: true
 ```
 
-Ver procedimiento completo en cada `doc/mcp/virtual-mcp-<entidad>.md`.
+Si después de las tres preguntas hay duda, la regla conservadora es `destructiveHint: true`.
 
 ---
 
-## 6. Relación con las descripciones del OpenAPI spec
+## Clasificación — Tools Phase 1
 
-Las annotations son independientes de las descripciones semánticas en el OpenAPI.
-Ambas son necesarias:
-
-| Campo | Fuente | Función |
+| Tool | Annotation | Razón |
 |---|---|---|
-| `description` (operación) | OpenAPI spec | Claude decide **cuándo** invocar la tool |
-| Annotations | Consola WSO2 | Claude decide **cómo** invocarla (con/sin confirmación) |
-
-Las descripciones se mantienen en `doc/api/equipos.yaml` y `doc/api/ot.yaml`.
-Las annotations se documenta en cada `virtual-mcp-*.md`.
+| `get_equipment` | `readOnlyHint: true` | Consulta catálogo de equipos — solo lectura |
+| `get_ot` | `readOnlyHint: true` | Consulta órdenes de trabajo — solo lectura |
+| `get_kpis` | `readOnlyHint: true` | Calcula MTBF/MTTR/Disponibilidad — solo lectura |
+| `get_stock` | `readOnlyHint: true` | Consulta stock en depósito — solo lectura |
+| `get_preventivos` | `readOnlyHint: true` | Lista preventivos vencidos/próximos — solo lectura |
+| `create_ot` | `destructiveHint: true` | Crea una OT en la BD — escribe datos |
 
 ---
 
-## 7. Revisión y actualización
+## Implementación en FastMCP (Python — Fase 2+)
 
-Revisar annotations cuando:
-- Se agrega una operación nueva a una API MCP
-- Una operación pasa de solo-lectura a incluir escritura
-- Una operación se conecta con un sistema externo nuevo
-- Se recibe feedback de que el agente no está pidiendo confirmaciones cuando debería
+Solo para tools que requieran Python (IA/ML, procesamiento no-estructurado — ver ADR-002).
 
-Versión del estándar: `1.0` — actualizar con fecha cuando se modifique.
+### Tool de solo lectura
+
+```python
+from fastmcp import FastMCP
+
+mcp = FastMCP("trazalog-mcp-server")
+
+@mcp.tool(annotations={"readOnlyHint": True})
+def get_equipment(cliente_id: int, estado: str = "activo") -> dict:
+    """
+    Devuelve el catálogo de equipos de un cliente.
+    Filtros opcionales: estado (activo, inactivo, todos).
+    """
+    # Llama al endpoint REST de WSO2 APIM
+    ...
+```
+
+### Tool con side effects
+
+```python
+@mcp.tool(annotations={"destructiveHint": True})
+def create_ot(
+    equipo_id: int,
+    descripcion: str,
+    tipo: str,
+    prioridad: str = "normal"
+) -> dict:
+    """
+    Crea una orden de trabajo correctiva en Asset Planner.
+    Tipos válidos: correctiva, mejora. Prioridades: baja, normal, alta, crítica.
+    """
+    # Llama al endpoint REST de WSO2 APIM — escribe en BD
+    ...
+```
+
+---
+
+## Implementación en WSO2 Virtual MCP Server
+
+Para tools generadas automáticamente desde OpenAPI specs (modo principal — ADR-002),
+las annotations se configuran en la definición del MCP Server en el Publisher de WSO2 APIM.
+
+En el archivo de configuración del Virtual MCP Server (JSON exportable desde el Publisher):
+
+```json
+{
+  "mcpServer": {
+    "tools": [
+      {
+        "name": "get_equipment",
+        "description": "Devuelve el catálogo de equipos de un cliente.",
+        "operationId": "getEquipment",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false
+        }
+      },
+      {
+        "name": "create_ot",
+        "description": "Crea una orden de trabajo correctiva en Asset Planner.",
+        "operationId": "createOT",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      }
+    ]
+  }
+}
+```
+
+Verificar que el campo `annotations` aparezca en el JSON que devuelve `tools/list`
+al conectarse con MCP Inspector (Etapa 1 del testing workflow — ver
+[`doc/infra/testing-workflow.md`](../infra/testing-workflow.md)).
+
+---
+
+## Checklist de compliance antes de hacer PR
+
+- [ ] La tool tiene exactamente una annotation: `readOnlyHint: true` o `destructiveHint: true`
+- [ ] La annotation es correcta según el árbol de decisión de este documento
+- [ ] MCP Inspector muestra la annotation en el schema de `tools/list`
+- [ ] La annotation aparece en la documentación de la tool en el MCP Hub
+
+---
+
+## Referencias
+
+- MCP Specification — Tool Annotations: https://modelcontextprotocol.io/docs/concepts/tools#annotations
+- WSO2 MCP Gateway docs: https://apim.docs.wso2.com/en/latest/mcp-gateway/overview/
+- Testing workflow: [`doc/infra/testing-workflow.md`](../infra/testing-workflow.md)
+- Arquitectura MCP Trazalog v3: [`doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md`](../v3/TRAZALOG_v3_MCP_ARCHITECTURE.md)

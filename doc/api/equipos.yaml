@@ -1,8 +1,8 @@
 openapi: 3.0.3
 
 info:
-  title: Equipos API - Trazalog MCP
-  version: "1.0"
+  title: Equipos API — Trazalog MCP
+  version: "1.0.0"
   description: |
     Acceso al catálogo de equipos industriales registrados en Asset Planner.
 
