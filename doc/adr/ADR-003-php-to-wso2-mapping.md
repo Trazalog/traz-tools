@@ -31,8 +31,20 @@ Cada operación que se expone como MCP tool necesita una decisión explícita so
 
 > **ADR-008 (Mayo 2026):** el flujo de validación fue actualizado. El APIM Gateway valida el JWT
 > y extrae el `empr_id` (no el MI). Ver [empr-id-injection.md](../identity/empr-id-injection.md).
+>
+> **Superseded a su vez por [ADR-009](ADR-009-backend-jwt-assertion.md).** El mecanismo de
+> inyección de ADR-008 (`EmprIdInjectorPolicy` / header `X-Empr-Id`) quedó deprecado: la
+> operation policy del gateway no puede leer el JWT (APIM descarta el `Authorization` tras
+> validarlo). El `empr_id` se deriva ahora del backend JWT `X-JWT-Assertion`
+> (`apim.jwt.enable=true`). Ver ADR-009. Lo demás de este ADR (estrategia de mapeo PHP→WSO2)
+> sigue vigente.
+>
+> **Nota sobre el diagrama de abajo:** el flujo ilustrado a continuación (`EmprIdInjectorPolicy`
+> extrayendo `empr_id` e inyectando `X-Empr-Id`) documenta el mecanismo **intermedio** —
+> post ADR-008, pre ADR-009— y ya **no** refleja el flujo vigente. Se conserva como referencia
+> histórica de la cadena ADR-008 → ADR-009.
 
-El flujo actual (post ADR-008):
+Antes de la tabla de decisiones, es necesario entender cómo llega el `empr_id` a cada operación:
 
 ```
 Agente MCP

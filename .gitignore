@@ -18,3 +18,18 @@ application/logs/*
 /imgTEST/
 application/config/constants.php
 
+
+# Marcador de última sesión de Claude Code (auto-escrito por hook Stop)
+doc/identity/.last-session
+
+# Bytecode de Python
+**/__pycache__/
+*.pyc
+
+# Claves y JWTs de test — REGENERABLES con tests/security/generate-test-jwts.sh
+# No son claves productivas; nunca commitear claves privadas al repo.
+tests/security/*.pem
+tests/security/test-env.vars
+
+# Artefacto compilado del CAR de discovery — regenerable con build.sh
+_backend/api/ApimDiscoveryProject/build/
