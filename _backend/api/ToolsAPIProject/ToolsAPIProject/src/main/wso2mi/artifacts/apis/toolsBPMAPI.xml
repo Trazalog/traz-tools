@@ -90,14 +90,14 @@
          <loopback/>
       </inSequence>
       <outSequence>
-         <script language="js">mc.setPayloadJSON(mc.getProperty("ORIGINAL_PAYLOAD"));</script>
-         <log level="full">
-            <property name="MESSAGE" value="FIRST"/>
-         </log>
-         <payloadFactory media-type="json" description="Mensaje error">
+         <!-- ADR-008 fix (jun-2026): restaurar el payload del BPM (session+caseId) SIN doble-encoding.
+              El motor JS del MI v3 es GraalVM, donde mc.setPayloadJSON(JSON.stringify(obj)) envuelve
+              el JSON como string-literal ("{\"...\"}") -> "Error creating JSON Payload" -> fault.
+              ORIGINAL_PAYLOAD ya es texto JSON válido; se inyecta crudo (literal=false) en el body. -->
+         <payloadFactory media-type="json">
             <format>$1</format>
             <args>
-               <arg evaluator="json" expression="$"/>
+               <arg evaluator="xml" expression="get-property('ORIGINAL_PAYLOAD')" literal="false"/>
             </args>
          </payloadFactory>
          <send/>

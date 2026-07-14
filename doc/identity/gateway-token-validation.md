@@ -1,8 +1,18 @@
 # Gateway Token Validation — WSO2 MI MCP [E9-IDENT-05]
 
-**Decisión base:** Sección 6.8 MCP Architecture Doc — Dnato emite JWTs, WSO2 los valida (ADR P01)  
-**Fecha:** 2026-05  
-**Estado:** MVP implementado
+> **⚠️ FLUJO REEMPLAZADO por ADR-008 (Mayo 2026)**
+> Este documento describía la validación JWT en el MI vía `JwtValidator.xml` (patrón passthrough).
+> Ese patrón fue descartado. El flujo vigente delega la validación al **APIM Gateway** (Key Manager
+> Dnato federado). Ver:
+> - [empr-id-injection.md](empr-id-injection.md) — flujo nuevo completo
+> - [apim-keymanager-dnato.md](apim-keymanager-dnato.md) — configuración del Key Manager
+> - [dnato-jwt-prereqs.md](dnato-jwt-prereqs.md) — estado de Dnato (RS256 + JWKS ya activos)
+>
+> Se mantiene como **referencia histórica** del diseño original.
+
+**Decisión base:** Sección 6.8 MCP Architecture Doc — Dnato emite JWTs, WSO2 los valida (ADR P01)
+**Fecha:** 2026-05
+**Estado:** ~~MVP implementado~~ **REEMPLAZADO — ver ADR-008**
 
 ---
 
