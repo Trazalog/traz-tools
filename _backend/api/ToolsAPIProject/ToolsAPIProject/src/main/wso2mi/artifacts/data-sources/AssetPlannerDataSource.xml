@@ -2,8 +2,8 @@
     <name>AssetPlannerDataSource</name>
     <definition type="RDBMS">
         <configuration>
-            <driverClassName>com.mysql.jdbc.Driver</driverClassName>
-            <url>jdbc:mysql://10.142.0.13:3306/assetv2</url>
+            <driverClassName>com.mysql.cj.jdbc.Driver</driverClassName>
+            <url>jdbc:mysql://10.142.0.13:3306/assetv2?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8</url>
             <username>rootremote</username>
             <password>!Password00</password>
         </configuration>

@@ -1,8 +1,24 @@
 #!/usr/bin/env bash
 # Genera claves y JWTs de prueba para los tests de seguridad E9-IDENT-05.
-# Requiere: openssl, python3 (para construir JWT), jq
+#
+# ADR-008 (Mayo 2026): la validación JWT ocurre en el APIM (Key Manager Dnato), no en el MI.
+# Los tests apuntan al APIM (:8243). Ver jwt-validation.hurl y ot-mcp.hurl.
+#
+# Este script genera:
+#   - Par de claves RSA de PRUEBA (NO son las claves reales de Dnato)
+#   - JWTs inválidos para test: expirado, clave diferente, sin empr_id
+#
+# Para JWT VÁLIDOS (VALID_JWT, EMPRESA_A_JWT, EMPRESA_B_JWT):
+#   Usar el CLI de Dnato en el host de Dnato:
+#     VALID_JWT=$(php index.php cli issue_test_token <email> <empr_id>)
+#   El APIM valida la firma contra el JWKS real de Dnato — los JWT del script
+#   generan una clave que NO está en el JWKS, por lo que serían rechazados.
+#   Solo EXPIRED_JWT, WRONG_KEY_JWT y NO_EMPRID_JWT se generan aquí
+#   (el APIM los rechaza por exp o por firma inválida — exactamente lo que queremos testear).
+#
+# Requiere: openssl, python3
 # Uso: ./generate-test-jwts.sh
-# Salida: crea tests/security/test-env.hurl con las variables de entorno para jwt-validation.hurl
+# Salida: test-env.vars (completar VALID_JWT/EMPRESA_A_JWT/EMPRESA_B_JWT/APIM_HOST manualmente)
 
 set -euo pipefail
 
@@ -77,22 +93,37 @@ EMPRESA_B_JWT=$(make_jwt "$SCRIPT_DIR/test-dnato-private.pem" \
     "{\"iss\":\"trazalog-dnato\",\"aud\":\"trazalog-mcp\",\"sub\":\"userB\",\"empr_id\":\"99\",\"exp\":$FUTURE,\"iat\":$NOW}")
 
 cat > "$OUT_ENV" <<EOF
-VALID_JWT=$VALID_JWT
+# APIM_HOST: completar con el host:port del APIM gateway
+APIM_HOST=localhost:8243
+
+# JWTs inválidos generados con claves de prueba (NO son la clave real de Dnato)
+# El APIM los rechaza porque la clave de prueba no está en el JWKS de Dnato.
 EXPIRED_JWT=$EXPIRED_JWT
 WRONG_KEY_JWT=$WRONG_KEY_JWT
 WRONG_ISS_JWT=$WRONG_ISS_JWT
 NO_EMPRID_JWT=$NO_EMPRID_JWT
-EMPRESA_A_JWT=$EMPRESA_A_JWT
-EMPRESA_B_JWT=$EMPRESA_B_JWT
+
+# JWTs válidos: COMPLETAR con el CLI de Dnato (en el host de Dnato):
+#   VALID_JWT=\$(php index.php cli issue_test_token <email> 42)
+#   EMPRESA_A_JWT=\$(php index.php cli issue_test_token <email_A> 42)
+#   EMPRESA_B_JWT=\$(php index.php cli issue_test_token <email_B> 99)
+VALID_JWT=COMPLETAR_CON_CLI_DNATO
+EMPRESA_A_JWT=COMPLETAR_CON_CLI_DNATO
+EMPRESA_B_JWT=COMPLETAR_CON_CLI_DNATO
 EOF
 
 echo ""
-echo "=== IMPORTANTE: Cargar la clave pública en WSO2 registry ==="
-echo "Copiar el contenido de test-dnato-public.pem al registry de WSO2:"
-echo "  /_system/config/identity/dnato-public-key.pem"
+echo "=== ADR-008: Tests ahora apuntan al APIM (:8243), no al MI (:8280) ==="
 echo ""
-echo "Variables generadas en: $OUT_ENV"
-echo "Usar con: hurl --variables-file $OUT_ENV jwt-validation.hurl"
+echo "SIGUIENTE PASO: completar los JWT válidos en $OUT_ENV"
+echo "En el host de Dnato:"
+echo "  VALID_JWT=\$(php index.php cli issue_test_token <email> 42)"
+echo "  EMPRESA_A_JWT=\$(php index.php cli issue_test_token <email_A> 42)"
+echo "  EMPRESA_B_JWT=\$(php index.php cli issue_test_token <email_B> 99)"
+echo ""
+echo "Luego ejecutar:"
+echo "  hurl -k --variables-file $OUT_ENV jwt-validation.hurl"
+echo "  hurl -k --variables-file $OUT_ENV ot-mcp.hurl"
 echo ""
 echo "ADVERTENCIA: Las claves en tests/security/ son SOLO para testing."
-echo "NO usar en producción. Destruir después de los tests."
+echo "NO usar en producción."

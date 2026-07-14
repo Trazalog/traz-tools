@@ -29,18 +29,23 @@ Cada operación que se expone como MCP tool necesita una decisión explícita so
 
 ## Flujo de autenticación y propagación de empr_id
 
-Antes de la tabla de decisiones, es necesario entender cómo llega el `empr_id` a cada operación:
+> **ADR-008 (Mayo 2026):** el flujo de validación fue actualizado. El APIM Gateway valida el JWT
+> y extrae el `empr_id` (no el MI). Ver [empr-id-injection.md](../identity/empr-id-injection.md).
+
+El flujo actual (post ADR-008):
 
 ```
 Agente MCP
   │  Authorization: Bearer <JWT Dnato>
   ▼
-WSO2 MI Gateway
-  ├── jwtValidator: valida firma RS256, exp, iss, aud, claim empr_id
-  ├── emprIdInjector: agrega header de transporte X-Empr-Id: <empr_id>
+APIM Gateway (:8243)
+  ├── Key Manager Dnato: valida firma RS256, exp, iss, aud
+  ├── EmprIdInjectorPolicy (in-sequence): extrae empr_id, inyecta X-Empr-Id
+  ▼
+WSO2 MI (:8280)
+  ├── emprIdFromHeader: lee X-Empr-Id, setea jwt_empr_id en contexto
   └── API Sequence (toolsMANAPI.xml)
-         │  Extrae X-Empr-Id del header de transporte
-         │  Llama al DataService pasando empr_id como path param
+         │  Usa jwt_empr_id para construir URL del DataService
          ▼
       DataService
          │  WHERE id_empresa = :id_empresa  (o id_empresa = :empr_id)
