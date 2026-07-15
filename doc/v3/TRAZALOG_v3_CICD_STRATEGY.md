@@ -20,6 +20,7 @@
 3. [Flujo de trabajo por escenario](#3-flujo-de-trabajo-por-escenario)
 4. [CI/CD — Pipelines y automatización](#4-cicd--pipelines-y-automatización)
 5. [Estrategia de testing](#5-estrategia-de-testing)
+5-bis. [Metodología de trabajo PM + Claude Code (v2)](#5-bis-metodología-de-trabajo-pm--claude-code-v2)
 6. [Suite de regresión v2 → v3](#6-suite-de-regresión-v2--v3)
 7. [Migraciones de base de datos](#7-migraciones-de-base-de-datos)
 8. [Convergencia v2 → v3 (cutover)](#8-convergencia-v2--v3-cutover)
@@ -510,110 +511,9 @@ flowchart TB
 | **Carga / performance** | v3 | k6 | Claude Code | Vos revisás thresholds | Pre-release |
 | **Security** | v3 | Trivy + Semgrep + gitleaks | CI automático | Vos revisás hallazgos | Diaria + cada PR |
 
-### 5.3 Cómo se generan los tests — el rol del PM
+### 5.3-bis Cómo se coordina la generación de tests
 
-**Punto clave**: tu rol como PM en testing **empieza ANTES de que se escriba código**, no después.
-
-#### Para cada story v3, el flujo de generación de tests es:
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': {
-  'primaryColor':'#1e40af',
-  'primaryTextColor':'#ffffff',
-  'primaryBorderColor':'#1e3a8a',
-  'lineColor':'#475569',
-  'background':'#ffffff'
-}}}%%
-sequenceDiagram
-    participant Vos as 🧑 PM (Rodolfo)
-    participant CW as 🧠 Claude Web
-    participant CC as ⚡ Claude Code
-    participant CI as 🤖 CI
-
-    Vos->>CW: Refinamos story
-    CW->>Vos: Propone criterios de aceptación (Gherkin)
-    Vos->>CW: Apruebo/ajusto AC
-    CW->>Vos: Story lista en GitHub Issues
-    Vos->>CC: "Tomá issue #TRZ-123"
-    CC->>CC: Lee AC en Gherkin
-    CC->>CC: Genera tests Behat<br/>+ unit tests<br/>+ implementación
-    CC->>CI: Push branch + PR
-    CI->>CI: Ejecuta toda la suite
-    CI->>Vos: Reporte de cobertura + resultados
-    Vos->>Vos: Review PR
-    Vos->>CC: Apruebo o pido cambios
-```
-
-#### Ejemplo concreto: una tool MCP
-
-**Story en el issue:**
-
-```markdown
-## Story: MCP tool — listar preventivos vencidos
-
-### Como
-Jefe de mantenimiento de un proveedor minero
-
-### Quiero
-Preguntarle a Claude qué equipos tienen preventivo vencido
-
-### Para
-Priorizar el trabajo del día sin abrir el sistema
-
-### Criterios de aceptación (Gherkin)
-
-```gherkin
-Feature: list_overdue_preventives MCP tool
-
-  Scenario: Cliente con equipos vencidos
-    Dado un cliente autenticado con tier Starter
-    Y existen 3 equipos con preventivos vencidos hace 5, 12 y 30 días
-    Cuando el agente invoca la tool "list_overdue_preventives"
-    Entonces la respuesta es exitosa
-    Y contiene exactamente 3 equipos
-    Y cada equipo trae: código, descripción, días vencido, criticidad
-    Y los equipos están ordenados por criticidad descendente
-    Y la tool call se contabiliza en analytics
-
-  Scenario: Cliente sin equipos vencidos
-    Dado un cliente autenticado con tier Starter
-    Y no hay equipos con preventivos vencidos
-    Cuando el agente invoca la tool "list_overdue_preventives"
-    Entonces la respuesta es exitosa
-    Y contiene una lista vacía
-    Y el mensaje sugiere revisar el plan de PM
-
-  Scenario: Cliente sin tier suficiente
-    Dado un cliente con tier Free
-    Cuando el agente invoca la tool "list_overdue_preventives"
-    Entonces la respuesta es 403
-    Y el mensaje incluye un link al upgrade
-```
-
-### Definition of Done
-- [ ] Tests unitarios pasan (cobertura > 80%)
-- [ ] Tests de API (Hurl) verifican OAuth + rate limiting
-- [ ] MCP Inspector valida el schema de la tool
-- [ ] Tool tiene annotation correcta (`readOnlyHint` o `destructiveHint`) — ver [`doc/mcp/tool-annotations-standard.md`](../../doc/mcp/tool-annotations-standard.md)
-- [ ] Documentación de la tool actualizada en `packages/mcp-tools/README.md`
-- [ ] Smoke test pasa en staging-v3
-```
-
-**Lo que hace Claude Code a partir de eso:**
-
-1. Lee los Gherkin
-2. Genera tests Behat ejecutables
-3. Genera tests unitarios PHPUnit para la lógica
-4. Genera tests Hurl para el endpoint API
-5. Genera el script de validación MCP Inspector
-6. **Implementa el código que hace pasar los tests** (TDD inverso)
-7. Abre PR con todo
-
-**Lo que hacés vos:**
-
-1. Revisás el PR y los tests
-2. Ejecutás MCP Inspector localmente para validar la primera vez (después se automatiza)
-3. Aprobás o pedís cambios
+> **Nota de versión (Jul 2026):** esta sub-sección reemplaza al flujo original "Gherkin → Behat → TDD inverso con el PM escribiendo criterios antes del código", que nunca se aplicó en la práctica durante el Sprint 2 (ver retro en `doc/v3/trazalog-v3-sprint-2-retro.md`). El proceso de coordinación vigente entre PM, Rodolfo y Claude Code está definido en la **sección 5-bis** de este documento. En síntesis, para testing: Claude Code genera los tests junto al código como parte de su DoD (columna "Quién las escribe" de la tabla 5.3), los reporta en la descripción del PR ("Cómo lo verifiqué"), y Rodolfo los revisa en el diff. Los criterios de aceptación viajan en el DoD de la tarea emitida por Claude Web — no en features Gherkin separados.
 
 ### 5.4 Lo que NO automatizamos
 
@@ -623,6 +523,179 @@ Feature: list_overdue_preventives MCP tool
 - ❌ **Migraciones de BD**: ver sección 7.
 
 ---
+---
+
+## 5-bis. Metodología de trabajo PM + Claude Code (v2)
+
+> **Nota de versión (Jul 2026):** esta sección define el proceso de coordinación vigente entre Claude Web (PM), Rodolfo y Claude Code. Reemplaza al flujo Gherkin→Behat→TDD-inverso que describía la sub-sección 5.3 original (nunca aplicado en la práctica — ver retro del Sprint 2). La estrategia técnica de testing (5.1–5.4: pirámide, niveles, herramientas) sigue vigente y esta sección no la modifica.
+
+### 5-bis.1 Principio rector
+
+> **"El repo es la única fuente de verdad. El chat es efímero. Todo lo que importa se materializa en git o no existe."**
+
+El Sprint 2 mostró cinco puntos críticos, todos derivados de una misma causa: el estado del proyecto vivía en la conversación con Claude Web, no en el repositorio.
+
+| # | Punto crítico detectado |
+|---|---|
+| 1 | Estado fantasma — docs desincronizados, trabajo "hecho" que no estaba, auditorías de emergencia |
+| 2 | Contexto degradado hacia Claude Code — reconstruido de memoria en cada prompt, causó violaciones de restricciones (PHP 5.6 x2) e implementación de mecanismos ya deprecados |
+| 3 | Git sin barandas — commits directos a ramas de integración *(ya mitigado, ver §2.4 y CLAUDE.md)* |
+| 4 | Burocracia sin ciclo de vida — backlog en xlsx congelado, scripts de un solo uso en el repo, issues creados retroactivamente |
+| 5 | Validación contra resúmenes en lugar de contra el repo real |
+
+### 5-bis.2 Los tres actores y sus roles
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor':'#1e40af',
+  'primaryTextColor':'#ffffff',
+  'primaryBorderColor':'#1e3a8a',
+  'lineColor':'#475569',
+  'background':'#ffffff'
+}}}%%
+flowchart LR
+    CW["🧠 Claude Web<br/>PM técnico / arquitecto<br/>Decisiones + planning"]
+    R["🧑 Rodolfo<br/>Transporta mensajes<br/>Revisa PRs<br/>Prueba lo visible"]
+    CC["⚡ Claude Code<br/>Implementación<br/>Lee repo, no memoria"]
+
+    CW <-->|mensajes vía Rodolfo| R
+    R <-->|prompts / resultados| CC
+    CC -->|PR + STATE.md| REPO[("📦 Repo<br/>= única verdad")]
+    CW -.->|lee al iniciar sesión| REPO
+    R -.->|revisa| REPO
+
+    style CW fill:#7c3aed,stroke:#5b21b6,color:#ffffff
+    style R fill:#ea580c,stroke:#9a3412,color:#ffffff
+    style CC fill:#065f46,stroke:#047857,color:#ffffff
+    style REPO fill:#1e40af,stroke:#1e3a8a,color:#ffffff
+```
+
+Claude Web y Claude Code **no tienen canal directo** — Rodolfo transporta los mensajes entre ambos. Lo que cambia respecto al Sprint 2 no es ese hecho (es una limitación de la herramienta), sino **cuánto contexto pesa cada mensaje transportado**: pasa de prompts artesanales de ~80 líneas reconstruidos de memoria, a prompts de ~10 líneas que remiten a documentos versionados que Claude Code lee por su cuenta.
+
+### 5-bis.3 Los dos documentos que sostienen todo
+
+| Documento | Ubicación | Quién lo escribe | Quién lo lee |
+|---|---|---|---|
+| **CONTEXT-PACK.md** | `doc/v3/CONTEXT-PACK.md` (uno por repo) | Se actualiza junto con cada ADR nuevo | Claude Code, al inicio de cada tarea |
+| **STATE.md** | `traz-tools/doc/v3/STATE.md` (único, aunque haya 2 repos) | Claude Code, al cierre de cada tarea | Claude Web, al inicio de cada sesión |
+
+**CONTEXT-PACK.md** es el resumen operativo de arquitectura, restricciones y regla de repos — pero es explícito en que **no es la fuente de verdad**: remite a `TRAZALOG_v3_MCP_ARCHITECTURE.md`, a los ADR individuales, y a los documentos de negocio (investigación del sector minero, pricing) como fuentes canónicas. Ver plantilla completa en `doc/v3/CONTEXT-PACK.md`.
+
+**STATE.md** es el tablero de qué está pasando ahora: sprint activo, tareas en curso con su clase de riesgo, próxima acción, últimas decisiones, bloqueos. Reemplaza al kickoff como documento de estado — el kickoff vuelve a ser lo que siempre debió ser: un plan inicial inmutable, no un documento que se reescribe cada semana.
+
+### 5-bis.4 El ciclo de una tarea — 4 pasos, 1 compuerta humana
+
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': {
+  'primaryColor':'#1e40af',
+  'primaryTextColor':'#ffffff',
+  'primaryBorderColor':'#1e3a8a',
+  'lineColor':'#475569',
+  'background':'#ffffff'
+}}}%%
+flowchart LR
+    A["1️⃣ Claude Web<br/>emite tarea<br/>~10 líneas + refs"] --> B["2️⃣ Claude Code<br/>lee CONTEXT-PACK<br/>+ STATE + CLAUDE.md<br/>implementa, abre PR<br/>con Closes #N<br/>actualiza STATE.md"]
+    B --> C["3️⃣ Rodolfo<br/>revisa el PR<br/>(diff + descripción, 5 min)<br/>ÚNICA COMPUERTA"]
+    C --> D["4️⃣ Merge<br/>→ issue se cierra solo<br/>→ board se mueve solo"]
+
+    style A fill:#7c3aed,stroke:#5b21b6,color:#ffffff
+    style B fill:#065f46,stroke:#047857,color:#ffffff
+    style C fill:#f59e0b,stroke:#d97706,color:#1f2937
+    style D fill:#16a34a,stroke:#15803d,color:#ffffff
+```
+
+Ejemplo de tarea emitida por Claude Web (formato real, no ilustrativo):
+
+```
+Leé doc/v3/CONTEXT-PACK.md y doc/v3/STATE.md antes de empezar.
+Tarea: E1-API-16 — Tool list_overdue_preventives (equipos con preventivo vencido)
+DoD:
+- [ ] Query filtra por empr_id vía el mecanismo ADR-009 (X-JWT-Assertion)
+- [ ] Ordenado por criticidad descendente
+- [ ] Spec OpenAPI en doc/api/equipos.yaml actualizada
+- [ ] PR con Closes #421, descripción funcional, STATE.md actualizado
+```
+
+**Qué desaparece respecto al Sprint 2:** el paso "Claude Code pega su resumen en el chat para que Claude Web lo valide". Claude Web ya no necesita ese resumen — si necesita saber algo, lee el PR o el STATE.md directamente del repo. Esto elimina el punto crítico #5 (validar contra resúmenes en lugar de la realidad).
+
+**Formato obligatorio de la descripción del PR** (para que el review de Rodolfo sea de 5 minutos, no de 30):
+```markdown
+## Qué cambia
+[1-2 líneas, en términos funcionales]
+
+## Por qué
+[referencia a la tarea / decisión que lo origina]
+
+## Cómo lo verifiqué
+[build / tests / curls ejecutados — con resultado]
+
+Closes #NNN
+```
+
+### 5-bis.5 Clasificación de tareas por riesgo
+
+El proceso debe ser proporcional al costo de un error, no uniforme. En el Sprint 2, una corrección de `.gitignore` pasó por el mismo ceremonial que el rediseño del mecanismo de identidad — eso es desperdicio de proceso.
+
+| Clase | Qué incluye | Ejemplos en Trazalog | Proceso |
+|---|---|---|---|
+| 🟢 **Rutina** | Docs, scripts de dev, tests, configs menores. Nada que toque runtime de producción ni datos | Agregar un test Hurl, corregir un typo en un doc, un script de mantenimiento del Project board | Claude Code solo, sin pasar por Claude Web. Rodolfo revisa y mergea |
+| 🟡 **Estándar** | Features, endpoints, tools MCP nuevas o modificadas | Agregar la tool `update_ot`, un nuevo campo en `equipos.yaml`, un Virtual MCP Server | Claude Web emite la tarea → Claude Code ejecuta → review de PR de Rodolfo |
+| 🔴 **Decisión** | ADRs, cambios de arquitectura, migraciones de BD, seguridad, **cambios al modelo de negocio** (pricing, tiers, límites, alcance del freemium) | El pivote ADR-008→ADR-009, agregar una migración de `seg.oauth_codes`, cambiar límites de un tier | Workshop Claude Web + Rodolfo PRIMERO → decisión documentada en ADR → recién ahí Claude Code implementa |
+
+### 5-bis.6 Reglas de escalamiento — cuándo Claude Code te pregunta
+
+Claude Code puede y debe pedir interacción cuando hay ambigüedad. La regla de oro: **ante la duda de si algo es menor o funcional, preguntá — el costo de preguntar es un minuto; el costo de un desvío de arquitectura son semanas** (evidencia: el pivote ADR-008→ADR-009 costó tres semanas de trabajo a reencauzar).
+
+| Tipo de duda | Qué hace Claude Code | Ejemplo real del Sprint 2 |
+|---|---|---|
+| **Técnica menor** — dos formas válidas de resolver lo mismo | Decide solo, documenta la elección en la descripción del PR | Nombre de una sequence, estructura interna de un test |
+| **Funcional o de negocio** — variantes con impacto distinto para el usuario o el modelo comercial | PARA y pregunta a Rodolfo con las opciones + su recomendación. No avanza sin respuesta | "¿El rollback de `create_ot` hace DELETE o deja la solicitud en draft?" |
+| **Arquitectura** — contradice o no está cubierto por el CONTEXT-PACK / los ADRs | PARA, marca la tarea como "requiere decisión de arquitectura" (queda registrada en STATE.md como bloqueo clase 🔴) | "La operation policy del gateway no puede leer el JWT" — esto fue lo que originó ADR-009 |
+
+### 5-bis.7 Cuándo prueba Rodolfo — review vs. prueba manual
+
+Son dos actividades distintas y no siempre coinciden en el tiempo.
+
+**Review de PR** = leer el diff + la descripción funcional. Siempre pasa antes del merge, en toda tarea 🟡 y 🔴. Toma ~5 minutos porque Claude Code ya ejecutó las verificaciones técnicas (build, tests, curls) y las reporta en la descripción.
+
+**Prueba manual** = Rodolfo ejecuta el flujo con sus manos contra un entorno levantado. No siempre hace falta, y cuando hace falta no siempre es antes del merge:
+
+| Clase / tipo | ¿Prueba manual? | Cuándo |
+|---|---|---|
+| 🟢 | No | — |
+| 🟡 interna (DataService, sequence, endpoint sin cara visible) | Opcional | Antes del merge, solo si Rodolfo desconfía del resultado |
+| 🟡 visible (tool MCP nueva, pantalla, flujo OAuth) | Sí — smoke test | **Después** del merge, agrupando 2-3 features en una sola sesión de entorno levantado (WSO2 + MI + Dnato + ngrok) |
+| 🔴 (identidad, seguridad, BD) | Sí, siempre | **Antes** del merge — el PR queda abierto hasta que Rodolfo lo prueba |
+
+La razón de probar "después del merge" en las 🟡 visibles: levantar el entorno completo (WSO2, MI, Dnato, ngrok) tiene un costo fijo alto. Agrupar varias features por sesión de prueba evita que Rodolfo se convierta en cuello de botella feature por feature. Si algo falla, el historial de commits/PRs dice exactamente qué introdujo el problema.
+
+### 5-bis.8 Ritual semanal — 15 minutos, Claude Web + Rodolfo
+
+Agenda fija, sin improvisación:
+
+1. **Leer STATE.md juntos** — ¿refleja la realidad del repo? Si no, se corrige ahí mismo. Esto incluye chequear la frescura del CONTEXT-PACK (¿hay ADRs nuevos sin reflejar?).
+2. **Sincronizar el proyecto Claude** — subir al proyecto los documentos del repo que cambiaron esa semana (lista corta: CONTEXT-PACK, STATE, ADRs nuevos).
+3. **Definir el foco de la semana** — máximo 3 tareas activas en paralelo simultáneamente.
+
+Esto reemplaza a las auditorías de emergencia tipo "alineemos las naves" que en el Sprint 2 consumieron sesiones completas: la deriva se corrige semanalmente cuando es chica, no trimestralmente cuando ya es una crisis. Deriva máxima aceptada: 1 semana.
+
+### 5-bis.9 Burocracia que se elimina
+
+| Se elimina | Se reemplaza por |
+|---|---|
+| Backlog en xlsx | GitHub Issues puro (ya era la fuente real de facto) |
+| Scripts de cierre de sprint (ej. `close-sprint-2.sh`) | `Closes #N` en la descripción de cada PR — cierre automático al mergear |
+| Issues creados retroactivamente | No existen: si no hubo issue antes del trabajo, se anota en STATE.md y se sigue |
+| Kickoff como documento vivo con múltiples versiones | Kickoff inmutable (plan inicial) + STATE.md (realidad actual) |
+| Resúmenes de Claude Code pegados al chat de Claude Web para validar | Claude Web lee el PR o el STATE.md directamente del repo cuando lo necesita |
+| Prompts artesanales de ~80 líneas reconstruidos de memoria | ~10 líneas + referencias a CONTEXT-PACK.md y STATE.md |
+
+### 5-bis.10 Trade-offs aceptados
+
+1. **Claude Code gana autonomía en tareas 🟢** — menos control fino de Claude Web, a cambio de velocidad. La baranda es la definición restrictiva de 🟢 (nada que toque runtime de producción ni datos).
+2. **El review de PR de Rodolfo es la única compuerta en tareas estándar** — mayor responsabilidad en leer diffs, mitigada por el formato obligatorio de descripción funcional del PR.
+3. **STATE.md puede desactualizarse si Claude Code omite el paso** — mitigado por estar en el DoD del CLAUDE.md y auditado en el ritual semanal.
+
 
 ## 6. Suite de regresión v2 → v3
 
