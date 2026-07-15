@@ -171,3 +171,60 @@ Browser → CodeIgniter (PHP) → wso2_helper → REST.php → WSO2 APIM 4.6.0 (
                                                             ├── API sequences → Bonita BPM (port 8080)
                                                             └── Connectors (Tango, Bascula, Firebase, WhatsApp)
 ```
+
+---
+
+## 🧭 Metodología v2 — Contexto y estado antes de cualquier tarea
+
+> Ver detalle completo en `TRAZALOG_v3_CICD_STRATEGY.md` sección 5-bis. Este bloque resume las obligaciones operativas para vos (Claude Code) en este repo.
+
+### Antes de empezar CUALQUIER tarea
+
+1. Leé `doc/v3/CONTEXT-PACK.md` completo.
+2. Leé `doc/v3/STATE.md` para saber en qué sprint/estado está el proyecto.
+3. **Chequeo de staleness obligatorio:** corré `ls doc/adr/` y comparalo contra el "último ADR" declarado en el encabezado del CONTEXT-PACK. Si hay un ADR más nuevo que el que el CONTEXT-PACK dice conocer, PARÁ y reportá la desincronización antes de continuar — no asumas que el resumen está actualizado.
+
+### Jerarquía de fuentes — el CONTEXT-PACK es un resumen, no la verdad
+
+El CONTEXT-PACK.md es un resumen operativo. La fuente canónica de arquitectura es `doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md` + los ADR individuales en `doc/adr/`. Ante cualquier ambigüedad, contradicción, o tema que el CONTEXT-PACK no cubra:
+
+1. Primero, leé la sección correspondiente del documento canónico.
+2. Si el documento canónico tampoco lo cubre, **PARÁ**. No improvises ni tomes la decisión de arquitectura solo. Reportalo como "requiere decisión de arquitectura" (ver reglas de escalamiento abajo).
+
+**Vos NO tomás decisiones de arquitectura.** Las toman Rodolfo y Claude Web en un workshop previo (clase 🔴 de tarea). Tu trabajo es implementar decisiones ya tomadas, y detectar cuándo una tarea te está pidiendo algo que ninguna decisión previa cubre.
+
+### Al terminar CUALQUIER tarea (parte del Definition of Done)
+
+1. Actualizá `doc/v3/STATE.md`: mové la tarea de "activa" a su estado final, actualizá "próxima acción", agregá la decisión relevante si hubo alguna.
+2. **Si tu tarea creó o modificó un ADR:** actualizá `doc/v3/CONTEXT-PACK.md` en el MISMO PR — agregá la línea del ADR a la tabla de decisiones vigentes y hacé bump de versión en el encabezado del CONTEXT-PACK. No lo dejes para un PR aparte.
+3. Abrí el PR con este formato obligatorio de descripción:
+
+```markdown
+## Qué cambia
+[1-2 líneas, en términos funcionales]
+
+## Por qué
+[referencia a la tarea/issue/decisión que lo origina]
+
+## Cómo lo verifiqué
+[build / tests / curls ejecutados, con resultado]
+
+Closes #NNN
+```
+
+### Reglas de escalamiento — cuándo parar y preguntar
+
+| Tipo de duda | Qué hacés |
+|---|---|
+| Técnica menor (dos formas válidas de implementar lo mismo) | Decidís vos, documentás la elección en la descripción del PR |
+| Funcional o de negocio (variantes con impacto distinto para el usuario o el modelo comercial — ej. algo que afecte tiers, límites, pricing) | PARÁS y preguntás a Rodolfo con las opciones + tu recomendación. No avanzás sin respuesta |
+| Arquitectura (contradice o no está cubierto por el CONTEXT-PACK ni por el documento canónico) | PARÁS, marcás la tarea como "requiere decisión de arquitectura" en tu reporte |
+
+**Regla de oro: ante la duda de si algo es menor o funcional, preguntá.** Preferimos una pregunta de más que un desvío de arquitectura — un desvío mal encaminado cuesta semanas de retrabajo, una pregunta cuesta un minuto.
+
+### Clasificación de riesgo de tu tarea
+
+Si la tarea que te llega no indica su clase, asumí por default:
+- Si toca solo docs/scripts/tests/configs sin efecto en runtime ni datos → 🟢, podés ejecutar sin más validación que tu propio criterio técnico.
+- Si toca código de producción (endpoints, DataServices, sequences, tools MCP) → 🟡, seguí el ciclo estándar de 4 pasos.
+- Si toca identidad, seguridad, migraciones de BD, o algo que huela a cambio de arquitectura o de modelo de negocio → 🔴, no implementes nada — reportá que necesita workshop previo con Rodolfo.
