@@ -300,6 +300,11 @@
       <sql>UPDATE core.equipos &#xd;SET eliminado = TRUE&#xd;WHERE equi_id = cast(:equi_id as integer);</sql>
       <param name="equi_id" sqlType="STRING"/>
    </query>
+   <query id="getEmpresaById" useConfig="ToolsDataSource">
+      <sql>SELECT empr_id, descripcion, cuit, telefono, email, empr_id_mysql FROM core.empresas WHERE empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{&#xd;    "empresa":{&#xd;        "empr_id":"$empr_id",&#xd;        "descripcion":"$descripcion",&#xd;        "cuit":"$cuit",&#xd;        "telefono":"$telefono",&#xd;        "email":"$email",&#xd;        "empr_id_mysql":"$empr_id_mysql"&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <query id="setEmpresa" returnGeneratedKeys="true" useConfig="ToolsDataSource">
       <sql>insert into core.empresas&#xd;(&#xd;    nombre,&#xd;    cuit,&#xd;    descripcion,&#xd;    telefono,&#xd;    email,&#xd;    pais_id, &#xd;    prov_id,&#xd;    loca_id,&#xd;    imagepath,&#xd;    image&#xd;)&#xd;VALUES(&#xd;    :nombre,&#xd;    :cuit,&#xd;    :descripcion,&#xd;    :telefono,&#xd;    :email,&#xd;    :pais_id,&#xd;    :prov_id,&#xd;    :loca_id,&#xd;    :imagepath,&#xd;    :image&#xd;);</sql>
       <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
@@ -391,6 +396,13 @@
    <query id="deleteEmpresaAsset" useConfig="AssetPlannerDataSource">
       <sql>DELETE FROM empresas WHERE id_empresa = cast(:id_empresa as INTEGER)</sql>
       <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <!-- Vincula empr_id_mysql en core.empresas tras crear la empresa en assetv2.
+        Permite traducción de IDs entre sistemas sin query-time JOIN. -->
+   <query id="updateEmpresaAssetId" useConfig="ToolsDataSource">
+      <sql>UPDATE core.empresas SET empr_id_mysql = cast(:empr_id_mysql as integer) WHERE empr_id = cast(:empr_id as integer)</sql>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="empr_id_mysql" sqlType="STRING"/>
    </query>
    <query id="getListasPrecios" useConfig="ToolsDataSource">
       <sql>SELECT &#xd;    lp.lipr_id, &#xd;    lp.nombre, &#xd;    lp.detalle, &#xd;    lp.tipo, &#xd;    lp.empr_id, &#xd;    to_char(lp.fec_alta, 'YYYY-MM-DD HH24:MI') AS fec_alta, &#xd;    lp.usr_alta, &#xd;    lp.usr_app_alta, &#xd;    to_char(lp.fec_ult_modif, 'YYYY-MM-DD HH24:MI') AS fec_ult_modif, &#xd;    lp.usr_ult_modif, &#xd;    lp.usr_app_ult_modif, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion&#xd;FROM &#xd;    core.listas_precios lp&#xd;LEFT JOIN &#xd;    core.versiones_listas_precios vlp &#xd;    ON lp.lipr_id = vlp.lipr_id&#xd;    AND vlp.nro_version = (&#xd;        SELECT MAX(vlp_inner.nro_version)&#xd;        FROM core.versiones_listas_precios vlp_inner&#xd;        WHERE vlp_inner.lipr_id = lp.lipr_id&#xd;    )&#xd;WHERE &#xd;    lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY &#xd;    lp.nombre ASC;</sql>
@@ -805,6 +817,11 @@ WHERE email = :email AND "group" = :group AND "role" = :role</sql>
          <with-param name="tran_id" query-param="tran_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/empresa/{empr_id}">
+      <call-query href="getEmpresaById">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
    <resource method="GET" path="/empresas">
       <call-query href="getEmpresas"/>
    </resource>
@@ -908,6 +925,12 @@ WHERE email = :email AND "group" = :group AND "role" = :role</sql>
          <with-param name="paisid" query-param="paisid"/>
          <with-param name="emlogo" query-param="emlogo"/>
          <with-param name="clienteid" query-param="clienteid"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/empresa/asset-id">
+      <call-query href="updateEmpresaAssetId">
+         <with-param name="empr_id"       query-param="empr_id"/>
+         <with-param name="empr_id_mysql" query-param="empr_id_mysql"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/empresa/asset">

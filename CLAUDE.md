@@ -76,6 +76,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## 🔒 Metodología de Git — OBLIGATORIA
+
+### Nunca commitear directo a ramas de integración
+PROHIBIDO hacer commit o push directo a: develop-v3, develop, master, main.
+Estas ramas están protegidas y todo cambio DEBE entrar por Pull Request.
+
+### Flujo obligatorio para cualquier cambio
+1. Sincronizar: `git checkout develop-v3 && git pull origin develop-v3`
+2. Crear rama de trabajo con nombre descriptivo:
+   `git checkout -b <tipo>/<issue-id>-<desc-corta>`
+   (tipos: feat, fix, docs, chore, refactor)
+   ejemplo: feature/E9-IDENT-12-refresh-tokens
+3. Hacer TODOS los commits en esa rama (nunca en la de integración)
+4. Formato de commit: `tipo(scope): descripción [ID-ISSUE]`
+5. Push de la rama de trabajo: `git push origin <nombre-rama>`
+6. Abrir PR: `gh pr create --base develop-v3 --head <nombre-rama>`
+7. NO mergear el PR sin confirmación explícita del PM
+8. NUNCA `git push` directo a develop-v3, develop, master ni main
+
+### Antes de crear un PR
+- Verificar que el build pasa (si aplica: `./mvnw clean install`)
+- Verificar que no quedan marcadores de conflicto:
+  `grep -rn "^<<<<<<<\|^=======\|^>>>>>>>" .`
+- Verificar que no se commitean secretos (claves privadas, tokens, .env)
+
+### Si un push a rama de integración es rechazado (protected branch)
+NO intentar forzar ni desactivar la protección. Es el comportamiento correcto.
+Mover los commits a una rama feature y abrir PR.
+
+---
+
 ## Documentos de referencia (doc/v3/)
 
 - [`doc/v3/TRAZALOG_v3_CICD_STRATEGY.md`](doc/v3/TRAZALOG_v3_CICD_STRATEGY.md) — Estrategia de branching y CI/CD. Sección 2 define el modelo de ramas.

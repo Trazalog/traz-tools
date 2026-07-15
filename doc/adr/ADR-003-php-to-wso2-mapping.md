@@ -29,11 +29,20 @@ Cada operación que se expone como MCP tool necesita una decisión explícita so
 
 ## Flujo de autenticación y propagación de empr_id
 
-> **Superseded en este punto por [ADR-009](ADR-009-backend-jwt-assertion.md).** El mecanismo
-> `emprIdInjector` / header `X-Empr-Id` descrito abajo quedó deprecado: la operation policy
-> del gateway no puede leer el JWT (APIM descarta el `Authorization` tras validarlo). El
-> `empr_id` se deriva ahora del backend JWT `X-JWT-Assertion` (`apim.jwt.enable=true`). Ver
-> ADR-009. Lo demás de este ADR (estrategia de mapeo PHP→WSO2) sigue vigente.
+> **ADR-008 (Mayo 2026):** el flujo de validación fue actualizado. El APIM Gateway valida el JWT
+> y extrae el `empr_id` (no el MI). Ver [empr-id-injection.md](../identity/empr-id-injection.md).
+>
+> **Superseded a su vez por [ADR-009](ADR-009-backend-jwt-assertion.md).** El mecanismo de
+> inyección de ADR-008 (`EmprIdInjectorPolicy` / header `X-Empr-Id`) quedó deprecado: la
+> operation policy del gateway no puede leer el JWT (APIM descarta el `Authorization` tras
+> validarlo). El `empr_id` se deriva ahora del backend JWT `X-JWT-Assertion`
+> (`apim.jwt.enable=true`). Ver ADR-009. Lo demás de este ADR (estrategia de mapeo PHP→WSO2)
+> sigue vigente.
+>
+> **Nota sobre el diagrama de abajo:** el flujo ilustrado a continuación (`EmprIdInjectorPolicy`
+> extrayendo `empr_id` e inyectando `X-Empr-Id`) documenta el mecanismo **intermedio** —
+> post ADR-008, pre ADR-009— y ya **no** refleja el flujo vigente. Se conserva como referencia
+> histórica de la cadena ADR-008 → ADR-009.
 
 Antes de la tabla de decisiones, es necesario entender cómo llega el `empr_id` a cada operación:
 
@@ -41,12 +50,14 @@ Antes de la tabla de decisiones, es necesario entender cómo llega el `empr_id` 
 Agente MCP
   │  Authorization: Bearer <JWT Dnato>
   ▼
-WSO2 MI Gateway
-  ├── jwtValidator: valida firma RS256, exp, iss, aud, claim empr_id
-  ├── emprIdInjector: agrega header de transporte X-Empr-Id: <empr_id>
+APIM Gateway (:8243)
+  ├── Key Manager Dnato: valida firma RS256, exp, iss, aud
+  ├── EmprIdInjectorPolicy (in-sequence): extrae empr_id, inyecta X-Empr-Id
+  ▼
+WSO2 MI (:8280)
+  ├── emprIdFromHeader: lee X-Empr-Id, setea jwt_empr_id en contexto
   └── API Sequence (toolsMANAPI.xml)
-         │  Extrae X-Empr-Id del header de transporte
-         │  Llama al DataService pasando empr_id como path param
+         │  Usa jwt_empr_id para construir URL del DataService
          ▼
       DataService
          │  WHERE id_empresa = :id_empresa  (o id_empresa = :empr_id)

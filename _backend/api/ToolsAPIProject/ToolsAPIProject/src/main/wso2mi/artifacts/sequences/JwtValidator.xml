@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NOTA (ADR-008, Mayo 2026): Esta sequence NO se invoca desde el flujo MCP.
+
+  La validación de JWTs para tráfico MCP la realiza el APIM Gateway directamente
+  vía el Key Manager federado "Dnato" (RS256 + JWKS). La inyección del empr_id
+  la realiza la in-sequence EmprIdInjectorPolicy del APIM. El MI solo lee
+  el header X-Empr-Id ya inyectado, vía la sequence EmprIdFromHeader.xml.
+
+  Esta sequence se mantiene en el repo como referencia histórica (documentaba
+  el patrón "JWT passthrough" descartado por ADR-008) y por si se necesitara
+  validación JWT en contextos fuera del flujo MCP (ej: acceso directo al MI
+  en DEV sin pasar por el APIM — solo para debugging).
+
+  Referencia: doc/identity/empr-id-injection.md, doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md §14
+-->
 <sequence name="jwtValidator" xmlns="http://ws.apache.org/ns/synapse">
 
     <!-- Extract Authorization transport header into default scope -->
