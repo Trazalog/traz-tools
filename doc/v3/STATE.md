@@ -12,63 +12,27 @@
 
 ---
 
-## 🟢 EJEMPLO DE REFERENCIA (Sprint 3 ficticio — borrar en el primer uso real)
-
-**Sprint actual:** Sprint 3 — Tools de OTs extendidas + hardening de PROD
-**Objetivo del sprint:** Agregar `update_ot` y `list_overdue_preventives`, y cerrar la deuda técnica de trazabilidad (`sub`→`usrId`) antes de activar al primer cliente early adopter.
-**Última actualización:** 2026-07-20 por Claude Code (E1-API-15)
+**Sprint actual:** Sprint 3 — Activación early adopter minero (dimensionamiento)
+**Objetivo del sprint:** Relevar estado real de los 3 frentes (Mantenimiento, Almacenes, Despliegue GCP) para que el PM priorice con datos reales antes de arrancar implementación.
+**Última actualización:** 2026-07-16 por Claude Code (E1-API-20)
 
 ### Tareas activas
 
 | ID | Descripción | Clase | Estado | Rama / PR |
 |---|---|---|---|---|
-| E1-API-15 | Tool `update_ot` (cambiar estado/mantenedor) | 🟡 | En review | `feature/e1-api-15-update-ot` — PR #410 |
-| E9-IDENT-12 | Mapear `sub` del JWT → `sisusers.usrId` en `create_ot` | 🔴 | Workshop pendiente con Rodolfo | — |
-| E7-CICD-10 | Agregar `.gitignore` de `.phpunit.result.cache` en Dnato | 🟢 | Mergeado | `chore/gitignore-phpunit` — PR #9XX (ficticio) ✅ |
-| E1-API-16 | Tool `list_overdue_preventives` | 🟡 | No iniciada, siguiente en cola | — |
+| E1-API-20 | Relevamiento de estado para dimensionar Sprint 3 (3 frentes) | 🟢 | Completada | `docs/e1-api-20-sprint3-relevamiento-estado` — PR pendiente de abrir |
 
 ### Próxima acción
 
-Rodolfo revisa el PR #410 (`update_ot`) — diff + descripción funcional, ~5 min. Si aprueba, mergea y Claude Code arranca E1-API-16.
+Rodolfo revisa `doc/v3/sprint-3-relevamiento-estado.md` y responde las 5 preguntas abiertas de la sección 5 (especialmente el riesgo de seguridad en `ALMDataService` — §2 del doc) antes de asignar trabajo de implementación del Sprint 3.
 
 ### Decisiones recientes (últimas 5)
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
-| 2026-07-18 | `update_ot` NO permite cambiar `empr_id` bajo ninguna circunstancia — el campo ni se acepta como parámetro | PR #410, coherente con ADR-009 |
-| 2026-07-15 | El mapeo `sub`→`usrId` se hace vía tabla puente en Dnato, no en el MI | Pendiente ADR-010 (a redactar en el workshop) |
-| 2026-07-10 | Cierre metodología v2 — CONTEXT-PACK + STATE + ciclo de 4 pasos | Sección 5-bis CICD_STRATEGY.md |
-| 2026-07-13 | Sprint 2 cerrado — 21 issues, demo E2E verificada | `doc/mcp/demo-smoke-test.md` |
-| 2026-07-13 | ADR-009: X-JWT-Assertion reemplaza EmprIdInjectorPolicy | `doc/adr/ADR-009-backend-jwt-assertion.md` |
+| 2026-07-16 | Relevamiento Sprint 3 completo: Mantenimiento con diseño listo para implementar, Almacenes con lógica de negocio ya existente pero gap de seguridad multi-tenant sin resolver, Despliegue GCP arranca de cero en artefactos | `doc/v3/sprint-3-relevamiento-estado.md` |
 
 ### Bloqueos
 
-- **E9-IDENT-12** bloqueada: requiere workshop de arquitectura (clase 🔴) antes de que Claude Code pueda implementar. Agendar con Rodolfo.
-
----
-
-## 📋 PLANTILLA VACÍA (usar desde acá para el estado real)
-
-**Sprint actual:**
-**Objetivo del sprint:**
-**Última actualización:** \[fecha] por \[CW / CC — ID de tarea]
-
-### Tareas activas
-
-| ID | Descripción | Clase | Estado | Rama / PR |
-|---|---|---|---|---|
-| | | | | |
-
-### Próxima acción
-
-
-
-### Decisiones recientes (últimas 5)
-
-| Fecha | Decisión | Referencia |
-|---|---|---|
-| | | |
-
-### Bloqueos
-
+- Ninguno para el relevamiento en sí. La implementación de escritura MCP en Almacenes queda bloqueada hasta que el PM confirme cómo resolver el aislamiento multi-tenant de `ALMDataService` (ver pregunta abierta #1 del relevamiento) — posible tema de arquitectura (🔴).
 
