@@ -1,6 +1,6 @@
 # CONTEXT-PACK — traz-tools
 
-> `Versión: 1.0 | Sincronizado con: TRAZALOG_v3_MCP_ARCHITECTURE.md / último ADR: ADR-009 | Última actualización: 2026-07-14`
+> `Versión: 1.1 | Sincronizado con: TRAZALOG_v3_MCP_ARCHITECTURE.md / último ADR: ADR-011 | Última actualización: 2026-07-16`
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -23,14 +23,15 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 
 > ⚠️ **Estado actual de formalización:** solo **ADR-003 y ADR-009 existen como archivos** en `doc/adr/`. Las demás decisiones (001, 002, 005, 008) viven consolidadas dentro de `TRAZALOG_v3_MCP_ARCHITECTURE.md` — su formalización como archivos retroactivos está aprobada pero pendiente de ejecución. Hasta entonces: el chequeo de staleness se hace contra los archivos que SÍ existen; para las decisiones sin archivo, la fuente es el doc de arquitectura.
 
-| Decisión | Archivo propio | Resumen (1 línea) |
-|---|---|---|
-| ADR-001 | ❌ (en arch doc) | WSO2 APIM es el único punto de entrada del tráfico MCP/API |
-| ADR-002 | ❌ (en arch doc) | Maximizar Virtual MCP Servers autogenerados; minimizar Python/FastMCP |
-| ADR-003 | ✅ `doc/adr/ADR-003-php-to-wso2-mapping.md` | Mapeo de orquestaciones PHP → WSO2; estrategia por operación |
-| ADR-005 | ❌ (en arch doc) | Costo $0 incremental hasta 2027 — open source siempre que sea posible |
-| ADR-008 | ❌ (en arch doc + Sección 6.8) | El APIM valida el JWT de Dnato como Key Manager federado (no el MI) |
-| **ADR-009** | ✅ `doc/adr/ADR-009-backend-jwt-assertion.md` | **VIGENTE.** El `empr_id` viaja en el backend JWT `X-JWT-Assertion` (firmado por APIM, `apim.jwt.enable=true`); el MI lo deriva con la sequence `EmprIdFromHeader`. La `EmprIdInjectorPolicy` de ADR-008 quedó **DEPRECADA** — no la reimplementes ni la reactives |
+| Decisión    | Archivo propio                                           | Resumen (1 línea)                                                                                                                                                                                                                                                  |
+| ----------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ADR-001     | ❌ (en arch doc)                                          | WSO2 APIM es el único punto de entrada del tráfico MCP/API                                                                                                                                                                                                         |
+| ADR-002     | ❌ (en arch doc)                                          | Maximizar Virtual MCP Servers autogenerados; minimizar Python/FastMCP                                                                                                                                                                                              |
+| ADR-003     | ✅ `doc/adr/ADR-003-php-to-wso2-mapping.md`               | Mapeo de orquestaciones PHP → WSO2; estrategia por operación                                                                                                                                                                                                       |
+| ADR-005     | ❌ (en arch doc)                                          | Costo $0 incremental hasta 2027 — open source siempre que sea posible                                                                                                                                                                                              |
+| ADR-008     | ❌ (en arch doc + Sección 6.8)                            | El APIM valida el JWT de Dnato como Key Manager federado (no el MI)                                                                                                                                                                                                |
+| **ADR-009** | ✅ `doc/adr/ADR-009-backend-jwt-assertion.md`             | **VIGENTE.** El `empr_id` viaja en el backend JWT `X-JWT-Assertion` (firmado por APIM, `apim.jwt.enable=true`); el MI lo deriva con la sequence `EmprIdFromHeader`. La `EmprIdInjectorPolicy` de ADR-008 quedó **DEPRECADA** — no la reimplementes ni la reactives |
+| **ADR-011** | doc/adr/ADR-011-gcp-deployment.md doc/v3/CONTEXT-PACK.md | **VIGENTE.**VM en GCP con WSO2 nativo (APIM+MI), sin Docker, PostgreSQL/Dnato existentes reutilizados                                                                                                                                                              |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 
@@ -58,21 +59,21 @@ Claude.ai ──JWT Dnato──> APIM (:8243)
 
 ## 5. Regla de oro de repos
 
-| Si el trabajo es… | Va en el repo… |
-|---|---|
+| Si el trabajo es…                                                                  | Va en el repo…             |
+| ---------------------------------------------------------------------------------- | -------------------------- |
 | WSO2 (APIM, MI), APIs, DataServices, sequences, specs OpenAPI, Virtual MCP Servers | **traz-tools** (este repo) |
-| Login, tokens, JWT, OAuth, usuarios, roles | **traz-comp-dnato** |
+| Login, tokens, JWT, OAuth, usuarios, roles                                         | **traz-comp-dnato**        |
 
 ## 6. Si tu tarea toca X → leé también Y
 
-| Tu tarea toca… | Leé también… |
-|---|---|
-| Identidad / OAuth / JWT / empr_id | `MCP_ARCHITECTURE.md` §6 + ADR-008 + ADR-009 |
-| DataServices / filtrado multi-tenant | ADR-003 + `doc/identity/dataservices-remediation-phase-a.md` |
-| Virtual MCP Server nuevo o modificado | `doc/mcp/virtual-mcp-equipos.md` / `virtual-mcp-ots.md` (como referencia de formato) + `doc/mcp/tool-annotations-standard.md` |
-| Tiers, límites de uso, analytics de tools | `TRAZALOG_v3_PRICING_STRATEGY` en doc/v3/ (verificar path) |
-| Priorización de features, próximo cliente | `investigacion-sector-minero-trazalog-v3-2.md` |
-| Cualquier cosa en PHP dentro de Dnato | `traz-comp-dnato/CLAUDE.md` (PHP 5.6 estricto) |
+| Tu tarea toca…                            | Leé también…                                                                                                                  |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Identidad / OAuth / JWT / empr_id         | `MCP_ARCHITECTURE.md` §6 + ADR-008 + ADR-009                                                                                  |
+| DataServices / filtrado multi-tenant      | ADR-003 + `doc/identity/dataservices-remediation-phase-a.md`                                                                  |
+| Virtual MCP Server nuevo o modificado     | `doc/mcp/virtual-mcp-equipos.md` / `virtual-mcp-ots.md` (como referencia de formato) + `doc/mcp/tool-annotations-standard.md` |
+| Tiers, límites de uso, analytics de tools | `TRAZALOG_v3_PRICING_STRATEGY` en doc/v3/ (verificar path)                                                                    |
+| Priorización de features, próximo cliente | `investigacion-sector-minero-trazalog-v3-2.md`                                                                                |
+| Cualquier cosa en PHP dentro de Dnato     | `traz-comp-dnato/CLAUDE.md` (PHP 5.6 estricto)                                                                                |
 
 ## 7. Dónde está cada cosa (mapa de directorios clave)
 
