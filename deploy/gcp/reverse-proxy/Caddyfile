@@ -1,0 +1,28 @@
+# Caddyfile — reverse proxy nativo para mcp.cloudtrazalog.com (ADR-011 #7, #9)
+#
+# TLS Let's Encrypt automático (HTTP-01 sobre :80, sirve en :443).
+# Solo expone el Gateway del APIM (:8243). La consola de administración
+# (:9443) NUNCA se expone acá — se accede por red interna/túnel (ADR-011 #9).
+#
+# Variables tomadas del entorno del servicio systemd `caddy`
+# (EnvironmentFile=/etc/caddy/gcp.env, ver setup-reverse-proxy.sh).
+
+{
+	email {$LETSENCRYPT_EMAIL}
+}
+
+{$MCP_DOMAIN} {
+	# El Gateway usa certificado self-signed en localhost:8243 (ver
+	# doc/infra/wso2-install.md). Válido acá porque el salto Caddy→APIM
+	# es loopback, nunca sale de la VM; el cliente solo ve el cert de
+	# Let's Encrypt de Caddy.
+	reverse_proxy https://127.0.0.1:8243 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+
+	log {
+		output file /var/log/caddy/mcp-access.log
+	}
+}
