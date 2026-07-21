@@ -20,7 +20,7 @@
 
 | ID | Descripción | Clase | Estado | Rama / PR |
 |---|---|---|---|---|
-| E7-INFRA-01/02 | Sizing VM GCP + scripts instalación nativa WSO2 (ADR-011) | 🟡 | En review | `feature/e7-infra-01-02-gcp-native-deploy` — PR pendiente de apertura |
+| E7-INFRA-01/02 | Sizing VM GCP + scripts instalación nativa WSO2 (ADR-011) | 🟡 | En review | `feature/e7-infra-01-02-gcp-native-deploy` — PR #403 |
 | E1-API-20 | Relevamiento de estado para dimensionar Sprint 3 (3 frentes) | 🟢 | Completada | `docs/e1-api-20-sprint3-relevamiento-estado` — PR pendiente de abrir |
 
 ### Próxima acción
@@ -31,7 +31,7 @@ Rodolfo revisa el PR de E7-INFRA-01/02: confirma el gasto mensual implicado por 
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
-| 2026-07-21 | Sizing de la VM GCP: `e2-standard-2` (2 vCPU/8GB) — `e2-micro`/`e2-small` insuficientes por RAM, `e2-medium` empata justo con el mínimo oficial del APIM sin margen para el MI | `doc/v3/deployment-gcp.md`, PR E7-INFRA-01/02 |
+| 2026-07-21 | Sizing de la VM GCP: `e2-standard-2` (2 vCPU/8GB) — `e2-micro`/`e2-small` insuficientes por RAM, `e2-medium` empata justo con el mínimo oficial del APIM sin margen para el MI | `doc/v3/deployment-gcp.md`, PR #403 |
 | 2026-07-16 | Relevamiento Sprint 3 completo: Mantenimiento con diseño listo para implementar, Almacenes con lógica de negocio ya existente pero gap de seguridad multi-tenant sin resolver, Despliegue GCP arranca de cero en artefactos | `doc/v3/sprint-3-relevamiento-estado.md` |
 
 ### Bloqueos
