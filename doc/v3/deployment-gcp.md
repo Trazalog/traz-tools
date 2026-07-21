@@ -15,18 +15,19 @@
 | WSO2 API Manager 4.6.0 (all-in-one) | **4 GB** (2 GB heap JVM + 2 GB SO) | 2 cores (3 GHz dual-core Xeon/Opteron o equiv.) | [Installation Prerequisites — APIM 4.6.0](https://apim.docs.wso2.com/en/4.6.0/install-and-setup/install/installation-prerequisites/) |
 | WSO2 Micro Integrator 4.x | Liviano — heap por defecto de fábrica `-Xms256m -Xmx1024m` en `bin/micro-integrator.sh` (footprint total ≈1 GB, reducido respecto a las ~4 GB de la generación EI anterior) | 1-2 cores compartidos | Confirmado en el script de arranque distribuido por WSO2; ver también `scripts/dev/setup-mi-b4-car-deploy.sh` de este repo (DEV corre MI 4.5.0 así) |
 
-**Conclusión:** correr APIM + MI + reverse proxy + SO en la misma VM necesita, como piso real, **RAM(APIM oficial) + RAM(MI liviano) + margen de SO/red** ≈ 4 GB + 1 GB + 1-2 GB ≈ **6-7 GB mínimo**, no los 4 GB que alcanzarían para el APIM solo.
+**Estos son los mínimos "de catálogo" de WSO2**, pensados para un ambiente de producción genérico con carga concurrente real. No son el punto de partida correcto para dimensionar el piloto: Rodolfo ya corre APIM+MI en su máquina de desarrollo con heaps de fábrica (`MI: -Xms256m -Xmx1024m`, sin tocar nada) y le anda bien. El early adopter va a tener **1-2 usuarios**, no la carga concurrente que esos mínimos oficiales asumen. Se prioriza ese dato empírico + el volumen real esperado por sobre el catálogo oficial (ver decisión en 1.4).
 
 ### 1.2 Comparación de tiers E2 (specs verificadas contra `docs.cloud.google.com`)
 
-| Tier | vCPU | RAM | Precio aprox.* (on-demand, us-central1) | ¿Aguanta el stack? |
+| Tier | vCPU | RAM | Precio aprox.* (on-demand, us-central1) | ¿Aguanta 1-2 usuarios piloto? |
 |---|---|---|---|---|
-| `e2-micro` | 2 vCPU compartidas (0.25 sustenido) | **1 GB** | Cubierto por Always Free (ver 1.3) | ❌ No. Por debajo del mínimo oficial del APIM solo (4 GB) |
-| `e2-small` | 2 vCPU compartidas (0.5 sustenido) | **2 GB** | ≈ US$12-15/mes | ❌ No. La mitad del mínimo oficial del APIM solo |
-| `e2-medium` | 2 vCPU compartidas (1.0 sustenido) | **4 GB** | ≈ US$24-25/mes | ⚠️ Al límite exacto del mínimo oficial del APIM **solo**, sin margen para el MI, el reverse proxy, sshd ni el SO. Riesgo real de OOM/lentitud — no recomendado para un despliegue de cara al cliente |
-| **`e2-standard-2`** | **2 vCPU dedicadas** | **8 GB** | ≈ US$48-52/mes | ✅ Sí. Cubre el mínimo oficial del APIM con margen, el MI en su heap liviano, y deja ~3-4 GB para SO/reverse proxy/monitoreo |
+| `e2-micro` | 2 vCPU compartidas (0.25 sustenido) | **1 GB** | Cubierto por Always Free (ver 1.3) | ❌ No. Ni siquiera un solo heap de MI (`Xmx1024m`) entra cómodo, sin contar el APIM ni el SO |
+| **`e2-medium`** | **2 vCPU compartidas (1.0 sustenido)** | **4 GB** | ≈ US$24-25/mes | ✅ Sí, con heaps chicos (ver 1.5) y aceptando el riesgo ya previsto en ADR-011 ("sizing ajustado", escalable sin reinstalar) |
+| `e2-standard-2` | 2 vCPU dedicadas | 8 GB | ≈ US$48-52/mes | Sobredimensionado para 1-2 usuarios — se descarta por costo (ver 1.4) |
 
 \* Precios de referencia obtenidos de trackers de terceros (economize.cloud, cloudprice.net, vantage.sh) al momento de esta investigación (2026-07-21). **Cambian seguido y varían por región** — reconfirmar el número exacto en [cloud.google.com/products/calculator](https://cloud.google.com/products/calculator) antes de aprobar el gasto. No son los precios oficiales citados textualmente, son una referencia de orden de magnitud.
+
+`e2-small` (2 GB) se descartó directamente: ni con heaps mínimos entran dos JVMs (APIM+MI) más SO más Caddy sin arriesgar swap constante.
 
 ### 1.3 Free tier — verificado contra la doc oficial
 
@@ -38,33 +39,38 @@ Texto verbatim de la [documentación oficial Always Free](https://docs.cloud.goo
 
 ### 1.4 Decisión de sizing
 
-**Tier elegido: `e2-standard-2` (2 vCPU, 8 GB RAM).**
+**Tier elegido: `e2-medium` (2 vCPU compartidas, 4 GB RAM). Decisión de Rodolfo, no la recomendación inicial de esta investigación.**
 
-Justificación: es el primer tier que supera el mínimo oficial documentado por WSO2 para el APIM (4 GB) dejando margen real para el MI, el reverse proxy (Caddy) y el sistema operativo — `e2-medium` empata justo con el piso del APIM solo, sin ningún margen, lo cual es un riesgo inaceptable para el primer despliegue de cara a un cliente. El tipo de máquina es cambiable sin reinstalar (ADR-011, riesgo aceptado "sizing ajustado" — primer movimiento ante problemas de memoria es subir de tier).
+La primera versión de este documento recomendaba `e2-standard-2` (8 GB) siguiendo al pie de la letra el mínimo "de catálogo" que documenta WSO2 para producción genérica. Rodolfo corrigió el enfoque: el early adopter va a tener **1-2 usuarios**, no la carga concurrente que ese catálogo asume, y él mismo corre el stack en su máquina de desarrollo con heaps de fábrica sin problemas. Para ese volumen real, `e2-medium` alcanza — y cuesta la mitad (~US$24-25/mes vs. ~US$48-52/mes).
 
-**⚠️ Punto que requiere confirmación explícita de Rodolfo antes de crear la VM:**
-ADR-005 establece costo incremental **$0 hasta 2027**. El sizing mínimo viable real (`e2-standard-2`) **no es gratuito** — ronda los US$48-52/mes (a reconfirmar con el calculador oficial). El free tier de Compute Engine no alcanza para este stack bajo ninguna combinación verificada. Esto es una excepción parcial a ADR-005 que el sizing técnico no puede evitar — se documenta acá para que sea una decisión consciente y no un descubrimiento post-facto en la factura de GCP.
+Esto es exactamente el riesgo que ADR-011 ya preveía y aceptó explícitamente ("sizing ajustado: si la VM elegida queda por debajo de lo que WSO2 recomienda, puede haber lentitud... mitigación: el tipo de máquina es escalable sin reinstalar"). Se arranca con lo mínimo indispensable; si el feedback de uso real del early adopter muestra que hace falta más, se sube de tier sin tener que reinstalar nada (cambio de tipo de máquina en la consola de GCP + reinicio).
 
-### 1.5 Reparto de heap propuesto (`e2-standard-2`, 8 GB total)
+**Costo vs. ADR-005**: `e2-medium` sigue sin ser gratis (~US$24-25/mes, el free tier de GCP solo cubre `e2-micro`), pero es una excepción mucho más chica a ADR-005 que la propuesta original, y Rodolfo ya la aceptó conscientemente en esta conversación.
+
+### 1.5 Reparto de heap propuesto (`e2-medium`, 4 GB total)
 
 | Proceso | `-Xms` | `-Xmx` | Nota |
 |---|---|---|---|
-| APIM | 2g | 3g | Prioridad de RAM (ADR-011 #4). Deja margen sobre el mínimo oficial de 2 GB heap |
-| MI | 256m | 768m | Cerca del default de fábrica (`256m`/`1024m`); se recorta el `-Xmx` levemente para dejarle más margen al APIM |
-| SO + Caddy + sshd + monitoreo | — | — | Resto (~3-4 GB) sin asignar a heap, disponible como colchón |
+| MI | 256m | 1024m | Igual al default de fábrica que Rodolfo ya usa en DEV y confirmó que anda bien |
+| APIM | 512m | 1536m | Recibe algo más de RAM que el MI (ADR-011 #4 — sigue priorizando al APIM) pero muy por debajo del mínimo "de catálogo" de 2 GB heap, acorde al volumen de 1-2 usuarios |
+| SO + Caddy + sshd | — | — | Resto (~1-1.5 GB una vez descontado el overhead de JVM de ambos procesos, no solo el heap declarado) — colchón más ajustado que en un dimensionamiento de catálogo, aceptado a propósito |
 
-Configurable en [`deploy/gcp/.env`](../../deploy/gcp/.env.example) (`APIM_XMS`/`APIM_XMX`/`MI_XMS`/`MI_XMX`) sin tener que reinstalar — volver a correr `install-apim.sh` / `install-mi.sh` reaplica la config sobre una instalación existente.
+Configurable en [`deploy/gcp/.env`](../../deploy/gcp/.env.example) (`APIM_XMS`/`APIM_XMX`/`MI_XMS`/`MI_XMX`) sin tener que reinstalar — volver a correr `install-apim.sh` / `install-mi.sh` reaplica la config sobre una instalación existente. Si tras el feedback de uso hace falta más margen, el camino es subir estos valores y/o el tier de la VM, no rearmar nada desde cero.
 
 ### 1.6 Disco
 
-Ambos productos + logs necesitan holgadamente menos que los 10 GB mínimos que documenta WSO2 para el APIM solo. Se recomienda **30 GB pd-balanced** (o pd-standard si se prioriza costo sobre IOPS) — cubre APIM + MI + logs con margen para varios meses de crecimiento, a un costo marginal (unos pocos dólares/mes, verificar en el calculador).
+Ambos productos + logs necesitan holgadamente menos que los 10 GB mínimos que documenta WSO2 para el APIM solo. Se recomienda **20 GB pd-standard** — cubre APIM + MI + logs con margen para varios meses, priorizando costo (consistente con el criterio de esta sección), a un costo marginal (un par de dólares/mes, verificar en el calculador).
+
+### 1.7 Nota de contexto: la otra VM (WSO2 4.4, sin MCP)
+
+Rodolfo ya tiene otra VM en el mismo proyecto GCP corriendo WSO2 **4.4** (sin servidor MCP). Una vez cerrado el trabajo con el early adopter, se evaluará migrar esa VM a 4.6.0 **si existe un path de migración** — no se investigó en esta tarea. La VM nueva de este documento es independiente de esa migración futura; no la reemplaza ni depende de ella.
 
 ---
 
 ## 2. Cómo conecta la VM a lo que ya existe
 
 ```
-VM GCP nueva (e2-standard-2, solo WSO2 nativo)
+VM GCP nueva (e2-medium, solo WSO2 nativo)
   APIM 4.6.0 ──jdbc:postgresql──> PostgreSQL existente (registro/metadata interno: apim_db, shared_db)
   MI 4.x      ──(red interna del proyecto GCP, sin VPN/peering)──> Dnato existente
 ```
@@ -90,8 +96,8 @@ VM GCP nueva (e2-standard-2, solo WSO2 nativo)
 
 Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta nada de esto.
 
-1. **Confirmar región/VPC** donde ya viven Dnato y PostgreSQL en el proyecto GCP actual, y crear la VM nueva en esa misma región/red (evita latencia y cargos de tráfico inter-región).
-2. **Crear la VM**: tipo `e2-standard-2`, imagen Ubuntu 24.04 LTS (o la que ya se use para Dnato, por consistencia operativa), disco 30 GB pd-balanced.
+1. **Confirmar región/VPC** donde ya viven Dnato y PostgreSQL en el proyecto GCP actual, y crear la VM nueva en esa misma región/red (evita latencia y cargos de tráfico inter-región). Todo vive en el proyecto GCP "Trazalog" — para ver la zona exacta de cada VM existente: consola → Compute Engine → Instancias de VM (columna "Zona"), o con `gcloud compute instances list --project=<id-del-proyecto-trazalog> --format="table(name,zone,machineType,status)"` si tenés `gcloud` autenticado localmente.
+2. **Crear la VM**: tipo `e2-medium`, imagen Ubuntu 24.04 LTS (o la que ya se use para Dnato, por consistencia operativa), disco 20 GB pd-standard.
 3. **Reservar IP pública estática** y asociarla a la VM.
 4. **DNS**: apuntar `mcp.cloudtrazalog.com` (registro A) a la IP estática reservada en el paso 3.
 5. **Firewall del proyecto GCP**:
@@ -118,7 +124,7 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
 
 ## 5. Preguntas abiertas
 
-- **Costo real vs. ADR-005**: ver 1.4 — el sizing mínimo viable no es gratis. Requiere aprobación explícita de Rodolfo del gasto mensual (~US$50-60/mes incluyendo disco, a reconfirmar con el calculador oficial al momento de crear la VM).
-- **Región/VPC exacta** donde viven hoy Dnato y PostgreSQL — necesaria para decidir la región de la VM nueva (no investigable sin acceso a la consola de GCP de Rodolfo).
+- **Costo real vs. ADR-005**: ver 1.4 — `e2-medium` (~US$24-25/mes incluyendo disco, a reconfirmar con el calculador oficial) sigue sin ser $0, pero ya fue aceptado conscientemente por Rodolfo dado el volumen de 1-2 usuarios del piloto.
+- **Región/VPC exacta** donde viven hoy Dnato y PostgreSQL — ver el paso 1 del checklist (§4) para cómo consultarla en la consola o con `gcloud`.
 - **Versión exacta del MI**: se usa `4.5.0` por ser la validada junto al APIM 4.6.0 en DEV (ver `scripts/dev/setup-mi-b4-car-deploy.sh`). Si Rodolfo prefiere subir a una versión más nueva de MI, es una decisión aparte — no se investigó compatibilidad de versiones más nuevas contra el mecanismo de identidad de ADR-009.
 - **Migración de DataServices a PostgreSQL**: en curso pero no cerrada (`doc/identity/dataservices-remediation-phase-a.md`). Se detectó además que las datasources actuales (`AssetPlannerDataSource.xml`, `ToolsDataSource.xml`) tienen credenciales en texto plano commiteadas en el repo — preexistente, no introducido por esta tarea, pero vale la pena que Rodolfo lo sepa antes del cutover a producción.

@@ -25,13 +25,13 @@
 
 ### Próxima acción
 
-Rodolfo revisa el PR de E7-INFRA-01/02: confirma el gasto mensual implicado por `e2-standard-2` (tensión con ADR-005, ver `doc/v3/deployment-gcp.md` §1.4) y la región/VPC donde ya viven Dnato y PostgreSQL. Si aprueba, ejecuta el checklist de la §4 de ese documento en su consola de GCP. En paralelo, sigue pendiente que responda las 5 preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md` (especialmente el riesgo de seguridad en `ALMDataService` — §2).
+Rodolfo ya confirmó el sizing (`e2-medium`, ~US$24-25/mes) y aclaró que las VMs del proyecto viven en "Trazalog" en GCP. Falta que confirme la región/VPC exacta donde viven Dnato y PostgreSQL (ver `doc/v3/deployment-gcp.md` §4 paso 1) y que ejecute el checklist de esa sección en su consola de GCP. En paralelo, sigue pendiente que responda las 5 preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md` (especialmente el riesgo de seguridad en `ALMDataService` — §2).
 
 ### Decisiones recientes (últimas 5)
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
-| 2026-07-21 | Sizing de la VM GCP: `e2-standard-2` (2 vCPU/8GB) — `e2-micro`/`e2-small` insuficientes por RAM, `e2-medium` empata justo con el mínimo oficial del APIM sin margen para el MI | `doc/v3/deployment-gcp.md`, PR #403 |
+| 2026-07-21 | Sizing final de la VM GCP: `e2-medium` (2 vCPU/4GB), no `e2-standard-2`. Rodolfo priorizó costo (~US$24/mes) + volumen real (1-2 usuarios) por sobre el mínimo "de catálogo" de WSO2, con heaps chicos ya validados en su DEV | `doc/v3/deployment-gcp.md`, PR #403 |
 | 2026-07-16 | Relevamiento Sprint 3 completo: Mantenimiento con diseño listo para implementar, Almacenes con lógica de negocio ya existente pero gap de seguridad multi-tenant sin resolver, Despliegue GCP arranca de cero en artefactos | `doc/v3/sprint-3-relevamiento-estado.md` |
 
 ### Bloqueos
