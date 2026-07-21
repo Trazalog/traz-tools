@@ -25,7 +25,7 @@
 
 ### Próxima acción
 
-Rodolfo ya confirmó el sizing (`e2-medium`, ~US$24-25/mes) y aclaró que las VMs del proyecto viven en "Trazalog" en GCP. Falta que confirme la región/VPC exacta donde viven Dnato y PostgreSQL (ver `doc/v3/deployment-gcp.md` §4 paso 1) y que ejecute el checklist de esa sección en su consola de GCP. En paralelo, sigue pendiente que responda las 5 preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md` (especialmente el riesgo de seguridad en `ALMDataService` — §2).
+Rodolfo ya confirmó el sizing (`e2-medium`, ~US$24-25/mes) y la zona (`us-east1-b`, proyecto GCP "Trazalog", misma zona que Dnato/PostgreSQL/VM legacy 4.4). Queda que ejecute el checklist de `doc/v3/deployment-gcp.md` §4 en su consola de GCP para crear la VM. En paralelo, sigue pendiente que responda las 5 preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md` (especialmente el riesgo de seguridad en `ALMDataService` — §2).
 
 ### Decisiones recientes (últimas 5)
 

@@ -75,7 +75,7 @@ VM GCP nueva (e2-medium, solo WSO2 nativo)
   MI 4.x      ──(red interna del proyecto GCP, sin VPN/peering)──> Dnato existente
 ```
 
-- **Red interna del proyecto GCP**: al estar la VM nueva, PostgreSQL y Dnato en el mismo proyecto, la conectividad es directa por IP interna — no requiere VPN ni peering (ADR-011 #6). Confirmar con Rodolfo el rango/subred donde viven Dnato y PostgreSQL hoy, para crear la VM nueva en la misma red (VPC) y, si aplica, la misma región (ver pregunta abierta en 4).
+- **Red interna del proyecto GCP**: al estar la VM nueva, PostgreSQL y Dnato en el mismo proyecto, la conectividad es directa por IP interna — no requiere VPN ni peering (ADR-011 #6). **Zona confirmada por Rodolfo: `us-east1-b`** — la VM nueva se crea ahí, misma zona que el resto del stack existente (Dnato, PostgreSQL, y la VM legacy con WSO2 4.4).
 - **Qué configuran los scripts**: `PG_HOST`/`PG_PORT`/credenciales en `deploy/gcp/.env` apuntan a la instancia PostgreSQL ya existente — `install-apim.sh` los usa para reescribir `[database.apim_db]` y `[database.shared_db]` en `deployment.toml` (registro/metadata **interno** del APIM, no las DataServices de negocio).
 - **Qué NO configuran los scripts**: las DataServices de negocio del MI (`AssetPlannerDataSource`, `ToolsDataSource`) están embebidas en el `.car` de `ToolsAPIProject` con su propia definición de conexión — hoy mezclan MySQL legacy y PostgreSQL (ver `doc/identity/dataservices-remediation-phase-a.md`, migración ya en curso pero no cerrada). Migrar esas conexiones es un cambio al proyecto Maven, no a la VM, y queda fuera de esta tarea.
 - **Identidad/JWT**: la config de `[apim.jwt]` + Key Manager federado de Dnato (ADR-008/ADR-009) tampoco la tocan estos scripts — es clase 🔴 (identidad/seguridad). Debe aplicarse como paso separado, replicando `doc/identity/apim-keymanager-dnato.md` contra el Dnato de este mismo proyecto GCP, antes de dar de alta al primer cliente.
@@ -96,8 +96,8 @@ VM GCP nueva (e2-medium, solo WSO2 nativo)
 
 Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta nada de esto.
 
-1. **Confirmar región/VPC** donde ya viven Dnato y PostgreSQL en el proyecto GCP actual, y crear la VM nueva en esa misma región/red (evita latencia y cargos de tráfico inter-región). Todo vive en el proyecto GCP "Trazalog" — para ver la zona exacta de cada VM existente: consola → Compute Engine → Instancias de VM (columna "Zona"), o con `gcloud compute instances list --project=<id-del-proyecto-trazalog> --format="table(name,zone,machineType,status)"` si tenés `gcloud` autenticado localmente.
-2. **Crear la VM**: tipo `e2-medium`, imagen Ubuntu 24.04 LTS (o la que ya se use para Dnato, por consistencia operativa), disco 20 GB pd-standard.
+1. ~~Confirmar región/VPC~~ **Confirmado: `us-east1-b`** (proyecto GCP "Trazalog") — misma zona donde ya viven Dnato, PostgreSQL y la VM legacy con WSO2 4.4. Crear la VM nueva ahí (evita latencia y cargos de tráfico inter-región/inter-zona).
+2. **Crear la VM**: tipo `e2-medium`, zona `us-east1-b`, imagen Ubuntu 24.04 LTS (o la que ya se use para Dnato, por consistencia operativa), disco 20 GB pd-standard.
 3. **Reservar IP pública estática** y asociarla a la VM.
 4. **DNS**: apuntar `mcp.cloudtrazalog.com` (registro A) a la IP estática reservada en el paso 3.
 5. **Firewall del proyecto GCP**:
@@ -125,6 +125,6 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
 ## 5. Preguntas abiertas
 
 - **Costo real vs. ADR-005**: ver 1.4 — `e2-medium` (~US$24-25/mes incluyendo disco, a reconfirmar con el calculador oficial) sigue sin ser $0, pero ya fue aceptado conscientemente por Rodolfo dado el volumen de 1-2 usuarios del piloto.
-- **Región/VPC exacta** donde viven hoy Dnato y PostgreSQL — ver el paso 1 del checklist (§4) para cómo consultarla en la consola o con `gcloud`.
+- ~~Región/VPC exacta~~ **Resuelto: `us-east1-b`** (ver §2 y §4 paso 1).
 - **Versión exacta del MI**: se usa `4.5.0` por ser la validada junto al APIM 4.6.0 en DEV (ver `scripts/dev/setup-mi-b4-car-deploy.sh`). Si Rodolfo prefiere subir a una versión más nueva de MI, es una decisión aparte — no se investigó compatibilidad de versiones más nuevas contra el mecanismo de identidad de ADR-009.
 - **Migración de DataServices a PostgreSQL**: en curso pero no cerrada (`doc/identity/dataservices-remediation-phase-a.md`). Se detectó además que las datasources actuales (`AssetPlannerDataSource.xml`, `ToolsDataSource.xml`) tienen credenciales en texto plano commiteadas en el repo — preexistente, no introducido por esta tarea, pero vale la pena que Rodolfo lo sepa antes del cutover a producción.
