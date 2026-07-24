@@ -31,6 +31,7 @@ Rodolfo ya confirmó el sizing (`e2-medium`, ~US$24-25/mes) y la zona (`us-east1
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
+| 2026-07-24 | Corregido el SO de la VM GCP: `Rocky Linux 9` (no Ubuntu, error de la v1 del doc). Ya estaba decidido en IDR-001 (`TRAZALOG_v3_MCP_ARCHITECTURE.md` §9-10) por incompatibilidad de CentOS 7/glibc con JDK 21 — no es una decisión nueva | `doc/v3/deployment-gcp.md`, PR #403 |
 | 2026-07-21 | Sizing final de la VM GCP: `e2-medium` (2 vCPU/4GB), no `e2-standard-2`. Rodolfo priorizó costo (~US$24/mes) + volumen real (1-2 usuarios) por sobre el mínimo "de catálogo" de WSO2, con heaps chicos ya validados en su DEV | `doc/v3/deployment-gcp.md`, PR #403 |
 | 2026-07-16 | Relevamiento Sprint 3 completo: Mantenimiento con diseño listo para implementar, Almacenes con lógica de negocio ya existente pero gap de seguridad multi-tenant sin resolver, Despliegue GCP arranca de cero en artefactos | `doc/v3/sprint-3-relevamiento-estado.md` |
 

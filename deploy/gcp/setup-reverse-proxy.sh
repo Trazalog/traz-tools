@@ -4,8 +4,9 @@
 # proxy TLS para mcp.cloudtrazalog.com → APIM Gateway (:8243). Aplica ADR-011
 # #7 (Let's Encrypt automático) y #9 (9443 nunca público).
 #
-# Fuente de instalación: repo oficial de Caddy en Cloudsmith
-# (https://caddyserver.com/docs/install#debian-ubuntu-raspbian).
+# SO objetivo: Rocky Linux 9 (IDR-001 en TRAZALOG_v3_MCP_ARCHITECTURE.md §9-10 —
+# no Ubuntu ni CentOS 7). Fuente de instalación: repo oficial de Caddy vía Copr
+# (https://caddyserver.com/docs/install#fedora-redhat-centos).
 #
 # PRE: deploy/gcp/.env presente, con MCP_DOMAIN y LETSENCRYPT_EMAIL completos.
 #      DNS de MCP_DOMAIN ya apuntando a la IP pública de esta VM (paso manual
@@ -31,17 +32,12 @@ for var in MCP_DOMAIN LETSENCRYPT_EMAIL; do
   [ -n "${!var:-}" ] || die "Falta $var en .env"
 done
 
-# ── Instalación de Caddy (repo oficial, si no está instalado) ────
+# ── Instalación de Caddy (repo oficial vía Copr, si no está instalado) ──
 if ! command -v caddy >/dev/null 2>&1; then
-  log "Instalando Caddy desde el repo oficial (Cloudsmith)..."
-  apt-get update -y
-  apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
-    | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
-    | tee /etc/apt/sources.list.d/caddy-stable.list
-  apt-get update -y
-  apt-get install -y caddy
+  log "Instalando Caddy desde el repo oficial (Copr, Fedora/RHEL/Rocky)..."
+  dnf install -y 'dnf-command(copr)'
+  dnf copr enable -y @caddy/caddy
+  dnf install -y caddy
 else
   log "Caddy ya está instalado ($(caddy version))"
 fi
