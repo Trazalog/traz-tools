@@ -89,7 +89,7 @@ VM GCP nueva (e2-medium, solo WSO2 nativo)
 **Elegido: Caddy** (nativo, sin contenedor) por sobre nginx — Let's Encrypt automático con configuración mínima (un solo `Caddyfile` de ~15 líneas, sin certbot ni renovación manual), consistente con la prioridad de "cero curva de aprendizaje nueva" de ADR-011 #3.
 
 - Config: [`deploy/gcp/reverse-proxy/Caddyfile`](../../deploy/gcp/reverse-proxy/Caddyfile) — enruta `mcp.cloudtrazalog.com` (TLS Let's Encrypt) → `https://127.0.0.1:8243` (Gateway del APIM, certificado self-signed interno, válido porque el salto es loopback).
-- Instalación: [`deploy/gcp/setup-reverse-proxy.sh`](../../deploy/gcp/setup-reverse-proxy.sh) — repo oficial de Caddy vía `dnf`/Copr (paquete `caddy` para Fedora/RHEL/Rocky), sin Docker.
+- Instalación: [`deploy/gcp/setup-reverse-proxy.sh`](../../deploy/gcp/setup-reverse-proxy.sh) — repo oficial de Caddy vía `dnf`/Copr, siguiendo al pie de la letra la sección "CentOS/RHEL" de [caddyserver.com/docs/install](https://caddyserver.com/docs/install) (`dnf-plugins-core` + `dnf copr enable @caddy/caddy`). Esa página no nombra Rocky Linux explícitamente (solo Fedora/RedHat/CentOS) — Rocky es rebuild 1:1 de RHEL así que debería resolver igual, pero no está confirmado 1:1 en la doc oficial de Caddy. Verificar `caddy version` después de correr el script como parte del smoke test (paso 8).
 - **9443 (consola de administración) nunca se expone** — ni el Caddyfile ni las reglas de firewall de la sección 4 lo enrutan. Acceso a `/carbon`, `/publisher`, `/devportal` solo por túnel SSH o red interna (ADR-011 #9).
 
 ---
@@ -106,7 +106,22 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
    - Abrir **80/tcp** (requerido por el desafío HTTP-01 de Let's Encrypt) y **443/tcp** (tráfico público real), origen `0.0.0.0/0`.
    - **NO** abrir 9443 al público — solo alcanzable desde la red interna del proyecto o vía túnel SSH (`gcloud compute ssh --tunnel-through-iap` o similar).
    - Confirmar que el firewall interno permite que la VM llegue a PostgreSQL (5432) y a Dnato por su puerto correspondiente dentro de la misma VPC.
-6. **Orden de ejecución en la VM** (una vez creada y con acceso SSH):
+   - **`firewalld` dentro de la VM**: la [doc oficial de GCP](https://docs.cloud.google.com/compute/docs/images/os-details) confirma para AlmaLinux/CentOS que "por defecto se permite todo el tráfico a través del firewall del guest, porque las reglas de firewall de la VPC lo overridean" — la sección de Rocky Linux específicamente no está en esa página, pero es la misma familia de imagen RHEL-like, así que es razonable esperar el mismo comportamiento. **No verificado 1:1 para Rocky** — al llegar a este paso, correr `sudo firewall-cmd --state` y, si está `running`, confirmar con `sudo firewall-cmd --list-all` que 80/443 pasan (o agregarlos con `firewall-cmd --add-port=80/tcp --add-port=443/tcp --permanent && firewall-cmd --reload`) antes de asumir que alcanza con la regla de la VPC.
+6. **Instalar JDK 21 Temurin** (requisito de WSO2 4.6.0 — verificado contra [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial con soporte explícito para Rocky Linux):
+   ```bash
+   sudo tee /etc/yum.repos.d/adoptium.repo <<'EOF'
+   [Adoptium]
+   name=Adoptium
+   baseurl=https://packages.adoptium.net/artifactory/rpm/rocky/$releasever/$basearch
+   enabled=1
+   gpgcheck=1
+   gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
+   EOF
+   sudo dnf install -y temurin-21-jdk
+   java -version   # debe mostrar "21.x.x"
+   ```
+   `install-apim.sh`/`install-mi.sh` detectan `JAVA_HOME` automáticamente a partir del `java` instalado (o respetan `$JAVA_HOME` si ya está seteado) y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d`, porque systemd no lo lee.
+7. **Orden de ejecución en la VM** (una vez creada y con acceso SSH):
    ```bash
    git clone <este repo> && cd traz-tools/deploy/gcp
    cp .env.example .env   # completar con los valores reales
@@ -119,8 +134,8 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
    sudo systemctl start wso2am
    sudo systemctl start wso2mi
    ```
-7. **Smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5): `curl -I https://mcp.cloudtrazalog.com` debe responder con el cert de Let's Encrypt (no self-signed), y proxyear al Gateway del APIM.
-8. **Antes de dar de alta al primer cliente**: aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL — ninguna de las dos está cubierta por esta tarea.
+8. **Smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5): `curl -I https://mcp.cloudtrazalog.com` debe responder con el cert de Let's Encrypt (no self-signed), y proxyear al Gateway del APIM.
+9. **Antes de dar de alta al primer cliente**: aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL — ninguna de las dos está cubierta por esta tarea.
 
 ---
 

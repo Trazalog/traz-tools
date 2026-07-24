@@ -16,6 +16,11 @@ otro proveedor o topología, va en `deploy/<nuevo-proveedor>/`, no acá adentro.
 
 ## Orden de ejecución (en la VM GCP, no localmente)
 
+SO objetivo: **Rocky Linux 9** (IDR-001, ver `deployment-gcp.md` §1.1). Antes de
+correr los scripts, instalar JDK 21 Temurin (ver checklist §4 paso 6 de
+`deployment-gcp.md`) — `install-apim.sh`/`install-mi.sh` lo detectan solo y
+lo dejan seteado en el unit de systemd.
+
 ```bash
 cp .env.example .env
 # completar .env con los valores reales (PostgreSQL externa, dominio, etc.)

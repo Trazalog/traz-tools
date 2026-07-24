@@ -71,10 +71,27 @@ else
   log "AVISO: no se encontraron flags -Xms/-Xmx en micro-integrator.sh — ajustar heap manualmente"
 fi
 
+# ── JAVA_HOME (JDK 21 requerido por WSO2 4.6.0 — ver doc/v3/deployment-gcp.md §4) ──
+# systemd no lee /etc/profile.d, así que hace falta resolver JAVA_HOME acá y
+# escribirlo explícitamente en el unit (a diferencia de DEV, que lo setea en
+# el perfil de shell — ver doc/infra/wso2-install.md).
+if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+  JAVA_HOME_RESOLVED="$JAVA_HOME"
+else
+  JAVA_BIN="$(command -v java || true)"
+  [ -n "$JAVA_BIN" ] || die "No se encontró Java. Instalar JDK 21 Temurin primero (doc/v3/deployment-gcp.md §4)."
+  JAVA_BIN="$(readlink -f "$JAVA_BIN")"
+  JAVA_HOME_RESOLVED="$(dirname "$(dirname "$JAVA_BIN")")"
+fi
+"$JAVA_HOME_RESOLVED/bin/java" -version 2>&1 | grep -q '"21\.' \
+  || die "Se requiere JDK 21 (WSO2 4.6.0) — detectado: $("$JAVA_HOME_RESOLVED/bin/java" -version 2>&1 | head -1)"
+log "JAVA_HOME detectado: $JAVA_HOME_RESOLVED (JDK 21 verificado)"
+
 # ── Permisos y systemd ─────────────────────────────────────────────
 chown -R "$WSO2_USER:$WSO2_USER" "$MI_HOME"
 
 sed -e "s#{{MI_HOME}}#$MI_HOME#g" -e "s#{{WSO2_USER}}#$WSO2_USER#g" \
+    -e "s#{{JAVA_HOME}}#$JAVA_HOME_RESOLVED#g" \
   "$SCRIPT_DIR/systemd/wso2mi.service" > /etc/systemd/system/wso2mi.service
 systemctl daemon-reload
 systemctl enable wso2mi.service

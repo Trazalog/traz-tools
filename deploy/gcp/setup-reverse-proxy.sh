@@ -34,8 +34,8 @@ done
 
 # ── Instalación de Caddy (repo oficial vía Copr, si no está instalado) ──
 if ! command -v caddy >/dev/null 2>&1; then
-  log "Instalando Caddy desde el repo oficial (Copr, Fedora/RHEL/Rocky)..."
-  dnf install -y 'dnf-command(copr)'
+  log "Instalando Caddy desde el repo oficial (Copr, sección CentOS/RHEL de caddyserver.com/docs/install)..."
+  dnf install -y dnf-plugins-core
   dnf copr enable -y @caddy/caddy
   dnf install -y caddy
 else

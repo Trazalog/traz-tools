@@ -7,6 +7,7 @@ Wants=network-online.target
 Type=forking
 User={{WSO2_USER}}
 Group={{WSO2_USER}}
+Environment="JAVA_HOME={{JAVA_HOME}}"
 WorkingDirectory={{MI_HOME}}
 ExecStart={{MI_HOME}}/bin/micro-integrator.sh start
 ExecStop={{MI_HOME}}/bin/micro-integrator.sh stop
