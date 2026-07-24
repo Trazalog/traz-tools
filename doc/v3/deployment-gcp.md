@@ -98,6 +98,15 @@ VM GCP nueva (e2-medium, solo WSO2 nativo)
 
 Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta nada de esto.
 
+> **Cómo correr los comandos `gcloud` de este checklist sin instalar nada:** los pasos 3 y 5 usan `gcloud`. No hace falta instalarlo en ninguna máquina — se usa **Cloud Shell**, la terminal integrada en el navegador de la consola de GCP:
+> 1. Ir a [console.cloud.google.com](https://console.cloud.google.com) y loguearse con la cuenta de Trazalog.
+> 2. Arriba a la izquierda, click en el selector de proyecto → buscar **"Trazalog"** → seleccionarlo. Confirmar que la barra superior queda con ese proyecto activo.
+> 3. Arriba a la derecha, click en el ícono de terminal (`>_`, "Activate Cloud Shell"). Esperar a que inicialice.
+> 4. Verificar el proyecto activo: `gcloud config get-value project` (debe mostrar el ID del proyecto Trazalog).
+> 5. Pegar ahí los comandos `gcloud compute...` de los pasos 3 y 5, uno por vez.
+>
+> Estos comandos son de **configuración del proyecto** (IP, firewall) — se corren desde Cloud Shell, **no por SSH dentro de la VM nueva**. El acceso por SSH a la VM recién aparece en los pasos 6-7 (instalar JDK, correr los scripts de `deploy/gcp/`).
+
 1. ~~Confirmar región/VPC~~ **Confirmado: `us-east1-b`** (proyecto GCP "Trazalog") — misma zona donde ya viven Dnato, PostgreSQL y la VM legacy con WSO2 4.4. Crear la VM nueva ahí (evita latencia y cargos de tráfico inter-región/inter-zona).
 2. **Crear la VM**: tipo `e2-medium`, zona `us-east1-b`, imagen **Rocky Linux 9** (decisión ya tomada en IDR-001, ver 1.1 — no Ubuntu ni CentOS 7), disco 20 GB pd-standard.
    - **Ojo con la variante de imagen**: en el selector de GCP puede aparecer "Rocky Linux 10 optimized for GCP with out-of-tree GVNIC (GVE) Support". **No usar la 10** — la [matriz oficial de compatibilidad de WSO2 4.6.0](https://apim.docs.wso2.com/en/4.6.0/install-and-setup/setup/reference/product-compatibility/) lista `Rocky Linux 8.7`/`9.3` como testeados; Rocky 10/RHEL 10 no figura ahí. GVNIC solo aporta en tráfico intensivo o familias de máquina específicas (C3, N2D, Tau T2D) — irrelevante para un `e2-medium` de 1-2 usuarios. Si existe una variante "Rocky Linux 9 optimized for GCP" (con o sin GVNIC), esa sí sirve igual.
