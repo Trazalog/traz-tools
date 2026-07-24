@@ -100,6 +100,7 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
 
 1. ~~Confirmar región/VPC~~ **Confirmado: `us-east1-b`** (proyecto GCP "Trazalog") — misma zona donde ya viven Dnato, PostgreSQL y la VM legacy con WSO2 4.4. Crear la VM nueva ahí (evita latencia y cargos de tráfico inter-región/inter-zona).
 2. **Crear la VM**: tipo `e2-medium`, zona `us-east1-b`, imagen **Rocky Linux 9** (decisión ya tomada en IDR-001, ver 1.1 — no Ubuntu ni CentOS 7), disco 20 GB pd-standard.
+   - **Ojo con la variante de imagen**: en el selector de GCP puede aparecer "Rocky Linux 10 optimized for GCP with out-of-tree GVNIC (GVE) Support". **No usar la 10** — la [matriz oficial de compatibilidad de WSO2 4.6.0](https://apim.docs.wso2.com/en/4.6.0/install-and-setup/setup/reference/product-compatibility/) lista `Rocky Linux 8.7`/`9.3` como testeados; Rocky 10/RHEL 10 no figura ahí. GVNIC solo aporta en tráfico intensivo o familias de máquina específicas (C3, N2D, Tau T2D) — irrelevante para un `e2-medium` de 1-2 usuarios. Si existe una variante "Rocky Linux 9 optimized for GCP" (con o sin GVNIC), esa sí sirve igual.
 3. **Reservar IP pública estática** y asociarla a la VM.
 4. **DNS**: apuntar `mcp.cloudtrazalog.com` (registro A) a la IP estática reservada en el paso 3.
 5. **Firewall del proyecto GCP**:
