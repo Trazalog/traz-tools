@@ -102,11 +102,66 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
 2. **Crear la VM**: tipo `e2-medium`, zona `us-east1-b`, imagen **Rocky Linux 9** (decisión ya tomada en IDR-001, ver 1.1 — no Ubuntu ni CentOS 7), disco 20 GB pd-standard.
    - **Ojo con la variante de imagen**: en el selector de GCP puede aparecer "Rocky Linux 10 optimized for GCP with out-of-tree GVNIC (GVE) Support". **No usar la 10** — la [matriz oficial de compatibilidad de WSO2 4.6.0](https://apim.docs.wso2.com/en/4.6.0/install-and-setup/setup/reference/product-compatibility/) lista `Rocky Linux 8.7`/`9.3` como testeados; Rocky 10/RHEL 10 no figura ahí. GVNIC solo aporta en tráfico intensivo o familias de máquina específicas (C3, N2D, Tau T2D) — irrelevante para un `e2-medium` de 1-2 usuarios. Si existe una variante "Rocky Linux 9 optimized for GCP" (con o sin GVNIC), esa sí sirve igual.
 3. **Reservar IP pública estática** y asociarla a la VM.
+
+   Al crear la VM (paso 2), GCP le asigna una IP pública **efímera** (cambia si se reinicia). Hay que promoverla a estática para que `mcp.cloudtrazalog.com` no se rompa en cada reinicio.
+
+   Con `gcloud` (desde la máquina local, proyecto "Trazalog" seleccionado):
+   ```bash
+   # ver la IP efímera actual de la VM
+   gcloud compute instances describe NOMBRE_VM --zone=us-east1-b \
+     --format="get(networkInterfaces[0].accessConfigs[0].natIP)"
+
+   # promoverla a estática (usar la IP que devolvió el comando anterior)
+   gcloud compute addresses create mcp-cloudtrazalog-ip \
+     --region=us-east1 \
+     --addresses=LA_IP_DEL_COMANDO_ANTERIOR
+   ```
+   Por consola: `VPC network` → `IP addresses` → la IP de la VM aparece como "In use" / "Ephemeral" → botón **"Reserve Static Address"** en esa fila. Queda asociada a la misma VM sin tocar nada más.
+
 4. **DNS**: apuntar `mcp.cloudtrazalog.com` (registro A) a la IP estática reservada en el paso 3.
+
+   Se hace en el panel de quien administra hoy el DNS de `cloudtrazalog.com` (fuera de GCP, salvo que ese dominio use Cloud DNS) — probablemente el mismo lugar donde está configurado el DNS de v2.
+   - Tipo: **A**
+   - Nombre/Host: **mcp** (o `mcp.cloudtrazalog.com` completo, según el proveedor)
+   - Valor: la IP estática del paso 3
+   - TTL: default del proveedor
+
+   Verificar propagación (puede tardar de minutos a un par de horas):
+   ```bash
+   dig +short mcp.cloudtrazalog.com
+   # o: nslookup mcp.cloudtrazalog.com
+   ```
+   Tiene que devolver la IP estática reservada.
+
 5. **Firewall del proyecto GCP**:
-   - Abrir **80/tcp** (requerido por el desafío HTTP-01 de Let's Encrypt) y **443/tcp** (tráfico público real), origen `0.0.0.0/0`.
-   - **NO** abrir 9443 al público — solo alcanzable desde la red interna del proyecto o vía túnel SSH (`gcloud compute ssh --tunnel-through-iap` o similar).
-   - Confirmar que el firewall interno permite que la VM llegue a PostgreSQL (5432) y a Dnato por su puerto correspondiente dentro de la misma VPC.
+   - **Usar una etiqueta de red (tag), no "todas las instancias"** — el proyecto ya tiene otras VMs corriendo (Dnato, PostgreSQL, la VM legacy WSO2 4.4); una regla sin scope les abriría 80/443 también a ellas.
+     ```bash
+     # etiquetar la VM nueva (si no se hizo al crearla)
+     gcloud compute instances add-tags NOMBRE_VM --zone=us-east1-b --tags=mcp-gateway
+
+     # regla de firewall, solo para instancias con esa etiqueta
+     gcloud compute firewall-rules create allow-mcp-http-https \
+       --network=default \
+       --direction=INGRESS \
+       --action=ALLOW \
+       --rules=tcp:80,tcp:443 \
+       --source-ranges=0.0.0.0/0 \
+       --target-tags=mcp-gateway
+     ```
+     (si la red no se llama `default`, chequear con `gcloud compute networks list` y ajustar `--network`)
+   - **NO** crear ninguna regla que abra 9443 al público. GCP deniega todo ingreso por defecto salvo que exista una regla `ALLOW` explícita — mientras no se cree una, ya está cerrado. Confirmar que no exista ya una regla vieja demasiado permisiva:
+     ```bash
+     gcloud compute firewall-rules list --format="table(name,sourceRanges.list(),allowed[].map().firewall_rule().list(),targetTags.list())"
+     ```
+     Si aparece algo con `0.0.0.0/0` y rango de puertos amplio (`0-65535` o similar), no tocarlo sin confirmar antes qué lo usa.
+   - **Conectividad interna a PostgreSQL/Dnato**: PostgreSQL corre en una VM propia (`traz-db-prod`, no es Cloud SQL administrado — ver `TRAZALOG_v3_MCP_ARCHITECTURE.md` §10.5), así que la conectividad depende de compartir la misma red VPC, no de reglas de firewall nuevas. Si el proyecto usa la red `default`, ya existe la regla `default-allow-internal` que permite todo el tráfico interno entre VMs del proyecto — solo hace falta confirmar que la VM nueva quedó en esa misma red:
+     ```bash
+     gcloud compute instances describe NOMBRE_VM --zone=us-east1-b \
+       --format="get(networkInterfaces[0].network)"
+     gcloud compute instances describe NOMBRE_VM_POSTGRES --zone=us-east1-b \
+       --format="get(networkInterfaces[0].network)"
+     ```
+     Si ambos comandos devuelven la misma red, está cubierto. Si difieren, hace falta peering o una regla específica — no asumir, chequear antes de seguir.
    - **`firewalld` dentro de la VM**: la [doc oficial de GCP](https://docs.cloud.google.com/compute/docs/images/os-details) confirma para AlmaLinux/CentOS que "por defecto se permite todo el tráfico a través del firewall del guest, porque las reglas de firewall de la VPC lo overridean" — la sección de Rocky Linux específicamente no está en esa página, pero es la misma familia de imagen RHEL-like, así que es razonable esperar el mismo comportamiento. **No verificado 1:1 para Rocky** — al llegar a este paso, correr `sudo firewall-cmd --state` y, si está `running`, confirmar con `sudo firewall-cmd --list-all` que 80/443 pasan (o agregarlos con `firewall-cmd --add-port=80/tcp --add-port=443/tcp --permanent && firewall-cmd --reload`) antes de asumir que alcanza con la regla de la VPC.
 6. **Instalar JDK 21 Temurin** (requisito de WSO2 4.6.0 — verificado contra [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial con soporte explícito para Rocky Linux):
    ```bash
