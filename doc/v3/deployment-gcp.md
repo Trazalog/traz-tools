@@ -94,61 +94,69 @@ VM GCP nueva (e2-medium, solo WSO2 nativo)
 
 ---
 
-## 4. Checklist para Rodolfo (consola de GCP)
+## 4. Checklist para Rodolfo (ejecución manual)
 
 Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta nada de esto.
 
-> **Cómo correr los comandos `gcloud` de este checklist sin instalar nada:** los pasos 3 y 5 usan `gcloud`. No hace falta instalarlo en ninguna máquina — se usa **Cloud Shell**, la terminal integrada en el navegador de la consola de GCP:
-> 1. Ir a [console.cloud.google.com](https://console.cloud.google.com) y loguearse con la cuenta de Trazalog.
-> 2. Arriba a la izquierda, click en el selector de proyecto → buscar **"Trazalog"** → seleccionarlo. Confirmar que la barra superior queda con ese proyecto activo.
-> 3. Arriba a la derecha, click en el ícono de terminal (`>_`, "Activate Cloud Shell"). Esperar a que inicialice.
-> 4. Verificar el proyecto activo: `gcloud config get-value project` (debe mostrar el ID del proyecto Trazalog).
-> 5. Pegar ahí los comandos `gcloud compute...` de los pasos 3 y 5, uno por vez.
->
-> Estos comandos son de **configuración del proyecto** (IP, firewall) — se corren desde Cloud Shell, **no por SSH dentro de la VM nueva**. El acceso por SSH a la VM recién aparece en los pasos 6-7 (instalar JDK, correr los scripts de `deploy/gcp/`).
+**Este checklist se ejecuta en 3 lugares distintos. Cada paso dice cuál con una etiqueta:**
 
-1. ~~Confirmar región/VPC~~ **Confirmado: `us-east1-b`** (proyecto GCP "Trazalog") — misma zona donde ya viven Dnato, PostgreSQL y la VM legacy con WSO2 4.4. Crear la VM nueva ahí (evita latencia y cargos de tráfico inter-región/inter-zona).
-2. **Crear la VM**: tipo `e2-medium`, zona `us-east1-b`, imagen **Rocky Linux 9** (decisión ya tomada en IDR-001, ver 1.1 — no Ubuntu ni CentOS 7), disco 20 GB pd-standard.
-   - **Ojo con la variante de imagen**: en el selector de GCP puede aparecer "Rocky Linux 10 optimized for GCP with out-of-tree GVNIC (GVE) Support". **No usar la 10** — la [matriz oficial de compatibilidad de WSO2 4.6.0](https://apim.docs.wso2.com/en/4.6.0/install-and-setup/setup/reference/product-compatibility/) lista `Rocky Linux 8.7`/`9.3` como testeados; Rocky 10/RHEL 10 no figura ahí. GVNIC solo aporta en tráfico intensivo o familias de máquina específicas (C3, N2D, Tau T2D) — irrelevante para un `e2-medium` de 1-2 usuarios. Si existe una variante "Rocky Linux 9 optimized for GCP" (con o sin GVNIC), esa sí sirve igual.
-3. **Reservar IP pública estática** y asociarla a la VM.
+| Etiqueta | Qué es | Cuándo se usa |
+|---|---|---|
+| 🖥️ **Consola web** | `console.cloud.google.com`, clicks con el mouse | Crear la VM, ver/reservar IP, ver reglas de firewall (opcional, alternativa a los comandos) |
+| ⌨️ **Cloud Shell** | Terminal integrada en la consola web (botón `>_` arriba a la derecha). No requiere instalar nada — ya viene logueada y con `gcloud` listo | Todos los comandos `gcloud` de este checklist (pasos 3 y 5) |
+| 💻 **SSH en la VM** | Terminal conectada DENTRO de la VM nueva ya creada | Instalar JDK y correr los scripts de `deploy/gcp/` (pasos 6 y 7) |
 
-   Al crear la VM (paso 2), GCP le asigna una IP pública **efímera** (cambia si se reinicia). Hay que promoverla a estática para que `mcp.cloudtrazalog.com` no se rompa en cada reinicio.
+### 4.0 Antes de empezar: abrir Cloud Shell (una sola vez)
 
-   Con `gcloud` (desde la máquina local, proyecto "Trazalog" seleccionado):
-   ```bash
-   # ver la IP efímera actual de la VM
-   gcloud compute instances describe NOMBRE_VM --zone=us-east1-b \
-     --format="get(networkInterfaces[0].accessConfigs[0].natIP)"
+1. 🖥️ Ir a [console.cloud.google.com](https://console.cloud.google.com) y loguearse con la cuenta de Trazalog.
+2. 🖥️ Arriba a la izquierda, click en el selector de proyecto → buscar **"Trazalog"** → seleccionarlo. Confirmar que la barra superior queda con ese proyecto activo.
+3. 🖥️ Arriba a la derecha, click en el ícono de terminal (`>_`, tooltip "Activate Cloud Shell"). Se abre una terminal abajo de la pantalla — esperar a que inicialice.
+4. ⌨️ Confirmar el proyecto activo: `gcloud config get-value project` → tiene que mostrar el ID del proyecto Trazalog.
 
-   # promoverla a estática (usar la IP que devolvió el comando anterior)
-   gcloud compute addresses create mcp-cloudtrazalog-ip \
-     --region=us-east1 \
-     --addresses=LA_IP_DEL_COMANDO_ANTERIOR
-   ```
-   Por consola: `VPC network` → `IP addresses` → la IP de la VM aparece como "In use" / "Ephemeral" → botón **"Reserve Static Address"** en esa fila. Queda asociada a la misma VM sin tocar nada más.
+Cloud Shell queda disponible para todo el resto del checklist — no hay que repetir esto en cada paso.
 
-4. **DNS**: apuntar `mcp.cloudtrazalog.com` (registro A) a la IP estática reservada en el paso 3.
+### 4.1 Pasos
 
-   Se hace en el panel de quien administra hoy el DNS de `cloudtrazalog.com` (fuera de GCP, salvo que ese dominio use Cloud DNS) — probablemente el mismo lugar donde está configurado el DNS de v2.
-   - Tipo: **A**
-   - Nombre/Host: **mcp** (o `mcp.cloudtrazalog.com` completo, según el proveedor)
-   - Valor: la IP estática del paso 3
-   - TTL: default del proveedor
+1. ~~Confirmar región/VPC~~ ✅ **Confirmado: `us-east1-b`** (proyecto GCP "Trazalog") — misma zona donde ya viven Dnato, PostgreSQL y la VM legacy con WSO2 4.4. Crear la VM nueva ahí.
 
-   Verificar propagación (puede tardar de minutos a un par de horas):
-   ```bash
-   dig +short mcp.cloudtrazalog.com
-   # o: nslookup mcp.cloudtrazalog.com
-   ```
-   Tiene que devolver la IP estática reservada.
+2. 🖥️ **Consola web — crear la VM**: `Compute Engine` → `VM instances` → `Create instance`.
+   - Tipo de máquina: `e2-medium`
+   - Zona: `us-east1-b`
+   - Imagen del sistema operativo: **Rocky Linux 9** — decisión ya tomada en IDR-001 (ver §1.1), no Ubuntu ni CentOS 7.
+     - ⚠️ En el selector puede aparecer también "Rocky Linux 10 optimized for GCP with GVNIC". **No elegir la 10** — la [matriz oficial de WSO2 4.6.0](https://apim.docs.wso2.com/en/4.6.0/install-and-setup/setup/reference/product-compatibility/) solo lista Rocky Linux `8.7`/`9.3` como testeados, la 10 no figura. GVNIC no aporta nada relevante para este tamaño de VM.
+   - Disco: 20 GB, tipo `pd-standard`.
 
-5. **Firewall del proyecto GCP**:
-   - **Usar una etiqueta de red (tag), no "todas las instancias"** — el proyecto ya tiene otras VMs corriendo (Dnato, PostgreSQL, la VM legacy WSO2 4.4); una regla sin scope les abriría 80/443 también a ellas.
+3. **Reservar IP pública estática** (para que `mcp.cloudtrazalog.com` no se rompa si la VM se reinicia).
+   - ⌨️ **Cloud Shell**:
      ```bash
-     # etiquetar la VM nueva (si no se hizo al crearla)
+     # 1. ver la IP efímera que GCP le asignó a la VM en el paso 2
+     gcloud compute instances describe NOMBRE_VM --zone=us-east1-b \
+       --format="get(networkInterfaces[0].accessConfigs[0].natIP)"
+
+     # 2. promoverla a estática (usar la IP que devolvió el comando anterior)
+     gcloud compute addresses create mcp-cloudtrazalog-ip \
+       --region=us-east1 \
+       --addresses=LA_IP_DEL_COMANDO_ANTERIOR
+     ```
+   - Alternativa 🖥️ **consola web**: `VPC network` → `IP addresses` → la IP de la VM aparece como "In use"/"Ephemeral" → botón **"Reserve Static Address"** en esa fila.
+
+4. **DNS**: apuntar `mcp.cloudtrazalog.com` (registro A) a la IP estática del paso 3.
+   - 🌐 **Panel del proveedor de DNS de `cloudtrazalog.com`** (fuera de GCP — el mismo lugar donde está configurado hoy el DNS de v2):
+     - Tipo: `A`
+     - Nombre/Host: `mcp`
+     - Valor: la IP estática del paso 3
+     - TTL: default del proveedor
+   - ⌨️ **Cloud Shell** (o cualquier terminal), para verificar que propagó (puede tardar de minutos a un par de horas):
+     ```bash
+     dig +short mcp.cloudtrazalog.com
+     ```
+     Tiene que devolver la IP estática reservada.
+
+5. **Firewall del proyecto GCP** — todo en ⌨️ **Cloud Shell**:
+   - **Etiquetar la VM y abrir 80/443 solo para ella** (no "todas las instancias" — el proyecto ya tiene otras VMs como Dnato y la VM legacy 4.4, y no queremos abrirles estos puertos también):
+     ```bash
      gcloud compute instances add-tags NOMBRE_VM --zone=us-east1-b --tags=mcp-gateway
 
-     # regla de firewall, solo para instancias con esa etiqueta
      gcloud compute firewall-rules create allow-mcp-http-https \
        --network=default \
        --direction=INGRESS \
@@ -157,22 +165,20 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
        --source-ranges=0.0.0.0/0 \
        --target-tags=mcp-gateway
      ```
-     (si la red no se llama `default`, chequear con `gcloud compute networks list` y ajustar `--network`)
-   - **NO** crear ninguna regla que abra 9443 al público. GCP deniega todo ingreso por defecto salvo que exista una regla `ALLOW` explícita — mientras no se cree una, ya está cerrado. Confirmar que no exista ya una regla vieja demasiado permisiva:
+     (si la red del proyecto no se llama `default`, chequear con `gcloud compute networks list` y ajustar `--network`)
+   - **NO crear ninguna regla que abra 9443 al público.** GCP deniega todo por defecto salvo regla `ALLOW` explícita — no crear ninguna alcanza. Confirmar que no exista ya una regla vieja demasiado abierta:
      ```bash
      gcloud compute firewall-rules list --format="table(name,sourceRanges.list(),allowed[].map().firewall_rule().list(),targetTags.list())"
      ```
-     Si aparece algo con `0.0.0.0/0` y rango de puertos amplio (`0-65535` o similar), no tocarlo sin confirmar antes qué lo usa.
-   - **Conectividad interna a PostgreSQL/Dnato**: PostgreSQL corre en una VM propia (`traz-db-prod`, no es Cloud SQL administrado — ver `TRAZALOG_v3_MCP_ARCHITECTURE.md` §10.5), así que la conectividad depende de compartir la misma red VPC, no de reglas de firewall nuevas. Si el proyecto usa la red `default`, ya existe la regla `default-allow-internal` que permite todo el tráfico interno entre VMs del proyecto — solo hace falta confirmar que la VM nueva quedó en esa misma red:
+     Si aparece algo con `0.0.0.0/0` y un rango de puertos amplio (`0-65535` o similar), avisar antes de tocar nada.
+   - **Confirmar que la VM llega a PostgreSQL/Dnato por red interna** (PostgreSQL corre en su propia VM, `traz-db-prod`, no es Cloud SQL administrado — ver `TRAZALOG_v3_MCP_ARCHITECTURE.md` §10.5). Si todas están en la red `default`, ya existe la regla `default-allow-internal` que permite el tráfico interno entre VMs del proyecto — solo falta confirmar que quedaron en la misma red:
      ```bash
-     gcloud compute instances describe NOMBRE_VM --zone=us-east1-b \
-       --format="get(networkInterfaces[0].network)"
-     gcloud compute instances describe NOMBRE_VM_POSTGRES --zone=us-east1-b \
-       --format="get(networkInterfaces[0].network)"
+     gcloud compute instances describe NOMBRE_VM --zone=us-east1-b --format="get(networkInterfaces[0].network)"
+     gcloud compute instances describe NOMBRE_VM_POSTGRES --zone=us-east1-b --format="get(networkInterfaces[0].network)"
      ```
-     Si ambos comandos devuelven la misma red, está cubierto. Si difieren, hace falta peering o una regla específica — no asumir, chequear antes de seguir.
-   - **`firewalld` dentro de la VM**: la [doc oficial de GCP](https://docs.cloud.google.com/compute/docs/images/os-details) confirma para AlmaLinux/CentOS que "por defecto se permite todo el tráfico a través del firewall del guest, porque las reglas de firewall de la VPC lo overridean" — la sección de Rocky Linux específicamente no está en esa página, pero es la misma familia de imagen RHEL-like, así que es razonable esperar el mismo comportamiento. **No verificado 1:1 para Rocky** — al llegar a este paso, correr `sudo firewall-cmd --state` y, si está `running`, confirmar con `sudo firewall-cmd --list-all` que 80/443 pasan (o agregarlos con `firewall-cmd --add-port=80/tcp --add-port=443/tcp --permanent && firewall-cmd --reload`) antes de asumir que alcanza con la regla de la VPC.
-6. **Instalar JDK 21 Temurin** (requisito de WSO2 4.6.0 — verificado contra [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial con soporte explícito para Rocky Linux):
+     Mismo resultado en ambos → OK. Distinto → parar y avisar (haría falta peering o una regla nueva).
+
+6. 💻 **SSH en la VM — instalar JDK 21 Temurin** (requisito de WSO2 4.6.0). Primero conectarse: 🖥️ `Compute Engine` → `VM instances` → botón **"SSH"** al lado de la VM nueva (abre una terminal en el navegador, sin configurar claves). Una vez adentro:
    ```bash
    sudo tee /etc/yum.repos.d/adoptium.repo <<'EOF'
    [Adoptium]
@@ -185,8 +191,9 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
    sudo dnf install -y temurin-21-jdk
    java -version   # debe mostrar "21.x.x"
    ```
-   `install-apim.sh`/`install-mi.sh` detectan `JAVA_HOME` automáticamente a partir del `java` instalado (o respetan `$JAVA_HOME` si ya está seteado) y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d`, porque systemd no lo lee.
-7. **Orden de ejecución en la VM** (una vez creada y con acceso SSH):
+   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/) (repo RPM oficial, con soporte explícito para Rocky Linux). `install-apim.sh`/`install-mi.sh` (paso 7) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
+
+7. 💻 **SSH en la VM (misma sesión que el paso 6) — instalar y arrancar WSO2**:
    ```bash
    git clone <este repo> && cd traz-tools/deploy/gcp
    cp .env.example .env   # completar con los valores reales
@@ -199,8 +206,25 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
    sudo systemctl start wso2am
    sudo systemctl start wso2mi
    ```
-8. **Smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5): `curl -I https://mcp.cloudtrazalog.com` debe responder con el cert de Let's Encrypt (no self-signed), y proxyear al Gateway del APIM.
-9. **Antes de dar de alta al primer cliente**: aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL — ninguna de las dos está cubierta por esta tarea.
+   Nota sobre `setup-reverse-proxy.sh`: instala Caddy vía `dnf`/Copr siguiendo la sección "CentOS/RHEL" de [caddyserver.com/docs/install](https://caddyserver.com/docs/install) — esa página no nombra Rocky Linux explícitamente (Rocky es rebuild 1:1 de RHEL, debería resolver igual, pero no está confirmado 1:1). Verificar `caddy version` en el smoke test (paso 8).
+
+   También en esta sesión SSH, chequear `firewalld` (no confirmado 1:1 para Rocky en la doc oficial de GCP — ver nota abajo):
+   ```bash
+   sudo firewall-cmd --state
+   # si dice "running":
+   sudo firewall-cmd --list-all
+   # si 80/443 no aparecen:
+   sudo firewall-cmd --add-port=80/tcp --add-port=443/tcp --permanent && sudo firewall-cmd --reload
+   ```
+   *(La [doc oficial de GCP](https://docs.cloud.google.com/compute/docs/images/os-details) confirma para AlmaLinux/CentOS que el firewall del guest permite todo por defecto porque las reglas de la VPC lo overridean — Rocky no está listada ahí explícitamente, pero es la misma familia de imagen. Por eso este chequeo, en vez de asumirlo.)*
+
+8. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
+   ```bash
+   curl -I https://mcp.cloudtrazalog.com
+   ```
+   Tiene que responder con el certificado de Let's Encrypt (no self-signed) y proxyear al Gateway del APIM.
+
+9. **Antes de dar de alta al primer cliente** (no es parte de esta tarea, queda pendiente aparte): aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL.
 
 ---
 
