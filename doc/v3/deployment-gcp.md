@@ -183,7 +183,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo tee /etc/yum.repos.d/adoptium.repo <<'EOF'
    [Adoptium]
    name=Adoptium
-   baseurl=https://packages.adoptium.net/artifactory/rpm/rocky/$releasever/$basearch
+   baseurl=https://packages.adoptium.net/artifactory/rpm/rhel/$releasever/$basearch
    enabled=1
    gpgcheck=1
    gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
@@ -191,7 +191,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo dnf install -y temurin-21-jdk
    java -version   # debe mostrar "21.x.x"
    ```
-   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/) (repo RPM oficial, con soporte explícito para Rocky Linux). `install-apim.sh`/`install-mi.sh` (paso 7) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
+   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 7) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
 
 7. 💻 **SSH en la VM (misma sesión que el paso 6) — instalar y arrancar WSO2**:
    ```bash
