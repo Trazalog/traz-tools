@@ -1,0 +1,21 @@
+[Unit]
+Description=WSO2 Micro Integrator (Trazalog v3 - ADR-011)
+After=network-online.target wso2am.service
+Wants=network-online.target
+
+[Service]
+Type=forking
+User={{WSO2_USER}}
+Group={{WSO2_USER}}
+Environment="JAVA_HOME={{JAVA_HOME}}"
+WorkingDirectory={{MI_HOME}}
+ExecStart={{MI_HOME}}/bin/micro-integrator.sh start
+ExecStop={{MI_HOME}}/bin/micro-integrator.sh stop
+PIDFile={{MI_HOME}}/wso2carbon.pid
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=180
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -33,3 +33,6 @@ tests/security/test-env.vars
 
 # Artefacto compilado del CAR de discovery — regenerable con build.sh
 _backend/api/ApimDiscoveryProject/build/
+
+# Secretos de despliegue GCP (ADR-011) — copiar de deploy/gcp/.env.example
+deploy/gcp/.env

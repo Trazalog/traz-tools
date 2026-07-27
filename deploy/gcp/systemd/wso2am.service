@@ -1,0 +1,21 @@
+[Unit]
+Description=WSO2 API Manager 4.6.0 (Trazalog v3 - ADR-011)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User={{WSO2_USER}}
+Group={{WSO2_USER}}
+Environment="JAVA_HOME={{JAVA_HOME}}"
+WorkingDirectory={{APIM_HOME}}
+ExecStart={{APIM_HOME}}/bin/api-manager.sh start
+ExecStop={{APIM_HOME}}/bin/api-manager.sh stop
+PIDFile={{APIM_HOME}}/wso2carbon.pid
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=300
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

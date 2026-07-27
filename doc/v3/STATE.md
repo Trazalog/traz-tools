@@ -12,27 +12,32 @@
 
 ---
 
-**Sprint actual:** Sprint 3 — Activación early adopter minero (dimensionamiento)
-**Objetivo del sprint:** Relevar estado real de los 3 frentes (Mantenimiento, Almacenes, Despliegue GCP) para que el PM priorice con datos reales antes de arrancar implementación.
-**Última actualización:** 2026-07-16 por Claude Code (E1-API-20)
+**Sprint actual:** Sprint 3 — Activación early adopter minero
+**Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
+**Última actualización:** 2026-07-21 por Claude Code (E7-INFRA-01/02)
 
 ### Tareas activas
 
 | ID | Descripción | Clase | Estado | Rama / PR |
 |---|---|---|---|---|
+| E7-INFRA-01/02 | Sizing VM GCP + scripts instalación nativa WSO2 (ADR-011) | 🟡 | En review | `feature/e7-infra-01-02-gcp-native-deploy` — PR #403 |
 | E1-API-20 | Relevamiento de estado para dimensionar Sprint 3 (3 frentes) | 🟢 | Completada | `docs/e1-api-20-sprint3-relevamiento-estado` — PR pendiente de abrir |
 
 ### Próxima acción
 
-Rodolfo revisa `doc/v3/sprint-3-relevamiento-estado.md` y responde las 5 preguntas abiertas de la sección 5 (especialmente el riesgo de seguridad en `ALMDataService` — §2 del doc) antes de asignar trabajo de implementación del Sprint 3.
+Rodolfo ya confirmó el sizing (`e2-medium`, ~US$24-25/mes) y la zona (`us-east1-b`, proyecto GCP "Trazalog", misma zona que Dnato/PostgreSQL/VM legacy 4.4). Queda que ejecute el checklist de `doc/v3/deployment-gcp.md` §4 en su consola de GCP para crear la VM. En paralelo, sigue pendiente que responda las 5 preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md` (especialmente el riesgo de seguridad en `ALMDataService` — §2).
 
 ### Decisiones recientes (últimas 5)
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
+| 2026-07-24 | Corregido el SO de la VM GCP: `Rocky Linux 9` (no Ubuntu, error de la v1 del doc). Ya estaba decidido en IDR-001 (`TRAZALOG_v3_MCP_ARCHITECTURE.md` §9-10) por incompatibilidad de CentOS 7/glibc con JDK 21 — no es una decisión nueva | `doc/v3/deployment-gcp.md`, PR #403 |
+| 2026-07-21 | Sizing final de la VM GCP: `e2-medium` (2 vCPU/4GB), no `e2-standard-2`. Rodolfo priorizó costo (~US$24/mes) + volumen real (1-2 usuarios) por sobre el mínimo "de catálogo" de WSO2, con heaps chicos ya validados en su DEV | `doc/v3/deployment-gcp.md`, PR #403 |
 | 2026-07-16 | Relevamiento Sprint 3 completo: Mantenimiento con diseño listo para implementar, Almacenes con lógica de negocio ya existente pero gap de seguridad multi-tenant sin resolver, Despliegue GCP arranca de cero en artefactos | `doc/v3/sprint-3-relevamiento-estado.md` |
 
 ### Bloqueos
 
-- Ninguno para el relevamiento en sí. La implementación de escritura MCP en Almacenes queda bloqueada hasta que el PM confirme cómo resolver el aislamiento multi-tenant de `ALMDataService` (ver pregunta abierta #1 del relevamiento) — posible tema de arquitectura (🔴).
+- **Costo real de la VM elegida (~US$50-60/mes) es una excepción parcial a ADR-005** — necesita aprobación explícita de Rodolfo antes de crear la VM (ver `doc/v3/deployment-gcp.md` §1.4).
+- Config de identidad (ADR-008/009) y migración de DataServices a PostgreSQL siguen pendientes antes de poder dar de alta al primer cliente sobre esta VM — fuera de alcance de E7-INFRA-01/02.
+- La implementación de escritura MCP en Almacenes sigue bloqueada hasta que el PM confirme cómo resolver el aislamiento multi-tenant de `ALMDataService` (ver pregunta abierta #1 del relevamiento) — posible tema de arquitectura (🔴).
 
