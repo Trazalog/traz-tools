@@ -104,7 +104,7 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
 |---|---|---|
 | 🖥️ **Consola web** | `console.cloud.google.com`, clicks con el mouse | Crear la VM, ver/reservar IP, ver reglas de firewall (opcional, alternativa a los comandos) |
 | ⌨️ **Cloud Shell** | Terminal integrada en la consola web (botón `>_` arriba a la derecha). No requiere instalar nada — ya viene logueada y con `gcloud` listo | Todos los comandos `gcloud` de este checklist (pasos 3 y 5) |
-| 💻 **SSH en la VM** | Terminal conectada DENTRO de la VM nueva ya creada | Instalar JDK y correr los scripts de `deploy/gcp/` (pasos 6 y 7) |
+| 💻 **SSH en la VM** | Terminal conectada DENTRO de la VM nueva ya creada | Instalar JDK, subir los archivos de WSO2 y correr los scripts de `deploy/gcp/` (pasos 6 a 8) |
 
 ### 4.0 Antes de empezar: abrir Cloud Shell (una sola vez)
 
@@ -191,22 +191,37 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo dnf install -y temurin-21-jdk
    java -version   # debe mostrar "21.x.x"
    ```
-   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 7) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
+   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 8) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
 
-7. 💻 **SSH en la VM (misma sesión que el paso 6) — instalar y arrancar WSO2**:
+7. **Conseguir los 3 archivos que necesitan los scripts** (WSO2 no deja descargarlos directo con `wget` desde la VM — hay que bajarlos con el navegador y después subirlos):
+
+   - 🌐 **En tu computadora** (navegador normal, no en la VM):
+     - API Manager: [wso2.com/products/downloads](https://wso2.com/products/downloads/) → buscar "API Manager" → **"Previous Releases"** → versión **4.6.0** → completar el formulario (email + aceptar la licencia — no hace falta contraseña ni instalar nada) → descarga `wso2am-4.6.0.zip`.
+     - Micro Integrator: misma página → "WSO2 Integrator: MI" → **"Previous Releases"** → versión **4.5.0** → mismo formulario → descarga `wso2mi-4.5.0.zip`.
+     - Driver JDBC de PostgreSQL: [jdbc.postgresql.org/download](https://jdbc.postgresql.org/download/) → botón de descarga directa (sin formulario) → un archivo tipo `postgresql-42.7.x.jar`.
+     - Los 3 quedan en la carpeta de Descargas de tu computadora.
+   - 💻 **En la ventana de SSH de la VM** (la misma del paso 6): arriba a la derecha de esa ventana hay un ícono de **engranaje ⚙️** → **"Upload file"** → elegir cada uno de los 3 archivos desde tu carpeta de Descargas, uno por vez. Quedan guardados en tu home dentro de la VM (`~`).
+   - 💻 **Seguir en la misma sesión SSH** — mover los archivos a las rutas que usa `.env` y confirmar que llegaron:
+     ```bash
+     sudo mkdir -p /opt/wso2/dist /opt/wso2/drivers
+     sudo mv ~/wso2am-4.6.0.zip /opt/wso2/dist/
+     sudo mv ~/wso2mi-4.5.0.zip /opt/wso2/dist/
+     sudo mv ~/postgresql-*.jar /opt/wso2/drivers/
+     ls /opt/wso2/dist/ /opt/wso2/drivers/
+     ```
+     Si el nombre del `.jar` de PostgreSQL no coincide exactamente con `PG_JDBC_JAR_PATH` en `.env` (por ejemplo bajó `postgresql-42.7.13.jar` y el `.env` dice `postgresql-42.7.4.jar`), ajustar esa línea del `.env` para que apunte al nombre real, o renombrar el archivo.
+
+8. 💻 **SSH en la VM (misma sesión) — instalar y arrancar WSO2**:
    ```bash
    git clone <este repo> && cd traz-tools/deploy/gcp
-   cp .env.example .env   # completar con los valores reales
-   # descargar manualmente wso2am-4.6.0.zip y wso2mi-4.5.0.zip desde wso2.com
-   # (cuenta gratuita) y el driver JDBC de PostgreSQL desde jdbc.postgresql.org,
-   # dejarlos en las rutas indicadas en .env
+   cp .env.example .env   # completar con los valores reales (incluidas las rutas del paso 7)
    sudo ./install-apim.sh
    sudo ./install-mi.sh
    sudo ./setup-reverse-proxy.sh
    sudo systemctl start wso2am
    sudo systemctl start wso2mi
    ```
-   Nota sobre `setup-reverse-proxy.sh`: instala Caddy vía `dnf`/Copr siguiendo la sección "CentOS/RHEL" de [caddyserver.com/docs/install](https://caddyserver.com/docs/install) — esa página no nombra Rocky Linux explícitamente (Rocky es rebuild 1:1 de RHEL, debería resolver igual, pero no está confirmado 1:1). Verificar `caddy version` en el smoke test (paso 8).
+   Nota sobre `setup-reverse-proxy.sh`: instala Caddy vía `dnf`/Copr siguiendo la sección "CentOS/RHEL" de [caddyserver.com/docs/install](https://caddyserver.com/docs/install) — esa página no nombra Rocky Linux explícitamente (Rocky es rebuild 1:1 de RHEL, debería resolver igual, pero no está confirmado 1:1). Verificar `caddy version` en el smoke test (paso 9).
 
    También en esta sesión SSH, chequear `firewalld` (no confirmado 1:1 para Rocky en la doc oficial de GCP — ver nota abajo):
    ```bash
@@ -218,13 +233,13 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    ```
    *(La [doc oficial de GCP](https://docs.cloud.google.com/compute/docs/images/os-details) confirma para AlmaLinux/CentOS que el firewall del guest permite todo por defecto porque las reglas de la VPC lo overridean — Rocky no está listada ahí explícitamente, pero es la misma familia de imagen. Por eso este chequeo, en vez de asumirlo.)*
 
-8. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
+9. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
    ```bash
    curl -I https://mcp.cloudtrazalog.com
    ```
    Tiene que responder con el certificado de Let's Encrypt (no self-signed) y proxyear al Gateway del APIM.
 
-9. **Antes de dar de alta al primer cliente** (no es parte de esta tarea, queda pendiente aparte): aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL.
+10. **Antes de dar de alta al primer cliente** (no es parte de esta tarea, queda pendiente aparte): aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL.
 
 ---
 
