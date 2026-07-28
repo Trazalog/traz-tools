@@ -123,6 +123,16 @@ log "JAVA_HOME detectado: $JAVA_HOME_RESOLVED (JDK 21 verificado)"
 # ── Permisos y systemd ─────────────────────────────────────────────
 chown -R "$WSO2_USER:$WSO2_USER" "$APIM_HOME"
 
+# El zip se descomprime en un directorio temporal y se mueve (mv) a
+# $APIM_HOME — el mv no actualiza el contexto de SELinux, así que los
+# binarios quedan etiquetados como el temp (tmp_t) y systemd no puede
+# ejecutarlos ("Permission denied" aunque el chmod +x esté bien). Restaurar
+# el contexto correcto en distros con SELinux (Rocky/RHEL) evita este fallo.
+if command -v restorecon >/dev/null 2>&1; then
+  restorecon -R "$APIM_HOME"
+  log "Contexto de SELinux restaurado en $APIM_HOME"
+fi
+
 sed -e "s#{{APIM_HOME}}#$APIM_HOME#g" -e "s#{{WSO2_USER}}#$WSO2_USER#g" \
     -e "s#{{JAVA_HOME}}#$JAVA_HOME_RESOLVED#g" \
   "$SCRIPT_DIR/systemd/wso2am.service" > /etc/systemd/system/wso2am.service

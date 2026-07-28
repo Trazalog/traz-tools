@@ -230,11 +230,43 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    ```
    *(La [doc oficial de GCP](https://docs.cloud.google.com/compute/docs/images/os-details) confirma para AlmaLinux/CentOS que el firewall del guest permite todo por defecto porque las reglas de la VPC lo overridean — Rocky no está listada ahí explícitamente, pero es la misma familia de imagen. Por eso este chequeo, en vez de asumirlo.)*
 
+   **Si `systemctl start wso2am`/`wso2mi` falla con `Failed to locate executable ... Permission denied`** (confirmado en la práctica): es **SELinux** (viene `Enforcing` por defecto en las imágenes Rocky de GCP). `install-apim.sh`/`install-mi.sh` descomprimen el `.zip` en un directorio temporal y lo mueven (`mv`) a `/opt/wso2/...` — el `mv` no actualiza el contexto de SELinux, así que los binarios quedan con la etiqueta del temporal (`tmp_t`, no ejecutable), aunque el `chmod +x` esté bien aplicado. Los scripts ya corren `restorecon -R` después del `chown` para evitar esto — si de todos modos aparece, confirmar y arreglar a mano:
+   ```bash
+   getenforce
+   sudo ausearch -m avc -ts recent -i 2>/dev/null | tail -20   # buscar "denied"
+   sudo restorecon -Rv /opt/wso2/wso2am-4.6.0
+   sudo restorecon -Rv /opt/wso2/wso2mi-4.5.0
+   sudo systemctl start wso2am
+   sudo systemctl start wso2mi
+   ```
+
 9. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
    ```bash
    curl -I https://mcp.cloudtrazalog.com
    ```
    Tiene que responder con el certificado de Let's Encrypt (no self-signed) y proxyear al Gateway del APIM.
+
+   **Verificar que ambos servicios y sus puertos quedaron arriba** — 💻 en la sesión SSH de la VM:
+   ```bash
+   sudo systemctl status wso2am wso2mi --no-pager
+   sudo ss -tlnp | grep -E ':(9443|8280|8243|8290|8253|9164)\b'
+   ```
+   Deberían aparecer los 6 puertos escuchando (3 del APIM, 3 del MI — no colisionan entre sí, el MI ya viene con sus propios puertos de fábrica corridos, distintos de los del APIM, precisamente para poder convivir en la misma máquina sin configurar nada).
+
+   **Consolas del APIM** (mismo patrón que DEV, `doc/infra/wso2-install.md` §5 — solo alcanzables desde dentro de la VM o por túnel SSH, **nunca públicamente**, ADR-011 #9):
+   ```bash
+   curl -k https://localhost:9443/carbon      # Admin Console
+   curl -k https://localhost:9443/publisher   # Publisher
+   curl -k https://localhost:9443/devportal   # Developer Portal
+   curl -k https://localhost:8243             # Gateway (lo mismo que expone Caddy en :443 públicamente)
+   ```
+   Para verlas en el navegador de tu computadora (no solo con `curl`), hace falta un túnel SSH, por ejemplo:
+   ```bash
+   gcloud compute ssh NOMBRE_VM --zone=us-east1-b --tunnel-through-iap -- -L 9443:localhost:9443
+   ```
+   y después abrir `https://localhost:9443/carbon` en tu propio navegador (certificado self-signed — el navegador va a advertir, es esperado).
+
+   **El MI no tiene una consola web como el APIM** (no es Carbon con UI, es un runtime liviano). Se verifica que está arriba con el `systemctl status`/`ss` de arriba, los logs (`tail -f /opt/wso2/wso2mi-4.5.0/repository/logs/wso2carbon.log`), o pegándole directo a un endpoint desplegado (ej. `curl http://localhost:8290/<contexto-del-API>`, igual que en DEV — ver `scripts/dev/setup-mi-b4-car-deploy.sh`). El puerto 9164 es su Management API (REST, para tooling — no para navegar).
 
 10. **Antes de dar de alta al primer cliente** (no es parte de esta tarea, queda pendiente aparte): aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL.
 
