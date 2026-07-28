@@ -217,6 +217,32 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    cp .env.example .env   # completar con los valores reales (incluidas las rutas del paso 7)
    sudo ./install-apim.sh
    sudo ./install-mi.sh
+   ```
+
+   **Antes de arrancar el APIM, crear las bases de datos y cargarles el esquema** (`install-apim.sh` solo edita `deployment.toml` para que el APIM sepa A QUÉ base conectarse — no crea la base ni las tablas; si no se hace esto, `wso2am` falla al arrancar porque busca tablas que no existen):
+   ```bash
+   # cliente psql, si no está instalado
+   sudo dnf install -y postgresql
+
+   # crear las 2 bases vacías en el PostgreSQL existente (usar los mismos
+   # nombres que PG_DB_APIM/PG_DB_SHARED del .env)
+   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -p 5432 -U $PG_USER -d postgres -c "CREATE DATABASE wso2am_db;"
+   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -p 5432 -U $PG_USER -d postgres -c "CREATE DATABASE wso2shared_db;"
+
+   # cargar el esquema de tablas de WSO2 en cada una (scripts que vienen
+   # adentro del zip de APIM ya descomprimido en $APIM_HOME) — confirmar
+   # los nombres exactos con `ls` antes de correr, por si difieren:
+   ls /opt/wso2/wso2am-4.6.0/dbscripts/ /opt/wso2/wso2am-4.6.0/dbscripts/apimgt/
+   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -U $PG_USER -d wso2am_db -f /opt/wso2/wso2am-4.6.0/dbscripts/apimgt/postgresql.sql
+   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -U $PG_USER -d wso2shared_db -f /opt/wso2/wso2am-4.6.0/dbscripts/postgresql.sql
+   ```
+   Notas:
+   - Si `CREATE DATABASE` da error de permisos, el usuario de `.env` (`PG_USER`) no tiene privilegio `CREATEDB` — hace falta que alguien con acceso admin a ese PostgreSQL (probablemente vos mismo, si administrás esa VM) cree las 2 bases vacías primero; después estos mismos comandos de carga de esquema funcionan igual.
+   - Si `psql` da timeout/connection refused (no un error de permisos), no es el firewall del proyecto GCP (eso ya se confirmó en el paso 5) — es la config propia de PostgreSQL (`pg_hba.conf`/`listen_addresses` en la VM de PostgreSQL), que tiene que permitir conexiones desde la IP interna de esta VM nueva. Revisar eso en la VM de PostgreSQL si pasa esto.
+   - Rutas verificadas contra la [doc oficial de WSO2 para PostgreSQL](https://apim.docs.wso2.com/en/4.4.0/install-and-setup/setup/setting-up-databases/changing-default-databases/changing-to-postgresql/) (consistente entre versiones 4.0-4.4; no confirmada línea por línea contra la doc específica de 4.6.0, que no fue accesible al momento de escribir esto) — por eso el `ls` previo, para confirmar antes de correr.
+
+   Recién ahora arrancar los servicios:
+   ```bash
    sudo ./setup-reverse-proxy.sh
    sudo systemctl start wso2am
    sudo systemctl start wso2mi
