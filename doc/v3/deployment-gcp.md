@@ -73,13 +73,13 @@ Rodolfo ya tiene otra VM en el mismo proyecto GCP corriendo WSO2 **4.4** (sin se
 
 ```
 VM GCP nueva (e2-medium, solo WSO2 nativo)
-  APIM 4.6.0 ──jdbc:postgresql──> PostgreSQL existente (registro/metadata interno: apim_db, shared_db)
+  APIM 4.6.0 ──registro/metadata interno en H2 embebida (local, sin red)
   MI 4.x      ──(red interna del proyecto GCP, sin VPN/peering)──> Dnato existente
 ```
 
-- **Red interna del proyecto GCP**: al estar la VM nueva, PostgreSQL y Dnato en el mismo proyecto, la conectividad es directa por IP interna — no requiere VPN ni peering (ADR-011 #6). **Zona confirmada por Rodolfo: `us-east1-b`** — la VM nueva se crea ahí, misma zona que el resto del stack existente (Dnato, PostgreSQL, y la VM legacy con WSO2 4.4).
-- **Qué configuran los scripts**: `PG_HOST`/`PG_PORT`/credenciales en `deploy/gcp/.env` apuntan a la instancia PostgreSQL ya existente — `install-apim.sh` los usa para reescribir `[database.apim_db]` y `[database.shared_db]` en `deployment.toml` (registro/metadata **interno** del APIM, no las DataServices de negocio).
-- **Qué NO configuran los scripts**: las DataServices de negocio del MI (`AssetPlannerDataSource`, `ToolsDataSource`) están embebidas en el `.car` de `ToolsAPIProject` con su propia definición de conexión — hoy mezclan MySQL legacy y PostgreSQL (ver `doc/identity/dataservices-remediation-phase-a.md`, migración ya en curso pero no cerrada). Migrar esas conexiones es un cambio al proyecto Maven, no a la VM, y queda fuera de esta tarea.
+- **Registro interno del APIM (`apim_db`/`shared_db`): H2 embebida, no PostgreSQL.** Decisión explícita de Rodolfo (2026-07-28) — ver nota de implementación en [ADR-011](../adr/ADR-011-gcp-deployment.md) punto 6. Para un piloto de 1-2 usuarios no se justificaba la complejidad de crear bases + cargar esquemas de PostgreSQL para el registro interno del propio APIM; se deja el H2 de fábrica, igual que en DEV. `install-apim.sh` **no toca** `[database.*]` en `deployment.toml`. Riesgo aceptado: si esto escala a producción real, migrar H2 → PostgreSQL más adelante es trabajo aparte, no trivial.
+- **Red interna del proyecto GCP**: al estar la VM nueva y Dnato en el mismo proyecto, la conectividad es directa por IP interna — no requiere VPN ni peering (ADR-011 #6, ahora acotado a Dnato). **Zona confirmada por Rodolfo: `us-east1-b`** — la VM nueva se crea ahí, misma zona que el resto del stack existente (Dnato, PostgreSQL, y la VM legacy con WSO2 4.4).
+- **Dónde sigue entrando PostgreSQL:** el PostgreSQL existente no se usa en este despliegue en absoluto por ahora — queda reservado para la futura migración de las DataServices de negocio del MI (`AssetPlannerDataSource`, `ToolsDataSource`, hoy mezclan MySQL legacy y PostgreSQL — ver `doc/identity/dataservices-remediation-phase-a.md`, migración ya en curso pero no cerrada, es un cambio al proyecto Maven, no a esta VM, y queda fuera de esta tarea).
 - **Identidad/JWT**: la config de `[apim.jwt]` + Key Manager federado de Dnato (ADR-008/ADR-009) tampoco la tocan estos scripts — es clase 🔴 (identidad/seguridad). Debe aplicarse como paso separado, replicando `doc/identity/apim-keymanager-dnato.md` contra el Dnato de este mismo proyecto GCP, antes de dar de alta al primer cliente.
 
 ---
@@ -171,10 +171,10 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
      gcloud compute firewall-rules list --format="table(name,sourceRanges.list(),allowed[].map().firewall_rule().list(),targetTags.list())"
      ```
      Si aparece algo con `0.0.0.0/0` y un rango de puertos amplio (`0-65535` o similar), avisar antes de tocar nada.
-   - **Confirmar que la VM llega a PostgreSQL/Dnato por red interna** (PostgreSQL corre en su propia VM, `traz-db-prod`, no es Cloud SQL administrado — ver `TRAZALOG_v3_MCP_ARCHITECTURE.md` §10.5). Si todas están en la red `default`, ya existe la regla `default-allow-internal` que permite el tráfico interno entre VMs del proyecto — solo falta confirmar que quedaron en la misma red:
+   - **Confirmar que la VM llega a Dnato por red interna** (el APIM ya no usa PostgreSQL en este despliegue — ver §2 — así que no hace falta verificar conectividad contra esa VM para esta tarea). Si todas están en la red `default`, ya existe la regla `default-allow-internal` que permite el tráfico interno entre VMs del proyecto — solo falta confirmar que quedaron en la misma red:
      ```bash
      gcloud compute instances describe NOMBRE_VM --zone=us-east1-b --format="get(networkInterfaces[0].network)"
-     gcloud compute instances describe NOMBRE_VM_POSTGRES --zone=us-east1-b --format="get(networkInterfaces[0].network)"
+     gcloud compute instances describe NOMBRE_VM_DNATO --zone=us-east1-b --format="get(networkInterfaces[0].network)"
      ```
      Mismo resultado en ambos → OK. Distinto → parar y avisar (haría falta peering o una regla nueva).
 
@@ -193,23 +193,20 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    ```
    Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 8) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
 
-7. **Conseguir los 3 archivos que necesitan los scripts** (WSO2 no deja descargarlos directo con `wget` desde la VM — hay que bajarlos con el navegador y después subirlos):
+7. **Conseguir los 2 archivos que necesitan los scripts** (WSO2 no deja descargarlos directo con `wget` desde la VM — hay que bajarlos con el navegador y después subirlos). *(Antes había un tercer archivo, el driver JDBC de PostgreSQL — ya no hace falta: el registro interno del APIM usa H2 embebida, ver §2.)*
 
    - 🌐 **En tu computadora** (navegador normal, no en la VM):
      - API Manager: [wso2.com/products/downloads](https://wso2.com/products/downloads/) → buscar "API Manager" → **"Previous Releases"** → versión **4.6.0** → completar el formulario (email + aceptar la licencia — no hace falta contraseña ni instalar nada) → descarga `wso2am-4.6.0.zip`.
      - Micro Integrator: misma página → "WSO2 Integrator: MI" → **"Previous Releases"** → versión **4.5.0** → mismo formulario → descarga `wso2mi-4.5.0.zip`.
-     - Driver JDBC de PostgreSQL: [jdbc.postgresql.org/download](https://jdbc.postgresql.org/download/) → botón de descarga directa (sin formulario) → un archivo tipo `postgresql-42.7.x.jar`.
-     - Los 3 quedan en la carpeta de Descargas de tu computadora.
-   - 💻 **En la ventana de SSH de la VM** (la misma del paso 6): arriba a la derecha de esa ventana hay un ícono de **engranaje ⚙️** → **"Upload file"** → elegir cada uno de los 3 archivos desde tu carpeta de Descargas, uno por vez. Quedan guardados en tu home dentro de la VM (`~`).
+     - Los 2 quedan en la carpeta de Descargas de tu computadora.
+   - 💻 **En la ventana de SSH de la VM** (la misma del paso 6): arriba a la derecha de esa ventana hay un ícono de **engranaje ⚙️** → **"Upload file"** → elegir cada uno de los 2 archivos desde tu carpeta de Descargas, uno por vez. Quedan guardados en tu home dentro de la VM (`~`).
    - 💻 **Seguir en la misma sesión SSH** — mover los archivos a las rutas que usa `.env` y confirmar que llegaron:
      ```bash
-     sudo mkdir -p /opt/wso2/dist /opt/wso2/drivers
+     sudo mkdir -p /opt/wso2/dist
      sudo mv ~/wso2am-4.6.0.zip /opt/wso2/dist/
      sudo mv ~/wso2mi-4.5.0.zip /opt/wso2/dist/
-     sudo mv ~/postgresql-*.jar /opt/wso2/drivers/
-     ls /opt/wso2/dist/ /opt/wso2/drivers/
+     ls /opt/wso2/dist/
      ```
-     Si el nombre del `.jar` de PostgreSQL no coincide exactamente con `PG_JDBC_JAR_PATH` en `.env` (por ejemplo bajó `postgresql-42.7.13.jar` y el `.env` dice `postgresql-42.7.4.jar`), ajustar esa línea del `.env` para que apunte al nombre real, o renombrar el archivo.
 
 8. 💻 **SSH en la VM (misma sesión) — instalar y arrancar WSO2**:
    ```bash
@@ -217,32 +214,6 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    cp .env.example .env   # completar con los valores reales (incluidas las rutas del paso 7)
    sudo ./install-apim.sh
    sudo ./install-mi.sh
-   ```
-
-   **Antes de arrancar el APIM, crear las bases de datos y cargarles el esquema** (`install-apim.sh` solo edita `deployment.toml` para que el APIM sepa A QUÉ base conectarse — no crea la base ni las tablas; si no se hace esto, `wso2am` falla al arrancar porque busca tablas que no existen):
-   ```bash
-   # cliente psql, si no está instalado
-   sudo dnf install -y postgresql
-
-   # crear las 2 bases vacías en el PostgreSQL existente (usar los mismos
-   # nombres que PG_DB_APIM/PG_DB_SHARED del .env)
-   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -p 5432 -U $PG_USER -d postgres -c "CREATE DATABASE wso2am_db;"
-   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -p 5432 -U $PG_USER -d postgres -c "CREATE DATABASE wso2shared_db;"
-
-   # cargar el esquema de tablas de WSO2 en cada una (scripts que vienen
-   # adentro del zip de APIM ya descomprimido en $APIM_HOME) — confirmar
-   # los nombres exactos con `ls` antes de correr, por si difieren:
-   ls /opt/wso2/wso2am-4.6.0/dbscripts/ /opt/wso2/wso2am-4.6.0/dbscripts/apimgt/
-   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -U $PG_USER -d wso2am_db -f /opt/wso2/wso2am-4.6.0/dbscripts/apimgt/postgresql.sql
-   PGPASSWORD='TU_PG_PASSWORD' psql -h $PG_HOST -U $PG_USER -d wso2shared_db -f /opt/wso2/wso2am-4.6.0/dbscripts/postgresql.sql
-   ```
-   Notas:
-   - Si `CREATE DATABASE` da error de permisos, el usuario de `.env` (`PG_USER`) no tiene privilegio `CREATEDB` — hace falta que alguien con acceso admin a ese PostgreSQL (probablemente vos mismo, si administrás esa VM) cree las 2 bases vacías primero; después estos mismos comandos de carga de esquema funcionan igual.
-   - Si `psql` da timeout/connection refused (no un error de permisos), no es el firewall del proyecto GCP (eso ya se confirmó en el paso 5) — es la config propia de PostgreSQL (`pg_hba.conf`/`listen_addresses` en la VM de PostgreSQL), que tiene que permitir conexiones desde la IP interna de esta VM nueva. Revisar eso en la VM de PostgreSQL si pasa esto.
-   - Rutas verificadas contra la [doc oficial de WSO2 para PostgreSQL](https://apim.docs.wso2.com/en/4.4.0/install-and-setup/setup/setting-up-databases/changing-default-databases/changing-to-postgresql/) (consistente entre versiones 4.0-4.4; no confirmada línea por línea contra la doc específica de 4.6.0, que no fue accesible al momento de escribir esto) — por eso el `ls` previo, para confirmar antes de correr.
-
-   Recién ahora arrancar los servicios:
-   ```bash
    sudo ./setup-reverse-proxy.sh
    sudo systemctl start wso2am
    sudo systemctl start wso2mi
