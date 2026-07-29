@@ -1,6 +1,6 @@
 # CONTEXT-PACK — traz-tools
 
-> `Versión: 1.1 | Sincronizado con: TRAZALOG_v3_MCP_ARCHITECTURE.md / último ADR: ADR-011 | Última actualización: 2026-07-16`
+> `Versión: 1.2 | Sincronizado con: TRAZALOG_v3_MCP_ARCHITECTURE.md / último ADR: ADR-011 | Última actualización: 2026-07-28`
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -31,7 +31,7 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 | ADR-005     | ❌ (en arch doc)                                          | Costo $0 incremental hasta 2027 — open source siempre que sea posible                                                                                                                                                                                              |
 | ADR-008     | ❌ (en arch doc + Sección 6.8)                            | El APIM valida el JWT de Dnato como Key Manager federado (no el MI)                                                                                                                                                                                                |
 | **ADR-009** | ✅ `doc/adr/ADR-009-backend-jwt-assertion.md`             | **VIGENTE.** El `empr_id` viaja en el backend JWT `X-JWT-Assertion` (firmado por APIM, `apim.jwt.enable=true`); el MI lo deriva con la sequence `EmprIdFromHeader`. La `EmprIdInjectorPolicy` de ADR-008 quedó **DEPRECADA** — no la reimplementes ni la reactives |
-| **ADR-011** | doc/adr/ADR-011-gcp-deployment.md doc/v3/CONTEXT-PACK.md | **VIGENTE.**VM en GCP con WSO2 nativo (APIM+MI), sin Docker, PostgreSQL/Dnato existentes reutilizados                                                                                                                                                              |
+| **ADR-011** | doc/adr/ADR-011-gcp-deployment.md doc/v3/CONTEXT-PACK.md | **VIGENTE.** VM en GCP con WSO2 nativo (APIM+MI), sin Docker, Dnato existente reutilizado. Registro interno del APIM (`apim_db`/`shared_db`) en **H2 embebida** (no PostgreSQL) — acotado 2026-07-28, ver nota en el ADR. PostgreSQL existente sigue reservado para la futura migración de DataServices de negocio |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 

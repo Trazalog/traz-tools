@@ -73,13 +73,13 @@ Rodolfo ya tiene otra VM en el mismo proyecto GCP corriendo WSO2 **4.4** (sin se
 
 ```
 VM GCP nueva (e2-medium, solo WSO2 nativo)
-  APIM 4.6.0 ──jdbc:postgresql──> PostgreSQL existente (registro/metadata interno: apim_db, shared_db)
+  APIM 4.6.0 ──registro/metadata interno en H2 embebida (local, sin red)
   MI 4.x      ──(red interna del proyecto GCP, sin VPN/peering)──> Dnato existente
 ```
 
-- **Red interna del proyecto GCP**: al estar la VM nueva, PostgreSQL y Dnato en el mismo proyecto, la conectividad es directa por IP interna — no requiere VPN ni peering (ADR-011 #6). **Zona confirmada por Rodolfo: `us-east1-b`** — la VM nueva se crea ahí, misma zona que el resto del stack existente (Dnato, PostgreSQL, y la VM legacy con WSO2 4.4).
-- **Qué configuran los scripts**: `PG_HOST`/`PG_PORT`/credenciales en `deploy/gcp/.env` apuntan a la instancia PostgreSQL ya existente — `install-apim.sh` los usa para reescribir `[database.apim_db]` y `[database.shared_db]` en `deployment.toml` (registro/metadata **interno** del APIM, no las DataServices de negocio).
-- **Qué NO configuran los scripts**: las DataServices de negocio del MI (`AssetPlannerDataSource`, `ToolsDataSource`) están embebidas en el `.car` de `ToolsAPIProject` con su propia definición de conexión — hoy mezclan MySQL legacy y PostgreSQL (ver `doc/identity/dataservices-remediation-phase-a.md`, migración ya en curso pero no cerrada). Migrar esas conexiones es un cambio al proyecto Maven, no a la VM, y queda fuera de esta tarea.
+- **Registro interno del APIM (`apim_db`/`shared_db`): H2 embebida, no PostgreSQL.** Decisión explícita de Rodolfo (2026-07-28) — ver nota de implementación en [ADR-011](../adr/ADR-011-gcp-deployment.md) punto 6. Para un piloto de 1-2 usuarios no se justificaba la complejidad de crear bases + cargar esquemas de PostgreSQL para el registro interno del propio APIM; se deja el H2 de fábrica, igual que en DEV. `install-apim.sh` **no toca** `[database.*]` en `deployment.toml`. Riesgo aceptado: si esto escala a producción real, migrar H2 → PostgreSQL más adelante es trabajo aparte, no trivial.
+- **Red interna del proyecto GCP**: al estar la VM nueva y Dnato en el mismo proyecto, la conectividad es directa por IP interna — no requiere VPN ni peering (ADR-011 #6, ahora acotado a Dnato). **Zona confirmada por Rodolfo: `us-east1-b`** — la VM nueva se crea ahí, misma zona que el resto del stack existente (Dnato, PostgreSQL, y la VM legacy con WSO2 4.4).
+- **Dónde sigue entrando PostgreSQL:** el PostgreSQL existente no se usa en este despliegue en absoluto por ahora — queda reservado para la futura migración de las DataServices de negocio del MI (`AssetPlannerDataSource`, `ToolsDataSource`, hoy mezclan MySQL legacy y PostgreSQL — ver `doc/identity/dataservices-remediation-phase-a.md`, migración ya en curso pero no cerrada, es un cambio al proyecto Maven, no a esta VM, y queda fuera de esta tarea).
 - **Identidad/JWT**: la config de `[apim.jwt]` + Key Manager federado de Dnato (ADR-008/ADR-009) tampoco la tocan estos scripts — es clase 🔴 (identidad/seguridad). Debe aplicarse como paso separado, replicando `doc/identity/apim-keymanager-dnato.md` contra el Dnato de este mismo proyecto GCP, antes de dar de alta al primer cliente.
 
 ---
@@ -104,7 +104,7 @@ Pasos manuales — Claude Code no tiene acceso a la consola de GCP y no ejecuta 
 |---|---|---|
 | 🖥️ **Consola web** | `console.cloud.google.com`, clicks con el mouse | Crear la VM, ver/reservar IP, ver reglas de firewall (opcional, alternativa a los comandos) |
 | ⌨️ **Cloud Shell** | Terminal integrada en la consola web (botón `>_` arriba a la derecha). No requiere instalar nada — ya viene logueada y con `gcloud` listo | Todos los comandos `gcloud` de este checklist (pasos 3 y 5) |
-| 💻 **SSH en la VM** | Terminal conectada DENTRO de la VM nueva ya creada | Instalar JDK y correr los scripts de `deploy/gcp/` (pasos 6 y 7) |
+| 💻 **SSH en la VM** | Terminal conectada DENTRO de la VM nueva ya creada | Instalar JDK, subir los archivos de WSO2 y correr los scripts de `deploy/gcp/` (pasos 6 a 8) |
 
 ### 4.0 Antes de empezar: abrir Cloud Shell (una sola vez)
 
@@ -171,10 +171,10 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
      gcloud compute firewall-rules list --format="table(name,sourceRanges.list(),allowed[].map().firewall_rule().list(),targetTags.list())"
      ```
      Si aparece algo con `0.0.0.0/0` y un rango de puertos amplio (`0-65535` o similar), avisar antes de tocar nada.
-   - **Confirmar que la VM llega a PostgreSQL/Dnato por red interna** (PostgreSQL corre en su propia VM, `traz-db-prod`, no es Cloud SQL administrado — ver `TRAZALOG_v3_MCP_ARCHITECTURE.md` §10.5). Si todas están en la red `default`, ya existe la regla `default-allow-internal` que permite el tráfico interno entre VMs del proyecto — solo falta confirmar que quedaron en la misma red:
+   - **Confirmar que la VM llega a Dnato por red interna** (el APIM ya no usa PostgreSQL en este despliegue — ver §2 — así que no hace falta verificar conectividad contra esa VM para esta tarea). Si todas están en la red `default`, ya existe la regla `default-allow-internal` que permite el tráfico interno entre VMs del proyecto — solo falta confirmar que quedaron en la misma red:
      ```bash
      gcloud compute instances describe NOMBRE_VM --zone=us-east1-b --format="get(networkInterfaces[0].network)"
-     gcloud compute instances describe NOMBRE_VM_POSTGRES --zone=us-east1-b --format="get(networkInterfaces[0].network)"
+     gcloud compute instances describe NOMBRE_VM_DNATO --zone=us-east1-b --format="get(networkInterfaces[0].network)"
      ```
      Mismo resultado en ambos → OK. Distinto → parar y avisar (haría falta peering o una regla nueva).
 
@@ -191,22 +191,34 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo dnf install -y temurin-21-jdk
    java -version   # debe mostrar "21.x.x"
    ```
-   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 7) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
+   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 8) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
 
-7. 💻 **SSH en la VM (misma sesión que el paso 6) — instalar y arrancar WSO2**:
+7. **Conseguir los 2 archivos que necesitan los scripts** (WSO2 no deja descargarlos directo con `wget` desde la VM — hay que bajarlos con el navegador y después subirlos). *(Antes había un tercer archivo, el driver JDBC de PostgreSQL — ya no hace falta: el registro interno del APIM usa H2 embebida, ver §2.)*
+
+   - 🌐 **En tu computadora** (navegador normal, no en la VM):
+     - API Manager: [wso2.com/products/downloads](https://wso2.com/products/downloads/) → buscar "API Manager" → **"Previous Releases"** → versión **4.6.0** → completar el formulario (email + aceptar la licencia — no hace falta contraseña ni instalar nada) → descarga `wso2am-4.6.0.zip`.
+     - Micro Integrator: misma página → "WSO2 Integrator: MI" → **"Previous Releases"** → versión **4.5.0** → mismo formulario → descarga `wso2mi-4.5.0.zip`.
+     - Los 2 quedan en la carpeta de Descargas de tu computadora.
+   - 💻 **En la ventana de SSH de la VM** (la misma del paso 6): arriba a la derecha de esa ventana hay un ícono de **engranaje ⚙️** → **"Upload file"** → elegir cada uno de los 2 archivos desde tu carpeta de Descargas, uno por vez. Quedan guardados en tu home dentro de la VM (`~`).
+   - 💻 **Seguir en la misma sesión SSH** — mover los archivos a las rutas que usa `.env` y confirmar que llegaron:
+     ```bash
+     sudo mkdir -p /opt/wso2/dist
+     sudo mv ~/wso2am-4.6.0.zip /opt/wso2/dist/
+     sudo mv ~/wso2mi-4.5.0.zip /opt/wso2/dist/
+     ls /opt/wso2/dist/
+     ```
+
+8. 💻 **SSH en la VM (misma sesión) — instalar y arrancar WSO2**:
    ```bash
    git clone <este repo> && cd traz-tools/deploy/gcp
-   cp .env.example .env   # completar con los valores reales
-   # descargar manualmente wso2am-4.6.0.zip y wso2mi-4.5.0.zip desde wso2.com
-   # (cuenta gratuita) y el driver JDBC de PostgreSQL desde jdbc.postgresql.org,
-   # dejarlos en las rutas indicadas en .env
+   cp .env.example .env   # completar con los valores reales (incluidas las rutas del paso 7)
    sudo ./install-apim.sh
    sudo ./install-mi.sh
    sudo ./setup-reverse-proxy.sh
    sudo systemctl start wso2am
    sudo systemctl start wso2mi
    ```
-   Nota sobre `setup-reverse-proxy.sh`: instala Caddy vía `dnf`/Copr siguiendo la sección "CentOS/RHEL" de [caddyserver.com/docs/install](https://caddyserver.com/docs/install) — esa página no nombra Rocky Linux explícitamente (Rocky es rebuild 1:1 de RHEL, debería resolver igual, pero no está confirmado 1:1). Verificar `caddy version` en el smoke test (paso 8).
+   Nota sobre `setup-reverse-proxy.sh`: instala Caddy vía `dnf`/Copr siguiendo la sección "CentOS/RHEL" de [caddyserver.com/docs/install](https://caddyserver.com/docs/install) — esa página no nombra Rocky Linux explícitamente (Rocky es rebuild 1:1 de RHEL, debería resolver igual, pero no está confirmado 1:1). Verificar `caddy version` en el smoke test (paso 9).
 
    También en esta sesión SSH, chequear `firewalld` (no confirmado 1:1 para Rocky en la doc oficial de GCP — ver nota abajo):
    ```bash
@@ -218,13 +230,45 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    ```
    *(La [doc oficial de GCP](https://docs.cloud.google.com/compute/docs/images/os-details) confirma para AlmaLinux/CentOS que el firewall del guest permite todo por defecto porque las reglas de la VPC lo overridean — Rocky no está listada ahí explícitamente, pero es la misma familia de imagen. Por eso este chequeo, en vez de asumirlo.)*
 
-8. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
+   **Si `systemctl start wso2am`/`wso2mi` falla con `Failed to locate executable ... Permission denied`** (confirmado en la práctica): es **SELinux** (viene `Enforcing` por defecto en las imágenes Rocky de GCP). `install-apim.sh`/`install-mi.sh` descomprimen el `.zip` en un directorio temporal y lo mueven (`mv`) a `/opt/wso2/...` — el `mv` no actualiza el contexto de SELinux, así que los binarios quedan con la etiqueta del temporal (`tmp_t`, no ejecutable), aunque el `chmod +x` esté bien aplicado. Los scripts ya corren `restorecon -R` después del `chown` para evitar esto — si de todos modos aparece, confirmar y arreglar a mano:
+   ```bash
+   getenforce
+   sudo ausearch -m avc -ts recent -i 2>/dev/null | tail -20   # buscar "denied"
+   sudo restorecon -Rv /opt/wso2/wso2am-4.6.0
+   sudo restorecon -Rv /opt/wso2/wso2mi-4.5.0
+   sudo systemctl start wso2am
+   sudo systemctl start wso2mi
+   ```
+
+9. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
    ```bash
    curl -I https://mcp.cloudtrazalog.com
    ```
    Tiene que responder con el certificado de Let's Encrypt (no self-signed) y proxyear al Gateway del APIM.
 
-9. **Antes de dar de alta al primer cliente** (no es parte de esta tarea, queda pendiente aparte): aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL.
+   **Verificar que ambos servicios y sus puertos quedaron arriba** — 💻 en la sesión SSH de la VM:
+   ```bash
+   sudo systemctl status wso2am wso2mi --no-pager
+   sudo ss -tlnp | grep -E ':(9443|8280|8243|8290|8253|9164)\b'
+   ```
+   Deberían aparecer los 6 puertos escuchando (3 del APIM, 3 del MI — no colisionan entre sí, el MI ya viene con sus propios puertos de fábrica corridos, distintos de los del APIM, precisamente para poder convivir en la misma máquina sin configurar nada).
+
+   **Consolas del APIM** (mismo patrón que DEV, `doc/infra/wso2-install.md` §5 — solo alcanzables desde dentro de la VM o por túnel SSH, **nunca públicamente**, ADR-011 #9):
+   ```bash
+   curl -k https://localhost:9443/carbon      # Admin Console
+   curl -k https://localhost:9443/publisher   # Publisher
+   curl -k https://localhost:9443/devportal   # Developer Portal
+   curl -k https://localhost:8243             # Gateway (lo mismo que expone Caddy en :443 públicamente)
+   ```
+   Para verlas en el navegador de tu computadora (no solo con `curl`), hace falta un túnel SSH, por ejemplo:
+   ```bash
+   gcloud compute ssh NOMBRE_VM --zone=us-east1-b --tunnel-through-iap -- -L 9443:localhost:9443
+   ```
+   y después abrir `https://localhost:9443/carbon` en tu propio navegador (certificado self-signed — el navegador va a advertir, es esperado).
+
+   **El MI no tiene una consola web como el APIM** (no es Carbon con UI, es un runtime liviano). Se verifica que está arriba con el `systemctl status`/`ss` de arriba, los logs (`tail -f /opt/wso2/wso2mi-4.5.0/repository/logs/wso2carbon.log`), o pegándole directo a un endpoint desplegado (ej. `curl http://localhost:8290/<contexto-del-API>`, igual que en DEV — ver `scripts/dev/setup-mi-b4-car-deploy.sh`). El puerto 9164 es su Management API (REST, para tooling — no para navegar).
+
+10. **Antes de dar de alta al primer cliente** (no es parte de esta tarea, queda pendiente aparte): aplicar la config de identidad (ADR-008/009) y cerrar la migración de DataServices a PostgreSQL.
 
 ---
 

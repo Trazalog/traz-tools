@@ -90,6 +90,14 @@ log "JAVA_HOME detectado: $JAVA_HOME_RESOLVED (JDK 21 verificado)"
 # ── Permisos y systemd ─────────────────────────────────────────────
 chown -R "$WSO2_USER:$WSO2_USER" "$MI_HOME"
 
+# Mismo motivo que en install-apim.sh: el mv desde el temp de descompresión
+# no actualiza el contexto de SELinux, y systemd falla con "Permission
+# denied" al intentar ejecutar los binarios aunque el chmod +x esté bien.
+if command -v restorecon >/dev/null 2>&1; then
+  restorecon -R "$MI_HOME"
+  log "Contexto de SELinux restaurado en $MI_HOME"
+fi
+
 sed -e "s#{{MI_HOME}}#$MI_HOME#g" -e "s#{{WSO2_USER}}#$WSO2_USER#g" \
     -e "s#{{JAVA_HOME}}#$JAVA_HOME_RESOLVED#g" \
   "$SCRIPT_DIR/systemd/wso2mi.service" > /etc/systemd/system/wso2mi.service
