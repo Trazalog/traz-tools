@@ -1,6 +1,6 @@
 # CONTEXT-PACK — traz-tools
 
-> Versión -> 1.3, "último ADR: ADR-012", fecha 2026-07-28
+> Versión -> 1.4, "último ADR: ADR-013", fecha 2026-07-31
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -32,7 +32,8 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 | ADR-008     | ❌ (en arch doc + Sección 6.8)                            | El APIM valida el JWT de Dnato como Key Manager federado (no el MI)                                                                                                                                                                                                                                                |
 | **ADR-009** | ✅ `doc/adr/ADR-009-backend-jwt-assertion.md`             | **VIGENTE.** El `empr_id` viaja en el backend JWT `X-JWT-Assertion` (firmado por APIM, `apim.jwt.enable=true`); el MI lo deriva con la sequence `EmprIdFromHeader`. La `EmprIdInjectorPolicy` de ADR-008 quedó **DEPRECADA** — no la reimplementes ni la reactives                                                 |
 | **ADR-011** | doc/adr/ADR-011-gcp-deployment.md doc/v3/CONTEXT-PACK.md | **VIGENTE.** VM en GCP con WSO2 nativo (APIM+MI), sin Docker, Dnato existente reutilizado. Registro interno del APIM (`apim_db`/`shared_db`) en **H2 embebida** (no PostgreSQL) — acotado 2026-07-28, ver nota en el ADR. PostgreSQL existente sigue reservado para la futura migración de DataServices de negocio |
-| **ADR-012** | doc/adr/                                                 | Almacenes reusa patrón de Mantenimiento: empr_id del JWT (ADR-009), crear_pedido_materiales con BPM+rollback estilo create_ot. Solo pedidos, sin operaciones de stock                                                                                                                                              |
+| **ADR-012** | doc/adr/ADR-012-almacenes-aislamiento.md                 | Almacenes reusa patrón de Mantenimiento: empr_id del JWT (ADR-009), crear_pedido_materiales con BPM+rollback estilo create_ot. Solo pedidos, sin operaciones de stock                                                                                                                                              |
+| **ADR-013** | ADR-013-unificacion-mcp.md                               | Unificación MCP: fachada delgada toolsMCPAPI resuelve empr_id y rutea a DataServices existentes. Un solo Virtual MCP Server, tools con prefijo de módulo (man_, alm_)                                                                                                                                              |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 
