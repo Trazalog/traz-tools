@@ -1,0 +1,84 @@
+<api xmlns="http://ws.apache.org/ns/synapse" name="toolsMCPAPI" context="/tools/mcp">
+   <!-- ══════════════════════════════════════════════════════════════
+        E2-MCP-11 (ADR-013): fachada ÚNICA y DELGADA de la capa MCP.
+
+        Esta API NO reimplementa lógica de negocio. Por cada tool:
+          1. Resuelve empr_id UNA vez (sequence emprIdFromHeader, ADR-009 —
+             la misma que ya usa toolsMANAPI, sin cambios).
+          2. Rutea al DataService/lógica que YA existe (mismo patrón que
+             toolsMANAPI: fn:concat($ctx:dataservices_url, '/<DataService>/...')).
+
+        Reemplaza, resource por resource, a los recursos /mcp/* hoy repartidos
+        entre toolsMANAPI (y, cuando se sumen, los de almacenes) — ver ADR-013
+        decisión #1 y #2. Rutas internas prefijadas por módulo: /mcp/man/...,
+        /mcp/alm/... (decisión #2). Nombres de tool con prefijo man_/alm_
+        (decisión #3) — el nombre de tool lo define la spec OpenAPI que se
+        publique en el Publisher (Tarea 3.4), no este artefacto MI.
+
+        Esta tarea (E2-MCP-11) implementa UNA sola tool de punta a punta
+        (man_get_equipos) para validar el patrón completo antes de migrar el
+        resto (Tarea 3.2). Es EXACTAMENTE la misma llamada que ya hace
+        toolsMANAPI en /mcp/equipos (mismo DataService, mismo query, mismo
+        formato de URL) — se copia el patrón verificado, no se reinventa.
+   -->
+
+   <!-- man_get_equipos — lista de equipos activos de la empresa del JWT.
+        Réplica 1:1 del recurso GET /mcp/equipos de toolsMANAPI.xml, bajo la
+        ruta prefijada por módulo que define ADR-013. -->
+   <resource methods="GET" uri-template="/mcp/man/equipos">
+      <inSequence>
+         <!-- ADR-009: deriva empr_id del backend JWT (X-JWT-Assertion) que firma el APIM. -->
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="uri.var.getEquipos_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANEquiposDataService/mcp/equipos/',get-property('jwt_mysql_empresa_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"              value="#TRAZA | MCP | man_get_equipos | iniciando (toolsMCPAPI, fachada ADR-013)"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="url"               expression="$ctx:uri.var.getEquipos_url"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <!-- ADR-008 fix: un GET sin body NO debe enviar Content-Type: application/json;
+              rompe el JsonStreamBuilder del DSS (NullPointerException: charsetName → 500).
+              El Accept ya define el formato de salida JSON. -->
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getEquipos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/equipos - MANEquiposDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_equipos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+</api>
