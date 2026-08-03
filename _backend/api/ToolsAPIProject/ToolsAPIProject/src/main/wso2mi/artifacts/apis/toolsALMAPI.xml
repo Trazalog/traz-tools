@@ -23,12 +23,12 @@
         Flujo real relevado (Notapedido.php / Notapedidos.php / ALMDataService.dbs):
           - POST /pedidos (query setPedido) → header, retorna pema_id
           - POST /notapedido/detalle en batch (query setDetaNotaPedido) → detalle
-          - BPM: proceso "Ped. Materiales" (constants.php:
+          - BPM: proceso "Pedido de Recursos Materiales" (constants.php:
             BPM_PROCESS_ID_PEDIDOS_NORMALES = 8803232493891311406), contrato
             {"pIdPedidoMaterial": pema_id} — el PHP lo lanza por ID; acá se
             busca por NOMBRE vía toolsBPMAPI (mismo mecanismo que create_ot).
-            ⚠️ Nombre asumido "Ped. Materiales" (etiqueta en constants.php) —
-            a confirmar contra Bonita real antes de dar de alta al cliente.
+            Nombre confirmado por Rodolfo (2026-08-02) — la etiqueta
+            "Ped. Materiales" de constants.php NO es el nombre real en Bonita.
           - Hoy el PHP actualiza case_id con SQL directo (sin pasar por WSO2)
             y NO hace rollback si Bonita falla. Acá se agrega ambas cosas
             correctamente vía 2 queries nuevas y aditivas en ALMDataService.dbs
@@ -298,11 +298,11 @@
             </else>
          </filter>
 
-         <!-- Paso 3: POST BPM — instanciar proceso "Ped. Materiales".
-              ⚠️ Nombre asumido desde constants.php (BPM_PROCESS_ID_PEDIDOS_NORMALES
-              → 'nombre' => 'Ped. Materiales') — confirmar contra Bonita real. -->
+         <!-- Paso 3: POST BPM — instanciar proceso "Pedido de Recursos Materiales".
+              Nombre confirmado por Rodolfo (2026-08-02) — la etiqueta
+              "Ped. Materiales" de constants.php NO era el nombre real en Bonita. -->
          <payloadFactory media-type="json">
-            <format>{"nombre_proceso":"Ped. Materiales","payload":{"pIdPedidoMaterial":"$1"},"session":"","emprId":"$2"}</format>
+            <format>{"nombre_proceso":"Pedido de Recursos Materiales","payload":{"pIdPedidoMaterial":"$1"},"session":"","emprId":"$2"}</format>
             <args>
                <arg evaluator="xml" expression="get-property('pema_id')"/>
                <arg evaluator="xml" expression="get-property('req_empr_id')"/>

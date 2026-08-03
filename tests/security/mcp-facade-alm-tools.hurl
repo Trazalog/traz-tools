@@ -15,7 +15,7 @@
 #      + toolsALMAPI + ALMDataService con las 3 queries nuevas) deployado
 #   2. Para los Casos C (respuesta real, no solo "no 503"): conectividad a
 #      la BD de ALMDataService y, para alm_crear_pedido_materiales, a
-#      Bonita BPM con el proceso "Ped. Materiales" (nombre a confirmar)
+#      Bonita BPM con el proceso "Pedido de Recursos Materiales"
 #
 # Variables requeridas:
 #   MI_HOST          = host:port del MI (ej: localhost:8290)
