@@ -43,6 +43,30 @@
       <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "case_id":"$case_id",&#xd;            "estado":"$estado",&#xd;            "batch_id":"$batch_id",&#xd;            "fecha":"$fecha",&#xd;            "justificacion":"$justificacion",&#xd;            "motivo_rechazo":"$motivo_rechazo",&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="batch_id" sqlType="STRING"/>
    </query>
+   <!-- E2-MCP-13 (ADR-013, fachada toolsMCPAPI): 3 queries nuevas, aditivas, para
+        alm_crear_pedido_materiales y alm_get_pedidos_materiales. No modifican ni
+        reemplazan ninguna query existente — el flujo real de creación de pedidos
+        (setPedido + setDetaNotaPedido) sigue exactamente igual, usado también por
+        el PHP de v2 (Notapedido::crearNotaPedido). Hoy el PHP actualiza case_id con
+        SQL directo (bypaseando WSO2) y no borra el pedido si Bonita falla — estas
+        3 queries permiten que la fachada MCP haga esos dos pasos correctamente
+        (case_id vía WSO2, y rollback real), replicando el patrón ya probado de
+        MANDataService/create_ot. -->
+   <query id="getPedidosMaterialesEmpresa" useConfig="ToolsDataSource">
+      <sql>select * from alm.alm_pedidos_materiales where empr_id = cast(:empr_id as integer) and not eliminado order by pema_id desc</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "case_id":"$case_id",&#xd;            "estado":"$estado",&#xd;            "fecha":"$fecha",&#xd;            "justificacion":"$justificacion"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setCaseIdPedido" useConfig="ToolsDataSource">
+      <sql>update alm.alm_pedidos_materiales set case_id = cast(:case_id as integer), estado = :estado where pema_id = cast(:pema_id as integer)</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="deletePedido" useConfig="ToolsDataSource">
+      <sql>delete from alm.alm_pedidos_materiales where pema_id = cast(:pema_id as integer)</sql>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
    <query id="getEstablecimiento" useConfig="ToolsDataSource">
       <sql>SELECT *&#xd; FROM&#xd;prd.establecimientos&#xd;where eliminado = false</sql>
       <result outputType="json">{&#xd; "establecimientos": {&#xd;      "establecimiento": [&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre",&#xd;          "lng": "$lng",&#xd;          "lat": "$lat",&#xd;          "calle": "$calle",&#xd;          "altura": "$altura",&#xd;          "localidad": "$localidad",&#xd;          "estado": "$estado",&#xd;          "pais": "$pais",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usuario": "$usuario"&#xd;        }&#xd;      ]&#xd; }&#xd;}</result>
@@ -573,6 +597,24 @@
       <call-query href="getPedido">
          <with-param name="pema_id" query-param="pema_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <!-- E2-MCP-13: resources aditivos para la fachada toolsMCPAPI, ver queries arriba -->
+   <resource method="GET" path="/pedidos/empresa/{empr_id}">
+      <call-query href="getPedidosMaterialesEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/caseid">
+      <call-query href="setCaseIdPedido">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/pedidos">
+      <call-query href="deletePedido">
+         <with-param name="pema_id" query-param="pema_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/pedidos/batch/{batch_id}">
