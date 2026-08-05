@@ -1,5 +1,25 @@
 # Procedimiento de publicación de OpenAPI specs en WSO2 API Manager 4.6.0
 
+## Objetivo
+
+Checklist de consola para publicar por primera vez una spec OpenAPI nueva
+en el Publisher de WSO2 APIM 4.6.0 (importar, configurar backend/seguridad,
+publicar, verificar). Es para vos (Rodolfo), en la consola.
+
+**Si ya publicaste la API antes y solo cambiaste la spec**, no hace falta
+repetir todo esto — ver §7 (re-publicar) o, más resumido,
+[`doc/infra/wso2-redeploy-artifacts.md`](../infra/wso2-redeploy-artifacts.md) §2.
+
+> ⚠️ **Este documento es de Sprint 2 y quedó desactualizado en un punto
+> importante:** describe la identidad como un header `X-Empr-Id` inyectado
+> por una mediación del APIM (§3.4, §6). Ese mecanismo **ya no es el
+> vigente** — desde ADR-009 el APIM genera su propio backend JWT
+> (`apim.jwt.enable=true`) y lo manda como `X-JWT-Assertion`; el MI lo lee
+> con la sequence `emprIdFromHeader`. No hace falta ninguna mediación de
+> `X-Empr-Id` por API. Detectado al escribir
+> [`virtual-mcp-unificado.md`](../mcp/virtual-mcp-unificado.md) — no
+> corregido acá todavía, queda pendiente.
+
 **Tarea:** E1-API-10 (rehecha por ADR-008)
 **Aplica a:** `equipos.yaml`, `ot.yaml`
 **Decisión base:** [ADR-008](../v3/TRAZALOG_v3_MCP_ARCHITECTURE.md) — el APIM valida el JWT de
