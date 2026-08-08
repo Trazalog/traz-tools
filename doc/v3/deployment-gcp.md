@@ -3,6 +3,13 @@
 > Implementa [ADR-011](../adr/ADR-011-gcp-deployment.md). Tarea: E7-INFRA-01/02.
 > Este documento NO despliega nada — es sizing + checklist para que Rodolfo
 > ejecute en su consola de GCP, más los scripts en [`deploy/gcp/`](../../deploy/gcp/).
+>
+> **Actualizado 2026-08-08 (E7-INFRA-05, Tarea 3.5):** §6 agrega el checklist para
+> desplegar la fachada MCP (`toolsMCPAPI`/`toolsALMAPI` + el Virtual MCP Server
+> unificado) a esta misma VM, una vez que ya está instalada (§1-4). Ese checklist
+> incorpora todo lo aprendido en el smoke test real hecho en DEV el mismo día
+> (`doc/mcp/virtual-mcp-unificado.md` §2.3/§2.8-bis/§4) para no repetir los mismos
+> errores de configuración acá.
 
 ---
 
@@ -278,3 +285,92 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
 - ~~Región/VPC exacta~~ **Resuelto: `us-east1-b`** (ver §2 y §4 paso 1).
 - **Versión exacta del MI**: se usa `4.5.0` por ser la validada junto al APIM 4.6.0 en DEV (ver `scripts/dev/setup-mi-b4-car-deploy.sh`). Si Rodolfo prefiere subir a una versión más nueva de MI, es una decisión aparte — no se investigó compatibilidad de versiones más nuevas contra el mecanismo de identidad de ADR-009.
 - **Migración de DataServices a PostgreSQL**: en curso pero no cerrada (`doc/identity/dataservices-remediation-phase-a.md`). Se detectó además que las datasources actuales (`AssetPlannerDataSource.xml`, `ToolsDataSource.xml`) tienen credenciales en texto plano commiteadas en el repo — preexistente, no introducido por esta tarea, pero vale la pena que Rodolfo lo sepa antes del cutover a producción.
+
+---
+
+## 6. Despliegue de la fachada MCP a esta VM (E7-INFRA-05, Tarea 3.5)
+
+Prerequisito de esta sección: la VM ya está instalada y funcionando (§1-4 de este documento, E7-INFRA-01/02, ya cerrado). Acá se agrega **lo nuevo**: llevar `toolsMCPAPI`/`toolsALMAPI` (Bloque 3, ya mergeados en `develop-v3`) y el Virtual MCP Server unificado a esta misma VM.
+
+### 6.0 Prerequisito de identidad — leer antes de empezar
+
+**El paso de verificación de aislamiento (§6.5) NO va a funcionar hasta que E7-INFRA-03 (Bloque 2 — config de identidad ADR-008/009 contra el Dnato de este mismo proyecto GCP) esté aplicado.** A la fecha de este documento, E7-INFRA-03 todavía no se ejecutó (ver `doc/v3/STATE.md` → Bloqueos). Los pasos §6.1-6.4 (desplegar el CAR, publicar la API, generar el MCP Server) se pueden hacer igual sin ese prerequisito — solo la verificación real con JWT de Dnato (§6.5-6.6) lo necesita. Si llegás a §6.5 y da 401/403 con un JWT que debería ser válido, lo primero a chequear es si `[[apim.jwt.issuer]]` para `trazalog-dnato` está configurado en el `deployment.toml` de **esta** VM (no asumir que se copió solo desde DEV).
+
+### 6.1 Artefacto desplegable — el `.car`
+
+Se genera igual que en DEV, no hay nada nuevo que preparar aparte del código ya mergeado:
+
+```bash
+cd _backend/api/ToolsAPIProject/ToolsAPIProject
+./mvnw clean install
+# target/ToolsAPIProject_1.0.0.car
+```
+
+Verificado en esta tarea (2026-08-08): el build corre limpio contra el estado actual de `develop-v3` (`BUILD SUCCESS`). El CAR incluye `toolsMCPAPI`, `toolsALMAPI`, `toolsMANAPI`, `toolsBPMAPI`, `toolsCOREAPI` y todos los DataServices — incluida la corrección de `case_id` en `MANDataService.dbs` (PR #416, ya mergeada). No hay un artefacto separado para la API/MCP Server del lado del APIM — esos se publican interactivamente en el Publisher (§6.3), igual que en DEV.
+
+### 6.2 Desplegar el CAR en el MI de la VM
+
+💻 SSH a la VM (mismo acceso que §4 paso 6):
+
+```bash
+cd ~/traz-tools   # el clone que ya existe en la VM desde el setup inicial (§4 paso 8)
+git checkout develop-v3 && git pull origin develop-v3
+cd _backend/api/ToolsAPIProject/ToolsAPIProject
+./mvnw clean install
+
+cp target/ToolsAPIProject_1.0.0.car /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/
+sudo systemctl restart wso2mi
+sudo journalctl -u wso2mi -f   # confirmar "Successfully Deployed Carbon Application" antes de seguir
+```
+
+Confirmar que el recurso existe localmente en la VM antes de tocar el APIM (un `503 identity_missing` acá es la respuesta ESPERADA — confirma que `toolsMCPAPI` está desplegado y corriendo, solo falta el JWT del gateway):
+
+```bash
+curl http://localhost:8290/tools/mcp/mcp/man/equipos
+```
+
+### 6.3 Publicar la API + generar el MCP Server en el Publisher de esta VM
+
+Seguir `doc/mcp/virtual-mcp-unificado.md` §2 completo — ya corregido con todo lo que falló la primera vez en DEV (2026-08-08). Puntos que cambian respecto a DEV:
+
+- **Acceso al Publisher:** el puerto 9443 nunca se expone públicamente (ADR-011 #9). Entrar por túnel SSH:
+  ```bash
+  gcloud compute ssh NOMBRE_VM --zone=us-east1-b --tunnel-through-iap -- -L 9443:localhost:9443
+  ```
+  y ahí sí `https://localhost:9443/publisher` desde tu propio navegador.
+- **Endpoint (§2.3 de `virtual-mcp-unificado.md`):** Production/Sandbox URL = `http://localhost:8290/tools/mcp` — APIM y MI conviven en la misma VM (igual que en DEV), **no** usar ninguna IP interna de otra VM del proyecto. Configurar en los DOS artefactos (la API y el MCP Server generado) — son artefactos separados, generar el MCP Server desde la API no copia el endpoint (encontrado en DEV el mismo día, ver la nota en §2.3 de ese documento).
+- **Seguridad (§2.4):** no tocar el selector de Key Managers (Dnato no se registra ahí — es `[[apim.jwt.issuer]]` en `deployment.toml`, ver §6.0). Desactivar `Enable Subscription Validation`.
+- **Suscripción (§2.8-bis):** crear o reusar una aplicación equivalente a `TrazalogDnatoMCP` en el DevPortal de esta VM y suscribirla al MCP Server nuevo. Sin este paso, las 9 tools dan `900908` aunque todo el resto esté bien — fue el primer bloqueo real que apareció en DEV.
+- **Nombre/contexto:** a elección de Rodolfo — no hay obligación de repetir `Trazalog MCP Server`/`/trazalog/mcp` (lo que terminó usándose en DEV), pero mantener el mismo nombre entre ambientes evita confusión al comparar configuraciones.
+
+### 6.4 Verificar el flujo OAuth end-to-end contra `mcp.cloudtrazalog.com`
+
+Requiere §6.0 resuelto (identidad de esta VM aplicada) y un JWT real emitido por el Dnato de este mismo proyecto GCP — no sirve el JWKS local de DEV (`scripts/dev/dnato-jwks-server.py`, ese es solo para el JWKS falso de DEV).
+
+```bash
+HOST="mcp.cloudtrazalog.com"
+CONTEXTO="<el que se haya elegido en §6.3>"   # ej. trazalog/mcp
+JWT="<JWT real de Dnato, este proyecto GCP>"
+
+curl -X POST "https://$HOST/$CONTEXTO/1.0/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"gcp-smoke-test","version":"1.0"}},"id":1}'
+
+curl -X POST "https://$HOST/$CONTEXTO/1.0/mcp" \
+  -H "Content-Type: application/json" -H "Authorization: Bearer $JWT" \
+  -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"man_get_equipos","arguments":{}},"id":2}'
+```
+
+### 6.5 Verificación de aislamiento multi-tenant (2 empresas)
+
+Mismo patrón que el smoke test que se hizo en DEV el 2026-08-08 (`virtual-mcp-unificado.md` §4): un JWT de empresa A y uno de empresa B, misma tool de lectura (ej. `man_get_equipos`), confirmar que cada uno ve solo los datos de su propia empresa y ninguno ve datos del otro.
+
+### DoD de esta tarea (E7-INFRA-05)
+
+- [ ] CAR reconstruido y desplegado en el MI de la VM (§6.2)
+- [ ] API + MCP Server publicados en el APIM de la VM (§6.3)
+- [ ] Suscripción de la aplicación al MCP Server confirmada
+- [ ] `initialize`/`tools/list` responden vía `https://mcp.cloudtrazalog.com`
+- [ ] Al menos una tool de cada módulo (`man_*`, `alm_*`) probada con `tools/call` real
+- [ ] Aislamiento de 2 empresas confirmado contra la URL pública
+- [ ] Esta sección actualizada marcando el despliegue como hecho, con fecha real
