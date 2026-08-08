@@ -387,7 +387,38 @@ Mismo patrón que el smoke test que se hizo en DEV el 2026-08-08 (`virtual-mcp-u
 
 **Por eso desplegar el contenido de `develop-v3` — a esta VM, o a cualquier servidor, incluido el de Dnato — no aplica ninguno de los cambios de `doc/identity/apim-keymanager-dnato.md`.** Ese documento describe ediciones manuales de `deployment.toml`, hechas y verificadas en DEV; acá se replican esas mismas ediciones, a mano, contra el `deployment.toml` de esta VM. No hay ningún artefacto en el repo que las traiga automáticamente.
 
-**Tampoco hace falta desplegar nada en el servidor de Dnato.** El prerequisito de `apim-keymanager-dnato.md` (`doc/identity/dnato-jwt-prereqs.md`) confirmó que Dnato no requiere cambios de código para esta federación — ya firma con RS256 y expone JWKS. Eso se confirmó para el Dnato de DEV; §7.2 abajo es donde se confirma (o no) que el Dnato de este proyecto GCP cumple lo mismo — no se puede asumir solo porque "es el mismo sistema".
+> **Corrección 2026-08-08:** la primera versión de esta sección decía "tampoco hace falta desplegar nada en el servidor de Dnato". **Eso estaba mal** — ver §7.0-bis. `dnato-jwt-prereqs.md` confirmó que Dnato **no necesita código nuevo** para esta federación porque ese código **ya se escribió**, en `traz-comp-dnato` rama `develop-v3` (E9-IDENT-03/04) — no porque no hiciera falta ningún despliegue. Si el servidor de Dnato de este proyecto GCP corre `develop` o `master` (no `develop-v3`), ese código simplemente no está ahí todavía.
+
+### 7.0-bis Prerequisito real: `traz-comp-dnato` rama `develop-v3` en el servidor de Dnato
+
+**Sí hace falta desplegar algo en el servidor de Dnato — y no es este repo, es `traz-comp-dnato`.** Confirmado revisando ese repo directamente: los commits que implementan la emisión de JWT, el login OAuth 2.1 PKCE, y el endpoint JWKS están **solo en `develop-v3`**, no en `develop` (soporte v2) ni en `master` (producción v2):
+
+```bash
+# Verificado en traz-comp-dnato:
+git log --all --oneline --grep="jwt\|jwks\|oauth" -i
+# 999d9a6 feat(identity): empr_id en JWT + login OAuth Dnato [E9-IDENT-03 / ADR-008]
+# 9516d30 feat(identity): add RFC 8414 AS metadata endpoint + configurable issuer for MCP discovery
+# 3da3f77 feat(identity): add OAuth 2.1 PKCE login screen in Dnato [E9-IDENT-04]
+# 5b5d1d6 feat(identity): add OAuth JWT issuance in Dnato with empr_id claim [E9-IDENT-03]
+# (todos solo en develop-v3, confirmado con git merge-base --is-ancestor)
+```
+
+Si el servidor de Dnato en este proyecto GCP (el que está "en la misma red donde está la VM de MCP", en otro server) corre `develop` o `master` de `traz-comp-dnato`, **hace falta desplegar `develop-v3` ahí** — el checkout de código en sí (`git checkout develop-v3 && git pull`, reemplazando el vhost/deploy que corresponda para ese ambiente) es responsabilidad de `traz-comp-dnato` y sus propias convenciones de deploy, no de este repo.
+
+**Con el código desplegado, todavía faltan pasos manuales — mismo patrón que `deployment.toml` (§7.0): nada de esto viaja con el `git checkout` solo**, según `traz-comp-dnato/doc/identity/jwt-keys-setup.md`:
+
+- [ ] Generar el par de claves RS256 **en ese servidor** (no reusar el de DEV): `openssl genrsa -out application/config/keys/jwt_private.pem 2048` + extraer la pública. El directorio `application/config/keys/` está en `.gitignore` — nunca se commitea, hay que generarlo en cada ambiente.
+- [ ] Setear `JWT_PRIVATE_KEY_PATH`/`JWT_PUBLIC_KEY_PATH` en el entorno de ese servidor (`.env` o vhost de Apache), apuntando a las claves recién generadas.
+- [ ] Correr la migración `doc/identity/migrations/001_create_seg_oauth_codes.sql` contra la base de ese ambiente (tabla nueva para el flujo OAuth, `OauthCode_model`).
+- [ ] Confirmar que `application/config/oauth_clients.php` tiene registrada la aplicación/`client_id` que va a usar el MCP Server de la VM (equivalente al `azp`/`consumerKey` de la app `TrazalogDnatoMCP` en DEV).
+
+**Con eso hecho, el endpoint JWKS real queda en:**
+```
+https://<host-de-dnato-en-este-proyecto>/oauth/.well-known/jwks.json
+```
+Esa es la URL que va en `jwks.url` de §7.1 — no un placeholder genérico, y no la del shim de DEV.
+
+> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles de cómo ejecutarlo viven en los docs de ese otro repo (`doc/identity/jwt-keys-setup.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`).
 
 ### 7.1 Qué hay que replicar — mismo mecanismo que DEV, otro `deployment.toml`
 
@@ -417,10 +448,12 @@ Reiniciar APIM después de editar: `sudo systemctl restart wso2am`.
 
 ### 7.2 Antes de aplicar esto — confirmar, no asumir
 
-- [ ] **URL real del JWKS de Dnato en este proyecto GCP** (reemplaza el placeholder de §7.1) — dato que solo tiene Rodolfo, no está en este repo.
-- [ ] Confirmar que ese Dnato expone el JWKS de forma alcanzable desde esta VM — por HTTPS con cadena válida, o por HTTP si están en la misma red interna/VPC del proyecto (`apim-keymanager-dnato.md` §2, Opción B — nunca exponer el JWKS por HTTP públicamente).
-- [ ] Confirmar el algoritmo de firma (se asume RS256, igual que DEV) y el `kid` de la clave activa — puede no ser el mismo `dnato-rs256-v1` que usa el shim de DEV.
-- [ ] **Si alguno de los 3 puntos anteriores no se puede confirmar sin acceso a la consola/config de Dnato de este proyecto: PARAR y consultar antes de aplicar §7.1.** No asumir que el Dnato de este proyecto GCP cumple los mismos prerequisitos que el de DEV solo por ser el mismo sistema — nunca se verificó específicamente para este ambiente.
+- [ ] **`traz-comp-dnato` `develop-v3` desplegado en el servidor de Dnato de este proyecto** (§7.0-bis) — sin esto, no hay JWKS real que apuntar, ni login OAuth que emita los JWT.
+- [ ] Claves RS256 generadas en ESE servidor, migración corrida, `oauth_clients.php` con el cliente registrado (checklist de §7.0-bis).
+- [ ] **URL real del JWKS** (`https://<host-de-dnato>/oauth/.well-known/jwks.json`, confirmado el endpoint en §7.0-bis — reemplaza el placeholder de §7.1).
+- [ ] Confirmar que ese endpoint es alcanzable desde esta VM — por HTTPS con cadena válida, o por HTTP si están en la misma red interna/VPC del proyecto (`apim-keymanager-dnato.md` §2, Opción B — nunca exponer el JWKS por HTTP públicamente).
+- [ ] Confirmar el `kid` de la clave activa que quedó en `application/config/jwt.php` de ese despliegue — no necesariamente el mismo `dnato-rs256-v1` que usa el shim de DEV (cada par de claves generado en §7.0-bis puede tener su propio `kid`).
+- [ ] **Si alguno de los puntos anteriores no se puede confirmar sin acceso al servidor/config de Dnato de este proyecto: PARAR y consultar antes de aplicar §7.1.** No asumir que ya está desplegado o configurado solo porque el mecanismo ya funciona en DEV — son servidores y despliegues distintos.
 
 ### 7.3 Verificar accesibilidad del JWKS desde la VM
 
