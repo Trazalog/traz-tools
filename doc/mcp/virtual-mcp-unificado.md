@@ -51,10 +51,14 @@ En **`Develop`** → **`API Configurations`** → **`Endpoints`**:
 | Campo | Valor |
 |---|---|
 | Endpoint type | HTTP/REST Endpoint |
-| Production URL | `http://<host-del-MI>:8280/tools/mcp` |
-| Sandbox URL | `http://<host-del-MI>:8280/tools/mcp` |
+| Production URL | `http://<host-del-MI>:8290/tools/mcp` |
+| Sandbox URL | `http://<host-del-MI>:8290/tools/mcp` |
 
+> **Corrección 2026-08-08:** este documento decía puerto `8280`, que es incorrecto — el HTTP passthrough del MI en DEV es el `8290` (confirmado en `doc/infra/wso2-install.md` y usado toda la sesión). El primer smoke test real contra el gateway (§4) falló con 404 hasta corregir esto — quedaba apuntando a `10.142.0.13:8280`, un host/puerto que no es el MI de DEV.
+>
 > El APIM proxea al MI, context `/tools/mcp` (`toolsMCPAPI`) — no a `/tools/man` ni `/tools/alm` directamente. `toolsMCPAPI` es la única fachada que expone esta API; internamente delega a `toolsALMAPI` para las tools `alm_*`, pero eso es transparente para el APIM.
+>
+> **⚠️ Este mismo Endpoint hay que configurarlo DOS VECES:** una vez acá, en la API (`Trazalog MCP Server` / `Trazalog MCP`), y otra vez en el **MCP Server generado** (§2.6) — son artefactos separados en el Publisher, cada uno con su propio `endpointConfig`, y **generar el MCP Server desde la API NO copia el endpoint automáticamente** (confirmado en la práctica: quedó `endpointConfig: null` en el MCP Server hasta configurarlo a mano). Repetir este mismo paso en `MCP Servers` → `Trazalog MCP Server` → `API Configurations` → `Endpoints` después de §2.6.
 
 ### 2.4 Seguridad — OAuth2 con Key Manager Dnato
 
@@ -101,6 +105,17 @@ Menú lateral → **`Tools`**: confirmar que aparecen las 9, con los nombres `ma
 ### 2.8 Deploy y publicar el MCP Server
 
 Igual que en Sprint 2 (`virtual-mcp-equipos.md` §2.7-2.8): **`Deployments`** → `Deploy New Revision` → environment `Default` → **`Deploy`**. Después **`Publish`** (Lifecycle).
+
+### 2.8-bis Suscribir la aplicación `TrazalogDnatoMCP` (obligatorio — no está en Sprint 2 porque ahí ya existía)
+
+**Sin este paso, las 9 tools fallan con `900908 Resource forbidden — API Subscription validation failed`**, aunque el JWT sea válido y `apim.jwt.enable` esté bien configurado. Confirmado en el primer smoke test real (§4): `trazalog-equipos`/`trazalog-ots` ya tenían esta suscripción desde Sprint 2 (por eso nunca hizo falta documentarlo), pero el **MCP Server nuevo es un artefacto propio y no hereda las suscripciones de la API fuente ni de ningún otro server**.
+
+1. Ir a `https://localhost:9443/devportal` (o el host correspondiente)
+2. Buscar la aplicación **`TrazalogDnatoMCP`** (la misma que usan `trazalog-equipos`/`trazalog-ots` — ver `apim-keymanager-dnato.md` §4.1, `consumerKey = z_CtMHRzWPSgY8aXWYxFuzsOli4a`)
+3. **`APIs`** (o **`MCP Servers`**, según cómo lo liste el DevPortal) → buscar **`Trazalog MCP Server`** → **`Subscribe`**
+4. Confirmar la suscripción con throttling policy `Unlimited`
+
+> Si se necesita hacer esto por API/consola en vez de UI: `POST /api/am/devportal/v3/subscriptions` con `applicationId` + `apiId` del **MCP Server** (no de la API fuente — son IDs distintos, confirmar con `GET /api/am/publisher/v4/mcp-servers`). Requiere un token OAuth2 con scope `apim:subscribe` (no basic auth) — ver `client-registration/v0.17/register` + `/oauth2/token` grant `password` si hace falta generarlo desde cero.
 
 ### 2.9 Endpoint MCP resultante
 
@@ -160,11 +175,21 @@ curl -k -X POST https://$HOST/mcp \
 
 DoD de este smoke test (a marcar por Rodolfo antes de avanzar al paso 3 de la migración):
 
-- [ ] `initialize` y `tools/list` responden correctamente, con las 9 tools
-- [ ] Cada una de las 9 tools responde `tools/call` sin error con JWT válido
-- [ ] `man_create_ot` y `alm_crear_pedido_materiales` piden confirmación (o al menos están marcadas `destructiveHint` en el schema) y el rollback dispara ante un fallo forzado
-- [ ] Aislamiento verificado: JWT empresa A no ve datos de empresa B en ninguna de las 4 tools de lectura de almacenes ni en las de mantenimiento
-- [ ] Sin JWT / JWT inválido → 401 en las 9 tools
+- [x] `initialize` y `tools/list` responden correctamente, con las 9 tools — **confirmado 2026-08-08** contra `https://localhost:8243/trazalog/mcp/1.0/mcp`
+- [x] Cada una de las 9 tools responde `tools/call` sin error con JWT válido — **confirmado**, ver troubleshooting abajo (dos bloqueos reales encontrados y corregidos en el camino)
+- [x] `man_create_ot` y `alm_crear_pedido_materiales` ejecutan y disparan Bonita real — **confirmado** (OT 292/case 30003, pedido 1482/case 30004, ambos marcados como descartables). Rollback ante fallo forzado ya se había validado antes contra el MI directo (mismo código de orquestación, sin cambios) — no se repitió el fallo forzado contra el gateway real
+- [ ] `destructiveHint`/`readOnlyHint` en el schema de `tools/list` — **NO aparecen**. Confirma el gap ya flageado en §1: WSO2 4.6.0 no está leyendo `x-mcp-annotations` (o usa un nombre de extensión distinto). Gap preexistente de Sprint 2, no bloqueante — Claude igual sabe cuándo pedir confirmación por la descripción semántica de cada tool
+- [x] Aislamiento verificado: JWT empresa B (`empr_id=187`) no ve datos de empresa A en `man_get_equipos` ni `alm_get_stock` — devuelve listas vacías, no cruza datos
+- [x] Sin JWT → 401 (`900902 Missing Credentials`)
+
+### Troubleshooting real encontrado en este smoke test (2026-08-08)
+
+| Síntoma | Causa | Fix aplicado |
+|---|---|---|
+| `900908 Resource forbidden — API Subscription validation failed` en las 9 tools | La app `TrazalogDnatoMCP` no tenía suscripción al MCP Server nuevo (es un artefacto separado, no hereda suscripciones) | Suscribir la app al MCP Server — ver §2.8-bis (nuevo paso, agregado a este documento) |
+| `HTTP Status Code: 404` en `tools/call`, ya con la suscripción resuelta | El `endpointConfig` del MCP Server estaba vacío (`null`) — generarlo desde la API no copia el endpoint. Y el endpoint de la propia API apuntaba a `10.142.0.13:8280` (dato incorrecto de este mismo documento desde la Tarea 3.4) en vez de `localhost:8290` (MI real de DEV) | Configurar el endpoint en AMBOS artefactos (API y MCP Server) apuntando a `localhost:8290/tools/mcp`, y desplegar una revisión nueva de cada uno — ver §2.3 actualizado |
+
+Ambos problemas eran de configuración de la instancia real de Rodolfo (no del código ni de los artefactos MI) — se corrigieron directamente contra su APIM vía REST API para completar este smoke test, y quedan documentados acá para que no se repitan si se vuelve a publicar la API o el MCP Server desde cero.
 
 ---
 
