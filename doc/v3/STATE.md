@@ -34,7 +34,12 @@
 
 ### Próxima acción
 
-Tarea 3.4 completada: `trazalog-operaciones.yaml` reúne las 9 tools (5 mantenimiento + 4 almacenes) en una sola spec, validada contra OpenAPI 3.0.3 (encontré y corregí un bug propio en el camino: había anidado el POST de `alm_crear_pedido_materiales` bajo la misma ruta parametrizada que el GET de detalle — corregido a su propia ruta `/mcp/alm/pedido`). `virtual-mcp-unificado.md` tiene los pasos de consola para Rodolfo (publicar la API, generar el Virtual MCP Server único `trazalog-operaciones`) y la guía de migración coordinada (crear→smoke test→reconfigurar Claude.ai→recién ahí despublicar los viejos). **Hallazgo importante:** `doc/api/openapi-publish-procedure.md` (Sprint 2) describe un mecanismo de identidad desactualizado (`X-Empr-Id` por mediación) — el vigente es `X-JWT-Assertion` (ADR-009). El nuevo doc usa el mecanismo correcto; `openapi-publish-procedure.md` queda con esa desactualización sin corregir (fuera de alcance de esta tarea, marcado para quien lo use después). **Próximo paso, en orden estricto (ADR-013): Tarea 3.5** (desplegar la fachada al server GCP, E7-INFRA-05), una vez que Rodolfo revise y mergee esta y ejecute los pasos de consola. En paralelo siguen pendientes: Bloque 1, Bloque 2 (E7-INFRA-03), y las preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md`.
+**Tarea 3.5 pausada antes de arrancar:** el prompt exige "E2-MCP-13 mergeado **y verificado por Rodolfo en DEV**" — mergeado sí, verificado todavía no confirmado. Al preguntarle, Rodolfo pidió primero mejorar la documentación (ver decisión de hoy) en vez de responder directamente — probablemente porque, sin `wso2-redeploy-artifacts.md`, no tenía un camino claro para llevar los cambios de `toolsMCPAPI`/`toolsALMAPI` (mergeados en 3.1-3.3) a su MI local y poder hacer esa verificación. Con el script y el doc nuevos, el próximo paso es que Rodolfo:
+1. Corra `./scripts/dev/rebuild-and-deploy-mi.sh` para llevar los cambios de las tareas 3.1-3.3 a su MI local.
+2. Ejecute los pasos de consola de `virtual-mcp-unificado.md` (publicar la API, generar `trazalog-operaciones`, smoke test de las 9 tools + aislamiento 2 empresas).
+3. Recién con eso en verde, confirmar y retomar la Tarea 3.5 (desplegar a GCP).
+
+En paralelo siguen pendientes: Bloque 1, Bloque 2 (E7-INFRA-03), y las preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md`.
 
 ### Decisiones recientes (últimas 5)
 
