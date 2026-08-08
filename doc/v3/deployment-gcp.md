@@ -405,20 +405,57 @@ git log --all --oneline --grep="jwt\|jwks\|oauth" -i
 
 Si el servidor de Dnato en este proyecto GCP (el que está "en la misma red donde está la VM de MCP", en otro server) corre `develop` o `master` de `traz-comp-dnato`, **hace falta desplegar `develop-v3` ahí** — el checkout de código en sí (`git checkout develop-v3 && git pull`, reemplazando el vhost/deploy que corresponda para ese ambiente) es responsabilidad de `traz-comp-dnato` y sus propias convenciones de deploy, no de este repo.
 
-**Con el código desplegado, todavía faltan pasos manuales — mismo patrón que `deployment.toml` (§7.0): nada de esto viaja con el `git checkout` solo**, según `traz-comp-dnato/doc/identity/jwt-keys-setup.md`:
+**Con el código desplegado, todavía faltan pasos manuales — mismo patrón que `deployment.toml` (§7.0): nada de esto viaja con el `git checkout` solo.** Comandos concretos, tomados de `traz-comp-dnato/doc/identity/jwt-keys-setup.md` y verificados contra el código real de `develop-v3` (2026-08-08):
 
-- [ ] Generar el par de claves RS256 **en ese servidor** (no reusar el de DEV): `openssl genrsa -out application/config/keys/jwt_private.pem 2048` + extraer la pública. El directorio `application/config/keys/` está en `.gitignore` — nunca se commitea, hay que generarlo en cada ambiente.
-- [ ] Setear `JWT_PRIVATE_KEY_PATH`/`JWT_PUBLIC_KEY_PATH` en el entorno de ese servidor (`.env` o vhost de Apache), apuntando a las claves recién generadas.
-- [ ] Correr la migración `doc/identity/migrations/001_create_seg_oauth_codes.sql` contra la base de ese ambiente (tabla nueva para el flujo OAuth, `OauthCode_model`).
-- [ ] Confirmar que `application/config/oauth_clients.php` tiene registrada la aplicación/`client_id` que va a usar el MCP Server de la VM (equivalente al `azp`/`consumerKey` de la app `TrazalogDnatoMCP` en DEV).
+```bash
+# 0. En el checkout de traz-comp-dnato en el servidor de Dnato
+cd /ruta/real/a/traz-comp-dnato
 
-**Con eso hecho, el endpoint JWKS real queda en:**
+# 1. Dependencias PHP (firebase/php-jwt, agregado en develop-v3)
+composer install --no-dev --optimize-autoloader
+
+# 2. Par de claves RS256 — generar EN ESTE SERVIDOR, no copiar el de DEV
+mkdir -p application/config/keys
+openssl genrsa -out application/config/keys/jwt_private.pem 2048
+openssl rsa -in application/config/keys/jwt_private.pem -pubout -out application/config/keys/jwt_public.pem
+openssl rsa -in application/config/keys/jwt_private.pem -check
+chmod 600 application/config/keys/jwt_private.pem
+chmod 644 application/config/keys/jwt_public.pem
+chown <usuario-de-apache>:<grupo-de-apache> application/config/keys/*.pem   # confirmar cuál aplica en ese server
+
+# 3. Variables de entorno vía .htaccess (Apache SetEnv — mismo mecanismo que DEV/ngrok)
+cp .htaccess.example .htaccess
+# editar .htaccess a mano con los valores reales (ver bloque de abajo)
+
+# 4. Migración — PostgreSQL (TEST/PROD usan Postgres, no MySQL)
+psql -h <host-postgres> -U <usuario> -d <basededatos> \
+  -c "CREATE SCHEMA IF NOT EXISTS seg;" \
+  -f doc/identity/migrations/001_create_seg_oauth_codes.sql
+
+# 5. Reiniciar Apache
+sudo systemctl restart httpd      # Rocky/RHEL
+# sudo systemctl restart apache2  # si ese server es Debian/Ubuntu
+
+# 6. Verificar
+curl -s https://<host-real-de-dnato>/oauth/.well-known/jwks.json | python3 -m json.tool
+php index.php cli issue_test_token admin@empresa.com 1
 ```
-https://<host-de-dnato-en-este-proyecto>/oauth/.well-known/jwks.json
-```
-Esa es la URL que va en `jwks.url` de §7.1 — no un placeholder genérico, y no la del shim de DEV.
 
-> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles de cómo ejecutarlo viven en los docs de ese otro repo (`doc/identity/jwt-keys-setup.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`).
+Contenido real del `.htaccess` (paso 3 — reemplazar los placeholders con datos reales del server, no quedan resueltos solos):
+
+```apache
+SetEnv DNATO_PUBLIC_URL "https://<host-real-de-dnato>/traz-comp-dnato"
+SetEnv DNATO_ISSUER "https://<host-real-de-dnato>/traz-comp-dnato/oauth"
+SetEnv JWT_PRIVATE_KEY_PATH "/ruta/real/a/traz-comp-dnato/application/config/keys/jwt_private.pem"
+SetEnv JWT_PUBLIC_KEY_PATH "/ruta/real/a/traz-comp-dnato/application/config/keys/jwt_public.pem"
+SetEnv JWT_AZP "<consumer key de la Application del APIM de la VM — ver nota abajo>"
+```
+
+> **Corrección 2026-08-08 sobre `JWT_AZP`:** una versión anterior de este checklist decía "confirmar que `oauth_clients.php` tiene registrada la aplicación... equivalente al `azp`/`consumerKey`". Es impreciso — leyendo `application/config/jwt.php` directamente: `oauth_clients.php` es un archivo distinto (registra a Claude.ai como cliente OAuth válido con su `redirect_uri` fijo, **no cambia por ambiente, no hace falta tocarlo**). El valor `azp` que de verdad importa se setea vía la variable de entorno `JWT_AZP` de arriba, y tiene que ser el **consumer key real de la Application del APIM de esta VM** (la que se crea en §6.3/§7.4, equivalente a `TrazalogDnatoMCP` de DEV) — sin este dato, la subscription validation del gateway va a rechazar los tokens reales de Dnato.
+
+**No hace falta tocar `oauth_clients.php`** — ya tiene registrado a Claude.ai (`trazalog-mcp-connector`, redirect fijo `https://claude.ai/api/mcp/auth_callback`), y ese valor es el mismo en cualquier ambiente.
+
+> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles completos viven en los docs de ese otro repo (`doc/identity/jwt-keys-setup.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`).
 
 ### 7.1 Qué hay que replicar — mismo mecanismo que DEV, otro `deployment.toml`
 
@@ -431,7 +468,7 @@ header = "X-JWT-Assertion"
 convert_dialect = false
 
 [[apim.jwt.issuer]]
-name = "trazalog-dnato"
+name = "<el mismo valor exacto que DNATO_ISSUER en el .htaccess de Dnato, §7.0-bis — ej. https://host-de-dnato/traz-comp-dnato/oauth>"
 consumer_key_claim = "azp"
 scopes_claim = "scope"
 jwks.url = "<URL real del JWKS de Dnato en este proyecto GCP — ver 7.2>"
@@ -443,6 +480,8 @@ local_claim = "empr_id"
 remote_claim = "empr_id_mysql"
 local_claim = "empr_id_mysql"
 ```
+
+> **Corrección 2026-08-08:** `name` NO es el string fijo `"trazalog-dnato"` — ese valor es el que usa el shim de pruebas de DEV (`scripts/dev/dnato-jwks-server.py` + `mint-dnato-jwt.py`), no el Dnato real. `jwt.php` (en `traz-comp-dnato`) arma el claim `iss` del JWT real a partir de la variable de entorno `DNATO_ISSUER` (default `http://localhost/oauth` si no se setea) — `name` acá tiene que coincidir EXACTAMENTE con ese valor, o el gateway va a rechazar los tokens reales de Dnato con "issuer mismatch" aunque todo el resto esté bien configurado.
 
 Reiniciar APIM después de editar: `sudo systemctl restart wso2am`.
 
