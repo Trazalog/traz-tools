@@ -1,5 +1,26 @@
 # Virtual MCP Server unificado — Trazalog Operaciones [E2-MCP-13]
 
+## Objetivo
+
+Este documento es el **checklist de consola** para publicar en WSO2 APIM
+**un solo** Virtual MCP Server (`trazalog-operaciones`) que reemplaza a los
+dos que existían por separado desde Sprint 2 (`trazalog-equipos`,
+`trazalog-ots`), sumando además las tools nuevas de Almacenes. Es para vos
+(Rodolfo), para ejecutar en la consola del Publisher — Claude Code no tiene
+acceso a esa consola y no ejecuta nada de esto.
+
+Cubre, en orden: qué tools va a tener el server (§1), los pasos de consola
+para publicarlo (§2), **cómo migrar sin cortar** lo que ya funciona hoy
+(§3), y un smoke test de las 9 tools antes de dar el paso final (§4).
+
+**No cubre:** cómo compilar/redesplegar `toolsMCPAPI` en el MI si volvés a
+tocar su código — eso es
+[`doc/infra/wso2-redeploy-artifacts.md`](../infra/wso2-redeploy-artifacts.md).
+Tampoco cubre el despliegue a la VM de GCP (`doc/v3/deployment-gcp.md`,
+Tarea 3.5) — este documento es sobre tu entorno de DEV.
+
+---
+
 **API fuente:** `doc/api/trazalog-operaciones.yaml` (nueva, unificada — reemplaza a `EquiposAPI-TrazalogMCP` + `OrdenesdeTrabajoAPI-TrazalogMCP`)
 **Backend:** `toolsMCPAPI` (WSO2 MI, context `/tools/mcp`) — fachada delgada, ver `_backend/api/ToolsAPIProject/.../artifacts/apis/toolsMCPAPI.xml`
 **Estado:** Pendiente configuración en consola WSO2 (pasos manuales de Rodolfo, esta tarea solo prepara los artefactos)
