@@ -14,12 +14,13 @@
 
 **Sprint actual:** Sprint 3 — Activación early adopter minero
 **Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
-**Última actualización:** 2026-08-08 por Claude Code (Tarea 3.5 — checklist de despliegue MCP a GCP)
+**Última actualización:** 2026-08-08 por Claude Code (DOC-PRD-SPEC — spec funcional y técnica del módulo de Producción)
 
 ### Tareas activas
 
 | ID | Descripción | Clase | Estado | Rama / PR |
 |---|---|---|---|---|
+| DOC-PRD-SPEC | Spec funcional y técnica del módulo de Producción (PRD / `traz-prod-trazasoft`, esquema `prd`) — pedido ad-hoc del PM como base para corrección de bugs | 🟢 | **Completada.** `doc/specs/PRD-modulo-produccion.md`: relevamiento contra la base de desarrollo y `develop-v3` — objetivo, clientes objetivo, trazabilidad (DAG `lotes_hijos`), etapas, lotes, recipientes, fraccionamiento, integración ALM (4 niveles) y TAR (incompleta), reporte de trazabilidad, diccionario de las 19 tablas, superficie de API, 12 diagramas Mermaid. Registra 8 bugs y 14 ítems de deuda técnica verificados — **documentados, no corregidos**. Hallazgos 🔴: anulación de lote vacía recipientes compartidos; `prd.fraccionamientos`/`prd.ingresar_deposito` invocados pero inexistentes; trazabilidad sin filtro `empr_id` | `docs/PRD-spec-modulo-produccion` — PR abierto, sin mergear |
 | E7-INFRA-05 (3.5) | Desplegar la fachada MCP al server GCP — checklist + artefactos (Bloque 3, tarea 3.5) | 🟡 | **Completada.** `.car` verificado con build limpio contra `develop-v3`. Nueva §6 en `deployment-gcp.md`: checklist de despliegue del CAR al MI de la VM, publicar API+MCP Server en el APIM de la VM (con todos los gotchas encontrados hoy en DEV ya incorporados: endpoint x2 artefactos, puerto 8290 no 8280, suscripción de la app, Key Manager), verificación OAuth end-to-end contra `mcp.cloudtrazalog.com`, aislamiento 2 empresas. Flags explícitamente que el paso de aislamiento depende de E7-INFRA-03 (identidad, Bloque 2), todavía no ejecutado | `feature/e7-infra-05-deploy-mcp-facade-gcp` — PR abierto, sin mergear |
 | E2-MCP-13 (3.4) + fixes | OpenAPI unificada + Virtual MCP Server único + smoke test real + fixes de docs (case_id, Key Manager, paths reales) | 🟡 | Completada y mergeada — verificado en DEV con smoke test real end-to-end (9/9 tools, aislamiento, Bonita real) | PR #414, #416, #417, #418, #419 |
 | E1-ALM (3.3) | Sumar almacenes a la fachada (Bloque 3, tarea 3.3) | 🔴 | Completada y mergeada | PR #413 |
