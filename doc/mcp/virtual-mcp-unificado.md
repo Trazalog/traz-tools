@@ -52,7 +52,7 @@ Tarea 3.5) — este documento es sobre tu entorno de DEV.
 
 ### 2.1 Prerequisito
 
-Key Manager **Dnato** ya configurado (federado, no Resident KM) — ver `doc/identity/apim-keymanager-dnato.md`. Es el mismo que ya usan `EquiposAPI-TrazalogMCP`/`OrdenesdeTrabajoAPI-TrazalogMCP`, no hay que crear uno nuevo.
+El emisor JWT **`trazalog-dnato`** ya configurado en `[[apim.jwt.issuer]]` del `deployment.toml` del APIM — ver `doc/identity/apim-keymanager-dnato.md` §3. **No es un Key Manager registrado en el Admin UI** (APIM 4.6.0 no tiene conector genérico para IdPs custom — la Admin UI/REST API no permite crear uno para Dnato). Es la misma configuración global que ya usan `EquiposAPI-TrazalogMCP`/`OrdenesdeTrabajoAPI-TrazalogMCP`, no hay nada nuevo que crear ni seleccionar por-API en el Publisher para esto.
 
 ### 2.2 Importar la spec
 
@@ -77,13 +77,22 @@ En **`Develop`** → **`API Configurations`** → **`Endpoints`**:
 
 > El APIM proxea al MI, context `/tools/mcp` (`toolsMCPAPI`) — no a `/tools/man` ni `/tools/alm` directamente. `toolsMCPAPI` es la única fachada que expone esta API; internamente delega a `toolsALMAPI` para las tools `alm_*`, pero eso es transparente para el APIM.
 
-### 2.4 Seguridad — OAuth2 con Key Manager Dnato
+### 2.4 Seguridad — OAuth2 con validación de JWT de Dnato
+
+> **Corrección 2026-08-08:** la versión anterior de esta sección decía "seleccionar únicamente
+> Dnato como Key Manager, des-seleccionar Resident Key Manager". Eso es **incorrecto** —
+> contradice `doc/identity/apim-keymanager-dnato.md` §3, que documenta explícitamente que Dnato
+> **no se registra como Key Manager** (no hay conector genérico en APIM 4.6.0 para IdPs custom).
+> No va a aparecer un "Dnato" en el selector de Key Managers del Publisher porque nunca se creó
+> ahí — la validación de Dnato ocurre en una capa distinta (`[[apim.jwt.issuer]]`, ver §2.1).
+> Corregido acá con los pasos reales, verificados en Sprint 2 (`apim-keymanager-dnato.md` §5).
 
 En **`Develop`** → **`API Configurations`** → **`Runtime`** → **`Application Level Security`**:
 
 1. Marcar **`OAuth2`**. Desmarcar Basic Auth y API Key.
-2. **Key Managers:** seleccionar únicamente **`Dnato`**. Des-seleccionar **`Resident Key Manager`**.
-3. Confirmar que `apim.jwt.enable=true` está activo en el `deployment.toml` del APIM (configuración global, ya debería estarlo si `trazalog-equipos`/`trazalog-ots` funcionan hoy — no es algo que se configure por API). Si no está activo, es un bloqueante — no seguir sin confirmarlo primero.
+2. **Key Managers:** dejar el selector como está por defecto (típicamente solo `Resident Key Manager` marcado). No hay nada de Dnato para seleccionar acá — no tocar este selector.
+3. **Desactivar `Enable Subscription Validation`**. Este es el paso que realmente habilita el flujo Dnato: sin `azp` (consumerKey) en el JWT, la subscription validation devuelve 403 aunque la firma sea válida — ver `apim-keymanager-dnato.md` §4.1.
+4. Confirmar que `apim.jwt.enable=true` está activo en el `deployment.toml` del APIM (configuración global, ya debería estarlo si `trazalog-equipos`/`trazalog-ots` funcionan hoy — no es algo que se configure por API). Si no está activo, es un bloqueante — no seguir sin confirmarlo primero.
 
 No hace falta asociar ninguna mediación/policy de inyección de `empr_id` — a diferencia de lo que describe `openapi-publish-procedure.md` (desactualizado, ver nota al inicio), el backend JWT (`X-JWT-Assertion`) lo genera el APIM automáticamente vía `apim.jwt.enable`, sin policy por API.
 
