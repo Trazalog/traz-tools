@@ -296,6 +296,8 @@ Prerequisito de esta sección: la VM ya está instalada y funcionando (§1-4 de 
 
 **El paso de verificación de aislamiento (§6.5) NO va a funcionar hasta que E7-INFRA-03 (Bloque 2 — config de identidad ADR-008/009 contra el Dnato de este mismo proyecto GCP) esté aplicado.** A la fecha de este documento, E7-INFRA-03 todavía no se ejecutó (ver `doc/v3/STATE.md` → Bloqueos). Los pasos §6.1-6.4 (desplegar el CAR, publicar la API, generar el MCP Server) se pueden hacer igual sin ese prerequisito — solo la verificación real con JWT de Dnato (§6.5-6.6) lo necesita. Si llegás a §6.5 y da 401/403 con un JWT que debería ser válido, lo primero a chequear es si `[[apim.jwt.issuer]]` para `trazalog-dnato` está configurado en el `deployment.toml` de **esta** VM (no asumir que se copió solo desde DEV).
 
+**El checklist concreto de E7-INFRA-03 está en §7 de este mismo documento.** Punto importante que no estaba claro hasta ahora: esa configuración **no viaja con el código**. `deployment.toml` no está versionado en git (cambia por ambiente — DEV, esta VM, y a futuro PROD tienen cada uno el suyo, con su propia URL de JWKS). Desplegar `develop-v3` a ningún servidor — ni al de Dnato ni a esta VM — aplica esos cambios solo: son ediciones manuales de un archivo de config local, siempre. Ver §7.0 para el detalle completo.
+
 ### 6.1 Artefacto desplegable — el `.car`
 
 Se genera igual que en DEV, no hay nada nuevo que preparar aparte del código ya mergeado:
@@ -374,3 +376,72 @@ Mismo patrón que el smoke test que se hizo en DEV el 2026-08-08 (`virtual-mcp-u
 - [ ] Al menos una tool de cada módulo (`man_*`, `alm_*`) probada con `tools/call` real
 - [ ] Aislamiento de 2 empresas confirmado contra la URL pública
 - [ ] Esta sección actualizada marcando el despliegue como hecho, con fecha real
+
+---
+
+## 7. Configuración de identidad en esta VM (E7-INFRA-03, Bloque 2)
+
+### 7.0 Por qué esto es un paso aparte — no viaja con el código
+
+**`deployment.toml` (donde vive toda la config de identidad — `[apim.jwt]`, `[[apim.jwt.issuer]]`) nunca está versionado en git.** Es un archivo de configuración local de cada instancia de APIM, y cambia por ambiente: el `deployment.toml` de DEV apunta al JWKS local de DEV (`http://localhost:8090/...`, servido por `scripts/dev/dnato-jwks-server.py`, un shim que solo existe para pruebas), el de esta VM tiene que apuntar al JWKS del Dnato real de este mismo proyecto GCP, y el de una futura VM de PROD tendría el suyo propio.
+
+**Por eso desplegar el contenido de `develop-v3` — a esta VM, o a cualquier servidor, incluido el de Dnato — no aplica ninguno de los cambios de `doc/identity/apim-keymanager-dnato.md`.** Ese documento describe ediciones manuales de `deployment.toml`, hechas y verificadas en DEV; acá se replican esas mismas ediciones, a mano, contra el `deployment.toml` de esta VM. No hay ningún artefacto en el repo que las traiga automáticamente.
+
+**Tampoco hace falta desplegar nada en el servidor de Dnato.** El prerequisito de `apim-keymanager-dnato.md` (`doc/identity/dnato-jwt-prereqs.md`) confirmó que Dnato no requiere cambios de código para esta federación — ya firma con RS256 y expone JWKS. Eso se confirmó para el Dnato de DEV; §7.2 abajo es donde se confirma (o no) que el Dnato de este proyecto GCP cumple lo mismo — no se puede asumir solo porque "es el mismo sistema".
+
+### 7.1 Qué hay que replicar — mismo mecanismo que DEV, otro `deployment.toml`
+
+Adaptado de `doc/identity/apim-keymanager-dnato.md` §3, aplicado al `deployment.toml` de **esta VM** (no el de DEV):
+
+```toml
+[apim.jwt]
+enable = true
+header = "X-JWT-Assertion"
+convert_dialect = false
+
+[[apim.jwt.issuer]]
+name = "trazalog-dnato"
+consumer_key_claim = "azp"
+scopes_claim = "scope"
+jwks.url = "<URL real del JWKS de Dnato en este proyecto GCP — ver 7.2>"
+
+[[apim.jwt.issuer.claim_mapping]]
+remote_claim = "empr_id"
+local_claim = "empr_id"
+[[apim.jwt.issuer.claim_mapping]]
+remote_claim = "empr_id_mysql"
+local_claim = "empr_id_mysql"
+```
+
+Reiniciar APIM después de editar: `sudo systemctl restart wso2am`.
+
+### 7.2 Antes de aplicar esto — confirmar, no asumir
+
+- [ ] **URL real del JWKS de Dnato en este proyecto GCP** (reemplaza el placeholder de §7.1) — dato que solo tiene Rodolfo, no está en este repo.
+- [ ] Confirmar que ese Dnato expone el JWKS de forma alcanzable desde esta VM — por HTTPS con cadena válida, o por HTTP si están en la misma red interna/VPC del proyecto (`apim-keymanager-dnato.md` §2, Opción B — nunca exponer el JWKS por HTTP públicamente).
+- [ ] Confirmar el algoritmo de firma (se asume RS256, igual que DEV) y el `kid` de la clave activa — puede no ser el mismo `dnato-rs256-v1` que usa el shim de DEV.
+- [ ] **Si alguno de los 3 puntos anteriores no se puede confirmar sin acceso a la consola/config de Dnato de este proyecto: PARAR y consultar antes de aplicar §7.1.** No asumir que el Dnato de este proyecto GCP cumple los mismos prerequisitos que el de DEV solo por ser el mismo sistema — nunca se verificó específicamente para este ambiente.
+
+### 7.3 Verificar accesibilidad del JWKS desde la VM
+
+Igual que `apim-keymanager-dnato.md` §2 — ejecutado **desde dentro de la VM** (no desde tu compu):
+
+```bash
+curl -s <URL del JWKS de 7.2> | python3 -m json.tool
+```
+
+### 7.4 Aplicación + suscripción en el DevPortal de esta VM
+
+Mismo patrón que el que se usó para destrabar el smoke test de DEV (`virtual-mcp-unificado.md` §2.8-bis): crear una aplicación en el DevPortal de esta VM (equivalente a `TrazalogDnatoMCP` de DEV) y suscribirla al MCP Server desplegado en §6. Sin esto, las tools dan `900908` aunque el resto de la identidad esté bien configurado — fue el primer bloqueo real que apareció en DEV el mismo día.
+
+### 7.5 Verificar que funciona
+
+Repetir §6.4 (verificación OAuth) y §6.5 (aislamiento) de este mismo documento — con la identidad ya configurada, ahora sí deberían pasar en verde.
+
+### DoD de esta sección (E7-INFRA-03)
+
+- [ ] `deployment.toml` de esta VM actualizado con `[[apim.jwt.issuer]]` para `trazalog-dnato`, apuntando al JWKS real de este proyecto GCP
+- [ ] JWKS verificado accesible desde la VM
+- [ ] Aplicación + suscripción al MCP Server creadas en el DevPortal de esta VM
+- [ ] §6.4/§6.5 confirmados en verde con identidad real (no la de DEV)
+- [ ] Esta sección actualizada con el resultado real, fecha, y la URL de JWKS usada

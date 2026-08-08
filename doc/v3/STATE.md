@@ -14,12 +14,13 @@
 
 **Sprint actual:** Sprint 3 — Activación early adopter minero
 **Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
-**Última actualización:** 2026-08-08 por Claude Code (Tarea 3.5 — checklist de despliegue MCP a GCP)
+**Última actualización:** 2026-08-08 por Claude Code (Bloque 2 — checklist de identidad E7-INFRA-03 en deployment-gcp.md)
 
 ### Tareas activas
 
 | ID | Descripción | Clase | Estado | Rama / PR |
 |---|---|---|---|---|
+| E7-INFRA-03 (Bloque 2) | Checklist de config de identidad (ADR-008/009) en la VM de GCP | 🟡 | **Completada (checklist, no ejecución — requiere URL real de Dnato y acceso a la VM, que solo tiene Rodolfo).** Nueva §7 en `deployment-gcp.md`. Motivada por una pregunta directa de Rodolfo: aclara que `deployment.toml` NUNCA viaja con el código (no está versionado, es config local por ambiente) — desplegar `develop-v3` a ningún servidor aplica los cambios de `apim-keymanager-dnato.md` solos. Checklist adapta esos pasos al `deployment.toml` de la VM de GCP, con un punto explícito de "parar y confirmar con Rodolfo" antes de asumir que el Dnato de ese proyecto cumple los mismos prerequisitos que el de DEV (URL de JWKS, alcanzabilidad, algoritmo/kid) | `feature/e7-infra-03-identidad-gcp-checklist` — PR abierto, sin mergear |
 | E7-INFRA-05 (3.5) | Desplegar la fachada MCP al server GCP — checklist + artefactos (Bloque 3, tarea 3.5) | 🟡 | **Completada.** `.car` verificado con build limpio contra `develop-v3`. Nueva §6 en `deployment-gcp.md`: checklist de despliegue del CAR al MI de la VM, publicar API+MCP Server en el APIM de la VM (con todos los gotchas encontrados hoy en DEV ya incorporados: endpoint x2 artefactos, puerto 8290 no 8280, suscripción de la app, Key Manager), verificación OAuth end-to-end contra `mcp.cloudtrazalog.com`, aislamiento 2 empresas. Flags explícitamente que el paso de aislamiento depende de E7-INFRA-03 (identidad, Bloque 2), todavía no ejecutado | `feature/e7-infra-05-deploy-mcp-facade-gcp` — PR abierto, sin mergear |
 | E2-MCP-13 (3.4) + fixes | OpenAPI unificada + Virtual MCP Server único + smoke test real + fixes de docs (case_id, Key Manager, paths reales) | 🟡 | Completada y mergeada — verificado en DEV con smoke test real end-to-end (9/9 tools, aislamiento, Bonita real) | PR #414, #416, #417, #418, #419 |
 | E1-ALM (3.3) | Sumar almacenes a la fachada (Bloque 3, tarea 3.3) | 🔴 | Completada y mergeada | PR #413 |
@@ -33,7 +34,9 @@
 
 ### Próxima acción
 
-**Bloque 3 completo del lado de Claude Code.** Falta la ejecución manual de Rodolfo: correr el checklist de `deployment-gcp.md` §6 en la VM de GCP (desplegar el CAR, publicar API+MCP Server, suscribir la app, verificar OAuth y aislamiento contra `mcp.cloudtrazalog.com`). **Antes de que el paso de aislamiento pueda pasar, hace falta E7-INFRA-03** (config de identidad ADR-008/009 contra el Dnato de ese mismo proyecto GCP — Bloque 2, todavía no ejecutado). Los pasos de deploy del CAR y publicación de API/MCP Server no dependen de eso y se pueden hacer antes o en paralelo.
+**Bloque 2 y Bloque 3 completos del lado de Claude Code** (checklists preparados, nada ejecutado — ambos requieren la VM de GCP, que solo tiene Rodolfo). Falta la ejecución manual, en este orden:
+1. `deployment-gcp.md` §7 (E7-INFRA-03): completar la URL real del JWKS de Dnato de este proyecto GCP, confirmar los 3 puntos de §7.2 (alcanzabilidad, algoritmo/kid), aplicar `[[apim.jwt.issuer]]` en el `deployment.toml` de la VM.
+2. `deployment-gcp.md` §6 (E7-INFRA-05): desplegar el CAR, publicar API+MCP Server, suscribir la app, verificar OAuth y aislamiento contra `mcp.cloudtrazalog.com`. Los pasos de deploy del CAR y publicación de API/MCP Server (§6.1-§6.3) no dependen de §7 y se pueden hacer antes o en paralelo — solo la verificación real (§6.4-§6.5) necesita la identidad ya aplicada.
 
 En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía), y las preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md`.
 
@@ -41,6 +44,7 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
+| 2026-08-08 | **Checklist de identidad para GCP (E7-INFRA-03), a pedido directo de Rodolfo** tras preguntar si desplegar `develop-v3` al servidor de Dnato traía consigo los cambios de `apim-keymanager-dnato.md`. Respuesta: no — `deployment.toml` no está versionado, es config local por ambiente, siempre manual. Nueva §7 en `deployment-gcp.md` con el checklist adaptado a la VM de GCP, y un punto explícito de "parar y confirmar" antes de asumir que el Dnato de ese proyecto cumple los mismos prerequisitos que el de DEV | `doc/v3/deployment-gcp.md` §7 |
 | 2026-08-08 | **Tarea 3.5 completada (checklist, no ejecución — requiere acceso a la VM que solo tiene Rodolfo).** `deployment-gcp.md` §6 nueva: despliegue del CAR, publicación de API+MCP Server, verificación OAuth y aislamiento contra `mcp.cloudtrazalog.com`. Incorpora todos los gotchas reales encontrados el mismo día en el smoke test de DEV para que no se repitan en GCP. Flagea explícitamente la dependencia con E7-INFRA-03 (identidad) para el paso de aislamiento | `doc/v3/deployment-gcp.md` §6 |
 | 2026-08-08 | **Smoke test real del MCP Server (:8243) completado, a pedido de Rodolfo.** 9/9 tools OK, aislamiento OK, escrituras con Bonita real OK. Encontrados y corregidos en vivo 2 bugs de configuración que bloqueaban todo (suscripción faltante de la app `TrazalogDnatoMCP` al MCP Server nuevo, y endpoint mal configurado en API y MCP Server — apuntaba a `10.142.0.13:8280`, dato incorrecto mío desde la Tarea 3.4, corregido a `localhost:8290`). Documentado como paso nuevo (§2.8-bis) y troubleshooting en `virtual-mcp-unificado.md` para que no se repita | `doc/mcp/virtual-mcp-unificado.md` |
 | 2026-08-08 | **Paths reales del MCP Server confirmados**: Rodolfo publicó `Trazalog MCP Server`, contexto `/trazalog/mcp`, versión `1.0` — no `trazalog-operaciones`/`/trazalog-operaciones` como sugería ADR-013. Resuelve la pregunta abierta de nombre del ADR. Docs y spec actualizados; tests Hurl no necesitaron cambios (apuntan al MI, capa sin tocar) | `doc/mcp/virtual-mcp-unificado.md`, `doc/api/trazalog-operaciones.yaml`, `doc/adr/ADR-013-unificacion-mcp.md` |
