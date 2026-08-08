@@ -447,10 +447,10 @@ SetEnv DNATO_PUBLIC_URL "https://<host-real-de-dnato>/traz-comp-dnato"
 SetEnv DNATO_ISSUER "https://<host-real-de-dnato>/traz-comp-dnato/oauth"
 SetEnv JWT_PRIVATE_KEY_PATH "/ruta/real/a/traz-comp-dnato/application/config/keys/jwt_private.pem"
 SetEnv JWT_PUBLIC_KEY_PATH "/ruta/real/a/traz-comp-dnato/application/config/keys/jwt_public.pem"
-SetEnv JWT_AZP "<consumer key de la Application del APIM de la VM — ver nota abajo>"
+SetEnv JWT_AZP "<Consumer Key generado en §7.4 — no existe todavía en este paso>"
 ```
 
-> **Corrección 2026-08-08 sobre `JWT_AZP`:** una versión anterior de este checklist decía "confirmar que `oauth_clients.php` tiene registrada la aplicación... equivalente al `azp`/`consumerKey`". Es impreciso — leyendo `application/config/jwt.php` directamente: `oauth_clients.php` es un archivo distinto (registra a Claude.ai como cliente OAuth válido con su `redirect_uri` fijo, **no cambia por ambiente, no hace falta tocarlo**). El valor `azp` que de verdad importa se setea vía la variable de entorno `JWT_AZP` de arriba, y tiene que ser el **consumer key real de la Application del APIM de esta VM** (la que se crea en §6.3/§7.4, equivalente a `TrazalogDnatoMCP` de DEV) — sin este dato, la subscription validation del gateway va a rechazar los tokens reales de Dnato.
+> **Corrección 2026-08-08 sobre `JWT_AZP`:** una versión anterior de este checklist decía "confirmar que `oauth_clients.php` tiene registrada la aplicación... equivalente al `azp`/`consumerKey`". Es impreciso — leyendo `application/config/jwt.php` directamente: `oauth_clients.php` es un archivo distinto (registra a Claude.ai como cliente OAuth válido con su `redirect_uri` fijo, **no cambia por ambiente, no hace falta tocarlo**). El valor `azp` que de verdad importa se setea vía la variable de entorno `JWT_AZP` de arriba, y tiene que ser el **Consumer Key real de la Application del APIM de esta VM** — **§7.4 abajo tiene los clicks exactos de dónde sale ese valor** (no existe todavía, se genera al crear la app).
 
 **No hace falta tocar `oauth_clients.php`** — ya tiene registrado a Claude.ai (`trazalog-mcp-connector`, redirect fijo `https://claude.ai/api/mcp/auth_callback`), y ese valor es el mismo en cualquier ambiente.
 
@@ -503,7 +503,16 @@ curl -s <URL del JWKS de 7.2> | python3 -m json.tool
 
 ### 7.4 Aplicación + suscripción en el DevPortal de esta VM
 
-Mismo patrón que el que se usó para destrabar el smoke test de DEV (`virtual-mcp-unificado.md` §2.8-bis): crear una aplicación en el DevPortal de esta VM (equivalente a `TrazalogDnatoMCP` de DEV) y suscribirla al MCP Server desplegado en §6. Sin esto, las tools dan `900908` aunque el resto de la identidad esté bien configurado — fue el primer bloqueo real que apareció en DEV el mismo día.
+Mismo patrón que el que se usó para destrabar el smoke test de DEV (`virtual-mcp-unificado.md` §2.8-bis), acá con los clicks concretos porque en DEV la app ya existía de Sprint 2 y nunca hizo falta documentar cómo se crea:
+
+1. `https://localhost:9443/devportal` (mismo túnel SSH de §6.3).
+2. Menú lateral → **Applications** → **+ Add New Application** (o **Create Application**).
+3. Nombre (ej. `TrazalogDnatoMCP-GCP`), Per Token Quota: `Unlimited` → **Save**.
+4. Dentro de la app → pestaña **Production Keys** (o **Credentials**) → **Generate Keys**.
+5. Copiar el **Consumer Key** que aparece — **ese es el valor que va en `JWT_AZP`** (§7.0-bis, `.htaccess` de Dnato).
+6. Misma app → pestaña **Subscriptions** → elegir la API/MCP Server desplegado en §6 (ej. `Trazalog MCP Server`) → suscribir con policy `Unlimited`.
+
+Sin el paso 6, las tools dan `900908` aunque el resto de la identidad esté bien configurado — fue el primer bloqueo real que apareció en DEV el mismo día. Sin el paso 5 (o con el `JWT_AZP` desactualizado), los JWT que emite Dnato no van a tener el `azp` que esta app espera, y la subscription validation los va a rechazar igual.
 
 ### 7.5 Verificar que funciona
 
