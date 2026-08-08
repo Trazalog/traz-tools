@@ -14,12 +14,13 @@
 
 **Sprint actual:** Sprint 3 — Activación early adopter minero
 **Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
-**Última actualización:** 2026-08-03 por Claude Code (E2-MCP-13 / tarea 3.4)
+**Última actualización:** 2026-08-08 por Claude Code (prueba de humo E2-MCP-13 en DEV + fix case_id)
 
 ### Tareas activas
 
 | ID | Descripción | Clase | Estado | Rama / PR |
 |---|---|---|---|---|
+| — | Prueba de humo de E2-MCP-13 en DEV (VPN+DB reales) + fix bug `case_id` null en `man_get_ot`/`man_get_ots` | 🟡 | **Completada.** 9/9 tools probadas con datos reales (empr_id=1): 7 reads OK, 2 writes OK end-to-end con Bonita real (`man_create_ot` → OT 291/case 30001, `alm_crear_pedido_materiales` → pedido 1481/case 30002, ambos marcados como descartables para limpieza). Bug preexistente encontrado y arreglado: `getOTsByEmpresa`/`getSolicitudServicioById` en `MANDataService.dbs` leían `case_id` del LEFT JOIN a `orden_trabajo` en vez de la tabla base `solicitud_reparacion` — daba `null` en OTs recién creadas (verificado preexistente contra el endpoint original de `toolsMANAPI`, no introducido por la unificación). Fix verificado en vivo contra DEV real (MI local rebuild+redeploy) | `fix/e2-mcp-case-id-null-man-queries` — PR abierto, sin mergear |
 | E2-MCP-13 (3.4) | OpenAPI unificada + Virtual MCP Server único + guía de migración (Bloque 3, tarea 3.4) | 🟡 | **Completada.** `doc/api/trazalog-operaciones.yaml` (9 tools, `empr_id` ausente, validada con `openapi-spec-validator`) + `doc/mcp/virtual-mcp-unificado.md` (pasos de consola + migración coordinada + smoke test) | `feature/e2-mcp-13-openapi-unificada` — PR abierto, sin mergear |
 | E1-ALM (3.3) | Sumar almacenes a la fachada (Bloque 3, tarea 3.3) | 🔴 | Completada y mergeada | PR #413 |
 | E2-MCP-12 | Migrar las 5 tools de mantenimiento a `toolsMCPAPI` (Bloque 3, tarea 3.2) | 🟡 | Completada y mergeada | PR #411 |
@@ -32,12 +33,18 @@
 
 ### Próxima acción
 
-Tarea 3.4 completada: `trazalog-operaciones.yaml` reúne las 9 tools (5 mantenimiento + 4 almacenes) en una sola spec, validada contra OpenAPI 3.0.3 (encontré y corregí un bug propio en el camino: había anidado el POST de `alm_crear_pedido_materiales` bajo la misma ruta parametrizada que el GET de detalle — corregido a su propia ruta `/mcp/alm/pedido`). `virtual-mcp-unificado.md` tiene los pasos de consola para Rodolfo (publicar la API, generar el Virtual MCP Server único `trazalog-operaciones`) y la guía de migración coordinada (crear→smoke test→reconfigurar Claude.ai→recién ahí despublicar los viejos). **Hallazgo importante:** `doc/api/openapi-publish-procedure.md` (Sprint 2) describe un mecanismo de identidad desactualizado (`X-Empr-Id` por mediación) — el vigente es `X-JWT-Assertion` (ADR-009). El nuevo doc usa el mecanismo correcto; `openapi-publish-procedure.md` queda con esa desactualización sin corregir (fuera de alcance de esta tarea, marcado para quien lo use después). **Próximo paso, en orden estricto (ADR-013): Tarea 3.5** (desplegar la fachada al server GCP, E7-INFRA-05), una vez que Rodolfo revise y mergee esta y ejecute los pasos de consola. En paralelo siguen pendientes: Bloque 1, Bloque 2 (E7-INFRA-03), y las preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md`.
+**Verificación en DEV de E2-MCP-13 completada** (era el prerequisito pendiente de Tarea 3.5): con VPN + Postgres arriba, se desplegó el `.car` completo en el MI local (incluye `toolsALMAPI`, que antes fallaba por falta de conectividad) y se probaron las 9 tools contra datos reales de `empr_id=1`. Resultado: todo funciona end-to-end, incluida la instanciación real de Bonita en ambos writes. En el camino apareció y se arregló un bug preexistente (`case_id` null en `man_get_ot`/`man_get_ots`, ver fila de arriba). **Próximo paso, en orden estricto (ADR-013): Tarea 3.5** (desplegar la fachada al server GCP, E7-INFRA-05), una vez que Rodolfo:
+1. Revise y mergee el fix del `case_id` (`fix/e2-mcp-case-id-null-man-queries`) y la Tarea 3.4 (`feature/e2-mcp-13-openapi-unificada`).
+2. Confirme que esta prueba de humo cuenta como la verificación en DEV que pedía el prompt de 3.5.
+3. Decida qué hacer con los artefactos de prueba descartables (OT 291, pedido 1481).
+
+En paralelo siguen pendientes: Bloque 1, Bloque 2 (E7-INFRA-03), y las preguntas abiertas de `doc/v3/sprint-3-relevamiento-estado.md`.
 
 ### Decisiones recientes (últimas 5)
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
+| 2026-08-08 | **Prueba de humo de E2-MCP-13 en DEV, a pedido de Rodolfo.** 9/9 tools verificadas con datos reales (empr_id=1) contra el MI local con VPN+Postgres arriba. Encontrado y arreglado (Rodolfo pidió el fix directo: "el arreglo del case_id es simple, lo podrias ejecutar por favor") un bug preexistente en `MANDataService.dbs`: `case_id` se leía del LEFT JOIN a `orden_trabajo` en vez de la tabla base `solicitud_reparacion`, dando `null` en OTs recién creadas | `fix/e2-mcp-case-id-null-man-queries`, `MANDataService.dbs` |
 | 2026-08-03 | **Tarea 3.4 completada.** OpenAPI unificada de las 9 tools + doc de Virtual MCP Server único con guía de migración coordinada. Detectada y corregida staleness en `openapi-publish-procedure.md` (describe `X-Empr-Id` en vez del `X-JWT-Assertion` vigente de ADR-009) — no corregida en el doc viejo, solo evitada en el nuevo | `doc/api/trazalog-operaciones.yaml`, `doc/mcp/virtual-mcp-unificado.md` |
 | 2026-08-02 | Rodolfo confirmó el nombre real del proceso Bonita para `alm_crear_pedido_materiales`: **"Pedido de Recursos Materiales"** — la etiqueta `"Ped. Materiales"` de `constants.php` (usada como suposición inicial) NO era el nombre real registrado en Bonita. Corregido en `toolsALMAPI.xml` y en el test Hurl | `toolsALMAPI.xml`, `tests/security/mcp-facade-alm-tools.hurl` |
 | 2026-07-31 | **Tarea 3.3 (almacenes) completada y mergeada.** `toolsALMAPI.xml` (nuevo, contexto `/tools/alm`) como capa de orquestación que recibe `empr_id` EXPLÍCITO (no derivado de JWT) — decisión de Rodolfo, reusable a futuro por el PHP de v2. `toolsMCPAPI` expone 4 tools `alm_*` como fachada delgada. 3 queries aditivas en `ALMDataService.dbs`. Rollback de 3 niveles | PR #413, `toolsALMAPI.xml`, `toolsMCPAPI.xml`, `ALMDataService.dbs` |
