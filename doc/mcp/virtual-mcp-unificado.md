@@ -39,9 +39,9 @@ Key Manager **Dnato** ya configurado (federado, no Resident KM) — ver `doc/ide
 2. **`+ Create API`** → **`Import OpenAPI`**
 3. Seleccionar `doc/api/trazalog-operaciones.yaml`
 4. Verificar los campos pre-completados:
-   - **Name:** `Trazalog Operaciones` (o el que prefieras — no afecta el nombre del MCP Server)
+   - **Name:** `Trazalog MCP Server` — nombre real usado por Rodolfo al publicar (2026-08-08), distinto del sugerido originalmente (`Trazalog Operaciones`)
    - **Version:** `1.0`
-   - **Context:** a definir — ej. `/trazalog-operaciones`
+   - **Context:** `/trazalog/mcp` — confirmado, no `/trazalog-operaciones`
 5. **`Create`**
 
 ### 2.3 Configurar el backend (Endpoint)
@@ -75,7 +75,7 @@ No hace falta asociar ninguna mediación/policy de inyección de `empr_id` — a
 
 **Opción A — desde la vista de la API (recomendada):**
 
-1. Abrir la API `Trazalog Operaciones` recién publicada
+1. Abrir la API `Trazalog MCP Server` recién publicada
 2. En la pantalla de overview, botón **`Generate MCP Server`**
 
 **Opción B — desde el menú de MCP Servers:**
@@ -84,13 +84,15 @@ No hace falta asociar ninguna mediación/policy de inyección de `empr_id` — a
 
 **Wizard de creación:**
 
-- **Select an API to create MCP Server from:** `Trazalog Operaciones` (versión 1.0)
+- **Select an API to create MCP Server from:** `Trazalog MCP Server` (versión 1.0)
 - **Select Operations for Tool Generation:** tildar las **9** operaciones (las 5 de mantenimiento + las 4 de almacenes)
 - **Next**
-- **Name:** `trazalog-operaciones`
+- **Name:** `Trazalog MCP Server`
 - **Version:** `1.0`
-- **Context:** `/trazalog-operaciones`
+- **Context:** `/trazalog/mcp`
 - **Create**
+
+> **Nota 2026-08-08:** los valores de arriba son los reales, confirmados una vez que Rodolfo publicó la API — difieren de la sugerencia original de ADR-013/este documento (`trazalog-operaciones` / `/trazalog-operaciones`). Gateway Type resultante: `Regular`.
 
 ### 2.7 Configurar Tools
 
@@ -103,8 +105,10 @@ Igual que en Sprint 2 (`virtual-mcp-equipos.md` §2.7-2.8): **`Deployments`** �
 ### 2.9 Endpoint MCP resultante
 
 ```
-https://<host-del-apim>:8243/trazalog-operaciones/1.0/mcp
+https://<host-del-apim>:8243/trazalog/mcp/1.0/mcp
 ```
+
+Confirmado en DEV: `https://localhost:8243/trazalog/mcp/1.0/mcp` (MCP playground de Rodolfo, 2026-08-08).
 
 Versión de protocolo MCP: `2025-06-18` (igual que los servers actuales).
 
@@ -114,11 +118,11 @@ Versión de protocolo MCP: `2025-06-18` (igual que los servers actuales).
 
 **⚠️ Orden estricto — no saltear pasos ni cambiar el orden:**
 
-1. **Crear y publicar** `trazalog-operaciones` (pasos §2 de este documento). `trazalog-equipos` y `trazalog-ots` **siguen activos** durante todo este proceso — no tocarlos todavía.
+1. **Crear y publicar** `Trazalog MCP Server` (contexto `/trazalog/mcp` — pasos §2 de este documento). `trazalog-equipos` y `trazalog-ots` **siguen activos** durante todo este proceso — no tocarlos todavía.
 2. **Smoke test completo de las 9 tools** contra el server nuevo (ver §4 abajo), incluida la prueba de aislamiento de 2 empresas.
 3. **Recién con el smoke test en verde**, reconfigurar Claude.ai:
    - `Settings` → `Integrations` → `MCP Servers`
-   - Cambiar (o agregar) la URL a `https://<host-del-apim>:8243/trazalog-operaciones/1.0/mcp`
+   - Cambiar (o agregar) la URL a `https://<host-del-apim>:8243/trazalog/mcp/1.0/mcp`
 4. **Recién ahí**, despublicar `trazalog-equipos` y `trazalog-ots` (Publisher → cada API → Lifecycle → `Retire` o `Block`, según se prefiera conservar el historial).
 
 **⚠️ Advertencia explícita: NO despublicar `trazalog-equipos`/`trazalog-ots` antes de tener el paso 3 confirmado.** Si algo del server unificado falla después de haberlos despublicado, la demo queda sin ningún MCP Server funcionando — la ventana de convivencia (viejos + nuevo activos en paralelo) es la red de seguridad de esta migración.
@@ -132,7 +136,7 @@ Equivalente al smoke test manual de Sprint 2, ahora respaldado por los tests aut
 ```bash
 JWT="<JWT real de Dnato, empresa A>"
 JWT_B="<JWT real de Dnato, empresa B — para el paso 2>"
-HOST="<host-del-apim>:8243/trazalog-operaciones/1.0"
+HOST="<host-del-apim>:8243/trazalog/mcp/1.0"
 
 # 1. Handshake MCP
 curl -k -X POST https://$HOST/mcp \
