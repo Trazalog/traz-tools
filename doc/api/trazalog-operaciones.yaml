@@ -35,12 +35,13 @@ info:
 servers:
   - url: http://10.142.0.13:8280/tools/mcp
     description: WSO2 Micro Integrator — DEV directo (toolsMCPAPI)
-  - url: https://{apim_host}:8243/trazalog-operaciones/1.0
+  - url: https://{apim_host}:8243/trazalog/mcp/1.0
     description: |
-      WSO2 API Manager 4.6.0 — Gateway (PROD/staging). Context path a
-      confirmar al publicar la API en el Publisher (Tarea 3.4, paso manual
-      de Rodolfo) — "trazalog-operaciones" es el nombre sugerido en ADR-013,
-      no está fijado todavía.
+      WSO2 API Manager 4.6.0 — Gateway (PROD/staging). Contexto real
+      confirmado 2026-08-08: Rodolfo publicó la API como "Trazalog MCP
+      Server", contexto `/trazalog/mcp`, versión `1.0` — no `trazalog-operaciones`
+      como sugería ADR-013 originalmente. Endpoint MCP resultante:
+      `/trazalog/mcp/1.0/mcp`.
     variables:
       apim_host:
         default: localhost

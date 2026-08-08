@@ -80,6 +80,6 @@ Tools expuestas (nombres con prefijo):
 
 ## Preguntas abiertas (a resolver en implementación, no bloquean el ADR)
 
-- Nombre definitivo del Virtual MCP Server unificado (`trazalog-operaciones` u otro).
+- ~~Nombre definitivo del Virtual MCP Server unificado~~ **Resuelto (2026-08-08):** Rodolfo publicó la API/MCP Server como **`Trazalog MCP Server`**, contexto **`/trazalog/mcp`**, versión `1.0` — no `trazalog-operaciones` como se sugería acá. Endpoint MCP: `https://<host-apim>:8243/trazalog/mcp/1.0/mcp`. Ver `doc/mcp/virtual-mcp-unificado.md` §2.6/§2.9.
 - Confirmar el ruteo a múltiples DataServices desde un artefacto MI (decisión #6) — primera tarea de implementación.
 - Si conviene que la fachada mantenga el backend MI separado por módulo o fusionado (pregunta abierta #1 del relevamiento) — se decide al implementar, según lo que dé la verificación.
