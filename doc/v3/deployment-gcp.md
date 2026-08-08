@@ -296,6 +296,8 @@ Prerequisito de esta sección: la VM ya está instalada y funcionando (§1-4 de 
 
 **El paso de verificación de aislamiento (§6.5) NO va a funcionar hasta que E7-INFRA-03 (Bloque 2 — config de identidad ADR-008/009 contra el Dnato de este mismo proyecto GCP) esté aplicado.** A la fecha de este documento, E7-INFRA-03 todavía no se ejecutó (ver `doc/v3/STATE.md` → Bloqueos). Los pasos §6.1-6.4 (desplegar el CAR, publicar la API, generar el MCP Server) se pueden hacer igual sin ese prerequisito — solo la verificación real con JWT de Dnato (§6.5-6.6) lo necesita. Si llegás a §6.5 y da 401/403 con un JWT que debería ser válido, lo primero a chequear es si `[[apim.jwt.issuer]]` para `trazalog-dnato` está configurado en el `deployment.toml` de **esta** VM (no asumir que se copió solo desde DEV).
 
+**El checklist concreto de E7-INFRA-03 está en §7 de este mismo documento.** Punto importante que no estaba claro hasta ahora: esa configuración **no viaja con el código**. `deployment.toml` no está versionado en git (cambia por ambiente — DEV, esta VM, y a futuro PROD tienen cada uno el suyo, con su propia URL de JWKS). Desplegar `develop-v3` a ningún servidor — ni al de Dnato ni a esta VM — aplica esos cambios solo: son ediciones manuales de un archivo de config local, siempre. Ver §7.0 para el detalle completo.
+
 ### 6.1 Artefacto desplegable — el `.car`
 
 Se genera igual que en DEV, no hay nada nuevo que preparar aparte del código ya mergeado:
@@ -374,3 +376,144 @@ Mismo patrón que el smoke test que se hizo en DEV el 2026-08-08 (`virtual-mcp-u
 - [ ] Al menos una tool de cada módulo (`man_*`, `alm_*`) probada con `tools/call` real
 - [ ] Aislamiento de 2 empresas confirmado contra la URL pública
 - [ ] Esta sección actualizada marcando el despliegue como hecho, con fecha real
+
+---
+
+## 7. Configuración de identidad en esta VM (E7-INFRA-03, Bloque 2)
+
+### 7.0 Por qué esto es un paso aparte — no viaja con el código
+
+**`deployment.toml` (donde vive toda la config de identidad — `[apim.jwt]`, `[[apim.jwt.issuer]]`) nunca está versionado en git.** Es un archivo de configuración local de cada instancia de APIM, y cambia por ambiente: el `deployment.toml` de DEV apunta al JWKS local de DEV (`http://localhost:8090/...`, servido por `scripts/dev/dnato-jwks-server.py`, un shim que solo existe para pruebas), el de esta VM tiene que apuntar al JWKS del Dnato real de este mismo proyecto GCP, y el de una futura VM de PROD tendría el suyo propio.
+
+**Por eso desplegar el contenido de `develop-v3` — a esta VM, o a cualquier servidor, incluido el de Dnato — no aplica ninguno de los cambios de `doc/identity/apim-keymanager-dnato.md`.** Ese documento describe ediciones manuales de `deployment.toml`, hechas y verificadas en DEV; acá se replican esas mismas ediciones, a mano, contra el `deployment.toml` de esta VM. No hay ningún artefacto en el repo que las traiga automáticamente.
+
+> **Corrección 2026-08-08:** la primera versión de esta sección decía "tampoco hace falta desplegar nada en el servidor de Dnato". **Eso estaba mal** — ver §7.0-bis. `dnato-jwt-prereqs.md` confirmó que Dnato **no necesita código nuevo** para esta federación porque ese código **ya se escribió**, en `traz-comp-dnato` rama `develop-v3` (E9-IDENT-03/04) — no porque no hiciera falta ningún despliegue. Si el servidor de Dnato de este proyecto GCP corre `develop` o `master` (no `develop-v3`), ese código simplemente no está ahí todavía.
+
+### 7.0-bis Prerequisito real: `traz-comp-dnato` rama `develop-v3` en el servidor de Dnato
+
+**Sí hace falta desplegar algo en el servidor de Dnato — y no es este repo, es `traz-comp-dnato`.** Confirmado revisando ese repo directamente: los commits que implementan la emisión de JWT, el login OAuth 2.1 PKCE, y el endpoint JWKS están **solo en `develop-v3`**, no en `develop` (soporte v2) ni en `master` (producción v2):
+
+```bash
+# Verificado en traz-comp-dnato:
+git log --all --oneline --grep="jwt\|jwks\|oauth" -i
+# 999d9a6 feat(identity): empr_id en JWT + login OAuth Dnato [E9-IDENT-03 / ADR-008]
+# 9516d30 feat(identity): add RFC 8414 AS metadata endpoint + configurable issuer for MCP discovery
+# 3da3f77 feat(identity): add OAuth 2.1 PKCE login screen in Dnato [E9-IDENT-04]
+# 5b5d1d6 feat(identity): add OAuth JWT issuance in Dnato with empr_id claim [E9-IDENT-03]
+# (todos solo en develop-v3, confirmado con git merge-base --is-ancestor)
+```
+
+Si el servidor de Dnato en este proyecto GCP (el que está "en la misma red donde está la VM de MCP", en otro server) corre `develop` o `master` de `traz-comp-dnato`, **hace falta desplegar `develop-v3` ahí** — el checkout de código en sí (`git checkout develop-v3 && git pull`, reemplazando el vhost/deploy que corresponda para ese ambiente) es responsabilidad de `traz-comp-dnato` y sus propias convenciones de deploy, no de este repo.
+
+**Con el código desplegado, todavía faltan pasos manuales — mismo patrón que `deployment.toml` (§7.0): nada de esto viaja con el `git checkout` solo.** Comandos concretos, tomados de `traz-comp-dnato/doc/identity/jwt-keys-setup.md` y verificados contra el código real de `develop-v3` (2026-08-08):
+
+```bash
+# 0. En el checkout de traz-comp-dnato en el servidor de Dnato
+cd /ruta/real/a/traz-comp-dnato
+
+# 1. Dependencias PHP (firebase/php-jwt, agregado en develop-v3)
+composer install --no-dev --optimize-autoloader
+
+# 2. Par de claves RS256 — generar EN ESTE SERVIDOR, no copiar el de DEV
+mkdir -p application/config/keys
+openssl genrsa -out application/config/keys/jwt_private.pem 2048
+openssl rsa -in application/config/keys/jwt_private.pem -pubout -out application/config/keys/jwt_public.pem
+openssl rsa -in application/config/keys/jwt_private.pem -check
+chmod 600 application/config/keys/jwt_private.pem
+chmod 644 application/config/keys/jwt_public.pem
+chown <usuario-de-apache>:<grupo-de-apache> application/config/keys/*.pem   # confirmar cuál aplica en ese server
+
+# 3. Variables de entorno vía .htaccess (Apache SetEnv — mismo mecanismo que DEV/ngrok)
+cp .htaccess.example .htaccess
+# editar .htaccess a mano con los valores reales (ver bloque de abajo)
+
+# 4. Migración — PostgreSQL (TEST/PROD usan Postgres, no MySQL)
+psql -h <host-postgres> -U <usuario> -d <basededatos> \
+  -c "CREATE SCHEMA IF NOT EXISTS seg;" \
+  -f doc/identity/migrations/001_create_seg_oauth_codes.sql
+
+# 5. Reiniciar Apache
+sudo systemctl restart httpd      # Rocky/RHEL
+# sudo systemctl restart apache2  # si ese server es Debian/Ubuntu
+
+# 6. Verificar
+curl -s https://<host-real-de-dnato>/oauth/.well-known/jwks.json | python3 -m json.tool
+php index.php cli issue_test_token admin@empresa.com 1
+```
+
+Contenido real del `.htaccess` (paso 3 — reemplazar los placeholders con datos reales del server, no quedan resueltos solos):
+
+```apache
+SetEnv DNATO_PUBLIC_URL "https://<host-real-de-dnato>/traz-comp-dnato"
+SetEnv DNATO_ISSUER "https://<host-real-de-dnato>/traz-comp-dnato/oauth"
+SetEnv JWT_PRIVATE_KEY_PATH "/ruta/real/a/traz-comp-dnato/application/config/keys/jwt_private.pem"
+SetEnv JWT_PUBLIC_KEY_PATH "/ruta/real/a/traz-comp-dnato/application/config/keys/jwt_public.pem"
+SetEnv JWT_AZP "<consumer key de la Application del APIM de la VM — ver nota abajo>"
+```
+
+> **Corrección 2026-08-08 sobre `JWT_AZP`:** una versión anterior de este checklist decía "confirmar que `oauth_clients.php` tiene registrada la aplicación... equivalente al `azp`/`consumerKey`". Es impreciso — leyendo `application/config/jwt.php` directamente: `oauth_clients.php` es un archivo distinto (registra a Claude.ai como cliente OAuth válido con su `redirect_uri` fijo, **no cambia por ambiente, no hace falta tocarlo**). El valor `azp` que de verdad importa se setea vía la variable de entorno `JWT_AZP` de arriba, y tiene que ser el **consumer key real de la Application del APIM de esta VM** (la que se crea en §6.3/§7.4, equivalente a `TrazalogDnatoMCP` de DEV) — sin este dato, la subscription validation del gateway va a rechazar los tokens reales de Dnato.
+
+**No hace falta tocar `oauth_clients.php`** — ya tiene registrado a Claude.ai (`trazalog-mcp-connector`, redirect fijo `https://claude.ai/api/mcp/auth_callback`), y ese valor es el mismo en cualquier ambiente.
+
+> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles completos viven en los docs de ese otro repo (`doc/identity/jwt-keys-setup.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`).
+
+### 7.1 Qué hay que replicar — mismo mecanismo que DEV, otro `deployment.toml`
+
+Adaptado de `doc/identity/apim-keymanager-dnato.md` §3, aplicado al `deployment.toml` de **esta VM** (no el de DEV):
+
+```toml
+[apim.jwt]
+enable = true
+header = "X-JWT-Assertion"
+convert_dialect = false
+
+[[apim.jwt.issuer]]
+name = "<el mismo valor exacto que DNATO_ISSUER en el .htaccess de Dnato, §7.0-bis — ej. https://host-de-dnato/traz-comp-dnato/oauth>"
+consumer_key_claim = "azp"
+scopes_claim = "scope"
+jwks.url = "<URL real del JWKS de Dnato en este proyecto GCP — ver 7.2>"
+
+[[apim.jwt.issuer.claim_mapping]]
+remote_claim = "empr_id"
+local_claim = "empr_id"
+[[apim.jwt.issuer.claim_mapping]]
+remote_claim = "empr_id_mysql"
+local_claim = "empr_id_mysql"
+```
+
+> **Corrección 2026-08-08:** `name` NO es el string fijo `"trazalog-dnato"` — ese valor es el que usa el shim de pruebas de DEV (`scripts/dev/dnato-jwks-server.py` + `mint-dnato-jwt.py`), no el Dnato real. `jwt.php` (en `traz-comp-dnato`) arma el claim `iss` del JWT real a partir de la variable de entorno `DNATO_ISSUER` (default `http://localhost/oauth` si no se setea) — `name` acá tiene que coincidir EXACTAMENTE con ese valor, o el gateway va a rechazar los tokens reales de Dnato con "issuer mismatch" aunque todo el resto esté bien configurado.
+
+Reiniciar APIM después de editar: `sudo systemctl restart wso2am`.
+
+### 7.2 Antes de aplicar esto — confirmar, no asumir
+
+- [ ] **`traz-comp-dnato` `develop-v3` desplegado en el servidor de Dnato de este proyecto** (§7.0-bis) — sin esto, no hay JWKS real que apuntar, ni login OAuth que emita los JWT.
+- [ ] Claves RS256 generadas en ESE servidor, migración corrida, `oauth_clients.php` con el cliente registrado (checklist de §7.0-bis).
+- [ ] **URL real del JWKS** (`https://<host-de-dnato>/oauth/.well-known/jwks.json`, confirmado el endpoint en §7.0-bis — reemplaza el placeholder de §7.1).
+- [ ] Confirmar que ese endpoint es alcanzable desde esta VM — por HTTPS con cadena válida, o por HTTP si están en la misma red interna/VPC del proyecto (`apim-keymanager-dnato.md` §2, Opción B — nunca exponer el JWKS por HTTP públicamente).
+- [ ] Confirmar el `kid` de la clave activa que quedó en `application/config/jwt.php` de ese despliegue — no necesariamente el mismo `dnato-rs256-v1` que usa el shim de DEV (cada par de claves generado en §7.0-bis puede tener su propio `kid`).
+- [ ] **Si alguno de los puntos anteriores no se puede confirmar sin acceso al servidor/config de Dnato de este proyecto: PARAR y consultar antes de aplicar §7.1.** No asumir que ya está desplegado o configurado solo porque el mecanismo ya funciona en DEV — son servidores y despliegues distintos.
+
+### 7.3 Verificar accesibilidad del JWKS desde la VM
+
+Igual que `apim-keymanager-dnato.md` §2 — ejecutado **desde dentro de la VM** (no desde tu compu):
+
+```bash
+curl -s <URL del JWKS de 7.2> | python3 -m json.tool
+```
+
+### 7.4 Aplicación + suscripción en el DevPortal de esta VM
+
+Mismo patrón que el que se usó para destrabar el smoke test de DEV (`virtual-mcp-unificado.md` §2.8-bis): crear una aplicación en el DevPortal de esta VM (equivalente a `TrazalogDnatoMCP` de DEV) y suscribirla al MCP Server desplegado en §6. Sin esto, las tools dan `900908` aunque el resto de la identidad esté bien configurado — fue el primer bloqueo real que apareció en DEV el mismo día.
+
+### 7.5 Verificar que funciona
+
+Repetir §6.4 (verificación OAuth) y §6.5 (aislamiento) de este mismo documento — con la identidad ya configurada, ahora sí deberían pasar en verde.
+
+### DoD de esta sección (E7-INFRA-03)
+
+- [ ] `deployment.toml` de esta VM actualizado con `[[apim.jwt.issuer]]` para `trazalog-dnato`, apuntando al JWKS real de este proyecto GCP
+- [ ] JWKS verificado accesible desde la VM
+- [ ] Aplicación + suscripción al MCP Server creadas en el DevPortal de esta VM
+- [ ] §6.4/§6.5 confirmados en verde con identidad real (no la de DEV)
+- [ ] Esta sección actualizada con el resultado real, fecha, y la URL de JWKS usada
