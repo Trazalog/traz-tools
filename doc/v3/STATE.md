@@ -14,6 +14,7 @@
 
 **Sprint actual:** Sprint 3 — Activación early adopter minero
 **Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
+**Última actualización:** 2026-08-08 por Claude Code (prueba de humo E2-MCP-13 en DEV + fix case_id)
 **Última actualización:** 2026-08-08 por Claude Code (doc de Ambientes + fix hostname ngrok en DEV)
 
 ### Tareas activas
@@ -34,6 +35,10 @@
 
 ### Próxima acción
 
+**Verificación en DEV de E2-MCP-13 completada** (era el prerequisito pendiente de Tarea 3.5): con VPN + Postgres arriba, se desplegó el `.car` completo en el MI local (incluye `toolsALMAPI`, que antes fallaba por falta de conectividad) y se probaron las 9 tools contra datos reales de `empr_id=1`. Resultado: todo funciona end-to-end, incluida la instanciación real de Bonita en ambos writes. En el camino apareció y se arregló un bug preexistente (`case_id` null en `man_get_ot`/`man_get_ots`, ver fila de arriba). **Próximo paso, en orden estricto (ADR-013): Tarea 3.5** (desplegar la fachada al server GCP, E7-INFRA-05), una vez que Rodolfo:
+1. Revise y mergee el fix del `case_id` (`fix/e2-mcp-case-id-null-man-queries`) y la Tarea 3.4 (`feature/e2-mcp-13-openapi-unificada`).
+2. Confirme que esta prueba de humo cuenta como la verificación en DEV que pedía el prompt de 3.5.
+3. Decida qué hacer con los artefactos de prueba descartables (OT 291, pedido 1481).
 **Tarea 3.5 pausada antes de arrancar:** el prompt exige "E2-MCP-13 mergeado **y verificado por Rodolfo en DEV**" — mergeado sí, verificado todavía no confirmado. Al preguntarle, Rodolfo pidió primero mejorar la documentación (ver decisión de hoy) en vez de responder directamente — probablemente porque, sin `wso2-redeploy-artifacts.md`, no tenía un camino claro para llevar los cambios de `toolsMCPAPI`/`toolsALMAPI` (mergeados en 3.1-3.3) a su MI local y poder hacer esa verificación. Con el script y el doc nuevos, el próximo paso es que Rodolfo:
 1. Corra `./scripts/dev/rebuild-and-deploy-mi.sh` para llevar los cambios de las tareas 3.1-3.3 a su MI local.
 2. Ejecute los pasos de consola de `virtual-mcp-unificado.md` (publicar la API, generar `trazalog-operaciones`, smoke test de las 9 tools + aislamiento 2 empresas).
@@ -45,6 +50,7 @@ En paralelo siguen pendientes: Bloque 1, Bloque 2 (E7-INFRA-03), y las preguntas
 
 | Fecha | Decisión | Referencia |
 |---|---|---|
+| 2026-08-08 | **Prueba de humo de E2-MCP-13 en DEV, a pedido de Rodolfo.** 9/9 tools verificadas con datos reales (empr_id=1) contra el MI local con VPN+Postgres arriba. Encontrado y arreglado (Rodolfo pidió el fix directo: "el arreglo del case_id es simple, lo podrias ejecutar por favor") un bug preexistente en `MANDataService.dbs`: `case_id` se leía del LEFT JOIN a `orden_trabajo` en vez de la tabla base `solicitud_reparacion`, dando `null` en OTs recién creadas | `fix/e2-mcp-case-id-null-man-queries`, `MANDataService.dbs` |
 | 2026-08-08 | **Doc de Ambientes creado**, a pedido de Rodolfo, tras confundirse con un redirect a ngrok al entrar a Publisher. Documenta cuándo DEV necesita ngrok (testing MCP con Claude.ai, federación Dnato) y cuándo no (trabajo diario), más el estado y acceso de TEST/PROD. Se identificó y corrigió la causa raíz del problema puntual: `hostname` en el `deployment.toml` local quedó pisado con un subdominio ngrok muerto por no haber corrido `--reset` al cerrar sesiones anteriores | `doc/infra/ambientes.md`, `scripts/dev/setup-ngrok.sh` |
 | 2026-08-03 | **Tarea 3.4 completada.** OpenAPI unificada de las 9 tools + doc de Virtual MCP Server único con guía de migración coordinada. Detectada y corregida staleness en `openapi-publish-procedure.md` (describe `X-Empr-Id` en vez del `X-JWT-Assertion` vigente de ADR-009) — no corregida en el doc viejo, solo evitada en el nuevo | `doc/api/trazalog-operaciones.yaml`, `doc/mcp/virtual-mcp-unificado.md` |
 | 2026-08-02 | Rodolfo confirmó el nombre real del proceso Bonita para `alm_crear_pedido_materiales`: **"Pedido de Recursos Materiales"** — la etiqueta `"Ped. Materiales"` de `constants.php` (usada como suposición inicial) NO era el nombre real registrado en Bonita. Corregido en `toolsALMAPI.xml` y en el test Hurl | `toolsALMAPI.xml`, `tests/security/mcp-facade-alm-tools.hurl` |
