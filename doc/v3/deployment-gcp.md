@@ -487,7 +487,7 @@ Reiniciar APIM después de editar: `sudo systemctl restart wso2am`.
 ### 7.2 Antes de aplicar esto — confirmar, no asumir
 
 - [ ] **`traz-comp-dnato` `develop-v3` desplegado en el servidor de Dnato de este proyecto** (§7.0-bis) — sin esto, no hay JWKS real que apuntar, ni login OAuth que emita los JWT.
-- [ ] Claves RS256 generadas en ESE servidor, migración corrida, `oauth_clients.php` con el cliente registrado (checklist de §7.0-bis).
+- [ ] Claves RS256 generadas en ESE servidor, migración corrida, `.htaccess` con `JWT_AZP` seteado al consumer key real (checklist de §7.0-bis).
 - [ ] **URL real del JWKS** (`https://<host-de-dnato>/oauth/.well-known/jwks.json`, confirmado el endpoint en §7.0-bis — reemplaza el placeholder de §7.1).
 - [ ] Confirmar que ese endpoint es alcanzable desde esta VM — por HTTPS con cadena válida, o por HTTP si están en la misma red interna/VPC del proyecto (`apim-keymanager-dnato.md` §2, Opción B — nunca exponer el JWKS por HTTP públicamente).
 - [ ] Confirmar el `kid` de la clave activa que quedó en `application/config/jwt.php` de ese despliegue — no necesariamente el mismo `dnato-rs256-v1` que usa el shim de DEV (cada par de claves generado en §7.0-bis puede tener su propio `kid`).
