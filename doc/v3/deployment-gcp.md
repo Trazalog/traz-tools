@@ -300,15 +300,17 @@ Prerequisito de esta sección: la VM ya está instalada y funcionando (§1-4 de 
 
 ### 6.1 Artefacto desplegable — el `.car`
 
-Se genera igual que en DEV, no hay nada nuevo que preparar aparte del código ya mergeado:
+Se genera igual que en DEV, no hay nada nuevo que preparar aparte del código ya mergeado.
+
+**Usar el Maven del sistema, no el wrapper (`./mvnw`)**: `mvnw`, `mvnw.cmd` y `.mvn/wrapper/maven-wrapper.jar` están en `.gitignore` de `ToolsAPIProject` — no viajan con `git clone`/`git pull`. Un checkout fresco en la VM (o en cualquier máquina nueva) no va a tener `./mvnw` y el shell va a responder "comando desconocido" / "command not found". `.mvn/wrapper/maven-wrapper.properties` pide Maven `3.8.7`; confirmar con `mvn -version` en la VM antes de buildear que la versión instalada sea razonablemente cercana:
 
 ```bash
 cd _backend/api/ToolsAPIProject/ToolsAPIProject
-./mvnw clean install
+mvn clean install
 # target/ToolsAPIProject_1.0.0.car
 ```
 
-Verificado en esta tarea (2026-08-08): el build corre limpio contra el estado actual de `develop-v3` (`BUILD SUCCESS`). El CAR incluye `toolsMCPAPI`, `toolsALMAPI`, `toolsMANAPI`, `toolsBPMAPI`, `toolsCOREAPI` y todos los DataServices — incluida la corrección de `case_id` en `MANDataService.dbs` (PR #416, ya mergeada). No hay un artefacto separado para la API/MCP Server del lado del APIM — esos se publican interactivamente en el Publisher (§6.3), igual que en DEV.
+Verificado en esta tarea (2026-08-08): el build corre limpio contra el estado actual de `develop-v3` (`BUILD SUCCESS`) con Maven 3.8.7 del sistema. El CAR incluye `toolsMCPAPI`, `toolsALMAPI`, `toolsMANAPI`, `toolsBPMAPI`, `toolsCOREAPI` y todos los DataServices — incluida la corrección de `case_id` en `MANDataService.dbs` (PR #416, ya mergeada). No hay un artefacto separado para la API/MCP Server del lado del APIM — esos se publican interactivamente en el Publisher (§6.3), igual que en DEV.
 
 ### 6.2 Desplegar el CAR en el MI de la VM
 
@@ -318,7 +320,7 @@ Verificado en esta tarea (2026-08-08): el build corre limpio contra el estado ac
 cd ~/traz-tools   # el clone que ya existe en la VM desde el setup inicial (§4 paso 8)
 git checkout develop-v3 && git pull origin develop-v3
 cd _backend/api/ToolsAPIProject/ToolsAPIProject
-./mvnw clean install
+mvn clean install   # NO ./mvnw — el wrapper no está commiteado, ver nota en §6.1
 
 cp target/ToolsAPIProject_1.0.0.car /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/
 sudo systemctl restart wso2mi
@@ -404,13 +406,16 @@ git log --all --oneline --grep="jwt\|jwks\|oauth" -i
 
 Si el servidor de Dnato en este proyecto GCP (el que está "en la misma red donde está la VM de MCP", en otro server) corre `develop` o `master` de `traz-comp-dnato`, **hace falta desplegar `develop-v3` ahí** — el checkout de código en sí (`git checkout develop-v3 && git pull`, reemplazando el vhost/deploy que corresponda para ese ambiente) es responsabilidad de `traz-comp-dnato` y sus propias convenciones de deploy, no de este repo.
 
-**Con el código desplegado, todavía faltan pasos manuales — mismo patrón que `deployment.toml` (§7.0): nada de esto viaja con el `git checkout` solo.** Comandos concretos, tomados de `traz-comp-dnato/doc/identity/jwt-keys-setup.md` y verificados contra el código real de `develop-v3` (2026-08-08):
+**Con el código desplegado, todavía faltan pasos manuales — mismo patrón que `deployment.toml` (§7.0): nada de esto viaja con el `git checkout` solo.** Comandos concretos, tomados de `traz-comp-dnato/doc/identity/jwt-keys-setup.md` y **verificados de punta a punta contra un despliegue real** (`demo.cloudtrazalog.com`, 2026-08-08/09 — ver §7.0-quater para el detalle de cada bug encontrado):
 
 ```bash
 # 0. En el checkout de traz-comp-dnato en el servidor de Dnato
 cd /ruta/real/a/traz-comp-dnato
 
-# 1. Dependencias PHP (firebase/php-jwt, agregado en develop-v3)
+# 1. Composer — si el comando no existe, instalarlo primero
+composer --version || { curl -sS https://getcomposer.org/installer | php && sudo mv composer.phar /usr/local/bin/composer; }
+# Si "composer: command not found" persiste después de instalarlo, /usr/local/bin no está
+# en el PATH de esta shell — usar la ruta completa: /usr/local/bin/composer install ...
 composer install --no-dev --optimize-autoloader
 
 # 2. Par de claves RS256 — generar EN ESTE SERVIDOR, no copiar el de DEV
@@ -420,27 +425,44 @@ openssl rsa -in application/config/keys/jwt_private.pem -pubout -out application
 openssl rsa -in application/config/keys/jwt_private.pem -check
 chmod 600 application/config/keys/jwt_private.pem
 chmod 644 application/config/keys/jwt_public.pem
-chown <usuario-de-apache>:<grupo-de-apache> application/config/keys/*.pem   # confirmar cuál aplica en ese server
+chown apache:apache application/config/keys/*.pem   # o el usuario real de Apache en ese server, ver §7.0-quater
 
 # 3. Variables de entorno vía .htaccess (Apache SetEnv — mismo mecanismo que DEV/ngrok)
 cp .htaccess.example .htaccess
-# editar .htaccess a mano con los valores reales (ver bloque de abajo)
+# Editar TODAS las 5 líneas con valores reales (ver bloque de abajo). Las rutas de
+# JWT_PRIVATE_KEY_PATH y JWT_PUBLIC_KEY_PATH tienen que ser ABSOLUTAS (con "/" inicial)
+# -- una sola sin la barra rompe el JWKS más adelante con un error nada obvio, ver §7.0-quater.
 
 # 4. Migración — PostgreSQL (TEST/PROD usan Postgres, no MySQL)
 psql -h <host-postgres> -U <usuario> -d <basededatos> \
   -c "CREATE SCHEMA IF NOT EXISTS seg;" \
   -f doc/identity/migrations/001_create_seg_oauth_codes.sql
 
-# 5. Reiniciar Apache
+# 5. Tres archivos de CÓDIGO que casi seguro también hace falta parchear a mano
+#    (no son de config por ambiente como .htaccess -- son bugs reales de develop-v3,
+#    confirmados en la práctica, ver el detalle y el fix exacto de cada uno en §7.0-quater):
+#    - application/config/config.php: línea "composer_autoload" en FALSE (default viejo)
+#      en vez de FCPATH . 'vendor/autoload.php' -> sin esto, "Class Firebase\JWT\JWT not found"
+#    - application/config/config.php: "permitted_uri_chars" sin '@' -> "issue_test_token" con
+#      un email como argumento falla con "disallowed characters"
+#    - application/controllers/Cli.php: usa el operador "??" (PHP 7+), este server corre PHP 5.6
+#    - application/config/routes.php: faltan las rutas de oauth/* -> 404 en /oauth/.well-known/jwks.json
+
+# 6. Reiniciar Apache (necesario para los cambios de código y de config.php;
+#    .htaccess NO necesita restart, se relee en cada request)
 sudo systemctl restart httpd      # Rocky/RHEL
 # sudo systemctl restart apache2  # si ese server es Debian/Ubuntu
 
-# 6. Verificar
+# 7. Verificar
 curl -s https://<host-real-de-dnato>/oauth/.well-known/jwks.json | python3 -m json.tool
-php index.php cli issue_test_token admin@empresa.com 1
+# Para el CLI, exportar las mismas variables del .htaccess ANTES de correrlo -- Apache SetEnv
+# NO aplica a una invocación directa de "php" por consola, ver §7.0-quater:
+export DNATO_ISSUER="https://<host-real-de-dnato>/traz-comp-dnato/oauth"
+export JWT_AZP="<el mismo Consumer Key que pusiste en .htaccess>"
+php index.php cli issue_test_token admin@empresa.com <empr_id-real>
 ```
 
-Contenido real del `.htaccess` (paso 3 — reemplazar los placeholders con datos reales del server, no quedan resueltos solos):
+Contenido real del `.htaccess` (paso 3 — reemplazar los placeholders con datos reales del server, no quedan resueltos solos, y **las dos rutas de claves tienen que ser absolutas**):
 
 ```apache
 SetEnv DNATO_PUBLIC_URL "https://<host-real-de-dnato>/traz-comp-dnato"
@@ -454,7 +476,69 @@ SetEnv JWT_AZP "<Consumer Key generado en §7.4 — no existe todavía en este p
 
 **No hace falta tocar `oauth_clients.php`** — ya tiene registrado a Claude.ai (`trazalog-mcp-connector`, redirect fijo `https://claude.ai/api/mcp/auth_callback`), y ese valor es el mismo en cualquier ambiente.
 
-> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles completos viven en los docs de ese otro repo (`doc/identity/jwt-keys-setup.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`).
+> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles completos viven en los docs de ese otro repo (`doc/identity/jwt-keys-setup.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`). **Los 4 bugs de código de §7.0-quater sí valdría la pena reportarlos/corregirlos en `traz-comp-dnato` directamente** — si se parchean solo acá, se repiten en el próximo sync de código.
+
+### 7.0-ter Certificado TLS con cadena incompleta — troubleshooting completo
+
+**Síntoma:** `curl` (y cualquier cliente HTTPS, incluido el APIM que va a consumir el JWKS en §7.3) falla con `Peer's Certificate issuer is not recognized` / código `000`, aunque el certificado sea real, vigente y del dominio correcto.
+
+**Esto pasó en `demo.cloudtrazalog.com` (2026-08-08) y probablemente se repita en cualquier server viejo con un cert renovado hace poco** — vale la pena revisar esto ANTES de asumir que el JWKS "no funciona":
+
+1. **Diagnóstico — confirmar que el cert en sí es válido** (esto no falla aunque no sea de confianza, solo muestra info):
+   ```bash
+   openssl s_client -connect <host>:443 -servername <host> </dev/null 2>/dev/null | openssl x509 -noout -issuer -subject -dates
+   ```
+   Si el `issuer` es una CA real (Sectigo, DigiCert, Let's Encrypt, etc.) y las fechas son válidas, el cert está bien — el problema es la cadena, no el cert.
+
+2. **Ver la cadena completa que manda el servidor y el motivo exacto del rechazo:**
+   ```bash
+   openssl s_client -connect <host>:443 -servername <host> </dev/null 2>&1 | grep -iE "^depth|verify (error|return code)|s:|i:"
+   ```
+   - Si el `issuer` del cert hoja (depth=0) **no coincide con ningún `subject` de los certificados que siguen** (depth=1, depth=2...) en la cadena que manda el server → **falta el intermedio correcto**, es un bug de configuración del lado del servidor (`SSLCertificateChainFile` en Apache — buscar con `grep -rn "SSLCertificateChainFile" /etc/httpd/conf.d/*.conf`). Bajar el intermedio correcto desde la URL "CA Issuers" del cert hoja:
+     ```bash
+     echo | openssl s_client -connect <host>:443 -servername <host> 2>/dev/null | openssl x509 -noout -text | grep -A1 "CA Issuers"
+     curl -o /tmp/intermediate.crt <esa-URL>
+     openssl x509 -inform DER -in /tmp/intermediate.crt -out /tmp/intermediate.pem -outform PEM 2>/dev/null || cp /tmp/intermediate.crt /tmp/intermediate.pem
+     sudo cp <archivo-actual-de-SSLCertificateChainFile> <archivo>.bak.$(date +%Y%m%d%H%M%S)
+     sudo cp /tmp/intermediate.pem <archivo-de-SSLCertificateChainFile>
+     sudo apachectl configtest && sudo systemctl restart httpd
+     ```
+   - Si después de eso el error pasa a ser sobre el **último** certificado de la cadena (la raíz, ej. `verify error:num=20` apuntando a una CA "Root") → **eso es esperado, las raíces nunca se mandan** — es la máquina CLIENTE (la que corre `curl`/`openssl`) la que no tiene esa raíz en su trust store local, típico en servers viejos sin actualizar (`ca-certificates` desactualizado). Si `sudo yum update ca-certificates` falla (repos EOL — común en CentOS 7), instalar la raíz a mano:
+     ```bash
+     # el "CA Issuers" del INTERMEDIO (no del hoja) apunta a la raíz
+     echo | openssl s_client -connect <host>:443 -servername <host> -showcerts 2>/dev/null | awk '/BEGIN CERT/{i++}i==2' > /tmp/intermediate-full.pem
+     openssl x509 -in /tmp/intermediate-full.pem -noout -text | grep -A1 "CA Issuers"
+     curl -o /tmp/root.crt <esa-URL>
+     # OJO: esta URL suele ser un .p7c (PKCS#7), NO un cert simple -- "openssl x509 -inform DER" falla
+     # silenciosamente con esto. Usar "openssl pkcs7", no "openssl x509":
+     openssl pkcs7 -inform DER -in /tmp/root.crt -print_certs -out /tmp/root.pem
+     sudo cp /tmp/root.pem /etc/pki/ca-trust/source/anchors/
+     sudo update-ca-trust extract
+     ```
+   - **Importante:** este problema de raíz faltante es específico de la máquina cliente vieja. No asumir que el APIM (en una VM Rocky Linux 9 moderna) tiene el mismo problema — puede que ya confíe en la raíz sin tocar nada. Confirmar directo desde esa VM en §7.3, no repetir este fix ahí "por las dudas".
+
+3. **Verificación final** (usar `-i` en el grep — `openssl` imprime `Verify return code` con V mayúscula, un grep case-sensitive de `verify` no lo va a matchear y parece que no hay salida):
+   ```bash
+   openssl s_client -connect <host>:443 -servername <host> </dev/null 2>&1 | grep -iE "verify (error|return code)"
+   ```
+   Tiene que decir `Verify return code: 0 (ok)` sin ningún `verify error:` arriba.
+
+### 7.0-quater Troubleshooting real de `traz-comp-dnato` (2026-08-08/09, `demo.cloudtrazalog.com`)
+
+Todos estos son bugs reales encontrados ejecutando este checklist de punta a punta contra un server real. El TLS de §7.0-ter fue el primero; estos son los que siguieron una vez resuelto ese:
+
+| Síntoma | Causa | Fix |
+|---|---|---|
+| `PHP Fatal error: Class 'Firebase\JWT\JWT' not found`, aunque `vendor/firebase/php-jwt` exista y `composer install` haya corrido bien | `application/config/config.php` tiene `$config['composer_autoload'] = FALSE;` (valor default de CI3) en vez de `FCPATH . 'vendor/autoload.php'` — es uno de los archivos que hay que parchear a mano, no solo copiar de cero | `grep -n "composer_autoload" application/config/config.php` para encontrar la línea activa (no las de ejemplo en el comentario) y reemplazarla por `$config['composer_autoload'] = FCPATH . 'vendor/autoload.php';` |
+| `ERROR: The URI you submitted has disallowed characters` al correr `php index.php cli issue_test_token <email> ...` | CI3 filtra los argumentos de CLI con la misma regla que las URLs web (`permitted_uri_chars`), y el default `'a-z 0-9~%.:_\-'` no incluye `@` | Agregar `@` al valor de `$config['permitted_uri_chars']` en `application/config/config.php` |
+| `PHP Parse error: syntax error, unexpected '?'` en `Cli.php` | Usa el operador `??` (null coalescing, PHP 7.0+) en 4 lugares — este server corre PHP 5.6.40 (`composer.json` lo pin ea explícitamente) | Reemplazar cada `$x ?? $y` por `isset($x) ? $x : $y` |
+| `404 Page Not Found` (la página nativa de CI3) en `/oauth/.well-known/jwks.json`, aunque el controller `Oauth::jwks()` exista en el código | `application/config/routes.php` no tiene las rutas custom de `oauth/*` — otro archivo de "parchear a mano" que no llegó a copiarse | Agregar el bloque `$route['oauth/...']` completo (ver `routes.php` de `develop-v3` §61-72) al final de `routes.php` |
+| `{"error":"server_error","error_description":"Clave pública no disponible"}` (HTTP 500) en el JWKS, con rutas y Composer ya OK | `JWT_PUBLIC_KEY_PATH` en `.htaccess` con ruta **relativa** (sin `/` inicial) — a diferencia de `JWT_PRIVATE_KEY_PATH`, que si la tenía. `is_file()` no la encuentra | Agregar la `/` inicial en el `.htaccess`, no hace falta reiniciar Apache |
+| El JWT emitido por `issue_test_token` tiene `"iss":"http://localhost/oauth"` y el `azp` viejo de DEV, aunque el `.htaccess` tenga los valores reales | `SetEnv` de Apache **no aplica a una invocación directa de `php` por consola** — solo a requests que pasan por Apache (mod_php/PHP-FPM). El CLI cae en los fallbacks hardcodeados de `jwt.php` | `export DNATO_ISSUER=...` y `export JWT_AZP=...` en la shell antes de correr el comando CLI (no hace falta para el login real por navegador, ese sí pasa por Apache) |
+| `Error: empr_id=N no encontrado en los memberships del usuario`, con memberships reales confirmadas por query directa a la DB | `Cli.php` resuelve `empr_id` parseando un prefijo numérico del `group` (`explode('-', $group)[0]`), asumiendo formato `"{empr_id}-{nombre}"` — pero `seg.memberships_users.group` en este server tiene solo el nombre de la empresa, sin prefijo (confirmado con Rodolfo: "siempre estuvo mal eso") | Resolver `empr_id` con un lookup a `core.empresas` por `descripcion = group`, no parseando el string. **Bug real de `Cli.php`, no específico de este server** — reportar/corregir en `traz-comp-dnato`. Nota aparte: `Oauthlogin.php` (el login real) lee de Bonita directo, no de esta tabla, y ya espera+filtra el formato con prefijo — no se confirmó en esta sesión si los grupos reales de Bonita lo tienen |
+| `PHP Warning: Constants may only evaluate to scalar values` en `constants.php:144` (`WEBMAIL_DOMAINS`) | `define()` con un array no es válido en PHP 5.6 (soportado recién desde 7.0) — pero es un Warning, no frena la ejecución, y **es preexistente en la rama `develop`** (v2), no algo introducido por identidad | No bloqueante, no se tocó — dejar constancia por si en algún momento se decide limpiar |
+
+**Todos estos (salvo el de `empr_id`/`core.empresas`, que es de lógica) son candidatos directos a un PR de fix en `traz-comp-dnato` contra `develop-v3`** — si PROD se despliega desde cero (clonando el repo en vez de copiar archivos a mano como se hizo acá), se va a pisar contra los mismos 4 bugs de código.
 
 ### 7.1 Qué hay que replicar — mismo mecanismo que DEV, otro `deployment.toml`
 
@@ -492,14 +576,17 @@ Reiniciar APIM después de editar: `sudo systemctl restart wso2am`.
 - [ ] Confirmar que ese endpoint es alcanzable desde esta VM — por HTTPS con cadena válida, o por HTTP si están en la misma red interna/VPC del proyecto (`apim-keymanager-dnato.md` §2, Opción B — nunca exponer el JWKS por HTTP públicamente).
 - [ ] Confirmar el `kid` de la clave activa que quedó en `application/config/jwt.php` de ese despliegue — no necesariamente el mismo `dnato-rs256-v1` que usa el shim de DEV (cada par de claves generado en §7.0-bis puede tener su propio `kid`).
 - [ ] **Si alguno de los puntos anteriores no se puede confirmar sin acceso al servidor/config de Dnato de este proyecto: PARAR y consultar antes de aplicar §7.1.** No asumir que ya está desplegado o configurado solo porque el mecanismo ya funciona en DEV — son servidores y despliegues distintos.
+- [ ] `curl` al JWKS desde el propio servidor de Dnato ya da `Verify return code: 0 (ok)` (§7.0-ter) y devuelve JSON real, no un error de cadena TLS ni un 404/500 — resolver ahí cualquier problema antes de asumir que es un tema de la VM del APIM.
 
 ### 7.3 Verificar accesibilidad del JWKS desde la VM
 
-Igual que `apim-keymanager-dnato.md` §2 — ejecutado **desde dentro de la VM** (no desde tu compu):
+Igual que `apim-keymanager-dnato.md` §2 — ejecutado **desde dentro de la VM del APIM** (no desde tu compu, y no reusar el resultado de correrlo desde el server de Dnato — son máquinas distintas, con trust stores distintos, ver §7.0-ter):
 
 ```bash
 curl -s <URL del JWKS de 7.2> | python3 -m json.tool
 ```
+
+Si esto falla con error de certificado **acá** (VM Rocky Linux 9) después de haber andado bien desde el server de Dnato, es la misma clase de problema que §7.0-ter — pero no asumas que hace falta el mismo fix manual de la raíz: una VM recién instalada y actualizada normalmente ya trae las raíces públicas comunes al día. Diagnosticar primero con el mismo comando de §7.0-ter punto 3 antes de tocar nada.
 
 ### 7.4 Aplicación + suscripción en el DevPortal de esta VM
 
