@@ -348,6 +348,10 @@ curl http://localhost:8290/tools/mcp/mcp/man/equipos
 
 Los gaps **G2** (`registration_endpoint` en la AS metadata) y **G3** (endpoint DCR `POST /oauth/register`) ya están implementados en `traz-comp-dnato` `develop-v3` — verificado en `application/controllers/Oauth.php` (`registration_endpoint` en `authorization_server_metadata()`, método `register_client()`) y `application/config/routes.php` (`$route['oauth/register']`). **No hay nada que hacer del lado de Dnato para esto**, más allá de que `develop-v3` esté efectivamente desplegado (§7.0-bis).
 
+> **Valor confirmado el 2026-08-10** para este proyecto GCP:
+> `DNATO_ISSUER = https://demo.cloudtrazalog.com/traz-comp-dnato/oauth`
+> (Dnato corre en `vm-demo-trazalog`, la misma VM que la base de test.) El paso 1 queda igual como procedimiento para reconfirmarlo o para otro ambiente.
+
 #### Paso 1 — Obtener el issuer real de Dnato (💻 SSH al servidor de **Dnato**, no a la VM del MCP)
 
 Este valor tiene que ser **idéntico** en tres lugares: el `.htaccess` de Dnato (§7.0-bis), el `[[apim.jwt.issuer]]` del APIM (§7.1), y la system property de acá. Si difieren aunque sea en la barra final, el flujo falla con "issuer mismatch" o con un 404 en el discovery.
@@ -364,15 +368,41 @@ curl -s <DNATO_ISSUER>/.well-known/oauth-authorization-server | python3 -m json.
 
 Tiene que devolver un JSON con `authorization_endpoint`, `token_endpoint`, `jwks_uri` **y `registration_endpoint`**. Si falta `registration_endpoint`, el servidor de Dnato no está corriendo `develop-v3` → volver a §7.0-bis.
 
+> ⚠️ **Si devuelve el 404 de CodeIgniter** (la página HTML con "404 Page Not Found", distinta del 404 de Apache): faltan las rutas de `oauth/*` en `routes.php` — es el bug #4 de §7.0-quater. **Pasó de nuevo el 2026-08-10:** ese bug se había dado por corregido, pero la corrección se verificó solo contra el JWKS y nunca contra los otros dos endpoints. Verificar **los tres**, no uno solo:
+>
+> ```bash
+> grep -n "oauth" /var/www/html/traz-comp-dnato/application/config/routes.php
+> ```
+>
+> Si no lista las 9 rutas, agregar el bloque completo (ver §7.0-quater) y validar con `php -l` que el archivo quedó sin error de sintaxis. No requiere reiniciar Apache.
+>
+> Los tres endpoints que el discovery de Claude necesita, y que hay que verificar juntos:
+>
+> ```bash
+> curl -s <DNATO_ISSUER>/.well-known/oauth-authorization-server | python3 -m json.tool
+> curl -s <DNATO_ISSUER>/.well-known/jwks.json | python3 -m json.tool
+> curl -i -X POST <DNATO_ISSUER>/register -H "Content-Type: application/json" \
+>   -d '{"redirect_uris":["https://claude.ai/api/mcp/auth_callback"],"token_endpoint_auth_method":"none"}'
+> ```
+>
+> Esperado: metadata con `registration_endpoint`, JWKS con la clave RS256, y un **201** con `"client_id":"trazalog-mcp-connector"`. Verificado en verde el 2026-08-10.
+>
+> *(Detalle menor, no bloqueante: el `201` devuelve `"redirect_uris":[]` en vez del pass-through de los valores enviados que describe `oauth-discovery-flow.md` §6.3. No afecta el flujo — el `redirect_uri` real se valida en `authorize()` contra `oauth_clients.php`.)*
+
 #### Paso 2 — Generar y desplegar el CAR (💻 SSH a la VM del MCP)
+
+> ⚠️ **El directorio `carbonapps/` NO existe en una instalación limpia del APIM** — es el mecanismo de despliegue de Carbon Applications que sí viene de fábrica en el MI, pero no en el zip del API Manager. **Hay que crearlo**; el APIM lo procesa igual. Verificado en el DEV que funciona (`/mnt/win/dev/wso2am-4.6.0`): ese directorio tiene fecha de creación 2026-06-30 (el día que se resolvió G1), mientras que el resto de `deployment/server/` es de la instalación original. Si el `cp` falla con "No such file or directory", falta el `mkdir -p`, no está mal la ruta.
 
 ```bash
 cd ~/traz-tools/_backend/api/ApimDiscoveryProject
 bash build.sh                      # genera build/trazalog-discovery-1.0.0.car
 
+sudo mkdir -p /opt/wso2/wso2am-4.6.0/repository/deployment/server/carbonapps
 sudo cp build/trazalog-discovery-1.0.0.car /opt/wso2/wso2am-4.6.0/repository/deployment/server/carbonapps/
-sudo chown wso2carbon:wso2carbon /opt/wso2/wso2am-4.6.0/repository/deployment/server/carbonapps/trazalog-discovery-1.0.0.car
+sudo chown -R wso2carbon:wso2carbon /opt/wso2/wso2am-4.6.0/repository/deployment/server/carbonapps
 ```
+
+Es el **APIM** (`wso2am-4.6.0`), no el MI — son dos CARs distintos en dos productos distintos, ver la tabla del principio de esta sección.
 
 #### Paso 3 — Inyectar las URLs como Java system properties (💻 SSH a la VM del MCP)
 
@@ -406,9 +436,21 @@ Dejarlo en:
 https_endpoint = "https://mcp.cloudtrazalog.com"
 ```
 
-#### Paso 5 — Apuntar el Key Manager residente a Dnato (💻 SSH a la VM del MCP, con el APIM arriba)
+#### Paso 5 — Apuntar el Key Manager residente a Dnato (OPCIONAL — solo si `[[apim.jwt.issuer]]` no está configurado)
 
-**Este es el paso que más fácil se pasa por alto y el que rompe la arquitectura de identidad si falta.** Por default, el APIM se anuncia a sí mismo como Authorization Server (`https://<dominio>:9443/oauth2/token`) en el campo `authorization_servers` del PRM. Eso **viola TAD-IDENT-04** ("el usuario se autentica contra Trazalog/Dnato, no contra WSO2" — `oauth-discovery-flow.md` §1) y además apunta al 9443, que nunca se expone.
+> **Verificar primero si hace falta.** Si §7.1 ya está aplicado en esta VM, este paso es redundante para la validación de tokens:
+>
+> ```bash
+> sudo grep -nA6 "^\[\[apim.jwt.issuer\]\]" /opt/wso2/wso2am-4.6.0/repository/conf/deployment.toml
+> ```
+>
+> Si `name` y `jwks.url` ya apuntan al Dnato real, **saltear este paso** e ir directo al 6. La validación del JWT entrante la resuelve `[[apim.jwt.issuer]]`, y el `authorization_servers` que Claude consulta lo sirve el CAR del paso 2 con las system properties del paso 3 — no el Key Manager.
+>
+> Lo único que queda desactualizado sin este paso es el **PRM nativo del APIM** (`/trazalog/mcp/1.0/.well-known/oauth-protected-resource`), que sigue anunciando `...:9443/oauth2/token`. Ese path **Claude no lo consulta** (por eso hizo falta el CAR), así que no bloquea el flujo — pero conviene dejarlo consistente cuando haya oportunidad, porque un PRM que se anuncia a sí mismo como AS contradice TAD-IDENT-04 y puede confundir a un cliente MCP futuro que sí lo lea.
+>
+> **Estado 2026-08-10 en esta VM: `[[apim.jwt.issuer]]` ya configurado → paso salteado.**
+
+Por default, el APIM se anuncia a sí mismo como Authorization Server (`https://<dominio>:9443/oauth2/token`) en el campo `authorization_servers` del PRM nativo. Eso contradice TAD-IDENT-04 ("el usuario se autentica contra Trazalog/Dnato, no contra WSO2" — `oauth-discovery-flow.md` §1) y además apunta al 9443, que nunca se expone.
 
 Equivalente al paso 5 de `setup-ngrok.sh`. Requiere el ID del Key Manager residente:
 
