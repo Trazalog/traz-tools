@@ -198,7 +198,62 @@ devuelve 0 filas.
 
 ---
 
-## 6. Lo que queda pendiente
+## 6. 🔴 Requiere decisión: solicitudes que apuntan a equipos de otra empresa
+
+**Encontrado el 2026-08-11. No se corrigió — necesita una definición de negocio antes de tocar
+nada.**
+
+En `assetv2` hay **203 solicitudes de reparación cuyo equipo pertenece a otra empresa**:
+
+| Empresa de la solicitud | Equipos de la empresa | Cantidad |
+|---|---|---|
+| 1 | 8 | 48 |
+| 6 | 8 | 155 |
+
+Como `man_get_ots` y `man_get_ot` unen `solicitud_reparacion` con `equipos` para traer el código,
+sector y ubicación, **la empresa 6 termina viendo el código y la ubicación de 155 equipos de la
+empresa 8**. Las queries filtran correctamente por `sr.id_empresa` (las solicitudes SÍ son
+propias), pero los campos del equipo salen del registro ajeno.
+
+**Por qué no se corrigió por cuenta propia:** hay dos lecturas posibles y llevan a soluciones
+opuestas.
+
+- **Si son datos sucios** (lo más probable dado que las 203 apuntan a la misma empresa 8, con
+  aspecto de carga de prueba mal hecha): hay que limpiar los datos, y además blindar la query con
+  `AND e.id_empresa = sr.id_empresa` en el join para que el aislamiento no dependa de la calidad
+  del dato.
+- **Si es un caso de negocio legítimo** — una empresa de servicios haciendo mantenimiento sobre
+  equipos de un cliente, que es exactamente el modelo de los proveedores mineros al que apunta
+  v3 — entonces la query está bien y lo que falta es modelar esa relación explícitamente.
+
+Blindar el join sin resolver esa pregunta haría desaparecer el equipo de 203 OTs que hoy se ven,
+en ambas lecturas por el motivo equivocado.
+
+**Riesgo asociado, independiente de la respuesta:** `man_create_ot` **no valida que el
+`equipo_id` recibido pertenezca a la empresa del JWT**. Toma el valor del payload del agente y lo
+inserta con el `id_empresa` del token, sin chequeo previo (`toolsMCPAPI.xml`, resource
+`POST /mcp/man/ot`). Un agente puede crear una OT sobre un equipo ajeno y disparar el proceso BPM
+correspondiente. `toolsMANAPI` sí tiene el patrón de validación (`getEquipoIsolated`), pero la
+fachada MCP no lo aplica antes del INSERT.
+
+Además, el paso 2 de ese flujo usa:
+
+```sql
+select max(sr.id_solicitud) sose_id, sr.id_equipo equiid
+  from solicitud_reparacion sr where sr.id_equipo = :equi_id
+```
+
+que **no filtra por empresa** y recupera el ID con un `max()` — susceptible a race condition si
+dos altas concurrentes tocan el mismo equipo. El patrón correcto sería que el INSERT devuelva la
+clave generada (`returnGeneratedKeys="true"`, ya usado en `setEmpresa` del mismo DataService) en
+vez de releerla después.
+
+No se tocó ninguna de las dos cosas porque `man_create_ot` es la única tool de escritura: probarla
+crea registros reales e instancia procesos en Bonita.
+
+---
+
+## 7. Lo que queda pendiente
 
 - **`alm_crear_pedido_materiales` no se verificó**: es la única tool de escritura y probarla
   crea registros reales + instancia un proceso en Bonita. Requiere decidir contra qué ambiente

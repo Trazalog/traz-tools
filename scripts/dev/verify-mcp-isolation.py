@@ -81,5 +81,25 @@ for E in [1,777]:
     ok = n=="0"; fails += 0 if ok else 1
     print(f"alm_get_pedidos  empr={E:<4} filas_ajenas={n:<4} {'OK' if ok else '*** FUGA ***'}")
 
+
+# --- ADVERTENCIA: datos cruzados solicitud <-> equipo -------------------------
+# No es un bug de la query: son datos donde una solicitud de la empresa A
+# referencia un equipo de la empresa B. La query hace el join natural y termina
+# exponiendo codigo/ubicacion del equipo ajeno. Se reporta como ADVERTENCIA
+# porque el fix correcto depende de una decision de negocio (ver
+# doc/mcp/verificacion-queries-datos-reales.md §6): puede ser dato sucio, o un
+# caso legitimo de mantenimiento tercerizado sobre equipos de un cliente.
+print("-"*78)
+n = my("SELECT count(*) FROM solicitud_reparacion sr JOIN equipos e ON e.id_equipo=sr.id_equipo WHERE sr.id_empresa <> e.id_empresa")
+if n != "0":
+    print(f"ADVERTENCIA: {n} solicitudes referencian un equipo de OTRA empresa.")
+    det = my("""SELECT concat('   empresa ', sr.id_empresa, ' -> equipos de la ', e.id_empresa, ': ', count(*))
+                  FROM solicitud_reparacion sr JOIN equipos e ON e.id_equipo=sr.id_equipo
+                 WHERE sr.id_empresa <> e.id_empresa GROUP BY sr.id_empresa, e.id_empresa""")
+    print(det)
+    print("   -> man_get_ots/man_get_ot exponen codigo y ubicacion de esos equipos ajenos.")
+else:
+    print("Sin solicitudes cruzadas entre empresas.")
+
 print("="*78); print(f"RESULTADO: {'AISLAMIENTO OK' if fails==0 else str(fails)+' FUGAS'}")
 sys.exit(1 if fails else 0)
