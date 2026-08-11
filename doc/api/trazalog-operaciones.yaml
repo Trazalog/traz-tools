@@ -17,7 +17,7 @@ info:
 
     **Prefijo por módulo en el nombre de la tool:** `man_` (mantenimiento),
     `alm_` (almacenes) — decisión de diseño (ADR-013 #3), no restricción
-    técnica. Evita colisiones de nombre entre módulos futuros.
+    técnica. Evita colisiones de nombre entre módulos futuros.	
 
     **La empresa se determina automáticamente desde el token JWT.**
     No existe ningún parámetro de empresa en ninguna operación — el gateway
@@ -360,6 +360,55 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /mcp/alm/depositos:
+    get:
+      operationId: alm_get_depositos
+      summary: Listar los depósitos de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los depósitos (almacenes) de la empresa del token, con el
+        establecimiento al que pertenece cada uno.
+
+        **Cuándo usar esta operación:**
+        - **Antes de `alm_crear_pedido_materiales`**: esa operación exige un
+          `depo_id` por cada artículo, y esta es la única forma de conocerlos.
+          No preguntarle al usuario el ID del depósito: consultarlo acá y, si
+          hay varios, ofrecerle elegir por nombre.
+        - Cuando el usuario pregunta dónde tiene almacenados sus materiales o
+          qué depósitos maneja.
+
+        Solo devuelve depósitos no eliminados de la empresa del token.
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Depósitos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositosList"
+              examples:
+                con_depositos:
+                  summary: Empresa con varios depósitos
+                  value:
+                    depositos:
+                      deposito:
+                        - depo_id: "2000"
+                          descripcion: "ALMACEN"
+                          esta_id: "6"
+                          establecimiento: "Planta Principal"
+                        - depo_id: "1000"
+                          descripcion: "DEPOSITO_TRANSPORTE"
+                          esta_id: "1000"
+                          establecimiento: "ESTABLECIMIENTO_TRANSPORTE"
+                sin_depositos:
+                  summary: Empresa sin depósitos cargados
+                  value:
+                    depositos: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /mcp/alm/pedidos:
     get:
       operationId: alm_get_pedidos_materiales
@@ -666,6 +715,36 @@ components:
               type: array
               items: { $ref: "#/components/schemas/ArticuloStock" }
 
+    Deposito:
+      type: object
+      properties:
+        depo_id:
+          type: string
+          description: ID del depósito. Es el valor que hay que pasar en `depo_id`
+            al crear un pedido de materiales.
+          example: "2000"
+        descripcion:
+          type: string
+          example: "ALMACEN"
+        esta_id:
+          type: string
+          description: ID del establecimiento al que pertenece.
+          example: "6"
+        establecimiento:
+          type: string
+          description: Nombre del establecimiento. Vacío si el depósito no tiene uno asociado.
+          example: "Planta Principal"
+
+    DepositosList:
+      type: object
+      properties:
+        depositos:
+          type: object
+          properties:
+            deposito:
+              type: array
+              items: { $ref: "#/components/schemas/Deposito" }
+
     ArticuloPedido:
       type: object
       required: [arti_id, cantidad, depo_id]
@@ -679,8 +758,9 @@ components:
           example: "10"
         depo_id:
           type: string
-          description: ID del depósito de destino.
-          example: "1"
+          description: ID del depósito de destino. **Obtenerlo con `alm_get_depositos`** —
+            no preguntárselo al usuario.
+          example: "2000"
 
     CrearPedidoRequest:
       type: object

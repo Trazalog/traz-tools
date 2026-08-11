@@ -16,7 +16,7 @@ una tool.
 
 | | |
 |---|---|
-| **Última ejecución** | 2026-08-11 — 6/6 escenarios OK, con escrituras reales |
+| **Última ejecución** | 2026-08-11 — 7/7 escenarios OK, con escrituras reales |
 | **Entorno** | MI local `:8290` + bases de desarrollo (`10.142.0.13`) |
 | **Suite** | `scripts/dev/mcp_escenarios.py` |
 
@@ -192,6 +192,24 @@ razona sobre datos contradictorios.
 | `código`, `descripción`, `estado` del equipo | idénticos en listado y detalle |
 | `estado` del pedido | idéntico en listado y detalle |
 | Acentos en las descripciones | sin mojibake (ver §5) |
+
+---
+
+### E7 · El contrato publicado no se desincroniza de lo implementado
+
+**Contexto.** La OpenAPI (`doc/api/trazalog-operaciones.yaml`) es lo que consume el Virtual MCP
+Server del APIM para generar las tools. Es un artefacto **separado** del `toolsMCPAPI.xml` del
+MI, así que pueden divergir sin que nadie lo note:
+
+| Divergencia | Qué pasa |
+|---|---|
+| Declarada en la OpenAPI, no implementada en el MI | la tool aparece en Claude y **falla con 404** al usarla |
+| Implementada en el MI, no declarada | la tool es **invisible** para el agente |
+
+Se verifica que ambos conjuntos de rutas coincidan y que no haya `operationId` duplicados. Es el
+único escenario que no necesita el MI corriendo — solo lee los dos archivos.
+
+**Resultado esperado:** 9 rutas declaradas, todas implementadas, 10 `operationId` únicos.
 
 ---
 

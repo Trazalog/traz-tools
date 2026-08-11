@@ -261,6 +261,49 @@ def e6(m):
 
 
 # ===========================================================================
+# E7 — El contrato publicado y lo implementado no se desincronizan
+#      La OpenAPI es lo que consume el Virtual MCP Server del APIM: si declara
+#      una operación que el MI no implementa, la tool aparece en Claude y falla
+#      con 404 al usarla. Y al revés, lo implementado sin declarar es invisible.
+# ===========================================================================
+@escenario("E7", "Contrato OpenAPI ↔ implementación del MI")
+def e7(_m):
+    import re
+    # scripts/dev/este.py -> hay que subir TRES niveles para llegar a la raíz
+    raiz = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    spec_path = os.path.join(raiz, "doc/api/trazalog-operaciones.yaml")
+    xml_path = os.path.join(
+        raiz, "_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/"
+              "artifacts/apis/toolsMCPAPI.xml")
+    if not (os.path.exists(spec_path) and os.path.exists(xml_path)):
+        paso(f"{AMAR}[se omite: no se encontró el repo]{FIN}")
+        return
+    try:
+        import yaml
+    except ImportError:
+        paso(f"{AMAR}[se omite: falta pyyaml]{FIN}")
+        return
+
+    norm = lambda s: re.sub(r"\{[^}]+\}", "{}", s)
+    spec = yaml.safe_load(open(spec_path, encoding="utf-8"))
+    en_spec = {norm(p) for p in spec["paths"]}
+    xml = open(xml_path, encoding="utf-8").read()
+    en_mi = {norm(p.split("?")[0]) for p in re.findall(r'uri-template="([^"]+)"', xml)
+             if p.startswith("/mcp/")}
+
+    solo_spec, solo_mi = sorted(en_spec - en_mi), sorted(en_mi - en_spec)
+    afirmar(not solo_spec,
+            f"declaradas en la OpenAPI pero NO implementadas (darían 404): {solo_spec}")
+    afirmar(not solo_mi,
+            f"implementadas pero NO declaradas (invisibles para el agente): {solo_mi}")
+    paso(f"{len(en_spec)} rutas declaradas y todas implementadas")
+
+    ops = [o.get("operationId") for ms in spec["paths"].values() for o in ms.values()]
+    afirmar(len(ops) == len(set(ops)), f"operationId duplicados: {ops}")
+    paso(f"{len(ops)} operationId únicos: {', '.join(sorted(ops)[:4])}…")
+
+
+# ===========================================================================
 def main():
     escrituras = "--escrituras" in sys.argv
     todos = [v for v in globals().values() if callable(v) and hasattr(v, "_esc")]
