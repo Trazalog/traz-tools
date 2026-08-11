@@ -116,8 +116,11 @@ for f in application/controllers/Oauthlogin.php application/controllers/Oauth.ph
          application/controllers/Cli.php application/libraries/JwtIssuer.php \
          application/models/OauthCode_model.php ; do
   P="$DNATO_DIR/$f"; [ -f "$P" ] || continue
-  N=$(grep -c '??' "$P" 2>/dev/null)
-  RB=$(grep -c 'random_bytes' "$P" 2>/dev/null)
+  # Ignorar lineas comentadas: en PHP valen //, # y * (bloques /* */).
+  # Sin esto, un fix aplicado dejando la linea vieja comentada da falso positivo.
+  CODE_ONLY=$(grep -vE '^\s*(//|#|\*|/\*)' "$P" 2>/dev/null)
+  N=$(echo "$CODE_ONLY" | grep -c '??')
+  RB=$(echo "$CODE_ONLY" | grep -c 'random_bytes')
   if [ "$N" -gt 0 ]; then bad "$(basename $f): $N usos de '??' (PHP 7+) -> Parse error"; fi
   if [ "$RB" -gt 0 ] && ! [ -d "$DNATO_DIR/vendor/paragonie/random_compat" ]; then
     bad "$(basename $f): usa random_bytes() (PHP 7+) sin paragonie/random_compat instalado"
