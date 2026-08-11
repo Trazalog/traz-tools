@@ -37,9 +37,8 @@ Necesita tener a mano:
 flowchart LR
     A["1 · Abrir<br/>Conectores"] --> B["2 · Agregar<br/>conector"]
     B --> C["3 · Pegar la<br/>dirección"]
-    C --> D["4 · Iniciar sesión<br/>en Trazalog"]
-    D --> E["5 · Autorizar<br/>el acceso"]
-    E --> F["✅ Listo:<br/>ya puede preguntar"]
+    C --> D["4 · Ingresar con su<br/>usuario de Trazalog"]
+    D --> E["✅ Listo:<br/>ya puede preguntar"]
 ```
 
 Toma unos 3 minutos.
@@ -56,8 +55,7 @@ izquierda.
 - En **claude.ai** (navegador): haga clic en su nombre o foto (arriba a la derecha) →
   **Configuración**.
 
-<!-- CAPTURA 1: pantalla de Configuración con "Conectores" señalado en el menú lateral.
-     Archivo sugerido: img/01-menu-conectores.png -->
+![Sección Conectores en la configuración de Claude](img/01-menu-conectores.png)
 
 ---
 
@@ -66,8 +64,7 @@ izquierda.
 Dentro de **Conectores**, busque el botón **Agregar conector personalizado**
 (o *Add custom connector*).
 
-<!-- CAPTURA 2: la lista de conectores con el botón "Agregar conector personalizado" señalado.
-     Archivo sugerido: img/02-agregar-conector.png -->
+![Menú Agregar → Agregar conector personalizado](img/02-agregar-conector.png)
 
 ---
 
@@ -85,41 +82,32 @@ Se abre un formulario con dos campos:
 
 Haga clic en **Agregar** o **Guardar**.
 
-<!-- CAPTURA 3: el formulario completo, con Nombre y URL cargados.
-     Archivo sugerido: img/03-formulario.png -->
+![Formulario con el nombre y la dirección del servidor](img/03-formulario.png)
 
 ---
 
-## Paso 4 — Iniciar sesión en Trazalog
+## Paso 4 — Ingresar con su usuario de Trazalog
 
-Ahora haga clic en **Conectar**. Se va a abrir una ventana con la pantalla de acceso de
-**Trazalog** — es el mismo sistema de siempre, pidiéndole que confirme quién es.
+Ahora haga clic en **Conectar**. Se abre una ventana de **Trazalog** que le avisa que *Claude
+solicita acceder a Trazalog* y le pide sus credenciales.
 
-Ingrese su **usuario y contraseña de Trazalog**.
+Ingrese su **usuario y contraseña de Trazalog** — los mismos de siempre — y haga clic en
+**Ingresar**.
 
-<!-- CAPTURA 4: la pantalla de login de Trazalog que aparece al conectar.
-     Archivo sugerido: img/04-login-trazalog.png -->
+![Pantalla de acceso de Trazalog](img/04-login-trazalog.png)
 
-> **Si no le pide usuario y contraseña**, no se preocupe: significa que su sesión de Trazalog
-> ya estaba abierta en ese navegador y el sistema lo reconoció. Puede seguir al paso 5.
-
----
-
-## Paso 5 — Autorizar el acceso
-
-Trazalog le va a preguntar si autoriza a **Claude** a acceder a sus datos. Confirme.
-
-Esto es lo mismo que cuando una aplicación le pide permiso para usar su cuenta de Google:
-usted le está dando permiso a Claude para consultar **su** información de Trazalog, y puede
+Al ingresar sus credenciales está autorizando a Claude a consultar **su** información. Es lo
+mismo que cuando una aplicación le pide permiso para usar su cuenta de Google, y puede
 revocarlo cuando quiera (ver *Desconectar* más abajo).
 
-<!-- CAPTURA 5: la pantalla de autorización ("Claude solicita acceder a Trazalog").
-     Archivo sugerido: img/05-autorizar.png -->
+> **Si no le pide usuario y contraseña**, no se preocupe: significa que su sesión de Trazalog
+> ya estaba abierta en ese navegador y el sistema lo reconoció.
 
-Al confirmar, vuelve a Claude y el conector aparece como **conectado**.
+Cuando termina, ve una pantalla de confirmación y puede cerrar esa ventana.
 
-<!-- CAPTURA 6: el conector ya conectado, mostrando la lista de herramientas disponibles.
-     Archivo sugerido: img/06-conectado.png -->
+![Conexión confirmada](img/05-conectado.png)
+
+De vuelta en Claude, el conector aparece en la lista como **conectado**.
 
 ---
 
