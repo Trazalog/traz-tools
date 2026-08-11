@@ -333,6 +333,177 @@ Confirmar que el recurso existe localmente en la VM antes de tocar el APIM (un `
 curl http://localhost:8290/tools/mcp/mcp/man/equipos
 ```
 
+### 6.2-bis OAuth discovery en el APIM — el segundo CAR (obligatorio para Claude.ai)
+
+> **Agregado 2026-08-10 tras fallar el alta del conector en Claude.** Esta sección faltaba por completo en la Tarea 3.5: el checklist original documentaba solo el `.car` del MI y omitía todo el bloque de discovery OAuth, que en DEV lo resuelve `scripts/dev/setup-ngrok.sh` de forma automática y por eso nunca se documentó como paso manual. Sin esto, el conector de Claude.ai **no puede autenticarse nunca** — ver §6.2-ter para el troubleshooting completo.
+
+**Hay DOS CARs, en DOS servidores distintos.** Es el punto que más confusión generó:
+
+| CAR | Se genera con | Va en | Contiene |
+|---|---|---|---|
+| `ToolsAPIProject_1.0.0.car` | `mvn clean install` (§6.1) | **MI** — `wso2mi-4.5.0/.../carbonapps/` | APIs de orquestación + DataServices |
+| `trazalog-discovery-1.0.0.car` | `bash build.sh` (acá) | **APIM** — `wso2am-4.6.0/.../carbonapps/` | Synapse API `OAuthDiscovery` (PRM RFC 9728) |
+
+**Por qué hace falta el segundo:** cuando Claude.ai agrega un conector MCP, sigue la cadena de descubrimiento RFC 9728 → RFC 8414 → RFC 7591 (`doc/identity/oauth-discovery-flow.md` §2). El primer paso es pedir el **Protected Resource Metadata** en el path que define la RFC 9728 §3.1: `/.well-known/oauth-protected-resource/...`. **WSO2 APIM no sirve el PRM en ese path** — lo sirve embebido dentro del contexto de la API (`/trazalog/mcp/1.0/.well-known/oauth-protected-resource`), que Claude nunca consulta. El CAR `OAuthDiscovery` cubre ese hueco publicando una Synapse API con contexto `/.well-known`. Es el gap **G1** de `oauth-discovery-flow.md` §5, resuelto el 2026-06-30 y validado con Claude.ai Web el 2026-07-02 (`doc/mcp/demo-smoke-test.md`).
+
+Los gaps **G2** (`registration_endpoint` en la AS metadata) y **G3** (endpoint DCR `POST /oauth/register`) ya están implementados en `traz-comp-dnato` `develop-v3` — verificado en `application/controllers/Oauth.php` (`registration_endpoint` en `authorization_server_metadata()`, método `register_client()`) y `application/config/routes.php` (`$route['oauth/register']`). **No hay nada que hacer del lado de Dnato para esto**, más allá de que `develop-v3` esté efectivamente desplegado (§7.0-bis).
+
+#### Paso 1 — Obtener el issuer real de Dnato (💻 SSH al servidor de **Dnato**, no a la VM del MCP)
+
+Este valor tiene que ser **idéntico** en tres lugares: el `.htaccess` de Dnato (§7.0-bis), el `[[apim.jwt.issuer]]` del APIM (§7.1), y la system property de acá. Si difieren aunque sea en la barra final, el flujo falla con "issuer mismatch" o con un 404 en el discovery.
+
+```bash
+grep DNATO_ISSUER /var/www/html/traz-comp-dnato/.htaccess
+```
+
+Confirmar que ese mismo valor responde la metadata RFC 8414 (💻 desde la VM del MCP, para validar de paso que hay conectividad y que la cadena TLS resuelve — ver §7.0-ter si falla):
+
+```bash
+curl -s <DNATO_ISSUER>/.well-known/oauth-authorization-server | python3 -m json.tool
+```
+
+Tiene que devolver un JSON con `authorization_endpoint`, `token_endpoint`, `jwks_uri` **y `registration_endpoint`**. Si falta `registration_endpoint`, el servidor de Dnato no está corriendo `develop-v3` → volver a §7.0-bis.
+
+#### Paso 2 — Generar y desplegar el CAR (💻 SSH a la VM del MCP)
+
+```bash
+cd ~/traz-tools/_backend/api/ApimDiscoveryProject
+bash build.sh                      # genera build/trazalog-discovery-1.0.0.car
+
+sudo cp build/trazalog-discovery-1.0.0.car /opt/wso2/wso2am-4.6.0/repository/deployment/server/carbonapps/
+sudo chown wso2carbon:wso2carbon /opt/wso2/wso2am-4.6.0/repository/deployment/server/carbonapps/trazalog-discovery-1.0.0.car
+```
+
+#### Paso 3 — Inyectar las URLs como Java system properties (💻 SSH a la VM del MCP)
+
+El CAR no tiene las URLs hardcodeadas: las lee en runtime con `get-property('system', ...)`. En DEV las inyecta `setup-ngrok.sh` vía `JAVA_OPTS` porque cambian con cada túnel; acá son fijas, así que van en el unit de systemd.
+
+```bash
+sudo systemctl edit --full wso2am
+```
+
+Agregar esta línea en la sección `[Service]`, debajo de la de `JAVA_HOME` (reemplazando `<DNATO_ISSUER>` por el valor del paso 1):
+
+```ini
+Environment="JAVA_OPTS=-Dtrazalog.mcp.resource.url=https://mcp.cloudtrazalog.com/trazalog/mcp/1.0/mcp -Dtrazalog.dnato.oauth.url=<DNATO_ISSUER>"
+```
+
+> `trazalog.mcp.resource.url` es la URL pública **completa** del endpoint MCP publicado en §6.3 — **sin el puerto `8243`**. Hacia afuera se entra siempre por el 443 de Caddy; el 8243 no está expuesto (ADR-011 #9) y anunciarlo en el PRM rompe el flujo desde cualquier cliente externo.
+>
+> En una VM nueva esto ya lo hace `install-apim.sh` a partir de `MCP_RESOURCE_URL` y `DNATO_OAUTH_URL` en `deploy/gcp/.env` — este paso manual es solo para la VM que ya estaba instalada antes de esta corrección.
+
+#### Paso 4 — Corregir `https_endpoint` en `deployment.toml` (💻 SSH a la VM del MCP)
+
+Sin esto, el PRM que sirve el propio APIM anuncia `"resource":"https://localhost:8243/..."` — inútil para cualquier cliente externo.
+
+```bash
+sudo grep -n "https_endpoint" /opt/wso2/wso2am-4.6.0/repository/conf/deployment.toml
+```
+
+Dejarlo en:
+
+```toml
+https_endpoint = "https://mcp.cloudtrazalog.com"
+```
+
+#### Paso 5 — Apuntar el Key Manager residente a Dnato (💻 SSH a la VM del MCP, con el APIM arriba)
+
+**Este es el paso que más fácil se pasa por alto y el que rompe la arquitectura de identidad si falta.** Por default, el APIM se anuncia a sí mismo como Authorization Server (`https://<dominio>:9443/oauth2/token`) en el campo `authorization_servers` del PRM. Eso **viola TAD-IDENT-04** ("el usuario se autentica contra Trazalog/Dnato, no contra WSO2" — `oauth-discovery-flow.md` §1) y además apunta al 9443, que nunca se expone.
+
+Equivalente al paso 5 de `setup-ngrok.sh`. Requiere el ID del Key Manager residente:
+
+```bash
+DNATO_ISSUER="<el valor del paso 1>"
+
+# 1) Obtener el ID del Resident Key Manager
+curl -s -k -u admin:admin https://localhost:9443/api/am/admin/v4/key-managers \
+  | python3 -c "import sys,json; [print(k['id'], k['name']) for k in json.load(sys.stdin)['list']]"
+
+# 2) Actualizarlo (reemplazar <KM_ID> por el id que devolvió el comando anterior)
+curl -s -k -u admin:admin -X PUT \
+  "https://localhost:9443/api/am/admin/v4/key-managers/<KM_ID>" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"name\": \"Resident Key Manager\",
+    \"type\": \"default\",
+    \"description\": \"This is Resident Key Manager\",
+    \"enabled\": true,
+    \"issuer\": \"$DNATO_ISSUER\",
+    \"tokenEndpoint\": \"${DNATO_ISSUER}/token\",
+    \"revokeEndpoint\": \"${DNATO_ISSUER}/revoke\",
+    \"certificates\": {\"type\": \"JWKS\", \"value\": \"${DNATO_ISSUER}/.well-known/jwks.json\"},
+    \"availableGrantTypes\": [\"authorization_code\"],
+    \"enableTokenGeneration\": false,
+    \"enableMapOAuthConsumerApps\": false,
+    \"enableOAuthAppCreation\": false,
+    \"enableSelfValidationJWT\": true,
+    \"additionalProperties\": {
+      \"ServerURL\": \"https://localhost:9443/services/\",
+      \"self_validate_jwt\": true,
+      \"validation_enable\": true,
+      \"enable_token_hash\": false
+    },
+    \"tokenValidation\": [{\"type\": \"JWT\", \"enable\": true, \"value\": {\"body\": {}, \"header\": {}}}]
+  }" | python3 -m json.tool
+```
+
+> ⚠️ Cambiar `admin:admin` por las credenciales reales del APIM de esta VM si se cambiaron durante la instalación.
+
+#### Paso 6 — Reiniciar y verificar (💻 SSH a la VM del MCP)
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart wso2am
+sudo journalctl -u wso2am -f    # esperar el arranque completo (~60-90s)
+```
+
+Verificación, en este orden. **Los tres tienen que pasar antes de tocar el conector en Claude:**
+
+```bash
+# A) El PRM responde en el path RFC 9728 (esto es lo que Claude realmente consulta)
+curl -s https://mcp.cloudtrazalog.com/.well-known/oauth-protected-resource | python3 -m json.tool
+
+# B) Mismo contenido en el path path-based
+curl -s https://mcp.cloudtrazalog.com/.well-known/oauth-protected-resource/trazalog/mcp/1.0/mcp | python3 -m json.tool
+
+# C) La AS metadata de Dnato, que es a donde el PRM tiene que apuntar
+curl -s <DNATO_ISSUER>/.well-known/oauth-authorization-server | python3 -m json.tool
+```
+
+A y B tienen que devolver **exactamente** esto (con el issuer real de Dnato, no `localhost` ni `:9443`):
+
+```json
+{
+  "resource": "https://mcp.cloudtrazalog.com/trazalog/mcp/1.0/mcp",
+  "authorization_servers": ["<DNATO_ISSUER>"],
+  "scopes_supported": []
+}
+```
+
+Si `authorization_servers` sigue diciendo `...:9443/oauth2/token`, faltó el paso 5. Si `resource` dice `localhost`, faltó el paso 4.
+
+### 6.2-ter Troubleshooting del alta del conector en Claude.ai
+
+Síntomas reales observados el 2026-08-10 con esta configuración incompleta, y qué los causa:
+
+| Síntoma en Claude | Causa | Dónde se arregla |
+|---|---|---|
+| Se abre una ventana en `https://mcp.cloudtrazalog.com/authorize?...` y devuelve `{"code":"404","type":"Status report"}` | Claude no encontró el PRM (404 en `/.well-known/...`) y cayó al **fallback host-based**: asume que el Authorization Server es el propio dominio del MCP server. El 404 lo tira Tomcat/WSO2, que no tiene ningún `/authorize` | §6.2-bis pasos 2+3 (CAR + system properties) |
+| «No se pudo registrar con el servicio de inicio de sesión de Trazalog MCP» + código `ofid_...` | Claude intentó el registro dinámico (RFC 7591) contra un servidor que no es Dnato. Se dispara al forzar una autorización nueva | §6.2-bis pasos 2+3, y verificar que la AS metadata de Dnato traiga `registration_endpoint` (paso 1) |
+| El conector figura conectado y `tools/list` muestra las 9 tools, pero cualquier `tools/call` responde `requires re-authorization (token expired)` | El conector tiene un token viejo cacheado (de DEV/ngrok, o de una sesión anterior) que nunca se puede renovar porque el discovery está roto. **Que las tools se listen no prueba que el OAuth funcione** — `tools/list` no requiere token | Igual que arriba; después **eliminar y volver a crear** el conector, no solo reconectarlo |
+| Nunca aparece la pantalla de login de Dnato | Puede ser normal: si ya hay sesión activa en Dnato en ese navegador, el `authorize` responde sin volver a pedir credenciales. **No es evidencia de que el flujo funcione** — verificar siempre con el `access_log` de Apache del servidor de Dnato | — |
+
+**Cómo confirmar de qué lado está el problema** (💻 en el servidor de **Dnato**), mientras se reintenta el alta del conector:
+
+```bash
+sudo tail -f /var/log/httpd/access_log | grep -E "oauth/(authorize|login|token|register)"
+```
+
+- **No aparece ninguna línea** → el problema es de discovery: Claude ni siquiera está llegando a Dnato. Es §6.2-bis.
+- **Aparecen requests** → el discovery funciona; el problema es de identidad (§7): `[[apim.jwt.issuer]]`, `JWT_AZP`, whitelist de `redirect_uri` en `oauth_clients.php`, o suscripción de la app (§7.4).
+
+Después de corregir la configuración, **eliminar el conector en Claude y crearlo de nuevo** (no alcanza con "Desconectar/Conectar"): un conector guardado conserva el `client_id` y los tokens del intento fallido.
+
 ### 6.3 Publicar la API + generar el MCP Server en el Publisher de esta VM
 
 Seguir `doc/mcp/virtual-mcp-unificado.md` §2 completo — ya corregido con todo lo que falló la primera vez en DEV (2026-08-08). Puntos que cambian respecto a DEV:
@@ -372,6 +543,7 @@ Mismo patrón que el smoke test que se hizo en DEV el 2026-08-08 (`virtual-mcp-u
 ### DoD de esta tarea (E7-INFRA-05)
 
 - [ ] CAR reconstruido y desplegado en el MI de la VM (§6.2)
+- [ ] **CAR `OAuthDiscovery` desplegado en el APIM + system properties + `https_endpoint` + Key Manager apuntando a Dnato (§6.2-bis)** — los 3 curls de verificación en verde
 - [ ] API + MCP Server publicados en el APIM de la VM (§6.3)
 - [ ] Suscripción de la aplicación al MCP Server confirmada
 - [ ] `initialize`/`tools/list` responden vía `https://mcp.cloudtrazalog.com`
