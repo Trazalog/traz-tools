@@ -560,6 +560,47 @@ Seguir `doc/mcp/virtual-mcp-unificado.md` §2 completo — ya corregido con todo
 - **Suscripción (§2.8-bis):** crear o reusar una aplicación equivalente a `TrazalogDnatoMCP` en el DevPortal de esta VM y suscribirla al MCP Server nuevo. Sin este paso, las 9 tools dan `900908` aunque todo el resto esté bien — fue el primer bloqueo real que apareció en DEV.
 - **Nombre/contexto:** a elección de Rodolfo — no hay obligación de repetir `Trazalog MCP Server`/`/trazalog/mcp` (lo que terminó usándose en DEV), pero mantener el mismo nombre entre ambientes evita confusión al comparar configuraciones.
 
+#### 6.3-bis Los dos errores que aparecen SIEMPRE al final, en este orden
+
+> **Agregado 2026-08-11, tras pegarse contra los dos en GCP** — los mismos dos que ya habían aparecido en DEV el 2026-08-08. No son bugs: son dos pasos de configuración que el Publisher **no** hace solo, y que se manifiestan recién cuando todo lo demás (identidad, discovery, OAuth) ya funciona. Conviene hacerlos de entrada para no perder tiempo diagnosticando.
+
+**La causa común de ambos: el MCP Server es un artefacto SEPARADO de la API.** Generarlo desde la API no copia ni las suscripciones ni el endpoint. Tiene su propio ID, su propio `endpointConfig` y sus propias suscripciones.
+
+**Error 1 — `403 Forbidden` en todas las tools**
+
+En el log del APIM (`repository/logs/wso2carbon.log`):
+
+```
+API authentication failure due to Resource forbidden for appName=<tu-app> for requestURI=/trazalog/mcp/1.0/mcp
+```
+
+Que el log muestre el `appName` es **buena señal**: significa que el JWT es válido, la firma verificó y el `azp` matcheó con el Consumer Key de la aplicación. Lo que falta es la suscripción (`900908`).
+
+**Fix:** DevPortal (por el túnel SSH de §6.3) → **Applications** → tu app (ej. `TrazalogDnatoMCP-GCP`) → **Subscriptions** → agregar **el MCP Server** (no la API fuente — son artefactos distintos) con policy `Unlimited`. Impacta en caliente: no hace falta reiniciar nada ni reconectar el conector en Claude.
+
+**Error 2 — `404 Not Found` (`{"code":"404","type":"Status report"}`)**
+
+Aparece **inmediatamente después** de resolver el 403. Es el `endpointConfig` del MCP Server, que queda en `null` porque generarlo desde la API no copia el endpoint.
+
+**Fix:** configurar el endpoint en **LOS DOS** artefactos del Publisher:
+
+| Artefacto | Dónde |
+|---|---|
+| La API | `APIs` → `Trazalog MCP` → `Develop` → `API Configurations` → `Endpoints` |
+| El MCP Server | `MCP Servers` → `Trazalog MCP Server` → `API Configurations` → `Endpoints` |
+
+En ambos, Production **y** Sandbox URL:
+
+```
+http://localhost:8290/tools/mcp
+```
+
+`localhost` porque en esta VM el APIM y el MI conviven (igual que en DEV) — **no** usar la IP interna de otra VM. Puerto `8290` (HTTP passthrough del MI), no `8280`. Contexto `/tools/mcp` (`toolsMCPAPI`), no `/tools/man` ni `/tools/alm`.
+
+> **Después de cambiar el endpoint hay que desplegar una revisión nueva de cada artefacto** (`Deployments` → `Deploy New Revision`). El cambio no toma efecto con solo guardarlo.
+
+**Cómo distinguir este 404 del 404 de discovery de §6.2-ter:** el de acá aparece en `tools/call` con el conector **ya conectado y autenticado**; el de discovery aparece al intentar conectar el conector, antes de cualquier login.
+
 ### 6.4 Verificar el flujo OAuth end-to-end contra `mcp.cloudtrazalog.com`
 
 Requiere §6.0 resuelto (identidad de esta VM aplicada) y un JWT real emitido por el Dnato de este mismo proyecto GCP — no sirve el JWKS local de DEV (`scripts/dev/dnato-jwks-server.py`, ese es solo para el JWKS falso de DEV).
