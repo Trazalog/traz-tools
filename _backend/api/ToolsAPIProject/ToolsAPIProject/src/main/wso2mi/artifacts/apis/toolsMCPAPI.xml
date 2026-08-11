@@ -470,12 +470,15 @@
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="api_url" expression="$ctx:apiconf//api_url"/>
 
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              alm.alm_lotes.empr_id, que es el id de core.empresas (ADR-012). -->
          <property name="uri.var.almStock_url"
-                   expression="fn:concat($ctx:api_url,'/alm/stock/',get-property('jwt_mysql_empresa_id'))"/>
+                   expression="fn:concat($ctx:api_url,'/alm/stock/',get-property('jwt_empr_id'))"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | MCP | alm_get_stock | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
-            <property name="empr_id" expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
@@ -520,12 +523,13 @@
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="api_url" expression="$ctx:apiconf//api_url"/>
 
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
          <property name="uri.var.almPedidos_url"
-                   expression="fn:concat($ctx:api_url,'/alm/pedidos/',get-property('jwt_mysql_empresa_id'))"/>
+                   expression="fn:concat($ctx:api_url,'/alm/pedidos/',get-property('jwt_empr_id'))"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | MCP | alm_get_pedidos_materiales | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
-            <property name="empr_id" expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
@@ -570,13 +574,14 @@
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="api_url" expression="$ctx:apiconf//api_url"/>
 
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
          <property name="uri.var.almPedido_url"
-                   expression="fn:concat($ctx:api_url,'/alm/pedido/',get-property('uri.var.pema_id'),'/',get-property('jwt_mysql_empresa_id'))"/>
+                   expression="fn:concat($ctx:api_url,'/alm/pedido/',get-property('uri.var.pema_id'),'/',get-property('jwt_empr_id'))"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | MCP | alm_get_pedido_material | detalle (toolsMCPAPI -> toolsALMAPI)"/>
             <property name="pema_id" expression="get-property('uri.var.pema_id')"/>
-            <property name="empr_id" expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
@@ -628,15 +633,16 @@
          <!-- Inyectar empr_id del JWT en el body ANTES de delegar — nunca el
               que mande el agente. justificacion/ortr_id/articulos pasan tal
               cual vinieron del request. -->
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
          <script language="js"><![CDATA[
             var body = mc.getPayloadJSON();
-            body.empr_id = "" + mc.getProperty('jwt_mysql_empresa_id');
+            body.empr_id = "" + mc.getProperty('jwt_empr_id');
             mc.setPayloadJSON(body);
          ]]></script>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | MCP | alm_crear_pedido_materiales | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
-            <property name="empr_id" expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
          </log>
 
          <header name="Accept" scope="transport" value="application/json"/>
