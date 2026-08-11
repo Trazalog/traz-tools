@@ -196,6 +196,15 @@ coincide exactamente con la suma de los lotes propios. Verificado además que pe
 ajeno por ID (equipo de la empresa 8 solicitado por la 6, solicitud de la 6 pedida por la 8)
 devuelve 0 filas.
 
+**Pasada exhaustiva** — no solo el set de muestra: se corrió cada query contra **todas** las
+empresas que tienen datos, verificando completitud y ausencia de filas ajenas en cada una.
+
+| Query | Empresas verificadas | Resultado |
+|---|---|---|
+| `getEquipos` | 1, 6, 8, 9, 17 | 5/5 OK |
+| `getOTsByEmpresa` | 1, 6, 8, 9 | 4/4 OK |
+| `getArticulos2` | 1, 2, 3, 4, 9, 87, 99, 181, 777 | 9/9 OK |
+
 ---
 
 ## 6. 🔴 Requiere decisión: solicitudes que apuntan a equipos de otra empresa
