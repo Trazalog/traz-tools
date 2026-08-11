@@ -601,6 +601,43 @@ http://localhost:8290/tools/mcp
 
 **Cómo distinguir este 404 del 404 de discovery de §6.2-ter:** el de acá aparece en `tools/call` con el conector **ya conectado y autenticado**; el de discovery aparece al intentar conectar el conector, antes de cualquier login.
 
+**Error 3 — `101503 Error connecting to the back end`**
+
+Significa que el gateway no pudo conectar al MI. Dos causas, en orden de frecuencia:
+
+1. **El MI se está reiniciando.** Tarda ~40 s en arrancar (`WSO2 Micro Integrator started in NN seconds` en el log). Cualquier `tools/call` en esa ventana da `101503`. **Pasó exactamente esto el 2026-08-11** tras redesplegar el CAR: se reportaron 8 intentos fallidos que en realidad eran el MI arrancando. Antes de diagnosticar nada, esperar el mensaje de arranque completo y recién ahí probar.
+2. El `endpointConfig` apunta a un host/puerto inalcanzable → ver Error 2.
+
+Para distinguirlas, desde la VM: si `curl http://localhost:8290/tools/mcp/mcp/alm/stock` devuelve `503 identity_missing`, el MI está sano y era timing.
+
+#### 6.3-ter Cuando el `endpointConfig` no se puede editar desde la UI
+
+En APIM 4.6.0 la pantalla del MCP Server puede no permitir editar el endpoint (el campo aparece deshabilitado o no se persiste). En ese caso hay que hacerlo por el **Publisher REST API**. Verificado el 2026-08-11 contra esta VM:
+
+```bash
+# 1) Registrar cliente + obtener token con scopes de publisher
+REG=$(curl -s -k -X POST https://localhost:9443/client-registration/v0.17/register \
+  -u admin:admin -H "Content-Type: application/json" \
+  -d '{"callbackUrl":"http://localhost","clientName":"mcp_fix","owner":"admin","grantType":"client_credentials password refresh_token","saasApp":true}')
+CK=$(echo "$REG" | python3 -c "import sys,json;print(json.load(sys.stdin)['clientId'])")
+CS=$(echo "$REG" | python3 -c "import sys,json;print(json.load(sys.stdin)['clientSecret'])")
+TOKEN=$(curl -s -k -X POST https://localhost:9443/oauth2/token -u "$CK:$CS" \
+  -d "grant_type=password&username=admin&password=admin&scope=apim:api_view apim:api_create apim:api_publish apim:api_manage apim:mcp_server_view apim:mcp_server_create apim:mcp_server_publish apim:mcp_server_manage" \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+# 2) Listar MCP Servers y quedarse con el id
+curl -s -k https://localhost:9443/api/am/publisher/v4/mcp-servers \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+```
+
+Con el `id`, se hace `GET` del artefacto, se le agrega el bloque `endpointConfig`, se hace `PUT`, se crea una revisión (`POST .../revisions`) y se despliega (`POST .../deploy-revision?revisionId=...`) con el body:
+
+```json
+[{"name":"Default","vhost":"mcp.cloudtrazalog.com","displayOnDevportal":true}]
+```
+
+> El nombre del gateway environment y el `vhost` salen de `GET /api/am/admin/v4/environments` (**no** de `/api/am/publisher/v4/environments`, que en 4.6.0 devuelve vacío). En esta VM: `name = "Default"`, `vhost = "mcp.cloudtrazalog.com"` (el vhost sigue al `hostname` del `deployment.toml`, no es `localhost`).
+
 ### 6.4 Verificar el flujo OAuth end-to-end contra `mcp.cloudtrazalog.com`
 
 Requiere §6.0 resuelto (identidad de esta VM aplicada) y un JWT real emitido por el Dnato de este mismo proyecto GCP — no sirve el JWKS local de DEV (`scripts/dev/dnato-jwks-server.py`, ese es solo para el JWKS falso de DEV).
@@ -625,14 +662,15 @@ Mismo patrón que el smoke test que se hizo en DEV el 2026-08-08 (`virtual-mcp-u
 
 ### DoD de esta tarea (E7-INFRA-05)
 
-- [ ] CAR reconstruido y desplegado en el MI de la VM (§6.2)
-- [ ] **CAR `OAuthDiscovery` desplegado en el APIM + system properties + `https_endpoint` + Key Manager apuntando a Dnato (§6.2-bis)** — los 3 curls de verificación en verde
-- [ ] API + MCP Server publicados en el APIM de la VM (§6.3)
-- [ ] Suscripción de la aplicación al MCP Server confirmada
-- [ ] `initialize`/`tools/list` responden vía `https://mcp.cloudtrazalog.com`
-- [ ] Al menos una tool de cada módulo (`man_*`, `alm_*`) probada con `tools/call` real
-- [ ] Aislamiento de 2 empresas confirmado contra la URL pública
-- [ ] Esta sección actualizada marcando el despliegue como hecho, con fecha real
+- [x] CAR reconstruido y desplegado en el MI de la VM (§6.2) — 2026-08-11
+- [x] **CAR `OAuthDiscovery` desplegado en el APIM + system properties + `https_endpoint` (§6.2-bis)** — los 3 curls en verde, 2026-08-11. Key Manager: no hizo falta, `[[apim.jwt.issuer]]` ya estaba
+- [x] API + MCP Server publicados en el APIM de la VM (§6.3)
+- [x] Suscripción de la aplicación al MCP Server confirmada — 2026-08-11 (§6.3-bis error 1)
+- [x] `endpointConfig` del MCP Server configurado vía REST API + revisión desplegada — 2026-08-11 (§6.3-ter)
+- [x] `initialize`/`tools/list` responden vía `https://mcp.cloudtrazalog.com`
+- [x] Al menos una tool de cada módulo (`man_*`, `alm_*`) probada con `tools/call` real — **2026-08-11: `alm_get_stock` → `{"materias":{}}` y `man_get_equipos` → `{"equipos":{}}`. Ambas HTTP 200 con la estructura correcta.** La cadena completa (OAuth Dnato → APIM → MI → toolsMCPAPI → toolsALMAPI → DataService → PostgreSQL) queda verificada end-to-end
+- [ ] **Datos**: las tools responden vacío — falta cargar stock para la empresa de prueba y poblar `empr_id_mysql` (§7.0-quinquies punto 2-bis). No es un problema de integración
+- [ ] Aislamiento de 2 empresas confirmado contra la URL pública — pendiente, requiere una segunda empresa con datos
 ---
 
 ## 7. Configuración de identidad en esta VM (E7-INFRA-03, Bloque 2)
