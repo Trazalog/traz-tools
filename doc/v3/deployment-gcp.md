@@ -754,6 +754,64 @@ Todos estos son bugs reales encontrados ejecutando este checklist de punta a pun
 
 **Todos estos (salvo el de `empr_id`/`core.empresas`, que es de lógica) son candidatos directos a un PR de fix en `traz-comp-dnato` contra `develop-v3`** — si PROD se despliega desde cero (clonando el repo en vez de copiar archivos a mano como se hizo acá), se va a pisar contra los mismos 4 bugs de código.
 
+> **Ampliación 2026-08-11 — el problema de fondo no son los 4 bugs, es que el checkout está desincronizado.** Ejecutando el login OAuth real aparecieron más archivos desactualizados en ese server, todos con el mismo patrón: el código **sí existe en `develop-v3`**, pero la copia del servidor es vieja.
+>
+> | Archivo | Qué falta en el server | Dónde está en el repo |
+> |---|---|---|
+> | `application/config/routes.php` | Las 9 rutas de `oauth/*` (el `grep` no devolvió ninguna) | `routes.php:60-72` |
+> | `application/controllers/Oauthlogin.php` | Operadores `??` sin adaptar a PHP 5.6 (líneas ~295 y ~359) | — (bug real de `develop-v3`) |
+> | `application/models/Empresas.php` | El método `getEmpresaById()` completo | `Empresas.php:67-76` |
+>
+> **Recomendación:** en vez de seguir parcheando de a un archivo por vez (no sabemos cuántos faltan, y el próximo deploy los vuelve a pisar), sincronizar el checkout entero contra `develop-v3` y aplicar arriba solo los fixes que son bugs reales del repo (los de la tabla de §7.0-quater). Diagnóstico rápido de qué tan atrás está:
+>
+> ```bash
+> git -C /var/www/html/traz-comp-dnato status
+> git -C /var/www/html/traz-comp-dnato log --oneline -3
+> ```
+>
+> **Dato confirmado de paso (cierra una duda abierta en la fila de `empr_id` de la tabla de arriba):** los grupos reales de Bonita **sí usan el formato `{empr_id}-{nombre}`**. Verificado en el log del login real del 2026-08-11: `"name":"9000-Termotanques"`. O sea que `Oauthlogin.php` (que espera y filtra ese formato) está bien; el que está mal es `Cli.php`, que aplica el mismo parseo contra `seg.memberships_users.group`, una tabla donde el prefijo no existe.
+
+### 7.0-quinquies El backend que consume Dnato — segunda instancia de WSO2 y `core.empresas`
+
+> **Sección nueva 2026-08-11.** Descubierta ejecutando el login OAuth real. Esto es lo que faltaba detallar sobre "qué necesita el despliegue de Dnato para soportar MCP" — no alcanza con el código de `traz-comp-dnato`: su backend también tiene que estar al día.
+
+**Hay DOS instancias de WSO2 en juego, en dos VMs distintas, y es fácil confundirlas:**
+
+| Instancia | Puerto | VM | Quién la consume | Qué se desplegó acá |
+|---|---|---|---|---|
+| MI de la fachada MCP | `8290` | `mcp-trazalog` | El APIM (gateway MCP) | `ToolsAPIProject_1.0.0.car` (§6.2) |
+| WSO2 del backend de Dnato | `8283` | `vm-demo-trazalog` | **Dnato**, vía `REST_CORE` | ⚠️ **quedó viejo** |
+
+El login OAuth de Dnato no pasa por la fachada MCP: `Oauthlogin.php` llama a su propio backend en `localhost:8283` (se ve en el log de Dnato: `#TRAZA | #REST | #CURL | #URL >> http://localhost:8283/tools/bpm/memberships/...`). **Actualizar el CAR en la VM del MCP no actualiza este otro.**
+
+Síntoma cuando este backend está desactualizado: el login llega hasta validar credenciales y resolver el membership de Bonita, y ahí falla al resolver la empresa.
+
+#### Lo que hay que verificar en el WSO2 de la VM de Dnato (💻 SSH a esa VM)
+
+**1. `COREDataService` tiene que exponer `/empresa/{empr_id}`** — lo usa `Empresas::getEmpresaById()` para resolver `empr_id_mysql`, que va como claim en el JWT.
+
+```bash
+curl http://localhost:8283/services/COREDataService/empresa/<un-empr_id-real>
+```
+
+Si da 404 o `Invalid URL`, falta la query + el resource. **Ambos existen en `develop-v3`** (`COREDataService.dbs:303` la query, `:820` el resource) — la copia de ese server está atrasada. Lo correcto es reconstruir y redesplegar el CAR ahí también, no parchear el `.dbs` a mano (un parche manual se pierde en el próximo deploy).
+
+**2. La columna `empr_id_mysql` tiene que existir en `core.empresas`.**
+
+Si el paso anterior devuelve `DATABASE_ERROR ... column "empr_id_mysql" does not exist`, falta la columna en la base que usa ese WSO2:
+
+```sql
+ALTER TABLE core.empresas ADD COLUMN IF NOT EXISTS empr_id_mysql integer;
+```
+
+Después hay que **poblarla** para las empresas que ya existen — es el mapeo entre el `empr_id` de PostgreSQL y el `id_empresa` nativo de `assetv2` (MySQL). Sin ese valor, el JWT sale sin `empr_id_mysql` y las tools de mantenimiento (que filtran por el ID de MySQL) no devuelven datos, aunque el login funcione.
+
+> ⚠️ **Gap del repo, no solo de este server: no existe ninguna migración SQL para esta columna en ningún repositorio.** Verificado con `grep -rn "empr_id_mysql" --include="*.sql"` sobre `traz-tools` y `traz-comp-dnato`: cero resultados. La columna se asume existente en `COREDataService.dbs` (`getEmpresaById`, `updateEmpresaAssetId`) y en toda la cadena de identidad de ADR-009, pero nunca se formalizó como migración. **Antes del despliegue a PROD hay que crear esa migración** — si no, el mismo error se repite ahí. Candidato a issue propio.
+
+#### Cosmético — el logo no aparece en la pantalla de login
+
+`Oauthlogin::_getLogo()` (línea ~356) lee el logo de la tabla `configuraciones_ui` vía `$this->Tablas->obtenerTabla('configuraciones_ui')`, y ante cualquier excepción devuelve `''`. La vista (`views/oauth/login_step1.php:35`) lo omite si viene vacío. Que no se vea significa que esa tabla no tiene el registro esperado en la base de este ambiente, o que el `_getLogo()` está fallando en silencio (el `catch` se traga el error). **No bloquea el login** — el resto de la pantalla funciona igual. Si se quiere corregir, el dato es de la base de ese ambiente, no del código.
+
 ### 7.1 Qué hay que replicar — mismo mecanismo que DEV, otro `deployment.toml`
 
 Adaptado de `doc/identity/apim-keymanager-dnato.md` §3, aplicado al `deployment.toml` de **esta VM** (no el de DEV):
