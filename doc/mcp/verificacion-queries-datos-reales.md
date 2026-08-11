@@ -15,41 +15,63 @@ diagnosticar por qué una tool devuelve vacío o datos raros.
 | **Fecha** | 2026-08-11 |
 | **Ejecutado contra** | `tools_prod_t` @ `10.142.0.13:5432` (PostgreSQL 11.18) y `assetv2` @ `10.142.0.13:3306` (MariaDB 10.1.48) |
 | **Scripts** | `scripts/dev/verify-mcp-queries.py`, `scripts/dev/verify-mcp-isolation.py` |
-| **Resultado** | 23/23 completitud OK · 19/19 aislamiento OK |
+| **Resultado** | 23/23 completitud OK · 19/19 aislamiento OK · 18/18 en la pasada exhaustiva |
+| **Confirmado en GCP** | 2026-08-11 — `alm_get_stock` devuelve datos reales desde Claude vía `mcp.cloudtrazalog.com` (Barra de acero 50.0, Barra de acero cortada 307.0, Eje 51.0) |
 
 ---
 
 ## 1. Antes de mirar las queries: contra qué base está apuntando el MI
 
-**Este fue el problema que disparó toda esta verificación, y es lo primero a descartar cuando una
-tool devuelve `{}` vacío.**
+**Es lo primero a descartar cuando una tool devuelve `{}` vacío**, y lo que más tiempo costó
+diagnosticar: la query puede estar perfecta y aun así no devolver nada si corre contra la base
+equivocada.
 
-Los datasources viven **embebidos en el `.car`**:
-
-```xml
-<!-- src/main/wso2mi/artifacts/data-sources/ToolsDataSource.xml -->
-<url>jdbc:postgresql://10.142.0.13:5432/tools_prod_t</url>   <!-- DESARROLLO -->
-```
-
-Consecuencia: **cada `mvn clean install` + deploy del CAR restaura esa URL**, pisando cualquier
-cambio manual que se haya hecho en la instancia para apuntar a otro ambiente. Un MI de TEST o
-PROD recién redesplegado queda consultando la base de **desarrollo** sin avisar.
-
-Síntoma típico: la app v2 muestra datos (usa su propia config) y las tools MCP devuelven vacío
-para la misma empresa, porque están mirando bases distintas.
-
-Verificación (💻 en la VM del MI):
+Los datasources viven **embebidos en el `.car`** (`src/main/wso2mi/artifacts/data-sources/`), así
+que cada instancia necesita su propia copia del repo con las URLs de su ambiente. Verificar cuál
+quedó realmente desplegada — no alcanza con mirar el XML del repo:
 
 ```bash
-sudo find /opt/wso2/wso2mi-4.5.0 -name "ToolsDataSource*.xml" -newer /etc/hostname \
-  -exec grep -H "jdbc:" {} \;
+cd /tmp && cp /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIProject_1.0.0.car tap.zip
+unzip -o tap.zip >/dev/null
+cat ToolsDataSource_1.0.0/ToolsDataSource-1.0.0.xml
+cat AssetPlannerDataSource_1.0.0/AssetPlannerDataSource-1.0.0.xml
 ```
 
-> **Pendiente de decisión (🔴, requiere workshop):** los datasources deberían salir del CAR y
-> definirse por ambiente. WSO2 MI soporta `[[datasource]]` en su `deployment.toml`, que es el
-> mecanismo correcto. Además, hoy las credenciales están en texto plano en el repo
-> (ya señalado en `deployment-gcp.md` §5). Mientras no se resuelva, **después de cada deploy del
-> CAR hay que re-aplicar la configuración de datasource del ambiente.**
+> **Ojo con el nombre de la base, no solo con el host.** En TEST conviven en el **mismo servidor y
+> puerto** (`10.142.0.11:5434`) más de una base con esquema equivalente. Un datasource apuntando a
+> la base equivocada del servidor correcto da exactamente el mismo síntoma que un host equivocado:
+> HTTP 200 con la estructura vacía. Comparar el `<url>` completo contra la base donde realmente se
+> ven los datos.
+
+**Y las dos URLs para probar, que es fácil confundir:**
+
+| URL | API | ¿JWT? | `empr_id` |
+|---|---|---|---|
+| `/tools/mcp/mcp/alm/stock` | `toolsMCPAPI` (fachada MCP) | **Sí** — sin él, `503 identity_missing` | Derivado del `X-JWT-Assertion` |
+| `/tools/alm/stock/{empr_id}` | `toolsALMAPI` (orquestación) | No | **Explícito en la URL** |
+
+El doble `/mcp/mcp` de la primera no es un error de tipeo: el contexto de la API es `/tools/mcp` y
+sus resources están prefijados por módulo (`/mcp/man/…`, `/mcp/alm/…`) por decisión de ADR-013.
+
+```bash
+# 1) ¿está viva la fachada MCP?  -> 503 identity_missing es la respuesta CORRECTA sin JWT
+curl -i http://localhost:8290/tools/mcp/mcp/alm/stock
+
+# 2) ¿la cadena orquestación -> DataService -> base devuelve datos? (saltea identidad)
+curl -s http://localhost:8290/tools/alm/stock/<empr_id-con-datos>
+```
+
+- (1) da `503` y (2) devuelve datos → la plomería está bien; si la tool igual falla, el problema
+  está en la identidad (JWT, `empr_id` mal resuelto, `empr_id_mysql` en NULL).
+- (2) devuelve vacío con un `empr_id` que **sabés** que tiene datos → base equivocada o query.
+- **(2) responde `main sequence executed for call to non-existent`** en el log del MI → la API no
+  está desplegada: el CAR se construyó incompleto o su deploy falló. Revisar
+  `Successfully Deployed Carbon Application` / `Error occurred while deploying` en el log.
+
+> **Nota sobre credenciales:** los datasources llevan usuario y contraseña en texto plano dentro
+> del artefacto versionado (ya señalado en `deployment-gcp.md` §5). Sacarlos del `.car` — WSO2 MI
+> soporta `[[datasource]]` en su `deployment.toml`, que además permitiría config por ambiente sin
+> tocar el artefacto — es una mejora pendiente de decisión (🔴).
 
 ---
 
