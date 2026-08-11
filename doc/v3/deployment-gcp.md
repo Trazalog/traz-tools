@@ -798,7 +798,21 @@ curl http://localhost:8283/services/COREDataService/empresa/<un-empr_id-real>
 
 Si da 404 o `Invalid URL`, falta la query + el resource. **Ambos existen en `develop-v3`** (`COREDataService.dbs:303` la query, `:820` el resource) — la copia de ese server está atrasada. Lo correcto es reconstruir y redesplegar el CAR ahí también, no parchear el `.dbs` a mano (un parche manual se pierde en el próximo deploy).
 
-**2. La columna `empr_id_mysql` tiene que existir en `core.empresas`.**
+**2. La columna `empr_id_mysql` tiene que existir en DOS tablas distintas.** Son dos errores separados que aparecen uno después del otro, y es fácil confundirlos porque el mensaje es casi idéntico — mirar siempre el `relation` que nombra el error:
+
+| Error | Tabla | Por qué falta |
+|---|---|---|
+| `column "empr_id_mysql" does not exist` (al resolver la empresa) | `core.empresas` | Sin migración en ningún repo (ver abajo) |
+| `column "empr_id_mysql" of relation "oauth_codes" does not exist` (al guardar el authorization code) | `seg.oauth_codes` | **La migración `001_create_seg_oauth_codes.sql` de `traz-comp-dnato` no la incluye**, pero `OauthCode_model::store()` la inserta. La migración quedó desactualizada cuando el commit `d0fbc45` agregó el claim al JWT |
+
+```sql
+-- seg.oauth_codes — falta en la migración 001 de traz-comp-dnato
+ALTER TABLE seg.oauth_codes ADD COLUMN IF NOT EXISTS empr_id_mysql INTEGER NULL;
+```
+
+> **Fix pendiente en `traz-comp-dnato`:** actualizar `doc/identity/migrations/001_create_seg_oauth_codes.sql` (o agregar una `002`) para que incluya `empr_id_mysql`. Si no, cualquier despliegue nuevo que corra la migración tal cual queda con la tabla incompleta y el login falla en el último paso, después de haber validado credenciales y resuelto el membership de Bonita.
+
+**2-bis. La columna de `core.empresas` además tiene que estar POBLADA.**
 
 Si el paso anterior devuelve `DATABASE_ERROR ... column "empr_id_mysql" does not exist`, falta la columna en la base que usa ese WSO2:
 
@@ -806,7 +820,18 @@ Si el paso anterior devuelve `DATABASE_ERROR ... column "empr_id_mysql" does not
 ALTER TABLE core.empresas ADD COLUMN IF NOT EXISTS empr_id_mysql integer;
 ```
 
-Después hay que **poblarla** para las empresas que ya existen — es el mapeo entre el `empr_id` de PostgreSQL y el `id_empresa` nativo de `assetv2` (MySQL). Sin ese valor, el JWT sale sin `empr_id_mysql` y las tools de mantenimiento (que filtran por el ID de MySQL) no devuelven datos, aunque el login funcione.
+Después hay que **poblarla** para las empresas que ya existen — es el mapeo entre el `empr_id` de PostgreSQL y el `id_empresa` nativo de `assetv2` (MySQL):
+
+```sql
+UPDATE core.empresas SET empr_id_mysql = <id_empresa en assetv2> WHERE empr_id = <empr_id>;
+```
+
+**Con la columna creada pero en `NULL`, el login se completa igual** — el código lo tolera y deja un `WARN` (`empr_id_mysql no disponible para empr_id=N — empresa sin mapping asset`) — pero el JWT sale con ese claim vacío. Consecuencia concreta, y es sutil porque *parece* que todo anda:
+
+- Las tools `alm_*` (almacenes) **funcionan**: filtran por el `empr_id` de PostgreSQL.
+- Las tools `man_*` (mantenimiento) **devuelven vacío sin error**: filtran por `id_empresa` en `assetv2` (MySQL), que es exactamente el valor que falta.
+
+Verificado en el login real del 2026-08-11: `core.empresas` devolvió `"empr_id":"9000"` con `"empr_id_mysql":null`.
 
 > ⚠️ **Gap del repo, no solo de este server: no existe ninguna migración SQL para esta columna en ningún repositorio.** Verificado con `grep -rn "empr_id_mysql" --include="*.sql"` sobre `traz-tools` y `traz-comp-dnato`: cero resultados. La columna se asume existente en `COREDataService.dbs` (`getEmpresaById`, `updateEmpresaAssetId`) y en toda la cadena de identidad de ADR-009, pero nunca se formalizó como migración. **Antes del despliegue a PROD hay que crear esa migración** — si no, el mismo error se repite ahí. Candidato a issue propio.
 >
