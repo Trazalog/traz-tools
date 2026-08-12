@@ -261,6 +261,81 @@ def e6(m):
 
 
 # ===========================================================================
+# E8 — Gestión del plan preventivo (M1, M2, M3 de casos-de-uso-mineria)
+#      El caso que el jefe de mantenimiento hace todos los días.
+# ===========================================================================
+@escenario("E8", "Preventivos vencidos y cobertura del plan")
+def e8(m):
+    prevs = lista(m.man_get_preventivos(), "preventivos", "preventivo")
+    afirmar(prevs, "man_get_preventivos no devolvió planes "
+                   "(¿hay preventivos con id_empresa coincidente con el del equipo?)")
+    paso(f"man_get_preventivos -> {len(prevs)} planes")
+
+    # M2: los vencidos. 'VE' es el estado que calcula v2 al superar el intervalo.
+    vencidos = [p for p in prevs if p.get("estadoprev") == "VE"]
+    paso(f"filtrado por el agente -> {len(vencidos)} vencidos (estadoprev=VE)")
+
+    # M3: priorización por criticidad — la trae el mismo registro
+    for p in prevs:
+        afirmar("criticidad" in p, f"el plan {p.get('prevId')} no trae la criticidad del equipo")
+    criticos = [p for p in prevs if p.get("criticidad") in ("Alta", "Muy Alta")]
+    paso(f"de esos, {len(criticos)} son en equipos de criticidad Alta/Muy Alta")
+
+    # los planes por uso tienen que traer con qué compararse
+    por_uso = [p for p in prevs if p.get("periodicidad") in ("Horas", "Kilómetros", "Ciclos")]
+    for p in por_uso:
+        afirmar(p.get("intervalo"), f"el plan {p['prevId']} es por {p['periodicidad']} sin intervalo")
+        afirmar("lectura_actual" in p,
+                f"el plan {p['prevId']} es por uso pero no trae la lectura actual del equipo")
+    if por_uso:
+        paso(f"{len(por_uso)} planes por uso, todos con intervalo y lectura actual")
+
+    # la tarea en lenguaje natural es lo que permite inferir el insumo (caso C1)
+    con_tarea = [p for p in prevs if p.get("tarea")]
+    paso(f"{len(con_tarea)}/{len(prevs)} con descripción de tarea "
+         f"(ej. {(con_tarea[0]['tarea'][:46] + '…') if con_tarea else '-'})")
+
+    # M1: cobertura — se resuelve cruzando con man_get_equipos, sin tool extra
+    eqs = lista(m.man_get_equipos(), "equipos", "equipo")
+    afirmar(eqs, "man_get_equipos no devolvió equipos")
+    con_plan = {p["id_equipo"] for p in prevs}
+    sin_plan = [e for e in eqs if e["id_equipo"] not in con_plan]
+    paso(f"cruce con man_get_equipos -> {len(sin_plan)}/{len(eqs)} equipos SIN plan")
+    sin_plan_criticos = [e for e in sin_plan if e.get("criticidad") in ("Alta", "Muy Alta")]
+    if sin_plan_criticos:
+        paso(f"  {AMAR}de esos, {len(sin_plan_criticos)} son CRÍTICOS: "
+             f"{', '.join(e['codigo'] for e in sin_plan_criticos[:4])}{FIN}")
+
+
+# ===========================================================================
+# E9 — Aislamiento de los preventivos
+#      Además del cruce entre empresas, verifica que no se filtren los planes
+#      cuyo id_empresa no coincide con el del equipo (datos basura conocidos).
+# ===========================================================================
+@escenario("E9", "Aislamiento del plan preventivo")
+def e9(m):
+    otra = MCP(OTRA_EMPR, OTRA_EMPR_MYSQL)
+    otra._escrituras = False
+    mios = lista(m.man_get_preventivos(), "preventivos", "preventivo")
+    suyos = lista(otra.man_get_preventivos(), "preventivos", "preventivo")
+    ids_m = {p["prevId"] for p in mios}
+    ids_o = {p["prevId"] for p in suyos}
+    afirmar(not (ids_m & ids_o),
+            f"FUGA: {len(ids_m & ids_o)} preventivos compartidos entre empresas")
+    paso(f"{len(ids_m)} vs {len(suyos)} planes, 0 en común")
+
+    # cada plan debe referirse a un equipo de la propia empresa
+    mis_eq = {e["id_equipo"] for e in lista(m.man_get_equipos(), "equipos", "equipo")}
+    ajenos = [p for p in mios if p["id_equipo"] not in mis_eq]
+    # el detalle se arma solo si hay fallo: un f-string se evalúa siempre, y
+    # ajenos[0] revienta con la lista vacía (o sea, justo cuando todo está bien)
+    afirmar(not ajenos,
+            "FUGA: {} planes sobre equipos que no son de la empresa (ej. plan {} sobre el equipo {})".format(
+                len(ajenos), ajenos[0]["prevId"], ajenos[0]["id_equipo"]) if ajenos else "")
+    paso(f"los {len(mios)} planes son sobre equipos propios")
+
+
+# ===========================================================================
 # E7 — El contrato publicado y lo implementado no se desincronizan
 #      La OpenAPI es lo que consume el Virtual MCP Server del APIM: si declara
 #      una operación que el MI no implementa, la tool aparece en Claude y falla

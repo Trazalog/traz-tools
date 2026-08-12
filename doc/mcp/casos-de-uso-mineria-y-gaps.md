@@ -16,7 +16,7 @@ en [`escenarios-de-uso-y-regresion.md`](escenarios-de-uso-y-regresion.md).
 |---|---|
 | **Fecha** | 2026-08-11 |
 | **Relevado contra** | `assetv2` (Asset Planner) y `tools_prod_t` (Almacenes), base de desarrollo |
-| **Resultado** | 21 casos · 5 cubiertos · 3 parciales · 13 con gap |
+| **Resultado** | 21 casos · 8 cubiertos · 1 parcial · 12 con gap |
 
 > **Sobre los datos de prueba:** la base de desarrollo tiene datos agrícolas y de laboratorio, no
 > mineros. Los equipos sí incluyen maquinaria real (generador, autoelevador, equipo de corte,
@@ -57,9 +57,11 @@ ejecutar_historial_lecturas_mem  ·  cada 1 MINUTE  ·  LAST_EXECUTED: 2024-09-1
 **El event scheduler de MySQL está apagado**, así que la tabla tiene 0 filas y cualquier KPI
 devuelve vacío hoy. Es un problema de infraestructura de la base, no de las queries.
 
-> ⚠️ **A verificar en producción antes de exponer los KPIs como tools.** Si en producción el
-> scheduler también está apagado, los KPIs del dashboard de Asset Planner tampoco estarían
-> funcionando.
+> ✅ **Confirmado por el PM (2026-08-12): en producción los KPIs se usan activamente** — el
+> dashboard de Asset Planner muestra Disponibilidad, MTBF y el donut Correctivo/Preventivo/Backlog
+> con datos reales. O sea que allá el evento sí corre y la tabla se puebla. **El problema es solo
+> del ambiente de desarrollo**, y no bloquea exponer los KPIs como tools: hay que prender el
+> scheduler en desarrollo para poder probarlas.
 
 ### 1.3. `orden_trabajo.tipo` — resuelto por código y datos
 
@@ -132,9 +134,9 @@ Los marcados con ⭐ son los de **impacto ALTO** según la investigación del se
 
 | # | Caso | Pregunta del usuario | Estado |
 |---|---|---|---|
-| **M1** | Equipos sin plan preventivo | «¿Qué equipos no tienen preventivo cargado?» | ❌ gap |
-| **M2** ⭐ | Preventivos vencidos | «¿Qué mantenimientos tengo vencidos?» | ❌ gap |
-| **M3** ⭐ | Priorizar por criticidad | «De esos, ¿cuáles son críticos?» | ⚠️ parcial |
+| M1 | Equipos sin plan preventivo | «¿Qué equipos no tienen preventivo cargado?» | ✅ cubierto (2026-08-12) |
+| M2 ⭐ | Preventivos vencidos | «¿Qué mantenimientos tengo vencidos?» | ✅ cubierto (2026-08-12) |
+| M3 ⭐ | Priorizar por criticidad | «De esos, ¿cuáles son críticos?» | ✅ cubierto |
 | **M4** | Equipos sin lecturas | «¿A qué equipos no les toman el horómetro?» | ❌ gap |
 | M5 | Backlog por antigüedad | «¿Qué OTs llevan más de una semana abiertas?» | ✅ cubierto |
 | M6 ⭐ | Equipos que más fallan | «¿Qué equipo me dio más problemas?» | ✅ cubierto |
@@ -145,8 +147,8 @@ Los marcados con ⭐ son los de **impacto ALTO** según la investigación del se
 **Verificado con datos** (empresa 8): **60 de 68 equipos sin plan preventivo**, de los cuales
 **31 son criticidad Alta y 6 Muy Alta**. Y 47 equipos sin lectura en 90 días.
 
-M3 es parcial porque `man_get_equipos` (listado) **no devuelve la criticidad** — solo el detalle
-la trae, así que el agente tendría que pedir equipo por equipo.
+M3 **sí está cubierto**: `man_get_equipos` devuelve `criticidad` y `sector` en el listado (una
+revisión anterior lo dio por faltante por haber truncado la salida al inspeccionarla).
 
 ### KPIs (el diferencial competitivo del sector)
 
