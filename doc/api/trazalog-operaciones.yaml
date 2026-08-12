@@ -318,6 +318,63 @@ paths:
   # que delegan a toolsALMAPI (ADR-013 #1, #2)
   # ══════════════════════════════════════════════════════════════
 
+  /mcp/man/lecturas:
+    get:
+      operationId: man_get_lecturas
+      summary: Control de lecturas de horómetro por equipo
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve, para **cada equipo** de la empresa, cuántas lecturas de
+        horómetro/odómetro tiene registradas, cuál es la última y hace cuántos
+        días se tomó.
+
+        **Cuándo usar esta operación:**
+        - «¿A qué equipos no les están tomando la lectura?» → filtrar por
+          `dias_sin_lectura` alto o `cantidad_lecturas` en cero.
+        - Junto con `man_get_preventivos`: un plan por `Horas`, `Kilómetros` o
+          `Ciclos` **no se puede evaluar** si el equipo no tiene lecturas. Si un
+          equipo tiene plan por uso y `cantidad_lecturas` es 0, nadie puede saber
+          si ese mantenimiento está vencido.
+
+        Incluye los equipos que **nunca** tuvieron una lectura (con
+        `cantidad_lecturas` en 0 y sin fecha) — son justamente los relevantes.
+      tags:
+        - Mantenimiento
+      responses:
+        "200":
+          description: Resumen de lecturas por equipo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturasList"
+              examples:
+                con_desactualizados:
+                  summary: Un equipo al día y otro sin control
+                  value:
+                    lecturas:
+                      equipo:
+                        - id_equipo: "21"
+                          equipo: "EQ-04-2020"
+                          equipo_descripcion: "Generador Eléctrico C330D5"
+                          equipo_estado: "AC"
+                          criticidad: "Muy Alta"
+                          cantidad_lecturas: "3"
+                          lectura_actual: "125"
+                          fecha_ultima_lectura: "2020-04-29"
+                          dias_sin_lectura: "2296"
+                        - id_equipo: "133"
+                          equipo: "GEN-001"
+                          equipo_descripcion: "Generador Sullair 750kVA"
+                          equipo_estado: "AC"
+                          criticidad: "Muy Alta"
+                          cantidad_lecturas: "0"
+                          lectura_actual: null
+                          fecha_ultima_lectura: null
+                          dias_sin_lectura: null
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /mcp/man/preventivos:
     get:
       operationId: man_get_preventivos
@@ -862,6 +919,44 @@ components:
             materia:
               type: array
               items: { $ref: "#/components/schemas/ArticuloStock" }
+
+    LecturaEquipo:
+      type: object
+      properties:
+        id_equipo: { type: string, example: "21" }
+        equipo: { type: string, example: "EQ-04-2020" }
+        equipo_descripcion: { type: string, example: "Generador Eléctrico C330D5" }
+        equipo_estado:
+          type: string
+          description: "`AC` activo · `RE` en reparación"
+          example: "AC"
+        criticidad: { type: string, example: "Muy Alta" }
+        cantidad_lecturas:
+          type: string
+          description: Cantidad de lecturas registradas. `0` = nunca se le tomó ninguna.
+          example: "3"
+        lectura_actual:
+          type: string
+          description: Lectura más alta registrada (el horómetro solo crece). Vacío si no hay lecturas.
+          example: "125"
+        fecha_ultima_lectura:
+          type: string
+          description: Vacío si no hay lecturas.
+          example: "2020-04-29"
+        dias_sin_lectura:
+          type: string
+          description: Días desde la última lectura. Vacío si nunca hubo ninguna.
+          example: "2296"
+
+    LecturasList:
+      type: object
+      properties:
+        lecturas:
+          type: object
+          properties:
+            equipo:
+              type: array
+              items: { $ref: "#/components/schemas/LecturaEquipo" }
 
     LoteVencimiento:
       type: object

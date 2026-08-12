@@ -116,6 +116,9 @@ class MCP:
     def man_get_ot(self, id_solicitud):
         return self._call("GET", f"/man/ot/{id_solicitud}", tool="man_get_ot")
 
+    def man_get_lecturas(self):
+        return self._call("GET", "/man/lecturas", tool="man_get_lecturas")
+
     def man_get_preventivos(self):
         return self._call("GET", "/man/preventivos", tool="man_get_preventivos")
 

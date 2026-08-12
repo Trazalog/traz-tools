@@ -430,6 +430,64 @@ def e11(m):
 
 
 # ===========================================================================
+# E12 — Control del horómetro (M4)
+#       Un preventivo por Horas/Km/Ciclos no se puede evaluar si nadie toma la
+#       lectura: esto audita el plan de medición, no el de mantenimiento.
+# ===========================================================================
+@escenario("E12", "Equipos sin control de lecturas")
+def e12(m):
+    eqs_lect = lista(m.man_get_lecturas(), "lecturas", "equipo")
+    afirmar(eqs_lect, "man_get_lecturas no devolvió equipos")
+    paso(f"man_get_lecturas -> {len(eqs_lect)} equipos")
+
+    # tiene que cubrir TODOS los equipos, incluidos los que nunca tuvieron lectura
+    eqs = lista(m.man_get_equipos(), "equipos", "equipo")
+    afirmar(len(eqs_lect) == len(eqs),
+            f"devuelve {len(eqs_lect)} equipos pero man_get_equipos tiene {len(eqs)}: "
+            "los que nunca tuvieron lectura tienen que aparecer igual")
+    paso(f"cubre los mismos {len(eqs)} equipos que man_get_equipos")
+
+    def n(v):
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return 0
+
+    sin_ninguna = [e for e in eqs_lect if n(e.get("cantidad_lecturas")) == 0]
+    paso(f"{len(sin_ninguna)} equipos sin ninguna lectura registrada")
+
+    desactualizados = [e for e in eqs_lect
+                       if e.get("dias_sin_lectura") and n(e["dias_sin_lectura"]) > 90]
+    paso(f"{len(desactualizados)} con más de 90 días sin lectura")
+
+    criticos = [e for e in desactualizados if e.get("criticidad") in ("Alta", "Muy Alta")]
+    if criticos:
+        peor = max(criticos, key=lambda e: n(e["dias_sin_lectura"]))
+        paso(f"{AMAR}{len(criticos)} de esos son críticos — el peor: "
+             f"{peor['equipo']} ({peor['criticidad']}, {peor['dias_sin_lectura']} días){FIN}")
+
+    # coherencia: si tiene lecturas, tiene fecha; si no tiene, no puede tener días
+    for e in eqs_lect:
+        if n(e.get("cantidad_lecturas")) > 0:
+            afirmar(e.get("fecha_ultima_lectura"),
+                    f"{e['equipo']} dice tener lecturas pero no trae la fecha de la última")
+        else:
+            afirmar(not e.get("dias_sin_lectura"),
+                    f"{e['equipo']} no tiene lecturas pero reporta días sin lectura")
+    paso("coherencia entre cantidad, fecha y días verificada")
+
+    # cruce con preventivos: los planes por uso necesitan lectura al día
+    prevs = lista(m.man_get_preventivos(), "preventivos", "preventivo")
+    por_uso = [p for p in prevs if p.get("periodicidad") in ("Horas", "Kilómetros", "Ciclos")]
+    if por_uso:
+        lect_por_eq = {e["id_equipo"]: e for e in eqs_lect}
+        ciegos = [p for p in por_uso
+                  if n(lect_por_eq.get(p["id_equipo"], {}).get("cantidad_lecturas")) == 0]
+        paso(f"{len(ciegos)}/{len(por_uso)} planes por uso sobre equipos SIN lecturas "
+             f"(no se puede saber si vencieron)")
+
+
+# ===========================================================================
 # E7 — El contrato publicado y lo implementado no se desincronizan
 #      La OpenAPI es lo que consume el Virtual MCP Server del APIM: si declara
 #      una operación que el MI no implementa, la tool aparece en Claude y falla

@@ -453,6 +453,60 @@
         man_get_equipos) y cuáles de esos son críticos.
         Devuelve la lectura actual del horómetro junto al intervalo, para que el
         agente pueda estimar cuánto falta en los planes por Horas/Km/Ciclos. -->
+   <!-- man_get_lecturas — control del horometro por equipo: cuando fue la
+        ultima lectura y cuantos dias pasaron. Sin lecturas al dia, los
+        preventivos por Horas/Km/Ciclos no se pueden evaluar. -->
+   <resource methods="GET" uri-template="/mcp/man/lecturas">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="uri.var.getLecturas_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/lecturas/',get-property('jwt_mysql_empresa_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"              value="#TRAZA | MCP | man_get_lecturas | iniciando (toolsMCPAPI)"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getLecturas_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/lecturas - MANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_lecturas (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
    <resource methods="GET" uri-template="/mcp/man/preventivos">
       <inSequence>
          <sequence key="emprIdFromHeader"/>
