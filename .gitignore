@@ -36,3 +36,7 @@ _backend/api/ApimDiscoveryProject/build/
 
 # Secretos de despliegue GCP (ADR-011) — copiar de deploy/gcp/.env.example
 deploy/gcp/.env
+
+# PDF generado — no versionar (se regenera con scripts/dev/manual-a-pdf.sh)
+doc/manuales/*.pdf
+doc/manuales/*.html

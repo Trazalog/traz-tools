@@ -17,7 +17,7 @@ info:
 
     **Prefijo por módulo en el nombre de la tool:** `man_` (mantenimiento),
     `alm_` (almacenes) — decisión de diseño (ADR-013 #3), no restricción
-    técnica. Evita colisiones de nombre entre módulos futuros.
+    técnica. Evita colisiones de nombre entre módulos futuros.	
 
     **La empresa se determina automáticamente desde el token JWT.**
     No existe ningún parámetro de empresa en ninguna operación — el gateway
@@ -318,6 +318,75 @@ paths:
   # que delegan a toolsALMAPI (ADR-013 #1, #2)
   # ══════════════════════════════════════════════════════════════
 
+  /mcp/man/preventivos:
+    get:
+      operationId: man_get_preventivos
+      summary: Listar el plan de mantenimiento preventivo
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los planes de mantenimiento preventivo de los equipos de la
+        empresa, con su estado, periodicidad, intervalo y la lectura actual
+        del horómetro/odómetro del equipo.
+
+        **Cuándo usar esta operación:**
+        - «¿Qué mantenimientos tengo vencidos?» → filtrar por `estadoprev`.
+        - «¿Qué equipos no tienen plan preventivo?» → cruzar los `id_equipo` de
+          esta operación contra los de `man_get_equipos`; los que no aparecen
+          acá no tienen plan.
+        - Para priorizar, cada plan trae la `criticidad` del equipo.
+        - Antes de pedir repuestos: la `tarea` describe en lenguaje natural qué
+          insumo hace falta (ej. *"cambiar aceite de motor 15W40"*), que después
+          se puede buscar con `alm_get_stock`.
+
+        **Estados (`estadoprev`)** — se devuelven tal como los calcula el
+        sistema: `C` en curso · `CR` crítico (cerca del intervalo) · `VE`
+        vencido · `PL` planificado · `AS` asignado · `CE` cerrado · `M` en
+        mantenimiento. Los anulados no se devuelven.
+
+        **Planes por uso** (periodicidad `Horas`, `Kilómetros` o `Ciclos`):
+        comparar `lectura_actual` contra `lectura_base + intervalo` para estimar
+        cuánto falta. `umbral_alerta` es el valor a partir del cual conviene
+        avisar. Si `lectura_actual` viene vacío, ese equipo no tiene lecturas
+        registradas y no se puede saber si está vencido.
+      tags:
+        - Mantenimiento
+      responses:
+        "200":
+          description: Planes preventivos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreventivosList"
+              examples:
+                con_planes:
+                  summary: Equipos con plan, uno vencido
+                  value:
+                    preventivos:
+                      preventivo:
+                        - prevId: "131"
+                          id_equipo: "131"
+                          equipo: "BOMB-001"
+                          equipo_descripcion: "Bomba centrífuga Grundfos CM10"
+                          equipo_estado: "RE"
+                          criticidad: "Media"
+                          tarea: "Cambiar Aceite de Motor (cada 250 hs según horómetro, utilizar aceite 15W40)."
+                          periodicidad: "Horas"
+                          intervalo: "250.0"
+                          ultima_ejecucion: "2026-05-01"
+                          estadoprev: "C"
+                          umbral_alerta: "210.0"
+                          lectura_base: "0.0"
+                          lectura_actual: "180"
+                          fecha_ultima_lectura: "2026-08-01"
+                          duracion_estimada: "120.0"
+                sin_planes:
+                  summary: Empresa sin plan preventivo cargado
+                  value:
+                    preventivos: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /mcp/alm/stock:
     get:
       operationId: alm_get_stock
@@ -357,6 +426,55 @@ paths:
                       unidad_medida: "UN"
                       es_loteado: "true"
                       stock: "24"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/depositos:
+    get:
+      operationId: alm_get_depositos
+      summary: Listar los depósitos de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los depósitos (almacenes) de la empresa del token, con el
+        establecimiento al que pertenece cada uno.
+
+        **Cuándo usar esta operación:**
+        - **Antes de `alm_crear_pedido_materiales`**: esa operación exige un
+          `depo_id` por cada artículo, y esta es la única forma de conocerlos.
+          No preguntarle al usuario el ID del depósito: consultarlo acá y, si
+          hay varios, ofrecerle elegir por nombre.
+        - Cuando el usuario pregunta dónde tiene almacenados sus materiales o
+          qué depósitos maneja.
+
+        Solo devuelve depósitos no eliminados de la empresa del token.
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Depósitos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositosList"
+              examples:
+                con_depositos:
+                  summary: Empresa con varios depósitos
+                  value:
+                    depositos:
+                      deposito:
+                        - depo_id: "2000"
+                          descripcion: "ALMACEN"
+                          esta_id: "6"
+                          establecimiento: "Planta Principal"
+                        - depo_id: "1000"
+                          descripcion: "DEPOSITO_TRANSPORTE"
+                          esta_id: "1000"
+                          establecimiento: "ESTABLECIMIENTO_TRANSPORTE"
+                sin_depositos:
+                  summary: Empresa sin depósitos cargados
+                  value:
+                    depositos: {}
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -666,6 +784,111 @@ components:
               type: array
               items: { $ref: "#/components/schemas/ArticuloStock" }
 
+    Preventivo:
+      type: object
+      properties:
+        prevId:
+          type: string
+          description: ID del plan preventivo.
+          example: "131"
+        id_equipo:
+          type: string
+          description: ID del equipo. Cruzar con `man_get_equipos` para saber qué equipos no tienen plan.
+          example: "131"
+        equipo:
+          type: string
+          example: "BOMB-001"
+        equipo_descripcion:
+          type: string
+          example: "Bomba centrífuga Grundfos CM10"
+        equipo_estado:
+          type: string
+          description: "`AC` activo · `RE` en reparación"
+          example: "RE"
+        criticidad:
+          type: string
+          description: Criticidad del equipo — sirve para priorizar. Muy Alta · Alta · Media · Baja.
+          example: "Alta"
+        tarea:
+          type: string
+          description: Descripción de la tarea en lenguaje natural. Suele indicar el insumo necesario.
+          example: "Cambiar Aceite de Motor (cada 250 hs según horómetro, utilizar aceite 15W40)."
+        periodicidad:
+          type: string
+          description: Diario · Semanal · Mensual · Semestral · Anual · Horas · Kilómetros · Ciclos
+          example: "Horas"
+        intervalo:
+          type: string
+          description: Cada cuánto corresponde, en la unidad de `periodicidad`.
+          example: "250.0"
+        ultima_ejecucion:
+          type: string
+          description: Fecha de la última vez que se ejecutó (YYYY-MM-DD).
+          example: "2026-05-01"
+        estadoprev:
+          type: string
+          description: "`C` en curso · `CR` crítico · `VE` vencido · `PL` planificado · `AS` asignado · `CE` cerrado · `M` en mantenimiento"
+          example: "VE"
+        umbral_alerta:
+          type: string
+          description: Valor de lectura a partir del cual conviene avisar (antes del vencimiento).
+          example: "210.0"
+        lectura_base:
+          type: string
+          description: Lectura del equipo cuando se ejecutó el plan por última vez.
+          example: "0.0"
+        lectura_actual:
+          type: string
+          description: Lectura más alta registrada del equipo. Vacío si nunca se le tomó lectura.
+          example: "180"
+        fecha_ultima_lectura:
+          type: string
+          example: "2026-08-01"
+        duracion_estimada:
+          type: string
+          description: Duración estimada de la tarea, en minutos.
+          example: "120.0"
+
+    PreventivosList:
+      type: object
+      properties:
+        preventivos:
+          type: object
+          properties:
+            preventivo:
+              type: array
+              items: { $ref: "#/components/schemas/Preventivo" }
+
+    Deposito:
+      type: object
+      properties:
+        depo_id:
+          type: string
+          description: ID del depósito. Es el valor que hay que pasar en `depo_id`
+            al crear un pedido de materiales.
+          example: "2000"
+        descripcion:
+          type: string
+          example: "ALMACEN"
+        esta_id:
+          type: string
+          description: ID del establecimiento al que pertenece.
+          example: "6"
+        establecimiento:
+          type: string
+          description: Nombre del establecimiento. Vacío si el depósito no tiene uno asociado.
+          example: "Planta Principal"
+
+    DepositosList:
+      type: object
+      properties:
+        depositos:
+          type: object
+          properties:
+            deposito:
+              type: array
+              items: { $ref: "#/components/schemas/Deposito" }
+
     ArticuloPedido:
       type: object
       required: [arti_id, cantidad, depo_id]
@@ -679,8 +902,9 @@ components:
           example: "10"
         depo_id:
           type: string
-          description: ID del depósito de destino.
-          example: "1"
+          description: ID del depósito de destino. **Obtenerlo con `alm_get_depositos`** —
+            no preguntárselo al usuario.
+          example: "2000"
 
     CrearPedidoRequest:
       type: object
