@@ -4,7 +4,7 @@
 
 Este documento releva el estado real de la migración de `traz-prod-assetplanner` (app standalone de mantenimiento) al submódulo `traz-tools-man` de traz-tools, reconstruye la mecánica que usó el desarrollador anterior, y define la estrategia, las etapas y el plan de calidad para terminarla. Está escrito para el PM y para quien vaya a ejecutar la migración; se puede leer sin conocer la historia previa del proyecto.
 
-**Qué NO cubre:** la migración de almacenes/depósitos (queda para una fase posterior, con estrategia propia ya definida por el PM — ver §5.7), los ABMs de catálogo, reportes/KPIs, y la decisión de qué pasa con Bonita BPM en v3. Tampoco es una guía de instalación de traz-tools ni del stack WSO2 (ver [`doc/infra/ambientes.md`](../infra/ambientes.md) y [`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md)).
+**Qué NO cubre:** el detalle de ejecución del reemplazo de almacenes y herramientas por los módulos de traz-tools (la estrategia está en §5.8, pero cada uno necesita su propio plan de migración de datos), los ABMs de catálogo, reportes/KPIs, y la decisión de qué pasa con Bonita BPM en v3. Tampoco es una guía de instalación de traz-tools ni del stack WSO2 (ver [`doc/infra/ambientes.md`](../infra/ambientes.md) y [`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md)).
 
 ---
 
@@ -30,11 +30,13 @@ Pero hay tres hechos que cambian el punto de partida:
 
 1. **El trabajo nunca se integró.** El submódulo en traz-tools apunta a `02cca43` ("First commit", un README de una línea) en `develop-v3`, `master` y HEAD por igual. El código vive en la rama `rnsanchez`, que ningún repo referencia.
 2. **El módulo no arranca.** No es "casi terminado": la conversión quedó a medias en tres dimensiones simultáneas (sesión, acceso a datos, vistas), y cada una produce fallos fatales. Detalle en §1.3.
-3. **El calendario nunca se tocó.** Y el calendario no es una pantalla: es el motor que genera las órdenes de trabajo a partir de los planes. Detalle en §5.6.
+3. **El calendario nunca se tocó.** Y el calendario no es una pantalla: es el motor que genera las órdenes de trabajo a partir de los planes. Detalle en §5.7.
 
 La contrapartida buena: **la divergencia es chica y está concentrada**. De los 43 archivos portados, sólo 15 cambiaron en assetplanner en los ~20 meses siguientes, casi todos en Tareas/Bonita e Informe de Servicio. Rescatar el fork es claramente mejor negocio que re-migrar.
 
-El hallazgo que más condiciona el plan es otro: tools y asset apuntarían a **la misma base MariaDB `assetv2`**. Eso hace posible una convivencia real con corte gradual por empresa y rollback instantáneo (§5.8), a cambio de congelar el esquema mientras asset siga en producción.
+El hallazgo que más condiciona el plan es otro: para el núcleo de mantenimiento, tools y asset apuntarían a **la misma base MariaDB `assetv2`**. Eso hace posible una convivencia real con corte gradual por empresa y rollback instantáneo, a cambio de congelar el esquema mientras asset siga en producción.
+
+Pero eso vale sólo para el núcleo. **Almacenes y herramientas son distintos**: no se migran, se reemplazan por los módulos que ya existen en traz-tools (`traz-comp-almacenes` y `traz-comp-pan`), que corren sobre PostgreSQL. Ahí sí hay migración de datos de clientes en el cutover, y el rollback deja de ser gratis. El cutover es entonces **de dos velocidades** (§5.8-§5.9).
 
 ---
 
@@ -201,7 +203,7 @@ Archivos calientes **fuera** del set migrado, relevantes para las etapas siguien
 | Vistas de `Sservicios/` (list, list_solicitante, list_term) | ~1.861 |
 | Vistas de `ordenservicios/` (view_, view_validacion) | ~1.933 |
 | `backlog/nuevo_edicion_view_.php` | 1.294 |
-| `Lectura`/`Lecturas`, `Ficha`/`Fichas`, `Herramienta`/`Herramientas` | ~806 |
+| `Lectura`/`Lecturas`, `Ficha`/`Fichas` | ~538 |
 | `componente/listabm.php`, vistas de area/proceso/tarea | ~700 |
 
 Total estimado: **~24.000 LOC**.
@@ -212,7 +214,8 @@ Total estimado: **~24.000 LOC**.
 
 | Bloque de assetplanner | Reemplazo en traz-tools |
 |---|---|
-| Almacenes / depósitos / compras (~20.000 LOC entre `traz-comp-almacen/`, duplicados en raíz y vistas) | `traz-comp-almacenes` + `ALMDataService` (estrategia en §5.7) |
+| Almacenes / depósitos / compras (~20.000 LOC entre `traz-comp-almacen/`, duplicados en raíz y vistas) | `traz-comp-almacenes` + `ALMDataService` (estrategia en §5.8) |
+| **Herramientas / pañol** — `controllers/Herramienta.php` (125), `models/Herramientas.php` (143), `views/herramienta/list.php`. Es la **versión vieja** del módulo | `traz-comp-pan` (pañol) + `PANDataservice` (estrategia en §5.8) |
 | Login, User, Group, Menu, Administracion (~1.100 LOC) | Core de traz-tools + DNato |
 | Notificacion/Notificaciones | `traz-comp-notificaciones` |
 | Form/Forms y variantes (~950 LOC) | `traz-comp-formularios` |
@@ -310,12 +313,16 @@ Corrección mecánica: `.success()` → `.done()`, `.error()` → `.fail()`.
 |---|---|---|---|---|---|
 | R1 | **La divergencia vuelve a crecer** y la migración persigue un blanco móvil, como pasó 2024-2026 | Alta | Alto | Freeze de features en asset, sólo bugfixes con cherry-pick a ambos lados. Revisión quincenal de la lista de 15 archivos | PM |
 | R2 | **Pérdida de conocimiento** — el trabajo previo no dejó documentación y sus autores no están | Ya ocurrió | Alto | Este documento + PR obligatorio con descripción + checklist por archivo. Prohibido el commit "backup" | Dev |
-| R3 | **No hay dónde probar.** No existe staging del frontend PHP | Alta | Bloqueante | Levantar entorno de test (Apache/PHP + réplica de `assetv2`) **antes** de la Etapa 1. Ver §5.9 | Rodolfo |
+| R3 | **No hay dónde probar.** No existe staging del frontend PHP | Alta | Bloqueante | Levantar entorno de test (Apache/PHP + réplica de `assetv2`) **antes** de la Etapa 1. Ver §5.10 | Rodolfo |
 | R4 | **Doble escritura durante la convivencia** — dos frontends sobre las mismas tablas | Media | Alto | Corte por empresa, no por usuario: una empresa entera usa un solo frontend a la vez (§5.8) | PM |
 | R5 | **Cada bugfix se aplica dos veces** durante la convivencia | Alta | Medio | Acotar la ventana de convivencia. Criterios de salida por empresa | PM |
-| R6 | **Subestimación del calendario** — es el motor, no una pantalla | Media | Alto | Tratarlo como etapa propia con reimplementación (§5.6), no como "portar unas vistas" | Dev |
+| R6 | **Subestimación del calendario** — es el motor, no una pantalla | Media | Alto | Tratarlo como etapa propia con reimplementación (§5.7), no como "portar unas vistas" | Dev |
 | R7 | **Bonita bloquea la creación de OT** y no está desacoplado | Alta | Alto | Decisión de arquitectura pendiente (§6.1). Mientras tanto, replicar la coreografía exacta | Workshop |
 | R8 | **Deriva de artefactos WSO2** — assetplanner mantiene copias propias de `toolsMANAPI.xml`, `MANDataService.xml`, `COREDataService.xml` | Ya ocurrió | Medio | Decidir fuente única (§6.2) | Workshop |
+| R9 | **Pérdida o corrupción de datos al migrar almacenes y herramientas a PostgreSQL.** El modelo no es equivalente: marca/modelo mezclados en texto libre, depósito ≠ pañol, latin1 → UTF-8 | Media | 🔴 Crítico | Dry-run con reporte de filas no mapeables; reconciliación obligatoria (§4 nivel 6); MariaDB intacta como respaldo; ensayo previo en TEST con datos reales (§5.8) | Dev + PM |
+| R10 | **El rollback deja de ser gratis** una vez migrados los datos. Volver atrás exige restore y reconciliar la ventana | Media | Alto | Migrar con la operación detenida, ventana corta, y sólo después de estabilizar el núcleo. Herramientas primero como ensayo, por ser 75× más chico que almacenes | PM |
+| R11 | **FK cruzando de motor.** Ocho tablas de asociación quedan en MariaDB apuntando a entidades que pasaron a PostgreSQL (~150 referencias) | Alta | Alto | Decidir el mecanismo de puente antes de migrar (§6.5). Hay precedente interno: `empr_id` / `empr_id_mysql` de ADR-009 | Workshop |
+| R12 | **Mojibake al pasar de latin1 a UTF-8.** Ya ocurrió en este proyecto con `equipos.descripcion`: filas latin1 con bytes UTF-8 adentro, donde ningún charset único las arregla a todas | Media | Medio | Detectar y normalizar las filas afectadas **antes** de migrar, no durante. Ver STATE.md, 2026-08-11 | Dev |
 
 ### 3.2 Riesgos técnicos heredados del origen
 
@@ -328,7 +335,7 @@ Estos bugs **existen hoy en producción** en assetplanner. No los introdujo la m
 | T3 | **Bucle de recurrencia sin guardas.** `while` sin límite de iteraciones, sin transacción, y sin verificar el status de Bonita antes de leer `$result['data']['caseId']`. Si `$diasFrecuencia` vale 0, crea OTs y lanza procesos Bonita hasta el timeout | 🔴 Crítica | `controllers/Calendario.php:523-556` | Límite duro de iteraciones + transacción + validación de frecuencia > 0 + validar `cant_meses` (hoy es un input de texto libre) |
 | T4 | **Fechas `'0000-00-00 00:00:00'` hardcodeadas.** Inválidas en MySQL 5.7+ con `NO_ZERO_DATE`, prohibidas en MySQL 8. Dos de ellas asignan un datetime a campos **numéricos** de lectura de contador | 🟡 Alta | `controllers/Calendario.php:161,171,176` | Bloquean cualquier upgrade de motor. Corregir en la reimplementación |
 | T5 | **Credenciales en claro en el repo**, incluido un JWT completo | 🔴 Crítica | `application/config/database.php:99-105`; `application/config/constants.php:247` | Variables de entorno + gitleaks en CI + rotación de las credenciales expuestas |
-| T6 | **Conversión de periodicidad rota.** `getDiasDuracion()` mapea Mensual=30 (los planes mensuales derivan ~5 días/año) y manda Horas/Ciclos/Km al `default`, convirtiendo "500 horas" en **500 días** | 🟡 Alta | `controllers/Calendario.php:497-521`, con TODO del propio autor en `:467` | Reimplementación con RRULE (§5.6) |
+| T6 | **Conversión de periodicidad rota.** `getDiasDuracion()` mapea Mensual=30 (los planes mensuales derivan ~5 días/año) y manda Horas/Ciclos/Km al `default`, convirtiendo "500 horas" en **500 días** | 🟡 Alta | `controllers/Calendario.php:497-521`, con TODO del propio autor en `:467` | Reimplementación con RRULE (§5.7) |
 | T7 | **Dos fuentes de verdad para la lectura del contador.** Un model usa `equipos.ultima_lectura`, otro `MAX(historial_lecturas)`. Y `setLecturas()` inserta en el historial pero **no actualiza** `equipos.ultima_lectura` | 🟡 Alta | `models/Calendarios.php:106` vs `models/Preventivos.php:747`; `models/Equipos.php:803-882` | Los planes por contador se disparan con datos viejos. Unificar en la reimplementación |
 | T8 | **Regla de alerta implementada 4 veces con 3 fórmulas distintas** (controller, SQL, y dos vistas) | 🟡 Alta | `controllers/Calendario.php:88-100`; `models/Calendarios.php:106`; `views/calendar/tablas.php:235-242`; `views/calendar/tabla_preventivo_por_horas.php:36-40` | Fuente única en el servicio de planificación |
 | T9 | **Bug en el host:** clave duplicada en el array `BPM_PROCESS`. La entrada `'Proc. Mantenimiento'` usa el ID de pedidos extraordinarios y pisa a `'Ped. Materiales Ext'`; `BPM_PROCESS_ID_MANTENIMIENTO` nunca entra al array | 🟡 Alta | `application/config/constants.php:161` | Corregir antes de integrar la bandeja de tareas |
@@ -351,6 +358,7 @@ La premisa que hace esto viable: **durante la migración, asset y tools consulta
 | 3 | **Aislamiento multi-tenant.** Empresa A no ve datos de empresa B | Script propio | Cada PR (bloqueante) |
 | 4 | **Motor de planificación.** Unitarios del código nuevo | PHPUnit | Cada PR (bloqueante) |
 | 5 | **Flujos críticos E2E** | Playwright | Nightly + pre-release |
+| 6 | **Reconciliación de datos migrados** a PostgreSQL (almacenes y herramientas) | Script propio | Antes y después de cada corte |
 
 **Nivel 0b** es el que ataca directamente el defecto de raíz de §2.3. Es barato (grep) y convierte "¿está convertido este archivo?" en una pregunta con respuesta automática. Baseline actual: `php -l` pasa en 43/43 archivos del fork.
 
@@ -359,6 +367,14 @@ La premisa que hace esto viable: **durante la migración, asset y tools consulta
 **Nivel 3 — aislamiento.** Replicar el patrón de `scripts/dev/verify-mcp-isolation.py`, que ya existe y se usa para las tools MCP. Prioritario por T1: hay al menos una fuga confirmada, y el patrón `->result()[0]` sin verificar filas está repartido por el código.
 
 **Nivel 4 — golden tests de recurrencia.** Dado un plan (equipo, tarea, periodicidad, fecha base, ventana), la serie de fechas generada debe coincidir con la del sistema viejo. Es el contrato funcional del motor reescrito.
+
+**Nivel 6 — reconciliación**, obligatorio en el cutover de almacenes y herramientas (§5.8). No es una prueba de código sino de datos, y corre dos veces: en el dry-run sobre TEST y en el corte real. Verifica, por empresa:
+
+- Conteo de filas origen (MariaDB) contra destino (PostgreSQL), y la lista de las que no se pudieron mapear.
+- Que ninguna herramienta o artículo referenciado por las ocho tablas de asociación quede huérfano tras el cambio de id (R11).
+- Integridad de texto: ninguna descripción con mojibake tras el pasaje latin1 → UTF-8 (R12).
+- Unicidad de `codigo` al consolidar, que en asset era una restricción global.
+- Que los totales que ve el usuario (stock por depósito, herramientas por pañol) coincidan antes y después.
 
 **Casos negativos obligatorios:**
 - Frecuencia 0 → no debe colgar (hoy cuelga, T3).
@@ -378,7 +394,8 @@ La premisa que hace esto viable: **durante la migración, asset y tools consulta
 | Decisión | Elección | Consecuencia |
 |---|---|---|
 | Punto de partida | Rescatar el fork de Rogelio y re-mergear encima | Se aprovechan 36k LOC; hay que sanear primero (Etapa 1) |
-| Alcance | Núcleo de mantenimiento primero | Almacenes, ABMs y reportes quedan para después |
+| Alcance | Núcleo de mantenimiento primero | ABMs y reportes quedan para después |
+| Almacenes y herramientas | **No se migran: se reemplazan.** Los models de asset pasan a llamar a `ALMDataService` y `PANDataservice`, y se usan las pantallas de `traz-comp-almacenes` y `traz-comp-pan` | Los datos de los clientes se migran a PostgreSQL en el cutover (§5.8). El de asset es la versión vieja en ambos casos |
 | Acceso a datos | Directo por `$db['asset_db']` a MariaDB | Excepción acotada a `CLAUDE.md`, formalizada como ADR |
 | Desarrollo de asset | Freeze de features, sólo bugfixes | Cherry-pick a ambos lados |
 | Esquema de `assetv2` | **No cambia** durante la migración | asset sigue en producción sobre la misma base |
@@ -392,12 +409,15 @@ flowchart TB
     E2["Etapa 2 — Re-merge<br/>los 15 archivos divergentes"]
     E3["Etapa 3 — Completar núcleo<br/>Tarea.php + vistas faltantes"]
     E4["Etapa 4 — Plan de Mantenimiento<br/>reimplementación del motor"]
-    E5["Etapa 5 — Corte de usuarios<br/>piloto por empresa"]
-    E0 --> E1 --> E2 --> E3 --> E4 --> E5
+    E5["Etapa 5 — Almacenes y Herramientas<br/>reemplazo + migración a PostgreSQL"]
+    E6["Etapa 6 — Corte de usuarios<br/>por empresa, en dos velocidades"]
+    E0 --> E1 --> E2 --> E3 --> E4 --> E5 --> E6
     E1 -.->|"criterio de salida:<br/>navega y lista datos reales"| E1
 ```
 
 Las etapas 2 y 3 pueden solaparse parcialmente; 1 y 4 no — la 1 es prerrequisito de todo y la 4 necesita el núcleo completo.
+
+La etapa 5 es de naturaleza distinta a las anteriores: no porta código, lo reemplaza, y es la única que mueve datos de clientes entre motores. Puede empezar en paralelo a la 4 (el relevamiento del mapeo no depende del calendario), pero su ejecución en producción va después del corte del núcleo, empresa por empresa (§5.9).
 
 ### 5.3 Etapa 0 — Fundaciones
 
@@ -405,7 +425,7 @@ Sin esto, la etapa 1 no se puede verificar.
 
 1. **Rama de integración** `feature/man-migracion` en `traz-tools-man`, con branch protection y PR obligatorio. Prohibido el commit "backup" directo a rama personal.
 2. **Actualizar el puntero del submódulo**, hoy en `02cca43` ("First commit").
-3. **Ambiente de test** del frontend PHP (§5.9). Es el bloqueante duro.
+3. **Ambiente de test** del frontend PHP (§5.10). Es el bloqueante duro.
 4. **CI mínimo** (§5.10): `php -l` + checklist de conversión + gitleaks.
 5. **Sacar las credenciales** de `asset_db` a variables de entorno **y rotarlas** (T5).
 6. **ADR-014** — formalizar la excepción a "sin queries directas desde PHP" para el módulo MAN, acotada y con plan de salida a DataServices. Actualizar `doc/v3/CONTEXT-PACK.md` en el mismo PR (fila en la tabla de decisiones + bump de versión), como pide el DoD de `CLAUDE.md`.
@@ -489,22 +509,97 @@ flowchart TB
 - `predictivo.tarea_descrip` es en realidad el FK a `tareas.id_tarea`, pese al nombre.
 - Fechas cero (T4).
 
-### 5.8 Etapa 5 — Corte de usuarios
+### 5.8 Etapa 5 — Almacenes y Herramientas: reemplazo, no migración
 
-Como ambos frontends van contra la **misma base**, no hay migración de datos ni sincronización: el corte es de interfaz, no de información.
+Este bloque no sigue la regla del resto del documento. En todo lo demás se **porta** código de asset a tools sobre la misma base MariaDB. Acá se **descarta** el código de asset, se usan las pantallas y los DataServices que traz-tools ya tiene, y los datos de los clientes **se migran a PostgreSQL**.
 
-**Modelo: piloto por empresa, no big bang y no por usuario.**
+**Qué se reemplaza con qué**
 
-1. Se elige una empresa piloto. **Todos** sus usuarios pasan a tools el mismo día — el corte es por empresa entera para evitar que dos frontends escriban en paralelo sobre las mismas filas (R4).
-2. El resto de las empresas sigue en asset, sin enterarse.
-3. **Rollback = volver a la URL vieja.** Sin restore, sin pérdida de datos, porque los datos son los mismos.
-4. Criterios de salida por empresa antes de habilitar la siguiente: N días sin incidentes críticos, paridad de datos en verde, y validación de QC sobre los flujos del módulo.
-5. Se repite empresa por empresa, de menor a mayor volumen.
-6. **Cierre:** cuando no queda nadie en asset, se desactiva su login y queda en sólo lectura hasta retirarlo.
+| Bloque de asset | Reemplazo en traz-tools | DataService | Esquema destino |
+|---|---|---|---|
+| Almacenes / depósitos / artículos | `traz-comp-almacenes` | `ALMDataService` | `alm.*` (PostgreSQL) |
+| Herramientas (versión vieja) | `traz-comp-pan` (pañol) | `PANDataservice` | `pan.*` (PostgreSQL) |
+
+`traz-comp-pan` ya tiene `controllers/Herramienta.php`, `models/Herramientas.php` y `views/herramienta/`, y `PANDataservice` ya expone el CRUD completo (`herramientasGet`, `herramientasSet`, `herramientasUpdate`, `herramientasDelete`, `herramientasSetEstado`) más movimientos de pañol (entradas, salidas, estanterías, encargado) que asset no tiene. No hay que construir nada nuevo del lado de tools: hay que **conectar** el módulo de mantenimiento a esos servicios.
+
+#### 5.8.1 El problema duro: claves foráneas cruzando de motor
+
+Herramientas y artículos no son entidades aisladas: el núcleo de mantenimiento los referencia desde cuatro tablas de asociación cada uno, y esas tablas **se quedan en MariaDB**.
+
+| Tabla de asociación (MariaDB) | Referencias en el código |
+|---|---:|
+| `tbl_otherramientas` | 54 |
+| `tbl_preventivoherramientas` | 21 |
+| `tbl_predictivoherramientas` | 12 |
+| `tbl_backlogherramientas` | 12 |
+| `tbl_preventivoinsumos` | 22 |
+| `tbl_otinsumos` | 9 |
+| `tbl_predictivoinsumos` | 12 |
+| `tbl_backloginsumos` | 12 |
+
+Más ~170 referencias directas a `herramientas` y ~331 a `articles`.
+
+Si `herramientas.herrId` (MariaDB) pasa a ser `pan.herramientas.herr_id` (PostgreSQL) con id nuevo, esas ocho tablas quedan apuntando a un id que ya no significa nada. **Es el mismo problema que el proyecto ya resolvió para empresas** con el par `empr_id` / `empr_id_mysql` y el puente en `core.empresas` (ADR-009). Tres salidas posibles, a decidir en workshop (§6.5):
+
+1. **Preservar el id** al migrar (forzar `herr_id` = `herrId` original). Simple, pero sólo funciona si no hay colisiones entre empresas ya cargadas en `pan.herramientas`.
+2. **Tabla de mapeo** `herrId_mysql → herr_id`, igual que el patrón de ADR-009. Robusto, agrega un join a cada lectura.
+3. **Mover también las tablas de asociación** a PostgreSQL. El más limpio a futuro, pero rompe la premisa de "el esquema de `assetv2` no cambia" y toca el núcleo de mantenimiento.
+
+#### 5.8.2 El modelo de datos no es equivalente
+
+La migración no es un dump/restore: es un mapeo con transformación, y hay conceptos sin correspondencia directa.
+
+| asset — `herramientas` (MariaDB, latin1) | tools — `pan.herramientas` (PostgreSQL) | Fricción |
+|---|---|---|
+| `herrId` | `herr_id` | Ver §5.8.1 |
+| `herrcodigo` (UNIQUE global) | `codigo` | Verificar unicidad al consolidar |
+| `herrmarca` varchar (texto libre) | `marca` → FK a `core.tablas` | **asset mezcla marca y modelo en un texto libre** (ej. `'Escalera 7 peldaño - Ayinco'`). Requiere parseo o carga manual |
+| `modid` int (FK `marcasequipos`) | `modelo` (texto) | El mapeo va cruzado respecto de lo que sugieren los nombres |
+| `depositoId` (FK `abmdeposito`) | `pano_id` (FK `pan.panol`) | **Depósito ≠ pañol.** Decisión funcional (§6.5) |
+| `equip_estad` varchar(4) (`'AC'`/`'AN'`) | `estado` + `eliminado` bool | Dos campos donde había uno |
+| `tipoid` int | `tipo` | Verificar semántica |
+| latin1 | UTF-8 | **Riesgo de mojibake.** El proyecto ya lo sufrió en `equipos.descripcion` (STATE.md, 2026-08-11): filas latin1 con bytes UTF-8 adentro, donde ningún charset único las arregla a todas |
+
+#### 5.8.3 Orden de ejecución
+
+1. **Relevar el mapeo campo a campo** para ambos módulos, con los datos reales del cliente a migrar (no con el dump de ejemplo).
+2. **Escribir los scripts de migración** (idempotentes, con dry-run y reporte de filas no mapeables).
+3. **Reemplazar los puntos de integración en el núcleo**: donde el módulo MAN lee o escribe herramientas/artículos, pasa a llamar a `PANDataservice` / `ALMDataService` en vez de a las tablas de MariaDB.
+4. **Ensayar la migración en TEST** con una copia de los datos reales, y correr la reconciliación (§4, nivel 6).
+5. **Ejecutar en el cutover de cada empresa**, no antes.
+
+Herramientas conviene hacerlo **antes** que almacenes: es mucho más chico (268 LOC contra ~20.000), tiene un solo concepto a mapear, y sirve de ensayo del mecanismo completo — mapeo, script, reconciliación y rollback — antes de aplicarlo al bloque grande.
+
+### 5.9 Etapa 6 — Corte de usuarios
+
+El corte es **por empresa entera** (no por usuario, para evitar que dos frontends escriban en paralelo sobre las mismas filas — R4), y tiene **dos velocidades** según el bloque:
+
+| Bloque | Base de datos | Migración de datos | Rollback |
+|---|---|---|---|
+| Núcleo de mantenimiento | Misma MariaDB `assetv2` | **Ninguna** | Instantáneo: volver a la URL vieja |
+| Almacenes y Herramientas | De MariaDB a PostgreSQL | **Sí**, en el momento del corte | Con restore y ventana de datos a reconciliar |
+
+**Secuencia por empresa:**
+
+1. **Núcleo primero.** La empresa pasa a usar el módulo de mantenimiento en tools, sobre los mismos datos. Sin migración, sin ventana, sin riesgo de pérdida. Se estabiliza acá.
+2. **Herramientas después**, una vez que el núcleo está estable: ventana de corte, script de migración a `pan.*`, reconciliación (§4 nivel 6), y recién ahí se habilitan las pantallas de `traz-comp-pan`.
+3. **Almacenes al final**, mismo procedimiento contra `alm.*`, que es el bloque más grande.
+
+Cada paso tiene su propio criterio de salida antes de habilitar el siguiente: N días sin incidentes críticos, paridad de datos en verde (niveles 1 y 6), y validación de QC sobre los flujos del módulo.
+
+**Sobre el rollback de los pasos 2 y 3.** Una vez migrados los datos a PostgreSQL y con el cliente operando ahí, volver atrás implica restaurar y reconciliar lo que se escribió en el medio. Por eso:
+
+- La ventana de corte de cada bloque debe ser corta y con la operación detenida (no migrar en caliente).
+- El script de migración corre primero en modo dry-run, con reporte de filas no mapeables, y no se ejecuta en producción hasta que ese reporte esté vacío o con excepciones aceptadas explícitamente.
+- Se conserva la base MariaDB intacta como respaldo durante todo el período de convivencia — no se borra nada al migrar.
+
+**Orden entre empresas:** de menor a mayor volumen. La primera empresa es el ensayo real del mecanismo completo.
+
+**Cierre:** cuando no queda nadie en asset, se desactiva su login y queda en sólo lectura hasta retirarlo.
 
 Durante toda la ventana rige el freeze (R1) y el doble bugfix (R5). Cuanto más corta la ventana, menos cuestan ambos.
 
-### 5.9 Ambientes
+### 5.10 Ambientes
 
 Estado actual: **no existe staging del frontend PHP.** `doc/infra/ambientes.md` documenta DEV/TEST/PROD sólo para el stack WSO2 (APIM + MI). Es el bloqueante duro de la Etapa 0.
 
@@ -514,11 +609,11 @@ Lo que hace falta:
 |---|---|---|
 | DEV local | Apache/PHP + traz-tools con el submódulo + acceso a una réplica de `assetv2` | Trabajo diario |
 | TEST | VM o contenedor con traz-tools desplegado + **réplica** de `assetv2` (nunca la base de producción) | Pruebas de paridad, validación de QC, piloto interno |
-| PROD | traz-tools apuntando a `assetv2` real | Corte por empresa (§5.8) |
+| PROD | traz-tools apuntando a `assetv2` real | Corte por empresa (§5.9) |
 
 Punto crítico: la base de TEST tiene que ser una **réplica** con datos representativos de al menos dos empresas, porque sin eso no se pueden correr las pruebas de aislamiento (nivel 3), que son las que cubren T1.
 
-### 5.10 CI/CD
+### 5.11 CI/CD
 
 Estado actual: `.github/workflows/` contiene sólo `pull_request_template.md`. **Ninguno** de los 6 workflows que describe `TRAZALOG_v3_CICD_STRATEGY.md` §4.2 está implementado. Hay infraestructura de pruebas reutilizable en `tests/security/*.hurl` y en `scripts/dev/verify-mcp-{queries,isolation}.py`.
 
@@ -538,15 +633,20 @@ PHPStan arranca en nivel bajo **con baseline** — el objetivo es que no entre d
 
 ## 6. Decisiones que requieren workshop (🔴)
 
-Estas cuatro no las resuelve quien ejecuta la migración. Están fuera de lo que cubre el CONTEXT-PACK y el doc de arquitectura.
+Estas cinco no las resuelve quien ejecuta la migración. Están fuera de lo que cubre el CONTEXT-PACK y el doc de arquitectura.
 
 **6.1 — Qué pasa con Bonita BPM.** `guardar_agregar()` no puede crear una OT sin Bonita: si `lanzarProceso` falla, se borra la OT y se aborta (`controllers/Calendario.php:354-359`). Hay 9 nombres de actividad hardcodeados como string literal (`'Planificar Solicitud'`, `'Asignar Recursos y Tareas'`, …) — renombrar una actividad en el diagrama BPM rompe la app en silencio. Y `orden_trabajo.case_id` es una FK a un sistema externo sin integridad referencial. La reimplementación del motor tiene que replicar esta coreografía exactamente, o hay que decidir antes si Bonita sigue.
 
 **6.2 — Las copias divergentes de artefactos WSO2.** assetplanner mantiene `api/toolsMANApi.xml`, `api/MANDataService.xml`, `_backend/api/toolsMANAPI.xml` y `_backend/api/dataservice/ASP/COREDataService.xml`, distintos de los de traz-tools (`_backend/api/ToolsAPIProject/.../toolsMANAPI.xml`, `MANDataService.dbs`). Uno de los dos conjuntos es la fuente de verdad; hoy ambos reciben cambios.
 
-**6.3 — Cuándo y cómo se sale de `asset_db`.** El PM ya definió la estrategia para almacenes: reemplazar los models por llamadas a los DataServices de `ALMDataService` en traz-tools. Falta decidir si el módulo MAN sigue el mismo camino, y cuándo — hay una capa `toolsMANAPI` + `MANDataService` que ya consume `assetv2` con el puente `empr_id_mysql` (ADR-009) y que hoy el frontend no usa.
+**6.3 — Cuándo y cómo se sale de `asset_db` para el núcleo.** El PM ya definió la estrategia para almacenes y herramientas: reemplazar los models por llamadas a `ALMDataService` y `PANDataservice`, con migración de datos a PostgreSQL (§5.8). Falta decidir si el **núcleo de mantenimiento** sigue el mismo camino, y cuándo — hay una capa `toolsMANAPI` + `MANDataService` que ya consume `assetv2` con el puente `empr_id_mysql` (ADR-009) y que hoy el frontend no usa.
 
-**6.4 — Dónde se corrigen los bugs heredados.** T1 (aislamiento), T2 (SQL injection) y T4 (fechas cero) existen hoy en producción en assetplanner. Corregirlos sólo en el módulo migrado deja a los clientes actuales expuestos durante toda la convivencia; corregirlos en ambos rompe el freeze. T1 y T2 son de seguridad, así que la decisión no debería esperar al cutover.
+**6.4 — Cómo se puentean las FK que cruzan de motor, y el mapeo depósito → pañol.** Dos decisiones acopladas, ambas necesarias antes de escribir una línea del script de migración:
+
+- **El puente de ids** (§5.8.1): preservar el id original, tabla de mapeo estilo ADR-009, o mover también las tablas de asociación a PostgreSQL. La tercera opción es la más limpia a futuro pero rompe la premisa de esquema congelado.
+- **Depósito ≠ pañol** (§5.8.2): en asset la herramienta cuelga de un depósito (`abmdeposito`); en tools, de un pañol (`pan.panol`). No es una equivalencia técnica sino una decisión funcional sobre cómo el cliente organiza sus herramientas. Lo mismo aplica a marca/modelo, que en asset viajan mezclados en un texto libre y en tools son un FK y un campo separados.
+
+**6.5 — Dónde se corrigen los bugs heredados.** T1 (aislamiento), T2 (SQL injection) y T4 (fechas cero) existen hoy en producción en assetplanner. Corregirlos sólo en el módulo migrado deja a los clientes actuales expuestos durante toda la convivencia; corregirlos en ambos rompe el freeze. T1 y T2 son de seguridad, así que la decisión no debería esperar al cutover.
 
 ---
 
@@ -596,4 +696,5 @@ find . -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
 | **Régimen por tiempo** | Vencimiento por fecha: `ultimo + cantidad` días |
 | **Régimen por contador** | Vencimiento por lectura: `lectura_base + cantidad` horas/ciclos/km |
 | **`empr_id` / `empr_id_mysql`** | Id de empresa en PostgreSQL (tools) y su equivalente en MySQL (`assetv2`). El puente está en `core.empresas` (ADR-009) |
+| **Pañol** | Depósito de herramientas. Es el módulo `traz-comp-pan` de traz-tools (esquema `pan`), que reemplaza al módulo de herramientas de asset |
 | **Fork de Rogelio** | La rama `rnsanchez` de `traz-tools-man`, congelada el 2024-09-09 |
