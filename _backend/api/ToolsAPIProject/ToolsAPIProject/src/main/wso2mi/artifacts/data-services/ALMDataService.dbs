@@ -76,9 +76,18 @@
       <result outputType="json">{&#xd;"recipientes":&#xd;      {"recipiente":&#xd;        [&#xd;          {&#xd;          "id": "$reci_id",&#xd;          "titulo":"$nombre",&#xd;          "estado":"$estado"&#xd;          }          &#xd;        ]&#xd;      }&#xd; }</result>
       <param name="esta_id" sqlType="STRING"/>
    </query>
+   <!-- MCP: depósitos de la empresa, para que el agente pueda resolver el depo_id
+        que exige alm_crear_pedido_materiales. El JOIN a establecimientos filtra
+        TAMBIÉN por empr_id (ADR-012): sin esa condición, un esta_id compartido
+        entre empresas expondría el nombre del establecimiento ajeno. -->
+   <query id="getDepositosMcp" useConfig="ToolsDataSource">
+      <sql>SELECT d.depo_id, d.descripcion, d.esta_id, e.nombre AS establecimiento&#xd;FROM alm.alm_depositos d&#xd;LEFT JOIN prd.establecimientos e ON e.esta_id = d.esta_id AND e.empr_id = d.empr_id&#xd;WHERE d.empr_id = cast(:empr_id as integer)&#xd;AND d.eliminado = false&#xd;ORDER BY d.descripcion</sql>
+      <result outputType="json">{&#xd;    "depositos": {&#xd;        "deposito": [&#xd;            {&#xd;                "depo_id": "$depo_id",&#xd;                "descripcion": "$descripcion",&#xd;                "esta_id": "$esta_id",&#xd;                "establecimiento": "$establecimiento"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <!-- E9-IDENT-06: corregido empr_id hardcoded → parámetro inyectable -->
    <query id="getArticulos2" useConfig="ToolsDataSource">
-      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id AND C.empr_id = A.empr_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
       <result outputType="json">{&#xd;    "materias": {&#xd;        "materia": [&#xd;            {&#xd;                "id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -632,6 +641,12 @@
    </resource>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos2">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <!-- MCP: depósitos de la empresa (tool alm_get_depositos) -->
+   <resource method="GET" path="/mcp/depositos/{empr_id}">
+      <call-query href="getDepositosMcp">
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>

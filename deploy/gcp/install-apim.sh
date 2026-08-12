@@ -36,7 +36,8 @@ set -a
 source "$ENV_FILE"
 set +a
 
-for var in APIM_ZIP_PATH APIM_HOME APIM_XMS APIM_XMX MCP_DOMAIN; do
+for var in APIM_ZIP_PATH APIM_HOME APIM_XMS APIM_XMX MCP_DOMAIN \
+           MCP_RESOURCE_URL DNATO_OAUTH_URL; do
   [ -n "${!var:-}" ] || die "Falta $var en .env"
 done
 
@@ -87,11 +88,24 @@ hostname = os.environ["MCP_DOMAIN"]
 # hostname público — usado por APIM para generar URLs de la gateway/consolas
 content = re.sub(r'(?m)^hostname\s*=.*$', f'hostname = "{hostname}"', content, count=1)
 
+# https_endpoint del gateway — es el que APIM usa para construir el campo
+# `resource` del PRM y la URL del header WWW-Authenticate. Si queda en el
+# default (https://localhost:${mgt.transport.https.port}), el PRM anuncia
+# "https://localhost:8243/..." y ningún cliente externo puede resolverlo.
+# Mismo cambio que scripts/dev/setup-ngrok.sh hace con la URL de ngrok en DEV.
+content = re.sub(
+    r'(?m)^https_endpoint\s*=.*$',
+    f'https_endpoint = "https://{hostname}"',
+    content,
+    count=1,
+)
+
 with open(path, "w") as f:
     f.write(content)
 PYEOF
 
-log "deployment.toml actualizado: hostname=$MCP_DOMAIN (database.apim_db/shared_db sin tocar — H2 por defecto)"
+log "deployment.toml actualizado: hostname=$MCP_DOMAIN, https_endpoint=https://$MCP_DOMAIN"
+log "  (database.apim_db/shared_db sin tocar — H2 por defecto)"
 log "PENDIENTE fuera de este script (clase 🔴): [apim.jwt] + Key Manager federado Dnato"
 log "  (ADR-008/ADR-009) — ver doc/identity/apim-keymanager-dnato.md antes de dar de alta el primer cliente"
 
@@ -135,9 +149,34 @@ fi
 
 sed -e "s#{{APIM_HOME}}#$APIM_HOME#g" -e "s#{{WSO2_USER}}#$WSO2_USER#g" \
     -e "s#{{JAVA_HOME}}#$JAVA_HOME_RESOLVED#g" \
+    -e "s#{{MCP_RESOURCE_URL}}#$MCP_RESOURCE_URL#g" \
+    -e "s#{{DNATO_OAUTH_URL}}#$DNATO_OAUTH_URL#g" \
   "$SCRIPT_DIR/systemd/wso2am.service" > /etc/systemd/system/wso2am.service
 systemctl daemon-reload
 systemctl enable wso2am.service
+
+# ── CAR OAuthDiscovery — PRM RFC 9728 (ver deployment-gcp.md §6.2-bis) ──
+# Sin este CAR, /.well-known/oauth-protected-resource devuelve 404 y Claude.ai
+# nunca descubre que el Authorization Server es Dnato: cae al fallback
+# host-based y pega contra https://<dominio>/authorize, que no existe.
+# Es un CAR del APIM, distinto e independiente del .car de ToolsAPIProject
+# (ese va en el MI). Equivalente al paso 3b de scripts/dev/setup-ngrok.sh.
+DISCOVERY_SRC="$SCRIPT_DIR/../../_backend/api/ApimDiscoveryProject"
+DISCOVERY_CAR="$DISCOVERY_SRC/build/trazalog-discovery-1.0.0.car"
+APIM_CARBONAPPS="$APIM_HOME/repository/deployment/server/carbonapps"
+
+if [ -f "$DISCOVERY_CAR" ]; then
+  mkdir -p "$APIM_CARBONAPPS"
+  cp "$DISCOVERY_CAR" "$APIM_CARBONAPPS/"
+  chown "$WSO2_USER:$WSO2_USER" "$APIM_CARBONAPPS/trazalog-discovery-1.0.0.car"
+  log "CAR OAuthDiscovery desplegado en $APIM_CARBONAPPS"
+  log "  trazalog.mcp.resource.url = $MCP_RESOURCE_URL"
+  log "  trazalog.dnato.oauth.url  = $DNATO_OAUTH_URL"
+else
+  log "AVISO: no se encontró $DISCOVERY_CAR"
+  log "  Generarlo con: bash $DISCOVERY_SRC/build.sh"
+  log "  Sin este CAR el conector MCP de Claude.ai NO va a poder autenticarse."
+fi
 
 log ""
 log "=== install-apim.sh COMPLETADO ==="
