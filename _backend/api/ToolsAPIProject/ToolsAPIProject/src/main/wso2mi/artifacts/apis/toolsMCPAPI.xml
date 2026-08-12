@@ -530,8 +530,12 @@
          <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
               ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
               alm.alm_lotes.empr_id, que es el id de core.empresas (ADR-012). -->
+         <property name="f_depo"   expression="fn:concat('',get-property('query.param.depo_id'))"/>
+         <property name="f_tipo"   expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <property name="f_buscar" expression="fn:concat('',get-property('query.param.buscar'))"/>
+
          <property name="uri.var.almStock_url"
-                   expression="fn:concat($ctx:api_url,'/alm/stock/',get-property('jwt_empr_id'))"/>
+                   expression="fn:concat($ctx:api_url,'/alm/stock/',get-property('jwt_empr_id'),'?depo_id=',$ctx:f_depo,'&amp;tipo=',$ctx:f_tipo,'&amp;buscar=',$ctx:f_buscar)"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | MCP | alm_get_stock | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
@@ -572,6 +576,58 @@
         Habilita el encadenado alm_get_stock -> alm_get_depositos ->
         alm_crear_pedido_materiales: sin esta tool el agente no tiene de dónde
         sacar el depo_id que exige el alta del pedido. -->
+   <!-- alm_get_vencimientos — lotes por vencer o vencidos, con dias restantes.
+        Para insumos con vida util (lubricantes, adhesivos, reactivos). -->
+   <resource methods="GET" uri-template="/mcp/alm/vencimientos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
+         <property name="uri.var.almVencimientos_url"
+                   expression="fn:concat($ctx:api_url,'/alm/vencimientos/',get-property('jwt_empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_vencimientos | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almVencimientos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/vencimientos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_vencimientos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
    <resource methods="GET" uri-template="/mcp/alm/depositos">
       <inSequence>
          <sequence key="emprIdFromHeader"/>

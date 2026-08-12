@@ -390,6 +390,35 @@ paths:
   /mcp/alm/stock:
     get:
       operationId: alm_get_stock
+      parameters:
+        - name: depo_id
+          in: query
+          required: false
+          description: |
+            Filtra a los artículos **con stock en ese depósito**, y el `stock`
+            devuelto pasa a ser el de ese depósito en vez del consolidado.
+            Obtener el ID con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+        - name: tipo
+          in: query
+          required: false
+          description: |
+            Filtra por tipo de artículo, por su nombre legible: `Insumo`,
+            `Materia Prima`, `Producto`, `En Proceso`, `Final`, `Scrap`.
+          schema: { type: string }
+          example: "Insumo"
+        - name: buscar
+          in: query
+          required: false
+          description: |
+            Busca el texto dentro de la descripción del artículo (sin distinguir
+            mayúsculas). Usarlo para ubicar insumos concretos —por ejemplo
+            `filtro`, `aceite`, `rodamiento`— en vez de traer el catálogo entero
+            y filtrar después: con catálogos grandes eso no escala.
+          schema: { type: string }
+          example: "filtro"
+      
       summary: Consultar stock de artículos de la empresa
       x-mcp-annotations:
         readOnlyHint: true
@@ -475,6 +504,56 @@ paths:
                   summary: Empresa sin depósitos cargados
                   value:
                     depositos: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/vencimientos:
+    get:
+      operationId: alm_get_vencimientos
+      summary: Listar lotes por vencer o vencidos
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los lotes con stock que tienen fecha de vencimiento, con los
+        días que faltan y una clasificación ya calculada.
+
+        **Clasificación (`estado_vencimiento`):**
+        - `Vencido` — la fecha ya pasó (`dias_restantes` ≤ 0)
+        - `Critico` — vence en menos de 10 días
+        - `Activo` — todavía tiene margen
+
+        **Cuándo usar esta operación:** cuando pregunten qué se vence, o al
+        planificar consumo de insumos con vida útil (lubricantes, adhesivos,
+        reactivos, sellantes). Solo incluye lotes con cantidad mayor a cero:
+        un lote vencido sin stock no es un problema.
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Lotes con vencimiento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VencimientosList"
+              examples:
+                con_vencidos:
+                  summary: Hay lotes vencidos y otros por vencer
+                  value:
+                    vencimientos:
+                      lote:
+                        - lote_id: "1075"
+                          lote: "L-2024-088"
+                          arti_id: "345"
+                          articulo: "Aceite hidráulico ISO 68"
+                          barcode: "778955684"
+                          tipo_articulo: "Insumo"
+                          cantidad: "938"
+                          unidad_medida: "LT"
+                          depo_id: "8"
+                          deposito: "Productivo"
+                          fec_vencimiento: "2026-08-20"
+                          dias_restantes: "8"
+                          estado_vencimiento: "Critico"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -783,6 +862,42 @@ components:
             materia:
               type: array
               items: { $ref: "#/components/schemas/ArticuloStock" }
+
+    LoteVencimiento:
+      type: object
+      properties:
+        lote_id: { type: string, example: "1075" }
+        lote:
+          type: string
+          description: Código del lote. Vacío si no tiene.
+          example: "L-2024-088"
+        arti_id: { type: string, example: "345" }
+        articulo: { type: string, example: "Aceite hidráulico ISO 68" }
+        barcode: { type: string, example: "778955684" }
+        tipo_articulo: { type: string, example: "Insumo" }
+        cantidad: { type: string, example: "938" }
+        unidad_medida: { type: string, example: "LT" }
+        depo_id: { type: string, example: "8" }
+        deposito: { type: string, example: "Productivo" }
+        fec_vencimiento: { type: string, example: "2026-08-20" }
+        dias_restantes:
+          type: string
+          description: Días hasta el vencimiento. Negativo si ya venció.
+          example: "8"
+        estado_vencimiento:
+          type: string
+          description: "`Vencido` · `Critico` (<10 días) · `Activo`"
+          example: "Critico"
+
+    VencimientosList:
+      type: object
+      properties:
+        vencimientos:
+          type: object
+          properties:
+            lote:
+              type: array
+              items: { $ref: "#/components/schemas/LoteVencimiento" }
 
     Preventivo:
       type: object

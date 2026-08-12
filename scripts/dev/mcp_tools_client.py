@@ -26,6 +26,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 
 MI_URL = os.environ.get("MI_URL", "http://localhost:8290")
@@ -124,8 +125,17 @@ class MCP:
                           tool="man_create_ot")
 
     # ---------------------------------------------------------------- almacenes
-    def alm_get_stock(self):
-        return self._call("GET", "/alm/stock", tool="alm_get_stock")
+    def alm_get_stock(self, depo_id=None, tipo=None, buscar=None):
+        """Filtros opcionales: sin ninguno devuelve el catálogo completo."""
+        q = []
+        if depo_id: q.append(f"depo_id={depo_id}")
+        if tipo:    q.append(f"tipo={urllib.parse.quote(str(tipo))}")
+        if buscar:  q.append(f"buscar={urllib.parse.quote(str(buscar))}")
+        qs = ("?" + "&".join(q)) if q else ""
+        return self._call("GET", f"/alm/stock{qs}", tool="alm_get_stock")
+
+    def alm_get_vencimientos(self):
+        return self._call("GET", "/alm/vencimientos", tool="alm_get_vencimientos")
 
     def alm_get_depositos(self):
         return self._call("GET", "/alm/depositos", tool="alm_get_depositos")

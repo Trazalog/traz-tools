@@ -76,6 +76,35 @@
       <result outputType="json">{&#xd;"recipientes":&#xd;      {"recipiente":&#xd;        [&#xd;          {&#xd;          "id": "$reci_id",&#xd;          "titulo":"$nombre",&#xd;          "estado":"$estado"&#xd;          }          &#xd;        ]&#xd;      }&#xd; }</result>
       <param name="esta_id" sqlType="STRING"/>
    </query>
+   <!-- MCP: stock con filtros OPCIONALES combinables (depo_id, tipo, buscar).
+        Sin ningun filtro devuelve exactamente lo mismo que getArticulos2, para
+        no cambiar el comportamiento de alm_get_stock ya en uso.
+          depo_id -> solo articulos CON stock en ese deposito, y el total pasa a
+                     ser el de ese deposito (no el consolidado)
+          tipo    -> por el valor legible del tipo (Insumo, Materia Prima, ...)
+          buscar  -> texto libre sobre la descripcion, para que el agente pueda
+                     ir a buscar los insumos que releva por su cuenta
+        Los JOIN a lotes filtran por empr_id (ADR-012). -->
+   <query id="getStockFiltradoMcp" useConfig="ToolsDataSource">
+      <sql>SELECT A.arti_id, A.barcode, A.descripcion, A.costo, A.cantidad_caja, A.punto_pedido,&#xd;       A.estado, A.unidad_medida, A.es_loteado, COALESCE(t.valor,'') AS tipo_articulo,&#xd;       coalesce(sum(C.cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN core.tablas t ON t.tabl_id = A.tiar_id&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id AND C.empr_id = A.empr_id&#xd;     AND (COALESCE(:depo_id,'') = '' OR C.depo_id = cast(NULLIF(:depo_id,'') as integer))&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;AND (COALESCE(:tipo,'') = '' OR t.valor = :tipo)&#xd;AND (COALESCE(:buscar,'') = '' OR A.descripcion ILIKE '%' || :buscar || '%')&#xd;AND (COALESCE(:depo_id,'') = '' OR EXISTS (SELECT 1 FROM alm.alm_lotes l2 WHERE l2.arti_id = A.arti_id AND l2.empr_id = A.empr_id AND l2.depo_id = cast(NULLIF(:depo_id,'') as integer) AND l2.cantidad &gt; 0))&#xd;GROUP BY A.arti_id, t.valor&#xd;ORDER BY A.descripcion</sql>
+      <result outputType="json">{&#xd;    "materias": {&#xd;        "materia": [&#xd;            {&#xd;                "id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "tipo_articulo": "$tipo_articulo",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="buscar" sqlType="STRING"/>
+   </query>
+   <!-- MCP: lotes con vencimiento, para anticipar el vencimiento de insumos con
+        vida útil (lubricantes, adhesivos, reactivos, filtros con fecha).
+
+        NO reutiliza getLotesVencimientos: esa query exige un arti_id puntual y
+        —más grave— NO filtra por empresa, así que no sirve para el MCP. Se
+        conserva su lógica de clasificación (Vencido / Crítico <10 días / Activo)
+        y se le agrega el aislamiento: los JOIN filtran también por empr_id. -->
+   <query id="getVencimientosMcp" useConfig="ToolsDataSource">
+      <sql>SELECT al.lote_id, COALESCE(al.codigo,'') AS lote, aa.arti_id, aa.descripcion AS articulo,&#xd;       COALESCE(aa.barcode,'') AS barcode, COALESCE(t.valor,'') AS tipo_articulo,&#xd;       al.cantidad, COALESCE(aa.unidad_medida,'') AS unidad_medida,&#xd;       al.depo_id, COALESCE(ad.descripcion,'') AS deposito,&#xd;       to_char(al.fec_vencimiento,'YYYY-MM-DD') AS fec_vencimiento,&#xd;       (al.fec_vencimiento - CURRENT_DATE) AS dias_restantes,&#xd;       CASE WHEN (al.fec_vencimiento - CURRENT_DATE) &lt;= 0 THEN 'Vencido'&#xd;            WHEN (al.fec_vencimiento - CURRENT_DATE) &lt; 10 THEN 'Critico'&#xd;            ELSE 'Activo' END AS estado_vencimiento&#xd;FROM alm.alm_lotes al&#xd;JOIN alm.alm_articulos aa ON aa.arti_id = al.arti_id AND aa.empr_id = al.empr_id&#xd;LEFT JOIN core.tablas t ON t.tabl_id = aa.tiar_id&#xd;LEFT JOIN alm.alm_depositos ad ON ad.depo_id = al.depo_id AND ad.empr_id = al.empr_id&#xd;WHERE al.empr_id = cast(:empr_id as integer)&#xd;AND al.cantidad &gt; 0&#xd;AND al.fec_vencimiento IS NOT NULL&#xd;AND aa.eliminado = false&#xd;ORDER BY al.fec_vencimiento</sql>
+      <result outputType="json">{&#xd;    "vencimientos": {&#xd;        "lote": [&#xd;            {&#xd;                "lote_id": "$lote_id",&#xd;                "lote": "$lote",&#xd;                "arti_id": "$arti_id",&#xd;                "articulo": "$articulo",&#xd;                "barcode": "$barcode",&#xd;                "tipo_articulo": "$tipo_articulo",&#xd;                "cantidad": "$cantidad",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "depo_id": "$depo_id",&#xd;                "deposito": "$deposito",&#xd;                "fec_vencimiento": "$fec_vencimiento",&#xd;                "dias_restantes": "$dias_restantes",&#xd;                "estado_vencimiento": "$estado_vencimiento"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <!-- MCP: depósitos de la empresa, para que el agente pueda resolver el depo_id
         que exige alm_crear_pedido_materiales. El JOIN a establecimientos filtra
         TAMBIÉN por empr_id (ADR-012): sin esa condición, un esta_id compartido
@@ -647,6 +676,21 @@
    <!-- MCP: depósitos de la empresa (tool alm_get_depositos) -->
    <resource method="GET" path="/mcp/depositos/{empr_id}">
       <call-query href="getDepositosMcp">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <!-- MCP: stock con filtros opcionales (tool alm_get_stock) -->
+   <resource method="GET" path="/mcp/stock/{empr_id}">
+      <call-query href="getStockFiltradoMcp">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="buscar" query-param="buscar"/>
+      </call-query>
+   </resource>
+   <!-- MCP: vencimientos de lotes (tool alm_get_vencimientos) -->
+   <resource method="GET" path="/mcp/vencimientos/{empr_id}">
+      <call-query href="getVencimientosMcp">
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
