@@ -16,7 +16,7 @@ una tool.
 
 | | |
 |---|---|
-| **Última ejecución** | 2026-08-11 — 7/7 escenarios OK, con escrituras reales |
+| **Última ejecución** | 2026-08-12 — 12/12 escenarios OK, con escrituras reales |
 | **Entorno** | MI local `:8290` + bases de desarrollo (`10.142.0.13`) |
 | **Suite** | `scripts/dev/mcp_escenarios.py` |
 
@@ -195,6 +195,89 @@ razona sobre datos contradictorios.
 
 ---
 
+### E8 · Preventivos vencidos y cobertura del plan
+
+**Contexto.** La consulta que el jefe de mantenimiento hace todos los días, y la que las mineras
+auditan: ¿el plan existe, se cumple, y cubre los equipos que importan?
+
+**Lo que le dice a Claude:**
+> «¿Qué mantenimientos tengo vencidos?»
+> «¿Qué equipos no tienen plan preventivo? ¿Alguno es crítico?»
+
+| # | Tool | Qué aporta |
+|---|---|---|
+| 1 | `man_get_preventivos` | plan, periodicidad, intervalo, `estadoprev` y criticidad del equipo |
+| 2 | *(el agente filtra)* | los que están en `VE` (vencido) |
+| 3 | *(el agente cruza con `man_get_equipos`)* | los equipos que **no aparecen** no tienen plan |
+
+**Resultado esperado:** además de los vencidos, detecta los equipos sin cobertura y los prioriza
+por criticidad. En los datos de prueba: 2 de 4 equipos sin plan, **ambos críticos**
+(GEN-001 Muy Alta, GHOR-001 Alta).
+
+---
+
+### E9 · Aislamiento del plan preventivo
+
+Verifica que dos empresas no compartan planes, y —específicamente— que no se filtren los
+registros donde `preventivo.id_empresa` no coincide con el del equipo. En la base de desarrollo
+hay 130 así (datos basura confirmados con el PM): el filtro estricto los excluye.
+
+---
+
+### E10 · Stock filtrado por depósito, tipo y búsqueda
+
+**Contexto.** El stock total no sirve si el material está en otra faena, y con catálogos grandes
+tampoco sirve traerlo entero.
+
+**Lo que le dice a Claude:**
+> «¿Cuántos insumos tengo en el depósito de Zaranda?»
+> «¿Tengo filtros de aire y aceite hidráulico?»
+
+Los tres filtros de `alm_get_stock` son opcionales y combinables:
+
+| Filtro | Efecto |
+|---|---|
+| `depo_id` | solo artículos con stock ahí, y el `stock` pasa a ser el de ese depósito |
+| `tipo` | por nombre legible: Insumo, Materia Prima, Producto… |
+| `buscar` | texto libre sobre la descripción |
+
+**`buscar` es la pieza del caso donde Claude aporta el conocimiento de dominio**: releva por su
+cuenta qué insumos son clave en minería y después consulta por esos.
+
+El escenario verifica que cada filtro devuelva **solo** lo que corresponde, que combinarlos
+acumule, y que **sin filtros la respuesta sea idéntica a la de antes** (retrocompatible).
+
+---
+
+### E11 · Lotes vencidos y por vencer
+
+**Contexto.** Lubricantes, adhesivos y reactivos tienen vida útil; un lote vencido usado en un
+mantenimiento es un problema de calidad.
+
+`alm_get_vencimientos` devuelve los lotes **con stock** y fecha, ya clasificados: `Vencido` ·
+`Critico` (menos de 10 días) · `Activo`, con los días restantes.
+
+El escenario verifica que la clasificación coincida con los días en **todos** los lotes (344 en
+los datos de prueba, de los cuales 55 vencidos).
+
+---
+
+### E12 · Equipos sin control de lecturas
+
+**Contexto.** Un preventivo por Horas/Km/Ciclos **no se puede evaluar** si nadie toma la lectura.
+Este escenario audita el plan de medición, no el de mantenimiento.
+
+`man_get_lecturas` devuelve un registro por equipo — incluidos los que **nunca** tuvieron una
+lectura, que son los relevantes.
+
+**Resultado en datos reales** (empresa 8): de 68 equipos, **42 sin ninguna lectura** y 26 con más
+de 90 días; **14 de esos son críticos**, el peor con 2296 días.
+
+El escenario además cruza con `man_get_preventivos` para detectar **planes por uso sobre equipos
+sin lecturas**: planes que nadie puede saber si vencieron.
+
+---
+
 ### E7 · El contrato publicado no se desincroniza de lo implementado
 
 **Contexto.** La OpenAPI (`doc/api/trazalog-operaciones.yaml`) es lo que consume el Virtual MCP
@@ -302,12 +385,15 @@ lea 0 elementos y parezca un bug de datos — pasó al escribir esta suite.
 | Tool | Camino en el JSON |
 |---|---|
 | `man_get_equipos` | `equipos.equipo[]` |
+| `man_get_preventivos` | `preventivos.preventivo[]` |
+| `man_get_lecturas` | `lecturas.equipo[]` |
 | `man_get_equipo` | `equipo` (objeto) |
 | `man_get_ots` | `solicitudes.solicitud[]` |
 | `man_get_ot` | `solicitudes.solicitud[]` |
 | `man_create_ot` | `resultado`, `ot_id`, `case_id`, `estado` |
 | `alm_get_stock` | `materias.materia[]` |
 | `alm_get_depositos` | `depositos.deposito[]` |
+| `alm_get_vencimientos` | `vencimientos.lote[]` |
 | `alm_get_pedidos_materiales` | `pedidos.pedido[]` |
 | `alm_get_pedido_material` | `pedidos.pedido[]` (con `detalles.detalle[]`) |
 | `alm_crear_pedido_materiales` | `resultado`, `pema_id`, `case_id`, `estado` |
