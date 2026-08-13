@@ -36,7 +36,9 @@ La contrapartida buena: **la divergencia es chica y está concentrada**. De los 
 
 El hallazgo que más condiciona el plan es otro: para el núcleo de mantenimiento, tools y asset apuntarían a **la misma base MariaDB `assetv2`**. Eso hace posible una convivencia real con corte gradual por empresa y rollback instantáneo, a cambio de congelar el esquema mientras asset siga en producción.
 
-Pero eso vale sólo para el núcleo. **Almacenes y herramientas son distintos**: no se migran, se reemplazan por los módulos que ya existen en traz-tools (`traz-comp-almacenes` y `traz-comp-pan`), que corren sobre PostgreSQL. Ahí sí hay migración de datos de clientes en el cutover, y el rollback deja de ser gratis. El cutover es entonces **de dos velocidades** (§5.8-§5.9).
+Pero eso vale sólo para el núcleo. **Almacenes y herramientas son distintos**: no se migran, se reemplazan por los módulos que ya existen en traz-tools (`traz-comp-almacenes` y `traz-comp-pan`), que corren sobre PostgreSQL.
+
+> **Actualización 2026-08-12 (REQ-ASSET-ALM):** un requerimiento de cliente adelantó este reemplazo — se ejecuta **ahora, en assetplanner mismo**, antes de la migración del núcleo. Y la verificación contra producción vació el problema de datos: el almacén operativo de asset está en **cero absoluto**, y el único cliente real con catálogo es Caleras San Juan (32 artículos, 2 herramientas → carga manual en setup). La "migración de datos en el cutover" que describe §5.8 quedó reducida a ese carry-over manual; los riesgos R9/R10 quedan prácticamente vacíos. El plan por fases (F0-F6) y las decisiones D1-D10 viven en `traz-prod-assetplanner/doc/v3/` (CONTEXT-PACK y STATE propios, asset PR #322).
 
 ---
 
@@ -311,7 +313,7 @@ Corrección mecánica: `.success()` → `.done()`, `.error()` → `.fail()`.
 
 | # | Riesgo | Prob. | Impacto | Mitigación | Dueño |
 |---|---|---|---|---|---|
-| R1 | **La divergencia vuelve a crecer** y la migración persigue un blanco móvil, como pasó 2024-2026 | Alta | Alto | Freeze de features en asset, sólo bugfixes con cherry-pick a ambos lados. Revisión quincenal de la lista de 15 archivos | PM |
+| R1 | **La divergencia vuelve a crecer** y la migración persigue un blanco móvil, como pasó 2024-2026 | Alta | Alto | Freeze de features en asset, sólo bugfixes con cherry-pick a ambos lados. Revisión quincenal de la lista de 15 archivos. **Excepción aprobada 2026-08-12: REQ-ASSET-ALM** (integración ALM+PAN, por `develop-v3` de asset con un PR por fase) — toda otra excepción requiere registro explícito acá | PM |
 | R2 | **Pérdida de conocimiento** — el trabajo previo no dejó documentación y sus autores no están | Ya ocurrió | Alto | Este documento + PR obligatorio con descripción + checklist por archivo. Prohibido el commit "backup" | Dev |
 | R3 | **No hay dónde probar.** No existe staging del frontend PHP | Alta | Bloqueante | Levantar entorno de test (Apache/PHP + réplica de `assetv2`) **antes** de la Etapa 1. Ver §5.10 | Rodolfo |
 | R4 | **Doble escritura durante la convivencia** — dos frontends sobre las mismas tablas | Media | Alto | Corte por empresa, no por usuario: una empresa entera usa un solo frontend a la vez (§5.8) | PM |
@@ -510,6 +512,8 @@ flowchart TB
 - Fechas cero (T4).
 
 ### 5.8 Etapa 5 — Almacenes y Herramientas: reemplazo, no migración
+
+> **⚠️ Actualización 2026-08-12 (REQ-ASSET-ALM):** esta etapa **se adelantó y cambió de forma**. Se ejecuta ahora, dentro de assetplanner (excepción aprobada al freeze), y la verificación contra producción eliminó la migración masiva de datos: almacén operativo en 0 filas; catálogo real solo de Caleras San Juan (32 artículos, 2 herramientas), que se carga a mano en el setup. Lo que sigue de esta sección queda como **referencia del análisis** (el mapeo de campos y el problema de FK cruzando motor siguen vigentes para las referencias históricas); el plan operativo por fases está en `traz-prod-assetplanner/doc/v3/STATE.md`. Prerrequisito confirmado: sincronizar la copia EI de `ALMDataService.dbs` con la del MI — la de EI tiene `getArticulos2` con `WHERE empr_id = 1` hardcodeado y sin el fix de aislamiento del 2026-08-11.
 
 Este bloque no sigue la regla del resto del documento. En todo lo demás se **porta** código de asset a tools sobre la misma base MariaDB. Acá se **descarta** el código de asset, se usan las pantallas y los DataServices que traz-tools ya tiene, y los datos de los clientes **se migran a PostgreSQL**.
 
