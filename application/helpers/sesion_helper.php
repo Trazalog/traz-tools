@@ -178,14 +178,25 @@ if(!function_exists('bandejaEmpresa')){
 	function bandejaEmpresa($case_id, $empr_id)
 	{
 		$ci =& get_instance();
-		$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
-		$aux =json_decode($aux["data"]);
-		
-		if ($aux->respuesta->case_id) {
-			return  true;
-		} else {
-			return  false;
+		$cacheKey = 'valid_cases_empr_' . $empr_id;
+		$validCases = $ci->session->userdata($cacheKey);
+
+		if (!is_array($validCases)) {
+			$validCases = [];
 		}
+
+		if (isset($validCases[$case_id])) {
+			return $validCases[$case_id];
+		}
+
+		$aux = $ci->rest->callAPI("GET",REST_CORE."/bandeja/linea/validar/case_id/".$case_id."/empr_id/".$empr_id);
+		$aux = json_decode($aux["data"]);
+		
+		$isValid = (isset($aux->respuesta->case_id) && $aux->respuesta->case_id) ? true : false;
+		$validCases[$case_id] = $isValid;
+		$ci->session->set_userdata($cacheKey, $validCases);
+
+		return $isValid;
 	}
 }
 

@@ -15,6 +15,12 @@
 </div>
 <div class="navbar-custom-menu">
 	<ul class="nav navbar-nav">
+		<!-- Help Menu Link -->
+		<li>
+			<a href="https://trazalog.com/ayudatools/" target="_blank" title="Ayuda">
+				<i class="fa fa-question-circle"></i>
+			</a>
+		</li>
 		<!-- User Account: style can be found in dropdown.less -->
 		<!-- Bloque PRUEBA -->
 		<li class="dropdown notifications-menu">
