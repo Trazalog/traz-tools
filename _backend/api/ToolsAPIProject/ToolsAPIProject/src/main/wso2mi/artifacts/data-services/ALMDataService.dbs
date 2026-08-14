@@ -584,6 +584,30 @@
       <param name="depo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="getPedidoPorOrden" useConfig="ToolsDataSource">
+      <sql>select pema_id, fecha, ortr_id, estado, case_id, justificacion from alm.alm_pedidos_materiales where ortr_id = cast(:ortr_id as integer) and empr_id = cast(:empr_id as integer) and not eliminado order by pema_id desc</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "fecha":"$fecha",&#xd;            "ortr_id":"$ortr_id",&#xd;            "estado":"$estado",&#xd;            "case_id":"$case_id",&#xd;            "justificacion":"$justificacion"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setPedidoOrden" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_pedidos_materiales (fecha, ortr_id, estado, empr_id) VALUES(CURRENT_TIMESTAMP, cast(:ortr_id as integer), :estado, cast(:empr_id as integer)) returning pema_id</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;        "pema_id": "$pema_id"&#xd;    }&#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setEstadoPedido" useConfig="ToolsDataSource">
+      <sql>update alm.alm_pedidos_materiales set estado = :estado where pema_id = cast(:pema_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="setDetallePedidoOrden" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_deta_pedidos_materiales (cantidad, pema_id, arti_id, resto) VALUES(cast(:cantidad as float4), cast(:pema_id as integer), cast(:arti_id as integer), cast(:cantidad as float4));</sql>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -633,6 +657,32 @@
    <resource method="DELETE" path="/pedidos">
       <call-query href="deletePedido">
          <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidos/orden/{ortr_id}/{empr_id}">
+      <call-query href="getPedidoPorOrden">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/orden">
+      <call-query href="setPedidoOrden">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/estado">
+      <call-query href="setEstadoPedido">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/detalle/orden">
+      <call-query href="setDetallePedidoOrden">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/pedidos/batch/{batch_id}">
