@@ -633,7 +633,7 @@
       </call-query>
    </resource>
    <resource method="GET" path="/articulos/{empr_id}">
-      <call-query href="getArticulos">
+      <call-query href="getArticulos2">
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
