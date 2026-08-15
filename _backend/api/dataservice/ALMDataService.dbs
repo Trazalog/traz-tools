@@ -588,7 +588,7 @@
       <param name="pema_id" sqlType="STRING"/>
    </query>
    <query id="setDetallePedidoOrden" useConfig="ToolsDataSource">
-      <sql>INSERT INTO alm.alm_deta_pedidos_materiales (cantidad, pema_id, arti_id, resto) VALUES(cast(:cantidad as float4), cast(:pema_id as integer), cast(:arti_id as integer), cast(:cantidad as float4));</sql>
+      <sql>INSERT INTO alm.alm_deta_pedidos_materiales (cantidad, pema_id, arti_id, resto) SELECT p.c, p.p, p.a, p.c FROM (SELECT cast(:cantidad as float4) c, cast(:pema_id as integer) p, cast(:arti_id as integer) a) p;</sql>
       <param name="cantidad" sqlType="STRING"/>
       <param name="pema_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
