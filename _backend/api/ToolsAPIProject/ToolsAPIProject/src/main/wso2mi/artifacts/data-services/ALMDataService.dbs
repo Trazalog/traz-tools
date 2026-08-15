@@ -613,6 +613,32 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/pedidos/orden/{ortr_id}/{empr_id}">
+      <call-query href="getPedidoPorOrden">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/orden">
+      <call-query href="setPedidoOrden">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/estado">
+      <call-query href="setEstadoPedido">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/detalle/orden">
+      <call-query href="setDetallePedidoOrden">
+         <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+      </call-query>
+   </resource>
    <resource method="POST" path="/pedidos">
       <call-query href="setPedido">
          <with-param name="fecha" query-param="fecha"/>
@@ -657,32 +683,6 @@
    <resource method="DELETE" path="/pedidos">
       <call-query href="deletePedido">
          <with-param name="pema_id" query-param="pema_id"/>
-      </call-query>
-   </resource>
-   <resource method="GET" path="/pedidos/orden/{ortr_id}/{empr_id}">
-      <call-query href="getPedidoPorOrden">
-         <with-param name="ortr_id" query-param="ortr_id"/>
-         <with-param name="empr_id" query-param="empr_id"/>
-      </call-query>
-   </resource>
-   <resource method="POST" path="/pedidos/orden">
-      <call-query href="setPedidoOrden">
-         <with-param name="ortr_id" query-param="ortr_id"/>
-         <with-param name="estado" query-param="estado"/>
-         <with-param name="empr_id" query-param="empr_id"/>
-      </call-query>
-   </resource>
-   <resource method="PUT" path="/pedidos/estado">
-      <call-query href="setEstadoPedido">
-         <with-param name="estado" query-param="estado"/>
-         <with-param name="pema_id" query-param="pema_id"/>
-      </call-query>
-   </resource>
-   <resource method="POST" path="/pedidos/detalle/orden">
-      <call-query href="setDetallePedidoOrden">
-         <with-param name="cantidad" query-param="cantidad"/>
-         <with-param name="pema_id" query-param="pema_id"/>
-         <with-param name="arti_id" query-param="arti_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/pedidos/batch/{batch_id}">
