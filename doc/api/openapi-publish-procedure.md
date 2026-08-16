@@ -239,6 +239,13 @@ claim del token ya validado, ignorando cualquier `X-Empr-Id` entrante.
 
 ## 7. Re-publicar tras cambios en la spec
 
+> **Para un MCP Server ya publicado, este procedimiento NO alcanza.** Le faltan dos
+> pasos imprescindibles: desplegar una **revisión nueva** (guardar no publica — el
+> gateway sirve la última revisión desplegada), y agregar las tools nuevas **al MCP
+> Server**, que es un artefacto separado y no hereda las operaciones de la API. El
+> procedimiento completo está en
+> [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md).
+
 1. Publisher → seleccionar la API → **`Edit`**
 2. **`API Definition`** → **`Import`** → subir el archivo actualizado
 3. **`Save`**

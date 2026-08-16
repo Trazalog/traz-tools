@@ -87,6 +87,13 @@ cubre el ciclo completo.
 una operación nueva a `doc/api/trazalog-operaciones.yaml`, o cambiaste una
 descripción).
 
+> **Si el cambio agrega o modifica tools de un MCP Server ya publicado, usar
+> [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md)** — es el
+> procedimiento completo y autocontenido (MI → API → MCP Server → revisión →
+> verificación → conector), e incluye los pasos que el resumen de abajo no cubre:
+> desplegar revisión, y que el MCP Server **no hereda** las operaciones nuevas de
+> la API. Lo de acá abajo alcanza sólo para una API REST común.
+
 Esto **no tiene script** — es un procedimiento de consola, porque el
 Publisher de WSO2 APIM no tiene una CLI/API pública simple para esto en este
 entorno. Pasos (ya documentados en detalle en

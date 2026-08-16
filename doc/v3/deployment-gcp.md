@@ -586,6 +586,10 @@ Después de corregir la configuración, **eliminar el conector en Claude y crear
 
 ### 6.3 Publicar la API + generar el MCP Server en el Publisher de esta VM
 
+> **Esta sección es la publicación INICIAL.** Si el MCP Server ya existe en esta VM y lo que hace
+> falta es llevarle tools nuevas o cambios de una tool existente, el procedimiento es otro:
+> [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md).
+
 Seguir `doc/mcp/virtual-mcp-unificado.md` §2 completo — ya corregido con todo lo que falló la primera vez en DEV (2026-08-08). Puntos que cambian respecto a DEV:
 
 - **Acceso al Publisher:** el puerto 9443 nunca se expone públicamente (ADR-011 #9). Entrar por túnel SSH:
