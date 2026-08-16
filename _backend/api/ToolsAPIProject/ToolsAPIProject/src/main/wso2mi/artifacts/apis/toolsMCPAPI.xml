@@ -896,4 +896,305 @@
       </faultSequence>
    </resource>
 
+   <!-- man_get_kpi_disponibilidad — porcentaje del tiempo que la flota estuvo operativa. Es el KPI que el
+         cliente presenta a su propio cliente.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/disponibilidad">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_disponibilidad requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiDisp_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/kpiDisponibilidadxFecha/',$ctx:emp,'/fecinicio/',$ctx:f_ini,'/fecfin/',$ctx:f_fin,'/idempr/',$ctx:emp,'/fecinicio2/',$ctx:f_ini,'/fecfin2/',$ctx:f_fin)"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_disponibilidad | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiDisp_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/disponibilidad - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_disponibilidad (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_kpi_mttr — tiempo medio de reparacion.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/mttr">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_mttr requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiMttr_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/KpiMttrxFecha/empresa/',$ctx:emp,'/fec_inicio/',$ctx:f_ini,'/fec_fin/',$ctx:f_fin,'/empresa2/',$ctx:emp,'/fec_inicio2/',$ctx:f_ini,'/fec_fin2/',$ctx:f_fin)"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_mttr | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiMttr_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/mttr - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_mttr (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_kpi_mttf — tiempo medio entre fallas.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/mttf">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_mttf requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiMttf_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/KpiMttfxFecha/empresa/',$ctx:emp,'/fec_inicio/',$ctx:f_ini,'/fec_fin/',$ctx:f_fin,'/empresa2/',$ctx:emp,'/fec_inicio2/',$ctx:f_ini,'/fec_fin2/',$ctx:f_fin)"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_mttf | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiMttf_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/mttf - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_mttf (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_kpi_fallas — cantidad de fallas registradas en el periodo.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/fallas">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_fallas requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiFallos_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/getCantidadFallos/',$ctx:f_ini,'/',$ctx:f_fin,'/',$ctx:emp,'/all/all')"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_fallas | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiFallos_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/fallas - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_fallas (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
 </api>

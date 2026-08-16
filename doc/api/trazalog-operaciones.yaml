@@ -444,6 +444,211 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /mcp/man/kpi/disponibilidad:
+    get:
+      operationId: man_get_kpi_disponibilidad
+      summary: KPI de disponibilidad de la flota
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Porcentaje del tiempo en que los equipos de la empresa estuvieron
+        operativos durante el período pedido. Es el indicador que el cliente
+        presenta periódicamente a su propio cliente.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuál fue la disponibilidad del mes pasado?»
+        - Para comparar períodos: llamarla una vez por cada rango.
+        - Junto con `man_get_kpi_fallas` da el panorama: cuánto estuvo parada la
+          flota y en cuántos eventos.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de disponibilidad de la flota
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      disponibilidad:
+                        type: string
+                        example: "99.74"
+
+  /mcp/man/kpi/mttr:
+    get:
+      operationId: man_get_kpi_mttr
+      summary: KPI de tiempo medio de reparación (MTTR)
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Tiempo medio de reparación en el período: cuánto tarda en promedio un
+        equipo en volver a servicio desde que sale.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuánto tardamos en reparar?»
+        - Para ver si el tiempo de respuesta mejora o empeora entre períodos.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de tiempo medio de reparación (MTTR)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      mttr:
+                        type: string
+                        example: "0.21"
+
+  /mcp/man/kpi/mttf:
+    get:
+      operationId: man_get_kpi_mttf
+      summary: KPI de tiempo medio entre fallas (MTTF/MTBF)
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Tiempo medio entre fallas en el período: cuánto opera en promedio la
+        flota entre un evento de falla y el siguiente.
+
+        **Cuándo usar esta operación:**
+        - «¿Cada cuánto se nos rompen los equipos?»
+        - Para acompañar al MTTR: uno mide cuánto tarda la reparación, el otro
+          cada cuánto hace falta.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de tiempo medio entre fallas (MTTF/MTBF)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      mttf:
+                        type: string
+                        example: "580.12"
+
+  /mcp/man/kpi/fallas:
+    get:
+      operationId: man_get_kpi_fallas
+      summary: KPI de cantidad de fallas del período
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Cantidad de fallas registradas en el período para toda la empresa.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuántas fallas tuvimos el mes pasado?»
+        - Es el denominador de `man_get_kpi_mttr` y `man_get_kpi_mttf`: si este
+          número es muy chico, esos dos promedios se calculan sobre muy pocos
+          eventos y hay que leerlos con cuidado.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de cantidad de fallas del período
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      numero_fallos:
+                        type: string
+                        example: "4"
+
   /mcp/alm/stock:
     get:
       operationId: alm_get_stock
