@@ -312,6 +312,44 @@ mvn clean install
 
 Verificado en esta tarea (2026-08-08): el build corre limpio contra el estado actual de `develop-v3` (`BUILD SUCCESS`) con Maven 3.8.7 del sistema. El CAR incluye `toolsMCPAPI`, `toolsALMAPI`, `toolsMANAPI`, `toolsBPMAPI`, `toolsCOREAPI` y todos los DataServices — incluida la corrección de `case_id` en `MANDataService.dbs` (PR #416, ya mergeada). No hay un artefacto separado para la API/MCP Server del lado del APIM — esos se publican interactivamente en el Publisher (§6.3), igual que en DEV.
 
+### 6.1-bis ⚠️ El CAR lleva adentro la IP de la base — revisar ANTES de buildear
+
+**El `.car` no es agnóstico del ambiente.** Empaqueta los datasources y las URLs internas, todos
+apuntando a la IP de **desarrollo** tal como están commiteados en el repo. Si se buildea el repo
+tal cual y se despliega, el MI de la VM queda apuntando a la base de desarrollo.
+
+Verificable desempaquetando el `.car` recién generado:
+
+```bash
+cd _backend/api/ToolsAPIProject/ToolsAPIProject
+unzip -l target/ToolsAPIProject_1.0.0.car | grep -i "datasource"
+mkdir -p /tmp/car && unzip -qo target/ToolsAPIProject_1.0.0.car -d /tmp/car
+grep -rh "jdbc:" /tmp/car | sed 's/^[[:space:]]*//'
+```
+
+Los cuatro archivos que llevan la IP, en el repo (💻 en la máquina donde se buildea, antes de
+`mvn clean install`):
+
+| Archivo (bajo `src/main/wso2mi/`) | Qué define | Valor commiteado |
+|---|---|---|
+| `artifacts/data-sources/ToolsDataSource.xml` | PostgreSQL de tools | `jdbc:postgresql://10.142.0.13:5432/tools_prod_t` |
+| `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` | `jdbc:mysql://10.142.0.13:3306/assetv2` |
+| `resources/registry/conf/apiconfig.xml` | `api_url` y `dataservices_url` internas del MI | `http://10.142.0.13:8280/...` |
+| `resources/conf/tools/bpmconf.xml` | `bpm_url` de Bonita | `http://10.142.0.13:8080/bonita` |
+
+> **No hay ningún script ni paso automatizado que haga este reemplazo.** Hoy es manual y no estaba
+> documentado — de ahí que un CAR buildeado desde un checkout limpio pueda quedar apuntando a otro
+> ambiente sin que nada falle de forma visible: las tools responden `200` con estructura correcta y
+> datos de la base equivocada.
+>
+> **Cómo confirmar después del deploy** (💻 SSH a la VM): además del host, comparar el **nombre de
+> la base** — en un mismo host conviven varias con esquema equivalente, así que acertarle al host no
+> alcanza.
+
+**Pendiente de decisión (no resuelto acá):** los valores definitivos para la VM de GCP y si esto se
+resuelve parametrizando el build (perfiles Maven) o dejándolo como paso manual documentado. Las
+credenciales de esos datasources además están en texto plano en el repo (ver §nota en el cierre).
+
 ### 6.2 Desplegar el CAR en el MI de la VM
 
 💻 SSH a la VM (mismo acceso que §4 paso 6):

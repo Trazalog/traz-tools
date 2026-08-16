@@ -49,8 +49,14 @@
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
                    name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
 
+         <!-- filtros opcionales: si no vienen en el request, viajan vacios y la
+              query los ignora, devolviendo el mismo resultado que antes -->
+         <property name="f_depo"   expression="fn:concat('',get-property('query.param.depo_id'))"/>
+         <property name="f_tipo"   expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <property name="f_buscar" expression="fn:concat('',get-property('query.param.buscar'))"/>
+
          <property name="uri.var.getStock_url"
-                   expression="fn:concat($ctx:dataservices_url,'/ALMDataService/articulos/',get-property('uri.var.empr_id'))"/>
+                   expression="fn:concat($ctx:dataservices_url,'/ALMDataService/mcp/stock/',get-property('uri.var.empr_id'),'?depo_id=',$ctx:f_depo,'&amp;tipo=',$ctx:f_tipo,'&amp;buscar=',$ctx:f_buscar)"/>
 
          <log level="custom" category="DEBUG">
             <property name="text"    value="#TRAZA | ALM | get_stock | iniciando (toolsALMAPI)"/>
@@ -94,6 +100,56 @@
         NO se usa getDepositosPorEmpresa: esa exige además el user_id del
         encargado del depósito, y devuelve vacío si el usuario del JWT no es
         encargado de ninguno. -->
+   <!-- get_vencimientos — lotes con fecha de vencimiento, clasificados.
+        Reusa la logica de clasificacion de getLotesVencimientos pero con
+        aislamiento por empresa, que esa query no tiene. -->
+   <resource methods="GET" uri-template="/vencimientos/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="uri.var.getVencimientos_url"
+                   expression="fn:concat($ctx:dataservices_url,'/ALMDataService/mcp/vencimientos/',get-property('uri.var.empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | ALM | get_vencimientos | iniciando (toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getVencimientos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /vencimientos - ALMDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en ALM get_vencimientos (toolsALMAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
    <resource methods="GET" uri-template="/depositos/{empr_id}">
       <inSequence>
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"

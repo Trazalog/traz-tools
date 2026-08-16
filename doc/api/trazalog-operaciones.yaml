@@ -318,6 +318,63 @@ paths:
   # que delegan a toolsALMAPI (ADR-013 #1, #2)
   # ══════════════════════════════════════════════════════════════
 
+  /mcp/man/lecturas:
+    get:
+      operationId: man_get_lecturas
+      summary: Control de lecturas de horómetro por equipo
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve, para **cada equipo** de la empresa, cuántas lecturas de
+        horómetro/odómetro tiene registradas, cuál es la última y hace cuántos
+        días se tomó.
+
+        **Cuándo usar esta operación:**
+        - «¿A qué equipos no les están tomando la lectura?» → filtrar por
+          `dias_sin_lectura` alto o `cantidad_lecturas` en cero.
+        - Junto con `man_get_preventivos`: un plan por `Horas`, `Kilómetros` o
+          `Ciclos` **no se puede evaluar** si el equipo no tiene lecturas. Si un
+          equipo tiene plan por uso y `cantidad_lecturas` es 0, nadie puede saber
+          si ese mantenimiento está vencido.
+
+        Incluye los equipos que **nunca** tuvieron una lectura (con
+        `cantidad_lecturas` en 0 y sin fecha) — son justamente los relevantes.
+      tags:
+        - Mantenimiento
+      responses:
+        "200":
+          description: Resumen de lecturas por equipo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturasList"
+              examples:
+                con_desactualizados:
+                  summary: Un equipo al día y otro sin control
+                  value:
+                    lecturas:
+                      equipo:
+                        - id_equipo: "21"
+                          equipo: "EQ-04-2020"
+                          equipo_descripcion: "Generador Eléctrico C330D5"
+                          equipo_estado: "AC"
+                          criticidad: "Muy Alta"
+                          cantidad_lecturas: "3"
+                          lectura_actual: "125"
+                          fecha_ultima_lectura: "2020-04-29"
+                          dias_sin_lectura: "2296"
+                        - id_equipo: "133"
+                          equipo: "GEN-001"
+                          equipo_descripcion: "Generador Sullair 750kVA"
+                          equipo_estado: "AC"
+                          criticidad: "Muy Alta"
+                          cantidad_lecturas: "0"
+                          lectura_actual: null
+                          fecha_ultima_lectura: null
+                          dias_sin_lectura: null
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /mcp/man/preventivos:
     get:
       operationId: man_get_preventivos
@@ -390,6 +447,35 @@ paths:
   /mcp/alm/stock:
     get:
       operationId: alm_get_stock
+      parameters:
+        - name: depo_id
+          in: query
+          required: false
+          description: |
+            Filtra a los artículos **con stock en ese depósito**, y el `stock`
+            devuelto pasa a ser el de ese depósito en vez del consolidado.
+            Obtener el ID con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+        - name: tipo
+          in: query
+          required: false
+          description: |
+            Filtra por tipo de artículo, por su nombre legible: `Insumo`,
+            `Materia Prima`, `Producto`, `En Proceso`, `Final`, `Scrap`.
+          schema: { type: string }
+          example: "Insumo"
+        - name: buscar
+          in: query
+          required: false
+          description: |
+            Busca el texto dentro de la descripción del artículo (sin distinguir
+            mayúsculas). Usarlo para ubicar insumos concretos —por ejemplo
+            `filtro`, `aceite`, `rodamiento`— en vez de traer el catálogo entero
+            y filtrar después: con catálogos grandes eso no escala.
+          schema: { type: string }
+          example: "filtro"
+      
       summary: Consultar stock de artículos de la empresa
       x-mcp-annotations:
         readOnlyHint: true
@@ -475,6 +561,56 @@ paths:
                   summary: Empresa sin depósitos cargados
                   value:
                     depositos: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/vencimientos:
+    get:
+      operationId: alm_get_vencimientos
+      summary: Listar lotes por vencer o vencidos
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los lotes con stock que tienen fecha de vencimiento, con los
+        días que faltan y una clasificación ya calculada.
+
+        **Clasificación (`estado_vencimiento`):**
+        - `Vencido` — la fecha ya pasó (`dias_restantes` ≤ 0)
+        - `Critico` — vence en menos de 10 días
+        - `Activo` — todavía tiene margen
+
+        **Cuándo usar esta operación:** cuando pregunten qué se vence, o al
+        planificar consumo de insumos con vida útil (lubricantes, adhesivos,
+        reactivos, sellantes). Solo incluye lotes con cantidad mayor a cero:
+        un lote vencido sin stock no es un problema.
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Lotes con vencimiento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VencimientosList"
+              examples:
+                con_vencidos:
+                  summary: Hay lotes vencidos y otros por vencer
+                  value:
+                    vencimientos:
+                      lote:
+                        - lote_id: "1075"
+                          lote: "L-2024-088"
+                          arti_id: "345"
+                          articulo: "Aceite hidráulico ISO 68"
+                          barcode: "778955684"
+                          tipo_articulo: "Insumo"
+                          cantidad: "938"
+                          unidad_medida: "LT"
+                          depo_id: "8"
+                          deposito: "Productivo"
+                          fec_vencimiento: "2026-08-20"
+                          dias_restantes: "8"
+                          estado_vencimiento: "Critico"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -783,6 +919,80 @@ components:
             materia:
               type: array
               items: { $ref: "#/components/schemas/ArticuloStock" }
+
+    LecturaEquipo:
+      type: object
+      properties:
+        id_equipo: { type: string, example: "21" }
+        equipo: { type: string, example: "EQ-04-2020" }
+        equipo_descripcion: { type: string, example: "Generador Eléctrico C330D5" }
+        equipo_estado:
+          type: string
+          description: "`AC` activo · `RE` en reparación"
+          example: "AC"
+        criticidad: { type: string, example: "Muy Alta" }
+        cantidad_lecturas:
+          type: string
+          description: Cantidad de lecturas registradas. `0` = nunca se le tomó ninguna.
+          example: "3"
+        lectura_actual:
+          type: string
+          description: Lectura más alta registrada (el horómetro solo crece). Vacío si no hay lecturas.
+          example: "125"
+        fecha_ultima_lectura:
+          type: string
+          description: Vacío si no hay lecturas.
+          example: "2020-04-29"
+        dias_sin_lectura:
+          type: string
+          description: Días desde la última lectura. Vacío si nunca hubo ninguna.
+          example: "2296"
+
+    LecturasList:
+      type: object
+      properties:
+        lecturas:
+          type: object
+          properties:
+            equipo:
+              type: array
+              items: { $ref: "#/components/schemas/LecturaEquipo" }
+
+    LoteVencimiento:
+      type: object
+      properties:
+        lote_id: { type: string, example: "1075" }
+        lote:
+          type: string
+          description: Código del lote. Vacío si no tiene.
+          example: "L-2024-088"
+        arti_id: { type: string, example: "345" }
+        articulo: { type: string, example: "Aceite hidráulico ISO 68" }
+        barcode: { type: string, example: "778955684" }
+        tipo_articulo: { type: string, example: "Insumo" }
+        cantidad: { type: string, example: "938" }
+        unidad_medida: { type: string, example: "LT" }
+        depo_id: { type: string, example: "8" }
+        deposito: { type: string, example: "Productivo" }
+        fec_vencimiento: { type: string, example: "2026-08-20" }
+        dias_restantes:
+          type: string
+          description: Días hasta el vencimiento. Negativo si ya venció.
+          example: "8"
+        estado_vencimiento:
+          type: string
+          description: "`Vencido` · `Critico` (<10 días) · `Activo`"
+          example: "Critico"
+
+    VencimientosList:
+      type: object
+      properties:
+        vencimientos:
+          type: object
+          properties:
+            lote:
+              type: array
+              items: { $ref: "#/components/schemas/LoteVencimiento" }
 
     Preventivo:
       type: object
