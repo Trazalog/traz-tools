@@ -154,12 +154,37 @@ ssh -L 9443:localhost:9443 <usuario>@<vm>
 # y después entrar a https://localhost:9443/publisher
 ```
 
-1. **`APIs`** → abrir la API (ej. `Trazalog MCP`) → **`Edit`**
-2. **`API Definition`** → **`Import`** → subir `doc/api/trazalog-operaciones.yaml` actualizado
+**No hay botón `Edit`.** Al abrir una API se entra directamente a su vista de trabajo; la
+navegación es por la barra lateral izquierda:
+
+```
+APIs  →  Trazalog MCP  →  Develop  →  API Configurations  →  ...
+```
+
+(esa es la ruta verificada en esta VM, la misma que se usa para el endpoint en
+`deployment-gcp.md` §6.3-bis)
+
+1. **`APIs`** → abrir la API (ej. `Trazalog MCP`)
+2. En la barra lateral, bajo **`Develop`**, entrar a la **definición de la API** y usar
+   **`Import`** para subir `doc/api/trazalog-operaciones.yaml` actualizado
 3. **`Save`**
-4. Confirmar que sigue **asociada al Key Manager Dnato** y que `Enable Subscription Validation`
-   sigue como estaba — re-importar no debería tocarlo, pero conviene mirarlo
-5. Si cambiaron paths o methods: **`Publish`** de nuevo
+4. Si cambiaron paths o methods: **`Publish`** de nuevo
+
+> ⚠️ **El nombre exacto del ítem de la barra lateral para la definición no está verificado** — en
+> 4.6.0 aparece bajo `Develop`, junto a `API Configurations`. Al ejecutarlo por primera vez,
+> corregir acá el nombre real.
+
+### B.5 Qué confirmar después de re-importar
+
+- **`Enable Subscription Validation` sigue desactivado.** Este es el que importa: sin `azp`
+  (consumerKey) en el JWT de Dnato, con la validación activa el gateway responde `403` aunque la
+  firma sea válida.
+- **El selector de Key Managers no se toca.** No hay ni va a haber un "Dnato" ahí: Dnato **no está
+  registrado como Key Manager** — APIM 4.6.0 no tiene conector genérico para IdPs custom. La
+  validación del JWT la resuelve `[[apim.jwt.issuer]]` en el `deployment.toml`, que es
+  configuración global del servidor y no se ve ni se configura por-API en el Publisher. Ver
+  [`virtual-mcp-unificado.md`](virtual-mcp-unificado.md) §2.4 y
+  [`../identity/apim-keymanager-dnato.md`](../identity/apim-keymanager-dnato.md) §3.
 
 > Re-importar **reemplaza** la definición. Cualquier ajuste hecho a mano en el Publisher sobre
 > operaciones (descripciones editadas ahí, no en el YAML) se pierde. La fuente de verdad es el YAML
@@ -174,8 +199,10 @@ operaciones nuevas de la API.
 
 🌐 **Navegador**, mismo Publisher:
 
-1. **`MCP Servers`** → abrir el server (ej. `Trazalog MCP Server`)
-2. **`Tools`** → agregar cada tool nueva, apuntándola a la operación correspondiente de la API
+1. **`MCP Servers`** → abrir el server (ej. `Trazalog MCP Server`) — igual que con las APIs, no hay
+   botón `Edit`: se entra directo y se navega por la barra lateral
+2. Buscar el listado de **tools** del server y agregar cada tool nueva, apuntándola a la operación
+   correspondiente de la API
 3. Verificar que el nombre de la tool coincida **exactamente** con el `operationId` del YAML — es
    el nombre con el que el agente la invoca
 
@@ -281,7 +308,7 @@ Trazalog y **volver a conectarlo**.
 [ ] MI arrancado ("started in NN seconds") (A.3)
 [ ] curl directo al MI: 503 identity_missing en cada ruta nueva (A.4)
 [ ] OpenAPI re-importada en la API + Save (+ Publish si cambiaron paths) (B)
-[ ] Key Manager Dnato sigue asociado (B.4)
+[ ] Enable Subscription Validation sigue DESACTIVADO (B.5)
 [ ] Tools nuevas agregadas al MCP Server (C)
 [ ] Revisión nueva desplegada en la API (D)
 [ ] Revisión nueva desplegada en el MCP Server (D)
@@ -298,6 +325,11 @@ Trazalog y **volver a conectarlo**.
 **Verificado en la práctica:** los pasos A (build, deploy, arranque, curl directo) y las tres
 condiciones de error de E.2 — los tres se encontraron realmente durante el despliegue a GCP del
 2026-08-11 y están documentados con su log en `deployment-gcp.md` §6.3-bis.
+
+**Corregido tras revisión de Rodolfo (2026-08-15):** la primera versión decía que había que
+confirmar la asociación al **Key Manager Dnato** y hablaba de un botón **`Edit`** en las APIs. Las
+dos cosas son falsas y venían de arrastrar `openapi-publish-procedure.md`, que refleja una
+arquitectura anterior: Dnato nunca se registró como Key Manager, y la UI de 4.6.0 no tiene `Edit`.
 
 **No verificado end-to-end todavía:** la secuencia completa de republicación con tools nuevas
 (pasos C, D y F) — este documento se escribió *antes* de la primera republicación, consolidando lo

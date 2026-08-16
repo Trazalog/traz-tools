@@ -245,6 +245,13 @@ claim del token ya validado, ignorando cualquier `X-Empr-Id` entrante.
 > Server**, que es un artefacto separado y no hereda las operaciones de la API. El
 > procedimiento completo está en
 > [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md).
+>
+> ⚠️ **El punto 5 de abajo está desactualizado:** Dnato **no** se registra como Key Manager (APIM
+> 4.6.0 no tiene conector genérico para IdPs custom) — no hay nada que asociar ni que verificar en
+> ese selector. La validación del JWT la resuelve `[[apim.jwt.issuer]]` en el `deployment.toml`. Lo
+> que sí hay que confirmar es que `Enable Subscription Validation` siga **desactivado**. Ver
+> [`../mcp/virtual-mcp-unificado.md`](../mcp/virtual-mcp-unificado.md) §2.4 y
+> [`../identity/apim-keymanager-dnato.md`](../identity/apim-keymanager-dnato.md) §3.
 
 1. Publisher → seleccionar la API → **`Edit`**
 2. **`API Definition`** → **`Import`** → subir el archivo actualizado
