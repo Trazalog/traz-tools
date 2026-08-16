@@ -336,6 +336,158 @@ def e9(m):
 
 
 # ===========================================================================
+# E10 — Stock focalizado: por depósito, por tipo y por texto (I2, I3)
+#       "¿tengo filtros de aire en el depósito de la faena?" — el agente aporta
+#       qué insumos son clave en minería y la tool tiene que dejarlo buscarlos.
+# ===========================================================================
+@escenario("E10", "Stock filtrado por depósito, tipo y búsqueda")
+def e10(m):
+    todo = lista(m.alm_get_stock(), "materias", "materia")
+    afirmar(todo, "alm_get_stock sin filtros no devolvió nada")
+    paso(f"sin filtros -> {len(todo)} artículos (catálogo completo)")
+
+    deps = lista(m.alm_get_depositos(), "depositos", "deposito")
+    afirmar(deps, "sin depósitos para filtrar")
+    # el depósito con más artículos, para que el caso sea significativo
+    mejor, mejor_n = None, -1
+    for d in deps[:12]:
+        n = len(lista(m.alm_get_stock(depo_id=d["depo_id"]), "materias", "materia"))
+        if n > mejor_n:
+            mejor, mejor_n = d, n
+    afirmar(mejor_n > 0, "ningún depósito devolvió artículos con el filtro depo_id")
+    afirmar(mejor_n <= len(todo), "el filtro por depósito devolvió MÁS que el catálogo completo")
+    paso(f"depo_id={mejor['depo_id']} ({mejor['descripcion'][:20]!r}) -> {mejor_n} artículos")
+
+    # por tipo: tiene que devolver solo ese tipo
+    tipos = {a.get("tipo_articulo") for a in todo if a.get("tipo_articulo")}
+    afirmar(tipos, "ningún artículo trae tipo_articulo")
+    t = "Insumo" if "Insumo" in tipos else sorted(tipos)[0]
+    por_tipo = lista(m.alm_get_stock(tipo=t), "materias", "materia")
+    afirmar(por_tipo, f"el filtro tipo={t} no devolvió nada")
+    distintos = [a for a in por_tipo if a.get("tipo_articulo") != t]
+    afirmar(not distintos,
+            "el filtro por tipo devolvió {} artículos de otro tipo".format(len(distintos))
+            if distintos else "")
+    paso(f"tipo={t!r} -> {len(por_tipo)} artículos, todos de ese tipo")
+
+    # búsqueda por texto: así encuentra el agente los insumos que releva por su cuenta
+    termino = None
+    for cand in ("aceite", "filtro", "ajo", "acero"):
+        if any(cand in (a.get("descripcion") or "").lower() for a in todo):
+            termino = cand
+            break
+    afirmar(termino, "no hay ningún término de búsqueda con resultados en este catálogo")
+    hallados = lista(m.alm_get_stock(buscar=termino), "materias", "materia")
+    afirmar(hallados, f"buscar={termino!r} no devolvió nada")
+    fuera = [a for a in hallados if termino not in (a.get("descripcion") or "").lower()]
+    afirmar(not fuera,
+            "la búsqueda devolvió {} artículos que no contienen el término".format(len(fuera))
+            if fuera else "")
+    paso(f"buscar={termino!r} -> {len(hallados)} artículos, todos coinciden")
+
+    # combinados: el resultado no puede ser mayor que cada filtro por separado
+    combo = lista(m.alm_get_stock(tipo=t, buscar=termino), "materias", "materia")
+    afirmar(len(combo) <= min(len(por_tipo), len(hallados)),
+            "combinar filtros devolvió más que cada uno por separado")
+    paso(f"tipo + buscar -> {len(combo)} (≤ {min(len(por_tipo), len(hallados))}, se acumulan)")
+
+
+# ===========================================================================
+# E11 — Vencimiento de lotes (I4)
+# ===========================================================================
+@escenario("E11", "Lotes vencidos y por vencer")
+def e11(m):
+    lotes = lista(m.alm_get_vencimientos(), "vencimientos", "lote")
+    afirmar(lotes, "alm_get_vencimientos no devolvió lotes")
+    paso(f"alm_get_vencimientos -> {len(lotes)} lotes con fecha de vencimiento")
+
+    validos = {"Vencido", "Critico", "Activo"}
+    malos = [l for l in lotes if l.get("estado_vencimiento") not in validos]
+    afirmar(not malos,
+            "estado_vencimiento inesperado: {}".format(
+                {l.get("estado_vencimiento") for l in malos}) if malos else "")
+
+    from collections import Counter
+    c = Counter(l["estado_vencimiento"] for l in lotes)
+    paso("clasificación -> " + " · ".join(f"{k}:{v}" for k, v in c.most_common()))
+
+    # la clasificación tiene que ser coherente con los días restantes
+    for l in lotes:
+        d = int(float(l["dias_restantes"]))
+        esperado = "Vencido" if d <= 0 else ("Critico" if d < 10 else "Activo")
+        afirmar(l["estado_vencimiento"] == esperado,
+                f"lote {l['lote_id']}: {d} días pero clasificado {l['estado_vencimiento']}")
+    paso("la clasificación coincide con los días restantes en los "
+         f"{len(lotes)} lotes")
+
+    # aislamiento
+    otra = MCP(OTRA_EMPR, OTRA_EMPR_MYSQL)
+    otra._escrituras = False
+    suyos = {l["lote_id"] for l in lista(otra.alm_get_vencimientos(), "vencimientos", "lote")}
+    mios = {l["lote_id"] for l in lotes}
+    afirmar(not (mios & suyos), "FUGA: lotes compartidos entre empresas")
+    paso(f"aislamiento OK ({len(mios)} vs {len(suyos)} lotes, 0 en común)")
+
+
+# ===========================================================================
+# E12 — Control del horómetro (M4)
+#       Un preventivo por Horas/Km/Ciclos no se puede evaluar si nadie toma la
+#       lectura: esto audita el plan de medición, no el de mantenimiento.
+# ===========================================================================
+@escenario("E12", "Equipos sin control de lecturas")
+def e12(m):
+    eqs_lect = lista(m.man_get_lecturas(), "lecturas", "equipo")
+    afirmar(eqs_lect, "man_get_lecturas no devolvió equipos")
+    paso(f"man_get_lecturas -> {len(eqs_lect)} equipos")
+
+    # tiene que cubrir TODOS los equipos, incluidos los que nunca tuvieron lectura
+    eqs = lista(m.man_get_equipos(), "equipos", "equipo")
+    afirmar(len(eqs_lect) == len(eqs),
+            f"devuelve {len(eqs_lect)} equipos pero man_get_equipos tiene {len(eqs)}: "
+            "los que nunca tuvieron lectura tienen que aparecer igual")
+    paso(f"cubre los mismos {len(eqs)} equipos que man_get_equipos")
+
+    def n(v):
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return 0
+
+    sin_ninguna = [e for e in eqs_lect if n(e.get("cantidad_lecturas")) == 0]
+    paso(f"{len(sin_ninguna)} equipos sin ninguna lectura registrada")
+
+    desactualizados = [e for e in eqs_lect
+                       if e.get("dias_sin_lectura") and n(e["dias_sin_lectura"]) > 90]
+    paso(f"{len(desactualizados)} con más de 90 días sin lectura")
+
+    criticos = [e for e in desactualizados if e.get("criticidad") in ("Alta", "Muy Alta")]
+    if criticos:
+        peor = max(criticos, key=lambda e: n(e["dias_sin_lectura"]))
+        paso(f"{AMAR}{len(criticos)} de esos son críticos — el peor: "
+             f"{peor['equipo']} ({peor['criticidad']}, {peor['dias_sin_lectura']} días){FIN}")
+
+    # coherencia: si tiene lecturas, tiene fecha; si no tiene, no puede tener días
+    for e in eqs_lect:
+        if n(e.get("cantidad_lecturas")) > 0:
+            afirmar(e.get("fecha_ultima_lectura"),
+                    f"{e['equipo']} dice tener lecturas pero no trae la fecha de la última")
+        else:
+            afirmar(not e.get("dias_sin_lectura"),
+                    f"{e['equipo']} no tiene lecturas pero reporta días sin lectura")
+    paso("coherencia entre cantidad, fecha y días verificada")
+
+    # cruce con preventivos: los planes por uso necesitan lectura al día
+    prevs = lista(m.man_get_preventivos(), "preventivos", "preventivo")
+    por_uso = [p for p in prevs if p.get("periodicidad") in ("Horas", "Kilómetros", "Ciclos")]
+    if por_uso:
+        lect_por_eq = {e["id_equipo"]: e for e in eqs_lect}
+        ciegos = [p for p in por_uso
+                  if n(lect_por_eq.get(p["id_equipo"], {}).get("cantidad_lecturas")) == 0]
+        paso(f"{len(ciegos)}/{len(por_uso)} planes por uso sobre equipos SIN lecturas "
+             f"(no se puede saber si vencieron)")
+
+
+# ===========================================================================
 # E7 — El contrato publicado y lo implementado no se desincronizan
 #      La OpenAPI es lo que consume el Virtual MCP Server del APIM: si declara
 #      una operación que el MI no implementa, la tool aparece en Claude y falla
@@ -382,7 +534,7 @@ def e7(_m):
 def main():
     escrituras = "--escrituras" in sys.argv
     todos = [v for v in globals().values() if callable(v) and hasattr(v, "_esc")]
-    todos.sort(key=lambda f: f._esc[0])
+    todos.sort(key=lambda f: int(f._esc[0][1:]))   # numérico: E2 antes que E10
 
     if "--lista" in sys.argv:
         for f in todos:

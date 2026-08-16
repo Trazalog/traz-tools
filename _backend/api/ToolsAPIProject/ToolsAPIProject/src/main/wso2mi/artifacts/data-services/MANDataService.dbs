@@ -404,6 +404,23 @@
          <with-param name="id_empresa" query-param="id_empresa"/>
       </call-query>
    </resource>
+   <!-- MCP get_lecturas: control del horometro/odometro por equipo.
+        Un preventivo por Horas/Km/Ciclos no se puede evaluar si nadie toma la
+        lectura, asi que esto es control de proceso sobre el propio plan.
+        Devuelve UN registro por equipo (no el historial completo, que serian
+        cientos de filas): cuantas lecturas tiene, la ultima, cuando fue y
+        cuantos dias pasaron. LEFT JOIN para que aparezcan tambien los equipos
+        que NUNCA tuvieron una lectura, que son justamente los mas relevantes. -->
+   <query id="getLecturasResumenMcp" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, e.codigo AS equipo, e.descripcion AS equipo_descripcion,&#xd;       e.estado AS equipo_estado, COALESCE(c.descripcion,'') AS criticidad,&#xd;       COUNT(h.id_lectura) AS cantidad_lecturas,&#xd;       MAX(h.lectura) AS lectura_actual,&#xd;       DATE_FORMAT(MAX(h.fecha),'%Y-%m-%d') AS fecha_ultima_lectura,&#xd;       DATEDIFF(CURDATE(), MAX(h.fecha)) AS dias_sin_lectura&#xd;FROM equipos e&#xd;LEFT JOIN historial_lecturas h ON h.id_equipo = e.id_equipo&#xd;LEFT JOIN criticidad c ON c.id_criti = e.id_criticidad&#xd;WHERE e.id_empresa = cast(:id_empresa as signed integer)&#xd;AND e.estado != 'AN'&#xd;GROUP BY e.id_equipo, e.codigo, e.descripcion, e.estado, c.descripcion&#xd;ORDER BY dias_sin_lectura DESC, e.codigo</sql>
+      <result outputType="json">{&#xd;    "lecturas": {&#xd;        "equipo": [&#xd;            {&#xd;                "id_equipo": "$id_equipo",&#xd;                "equipo": "$equipo",&#xd;                "equipo_descripcion": "$equipo_descripcion",&#xd;                "equipo_estado": "$equipo_estado",&#xd;                "criticidad": "$criticidad",&#xd;                "cantidad_lecturas": "$cantidad_lecturas",&#xd;                "lectura_actual": "$lectura_actual",&#xd;                "fecha_ultima_lectura": "$fecha_ultima_lectura",&#xd;                "dias_sin_lectura": "$dias_sin_lectura"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="mcp/lecturas/{id_empresa}">
+      <call-query href="getLecturasResumenMcp">
+         <with-param name="id_empresa" query-param="id_empresa"/>
+      </call-query>
+   </resource>
    <!-- MCP get_preventivos: plan de mantenimiento preventivo de la empresa.
         Primera query del proyecto sobre la tabla `preventivo` — ningún DataService
         la tocaba (ver doc/api/codeigniter-models-survey.md §7).

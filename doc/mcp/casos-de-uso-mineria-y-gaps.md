@@ -16,7 +16,7 @@ en [`escenarios-de-uso-y-regresion.md`](escenarios-de-uso-y-regresion.md).
 |---|---|
 | **Fecha** | 2026-08-11 |
 | **Relevado contra** | `assetv2` (Asset Planner) y `tools_prod_t` (Almacenes), base de desarrollo |
-| **Resultado** | 21 casos · 8 cubiertos · 1 parcial · 12 con gap |
+| **Resultado** | 21 casos · **12 cubiertos** · 9 con gap |
 
 > **Sobre los datos de prueba:** la base de desarrollo tiene datos agrícolas y de laboratorio, no
 > mineros. Los equipos sí incluyen maquinaria real (generador, autoelevador, equipo de corte,
@@ -137,7 +137,7 @@ Los marcados con ⭐ son los de **impacto ALTO** según la investigación del se
 | M1 | Equipos sin plan preventivo | «¿Qué equipos no tienen preventivo cargado?» | ✅ cubierto (2026-08-12) |
 | M2 ⭐ | Preventivos vencidos | «¿Qué mantenimientos tengo vencidos?» | ✅ cubierto (2026-08-12) |
 | M3 ⭐ | Priorizar por criticidad | «De esos, ¿cuáles son críticos?» | ✅ cubierto |
-| **M4** | Equipos sin lecturas | «¿A qué equipos no les toman el horómetro?» | ❌ gap |
+| M4 | Equipos sin lecturas | «¿A qué equipos no les toman el horómetro?» | ✅ cubierto (2026-08-12) |
 | M5 | Backlog por antigüedad | «¿Qué OTs llevan más de una semana abiertas?» | ✅ cubierto |
 | M6 ⭐ | Equipos que más fallan | «¿Qué equipo me dio más problemas?» | ✅ cubierto |
 | **M7** ⭐ | Ratio preventivo/correctivo | «¿Estoy previniendo o apagando incendios?» | ❌ gap (datos ✅, ver §1.3) |
@@ -170,14 +170,14 @@ K5 (PM Compliance = % de preventivos completados a tiempo) es **calculable hoy**
 | # | Caso | Pregunta | Estado |
 |---|---|---|---|
 | I1 ⭐ | Bajo punto de pedido | «¿Qué tengo que reponer?» | ✅ cubierto (E1) |
-| **I2** | Stock por tipo y depósito | «¿Cuántos insumos hay en Zaranda?» | ❌ gap |
-| **I3** ⭐ | Insumos clave por nombre | «¿Tengo filtros y aceite hidráulico?» | ⚠️ parcial |
-| **I4** | Lotes por vencer | «¿Qué se vence este mes?» | ❌ gap (query ✅) |
+| I2 | Stock por tipo y depósito | «¿Cuántos insumos hay en Zaranda?» | ✅ cubierto (2026-08-12) |
+| I3 ⭐ | Insumos clave por nombre | «¿Tengo filtros y aceite hidráulico?» | ✅ cubierto (2026-08-12) |
+| I4 | Lotes por vencer | «¿Qué se vence este mes?» | ✅ cubierto (2026-08-12) |
 | **I5** | Consumo histórico | «¿Cuántos filtros usamos el mes pasado?» | ❌ gap (query ✅) |
 | I6 | Stock inmovilizado | «¿Qué no se mueve hace un año?» | ❌ gap (depende de I5) |
 
-I3 es parcial: `alm_get_stock` trae el catálogo completo y el agente filtra por texto. Funciona
-con 311 artículos, **no escala** a catálogos de miles.
+I3 se resolvió agregando el parámetro `buscar` a `alm_get_stock`, en vez de que el agente traiga
+el catálogo entero y filtre —que funciona con 311 artículos pero no escala a miles.
 
 Verificado: 58 lotes vencidos con stock en la empresa 1.
 
