@@ -88,12 +88,17 @@ El `.car` **empaqueta la IP del ambiente** en cuatro archivos. Buildear desde un
 deja el MI apuntando a la base de desarrollo, **sin fallar de forma visible** (las tools responden
 `200` con datos del ambiente equivocado). Ver `deployment-gcp.md` §6.1-bis para el detalle:
 
-| Archivo (bajo `src/main/wso2mi/`) | Qué define |
-|---|---|
-| `artifacts/data-sources/ToolsDataSource.xml` | PostgreSQL de tools |
-| `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` |
-| `resources/registry/conf/apiconfig.xml` | `api_url` y `dataservices_url` internas |
-| `resources/conf/tools/bpmconf.xml` | `bpm_url` de Bonita |
+| Archivo (bajo `src/main/wso2mi/`) | Qué define | ¿Tocarlo? |
+|---|---|---|
+| `artifacts/data-sources/ToolsDataSource.xml` | PostgreSQL de tools | **sí** |
+| `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` | **sí** |
+| `resources/conf/tools/bpmconf.xml` → `bpm_url` | Bonita | **sí** |
+| `resources/conf/tools/apiconfig.xml` | `api_url` / `dataservices_url` | **no** — es el MI llamándose a sí mismo, `localhost` es correcto |
+
+> ⚠️ **Editar siempre `resources/conf/tools/`.** Existe una segunda copia en
+> `resources/registry/conf/` que **no se empaqueta** (`resources/artifact.xml` apunta a
+> `conf/tools/`) y que tiene valores distintos — es fácil editar la equivocada y no ver ningún
+> efecto. Detalle en `deployment-gcp.md` §6.1-bis.
 
 ### A.2 Buildear y desplegar
 
