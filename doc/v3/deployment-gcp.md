@@ -705,6 +705,16 @@ Para distinguirlas, desde la VM: si `curl http://localhost:8290/tools/mcp/mcp/al
 
 #### 6.3-ter Cuando el `endpointConfig` no se puede editar desde la UI
 
+> ⚠️ **Este procedimiento puede dejar tools rotas — verificar después de cada `PUT`.**
+> Actualizar un MCP Server por el Publisher REST API es el escenario de reproducción de
+> [wso2/api-manager#5106](https://github.com/wso2/api-manager/issues/5106): si en el ciclo
+> `GET` → editar → `PUT` el `apiOperationMapping` de alguna tool se pierde o se altera, APIM **lo
+> guarda igual y sin avisar**. Después queda la pantalla `Tools` del Publisher rota
+> (`TypeError ... toLowerCase`) y las tools afectadas devolviendo `500`. El fix
+> ([carbon-apimgt#13889](https://github.com/wso2/carbon-apimgt/pull/13889)) valida y rechaza antes
+> de persistir, pero va por update level. Mientras tanto: guardar el JSON antes del `PUT`, y correr
+> `python3 scripts/dev/mcp-smoke-tools.py` después — detecta el problema desde afuera y sin token.
+
 En APIM 4.6.0 la pantalla del MCP Server puede no permitir editar el endpoint (el campo aparece deshabilitado o no se persiste). En ese caso hay que hacerlo por el **Publisher REST API**. Verificado el 2026-08-11 contra esta VM:
 
 ```bash

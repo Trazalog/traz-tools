@@ -365,10 +365,72 @@ como *"The connector's server isn't responding"*, que no orienta a nada.
 **Caso real (2026-08-18):** tras la primera republicación, las **9 tools originales** respondían
 `401` y las **8 agregadas después** daban `500` sin mapeo — `man_get_lecturas`,
 `man_get_preventivos`, `alm_get_depositos`, `alm_get_vencimientos` y las 4 de KPI. El corte fue
-exacto entre las que existían al crear el MCP Server y las posteriores. Se corrige con el paso C
-(asociar la `Operation` de cada una) o, más rápido para ese volumen, con **C-bis** (regenerar el
+exacto entre las que existían al crear el MCP Server y las posteriores. **El paso C no es viable en este estado**: la pantalla `Tools` del Publisher no abre (ver E.0-ter),
+así que no hay forma de asociar la `Operation` desde la UI. La salida es **C-bis** — regenerar el
 MCP Server desde la API, después de confirmar que la API tiene las 17 operaciones **y** una revisión
-desplegada).
+desplegada.
+
+---
+
+### E.0-ter El bug de WSO2 detrás de esto — issue #5106
+
+Si al abrir **`API Configurations`** → **`Tools`** el Publisher muestra una pantalla rota con:
+
+```text
+TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at ab (ToolDetails.jsx:229:82)
+```
+
+no es un problema de la instalación: es
+[**wso2/api-manager#5106**](https://github.com/wso2/api-manager/issues/5106), `Type/Bug`, reportado
+contra **4.6.0** y cerrado el 2026-07-09.
+
+**Qué explica el issue.** `findMatchingTemplate()` en `ApiMgtDAO` no encuentra un resource template
+que coincida con la operación de la tool, así que el GET del MCP Server devuelve
+`apiOperationMapping` en **`null`**. De ahí salen los dos síntomas a la vez:
+
+| Síntoma | Dónde se ve |
+|---|---|
+| La pantalla `Tools` revienta con el `toLowerCase` | Publisher |
+| `500` — *"Cannot invoke `APIOperationMapping.getBackendOperation()` because `existingAPIOperationMapping` is null"* | al invocar la tool |
+| *"The connector's server isn't responding"* | en Claude |
+
+**El matching es por `target` + `verb`.** Alcanza con que el verbo o el path de la tool no
+correspondan **exactamente** a un recurso de la API referenciada para que el mapping quede en
+`null`.
+
+**El fix**
+([carbon-apimgt#13889](https://github.com/wso2/carbon-apimgt/pull/13889), mergeado el 2026-06-30)
+agrega `validateMCPBackendOperations`, que valida cada backend operation contra los recursos de la
+API referenciada y **rechaza las inválidas antes de persistirlas**. Sin ese fix, APIM **deja
+guardar** un mapping roto sin avisar. Va por update level (`patch`); mientras no esté aplicado, el
+procedimiento de acá abajo evita el problema.
+
+#### ⚠️ Nuestro propio §6.3-ter puede ser el disparador
+
+Los pasos para reproducirlo, según el issue, son: crear el MCP Server desde una API existente y
+después **actualizarlo por el Publisher REST API**.
+
+`deployment-gcp.md` §6.3-ter hace exactamente eso: `GET` del MCP Server, agregarle `endpointConfig`,
+`PUT`. **Si en ese ciclo el `apiOperationMapping` de alguna tool se pierde o se altera, el `PUT` lo
+guarda roto y no protesta.**
+
+Por eso, cada vez que se toque el MCP Server por REST API:
+
+```bash
+# ANTES del PUT — guardar el artefacto tal cual esta
+curl -s -k "https://localhost:9443/api/am/publisher/v4/mcp-servers/<id>" \
+  -H "Authorization: Bearer $TOKEN" > /tmp/mcp-antes.json
+
+# DESPUES del PUT — ninguna tool debe haber quedado sin mapping
+curl -s -k "https://localhost:9443/api/am/publisher/v4/mcp-servers/<id>" \
+  -H "Authorization: Bearer $TOKEN" \
+  | python3 -c "import sys,json;d=json.load(sys.stdin);ops=d.get('operations',[]);\
+b=[o.get('target') for o in ops if not o.get('apiOperationMapping')];\
+print(f'{len(ops)} tools, {len(b)} sin mapping'); print(b)"
+```
+
+Y correr el smoke test de E.0-bis, que detecta lo mismo desde afuera y sin token.
 
 ---
 
@@ -492,6 +554,7 @@ Trazalog y **volver a conectarlo**.
 | E.0 — `Test` → `MCP Playground` → `Connect` | misma página, §3 |
 | El MCP Server no hereda de la API | [*Create a MCP Server Using an Existing API*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/create-from-api.md) — la selección de operaciones ocurre **sólo al crearlo** |
 | C-bis — `apictl get/delete/import mcp-server` | [*Managing MCP Servers*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/managing-mcp-servers.md) e [*Importing MCP Servers Via Dev First Approach*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/importing-mcp-servers-via-dev-first-approach.md) |
+| E.0-ter — bug del `toLowerCase` / mapping null | [wso2/api-manager#5106](https://github.com/wso2/api-manager/issues/5106) y su fix [carbon-apimgt#13889](https://github.com/wso2/carbon-apimgt/pull/13889) |
 | C-bis — qué se pierde al regenerar | verificado en el despliegue del 2026-08-11 (`deployment-gcp.md` §6.3-bis) |
 | A — build, deploy del CAR, arranque, curl directo | verificado contra la VM real (`deployment-gcp.md` §6.1-bis, §6.2) |
 | Los 3 errores de E.2 (`403`/`404`/`101503`) | verificados en el despliegue del 2026-08-11 (`deployment-gcp.md` §6.3-bis) |
