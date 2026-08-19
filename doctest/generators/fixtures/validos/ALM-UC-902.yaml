@@ -2,7 +2,7 @@
 id: ALM-UC-902
 modulo: ALM
 titulo: Fixture de caso validado sin derivados generados
-perfil: Encargado de almacén
+perfil: Solicitante
 estado: validado
 version: "1.0"
 origen: baseline

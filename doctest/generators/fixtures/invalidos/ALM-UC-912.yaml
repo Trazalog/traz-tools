@@ -3,7 +3,7 @@
 id: ALM-UC-912
 modulo: ALM
 titulo: Fixture de validado con derivado que no existe en el repo
-perfil: Encargado de almacén
+perfil: Solicitante
 estado: validado
 version: "1.0"
 origen: baseline

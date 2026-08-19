@@ -1,7 +1,8 @@
 # Trazalog v3 — DocTest · Documento 2: Ciclo de Vida en CI/CD y Pruebas de Developers
 
 > **Solución:** DocTest — Pipeline de Catálogo Funcional → Ayudas + Pruebas automatizadas
-> Versión: 1.0 · Fecha: Agosto 2026
+> Versión: 1.1 · Fecha: Agosto 2026
+> **Cambios v1.1:** los workflows DocTest pasan a ser autónomos — se elimina la dependencia de `v3-ci.yml` y `v3-deploy-staging.yml` (verificado: no existen aún; siguen siendo entregables de E7-CICD). `doctest-full-staging.yml` con trigger interino `workflow_dispatch` → `workflow_run` cuando E7 entregue el deploy automatizado (§4).
 > Autor: Rodolfo (PM) + Claude Web (PM técnico/arquitecto)
 > Estado: Aprobado para implementación por Claude Code
 > **Este documento extiende `TRAZALOG_v3_CICD_STRATEGY.md` (v1.1) — no lo reemplaza.** Branching, cutover y roles generales siguen rigiendo desde aquel documento.
@@ -67,7 +68,7 @@ Los tests apuntan por variable de entorno (`DOCTEST_BASE_URL`) a: (a) el entorno
 
 ### 3.1 Suite de regresión en el PR
 
-Workflow `doctest-e2e.yml` (extiende el `v3-ci.yml` existente):
+Workflow `doctest-e2e.yml` — **autónomo** (no requiere `v3-ci.yml`; cuando E7-CICD lo cree, coexisten como checks independientes del mismo PR):
 
 1. Detecta módulos afectados por paths del diff (mapa path→módulo en configuración, ver Doc 3 §8).
 2. Ejecuta la suite E2E de esos módulos contra staging-v3 (o entorno efímero si en el futuro se dockeriza la app — fuera de alcance hoy).
@@ -104,14 +105,18 @@ Workflow `doctest-e2e.yml` (extiende el `v3-ci.yml` existente):
 
 ## 4. Momento 3 — Deploy a staging-v3 (gate de regresión)
 
-Extiende el `v3-deploy-staging.yml` existente:
+> ⚠️ **Estado real del entorno (verificado por CC, Ago-2026):** los workflows del plan CICD (`v3-ci.yml`, `v3-deploy-staging.yml` — Sprint 0/1 de la estrategia, backlog E7-CICD) **aún no existen**. Por eso los workflows de DocTest son **autónomos**: no extienden ni requieren archivos previos. La única dependencia real es el evento de deploy, que se resuelve con trigger interino.
 
-1. Deploy automático al mergear a `develop-v3` (flujo actual, sin cambios).
-2. **Post-deploy: suite E2E completa + suite Hurl completa contra staging-v3.**
+1. Deploy a staging-v3: hoy manual; cuando E7-CICD entregue `v3-deploy-staging.yml`, automático al mergear a `develop-v3`.
+2. **Post-deploy: suite E2E completa + suite Hurl completa contra staging-v3** (`doctest-full-staging.yml`).
+   - **Trigger interino (hasta E7-CICD):** `workflow_dispatch` — quien despliega a staging dispara la suite inmediatamente después (paso agregado al procedimiento de deploy manual). El cron semanal (§6) actúa de red de seguridad si alguien lo olvida.
+   - **Trigger definitivo (cuando exista el deploy automatizado):** `workflow_run` encadenado al workflow de deploy. El cambio es de ~3 líneas y queda anotado como TODO en el propio YAML.
 3. Verde → el build queda marcado como candidato sano. Rojo → issue automático con el reporte + traces; **no se promociona nada a producción hasta resolver** (política, alineada con riesgo 10 del doc CICD).
 4. El reporte queda como artifact 30 días para auditoría.
 
 **Por qué acá y no antes del merge:** la suite completa (< 45 min) es demasiado lenta para cada PR; el PR corre lo afectado, staging corre todo. Es el balance estándar velocidad/cobertura.
+
+**Deslinde de alcance con E7-CICD:** DocTest NO crea `v3-ci.yml` (lint/unit PHP) ni `v3-deploy-staging.yml` — siguen siendo entregables de E7-CICD según la estrategia CICD. Cuando existan, la única integración necesaria es el cambio de trigger descrito arriba (tarea 🟢).
 
 ---
 

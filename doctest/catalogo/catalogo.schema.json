@@ -36,8 +36,8 @@
     },
     "perfil": {
       "type": "string",
-      "minLength": 3,
-      "description": "Perfil funcional que ejecuta el flujo (ej. Supervisor, Operario, Administrador de cuenta)."
+      "enum": ["Solicitante", "Supervisor", "Planificador", "Mantenedor"],
+      "description": "Perfil funcional que ejecuta el flujo. Vocabulario FIJO de roles del dominio (Doc 3 v1.1 §3). Los roles propios de DNATO se agregan a este enum recién cuando el relevamiento de F1 los identifique y Rodolfo los valide — no se inventan sobre la marcha."
     },
     "estado": {
       "type": "string",

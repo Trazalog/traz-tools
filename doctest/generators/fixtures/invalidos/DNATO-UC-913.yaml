@@ -3,7 +3,7 @@
 id: DNATO-UC-999
 modulo: DNATO
 titulo: Fixture con id que no coincide con el nombre del archivo
-perfil: Administrador de cuenta
+perfil: Supervisor
 estado: borrador
 version: "0.1"
 origen: baseline

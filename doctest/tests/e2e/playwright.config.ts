@@ -3,9 +3,10 @@
  *
  * Projects:
  *   - `local`      → apps levantadas en la máquina del developer
- *   - `staging-v3` → entorno de staging (default en CI)
+ *   - `demo`       → entorno DEMO de v2 (demo.cloudtrazalog.com), el único desplegado hoy
+ *   - `staging-v3` → entorno de staging de v3, pendiente de E7-CICD
  *
- * Selección: `DOCTEST_ENV=staging-v3 npm run test:smoke`, o `--project staging-v3`.
+ * Selección: `DOCTEST_ENV=demo npm run test:smoke`, o `--project demo`.
  * Las URLs salen de `doctest/.env` (plantilla en `.env.example`); nunca se hardcodean.
  */
 
@@ -57,6 +58,16 @@ export default defineConfig({
       },
     },
     {
+      // Entorno DEMO de v2 (demo.cloudtrazalog.com): el único desplegado hoy.
+      name: 'demo',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: urlDeApp('tools', 'demo'),
+      },
+    },
+    {
+      // staging-v3 todavía no existe (lo entrega E7-CICD); queda declarado para
+      // que la suite no necesite cambios el día que exista.
       name: 'staging-v3',
       use: {
         ...devices['Desktop Chrome'],

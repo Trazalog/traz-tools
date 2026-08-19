@@ -38,10 +38,10 @@ código PHP + ayudas actuales ──relevamiento──> catálogo (gate humano) 
 npm install                       # dependencias (Playwright, ajv, tsx, ...)
 npx playwright install chromium   # navegador headless
 npm run hurl:install              # Hurl 8.0.1 en ~/.local/bin (solo si vas a tocar la suite MCP)
-cp .env.example .env              # y completar; .env NO se commitea
+cp .env.example .env              # y completar las credenciales; .env NO se commitea
 ```
 
-> Las URLs de staging-v3 y las credenciales de las empresas de test las provee Rodolfo. Nunca se hardcodean ni se inventan: si falta una, el test falla con un mensaje que dice exactamente qué variable falta.
+> Las URLs ya vienen en `.env.example`. Lo que falta completar son las **credenciales de las empresas de test**, que provee Rodolfo. Nunca se hardcodean ni se inventan: si falta una, el test falla con un mensaje que dice exactamente qué variable falta.
 
 ## Comandos
 
@@ -59,11 +59,21 @@ cp .env.example .env              # y completar; .env NO se commitea
 | `npm run typecheck` | `tsc --noEmit` sobre generators y tests |
 | `npm run hurl:install` | Instala Hurl sin sudo |
 
-El entorno se elige con `DOCTEST_ENV` (`local` por defecto, o `staging-v3`), desde tu `.env` o inline:
+### Entornos
+
+| `DOCTEST_ENV` | Qué es | Estado |
+|---|---|---|
+| `local` | Las apps levantadas en tu máquina | según cada developer |
+| `demo` | `demo.cloudtrazalog.com` — entorno **DEMO de v2** | ✅ el único desplegado hoy, y contra el que corre DocTest |
+| `staging-v3` | Staging de v3 | ⛔ todavía no existe (lo entrega E7-CICD) |
+
+Se elige desde tu `.env` o inline:
 
 ```bash
-DOCTEST_ENV=staging-v3 npm run test:smoke
+DOCTEST_ENV=demo npm run test:smoke
 ```
+
+> **No hay nada de v3 desplegado todavía.** Mientras tanto la suite corre contra el DEMO de v2, que es funcionalmente el mismo sistema bajo prueba. El día que exista staging-v3 alcanza con completar sus tres URLs en el `.env`: la config ya tiene el project declarado.
 
 ## Convenciones que hay que respetar
 
@@ -72,7 +82,7 @@ DOCTEST_ENV=staging-v3 npm run test:smoke
 - **Sin selectores en los specs:** los specs llaman métodos de page objects. Un cambio de UI se arregla en un solo archivo.
 - **Sin esperas fijas:** nada de `waitForTimeout`; auto-wait de Playwright + asserts explícitos.
 - **Trazabilidad:** cada spec declara en su cabecera el id del caso de uso; el YAML del caso lista sus derivados. El validador verifica que los derivados declarados existan.
-- **Nunca producción:** los tests corren contra staging-v3 o local (RNF-04). Hay una guarda en `tests/e2e/config/apps.ts` que corta si una URL apunta a un host productivo.
+- **Nunca producción:** los tests corren contra `local`, `demo` o `staging-v3` (RNF-04). Hay una guarda en `tests/e2e/config/apps.ts` que corta si una URL apunta a un host productivo (`cloudtrazalog.com` a secas).
 - **Nunca secretos en el repo:** credenciales por `.env` (local) o GitHub Secrets (CI).
 
 ## Cómo se agrega un caso de uso

@@ -48,7 +48,8 @@ const GENERADORES: Generador[] = [
   },
   {
     archivo: 'build-ayudas.ts',
-    descripcion: 'Ensambla ayudas/build/ desde ayudas/src/ + plantilla (searchData automático)',
+    descripcion:
+      'Ensambla ayudas/build/ desde ayudas/src/ + plantilla: searchData de index.html generado desde TODOS los manuales, theme.css compartido, nombres de archivo y anclas sNN del sitio publicado intactos (Doc 3 §6)',
     fase: 'F2 (plantilla) / F5 (completo)',
     implementado: false,
   },

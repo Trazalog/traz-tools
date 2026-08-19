@@ -22,7 +22,7 @@ const DOCTEST_ROOT = resolve(HERE, '..');
 
 cargarEnv({ path: join(DOCTEST_ROOT, '.env'), quiet: true });
 
-const ENTORNOS = ['local', 'staging-v3'];
+const ENTORNOS = ['local', 'demo', 'staging-v3'];
 const entorno = (process.env.DOCTEST_ENV ?? 'local').trim();
 if (!ENTORNOS.includes(entorno)) {
   console.error(`DOCTEST_ENV inválido: "${entorno}". Valores admitidos: ${ENTORNOS.join(' | ')}.`);

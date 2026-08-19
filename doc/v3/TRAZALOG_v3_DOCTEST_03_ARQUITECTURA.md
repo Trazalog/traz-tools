@@ -1,7 +1,9 @@
 # Trazalog v3 — DocTest · Documento 3: Arquitectura Técnica y Diseño
 
 > **Solución:** DocTest — Pipeline de Catálogo Funcional → Ayudas + Pruebas automatizadas
-> Versión: 1.0 · Fecha: Agosto 2026
+> Versión: 1.2 · Fecha: Agosto 2026
+> **Cambios v1.2:** workflows autónomos — `doctest-full-staging.yml` con trigger interino `workflow_dispatch` hasta que E7-CICD entregue el deploy automatizado (alineado con Doc 2 v1.1 §4).
+> **Cambios v1.1:** `ayudas/legacy/` incorporado a la estructura; `build-ayudas.ts` genera searchData automático y centraliza variables CSS en theme.css; campo `perfil` del catálogo con vocabulario fijo de roles del dominio.
 > Autor: Rodolfo (PM) + Claude Web (PM técnico/arquitecto)
 > Estado: Aprobado para implementación por Claude Code
 > Documentos relacionados: Doc 1 (requerimientos), Doc 2 (ciclo de vida CI/CD), `TRAZALOG_v3_MCP_ARCHITECTURE.md` (ADRs), `CLAUDE.md` de cada repo
@@ -89,9 +91,10 @@ doctest/
 │       ├── hurl/                  # un .hurl por tool + casos de error
 │       └── env/                   # variables por entorno (sin secretos)
 ├── ayudas/
-│   ├── plantilla/                 # base extraída del manual actual
-│   ├── src/                       # fuentes por módulo
-│   └── build/                     # HTML final publicable
+│   ├── legacy/                    # sitio actual importado tal cual + CLAUDE-mperez.md (referencia, solo lectura)
+│   ├── plantilla/                 # plantilla + theme.css extraídos del sitio legacy (variables centralizadas)
+│   ├── src/                       # fuentes por módulo (nombres de archivo publicados se respetan, typos incluidos)
+│   └── build/                     # HTML final publicable a trazalog.com/ayudatools
 ├── generators/                    # scripts de derivación catálogo→salidas
 └── feedback/PROCESO.md            # cómo reportar test-gaps (para testers)
 ```
@@ -106,7 +109,8 @@ Un archivo YAML por caso de uso. Esquema (se formaliza con JSON Schema en `catal
 id: MAN-UC-001
 modulo: MAN
 titulo: Alta de equipo con componentes
-perfil: Supervisor                 # perfil funcional que ejecuta el flujo
+perfil: Supervisor                 # vocabulario fijo del dominio: Solicitante | Supervisor |
+                                   # Planificador | Mantenedor (+ roles DNATO que surjan del relevamiento)
 estado: validado                   # borrador | validado | obsoleto
 version: 1.2
 origen: baseline                   # baseline | delta-PR#123 | feedback-issue#45
@@ -210,7 +214,7 @@ Scripts Node/TypeScript ejecutados por CC (y por cualquier humano) — **la gene
 | `validate-catalog.ts` | Valida todos los YAML contra el JSON Schema + reglas duras §3. Corre en CI en cada PR que toque `doctest/` |
 | `catalog-to-feature.ts` | Deriva `.feature` Gherkin desde YAML (transformación mecánica 1:1 — pasos → Cuando/Entonces). Regenerable; los `.feature` no se editan a mano |
 | `scaffold-spec.ts` | Genera el esqueleto del spec Playwright desde el YAML (describe, tags, referencias). El cuerpo lo completa CC/dev |
-| `build-ayudas.ts` | Ensambla `ayudas/build/` desde `ayudas/src/` + plantilla + índice + buscador client-side (lunr.js o similar, open source) |
+| `build-ayudas.ts` | Ensambla `ayudas/build/` desde `ayudas/src/` + plantilla. Genera automáticamente el array `searchData` de `index.html` desde el contenido de TODOS los manuales (resuelve la deuda conocida del sitio actual: hoy solo indexa correctivo y preventivo). Mantiene el buscador existente del hero — no se reemplaza por otra librería salvo limitación demostrada. Centraliza las variables CSS en `theme.css` compartido (hoy duplicadas por archivo). Respeta nombres de archivo publicados (incl. typos `correrctivo`/`mantenimeinto`) y anclas `sNN` existentes |
 | `coverage-report.ts` | Cruza catálogo vs specs existentes: casos validados sin test, tests sin caso — sale en el ritual semanal |
 
 Punto de extensión imágenes generativas (RF fuera de alcance, previsto): `ayudas/src` admite bloques `<figure data-genimg-prompt="...">`; hoy renderizan el SVG/mockup incluido; a futuro un generador podrá resolverlos contra una tool MCP de generación de imágenes.
@@ -224,7 +228,7 @@ Punto de extensión imágenes generativas (RF fuera de alcance, previsto): `ayud
 | `doctest-validate.yml` | PR que toca `doctest/**` | validate-catalog + lint TS + dry-run de generators |
 | `doctest-e2e.yml` | PR a `develop-v3` (paths funcionales, mapa path→módulo en `doctest/ci/module-map.json`) | Playwright módulos afectados vs staging-v3 + Hurl si toca MCP/DataServices. Artifacts: reporte HTML + traces |
 | `doctest-delta.yml` | Label `doctest-delta` en PR · `workflow_dispatch` | claude-code-action: análisis según Doc 2 §3.2. Secrets: `ANTHROPIC_API_KEY`. Permisos mínimos: contents:write (solo ramas `doctest/delta-*`), pull-requests:write (comentar) |
-| `doctest-full-staging.yml` | Post-deploy staging-v3 (workflow_run del deploy existente) | Suite completa + Hurl. Rojo ⇒ issue automático |
+| `doctest-full-staging.yml` | **Interino:** `workflow_dispatch` (post-deploy manual a staging-v3) · **Definitivo:** `workflow_run` del deploy cuando E7-CICD lo cree (TODO en el YAML) | Suite completa + Hurl. Rojo ⇒ issue automático |
 | `doctest-weekly.yml` | Cron dom 22:00 ART | Ídem full + label `doctest-drift` si falla |
 | `doctest-smoke-prod.yml` | Post-deploy producción (manual dispatch por ahora) | Solo `@smoke` de lectura + 1 tool MCP GET |
 
