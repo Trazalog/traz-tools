@@ -88,12 +88,17 @@ El `.car` **empaqueta la IP del ambiente** en cuatro archivos. Buildear desde un
 deja el MI apuntando a la base de desarrollo, **sin fallar de forma visible** (las tools responden
 `200` con datos del ambiente equivocado). Ver `deployment-gcp.md` §6.1-bis para el detalle:
 
-| Archivo (bajo `src/main/wso2mi/`) | Qué define |
-|---|---|
-| `artifacts/data-sources/ToolsDataSource.xml` | PostgreSQL de tools |
-| `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` |
-| `resources/registry/conf/apiconfig.xml` | `api_url` y `dataservices_url` internas |
-| `resources/conf/tools/bpmconf.xml` | `bpm_url` de Bonita |
+| Archivo (bajo `src/main/wso2mi/`) | Qué define | ¿Tocarlo? |
+|---|---|---|
+| `artifacts/data-sources/ToolsDataSource.xml` | PostgreSQL de tools | **sí** |
+| `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` | **sí** |
+| `resources/conf/tools/bpmconf.xml` → `bpm_url` | Bonita | **sí** |
+| `resources/conf/tools/apiconfig.xml` | `api_url` / `dataservices_url` | **no** — es el MI llamándose a sí mismo, `localhost` es correcto |
+
+> ⚠️ **Editar siempre `resources/conf/tools/`.** Existe una segunda copia en
+> `resources/registry/conf/` que **no se empaqueta** (`resources/artifact.xml` apunta a
+> `conf/tools/`) y que tiene valores distintos — es fácil editar la equivocada y no ver ningún
+> efecto. Detalle en `deployment-gcp.md` §6.1-bis.
 
 ### A.2 Buildear y desplegar
 
@@ -147,6 +152,10 @@ Repetir con la ruta de cada tool nueva, ej. `/tools/mcp/mcp/man/lecturas`.
 
 ## 3. Paso B — Actualizar la API en el Publisher
 
+> **Todo lo que sigue está tomado de la documentación oficial de WSO2 API Manager, rama `4.6.0`**
+> (repositorio [`wso2/docs-apim`](https://github.com/wso2/docs-apim/tree/4.6.0)). Los nombres de los
+> ítems del menú son los que usa esa documentación, no una reconstrucción.
+
 🌐 **Navegador.** Si el Publisher no está expuesto, abrir primero un túnel SSH desde tu máquina:
 
 ```bash
@@ -154,89 +163,376 @@ ssh -L 9443:localhost:9443 <usuario>@<vm>
 # y después entrar a https://localhost:9443/publisher
 ```
 
-**No hay botón `Edit`.** Al abrir una API se entra directamente a su vista de trabajo; la
-navegación es por la barra lateral izquierda:
-
-```
-APIs  →  Trazalog MCP  →  Develop  →  API Configurations  →  ...
-```
-
-(esa es la ruta verificada en esta VM, la misma que se usa para el endpoint en
-`deployment-gcp.md` §6.3-bis)
+**No hay ningún botón `Edit`.** Al abrir una API se entra directamente a su vista de trabajo y se
+navega por el menú de la izquierda.
 
 1. **`APIs`** → abrir la API (ej. `Trazalog MCP`)
-2. En la barra lateral, bajo **`Develop`**, entrar a la **definición de la API** y usar
-   **`Import`** para subir `doc/api/trazalog-operaciones.yaml` actualizado
-3. **`Save`**
-4. Si cambiaron paths o methods: **`Publish`** de nuevo
+2. **`API definition`** — abre la definición en el editor Swagger integrado. Ahí se sube el
+   `doc/api/trazalog-operaciones.yaml` actualizado.
+3. Guardar.
 
-> ⚠️ **El nombre exacto del ítem de la barra lateral para la definición no está verificado** — en
-> 4.6.0 aparece bajo `Develop`, junto a `API Configurations`. Al ejecutarlo por primera vez,
-> corregir acá el nombre real.
+> Fuente: [*Edit an API by modifying the API
+> Definition*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/tutorials/edit-an-api-by-modifyng-the-api-definition.md)
+> — *"Click on **API definition** to view the API Definition in the swagger UI."*
 
-### B.5 Qué confirmar después de re-importar
+### B.2 Desplegar una revisión de la API
 
-- **`Enable Subscription Validation` sigue desactivado.** Este es el que importa: sin `azp`
-  (consumerKey) en el JWT de Dnato, con la validación activa el gateway responde `403` aunque la
-  firma sea válida.
-- **El selector de Key Managers no se toca.** No hay ni va a haber un "Dnato" ahí: Dnato **no está
-  registrado como Key Manager** — APIM 4.6.0 no tiene conector genérico para IdPs custom. La
-  validación del JWT la resuelve `[[apim.jwt.issuer]]` en el `deployment.toml`, que es
-  configuración global del servidor y no se ve ni se configura por-API en el Publisher. Ver
-  [`virtual-mcp-unificado.md`](virtual-mcp-unificado.md) §2.4 y
-  [`../identity/apim-keymanager-dnato.md`](../identity/apim-keymanager-dnato.md) §3.
+Guardar la definición **no** la publica en el gateway. Hay que desplegar una revisión nueva:
 
-> Re-importar **reemplaza** la definición. Cualquier ajuste hecho a mano en el Publisher sobre
-> operaciones (descripciones editadas ahí, no en el YAML) se pierde. La fuente de verdad es el YAML
-> del repo.
+1. Ir a la sección **`Deploy`** y hacer clic en **`Deployments`**
+2. Clic en **`Deploy New Revision`**
+3. Opcionalmente, una descripción para la revisión
+4. Seleccionar los **API Gateways** donde desplegarla
+5. Clic en **`Deploy`**
+
+> **Máximo 5 revisiones.** Al llegar al límite hay que borrar una antes de crear otra.
+>
+> Fuente: [*deploy-revision*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/includes/design/deploy-revision.md),
+> el include oficial que la documentación reusa en todas las páginas de despliegue.
+
+### B.3 Qué confirmar después de re-importar
+
+- **`Enable Subscription Validation` sigue desactivado.** Sin `azp` (consumerKey) en el JWT de
+  Dnato, con la validación activa el gateway responde `403` aunque la firma sea válida.
+- **El selector de Key Managers no se toca.** Dnato **no está registrado como Key Manager** — APIM
+  4.6.0 no tiene conector genérico para IdPs custom. La validación la resuelve
+  `[[apim.jwt.issuer]]` en el `deployment.toml`. Ver
+  [`virtual-mcp-unificado.md`](virtual-mcp-unificado.md) §2.4.
+
+> Re-importar **reemplaza** la definición: lo editado a mano en el Publisher sobre operaciones se
+> pierde. La fuente de verdad es el YAML del repo.
 
 ---
 
 ## 4. Paso C — Agregar las tools nuevas al MCP Server
 
-**Este es el paso que se olvida.** El MCP Server es un artefacto distinto y no hereda las
-operaciones nuevas de la API.
+**Acá está la respuesta a "¿cómo le digo al MCP que tome esa revisión?": no se le dice.**
+
+El MCP Server **no toma revisiones de la API**. El vínculo con la API existe **una sola vez, al
+crearlo**: en ese momento se eligen qué operaciones se convierten en tools. Después son dos
+artefactos independientes, cada uno con sus propias revisiones y sus propios despliegues.
+
+Por eso, una operación nueva en la API **no aparece sola** como tool: hay que agregarla a mano.
 
 🌐 **Navegador**, mismo Publisher:
 
-1. **`MCP Servers`** → abrir el server (ej. `Trazalog MCP Server`) — igual que con las APIs, no hay
-   botón `Edit`: se entra directo y se navega por la barra lateral
-2. Buscar el listado de **tools** del server y agregar cada tool nueva, apuntándola a la operación
-   correspondiente de la API
-3. Verificar que el nombre de la tool coincida **exactamente** con el `operationId` del YAML — es
-   el nombre con el que el agente la invoca
+1. **`MCP Servers`** → abrir el server (ej. `Trazalog MCP Server`)
+2. En el menú de la izquierda: **`API Configurations`** → **`Tools`**
+   *(esta vista lista todas las tools generadas a partir de los recursos de la API)*
+3. Clic en **`Add New Tool`**
+4. Completar los campos:
 
-**Alternativa: regenerarlo desde la API.** Más rápido si hay varias tools nuevas, pero **borra la
-configuración propia del server**. Si se regenera, hay que rehacer sí o sí:
+   | Campo | Qué va |
+   |---|---|
+   | **`Operation`** | el recurso de la API sobre el que se basa la tool |
+   | **`Description`** | contexto suficiente para que el LLM entienda qué hace |
+   | **`Tool Name`** | único; usar el mismo `operationId` del YAML |
 
-- el **`endpointConfig`** (queda en `null` → todas las tools dan `404`)
-- la **suscripción** de la aplicación en el DevPortal (→ todas dan `403` / `900908`)
+5. Guardar los cambios.
 
-Ambos valores y el detalle de cómo reponerlos están en `deployment-gcp.md` §6.3-bis.
+> Fuente: [*Updating Tools and Deploying the MCP
+> Server*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/update-and-deploy-mcp-server.md)
+> — *"In the left navigation menu, go to **API Configurations** → **Tools**"*, *"Click **Add New
+> Tool**"*, con los campos **Operation**, **Description** y **Tool Name**.
+
+**Por eso el paso B va antes que este:** el desplegable **`Operation`** ofrece los recursos de la
+API, así que la operación tiene que existir ahí primero.
 
 ---
 
-## 5. Paso D — Desplegar una revisión de cada artefacto
+### C-bis · La alternativa: borrar el MCP Server y regenerarlo
 
-**Guardar no publica.** El gateway sirve la última revisión desplegada.
+No hace falta agregar las tools de a una. Se puede **eliminar el MCP Server y volver a crearlo**
+desde la API, que regenera todas las tools de golpe.
 
-🌐 **Navegador**, para **la API** y **el MCP Server** por separado:
+**Cuándo conviene regenerar** (que es nuestro caso habitual):
 
-1. **`Deployments`** → **`Deploy New Revision`**
-2. Elegir el gateway environment (en la VM de GCP: `Default`, vhost `mcp.cloudtrazalog.com`)
-3. Confirmar
+- hay **varias** tools nuevas
+- cambiaron **descripciones** en el YAML — al regenerar se toman de la API automáticamente, mientras
+  que agregando a mano hay que copiar cada descripción a mano en el campo `Description`
 
-> APIM guarda un número limitado de revisiones. Si el botón aparece deshabilitado, hay que borrar
-> una revisión vieja primero.
+**Cuándo conviene agregar a mano:** una sola tool nueva, y el resto de la configuración del server
+ya está afinada.
 
-Si el `endpointConfig` del MCP Server no se deja editar desde la UI —pasa en 4.6.0— hay que hacerlo
-por el Publisher REST API: procedimiento completo y verificado en `deployment-gcp.md` §6.3-ter.
+#### Qué se pierde al regenerar — y hay que rehacer sí o sí
+
+El MCP Server nuevo es **otro artefacto**, con otro ID. Esto está **verificado en nuestro
+despliegue** (`deployment-gcp.md` §6.3-bis), no es teoría:
+
+| Se pierde | Síntoma si te olvidás | Dónde se repone |
+|---|---|---|
+| **`endpointConfig`** | **`404`** en todas las tools | `deployment-gcp.md` §6.3-bis (error 2) y §6.3-ter si la UI no lo deja editar |
+| **Suscripción de la aplicación** | **`403`** / `900908` en todas las tools | DevPortal → `Applications` → tu app → `Subscriptions` → suscribir **el MCP Server** (no la API) |
+| Deploy y Publish | la URL no responde | pasos D y D.2 |
+
+#### Qué son esas dos cosas que hay que reponer, y por qué
+
+Al regenerar, el MCP Server nuevo **nace vacío de configuración propia**. Dos cosas que tenía el
+anterior no se heredan, y sin ellas ninguna tool funciona. No son trámites: son las dos piezas que
+hacen que una llamada **llegue a destino** y **tenga permiso**.
+
+##### 1. El endpoint — *"¿a dónde mando la llamada?"*
+
+El MCP Server **no ejecuta nada**: es una fachada. Cuando Claude invoca `man_get_kpi_mttr`, el
+gateway tiene que reenviar esa llamada al Micro Integrator, que es quien consulta la base.
+
+El **endpoint** es esa dirección de reenvío. El artefacto nuevo no la tiene: sabe qué tools expone,
+pero no a qué servidor mandarlas.
+
+| | |
+|---|---|
+| **Si falta** | todas las tools devuelven **`404`** |
+| **Por qué ese código** | el gateway recibe la llamada, no tiene a dónde reenviarla, y contesta "no encontrado" |
+| **Valor en esta VM** | `http://localhost:8290/tools/mcp` |
+| **Dónde se pone** | **Publisher** → el MCP Server → `API Configurations` → `Endpoints` |
+
+`localhost` porque el APIM y el MI conviven en la misma máquina. Puerto `8290`, que es el del MI —
+no el del gateway. Contexto `/tools/mcp`, que es la fachada `toolsMCPAPI` — no `/tools/man` ni
+`/tools/alm`. Va en **Production** y en **Sandbox**.
+
+##### 2. La suscripción — *"¿quién tiene permiso para usarlo?"*
+
+En APIM quien consume no es una persona sino una **Application**: un registro que representa al
+cliente y que tiene asociadas las credenciales OAuth. Acá, la Application es la identidad con la que
+**el conector de Claude** se conecta (ej. `TrazalogDnatoMCP-GCP`).
+
+Una Application no puede usar cualquier cosa: tiene que estar **suscripta** a cada producto que
+consume. La suscripción *es* el permiso.
+
+El punto es este: la suscripción vieja quedó apuntando al **MCP Server anterior**, que ya no existe.
+La Application conserva sus credenciales y su token sigue siendo válido — pero ya no está suscripta
+a nada que exista.
+
+| | |
+|---|---|
+| **Si falta** | todas las tools devuelven **`403`** (código `900908`) |
+| **Por qué ese código** | el token es válido y la firma verifica; lo que falla es el permiso |
+| **Cómo reconocerlo** | en el log del APIM aparece el `appName`. Que aparezca es **buena señal**: la identidad funcionó, sólo falta la suscripción |
+| **Dónde se hace** | **DevPortal**, no el Publisher |
+
+**Son dos portales distintos.** El endpoint se configura en el **Publisher**
+(`:9443/publisher`); la suscripción se hace en el **DevPortal** (`:9443/devportal`).
+
+Pasos, según la documentación oficial:
+
+1. Entrar al **Developer Portal** (`https://<host>:9443/devportal`)
+2. Clic en el MCP Server (ej. `Trazalog MCP Server`) para ir a su vista general
+3. Clic en **`SUBSCRIBE TO AN APPLICATION`**
+4. Elegir la **Application** que ya usa el conector y la **throttling policy** (`Unlimited`)
+5. Clic en **`Subscribe`**
+
+> Fuente: [*Subscribe to a MCP
+> Server*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/subscribe-to-a-mcp-server.md)
+> — *"You have to **subscribe** to a published MCP Server before using its tools in your
+> applications."*
+
+**Suscribí el MCP Server, no la API.** Son dos productos distintos del catálogo y el conector
+consume el MCP Server. Estar suscripto a la API no alcanza: es el error más repetido.
+
+##### Cómo verificar que las dos quedaron bien
+
+💻 Desde tu máquina, sin token:
+
+```bash
+python3 scripts/dev/mcp-smoke-tools.py
+```
+
+| Lo que devuelve | Qué falta |
+|---|---|
+| **`401` en todas** | **nada** — están bien. El `401` es sólo que no mandaste token |
+| `404` en todas | el **endpoint** (punto 1) |
+| `500 SIN MAPEO` | las tools quedaron sin operación asociada — ver E.0-ter |
+
+El `403` **no se ve sin token**: sin `Authorization` el gateway corta antes con `401`. Para
+distinguirlos hace falta un JWT real (`--jwt "$JWT"`).
+
+#### Mantener Name, Context y Version idénticos
+
+La URL del MCP Server sale del **Context** y la **Version**. Si los repetís exactamente, la URL no
+cambia y **el conector de Claude sigue apuntando al mismo lugar**. Si cambiás cualquiera de los dos,
+hay que reconfigurar el conector.
+
+> **No verificado:** si APIM permite reusar el mismo `Context` inmediatamente después de borrar el
+> server anterior. Si lo rechaza por duplicado, confirmar primero que el borrado se completó.
+
+#### Por línea de comandos (apictl)
+
+La documentación oficial expone estas operaciones en `apictl`, lo que permite hacerlo sin la UI:
+
+```bash
+# listar los MCP Servers del entorno (devuelve ID, NAME, VERSION, CONTEXT, STATUS)
+apictl get mcp-servers -e <environment>
+
+# ver las revisiones de uno
+apictl get mcp-server-revisions -n <nombre> -v <version> -e <environment>
+apictl get mcp-server-revisions -n <nombre> -v <version> -q deployed:true -e <environment>
+
+# borrarlo
+apictl delete mcp-server -n <nombre> -v <version> -e <environment>
+
+# importarlo desde un proyecto versionado
+apictl import mcp-server -f <path al proyecto> -e <environment>
+apictl import mcp-server --file <path> --environment <env> --rotate-revision
+```
+
+> Fuentes: [*Managing MCP
+> Servers*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/managing-mcp-servers.md)
+> e [*Importing MCP Servers Via Dev First
+> Approach*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/importing-mcp-servers-via-dev-first-approach.md)
+> (docs-apim, rama 4.6.0).
+>
+> **`apictl` no está en uso en este proyecto todavía** — requiere instalarlo e inicializar el
+> entorno. Queda anotado como el camino a futuro para que la republicación deje de ser un
+> procedimiento de consola: con `import mcp-server` sobre un proyecto versionado, el MCP Server se
+> vuelve reproducible desde el repo igual que el `.car`.
+
+> La documentación oficial **no aclara** si además hace falta que la revisión de la API esté
+> desplegada para que la operación aparezca en ese desplegable. Si no aparece, hacer B.2 y volver.
+
+---
+
+## 5. Paso D — Desplegar el MCP Server
+
+Es un despliegue **propio del MCP Server**, aparte del de la API:
+
+1. En el menú de la izquierda: **`Deploy`** → **`Deployments`**
+2. Elegir el **`Gateway`** donde desplegarlo
+3. Clic en **`Deploy`**
+4. Esperar el mensaje de confirmación
+
+> Fuente: *Updating Tools and Deploying the MCP Server*, sección **2. Deploying the MCP Server**
+> — *"In the left menu, go to **Deploy** → **Deployments**"*, *"Choose the **Gateway**"*,
+> *"Click **Deploy**"*.
+
+### D.2 Publicar, si el estado lo pide
+
+1. **`Publish`** → **`Lifecycle`**
+2. Revisar que los nombres y descripciones de las tools estén finalizados
+3. Clic en **`Publish`**
+
+> Fuente: misma página, sección **4. Publishing the MCP Server**.
+
+### D.3 Si el endpoint no se deja editar desde la UI
+
+En 4.6.0 el `endpointConfig` del MCP Server puede aparecer deshabilitado o no persistirse. En ese
+caso va por el **Publisher REST API**: procedimiento completo y **verificado contra esta VM el
+2026-08-11** en `deployment-gcp.md` §6.3-ter.
 
 ---
 
 ## 6. Paso E — Verificar
 
-💻 **Terminal local.** Hace falta un JWT real emitido por el Dnato **de ese mismo ambiente**.
+### E.0-bis Smoke test de las 17 tools, sin necesidad de token
+
+💻 **Terminal local** (el MCP Server es público, no hace falta VPN ni SSH):
+
+```bash
+python3 scripts/dev/mcp-smoke-tools.py
+python3 scripts/dev/mcp-smoke-tools.py --jwt "$JWT"      # ademas valida datos reales
+```
+
+Llama `tools/call` sobre **cada** tool y clasifica la respuesta. **Sin token alcanza para detectar
+el error más común de una republicación**, porque el código de respuesta ya distingue los dos casos:
+
+| Respuesta | Significa |
+|---|---|
+| **`401`** | la tool está **bien mapeada** — el gateway llegó a pedir autenticación |
+| **`500`** con `existingAPIOperationMapping is null` | la tool **existe en el MCP Server pero no tiene asociada la operación del backend** |
+
+Ese `500` es el síntoma de una tool agregada sin completar el campo **`Operation`**, o agregada
+cuando la API todavía no tenía esa operación desplegada en el gateway. Desde el cliente MCP se ve
+como *"The connector's server isn't responding"*, que no orienta a nada.
+
+**Caso real (2026-08-18):** tras la primera republicación, las **9 tools originales** respondían
+`401` y las **8 agregadas después** daban `500` sin mapeo — `man_get_lecturas`,
+`man_get_preventivos`, `alm_get_depositos`, `alm_get_vencimientos` y las 4 de KPI. El corte fue
+exacto entre las que existían al crear el MCP Server y las posteriores. **El paso C no es viable en este estado**: la pantalla `Tools` del Publisher no abre (ver E.0-ter),
+así que no hay forma de asociar la `Operation` desde la UI. La salida es **C-bis** — regenerar el
+MCP Server desde la API, después de confirmar que la API tiene las 17 operaciones **y** una revisión
+desplegada.
+
+---
+
+### E.0-ter El bug de WSO2 detrás de esto — issue #5106
+
+Si al abrir **`API Configurations`** → **`Tools`** el Publisher muestra una pantalla rota con:
+
+```text
+TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at ab (ToolDetails.jsx:229:82)
+```
+
+no es un problema de la instalación: es
+[**wso2/api-manager#5106**](https://github.com/wso2/api-manager/issues/5106), `Type/Bug`, reportado
+contra **4.6.0** y cerrado el 2026-07-09.
+
+**Qué explica el issue.** `findMatchingTemplate()` en `ApiMgtDAO` no encuentra un resource template
+que coincida con la operación de la tool, así que el GET del MCP Server devuelve
+`apiOperationMapping` en **`null`**. De ahí salen los dos síntomas a la vez:
+
+| Síntoma | Dónde se ve |
+|---|---|
+| La pantalla `Tools` revienta con el `toLowerCase` | Publisher |
+| `500` — *"Cannot invoke `APIOperationMapping.getBackendOperation()` because `existingAPIOperationMapping` is null"* | al invocar la tool |
+| *"The connector's server isn't responding"* | en Claude |
+
+**El matching es por `target` + `verb`.** Alcanza con que el verbo o el path de la tool no
+correspondan **exactamente** a un recurso de la API referenciada para que el mapping quede en
+`null`.
+
+**El fix**
+([carbon-apimgt#13889](https://github.com/wso2/carbon-apimgt/pull/13889), mergeado el 2026-06-30)
+agrega `validateMCPBackendOperations`, que valida cada backend operation contra los recursos de la
+API referenciada y **rechaza las inválidas antes de persistirlas**. Sin ese fix, APIM **deja
+guardar** un mapping roto sin avisar. Va por update level (`patch`); mientras no esté aplicado, el
+procedimiento de acá abajo evita el problema.
+
+#### ⚠️ Nuestro propio §6.3-ter puede ser el disparador
+
+Los pasos para reproducirlo, según el issue, son: crear el MCP Server desde una API existente y
+después **actualizarlo por el Publisher REST API**.
+
+`deployment-gcp.md` §6.3-ter hace exactamente eso: `GET` del MCP Server, agregarle `endpointConfig`,
+`PUT`. **Si en ese ciclo el `apiOperationMapping` de alguna tool se pierde o se altera, el `PUT` lo
+guarda roto y no protesta.**
+
+Por eso, cada vez que se toque el MCP Server por REST API:
+
+```bash
+# ANTES del PUT — guardar el artefacto tal cual esta
+curl -s -k "https://localhost:9443/api/am/publisher/v4/mcp-servers/<id>" \
+  -H "Authorization: Bearer $TOKEN" > /tmp/mcp-antes.json
+
+# DESPUES del PUT — ninguna tool debe haber quedado sin mapping
+curl -s -k "https://localhost:9443/api/am/publisher/v4/mcp-servers/<id>" \
+  -H "Authorization: Bearer $TOKEN" \
+  | python3 -c "import sys,json;d=json.load(sys.stdin);ops=d.get('operations',[]);\
+b=[o.get('target') for o in ops if not o.get('apiOperationMapping')];\
+print(f'{len(ops)} tools, {len(b)} sin mapping'); print(b)"
+```
+
+Y correr el smoke test de E.0-bis, que detecta lo mismo desde afuera y sin token.
+
+---
+
+### E.0 MCP Playground — la verificación más rápida, sin JWT ni curl
+
+El Publisher trae un cliente MCP incorporado. Es la forma más directa de ver si la tool nueva quedó
+expuesta:
+
+1. En el menú de la izquierda: **`Test`** → **`MCP Playground`**
+2. Clic en **`Connect`** para establecer sesión con el MCP Server
+3. Probar las tools disponibles con valores de ejemplo
+
+> Fuente: *Updating Tools and Deploying the MCP Server*, sección **3. Testing with the MCP
+> Playground** — *"The MCP Playground in the Publisher Portal allows you to test tools without
+> publishing them."*
+
+Si la tool nueva **no aparece acá**, el problema es el paso C o el D, y no tiene sentido seguir con
+los curls de abajo.
+
+💻 **Terminal local.** Para los curls de abajo hace falta un JWT real emitido por el Dnato **de ese
+mismo ambiente**.
 
 ### E.1 ¿Aparece la tool nueva?
 
@@ -307,11 +603,16 @@ Trazalog y **volver a conectarlo**.
 [ ] mvn clean install en verde y .car verificado por dentro (A.2)
 [ ] MI arrancado ("started in NN seconds") (A.3)
 [ ] curl directo al MI: 503 identity_missing en cada ruta nueva (A.4)
-[ ] OpenAPI re-importada en la API + Save (+ Publish si cambiaron paths) (B)
-[ ] Enable Subscription Validation sigue DESACTIVADO (B.5)
-[ ] Tools nuevas agregadas al MCP Server (C)
-[ ] Revisión nueva desplegada en la API (D)
-[ ] Revisión nueva desplegada en el MCP Server (D)
+[ ] OpenAPI re-importada en API definition + guardada (B.1)
+[ ] Revisión nueva de la API desplegada: Deploy > Deployments > Deploy New Revision (B.2)
+[ ] Enable Subscription Validation sigue DESACTIVADO (B.3)
+[ ] Tools nuevas: agregadas a mano (C) O el MCP Server regenerado (C-bis)
+[ ]   si se regenero: endpointConfig repuesto (C-bis)
+[ ]   si se regenero: aplicacion re-suscripta al MCP Server (C-bis)
+[ ]   si se regenero: Name/Context/Version identicos, o conector reconfigurado
+[ ] MCP Server desplegado: Deploy > Deployments > Deploy (D)
+[ ] MCP Playground muestra la tool nueva (E.0)
+[ ] mcp-smoke-tools.py: 0 tools con SIN MAPEO (E.0-bis)
 [ ] tools/list muestra la tool nueva (E.1)
 [ ] tools/call devuelve datos reales (E.2)
 [ ] Aislamiento verificado con dos empresas (E.3)
@@ -320,21 +621,43 @@ Trazalog y **volver a conectarlo**.
 
 ---
 
-## 9. Estado de verificación de este procedimiento
+## 9. Fuentes y estado de verificación
 
-**Verificado en la práctica:** los pasos A (build, deploy, arranque, curl directo) y las tres
-condiciones de error de E.2 — los tres se encontraron realmente durante el despliegue a GCP del
-2026-08-11 y están documentados con su log en `deployment-gcp.md` §6.3-bis.
+### De dónde sale cada paso
 
-**Corregido tras revisión de Rodolfo (2026-08-15):** la primera versión decía que había que
-confirmar la asociación al **Key Manager Dnato** y hablaba de un botón **`Edit`** en las APIs. Las
-dos cosas son falsas y venían de arrastrar `openapi-publish-procedure.md`, que refleja una
-arquitectura anterior: Dnato nunca se registró como Key Manager, y la UI de 4.6.0 no tiene `Edit`.
+| Paso | Fuente |
+|---|---|
+| B.1 — `API definition` | [*Edit an API by modifying the API Definition*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/tutorials/edit-an-api-by-modifyng-the-api-definition.md) (docs-apim, rama 4.6.0) |
+| B.2 — `Deploy` → `Deployments` → `Deploy New Revision` | [*deploy-revision*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/includes/design/deploy-revision.md) |
+| C — `API Configurations` → `Tools` → `Add New Tool` | [*Updating Tools and Deploying the MCP Server*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/update-and-deploy-mcp-server.md) §1 |
+| D — `Deploy` → `Deployments` → `Deploy` | misma página, §2 |
+| D.2 — `Publish` → `Lifecycle` | misma página, §4 |
+| E.0 — `Test` → `MCP Playground` → `Connect` | misma página, §3 |
+| El MCP Server no hereda de la API | [*Create a MCP Server Using an Existing API*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/create-from-api.md) — la selección de operaciones ocurre **sólo al crearlo** |
+| C-bis — `apictl get/delete/import mcp-server` | [*Managing MCP Servers*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/managing-mcp-servers.md) e [*Importing MCP Servers Via Dev First Approach*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/importing-mcp-servers-via-dev-first-approach.md) |
+| E.0-ter — bug del `toLowerCase` / mapping null | [wso2/api-manager#5106](https://github.com/wso2/api-manager/issues/5106) y su fix [carbon-apimgt#13889](https://github.com/wso2/carbon-apimgt/pull/13889) |
+| C-bis — qué se pierde al regenerar | verificado en el despliegue del 2026-08-11 (`deployment-gcp.md` §6.3-bis) |
+| A — build, deploy del CAR, arranque, curl directo | verificado contra la VM real (`deployment-gcp.md` §6.1-bis, §6.2) |
+| Los 3 errores de E.2 (`403`/`404`/`101503`) | verificados en el despliegue del 2026-08-11 (`deployment-gcp.md` §6.3-bis) |
+| D.3 — endpoint por REST API | verificado contra la VM el 2026-08-11 (`deployment-gcp.md` §6.3-ter) |
 
-**No verificado end-to-end todavía:** la secuencia completa de republicación con tools nuevas
-(pasos C, D y F) — este documento se escribió *antes* de la primera republicación, consolidando lo
-que estaba disperso en `openapi-publish-procedure.md` §7 (cinco líneas, sin el paso de revisión),
-`wso2-redeploy-artifacts.md` §2 y `deployment-gcp.md` §6.3. **Al ejecutarlo la primera vez conviene
-corregir acá lo que no coincida con la UI real**, sobre todo el paso C (nombres exactos de las
-pantallas de `Tools` en el MCP Server de APIM 4.6.0) y el F (si alcanza con conversación nueva o
-hace falta reconectar).
+> El sitio `apim.docs.wso2.com` responde `403` a las descargas automatizadas. La fuente usada es el
+> repositorio del que se genera esa documentación, [`wso2/docs-apim`](https://github.com/wso2/docs-apim),
+> **rama `4.6.0`**, que es exactamente la versión que corre en esta instalación.
+
+### Lo que la documentación oficial NO dice
+
+- **Si la revisión de la API tiene que estar desplegada** para que su operación aparezca en el
+  desplegable `Operation` al agregar una tool. Si no aparece, hacer B.2 y volver a intentar.
+- **Si hace falta reconectar el conector en Claude** (paso F) o alcanza con una conversación nueva.
+  Lo del paso F es comportamiento del cliente MCP, no del Publisher.
+- **Si se puede reusar el mismo `Context`** inmediatamente después de borrar un MCP Server (C-bis).
+
+### Corregido tras revisión de Rodolfo
+
+- **2026-08-15** — se decía confirmar la asociación al *Key Manager Dnato* y se hablaba de un botón
+  **`Edit`** en las APIs. Las dos cosas eran falsas, arrastradas de `openapi-publish-procedure.md`
+  (arquitectura anterior).
+- **2026-08-18** — los pasos B, C y D estaban reconstruidos por analogía en vez de tomados de la
+  documentación. Se reescribieron con los nombres exactos de la documentación oficial de la rama
+  `4.6.0`, con el link a cada página en la tabla de arriba.

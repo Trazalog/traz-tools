@@ -327,15 +327,66 @@ mkdir -p /tmp/car && unzip -qo target/ToolsAPIProject_1.0.0.car -d /tmp/car
 grep -rh "jdbc:" /tmp/car | sed 's/^[[:space:]]*//'
 ```
 
-Los cuatro archivos que llevan la IP, en el repo (💻 en la máquina donde se buildea, antes de
-`mvn clean install`):
+**Cuáles son realmente** (💻 en la máquina donde se buildea, antes de `mvn clean install`), bajo
+`src/main/wso2mi/`:
 
-| Archivo (bajo `src/main/wso2mi/`) | Qué define | Valor commiteado |
+| Archivo | Qué define | Valor commiteado | ¿Hay que tocarlo? |
+|---|---|---|---|
+| `artifacts/data-sources/ToolsDataSource.xml` | PostgreSQL de tools | `jdbc:postgresql://10.142.0.13:5432/tools_prod_t` | **SÍ** — IP del ambiente |
+| `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` | `jdbc:mysql://10.142.0.13:3306/assetv2` | **SÍ** — IP del ambiente |
+| `resources/conf/tools/bpmconf.xml` | `bpm_url` de Bonita | `http://10.142.0.13:8080/bonita` | **SÍ** — IP del ambiente |
+| `resources/conf/tools/apiconfig.xml` | `api_url` / `dataservices_url` internas | `http://localhost:8290/...` | **NO** — ver abajo |
+
+#### `localhost` en `apiconfig.xml` está BIEN, no es un error
+
+`api_url` y `dataservices_url` son el MI **llamándose a sí mismo**: la fachada `toolsMCPAPI` invoca
+a `toolsALMAPI` y a los DataServices dentro del mismo proceso. `localhost:8290` es lo correcto en
+cualquier ambiente y **no hay que cambiarlo**. Lo mismo vale para el `dataservices_url` que está
+dentro de `bpmconf.xml`.
+
+El único de ese archivo que es específico del ambiente es el `bpm_url` de Bonita, que apunta a otra
+máquina.
+
+#### ⚠️ Hay DOS copias de los archivos de registry — sólo una se empaqueta
+
+En `src/main/wso2mi/resources/` conviven:
+
+| Carpeta | Estado |
+|---|---|
+| **`conf/tools/`** | **la que se empaqueta** — es la que declara `resources/artifact.xml` |
+| `registry/conf/` | **huérfana** — no la referencia nadie, no entra al `.car` |
+
+`resources/artifact.xml` lo dice explícitamente en un comentario: *"Los archivos deben estar en
+`resources/conf/tools/`"*. Los `<item>` apuntan ahí.
+
+**Las dos copias tienen valores distintos y contradictorios**, lo que hace muy fácil editar la
+equivocada y no ver ningún efecto:
+
+| | `conf/tools/` (se empaqueta) | `registry/conf/` (huérfana) |
 |---|---|---|
-| `artifacts/data-sources/ToolsDataSource.xml` | PostgreSQL de tools | `jdbc:postgresql://10.142.0.13:5432/tools_prod_t` |
-| `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` | `jdbc:mysql://10.142.0.13:3306/assetv2` |
-| `resources/registry/conf/apiconfig.xml` | `api_url` y `dataservices_url` internas del MI | `http://10.142.0.13:8280/...` |
-| `resources/conf/tools/bpmconf.xml` | `bpm_url` de Bonita | `http://10.142.0.13:8080/bonita` |
+| `apiconfig.xml` → `api_url` | `localhost:8290/tools` | `10.142.0.13:8280/tools` |
+| `bpmconf.xml` → `bpm_url` | `10.142.0.13:8080/bonita` | `localhost:8080/bonita` |
+| `bpmconf.xml` → password | `123traza` | `!Password00` |
+
+**Origen:** ambas existen desde el commit `8b266545` (*"Migración de proyectos de wso2 desde Eclipse
+a Visual Studio"*). La copia de `registry/conf/` **no se modificó nunca más** desde entonces; el
+`artifact.xml` se consolidó apuntando a `conf/tools/` en el PR #384. Es deuda heredada de esa
+migración, no la introdujo ningún cambio reciente.
+
+**Cómo confirmar cuál quedó adentro** (💻 donde se buildea):
+
+```bash
+mkdir -p /tmp/car && unzip -qo target/ToolsAPIProject_1.0.0.car -d /tmp/car
+cat /tmp/car/registry_conf_tools_apiconfig_1.0.0/resources/apiconfig.xml
+cat /tmp/car/registry_conf_tools_bpmconf_1.0.0/resources/bpmconf.xml
+```
+
+> **Pendiente de decisión:** borrar `resources/registry/conf/` para que quede una sola fuente. No se
+> hizo todavía porque hay que confirmar que ningún otro proyecto/despliegue la lea. Mientras exista,
+> **editar siempre `conf/tools/`**.
+
+> **Credenciales en claro:** los dos `bpmconf.xml` tienen la password de Bonita en texto plano y
+> commiteada. Preexistente, anotado para el cutover a producción.
 
 > **No hay ningún script ni paso automatizado que haga este reemplazo.** Hoy es manual y no estaba
 > documentado — de ahí que un CAR buildeado desde un checkout limpio pueda quedar apuntando a otro
@@ -653,6 +704,16 @@ Significa que el gateway no pudo conectar al MI. Dos causas, en orden de frecuen
 Para distinguirlas, desde la VM: si `curl http://localhost:8290/tools/mcp/mcp/alm/stock` devuelve `503 identity_missing`, el MI está sano y era timing.
 
 #### 6.3-ter Cuando el `endpointConfig` no se puede editar desde la UI
+
+> ⚠️ **Este procedimiento puede dejar tools rotas — verificar después de cada `PUT`.**
+> Actualizar un MCP Server por el Publisher REST API es el escenario de reproducción de
+> [wso2/api-manager#5106](https://github.com/wso2/api-manager/issues/5106): si en el ciclo
+> `GET` → editar → `PUT` el `apiOperationMapping` de alguna tool se pierde o se altera, APIM **lo
+> guarda igual y sin avisar**. Después queda la pantalla `Tools` del Publisher rota
+> (`TypeError ... toLowerCase`) y las tools afectadas devolviendo `500`. El fix
+> ([carbon-apimgt#13889](https://github.com/wso2/carbon-apimgt/pull/13889)) valida y rechaza antes
+> de persistir, pero va por update level. Mientras tanto: guardar el JSON antes del `PUT`, y correr
+> `python3 scripts/dev/mcp-smoke-tools.py` después — detecta el problema desde afuera y sin token.
 
 En APIM 4.6.0 la pantalla del MCP Server puede no permitir editar el endpoint (el campo aparece deshabilitado o no se persiste). En ese caso hay que hacerlo por el **Publisher REST API**. Verificado el 2026-08-11 contra esta VM:
 
