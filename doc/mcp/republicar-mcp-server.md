@@ -341,6 +341,37 @@ caso va por el **Publisher REST API**: procedimiento completo y **verificado con
 
 ## 6. Paso E — Verificar
 
+### E.0-bis Smoke test de las 17 tools, sin necesidad de token
+
+💻 **Terminal local** (el MCP Server es público, no hace falta VPN ni SSH):
+
+```bash
+python3 scripts/dev/mcp-smoke-tools.py
+python3 scripts/dev/mcp-smoke-tools.py --jwt "$JWT"      # ademas valida datos reales
+```
+
+Llama `tools/call` sobre **cada** tool y clasifica la respuesta. **Sin token alcanza para detectar
+el error más común de una republicación**, porque el código de respuesta ya distingue los dos casos:
+
+| Respuesta | Significa |
+|---|---|
+| **`401`** | la tool está **bien mapeada** — el gateway llegó a pedir autenticación |
+| **`500`** con `existingAPIOperationMapping is null` | la tool **existe en el MCP Server pero no tiene asociada la operación del backend** |
+
+Ese `500` es el síntoma de una tool agregada sin completar el campo **`Operation`**, o agregada
+cuando la API todavía no tenía esa operación desplegada en el gateway. Desde el cliente MCP se ve
+como *"The connector's server isn't responding"*, que no orienta a nada.
+
+**Caso real (2026-08-18):** tras la primera republicación, las **9 tools originales** respondían
+`401` y las **8 agregadas después** daban `500` sin mapeo — `man_get_lecturas`,
+`man_get_preventivos`, `alm_get_depositos`, `alm_get_vencimientos` y las 4 de KPI. El corte fue
+exacto entre las que existían al crear el MCP Server y las posteriores. Se corrige con el paso C
+(asociar la `Operation` de cada una) o, más rápido para ese volumen, con **C-bis** (regenerar el
+MCP Server desde la API, después de confirmar que la API tiene las 17 operaciones **y** una revisión
+desplegada).
+
+---
+
 ### E.0 MCP Playground — la verificación más rápida, sin JWT ni curl
 
 El Publisher trae un cliente MCP incorporado. Es la forma más directa de ver si la tool nueva quedó
@@ -438,6 +469,7 @@ Trazalog y **volver a conectarlo**.
 [ ]   si se regenero: Name/Context/Version identicos, o conector reconfigurado
 [ ] MCP Server desplegado: Deploy > Deployments > Deploy (D)
 [ ] MCP Playground muestra la tool nueva (E.0)
+[ ] mcp-smoke-tools.py: 0 tools con SIN MAPEO (E.0-bis)
 [ ] tools/list muestra la tool nueva (E.1)
 [ ] tools/call devuelve datos reales (E.2)
 [ ] Aislamiento verificado con dos empresas (E.3)
