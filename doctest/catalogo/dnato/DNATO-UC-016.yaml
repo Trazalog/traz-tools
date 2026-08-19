@@ -1,0 +1,44 @@
+id: DNATO-UC-016
+modulo: DNATO
+titulo: Habilitar o inhabilitar un usuario
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "banuser() (500-554)"
+  - repo: traz-comp-dnato
+    path: application/views/banuser.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "updateUserban()"
+pantallas:
+  - "Usuarios → Habilitar/Deshabilitar Usuario"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+flujo_principal:
+  - paso: "Abre 'Habilitar/Deshabilitar Usuario'"
+    resultado: "Se muestra el listado de usuarios con su estado actual"
+  - paso: "Elige un usuario habilitado, lo marca como inhabilitado y confirma"
+    resultado: "Se muestra 'El usuario ha sido inhabilitado exitosamente.' y el usuario ya no puede iniciar sesión"
+  - paso: "Vuelve a marcarlo como habilitado y confirma"
+    resultado: "Se muestra 'El usuario fue habilitado con éxito.' y el usuario puede volver a iniciar sesión"
+flujos_alternativos:
+  - nombre: "No se puede actualizar"
+    pasos:
+      - paso: "Confirma el cambio cuando la actualización falla"
+        resultado: "Se muestra el mensaje de error y el estado no cambia"
+  - nombre: "Usuario sin permisos de administración"
+    pasos:
+      - paso: "Un usuario sin perfil de administrador abre la pantalla"
+        resultado: "Se lo redirige a la pantalla principal"
+validaciones:
+  - "Correo y estado son obligatorios"
+  - "Un usuario inhabilitado no puede iniciar sesión (ver DNATO-UC-006)"
+datos_prueba: {}
+dudas:
+  - "Existen dos pantallas casi iguales (`banuser` y `banuser_old`). ¿La vieja se puede dar por obsoleta? Si sigue accesible, el tester la va a encontrar."
+  - "El mensaje de error al fallar dice 'Error al borrar usuario' en una pantalla que habilita/inhabilita. Parece texto copiado; ¿lo corregimos en el mismo PR de los data-testid o queda como está?"
+  - "¿Un administrador puede inhabilitarse a sí mismo? No vi una restricción."

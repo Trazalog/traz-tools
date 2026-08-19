@@ -1,0 +1,37 @@
+id: DNATO-UC-019
+modulo: DNATO
+titulo: Cambiar el nivel de acceso de un usuario
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "changeleveluser() (334-399), changelevel() (400-448)"
+  - repo: traz-comp-dnato
+    path: application/views/changeleveluser.php
+  - repo: traz-comp-dnato
+    path: application/libraries/Userlevel.php
+    detalle: "1=administrador, 2=autor, 3=editor, 4=suscriptor"
+pantallas:
+  - "Usuarios → Lista de Usuarios → Cambiar nivel"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+flujo_principal:
+  - paso: "Elige cambiar el nivel de un usuario"
+    resultado: "Se muestra la pantalla con el nivel actual y los niveles disponibles"
+  - paso: "Elige el nivel nuevo y confirma"
+    resultado: "Se muestra 'El nivel del usuario se actualizó correctamente.'"
+flujos_alternativos:
+  - nombre: "No se puede actualizar"
+    pasos:
+      - paso: "Confirma cuando la actualización falla"
+        resultado: "Se muestra 'Hubo un problema al actualizar el nivel de usuario.'"
+validaciones:
+  - "Correo y nivel son obligatorios"
+  - "Solo un administrador puede cambiar niveles"
+datos_prueba: {}
+dudas:
+  - "Conviven dos conceptos de permiso: el 'nivel' de este caso (1 a 4, propio de Dnato) y los roles de BPM de DNATO-UC-018. ¿Cuál manda para el usuario final, y qué le cambia en la práctica pasar de un nivel a otro? Sin eso no puedo escribir el resultado esperado más allá del mensaje en pantalla."
+  - "Los niveles 2 (autor) y 3 (editor) parecen heredados de la plantilla original del sistema. ¿Se usan en Trazalog o son ruido a documentar como obsoleto?"

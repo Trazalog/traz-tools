@@ -1,0 +1,39 @@
+id: DNATO-UC-011
+modulo: DNATO
+titulo: Editar los datos del perfil propio
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "updateuser() (611-672)"
+  - repo: traz-comp-dnato
+    path: application/views/changeuser.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "updateProfile()"
+pantallas:
+  - "Menú de usuario → Editar Perfil"
+precondiciones:
+  - Sesión iniciada
+flujo_principal:
+  - paso: "Abre 'Editar Perfil'"
+    resultado: "Se muestra el formulario con sus datos actuales"
+  - paso: "Modifica nombre, apellido o correo y confirma"
+    resultado: "Se muestra 'Tu perfil ha sido actualizado.' y los datos quedan guardados"
+flujos_alternativos:
+  - nombre: "Campos obligatorios vacíos"
+    pasos:
+      - paso: "Borra el nombre, el apellido o el correo y confirma"
+        resultado: "Se muestra el error de validación y los datos no se guardan"
+  - nombre: "No se puede guardar"
+    pasos:
+      - paso: "Confirma cuando la actualización falla"
+        resultado: "Se muestra 'Tu perfil no ha podido ser actualizado'"
+validaciones:
+  - "Nombre, apellido y correo son obligatorios; el correo debe tener formato válido"
+datos_prueba: {}
+dudas:
+  - "¿El usuario puede cambiar su propio correo? Si el correo es la identidad con la que se resuelven roles y membresías en BPM, cambiarlo podría dejar la cuenta inconsistente. No encontré ninguna validación que lo impida."

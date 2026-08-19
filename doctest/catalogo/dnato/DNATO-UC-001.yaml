@@ -1,0 +1,61 @@
+id: DNATO-UC-001
+modulo: DNATO
+titulo: Registrar una empresa nueva (paso 1 - datos de contacto)
+perfil: Visitante
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "register() (líneas 1138-1237) y procesarRegistro() (1642-1793)"
+  - repo: traz-comp-dnato
+    path: application/views/register.php
+    detalle: "formulario público de registración"
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "isDuplicate(), existeRazonSocial(), validarTelefonoPorPais(), obtenerPaisesRegistracion()"
+pantallas:
+  - "Login → 'No esta registrado? Registrese por favor'"
+  - "Registro Nuevo Usuario"
+precondiciones:
+  - Sin sesión iniciada
+  - El correo no está registrado en el sistema
+  - La razón social no existe todavía para ese país
+flujo_principal:
+  - paso: "Desde la pantalla de ingreso hace clic en 'Registrese por favor'"
+    resultado: "Se abre el formulario de registro con la lista de países disponibles"
+  - paso: "Completa Nombre, Apellido, Correo electrónico, Razón Social de la Empresa, Teléfono y País, y confirma"
+    resultado: "Se crea la cuenta sin contraseña, se muestra 'Registro exitoso! Revise su email para activar su cuenta.' y llega un correo con el enlace de activación"
+flujos_alternativos:
+  - nombre: "Correo ya registrado"
+    pasos:
+      - paso: "Completa el formulario con un correo que ya existe en el sistema"
+        resultado: "Se muestra 'El email que intenta registrar ya existe...' y la cuenta no se crea"
+  - nombre: "Razón social repetida en el mismo país"
+    pasos:
+      - paso: "Completa el formulario con una razón social ya existente para el país elegido"
+        resultado: "Se muestra 'La Razón Social ingresada ya existe en el sistema para el país solicitado' y la cuenta no se crea"
+  - nombre: "Teléfono con formato inválido para el país"
+    pasos:
+      - paso: "Ingresa un teléfono que no cumple el formato del país seleccionado"
+        resultado: "Se muestra 'El formato del teléfono no es válido para el país seleccionado.' y la cuenta no se crea"
+  - nombre: "Campos obligatorios incompletos"
+    pasos:
+      - paso: "Confirma el formulario sin completar alguno de los seis campos"
+        resultado: "El formulario se vuelve a mostrar con el error del campo y conserva lo ya cargado"
+validaciones:
+  - "Nombre, Apellido, Correo, Razón Social, Teléfono y País son obligatorios"
+  - "El correo debe tener formato válido y no puede estar registrado"
+  - "La razón social no puede repetirse dentro del mismo país"
+  - "El teléfono se valida según el país elegido"
+  - "Si la configuración del sitio tiene reCAPTCHA activo, se exige superarlo"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  email_prefijo: "doctest+reg-"
+  razon_social_prefijo: "DOCTEST SA "
+dudas:
+  - "¿Cómo se prueba este flujo sin ensuciar el entorno? Cada registro exitoso crea una empresa, usuarios en BPM y un establecimiento; hoy no hay forma automática de darlos de baja. ¿Se prueba solo el camino de errores y el camino feliz queda manual, o se habilita un mecanismo de limpieza?"
+  - "El usuario que se auto-registra queda con rol de Administrador de su empresa (roles[1]='1'). ¿'Administrador' es el nombre del perfil que querés en el catálogo?"
+  - "¿reCAPTCHA está activo en el entorno de pruebas? Si lo está, el flujo no es automatizable end-to-end sin una clave de test."
+  - "Si el envío del mail falla, el usuario queda creado igual y el enlace de activación solo queda en el log. ¿Es el comportamiento buscado o debería reintentarse desde la pantalla?"

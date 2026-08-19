@@ -1,0 +1,56 @@
+id: DNATO-UC-004
+modulo: DNATO
+titulo: Dar de alta la empresa y su configuración inicial
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Register.php
+    detalle: "crearEmpresa() (247-285), guardarEmpresa() (459-649), postProcesarEmpresa() (851-891), crearEstablecimientoDefectoEmpresa() (892-988), crearUsuariosPorDefecto() (1002-1035)"
+  - repo: traz-comp-dnato
+    path: application/views/crear_empresa_page.php
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "REGISTRACION_USUARIOS_DEFAULT_JSON, REGISTRACION_ESTABLECIMIENTO_DEFAULT_NOMBRE, REGISTRACION_DEPOSITO_DEFAULT_NOMBRE, REGISTRACION_PASSWORD_DEFAULT"
+pantallas:
+  - "Completar Datos de Empresa"
+precondiciones:
+  - La cuenta está activa y con sesión iniciada
+  - El usuario tiene razón social, teléfono y país cargados desde su registro
+flujo_principal:
+  - paso: "Ve la pantalla de datos de la empresa con la razón social y el país que cargó al registrarse"
+    resultado: "Se muestran los campos a completar: identificador tributario, provincia y localidad"
+  - paso: "Selecciona provincia y localidad, ingresa el identificador tributario y confirma"
+    resultado: "Se crea la empresa con su establecimiento y depósito por defecto, los usuarios iniciales y sus roles, y se muestra la pantalla de bienvenida"
+flujos_alternativos:
+  - nombre: "Correo de webmail público: hace falta el dominio de la empresa"
+    pasos:
+      - paso: "Se registró con un correo tipo gmail.com y completa el formulario sin un dominio de empresa válido"
+        resultado: "Se muestra 'Ingresá un dominio de empresa valido (por ejemplo: rtools.ca). No se permiten dominios de webmail publicos.' y la empresa no se crea"
+  - nombre: "La empresa ya existe"
+    pasos:
+      - paso: "Confirma con una razón social y un identificador tributario ya registrados para ese país"
+        resultado: "Se muestra 'La empresa ya existe para el pais y CUIT indicados.' y no se crea nada"
+  - nombre: "Campos obligatorios incompletos"
+    pasos:
+      - paso: "Confirma sin identificador tributario, provincia o localidad"
+        resultado: "Se vuelve a mostrar el formulario con el error de validación"
+  - nombre: "Falla la configuración inicial y se revierte el alta"
+    pasos:
+      - paso: "Confirma el alta cuando falla la creación de los usuarios, roles o del depósito por defecto"
+        resultado: "Se avisa el detalle del problema, se elimina la empresa recién creada y el alta queda anulada"
+validaciones:
+  - "Identificador tributario, provincia y localidad son obligatorios"
+  - "La empresa no puede repetirse para el mismo país e identificador tributario"
+  - "Si el correo del usuario es de un webmail público, el dominio de empresa es obligatorio y no puede ser otro webmail"
+  - "El alta crea Establecimiento Principal, Depósito 1 con encargado, y los usuarios iniciales de cada área con sus roles"
+datos_prueba:
+  cuit_prefijo: "30-DOCTEST"
+  dominio_test: "doctest-empresa.com"
+dudas:
+  - "Este es el flujo más pesado de todo DNATO: escribe empresa, establecimiento, depósito, 5 usuarios y sus roles en BPM. ¿Se automatiza contra el entorno de pruebas sabiendo que deja datos, o se cubre solo hasta la validación previa al alta?"
+  - "Los usuarios iniciales (usuario@, almacen@, panol@, produccion@, mantenimiento@ del dominio de la empresa) se crean con la contraseña por defecto '12345' y la pantalla de bienvenida la muestra en pantalla. ¿Es lo esperado para un cliente real? Lo reporto como hallazgo, no lo cambio."
+  - "El identificador tributario no tiene validación de formato por país (solo 'required'). ¿Debería validarse como el teléfono?"
+  - "Si la reversión automática también falla, quedan datos huérfanos y el mensaje pide contactar soporte. ¿Hay un procedimiento definido para ese caso?"

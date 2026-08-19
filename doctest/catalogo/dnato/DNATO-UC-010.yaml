@@ -1,0 +1,29 @@
+id: DNATO-UC-010
+modulo: DNATO
+titulo: Ver el perfil propio
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "profile() (673-692)"
+  - repo: traz-comp-dnato
+    path: application/views/profile.php
+pantallas:
+  - "Menú de usuario → Perfil"
+precondiciones:
+  - Sesión iniciada
+flujo_principal:
+  - paso: "Abre 'Perfil' desde el menú de usuario"
+    resultado: "Se muestran sus datos de cuenta"
+flujos_alternativos:
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Abre la dirección del perfil sin haber iniciado sesión"
+        resultado: "Se lo redirige a la pantalla de ingreso"
+validaciones: []
+datos_prueba: {}
+dudas:
+  - "¿Qué datos debe mostrar el perfil? La vista existe pero conviene fijar cuáles son los campos que el usuario espera ver, para que el test verifique contenido y no solo que la pantalla abre."

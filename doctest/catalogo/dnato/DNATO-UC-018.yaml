@@ -1,0 +1,42 @@
+id: DNATO-UC-018
+modulo: DNATO
+titulo: Asignar y quitar roles a un usuario
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "associaterol() (1012-1030), getBPMroles() (1031-1040), guardarMembership() (1041-1103), borrarMembership() (1104-1137)"
+  - repo: traz-comp-dnato
+    path: application/views/membership.php
+pantallas:
+  - "Usuarios → Lista de Usuarios → Asignar Rol"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+  - El usuario destino existe y pertenece a la empresa
+flujo_principal:
+  - paso: "Elige 'Asignar Rol' sobre un usuario del listado"
+    resultado: "Se muestra la pantalla de roles del usuario, con los roles disponibles de la empresa"
+  - paso: "Elige un rol y lo asigna"
+    resultado: "Se muestra 'Rol asignado correctamente.' y el rol aparece entre los roles del usuario"
+  - paso: "Quita un rol asignado"
+    resultado: "El rol deja de figurar entre los roles del usuario"
+flujos_alternativos:
+  - nombre: "Datos incompletos"
+    pasos:
+      - paso: "Confirma la asignación sin elegir empresa o rol"
+        resultado: "Se muestra el error y no se asigna nada"
+  - nombre: "Falla la asignación en el sistema de procesos"
+    pasos:
+      - paso: "Asigna un rol cuando el servicio de procesos responde con error"
+        resultado: "Se muestra el error y el rol no queda asignado"
+validaciones:
+  - "Correo, empresa y rol son obligatorios para asignar"
+  - "Sin roles asignados el usuario no puede operar (ver DNATO-UC-014)"
+datos_prueba: {}
+dudas:
+  - "Los roles vienen del sistema de procesos (BPM) con el formato '<Rol> de <Módulo>' — por ejemplo 'Supervisor de Mantenimiento'. ¿Ese es el vocabulario que querés como oficial también en las ayudas y en el catálogo?"
+  - "¿Existe un tope de roles por usuario, o combinaciones que no deberían permitirse (por ejemplo Solicitante y Supervisor a la vez)?"
+  - "Hay varios métodos que parecen hacer lo mismo (deleteLevelRolUser, changeLevelRolUser, changeLevelRolUserObject, cambiarNivelUsr). Necesito saber cuáles usa la pantalla real y cuáles son código muerto antes de escribir el test."

@@ -1,0 +1,57 @@
+id: DNATO-UC-009
+modulo: DNATO
+titulo: Iniciar sesión desde un agente de IA (OAuth 2.1)
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Oauthlogin.php
+    detalle: "index() y credentials() — TAD-IDENT-02: exactamente 1 empresa por usuario"
+  - repo: traz-comp-dnato
+    path: application/controllers/Oauth.php
+    detalle: "authorize(), token(), jwks(), register_client()"
+  - repo: traz-comp-dnato
+    path: application/config/routes.php
+    detalle: "líneas 60-72: endpoints OAuth 2.1"
+pantallas:
+  - "Pantalla de ingreso del agente (OAuth) — 'Iniciar sesión en <cliente>'"
+precondiciones:
+  - El cliente OAuth está habilitado en la configuración
+  - El usuario tiene exactamente una empresa asignada
+flujo_principal:
+  - paso: "El agente lo redirige a la pantalla de ingreso de Trazalog"
+    resultado: "Se muestra el formulario de correo y contraseña, indicando qué aplicación pide el acceso"
+  - paso: "Ingresa correo y contraseña y confirma"
+    resultado: "Se resuelve su empresa y vuelve al agente ya autorizado"
+flujos_alternativos:
+  - nombre: "Usuario sin empresa asignada"
+    pasos:
+      - paso: "Ingresa con una cuenta que no tiene empresa asignada"
+        resultado: "Se muestra que no tiene empresa asignada y que contacte al administrador"
+  - nombre: "Usuario con más de una empresa"
+    pasos:
+      - paso: "Ingresa con una cuenta que tiene más de una empresa asignada"
+        resultado: "Se muestra que la configuración no está soportada y que contacte al administrador"
+  - nombre: "Credenciales incorrectas"
+    pasos:
+      - paso: "Ingresa una contraseña equivocada"
+        resultado: "Se muestra 'Correo o contraseña incorrectos.'"
+  - nombre: "Cuenta inhabilitada"
+    pasos:
+      - paso: "Ingresa con una cuenta inhabilitada"
+        resultado: "Se muestra que la cuenta está temporalmente inhabilitada"
+  - nombre: "Sesión del pedido vencida"
+    pasos:
+      - paso: "Confirma las credenciales cuando el pedido del agente ya venció"
+        resultado: "Se muestra que la sesión expiró y que inicie el proceso de nuevo desde el agente"
+validaciones:
+  - "Solo se aceptan clientes registrados, con response_type=code y code_challenge_method=S256"
+  - "Un usuario debe tener exactamente una empresa asignada (TAD-IDENT-02)"
+  - "El formulario valida un token de seguridad propio antes de aceptar las credenciales"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Este caso entra en el alcance de F1 (registración y administración de cuenta) o pertenece al frente MCP (F4), que prueba el mismo login pero por API con Hurl? Lo dejo relevado para que decidas dónde vive."
+  - "La invariante de una sola empresa por usuario (TAD-IDENT-02) choca con el login web, que sí permite elegir entre varias. ¿Se prueban las dos reglas como están, o hay una decisión pendiente de unificación?"

@@ -36,8 +36,8 @@
     },
     "perfil": {
       "type": "string",
-      "enum": ["Solicitante", "Supervisor", "Planificador", "Mantenedor"],
-      "description": "Perfil funcional que ejecuta el flujo. Vocabulario FIJO de roles del dominio (Doc 3 v1.1 §3). Los roles propios de DNATO se agregan a este enum recién cuando el relevamiento de F1 los identifique y Rodolfo los valide — no se inventan sobre la marcha."
+      "enum": ["Solicitante", "Supervisor", "Planificador", "Mantenedor", "Administrador", "Usuario", "Visitante"],
+      "description": "Perfil funcional que ejecuta el flujo. Vocabulario FIJO de roles del dominio (Doc 3 v1.1 §3 y Doc 1 v1.1 RF-05.4). Los cuatro primeros son los roles de mantenimiento ya validados. Los tres últimos salieron del relevamiento de DNATO (F1, issue #438) y están PENDIENTES de validación del PM: Administrador (administra la cuenta y los usuarios de su empresa), Usuario (cualquier usuario autenticado, sin importar su rol), Visitante (todavía no tiene cuenta). Ningún valor nuevo se agrega sin que el PM lo valide."
     },
     "estado": {
       "type": "string",

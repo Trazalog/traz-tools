@@ -1,0 +1,36 @@
+id: DNATO-UC-003
+modulo: DNATO
+titulo: Completar el formulario de datos del registro
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Register.php
+    detalle: "register_success() (23-75) y guardarFormularioRegistro() (185-246)"
+  - repo: traz-comp-dnato
+    path: application/views/formulario_page.php
+  - repo: traz-comp-dnato
+    path: application/modules/traz-comp-formularios/models/Forms.php
+    detalle: "generarInstancia() / actualizar()"
+pantallas:
+  - "Registro Exitoso — formulario de datos"
+precondiciones:
+  - La cuenta fue activada y hay sesión iniciada (DNATO-UC-002)
+flujo_principal:
+  - paso: "Después de activar la cuenta, ve el formulario de datos del registro"
+    resultado: "Se muestra el formulario con las opciones cargadas"
+  - paso: "Completa los datos y confirma"
+    resultado: "Los datos quedan guardados y se continúa con el alta de la empresa"
+flujos_alternativos:
+  - nombre: "No se puede preparar el formulario"
+    pasos:
+      - paso: "Llega a la pantalla cuando el formulario no se puede generar"
+        resultado: "Se muestra 'No se pudo preparar el formulario de registro. Volvé a iniciar sesión o contactá soporte.'"
+validaciones: []
+datos_prueba: {}
+dudas:
+  - "¿Qué campos tiene el formulario y cuáles son obligatorios? Es un formulario dinámico (FORMULARIO_REGISTRO_ID) definido en datos, no en código: sin ver la definición cargada en el entorno no se puede escribir el flujo real ni sus validaciones."
+  - "¿Este paso es obligatorio para poder seguir, o se puede saltear? En el código no vi un control que impida ir directo al alta de empresa."
+  - "Durante este paso la sesión usa un `empr_id` temporal (9000) para leer las listas de valores. ¿Es una solución definitiva o algo a corregir? Afecta a cómo se arma el dato de prueba."
