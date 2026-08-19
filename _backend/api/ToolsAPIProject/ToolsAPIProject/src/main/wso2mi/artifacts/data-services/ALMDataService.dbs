@@ -714,11 +714,6 @@
          <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/articulos/{empr_id}">
-      <call-query href="getArticulos2">
-         <with-param name="empr_id" query-param="empr_id"/>
-      </call-query>
-   </resource>
    <!-- MCP: depósitos de la empresa (tool alm_get_depositos) -->
    <resource method="GET" path="/mcp/depositos/{empr_id}">
       <call-query href="getDepositosMcp">
