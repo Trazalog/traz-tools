@@ -238,6 +238,73 @@ Por eso, una operación nueva en la API **no aparece sola** como tool: hay que a
 **Por eso el paso B va antes que este:** el desplegable **`Operation`** ofrece los recursos de la
 API, así que la operación tiene que existir ahí primero.
 
+---
+
+### C-bis · La alternativa: borrar el MCP Server y regenerarlo
+
+No hace falta agregar las tools de a una. Se puede **eliminar el MCP Server y volver a crearlo**
+desde la API, que regenera todas las tools de golpe.
+
+**Cuándo conviene regenerar** (que es nuestro caso habitual):
+
+- hay **varias** tools nuevas
+- cambiaron **descripciones** en el YAML — al regenerar se toman de la API automáticamente, mientras
+  que agregando a mano hay que copiar cada descripción a mano en el campo `Description`
+
+**Cuándo conviene agregar a mano:** una sola tool nueva, y el resto de la configuración del server
+ya está afinada.
+
+#### Qué se pierde al regenerar — y hay que rehacer sí o sí
+
+El MCP Server nuevo es **otro artefacto**, con otro ID. Esto está **verificado en nuestro
+despliegue** (`deployment-gcp.md` §6.3-bis), no es teoría:
+
+| Se pierde | Síntoma si te olvidás | Dónde se repone |
+|---|---|---|
+| **`endpointConfig`** | **`404`** en todas las tools | `deployment-gcp.md` §6.3-bis (error 2) y §6.3-ter si la UI no lo deja editar |
+| **Suscripción de la aplicación** | **`403`** / `900908` en todas las tools | DevPortal → `Applications` → tu app → `Subscriptions` → suscribir **el MCP Server** (no la API) |
+| Deploy y Publish | la URL no responde | pasos D y D.2 |
+
+#### Mantener Name, Context y Version idénticos
+
+La URL del MCP Server sale del **Context** y la **Version**. Si los repetís exactamente, la URL no
+cambia y **el conector de Claude sigue apuntando al mismo lugar**. Si cambiás cualquiera de los dos,
+hay que reconfigurar el conector.
+
+> **No verificado:** si APIM permite reusar el mismo `Context` inmediatamente después de borrar el
+> server anterior. Si lo rechaza por duplicado, confirmar primero que el borrado se completó.
+
+#### Por línea de comandos (apictl)
+
+La documentación oficial expone estas operaciones en `apictl`, lo que permite hacerlo sin la UI:
+
+```bash
+# listar los MCP Servers del entorno (devuelve ID, NAME, VERSION, CONTEXT, STATUS)
+apictl get mcp-servers -e <environment>
+
+# ver las revisiones de uno
+apictl get mcp-server-revisions -n <nombre> -v <version> -e <environment>
+apictl get mcp-server-revisions -n <nombre> -v <version> -q deployed:true -e <environment>
+
+# borrarlo
+apictl delete mcp-server -n <nombre> -v <version> -e <environment>
+
+# importarlo desde un proyecto versionado
+apictl import mcp-server -f <path al proyecto> -e <environment>
+apictl import mcp-server --file <path> --environment <env> --rotate-revision
+```
+
+> Fuentes: [*Managing MCP
+> Servers*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/managing-mcp-servers.md)
+> e [*Importing MCP Servers Via Dev First
+> Approach*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/importing-mcp-servers-via-dev-first-approach.md)
+> (docs-apim, rama 4.6.0).
+>
+> **`apictl` no está en uso en este proyecto todavía** — requiere instalarlo e inicializar el
+> entorno. Queda anotado como el camino a futuro para que la republicación deje de ser un
+> procedimiento de consola: con `import mcp-server` sobre un proyecto versionado, el MCP Server se
+> vuelve reproducible desde el repo igual que el `.car`.
+
 > La documentación oficial **no aclara** si además hace falta que la revisión de la API esté
 > desplegada para que la operación aparezca en ese desplegable. Si no aparece, hacer B.2 y volver.
 
@@ -365,7 +432,10 @@ Trazalog y **volver a conectarlo**.
 [ ] OpenAPI re-importada en API definition + guardada (B.1)
 [ ] Revisión nueva de la API desplegada: Deploy > Deployments > Deploy New Revision (B.2)
 [ ] Enable Subscription Validation sigue DESACTIVADO (B.3)
-[ ] Tools nuevas agregadas: API Configurations > Tools > Add New Tool (C)
+[ ] Tools nuevas: agregadas a mano (C) O el MCP Server regenerado (C-bis)
+[ ]   si se regenero: endpointConfig repuesto (C-bis)
+[ ]   si se regenero: aplicacion re-suscripta al MCP Server (C-bis)
+[ ]   si se regenero: Name/Context/Version identicos, o conector reconfigurado
 [ ] MCP Server desplegado: Deploy > Deployments > Deploy (D)
 [ ] MCP Playground muestra la tool nueva (E.0)
 [ ] tools/list muestra la tool nueva (E.1)
@@ -389,6 +459,8 @@ Trazalog y **volver a conectarlo**.
 | D.2 — `Publish` → `Lifecycle` | misma página, §4 |
 | E.0 — `Test` → `MCP Playground` → `Connect` | misma página, §3 |
 | El MCP Server no hereda de la API | [*Create a MCP Server Using an Existing API*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/create-from-api.md) — la selección de operaciones ocurre **sólo al crearlo** |
+| C-bis — `apictl get/delete/import mcp-server` | [*Managing MCP Servers*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/managing-mcp-servers.md) e [*Importing MCP Servers Via Dev First Approach*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/apiops/cli/managing-mcp-servers/importing-mcp-servers-via-dev-first-approach.md) |
+| C-bis — qué se pierde al regenerar | verificado en el despliegue del 2026-08-11 (`deployment-gcp.md` §6.3-bis) |
 | A — build, deploy del CAR, arranque, curl directo | verificado contra la VM real (`deployment-gcp.md` §6.1-bis, §6.2) |
 | Los 3 errores de E.2 (`403`/`404`/`101503`) | verificados en el despliegue del 2026-08-11 (`deployment-gcp.md` §6.3-bis) |
 | D.3 — endpoint por REST API | verificado contra la VM el 2026-08-11 (`deployment-gcp.md` §6.3-ter) |
@@ -403,6 +475,7 @@ Trazalog y **volver a conectarlo**.
   desplegable `Operation` al agregar una tool. Si no aparece, hacer B.2 y volver a intentar.
 - **Si hace falta reconectar el conector en Claude** (paso F) o alcanza con una conversación nueva.
   Lo del paso F es comportamiento del cliente MCP, no del Publisher.
+- **Si se puede reusar el mismo `Context`** inmediatamente después de borrar un MCP Server (C-bis).
 
 ### Corregido tras revisión de Rodolfo
 
