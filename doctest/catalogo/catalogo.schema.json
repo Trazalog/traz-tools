@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Trazalog/traz-tools/doctest/catalogo/catalogo.schema.json",
+  "title": "Caso de uso del Catálogo Funcional de Trazalog v3 (DocTest)",
+  "description": "Esquema de un caso de uso del catálogo. Fuente: TRAZALOG_v3_DOCTEST_03_ARQUITECTURA.md §3. Las reglas que no se pueden expresar en JSON Schema (reglas duras §3, unicidad de id, existencia de derivados) las verifica generators/validate-catalog.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "modulo",
+    "titulo",
+    "perfil",
+    "estado",
+    "version",
+    "origen",
+    "referencias_codigo",
+    "pantallas",
+    "precondiciones",
+    "flujo_principal"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(DNATO|MAN|ALM|MCP|PAN|PRD|TAR)-UC-[0-9]{3}$",
+      "description": "Identificador único: <MOD>-UC-<NNN>. Debe coincidir con el nombre del archivo."
+    },
+    "modulo": {
+      "type": "string",
+      "enum": ["DNATO", "MAN", "ALM", "MCP", "PAN", "PRD", "TAR"],
+      "description": "Módulo funcional. Debe coincidir con el prefijo del id y con el directorio que contiene el archivo."
+    },
+    "titulo": {
+      "type": "string",
+      "minLength": 5,
+      "description": "Título funcional del caso, en lenguaje de usuario."
+    },
+    "perfil": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Perfil funcional que ejecuta el flujo (ej. Supervisor, Operario, Administrador de cuenta)."
+    },
+    "estado": {
+      "type": "string",
+      "enum": ["borrador", "validado", "obsoleto"],
+      "description": "borrador = relevado, sin validar por el PM (no habilita derivados). validado = habilita derivación. obsoleto = se conserva por historia, sin derivados."
+    },
+    "version": {
+      "oneOf": [
+        { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+        { "type": "number" }
+      ],
+      "description": "Versión del caso, formato mayor.menor. Se incrementa al cambiar flujo_principal, flujos_alternativos o validaciones de un caso validado."
+    },
+    "origen": {
+      "type": "string",
+      "pattern": "^(baseline|delta-PR#[0-9]+|feedback-issue#[0-9]+)$",
+      "description": "De dónde salió el caso: baseline (relevamiento inicial), delta-PR#N (Etapa 2) o feedback-issue#N (test-gap de un tester)."
+    },
+    "fecha_validacion": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha en que Rodolfo validó el caso (YYYY-MM-DD). Obligatoria si estado = validado."
+    },
+    "referencias_codigo": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Trazabilidad al código fuente del que se relevó el caso.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repo", "path"],
+        "properties": {
+          "repo": {
+            "type": "string",
+            "enum": ["traz-tools", "traz-prod-assetplanner", "traz-comp-dnato", "traz-comp-almacenes", "traz-comp-pan", "traz-prod-trazasoft", "traz-comp-bpm", "traz-comp-formularios", "traz-comp-tareasestandar", "traz-comp-calendar"]
+          },
+          "path": { "type": "string", "minLength": 3 },
+          "detalle": { "type": "string", "description": "Método, clase o rango de líneas relevante (opcional)." }
+        }
+      }
+    },
+    "pantallas": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ruta de navegación tal como la ve el usuario (ej. 'Mantenimiento → Equipos → Agregar').",
+      "items": { "type": "string", "minLength": 3 }
+    },
+    "precondiciones": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 3 }
+    },
+    "flujo_principal": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/paso" }
+    },
+    "flujos_alternativos": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nombre", "pasos"],
+        "properties": {
+          "nombre": { "type": "string", "minLength": 3 },
+          "pasos": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/paso" }
+          }
+        }
+      }
+    },
+    "validaciones": {
+      "type": "array",
+      "default": [],
+      "description": "Reglas de negocio que el caso verifica (ej. 'Código de equipo único por empresa').",
+      "items": { "type": "string", "minLength": 3 }
+    },
+    "datos_prueba": {
+      "type": "object",
+      "description": "Datos semilla / convenciones de datos que usa el caso. Nunca credenciales ni datos de clientes reales.",
+      "additionalProperties": {
+        "type": ["string", "number", "boolean", "array", "object", "null"]
+      }
+    },
+    "dudas": {
+      "type": "array",
+      "default": [],
+      "description": "Dudas de intención funcional. Obligatorio no vacío si estado = borrador (modo conservador, RF-02.3).",
+      "items": { "type": "string", "minLength": 5 }
+    },
+    "derivados": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Artefactos derivados del caso. Paths relativos a doctest/. Solo se completan si estado = validado.",
+      "properties": {
+        "test_e2e": { "type": "string", "pattern": "^tests/e2e/specs/.+\\.spec\\.ts$" },
+        "test_hurl": { "type": "string", "pattern": "^tests/api-mcp/hurl/.+\\.hurl$" },
+        "feature": { "type": "string", "pattern": "^features/.+\\.feature$" },
+        "ayuda": { "type": "string", "pattern": "^ayudas/src/.+\\.html(#.+)?$" }
+      }
+    },
+    "notas": {
+      "type": "array",
+      "description": "Observaciones para el revisor humano; no se derivan a ningún artefacto.",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "paso": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paso", "resultado"],
+      "properties": {
+        "paso": {
+          "type": "string",
+          "minLength": 5,
+          "description": "Acción del usuario, en lenguaje de usuario final (sin selectores ni tecnicismos — RF-03.3)."
+        },
+        "resultado": {
+          "type": "string",
+          "minLength": 5,
+          "description": "Resultado observable esperado."
+        }
+      }
+    }
+  }
+}

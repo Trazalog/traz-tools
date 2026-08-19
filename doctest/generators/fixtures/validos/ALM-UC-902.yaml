@@ -1,0 +1,27 @@
+# Fixture del validador — caso validado sin derivados todavía. NO es un caso real del catálogo.
+id: ALM-UC-902
+modulo: ALM
+titulo: Fixture de caso validado sin derivados generados
+perfil: Encargado de almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-19
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Pedidos.php
+pantallas:
+  - "Almacenes → Pedidos de materiales"
+precondiciones:
+  - Empresa de test con un depósito activo
+flujo_principal:
+  - paso: "Abre el listado de pedidos de materiales"
+    resultado: "Se muestran los pedidos de la empresa activa"
+flujos_alternativos:
+  - nombre: "Sin pedidos cargados"
+    pasos:
+      - paso: "Abre el listado con la empresa sin pedidos"
+        resultado: "Se muestra el mensaje de listado vacío"
+validaciones:
+  - "El listado solo muestra pedidos de la empresa activa"
+dudas: []

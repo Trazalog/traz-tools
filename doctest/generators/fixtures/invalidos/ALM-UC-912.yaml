@@ -1,0 +1,23 @@
+# expect-error: R2
+# Fixture del validador — caso validado que declara un derivado inexistente.
+id: ALM-UC-912
+modulo: ALM
+titulo: Fixture de validado con derivado que no existe en el repo
+perfil: Encargado de almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-19
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Pedidos.php
+pantallas:
+  - "Almacenes → Pedidos de materiales"
+precondiciones:
+  - Empresa de test con un depósito activo
+flujo_principal:
+  - paso: "Abre el listado de pedidos de materiales"
+    resultado: "Se muestran los pedidos de la empresa activa"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/alm/ALM-UC-912.inexistente.spec.ts
