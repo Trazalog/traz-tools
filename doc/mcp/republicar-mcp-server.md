@@ -265,6 +265,87 @@ despliegue** (`deployment-gcp.md` §6.3-bis), no es teoría:
 | **Suscripción de la aplicación** | **`403`** / `900908` en todas las tools | DevPortal → `Applications` → tu app → `Subscriptions` → suscribir **el MCP Server** (no la API) |
 | Deploy y Publish | la URL no responde | pasos D y D.2 |
 
+#### Qué son esas dos cosas que hay que reponer, y por qué
+
+Al regenerar, el MCP Server nuevo **nace vacío de configuración propia**. Dos cosas que tenía el
+anterior no se heredan, y sin ellas ninguna tool funciona. No son trámites: son las dos piezas que
+hacen que una llamada **llegue a destino** y **tenga permiso**.
+
+##### 1. El endpoint — *"¿a dónde mando la llamada?"*
+
+El MCP Server **no ejecuta nada**: es una fachada. Cuando Claude invoca `man_get_kpi_mttr`, el
+gateway tiene que reenviar esa llamada al Micro Integrator, que es quien consulta la base.
+
+El **endpoint** es esa dirección de reenvío. El artefacto nuevo no la tiene: sabe qué tools expone,
+pero no a qué servidor mandarlas.
+
+| | |
+|---|---|
+| **Si falta** | todas las tools devuelven **`404`** |
+| **Por qué ese código** | el gateway recibe la llamada, no tiene a dónde reenviarla, y contesta "no encontrado" |
+| **Valor en esta VM** | `http://localhost:8290/tools/mcp` |
+| **Dónde se pone** | **Publisher** → el MCP Server → `API Configurations` → `Endpoints` |
+
+`localhost` porque el APIM y el MI conviven en la misma máquina. Puerto `8290`, que es el del MI —
+no el del gateway. Contexto `/tools/mcp`, que es la fachada `toolsMCPAPI` — no `/tools/man` ni
+`/tools/alm`. Va en **Production** y en **Sandbox**.
+
+##### 2. La suscripción — *"¿quién tiene permiso para usarlo?"*
+
+En APIM quien consume no es una persona sino una **Application**: un registro que representa al
+cliente y que tiene asociadas las credenciales OAuth. Acá, la Application es la identidad con la que
+**el conector de Claude** se conecta (ej. `TrazalogDnatoMCP-GCP`).
+
+Una Application no puede usar cualquier cosa: tiene que estar **suscripta** a cada producto que
+consume. La suscripción *es* el permiso.
+
+El punto es este: la suscripción vieja quedó apuntando al **MCP Server anterior**, que ya no existe.
+La Application conserva sus credenciales y su token sigue siendo válido — pero ya no está suscripta
+a nada que exista.
+
+| | |
+|---|---|
+| **Si falta** | todas las tools devuelven **`403`** (código `900908`) |
+| **Por qué ese código** | el token es válido y la firma verifica; lo que falla es el permiso |
+| **Cómo reconocerlo** | en el log del APIM aparece el `appName`. Que aparezca es **buena señal**: la identidad funcionó, sólo falta la suscripción |
+| **Dónde se hace** | **DevPortal**, no el Publisher |
+
+**Son dos portales distintos.** El endpoint se configura en el **Publisher**
+(`:9443/publisher`); la suscripción se hace en el **DevPortal** (`:9443/devportal`).
+
+Pasos, según la documentación oficial:
+
+1. Entrar al **Developer Portal** (`https://<host>:9443/devportal`)
+2. Clic en el MCP Server (ej. `Trazalog MCP Server`) para ir a su vista general
+3. Clic en **`SUBSCRIBE TO AN APPLICATION`**
+4. Elegir la **Application** que ya usa el conector y la **throttling policy** (`Unlimited`)
+5. Clic en **`Subscribe`**
+
+> Fuente: [*Subscribe to a MCP
+> Server*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/subscribe-to-a-mcp-server.md)
+> — *"You have to **subscribe** to a published MCP Server before using its tools in your
+> applications."*
+
+**Suscribí el MCP Server, no la API.** Son dos productos distintos del catálogo y el conector
+consume el MCP Server. Estar suscripto a la API no alcanza: es el error más repetido.
+
+##### Cómo verificar que las dos quedaron bien
+
+💻 Desde tu máquina, sin token:
+
+```bash
+python3 scripts/dev/mcp-smoke-tools.py
+```
+
+| Lo que devuelve | Qué falta |
+|---|---|
+| **`401` en todas** | **nada** — están bien. El `401` es sólo que no mandaste token |
+| `404` en todas | el **endpoint** (punto 1) |
+| `500 SIN MAPEO` | las tools quedaron sin operación asociada — ver E.0-ter |
+
+El `403` **no se ve sin token**: sin `Authorization` el gateway corta antes con `401`. Para
+distinguirlos hace falta un JWT real (`--jwt "$JWT"`).
+
 #### Mantener Name, Context y Version idénticos
 
 La URL del MCP Server sale del **Context** y la **Version**. Si los repetís exactamente, la URL no
