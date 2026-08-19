@@ -152,6 +152,10 @@ Repetir con la ruta de cada tool nueva, ej. `/tools/mcp/mcp/man/lecturas`.
 
 ## 3. Paso B — Actualizar la API en el Publisher
 
+> **Todo lo que sigue está tomado de la documentación oficial de WSO2 API Manager, rama `4.6.0`**
+> (repositorio [`wso2/docs-apim`](https://github.com/wso2/docs-apim/tree/4.6.0)). Los nombres de los
+> ítems del menú son los que usa esa documentación, no una reconstrucción.
+
 🌐 **Navegador.** Si el Publisher no está expuesto, abrir primero un túnel SSH desde tu máquina:
 
 ```bash
@@ -159,89 +163,135 @@ ssh -L 9443:localhost:9443 <usuario>@<vm>
 # y después entrar a https://localhost:9443/publisher
 ```
 
-**No hay botón `Edit`.** Al abrir una API se entra directamente a su vista de trabajo; la
-navegación es por la barra lateral izquierda:
-
-```
-APIs  →  Trazalog MCP  →  Develop  →  API Configurations  →  ...
-```
-
-(esa es la ruta verificada en esta VM, la misma que se usa para el endpoint en
-`deployment-gcp.md` §6.3-bis)
+**No hay ningún botón `Edit`.** Al abrir una API se entra directamente a su vista de trabajo y se
+navega por el menú de la izquierda.
 
 1. **`APIs`** → abrir la API (ej. `Trazalog MCP`)
-2. En la barra lateral, bajo **`Develop`**, entrar a la **definición de la API** y usar
-   **`Import`** para subir `doc/api/trazalog-operaciones.yaml` actualizado
-3. **`Save`**
-4. Si cambiaron paths o methods: **`Publish`** de nuevo
+2. **`API definition`** — abre la definición en el editor Swagger integrado. Ahí se sube el
+   `doc/api/trazalog-operaciones.yaml` actualizado.
+3. Guardar.
 
-> ⚠️ **El nombre exacto del ítem de la barra lateral para la definición no está verificado** — en
-> 4.6.0 aparece bajo `Develop`, junto a `API Configurations`. Al ejecutarlo por primera vez,
-> corregir acá el nombre real.
+> Fuente: [*Edit an API by modifying the API
+> Definition*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/tutorials/edit-an-api-by-modifyng-the-api-definition.md)
+> — *"Click on **API definition** to view the API Definition in the swagger UI."*
 
-### B.5 Qué confirmar después de re-importar
+### B.2 Desplegar una revisión de la API
 
-- **`Enable Subscription Validation` sigue desactivado.** Este es el que importa: sin `azp`
-  (consumerKey) en el JWT de Dnato, con la validación activa el gateway responde `403` aunque la
-  firma sea válida.
-- **El selector de Key Managers no se toca.** No hay ni va a haber un "Dnato" ahí: Dnato **no está
-  registrado como Key Manager** — APIM 4.6.0 no tiene conector genérico para IdPs custom. La
-  validación del JWT la resuelve `[[apim.jwt.issuer]]` en el `deployment.toml`, que es
-  configuración global del servidor y no se ve ni se configura por-API en el Publisher. Ver
-  [`virtual-mcp-unificado.md`](virtual-mcp-unificado.md) §2.4 y
-  [`../identity/apim-keymanager-dnato.md`](../identity/apim-keymanager-dnato.md) §3.
+Guardar la definición **no** la publica en el gateway. Hay que desplegar una revisión nueva:
 
-> Re-importar **reemplaza** la definición. Cualquier ajuste hecho a mano en el Publisher sobre
-> operaciones (descripciones editadas ahí, no en el YAML) se pierde. La fuente de verdad es el YAML
-> del repo.
+1. Ir a la sección **`Deploy`** y hacer clic en **`Deployments`**
+2. Clic en **`Deploy New Revision`**
+3. Opcionalmente, una descripción para la revisión
+4. Seleccionar los **API Gateways** donde desplegarla
+5. Clic en **`Deploy`**
+
+> **Máximo 5 revisiones.** Al llegar al límite hay que borrar una antes de crear otra.
+>
+> Fuente: [*deploy-revision*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/includes/design/deploy-revision.md),
+> el include oficial que la documentación reusa en todas las páginas de despliegue.
+
+### B.3 Qué confirmar después de re-importar
+
+- **`Enable Subscription Validation` sigue desactivado.** Sin `azp` (consumerKey) en el JWT de
+  Dnato, con la validación activa el gateway responde `403` aunque la firma sea válida.
+- **El selector de Key Managers no se toca.** Dnato **no está registrado como Key Manager** — APIM
+  4.6.0 no tiene conector genérico para IdPs custom. La validación la resuelve
+  `[[apim.jwt.issuer]]` en el `deployment.toml`. Ver
+  [`virtual-mcp-unificado.md`](virtual-mcp-unificado.md) §2.4.
+
+> Re-importar **reemplaza** la definición: lo editado a mano en el Publisher sobre operaciones se
+> pierde. La fuente de verdad es el YAML del repo.
 
 ---
 
 ## 4. Paso C — Agregar las tools nuevas al MCP Server
 
-**Este es el paso que se olvida.** El MCP Server es un artefacto distinto y no hereda las
-operaciones nuevas de la API.
+**Acá está la respuesta a "¿cómo le digo al MCP que tome esa revisión?": no se le dice.**
+
+El MCP Server **no toma revisiones de la API**. El vínculo con la API existe **una sola vez, al
+crearlo**: en ese momento se eligen qué operaciones se convierten en tools. Después son dos
+artefactos independientes, cada uno con sus propias revisiones y sus propios despliegues.
+
+Por eso, una operación nueva en la API **no aparece sola** como tool: hay que agregarla a mano.
 
 🌐 **Navegador**, mismo Publisher:
 
-1. **`MCP Servers`** → abrir el server (ej. `Trazalog MCP Server`) — igual que con las APIs, no hay
-   botón `Edit`: se entra directo y se navega por la barra lateral
-2. Buscar el listado de **tools** del server y agregar cada tool nueva, apuntándola a la operación
-   correspondiente de la API
-3. Verificar que el nombre de la tool coincida **exactamente** con el `operationId` del YAML — es
-   el nombre con el que el agente la invoca
+1. **`MCP Servers`** → abrir el server (ej. `Trazalog MCP Server`)
+2. En el menú de la izquierda: **`API Configurations`** → **`Tools`**
+   *(esta vista lista todas las tools generadas a partir de los recursos de la API)*
+3. Clic en **`Add New Tool`**
+4. Completar los campos:
 
-**Alternativa: regenerarlo desde la API.** Más rápido si hay varias tools nuevas, pero **borra la
-configuración propia del server**. Si se regenera, hay que rehacer sí o sí:
+   | Campo | Qué va |
+   |---|---|
+   | **`Operation`** | el recurso de la API sobre el que se basa la tool |
+   | **`Description`** | contexto suficiente para que el LLM entienda qué hace |
+   | **`Tool Name`** | único; usar el mismo `operationId` del YAML |
 
-- el **`endpointConfig`** (queda en `null` → todas las tools dan `404`)
-- la **suscripción** de la aplicación en el DevPortal (→ todas dan `403` / `900908`)
+5. Guardar los cambios.
 
-Ambos valores y el detalle de cómo reponerlos están en `deployment-gcp.md` §6.3-bis.
+> Fuente: [*Updating Tools and Deploying the MCP
+> Server*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/update-and-deploy-mcp-server.md)
+> — *"In the left navigation menu, go to **API Configurations** → **Tools**"*, *"Click **Add New
+> Tool**"*, con los campos **Operation**, **Description** y **Tool Name**.
+
+**Por eso el paso B va antes que este:** el desplegable **`Operation`** ofrece los recursos de la
+API, así que la operación tiene que existir ahí primero.
+
+> La documentación oficial **no aclara** si además hace falta que la revisión de la API esté
+> desplegada para que la operación aparezca en ese desplegable. Si no aparece, hacer B.2 y volver.
 
 ---
 
-## 5. Paso D — Desplegar una revisión de cada artefacto
+## 5. Paso D — Desplegar el MCP Server
 
-**Guardar no publica.** El gateway sirve la última revisión desplegada.
+Es un despliegue **propio del MCP Server**, aparte del de la API:
 
-🌐 **Navegador**, para **la API** y **el MCP Server** por separado:
+1. En el menú de la izquierda: **`Deploy`** → **`Deployments`**
+2. Elegir el **`Gateway`** donde desplegarlo
+3. Clic en **`Deploy`**
+4. Esperar el mensaje de confirmación
 
-1. **`Deployments`** → **`Deploy New Revision`**
-2. Elegir el gateway environment (en la VM de GCP: `Default`, vhost `mcp.cloudtrazalog.com`)
-3. Confirmar
+> Fuente: *Updating Tools and Deploying the MCP Server*, sección **2. Deploying the MCP Server**
+> — *"In the left menu, go to **Deploy** → **Deployments**"*, *"Choose the **Gateway**"*,
+> *"Click **Deploy**"*.
 
-> APIM guarda un número limitado de revisiones. Si el botón aparece deshabilitado, hay que borrar
-> una revisión vieja primero.
+### D.2 Publicar, si el estado lo pide
 
-Si el `endpointConfig` del MCP Server no se deja editar desde la UI —pasa en 4.6.0— hay que hacerlo
-por el Publisher REST API: procedimiento completo y verificado en `deployment-gcp.md` §6.3-ter.
+1. **`Publish`** → **`Lifecycle`**
+2. Revisar que los nombres y descripciones de las tools estén finalizados
+3. Clic en **`Publish`**
+
+> Fuente: misma página, sección **4. Publishing the MCP Server**.
+
+### D.3 Si el endpoint no se deja editar desde la UI
+
+En 4.6.0 el `endpointConfig` del MCP Server puede aparecer deshabilitado o no persistirse. En ese
+caso va por el **Publisher REST API**: procedimiento completo y **verificado contra esta VM el
+2026-08-11** en `deployment-gcp.md` §6.3-ter.
 
 ---
 
 ## 6. Paso E — Verificar
 
-💻 **Terminal local.** Hace falta un JWT real emitido por el Dnato **de ese mismo ambiente**.
+### E.0 MCP Playground — la verificación más rápida, sin JWT ni curl
+
+El Publisher trae un cliente MCP incorporado. Es la forma más directa de ver si la tool nueva quedó
+expuesta:
+
+1. En el menú de la izquierda: **`Test`** → **`MCP Playground`**
+2. Clic en **`Connect`** para establecer sesión con el MCP Server
+3. Probar las tools disponibles con valores de ejemplo
+
+> Fuente: *Updating Tools and Deploying the MCP Server*, sección **3. Testing with the MCP
+> Playground** — *"The MCP Playground in the Publisher Portal allows you to test tools without
+> publishing them."*
+
+Si la tool nueva **no aparece acá**, el problema es el paso C o el D, y no tiene sentido seguir con
+los curls de abajo.
+
+💻 **Terminal local.** Para los curls de abajo hace falta un JWT real emitido por el Dnato **de ese
+mismo ambiente**.
 
 ### E.1 ¿Aparece la tool nueva?
 
@@ -312,11 +362,12 @@ Trazalog y **volver a conectarlo**.
 [ ] mvn clean install en verde y .car verificado por dentro (A.2)
 [ ] MI arrancado ("started in NN seconds") (A.3)
 [ ] curl directo al MI: 503 identity_missing en cada ruta nueva (A.4)
-[ ] OpenAPI re-importada en la API + Save (+ Publish si cambiaron paths) (B)
-[ ] Enable Subscription Validation sigue DESACTIVADO (B.5)
-[ ] Tools nuevas agregadas al MCP Server (C)
-[ ] Revisión nueva desplegada en la API (D)
-[ ] Revisión nueva desplegada en el MCP Server (D)
+[ ] OpenAPI re-importada en API definition + guardada (B.1)
+[ ] Revisión nueva de la API desplegada: Deploy > Deployments > Deploy New Revision (B.2)
+[ ] Enable Subscription Validation sigue DESACTIVADO (B.3)
+[ ] Tools nuevas agregadas: API Configurations > Tools > Add New Tool (C)
+[ ] MCP Server desplegado: Deploy > Deployments > Deploy (D)
+[ ] MCP Playground muestra la tool nueva (E.0)
 [ ] tools/list muestra la tool nueva (E.1)
 [ ] tools/call devuelve datos reales (E.2)
 [ ] Aislamiento verificado con dos empresas (E.3)
@@ -325,21 +376,39 @@ Trazalog y **volver a conectarlo**.
 
 ---
 
-## 9. Estado de verificación de este procedimiento
+## 9. Fuentes y estado de verificación
 
-**Verificado en la práctica:** los pasos A (build, deploy, arranque, curl directo) y las tres
-condiciones de error de E.2 — los tres se encontraron realmente durante el despliegue a GCP del
-2026-08-11 y están documentados con su log en `deployment-gcp.md` §6.3-bis.
+### De dónde sale cada paso
 
-**Corregido tras revisión de Rodolfo (2026-08-15):** la primera versión decía que había que
-confirmar la asociación al **Key Manager Dnato** y hablaba de un botón **`Edit`** en las APIs. Las
-dos cosas son falsas y venían de arrastrar `openapi-publish-procedure.md`, que refleja una
-arquitectura anterior: Dnato nunca se registró como Key Manager, y la UI de 4.6.0 no tiene `Edit`.
+| Paso | Fuente |
+|---|---|
+| B.1 — `API definition` | [*Edit an API by modifying the API Definition*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/tutorials/edit-an-api-by-modifyng-the-api-definition.md) (docs-apim, rama 4.6.0) |
+| B.2 — `Deploy` → `Deployments` → `Deploy New Revision` | [*deploy-revision*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/includes/design/deploy-revision.md) |
+| C — `API Configurations` → `Tools` → `Add New Tool` | [*Updating Tools and Deploying the MCP Server*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/update-and-deploy-mcp-server.md) §1 |
+| D — `Deploy` → `Deployments` → `Deploy` | misma página, §2 |
+| D.2 — `Publish` → `Lifecycle` | misma página, §4 |
+| E.0 — `Test` → `MCP Playground` → `Connect` | misma página, §3 |
+| El MCP Server no hereda de la API | [*Create a MCP Server Using an Existing API*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/ai-gateway/mcp-gateway/create-from-api.md) — la selección de operaciones ocurre **sólo al crearlo** |
+| A — build, deploy del CAR, arranque, curl directo | verificado contra la VM real (`deployment-gcp.md` §6.1-bis, §6.2) |
+| Los 3 errores de E.2 (`403`/`404`/`101503`) | verificados en el despliegue del 2026-08-11 (`deployment-gcp.md` §6.3-bis) |
+| D.3 — endpoint por REST API | verificado contra la VM el 2026-08-11 (`deployment-gcp.md` §6.3-ter) |
 
-**No verificado end-to-end todavía:** la secuencia completa de republicación con tools nuevas
-(pasos C, D y F) — este documento se escribió *antes* de la primera republicación, consolidando lo
-que estaba disperso en `openapi-publish-procedure.md` §7 (cinco líneas, sin el paso de revisión),
-`wso2-redeploy-artifacts.md` §2 y `deployment-gcp.md` §6.3. **Al ejecutarlo la primera vez conviene
-corregir acá lo que no coincida con la UI real**, sobre todo el paso C (nombres exactos de las
-pantallas de `Tools` en el MCP Server de APIM 4.6.0) y el F (si alcanza con conversación nueva o
-hace falta reconectar).
+> El sitio `apim.docs.wso2.com` responde `403` a las descargas automatizadas. La fuente usada es el
+> repositorio del que se genera esa documentación, [`wso2/docs-apim`](https://github.com/wso2/docs-apim),
+> **rama `4.6.0`**, que es exactamente la versión que corre en esta instalación.
+
+### Lo que la documentación oficial NO dice
+
+- **Si la revisión de la API tiene que estar desplegada** para que su operación aparezca en el
+  desplegable `Operation` al agregar una tool. Si no aparece, hacer B.2 y volver a intentar.
+- **Si hace falta reconectar el conector en Claude** (paso F) o alcanza con una conversación nueva.
+  Lo del paso F es comportamiento del cliente MCP, no del Publisher.
+
+### Corregido tras revisión de Rodolfo
+
+- **2026-08-15** — se decía confirmar la asociación al *Key Manager Dnato* y se hablaba de un botón
+  **`Edit`** en las APIs. Las dos cosas eran falsas, arrastradas de `openapi-publish-procedure.md`
+  (arquitectura anterior).
+- **2026-08-18** — los pasos B, C y D estaban reconstruidos por analogía en vez de tomados de la
+  documentación. Se reescribieron con los nombres exactos de la documentación oficial de la rama
+  `4.6.0`, con el link a cada página en la tabla de arriba.
