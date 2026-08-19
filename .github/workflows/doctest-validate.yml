@@ -1,0 +1,62 @@
+# DocTest — validación del catálogo funcional y del tooling (Doc 3 §7).
+#
+# Corre en todo PR que toque `doctest/`. No necesita staging, secrets ni navegador:
+# valida los YAML del catálogo, tipa el TypeScript y corre los generadores en seco.
+name: doctest-validate
+
+on:
+  pull_request:
+    paths:
+      - 'doctest/**'
+      - '.github/workflows/doctest-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doctest-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Catálogo + tooling
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: doctest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Se necesita la rama base completa para la regla R6 (bump de versión).
+          fetch-depth: 0
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: doctest/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Validar el catálogo funcional
+        run: npm run validate:catalog -- --diff-base "origin/${{ github.base_ref || 'develop-v3' }}"
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Dry-run de generators
+        run: npm run generators:dry-run
+
+      # Carga la config y todos los specs sin abrir navegador ni tocar staging:
+      # detecta specs rotos o mal etiquetados. La EJECUCIÓN real de la suite vive
+      # en doctest-e2e.yml (fase F5), que sí tiene URLs y credenciales.
+      - name: Cargar la suite Playwright (--list)
+        run: npm run test:list
+        env:
+          CI: 'true'
