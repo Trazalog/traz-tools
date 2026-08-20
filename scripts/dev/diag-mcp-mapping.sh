@@ -69,6 +69,46 @@ if bad:
     print("      No se repara redesplegando: hay que rehacer esas operaciones.")
 PY
 echo
+echo "=== 3b. LA API FUENTE: tiene los recursos que las tools necesitan? ==="
+APIID=$(python3 -c "
+import json
+d=json.load(open('/tmp/mcp-server.json'))
+for o in d.get('operations',[]):
+    m=o.get('apiOperationMapping')
+    if m: print(m.get('apiId','')); break
+")
+if [ -z "${APIID:-}" ]; then
+  echo "  ninguna tool tiene mapping: no se puede deducir la API fuente"
+else
+  curl -s -k "https://$H:9443/api/am/publisher/v4/apis/$APIID" -H "Authorization: Bearer $TOKEN" > /tmp/mcp-api-fuente.json
+  python3 - <<'PY'
+import json
+try:
+    a=json.load(open('/tmp/mcp-api-fuente.json'))
+except Exception:
+    print("  no se pudo leer la API fuente"); raise SystemExit
+print(f"  API fuente: {a.get('name')} v{a.get('version')}  ctx={a.get('context')}  estado={a.get('lifeCycleStatus')}")
+recursos={(o.get('verb'), o.get('target')) for o in a.get('operations',[])}
+print(f"  recursos en la API: {len(recursos)}")
+d=json.load(open('/tmp/mcp-server.json'))
+falt=[]
+for o in d.get('operations',[]):
+    if o.get('apiOperationMapping'): continue
+    falt.append(o.get('target'))
+print()
+print("  Las 8 tools sin mapping necesitan estos recursos. Estan en la API?")
+# heuristica: buscar por nombre de tool en los targets de la API
+import re
+for t in sorted(falt):
+    cand=[r for r in recursos if t.split('_')[-1] in (r[1] or '')]
+    print(f"    {t:32} -> {'candidato: '+str(cand[0]) if cand else 'NO HAY RECURSO PARECIDO'}")
+print()
+print("  Recursos de la API fuente (verb target):")
+for v,t in sorted(recursos, key=lambda x:str(x[1])):
+    print(f"    {str(v):6} {t}")
+PY
+fi
+echo
 echo "=== 4. revisiones y cual esta desplegada ==="
 curl -s -k "https://$H:9443/api/am/publisher/v4/mcp-servers/$ID/revisions" -H "Authorization: Bearer $TOKEN" \
  | python3 -c "
@@ -79,4 +119,5 @@ for r in json.load(sys.stdin).get('list',[]):
     print(f\"  rev {r.get('displayName','?'):8} id={r.get('id','')[:8]}  {where}\")
 " 2>/dev/null || echo "  (sin revisiones)"
 echo
-echo "El JSON completo quedo en /tmp/mcp-server.json"
+echo "JSON del MCP Server : /tmp/mcp-server.json"
+echo "JSON de la API fuente: /tmp/mcp-api-fuente.json"
