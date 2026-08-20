@@ -63,6 +63,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Comandos que se le pasan al PM para ejecutar
+
+- **Multilínea siempre con `\` al final de cada línea** (salvo la última). Los comandos se copian y
+  pegan directo a la terminal: sin la barra, la segunda línea se ejecuta como un comando aparte y
+  falla en silencio. Aplica a cualquier CLI — `gcloud`, `curl`, `apictl`, `mvn`, `git`. Si el
+  comando es corto, dejarlo en una sola línea.
+- **Sin heredocs** (`<<EOF`) en los comandos que ejecuta el PM. Indicar qué archivo y qué línea
+  tocar; él edita a mano y valida después.
+
 ## Convenciones de branching
 
 | Rama | Propósito |
