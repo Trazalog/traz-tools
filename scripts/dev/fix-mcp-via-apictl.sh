@@ -110,16 +110,30 @@ echo "  $NEW"
 if [ "$APPLY" != "--apply" ]; then
   echo
   echo "DRY-RUN. Para importarlo:"
-  echo "  apictl import mcp-server -f \"$NEW\" -e $ENV --update --rotate-revision"
+  echo "  # 1) borrar el existente (el path de update esta roto para EXISTING_API)"
+  echo "  apictl delete mcp-server -n \"$NAME\" -v $VER -e $ENV"
+  echo "  # 2) importar como nuevo, con los mappings ya en el YAML"
+  echo "  apictl import mcp-server -f \"$NEW\" -e $ENV --rotate-revision"
   echo "  (o volver a correr este script con --apply)"
   exit 0
 fi
 
 echo
 echo "=== 4. importar ==="
+# --update entra por ImportUtils.importMCPServer(), que exige backends aunque
+# el subtype EXISTING_API no tenga (bug wso2/api-manager#4997, fix
+# carbon-apimgt#13822 no aplicado en esta version): devuelve
+# "No backends found to update for API" con HTTP 500.
+# El path de CREATE si tiene el guard correcto, asi que se borra el MCP Server
+# y se importa como nuevo. El zip ya lleva los apiOperationMapping explicitos.
+echo "  se borra el MCP Server y se importa como NUEVO (el path de update esta roto)"
+cp "$NEW" "/tmp/mcp-proyecto-reparado.zip"
+echo "  copia de seguridad del proyecto: /tmp/mcp-proyecto-reparado.zip"
+apictl delete mcp-server -n "$NAME" -v "$VER" -e "$ENV" 2>&1 | tail -3
+sleep 3
 # el flag correcto en apictl 4.6.1 es --update (no --update-mcp-server, que
 # figura en la pagina de migracion de la doc pero el binario no reconoce)
-apictl import mcp-server -f "$NEW" -e "$ENV" --update --rotate-revision 2>&1 | tail -15
+apictl import mcp-server -f "$NEW" -e "$ENV" --rotate-revision 2>&1 | tail -15
 RC=${PIPESTATUS[0]}
 if [ "$RC" != "0" ]; then
   echo
@@ -141,5 +155,14 @@ if [ "$RC" != "0" ]; then
 fi
 
 echo
-echo "=== 5. verificar ==="
+echo
+echo "=== 5. estado del mapping en la base ==="
+bash "$(dirname "$0")/diag-mcp-mapping.sh" 2>/dev/null | sed -n '/tool por tool/,/sin mapping:/p' | tail -25 \
+  || echo "  correr: bash /tmp/diag-mcp-mapping.sh"
+echo
+echo "=== 6. verificar desde afuera ==="
 echo "  python3 /tmp/mcp-smoke-tools.py"
+echo
+echo "OJO: al importar como nuevo hay que rehacer la suscripcion en el DevPortal"
+echo "     (DevPortal > Trazalog MCP > SUBSCRIBE TO AN APPLICATION), o las tools"
+echo "     van a dar 403 aunque el mapping este bien."
