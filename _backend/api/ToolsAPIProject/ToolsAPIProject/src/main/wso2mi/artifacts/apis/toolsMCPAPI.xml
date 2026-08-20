@@ -381,6 +381,12 @@
          </call>
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then>
+               <!-- El backend responde 202 Accepted y <respond/> lo propaga tal cual.
+                    La OpenAPI declara 200/401/500, asi que el MCP Server recibe un
+                    status fuera del contrato y marca la tool como fallida: el pedido
+                    queda creado y el cliente ve "Error occurred during tool execution".
+                    La operacion es sincrona y ya termino, asi que 200 es lo correcto. -->
+               <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
                <respond/>
             </then>
             <else>
@@ -880,6 +886,12 @@
 
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then>
+               <!-- El backend responde 202 Accepted y <respond/> lo propaga tal cual.
+                    La OpenAPI declara 200/401/500, asi que el MCP Server recibe un
+                    status fuera del contrato y marca la tool como fallida: el pedido
+                    queda creado y el cliente ve "Error occurred during tool execution".
+                    La operacion es sincrona y ya termino, asi que 200 es lo correcto. -->
+               <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
                <respond/>
             </then>
             <else>
