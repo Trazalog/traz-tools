@@ -97,6 +97,11 @@ PY
 [ $? -ne 0 ] && exit 2
 
 echo
+echo "=== 2b. diff del YAML (solo deberian verse los 8 bloques agregados) ==="
+diff -u "$WORK/mcp_server.yaml.bak" "$YML" | head -60
+echo "  ...(diff completo: diff -u $WORK/mcp_server.yaml.bak \"$YML\")"
+
+echo
 echo "=== 3. re-empaquetar ==="
 BASE=$(basename "$ZIP"); NEW="$WORK/$BASE"
 ( cd "$WORK/src" && zip -qr "$NEW" . )
@@ -120,6 +125,19 @@ if [ "$RC" != "0" ]; then
   echo
   echo "  el import fallo. Flags que soporta este binario:"
   apictl import mcp-server --help 2>&1 | sed -n '/Flags:/,/Global Flags:/p'
+  echo
+  echo "  === excepcion real en el log del APIM ==="
+  LOG=$(ls -1 /opt/wso2*/repository/logs/wso2carbon.log \
+                $APIM_HOME/repository/logs/wso2carbon.log 2>/dev/null | head -1)
+  if [ -n "${LOG:-}" ]; then
+    echo "  ($LOG)"
+    grep -n "ERROR" "$LOG" | tail -5
+    echo "  --- ultimo stack trace ---"
+    tac "$LOG" | grep -m1 -B60 "ERROR" | tac | head -45
+  else
+    echo "  no se encontro wso2carbon.log — buscarlo con:"
+    echo "     find / -name wso2carbon.log -path '*repository/logs*' 2>/dev/null"
+  fi
 fi
 
 echo
