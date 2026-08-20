@@ -105,14 +105,22 @@ echo "  $NEW"
 if [ "$APPLY" != "--apply" ]; then
   echo
   echo "DRY-RUN. Para importarlo:"
-  echo "  apictl import mcp-server -f \"$NEW\" -e $ENV --update-mcp-server=true --rotate-revision"
+  echo "  apictl import mcp-server -f \"$NEW\" -e $ENV --update --rotate-revision"
   echo "  (o volver a correr este script con --apply)"
   exit 0
 fi
 
 echo
 echo "=== 4. importar ==="
-apictl import mcp-server -f "$NEW" -e "$ENV" --update-mcp-server=true --rotate-revision 2>&1 | tail -10
+# el flag correcto en apictl 4.6.1 es --update (no --update-mcp-server, que
+# figura en la pagina de migracion de la doc pero el binario no reconoce)
+apictl import mcp-server -f "$NEW" -e "$ENV" --update --rotate-revision 2>&1 | tail -15
+RC=${PIPESTATUS[0]}
+if [ "$RC" != "0" ]; then
+  echo
+  echo "  el import fallo. Flags que soporta este binario:"
+  apictl import mcp-server --help 2>&1 | sed -n '/Flags:/,/Global Flags:/p'
+fi
 
 echo
 echo "=== 5. verificar ==="
