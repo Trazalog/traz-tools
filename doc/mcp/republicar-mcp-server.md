@@ -265,6 +265,45 @@ despliegue** (`deployment-gcp.md` §6.3-bis), no es teoría:
 | **Suscripción de la aplicación** | **`403`** / `900908` en todas las tools | DevPortal → `Applications` → tu app → `Subscriptions` → suscribir **el MCP Server** (no la API) |
 | Deploy y Publish | la URL no responde | pasos D y D.2 |
 
+#### ⚠️ El prerrequisito que descubrimos por las malas (2026-08-20)
+
+**Antes de crear o recrear el MCP Server, la API tiene que tener su revisión
+DESPLEGADA con todos los recursos** — no alcanza con que el Publisher los muestre.
+
+El Publisher muestra la **working copy**. El gateway sirve la **revisión desplegada**. Si se
+agregaron recursos y no se desplegó una revisión nueva, para el gateway esos recursos **no existen**,
+y cualquier tool que los referencie queda con `apiOperationMapping` en `null` — silenciosamente.
+
+Así se veía el caso real:
+
+| | |
+|---|---|
+| Working copy de `Trazalog MCP API` | **17 recursos** |
+| Revisión desplegada | **9 recursos** |
+| Tools del MCP Server que funcionaban | **las 9 de esa revisión, exactamente** |
+
+Verificarlo antes de tocar nada:
+
+```bash
+bash scripts/dev/diag-api-revisiones.sh
+```
+
+Si la revisión desplegada tiene menos recursos que la working copy:
+
+**`APIs` → la API → `Deploy` → `Deployments` → `Deploy New Revision`**
+
+Y recién después crear o recrear el MCP Server.
+
+#### Reparar el mapping por REST API no funciona
+
+Se intentó dos veces completar el `apiOperationMapping` con un `PUT` al Publisher REST API, la
+segunda con los 17 recursos ya desplegados en el gateway. **El APIM acepta el `PUT` con HTTP 200 y
+guarda `null` igual.** No es un problema del payload: el servidor descarta el mapping entrante.
+
+Mientras no esté aplicado el fix [carbon-apimgt#13889](https://github.com/wso2/carbon-apimgt/pull/13889),
+**la única vía es recrear el MCP Server** desde la API. `scripts/dev/fix-mcp-mapping.py` sigue
+sirviendo para el paso de desplegar la revisión de la API, que sí funciona.
+
 #### Qué son esas dos cosas que hay que reponer, y por qué
 
 Al regenerar, el MCP Server nuevo **nace vacío de configuración propia**. Dos cosas que tenía el

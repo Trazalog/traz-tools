@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+PASO 1 UTIL / PASO 2 NO FUNCIONA — leer antes de usar.
+
+Verificado el 2026-08-20 contra la VM de PROD:
+
+  PASO 1 (desplegar revision nueva de la API)  ->  FUNCIONA. Llevo la revision
+          desplegada de 9 a 17 recursos. Es un prerrequisito real y sirve.
+
+  PASO 2 (reparar el apiOperationMapping por PUT)  ->  NO FUNCIONA. El APIM
+          acepta el PUT (HTTP 200) y guarda null igual, incluso con los 17
+          recursos ya desplegados en el gateway. Se probo dos veces. El
+          mapping no se puede reparar por el Publisher REST API mientras no
+          este aplicado el fix carbon-apimgt#13889.
+
+  QUE HACER: correr este script solo para el PASO 1, y despues RECREAR el MCP
+  Server desde la API (flujo oficial "Create MCP Server from Existing API").
+  Con la revision de la API ya completa, el mapping se arma bien al crearlo.
+  Ver doc/mcp/republicar-mcp-server.md seccion C-bis.
+
 Repara el apiOperationMapping de las tools del MCP Server que quedaron en null
 por el bug wso2/api-manager#5106.
 
@@ -171,6 +189,8 @@ def main():
         cambios += 1
 
     print(f"\n{cambios} tool(s) a reparar")
+    print("  NOTA: el PUT de abajo NO persiste el mapping (verificado 2 veces).")
+    print("        Si tras el PUT siguen en null, recrear el MCP Server desde la API.")
     if not cambios:
         return 0
     if not a.apply:
