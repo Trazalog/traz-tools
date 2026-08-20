@@ -8,6 +8,9 @@ X-JWT-Assertion, solo decodifica el payload y lee empr_id / empr_id_mysql.
 Eso permite probar la logica de cada tool sin depender de Dnato ni del
 gateway, y aisla si un fallo es del backend o del APIM.
 
+NOTA: el MI responde 202 Accepted (no 200) en las escrituras. Se acepta
+cualquier 2xx.
+
 ESCRITURAS: alm_crear_pedido_materiales y man_create_ot crean registros
 reales e instancian procesos en Bonita. Por defecto NO se ejecutan.
 Con --escrituras se ejecutan, encadenando los datos que necesitan
@@ -99,7 +102,7 @@ def main():
     print("=== LECTURA ===")
     for nombre, url in LECTURA:
         code, body = get(url, jwt)
-        bien = code == "200" and "identity_missing" not in body and '"error"' not in body[:200]
+        bien = code.startswith("2") and "identity_missing" not in body and '"error"' not in body[:200]
         print(f"  {'OK ' if bien else 'FAIL'} {nombre:28} {code:4} {resumen(body)}")
         datos[nombre] = body
         ok, fail = (ok + 1, fail) if bien else (ok, fail + 1)
@@ -118,7 +121,7 @@ def main():
     equi = primer_id("man_get_equipos", "equipos", "equipo", "id_equipo")
     if equi:
         code, body = get(f"{B}/mcp/man/equipo/{equi}", jwt)
-        bien = code == "200"
+        bien = code.startswith("2")
         print(f"  {'OK ' if bien else 'FAIL'} {'man_get_equipo':28} {code:4} id={equi} {resumen(body, 70)}")
         ok, fail = (ok + 1, fail) if bien else (ok, fail + 1)
     else:
@@ -127,7 +130,7 @@ def main():
     ot = primer_id("man_get_ots", "solicitudes", "solicitud", "id_solicitud")
     if ot:
         code, body = get(f"{B}/mcp/man/ot/{ot}", jwt)
-        bien = code == "200"
+        bien = code.startswith("2")
         print(f"  {'OK ' if bien else 'FAIL'} {'man_get_ot':28} {code:4} id={ot} {resumen(body, 70)}")
         ok, fail = (ok + 1, fail) if bien else (ok, fail + 1)
     else:
@@ -136,7 +139,7 @@ def main():
     ped = primer_id("alm_get_pedidos_materiales", "pedidos", "pedido", "pema_id")
     if ped:
         code, body = get(f"{B}/mcp/alm/pedido/{ped}", jwt)
-        bien = code == "200"
+        bien = code.startswith("2")
         print(f"  {'OK ' if bien else 'FAIL'} {'alm_get_pedido_material':28} {code:4} id={ped} {resumen(body, 70)}")
         ok, fail = (ok + 1, fail) if bien else (ok, fail + 1)
     else:
@@ -154,7 +157,7 @@ def main():
             payload = {"justificacion": "Prueba de humo automatica - ignorar",
                        "articulos": [{"arti_id": str(arti), "cantidad": "1", "depo_id": str(depo)}]}
             code, body = post(f"{B}/mcp/alm/pedido", jwt, payload)
-            bien = code in ("200", "201")
+            bien = code.startswith("2") and '"resultado": "ok"' in body.replace("'", '"')
             print(f"  {'OK ' if bien else 'FAIL'} {'alm_crear_pedido_materiales':28} {code:4} {resumen(body)}")
             ok, fail = (ok + 1, fail) if bien else (ok, fail + 1)
         else:
@@ -163,7 +166,7 @@ def main():
         if equi:
             payload = {"equipo_id": str(equi), "descripcion": "Prueba de humo automatica - ignorar"}
             code, body = post(f"{B}/mcp/man/ot", jwt, payload)
-            bien = code in ("200", "201")
+            bien = code.startswith("2") and "error" not in body.lower()[:200]
             print(f"  {'OK ' if bien else 'FAIL'} {'man_create_ot':28} {code:4} {resumen(body)}")
             ok, fail = (ok + 1, fail) if bien else (ok, fail + 1)
 
