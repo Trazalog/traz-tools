@@ -175,9 +175,32 @@ navega por el menú de la izquierda.
 > Definition*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/tutorials/edit-an-api-by-modifyng-the-api-definition.md)
 > — *"Click on **API definition** to view the API Definition in the swagger UI."*
 
-### B.2 Desplegar una revisión de la API
+### B.2 Desplegar una revisión de la API — **el paso que más se saltea**
 
-Guardar la definición **no** la publica en el gateway. Hay que desplegar una revisión nueva:
+#### `Publish` y `Deploy` son cosas distintas, y hacen falta las dos
+
+Esta es la confusión que costó tres republicaciones fallidas. La documentación oficial lo dice sin
+ambigüedad:
+
+> *"**API Deploying** is the process of making the API available for invocation via a Gateway. […]
+> To invoke an API, it needs to be **published on the Developer Portal as well as deployed on a
+> Gateway environment**. You need to create a revision of an API in order to deploy it."*
+>
+> — [*Deploy an API*](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/api-design-manage/deploy-and-publish/deploy-on-gateway/deploy-api/deploy-an-api.md)
+
+| Acción | Qué hace | Qué NO hace |
+|---|---|---|
+| **`Publish`** (`Publish` → `Lifecycle`) | la hace visible en el Developer Portal | **no** la pone en el gateway |
+| **`Deploy New Revision`** (`Deploy` → `Deployments`) | congela la definición actual en una revisión y **la pone en el gateway** | no cambia su estado de ciclo de vida |
+
+Una API puede figurar como `PUBLISHED` y tener en el gateway una revisión vieja de hace meses. Es
+exactamente lo que pasó: `lifeCycleStatus: PUBLISHED`, 17 recursos en el Publisher, **9 en el
+gateway**.
+
+**Importar la OpenAPI + `Save` + `Publish` no lleva un solo recurso nuevo al gateway.** Hace falta
+`Deploy New Revision`.
+
+#### Los pasos
 
 1. Ir a la sección **`Deploy`** y hacer clic en **`Deployments`**
 2. Clic en **`Deploy New Revision`**
