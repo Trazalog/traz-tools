@@ -1,0 +1,41 @@
+id: DNATO-UC-021
+modulo: DNATO
+titulo: Configurar los parámetros del sitio
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "settings() (117-177)"
+  - repo: traz-comp-dnato
+    path: application/views/settings.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "getAllSettings(), settings()"
+pantallas:
+  - "Configuración"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+flujo_principal:
+  - paso: "Abre 'Configuración'"
+    resultado: "Se muestran el título del sitio, la zona horaria, el uso de reCAPTCHA y el tema actuales"
+  - paso: "Modifica algún parámetro y confirma"
+    resultado: "Se muestra 'Los datos se actualizaron correctamente.' y el cambio queda aplicado"
+flujos_alternativos:
+  - nombre: "Campos obligatorios incompletos"
+    pasos:
+      - paso: "Deja vacío el título, la zona horaria, el reCAPTCHA o el tema y confirma"
+        resultado: "Se muestra el error de validación y no se guarda"
+  - nombre: "No se puede guardar"
+    pasos:
+      - paso: "Confirma cuando la actualización falla"
+        resultado: "Se muestra 'Hubo un problema al actualizar los datos.'"
+validaciones:
+  - "Título del sitio, zona horaria, reCAPTCHA y tema son obligatorios"
+  - "Solo un administrador accede a esta pantalla"
+datos_prueba: {}
+dudas:
+  - "Esta configuración parece global del sistema, no por empresa: si un administrador de una empresa la cambia, ¿afecta a todas? Es importante antes de automatizar cualquier cambio acá, porque el interruptor de reCAPTCHA condiciona a los tests de registro y recuperación de contraseña."
+  - "¿Este caso entra en 'administración de cuenta' o es administración de la plataforma, fuera del alcance de la Ola 1?"

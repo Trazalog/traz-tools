@@ -1,0 +1,40 @@
+id: DNATO-UC-020
+modulo: DNATO
+titulo: Dar de alta un usuario externo
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "adduserexterno() (772-838)"
+  - repo: traz-comp-dnato
+    path: application/views/usuario_externo.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "addUserExterno()"
+pantallas:
+  - "Usuarios → Usuario externo"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+flujo_principal:
+  - paso: "Abre la pantalla de alta de usuario externo"
+    resultado: "Se muestra el formulario"
+  - paso: "Completa los datos y confirma"
+    resultado: "Se muestra 'El usuario se agregó correctamente.' y vuelve al listado de usuarios"
+flujos_alternativos:
+  - nombre: "Correo ya existente"
+    pasos:
+      - paso: "Completa el formulario con un correo ya registrado"
+        resultado: "Se muestra 'El correo del usuario ya existe en el sistema.' y no se crea"
+  - nombre: "Contraseña que no cumple la política"
+    pasos:
+      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la fortaleza"
+        resultado: "Se muestra el error de validación y el usuario no se crea"
+validaciones:
+  - "Correo, contraseña y confirmación son obligatorios; el correo no puede estar repetido"
+datos_prueba: {}
+dudas:
+  - "¿Qué es funcionalmente un 'usuario externo' y en qué se diferencia de un usuario común? Del código solo se deduce que se crea por otro camino; la intención de negocio no está."
+  - "No encontré esta opción en el menú de navegación. ¿Sigue en uso o quedó como pantalla huérfana?"

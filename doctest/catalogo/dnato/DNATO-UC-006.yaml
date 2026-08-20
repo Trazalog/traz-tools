@@ -1,0 +1,57 @@
+id: DNATO-UC-006
+modulo: DNATO
+titulo: Iniciar sesión eligiendo la empresa
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "login() (1362-1475)"
+  - repo: traz-comp-dnato
+    path: application/views/login.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "chekEmpresa(), checkLogin()"
+pantallas:
+  - "Bienvenido! Ingrese por favor"
+precondiciones:
+  - Sin sesión iniciada
+  - La cuenta está activada y habilitada
+  - El usuario pertenece a la empresa que elige
+flujo_principal:
+  - paso: "Abre la pantalla de ingreso"
+    resultado: "Se muestra el formulario con la lista de empresas, correo y contraseña"
+  - paso: "Elige su empresa, ingresa correo y contraseña, y confirma"
+    resultado: "Inicia sesión y entra a Trazalog Tools con la empresa elegida"
+flujos_alternativos:
+  - nombre: "El usuario no pertenece a la empresa elegida"
+    pasos:
+      - paso: "Elige una empresa a la que no pertenece e ingresa sus credenciales"
+        resultado: "Se muestra 'El usuario no corresponde a la empresa seleccionada.' y no inicia sesión"
+  - nombre: "Correo o contraseña incorrectos"
+    pasos:
+      - paso: "Ingresa una contraseña equivocada"
+        resultado: "Se muestra 'Correo o contraseña incorrectos.' y no inicia sesión"
+  - nombre: "Usuario inhabilitado"
+    pasos:
+      - paso: "Ingresa credenciales correctas de una cuenta inhabilitada"
+        resultado: "Se muestra que está temporalmente inhabilitado para el sistema y no inicia sesión"
+  - nombre: "Campos vacíos"
+    pasos:
+      - paso: "Confirma sin completar correo o contraseña"
+        resultado: "Se vuelve a mostrar la pantalla de ingreso con el error de validación"
+  - nombre: "El usuario no existe en BPM"
+    pasos:
+      - paso: "Ingresa con una cuenta que no tiene usuario en el sistema de procesos"
+        resultado: "Se muestra 'Error de inicio de sesión en BPM.' y no inicia sesión"
+validaciones:
+  - "Correo y contraseña son obligatorios; el correo debe tener formato válido"
+  - "La pertenencia del usuario a la empresa elegida se verifica antes de validar la contraseña"
+  - "Una cuenta inhabilitada no puede iniciar sesión aunque la contraseña sea correcta"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "El listado de empresas del combo es global: cualquiera que abra el login ve todas las empresas del sistema. ¿Es intencional? Afecta a si el caso se puede probar con datos estables."
+  - "El mensaje de 'no corresponde a la empresa' aparece antes de validar la contraseña, así que revela si un correo pertenece o no a una empresa. Lo dejo como observación, no lo cambio."

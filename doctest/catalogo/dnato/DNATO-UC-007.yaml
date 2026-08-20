@@ -1,0 +1,29 @@
+id: DNATO-UC-007
+modulo: DNATO
+titulo: Cerrar sesión
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "logout() (1476-1483)"
+  - repo: traz-comp-dnato
+    path: application/views/navbar.php
+    detalle: "opción 'Salir'"
+pantallas:
+  - "Menú de usuario → Salir"
+precondiciones:
+  - Sesión iniciada
+flujo_principal:
+  - paso: "Elige 'Salir' en el menú de usuario"
+    resultado: "Se cierra la sesión y vuelve a la pantalla de ingreso"
+  - paso: "Intenta volver a una pantalla interna con el botón atrás del navegador"
+    resultado: "Se lo redirige nuevamente a la pantalla de ingreso"
+flujos_alternativos: []
+validaciones:
+  - "Después de salir, ninguna pantalla interna queda accesible sin volver a iniciar sesión"
+datos_prueba: {}
+dudas:
+  - "¿A qué pantalla debería volver el usuario al salir? El destino sale de una constante de configuración (DS) y puede diferir entre entornos."

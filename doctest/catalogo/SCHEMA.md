@@ -30,7 +30,7 @@ El nombre del archivo **es** el id del caso. El directorio **es** el módulo en 
 | `id` | sí | `<MOD>-UC-<NNN>`. Módulos: `DNATO`, `MAN`, `ALM`, `MCP`, `PAN`, `PRD`, `TAR` |
 | `modulo` | sí | Mismo prefijo que el id |
 | `titulo` | sí | Título funcional, en lenguaje de usuario |
-| `perfil` | sí | Perfil funcional que ejecuta el flujo. **Vocabulario fijo**: `Solicitante`, `Supervisor`, `Planificador`, `Mantenedor` (ver abajo) |
+| `perfil` | sí | Perfil funcional que ejecuta el flujo. **Vocabulario fijo** (ver abajo) |
 | `estado` | sí | `borrador` \| `validado` \| `obsoleto` |
 | `version` | sí | `mayor.menor`. Se incrementa al cambiar el comportamiento de un caso ya validado |
 | `origen` | sí | `baseline` \| `delta-PR#<N>` \| `feedback-issue#<N>` |
@@ -48,7 +48,19 @@ El nombre del archivo **es** el id del caso. El directorio **es** el módulo en 
 
 ### El campo `perfil` tiene vocabulario cerrado
 
-Los roles del dominio de mantenimiento son cuatro y están fijados por el Doc 3 v1.1 §3: **Solicitante**, **Supervisor**, **Planificador**, **Mantenedor**. El validador rechaza cualquier otro valor, a propósito: si en un relevamiento aparece un rol que no entra en ninguno de esos cuatro (típicamente los de DNATO — administrador de cuenta, usuario que se registra), **no se inventa un valor nuevo**. Se deja el caso en `borrador`, se escribe la duda, y el rol se agrega al enum recién cuando Rodolfo lo valide.
+El validador rechaza cualquier valor fuera de esta lista, a propósito: si en un relevamiento aparece un rol nuevo, **no se inventa** — se propone acá y el PM lo valida.
+
+| Perfil | Quién es | Estado |
+|---|---|---|
+| `Solicitante` | Genera solicitudes de servicio | ✅ validado (Doc 1 v1.1 RF-05.4) |
+| `Supervisor` | Acepta/rechaza solicitudes, da de alta equipos, verifica informes | ✅ validado |
+| `Planificador` | Programa preventivos y asigna órdenes de trabajo | ✅ validado |
+| `Mantenedor` | Ejecuta órdenes de trabajo y carga el informe de servicio | ✅ validado |
+| `Administrador` | Administra la cuenta: usuarios, roles y datos de su empresa | ⏳ propuesto en F1 (#438) |
+| `Usuario` | Cualquier usuario autenticado, sin importar su rol (perfil propio, contraseña) | ⏳ propuesto en F1 (#438) |
+| `Visitante` | Todavía no tiene cuenta: se está registrando o activándola | ⏳ propuesto en F1 (#438) |
+
+Los tres propuestos salieron del relevamiento de DNATO, que es lo que el Doc 1 v1.1 RF-05.4 anticipa ("más los roles de administración de cuenta que surjan del relevamiento DNATO"). Quedan pendientes de la validación del PM junto con el catálogo de DNATO; si prefiere otros nombres, se renombran y se regeneran los casos.
 
 ### Cómo se escriben los pasos
 
