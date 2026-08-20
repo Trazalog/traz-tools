@@ -401,6 +401,81 @@ cat /tmp/car/registry_conf_tools_bpmconf_1.0.0/resources/bpmconf.xml
 resuelve parametrizando el build (perfiles Maven) o dejándolo como paso manual documentado. Las
 credenciales de esos datasources además están en texto plano en el repo (ver §nota en el cierre).
 
+### 6.1-ter Conectividad a Bonita — las dos tools que escriben no funcionan sin esto
+
+`alm_crear_pedido_materiales` y `man_create_ot` no sólo escriben en la base: **instancian un proceso
+en Bonita BPM**. Si la VM del MCP no llega a Bonita, las dos fallan — y fallan feo, porque el
+rollback también depende de Bonita:
+
+```
+{api:toolsbpmAPI} bpm_url = http://10.142.0.11:8080/bonita
+WARN  Timeout connecting to : /10.142.0.11:8080
+ERROR armarSession - TypeError: Cannot get property "0" of null
+WARN  Expiring message ID ... after GLOBAL_TIMEOUT of : 120 seconds
+```
+
+Desde el cliente MCP se ve como `MCP tool call failed`, sin más detalle. **El pedido queda creado en
+la base pero sin `case_id`**, porque el rollback tampoco puede completarse.
+
+#### Las VMs del proyecto (2026-08-20)
+
+| VM | IP interna | Network tags | Qué corre |
+|---|---|---|---|
+| `mcp-trazalog` | `10.142.0.18` | `deny-ingress`, **`mcp-gateway`** | MI + APIM de la fachada MCP |
+| `vm-demo-trazalog` | `10.142.0.11` | `deny-ingress`, **`vm-demo`**, … | Bonita **DEMO**, Dnato, base de test |
+| `vm-production-assetplanner-inst1` | `10.142.0.2` | `deny-ingress`, **`vm-prod`**, … | Bonita **PRODUCCIÓN** |
+
+#### La regla de firewall
+
+💻 **Cloud Shell** (o donde tengas `gcloud` autenticado):
+
+```bash
+gcloud compute firewall-rules create allow-bonita-desde-mcp --network=default --direction=INGRESS --action=ALLOW --rules=tcp:8080 --source-tags=mcp-gateway --target-tags=vm-demo,vm-prod --priority=900 --description="Bonita 8080 (DEMO y PROD) desde mcp-trazalog"
+```
+
+> **La prioridad importa.** Las VMs tienen el tag `deny-ingress`, y en GCP **a igual prioridad el
+> `deny` gana** (menor número = mayor prioridad). Con la prioridad por defecto (1000) la regla se
+> crea pero **no habilita nada**. Si el comando se parte en varias líneas y el `--priority` queda
+> suelto, pasa exactamente eso; se corrige con:
+>
+> ```bash
+> gcloud compute firewall-rules update allow-bonita-desde-mcp --priority=900
+> ```
+
+Sólo abre el `8080` **desde las VMs con tag `mcp-gateway`**: no expone Bonita a internet.
+
+#### Verificar
+
+💻 **SSH a `mcp-trazalog`**:
+
+```bash
+curl -m 10 -sS -o /dev/null -w "DEMO -> %{http_code}\n" http://10.142.0.11:8080/bonita/loginservice
+curl -m 10 -sS -o /dev/null -w "PROD -> %{http_code}\n" http://10.142.0.2:8080/bonita/loginservice
+```
+
+Ambas tienen que dar `200` (o `302`). `000` es timeout: la regla no está tomando.
+
+> ⚠️ **Con las dos abiertas, el `bpm_url` del CAR decide contra qué Bonita se instancian los
+> procesos.** Un CAR con la IP equivocada crea casos reales en producción sin que nada falle a la
+> vista. Verificarlo desempaquetando el `.car` desplegado (§6.1-bis) antes de cada despliegue.
+
+#### Prueba de humo de las tools
+
+💻 **SSH a la VM** — prueba las 17 contra el MI, con datos reales:
+
+```bash
+python3 scripts/dev/smoke-tools-mi.py --empresa <empr_id_mysql> --empresa-pg <empr_id>
+python3 scripts/dev/smoke-tools-mi.py --empresa 15 --empresa-pg 4 --escrituras
+```
+
+`--escrituras` ejecuta los dos POST, que **crean registros reales e instancian procesos en Bonita**;
+sin ese flag se omiten.
+
+> **Los dos identificadores de empresa no son intercambiables:** las tools `man_*` filtran por
+> `empr_id_mysql` (assetv2) y las `alm_*` por `empr_id` (PostgreSQL). Ambos viajan en el mismo JWT.
+> Si un grupo devuelve datos y el otro viene vacío, es el id — o el datasource del CAR apuntando a
+> otro ambiente.
+
 ### 6.2 Desplegar el CAR en el MI de la VM
 
 💻 SSH a la VM (mismo acceso que §4 paso 6):
