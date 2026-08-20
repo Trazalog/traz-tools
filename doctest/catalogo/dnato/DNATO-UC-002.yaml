@@ -1,0 +1,54 @@
+id: DNATO-UC-002
+modulo: DNATO
+titulo: Activar la cuenta y definir la contraseña
+perfil: Visitante
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "complete() (líneas 1271-1361)"
+  - repo: traz-comp-dnato
+    path: application/views/complete_password.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "isTokenValid(), updateUserInfo()"
+pantallas:
+  - "Correo 'Activar cuenta en Trazalog.com' → 'Activar mi cuenta'"
+  - "Establecer Contraseña"
+precondiciones:
+  - Existe una cuenta registrada sin contraseña (DNATO-UC-001)
+  - Se tiene el enlace de activación con su token
+flujo_principal:
+  - paso: "Abre el enlace de activación recibido por correo"
+    resultado: "Se muestra la pantalla para establecer la contraseña, con el nombre y el correo de la cuenta"
+  - paso: "Ingresa la contraseña y su confirmación, y confirma"
+    resultado: "La cuenta queda activa, se inicia sesión y se continúa con el formulario de datos de registro"
+flujos_alternativos:
+  - nombre: "Enlace ya usado o vencido"
+    pasos:
+      - paso: "Abre un enlace de activación inválido o expirado"
+        resultado: "Se muestra 'Token invalido o expirado...' y se vuelve a la pantalla de ingreso"
+  - nombre: "Contraseña que no cumple la política"
+    pasos:
+      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la regla de fortaleza"
+        resultado: "Se muestra el error de validación y la contraseña no se guarda"
+  - nombre: "Confirmación distinta"
+    pasos:
+      - paso: "Ingresa una confirmación que no coincide con la contraseña"
+        resultado: "Se muestra el error de coincidencia y la contraseña no se guarda"
+  - nombre: "La sincronización con BPM falla"
+    pasos:
+      - paso: "Confirma la contraseña cuando el servicio de BPM no responde"
+        resultado: "La cuenta queda activada igual y se avisa que no se pudo sincronizar con BPM, invitando a continuar"
+validaciones:
+  - "La contraseña es obligatoria, de al menos 10 caracteres y debe cumplir la regla de fortaleza"
+  - "La confirmación debe coincidir con la contraseña"
+  - "El token de activación se usa una sola vez"
+datos_prueba:
+  password_valida_prefijo: "Doctest-"
+dudas:
+  - "La regla `password_strong` no está a la vista en el controlador. ¿Qué exige exactamente (mayúsculas, números, símbolos)? Hace falta el detalle para escribir el caso de contraseña rechazada."
+  - "Al activar se crea también el usuario en BPM y en Asset Planner. Si eso falla, la cuenta queda activa pero incompleta: ¿el usuario puede seguir trabajando o es un estado a evitar?"
+  - "¿Cuánto dura el token de activación? No encontré el vencimiento en el código relevado."

@@ -1,0 +1,39 @@
+id: DNATO-UC-013
+modulo: DNATO
+titulo: Ver la lista de usuarios de la empresa
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "users() (178-223)"
+  - repo: traz-comp-dnato
+    path: application/views/usersList.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "gestMembershipsUserInfo(), getListUserDataForGroups()"
+pantallas:
+  - "Usuarios → Lista de Usuarios"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+flujo_principal:
+  - paso: "Abre 'Lista de Usuarios'"
+    resultado: "Se muestran los usuarios de las empresas a las que pertenece el administrador, con sus acciones disponibles"
+flujos_alternativos:
+  - nombre: "Usuario sin permisos de administración"
+    pasos:
+      - paso: "Un usuario sin perfil de administrador abre la dirección de la lista de usuarios"
+        resultado: "Se lo redirige a la pantalla principal sin mostrar la lista"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Abre la dirección sin haber iniciado sesión"
+        resultado: "Se lo redirige a la pantalla de ingreso"
+validaciones:
+  - "El listado se limita a las empresas del administrador conectado — no muestra usuarios de otras empresas"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "Este es el caso que verifica aislamiento entre empresas del lado de la administración de cuentas. Para probarlo hacen falta DOS empresas de test con usuarios propios; hoy solo tenemos una."
+  - "¿Qué columnas y acciones tiene que ver el administrador? Conviene fijarlo para que el test verifique la grilla y no solo que la pantalla abre."

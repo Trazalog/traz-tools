@@ -1,0 +1,41 @@
+id: DNATO-UC-012
+modulo: DNATO
+titulo: Cambiar la contraseña propia
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "changeuser() (555-610)"
+  - repo: traz-comp-dnato
+    path: application/views/changeuser.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "updatePass()"
+pantallas:
+  - "Menú de usuario → Editar Perfil (sección de contraseña)"
+precondiciones:
+  - Sesión iniciada
+flujo_principal:
+  - paso: "Abre la pantalla de edición de perfil"
+    resultado: "Se muestra la sección para cambiar la contraseña"
+  - paso: "Ingresa la contraseña nueva y su confirmación, y confirma"
+    resultado: "Se muestra 'Tu contraseña ha sido actualizada.'"
+flujos_alternativos:
+  - nombre: "Contraseña que no cumple la política"
+    pasos:
+      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la fortaleza exigida"
+        resultado: "Se muestra el error de validación y la contraseña no cambia"
+  - nombre: "Confirmación distinta"
+    pasos:
+      - paso: "Ingresa una confirmación que no coincide"
+        resultado: "Se muestra el error de coincidencia y la contraseña no cambia"
+validaciones:
+  - "La contraseña nueva exige al menos 10 caracteres y cumplir la regla de fortaleza"
+  - "La confirmación debe coincidir"
+datos_prueba: {}
+dudas:
+  - "No se pide la contraseña actual para cambiarla: con la sesión abierta alcanza. ¿Es lo esperado? Lo reporto como observación de seguridad, no lo cambio."
+  - "Si el cambio de contraseña también debe propagarse a BPM/Asset (como sí pasa en la activación), no lo encontré en este flujo. ¿Queda la contraseña desincronizada entre sistemas?"

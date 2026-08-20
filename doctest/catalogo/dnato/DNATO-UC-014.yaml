@@ -1,0 +1,55 @@
+id: DNATO-UC-014
+modulo: DNATO
+titulo: Dar de alta un usuario de la empresa
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "adduser() (224-333)"
+  - repo: traz-comp-dnato
+    path: application/views/adduser.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "isDuplicate(), crearUsuarioAPI()"
+pantallas:
+  - "Usuarios → Agregar Usuario"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+  - El correo del nuevo usuario no existe en el sistema
+flujo_principal:
+  - paso: "Abre 'Agregar Usuario'"
+    resultado: "Se muestra el formulario con las empresas y los roles disponibles"
+  - paso: "Completa nombre, apellido, correo, empresa, rol y contraseña con su confirmación, y confirma"
+    resultado: "El usuario queda creado y se avisa que, para que pueda entrar, hay que asignarle roles desde la columna Acciones"
+flujos_alternativos:
+  - nombre: "Correo ya existente"
+    pasos:
+      - paso: "Completa el formulario con un correo ya registrado"
+        resultado: "Se muestra 'Ya existe un usuario asociado a ese Email' y no se crea nada"
+  - nombre: "Contraseña que no cumple la política"
+    pasos:
+      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la fortaleza exigida"
+        resultado: "Se muestra el error de validación y el usuario no se crea"
+  - nombre: "Campos obligatorios incompletos"
+    pasos:
+      - paso: "Confirma sin completar nombre, apellido, correo, empresa o rol"
+        resultado: "Se vuelve a mostrar el formulario con el error"
+  - nombre: "Falla el alta en el backend"
+    pasos:
+      - paso: "Confirma cuando el servicio de alta responde con error"
+        resultado: "Se muestra el motivo del error y el usuario no se crea"
+validaciones:
+  - "Nombre, apellido, correo, empresa, rol, contraseña y confirmación son obligatorios"
+  - "El correo debe ser válido y no puede estar repetido"
+  - "La contraseña exige al menos 10 caracteres y cumplir la regla de fortaleza"
+  - "Un usuario recién creado no puede operar hasta que se le asignen roles (DNATO-UC-018)"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  email_prefijo: "doctest+user-"
+dudas:
+  - "El alta deja al usuario sin roles y sin poder entrar, y eso se comunica solo con un aviso en pantalla. ¿Se espera que el alta y la asignación de roles sean un solo flujo para el administrador?"
+  - "El administrador elige la empresa de una lista: ¿puede elegir cualquiera del sistema o solo las suyas? En el código carga `obtenerBusines()` (todas) además de sus empresas."
+  - "¿Se puede probar el alta en el entorno de pruebas dejando usuarios de test creados, o hace falta poder borrarlos después? Ver DNATO-UC-017: el borrado se bloquea si el usuario tiene roles."

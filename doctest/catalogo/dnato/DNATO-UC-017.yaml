@@ -1,0 +1,37 @@
+id: DNATO-UC-017
+modulo: DNATO
+titulo: Quitar un usuario de la empresa
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "deleteuser() (693-741)"
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "getMembershipsUserInfoEmpresa(), deleteUserBusines(), deleteUser()"
+pantallas:
+  - "Usuarios → Lista de Usuarios → Eliminar"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+  - El usuario a quitar no tiene roles asignados en esa empresa
+flujo_principal:
+  - paso: "Elige 'Eliminar' sobre un usuario sin roles asignados"
+    resultado: "Se muestra 'Eliminado Correctamente.' y el usuario desaparece del listado de la empresa"
+flujos_alternativos:
+  - nombre: "El usuario todavía tiene roles asignados"
+    pasos:
+      - paso: "Elige 'Eliminar' sobre un usuario que tiene roles en la empresa"
+        resultado: "Se muestra 'Error, Este usuario tiene roles de sistema en la empresa asignados!' y no se elimina"
+  - nombre: "No se puede desvincular de la empresa"
+    pasos:
+      - paso: "Confirma la eliminación cuando falla la baja del vínculo con la empresa"
+        resultado: "Se muestra el error indicando el correo del usuario y no se elimina"
+validaciones:
+  - "Un usuario con roles asignados en la empresa no puede eliminarse: primero hay que quitarle los roles"
+datos_prueba: {}
+dudas:
+  - "¿'Eliminar' saca al usuario solo de esa empresa o borra la cuenta del sistema? El código hace las dos cosas en secuencia (desvincula de la empresa y después borra el usuario). Para el usuario final esto es una diferencia importante y el texto de pantalla no la aclara."
+  - "¿Hay confirmación previa antes de eliminar? Si no la hay, es un borrado a un clic."

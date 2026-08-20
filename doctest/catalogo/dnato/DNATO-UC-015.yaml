@@ -1,0 +1,36 @@
+id: DNATO-UC-015
+modulo: DNATO
+titulo: Editar un usuario de la empresa
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "edituser() (742-771)"
+  - repo: traz-comp-dnato
+    path: application/views/usersList.php
+    detalle: "acción de edición en la columna Acciones"
+pantallas:
+  - "Usuarios → Lista de Usuarios → Editar"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+  - El usuario a editar existe
+flujo_principal:
+  - paso: "Elige 'Editar' sobre un usuario del listado"
+    resultado: "Se muestra el formulario con los datos actuales del usuario"
+  - paso: "Modifica los datos y confirma"
+    resultado: "Los cambios quedan guardados y se vuelve al listado"
+flujos_alternativos:
+  - nombre: "Campos obligatorios incompletos"
+    pasos:
+      - paso: "Borra nombre, apellido, correo o rol y confirma"
+        resultado: "Se muestra el error de validación y no se guarda"
+validaciones:
+  - "Nombre, apellido, correo y rol son obligatorios"
+  - "La contraseña, si se cambia, exige al menos 10 caracteres y su confirmación"
+datos_prueba: {}
+dudas:
+  - "La edición exige contraseña y confirmación como campos obligatorios (mismas reglas que el alta). ¿Es correcto que editar el nombre de un usuario obligue a reescribir su contraseña? Puede ser un bug; no lo cambio."
+  - "¿Un administrador puede editar usuarios de otra empresa si conoce el id? No vi una verificación de pertenencia en este método."
