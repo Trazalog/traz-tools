@@ -40,3 +40,7 @@ deploy/gcp/.env
 # PDF generado — no versionar (se regenera con scripts/dev/manual-a-pdf.sh)
 doc/manuales/*.pdf
 doc/manuales/*.html
+
+# archivos temporales de editores
+*.swp
+*.swo
