@@ -61,13 +61,23 @@ def jwt_del_log(apim_home):
 
 
 def rpc(url, jwt, payload, timeout=180):
-    """Devuelve (status_en_el_cable, cuerpo). El status sale de curl, no del body."""
+    """Devuelve (status_en_el_cable, cuerpo). El status sale de curl, no del body.
+
+    Manda los headers Mcp-* igual que el cliente real: el rewrite 202->200 de
+    Caddy matchea por 'Mcp-Method: tools/call'. Sin ese header el request cae
+    en el handler generico y se ve el 202 del backend — falso negativo.
+    """
+    metodo = payload.get("method", "")
     cmd = ["curl", "-sS", "-m", str(timeout), "-w", "\n<<<%{http_code}>>>",
            "-X", "POST", url,
            "-H", "Content-Type: application/json",
            "-H", "Accept: application/json, text/event-stream",
-           "-H", f"Authorization: Bearer {jwt}",
-           "-d", json.dumps(payload)]
+           "-H", "Mcp-Protocol-Version: 2025-06-18",
+           "-H", f"Mcp-Method: {metodo}",
+           "-H", f"Authorization: Bearer {jwt}"]
+    if metodo == "tools/call":
+        cmd += ["-H", "Mcp-Name: " + payload.get("params", {}).get("name", "")]
+    cmd += ["-d", json.dumps(payload)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     m = re.search(r"<<<(\d+)>>>\s*$", r.stdout)
     code = m.group(1) if m else "000"
@@ -182,7 +192,10 @@ def main():
         bien = code == "200" and err is None
         estado = "OK " if bien else "FAIL"
         detalle = err or resumen(dato)
-        if code != "200":
+        if code == "202":
+            detalle = ("status 202 en el cable — el cliente MCP lo lee como "
+                       "notificacion y descarta el cuerpo. Revisar el rewrite de Caddy.")
+        elif code != "200":
             detalle = f"status {code} en el cable — {detalle}"
         print(f"  {estado} {nombre:30} HTTP {code:4} {detalle}")
         return bien, dato
