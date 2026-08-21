@@ -401,6 +401,27 @@ cat /tmp/car/registry_conf_tools_bpmconf_1.0.0/resources/bpmconf.xml
 resuelve parametrizando el build (perfiles Maven) o dejándolo como paso manual documentado. Las
 credenciales de esos datasources además están en texto plano en el repo (ver §nota en el cierre).
 
+### 6.1-quater El reverse proxy no es sólo TLS — lleva dos parches de compatibilidad MCP
+
+`deploy/gcp/reverse-proxy/Caddyfile` no es un passthrough: contiene **dos bloques sin los cuales las
+tools que escriben fallan en el cliente** aunque el backend funcione perfecto.
+
+| Bloque | Qué resuelve |
+|---|---|
+| `@discover` | APIM responde `404` no-JSON-RPC al método `server/discover` del protocolo `2026-07-28` |
+| `@toolcall` | reescribe `202 → 200`: el `202` del backend hace que el cliente MCP descarte la respuesta |
+
+Detalle y evidencia en [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md) §7.
+
+> **Al validar el Caddyfile hay que cargar el entorno primero**, porque usa variables que provee
+> systemd (`EnvironmentFile=/etc/caddy/gcp.env`). Sin eso, `caddy validate` falla en la línea del
+> `email` con `wrong argument count`, que despista:
+>
+> ```bash
+> sudo bash -c 'set -a; source /etc/caddy/gcp.env; caddy validate --config /etc/caddy/Caddyfile'
+> sudo systemctl reload caddy
+> ```
+
 ### 6.1-ter Conectividad a Bonita — las dos tools que escriben no funcionan sin esto
 
 `alm_crear_pedido_materiales` y `man_create_ot` no sólo escriben en la base: **instancian un proceso
