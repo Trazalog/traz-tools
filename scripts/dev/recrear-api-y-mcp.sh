@@ -13,6 +13,19 @@
 #   - Dry-run por defecto.
 #   - Aborta en cuanto un paso falla, en vez de seguir y dejar el estado a medias.
 #
+#  ATENCION — ESTE SCRIPT NO SIRVE PARA AGREGAR OPERACIONES NUEVAS.
+#  Reimporta la API desde el backup que el mismo acaba de exportar, o sea la
+#  definicion que YA estaba en el APIM. Si acabas de sumar tools al repo y
+#  corres esto, vuelve a quedar con las operaciones viejas.
+#  Para sumar tools el camino es otro, y no es destructivo:
+#     1. desplegar el .car nuevo en el MI
+#     2. Publisher > la API > API Definition > Update  (subir
+#        doc/api/trazalog-operaciones.yaml, que ya trae las operaciones nuevas)
+#     3. Deploy > nueva revision
+#     4. recrear el MCP Server desde la API (paso manual, ver el final)
+#  Este script es para cuando las URL mappings quedaron corruptas, no para
+#  publicar cambios.
+#
 #  USO:
 #     bash recrear-api-y-mcp.sh              # plan, no toca nada
 #     bash recrear-api-y-mcp.sh --apply
@@ -77,7 +90,7 @@ listar
 echo
 
 if [ "$APPLY" != "--apply" ]; then
-  cat <<'PLAN'
+  cat <<PLAN
 PLAN (con --apply se ejecuta):
   1. exportar backups de la API y de TODOS los MCP Servers
   2. borrar TODOS los MCP Servers
@@ -85,12 +98,12 @@ PLAN (con --apply se ejecuta):
        409 "Cannot remove the API as it is used by MCP server(s)"
   3. borrar la API            -> aborta si no se borro
   4. importar la API de cero  -> aborta si falla
-  5. desplegar revision de la API y verificar que tenga 17 operaciones
+  5. desplegar revision de la API y verificar que tenga $NESPERADAS operaciones
 
   El MCP Server NO se reimporta: el proyecto viejo tiene 8 tools sin mapping
   y el import las descarta. Hay que crearlo desde la API recien recreada
   (Publisher > MCP Servers > Create > Start from Existing API), que es el
-  unico camino que genera los 17 mappings.
+  unico camino que genera los mappings completos.
 PLAN
   exit 0
 fi
@@ -188,11 +201,11 @@ listar
 
 cat <<FIN
 
-AHORA, A MANO (es el unico camino que genera los 17 mappings):
+AHORA, A MANO (es el unico camino que genera los mappings completos):
 
   Publisher > MCP Servers > Create MCP Server > Start from Existing API
     1. elegir "$API_NAME"
-    2. seleccionar las 17 operaciones   <-- contar que sean 17
+    2. seleccionar TODAS las operaciones   <-- contar que sean $NESPERADAS
     3. Name/Context/Version a eleccion
     4. Create
     5. Deploy > Deployments > Deploy
