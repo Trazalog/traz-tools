@@ -28,6 +28,15 @@ BK="/root/mcp-backup-$STAMP"; mkdir -p "$BK"
 
 command -v apictl >/dev/null || { echo "falta apictl"; exit 2; }
 
+# cuantas operaciones DEBERIA tener: se cuenta de la OpenAPI del repo en vez de
+# dejarlo escrito a mano, que se desactualiza cada vez que se suma una tool.
+OPENAPI="${OPENAPI:-$(dirname "$0")/../../doc/api/trazalog-operaciones.yaml}"
+if [ -f "$OPENAPI" ]; then
+  NESPERADAS=$(OPENAPI="$OPENAPI" python3 -c "import os,yaml;print(len(yaml.safe_load(open(os.environ['OPENAPI']))['paths']))" 2>/dev/null)
+fi
+NESPERADAS="${NESPERADAS:-?}"
+echo "  operaciones esperadas segun la OpenAPI del repo: $NESPERADAS"
+
 REG=$(curl -s -k -X POST "https://$H:9443/client-registration/v0.17/register" -u "$U:$P" \
   -H "Content-Type: application/json" \
   -d '{"callbackUrl":"http://localhost","clientName":"recrear","owner":"'"$U"'","grantType":"client_credentials password refresh_token","saasApp":true}')
@@ -143,12 +152,12 @@ for a in json.load(sys.stdin).get('list',[]):
 [ -z "${NEWAPI:-}" ] && { echo "  la API no aparece tras el import — revisar"; exit 2; }
 echo "  apiId nuevo: $NEWAPI"
 NOPS=$(curl -s -k "$B/apis/$NEWAPI" -H "$AUTH" | python3 -c "import sys,json;print(len(json.load(sys.stdin).get('operations',[])))")
-echo "  operaciones: $NOPS  (deberian ser 17)"
+echo "  operaciones: $NOPS  (deberian ser $NESPERADAS)"
 
 echo
 echo "=== 5. desplegar revision de la API ==="
 RID=$(curl -s -k -X POST "$B/apis/$NEWAPI/revisions" -H "Content-Type: application/json" -H "$AUTH" \
-  -d '{"description":"API recreada con los 17 recursos"}' | python3 -c "import sys,json;print(json.load(sys.stdin).get('id',''))")
+  -d '{"description":"API recreada con todos los recursos de la OpenAPI"}' | python3 -c "import sys,json;print(json.load(sys.stdin).get('id',''))")
 if [ -z "${RID:-}" ]; then echo "  no se pudo crear la revision"; exit 2; fi
 GW=$(curl -s -k "https://$H:9443/api/am/admin/v4/environments" -H "$AUTH" | python3 -c "import sys,json
 l=json.load(sys.stdin).get('list',[])
