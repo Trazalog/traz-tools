@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Ver el perfil propio
 perfil: Usuario
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato

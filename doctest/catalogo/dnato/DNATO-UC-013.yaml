@@ -3,37 +3,41 @@ modulo: DNATO
 titulo: Ver la lista de usuarios de la empresa
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
-    detalle: "users() (178-223)"
-  - repo: traz-comp-dnato
-    path: application/views/usersList.php
+    detalle: "users() (178-223): arma el listado con las empresas del administrador conectado"
   - repo: traz-comp-dnato
     path: application/models/User_model.php
-    detalle: "gestMembershipsUserInfo(), getListUserDataForGroups()"
+    detalle: "gestMembershipsUserInfo(), getListUserDataForGroups(), getListUserData() (658-691)"
+  - repo: traz-comp-dnato
+    path: application/views/usersList.php
 pantallas:
-  - "Usuarios → Lista de Usuarios"
+  - "Gestión de Usuarios → Lista de Usuarios"
 precondiciones:
-  - Sesión iniciada con perfil de administrador
+  - Sesión iniciada con perfil Administrador
 flujo_principal:
   - paso: "Abre 'Lista de Usuarios'"
-    resultado: "Se muestran los usuarios de las empresas a las que pertenece el administrador, con sus acciones disponibles"
+    resultado: "Se muestra la grilla con id, Empresa, Nombre, Usuario, Último login, Nivel de Usuario, Estado y Acciones, con los usuarios de las empresas del administrador conectado"
+  - paso: "Busca un usuario por su correo"
+    resultado: "La grilla filtra y muestra solo las filas que coinciden"
 flujos_alternativos:
-  - nombre: "Usuario sin permisos de administración"
+  - nombre: "Usuario sin perfil de administración"
     pasos:
-      - paso: "Un usuario sin perfil de administrador abre la dirección de la lista de usuarios"
+      - paso: "Un usuario con perfil no administrador abre la dirección de la lista de usuarios"
         resultado: "Se lo redirige a la pantalla principal sin mostrar la lista"
   - nombre: "Sin sesión"
     pasos:
       - paso: "Abre la dirección sin haber iniciado sesión"
         resultado: "Se lo redirige a la pantalla de ingreso"
 validaciones:
-  - "El listado se limita a las empresas del administrador conectado — no muestra usuarios de otras empresas"
+  - "El listado se limita a las empresas en las que el administrador conectado tiene rol — no muestra usuarios de otras empresas"
+  - "Cada fila ofrece las acciones 'Asignar Rol' y 'Eliminar Usuario'"
 datos_prueba:
   empresa: EMPRESA_TEST_1
 dudas:
-  - "Este es el caso que verifica aislamiento entre empresas del lado de la administración de cuentas. Para probarlo hacen falta DOS empresas de test con usuarios propios; hoy solo tenemos una."
-  - "¿Qué columnas y acciones tiene que ver el administrador? Conviene fijarlo para que el test verifique la grilla y no solo que la pantalla abre."
+  - "Para probar el aislamiento hace falta un administrador que NO sea el superusuario y que tenga rol en una sola empresa. El usuario de prueba actual es el superusuario del DEMO y tiene rol en seis empresas, así que ve usuarios de todas: con esa cuenta el caso de aislamiento no se puede verificar."
+notas:
+  - "Verificado en el DEMO el 2026-08-19: la grilla trae las columnas mencionadas y el filtro por empresa funciona por las membresías del conectado, no por un campo de empresa del usuario."

@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Habilitar o inhabilitar un usuario
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato

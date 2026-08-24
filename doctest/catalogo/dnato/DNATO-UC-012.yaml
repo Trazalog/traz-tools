@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Cambiar la contraseña propia
 perfil: Usuario
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -26,14 +26,14 @@ flujo_principal:
 flujos_alternativos:
   - nombre: "Contraseña que no cumple la política"
     pasos:
-      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la fortaleza exigida"
+      - paso: "Ingresa 'doctest2026' (10 caracteres, sin mayúscula ni símbolo)"
         resultado: "Se muestra el error de validación y la contraseña no cambia"
   - nombre: "Confirmación distinta"
     pasos:
       - paso: "Ingresa una confirmación que no coincide"
         resultado: "Se muestra el error de coincidencia y la contraseña no cambia"
 validaciones:
-  - "La contraseña nueva exige al menos 10 caracteres y cumplir la regla de fortaleza"
+  - "La contraseña nueva exige 10 caracteres o más, mayúscula, minúscula, dígito y símbolo"
   - "La confirmación debe coincidir"
 datos_prueba: {}
 dudas:

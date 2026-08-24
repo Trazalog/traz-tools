@@ -3,17 +3,18 @@ modulo: DNATO
 titulo: Dar de alta la empresa y su configuración inicial
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Register.php
     detalle: "crearEmpresa() (247-285), guardarEmpresa() (459-649), postProcesarEmpresa() (851-891), crearEstablecimientoDefectoEmpresa() (892-988), crearUsuariosPorDefecto() (1002-1035)"
   - repo: traz-comp-dnato
-    path: application/views/crear_empresa_page.php
-  - repo: traz-comp-dnato
     path: application/config/constants.php
-    detalle: "REGISTRACION_USUARIOS_DEFAULT_JSON, REGISTRACION_ESTABLECIMIENTO_DEFAULT_NOMBRE, REGISTRACION_DEPOSITO_DEFAULT_NOMBRE, REGISTRACION_PASSWORD_DEFAULT"
+    detalle: "REGISTRACION_USUARIOS_DEFAULT_JSON (250-256), ESTABLECIMIENTO/DEPOSITO por defecto (266-269), REGISTRACION_PASSWORD_DEFAULT (230)"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
+    detalle: "resource POST /empresa (2-411): crea la empresa en core, en Asset, el grupo en Bonita, el perfil, y los 16 roles del catálogo con sus actores de proceso"
 pantallas:
   - "Completar Datos de Empresa"
 precondiciones:
@@ -23,7 +24,7 @@ flujo_principal:
   - paso: "Ve la pantalla de datos de la empresa con la razón social y el país que cargó al registrarse"
     resultado: "Se muestran los campos a completar: identificador tributario, provincia y localidad"
   - paso: "Selecciona provincia y localidad, ingresa el identificador tributario y confirma"
-    resultado: "Se crea la empresa con su establecimiento y depósito por defecto, los usuarios iniciales y sus roles, y se muestra la pantalla de bienvenida"
+    resultado: "Se crea la empresa con sus 16 roles de trabajo, el Establecimiento Principal con su Depósito 1, los cinco usuarios iniciales con sus roles, y se muestra la pantalla de bienvenida"
 flujos_alternativos:
   - nombre: "Correo de webmail público: hace falta el dominio de la empresa"
     pasos:
@@ -45,12 +46,15 @@ validaciones:
   - "Identificador tributario, provincia y localidad son obligatorios"
   - "La empresa no puede repetirse para el mismo país e identificador tributario"
   - "Si el correo del usuario es de un webmail público, el dominio de empresa es obligatorio y no puede ser otro webmail"
-  - "El alta crea Establecimiento Principal, Depósito 1 con encargado, y los usuarios iniciales de cada área con sus roles"
+  - "El alta crea los 16 roles de la empresa: Responsable / Solicitante de Almacén, Responsable de Producción, Responsable de Lote, Responsable de Pañol, Planificador de Tareas, Responsable de Procesos, Supervisor / Planificador / Solicitante de Mantenimiento, Mantenedor, Administrador y los cuatro roles SMA (Transportista, Generador, Operario Descarga, Operador de Bascula)"
+  - "El alta crea el Establecimiento Principal, el Depósito 1 y le asigna como encargado al usuario almacen@<dominio>"
+  - "Al usuario que dio de alta la empresa se le asigna el rol Administrador de esa empresa"
 datos_prueba:
   cuit_prefijo: "30-DOCTEST"
-  dominio_test: "doctest-empresa.com"
+  dominio_empresa_test: "doctest-empresa.com"
 dudas:
-  - "Este es el flujo más pesado de todo DNATO: escribe empresa, establecimiento, depósito, 5 usuarios y sus roles en BPM. ¿Se automatiza contra el entorno de pruebas sabiendo que deja datos, o se cubre solo hasta la validación previa al alta?"
-  - "Los usuarios iniciales (usuario@, almacen@, panol@, produccion@, mantenimiento@ del dominio de la empresa) se crean con la contraseña por defecto '12345' y la pantalla de bienvenida la muestra en pantalla. ¿Es lo esperado para un cliente real? Lo reporto como hallazgo, no lo cambio."
-  - "El identificador tributario no tiene validación de formato por país (solo 'required'). ¿Debería validarse como el teléfono?"
+  - "El identificador tributario no tiene validación de formato por país (solo es obligatorio), a diferencia del teléfono. ¿Debería validarse?"
   - "Si la reversión automática también falla, quedan datos huérfanos y el mensaje pide contactar soporte. ¿Hay un procedimiento definido para ese caso?"
+notas:
+  - "Los 16 roles no se crean en el PHP sino en la orquestación WSO2 del alta de empresa (`toolsCOREAPI`, POST /empresa), que además los mapea como actores de los procesos de Bonita. Es la fuente canónica del vocabulario de roles de Tools."
+  - "Verificado en el entorno DEMO: la empresa Conservas tiene un solo rol ('Almacen'), porque es anterior a este alta automática. Por eso el PM pidió crear una empresa de test nueva desde cero."

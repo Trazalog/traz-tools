@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Editar un usuario de la empresa
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato

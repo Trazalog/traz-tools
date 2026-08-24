@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Recuperar la contraseña olvidada
 perfil: Usuario
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -45,15 +45,16 @@ flujos_alternativos:
         resultado: "Se muestra 'El token es inválido o expiró.' y vuelve a la pantalla de ingreso"
   - nombre: "Contraseña que no cumple la política"
     pasos:
-      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la fortaleza exigida"
+      - paso: "Ingresa 'doctest2026' (10 caracteres, sin mayúscula ni símbolo)"
         resultado: "Se muestra el error de validación y la contraseña no se cambia"
 validaciones:
   - "El correo es obligatorio y con formato válido"
   - "Solo se envía el enlace si la cuenta existe y está aprobada"
-  - "La contraseña nueva exige al menos 10 caracteres, cumplir la fortaleza y coincidir con su confirmación"
+  - "El enlace de restablecimiento vence a la medianoche del día en que se generó (misma regla que la activación)"
+  - "La contraseña nueva exige 10 caracteres o más, mayúscula, minúscula, dígito y símbolo, y coincidir con su confirmación"
 datos_prueba:
   empresa: EMPRESA_TEST_1
 dudas:
-  - "El caso no se puede automatizar de punta a punta sin leer el correo. ¿Hay una casilla de prueba accesible por API, o el test cubre hasta el envío y el tramo del enlace se prueba con un token generado a mano?"
-  - "El mensaje distingue entre correo inexistente y cuenta no aprobada, lo que permite averiguar si un correo está registrado. Lo dejo como observación."
-  - "¿Cuánto dura el enlace de restablecimiento?"
+  - "El caso necesita leer el correo para seguir el enlace. Falta definir la casilla de prueba — ver §3 del RESUMEN; es el mismo bloqueo que DNATO-UC-002."
+notas:
+  - "El mensaje distingue entre 'no encontramos ese correo' y 'tu cuenta aún no está aprobada', lo que permite averiguar desde afuera si un correo está registrado (hallazgo H5)."

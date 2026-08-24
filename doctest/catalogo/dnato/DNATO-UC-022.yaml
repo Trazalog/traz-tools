@@ -1,0 +1,43 @@
+id: DNATO-UC-022
+modulo: DNATO
+titulo: Ver la lista de empresas del sistema
+perfil: Superusuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Empresa.php
+    detalle: "listarEmpresas() (20-45): solo accede quien tenga el correo definido en TOOLS_ADMIN_USER"
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "TOOLS_ADMIN_USER (105): define quién es el superusuario, por ambiente"
+  - repo: traz-comp-dnato
+    path: application/views/empresas/list.php
+  - repo: traz-comp-dnato
+    path: application/models/Empresas.php
+    detalle: "listarEmpresas()"
+pantallas:
+  - "Gestión de Empresas → Lista de Empresas"
+precondiciones:
+  - Sesión iniciada con el usuario superusuario del ambiente
+flujo_principal:
+  - paso: "Abre 'Lista de Empresas'"
+    resultado: "Se muestra el listado de todas las empresas del sistema"
+flujos_alternativos:
+  - nombre: "Administrador común"
+    pasos:
+      - paso: "Un administrador que no es el superusuario abre la dirección de la lista de empresas"
+        resultado: "Se lo redirige a la pantalla principal sin mostrar la lista"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Abre la dirección sin haber iniciado sesión"
+        resultado: "Se lo redirige a la pantalla de ingreso"
+validaciones:
+  - "El menú 'Gestión de Empresas' solo aparece para el superusuario del ambiente"
+datos_prueba: {}
+dudas:
+  - "El superusuario se define por una **constante con un correo concreto** (`TOOLS_ADMIN_USER`), distinta en cada ambiente y no como un perfil de la base. En el DEMO ese correo es el del usuario de prueba que me pasaste, así que hoy 'superusuario' y 'usuario de test' son la misma cuenta (hallazgo H3). ¿Se deja así, o el superusuario pasa a ser un perfil como los demás?"
+  - "¿Qué columnas tiene que mostrar el listado? La vista existe pero conviene fijarlo para que el test verifique contenido."
+notas:
+  - "Alcance confirmado por el PM el 2026-08-19: el ABM de Empresas entra en la Ola 1, con el perfil de DNATO correcto."

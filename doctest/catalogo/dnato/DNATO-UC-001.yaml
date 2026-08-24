@@ -3,18 +3,20 @@ modulo: DNATO
 titulo: Registrar una empresa nueva (paso 1 - datos de contacto)
 perfil: Visitante
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
-    detalle: "register() (líneas 1138-1237) y procesarRegistro() (1642-1793)"
+    detalle: "register() (1138-1237) y procesarRegistro() (1642-1793)"
   - repo: traz-comp-dnato
     path: application/views/register.php
-    detalle: "formulario público de registración"
   - repo: traz-comp-dnato
     path: application/models/User_model.php
     detalle: "isDuplicate(), existeRazonSocial(), validarTelefonoPorPais(), obtenerPaisesRegistracion()"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
+    detalle: "resource POST /usuario/registro (líneas 629-745): verifica duplicado, inserta el usuario y guarda el token de activación"
 pantallas:
   - "Login → 'No esta registrado? Registrese por favor'"
   - "Registro Nuevo Usuario"
@@ -26,7 +28,7 @@ flujo_principal:
   - paso: "Desde la pantalla de ingreso hace clic en 'Registrese por favor'"
     resultado: "Se abre el formulario de registro con la lista de países disponibles"
   - paso: "Completa Nombre, Apellido, Correo electrónico, Razón Social de la Empresa, Teléfono y País, y confirma"
-    resultado: "Se crea la cuenta sin contraseña, se muestra 'Registro exitoso! Revise su email para activar su cuenta.' y llega un correo con el enlace de activación"
+    resultado: "Se crea la cuenta sin contraseña y con perfil Administrador, se muestra 'Registro exitoso! Revise su email para activar su cuenta.' y llega el correo 'Activar cuenta en Trazalog.com' con el enlace de activación"
 flujos_alternativos:
   - nombre: "Correo ya registrado"
     pasos:
@@ -49,13 +51,13 @@ validaciones:
   - "El correo debe tener formato válido y no puede estar registrado"
   - "La razón social no puede repetirse dentro del mismo país"
   - "El teléfono se valida según el país elegido"
-  - "Si la configuración del sitio tiene reCAPTCHA activo, se exige superarlo"
+  - "Quien se auto-registra queda con perfil Administrador de su empresa"
 datos_prueba:
-  empresa: EMPRESA_TEST_1
   email_prefijo: "doctest+reg-"
   razon_social_prefijo: "DOCTEST SA "
+  nota_recaptcha: "reCAPTCHA está desactivado en el entorno de pruebas (decisión del PM, 2026-08-19): el flujo es automatizable de punta a punta"
 dudas:
-  - "¿Cómo se prueba este flujo sin ensuciar el entorno? Cada registro exitoso crea una empresa, usuarios en BPM y un establecimiento; hoy no hay forma automática de darlos de baja. ¿Se prueba solo el camino de errores y el camino feliz queda manual, o se habilita un mecanismo de limpieza?"
-  - "El usuario que se auto-registra queda con rol de Administrador de su empresa (roles[1]='1'). ¿'Administrador' es el nombre del perfil que querés en el catálogo?"
-  - "¿reCAPTCHA está activo en el entorno de pruebas? Si lo está, el flujo no es automatizable end-to-end sin una clave de test."
-  - "Si el envío del mail falla, el usuario queda creado igual y el enlace de activación solo queda en el log. ¿Es el comportamiento buscado o debería reintentarse desde la pantalla?"
+  - "El correo de la persona que se registra tiene que llegar a una casilla que el test pueda leer, porque el enlace de activación (DNATO-UC-002) solo llega por mail. Falta definir esa casilla — ver §3 del RESUMEN."
+  - "Si el envío del mail falla, el usuario queda creado igual y el enlace solo queda en el log del servidor. ¿Es el comportamiento buscado o debería poder reenviarse desde la pantalla?"
+notas:
+  - "Decisión del PM (2026-08-19): la automatización va contra una empresa de test descartable y se acepta la basura acumulada, con re-seed periódico. Queda pendiente construir un procedimiento de limpieza."

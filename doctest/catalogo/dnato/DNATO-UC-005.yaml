@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Ver la pantalla de bienvenida con los usuarios iniciales
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -11,23 +11,28 @@ referencias_codigo:
     detalle: "registro_completo() (800-824) y listaUsuariosDefaultParaBienvenida() (825-850)"
   - repo: traz-comp-dnato
     path: application/views/bienvenida_page.php
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "REGISTRACION_USUARIOS_DEFAULT_JSON (250-256)"
 pantallas:
   - "Registro Completado"
 precondiciones:
   - La empresa fue creada correctamente (DNATO-UC-004)
 flujo_principal:
   - paso: "Termina el alta de la empresa"
-    resultado: "Se muestra la pantalla de bienvenida con la lista de usuarios iniciales de la empresa, sus roles y la contraseña con la que fueron creados"
+    resultado: "Se muestra la bienvenida con los cinco usuarios iniciales de la empresa —usuario, almacen, panol, produccion y mantenimiento, en el dominio de la empresa— con los roles de cada uno y la contraseña con la que fueron creados"
   - paso: "Hace clic en 'Ir a iniciar sesión'"
-    resultado: "Se cierra la sesión del registro y se muestra la pantalla de ingreso, donde ya puede elegir su empresa"
+    resultado: "Se cierra la sesión del registro y se muestra la pantalla de ingreso, donde ya puede entrar con su empresa"
 flujos_alternativos:
   - nombre: "El alta terminó con advertencias"
     pasos:
       - paso: "Llega a la bienvenida cuando alguna parte de la configuración inicial dejó advertencias"
         resultado: "Se muestran las advertencias junto con la lista de usuarios"
 validaciones:
-  - "La sesión del registro se cierra al llegar a esta pantalla, para que el ingreso siguiente sea con selección de empresa"
+  - "Los usuarios iniciales son cinco: usuario (Solicitante de Almacén y de Mantenimiento), almacen (Responsable de Almacén), panol (Responsable de Pañol), produccion (Responsable de Producción) y mantenimiento (Supervisor y Planificador de Mantenimiento)"
+  - "La sesión del registro se cierra al llegar a esta pantalla"
 datos_prueba: {}
 dudas:
-  - "¿La pantalla debe seguir mostrando la contraseña inicial de los usuarios? Es el mismo hallazgo que DNATO-UC-004 y afecta a qué se puede capturar en las pruebas (los reportes de Playwright guardan capturas)."
-  - "¿Se espera que el administrador cambie esas contraseñas antes de operar? Si es así, no encontré dónde se le exige."
+  - "¿La pantalla debe seguir mostrando la contraseña inicial de los usuarios? Es el hallazgo H1: afecta también a qué queda guardado en las capturas de los reportes de Playwright."
+notas:
+  - "Las capturas de pantalla de esta página van a contener la contraseña inicial mientras el diseño no cambie. Los reportes son artifacts privados con retención de 30 días (Doc 3 §8.4)."

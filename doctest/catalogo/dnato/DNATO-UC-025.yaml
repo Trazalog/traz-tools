@@ -1,0 +1,47 @@
+id: DNATO-UC-025
+modulo: DNATO
+titulo: Asignar opciones de menú a un rol de una empresa
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Menu.php
+    detalle: "rolesList() (313-356), addMenuRoles() (98-157), activeMenuRole() (224-245), deleteMenuRole() (272-293)"
+  - repo: traz-comp-dnato
+    path: application/models/Mmenu.php
+    detalle: "addMenuRoles(), updateMembershipsMenues(), getMenuesRoles(): tabla seg.memberships_menues"
+  - repo: traz-comp-dnato
+    path: application/views/menu/rolesList.php
+pantallas:
+  - "Gestión de Menúes → Menu por Rol"
+  - "Opción de Menú por Rol"
+precondiciones:
+  - Sesión iniciada con perfil Administrador
+  - La empresa tiene creados sus roles de trabajo (DNATO-UC-004)
+flujo_principal:
+  - paso: "Abre 'Menu por Rol'"
+    resultado: "Se muestra la grilla con Grupo, Módulo, Opciones, Roles, Estado y Acciones"
+  - paso: "Elige la empresa, el rol, el módulo y la opción de menú, y confirma"
+    resultado: "Se muestra 'Guardado correctamente el registro.' y esa opción pasa a estar disponible para los usuarios con ese rol en esa empresa"
+flujos_alternativos:
+  - nombre: "Activar o desactivar la asignación"
+    pasos:
+      - paso: "Cambia el estado de una asignación existente"
+        resultado: "La opción deja de verse (o vuelve a verse) para los usuarios con ese rol"
+  - nombre: "No se puede guardar"
+    pasos:
+      - paso: "Confirma cuando la operación falla"
+        resultado: "Se muestra 'Error, no se puede guardar el registro'"
+validaciones:
+  - "La asignación es por empresa y rol: dos empresas pueden dar acceso a opciones distintas para el mismo rol"
+  - "Es la pieza que conecta los roles de trabajo creados con la empresa (DNATO-UC-004) con lo que cada usuario ve en el menú de Tools"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  rol: "Solicitante de Mantenimiento"
+dudas:
+  - "Cuando se crea una empresa nueva con sus 16 roles, ¿los menúes quedan asignados automáticamente o hay que asignarlos a mano en esta pantalla? Es determinante: si es a mano, una empresa recién creada no ve ningún menú y el flujo de alta (DNATO-UC-004) estaría incompleto de cara al usuario."
+  - "¿Un administrador de una empresa puede asignar menúes a roles de OTRA empresa? El combo de empresas se arma con todos los grupos de Bonita."
+notas:
+  - "Alcance confirmado por el PM el 2026-08-19."

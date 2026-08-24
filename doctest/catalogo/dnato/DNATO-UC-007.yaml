@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Cerrar sesión
 perfil: Usuario
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -26,4 +26,4 @@ validaciones:
   - "Después de salir, ninguna pantalla interna queda accesible sin volver a iniciar sesión"
 datos_prueba: {}
 dudas:
-  - "¿A qué pantalla debería volver el usuario al salir? El destino sale de una constante de configuración (DS) y puede diferir entre entornos."
+  - "El destino al salir sale de la constante `DS` del `constants.php` de cada ambiente (en el repo apunta al entorno de desarrollo). ¿El test verifica que vuelve a la pantalla de ingreso del ambiente bajo prueba, sin fijar una URL concreta?"
