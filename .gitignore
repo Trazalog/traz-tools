@@ -40,3 +40,6 @@ deploy/gcp/.env
 # PDF generado — no versionar (se regenera con scripts/dev/manual-a-pdf.sh)
 doc/manuales/*.pdf
 doc/manuales/*.html
+
+# Paquete suelto de documentos que ya están versionados como .md — no aporta al repo
+doc/v3/files.zip
