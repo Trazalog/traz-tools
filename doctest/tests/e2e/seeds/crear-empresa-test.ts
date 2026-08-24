@@ -39,6 +39,13 @@ cargarEnv({ path: resolve(HERE, '..', '..', '..', '.env'), quiet: true });
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const HEADED = process.argv.includes('--headed');
+/** Solo el paso 1: registra y sale, para que el mail de activación llegue mientras tanto. */
+const SOLO_REGISTRO = process.argv.includes('--solo-registro');
+/** Retoma desde el enlace de activación: `--desde-enlace <url>`. Sirve cuando el enlace se copia a mano. */
+const DESDE_ENLACE = (() => {
+  const i = process.argv.indexOf('--desde-enlace');
+  return i >= 0 ? process.argv[i + 1] : undefined;
+})();
 
 /** Datos del alta. Todo configurable por entorno para no hardcodear nada. */
 const DATOS = {
@@ -46,7 +53,8 @@ const DATOS = {
   email: process.env.DOCTEST_SEED_EMAIL ?? '',
   nombre: process.env.DOCTEST_SEED_NOMBRE ?? 'DocTest',
   apellido: process.env.DOCTEST_SEED_APELLIDO ?? 'Automatizado',
-  telefono: process.env.DOCTEST_SEED_TELEFONO ?? '+54 9 2645 123456',
+  // El teléfono se valida por país: Argentina exige /^\+?54\s?9?\d{4}\s?\d{6}$/
+  telefono: process.env.DOCTEST_SEED_TELEFONO ?? '+54 92645123456',
   pais: process.env.DOCTEST_SEED_PAIS ?? 'Argentina',
   razonSocial: process.env.DOCTEST_SEED_RAZON_SOCIAL ?? 'DocTest Empresa SA',
   password: process.env.DOCTEST_SEED_PASSWORD ?? '',
@@ -160,7 +168,14 @@ async function registrarse(page: Page, urlDnato: string): Promise<void> {
   await page.fill('input[name="email"]', DATOS.email);
   await page.fill('input[name="reg_razon_social"]', DATOS.razonSocial);
   await page.fill('input[name="telefono"]', DATOS.telefono);
-  await page.selectOption('select[name="reg_pais_id"]', { label: DATOS.pais });
+  // El texto de la opción trae la bandera y espacios ("🇦🇷 Argentina"), así que se busca por contenido.
+  const opcionPais = await page
+    .locator('select[name="reg_pais_id"] option')
+    .filter({ hasText: new RegExp(DATOS.pais, 'i') })
+    .first()
+    .getAttribute('value');
+  if (!opcionPais) abortar(`El país "${DATOS.pais}" no está en la lista del formulario de registro.`);
+  await page.selectOption('select[name="reg_pais_id"]', opcionPais);
   await page.click('button[type="submit"], input[type="submit"]');
   await page.waitForLoadState('networkidle');
   const texto = await page.locator('body').innerText();
@@ -221,6 +236,7 @@ async function main(): Promise<void> {
   console.log('  registra  :', DATOS.email);
   console.log('  empresa   :', DATOS.razonSocial, '| CUIT', DATOS.cuit, '|', DATOS.provincia);
   console.log('  dominio   :', DATOS.dominioEmpresa, '(solo se usa si el correo es de webmail)');
+  console.log('  modo      :', DESDE_ENLACE ? 'retomar desde el enlace de activación' : SOLO_REGISTRO ? 'solo el paso 1 (registro)' : 'completo');
   if (DRY_RUN) {
     console.log('\n(--dry-run: no se ejecuta nada)\n');
     return;
@@ -229,8 +245,15 @@ async function main(): Promise<void> {
   const browser = await chromium.launch({ headless: !HEADED });
   const page = await browser.newPage({ ignoreHTTPSErrors: true, locale: 'es-AR' });
   try {
-    await registrarse(page, urlDnato);
-    const enlace = await obtenerEnlaceActivacion();
+    if (!DESDE_ENLACE) {
+      await registrarse(page, urlDnato);
+      if (SOLO_REGISTRO) {
+        console.log('\n→ Paso 1 hecho. Cuando llegue el mail de activación, seguí con:');
+        console.log('   npm run seed:empresa -- --desde-enlace "<url del botón Activar mi cuenta>"\n');
+        return;
+      }
+    }
+    const enlace = DESDE_ENLACE ?? (await obtenerEnlaceActivacion());
     await activar(page, enlace);
     await completarFormulario(page);
     await crearEmpresa(page);
