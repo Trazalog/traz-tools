@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Dar de alta la empresa y su configuración inicial
 perfil: Administrador
 estado: borrador
-version: "0.2"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -15,6 +15,9 @@ referencias_codigo:
   - repo: traz-tools
     path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
     detalle: "resource POST /empresa (2-411): crea la empresa en core, en Asset, el grupo en Bonita, el perfil, y los 16 roles del catálogo con sus actores de proceso"
+  - repo: traz-tools
+    path: _backend/database/scripts/versiones/v2.8.1.2/configuracion_inicial_empresa_trg_func.sql
+    detalle: "trigger core.configuracion_inicial_empresa_trg(): asigna los menúes iniciales por rol, da acceso al superadmin y crea las listas de valores por defecto de la empresa"
 pantallas:
   - "Completar Datos de Empresa"
 precondiciones:
@@ -49,6 +52,7 @@ validaciones:
   - "El alta crea los 16 roles de la empresa: Responsable / Solicitante de Almacén, Responsable de Producción, Responsable de Lote, Responsable de Pañol, Planificador de Tareas, Responsable de Procesos, Supervisor / Planificador / Solicitante de Mantenimiento, Mantenedor, Administrador y los cuatro roles SMA (Transportista, Generador, Operario Descarga, Operador de Bascula)"
   - "El alta crea el Establecimiento Principal, el Depósito 1 y le asigna como encargado al usuario almacen@<dominio>"
   - "Al usuario que dio de alta la empresa se le asigna el rol Administrador de esa empresa"
+  - "La empresa nueva queda con sus menúes iniciales asignados por rol, con el superusuario habilitado como administrador, y con las listas de valores por defecto (sectores, tipos de artículo, tipos de transportista y unidades de medida)"
 datos_prueba:
   cuit_prefijo: "30-DOCTEST"
   dominio_empresa_test: "doctest-empresa.com"
@@ -56,5 +60,6 @@ dudas:
   - "El identificador tributario no tiene validación de formato por país (solo es obligatorio), a diferencia del teléfono. ¿Debería validarse?"
   - "Si la reversión automática también falla, quedan datos huérfanos y el mensaje pide contactar soporte. ¿Hay un procedimiento definido para ese caso?"
 notas:
+  - "La configuración inicial se reparte en dos lugares: la orquestación WSO2 crea empresa, grupo y roles; y el trigger de base `core.configuracion_inicial_empresa_trg()` asigna menúes, habilita al superadmin y carga las listas de valores. Quien toque uno tiene que mirar el otro — de esa separación salen los hallazgos H-012 y H-013."
   - "Los 16 roles no se crean en el PHP sino en la orquestación WSO2 del alta de empresa (`toolsCOREAPI`, POST /empresa), que además los mapea como actores de los procesos de Bonita. Es la fuente canónica del vocabulario de roles de Tools."
   - "Verificado en el entorno DEMO: la empresa Conservas tiene un solo rol ('Almacen'), porque es anterior a este alta automática. Por eso el PM pidió crear una empresa de test nueva desde cero."

@@ -59,17 +59,28 @@ Fuera de alcance por ahora: **Carga Masiva** (`Bulkload.php`) — no es registra
 | 3 | **La empresa de test se crea de cero**, no se usa Conservas: sus datos en Asset Planner no están bien creados. Verificado: Conservas tiene **un solo rol de trabajo** ("Almacen") porque es anterior al alta automática de 16 roles |
 | 4 | **reCAPTCHA no se usa** en el entorno de pruebas: el registro y la recuperación son automatizables de punta a punta |
 | 5 | **v3 cambia el login**: se elimina el desplegable de empresas. Se validan las credenciales y, si el usuario tiene más de una empresa, se le muestra un selector; si tiene una sola, entra directo. Aplica a las dos pantallas (web y OAuth), y resuelve la contradicción entre ellas |
-| 6 | **La eliminación de usuarios se esperaba lógica** — el código hace borrado físico (ver H2): decisión pendiente |
+| 6 | **La eliminación de usuarios se esperaba lógica** — el código hace borrado físico (H-002): decisión pendiente, issue #451 |
+| 7 | **Los menúes se asignan solos** al crear la empresa (trigger `core.configuracion_inicial_empresa_trg()`); la pantalla "Menu por Rol" es el ajuste posterior. Verificado en el script del trigger |
+| 8 | **Los hallazgos van a un registro central**: `doc/hallazgos/REGISTRO.md`. Los bugs además abren issue con label `hallazgo` |
 
 ## 4. Lo que falta para cerrar la fase
 
 ### 4.1 Bloqueantes
 
 1. **Casilla de correo de prueba.** Dos casos dependen de leer un mail (activación, UC-002; recuperación, UC-008) y sin eso tampoco puedo crear la empresa de test de cero, porque el alta pasa por el enlace de activación. **Mi recomendación: una casilla de Gmail dedicada** (por ejemplo `doctest.trazalog@gmail.com`) con IMAP habilitado y contraseña de aplicación. El motivo no es la comodidad: al ser un webmail público, el alta **obliga** a tipear el dominio corporativo de la empresa, así que los cinco usuarios iniciales quedan en un dominio inventado (`doctest-empresa.com`) y **no** en `trazalog.com`, donde chocarían con direcciones reales de ustedes. Si preferís una casilla del servidor propio, hay que elegir un dominio que no se use (por ejemplo `doctest.trazalog.com`).
-2. **Un administrador de prueba que no sea el superusuario.** El usuario que me pasaste es **el superusuario del DEMO** (ve "Gestión de Empresas") y tiene roles en seis empresas, así que ve usuarios de todas: con esa cuenta el caso de aislamiento (UC-013) no prueba nada. Con la empresa de test nueva queda resuelto: su administrador sirve.
+2. **El usuario de prueba nuevo todavía no puede entrar.** `admin@doctest-empresa.com` no supera la validación de credenciales en el DEMO (verificado por dos caminos, ver §4.2), y no hay ninguna empresa cuyo nombre contenga "doctest" entre las 32 del sistema. Hasta que eso se resuelva, el caso de aislamiento (UC-013) sigue sin poder probarse: el usuario anterior era **el superusuario del DEMO** y tenía roles en seis empresas.
 3. **Nombres de los perfiles (UC-019).** Vos los describís como *Administrador* y *Usuario*; la tabla `seg.roles` del DEMO dice **`Admin`** y **`Author`**. ¿Renombramos los datos, o el catálogo y las ayudas adoptan lo que el usuario ve hoy?
 
-### 4.2 Dudas funcionales que quedan abiertas
+### 4.2 Diagnóstico del usuario de prueba nuevo (2026-08-24)
+
+`admin@doctest-empresa.com` / la contraseña provista **no entra** en el DEMO. Verificado por dos caminos independientes, ninguno con efectos sobre los datos:
+
+1. **Login web**: no aparece ninguna empresa con "doctest" entre las 32 del combo, y con las tres candidatas (`ClientesTrazalog`, `Empresa_de_Prueba_2`, `Prueba 1`) el sistema responde *"El usuario no corresponde a la empresa seleccionada"* — mensaje que sale **antes** de validar la contraseña.
+2. **Login OAuth** (`/oauth/login`, que no pide empresa y resuelve la membresía sola): responde *"Correo o contraseña incorrectos"*. Como control, el mismo camino con el usuario anterior sí emite el código de autorización, así que la mecánica de la prueba es correcta.
+
+Las tres explicaciones posibles, en orden de probabilidad: la cuenta se creó pero **nunca se activó** (queda sin contraseña, y `checkLogin` falla igual que con una contraseña equivocada); la empresa se creó en `core.empresas` pero **sin el grupo en Bonita**, que es de donde sale el combo; o la contraseña es otra.
+
+### 4.3 Dudas funcionales que quedan abiertas
 
 | Caso | Duda |
 |---|---|
@@ -81,21 +92,20 @@ Fuera de alcance por ahora: **Carga Masiva** (`Bulkload.php`) — no es registra
 | UC-025 | Cuando se crea una empresa con sus 16 roles, **¿los menúes se asignan solos o hay que asignarlos a mano?** Si es a mano, una empresa recién creada no ve ningún menú y el alta queda incompleta de cara al usuario |
 | UC-021 / UC-024 | Tanto la configuración del sitio como las opciones de menú son **globales del sistema**: cualquier administrador de cualquier empresa las cambia para todos. ¿Debería restringirse al superusuario? |
 
-## 5. Hallazgos (documento, no corrijo)
+## 5. Hallazgos
 
-| # | Hallazgo | Evidencia |
+Ya no viven acá: se mudaron al **registro central** [`doc/hallazgos/REGISTRO.md`](../../../doc/hallazgos/REGISTRO.md), que es el lugar único para bugs, deudas y mejoras de todo el proyecto. Los que salieron de este relevamiento son **H-001 a H-014**.
+
+Con issue abierto (los cuatro bugs más pesados):
+
+| Hallazgo | Issue | Qué es |
 |---|---|---|
-| H1 | Los cinco usuarios iniciales de cada empresa nacen con contraseña **`12345`**, y la pantalla de bienvenida la muestra en pantalla | `constants.php:230`, `Register::registro_completo()` |
-| H2 | 🔴 **El borrado de usuarios es físico, no lógico**: `DELETE` sobre `seg.users_business` y después sobre `seg.users`. Además no da de baja al usuario en Bonita ni en Asset, así que queda huérfano ahí | `User_model.php:770-795`, `Main.php:693-741` |
-| H3 | El **superusuario se define por un correo hardcodeado** en `constants.php`, distinto en cada ambiente. En el DEMO ese correo es el del usuario de prueba | `constants.php:105`, `Empresa.php:34,56` |
-| H4 | El combo de empresas del login lista **todas** las empresas del sistema a cualquiera que abra la pantalla, sin sesión. Lo resuelve el cambio de v3 (decisión 5) | `Main.php:1362-1400` |
-| H5 | Los mensajes de login y recuperación **distinguen** entre "no existe el correo", "no pertenece a la empresa" y "cuenta no aprobada": permiten averiguar desde afuera si un correo está registrado | `Main.php:1412, 1505-1512` |
-| H6 | **Código muerto**: `Main::associaterol()` carga una vista `membership` que no existe en el repo; `changelevel.php`, `changeleveluser_old.php`, `changeuser_old` y `banuser_old` son pantallas anteriores ya sin enlace en el menú | `Main.php:1012-1030` y `application/views/` |
-| H7 | **Editar un usuario obliga a reescribir su contraseña**: `edituser()` marca contraseña y confirmación como obligatorias igual que el alta | `Main.php:742-771` |
-| H8 | `edituser()` y `deleteuser()` **no verifican** que el usuario objetivo pertenezca a una empresa del administrador | `Main.php:693-771` |
-| H9 | El mensaje de error de habilitar/inhabilitar dice **"Error al borrar usuario"** — texto copiado de otra pantalla | `Main.php:500-554` |
-| H10 | Cambiar la contraseña propia **no pide la contraseña actual** y, a diferencia de la activación, **no se propaga** a Bonita ni a Asset: la contraseña queda distinta entre sistemas | `Main.php:555-610` |
-| H11 | El vencimiento de los enlaces de activación y recuperación compara la **fecha** de creación contra la de hoy: valen hasta la medianoche del día en que se generaron. Si la columna `seg.tokens.created` guardara hora, ningún enlace validaría nunca | `User_model.php:111-135` |
+| H-002 🔴 | [#451](https://github.com/Trazalog/traz-tools/issues/451) | La eliminación de usuarios es **física**, no lógica, y no da de baja en Bonita ni Asset |
+| H-012 🔴 | [#452](https://github.com/Trazalog/traz-tools/issues/452) | El rol **Responsable de Procesos nunca ve su menú**: el trigger lo escribe sin "de" |
+| H-008 🔴 | [#453](https://github.com/Trazalog/traz-tools/issues/453) | `edituser`/`deleteuser` **no verifican** que el usuario sea de una empresa del administrador |
+| H-001 🔴 | [#454](https://github.com/Trazalog/traz-tools/issues/454) | Los usuarios iniciales nacen con contraseña `12345`, mostrada en pantalla |
+
+Los otros diez (H-003 a H-007, H-009 a H-011, H-013, H-014) quedan en el registro esperando tu triaje.
 
 ## 6. Detalle técnico que sirve para las fixtures
 

@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Asignar opciones de menú a un rol de una empresa
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -14,6 +14,9 @@ referencias_codigo:
     detalle: "addMenuRoles(), updateMembershipsMenues(), getMenuesRoles(): tabla seg.memberships_menues"
   - repo: traz-comp-dnato
     path: application/views/menu/rolesList.php
+  - repo: traz-tools
+    path: _backend/database/scripts/versiones/v2.8.1.2/configuracion_inicial_empresa_trg_func.sql
+    detalle: "trigger core.configuracion_inicial_empresa_trg(): al crear la empresa inserta solo las asignaciones de menú de 8 roles en seg.memberships_menues (líneas 33-44)"
 pantallas:
   - "Gestión de Menúes → Menu por Rol"
   - "Opción de Menú por Rol"
@@ -22,7 +25,7 @@ precondiciones:
   - La empresa tiene creados sus roles de trabajo (DNATO-UC-004)
 flujo_principal:
   - paso: "Abre 'Menu por Rol'"
-    resultado: "Se muestra la grilla con Grupo, Módulo, Opciones, Roles, Estado y Acciones"
+    resultado: "Se muestra la grilla con Grupo, Módulo, Opciones, Roles, Estado y Acciones, y una empresa recién creada ya trae sus asignaciones iniciales"
   - paso: "Elige la empresa, el rol, el módulo y la opción de menú, y confirma"
     resultado: "Se muestra 'Guardado correctamente el registro.' y esa opción pasa a estar disponible para los usuarios con ese rol en esa empresa"
 flujos_alternativos:
@@ -37,11 +40,14 @@ flujos_alternativos:
 validaciones:
   - "La asignación es por empresa y rol: dos empresas pueden dar acceso a opciones distintas para el mismo rol"
   - "Es la pieza que conecta los roles de trabajo creados con la empresa (DNATO-UC-004) con lo que cada usuario ve en el menú de Tools"
+  - "Las asignaciones iniciales de una empresa nueva se crean solas al darla de alta; esta pantalla sirve para ajustarlas después"
 datos_prueba:
   empresa: EMPRESA_TEST_1
   rol: "Solicitante de Mantenimiento"
 dudas:
-  - "Cuando se crea una empresa nueva con sus 16 roles, ¿los menúes quedan asignados automáticamente o hay que asignarlos a mano en esta pantalla? Es determinante: si es a mano, una empresa recién creada no ve ningún menú y el flujo de alta (DNATO-UC-004) estaría incompleto de cara al usuario."
   - "¿Un administrador de una empresa puede asignar menúes a roles de OTRA empresa? El combo de empresas se arma con todos los grupos de Bonita."
+  - "Los ocho roles que hoy NO reciben menú automático (los cuatro de Mantenimiento y los cuatro de SMA) ¿tienen que recibirlo? Ver hallazgo H-013 — para Mantenimiento puede ser correcto porque vive en Asset Planner, pero SMA es un módulo de Tools."
 notas:
   - "Alcance confirmado por el PM el 2026-08-19."
+  - "Los menúes se asignan solos: el trigger `core.configuracion_inicial_empresa_trg()` inserta las filas de `seg.memberships_menues` al crear la empresa (confirmado por el PM el 2026-08-24). Esta pantalla es el ajuste posterior."
+  - "Ojo al escribir el test: el trigger asigna menúes a **8** de los 16 roles, y uno de esos ocho está escrito con un nombre que no existe (`Responsable Procesos` en vez de `Responsable de Procesos`) — hallazgos H-012 y H-013."
