@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Validacion end-to-end de las 17 tools MCP por el camino REAL:
+Validacion end-to-end de las tools MCP por el camino REAL:
 
     cliente -> Caddy (443) -> APIM gateway (8243) -> MI (8290) -> base / Bonita
 
@@ -40,6 +40,10 @@ ARGS_FIJOS = {
     "man_get_kpi_mttr":           {"fec_inicio": "2024-01-01", "fec_fin": "2026-07-31"},
     "man_get_kpi_mttf":           {"fec_inicio": "2024-01-01", "fec_fin": "2026-07-31"},
     "man_get_kpi_fallas":         {"fec_inicio": "2024-01-01", "fec_fin": "2026-07-31"},
+    # sin rango, movimientos y entregas devuelven el historico completo del
+    # almacen: se acota para que la validacion no dependa del volumen
+    "alm_get_movimientos":        {"desde": "2024-01-01", "hasta": "2026-12-31"},
+    "alm_get_entregas":           {"desde": "2024-01-01", "hasta": "2026-12-31"},
 }
 ESCRITURAS = {"alm_crear_pedido_materiales", "man_create_ot"}
 
