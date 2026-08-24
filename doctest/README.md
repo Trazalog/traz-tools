@@ -58,6 +58,7 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run generators:dry-run` | Corrida en seco de los generadores (lo mismo que corre el CI) |
 | `npm run typecheck` | `tsc --noEmit` sobre generators y tests |
 | `npm run hurl:install` | Instala Hurl sin sudo |
+| `npm run seed:empresa` | **Crea la empresa de test desde cero**, recorriendo el registro real (agregá `-- --dry-run` para ver los datos sin ejecutar, o `-- --headed` para mirarlo). Escribe datos reales: se corre pocas veces |
 
 ### Entornos
 
