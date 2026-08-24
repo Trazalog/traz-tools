@@ -332,6 +332,34 @@ Con el conector configurado, escribir en el chat las preguntas de cada escenario
 
 ## 5. Hallazgos abiertos
 
+### 5.0 El DDL versionado de `movimientos_historicos_vw` no refleja la vista real 🟡
+
+`application/modules/traz-comp-almacenes/_backend/database/scripts/versiones/v1.5 tools/movimientos historicos view.sql`
+quedó atrás respecto de la vista que está en las bases. Verificado el 2026-08-24 contra
+desarrollo, difiere en tres puntos:
+
+| | El script dice | La base tiene |
+|---|---|---|
+| `empr_id` | no existe | existe, y **todo el aislamiento depende de él** |
+| Nombres de `tipo_mov` | `MOV. SALIDA`, `INGRESO PRODUCTO`, … | `MOV.SALIDA`, `INGRESOPRODUCTO`, `ETAPAPRODINGRESO`, `ETAPAPRODEGRESO` |
+| Rama `MOV. SALIDA` | une por `lote_id_destino` | usa el lote de **origen** |
+
+**Por qué importa:** `getHistoricoMovimientos` filtra por `mh.empr_id` y `alm_get_movimientos` le
+pasa el de la empresa del token. Si alguien ejecuta ese archivo para "restaurar" la vista, la
+columna desaparece, la query falla — o peor, si se la adapta sin el filtro, cada empresa pasa a
+ver los movimientos de todas (ADR-012).
+
+El tercer punto era una sospecha de bug que **no se confirmó**: la vista desplegada está bien. El
+traslado 50 (DEPO_RNS_TEST_1 → Playa) reporta `DEPO_RNS_TEST_1` en la pata `MOV.SALIDA` y `Playa`
+en la `MOV.ENTRADA`, que es lo correcto. El error está solo en el archivo.
+
+**Estado:** se agregó una advertencia en la cabecera del `.sql`, donde la va a leer quien lo abra
+para ejecutarlo. **El cambio está sin commitear**: `traz-comp-almacenes` es un submódulo (otro
+repo) y además está en HEAD detached. Requiere decidir rama y PR en ese repo.
+
+**Lo que hay que hacer:** exportar el DDL vigente (`\d+ alm.movimientos_historicos_vw` en psql) y
+versionarlo, en vez de mantener a mano una copia que ya divergió.
+
 ### 5.1 Mojibake en las descripciones de equipos 🟡
 
 `man_get_equipos` devuelve `"Bomba centrÃ­fuga"` en vez de `"Bomba centrífuga"` para 3 de los 88
