@@ -165,8 +165,9 @@ cero → despliega su revisión → verifica el conteo de operaciones.
 > El script **aborta** si un paso falla, en vez de dejar el estado a medias. Backups en
 > `/root/mcp-backup-<fecha>`; se vuelve atrás con `apictl import api -f <zip> -e prod`.
 
-Al terminar tiene que decir **17 operaciones** (o las que correspondan) y **revisión desplegada con
-17 recursos**.
+Al terminar, el conteo de operaciones y el de la revisión desplegada tienen que coincidir con el
+número que el propio script imprime al arrancar (lo cuenta de `doc/api/trazalog-operaciones.yaml`).
+Si la revisión quedó con menos, es el síntoma de mappings incompletos de la sección 7.
 
 ### B.3 Qué confirmar
 
