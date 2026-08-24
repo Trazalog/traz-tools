@@ -827,18 +827,21 @@ paths:
           in: query
           required: false
           description: |
-            Filtra por tipo de movimiento. Valores exactos (respetar el punto y
-            el espacio):
+            Filtra por tipo de movimiento. **Los valores van sin espacios** y
+            deben escribirse exactamente así:
 
             - `INGRESO` — recepción de materiales de un proveedor.
             - `EGRESO` — entrega de materiales a una obra, tarea u operario.
-            - `MOV. SALIDA` / `MOV. ENTRADA` — las dos patas de un movimiento
+            - `MOV.SALIDA` / `MOV.ENTRADA` — las dos patas de un movimiento
               interno entre depósitos. Un traslado genera las dos.
             - `AJUSTE` — corrección de inventario (conteo físico, rotura,
               merma).
-            - `INGRESO PRODUCTO`, `INGRESO PROD. EN PROCESO`,
-              `EGRESO PROD. EN PROCESO` — altas y bajas del módulo de
-              Producción.
+            - `INGRESOPRODUCTO`, `ETAPAPRODINGRESO`, `ETAPAPRODEGRESO` — altas
+              y bajas del módulo de Producción.
+
+            Escribir `MOV. SALIDA` con espacio devuelve **cero resultados**, no
+            un error: el filtro compara texto exacto. Ante un resultado vacío
+            inesperado, revisar primero que el valor esté bien escrito.
 
             Sin este parámetro devuelve todos los tipos.
           schema: { type: string }
@@ -904,9 +907,13 @@ paths:
         `referencia` es el ID del documento que originó el movimiento (entrega,
         recepción, ajuste o movimiento interno según el `tipo_mov`).
 
-        Un traslado entre depósitos aparece **dos veces**, como `MOV. SALIDA` y
-        como `MOV. ENTRADA`: al contar movimientos, no sumarlos como si fueran
+        Un traslado entre depósitos aparece **dos veces**, como `MOV.SALIDA` y
+        como `MOV.ENTRADA`: al contar movimientos, no sumarlos como si fueran
         dos operaciones distintas.
+
+        La respuesta trae el **nombre** del depósito (`deposito`) pero no su
+        ID, así que para filtrar por depósito hay que obtener el `depo_id` con
+        `alm_get_depositos`.
       tags: [Almacenes]
       responses:
         "200":
@@ -1017,7 +1024,8 @@ paths:
               recibido en destino. **Es el estado que hay que vigilar**: el
               stock está en tránsito.
             - `RECIBIDO` — llegó a destino.
-            - `FINALIZADO` — cerrado.
+            - `FINALIZADO` — cerrado. Aparece en el código del sistema pero no
+              se observó en datos; puede no usarse.
           schema: { type: string }
           example: "EN_CURSO"
         - name: origen
@@ -1058,10 +1066,15 @@ paths:
           esperado.
 
         **Cómo leer el detalle:** `cantidad_cargada` es lo que salió del origen
-        y `cantidad_recibida` lo que se confirmó en destino. **Si difieren, hay
-        faltante en el traslado** — vale la pena señalarlo, no reportar solo un
-        número. Mientras el movimiento está `EN_CURSO`, `cantidad_recibida`
-        todavía no es un dato definitivo.
+        y `cantidad_recibida` lo que se confirmó en destino.
+
+        `cantidad_recibida` viene en **`null`** mientras el traslado no se
+        recibió. Eso **no es un faltante**: es que todavía no llegó. Solo tiene
+        sentido comparar las dos cantidades en movimientos ya `RECIBIDO`, y
+        únicamente cuando `cantidad_recibida` no es `null` — también aparece
+        `null` en traslados recibidos donde nadie cargó la cantidad. Cuando las
+        dos están cargadas y difieren, ahí sí hay faltante y vale señalarlo en
+        vez de reportar solo un número.
       tags: [Almacenes]
       responses:
         "200":
@@ -1092,7 +1105,7 @@ paths:
                             descripcion: "Filtro de aceite hidráulico HF-35"
                             nom_proveedor: "Distribuidora del Oeste"
                             cantidad_cargada: "12"
-                            cantidad_recibida: "0"
+                            cantidad_recibida: null
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -1587,7 +1600,7 @@ components:
         deposito: { type: string }
         tipo_mov:
           type: string
-          description: "`INGRESO` · `EGRESO` · `MOV. ENTRADA` · `MOV. SALIDA` · `AJUSTE` · `INGRESO PRODUCTO` · `INGRESO PROD. EN PROCESO` · `EGRESO PROD. EN PROCESO`"
+          description: "Sin espacios: `INGRESO` · `EGRESO` · `MOV.ENTRADA` · `MOV.SALIDA` · `AJUSTE` · `INGRESOPRODUCTO` · `ETAPAPRODINGRESO` · `ETAPAPRODEGRESO`"
         fec_alta_formatted: { type: string, example: "2026-08-20 14:32:07" }
 
     MovimientosList:
@@ -1613,7 +1626,12 @@ components:
         cantidad: { type: string }
         unidad_medida: { type: string }
         deposito: { type: string }
-        obra: { type: string, description: Obra o centro de costo al que se imputó. Vacío si no se cargó. }
+        obra:
+          type: ["string", "null"]
+          description: >-
+            Obra o centro de costo al que se imputó. Viene `null` en la mayoría
+            de las entregas, porque el campo es opcional al entregar: no asumir
+            que una obra sin entregas no consumió material.
 
     EntregasList:
       type: object
@@ -1636,8 +1654,12 @@ components:
         nom_proveedor: { type: string }
         cantidad_cargada: { type: string, description: Lo que salió del depósito de origen. }
         cantidad_recibida:
-          type: string
-          description: Lo confirmado en destino. Si difiere de `cantidad_cargada`, hay faltante en el traslado.
+          type: ["string", "null"]
+          description: >-
+            Lo confirmado en destino. Es `null` mientras el traslado no se
+            recibió (y también en algunos ya recibidos donde no se cargó): en
+            ese caso NO es un faltante. Solo hay faltante si difiere de
+            `cantidad_cargada` estando ambas cargadas.
         lote_id_origen: { type: string }
         lote_id_destino: { type: string }
         demi_id: { type: string }
@@ -1650,7 +1672,7 @@ components:
         depo_id_origen: { type: string }
         depo_id_destino: { type: string }
         nombre_depo_destino: { type: string }
-        estado: { type: string, description: "`EN_CURSO` en tránsito · `RECIBIDO` · `FINALIZADO`" }
+        estado: { type: string, description: "`EN_CURSO` en tránsito · `RECIBIDO` · `FINALIZADO` (en el código, no visto en datos)" }
         patente: { type: string }
         acoplado: { type: string }
         conductor: { type: string }
