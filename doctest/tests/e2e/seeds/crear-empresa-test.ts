@@ -156,6 +156,36 @@ async function obtenerEnlaceActivacion(): Promise<string> {
   return enlace;
 }
 
+
+/**
+ * Envía el formulario visible. Las pantallas del registro no usan un control
+ * uniforme (hay `input[type=submit]`, botones sin type y botones con texto),
+ * así que se prueban las variantes en orden y, si ninguna aparece, se listan los
+ * controles de la pantalla para que el error diga algo útil.
+ */
+async function enviarFormulario(page: Page, etiquetas = ['Aceptar', 'Guardar', 'Continuar', 'Siguiente', 'Enviar', 'Registrar', 'Crear']): Promise<void> {
+  const candidatos = [
+    page.locator('input[type="submit"]'),
+    page.locator('button[type="submit"]'),
+    ...etiquetas.map((t) => page.getByRole('button', { name: new RegExp(t, 'i') })),
+    ...etiquetas.map((t) => page.locator(`a.btn:has-text("${t}")`)),
+  ];
+  for (const c of candidatos) {
+    const visible = c.first();
+    if ((await visible.count()) && (await visible.isVisible().catch(() => false))) {
+      // El paso de activación dispara la creación del usuario en Bonita y en Asset:
+      // puede tardar bastante, así que no se espera la navegación en el click.
+      await visible.click({ noWaitAfter: true });
+      await page.waitForLoadState('networkidle', { timeout: 180_000 }).catch(() => {});
+      return;
+    }
+  }
+  const controles = await page
+    .locator('input[name], button, a.btn')
+    .evaluateAll((els) => els.map((e) => `${e.tagName}:${(e as HTMLInputElement).name || e.className}:${(e.textContent ?? '').trim().slice(0, 20)}`).join(' | '));
+  abortar(`No encontré con qué enviar el formulario en ${page.url()}.\n  Controles visibles: ${controles}`);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Pasos del alta
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,7 +206,7 @@ async function registrarse(page: Page, urlDnato: string): Promise<void> {
     .getAttribute('value');
   if (!opcionPais) abortar(`El país "${DATOS.pais}" no está en la lista del formulario de registro.`);
   await page.selectOption('select[name="reg_pais_id"]', opcionPais);
-  await page.click('button[type="submit"], input[type="submit"]');
+  await enviarFormulario(page);
   await page.waitForLoadState('networkidle');
   const texto = await page.locator('body').innerText();
   if (/ya existe|no es válido|ya existe en el sistema/i.test(texto)) {
@@ -189,39 +219,70 @@ async function activar(page: Page, enlace: string): Promise<void> {
   await page.goto(enlace);
   await page.fill('input[name="password"]', DATOS.password);
   await page.fill('input[name="passconf"]', DATOS.password);
-  await page.click('button[type="submit"], input[type="submit"]');
+  await enviarFormulario(page);
   await page.waitForLoadState('networkidle');
-  console.log('✓ Paso 2: cuenta activada y contraseña definida');
+  console.log('✓ Paso 2: cuenta activada y contraseña definida →', page.url());
 }
 
 async function completarFormulario(page: Page): Promise<void> {
   await page.getByText(DATOS.comoEnteraste, { exact: true }).first().click();
   await page.getByText(DATOS.actividad, { exact: true }).first().click();
   await page.getByText(DATOS.empleados, { exact: true }).first().click();
-  await page.click('button[type="submit"], input[type="submit"]');
+  await enviarFormulario(page);
   await page.waitForLoadState('networkidle');
-  console.log('✓ Paso 3: información adicional guardada');
+  console.log('✓ Paso 3: información adicional guardada →', page.url());
 }
 
 async function crearEmpresa(page: Page): Promise<void> {
+  // El dominio corporativo solo se pide si el correo del registro es de un webmail público.
+  const dominio = page.locator('input[name="company_domain"]');
+  if (await dominio.count()) {
+    await dominio.fill(DATOS.dominioEmpresa);
+    console.log(`   (correo de webmail: se declara el dominio ${DATOS.dominioEmpresa})`);
+  }
   await page.fill('input[name="cuit"]', DATOS.cuit);
+
   await page.selectOption('select[name="prov_id"]', { label: DATOS.provincia });
-  await page.waitForTimeout(2000); // el combo de localidades se carga al elegir provincia
+  // Las localidades se cargan por AJAX al elegir la provincia: se espera a que aparezcan
+  // en vez de dormir un tiempo fijo (RNF-03: nada de esperas arbitrarias).
+  await page
+    .locator('select[name="loca_id"] option')
+    .nth(1)
+    .waitFor({ state: 'attached', timeout: 60_000 })
+    .catch(() => abortar('El combo de localidades nunca se pobló para la provincia elegida.'));
   if (DATOS.localidad) {
     await page.selectOption('select[name="loca_id"]', { label: DATOS.localidad });
   } else {
     await page.selectOption('select[name="loca_id"]', { index: 1 });
   }
-  const dominio = page.locator('input[name="company_domain"]');
-  if (await dominio.count()) await dominio.fill(DATOS.dominioEmpresa);
-  await page.click('button[type="submit"], input[type="submit"]');
-  await page.waitForLoadState('networkidle');
+  const localidadElegida = await page.locator('select[name="loca_id"]').inputValue();
+  console.log(`   provincia ${DATOS.provincia} · localidad ${localidadElegida}`);
+
+  await enviarFormulario(page);
+  // El alta encadena varias llamadas (core, Asset, Bonita, roles, establecimiento):
+  // se espera a que aparezca la bienvenida o un mensaje de error, sin fijar la URL,
+  // porque el redirect final llega después del 303 de guardarEmpresa.
+  await page
+    .locator('body')
+    .filter({ hasText: /Registro Completado|alert-main-text|No se pudo|ya existe/i })
+    .first()
+    .waitFor({ timeout: 180_000 })
+    .catch(() => {});
+
   const texto = await page.locator('body').innerText();
   if (!/Registro Completado|bienvenid/i.test(texto)) {
-    abortar(`El alta de empresa no llegó a la bienvenida:\n${texto.slice(0, 500)}`);
+    const alerta = await page
+      .locator('.alert, .error, .flash, [class*="danger"]')
+      .allInnerTexts()
+      .catch(() => [] as string[]);
+    abortar(
+      `El alta de empresa no llegó a la bienvenida (sigue en ${page.url()}).\n` +
+        `  Mensajes en pantalla: ${alerta.filter(Boolean).join(' | ') || '(ninguno)'}\n` +
+        `  Primeras líneas: ${texto.replace(/\n+/g, ' | ').slice(0, 300)}`,
+    );
   }
   console.log('✓ Paso 4: empresa creada');
-  console.log('\n--- Pantalla de bienvenida ---\n' + texto.slice(0, 800));
+  console.log('\n--- Pantalla de bienvenida ---\n' + texto.slice(0, 900));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -244,6 +305,8 @@ async function main(): Promise<void> {
 
   const browser = await chromium.launch({ headless: !HEADED });
   const page = await browser.newPage({ ignoreHTTPSErrors: true, locale: 'es-AR' });
+  page.setDefaultNavigationTimeout(180_000);
+  page.setDefaultTimeout(60_000);
   try {
     if (!DESDE_ENLACE) {
       await registrarse(page, urlDnato);

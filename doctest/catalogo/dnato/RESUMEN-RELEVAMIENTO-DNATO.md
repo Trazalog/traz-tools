@@ -67,18 +67,25 @@ Fuera de alcance por ahora: **Carga Masiva** (`Bulkload.php`) — no es registra
 
 ### 4.1 Bloqueantes
 
-1. **Casilla de correo de prueba.** Dos casos dependen de leer un mail (activación, UC-002; recuperación, UC-008) y sin eso tampoco puedo crear la empresa de test de cero, porque el alta pasa por el enlace de activación. **Mi recomendación: una casilla de Gmail dedicada** (por ejemplo `doctest.trazalog@gmail.com`) con IMAP habilitado y contraseña de aplicación. El motivo no es la comodidad: al ser un webmail público, el alta **obliga** a tipear el dominio corporativo de la empresa, así que los cinco usuarios iniciales quedan en un dominio inventado (`doctest-empresa.com`) y **no** en `trazalog.com`, donde chocarían con direcciones reales de ustedes. Si preferís una casilla del servidor propio, hay que elegir un dominio que no se use (por ejemplo `doctest.trazalog.com`).
-2. **El usuario de prueba nuevo todavía no puede entrar.** `admin@doctest-empresa.com` no supera la validación de credenciales en el DEMO (verificado por dos caminos, ver §4.2), y no hay ninguna empresa cuyo nombre contenga "doctest" entre las 32 del sistema. Hasta que eso se resuelva, el caso de aislamiento (UC-013) sigue sin poder probarse: el usuario anterior era **el superusuario del DEMO** y tenía roles en seis empresas.
+1. **Acceso programático a la casilla de prueba — es lo único que falta para automatizar la registración.** La casilla `admindoctest@gmail.com` ya existe, pero Google **no acepta la contraseña normal por IMAP** (probado: `AUTHENTICATIONFAILED`). Hace falta una **contraseña de aplicación** de esa cuenta (Google la exige con verificación en dos pasos activada). Sin eso, DNATO-UC-002 (activación) y DNATO-UC-008 (recuperación) no son automatizables: alguien tiene que pegar el enlace a mano, que es justo lo que el caso de uso tiene que probar solo. El cliente IMAP ya está escrito y esperando la credencial.
+
+2. ~~Un administrador que no sea el superusuario~~ **Resuelto**: la empresa de test está creada y su administrador sirve para el caso de aislamiento (ver §4.2).
 3. **Nombres de los perfiles (UC-019).** Vos los describís como *Administrador* y *Usuario*; la tabla `seg.roles` del DEMO dice **`Admin`** y **`Author`**. ¿Renombramos los datos, o el catálogo y las ayudas adoptan lo que el usuario ve hoy?
 
-### 4.2 Diagnóstico del usuario de prueba nuevo (2026-08-24)
+### 4.2 La empresa de test ya existe (2026-08-24)
 
-`admin@doctest-empresa.com` / la contraseña provista **no entra** en el DEMO. Verificado por dos caminos independientes, ninguno con efectos sobre los datos:
+Creada recorriendo el alta real con `npm run seed:empresa`, no a mano ni por SQL:
 
-1. **Login web**: no aparece ninguna empresa con "doctest" entre las 32 del combo, y con las tres candidatas (`ClientesTrazalog`, `Empresa_de_Prueba_2`, `Prueba 1`) el sistema responde *"El usuario no corresponde a la empresa seleccionada"* — mensaje que sale **antes** de validar la contraseña.
-2. **Login OAuth** (`/oauth/login`, que no pide empresa y resuelve la membresía sola): responde *"Correo o contraseña incorrectos"*. Como control, el mismo camino con el usuario anterior sí emite el código de autorización, así que la mecánica de la prueba es correcta.
+| | |
+|---|---|
+| Empresa | **DocTest Empresa SA** (San Juan, Argentina) |
+| Administrador | `admindoctest@gmail.com` — perfil **Admin**, id 79 |
+| Dominio de la empresa | `doctest-empresa.com` (obligatorio: la casilla es Gmail, y el sistema no acepta webmails como dominio corporativo) |
+| Usuarios iniciales | `usuario@` `almacen@` `panol@` `produccion@` `mantenimiento@doctest-empresa.com` |
 
-Las tres explicaciones posibles, en orden de probabilidad: la cuenta se creó pero **nunca se activó** (queda sin contraseña, y `checkLogin` falla igual que con una contraseña equivocada); la empresa se creó en `core.empresas` pero **sin el grupo en Bonita**, que es de donde sale el combo; o la contraseña es otra.
+Verificado después del alta: la empresa aparece en el combo del login (34, una sola entrada, sin duplicados), el administrador entra, y su menú tiene Gestión de Usuarios, Menúes, Carga Masiva y Configuración **pero no Gestión de Empresas** — o sea, es el administrador **no superusuario** que hacía falta para poder probar el aislamiento (UC-013).
+
+**Confirmación en vivo del hallazgo H-003:** en la lista de usuarios de la empresa nueva aparece `jperez@prueba.com`, el superadmin, que el trigger agrega automáticamente a **toda** empresa nueva con rol Administrador.
 
 ### 4.3 Dudas funcionales que quedan abiertas
 
