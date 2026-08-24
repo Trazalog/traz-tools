@@ -13,18 +13,15 @@
 #   - Dry-run por defecto.
 #   - Aborta en cuanto un paso falla, en vez de seguir y dejar el estado a medias.
 #
-#  ATENCION — ESTE SCRIPT NO SIRVE PARA AGREGAR OPERACIONES NUEVAS.
-#  Reimporta la API desde el backup que el mismo acaba de exportar, o sea la
-#  definicion que YA estaba en el APIM. Si acabas de sumar tools al repo y
-#  corres esto, vuelve a quedar con las operaciones viejas.
-#  Para sumar tools el camino es otro, y no es destructivo:
-#     1. desplegar el .car nuevo en el MI
-#     2. Publisher > la API > API Definition > Update  (subir
-#        doc/api/trazalog-operaciones.yaml, que ya trae las operaciones nuevas)
-#     3. Deploy > nueva revision
-#     4. recrear el MCP Server desde la API (paso manual, ver el final)
-#  Este script es para cuando las URL mappings quedaron corruptas, no para
-#  publicar cambios.
+#  ORDEN — este script NO actualiza la definicion de la API: la exporta tal
+#  como esta en el APIM y la reimporta. Si sumaste tools, ANTES hay que subir
+#  doc/api/trazalog-operaciones.yaml en Publisher > la API > API definition
+#  (paso B.1 del procedimiento). Corriendo esto sin ese paso previo, la API se
+#  recrea con las operaciones viejas.
+#
+#  Este script es el paso B.2 de doc/mcp/republicar-mcp-server.md, que tiene
+#  el procedimiento completo (MI, API, MCP Server, verificacion) y las trampas
+#  conocidas. Leelo antes; aca no se repite.
 #
 #  USO:
 #     bash recrear-api-y-mcp.sh              # plan, no toca nada
