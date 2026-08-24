@@ -67,25 +67,26 @@ Fuera de alcance por ahora: **Carga Masiva** (`Bulkload.php`) — no es registra
 
 ### 4.1 Bloqueantes
 
-1. **Acceso programático a la casilla de prueba — es lo único que falta para automatizar la registración.** La casilla `admindoctest@gmail.com` ya existe, pero Google **no acepta la contraseña normal por IMAP** (probado: `AUTHENTICATIONFAILED`). Hace falta una **contraseña de aplicación** de esa cuenta (Google la exige con verificación en dos pasos activada). Sin eso, DNATO-UC-002 (activación) y DNATO-UC-008 (recuperación) no son automatizables: alguien tiene que pegar el enlace a mano, que es justo lo que el caso de uso tiene que probar solo. El cliente IMAP ya está escrito y esperando la credencial.
+~~1. Casilla de correo~~ · ~~2. Administrador que no sea el superusuario~~ — **los dos resueltos el 2026-08-24** (ver §4.2).
 
-2. ~~Un administrador que no sea el superusuario~~ **Resuelto**: la empresa de test está creada y su administrador sirve para el caso de aislamiento (ver §4.2).
-3. **Nombres de los perfiles (UC-019).** Vos los describís como *Administrador* y *Usuario*; la tabla `seg.roles` del DEMO dice **`Admin`** y **`Author`**. ¿Renombramos los datos, o el catálogo y las ayudas adoptan lo que el usuario ve hoy?
+3. **Nombres de los perfiles (UC-019).** Vos los describís como *Administrador* y *Usuario*; la tabla `seg.roles` del DEMO dice **`Admin`** y **`Author`**. ¿Renombramos los datos, o el catálogo y las ayudas adoptan lo que el usuario ve hoy? Es lo único que sigue bloqueando la derivación.
 
-### 4.2 La empresa de test ya existe (2026-08-24)
+### 4.2 Empresas de test y lectura del correo (2026-08-24)
 
-Creada recorriendo el alta real con `npm run seed:empresa`, no a mano ni por SQL:
+**Las dos empresas de test están creadas, y las creó el alta real** (`npm run seed:empresa`), no un INSERT:
 
-| | |
-|---|---|
-| Empresa | **DocTest Empresa SA** (San Juan, Argentina) |
-| Administrador | `admindoctest@gmail.com` — perfil **Admin**, id 79 |
-| Dominio de la empresa | `doctest-empresa.com` (obligatorio: la casilla es Gmail, y el sistema no acepta webmails como dominio corporativo) |
-| Usuarios iniciales | `usuario@` `almacen@` `panol@` `produccion@` `mantenimiento@doctest-empresa.com` |
+| | Empresa 1 | Empresa 2 |
+|---|---|---|
+| Nombre | **DocTest Empresa SA** | **DocTest Empresa 2608242245** |
+| Administrador | `admindoctest@gmail.com` | `doctest-tq4m5sleqh@emalupe.com` |
+| Dominio de los usuarios iniciales | `doctest-empresa.com` | `emalupe.com` |
+| Cómo se creó | casilla de Gmail, enlace de activación pegado a mano | **casilla descartable: de punta a punta, sin intervención** |
 
-Verificado después del alta: la empresa aparece en el combo del login (34, una sola entrada, sin duplicados), el administrador entra, y su menú tiene Gestión de Usuarios, Menúes, Carga Masiva y Configuración **pero no Gestión de Empresas** — o sea, es el administrador **no superusuario** que hacía falta para poder probar el aislamiento (UC-013).
+Las dos tienen sus 16 roles, establecimiento, depósito y los cinco usuarios iniciales. **Aislamiento verificado con datos reales**: el administrador de cada una ve sus seis usuarios y el superadmin, y ninguno ve los de la otra — que es exactamente lo que prueba DNATO-UC-013.
 
-**Confirmación en vivo del hallazgo H-003:** en la lista de usuarios de la empresa nueva aparece `jperez@prueba.com`, el superadmin, que el trigger agrega automáticamente a **toda** empresa nueva con rol Administrador.
+**El correo ya no es un bloqueante.** Google no admite IMAP con contraseña común y esa cuenta no puede emitir contraseña de aplicación, así que se resolvió por otro lado: el test **se crea su propia casilla descartable** (`tests/e2e/fixtures/casilla-descartable.ts`), se registra con ella y lee el mail de activación solo. Ventajas: cero credenciales que guardar o rotar, bandeja vacía en cada corrida —nunca lee el mail de la corrida anterior— y funciona igual en local y en CI. Límite conocido y anotado en el código: el dominio de esas casillas es público, así que sirve para el entorno de pruebas y **nunca** para producción.
+
+Con esto, **DNATO-UC-001 a UC-005 quedan automatizables de punta a punta**, que era la duda de fondo.
 
 ### 4.3 Dudas funcionales que quedan abiertas
 

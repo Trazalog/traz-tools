@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Registrar una empresa nueva (paso 1 - datos de contacto)
 perfil: Visitante
 estado: borrador
-version: "0.2"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -57,7 +57,7 @@ datos_prueba:
   razon_social_prefijo: "DOCTEST SA "
   nota_recaptcha: "reCAPTCHA está desactivado en el entorno de pruebas (decisión del PM, 2026-08-19): el flujo es automatizable de punta a punta"
 dudas:
-  - "El correo de la persona que se registra tiene que llegar a una casilla que el test pueda leer, porque el enlace de activación (DNATO-UC-002) solo llega por mail. Falta definir esa casilla — ver §3 del RESUMEN."
   - "Si el envío del mail falla, el usuario queda creado igual y el enlace solo queda en el log del servidor. ¿Es el comportamiento buscado o debería poder reenviarse desde la pantalla?"
 notas:
+  - "El caso ES automatizable de punta a punta: el test se crea una casilla descartable, se registra con ella y lee el mail de activación solo (`tests/e2e/fixtures/casilla-descartable.ts`). Verificado el 2026-08-24 creando una empresa real en el DEMO."
   - "Decisión del PM (2026-08-19): la automatización va contra una empresa de test descartable y se acepta la basura acumulada, con re-seed periódico. Queda pendiente construir un procedimiento de limpieza."

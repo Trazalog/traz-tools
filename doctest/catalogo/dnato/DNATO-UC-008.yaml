@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Recuperar la contraseña olvidada
 perfil: Usuario
 estado: borrador
-version: "0.2"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -55,6 +55,6 @@ validaciones:
 datos_prueba:
   empresa: EMPRESA_TEST_1
 dudas:
-  - "El caso necesita leer el correo para seguir el enlace. Falta definir la casilla de prueba — ver §3 del RESUMEN; es el mismo bloqueo que DNATO-UC-002."
+  - "Para automatizarlo hay que registrar un usuario con una casilla descartable (como hace el seed) y pedir la recuperación con esa dirección: la cuenta de test estable no sirve, porque su casilla no se puede leer por API. ¿Se acepta que este caso cree su propio usuario descartable en cada corrida?"
 notas:
   - "El mensaje distingue entre 'no encontramos ese correo' y 'tu cuenta aún no está aprobada', lo que permite averiguar desde afuera si un correo está registrado (hallazgo H5)."

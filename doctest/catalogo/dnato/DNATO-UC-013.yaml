@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Ver la lista de usuarios de la empresa
 perfil: Administrador
 estado: borrador
-version: "0.2"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -37,7 +37,9 @@ validaciones:
   - "Cada fila ofrece las acciones 'Asignar Rol' y 'Eliminar Usuario'"
 datos_prueba:
   empresa: EMPRESA_TEST_1
+  empresa_ajena: EMPRESA_TEST_2
 dudas:
-  - "Para probar el aislamiento hace falta un administrador que NO sea el superusuario y que tenga rol en una sola empresa. El usuario de prueba actual es el superusuario del DEMO y tiene rol en seis empresas, así que ve usuarios de todas: con esa cuenta el caso de aislamiento no se puede verificar."
+  - "El superusuario del sistema aparece en la lista de TODAS las empresas, porque el alta lo agrega como Administrador (hallazgo H-003). ¿El caso lo da por esperado, o eso también tiene que cambiar?"
 notas:
+  - "**Aislamiento verificado con datos reales el 2026-08-24**: el administrador de la primera empresa de test ve sus 6 usuarios y el superadmin; el de la segunda ve los suyos y el superadmin; ninguno ve los de la otra."
   - "Verificado en el DEMO el 2026-08-19: la grilla trae las columnas mencionadas y el filtro por empresa funciona por las membresías del conectado, no por un campo de empresa del usuario."

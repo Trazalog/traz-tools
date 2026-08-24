@@ -3,14 +3,15 @@
  *
  * DÓNDE SE EJECUTA: en una terminal, parado en `doctest/`.
  *
- *   npm run seed:empresa                 # usa lo que haya en doctest/.env
+ *   npm run seed:empresa                 # casilla descartable: corre solo, de punta a punta
  *   npm run seed:empresa -- --dry-run    # muestra los datos y no toca nada
+ *   DOCTEST_SEED_EMAIL=alguien@dominio.com npm run seed:empresa   # con una casilla propia
  *
  * QUÉ HACE: recorre el alta real de una empresa, tal como la haría una persona
  * (DNATO-UC-001 a UC-005), con navegador visible o headless:
  *
  *   1. Registro           → deja la cuenta creada y dispara el mail de activación
- *   2. Enlace de activación → lo lee de la casilla por IMAP, o lo pide por consola
+ *   2. Enlace de activación → lo lee solo de una casilla descartable (o por IMAP, o a mano)
  *   3. Activación         → define la contraseña
  *   4. Información adicional → responde las tres preguntas obligatorias
  *   5. Alta de empresa    → identificador tributario, provincia, localidad y dominio
@@ -32,6 +33,7 @@ import { fileURLToPath } from 'node:url';
 
 import { config as cargarEnv } from 'dotenv';
 
+import { crearCasilla, type Casilla } from '../fixtures/casilla-descartable.ts';
 import { requerirUrlDeApp } from '../config/apps.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -130,6 +132,17 @@ function imapBuscarEnlace(asunto: string, minutos = 30): Promise<string | null> 
       }
     });
   });
+}
+
+/** Enlace de activación desde la casilla descartable que creó este mismo seed. */
+async function enlaceDesdeCasilla(casilla: Casilla): Promise<string> {
+  console.log('→ Esperando el mail de activación en la casilla descartable...');
+  const enlace = await casilla.esperarEnlace(
+    /activar cuenta/i,
+    /https?:\/\/[^\s"'<>]*main\/complete\/token\/[A-Za-z0-9_-]+/,
+  );
+  console.log('✓ Enlace de activación leído del correo');
+  return enlace;
 }
 
 async function obtenerEnlaceActivacion(): Promise<string> {
@@ -289,12 +302,24 @@ async function crearEmpresa(page: Page): Promise<void> {
 
 async function main(): Promise<void> {
   const urlDnato = requerirUrlDeApp('dnato');
-  if (!DATOS.email) abortar('Falta DOCTEST_SEED_EMAIL: la casilla desde la que se registra la empresa.');
   if (!DATOS.password) abortar('Falta DOCTEST_SEED_PASSWORD: la contraseña que va a tener el administrador.');
+
+  // Sin DOCTEST_SEED_EMAIL, el seed se crea su propia casilla y no depende de nadie.
+  let casilla: Casilla | undefined;
+  if (!DATOS.email && !DESDE_ENLACE && !DRY_RUN) {
+    casilla = await crearCasilla('doctest');
+    DATOS.email = casilla.direccion;
+    // Cada corrida crea una empresa nueva, y el sistema exige razón social única por
+    // país e identificador tributario único: se les agrega un sufijo irrepetible.
+    const sufijo = new Date().toISOString().slice(2, 16).replace(/[-:T]/g, '');
+    DATOS.razonSocial = `${DATOS.razonSocial} ${sufijo}`;
+    DATOS.cuit = `30-${sufijo.slice(-8)}-9`;
+    console.log('→ Casilla descartable creada:', DATOS.email);
+  }
 
   console.log('\nDocTest · alta de la empresa de test');
   console.log('  entorno   :', urlDnato);
-  console.log('  registra  :', DATOS.email);
+  console.log('  registra  :', DATOS.email || '(casilla descartable, se crea al arrancar)');
   console.log('  empresa   :', DATOS.razonSocial, '| CUIT', DATOS.cuit, '|', DATOS.provincia);
   console.log('  dominio   :', DATOS.dominioEmpresa, '(solo se usa si el correo es de webmail)');
   console.log('  modo      :', DESDE_ENLACE ? 'retomar desde el enlace de activación' : SOLO_REGISTRO ? 'solo el paso 1 (registro)' : 'completo');
@@ -316,7 +341,7 @@ async function main(): Promise<void> {
         return;
       }
     }
-    const enlace = DESDE_ENLACE ?? (await obtenerEnlaceActivacion());
+    const enlace = DESDE_ENLACE ?? (casilla ? await enlaceDesdeCasilla(casilla) : await obtenerEnlaceActivacion());
     await activar(page, enlace);
     await completarFormulario(page);
     await crearEmpresa(page);
@@ -324,7 +349,9 @@ async function main(): Promise<void> {
     console.log(`  DOCTEST_EMPRESA1_NOMBRE=${DATOS.razonSocial}`);
     console.log(`  DOCTEST_EMPRESA1_USER=${DATOS.email}`);
     console.log('  DOCTEST_EMPRESA1_PASS=<la que definiste>');
-    console.log(`\n  Usuarios iniciales creados: usuario@ almacen@ panol@ produccion@ mantenimiento@${DATOS.dominioEmpresa}`);
+    const dominioReal = DATOS.email.split('@')[1];
+    console.log(`\n  Usuarios iniciales creados: usuario@ almacen@ panol@ produccion@ mantenimiento@ del dominio de la empresa`);
+    console.log(`  (si el correo no era de webmail, ese dominio es ${dominioReal})`);
   } finally {
     await browser.close();
   }

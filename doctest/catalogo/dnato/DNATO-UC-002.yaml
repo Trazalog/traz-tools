@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Activar la cuenta y definir la contraseña
 perfil: Visitante
 estado: borrador
-version: "0.2"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -56,4 +56,5 @@ datos_prueba:
 dudas:
   - "El vencimiento del token compara la fecha de creación contra la de hoy: si la columna `created` de `seg.tokens` guardara hora, ningún enlace validaría nunca. Como en la práctica las activaciones funcionan, se asume que guarda solo la fecha — conviene confirmarlo contra la base antes de escribir el caso del enlace vencido."
 notas:
+  - "El enlace de activación se lee del correo automáticamente con la casilla descartable del seed, así que el caso no necesita intervención humana."
   - "La política de contraseñas está duplicada en el cliente (`public/js/password-strength.js`) y en el servidor; el propio código avisa que hay que mantener las dos sincronizadas."
