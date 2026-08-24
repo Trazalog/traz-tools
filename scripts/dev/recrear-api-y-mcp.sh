@@ -32,7 +32,12 @@ command -v apictl >/dev/null || { echo "falta apictl"; exit 2; }
 # dejarlo escrito a mano, que se desactualiza cada vez que se suma una tool.
 OPENAPI="${OPENAPI:-$(dirname "$0")/../../doc/api/trazalog-operaciones.yaml}"
 if [ -f "$OPENAPI" ]; then
-  NESPERADAS=$(OPENAPI="$OPENAPI" python3 -c "import os,yaml;print(len(yaml.safe_load(open(os.environ['OPENAPI']))['paths']))" 2>/dev/null)
+  # se cuentan OPERACIONES (path + metodo), no paths: /mcp/man/ot tiene GET y
+  # POST, asi que contar paths da uno menos del numero que reporta el APIM.
+  NESPERADAS=$(OPENAPI="$OPENAPI" python3 -c "
+import os,yaml
+d=yaml.safe_load(open(os.environ['OPENAPI']))['paths']
+print(sum(1 for p in d.values() for m in p if m.lower() in ('get','post','put','delete','patch')))" 2>/dev/null)
 fi
 NESPERADAS="${NESPERADAS:-?}"
 echo "  operaciones esperadas segun la OpenAPI del repo: $NESPERADAS"
