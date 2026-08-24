@@ -71,7 +71,7 @@ El validador rechaza cualquier valor fuera de esta lista, a propósito: si en un
 
 Los cinco propuestos salieron del relevamiento de DNATO, que es lo que el Doc 1 v1.1 RF-05.4 anticipa ("más los roles de administración de cuenta que surjan del relevamiento DNATO"). Quedan pendientes de la validación del PM.
 
-> ⚠️ **Los nombres del catálogo y los de los datos no coinciden hoy**: el catálogo dice `Administrador` y `Usuario`, y la base dice `Admin` y `Author`. Está registrado como duda en DNATO-UC-019: se resuelve renombrando los datos o adoptando los nombres actuales en el catálogo y las ayudas.
+> **Los nombres del catálogo y los de los datos no coinciden, y está decidido así** (PM, 2026-08-24): el catálogo y las ayudas usan el lenguaje de negocio (`Administrador`, `Usuario`) y la base sigue diciendo `Admin` y `Author`. Renombrar los datos quedó como mejora futura — hallazgo **H-015** del registro.
 
 ### Cómo se escriben los pasos
 

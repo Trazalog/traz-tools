@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Cambiar el perfil de un usuario en DNATO
 perfil: Administrador
 estado: borrador
-version: "0.2"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -38,7 +38,7 @@ validaciones:
   - "El perfil de DNATO es independiente de los roles de trabajo de cada empresa (DNATO-UC-018): el perfil dice qué puede administrar, el rol dice qué puede hacer en la operación"
 datos_prueba: {}
 dudas:
-  - "Los perfiles salen de la tabla `seg.roles`, y en el DEMO los valores son **'Admin' y 'Author'** (más 'Usuario externo', id 8, que no aparece en el combo). El PM los describe como 'Administrador' y 'Usuario'. ¿Se renombran los datos para que coincidan con el lenguaje del negocio, o el catálogo y las ayudas usan 'Admin' y 'Author' como los ve el usuario hoy?"
-  - "`Userlevel` contempla cuatro niveles (1 admin, 2 autor, 3 editor, 4 suscriptor) y el registro asigna el 1. ¿Los niveles 3 y 4 se usan en algún lado o son herencia de la plantilla original?"
+  - "Los niveles 3 (editor) y 4 (suscriptor) de `Userlevel` no aparecen en el combo del DEMO ni se asignan en ningún alta. ¿Se pueden dar por obsoletos, o hay clientes con usuarios en esos niveles?"
 notas:
+  - "Nomenclatura resuelta (decisión del PM, 2026-08-24): el catálogo y las ayudas usan el lenguaje de negocio — **Administrador** y **Usuario** — mientras que los datos siguen diciendo `Admin` y `Author`. El renombre de los datos queda anotado como mejora futura (hallazgo H-015), no se toca ahora."
   - "Perfil y roles se editan en la MISMA pantalla y se guardan en la misma operación; se separan en dos casos de uso porque son dos decisiones distintas del administrador."

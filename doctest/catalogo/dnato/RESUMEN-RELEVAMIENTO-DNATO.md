@@ -65,11 +65,17 @@ Fuera de alcance por ahora: **Carga Masiva** (`Bulkload.php`) — no es registra
 
 ## 4. Lo que falta para cerrar la fase
 
-### 4.1 Bloqueantes
+### 4.1 Bloqueantes: ninguno
 
-~~1. Casilla de correo~~ · ~~2. Administrador que no sea el superusuario~~ — **los dos resueltos el 2026-08-24** (ver §4.2).
+Los tres que había quedaron resueltos:
 
-3. **Nombres de los perfiles (UC-019).** Vos los describís como *Administrador* y *Usuario*; la tabla `seg.roles` del DEMO dice **`Admin`** y **`Author`**. ¿Renombramos los datos, o el catálogo y las ayudas adoptan lo que el usuario ve hoy? Es lo único que sigue bloqueando la derivación.
+| | Estado |
+|---|---|
+| Casilla de correo para leer el enlace de activación | ✅ el test se crea una casilla descartable y lo lee solo (§4.2) |
+| Administrador que no sea el superusuario | ✅ las dos empresas de test están creadas (§4.2) |
+| Nombres de los perfiles (`Admin`/`Author` vs *Administrador*/*Usuario*) | ✅ decisión del PM (2026-08-24): el catálogo usa el lenguaje de negocio y el renombre de los datos queda como mejora futura (hallazgo H-015) |
+
+Lo único pendiente para derivar es **tu validación caso por caso**.
 
 ### 4.2 Empresas de test y lectura del correo (2026-08-24)
 
