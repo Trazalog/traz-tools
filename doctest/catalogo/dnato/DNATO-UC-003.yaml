@@ -1,36 +1,53 @@
 id: DNATO-UC-003
 modulo: DNATO
-titulo: Completar el formulario de datos del registro
+titulo: Completar el formulario de información adicional del registro
 perfil: Administrador
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Register.php
-    detalle: "register_success() (23-75) y guardarFormularioRegistro() (185-246)"
-  - repo: traz-comp-dnato
-    path: application/views/formulario_page.php
+    detalle: "register_success() (23-75), guardarFormularioRegistro() (185-246), aplicarEmprIdTemporalRegistro() (76-90)"
   - repo: traz-comp-dnato
     path: application/modules/traz-comp-formularios/models/Forms.php
     detalle: "generarInstancia() / actualizar()"
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "FORMULARIO_REGISTRO_ID y REGISTER_TEMP_EMPR_ID = 9000 (empresa que guarda las listas de valores del formulario)"
 pantallas:
-  - "Registro Exitoso — formulario de datos"
+  - "Información Adicional de Registro"
 precondiciones:
   - La cuenta fue activada y hay sesión iniciada (DNATO-UC-002)
 flujo_principal:
-  - paso: "Después de activar la cuenta, ve el formulario de datos del registro"
-    resultado: "Se muestra el formulario con las opciones cargadas"
-  - paso: "Completa los datos y confirma"
-    resultado: "Los datos quedan guardados y se continúa con el alta de la empresa"
+  - paso: "Después de activar la cuenta, ve el formulario de información adicional"
+    resultado: "Se muestran las cuatro preguntas con sus opciones"
+  - paso: "Elige cómo se enteró de Trazalog, marca a qué se dedica la empresa, elige la cantidad de empleados, describe sus problemas principales y confirma"
+    resultado: "Las respuestas quedan guardadas y se continúa con el alta de la empresa"
 flujos_alternativos:
+  - nombre: "Preguntas obligatorias sin responder"
+    pasos:
+      - paso: "Confirma sin responder cómo se enteró, a qué se dedica la empresa o cuántos empleados tiene"
+        resultado: "El formulario señala las preguntas obligatorias y no avanza"
   - nombre: "No se puede preparar el formulario"
     pasos:
       - paso: "Llega a la pantalla cuando el formulario no se puede generar"
         resultado: "Se muestra 'No se pudo preparar el formulario de registro. Volvé a iniciar sesión o contactá soporte.'"
-validaciones: []
-datos_prueba: {}
-dudas:
-  - "¿Qué campos tiene el formulario y cuáles son obligatorios? Es un formulario dinámico (FORMULARIO_REGISTRO_ID) definido en datos, no en código: sin ver la definición cargada en el entorno no se puede escribir el flujo real ni sus validaciones."
-  - "¿Este paso es obligatorio para poder seguir, o se puede saltear? En el código no vi un control que impida ir directo al alta de empresa."
-  - "Durante este paso la sesión usa un `empr_id` temporal (9000) para leer las listas de valores. ¿Es una solución definitiva o algo a corregir? Afecta a cómo se arma el dato de prueba."
+validaciones:
+  - "'¿Cómo te enteraste de Trazalog?' es obligatoria — opción única: Internet, Referencia de otro usuario, Publicidad"
+  - "'¿A qué se dedica tu empresa?' es obligatoria — opción múltiple: Industria, Minería, Agricultura, Ganadería, Reciclado, Tecnología, Militar"
+  - "'¿Cuántos empleados tiene tu empresa?' es obligatoria — opción única: 1 a 5, 5 a 20, 20 a 40, Más de 40"
+  - "'¿Cuáles son los principales problemas que hoy enfrentas?' es de texto libre y opcional"
+datos_prueba:
+  como_enteraste: "Internet"
+  actividad_empresa: "Minería"
+  cantidad_empleados: "5 a 20"
+dudas: []
+notas:
+  - "Las cuatro preguntas se relevaron contra el entorno DEMO el 2026-08-19: es un formulario dinámico definido en datos, y el PM confirmó que se toma como estático."
+  - "Detalle técnico observado: los nombres de campo llevan el prefijo del empr_id temporal (`9000-como_enteraste`, `9000-cantidad_empleados`), mientras que `actividad_empresa[]` y `problemas_principales` no. Los page objects tienen que contemplarlo."
+  - "Validado por el PM el 2026-08-24. Hoy las respuestas se guardan y no se usan para nada: la explotación de esos datos va a ser una tool MCP para el superusuario (mejora futura, hallazgo H-022)."
+  - "El formulario probablemente cambie. Cuando cambie no se edita este caso: se versiona (bump de `version`) y se regeneran sus derivados, como manda la regla R6."
+derivados:
+  feature: features/dnato/DNATO-UC-003.completar-el-formulario-de-informacion-adicional.feature

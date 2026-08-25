@@ -1,28 +1,35 @@
 id: DNATO-UC-020
 modulo: DNATO
-titulo: Dar de alta un usuario externo
+titulo: Dar de alta un usuario de una empresa externa
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
     detalle: "adduserexterno() (772-838)"
   - repo: traz-comp-dnato
-    path: application/views/usuario_externo.php
-  - repo: traz-comp-dnato
     path: application/models/User_model.php
-    detalle: "addUserExterno()"
+    detalle: "addUserExterno() (523-539): inserta en seg.users con role = USUARIO_EXTERNO y status aprobado"
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "USUARIO_EXTERNO = 8"
+  - repo: traz-comp-dnato
+    path: application/views/usuario_externo.php
+    detalle: "campos nombre_razon, email, telefono, cuit_empresa, usernick, password"
+  - repo: traz-comp-dnato
+    path: application/views/list_usuarios_externos.php
+    detalle: "listado que filtra por role = USUARIO_EXTERNO"
 pantallas:
-  - "Usuarios → Usuario externo"
+  - "Alta de usuario externo"
 precondiciones:
-  - Sesión iniciada con perfil de administrador
+  - Sesión iniciada con perfil Administrador
 flujo_principal:
   - paso: "Abre la pantalla de alta de usuario externo"
-    resultado: "Se muestra el formulario"
+    resultado: "Se muestra el formulario con razón social, correo, teléfono, identificador tributario de la empresa externa, nombre de usuario y contraseña"
   - paso: "Completa los datos y confirma"
-    resultado: "Se muestra 'El usuario se agregó correctamente.' y vuelve al listado de usuarios"
+    resultado: "Se muestra 'El usuario se agregó correctamente.' y vuelve a la lista de usuarios"
 flujos_alternativos:
   - nombre: "Correo ya existente"
     pasos:
@@ -30,11 +37,15 @@ flujos_alternativos:
         resultado: "Se muestra 'El correo del usuario ya existe en el sistema.' y no se crea"
   - nombre: "Contraseña que no cumple la política"
     pasos:
-      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la fortaleza"
-        resultado: "Se muestra el error de validación y el usuario no se crea"
+      - paso: "Ingresa una contraseña sin mayúscula, dígito o símbolo"
+        resultado: "Se muestra el error de contraseña y el usuario no se crea"
 validaciones:
-  - "Correo, contraseña y confirmación son obligatorios; el correo no puede estar repetido"
+  - "Correo, contraseña y confirmación son obligatorios; el correo no puede repetirse"
+  - "El usuario externo se crea con el perfil 'usuario externo' y queda aprobado y habilitado desde el alta"
+  - "A diferencia del alta común, no se lo vincula a una empresa del sistema ni se lo crea en el sistema de procesos: lleva la razón social y el identificador tributario de SU empresa"
 datos_prueba: {}
 dudas:
-  - "¿Qué es funcionalmente un 'usuario externo' y en qué se diferencia de un usuario común? Del código solo se deduce que se crea por otro camino; la intención de negocio no está."
-  - "No encontré esta opción en el menú de navegación. ¿Sigue en uso o quedó como pantalla huérfana?"
+  - "Pregunta abierta del PM (2026-08-24): ¿este alta es para que el SUPERUSUARIO cree usuarios de cualquier empresa, o para que un administrador que tiene varias empresas cree usuarios en una de ellas? Son dos casos de uso distintos y hoy la pantalla no distingue ninguno de los dos."
+  - "Según cuál sea, cambia quién es el perfil del caso y qué debería mostrar la pantalla. Queda en borrador hasta definirlo."
+notas:
+  - "Verificado en el DEMO el 2026-08-19: la pantalla existe y responde en `main/adduserexterno`, con esos seis campos."

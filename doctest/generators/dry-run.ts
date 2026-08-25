@@ -36,9 +36,17 @@ const GENERADORES: Generador[] = [
   },
   {
     archivo: 'catalog-to-feature.ts',
-    descripcion: 'Deriva los .feature Gherkin desde los casos validados',
-    fase: 'F5',
-    implementado: false,
+    descripcion: 'Deriva los .feature Gherkin desde los casos validados (transformación mecánica 1:1)',
+    fase: 'F1',
+    implementado: true,
+    dryRunArgs: ['--dry-run'],
+  },
+  {
+    archivo: 'hoja-validacion.ts',
+    descripcion: 'Arma la hoja de validación legible del módulo, para el gate humano',
+    fase: 'F1',
+    implementado: true,
+    dryRunArgs: ['dnato', '--dry-run'],
   },
   {
     archivo: 'scaffold-spec.ts',

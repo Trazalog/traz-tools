@@ -44,3 +44,6 @@ doc/manuales/*.html
 # archivos temporales de editores
 *.swp
 *.swo
+
+# Paquete suelto de documentos que ya están versionados como .md — no aporta al repo
+doc/v3/files.zip

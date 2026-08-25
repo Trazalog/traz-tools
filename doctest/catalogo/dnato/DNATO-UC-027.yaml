@@ -1,0 +1,57 @@
+id: DNATO-UC-027
+modulo: DNATO
+titulo: Cargar datos masivamente desde una planilla
+perfil: Administrador
+estado: validado
+version: "0.2"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Bulkload.php
+    detalle: "procesarCarga() (152-330): valida entidad y archivo, lo convierte a CSV y lo procesa; mostrarResultado() (670-710)"
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "BULKLOAD_STAGING_DIR (208): dónde se deja el archivo mientras se procesa"
+  - repo: traz-comp-dnato
+    path: application/views/bulkload/resultado.php
+pantallas:
+  - "Carga Masiva"
+  - "Resultado de Carga Masiva"
+precondiciones:
+  - Sesión iniciada con perfil Administrador
+  - Se completó la plantilla de la entidad a cargar (DNATO-UC-026)
+flujo_principal:
+  - paso: "Elige la entidad que va a cargar y adjunta la planilla completada"
+    resultado: "El archivo se acepta y comienza el procesamiento"
+  - paso: "Confirma la carga"
+    resultado: "Se muestra el resultado de la carga con lo que se procesó"
+flujos_alternativos:
+  - nombre: "La planilla tiene filas con errores"
+    pasos:
+      - paso: "Carga una planilla en la que alguna fila no cumple lo esperado"
+        resultado: "No se carga ninguna fila y el resultado indica qué estuvo mal"
+  - nombre: "Sin elegir la entidad"
+    pasos:
+      - paso: "Adjunta el archivo sin elegir qué se está cargando"
+        resultado: "Se muestra el error de campo obligatorio y no se procesa nada"
+  - nombre: "Archivo que no es una planilla"
+    pasos:
+      - paso: "Adjunta un archivo que no es .xlsx ni .xls"
+        resultado: "Se muestra 'Formato de archivo no válido. Solo se permiten archivos Excel (.xlsx, .xls)' y no se procesa nada"
+  - nombre: "Sin archivo"
+    pasos:
+      - paso: "Confirma sin adjuntar ningún archivo"
+        resultado: "Se muestra 'Error al cargar el archivo. Verifique que el archivo sea válido.'"
+validaciones:
+  - "La entidad de negocio es obligatoria"
+  - "Solo se aceptan planillas .xlsx o .xls"
+  - "**La carga es todo o nada**: si alguna fila tiene un error, no se carga ninguna"
+  - "Los datos se cargan en la empresa de la sesión: no hace falta que la planilla la identifique ni se valida contra ella"
+  - "Una carga que terminó bien no se puede deshacer"
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24 con tres definiciones: la carga es todo o nada, la empresa sale de la sesión y se asume que los datos son de esa empresa, y una carga exitosa no se deshace."
+  - "El archivo queda guardado en el servidor (`bulkload_stage_files`) con nombre único mientras se procesa; hay limpieza de temporales."
+derivados:
+  feature: features/dnato/DNATO-UC-027.cargar-datos-masivamente-desde-una-planilla.feature

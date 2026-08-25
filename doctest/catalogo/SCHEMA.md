@@ -50,17 +50,28 @@ El nombre del archivo **es** el id del caso. El directorio **es** el módulo en 
 
 El validador rechaza cualquier valor fuera de esta lista, a propósito: si en un relevamiento aparece un rol nuevo, **no se inventa** — se propone acá y el PM lo valida.
 
+**Roles de trabajo (los que ejecutan la operación).** Los define el alta de empresa: `toolsCOREAPI` crea 16 roles en Bonita por cada empresa nueva, con el nombre `<Rol> <NombreEmpresa>`.
+
 | Perfil | Quién es | Estado |
 |---|---|---|
-| `Solicitante` | Genera solicitudes de servicio | ✅ validado (Doc 1 v1.1 RF-05.4) |
-| `Supervisor` | Acepta/rechaza solicitudes, da de alta equipos, verifica informes | ✅ validado |
-| `Planificador` | Programa preventivos y asigna órdenes de trabajo | ✅ validado |
+| `Solicitante` | Genera solicitudes de servicio (en Bonita: *Solicitante de Almacén*, *Solicitante de Mantenimiento*) | ✅ validado |
+| `Supervisor` | Acepta/rechaza solicitudes, da de alta equipos, verifica informes (*Supervisor de Mantenimiento*) | ✅ validado |
+| `Planificador` | Programa preventivos y asigna órdenes de trabajo (*Planificador de Mantenimiento*, *Planificador de Tareas*) | ✅ validado |
 | `Mantenedor` | Ejecuta órdenes de trabajo y carga el informe de servicio | ✅ validado |
-| `Administrador` | Administra la cuenta: usuarios, roles y datos de su empresa | ⏳ propuesto en F1 (#438) |
-| `Usuario` | Cualquier usuario autenticado, sin importar su rol (perfil propio, contraseña) | ⏳ propuesto en F1 (#438) |
-| `Visitante` | Todavía no tiene cuenta: se está registrando o activándola | ⏳ propuesto en F1 (#438) |
 
-Los tres propuestos salieron del relevamiento de DNATO, que es lo que el Doc 1 v1.1 RF-05.4 anticipa ("más los roles de administración de cuenta que surjan del relevamiento DNATO"). Quedan pendientes de la validación del PM junto con el catálogo de DNATO; si prefiere otros nombres, se renombran y se regeneran los casos.
+**Perfiles de DNATO (los que administran la cuenta).** Son otra cosa: no dicen qué puede hacer el usuario en la operación, sino qué puede administrar. Salen de la tabla `seg.roles` y del `constants.php` de cada ambiente.
+
+| Perfil | Quién es | Dónde vive | Estado |
+|---|---|---|---|
+| `Administrador` | Administra usuarios, menúes, carga masiva y configuración de su empresa | `seg.roles` id 1 — en los datos del DEMO figura como **`Admin`** | ⏳ propuesto en F1 (#438) |
+| `Usuario` | Perfil no administrador: solo accede a sus datos personales | `seg.roles` id 2 — en los datos del DEMO figura como **`Author`** | ⏳ propuesto en F1 (#438) |
+| `Superusuario` | Además da de alta empresas y las lista todas | **no es un perfil de la base**: es el correo definido en `TOOLS_ADMIN_USER` | ⏳ propuesto en F1 (#438) |
+| `Usuario externo` | Representa a una empresa de afuera (razón social y CUIT propios) | `USUARIO_EXTERNO` = rol 8 | ⏳ propuesto en F1 (#438) |
+| `Visitante` | Todavía no tiene cuenta: se está registrando o activándola | — | ⏳ propuesto en F1 (#438) |
+
+Los cinco propuestos salieron del relevamiento de DNATO, que es lo que el Doc 1 v1.1 RF-05.4 anticipa ("más los roles de administración de cuenta que surjan del relevamiento DNATO"). Quedan pendientes de la validación del PM.
+
+> **Los nombres del catálogo y los de los datos no coinciden, y está decidido así** (PM, 2026-08-24): el catálogo y las ayudas usan el lenguaje de negocio (`Administrador`, `Usuario`) y la base sigue diciendo `Admin` y `Author`. Renombrar los datos quedó como mejora futura — hallazgo **H-015** del registro.
 
 ### Cómo se escriben los pasos
 
