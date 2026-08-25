@@ -2,9 +2,10 @@ id: ALM-UC-005
 modulo: ALM
 titulo: Consultar el stock por establecimiento y depósito
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Lote.php
@@ -33,8 +34,12 @@ flujos_alternativos:
       - paso: "Hace clic en 'Filtrar'"
         resultado: "El listado agrega los artículos cuya existencia es cero"
 validaciones:
+  - "La cantidad que muestra esta pantalla es la **existencia física**: lo que hay, sin descontar lo comprometido en pedidos"
+  - "Es una pantalla de consulta: no permite operar sobre el stock"
   - "El stock listado corresponde solo a la empresa de la sesión"
   - "Los depósitos ofrecidos son los del establecimiento elegido"
-dudas:
-  - "¿Qué significa exactamente la cantidad que muestra esta pantalla: existencia física, existencia disponible (descontando lo comprometido en pedidos), o las dos? ALM-UC-015 (punto de pedido) muestra 'Cant. Stock' y 'Cant. Disponible' como columnas distintas, así que la diferencia importa."
-  - "¿Esta pantalla es solo consulta, o se espera que desde acá se pueda operar sobre el stock?"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-005.consultar-el-stock-por-establecimiento-y-deposit.feature
+notas:
+  - "La existencia **disponible** —física menos lo comprometido— es otra cosa y se usa en el punto de pedido (ALM-UC-015)."

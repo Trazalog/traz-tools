@@ -2,9 +2,10 @@ id: ALM-UC-012
 modulo: ALM
 titulo: Consultar el detalle de las entregas de un período
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Informe.php
@@ -26,7 +27,10 @@ flujo_principal:
     resultado: "Se listan las entregas del período con su detalle"
 validaciones:
   - "Las fechas Desde y Hasta son obligatorias"
+  - "El filtro de Obras solo tiene contenido si la empresa lo cargó: es un formulario dinámico, no un dato del módulo"
   - "El informe solo incluye entregas de la empresa de la sesión"
-dudas:
-  - "La pantalla filtra por 'Obras'. En el resto del módulo se habla de órdenes de trabajo. ¿Es lo mismo con otro nombre, o son cosas distintas?"
-  - "¿Este informe se usa para rendir consumos a un cliente o a una obra? De eso depende qué columnas tienen que estar sí o sí."
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-012.consultar-el-detalle-de-las-entregas-de-un-perio.feature
+notas:
+  - "**'Obras' no es lo mismo que orden de trabajo.** Es un formulario dinámico que se carga a mano y solo se usa en clientes constructores; para el resto de las empresas el filtro queda vacío. Confirmado por el PM."

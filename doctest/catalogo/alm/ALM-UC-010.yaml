@@ -2,9 +2,10 @@ id: ALM-UC-010
 modulo: ALM
 titulo: Entregar materiales contra un pedido
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/new/Entrega_Material.php
@@ -23,8 +24,8 @@ flujo_principal:
     resultado: "Se muestra el listado con N° de Pedido, N° de Entrega, Ord.Trabajo, Fecha, N° Comprobante, Entregado y Estado Ped."
   - paso: "Abre un pedido pendiente"
     resultado: "Se muestran los artículos pedidos con la cantidad pedida y la cantidad a entregar"
-  - paso: "Indica cuánto entrega de cada artículo y de qué lote y depósito sale"
-    resultado: "Las cantidades quedan cargadas"
+  - paso: "Indica cuánto entrega de cada artículo y elige de qué lote y depósito sale"
+    resultado: "Las cantidades quedan cargadas. La pantalla no ofrece agregar más de lo pedido ni sacar de un lote sin existencias"
   - paso: "Confirma la entrega"
     resultado: "La entrega queda registrada, el stock del depósito baja y el pedido actualiza cuánto lleva entregado"
 flujos_alternativos:
@@ -36,9 +37,14 @@ flujos_alternativos:
         resultado: "El pedido queda con saldo pendiente y admite una entrega posterior"
 validaciones:
   - "La entrega descuenta stock del depósito y del lote indicados"
-  - "Lo entregado no debería superar lo pedido"
-dudas:
-  - "**¿Se puede entregar más de lo pedido?** El modelo lleva un campo `resto` por línea, pero el código no verifica el tope. Si la respuesta es que no, el caso necesita esa validación."
-  - "¿Se puede entregar si no hay stock suficiente en el depósito? Hoy nada lo impide y el stock quedaría en negativo."
-  - "¿Quién elige el lote del que sale la mercadería: lo elige quien entrega, o el sistema aplica un criterio (el más viejo primero, por ejemplo)?"
-  - "Una entrega registrada, ¿se puede anular o corregir?"
+  - "No se puede entregar más de lo pedido"
+  - "No se puede entregar si el lote no tiene existencias"
+  - "Quien elige el lote del que sale la mercadería es el Responsable de Almacén"
+  - "Una entrega registrada no se anula ni se corrige: toda corrección se hace por un ajuste de stock (ALM-UC-014)"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-010.entregar-materiales-contra-un-pedido.feature
+notas:
+  - "**Lo de 'no entregar de más' hoy lo protege la pantalla, no el servidor.** La vista oculta el botón de agregar entrega cuando `cant_pedida <= cant_entregada` o `cant_disponible == 0`, pero `Ordeninsumos::insert_entrega_materiales()` acepta el `resto` que venga del formulario sin recalcularlo. Es el mismo patrón que en DNATO: la vista protege y el servidor no revalida (H-041)."
+  - "`actualizar_lote()` descuenta con `cantidad - X` sin verificar que alcance, así que un pedido armado a mano dejaría el lote en negativo."
+  - "Estados que deja la entrega: `Entregado`, `Ent. Parcial`, `Finalizado Ent. Parcial` o `Finalizado Sin Entrega` — ver las notas de ALM-UC-006."

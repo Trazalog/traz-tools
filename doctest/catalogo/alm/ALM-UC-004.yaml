@@ -2,9 +2,10 @@ id: ALM-UC-004
 modulo: ALM
 titulo: Dar de baja un artículo
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Articulo.php
@@ -18,15 +19,22 @@ precondiciones:
   - Sesión iniciada en Tools
   - Existe un artículo activo en la empresa
 flujo_principal:
-  - paso: "En el listado hace clic en la acción de baja de un artículo"
+  - paso: "En el listado hace clic en la acción de baja de un artículo sin existencias"
     resultado: "El sistema pide confirmación"
   - paso: "Confirma la baja"
-    resultado: "El artículo queda dado de baja y la columna Estado lo refleja"
+    resultado: "El artículo queda dado de baja —la baja es lógica, el artículo no se borra— y la columna Estado lo refleja"
+flujos_alternativos:
+  - nombre: "El artículo todavía tiene existencias"
+    pasos:
+      - paso: "Intenta dar de baja un artículo con stock"
+        resultado: "El sistema no lo permite: primero hay que dejar el artículo en cero"
 validaciones:
+  - "La baja es lógica: el artículo nunca se borra, para no romper la trazabilidad de lo que se movió con él"
+  - "No se puede dar de baja un artículo que todavía tiene existencias"
+  - "Un artículo dado de baja no se ofrece para elegir en un pedido nuevo"
   - "La columna Estado del listado distingue los artículos dados de baja"
-dudas:
-  - "**Ésta es la duda central del caso.** ¿La baja tiene que ser lógica, como en DNATO-UC-017 donde decidiste que nunca debe haber borrado físico porque rompe la trazabilidad? El listado tiene una columna Estado, lo que sugiere baja lógica, pero el modelo expone `eliminar($id)`. Hay que confirmar cuál de los dos caminos es el que corre."
-  - "¿Se puede dar de baja un artículo que todavía tiene stock, o que aparece en pedidos abiertos? Hoy nada lo impide."
-  - "Un artículo dado de baja, ¿sigue apareciendo para elegir en un pedido nuevo?"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-004.dar-de-baja-un-articulo.feature
 notas:
   - "No se ejecutó ninguna baja contra el DEMO: sería modificar datos de una empresa real."

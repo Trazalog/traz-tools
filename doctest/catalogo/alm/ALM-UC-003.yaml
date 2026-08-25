@@ -2,9 +2,10 @@ id: ALM-UC-003
 modulo: ALM
 titulo: Editar un artículo
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Articulo.php
@@ -26,9 +27,9 @@ flujo_principal:
     resultado: "El artículo queda actualizado y el listado refleja el cambio"
 validaciones:
   - "Si el punto de pedido se deja vacío, se guarda como 0"
-dudas:
-  - "¿Qué campos de un artículo se pueden cambiar una vez que tiene movimientos de stock? Cambiar la unidad de medida de un artículo con existencias cambiaría el significado de las cantidades ya registradas, y el código no lo impide."
-  - "¿Se puede cambiar el código de un artículo ya usado en pedidos o remitos?"
-  - "El caso describe el ícono de edición del listado porque es como se llega hoy. ¿Es el único camino previsto?"
+  - "El código y la unidad de medida solo los puede cambiar un Administrador de la empresa: cambiarlos con existencias o con movimientos ya registrados altera el significado de lo que está cargado"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-003.editar-un-articulo.feature
 notas:
   - "`update_editar($data, $id)` arma el WHERE solo con el id del artículo, sin empresa: con el id de un artículo ajeno se podría editar el de otra empresa. NO se ejecutó la prueba para no alterar datos de otra empresa — el hallazgo es lo que dice el código (H-037 / issue #479)."

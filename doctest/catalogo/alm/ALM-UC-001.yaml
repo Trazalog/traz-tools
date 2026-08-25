@@ -2,9 +2,10 @@ id: ALM-UC-001
 modulo: ALM
 titulo: Ver el listado de artículos del almacén
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Articulo.php
@@ -31,11 +32,12 @@ flujos_alternativos:
         resultado: "La grilla aparece vacía y solo se ofrece el botón Agregar"
 validaciones:
   - "El listado solo muestra artículos de la empresa de la sesión"
+  - "El acceso se controla por el menú: quien tiene la opción de Almacenes, entra"
 datos_prueba:
   empresa: EMPRESA_TEST_1
   precondicion: "la empresa tiene al menos un artículo cargado"
-dudas:
-  - "La columna Estado muestra si el artículo está activo o dado de baja. ¿El listado debe mostrar los artículos dados de baja junto con los activos, como hace hoy, o deberían quedar ocultos salvo que se pidan explícitamente?"
-  - "¿Quién debe poder ver este listado? Hoy alcanza con tener el menú; el controlador no verifica perfil (ver H-037 / issue #479)."
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-001.ver-el-listado-de-articulos-del-almacen.feature
 notas:
   - "Relevado contra `origin/develop` del submódulo, que es lo desplegado en el DEMO — el puntero de develop-v3 está 25 commits atrás (H-038 / issue #481)."

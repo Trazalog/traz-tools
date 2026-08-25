@@ -2,7 +2,9 @@
 
 ## Objetivo
 
-Es lo que tenés que leer para validar el catálogo de Almacenes: qué se relevó, qué se encontró y **qué preguntas hay que responder** para que los casos salgan de `borrador`. Está escrito para el PM. **No** es el catálogo en sí —eso son los 19 YAML de esta carpeta— ni la guía de cómo funciona DocTest, que está en [`../../GUIA-PRUEBAS-Y-AYUDAS.md`](../../GUIA-PRUEBAS-Y-AYUDAS.md).
+Deja registro de cómo se relevó Almacenes, qué se encontró y en qué quedó cada caso después de la validación del PM. Está escrito para el PM y para quien retome F3. **No** es el catálogo en sí —eso son los 19 YAML de esta carpeta, que son la fuente— ni la guía de cómo funciona DocTest, que está en [`../../GUIA-PRUEBAS-Y-AYUDAS.md`](../../GUIA-PRUEBAS-Y-AYUDAS.md).
+
+> **Validado el 2026-08-25.** Las 61 preguntas están respondidas y aplicadas al catálogo. Lo que queda abierto está en §6. Este dossier se conserva porque documenta cómo se relevó y qué se encontró; para el estado actual de cada caso, la fuente son los YAML.
 
 **Cómo validar, en concreto.** En una terminal, parado en `traz-tools/doctest/`:
 
@@ -12,8 +14,9 @@ npm run hoja:validacion -- alm
 
 Eso deja `.validacion/alm.html`. Abrilo en el navegador (doble clic), leé caso por caso, marcá la decisión de cada uno y usá el botón **Copiar** al final: arma un texto con todas tus decisiones que me pegás acá. Con eso aplico los cambios al catálogo.
 
-- **Fecha:** 2026-08-25 · **Fase:** DocTest F3 (issue #440) · **Casos:** 19, todos en `borrador`
-- **Preguntas abiertas:** 61, repartidas entre los 19 casos
+- **Fecha:** 2026-08-25 · **Fase:** DocTest F3 (issue #440)
+- **Estado tras la validación del PM:** 19 casos → **16 validados**, 2 en `borrador`, 1 `obsoleto`
+- **Preguntas abiertas:** 1 (era 61)
 
 ---
 
@@ -38,11 +41,13 @@ Es **el mismo gap que ADR-012 detectó en el DataService**, del lado del PHP. Y 
 
 ### 1.2 El código que ve `develop-v3` no es el que corre en el DEMO
 
-El submódulo `traz-comp-almacenes` que apunta `develop-v3` está **25 commits atrás** de la rama `develop` del submódulo, que es lo desplegado.
+**Cuatro submódulos** de `develop-v3` están atrás de `develop`, que es lo desplegado: `traz-comp-almacenes` (25 commits), `traz-comp-bpm`, `traz-comp-pan` y `traz-prod-trazasoft`. En el repo padre, en cambio, casi no hay diferencia.
 
 Se notó porque el menú tiene **Movimientos Internos**, la pantalla abre y funciona en el DEMO, y su controlador **no existe** en el árbol de `develop-v3`: entró en uno de esos 25 commits. Es decir, alguien que releve desde `develop-v3` no ve una pantalla que los usuarios están usando.
 
-**Este relevamiento se hizo contra `origin/develop` del submódulo.** No moví el puntero: cambiarlo 25 commits cambia qué código corre y es una decisión de integración, no de relevamiento. → Issue **#481**.
+**Este relevamiento se hizo contra `origin/develop` del submódulo**, y está verificado que es la versión correcta: el commit que releví (`de535f6`) es exactamente el que apunta `develop` del repo padre. No moví el puntero: cambiarlo 25 commits cambia qué código corre y es una decisión de integración, no de relevamiento. → Issue **#481**.
+
+**Cómo leer `develop` sin tocar `develop-v3`** quedó escrito en [`../../GUIA-PRUEBAS-Y-AYUDAS.md` §1.4](../../GUIA-PRUEBAS-Y-AYUDAS.md): `git show`, `git grep` y `git ls-tree` aceptan una referencia, así que se lee la otra rama sin cambiar de rama ni tocar el working tree.
 
 ### 1.3 Un `empr_id` fijo en 1
 
@@ -54,101 +59,105 @@ Se notó porque el menú tiene **Movimientos Internos**, la pantalla abre y func
 
 **13 pantallas** del menú (11 en Almacenes + Stock Producción, que está en Producción pero es de este módulo), verificadas una por una contra el DEMO: **las 13 responden HTTP 200 y muestran contenido real**. De ahí salieron 19 casos.
 
-| Caso | Título | Perfil | Dudas |
+| Caso | Título | Perfil | Estado |
 |---|---|---|---|
-| ALM-UC-001 | Ver el listado de artículos del almacén | Responsable de Almacén | 2 |
-| ALM-UC-002 | Dar de alta un artículo | Responsable de Almacén | 4 |
-| ALM-UC-003 | Editar un artículo | Responsable de Almacén | 3 |
-| ALM-UC-004 | Dar de baja un artículo | Responsable de Almacén | 3 |
-| ALM-UC-005 | Consultar el stock por establecimiento y depósito | Responsable de Almacén | 2 |
-| ALM-UC-006 | **Pedir materiales al almacén** | Solicitante | 5 |
-| ALM-UC-007 | Ver el detalle de un pedido de materiales | Solicitante | 2 |
-| ALM-UC-008 | Editar un pedido de materiales | Solicitante | 3 |
-| ALM-UC-009 | Registrar la recepción de materiales de un proveedor | Responsable de Almacén | 4 |
-| ALM-UC-010 | Entregar materiales contra un pedido | Responsable de Almacén | 4 |
-| ALM-UC-011 | Entregar materiales sin pedido previo | Responsable de Almacén | 3 |
-| ALM-UC-012 | Consultar el detalle de las entregas de un período | Responsable de Almacén | 2 |
-| ALM-UC-013 | Consultar el stock valorizado | Responsable de Almacén | 3 |
-| ALM-UC-014 | Registrar un ajuste de stock | Responsable de Almacén | 5 |
-| ALM-UC-015 | Ver los artículos que llegaron al punto de pedido | Responsable de Almacén | 4 |
-| ALM-UC-016 | Mover mercadería entre depósitos — salida | Responsable de Almacén | 4 |
-| ALM-UC-017 | Mover mercadería entre depósitos — recepción | Responsable de Almacén | 3 |
-| ALM-UC-018 | Consultar los movimientos históricos de un artículo | Responsable de Almacén | 2 |
-| ALM-UC-019 | Consultar el stock de producción por lote | Responsable de Almacén | 3 |
+| ALM-UC-001 | Ver el listado de artículos del almacén | Responsable de Almacén | validado |
+| ALM-UC-002 | Dar de alta un artículo | Responsable de Almacén | validado |
+| ALM-UC-003 | Editar un artículo | Responsable de Almacén | validado |
+| ALM-UC-004 | Dar de baja un artículo | Responsable de Almacén | validado |
+| ALM-UC-005 | Consultar el stock por establecimiento y depósito | Responsable de Almacén | validado |
+| ALM-UC-006 | **Pedir materiales al almacén** | Solicitante | validado |
+| ALM-UC-007 | Ver el detalle de un pedido de materiales | Solicitante | borrador |
+| ALM-UC-008 | Editar un pedido de materiales | Solicitante | obsoleto |
+| ALM-UC-009 | Registrar la recepción de materiales de un proveedor | Responsable de Almacén | validado |
+| ALM-UC-010 | Entregar materiales contra un pedido | Responsable de Almacén | validado |
+| ALM-UC-011 | Entregar materiales sin pedido previo | Responsable de Almacén | validado |
+| ALM-UC-012 | Consultar el detalle de las entregas de un período | Responsable de Almacén | validado |
+| ALM-UC-013 | Consultar el stock valorizado | Responsable de Almacén | validado |
+| ALM-UC-014 | Registrar un ajuste de stock | Responsable de Almacén | validado |
+| ALM-UC-015 | Ver los artículos que llegaron al punto de pedido | Responsable de Almacén | validado |
+| ALM-UC-016 | Mover mercadería entre depósitos — salida | Responsable de Almacén | validado |
+| ALM-UC-017 | Mover mercadería entre depósitos — recepción | Responsable de Almacén | validado |
+| ALM-UC-018 | Consultar los movimientos históricos de un artículo | Responsable de Almacén | validado |
+| ALM-UC-019 | Consultar el stock de producción por lote | Responsable de Almacén | borrador |
 
 ### Un perfil nuevo, que no inventé
 
-El alta de empresa crea dos roles de almacén en `toolsCOREAPI`: **`Responsable de Almacén <empresa>`** y **`Solicitante de Almacén <empresa>`**. El segundo entra en el `Solicitante` que el catálogo ya tiene; el primero es nuevo y lo agregué al vocabulario como **propuesto**, pendiente de que lo valides.
+El alta de empresa crea dos roles de almacén en `toolsCOREAPI`: **`Responsable de Almacén <empresa>`** y **`Solicitante de Almacén <empresa>`**. El segundo entra en el `Solicitante` que el catálogo ya tiene; el primero es nuevo y se agregó al vocabulario. **Validado por el PM el 2026-08-25** al aceptar los casos que lo usan.
 
 Verifiqué además que en este caso **el nombre del rol coincide** entre `toolsCOREAPI` y el trigger que asigna los menúes — o sea que ALM **no** tiene el problema de H-012, donde "Responsable de Procesos" se quedaba sin menú por una diferencia de nombre. (Hay un `"Responsable Almacén"` sin "de" en el mismo XML, pero es el nombre del **actor de Bonita**, que es otra cosa.)
 
 ---
 
-## 3. Las preguntas que hay que responder
+## 3. Qué se respondió, y lo que cambió al profundizar
 
-Están todas dentro de cada caso, en su campo `dudas`, y la hoja de validación las muestra al frente. Acá van agrupadas por tema, porque muchas se responden juntas.
+La validación no solo cerró las preguntas: al pedir el PM que se estudiara mejor el código, **cinco respuestas resultaron más precisas —o distintas— de lo que se había supuesto**. Eso es lo que vale la pena leer acá.
 
-### 3.1 Stock: qué número es cuál
+### 3.1 El disponible no descuenta solo los pedidos aprobados
 
-Tres pantallas muestran cantidades y no queda claro que hablen de lo mismo. **Punto de Pedido** tiene dos columnas separadas, "Cant. Stock" y "Cant. Disponible", así que la diferencia existe y es del negocio.
+La regla, tal como la valida `Lotes::getPuntoPedido()`:
 
-- ¿Qué es cada una: existencia física contra existencia sin comprometer?
-- El punto de pedido, ¿se compara contra cuál de las dos? (Si hay stock físico pero comprometido, hay que reponer igual.)
-- El punto de pedido es un número por artículo: con varios depósitos, ¿el umbral es del total o de cada uno?
+```
+disponible = SUM(alm_lotes.cantidad) − reservado
+reservado  = SUM(resto) de los detalles de pedidos de la empresa cuyo estado NO es
+             Entregado, Rechazado, Cancelado, Finalizado Ent. Parcial ni Finalizado Sin Entrega
+```
 
-*Casos afectados: ALM-UC-005, ALM-UC-015, y de rebote ALM-UC-019.*
+Un artículo aparece en Punto de Pedido cuando `disponible < punto_pedido`.
 
-### 3.2 Qué operación mueve stock y con qué control
+**El matiz:** como el filtro es por exclusión de estados cerrados, un pedido en `Creada` —todavía sin aprobar— **ya descuenta disponible**. La validación decía "pedidos aprobados". Conviene confirmar si es lo esperado.
 
-Cuatro operaciones cambian existencias, con controles muy distintos:
+### 3.2 El pedido tiene ocho estados, no cuatro
 
-| Operación | Efecto | Control hoy |
-|---|---|---|
-| Recepción de materiales (UC-009) | suma | ninguno más que tener el menú |
-| Entrega contra pedido (UC-010) | resta | hay un pedido aprobado detrás |
-| **Entrega directa** (UC-011) | resta | **ninguno: saltea el pedido** |
-| **Ajuste de stock** (UC-014) | suma o resta | **ninguno: cambia el número sin que entre ni salga nada** |
+De `models/Almtareas.php` y `models/Lotes.php`:
 
-- **¿Para qué existe la entrega directa?** Si el pedido existe para que alguien apruebe, la entrega directa equivale a saltear esa aprobación. ¿Es para urgencias, para consumos menores, o quedó de una etapa anterior?
-- **¿Quién debería poder hacer un ajuste?** Es el mecanismo para corregir diferencias de inventario y hoy alcanza con tener el menú.
-- ¿Alguna de estas operaciones puede dejar el stock en negativo?
-- ¿Se pueden anular? Hoy ninguna tiene pantalla de anulación: si una cantidad se cargó mal, el stock queda mal.
+| Estado | Cuándo |
+|---|---|
+| `Creada` | al crearse el pedido |
+| `Aprobado` / `Rechazado` | tarea de Bonita "Aprueba pedido de Recursos Materiales" |
+| `Entregado` | entrega completa |
+| `Ent. Parcial` | entrega parcial |
+| `Finalizado Ent. Parcial` | se cierra el pedido con lo entregado |
+| `Finalizado Sin Entrega` | se cierra sin entregar nada |
+| `Cancelado` | aparece en el cálculo del punto de pedido |
 
-### 3.3 El pedido de materiales, que es el flujo del piloto MCP
+Los cambia **Bonita**, a través de las tareas del proceso, no la pantalla. **Los dos estados de cierre no estaban en la lista de la validación** — quedan por confirmar (§6).
 
-- **Si Bonita falla, el pedido queda huérfano.** El código guarda el pedido y después lanza el proceso: si eso falla, el pedido ya está guardado sin caso asociado. ADR-012 pide explícitamente el patrón INSERT → BPM → **rollback** para la tool MCP. ¿La pantalla debería comportarse igual, o un pedido sin proceso es un estado aceptable que alguien repara después?
-- ¿La justificación es obligatoria siempre, o solo cuando el pedido no viene de una orden de trabajo?
-- ¿Se puede pedir más de lo que hay en stock?
-- **¿Hasta qué estado se puede editar un pedido?** El código no lo verifica, así que hoy se puede editar uno ya entregado. Y al editar se borra todo el detalle anterior y se vuelve a insertar: si había entregas parciales contra esas líneas, ¿qué pasa con ellas?
-- ¿Qué estados recorre un pedido y quién los cambia? En el DEMO se ven pedidos "Entregado", pero el catálogo de estados no está en el código.
-- ¿El pedido extraordinario se sigue usando, o quedó reemplazado por el normal?
+### 3.3 El precio del stock valorizado sale de la recepción, y se activa por empresa
 
-### 3.4 Bajas, otra vez
+Confirmado tal como lo describió el PM. `Remitos::getConfigPrecios()` busca en `core.tablas` un registro de la empresa cuya `tabla` contiene `alm_configs`: **si su campo `valor2` viene con valor**, la pantalla de recepción muestra Precio Unitario en pesos y en dólares con sus totales. Ese es el valor que después informa Stock Valorizado — no una lista de precios.
 
-En DNATO decidiste que **nunca debe haber borrado físico**, porque rompe la trazabilidad. Acá vuelve a aparecer:
+### 3.4 Las reglas de "no de más" existen, pero solo en la pantalla
 
-- **ALM-UC-004 (dar de baja un artículo):** el listado tiene columna Estado, lo que sugiere baja lógica, pero el modelo expone `eliminar($id)`. ¿Cuál de los dos corre?
-- ¿Se puede dar de baja un artículo que tiene stock, o que aparece en pedidos abiertos?
-- Un artículo dado de baja, ¿sigue apareciendo para elegir en un pedido nuevo?
+El PM confirmó dos reglas: no se puede entregar más de lo pedido, y **nunca** se puede sacar más de lo que hay. Las dos están implementadas… en el JavaScript de la vista:
 
-### 3.5 Movimientos entre depósitos
+| Regla | Dónde está |
+|---|---|
+| No entregar de más | la vista oculta el botón si `cant_pedida <= cant_entregada` o `cant_disponible == 0` |
+| No sacar más de lo que hay (movimiento interno) | `MovimientoSalida.php:674` avisa cuántas unidades tiene el lote |
 
-- **¿Dónde está la mercadería en tránsito?** Si la salida descuenta del origen y la recepción suma al destino, en el medio no figura en ningún depósito. ¿Es a propósito o debería verse como stock en tránsito?
-- **¿Qué pasa si lo que llega no es lo que salió?** ¿Se registra como faltante, se rechaza, se ajusta?
-- ¿La recepción tiene que hacerla alguien del destino, o puede hacerla el mismo que registró la salida?
+Del lado del servidor no hay nada: `insert_entrega_materiales()` guarda el `resto` que venga del formulario y `actualizar_lote()` descuenta sin verificar que alcance. Es el mismo patrón que en DNATO. → **#483**.
 
-*Estos dos casos están relevados más por arriba que el resto: la pantalla es reciente y no está en el árbol de `develop-v3` (§1.2).*
+### 3.5 El ajuste de stock: acá el relevamiento estaba mal, y el PM lo marcó
 
-### 3.6 Dudas sueltas, pero que cambian el caso
+Las preguntas de la primera pasada ("¿la justificación es obligatoria?", "¿admite negativos?", "¿se puede anular?") estaban mal planteadas por dos motivos:
 
-- **UC-002:** el formulario de alta tiene **dos campos con la etiqueta "Código"** — el identificador interno y el código de barras. ¿Cuál escribe el usuario? ¿El interno debería estar visible?
-- **UC-002:** ¿qué implica "lotear" un artículo para la operación? El manual de almacén no lo explica y el código solo guarda la marca.
-- **UC-009:** ¿el número de comprobante tiene que ser único por proveedor? Hoy se puede cargar dos veces el mismo remito y duplicar el stock.
-- **UC-009:** para un artículo loteado, ¿el número de lote lo escribe quien recibe o lo genera el sistema?
-- **UC-013:** **¿de dónde sale el precio con el que se valoriza el stock?** ¿De la lista de precios, del último remito, de un promedio? El criterio cambia el número y no está escrito en ningún lado.
-- **UC-012:** la pantalla filtra por "Obras" y el resto del módulo habla de órdenes de trabajo. ¿Es lo mismo con otro nombre?
-- **UC-019:** **Stock Producción está en el menú de Producción pero es del módulo de Almacenes.** ¿Está bien ahí? ¿En qué se diferencia de Almacenes → Stock? De la respuesta depende en qué manual va su ayuda.
-- **UC-018:** ¿el histórico incluye los cuatro tipos de movimiento (recepción, entrega, ajuste, movimiento interno)? Si falta alguno, no cierra contra el stock actual y deja de servir para auditar.
+1. **Capturé el modal de detalle de un ajuste existente, no el formulario de alta.** El alta se abre por `nuevoAjuste()` y carga otra vista.
+2. **Busqué en el PHP una lógica que no está ahí.** `Ajustestocks::guardarDetalleAjustes()` arma las líneas y las manda a `REST_ALM + /stock/ajuste/detalle_batch_req`: **el ajuste no escribe en la base desde el PHP**, lo resuelve el DataService. Por eso desde el PHP no se puede responder si admite negativos.
+
+Lo que sí quedó claro del código: el ajuste se aplica **sobre un lote concreto**, cada línea lleva su propio tipo de ajuste (la cabecera ya no lo usa — lo dice un comentario en el código), y una salida se guarda como cantidad negativa.
+
+### 3.6 El histórico cubre ocho tipos de movimiento, incluida la producción
+
+De `Historico_articulos.view.php`: Recepción, Entrega, Movimiento Interno de ingreso y de egreso, Ajuste, y tres de producción (consumo de materia prima, consumo de producto semi terminado, salida de producto de etapa productiva). **Sí se puede reconstruir el stock** sumándolos, como esperaba la validación.
+
+### 3.7 Lo demás, confirmado sin sorpresas
+
+- **Lotear** (UC-002): la marca `es_loteado` hace que la recepción exija número de lote y que las existencias se lleven por lote dentro de cada depósito.
+- **El lote en la recepción lo escribe quien recibe** (UC-009): campo de texto libre, obligatorio, que la vista habilita solo para artículos loteados.
+- **La justificación por diferencia en movimientos internos es obligatoria** (UC-017): la pantalla compara contra lo enviado y muestra *«La cantidad ingresada es distinta a la cantidad enviada, por favor ingrese justificación»*.
+- **"Obras" no es orden de trabajo** (UC-012): es un formulario dinámico que se carga a mano y solo se usa en clientes constructores.
+- **La entrega directa existe a propósito** (UC-011): hay clientes con procedimientos menos estrictos. El control está en quién puede usarla — solo el Responsable de Almacén.
 
 ---
 
@@ -169,8 +178,27 @@ Aplicada la lección de F1: **un hallazgo no se reporta sin verificarlo contra l
 
 ---
 
-## 5. Después de que valides
+## 5. En qué quedó cada caso
 
-Con los casos en `validado` sigue la segunda mitad de F3, que es mecánica y ya tiene todo el andamiaje de F1: page objects, specs, `.feature` y la ayuda de usuario del módulo. Los casos que queden en `borrador` no generan nada — ni test, ni escenario, ni ayuda —, que es justamente la garantía de que ninguna ayuda le explique a un usuario algo que nadie confirmó.
+| Caso | Estado |
+|---|---|
+| ALM-UC-001 a 006, 009 a 018 | **validado** (16) |
+| ALM-UC-007 — Ver el detalle de un pedido | `borrador`: el PM pidió expresamente no validarlo todavía |
+| ALM-UC-019 — Stock de producción por lote | `borrador`: se mueve a Producción por el ABM de menúes, y ese módulo no se ataca aún |
+| ALM-UC-008 — Editar un pedido de materiales | **obsoleto**: hoy un pedido no se puede editar |
+
+---
+
+## 6. Lo único que queda abierto
+
+1. **ALM-UC-007** — ¿un Solicitante ve **solo sus propios pedidos** o todos los de su empresa? Al validar quedó como *"debería ver solo los propios, hoy no lo hace creo"*. De la respuesta depende si es una restricción del caso o una mejora aparte. El resto del caso ya está confirmado: el detalle no debe verse desde otra empresa.
+2. **Dos estados de cierre por confirmar** — `Finalizado Ent. Parcial` y `Finalizado Sin Entrega` (§3.2).
+3. **El disponible descuenta pedidos sin aprobar** — confirmar si es lo esperado (§3.1).
+
+Ninguna de las tres frena la segunda mitad de F3.
+
+---
+
+## 7. Aviso que sigue vigente para los tests
 
 **Un aviso sobre los tests de ALM:** la empresa de test (`DocTest Empresa SA`) **no tiene el menú de Almacenes** — el trigger de alta solo le asigna menúes al rol Administrador. Para que la suite de ALM corra con datos propios hace falta asignarle el menú de Almacenes a un rol de esa empresa, y eso se hace desde el ABM de menúes, que es justamente `DNATO-UC-024`, uno de los dos casos de DNATO que quedaron en borrador. Lo marco acá porque es la dependencia concreta entre las dos fases.

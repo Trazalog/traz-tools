@@ -23,7 +23,7 @@ flujo_principal:
 validaciones:
   - "El detalle de un pedido solo debería ser visible para la empresa dueña del pedido"
 dudas:
-  - "**Hoy esto no se cumple y está verificado**: desde la sesión de otra empresa se obtuvo el detalle completo del pedido 882 de Conservas (H-036 / issue #478). El caso describe el comportamiento esperado, no el actual. ¿Confirmás que el detalle debe venir vacío para una empresa que no es la dueña, como pide ADR-012 para la tool `get_pedido_material`?"
-  - "¿El solicitante debe ver todos los pedidos de su empresa o solo los suyos?"
+  - "**Queda una sola pregunta, y la dejaste abierta al validar** (dijiste \"el solicitante debería ver solo los propios, hoy no lo hace creo\"): ¿un Solicitante tiene que ver **solo sus propios pedidos**, o todos los de su empresa? De la respuesta depende si esto es una restricción del caso o una mejora aparte. El resto del caso ya está confirmado: el detalle debe venir vacío para una empresa que no es la dueña."
 notas:
-  - "Cuando se derive el test, va con `test.fail()` y el issue #478 anotado: el caso describe el comportamiento esperado y el sistema todavía falla."
+  - "El aislamiento entre empresas quedó **confirmado por el PM** el 2026-08-25: el detalle no debe verse desde otra empresa. Hoy no se cumple y está verificado en vivo (issue #478). Cuando el caso salga de borrador, el test se deriva con `test.fail()` y el issue anotado."
+  - "El caso sigue en `borrador` **por pedido explícito del PM** (\"no valides esto ahora\"), no porque falte relevamiento."

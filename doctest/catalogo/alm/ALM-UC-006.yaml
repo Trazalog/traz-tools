@@ -2,9 +2,10 @@ id: ALM-UC-006
 modulo: ALM
 titulo: Pedir materiales al almacén
 perfil: Solicitante
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Notapedido.php
@@ -37,7 +38,7 @@ flujo_principal:
   - paso: "Elige el establecimiento y el depósito al que se le pide"
     resultado: "El pedido queda dirigido a ese depósito"
   - paso: "Confirma con 'Guardar'"
-    resultado: "El pedido queda creado en estado 'Creada' y se dispara el proceso de aprobación"
+    resultado: "El pedido queda creado en estado 'Creada' y se dispara el proceso de aprobación en Bonita"
 flujos_alternativos:
   - nombre: "El pedido nace de una orden de trabajo"
     pasos:
@@ -45,25 +46,25 @@ flujos_alternativos:
         resultado: "El formulario se abre con la orden ya asociada"
       - paso: "Carga los artículos y confirma"
         resultado: "El pedido queda asociado a la orden y aparece en la columna Ord.Trabajo del listado"
-  - nombre: "Pedido extraordinario"
+  - nombre: "El proceso en Bonita no arranca"
     pasos:
-      - paso: "En vez de elegir artículos del catálogo, describe en texto libre lo que necesita y lo justifica"
-        resultado: "El pedido se registra como extraordinario"
-      - paso: "Confirma"
-        resultado: "Se dispara el proceso de aprobación de pedidos extraordinarios"
+      - paso: "Confirma el pedido y el proceso de Bonita falla"
+        resultado: "El pedido **se elimina**: no debe quedar un pedido guardado sin su proceso de aprobación"
 validaciones:
-  - "La justificación es obligatoria"
+  - "La justificación es obligatoria siempre, venga el pedido de una orden de trabajo o no"
+  - "No hay tope de cantidad: se puede pedir lo que sea, aunque no haya existencias — el pedido no mueve stock"
   - "El pedido se crea en estado 'Creada'"
+  - "Si el proceso de Bonita falla, el pedido se elimina"
   - "El pedido queda asociado a la empresa de la sesión"
 datos_prueba:
   empresa: EMPRESA_TEST_1
   articulo: "uno existente de la empresa de prueba"
   cantidad: 1
-dudas:
-  - "¿La justificación es obligatoria siempre, o solo para los pedidos que no vienen de una orden de trabajo?"
-  - "¿Se puede pedir un artículo en una cantidad mayor a la que hay en stock? El código no lo valida y ADR-012 dice que el pedido no toca stock, pero no aclara si debe avisar."
-  - "**El pedido dispara un proceso en Bonita y no hay vuelta atrás si eso falla.** `crearNotaPedido()` guarda el pedido y `pedidoNormal()` lanza el proceso después: si Bonita falla, el pedido ya quedó guardado sin caso asociado. ADR-012 pide explícitamente el patrón INSERT → BPM → **rollback** para la tool MCP. ¿La pantalla debería comportarse igual, o un pedido sin proceso es un estado aceptable que alguien repara después?"
-  - "El pedido extraordinario se guarda con `empr_id = 1` fijo (H-039 / issue #480). ¿Ese flujo se sigue usando, o quedó reemplazado por el pedido normal?"
-  - "¿Qué estados puede recorrer un pedido y quién los cambia? En el DEMO se ven pedidos 'Entregado', pero el catálogo de estados no está en el código."
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-006.pedir-materiales-al-almacen.feature
 notas:
   - "Es el flujo central del módulo y el que ADR-012 elige para la única escritura del piloto MCP."
+  - "**Estados del pedido, relevados del código** (`models/Almtareas.php`, `models/Lotes.php`): `Creada` al nacer; `Aprobado` o `Rechazado` según la tarea de Bonita 'Aprueba pedido de Recursos Materiales'; y al entregar, `Entregado` (completa), `Ent. Parcial`, `Finalizado Ent. Parcial` (se cierra con lo entregado) o `Finalizado Sin Entrega`. Existe además `Cancelado`, que aparece en el cálculo del punto de pedido. Son **ocho**, y los cambia Bonita a través de las tareas del proceso, no la pantalla. Los dos estados de cierre —`Finalizado Ent. Parcial` y `Finalizado Sin Entrega`— no estaban en la lista que dio el PM al validar: conviene confirmarlos."
+  - "**Hoy el pedido NO se elimina si Bonita falla**: `crearNotaPedido()` guarda y `pedidoNormal()` lanza el proceso después, sin vuelta atrás. La validación de este caso describe lo que debe pasar; el test se deriva con `test.fail()` hasta que se corrija. Es el mismo patrón INSERT → BPM → rollback que ADR-012 exige para la tool MCP."
+  - "El pedido extraordinario quedó declarado **obsoleto por el PM (2026-08-25)** y se sacó de este caso. El `empr_id` fijo en 1 que tenía (issue #480) deja de ser urgente por eso, pero el issue sigue abierto porque el código está."

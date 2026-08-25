@@ -2,8 +2,8 @@ id: ALM-UC-008
 modulo: ALM
 titulo: Editar un pedido de materiales
 perfil: Solicitante
-estado: borrador
-version: "0.1"
+estado: obsoleto
+version: "1.0"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-almacenes
@@ -26,7 +26,7 @@ flujo_principal:
     resultado: "El pedido queda actualizado"
 validaciones:
   - "Un pedido ya entregado no debería poder modificarse"
-dudas:
-  - "**¿Hasta qué estado se puede editar un pedido?** Es la duda que bloquea el caso: el código no verifica el estado antes de editar, así que un pedido entregado se puede modificar. ¿Cuál es la regla del negocio?"
-  - "`editPedidoV2()` borra todo el detalle anterior y lo vuelve a insertar. Si el pedido ya tenía entregas parciales registradas contra esas líneas, ¿qué pasa con ellas?"
-  - "¿Quién puede editar un pedido: solo quien lo creó, cualquiera de la empresa, o el responsable de almacén también?"
+dudas: []
+notas:
+  - "**Declarado obsoleto por el PM el 2026-08-25: hoy un pedido de materiales no se puede editar.** El código de edición sigue existiendo (`editarPedido()`, `editPedidoV2()`, `editarDetalle()`, `eliminarDetalle()`, `editaDeposito()`) pero no hay camino en la pantalla que lleve ahí. Se conserva el caso por historia y no genera ningún derivado."
+  - "Que el código siga expuesto sin que la pantalla lo use tiene una consecuencia: esos métodos son alcanzables por URL y no verifican ni empresa ni estado del pedido. Queda anotado en el registro de hallazgos."

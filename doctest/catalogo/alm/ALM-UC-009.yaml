@@ -2,9 +2,10 @@ id: ALM-UC-009
 modulo: ALM
 titulo: Registrar la recepción de materiales de un proveedor
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Remito.php
@@ -24,9 +25,9 @@ flujo_principal:
     resultado: "Se muestra el listado de recepciones con Nº de Comprobante, Fecha y Proveedor"
   - paso: "Hace clic en 'Agregar'"
     resultado: "Se abre el formulario de recepción"
-  - paso: "Carga el número de comprobante, la fecha y el proveedor"
+  - paso: "Transcribe el número del comprobante físico que trae el proveedor, la fecha y el proveedor"
     resultado: "Quedan registrados los datos de cabecera"
-  - paso: "Agrega cada artículo recibido con su cantidad, depósito y establecimiento"
+  - paso: "Agrega cada artículo recibido con su cantidad, depósito y establecimiento. Si el artículo es loteado, escribe el número de lote"
     resultado: "El detalle acumula los artículos recibidos"
   - paso: "Confirma la recepción"
     resultado: "La recepción queda registrada y el stock de esos artículos aumenta en el depósito indicado"
@@ -39,8 +40,13 @@ flujos_alternativos:
         resultado: "La recepción se puede imprimir"
 validaciones:
   - "La recepción aumenta el stock del depósito indicado"
-dudas:
-  - "**Ésta es la operación que sí mueve stock**, a diferencia del pedido. ¿Qué la dispara: llega la mercadería físicamente y alguien la carga, o se recibe contra una orden de compra previa? En el módulo no hay orden de compra."
-  - "¿El número de comprobante tiene que ser único por proveedor? Hoy nada lo impide, así que se puede cargar dos veces el mismo remito y duplicar el stock."
-  - "Para un artículo loteado, ¿de dónde sale el número de lote: lo escribe quien recibe, o lo genera el sistema?"
-  - "¿Se puede corregir o anular una recepción ya registrada? No hay pantalla para eso, y si la cantidad se cargó mal el stock queda mal."
+  - "El número de comprobante no se valida ni tiene que ser único: es la transcripción del comprobante físico del proveedor"
+  - "Para un artículo loteado, el número de lote es obligatorio y lo escribe quien recibe"
+  - "Una recepción registrada no se corrige ni se anula: toda corrección se hace por un ajuste de stock (ALM-UC-014)"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-009.registrar-la-recepcion-de-materiales-de-un-prove.feature
+notas:
+  - "**No hay orden de compra en el módulo**: la mercadería llega y alguien la carga. Confirmado por el PM."
+  - "El campo de lote es texto libre y obligatorio, y la vista lo habilita solo para artículos loteados (`views/remito/view_.php`)."
+  - "**Si la empresa tiene activada la valorización**, esta pantalla muestra además Precio Unitario en pesos y en dólares con sus totales — ver ALM-UC-013."

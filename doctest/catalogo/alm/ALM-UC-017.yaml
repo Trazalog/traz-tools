@@ -2,9 +2,10 @@ id: ALM-UC-017
 modulo: ALM
 titulo: Mover mercadería entre depósitos — recepción
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Movimientointerno.php
@@ -21,13 +22,16 @@ flujo_principal:
     resultado: "Se abre el formulario de recepción en depósito"
   - paso: "Elige el movimiento que está recibiendo"
     resultado: "Se muestran los artículos y las cantidades que salieron del origen"
-  - paso: "Confirma lo que efectivamente recibió"
-    resultado: "El stock del depósito de destino sube y el movimiento queda cerrado"
+  - paso: "Carga lo que efectivamente recibió"
+    resultado: "Si la cantidad no coincide con la que salió, la pantalla avisa la diferencia y exige una justificación"
+  - paso: "Justifica la diferencia si la hay y confirma"
+    resultado: "El stock del depósito de destino sube por lo efectivamente recibido y el movimiento queda cerrado"
 validaciones:
-  - "El stock del depósito de destino sube al confirmar la recepción"
-dudas:
-  - "**¿Qué pasa si lo que llega no es lo que salió?** Si se reciben menos unidades de las que salieron, ¿se registra la diferencia como faltante, se rechaza, o se ajusta por otro lado?"
-  - "¿La recepción tiene que hacerla alguien del depósito de destino, o puede hacerla la misma persona que registró la salida?"
-  - "¿Puede recibirse una salida parcialmente?"
+  - "Si lo recibido difiere de lo que salió, la justificación es obligatoria"
+  - "El stock del depósito de destino sube por la cantidad efectivamente recibida"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-017.mover-mercaderia-entre-depositos-recepcion.feature
 notas:
+  - "La justificación por diferencia la exige la pantalla: `views/depositos/MovimientoRecepcion.php` compara contra la cantidad enviada y muestra *«La cantidad ingresada es distinta a la cantidad enviada, por favor ingrese justificación»*, revelando el campo obligatorio."
   - "Misma advertencia que ALM-UC-016: pantalla que no está en el árbol de `develop-v3` (H-038 / issue #481)."

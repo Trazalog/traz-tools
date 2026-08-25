@@ -135,7 +135,47 @@ sin abrir navegador. **No ejecuta la suite** — no toca ningún entorno ni nece
 descargable del run (`doctest-e2e.yml`) es parte de **F5** y todavía no existe. Hasta entonces, la
 evidencia solo existe en la máquina de quien corrió los tests.
 
-## 1.4 Dónde se recopilan los hallazgos
+## 1.4 Cómo relevar contra lo que está desplegado, sin tocar tu rama
+
+Es una trampa concreta de este repo: **`develop-v3` no es lo que corre en el DEMO.** Hay un programador trabajando en `develop`, y ahí es donde están varias pantallas que los usuarios ya usan. Relevar contra el árbol equivocado da un catálogo incompleto.
+
+Al 2026-08-25, **cuatro submódulos** difieren entre las dos ramas: `traz-comp-almacenes` (25 commits), `traz-comp-bpm`, `traz-comp-pan` y `traz-prod-trazasoft`. En el repo padre casi no hay diferencia.
+
+**La regla: no cambies de rama. Leé la otra rama sin moverte.** `git show` y `git grep` aceptan una referencia, así que se puede leer `develop` estando parado en `develop-v3` sin tocar nada del working tree.
+
+**Dónde se ejecuta:** en una terminal, parado en `traz-tools/` o en el submódulo, según el caso.
+
+```bash
+# Qué commit de cada submódulo usa cada rama — esto es lo primero a mirar
+git ls-tree origin/develop application/modules/ | grep commit
+git ls-tree origin/develop-v3 application/modules/ | grep commit
+
+# Leer un archivo de la otra rama, sin cambiar de rama
+git show origin/develop:controllers/Notapedido.php | less
+
+# Buscar en la otra rama
+git grep -n 'empr_id' origin/develop -- models/
+
+# Qué cambió entre las dos, en el repo padre
+git diff --name-only origin/develop-v3 origin/develop -- application/
+```
+
+Dentro de un submódulo hay un paso previo: `git fetch --all` para tener las ramas remotas, y después las mismas órdenes contra `origin/develop`.
+
+**Cómo confirmar que estás leyendo lo desplegado.** El commit de `origin/develop` del submódulo tiene que coincidir con el que apunta `origin/develop` del repo padre:
+
+```bash
+git ls-tree origin/develop application/modules/traz-comp-almacenes
+cd application/modules/traz-comp-almacenes && git rev-parse origin/develop
+```
+
+Si coinciden, lo que estás leyendo es lo que corre. Si no, mirá primero qué está más adelante.
+
+**Lo que no hay que hacer:** mover el puntero del submódulo para "ponerse al día". Eso cambia qué código corre y es una decisión de integración, no de relevamiento — va por su propio PR, mirando antes qué entró en los commits del medio.
+
+---
+
+## 1.5 Dónde se recopilan los hallazgos
 
 **Un solo lugar: [`doc/hallazgos/REGISTRO.md`](../doc/hallazgos/REGISTRO.md).** Ahí van los bugs,
 las deudas y las mejoras que aparecen mientras se hace otra cosa y que **no se corrigen en esa misma
