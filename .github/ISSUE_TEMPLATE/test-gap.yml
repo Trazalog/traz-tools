@@ -1,0 +1,69 @@
+name: "Falta probar algo (test-gap)"
+description: "Un flujo o un caso que el catálogo de DocTest no contempla"
+title: "[test-gap] "
+labels: ["test-gap", "doctest"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Usá esto cuando encontrás **un flujo que el sistema hace y las pruebas no cubren**, o un caso
+        que está descrito de una forma que no coincide con lo que pasa en la pantalla.
+
+        No hace falta que sepas programar ni que propongas cómo probarlo: alcanza con contar qué
+        hiciste, qué esperabas y qué pasó.
+
+        ¿Es un error del sistema, no una falta de cobertura? Abrí un issue normal con label `bug`.
+
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options:
+        - DNATO — registración y cuenta
+        - MAN — mantenimiento
+        - ALM — almacenes
+        - MCP — capa de agentes
+        - PRD / TAR / PAN — otros
+        - No sé / varios
+    validations:
+      required: true
+
+  - type: input
+    id: pantalla
+    attributes:
+      label: Pantalla o flujo
+      description: "Cómo se llama en el menú, como la ves vos."
+      placeholder: "Gestión de Usuarios → Agregar Usuario"
+    validations:
+      required: true
+
+  - type: textarea
+    id: falta
+    attributes:
+      label: Qué falta probar
+      description: |
+        Contá el flujo en pasos. Si ya sabés qué debería pasar, decilo.
+      placeholder: |
+        1. Entro como Supervisor
+        2. Doy de alta un equipo sin componentes
+        3. Debería avisar que falta al menos un componente, y no avisa nada
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severidad
+    attributes:
+      label: Severidad
+      options:
+        - "🔴 Datos incorrectos, información que se pierde, o una empresa ve datos de otra"
+        - "🟡 Molesta al usuario pero tiene una vuelta"
+        - "🟢 Cosmético o menor"
+    validations:
+      required: true
+
+  - type: input
+    id: caso
+    attributes:
+      label: Caso de uso relacionado (si lo sabés)
+      description: "El id que aparece en el `.feature` o en la ayuda, si estabas mirando alguno."
+      placeholder: "DNATO-UC-014"

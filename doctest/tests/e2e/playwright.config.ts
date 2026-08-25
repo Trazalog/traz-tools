@@ -27,21 +27,32 @@ const EN_CI = !!process.env.CI;
 
 export default defineConfig({
   testDir: resolve(HERE, 'specs'),
+  // El ingreso real se hace una sola vez acá y los tests reutilizan la sesión.
+  globalSetup: resolve(HERE, 'global-setup.ts'),
   outputDir: resolve(HERE, '.test-results'),
-  // RNF-02: la suite smoke tiene que quedar bajo 2 minutos; los tests, cortos.
-  timeout: 60_000,
+  // RNF-02 pide una suite smoke corta, pero cada ingreso consulta el sistema de
+  // procesos y contra el DEMO llega a tardar ~40 s: el timeout contempla eso.
+  timeout: 90_000,
   expect: { timeout: 10_000 },
   fullyParallel: true,
   forbidOnly: EN_CI,
+  // El entorno de pruebas es una máquina chica y compartida: con tests en paralelo
+  // las pantallas empiezan a tardar más que cualquier tiempo máximo razonable y
+  // aparecen fallas que no son del sistema sino del banco de pruebas. Medido: en
+  // serie la suite es estable y tarda ~2 min; con dos workers falla un test al azar
+  // en cada corrida. RNF-03 pide tests deterministas, así que va en serie.
+  // El día que exista un staging propio, esto se sube.
+  workers: 1,
+  // Un reintento en CI cubre el corte de red puntual, no la inestabilidad: si un
+  // test falla siempre, el reintento no lo salva.
   retries: EN_CI ? 1 : 0,
-  workers: EN_CI ? 2 : undefined,
   reporter: EN_CI
     ? [['github'], ['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }]]
     : [['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }]],
   use: {
     // RNF-03: nada de esperas fijas — auto-wait de Playwright + asserts explícitos.
     actionTimeout: 15_000,
-    navigationTimeout: 30_000,
+    navigationTimeout: 60_000,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

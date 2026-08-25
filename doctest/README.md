@@ -4,6 +4,9 @@
 
 Punto de entrada de DocTest: qué hay en este árbol, qué comando corrés y dónde, y cómo se contribuye. Está escrito para cualquiera que toque el repo — developer que va a correr la suite antes de pushear, tester que quiere leer los casos, o Claude Code al implementar una fase. **No** cubre el diseño de la solución ni el porqué de las decisiones: eso está en los tres documentos ancla de `doc/v3/` (`TRAZALOG_v3_DOCTEST_01_REQUERIMIENTOS.md`, `..._02_CICLO_VIDA_CICD.md`, `..._03_ARQUITECTURA.md`).
 
+> **¿Buscás dónde queda la evidencia de una corrida, dónde se anotan los hallazgos, o cómo se
+> publican y se opinan las ayudas?** Está todo en [`GUIA-PRUEBAS-Y-AYUDAS.md`](GUIA-PRUEBAS-Y-AYUDAS.md).
+
 ---
 
 ## La idea en cuatro líneas
@@ -24,10 +27,10 @@ código PHP + ayudas actuales ──relevamiento──> catálogo (gate humano) 
 | `features/` | `.feature` Gherkin en español — documentación para testers, sin runtime Cucumber |
 | `tests/e2e/` | Suite Playwright: `playwright.config.ts`, `config/`, `fixtures/` (incluye la casilla de correo descartable), `pages/`, `specs/`, `seeds/` |
 | `tests/api-mcp/` | Suite Hurl de contrato MCP ([README](tests/api-mcp/README.md)) |
-| `ayudas/` | `legacy/` (manuales vigentes, fuente de intención funcional), `plantilla/`, `src/`, `build/` |
+| `ayudas/` | `legacy/` (el sitio publicado, tal cual), `plantilla/` (theme.css + esqueleto extraídos de ahí), `src/` (el contenido nuevo, por módulo) y `build/` (lo publicable, regenerable) |
 | `generators/` | Scripts de validación y derivación catálogo → salidas |
 | `ci/` | [`module-map.json`](ci/module-map.json): mapa path→módulo que usa el CI |
-| `feedback/` | Cómo reporta un tester lo que falta probar |
+| `feedback/` | [`PROCESO.md`](feedback/PROCESO.md): cómo reporta un tester lo que falta probar o lo que está mal en una ayuda |
 | `scripts/` | Envoltorios de ejecución (`pw.mjs`, `test-module.mjs`, `install-hurl.sh`) |
 
 ## Puesta a punto (una sola vez)
@@ -55,6 +58,9 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run test:list` | Lista los tests sin ejecutarlos (carga config y specs; es lo que corre el CI de validación) |
 | `npm run test:report` | Abre el último reporte HTML de Playwright |
 | `npm run validate:catalog` | Valida el catálogo contra el schema y las reglas duras |
+| `npm run test:report` | Abre el último reporte HTML de Playwright |
+| `npm run ayudas` | Arma el sitio de ayudas publicable en `ayudas/build/`: copia los manuales actuales tal cual, ensambla los nuevos con la plantilla y **regenera el buscador del inicio desde el contenido de todos los manuales** |
+| `npm run test:alta-empresa` | Corre el alta completa de una empresa como test. **Crea una empresa real**: se ejecuta a demanda, está fuera de las corridas normales |
 | `npm run features` | Regenera los `.feature` Gherkin desde los casos **validados** (agregá `-- --dry-run` para ver qué cambiaría). Los `.feature` no se editan a mano |
 | `npm run hoja:validacion -- dnato` | Arma la **hoja de validación** del módulo: los casos en prosa legible, con las dudas al frente y un control para marcar validado / obsoleto / sigue en borrador. Sale en `.validacion/<modulo>.html` (no se commitea) y se publica para que el PM la lea |
 | `npm run generators:dry-run` | Corrida en seco de los generadores (lo mismo que corre el CI) |
@@ -80,7 +86,9 @@ DOCTEST_ENV=demo npm run test:smoke
 
 ## Convenciones que hay que respetar
 
-- **Tags:** cada spec lleva `@<modulo>` y, si es crítico, `@smoke`. Un test inestable se marca `@quarantine` **y se abre un issue** — no se ignora en silencio (RNF-03).
+- **Tags:** cada spec lleva `@<modulo>`, el id del caso (`@DNATO-UC-013`) y, si es crítico, `@smoke`. El conjunto `@smoke` se mantiene chico a propósito —los flujos sin los cuales nada funciona— para que siga entrando en los 2 minutos que pide RNF-02: ingreso, salida, aislamiento entre empresas, el formulario público de registro y el corte de acceso a la administración de empresas. Un test inestable se marca `@quarantine` **y se abre un issue** — no se ignora en silencio (RNF-03).
+- **Bugs conocidos:** cuando un caso validado describe lo que *tiene* que pasar y el sistema todavía no lo cumple, el test se marca con `test.fail()` y un comentario con el hallazgo y su issue. Así el test sigue vivo: hoy tiene que fallar, y **el día que se corrija el bug la corrida se pone en rojo** avisando que hay que sacar la marca. No se comenta el test ni se lo saca de la suite.
+- **Corre en serie:** el entorno de pruebas es una máquina chica y compartida; con tests en paralelo aparecen fallas que no son del sistema. Está medido y explicado en `playwright.config.ts`.
 - **Selectores:** `data-testid` como selector primario, con formato `<modulo>-<pantalla>-<tipo>-<nombre>` en minúsculas. `getByRole()`/`getByLabel()` como secundario. XPath o CSS estructural: prohibido salvo excepción justificada en comentario (Doc 3 §4.5).
 - **Sin selectores en los specs:** los specs llaman métodos de page objects. Un cambio de UI se arregla en un solo archivo.
 - **Sin esperas fijas:** nada de `waitForTimeout`; auto-wait de Playwright + asserts explícitos.
@@ -102,7 +110,7 @@ Todo entra por feature branch + PR (metodología git del `CLAUDE.md`). Nunca com
 | Fase | Alcance | Issue | Estado |
 |---|---|---|---|
 | F0 | Infraestructura: árbol, Playwright, Hurl, schema + validador, CI de validación | #437 | ✅ |
-| F1 | DNATO — registración y administración de cuenta | #438 | pendiente |
+| F1 | DNATO — registración y administración de cuenta | #438 | ✅ catálogo validado (25), 25 `.feature`, 55 tests y la ayuda de usuario |
 | F2 | MAN piloto — Alta de Equipos y Componentes | #439 | pendiente |
 | F3 | ALM — almacenes y pedido de materiales | #440 | pendiente |
 | F4 | MCP — suite Hurl de contrato y aislamiento | #441 | pendiente |

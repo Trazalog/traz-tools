@@ -1,6 +1,7 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/dnato/DNATO-UC-014.yaml (versión 0.3, validado 2026-08-24).
+# Fuente: catalogo/dnato/DNATO-UC-014.yaml (versión 0.4, validado 2026-08-24).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
+# Test que lo implementa: tests/e2e/specs/dnato/DNATO-UC-014.alta-usuario.spec.ts
 
 @dnato @DNATO-UC-014
 Característica: Dar de alta un usuario de la empresa
@@ -47,5 +48,6 @@ Característica: Dar de alta un usuario de la empresa
   #   password_valida: Doctest2026!
 
   # ⚠️ Atención al ejecutarlo:
+  #   **Verificado al automatizarlo (2026-08-25): el usuario queda creado pero NO aparece en la Lista de Usuarios**, que es donde la propia pantalla dice ir a asignarle los roles. La lista exige que el usuario ya tenga alguna membresía. El caso describe lo que corresponde —el usuario recién creado tiene que poder verse para completarlo— y el test que lo verifica está marcado como falla conocida (hallazgo H-032, issue #464).
   #   Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el desplegable trae todas las empresas del sistema. Registrado como hallazgo H-019.
   #   La etiqueta 'Rol' de este formulario es en realidad el perfil de Dnato: renombrarla queda anotado como mejora (hallazgo H-025), no se toca ahora.

@@ -43,4 +43,5 @@ notas:
   - "Alcance confirmado por el PM el 2026-08-19: el ABM de Empresas entra en la Ola 1, con el perfil de DNATO correcto."
   - "Validado por el PM el 2026-08-24: el superusuario sigue siendo por ahora el que define la constante, y el listado muestra los datos de empresa que uno espera ver (nombre, identificador tributario, contacto, ubicación)."
 derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-022.empresas-superusuario.spec.ts
   feature: features/dnato/DNATO-UC-022.ver-la-lista-de-empresas-del-sistema.feature

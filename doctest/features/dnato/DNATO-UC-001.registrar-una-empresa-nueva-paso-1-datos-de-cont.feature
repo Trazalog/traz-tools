@@ -1,6 +1,7 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/dnato/DNATO-UC-001.yaml (versión 0.4, validado 2026-08-24).
+# Fuente: catalogo/dnato/DNATO-UC-001.yaml (versión 0.5, validado 2026-08-24).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
+# Test que lo implementa: tests/e2e/specs/dnato/DNATO-UC-001.registro.spec.ts
 
 @dnato @DNATO-UC-001
 Característica: Registrar una empresa nueva (paso 1 - datos de contacto)
@@ -29,7 +30,7 @@ Característica: Registrar una empresa nueva (paso 1 - datos de contacto)
 
   Escenario: Teléfono con formato inválido para el país
     Cuando Ingresa un teléfono que no cumple el formato del país seleccionado
-    Entonces Se muestra 'El formato del teléfono no es válido para el país seleccionado.' y la cuenta no se crea
+    Entonces Se avisa 'Formato de teléfono inválido para el país seleccionado', el formulario no se envía y la cuenta no se crea
 
   Escenario: Campos obligatorios incompletos
     Cuando Confirma el formulario sin completar alguno de los seis campos

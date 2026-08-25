@@ -54,4 +54,5 @@ notas:
   - "Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el desplegable de empresas trae todos los grupos del sistema. Registrado como hallazgo H-020."
   - "Que los roles de Mantenimiento no reciban menú es correcto: Mantenimiento todavía no está migrado a Tools y vive en Asset Planner, así que este ABM no lo afecta (aclara el hallazgo H-013, que queda acotado a los roles de SMA/Residuos)."
 derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-025.menu-por-rol.spec.ts
   feature: features/dnato/DNATO-UC-025.asignar-opciones-de-menu-a-un-rol-de-una-empresa.feature

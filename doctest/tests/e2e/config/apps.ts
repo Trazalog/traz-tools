@@ -92,3 +92,12 @@ export function requerirUrlDeApp(app: App, entorno: Entorno = entornoActual()): 
   }
   return url;
 }
+
+/**
+ * Arma una URL de Dnato a partir de la de ingreso configurada.
+ * `urlDnato()` devuelve la raíz de la app; `urlDnato('main/users')`, esa pantalla.
+ */
+export function urlDnato(ruta = '', entorno: Entorno = entornoActual()): string {
+  const base = requerirUrlDeApp('dnato', entorno).replace(/main\/login\/?$/, '').replace(/\/$/, '');
+  return ruta ? `${base}/${ruta.replace(/^\//, '')}` : `${base}/`;
+}
