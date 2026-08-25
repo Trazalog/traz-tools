@@ -20,3 +20,6 @@ tests/api-mcp/env/*.env
 # .claude/ es config local del proyecto donde se generaron. No aportan al repo.
 ayudas/legacy/*.rar
 ayudas/legacy/.claude/
+
+# Hojas de validación generadas — se regeneran con `npm run hoja:validacion`
+.validacion/

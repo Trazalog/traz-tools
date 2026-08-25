@@ -134,4 +134,6 @@ Los otros diez (H-003 a H-007, H-009 a H-011, H-013, H-014) quedan en el registr
 25 casos · borrador 25 · validado 0 · obsoleto 0
 ```
 
-**Próximo paso: tu validación.** Sobre cada caso hace falta una de tres respuestas: *validado* (con las correcciones que quieras), *obsoleto*, o *sigue en borrador*. Recién con los casos en `validado` se generan las fixtures de login, los page objects, los specs y los `.feature`, que es la segunda mitad de F1.
+**Próximo paso: tu validación.** Sobre cada caso hace falta una de tres respuestas: *validado* (con las correcciones que quieras), *obsoleto*, o *sigue en borrador*. Recién con los casos en `validado` se generan los specs, los `.feature` y las ayudas, que es la segunda mitad de F1.
+
+**No hace falta leer los YAML.** `npm run hoja:validacion -- dnato` arma una hoja con los 25 casos en prosa —los pasos como los va a leer un tester, las dudas destacadas y el código relevado plegado— y un control por caso para marcar la decisión, con un botón que arma el texto de las decisiones para pegar. Se regenera cuando cambia el catálogo, así que nunca queda desactualizada.

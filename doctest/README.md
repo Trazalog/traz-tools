@@ -55,6 +55,7 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run test:list` | Lista los tests sin ejecutarlos (carga config y specs; es lo que corre el CI de validación) |
 | `npm run test:report` | Abre el último reporte HTML de Playwright |
 | `npm run validate:catalog` | Valida el catálogo contra el schema y las reglas duras |
+| `npm run hoja:validacion -- dnato` | Arma la **hoja de validación** del módulo: los casos en prosa legible, con las dudas al frente y un control para marcar validado / obsoleto / sigue en borrador. Sale en `.validacion/<modulo>.html` (no se commitea) y se publica para que el PM la lea |
 | `npm run generators:dry-run` | Corrida en seco de los generadores (lo mismo que corre el CI) |
 | `npm run typecheck` | `tsc --noEmit` sobre generators y tests |
 | `npm run hurl:install` | Instala Hurl sin sudo |

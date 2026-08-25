@@ -18,6 +18,7 @@
     "seed:empresa": "tsx tests/e2e/seeds/crear-empresa-test.ts",
     "validate:catalog": "tsx generators/validate-catalog.ts",
     "validate:catalog:selftest": "tsx generators/validate-catalog.ts --selftest",
+    "hoja:validacion": "tsx generators/hoja-validacion.ts",
     "generators:dry-run": "tsx generators/dry-run.ts",
     "typecheck": "tsc --noEmit",
     "hurl:install": "bash scripts/install-hurl.sh"
