@@ -5,7 +5,7 @@
  * `traz-comp-dnato` (PHP 5.6). Quedan todos acá.
  */
 
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import { urlDnato } from '../../config/apps.ts';
 
@@ -74,5 +74,18 @@ export class AltaUsuarioPage {
 
   async mensaje(): Promise<string> {
     return (await this.page.locator('body').innerText()).replace(/\s+/g, ' ');
+  }
+
+  /**
+   * Espera hasta que la pantalla muestre el mensaje esperado y lo devuelve.
+   *
+   * Leer el body una sola vez apenas vuelve el POST es una carrera: cuando el
+   * DEMO está cargado, la respuesta todavía no terminó de pintar y el test falla
+   * sin que haya nada roto en el sistema.
+   */
+  async esperarMensaje(esperado: RegExp, timeout = 20_000): Promise<string> {
+    const leer = async () => (await this.page.locator('body').innerText()).replace(/\s+/g, ' ');
+    await expect.poll(leer, { timeout }).toMatch(esperado);
+    return leer();
   }
 }

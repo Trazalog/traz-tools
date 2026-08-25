@@ -40,7 +40,7 @@ test.describe('@dnato @DNATO-UC-001 Registrar una empresa nueva', () => {
     await registro.completar({ ...base(), email: credenciales('empresa1').email });
     await registro.enviar();
 
-    expect(await registro.mensaje()).toMatch(/ya existe/i);
+    await registro.esperarMensaje(/ya existe/i);
   });
 
   test('rechaza una razón social ya usada en el mismo país', async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe('@dnato @DNATO-UC-001 Registrar una empresa nueva', () => {
     await registro.completar({ ...base(), razonSocial: credenciales('empresa1').empresa });
     await registro.enviar();
 
-    expect(await registro.mensaje()).toMatch(/razón social ingresada ya existe/i);
+    await registro.esperarMensaje(/razón social ingresada ya existe/i);
   });
 
   test('rechaza un teléfono que no cumple el formato del país', async ({ page }) => {
@@ -97,7 +97,7 @@ test.describe('@dnato @DNATO-UC-001 Registrar una empresa nueva', () => {
     await registro.completar({ ...base(), email: casilla.direccion });
     await registro.enviar();
 
-    expect(await registro.mensaje()).toMatch(/registro exitoso/i);
+    await registro.esperarMensaje(/registro exitoso/i);
 
     const enlace = await casilla.esperarEnlace(
       /activar cuenta/i,

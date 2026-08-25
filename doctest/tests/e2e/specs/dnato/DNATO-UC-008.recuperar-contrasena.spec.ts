@@ -65,7 +65,7 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
       pais: 'Argentina',
     });
     await registro.enviar();
-    expect(await registro.mensaje()).toMatch(/registro exitoso/i);
+    await registro.esperarMensaje(/registro exitoso/i);
 
     await page.goto(urlDnato('main/forgot'), { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="email"]').fill(casilla.direccion);

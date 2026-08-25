@@ -36,7 +36,7 @@ test.describe('@dnato @DNATO-UC-014 Dar de alta un usuario de la empresa', () =>
     await alta.completar({ ...nuevo(), email: credenciales('empresa1').email });
     await alta.enviar();
 
-    expect(await alta.mensaje()).toMatch(/ya existe un usuario asociado a ese email/i);
+    await alta.esperarMensaje(/ya existe un usuario asociado a ese email/i);
   });
 
   test('no deja guardar con una contraseña que no cumple la política', async ({ paginaEmpresa1 }) => {
@@ -55,10 +55,8 @@ test.describe('@dnato @DNATO-UC-014 Dar de alta un usuario de la empresa', () =>
     await alta.abrir();
     await alta.completar(datos);
     await alta.enviar();
-    await paginaEmpresa1.waitForTimeout(2000);
 
-    const mensaje = await alta.mensaje();
-    expect(mensaje).toMatch(/creado exitosamente/i);
+    const mensaje = await alta.esperarMensaje(/creado exitosamente/i);
     // La pantalla avisa que sin roles el usuario todavía no puede entrar.
     expect(mensaje).toMatch(/asignarle roles/i);
 

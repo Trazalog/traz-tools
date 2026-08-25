@@ -41,7 +41,7 @@ test.describe('@dnato @alta-empresa @DNATO-UC-002 @DNATO-UC-003 @DNATO-UC-004 @D
       pais: 'Argentina',
     });
     await registro.enviar();
-    expect(await registro.mensaje()).toMatch(/registro exitoso/i);
+    await registro.esperarMensaje(/registro exitoso/i);
 
     // DNATO-UC-002 — activación: el enlace llega por correo y lo lee el propio test
     const enlace = await casilla.esperarEnlace(/activar cuenta/i, ENLACE_ACTIVACION, 180_000);
