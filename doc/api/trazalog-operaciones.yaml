@@ -1432,14 +1432,17 @@ components:
           example: "3"
         lectura_actual:
           type: string
+          nullable: true
           description: Lectura más alta registrada (el horómetro solo crece). Vacío si no hay lecturas.
           example: "125"
         fecha_ultima_lectura:
           type: string
+          nullable: true
           description: Vacío si no hay lecturas.
           example: "2020-04-29"
         dias_sin_lectura:
           type: string
+          nullable: true
           description: Días desde la última lectura. Vacío si nunca hubo ninguna.
           example: "2296"
 
@@ -1544,10 +1547,12 @@ components:
           example: "0.0"
         lectura_actual:
           type: string
+          nullable: true
           description: Lectura más alta registrada del equipo. Vacío si nunca se le tomó lectura.
           example: "180"
         fecha_ultima_lectura:
           type: string
+          nullable: true
           example: "2026-08-01"
         duracion_estimada:
           type: string
@@ -1627,7 +1632,8 @@ components:
         unidad_medida: { type: string }
         deposito: { type: string }
         obra:
-          type: ["string", "null"]
+          type: string
+          nullable: true
           description: >-
             Obra o centro de costo al que se imputó. Viene `null` en la mayoría
             de las entregas, porque el campo es opcional al entregar: no asumir
@@ -1654,7 +1660,8 @@ components:
         nom_proveedor: { type: string }
         cantidad_cargada: { type: string, description: Lo que salió del depósito de origen. }
         cantidad_recibida:
-          type: ["string", "null"]
+          type: string
+          nullable: true
           description: >-
             Lo confirmado en destino. Es `null` mientras el traslado no se
             recibió (y también en algunos ya recibidos donde no se cargó): en
