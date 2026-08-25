@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Descargar la plantilla de carga masiva
 perfil: Administrador
 estado: validado
-version: "0.2"
+version: "0.3"
 origen: baseline
 fecha_validacion: 2026-08-24
 referencias_codigo:
@@ -30,13 +30,15 @@ flujos_alternativos:
       - paso: "Abre la pantalla cuando el servicio que informa las entidades no responde"
         resultado: "Se avisa que se están usando datos de prueba y se muestra una lista mínima"
 validaciones:
-  - "Las entidades que se pueden cargar salen de una tabla de configuración: hoy son Artículos, Herramientas y Stock de Artículos"
+  - "Las entidades que se pueden cargar salen de una tabla de configuración. Hoy la pantalla ofrece cinco: Articulos, Herramientas, Stock Articulos, Mantenimiento Equipos y Solicitantes de Transporte"
   - "La plantilla que se descarga corresponde a la entidad elegida"
 datos_prueba: {}
 dudas: []
 notas:
   - "Validado por el PM el 2026-08-24. Las entidades son 100% configurables desde una tabla, así que la lista va a crecer; el caso se prueba con las tres de hoy."
-  - "**Equipos no anda**: la carga masiva todavía no funciona contra MariaDB, así que esa entidad falla. Anotado como hallazgo H-030, a resolver en el corto plazo."
+  - "**Mantenimiento Equipos no anda**: la carga masiva todavía no funciona contra MariaDB, así que esa entidad falla. Anotado como hallazgo H-030, a resolver en el corto plazo."
+  - "Verificado en pantalla el 2026-08-25: además de las tres que mencionó el PM, la lista ofrece 'Mantenimiento Equipos' (la que falla) y 'Solicitantes de Transporte', que no estaba en la conversación. **Conviene que el PM confirme si esa última corresponde.**"
   - "La pantalla solo verifica que haya sesión iniciada, no que el usuario sea administrador (hallazgo H-029), aunque el menú se la muestre solo a administradores."
 derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-026-027.carga-masiva.spec.ts
   feature: features/dnato/DNATO-UC-026.descargar-la-plantilla-de-carga-masiva.feature

@@ -60,4 +60,5 @@ notas:
   - "La política de contraseñas está duplicada en el cliente (`public/js/password-strength.js`) y en el servidor; el propio código avisa que hay que mantener las dos sincronizadas."
   - "Validado por el PM el 2026-08-24."
 derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-002-005.alta-de-empresa.spec.ts
   feature: features/dnato/DNATO-UC-002.activar-la-cuenta-y-definir-la-contrasena.feature

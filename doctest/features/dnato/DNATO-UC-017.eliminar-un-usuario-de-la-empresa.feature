@@ -1,6 +1,7 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
 # Fuente: catalogo/dnato/DNATO-UC-017.yaml (versión 0.3, validado 2026-08-24).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
+# Test que lo implementa: tests/e2e/specs/dnato/DNATO-UC-017.eliminar-usuario.spec.ts
 
 @dnato @DNATO-UC-017
 Característica: Eliminar un usuario de la empresa

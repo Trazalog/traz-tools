@@ -44,4 +44,5 @@ notas:
   - "Perfil y roles se editan en la MISMA pantalla y se guardan en la misma operación; se separan en dos casos de uso porque son dos decisiones distintas del administrador."
   - "Validado por el PM el 2026-08-24."
 derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-018-019.roles-y-perfil.spec.ts
   feature: features/dnato/DNATO-UC-019.cambiar-el-perfil-de-un-usuario-en-dnato.feature

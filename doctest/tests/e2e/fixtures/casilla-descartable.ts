@@ -103,9 +103,14 @@ export async function crearCasilla(prefijo = 'doctest'): Promise<Casilla> {
         const elegido = mensajes.find((m) => asunto.test(m.subject ?? ''));
         if (elegido) {
           const cuerpo = await pedir<{ text?: string; html?: string[] }>(`/messages/${elegido.id}`, {}, token);
-          const texto = `${cuerpo.text ?? ''}\n${(cuerpo.html ?? []).join('\n')}`;
-          const encontrado = enlace.exec(texto)?.[0];
-          if (encontrado) return encontrado.replace(/&amp;/g, '&');
+          const html = (cuerpo.html ?? []).join('\n');
+          const texto = `${cuerpo.text ?? ''}\n${html}`;
+          // Primero se buscan los enlaces del HTML: en el cuerpo en texto plano el
+          // enlace suele quedar pegado a la línea siguiente y se extrae de más.
+          const hrefs = [...html.matchAll(/href="([^"]+)"/gi)].map((m) => m[1]);
+          const desdeHref = hrefs.find((h) => enlace.test(h));
+          const encontrado = desdeHref ?? enlace.exec(texto)?.[0];
+          if (encontrado) return encontrado.replace(/&amp;/g, '&').trim();
           throw new Error(
             `Llegó el mail "${elegido.subject}" pero no tiene ningún enlace que cumpla ${enlace}.\n` +
               `Primeros 300 caracteres: ${texto.slice(0, 300)}`,

@@ -42,4 +42,5 @@ dudas: []
 notas:
   - "Validado por el PM el 2026-08-24. Que no se pida la contraseña actual queda anotado como mejora de seguridad (hallazgo H-010). Que no se propague a Bonita ni a Asset **no es un problema**: la contraseña la maneja Dnato y nadie más."
 derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-012.cambiar-contrasena.spec.ts
   feature: features/dnato/DNATO-UC-012.cambiar-la-contrasena-propia.feature
