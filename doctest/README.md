@@ -55,6 +55,7 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run test:list` | Lista los tests sin ejecutarlos (carga config y specs; es lo que corre el CI de validación) |
 | `npm run test:report` | Abre el último reporte HTML de Playwright |
 | `npm run validate:catalog` | Valida el catálogo contra el schema y las reglas duras |
+| `npm run test:report` | Abre el último reporte HTML de Playwright |
 | `npm run features` | Regenera los `.feature` Gherkin desde los casos **validados** (agregá `-- --dry-run` para ver qué cambiaría). Los `.feature` no se editan a mano |
 | `npm run hoja:validacion -- dnato` | Arma la **hoja de validación** del módulo: los casos en prosa legible, con las dudas al frente y un control para marcar validado / obsoleto / sigue en borrador. Sale en `.validacion/<modulo>.html` (no se commitea) y se publica para que el PM la lea |
 | `npm run generators:dry-run` | Corrida en seco de los generadores (lo mismo que corre el CI) |
@@ -80,7 +81,9 @@ DOCTEST_ENV=demo npm run test:smoke
 
 ## Convenciones que hay que respetar
 
-- **Tags:** cada spec lleva `@<modulo>` y, si es crítico, `@smoke`. Un test inestable se marca `@quarantine` **y se abre un issue** — no se ignora en silencio (RNF-03).
+- **Tags:** cada spec lleva `@<modulo>`, el id del caso (`@DNATO-UC-013`) y, si es crítico, `@smoke`. Un test inestable se marca `@quarantine` **y se abre un issue** — no se ignora en silencio (RNF-03).
+- **Bugs conocidos:** cuando un caso validado describe lo que *tiene* que pasar y el sistema todavía no lo cumple, el test se marca con `test.fail()` y un comentario con el hallazgo y su issue. Así el test sigue vivo: hoy tiene que fallar, y **el día que se corrija el bug la corrida se pone en rojo** avisando que hay que sacar la marca. No se comenta el test ni se lo saca de la suite.
+- **Corre en serie:** el entorno de pruebas es una máquina chica y compartida; con tests en paralelo aparecen fallas que no son del sistema. Está medido y explicado en `playwright.config.ts`.
 - **Selectores:** `data-testid` como selector primario, con formato `<modulo>-<pantalla>-<tipo>-<nombre>` en minúsculas. `getByRole()`/`getByLabel()` como secundario. XPath o CSS estructural: prohibido salvo excepción justificada en comentario (Doc 3 §4.5).
 - **Sin selectores en los specs:** los specs llaman métodos de page objects. Un cambio de UI se arregla en un solo archivo.
 - **Sin esperas fijas:** nada de `waitForTimeout`; auto-wait de Playwright + asserts explícitos.

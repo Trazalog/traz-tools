@@ -18,6 +18,11 @@
  * duplica la cabecera en una tabla aparte. Hay que apuntar a la tabla de datos —
  * `page.locator('table').last()` o el id concreto—, no a `table` a secas.
  *
+ * ⚠️ Un test que **cierre sesión** no puede usar estas fixtures: `main/logout` hace
+ * `sess_destroy()` en el servidor y eso invalida la sesión para todos los contextos
+ * que compartan la cookie, así que dejaría sin sesión al resto de la suite. Ese caso
+ * (DNATO-UC-007) abre su propia sesión y la cierra.
+ *
  * Uso en un spec:
  *
  *   import { test, expect } from '../../fixtures/auth.ts';
@@ -28,7 +33,7 @@
  */
 
 import { test as base, type Browser, type Page } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,6 +44,17 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const DIR_SESIONES = resolve(HERE, '..', '.auth');
 
 export type Empresa = 'empresa1' | 'empresa2';
+
+export const EMPRESAS: readonly Empresa[] = ['empresa1', 'empresa2'];
+
+/** Igual que `credenciales`, pero devuelve null en vez de fallar si faltan datos. */
+export function credencialesOpcionales(empresa: Empresa): CredencialesEmpresa | null {
+  try {
+    return credenciales(empresa);
+  } catch {
+    return null;
+  }
+}
 
 /** Credenciales de una empresa de test, leídas del entorno (nunca del repo). */
 export function credenciales(empresa: Empresa): CredencialesEmpresa {
@@ -61,11 +77,16 @@ export function credenciales(empresa: Empresa): CredencialesEmpresa {
   return datos;
 }
 
+/** Path donde vive la sesión serializada de una empresa. */
+export function pathSesion(empresa: Empresa): string {
+  return join(DIR_SESIONES, `${empresa}.json`);
+}
+
 /**
- * Inicia sesión de verdad y devuelve el path del estado serializado.
- * Se llama una vez por worker y por empresa.
+ * Inicia sesión de verdad y guarda el estado. Lo llama el setup global una vez
+ * por corrida; las fixtures solo lo reutilizan.
  */
-async function iniciarSesion(browser: Browser, empresa: Empresa): Promise<string> {
+export async function guardarSesion(browser: Browser, empresa: Empresa): Promise<string> {
   const datos = credenciales(empresa);
   const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await contexto.newPage();
@@ -84,10 +105,16 @@ async function iniciarSesion(browser: Browser, empresa: Empresa): Promise<string
   }
 
   mkdirSync(DIR_SESIONES, { recursive: true });
-  const destino = join(DIR_SESIONES, `${empresa}.json`);
+  const destino = pathSesion(empresa);
   await contexto.storageState({ path: destino });
   await contexto.close();
   return destino;
+}
+
+/** Devuelve la sesión guardada por el setup global; si no está, inicia sesión ahora. */
+async function sesion(browser: Browser, empresa: Empresa): Promise<string> {
+  const guardada = pathSesion(empresa);
+  return existsSync(guardada) ? guardada : guardarSesion(browser, empresa);
 }
 
 interface FixturesDeSesion {
@@ -105,13 +132,13 @@ interface FixturesDeWorker {
 export const test = base.extend<FixturesDeSesion, FixturesDeWorker>({
   sesionEmpresa1: [
     async ({ browser }, use) => {
-      await use(await iniciarSesion(browser, 'empresa1'));
+      await use(await sesion(browser, 'empresa1'));
     },
     { scope: 'worker' },
   ],
   sesionEmpresa2: [
     async ({ browser }, use) => {
-      await use(await iniciarSesion(browser, 'empresa2'));
+      await use(await sesion(browser, 'empresa2'));
     },
     { scope: 'worker' },
   ],
