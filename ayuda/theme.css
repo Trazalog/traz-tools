@@ -877,3 +877,58 @@ body {
 @media (max-width: 700px) {
   .screen-campos.dos, .screen-campos.tres { grid-template-columns: 1fr !important; }
 }
+
+/* Caja o campo todavía deshabilitado: así se muestra la cascada de habilitación
+ * de un formulario, que es lo que más confunde a quien lo usa por primera vez. */
+.screen-panel.off { opacity: .45; }
+.screen-panel.off .cab { background: var(--mgray); }
+.screen-campo.off .val { background: #F0F3F8; color: var(--mgray); }
+.screen-btn.off { opacity: .45; }
+
+/* Ayuda al pie de un campo, como la que muestra la pantalla al elegir un lote. */
+.screen-hint { font-size: 10.5px; color: var(--teal); margin-top: 4px; }
+.screen-hint.aviso { color: #A96A05; }
+
+/* Numerito para señalar un paso dentro de una pantalla. */
+.screen-paso {
+  position: absolute;
+  margin-left: -26px;
+  margin-top: -2px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--white);
+  font-size: 11px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Secuencia: varias pantallas encadenadas con su explicación. */
+.secuencia { counter-reset: paso; margin: 20px 0 8px; }
+.secuencia > .paso {
+  position: relative;
+  padding-left: 46px;
+  padding-bottom: 26px;
+  border-left: 2px solid var(--lgray);
+  margin-left: 14px;
+}
+.secuencia > .paso:last-child { border-left-color: transparent; padding-bottom: 4px; }
+.secuencia > .paso::before {
+  counter-increment: paso;
+  content: counter(paso);
+  position: absolute;
+  left: -15px; top: -2px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--white);
+  font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 4px var(--bg);
+}
+.secuencia .paso-titulo { font-weight: 700; color: var(--dark); font-size: 15px; margin-bottom: 4px; }
+.secuencia .paso-texto { color: var(--dgray); font-size: 14px; line-height: 1.65; margin-bottom: 10px; }
+.secuencia .screen { margin: 12px 0 4px; }
+
+@media (max-width: 700px) {
+  .secuencia > .paso { padding-left: 26px; margin-left: 12px; }
+}

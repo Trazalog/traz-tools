@@ -263,6 +263,26 @@ Dos reglas al dibujar una pantalla: **datos verosímiles del dominio** —un art
 "Lorem"— y un **pie que diga qué mirar**, porque una pantalla sin pie es decoración. Las tablas anchas
 van dentro de `.screen-scroll`, para que scrolleen solas sin arrastrar la página.
 
+### Para quién se escribe
+
+**Para alguien que se registró solo y no tiene a quién preguntarle.** En el plan gratuito no hay
+soporte: la ayuda es el único lugar donde esa persona puede resolver. Eso cambia cómo se escribe cada
+sección:
+
+- **Una pantalla estática no alcanza para un formulario.** Si los campos se habilitan en cadena —como
+  en el ajuste de stock, donde al entrar está casi todo gris— hay que mostrar **la secuencia**: el
+  bloque `.secuencia` encadena pasos numerados, y en los que importa va una pantalla del formulario
+  *en ese momento*, con lo todavía bloqueado en gris (`.screen-panel.off`, `.screen-campo.off`).
+- **Decir qué hace cada campo, no solo nombrarlo.** Una tabla campo por campo con qué poner y qué
+  pasa si se deja vacío vale más que la lista de campos.
+- **Anticipar los mensajes de error.** Una tabla de "si aparece esto, pasó aquello" evita el bloqueo
+  más caro: el que no sabés cómo se llama para buscarlo.
+- **Explicar por qué el sistema no te deja**, no solo que no te deja. "No podés dar de baja un
+  artículo con stock" se entiende mejor con el motivo al lado.
+- **Empezar por el principio.** Un manual de módulo abre con el orden en que hay que cargar las cosas
+  para poder operar; la mayoría de los "no me aparece nada" son un paso salteado de esa cadena, no un
+  problema de permisos.
+
 > En los manuales legacy estas clases se usaban pero **nunca tuvieron CSS**: verificado renderizándolos,
 > el marco de ventana no se dibujaba y el título quedaba suelto encima del contenido. Quedó resuelto en
 > el theme, así que los manuales nuevos sí muestran el marco. Los legacy no se tocan — se copian tal
