@@ -2,9 +2,10 @@
 
 ## Objetivo
 
-Responde dos preguntas concretas: **dónde viven las pruebas** (los casos, la evidencia de cada
-corrida, los hallazgos) y **cómo funciona el circuito de las ayudas** de usuario (cómo se opina
-sobre ellas, cómo se publican, cómo se enlazan desde el sistema). Está escrito para el PM y para
+Responde tres preguntas concretas: **dónde viven las pruebas** (los casos, la evidencia de cada
+corrida, los hallazgos), **cómo funciona el circuito de las ayudas** de usuario (cómo se opina sobre
+ellas, cómo se publican, cómo se enlazan desde el sistema) y **cómo se mantiene todo al día** cuando
+el sistema cambia. Está escrito para el PM y para
 cualquiera que se sume al proyecto sin haber estado en la construcción.
 
 **No** cubre el diseño de la solución ni por qué se decidió así — eso está en los tres documentos
@@ -363,10 +364,75 @@ la que estás** ya existe como dato, no hay que escribirlo a mano:
 Con esos dos campos, la tabla "vista PHP → sección de ayuda" se genera del catálogo. Queda pendiente
 de hacer.
 
-# 3. Lo que todavía no está
+# 3. Cómo se mantiene actualizado
+
+El sistema cambia: el programador agrega una pantalla, se corrige un bug, cambia una regla. Nada de
+eso actualiza el catálogo solo. **Hoy hay que pedirlo, y hay un comando para eso.**
+
+## El comando
+
+**Dónde se ejecuta:** en una sesión de Claude Code, parado en `traz-tools/`.
+
+```
+/doctest <qué cambió>
+```
+
+Por ejemplo:
+
+```
+/doctest se corrigió el bug #467, ahora recuperar la contraseña sí funciona
+/doctest el programador agregó la pantalla de Movimientos Internos en almacenes
+/doctest cambió la regla: ahora un pedido se puede editar mientras esté en Creada
+/doctest revisá el módulo ALM contra lo que hay en develop, entró código nuevo
+```
+
+No hace falta ser preciso ni decir qué caso tocar: el comando arranca buscando qué casos toca el
+cambio, a partir de las `referencias_codigo` que cada caso declara.
+
+**Qué hace por dentro**, y por qué conviene usarlo en vez de pedirlo suelto: releva contra lo
+desplegado y no contra la rama de trabajo (§1.4), decide si el cambio actualiza un caso, crea uno
+nuevo o vuelve obsoleto a otro, bumpea la versión si hacía falta, regenera los `.feature` y las
+ayudas, corre la suite y abre el PR con el formato de la metodología. Y respeta la regla de oro: si
+aparece una duda de intención de negocio, **el caso queda en `borrador` con la duda escrita** en vez
+de inventar una respuesta.
+
+El comando vive en `.claude/commands/doctest.md` y está versionado, así que lo tiene cualquiera que
+clone el repo.
+
+## Los tres tipos de cambio, y qué esperar de cada uno
+
+| Lo que pasó | Qué hace el comando |
+|---|---|
+| **Funcionalidad nueva o modificada** | Releva el código y la pantalla real, actualiza o agrega el caso, y regenera lo derivado. Si hay una duda de negocio, el caso queda en `borrador` esperándote |
+| **Un bug corregido** | Los casos describen el comportamiento **esperado**, así que el caso ya dice lo correcto: lo que se hace es **sacar el `test.fail()`** del test y verificar que ahora pasa de verdad. Si pasa, el issue se cierra en ese PR |
+| **Un `test-gap` o `ayuda-gap` reportado** | Se convierte en caso nuevo o corrección, y el PR lo cierra con `Closes #N` |
+
+Ese segundo caso es el que más se aprovecha: cuando la suite marca un bug, el test queda listo para
+avisar el día que se arregle. No hay que acordarse de nada.
+
+## Qué NO hace falta pedir
+
+- **Regenerar los `.feature` o las ayudas** después de editar un caso: el comando ya lo hace, y de
+  todos modos son un `npm run features` y un `npm run ayudas`.
+- **Avisar de un cambio que no toca funcionalidad** —un refactor, un cambio de estilos— porque el
+  catálogo describe qué hace el sistema, no cómo está escrito.
+
+## Lo que falta para que esto sea automático
+
+Está diseñado y no construido. El Doc 1 lo llama **Etapa 2 (delta continuo)**: un job de CI que,
+ante cada PR que toque código funcional, analiza el diff contra el catálogo y **propone** los casos
+nuevos, los modificados y los obsoletos, más sus derivados. El gate humano sigue siendo el mismo —
+vos validás— pero deja de depender de que alguien se acuerde de avisar.
+
+Es parte de **F5** y no existe todavía. Hasta entonces, el comando de arriba es el disparador.
+
+---
+
+# 4. Lo que todavía no está
 
 | Qué falta | Quién lo destraba | Nota |
 |---|---|---|
+| **El delta automático** — que el CI proponga solo los casos nuevos ante un PR que toque código funcional | F5 | Hoy el disparador es el comando `/doctest` (§3). El diseño está en el Doc 1 como "Etapa 2" |
 | **Que cada pantalla abra su propia sección de ayuda** | pendiente de hacer | El ícono de la barra abre la portada. El mapeo vista → sección ya está en el catálogo (§2.4); falta generarlo y usarlo |
 | **Ejecutar la suite en CI** (`doctest-e2e.yml`) y guardar la evidencia como artifact | F5 | Necesita un entorno donde correr y sus credenciales como secrets. Hasta que exista staging-v3, correría contra DEMO |
 | **2 casos de DNATO en borrador** | vos | `DNATO-UC-020` (usuario externo) y `DNATO-UC-024` (ABM de menúes): falta definición de negocio. Son las dos únicas preguntas abiertas |
@@ -382,6 +448,7 @@ issue (#470 a #477) y 10 se quedan en el registro porque ya tienen decisión tom
 ## Referencias
 
 - [`README.md`](README.md) — puesta a punto, comandos, cómo se contribuye
+- [`../.claude/commands/doctest.md`](../.claude/commands/doctest.md) — el comando `/doctest`, que actualiza el catálogo cuando algo cambia
 - [`feedback/PROCESO.md`](feedback/PROCESO.md) — cómo reporta un tester
 - [`catalogo/SCHEMA.md`](catalogo/SCHEMA.md) — todos los campos de un caso
 - [`../doc/hallazgos/REGISTRO.md`](../doc/hallazgos/REGISTRO.md) — el registro de hallazgos

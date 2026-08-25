@@ -47,3 +47,7 @@ doc/manuales/*.html
 
 # Paquete suelto de documentos que ya están versionados como .md — no aporta al repo
 doc/v3/files.zip
+
+# Config local de Claude Code — los comandos compartidos (.claude/commands/) sí se versionan
+.claude/settings.local.json
+.claude/worktrees/
