@@ -13,6 +13,16 @@
 #   - Dry-run por defecto.
 #   - Aborta en cuanto un paso falla, en vez de seguir y dejar el estado a medias.
 #
+#  ORDEN — este script NO actualiza la definicion de la API: la exporta tal
+#  como esta en el APIM y la reimporta. Si sumaste tools, ANTES hay que subir
+#  doc/api/trazalog-operaciones.yaml en Publisher > la API > API definition
+#  (paso B.1 del procedimiento). Corriendo esto sin ese paso previo, la API se
+#  recrea con las operaciones viejas.
+#
+#  Este script es el paso B.2 de doc/mcp/republicar-mcp-server.md, que tiene
+#  el procedimiento completo (MI, API, MCP Server, verificacion) y las trampas
+#  conocidas. Leelo antes; aca no se repite.
+#
 #  USO:
 #     bash recrear-api-y-mcp.sh              # plan, no toca nada
 #     bash recrear-api-y-mcp.sh --apply
@@ -27,6 +37,20 @@ STAMP=$(date +%Y%m%d-%H%M%S)
 BK="/root/mcp-backup-$STAMP"; mkdir -p "$BK"
 
 command -v apictl >/dev/null || { echo "falta apictl"; exit 2; }
+
+# cuantas operaciones DEBERIA tener: se cuenta de la OpenAPI del repo en vez de
+# dejarlo escrito a mano, que se desactualiza cada vez que se suma una tool.
+OPENAPI="${OPENAPI:-$(dirname "$0")/../../doc/api/trazalog-operaciones.yaml}"
+if [ -f "$OPENAPI" ]; then
+  # se cuentan OPERACIONES (path + metodo), no paths: /mcp/man/ot tiene GET y
+  # POST, asi que contar paths da uno menos del numero que reporta el APIM.
+  NESPERADAS=$(OPENAPI="$OPENAPI" python3 -c "
+import os,yaml
+d=yaml.safe_load(open(os.environ['OPENAPI']))['paths']
+print(sum(1 for p in d.values() for m in p if m.lower() in ('get','post','put','delete','patch')))" 2>/dev/null)
+fi
+NESPERADAS="${NESPERADAS:-?}"
+echo "  operaciones esperadas segun la OpenAPI del repo: $NESPERADAS"
 
 REG=$(curl -s -k -X POST "https://$H:9443/client-registration/v0.17/register" -u "$U:$P" \
   -H "Content-Type: application/json" \
@@ -63,7 +87,7 @@ listar
 echo
 
 if [ "$APPLY" != "--apply" ]; then
-  cat <<'PLAN'
+  cat <<PLAN
 PLAN (con --apply se ejecuta):
   1. exportar backups de la API y de TODOS los MCP Servers
   2. borrar TODOS los MCP Servers
@@ -71,12 +95,12 @@ PLAN (con --apply se ejecuta):
        409 "Cannot remove the API as it is used by MCP server(s)"
   3. borrar la API            -> aborta si no se borro
   4. importar la API de cero  -> aborta si falla
-  5. desplegar revision de la API y verificar que tenga 17 operaciones
+  5. desplegar revision de la API y verificar que tenga $NESPERADAS operaciones
 
   El MCP Server NO se reimporta: el proyecto viejo tiene 8 tools sin mapping
   y el import las descarta. Hay que crearlo desde la API recien recreada
   (Publisher > MCP Servers > Create > Start from Existing API), que es el
-  unico camino que genera los 17 mappings.
+  unico camino que genera los mappings completos.
 PLAN
   exit 0
 fi
@@ -143,12 +167,12 @@ for a in json.load(sys.stdin).get('list',[]):
 [ -z "${NEWAPI:-}" ] && { echo "  la API no aparece tras el import — revisar"; exit 2; }
 echo "  apiId nuevo: $NEWAPI"
 NOPS=$(curl -s -k "$B/apis/$NEWAPI" -H "$AUTH" | python3 -c "import sys,json;print(len(json.load(sys.stdin).get('operations',[])))")
-echo "  operaciones: $NOPS  (deberian ser 17)"
+echo "  operaciones: $NOPS  (deberian ser $NESPERADAS)"
 
 echo
 echo "=== 5. desplegar revision de la API ==="
 RID=$(curl -s -k -X POST "$B/apis/$NEWAPI/revisions" -H "Content-Type: application/json" -H "$AUTH" \
-  -d '{"description":"API recreada con los 17 recursos"}' | python3 -c "import sys,json;print(json.load(sys.stdin).get('id',''))")
+  -d '{"description":"API recreada con todos los recursos de la OpenAPI"}' | python3 -c "import sys,json;print(json.load(sys.stdin).get('id',''))")
 if [ -z "${RID:-}" ]; then echo "  no se pudo crear la revision"; exit 2; fi
 GW=$(curl -s -k "https://$H:9443/api/am/admin/v4/environments" -H "$AUTH" | python3 -c "import sys,json
 l=json.load(sys.stdin).get('list',[])
@@ -174,11 +198,11 @@ listar
 
 cat <<FIN
 
-AHORA, A MANO (es el unico camino que genera los 17 mappings):
+AHORA, A MANO (es el unico camino que genera los mappings completos):
 
   Publisher > MCP Servers > Create MCP Server > Start from Existing API
     1. elegir "$API_NAME"
-    2. seleccionar las 17 operaciones   <-- contar que sean 17
+    2. seleccionar TODAS las operaciones   <-- contar que sean $NESPERADAS
     3. Name/Context/Version a eleccion
     4. Create
     5. Deploy > Deployments > Deploy

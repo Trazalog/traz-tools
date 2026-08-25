@@ -819,6 +819,296 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /mcp/alm/movimientos:
+    get:
+      operationId: alm_get_movimientos
+      parameters:
+        - name: tipo
+          in: query
+          required: false
+          description: |
+            Filtra por tipo de movimiento. **Los valores van sin espacios** y
+            deben escribirse exactamente así:
+
+            - `INGRESO` — recepción de materiales de un proveedor.
+            - `EGRESO` — entrega de materiales a una obra, tarea u operario.
+            - `MOV.SALIDA` / `MOV.ENTRADA` — las dos patas de un movimiento
+              interno entre depósitos. Un traslado genera las dos.
+            - `AJUSTE` — corrección de inventario (conteo físico, rotura,
+              merma).
+            - `INGRESOPRODUCTO`, `ETAPAPRODINGRESO`, `ETAPAPRODEGRESO` — altas
+              y bajas del módulo de Producción.
+
+            Escribir `MOV. SALIDA` con espacio devuelve **cero resultados**, no
+            un error: el filtro compara texto exacto. Ante un resultado vacío
+            inesperado, revisar primero que el valor esté bien escrito.
+
+            Sin este parámetro devuelve todos los tipos.
+          schema: { type: string }
+          example: "AJUSTE"
+        - name: desde
+          in: query
+          required: false
+          description: |
+            Fecha de inicio del rango, `YYYY-MM-DD`. **Conviene mandarla
+            siempre**: sin rango la operación devuelve el histórico completo
+            del almacén, que en una empresa con años de operación son miles de
+            movimientos. Ante un pedido sin período explícito, acotar a los
+            últimos 30 o 90 días y aclararlo en la respuesta.
+          schema: { type: string }
+          example: "2026-06-01"
+        - name: hasta
+          in: query
+          required: false
+          description: Fecha de fin del rango, `YYYY-MM-DD`.
+          schema: { type: string }
+          example: "2026-08-24"
+        - name: depo_id
+          in: query
+          required: false
+          description: Limita a un depósito. Obtener el ID con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+        - name: arti_id
+          in: query
+          required: false
+          description: |
+            Limita a un artículo. Obtener el ID (campo `id`) con
+            `alm_get_stock`. Es el filtro para responder "qué pasó con este
+            material".
+          schema: { type: string }
+          example: "5"
+        - name: lote_id
+          in: query
+          required: false
+          description: |
+            Limita a un lote puntual. Es el filtro de **trazabilidad**: dado un
+            lote, devuelve todo lo que le pasó desde que ingresó.
+          schema: { type: string }
+          example: "812"
+      summary: Consultar el historial de movimientos de stock
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        El libro mayor del almacén: toda entrada, salida, traslado y ajuste que
+        afectó al stock, unificado en una sola línea de tiempo y ordenado del
+        más reciente al más viejo.
+
+        **Cuándo usar esta operación:**
+        - "¿Por qué bajó el stock de este filtro?" — filtrar por `arti_id`.
+        - Trazabilidad de un lote: filtrar por `lote_id` para reconstruir su
+          recorrido completo.
+        - Auditar el movimiento de un depósito en un período.
+        - Investigar un faltante: buscar `AJUSTE` en el rango de fechas.
+
+        **Cómo leerla:** `cantidad` es lo que movió esa operación;
+        `stock_actual` es el saldo del lote **hoy**, no el saldo posterior a
+        ese movimiento — no sirve para reconstruir el saldo histórico.
+        `referencia` es el ID del documento que originó el movimiento (entrega,
+        recepción, ajuste o movimiento interno según el `tipo_mov`).
+
+        Un traslado entre depósitos aparece **dos veces**, como `MOV.SALIDA` y
+        como `MOV.ENTRADA`: al contar movimientos, no sumarlos como si fueran
+        dos operaciones distintas.
+
+        La respuesta trae el **nombre** del depósito (`deposito`) pero no su
+        ID, así que para filtrar por depósito hay que obtener el `depo_id` con
+        `alm_get_depositos`.
+      tags: [Almacenes]
+      responses:
+        "200":
+          description: Movimientos del período, del más reciente al más antiguo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MovimientosList" }
+              example:
+                movimientos:
+                  movimiento:
+                    - referencia: "1043"
+                      codigo: "7791234567890"
+                      descripcion: "Filtro de aceite hidráulico HF-35"
+                      lote: "L-2026-0087"
+                      cantidad: "12"
+                      stock_actual: "24"
+                      deposito: "ALMACEN"
+                      tipo_mov: "EGRESO"
+                      fec_alta_formatted: "2026-08-20 14:32:07"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/entregas:
+    get:
+      operationId: alm_get_entregas
+      parameters:
+        - name: desde
+          in: query
+          required: false
+          description: Fecha de inicio del rango, `YYYY-MM-DD`. Sin rango devuelve todo el histórico.
+          schema: { type: string }
+          example: "2026-06-01"
+        - name: hasta
+          in: query
+          required: false
+          description: Fecha de fin del rango, `YYYY-MM-DD`.
+          schema: { type: string }
+          example: "2026-08-24"
+        - name: obra
+          in: query
+          required: false
+          description: |
+            Limita a una obra o centro de costo, por su ID. Es el filtro para
+            responder cuánto material consumió un proyecto.
+          schema: { type: string }
+          example: "42"
+        - name: depo_id
+          in: query
+          required: false
+          description: Limita al depósito que entregó. Obtener el ID con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+      summary: Consultar el historial de entregas de materiales
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Qué se entregó realmente del almacén, contra qué pedido, de qué lote y
+        para qué obra. Es la pantalla de Entrega de Materiales: el consumo
+        efectivo, no lo solicitado.
+
+        **Cuándo usar esta operación:**
+        - "¿Cuánto material consumió esta obra?" — filtrar por `obra`.
+        - Verificar si un pedido se entregó y en qué cantidad: cruzar el
+          `pema_id` con `alm_get_pedido_material`.
+        - Analizar consumo de un insumo en el tiempo, para revisar si el punto
+          de pedido está bien puesto.
+
+        **Diferencia con `alm_get_pedidos_materiales`:** esa operación devuelve
+        lo que se **pidió** (con su estado en el circuito de aprobación); esta
+        devuelve lo que se **entregó**. Un pedido puede estar aprobado y no
+        entregado, o entregado parcialmente. Para responder "¿lo recibieron?"
+        hay que mirar acá.
+
+        `lote` viene como `S/L` cuando el artículo no maneja lotes.
+      tags: [Almacenes]
+      responses:
+        "200":
+          description: Entregas del período, de la más reciente a la más antigua
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EntregasList" }
+              example:
+                historicosEntrega:
+                  historicoEntrega:
+                    - fec_alta: "20-08-2026 14:32"
+                      pema_id: "1483"
+                      barcode: "7791234567890"
+                      desc_articulo: "Filtro de aceite hidráulico HF-35"
+                      lote: "L-2026-0087"
+                      cantidad: "12"
+                      unidad_medida: "UN"
+                      deposito: "ALMACEN"
+                      obra: "Planta de chancado"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/movimientos-internos:
+    get:
+      operationId: alm_get_movimientos_internos
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: |
+            Filtra por estado del traslado:
+
+            - `EN_CURSO` — despachado del depósito de origen, todavía no
+              recibido en destino. **Es el estado que hay que vigilar**: el
+              stock está en tránsito.
+            - `RECIBIDO` — llegó a destino.
+            - `FINALIZADO` — cerrado. Aparece en el código del sistema pero no
+              se observó en datos; puede no usarse.
+          schema: { type: string }
+          example: "EN_CURSO"
+        - name: origen
+          in: query
+          required: false
+          description: ID del depósito que despacha. Obtenerlo con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+        - name: destino
+          in: query
+          required: false
+          description: ID del depósito que recibe.
+          schema: { type: string }
+          example: "1000"
+        - name: moin_id
+          in: query
+          required: false
+          description: Trae un movimiento puntual por su ID, con todo su detalle.
+          schema: { type: string }
+          example: "77"
+      summary: Consultar los movimientos internos de stock entre depósitos
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Traslados de materiales entre depósitos de la empresa, con su estado y
+        el detalle de lo que viaja en cada uno. Es la pantalla de Movimientos
+        Internos.
+
+        **Cada movimiento ya trae su detalle anidado** en
+        `detallesMovimientosInternos`: no hace falta una segunda llamada para
+        ver qué artículos lleva.
+
+        **Cuándo usar esta operación:**
+        - "¿Qué hay en tránsito?" — filtrar por `estado=EN_CURSO`.
+        - Detectar traslados despachados hace tiempo y nunca recibidos: son
+          stock que el sistema da por movido y nadie confirmó.
+        - Rastrear dónde está un material que no aparece en el depósito
+          esperado.
+
+        **Cómo leer el detalle:** `cantidad_cargada` es lo que salió del origen
+        y `cantidad_recibida` lo que se confirmó en destino.
+
+        `cantidad_recibida` viene en **`null`** mientras el traslado no se
+        recibió. Eso **no es un faltante**: es que todavía no llegó. Solo tiene
+        sentido comparar las dos cantidades en movimientos ya `RECIBIDO`, y
+        únicamente cuando `cantidad_recibida` no es `null` — también aparece
+        `null` en traslados recibidos donde nadie cargó la cantidad. Cuando las
+        dos están cargadas y difieren, ahí sí hay faltante y vale señalarlo en
+        vez de reportar solo un número.
+      tags: [Almacenes]
+      responses:
+        "200":
+          description: Movimientos internos con su detalle
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MovimientosInternosList" }
+              example:
+                movimientosInternos:
+                  movimientoInterno:
+                    - moin_id: "77"
+                      num_comprobante: "0001-00000077"
+                      depo_id_origen: "2000"
+                      depo_id_destino: "1000"
+                      nombre_depo_destino: "DEPOSITO_TRANSPORTE"
+                      estado: "EN_CURSO"
+                      patente: "AB123CD"
+                      acoplado: ""
+                      conductor: "J. Pérez"
+                      fec_envio: "2026-08-22"
+                      fec_recepcion: ""
+                      observaciones_recepcion: ""
+                      detallesMovimientosInternos:
+                        detalleMovimientoInterno:
+                          - cod_lote: "L-2026-0087"
+                            arti_id: "5"
+                            barcode: "7791234567890"
+                            descripcion: "Filtro de aceite hidráulico HF-35"
+                            nom_proveedor: "Distribuidora del Oeste"
+                            cantidad_cargada: "12"
+                            cantidad_recibida: null
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /mcp/alm/pedidos:
     get:
       operationId: alm_get_pedidos_materiales
@@ -1293,6 +1583,119 @@ components:
           type: string
           description: Nombre del establecimiento. Vacío si el depósito no tiene uno asociado.
           example: "Planta Principal"
+
+    Movimiento:
+      type: object
+      properties:
+        referencia:
+          type: string
+          description: ID del documento que originó el movimiento (entrega, recepción, ajuste o detalle de movimiento interno, según `tipo_mov`).
+        codigo: { type: string, description: Código de barras del artículo. }
+        descripcion: { type: string }
+        lote: { type: string }
+        cantidad: { type: string, description: Cantidad que movió esta operación. }
+        stock_actual:
+          type: string
+          description: Saldo del lote HOY, no el saldo posterior a este movimiento.
+        deposito: { type: string }
+        tipo_mov:
+          type: string
+          description: "Sin espacios: `INGRESO` · `EGRESO` · `MOV.ENTRADA` · `MOV.SALIDA` · `AJUSTE` · `INGRESOPRODUCTO` · `ETAPAPRODINGRESO` · `ETAPAPRODEGRESO`"
+        fec_alta_formatted: { type: string, example: "2026-08-20 14:32:07" }
+
+    MovimientosList:
+      type: object
+      properties:
+        movimientos:
+          type: object
+          properties:
+            movimiento:
+              type: array
+              items: { $ref: "#/components/schemas/Movimiento" }
+
+    Entrega:
+      type: object
+      properties:
+        fec_alta: { type: string, example: "20-08-2026 14:32" }
+        pema_id:
+          type: string
+          description: Pedido de materiales contra el que se entregó. Cruzable con `alm_get_pedido_material`.
+        barcode: { type: string }
+        desc_articulo: { type: string }
+        lote: { type: string, description: "`S/L` si el artículo no maneja lotes." }
+        cantidad: { type: string }
+        unidad_medida: { type: string }
+        deposito: { type: string }
+        obra:
+          type: ["string", "null"]
+          description: >-
+            Obra o centro de costo al que se imputó. Viene `null` en la mayoría
+            de las entregas, porque el campo es opcional al entregar: no asumir
+            que una obra sin entregas no consumió material.
+
+    EntregasList:
+      type: object
+      properties:
+        historicosEntrega:
+          type: object
+          properties:
+            historicoEntrega:
+              type: array
+              items: { $ref: "#/components/schemas/Entrega" }
+
+    DetalleMovimientoInterno:
+      type: object
+      properties:
+        cod_lote: { type: string }
+        arti_id: { type: string }
+        barcode: { type: string }
+        descripcion: { type: string }
+        prov_id: { type: string }
+        nom_proveedor: { type: string }
+        cantidad_cargada: { type: string, description: Lo que salió del depósito de origen. }
+        cantidad_recibida:
+          type: ["string", "null"]
+          description: >-
+            Lo confirmado en destino. Es `null` mientras el traslado no se
+            recibió (y también en algunos ya recibidos donde no se cargó): en
+            ese caso NO es un faltante. Solo hay faltante si difiere de
+            `cantidad_cargada` estando ambas cargadas.
+        lote_id_origen: { type: string }
+        lote_id_destino: { type: string }
+        demi_id: { type: string }
+
+    MovimientoInterno:
+      type: object
+      properties:
+        moin_id: { type: string }
+        num_comprobante: { type: string }
+        depo_id_origen: { type: string }
+        depo_id_destino: { type: string }
+        nombre_depo_destino: { type: string }
+        estado: { type: string, description: "`EN_CURSO` en tránsito · `RECIBIDO` · `FINALIZADO` (en el código, no visto en datos)" }
+        patente: { type: string }
+        acoplado: { type: string }
+        conductor: { type: string }
+        fec_envio: { type: string, example: "2026-08-22" }
+        fec_recepcion: { type: string, description: Vacío mientras no se recibió. }
+        observaciones_recepcion: { type: string }
+        detallesMovimientosInternos:
+          type: object
+          description: Detalle anidado — no requiere una segunda llamada.
+          properties:
+            detalleMovimientoInterno:
+              type: array
+              items: { $ref: "#/components/schemas/DetalleMovimientoInterno" }
+
+    MovimientosInternosList:
+      type: object
+      properties:
+        movimientosInternos:
+          type: object
+          properties:
+            movimientoInterno:
+              type: array
+              items: { $ref: "#/components/schemas/MovimientoInterno" }
 
     DepositosList:
       type: object

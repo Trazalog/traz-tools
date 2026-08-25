@@ -137,6 +137,27 @@ class MCP:
         qs = ("?" + "&".join(q)) if q else ""
         return self._call("GET", f"/alm/stock{qs}", tool="alm_get_stock")
 
+    def _qs(self, **kw):
+        q = [f"{k}={urllib.parse.quote(str(v))}" for k, v in kw.items() if v]
+        return ("?" + "&".join(q)) if q else ""
+
+    def alm_get_movimientos(self, tipo=None, desde=None, hasta=None,
+                            depo_id=None, arti_id=None, lote_id=None):
+        """Historial de stock. Sin desde/hasta devuelve TODO el historico."""
+        qs = self._qs(tipo=tipo, desde=desde, hasta=hasta,
+                      depo_id=depo_id, arti_id=arti_id, lote_id=lote_id)
+        return self._call("GET", "/alm/movimientos" + qs, tool="alm_get_movimientos")
+
+    def alm_get_entregas(self, desde=None, hasta=None, obra=None, depo_id=None):
+        qs = self._qs(desde=desde, hasta=hasta, obra=obra, depo_id=depo_id)
+        return self._call("GET", "/alm/entregas" + qs, tool="alm_get_entregas")
+
+    def alm_get_movimientos_internos(self, estado=None, origen=None,
+                                     destino=None, moin_id=None):
+        qs = self._qs(estado=estado, origen=origen, destino=destino, moin_id=moin_id)
+        return self._call("GET", "/alm/movimientos-internos" + qs,
+                          tool="alm_get_movimientos_internos")
+
     def alm_get_vencimientos(self):
         return self._call("GET", "/alm/vencimientos", tool="alm_get_vencimientos")
 

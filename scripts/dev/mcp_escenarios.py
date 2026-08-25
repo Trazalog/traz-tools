@@ -488,6 +488,119 @@ def e12(m):
 
 
 # ===========================================================================
+# E13 — Trazabilidad de un lote por el historial de movimientos
+#       El caso real: "algo desapareció del depósito, ¿qué pasó?"
+# ===========================================================================
+@escenario("E13", "Rastrear qué le pasó a un lote y a un depósito")
+def e13(m):
+    RANGO = dict(desde="2020-01-01", hasta="2026-12-31")
+    movs = lista(m.alm_get_movimientos(**RANGO), "movimientos", "movimiento")
+    afirmar(movs, "alm_get_movimientos no devolvió nada en un rango de 6 años")
+    paso(f"alm_get_movimientos -> {len(movs)} movimientos")
+
+    tipos = sorted({x["tipo_mov"] for x in movs})
+    paso(f"tipos presentes: {', '.join(tipos)}")
+    # Los valores NO llevan espacio ('MOV.SALIDA', no 'MOV. SALIDA'). El DDL
+    # versionado del repo dice lo contrario y esta desactualizado: si alguien
+    # "corrige" la OpenAPI segun ese DDL, el filtro deja de traer nada.
+    con_espacio = [t for t in tipos if ". " in t or t.startswith("MOV. ")]
+    afirmar(not con_espacio,
+            f"tipo_mov con espacio: {con_espacio} — hay que actualizar la OpenAPI")
+
+    # el filtro por tipo devuelve solo ese tipo
+    aj = lista(m.alm_get_movimientos(tipo="AJUSTE", **RANGO), "movimientos", "movimiento")
+    afirmar(aj, "no hay AJUSTE en 6 años, o el filtro por tipo no anda")
+    afirmar(all(x["tipo_mov"] == "AJUSTE" for x in aj),
+            "el filtro tipo=AJUSTE devolvió movimientos de otro tipo")
+    paso(f"tipo=AJUSTE -> {len(aj)} y todos son AJUSTE")
+
+    # un valor mal escrito devuelve vacío, no error: es la trampa que la
+    # OpenAPI le advierte al agente
+    mal = lista(m.alm_get_movimientos(tipo="MOV. SALIDA", **RANGO), "movimientos", "movimiento")
+    afirmar(not mal, "'MOV. SALIDA' con espacio devolvió filas: cambió el dato")
+    bien = lista(m.alm_get_movimientos(tipo="MOV.SALIDA", **RANGO), "movimientos", "movimiento")
+    afirmar(bien, "'MOV.SALIDA' sin espacio no devolvió nada")
+    paso(f"'MOV. SALIDA' -> 0 · 'MOV.SALIDA' -> {len(bien)} (la OpenAPI lo advierte)")
+
+    # el filtro por fecha respeta el rango
+    jun = lista(m.alm_get_movimientos(desde="2026-06-01", hasta="2026-06-30"),
+                "movimientos", "movimiento")
+    fuera = [x["fec_alta"][:10] for x in jun
+             if not ("2026-06-01" <= x["fec_alta"][:10] <= "2026-06-30")]
+    afirmar(not fuera, f"el filtro de fechas dejó pasar {len(fuera)} fuera del rango")
+    paso(f"rango junio-2026 -> {len(jun)} movimientos, todos dentro")
+
+    # trazabilidad: dado un lote, su recorrido completo
+    con_lote = [x for x in movs if x.get("lote")]
+    afirmar(con_lote, "ningún movimiento trae lote: no se puede trazar")
+    paso(f"{len(con_lote)}/{len(movs)} movimientos con lote identificable")
+
+
+# ===========================================================================
+# E14 — Entregas y traslados: lo pedido contra lo que realmente se movió
+# ===========================================================================
+@escenario("E14", "Cruzar entregas con pedidos y vigilar traslados en tránsito")
+def e14(m):
+    ent = lista(m.alm_get_entregas(), "historicosEntrega", "historicoEntrega")
+    afirmar(ent, "alm_get_entregas no devolvió nada")
+    paso(f"alm_get_entregas -> {len(ent)} entregas")
+
+    # cada entrega referencia un pedido, y ese pedido tiene que existir:
+    # es el cruce que permite responder "¿me entregaron lo que pedí?"
+    pedidos = {p["pema_id"] for p in
+               lista(m.alm_get_pedidos_materiales(), "pedidos", "pedido")}
+    refs = {e["pema_id"] for e in ent if e.get("pema_id")}
+    afirmar(refs, "ninguna entrega referencia un pedido")
+    huerfanas = refs - pedidos
+    paso(f"{len(refs)} pedidos referenciados; {len(refs & pedidos)} existen en "
+         f"alm_get_pedidos_materiales")
+    afirmar(len(refs & pedidos) > 0,
+            f"ninguno de los {len(refs)} pema_id de las entregas aparece en los "
+            "pedidos: el cruce entre las dos tools no funciona")
+
+    # detalle de un pedido efectivamente entregado
+    cruzado = sorted(refs & pedidos)[0]
+    det = lista(m.alm_get_pedido_material(cruzado), "pedidos", "pedido")
+    afirmar(det, f"el pedido {cruzado}, que tiene entregas, no se puede recuperar")
+    paso(f"pedido {cruzado}: entregado y recuperable por alm_get_pedido_material")
+
+    # --- traslados internos ---
+    mi = lista(m.alm_get_movimientos_internos(), "movimientosInternos", "movimientoInterno")
+    afirmar(mi, "alm_get_movimientos_internos no devolvió nada")
+    con_det = [x for x in mi if x.get("detallesMovimientosInternos")]
+    paso(f"alm_get_movimientos_internos -> {len(mi)} traslados, "
+         f"{len(con_det)} con detalle anidado")
+    afirmar(con_det, "ningún traslado trae el detalle anidado: se rompió "
+                     "@getDetalleMovimientoInterno y haría falta una 2da llamada")
+
+    def lineas(x):
+        d = (x.get("detallesMovimientosInternos") or {}).get("detalleMovimientoInterno")
+        return d if isinstance(d, list) else [d] if d else []
+
+    curso = lista(m.alm_get_movimientos_internos(estado="EN_CURSO"),
+                  "movimientosInternos", "movimientoInterno")
+    afirmar(all(x["estado"] == "EN_CURSO" for x in curso),
+            "el filtro estado=EN_CURSO devolvió traslados de otro estado")
+    paso(f"estado=EN_CURSO -> {len(curso)} en tránsito")
+
+    # cantidad_recibida es null mientras no se recibio: NO es un faltante.
+    # Si esto cambiara, el agente empezaria a reportar faltantes inexistentes.
+    en_curso_no_nulos = [l for x in curso for l in lineas(x)
+                         if l.get("cantidad_recibida") is not None]
+    afirmar(not en_curso_no_nulos,
+            f"{len(en_curso_no_nulos)} líneas EN_CURSO traen cantidad_recibida "
+            "cargada: la OpenAPI dice que ahí siempre es null")
+    paso("las líneas EN_CURSO traen cantidad_recibida=null (no son faltantes)")
+
+    recibidos = [x for x in mi if x["estado"] == "RECIBIDO"]
+    faltantes = [(x["moin_id"], l) for x in recibidos for l in lineas(x)
+                 if l.get("cantidad_recibida") is not None
+                 and float(l.get("cantidad_cargada") or 0) != float(l["cantidad_recibida"])]
+    paso(f"traslados RECIBIDO con faltante real: {len(faltantes)} líneas "
+         f"(cargada != recibida, ambas cargadas)")
+
+
+# ===========================================================================
 # E7 — El contrato publicado y lo implementado no se desincronizan
 #      La OpenAPI es lo que consume el Virtual MCP Server del APIM: si declara
 #      una operación que el MI no implementa, la tool aparece en Claude y falla
