@@ -2,9 +2,10 @@ id: DNATO-UC-003
 modulo: DNATO
 titulo: Completar el formulario de información adicional del registro
 perfil: Administrador
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Register.php
@@ -42,8 +43,9 @@ datos_prueba:
   como_enteraste: "Internet"
   actividad_empresa: "Minería"
   cantidad_empleados: "5 a 20"
-dudas:
-  - "¿Las respuestas tienen alguna consecuencia funcional (por ejemplo, que marcar 'Minería' o 'Más de 40 empleados' cambie algo del alta, del tier o de lo que ve el usuario después), o son solo información comercial? De eso depende qué tiene que verificar el test además de que se guardó."
+dudas: []
 notas:
   - "Las cuatro preguntas se relevaron contra el entorno DEMO el 2026-08-19: es un formulario dinámico definido en datos, y el PM confirmó que se toma como estático."
   - "Detalle técnico observado: los nombres de campo llevan el prefijo del empr_id temporal (`9000-como_enteraste`, `9000-cantidad_empleados`), mientras que `actividad_empresa[]` y `problemas_principales` no. Los page objects tienen que contemplarlo."
+  - "Validado por el PM el 2026-08-24. Hoy las respuestas se guardan y no se usan para nada: la explotación de esos datos va a ser una tool MCP para el superusuario (mejora futura, hallazgo H-022)."
+  - "El formulario probablemente cambie. Cuando cambie no se edita este caso: se versiona (bump de `version`) y se regeneran sus derivados, como manda la regla R6."

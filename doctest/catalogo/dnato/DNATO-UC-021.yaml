@@ -2,8 +2,8 @@ id: DNATO-UC-021
 modulo: DNATO
 titulo: Configurar los parámetros del sitio
 perfil: Administrador
-estado: borrador
-version: "0.2"
+estado: obsoleto
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -38,8 +38,8 @@ validaciones:
   - "Solo un administrador accede a esta pantalla"
   - "El interruptor de reCAPTCHA afecta al registro (DNATO-UC-001) y a la recuperación de contraseña (DNATO-UC-008)"
 datos_prueba: {}
-dudas:
-  - "La configuración es una fila única del sistema, no una por empresa: si un administrador de cualquier empresa la cambia, afecta a todos. ¿Tiene que quedar restringida al superusuario?"
+dudas: []
 notas:
   - "⚠️ Riesgo para la automatización: un test que cambie el interruptor de reCAPTCHA rompe a los tests de registro y recuperación mientras corre. Si se automatiza, tiene que ser un caso serializado (nunca en paralelo) y que restaure el valor original."
   - "Hoy reCAPTCHA está desactivado en el entorno de pruebas (confirmado por el PM el 2026-08-19)."
+  - "Declarado OBSOLETO por el PM el 2026-08-24: la configuración del sitio no se contempla por ahora y probablemente haya que ocultar la pantalla (hallazgo H-026). El caso se conserva por historia y no genera ningún derivado."

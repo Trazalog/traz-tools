@@ -2,9 +2,10 @@ id: DNATO-UC-025
 modulo: DNATO
 titulo: Asignar opciones de menú a un rol de una empresa
 perfil: Administrador
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Menu.php
@@ -41,13 +42,14 @@ validaciones:
   - "La asignación es por empresa y rol: dos empresas pueden dar acceso a opciones distintas para el mismo rol"
   - "Es la pieza que conecta los roles de trabajo creados con la empresa (DNATO-UC-004) con lo que cada usuario ve en el menú de Tools"
   - "Las asignaciones iniciales de una empresa nueva se crean solas al darla de alta; esta pantalla sirve para ajustarlas después"
+  - "Un administrador solo puede asignar menúes a roles de una empresa suya"
 datos_prueba:
   empresa: EMPRESA_TEST_1
   rol: "Solicitante de Mantenimiento"
-dudas:
-  - "¿Un administrador de una empresa puede asignar menúes a roles de OTRA empresa? El combo de empresas se arma con todos los grupos de Bonita."
-  - "Los ocho roles que hoy NO reciben menú automático (los cuatro de Mantenimiento y los cuatro de SMA) ¿tienen que recibirlo? Ver hallazgo H-013 — para Mantenimiento puede ser correcto porque vive en Asset Planner, pero SMA es un módulo de Tools."
+dudas: []
 notas:
   - "Alcance confirmado por el PM el 2026-08-19."
   - "Los menúes se asignan solos: el trigger `core.configuracion_inicial_empresa_trg()` inserta las filas de `seg.memberships_menues` al crear la empresa (confirmado por el PM el 2026-08-24). Esta pantalla es el ajuste posterior."
   - "Ojo al escribir el test: el trigger asigna menúes a **8** de los 16 roles, y uno de esos ocho está escrito con un nombre que no existe (`Responsable Procesos` en vez de `Responsable de Procesos`) — hallazgos H-012 y H-013."
+  - "Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el desplegable de empresas trae todos los grupos del sistema. Registrado como hallazgo H-020."
+  - "Que los roles de Mantenimiento no reciban menú es correcto: Mantenimiento todavía no está migrado a Tools y vive en Asset Planner, así que este ABM no lo afecta (aclara el hallazgo H-013, que queda acotado a los roles de SMA/Residuos)."

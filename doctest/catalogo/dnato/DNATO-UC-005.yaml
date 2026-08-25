@@ -2,9 +2,10 @@ id: DNATO-UC-005
 modulo: DNATO
 titulo: Ver la pantalla de bienvenida con los usuarios iniciales
 perfil: Administrador
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Register.php
@@ -32,7 +33,7 @@ validaciones:
   - "Los usuarios iniciales son cinco: usuario (Solicitante de Almacén y de Mantenimiento), almacen (Responsable de Almacén), panol (Responsable de Pañol), produccion (Responsable de Producción) y mantenimiento (Supervisor y Planificador de Mantenimiento)"
   - "La sesión del registro se cierra al llegar a esta pantalla"
 datos_prueba: {}
-dudas:
-  - "¿La pantalla debe seguir mostrando la contraseña inicial de los usuarios? Es el hallazgo H1: afecta también a qué queda guardado en las capturas de los reportes de Playwright."
+dudas: []
 notas:
   - "Las capturas de pantalla de esta página van a contener la contraseña inicial mientras el diseño no cambie. Los reportes son artifacts privados con retención de 30 días (Doc 3 §8.4)."
+  - "Validado por el PM el 2026-08-24: por ahora la pantalla muestra la contraseña inicial a propósito. Pedirle al administrador que elija una contraseña para esos usuarios queda como mejora para más adelante, no para esta etapa (hallazgo H-001)."

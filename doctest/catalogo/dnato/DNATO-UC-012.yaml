@@ -2,9 +2,10 @@ id: DNATO-UC-012
 modulo: DNATO
 titulo: Cambiar la contraseña propia
 perfil: Usuario
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -35,7 +36,8 @@ flujos_alternativos:
 validaciones:
   - "La contraseña nueva exige 10 caracteres o más, mayúscula, minúscula, dígito y símbolo"
   - "La confirmación debe coincidir"
+  - "La contraseña la administra únicamente Dnato: no se replica a ningún otro sistema"
 datos_prueba: {}
-dudas:
-  - "No se pide la contraseña actual para cambiarla: con la sesión abierta alcanza. ¿Es lo esperado? Lo reporto como observación de seguridad, no lo cambio."
-  - "Si el cambio de contraseña también debe propagarse a BPM/Asset (como sí pasa en la activación), no lo encontré en este flujo. ¿Queda la contraseña desincronizada entre sistemas?"
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24. Que no se pida la contraseña actual queda anotado como mejora de seguridad (hallazgo H-010). Que no se propague a Bonita ni a Asset **no es un problema**: la contraseña la maneja Dnato y nadie más."

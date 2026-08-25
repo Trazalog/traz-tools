@@ -2,9 +2,10 @@ id: DNATO-UC-001
 modulo: DNATO
 titulo: Registrar una empresa nueva (paso 1 - datos de contacto)
 perfil: Visitante
-estado: borrador
-version: "0.3"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -56,8 +57,8 @@ datos_prueba:
   email_prefijo: "doctest+reg-"
   razon_social_prefijo: "DOCTEST SA "
   nota_recaptcha: "reCAPTCHA está desactivado en el entorno de pruebas (decisión del PM, 2026-08-19): el flujo es automatizable de punta a punta"
-dudas:
-  - "Si el envío del mail falla, el usuario queda creado igual y el enlace solo queda en el log del servidor. ¿Es el comportamiento buscado o debería poder reenviarse desde la pantalla?"
+dudas: []
 notas:
   - "El caso ES automatizable de punta a punta: el test se crea una casilla descartable, se registra con ella y lee el mail de activación solo (`tests/e2e/fixtures/casilla-descartable.ts`). Verificado el 2026-08-24 creando una empresa real en el DEMO."
   - "Decisión del PM (2026-08-19): la automatización va contra una empresa de test descartable y se acepta la basura acumulada, con re-seed periódico. Queda pendiente construir un procedimiento de limpieza."
+  - "Validado por el PM el 2026-08-24. La cuenta queda creada solo en Dnato, sin confirmar el correo, hasta que se activa: depurar las cuentas sin confirmar es una mejora futura (hallazgo H-021)."

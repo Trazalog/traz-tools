@@ -2,9 +2,10 @@ id: DNATO-UC-002
 modulo: DNATO
 titulo: Activar la cuenta y definir la contraseña
 perfil: Visitante
-estado: borrador
-version: "0.3"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -53,8 +54,8 @@ datos_prueba:
   password_valida: "Doctest2026!"
   password_invalida_sin_simbolo: "Doctest2026"
   password_invalida_corta: "Doct2026!"
-dudas:
-  - "El vencimiento del token compara la fecha de creación contra la de hoy: si la columna `created` de `seg.tokens` guardara hora, ningún enlace validaría nunca. Como en la práctica las activaciones funcionan, se asume que guarda solo la fecha — conviene confirmarlo contra la base antes de escribir el caso del enlace vencido."
+dudas: []
 notas:
   - "El enlace de activación se lee del correo automáticamente con la casilla descartable del seed, así que el caso no necesita intervención humana."
   - "La política de contraseñas está duplicada en el cliente (`public/js/password-strength.js`) y en el servidor; el propio código avisa que hay que mantener las dos sincronizadas."
+  - "Validado por el PM el 2026-08-24."

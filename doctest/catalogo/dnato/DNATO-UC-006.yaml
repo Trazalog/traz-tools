@@ -2,9 +2,10 @@ id: DNATO-UC-006
 modulo: DNATO
 titulo: Iniciar sesión eligiendo la empresa
 perfil: Usuario
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -53,9 +54,9 @@ validaciones:
   - "Una cuenta inhabilitada no puede iniciar sesión aunque la contraseña sea correcta"
 datos_prueba:
   empresa: EMPRESA_TEST_1
-dudas:
-  - "¿El caso se valida contra el comportamiento actual (desplegable de empresas antes de las credenciales) sabiendo que v3 lo va a reemplazar por el selector posterior, o conviene esperar al cambio para no derivar un test que ya sabemos que va a cambiar? Es la pantalla de la que dependen las fixtures de login de todos los demás módulos."
+dudas: []
 notas:
   - "Confirmado contra el DEMO: un usuario puede tener roles en varias empresas (el usuario de prueba tiene seis)."
   - "⚠️ Cambio previsto en v3 (decisión del PM, 2026-08-19): se elimina el desplegable de empresas de esta pantalla. Se valida primero el usuario y, si tiene más de una empresa, recién ahí se le muestra un selector; si tiene una sola, entra directo. Cuando eso se implemente, este caso cambia de comportamiento: hay que subir su `version` y regenerar sus derivados en el mismo PR (regla R6 del validador)."
   - "El combo actual lista todas las empresas del sistema a cualquiera que abra el login, sin sesión (hallazgo H4). El cambio de v3 lo resuelve de paso."
+  - "Validado por el PM el 2026-08-24: este es el único login unificado del sistema."

@@ -2,9 +2,10 @@ id: DNATO-UC-015
 modulo: DNATO
 titulo: Editar un usuario de la empresa
 perfil: Administrador
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -30,7 +31,9 @@ flujos_alternativos:
 validaciones:
   - "Nombre, apellido, correo y rol son obligatorios"
   - "La contraseña, si se cambia, exige al menos 10 caracteres y su confirmación"
+  - "Un administrador solo puede editar usuarios de una empresa suya"
+  - "Editar los datos de un usuario no exige cambiarle la contraseña"
 datos_prueba: {}
-dudas:
-  - "La edición exige contraseña y confirmación como campos obligatorios (mismas reglas que el alta). ¿Es correcto que editar el nombre de un usuario obligue a reescribir su contraseña? Puede ser un bug; no lo cambio."
-  - "¿Un administrador puede editar usuarios de otra empresa si conoce el id? No vi una verificación de pertenencia en este método."
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24 y confirmados los dos hallazgos: que editar obligue a reescribir la contraseña es un bug (H-007), y que un administrador pueda editar usuarios de otra empresa también (H-008)."

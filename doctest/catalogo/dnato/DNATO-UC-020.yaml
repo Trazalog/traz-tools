@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Dar de alta un usuario de una empresa externa
 perfil: Administrador
 estado: borrador
-version: "0.2"
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -45,8 +45,7 @@ validaciones:
   - "A diferencia del alta común, no se lo vincula a una empresa del sistema ni se lo crea en el sistema de procesos: lleva la razón social y el identificador tributario de SU empresa"
 datos_prueba: {}
 dudas:
-  - "Interpretación desde el código y los datos: es un usuario que representa a una empresa de afuera (proveedor, transportista, cliente) y por eso guarda razón social y CUIT propios en vez de pertenecer a una empresa del sistema. **¿Es esa la intención de negocio?** Es lo único que me falta confirmar del caso."
-  - "La pantalla no está enlazada en el menú de navegación: se llega solo por dirección directa. ¿Sigue en uso o quedó fuera de circulación?"
-  - "Al no crearse en Bonita, un usuario externo no tiene roles de trabajo y no podría operar los módulos. ¿Contra qué pantallas se espera que use el sistema?"
+  - "Pregunta abierta del PM (2026-08-24): ¿este alta es para que el SUPERUSUARIO cree usuarios de cualquier empresa, o para que un administrador que tiene varias empresas cree usuarios en una de ellas? Son dos casos de uso distintos y hoy la pantalla no distingue ninguno de los dos."
+  - "Según cuál sea, cambia quién es el perfil del caso y qué debería mostrar la pantalla. Queda en borrador hasta definirlo."
 notas:
   - "Verificado en el DEMO el 2026-08-19: la pantalla existe y responde en `main/adduserexterno`, con esos seis campos."

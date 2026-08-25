@@ -2,9 +2,10 @@ id: DNATO-UC-008
 modulo: DNATO
 titulo: Recuperar la contraseña olvidada
 perfil: Usuario
-estado: borrador
-version: "0.3"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -52,9 +53,10 @@ validaciones:
   - "Solo se envía el enlace si la cuenta existe y está aprobada"
   - "El enlace de restablecimiento vence a la medianoche del día en que se generó (misma regla que la activación)"
   - "La contraseña nueva exige 10 caracteres o más, mayúscula, minúscula, dígito y símbolo, y coincidir con su confirmación"
+  - "Solo puede recuperar la contraseña quien tenga el correo validado: el administrador que dio de alta la empresa. Los cinco usuarios iniciales y los que crea el administrador NO tienen correo validado y no deben poder usarla"
 datos_prueba:
   empresa: EMPRESA_TEST_1
-dudas:
-  - "Para automatizarlo hay que registrar un usuario con una casilla descartable (como hace el seed) y pedir la recuperación con esa dirección: la cuenta de test estable no sirve, porque su casilla no se puede leer por API. ¿Se acepta que este caso cree su propio usuario descartable en cada corrida?"
+dudas: []
 notas:
   - "El mensaje distingue entre 'no encontramos ese correo' y 'tu cuenta aún no está aprobada', lo que permite averiguar desde afuera si un correo está registrado (hallazgo H5)."
+  - "Validado por el PM el 2026-08-24 con una regla nueva: la recuperación es solo para usuarios con correo validado. **Hoy el sistema no la cumple** — los usuarios creados automáticamente y los creados por el administrador nacen en estado `approved`, que es lo único que mira la pantalla, así que pueden recuperar contraseña. Registrado como hallazgo H-016."

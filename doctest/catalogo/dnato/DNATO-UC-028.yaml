@@ -1,0 +1,30 @@
+id: DNATO-UC-028
+modulo: DNATO
+titulo: Eliminar una empresa
+perfil: Superusuario
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Empresa.php
+    detalle: "borrarEmpresa() (132-176)"
+  - repo: traz-comp-dnato
+    path: application/models/Empresas.php
+    detalle: "eliminarEmpresa() — la que sí borra la empresa por API, y que este flujo NO usa"
+pantallas:
+  - "Gestión de Empresas → Lista de Empresas → Eliminar"
+precondiciones:
+  - Sesión iniciada con el usuario superusuario del ambiente
+flujo_principal:
+  - paso: "Elige eliminar una empresa del listado"
+    resultado: "PENDIENTE DE DEFINIR — ver dudas: hoy la acción no hace lo que su nombre dice"
+flujos_alternativos: []
+validaciones: []
+datos_prueba: {}
+dudas:
+  - "🔴 **El caso no se puede escribir hasta decidir qué tiene que hacer, porque hoy hace otra cosa.** `Empresa::borrarEmpresa($empr_id)` es una copia de la baja de usuarios: busca un USUARIO con el id de la empresa, usa una variable que nunca se define (`$busines`) y termina llamando a `deleteUser($empr_id)`, que borra de `seg.users` la fila cuyo id coincida con el id de la empresa. Registrado como hallazgo H-028."
+  - "Además, el PM definió al validar DNATO-UC-017 que **nunca debe existir un borrado definitivo porque rompe la trazabilidad**. ¿Una empresa se da de baja lógicamente? ¿Qué pasa con sus usuarios, sus datos y su grupo en el sistema de procesos?"
+  - "¿Quién puede darla de baja: solo el superusuario, o también soporte?"
+notas:
+  - "El modelo ya tiene `Empresas::eliminarEmpresa()`, que llama a la API y es la que usa el rollback del alta por registración: la pantalla no la usa."

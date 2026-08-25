@@ -2,9 +2,10 @@ id: DNATO-UC-017
 modulo: DNATO
 titulo: Eliminar un usuario de la empresa
 perfil: Administrador
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -41,9 +42,9 @@ flujos_alternativos:
 validaciones:
   - "Un usuario con roles de trabajo asignados en la empresa no puede eliminarse: primero hay que quitarle los roles (DNATO-UC-018)"
   - "La acción pide confirmación antes de ejecutarse"
-dudas:
-  - "🔴 El PM entendía que la baja era lógica y **el código hace borrado físico**: `DELETE` sobre `seg.users_business` y después `DELETE` sobre `seg.users` (hallazgo H2). Además no da de baja al usuario ni en Bonita ni en Asset Planner, así que queda huérfano ahí. Antes de escribir el test hay que decidir si el comportamiento esperado es el actual o si esto se corrige: el caso de uso describiría cosas distintas."
-  - "Con borrado físico, la baja lógica que existe hoy es 'inhabilitar' (DNATO-UC-016). ¿La pantalla debería llamar a esta acción 'Eliminar definitivamente' para que el administrador entienda la diferencia?"
+  - "La baja es lógica: el usuario deja de operar pero se conserva, porque borrarlo rompería la trazabilidad de lo que hizo"
+dudas: []
 datos_prueba: {}
 notas:
   - "Este caso queda deliberadamente sin derivar hasta que se resuelva la duda: automatizar un borrado físico contra el entorno de pruebas necesita además decidir qué usuario se sacrifica en cada corrida."
+  - "Validado por el PM el 2026-08-24 con una definición fuerte: **nunca debe existir un borrado definitivo, porque rompe la trazabilidad**. El borrado físico que hace hoy el sistema es un bug a corregir (H-002, issue #451). El caso describe el comportamiento esperado, no el actual: sus derivados se generan recién cuando el borrado sea lógico."

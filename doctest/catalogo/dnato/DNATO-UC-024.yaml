@@ -3,7 +3,7 @@ modulo: DNATO
 titulo: Administrar las opciones de menú del sistema
 perfil: Administrador
 estado: borrador
-version: "0.1"
+version: "0.2"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -44,8 +44,8 @@ validaciones:
 datos_prueba:
   opcion_prefijo: "DOCTEST-MENU-"
 dudas:
-  - "¿Qué campos son obligatorios? El controlador no declara reglas de validación: manda lo que llegue del formulario."
-  - "Tocar los menúes afecta a lo que ven TODOS los usuarios de TODAS las empresas. ¿Se automatiza el alta y borrado de una opción de prueba, o el caso queda como documentación y prueba manual?"
+  - "El PM lo deja en borrador (2026-08-24): la pantalla no es prioridad ahora. Antes de derivar tests hay que definir qué campos son obligatorios y si el ABM se rehace."
 notas:
   - "Alcance confirmado por el PM el 2026-08-19."
   - "Verificado en el DEMO el 2026-08-19: la grilla y el formulario tienen los campos mencionados."
+  - "La pantalla quedó anotada como candidata a rehacerse: hoy es muy rústica, pero no es prioridad (hallazgo H-027)."

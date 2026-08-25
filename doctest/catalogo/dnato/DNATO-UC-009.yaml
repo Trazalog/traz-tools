@@ -2,9 +2,10 @@ id: DNATO-UC-009
 modulo: DNATO
 titulo: Iniciar sesión desde un agente de IA (OAuth 2.1)
 perfil: Usuario
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Oauthlogin.php
@@ -52,7 +53,7 @@ validaciones:
   - "Hoy la pantalla exige exactamente una empresa por usuario (TAD-IDENT-02)"
 datos_prueba:
   empresa: EMPRESA_TEST_1
-dudas:
-  - "Alcance: este caso prueba la PANTALLA de ingreso del agente (Playwright). El intercambio de tokens y el consumo de tools se prueba en F4 con Hurl. ¿Confirmás ese reparto?"
+dudas: []
 notas:
   - "⚠️ Cambio previsto en v3 (decisión del PM, 2026-08-19): el ingreso OAuth deja de rechazar a los usuarios con varias empresas — va a mostrar un selector de empresa cuando haya más de una, igual que el login web (ver DNATO-UC-006). Hoy el código corta con error, y la contradicción entre las dos pantallas queda resuelta por esa decisión. Cuando se implemente: bump de `version` y regeneración de derivados en el mismo PR."
+  - "Validado por el PM el 2026-08-24."

@@ -2,9 +2,10 @@ id: DNATO-UC-011
 modulo: DNATO
 titulo: Editar los datos del perfil propio
 perfil: Usuario
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -34,6 +35,8 @@ flujos_alternativos:
         resultado: "Se muestra 'Tu perfil no ha podido ser actualizado'"
 validaciones:
   - "Nombre, apellido y correo son obligatorios; el correo debe tener formato válido"
+  - "El usuario NO puede cambiar su correo: es su identidad en el sistema de procesos y en las membresías"
 datos_prueba: {}
-dudas:
-  - "¿El usuario puede cambiar su propio correo? Si el correo es la identidad con la que se resuelven roles y membresías en BPM, cambiarlo podría dejar la cuenta inconsistente. No encontré ninguna validación que lo impida."
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el formulario permite editar el correo. Registrado como hallazgo H-017."

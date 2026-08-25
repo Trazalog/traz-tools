@@ -2,9 +2,10 @@ id: DNATO-UC-022
 modulo: DNATO
 titulo: Ver la lista de empresas del sistema
 perfil: Superusuario
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.2"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Empresa.php
@@ -35,9 +36,9 @@ flujos_alternativos:
         resultado: "Se lo redirige a la pantalla de ingreso"
 validaciones:
   - "El menú 'Gestión de Empresas' solo aparece para el superusuario del ambiente"
+  - "El superusuario se define hoy en `constants.php` y además tiene que existir como usuario en `seg.users`"
 datos_prueba: {}
-dudas:
-  - "El superusuario se define por una **constante con un correo concreto** (`TOOLS_ADMIN_USER`), distinta en cada ambiente y no como un perfil de la base. En el DEMO ese correo es el del usuario de prueba que me pasaste, así que hoy 'superusuario' y 'usuario de test' son la misma cuenta (hallazgo H3). ¿Se deja así, o el superusuario pasa a ser un perfil como los demás?"
-  - "¿Qué columnas tiene que mostrar el listado? La vista existe pero conviene fijarlo para que el test verifique contenido."
+dudas: []
 notas:
   - "Alcance confirmado por el PM el 2026-08-19: el ABM de Empresas entra en la Ola 1, con el perfil de DNATO correcto."
+  - "Validado por el PM el 2026-08-24: el superusuario sigue siendo por ahora el que define la constante, y el listado muestra los datos de empresa que uno espera ver (nombre, identificador tributario, contacto, ubicación)."

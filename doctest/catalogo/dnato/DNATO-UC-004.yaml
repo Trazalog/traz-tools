@@ -2,9 +2,10 @@ id: DNATO-UC-004
 modulo: DNATO
 titulo: Dar de alta la empresa y su configuración inicial
 perfil: Administrador
-estado: borrador
-version: "0.3"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Register.php
@@ -53,13 +54,13 @@ validaciones:
   - "El alta crea el Establecimiento Principal, el Depósito 1 y le asigna como encargado al usuario almacen@<dominio>"
   - "Al usuario que dio de alta la empresa se le asigna el rol Administrador de esa empresa"
   - "La empresa nueva queda con sus menúes iniciales asignados por rol, con el superusuario habilitado como administrador, y con las listas de valores por defecto (sectores, tipos de artículo, tipos de transportista y unidades de medida)"
+  - "El identificador tributario NO se valida por formato — decisión del PM: se acepta lo que el usuario cargue y después se corrige"
 datos_prueba:
   cuit_prefijo: "30-DOCTEST"
   dominio_empresa_test: "doctest-empresa.com"
-dudas:
-  - "El identificador tributario no tiene validación de formato por país (solo es obligatorio), a diferencia del teléfono. ¿Debería validarse?"
-  - "Si la reversión automática también falla, quedan datos huérfanos y el mensaje pide contactar soporte. ¿Hay un procedimiento definido para ese caso?"
+dudas: []
 notas:
   - "La configuración inicial se reparte en dos lugares: la orquestación WSO2 crea empresa, grupo y roles; y el trigger de base `core.configuracion_inicial_empresa_trg()` asigna menúes, habilita al superadmin y carga las listas de valores. Quien toque uno tiene que mirar el otro — de esa separación salen los hallazgos H-012 y H-013."
   - "Los 16 roles no se crean en el PHP sino en la orquestación WSO2 del alta de empresa (`toolsCOREAPI`, POST /empresa), que además los mapea como actores de los procesos de Bonita. Es la fuente canónica del vocabulario de roles de Tools."
   - "Verificado en el entorno DEMO: la empresa Conservas tiene un solo rol ('Almacen'), porque es anterior a este alta automática. Por eso el PM pidió crear una empresa de test nueva desde cero."
+  - "Validado por el PM el 2026-08-24, con tres definiciones: el identificador tributario no se valida (máscaras por país, mejora futura), tiene que poder corregirse después desde Dnato (hoy no hay pantalla para eso — hallazgo H-023), y el mensaje de error debe mostrar el contacto de soporte, soporte@trazalog.com (hallazgo H-024)."

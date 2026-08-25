@@ -2,9 +2,10 @@ id: DNATO-UC-010
 modulo: DNATO
 titulo: Ver el perfil propio
 perfil: Usuario
-estado: borrador
-version: "0.2"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -23,7 +24,9 @@ flujos_alternativos:
     pasos:
       - paso: "Abre la dirección del perfil sin haber iniciado sesión"
         resultado: "Se lo redirige a la pantalla de ingreso"
-validaciones: []
+validaciones:
+  - "El perfil muestra los datos de la cuenta que el usuario reconoce (nombre, apellido, correo, teléfono, empresa); el nombre de usuario interno (`usernick`) no se muestra"
 datos_prueba: {}
-dudas:
-  - "¿Qué datos debe mostrar el perfil? La vista existe pero conviene fijar cuáles son los campos que el usuario espera ver, para que el test verifique contenido y no solo que la pantalla abre."
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24: es una pantalla típica de perfil; el único dato que no debe verse es el `usernick`."

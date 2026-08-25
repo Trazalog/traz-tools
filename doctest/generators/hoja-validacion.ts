@@ -99,13 +99,15 @@ function tarjeta(c: Caso): string {
     .map(([k, v]) => `<li><code>${esc(k)}</code>: ${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</li>`)
     .join('');
 
-  return `<article class="caso" id="${esc(c.id)}" data-id="${esc(c.id)}" data-dudas="${(c.dudas ?? []).length}">
+  const decidido = c.estado === 'validado' || c.estado === 'obsoleto';
+  return `<article class="caso" id="${esc(c.id)}" data-id="${esc(c.id)}" data-dudas="${(c.dudas ?? []).length}" data-estado="${esc(c.estado)}"${decidido ? ` data-decision="${esc(c.estado)}"` : ''}>
     <header>
       <div class="titulo">
         <span class="id">${esc(c.id)}</span>
         <h3>${esc(c.titulo)}</h3>
       </div>
       <div class="meta">
+        <span class="chip estado estado-${esc(c.estado)}">${c.estado === 'validado' ? 'validado' : c.estado === 'obsoleto' ? 'obsoleto' : 'en borrador'}</span>
         <span class="chip perfil">${esc(c.perfil)}</span>
         <span class="chip version">v${esc(c.version)}</span>
         ${(c.dudas ?? []).length ? `<span class="chip dudas">${(c.dudas ?? []).length} duda${(c.dudas ?? []).length > 1 ? 's' : ''}</span>` : ''}
@@ -141,7 +143,9 @@ function tarjeta(c: Caso): string {
 function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
   const total = casos.length;
   const conDudas = casos.filter((c) => (c.dudas ?? []).length).length;
-  const perfiles = [...new Set(casos.map((c) => c.perfil))];
+  const validados = casos.filter((c) => c.estado === 'validado').length;
+  const borradores = casos.filter((c) => c.estado === 'borrador').length;
+  const obsoletos = casos.filter((c) => c.estado === 'obsoleto').length;
 
   return `<title>Validación DNATO</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -229,6 +233,10 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
   .meta { display: flex; gap: 6px; flex-wrap: wrap; }
   .chip { font-size: 11.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--borde); color: var(--suave); white-space: nowrap; }
   .chip.perfil { border-color: var(--teal); color: var(--teal); }
+  .chip.estado { font-weight: 500; text-transform: uppercase; letter-spacing: .06em; font-size: 10.5px; }
+  .chip.estado-validado { border-color: var(--teal); background: var(--teal); color: #fff; }
+  .chip.estado-obsoleto { border-color: var(--suave); background: var(--suave); color: var(--papel); }
+  .chip.estado-borrador { border-color: var(--ambar); background: var(--ambar-fondo); color: var(--ambar); }
   .chip.dudas { border-color: var(--ambar); color: var(--ambar); background: var(--ambar-fondo); font-weight: 500; }
   .pantallas { font-size: 14px; color: var(--suave); margin: 14px 0 0; font-family: 'JetBrains Mono', monospace; }
 
@@ -294,12 +302,13 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
   <header class="portada">
     <div class="eyebrow">DocTest · Fase F1 · Issue #438</div>
     <h1>Hoja de validación del catálogo de DNATO</h1>
-    <p class="bajada">Los ${total} casos de uso relevados de registración y administración de cuenta, en el mismo orden en que los va a leer un tester. Nada de esto genera todavía un test, una ayuda ni un documento Gherkin: eso arranca cuando cada caso queda validado.</p>
+    <p class="bajada">Los ${total} casos de uso de registración y administración de cuenta, en el mismo orden en que los va a leer un tester. El estado de cada uno ya viene del catálogo: <b>${validados} validados</b>, <b>${borradores} esperando una definición</b> y <b>${obsoletos} obsoleto</b>. Los que faltan son los que tienen dudas escritas.</p>
     <div class="tablero">
       <div class="dato"><b>${total}</b><span>casos relevados</span></div>
+      <div class="dato"><b>${validados}</b><span>ya validados</span></div>
+      <div class="dato"><b>${borradores}</b><span>esperando definición</span></div>
+      <div class="dato"><b>${obsoletos}</b><span>obsoletos</span></div>
       <div class="dato"><b>${conDudas}</b><span>con dudas abiertas</span></div>
-      <div class="dato"><b>${perfiles.length}</b><span>perfiles involucrados</span></div>
-      <div class="dato"><b id="contador-decididos">0</b><span>decididos por vos</span></div>
     </div>
   </header>
 
@@ -315,7 +324,7 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
     <label>Mostrar:</label>
     <button type="button" data-filtro="todos" aria-pressed="true">Todos</button>
     <button type="button" data-filtro="dudas" aria-pressed="false">Solo con dudas</button>
-    <button type="button" data-filtro="pendientes" aria-pressed="false">Sin decidir</button>
+    <button type="button" data-filtro="pendientes" aria-pressed="false">Pendientes de definir</button>
   </nav>
 
   <main>${casos.map(tarjeta).join('')}</main>
@@ -354,7 +363,13 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
     try { localStorage.setItem(CLAVE, JSON.stringify(datos)); } catch { /* modo privado: se pierde al cerrar */ }
   }
 
-  let decisiones = leerGuardado();
+  // El punto de partida es lo que ya dice el catálogo; lo guardado en este navegador
+  // solo se usa para lo que el revisor marcó y todavía no está en los YAML.
+  const desdeCatalogo = {};
+  for (const caso of casos) {
+    if (caso.dataset.decision) desdeCatalogo[caso.dataset.id] = { valor: caso.dataset.decision, delCatalogo: true };
+  }
+  let decisiones = { ...desdeCatalogo, ...leerGuardado() };
 
   function pintar() {
     let decididos = 0, validados = 0, obsoletos = 0, borradores = 0;
@@ -375,7 +390,6 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
       }
     }
     document.getElementById('progreso-n').textContent = decididos;
-    document.getElementById('contador-decididos').textContent = decididos;
     document.getElementById('progreso-detalle').textContent =
       decididos ? validados + ' validados · ' + obsoletos + ' obsoletos · ' + borradores + ' en borrador' : 'todavía no marcaste ninguno';
     aplicarFiltro();
@@ -427,6 +441,7 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
       const id = caso.dataset.id;
       const d = decisiones[id];
       if (!d?.valor && !d?.comentario) continue;
+      if (d?.delCatalogo && !d?.comentario) continue; // ya está en el catálogo, no hace falta repetirlo
       const titulo = caso.querySelector('h3').textContent.trim();
       lineas.push('- ' + id + ' [' + (d.valor || 'sin decidir').toUpperCase() + '] ' + titulo + (d.comentario ? ' — ' + d.comentario : ''));
     }

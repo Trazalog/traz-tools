@@ -2,9 +2,10 @@ id: DNATO-UC-019
 modulo: DNATO
 titulo: Cambiar el perfil de un usuario en DNATO
 perfil: Administrador
-estado: borrador
-version: "0.3"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -37,8 +38,8 @@ validaciones:
   - "El perfil administrador habilita Gestión de Usuarios, Gestión de Menúes, Carga Masiva y Configuración; el perfil no administrador solo da acceso a los datos propios del usuario"
   - "El perfil de DNATO es independiente de los roles de trabajo de cada empresa (DNATO-UC-018): el perfil dice qué puede administrar, el rol dice qué puede hacer en la operación"
 datos_prueba: {}
-dudas:
-  - "Los niveles 3 (editor) y 4 (suscriptor) de `Userlevel` no aparecen en el combo del DEMO ni se asignan en ningún alta. ¿Se pueden dar por obsoletos, o hay clientes con usuarios en esos niveles?"
+dudas: []
 notas:
   - "Nomenclatura resuelta (decisión del PM, 2026-08-24): el catálogo y las ayudas usan el lenguaje de negocio — **Administrador** y **Usuario** — mientras que los datos siguen diciendo `Admin` y `Author`. El renombre de los datos queda anotado como mejora futura (hallazgo H-015), no se toca ahora."
   - "Perfil y roles se editan en la MISMA pantalla y se guardan en la misma operación; se separan en dos casos de uso porque son dos decisiones distintas del administrador."
+  - "Validado por el PM el 2026-08-24."
