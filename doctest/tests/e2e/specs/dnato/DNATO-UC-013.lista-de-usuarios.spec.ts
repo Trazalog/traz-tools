@@ -26,7 +26,7 @@ test.describe('@dnato @DNATO-UC-013 Ver la lista de usuarios de la empresa', () 
     }
   });
 
-  test('@smoke el administrador ve a los usuarios de su empresa', async ({ paginaEmpresa1 }) => {
+  test('el administrador ve a los usuarios de su empresa', async ({ paginaEmpresa1 }) => {
     const usuarios = new UsuariosListPage(paginaEmpresa1);
     await usuarios.abrir();
 

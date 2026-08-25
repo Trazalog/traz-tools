@@ -1,6 +1,7 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
 # Fuente: catalogo/dnato/DNATO-UC-016.yaml (versión 0.3, validado 2026-08-24).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
+# Test que lo implementa: tests/e2e/specs/dnato/DNATO-UC-016.habilitar-inhabilitar.spec.ts
 
 @dnato @DNATO-UC-016
 Característica: Habilitar o inhabilitar un usuario

@@ -1,6 +1,7 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
 # Fuente: catalogo/dnato/DNATO-UC-022.yaml (versión 0.2, validado 2026-08-24).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
+# Test que lo implementa: tests/e2e/specs/dnato/DNATO-UC-022.empresas-superusuario.spec.ts
 
 @dnato @DNATO-UC-022
 Característica: Ver la lista de empresas del sistema

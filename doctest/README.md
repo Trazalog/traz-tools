@@ -81,7 +81,7 @@ DOCTEST_ENV=demo npm run test:smoke
 
 ## Convenciones que hay que respetar
 
-- **Tags:** cada spec lleva `@<modulo>`, el id del caso (`@DNATO-UC-013`) y, si es crítico, `@smoke`. Un test inestable se marca `@quarantine` **y se abre un issue** — no se ignora en silencio (RNF-03).
+- **Tags:** cada spec lleva `@<modulo>`, el id del caso (`@DNATO-UC-013`) y, si es crítico, `@smoke`. El conjunto `@smoke` se mantiene chico a propósito —los flujos sin los cuales nada funciona— para que siga entrando en los 2 minutos que pide RNF-02: ingreso, salida, aislamiento entre empresas, el formulario público de registro y el corte de acceso a la administración de empresas. Un test inestable se marca `@quarantine` **y se abre un issue** — no se ignora en silencio (RNF-03).
 - **Bugs conocidos:** cuando un caso validado describe lo que *tiene* que pasar y el sistema todavía no lo cumple, el test se marca con `test.fail()` y un comentario con el hallazgo y su issue. Así el test sigue vivo: hoy tiene que fallar, y **el día que se corrija el bug la corrida se pone en rojo** avisando que hay que sacar la marca. No se comenta el test ni se lo saca de la suite.
 - **Corre en serie:** el entorno de pruebas es una máquina chica y compartida; con tests en paralelo aparecen fallas que no son del sistema. Está medido y explicado en `playwright.config.ts`.
 - **Selectores:** `data-testid` como selector primario, con formato `<modulo>-<pantalla>-<tipo>-<nombre>` en minúsculas. `getByRole()`/`getByLabel()` como secundario. XPath o CSS estructural: prohibido salvo excepción justificada en comentario (Doc 3 §4.5).

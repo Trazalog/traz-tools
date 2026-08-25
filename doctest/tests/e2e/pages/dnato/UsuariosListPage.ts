@@ -35,6 +35,12 @@ export class UsuariosListPage {
     // Se espera la grilla concreta y no `networkidle`: la pantalla tiene componentes
     // que siguen pidiendo datos y el "silencio de red" nunca llega de forma confiable.
     await this.filas.first().waitFor({ state: 'visible', timeout: 60_000 }).catch(() => {});
+    // La grilla pagina de a 10: se pide el máximo para que buscar y contar sean fiables.
+    await this.page
+      .locator('select[name$="_length"]')
+      .first()
+      .selectOption('100')
+      .catch(() => {});
   }
 
   async columnas(): Promise<string[]> {
