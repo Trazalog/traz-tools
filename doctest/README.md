@@ -22,7 +22,7 @@ código PHP + ayudas actuales ──relevamiento──> catálogo (gate humano) 
 |---|---|
 | `catalogo/` | Casos de uso YAML por módulo + [`SCHEMA.md`](catalogo/SCHEMA.md) y el JSON Schema |
 | `features/` | `.feature` Gherkin en español — documentación para testers, sin runtime Cucumber |
-| `tests/e2e/` | Suite Playwright: `playwright.config.ts`, `config/`, `fixtures/`, `pages/`, `specs/`, `seeds/` |
+| `tests/e2e/` | Suite Playwright: `playwright.config.ts`, `config/`, `fixtures/` (incluye la casilla de correo descartable), `pages/`, `specs/`, `seeds/` |
 | `tests/api-mcp/` | Suite Hurl de contrato MCP ([README](tests/api-mcp/README.md)) |
 | `ayudas/` | `legacy/` (manuales vigentes, fuente de intención funcional), `plantilla/`, `src/`, `build/` |
 | `generators/` | Scripts de validación y derivación catálogo → salidas |
@@ -41,7 +41,7 @@ npm run hurl:install              # Hurl 8.0.1 en ~/.local/bin (solo si vas a to
 cp .env.example .env              # y completar las credenciales; .env NO se commitea
 ```
 
-> Las URLs ya vienen en `.env.example`. Lo que falta completar son las **credenciales de las empresas de test**, que provee Rodolfo. Nunca se hardcodean ni se inventan: si falta una, el test falla con un mensaje que dice exactamente qué variable falta.
+> Las URLs ya vienen en `.env.example`. Lo que falta completar son las **credenciales de las empresas de test**, que provee Rodolfo. Los casos que dependen de un mail (activación, recuperación de contraseña) **no** necesitan credenciales de correo: el test se crea una casilla descartable y la lee por API. Nunca se hardcodean ni se inventan: si falta una, el test falla con un mensaje que dice exactamente qué variable falta.
 
 ## Comandos
 
@@ -55,9 +55,12 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run test:list` | Lista los tests sin ejecutarlos (carga config y specs; es lo que corre el CI de validación) |
 | `npm run test:report` | Abre el último reporte HTML de Playwright |
 | `npm run validate:catalog` | Valida el catálogo contra el schema y las reglas duras |
+| `npm run features` | Regenera los `.feature` Gherkin desde los casos **validados** (agregá `-- --dry-run` para ver qué cambiaría). Los `.feature` no se editan a mano |
+| `npm run hoja:validacion -- dnato` | Arma la **hoja de validación** del módulo: los casos en prosa legible, con las dudas al frente y un control para marcar validado / obsoleto / sigue en borrador. Sale en `.validacion/<modulo>.html` (no se commitea) y se publica para que el PM la lea |
 | `npm run generators:dry-run` | Corrida en seco de los generadores (lo mismo que corre el CI) |
 | `npm run typecheck` | `tsc --noEmit` sobre generators y tests |
 | `npm run hurl:install` | Instala Hurl sin sudo |
+| `npm run seed:empresa` | **Crea una empresa de test desde cero**, recorriendo el registro real de punta a punta: se crea una casilla descartable, se registra, **lee el mail de activación solo** y da de alta la empresa con sus 16 roles, establecimiento, depósito y 5 usuarios. `-- --dry-run` muestra los datos sin tocar nada; `-- --headed` deja mirarlo. Escribe datos reales: se corre pocas veces |
 
 ### Entornos
 

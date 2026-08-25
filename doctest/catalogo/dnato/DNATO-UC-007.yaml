@@ -2,9 +2,10 @@ id: DNATO-UC-007
 modulo: DNATO
 titulo: Cerrar sesión
 perfil: Usuario
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -24,6 +25,10 @@ flujo_principal:
 flujos_alternativos: []
 validaciones:
   - "Después de salir, ninguna pantalla interna queda accesible sin volver a iniciar sesión"
+  - "Al salir, el usuario vuelve a la pantalla de ingreso"
 datos_prueba: {}
-dudas:
-  - "¿A qué pantalla debería volver el usuario al salir? El destino sale de una constante de configuración (DS) y puede diferir entre entornos."
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24: el destino al salir es la pantalla de login, no otra."
+derivados:
+  feature: features/dnato/DNATO-UC-007.cerrar-sesion.feature

@@ -1,37 +1,47 @@
 id: DNATO-UC-019
 modulo: DNATO
-titulo: Cambiar el nivel de acceso de un usuario
+titulo: Cambiar el perfil de un usuario en DNATO
 perfil: Administrador
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
-    detalle: "changeleveluser() (334-399), changelevel() (400-448)"
+    detalle: "changeleveluser() (334-399) y changeLevelRolUserObject() (903-991), que guarda el perfil con updateUserLevel()"
   - repo: traz-comp-dnato
     path: application/views/changeleveluser.php
+    detalle: "campo 'Perfil:' (#level), cargado desde Roles::obtener()"
+  - repo: traz-comp-dnato
+    path: application/models/Roles.php
+    detalle: "obtener() (10-22): lee los perfiles de la tabla seg.roles con eliminado = 0"
   - repo: traz-comp-dnato
     path: application/libraries/Userlevel.php
-    detalle: "1=administrador, 2=autor, 3=editor, 4=suscriptor"
+    detalle: "checkLevel(): 1 = is_admin, 2 = is_author, 3 = is_editor, 4 = is_subscriber"
 pantallas:
-  - "Usuarios → Lista de Usuarios → Cambiar nivel"
+  - "Gestión de Usuarios → Lista de Usuarios → Asignar Rol"
+  - "Cambio de Rol — campo Perfil"
 precondiciones:
-  - Sesión iniciada con perfil de administrador
+  - Sesión iniciada con perfil Administrador
 flujo_principal:
-  - paso: "Elige cambiar el nivel de un usuario"
-    resultado: "Se muestra la pantalla con el nivel actual y los niveles disponibles"
-  - paso: "Elige el nivel nuevo y confirma"
-    resultado: "Se muestra 'El nivel del usuario se actualizó correctamente.'"
+  - paso: "Abre 'Asignar Rol' sobre un usuario"
+    resultado: "Se muestra el perfil actual del usuario en el campo Perfil"
+  - paso: "Elige el otro perfil y guarda"
+    resultado: "El perfil queda cambiado y la columna 'Nivel de Usuario' de la lista lo refleja"
 flujos_alternativos:
   - nombre: "No se puede actualizar"
     pasos:
-      - paso: "Confirma cuando la actualización falla"
-        resultado: "Se muestra 'Hubo un problema al actualizar el nivel de usuario.'"
+      - paso: "Guarda cuando la actualización falla"
+        resultado: "Se muestra el error y el perfil no cambia"
 validaciones:
-  - "Correo y nivel son obligatorios"
-  - "Solo un administrador puede cambiar niveles"
+  - "El perfil administrador habilita Gestión de Usuarios, Gestión de Menúes, Carga Masiva y Configuración; el perfil no administrador solo da acceso a los datos propios del usuario"
+  - "El perfil de DNATO es independiente de los roles de trabajo de cada empresa (DNATO-UC-018): el perfil dice qué puede administrar, el rol dice qué puede hacer en la operación"
 datos_prueba: {}
-dudas:
-  - "Conviven dos conceptos de permiso: el 'nivel' de este caso (1 a 4, propio de Dnato) y los roles de BPM de DNATO-UC-018. ¿Cuál manda para el usuario final, y qué le cambia en la práctica pasar de un nivel a otro? Sin eso no puedo escribir el resultado esperado más allá del mensaje en pantalla."
-  - "Los niveles 2 (autor) y 3 (editor) parecen heredados de la plantilla original del sistema. ¿Se usan en Trazalog o son ruido a documentar como obsoleto?"
+dudas: []
+notas:
+  - "Nomenclatura resuelta (decisión del PM, 2026-08-24): el catálogo y las ayudas usan el lenguaje de negocio — **Administrador** y **Usuario** — mientras que los datos siguen diciendo `Admin` y `Author`. El renombre de los datos queda anotado como mejora futura (hallazgo H-015), no se toca ahora."
+  - "Perfil y roles se editan en la MISMA pantalla y se guardan en la misma operación; se separan en dos casos de uso porque son dos decisiones distintas del administrador."
+  - "Validado por el PM el 2026-08-24."
+derivados:
+  feature: features/dnato/DNATO-UC-019.cambiar-el-perfil-de-un-usuario-en-dnato.feature

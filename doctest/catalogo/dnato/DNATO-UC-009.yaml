@@ -2,13 +2,14 @@ id: DNATO-UC-009
 modulo: DNATO
 titulo: Iniciar sesión desde un agente de IA (OAuth 2.1)
 perfil: Usuario
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Oauthlogin.php
-    detalle: "index() y credentials() — TAD-IDENT-02: exactamente 1 empresa por usuario"
+    detalle: "index() (44-63) y credentials() (74-155): valida credenciales, resuelve la empresa y emite el code"
   - repo: traz-comp-dnato
     path: application/controllers/Oauth.php
     detalle: "authorize(), token(), jwks(), register_client()"
@@ -16,10 +17,10 @@ referencias_codigo:
     path: application/config/routes.php
     detalle: "líneas 60-72: endpoints OAuth 2.1"
 pantallas:
-  - "Pantalla de ingreso del agente (OAuth) — 'Iniciar sesión en <cliente>'"
+  - "Pantalla de ingreso del agente (OAuth) — indica qué aplicación pide acceso"
 precondiciones:
   - El cliente OAuth está habilitado en la configuración
-  - El usuario tiene exactamente una empresa asignada
+  - El usuario tiene rol asignado en al menos una empresa
 flujo_principal:
   - paso: "El agente lo redirige a la pantalla de ingreso de Trazalog"
     resultado: "Se muestra el formulario de correo y contraseña, indicando qué aplicación pide el acceso"
@@ -28,9 +29,9 @@ flujo_principal:
 flujos_alternativos:
   - nombre: "Usuario sin empresa asignada"
     pasos:
-      - paso: "Ingresa con una cuenta que no tiene empresa asignada"
+      - paso: "Ingresa con una cuenta que no tiene ninguna empresa asignada"
         resultado: "Se muestra que no tiene empresa asignada y que contacte al administrador"
-  - nombre: "Usuario con más de una empresa"
+  - nombre: "Usuario con más de una empresa (comportamiento actual)"
     pasos:
       - paso: "Ingresa con una cuenta que tiene más de una empresa asignada"
         resultado: "Se muestra que la configuración no está soportada y que contacte al administrador"
@@ -48,10 +49,13 @@ flujos_alternativos:
         resultado: "Se muestra que la sesión expiró y que inicie el proceso de nuevo desde el agente"
 validaciones:
   - "Solo se aceptan clientes registrados, con response_type=code y code_challenge_method=S256"
-  - "Un usuario debe tener exactamente una empresa asignada (TAD-IDENT-02)"
   - "El formulario valida un token de seguridad propio antes de aceptar las credenciales"
+  - "Hoy la pantalla exige exactamente una empresa por usuario (TAD-IDENT-02)"
 datos_prueba:
   empresa: EMPRESA_TEST_1
-dudas:
-  - "¿Este caso entra en el alcance de F1 (registración y administración de cuenta) o pertenece al frente MCP (F4), que prueba el mismo login pero por API con Hurl? Lo dejo relevado para que decidas dónde vive."
-  - "La invariante de una sola empresa por usuario (TAD-IDENT-02) choca con el login web, que sí permite elegir entre varias. ¿Se prueban las dos reglas como están, o hay una decisión pendiente de unificación?"
+dudas: []
+notas:
+  - "⚠️ Cambio previsto en v3 (decisión del PM, 2026-08-19): el ingreso OAuth deja de rechazar a los usuarios con varias empresas — va a mostrar un selector de empresa cuando haya más de una, igual que el login web (ver DNATO-UC-006). Hoy el código corta con error, y la contradicción entre las dos pantallas queda resuelta por esa decisión. Cuando se implemente: bump de `version` y regeneración de derivados en el mismo PR."
+  - "Validado por el PM el 2026-08-24."
+derivados:
+  feature: features/dnato/DNATO-UC-009.iniciar-sesion-desde-un-agente-de-ia-oauth-2-1.feature

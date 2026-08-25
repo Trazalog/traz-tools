@@ -2,9 +2,10 @@ id: DNATO-UC-016
 modulo: DNATO
 titulo: Habilitar o inhabilitar un usuario
 perfil: Administrador
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.3"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
@@ -37,8 +38,10 @@ flujos_alternativos:
 validaciones:
   - "Correo y estado son obligatorios"
   - "Un usuario inhabilitado no puede iniciar sesión (ver DNATO-UC-006)"
+  - "Un administrador no puede inhabilitarse a sí mismo"
 datos_prueba: {}
-dudas:
-  - "Existen dos pantallas casi iguales (`banuser` y `banuser_old`). ¿La vieja se puede dar por obsoleta? Si sigue accesible, el tester la va a encontrar."
-  - "El mensaje de error al fallar dice 'Error al borrar usuario' en una pantalla que habilita/inhabilita. Parece texto copiado; ¿lo corregimos en el mismo PR de los data-testid o queda como está?"
-  - "¿Un administrador puede inhabilitarse a sí mismo? No vi una restricción."
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24. La pantalla anterior (`banuser_old`) queda declarada obsoleta (hallazgo H-006). Que un administrador pueda inhabilitarse a sí mismo es un hallazgo nuevo (H-018); el texto equivocado del mensaje de error sigue anotado (H-009)."
+derivados:
+  feature: features/dnato/DNATO-UC-016.habilitar-o-inhabilitar-un-usuario.feature

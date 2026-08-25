@@ -2,19 +2,22 @@ id: DNATO-UC-001
 modulo: DNATO
 titulo: Registrar una empresa nueva (paso 1 - datos de contacto)
 perfil: Visitante
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
-    detalle: "register() (líneas 1138-1237) y procesarRegistro() (1642-1793)"
+    detalle: "register() (1138-1237) y procesarRegistro() (1642-1793)"
   - repo: traz-comp-dnato
     path: application/views/register.php
-    detalle: "formulario público de registración"
   - repo: traz-comp-dnato
     path: application/models/User_model.php
     detalle: "isDuplicate(), existeRazonSocial(), validarTelefonoPorPais(), obtenerPaisesRegistracion()"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
+    detalle: "resource POST /usuario/registro (líneas 629-745): verifica duplicado, inserta el usuario y guarda el token de activación"
 pantallas:
   - "Login → 'No esta registrado? Registrese por favor'"
   - "Registro Nuevo Usuario"
@@ -26,7 +29,7 @@ flujo_principal:
   - paso: "Desde la pantalla de ingreso hace clic en 'Registrese por favor'"
     resultado: "Se abre el formulario de registro con la lista de países disponibles"
   - paso: "Completa Nombre, Apellido, Correo electrónico, Razón Social de la Empresa, Teléfono y País, y confirma"
-    resultado: "Se crea la cuenta sin contraseña, se muestra 'Registro exitoso! Revise su email para activar su cuenta.' y llega un correo con el enlace de activación"
+    resultado: "Se crea la cuenta sin contraseña y con perfil Administrador, se muestra 'Registro exitoso! Revise su email para activar su cuenta.' y llega el correo 'Activar cuenta en Trazalog.com' con el enlace de activación"
 flujos_alternativos:
   - nombre: "Correo ya registrado"
     pasos:
@@ -49,13 +52,15 @@ validaciones:
   - "El correo debe tener formato válido y no puede estar registrado"
   - "La razón social no puede repetirse dentro del mismo país"
   - "El teléfono se valida según el país elegido"
-  - "Si la configuración del sitio tiene reCAPTCHA activo, se exige superarlo"
+  - "Quien se auto-registra queda con perfil Administrador de su empresa"
 datos_prueba:
-  empresa: EMPRESA_TEST_1
   email_prefijo: "doctest+reg-"
   razon_social_prefijo: "DOCTEST SA "
-dudas:
-  - "¿Cómo se prueba este flujo sin ensuciar el entorno? Cada registro exitoso crea una empresa, usuarios en BPM y un establecimiento; hoy no hay forma automática de darlos de baja. ¿Se prueba solo el camino de errores y el camino feliz queda manual, o se habilita un mecanismo de limpieza?"
-  - "El usuario que se auto-registra queda con rol de Administrador de su empresa (roles[1]='1'). ¿'Administrador' es el nombre del perfil que querés en el catálogo?"
-  - "¿reCAPTCHA está activo en el entorno de pruebas? Si lo está, el flujo no es automatizable end-to-end sin una clave de test."
-  - "Si el envío del mail falla, el usuario queda creado igual y el enlace de activación solo queda en el log. ¿Es el comportamiento buscado o debería reintentarse desde la pantalla?"
+  nota_recaptcha: "reCAPTCHA está desactivado en el entorno de pruebas (decisión del PM, 2026-08-19): el flujo es automatizable de punta a punta"
+dudas: []
+notas:
+  - "El caso ES automatizable de punta a punta: el test se crea una casilla descartable, se registra con ella y lee el mail de activación solo (`tests/e2e/fixtures/casilla-descartable.ts`). Verificado el 2026-08-24 creando una empresa real en el DEMO."
+  - "Decisión del PM (2026-08-19): la automatización va contra una empresa de test descartable y se acepta la basura acumulada, con re-seed periódico. Queda pendiente construir un procedimiento de limpieza."
+  - "Validado por el PM el 2026-08-24. La cuenta queda creada solo en Dnato, sin confirmar el correo, hasta que se activa: depurar las cuentas sin confirmar es una mejora futura (hallazgo H-021)."
+derivados:
+  feature: features/dnato/DNATO-UC-001.registrar-una-empresa-nueva-paso-1-datos-de-cont.feature

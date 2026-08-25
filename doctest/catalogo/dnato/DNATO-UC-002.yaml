@@ -2,53 +2,62 @@ id: DNATO-UC-002
 modulo: DNATO
 titulo: Activar la cuenta y definir la contraseña
 perfil: Visitante
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.4"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
-    detalle: "complete() (líneas 1271-1361)"
+    detalle: "complete() (1271-1361)"
   - repo: traz-comp-dnato
-    path: application/views/complete_password.php
+    path: application/libraries/MY_Form_validation.php
+    detalle: "password_strong() (35-55): la política real de contraseñas"
   - repo: traz-comp-dnato
     path: application/models/User_model.php
-    detalle: "isTokenValid(), updateUserInfo()"
+    detalle: "isTokenValid() (111-135): el token vale solo el día en que se generó; updateUserInfo()"
+  - repo: traz-comp-dnato
+    path: application/views/complete_password.php
 pantallas:
   - "Correo 'Activar cuenta en Trazalog.com' → 'Activar mi cuenta'"
   - "Establecer Contraseña"
 precondiciones:
   - Existe una cuenta registrada sin contraseña (DNATO-UC-001)
-  - Se tiene el enlace de activación con su token
+  - El enlace de activación se usa el mismo día en que se generó
 flujo_principal:
   - paso: "Abre el enlace de activación recibido por correo"
     resultado: "Se muestra la pantalla para establecer la contraseña, con el nombre y el correo de la cuenta"
   - paso: "Ingresa la contraseña y su confirmación, y confirma"
-    resultado: "La cuenta queda activa, se inicia sesión y se continúa con el formulario de datos de registro"
+    resultado: "La cuenta queda activa, se crea el usuario en el sistema de procesos y en Asset Planner, se inicia sesión y se continúa con el formulario de datos de registro"
 flujos_alternativos:
-  - nombre: "Enlace ya usado o vencido"
+  - nombre: "Enlace ya usado o de otro día"
     pasos:
-      - paso: "Abre un enlace de activación inválido o expirado"
+      - paso: "Abre un enlace de activación inválido, o uno generado un día anterior"
         resultado: "Se muestra 'Token invalido o expirado...' y se vuelve a la pantalla de ingreso"
   - nombre: "Contraseña que no cumple la política"
     pasos:
-      - paso: "Ingresa una contraseña de menos de 10 caracteres o que no cumple la regla de fortaleza"
-        resultado: "Se muestra el error de validación y la contraseña no se guarda"
+      - paso: "Ingresa 'doctest2026' (10 caracteres, sin mayúscula ni símbolo)"
+        resultado: "Se muestra el error de contraseña y la cuenta no se activa"
   - nombre: "Confirmación distinta"
     pasos:
       - paso: "Ingresa una confirmación que no coincide con la contraseña"
         resultado: "Se muestra el error de coincidencia y la contraseña no se guarda"
-  - nombre: "La sincronización con BPM falla"
+  - nombre: "La sincronización con el sistema de procesos falla"
     pasos:
-      - paso: "Confirma la contraseña cuando el servicio de BPM no responde"
-        resultado: "La cuenta queda activada igual y se avisa que no se pudo sincronizar con BPM, invitando a continuar"
+      - paso: "Confirma la contraseña cuando el servicio de procesos no responde"
+        resultado: "La cuenta queda activada igual y se avisa que no se pudo sincronizar, invitando a continuar"
 validaciones:
-  - "La contraseña es obligatoria, de al menos 10 caracteres y debe cumplir la regla de fortaleza"
+  - "La contraseña exige 10 caracteres o más, al menos una mayúscula, una minúscula, un dígito y un carácter no alfanumérico"
   - "La confirmación debe coincidir con la contraseña"
-  - "El token de activación se usa una sola vez"
+  - "El enlace de activación es de un solo uso y vence a la medianoche del día en que se generó"
 datos_prueba:
-  password_valida_prefijo: "Doctest-"
-dudas:
-  - "La regla `password_strong` no está a la vista en el controlador. ¿Qué exige exactamente (mayúsculas, números, símbolos)? Hace falta el detalle para escribir el caso de contraseña rechazada."
-  - "Al activar se crea también el usuario en BPM y en Asset Planner. Si eso falla, la cuenta queda activa pero incompleta: ¿el usuario puede seguir trabajando o es un estado a evitar?"
-  - "¿Cuánto dura el token de activación? No encontré el vencimiento en el código relevado."
+  password_valida: "Doctest2026!"
+  password_invalida_sin_simbolo: "Doctest2026"
+  password_invalida_corta: "Doct2026!"
+dudas: []
+notas:
+  - "El enlace de activación se lee del correo automáticamente con la casilla descartable del seed, así que el caso no necesita intervención humana."
+  - "La política de contraseñas está duplicada en el cliente (`public/js/password-strength.js`) y en el servidor; el propio código avisa que hay que mantener las dos sincronizadas."
+  - "Validado por el PM el 2026-08-24."
+derivados:
+  feature: features/dnato/DNATO-UC-002.activar-la-cuenta-y-definir-la-contrasena.feature

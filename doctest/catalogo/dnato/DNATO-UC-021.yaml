@@ -2,8 +2,8 @@ id: DNATO-UC-021
 modulo: DNATO
 titulo: Configurar los parámetros del sitio
 perfil: Administrador
-estado: borrador
-version: "0.1"
+estado: obsoleto
+version: "0.3"
 origen: baseline
 referencias_codigo:
   - repo: traz-comp-dnato
@@ -11,17 +11,18 @@ referencias_codigo:
     detalle: "settings() (117-177)"
   - repo: traz-comp-dnato
     path: application/views/settings.php
+    detalle: "campos id, site_title, timezone, recaptcha, theme"
   - repo: traz-comp-dnato
     path: application/models/User_model.php
     detalle: "getAllSettings(), settings()"
 pantallas:
   - "Configuración"
 precondiciones:
-  - Sesión iniciada con perfil de administrador
+  - Sesión iniciada con perfil Administrador
 flujo_principal:
   - paso: "Abre 'Configuración'"
     resultado: "Se muestran el título del sitio, la zona horaria, el uso de reCAPTCHA y el tema actuales"
-  - paso: "Modifica algún parámetro y confirma"
+  - paso: "Modifica un parámetro y confirma"
     resultado: "Se muestra 'Los datos se actualizaron correctamente.' y el cambio queda aplicado"
 flujos_alternativos:
   - nombre: "Campos obligatorios incompletos"
@@ -35,7 +36,10 @@ flujos_alternativos:
 validaciones:
   - "Título del sitio, zona horaria, reCAPTCHA y tema son obligatorios"
   - "Solo un administrador accede a esta pantalla"
+  - "El interruptor de reCAPTCHA afecta al registro (DNATO-UC-001) y a la recuperación de contraseña (DNATO-UC-008)"
 datos_prueba: {}
-dudas:
-  - "Esta configuración parece global del sistema, no por empresa: si un administrador de una empresa la cambia, ¿afecta a todas? Es importante antes de automatizar cualquier cambio acá, porque el interruptor de reCAPTCHA condiciona a los tests de registro y recuperación de contraseña."
-  - "¿Este caso entra en 'administración de cuenta' o es administración de la plataforma, fuera del alcance de la Ola 1?"
+dudas: []
+notas:
+  - "⚠️ Riesgo para la automatización: un test que cambie el interruptor de reCAPTCHA rompe a los tests de registro y recuperación mientras corre. Si se automatiza, tiene que ser un caso serializado (nunca en paralelo) y que restaure el valor original."
+  - "Hoy reCAPTCHA está desactivado en el entorno de pruebas (confirmado por el PM el 2026-08-19)."
+  - "Declarado OBSOLETO por el PM el 2026-08-24: la configuración del sitio no se contempla por ahora y probablemente haya que ocultar la pantalla (hallazgo H-026). El caso se conserva por historia y no genera ningún derivado."
