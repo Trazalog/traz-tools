@@ -1,0 +1,29 @@
+id: ALM-UC-019
+modulo: ALM
+titulo: Consultar el stock de producción por lote
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Lote.php
+    detalle: "index(), filtrarListado(), Listar_tabla(), getRecipientesPorEstablecimiento()"
+  - repo: traz-comp-almacenes
+    path: models/Lotes.php
+pantallas:
+  - "Producción → Stock Producción"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa usa artículos loteados
+flujo_principal:
+  - paso: "Entra a Producción → Stock Producción"
+    resultado: "Se muestran los filtros de fecha de creación, establecimiento, tipo de depósito y depósito"
+  - paso: "Elige el período y el alcance, y filtra"
+    resultado: "Se listan los lotes con su existencia"
+validaciones:
+  - "Solo se listan lotes de la empresa de la sesión"
+dudas:
+  - "**Esta pantalla vive en el menú de Producción pero es del módulo de Almacenes.** ¿Es correcto que esté ahí, o quedó de una etapa anterior? Importa para saber a quién se le documenta."
+  - "¿En qué se diferencia de Almacenes → Stock (ALM-UC-005)? Las dos muestran existencias con filtros parecidos; ésta agrega la fecha de creación del lote."
+  - "¿Quién la usa: el responsable de almacén o el de producción? Del rol depende en qué manual va la ayuda."

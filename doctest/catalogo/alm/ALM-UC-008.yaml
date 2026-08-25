@@ -1,0 +1,32 @@
+id: ALM-UC-008
+modulo: ALM
+titulo: Editar un pedido de materiales
+perfil: Solicitante
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Notapedido.php
+    detalle: "editarPedido() abre la vista; editPedidoV2() reemplaza el detalle completo; editarDetalle() cambia una cantidad; eliminarDetalle(); editaDeposito()"
+  - repo: traz-comp-almacenes
+    path: models/Notapedidos.php
+    detalle: "eliminaDetallePedidoViejo(), setDetaNotaV2(), editaJustificacion(), updateaDeposito()"
+pantallas:
+  - "Almacenes → Pedido Materiales → (editar una fila)"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un pedido de la empresa que todavía admite cambios
+flujo_principal:
+  - paso: "En el listado de pedidos abre uno para editarlo"
+    resultado: "Se muestran la justificación y los artículos pedidos"
+  - paso: "Cambia la cantidad de un artículo, agrega otro o saca uno"
+    resultado: "El detalle refleja los cambios"
+  - paso: "Confirma"
+    resultado: "El pedido queda actualizado"
+validaciones:
+  - "Un pedido ya entregado no debería poder modificarse"
+dudas:
+  - "**¿Hasta qué estado se puede editar un pedido?** Es la duda que bloquea el caso: el código no verifica el estado antes de editar, así que un pedido entregado se puede modificar. ¿Cuál es la regla del negocio?"
+  - "`editPedidoV2()` borra todo el detalle anterior y lo vuelve a insertar. Si el pedido ya tenía entregas parciales registradas contra esas líneas, ¿qué pasa con ellas?"
+  - "¿Quién puede editar un pedido: solo quien lo creó, cualquiera de la empresa, o el responsable de almacén también?"

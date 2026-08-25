@@ -1,0 +1,31 @@
+id: ALM-UC-015
+modulo: ALM
+titulo: Ver los artículos que llegaron al punto de pedido
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Lote.php
+    detalle: "puntoPedList()"
+  - repo: traz-comp-almacenes
+    path: models/Lotes.php
+  - repo: traz-comp-almacenes
+    path: controllers/Articulo.php
+    detalle: "el punto de pedido se carga en el alta y la edición del artículo (ALM-UC-002 y ALM-UC-003)"
+pantallas:
+  - "Almacenes → Punto de Pedido"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Hay artículos con punto de pedido cargado
+flujo_principal:
+  - paso: "Entra a Almacenes → Punto de Pedido"
+    resultado: "Se listan los artículos con las columnas Producto, Código, Punto Pedido, Cant. Stock y Cant. Disponible"
+validaciones:
+  - "Solo se listan artículos de la empresa de la sesión"
+dudas:
+  - "**¿Qué criterio decide que un artículo aparezca acá?** ¿Compara el punto de pedido contra 'Cant. Stock' o contra 'Cant. Disponible'? Las dos columnas están y la diferencia importa: si hay stock físico pero está comprometido, hay que reponer igual."
+  - "¿Cuál es la diferencia exacta entre 'Cant. Stock' y 'Cant. Disponible'? Es la misma duda que ALM-UC-005."
+  - "¿Esta pantalla dispara alguna acción —avisar, generar un pedido de compra— o es solo para mirar?"
+  - "El punto de pedido es un único número por artículo. Si la empresa tiene varios depósitos, ¿el umbral es del total o de cada depósito?"

@@ -1,0 +1,33 @@
+id: ALM-UC-017
+modulo: ALM
+titulo: Mover mercadería entre depósitos — recepción
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Movimientointerno.php
+    detalle: "movimientoRecepcion(), getDataMovimientoInterno()"
+  - repo: traz-comp-almacenes
+    path: models/Movimdeporecepcion.php
+pantallas:
+  - "Almacenes → Movimientos Internos → Nueva Recepción"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un movimiento de salida pendiente de recibir
+flujo_principal:
+  - paso: "En Movimientos Internos hace clic en 'Nueva Recepción'"
+    resultado: "Se abre el formulario de recepción en depósito"
+  - paso: "Elige el movimiento que está recibiendo"
+    resultado: "Se muestran los artículos y las cantidades que salieron del origen"
+  - paso: "Confirma lo que efectivamente recibió"
+    resultado: "El stock del depósito de destino sube y el movimiento queda cerrado"
+validaciones:
+  - "El stock del depósito de destino sube al confirmar la recepción"
+dudas:
+  - "**¿Qué pasa si lo que llega no es lo que salió?** Si se reciben menos unidades de las que salieron, ¿se registra la diferencia como faltante, se rechaza, o se ajusta por otro lado?"
+  - "¿La recepción tiene que hacerla alguien del depósito de destino, o puede hacerla la misma persona que registró la salida?"
+  - "¿Puede recibirse una salida parcialmente?"
+notas:
+  - "Misma advertencia que ALM-UC-016: pantalla que no está en el árbol de `develop-v3` (H-038 / issue #481)."

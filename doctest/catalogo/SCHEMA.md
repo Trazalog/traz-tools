@@ -58,6 +58,7 @@ El validador rechaza cualquier valor fuera de esta lista, a propósito: si en un
 | `Supervisor` | Acepta/rechaza solicitudes, da de alta equipos, verifica informes (*Supervisor de Mantenimiento*) | ✅ validado |
 | `Planificador` | Programa preventivos y asigna órdenes de trabajo (*Planificador de Mantenimiento*, *Planificador de Tareas*) | ✅ validado |
 | `Mantenedor` | Ejecuta órdenes de trabajo y carga el informe de servicio | ✅ validado |
+| `Responsable de Almacén` | Administra el almacén: da de alta artículos, recibe materiales, entrega contra pedido, ajusta stock y mueve entre depósitos | ⏳ propuesto en F3 (#440) |
 
 **Perfiles de DNATO (los que administran la cuenta).** Son otra cosa: no dicen qué puede hacer el usuario en la operación, sino qué puede administrar. Salen de la tabla `seg.roles` y del `constants.php` de cada ambiente.
 
@@ -68,6 +69,8 @@ El validador rechaza cualquier valor fuera de esta lista, a propósito: si en un
 | `Superusuario` | Además da de alta empresas y las lista todas | **no es un perfil de la base**: es el correo definido en `TOOLS_ADMIN_USER` | ⏳ propuesto en F1 (#438) |
 | `Usuario externo` | Representa a una empresa de afuera (razón social y CUIT propios) | `USUARIO_EXTERNO` = rol 8 | ⏳ propuesto en F1 (#438) |
 | `Visitante` | Todavía no tiene cuenta: se está registrando o activándola | — | ⏳ propuesto en F1 (#438) |
+
+`Responsable de Almacén` salió del relevamiento de ALM: es uno de los dos roles de almacén que el alta de empresa crea en `toolsCOREAPI` (`Responsable de Almacén <empresa>` y `Solicitante de Almacén <empresa>`). El segundo no necesita entrada propia: entra en el `Solicitante` que ya existe. Verificado además que en este caso **el nombre del rol coincide** entre `toolsCOREAPI` y el trigger que asigna los menúes — no es el problema de H-012.
 
 Los cinco propuestos salieron del relevamiento de DNATO, que es lo que el Doc 1 v1.1 RF-05.4 anticipa ("más los roles de administración de cuenta que surjan del relevamiento DNATO"). Quedan pendientes de la validación del PM.
 

@@ -1,0 +1,29 @@
+id: ALM-UC-007
+modulo: ALM
+titulo: Ver el detalle de un pedido de materiales
+perfil: Solicitante
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Notapedido.php
+    detalle: "getNotaPedidoId() toma id_nota de la query string; getTablaDetalle()"
+  - repo: traz-comp-almacenes
+    path: models/Notapedidos.php
+    detalle: "getNotaPedidoIds($id) — arma el WHERE solo con pema_id, sin empresa"
+pantallas:
+  - "Almacenes → Pedido Materiales → (ver detalle de una fila)"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un pedido de la empresa
+flujo_principal:
+  - paso: "En el listado de pedidos abre el detalle de una fila"
+    resultado: "Se muestran los artículos pedidos con su cantidad, cuánto se entregó y de qué depósito"
+validaciones:
+  - "El detalle de un pedido solo debería ser visible para la empresa dueña del pedido"
+dudas:
+  - "**Hoy esto no se cumple y está verificado**: desde la sesión de otra empresa se obtuvo el detalle completo del pedido 882 de Conservas (H-036 / issue #478). El caso describe el comportamiento esperado, no el actual. ¿Confirmás que el detalle debe venir vacío para una empresa que no es la dueña, como pide ADR-012 para la tool `get_pedido_material`?"
+  - "¿El solicitante debe ver todos los pedidos de su empresa o solo los suyos?"
+notas:
+  - "Cuando se derive el test, va con `test.fail()` y el issue #478 anotado: el caso describe el comportamiento esperado y el sistema todavía falla."

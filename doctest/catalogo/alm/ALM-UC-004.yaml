@@ -1,0 +1,32 @@
+id: ALM-UC-004
+modulo: ALM
+titulo: Dar de baja un artículo
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Articulo.php
+    detalle: "baja_articulo(), getestado()"
+  - repo: traz-comp-almacenes
+    path: models/Articulos.php
+    detalle: "eliminar($id) — no filtra por empresa"
+pantallas:
+  - "Almacenes → Articulos → (acción de baja de una fila)"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un artículo activo en la empresa
+flujo_principal:
+  - paso: "En el listado hace clic en la acción de baja de un artículo"
+    resultado: "El sistema pide confirmación"
+  - paso: "Confirma la baja"
+    resultado: "El artículo queda dado de baja y la columna Estado lo refleja"
+validaciones:
+  - "La columna Estado del listado distingue los artículos dados de baja"
+dudas:
+  - "**Ésta es la duda central del caso.** ¿La baja tiene que ser lógica, como en DNATO-UC-017 donde decidiste que nunca debe haber borrado físico porque rompe la trazabilidad? El listado tiene una columna Estado, lo que sugiere baja lógica, pero el modelo expone `eliminar($id)`. Hay que confirmar cuál de los dos caminos es el que corre."
+  - "¿Se puede dar de baja un artículo que todavía tiene stock, o que aparece en pedidos abiertos? Hoy nada lo impide."
+  - "Un artículo dado de baja, ¿sigue apareciendo para elegir en un pedido nuevo?"
+notas:
+  - "No se ejecutó ninguna baja contra el DEMO: sería modificar datos de una empresa real."

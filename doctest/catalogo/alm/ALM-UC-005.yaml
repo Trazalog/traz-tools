@@ -1,0 +1,40 @@
+id: ALM-UC-005
+modulo: ALM
+titulo: Consultar el stock por establecimiento y depósito
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Lote.php
+    detalle: "indexStock(), filtrarListadoStock(), Listar_tabla_stock(), getDepositos()"
+  - repo: traz-comp-almacenes
+    path: models/Lotes.php
+pantallas:
+  - "Almacenes → Stock"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene establecimientos y depósitos definidos
+flujo_principal:
+  - paso: "Entra a Almacenes → Stock"
+    resultado: "Se muestran los filtros: Establecimiento, Depósito, Tipo de Artículo, Artículo y la opción de incluir artículos con stock en cero"
+  - paso: "Elige un establecimiento"
+    resultado: "El desplegable de depósitos se limita a los de ese establecimiento"
+  - paso: "Hace clic en 'Filtrar'"
+    resultado: "Se listan las existencias que cumplen el filtro"
+  - paso: "Hace clic en 'Limpiar'"
+    resultado: "Los filtros vuelven a su valor inicial"
+flujos_alternativos:
+  - nombre: "Incluir artículos sin existencias"
+    pasos:
+      - paso: "Marca 'Incluir artículos con stock en 0'"
+        resultado: "La opción queda tildada"
+      - paso: "Hace clic en 'Filtrar'"
+        resultado: "El listado agrega los artículos cuya existencia es cero"
+validaciones:
+  - "El stock listado corresponde solo a la empresa de la sesión"
+  - "Los depósitos ofrecidos son los del establecimiento elegido"
+dudas:
+  - "¿Qué significa exactamente la cantidad que muestra esta pantalla: existencia física, existencia disponible (descontando lo comprometido en pedidos), o las dos? ALM-UC-015 (punto de pedido) muestra 'Cant. Stock' y 'Cant. Disponible' como columnas distintas, así que la diferencia importa."
+  - "¿Esta pantalla es solo consulta, o se espera que desde acá se pueda operar sobre el stock?"

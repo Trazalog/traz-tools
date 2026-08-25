@@ -1,0 +1,42 @@
+id: ALM-UC-016
+modulo: ALM
+titulo: Mover mercadería entre depósitos — salida
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Movimientointerno.php
+    detalle: "index(), movimientoSalida(), getDatosCabeceraRemito(), getMovimientoInternoPaginado()"
+  - repo: traz-comp-almacenes
+    path: models/Movimdeposalida.php
+  - repo: traz-comp-almacenes
+    path: views/movimientosinternos/list.php
+pantallas:
+  - "Almacenes → Movimientos Internos"
+  - "Almacenes → Movimientos Internos → Nueva Salida"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene al menos dos depósitos
+  - Hay existencias en el depósito de origen
+flujo_principal:
+  - paso: "Entra a Almacenes → Movimientos Internos"
+    resultado: "Se muestra el listado con Remito, Fecha y Hora, Establecimiento y Depósito de origen, Establecimiento y Depósito de destino, y Estado"
+  - paso: "Hace clic en 'Nueva Salida'"
+    resultado: "Se abre el formulario de salida de depósito"
+  - paso: "Elige el depósito de origen y el de destino"
+    resultado: "El movimiento queda definido entre esos dos depósitos"
+  - paso: "Agrega los artículos y las cantidades que salen"
+    resultado: "El detalle acumula los artículos"
+  - paso: "Confirma la salida"
+    resultado: "El movimiento queda registrado, el stock del depósito de origen baja y el movimiento queda pendiente de recepción en destino"
+validaciones:
+  - "El stock del depósito de origen baja al confirmar la salida"
+dudas:
+  - "**¿La mercadería en tránsito dónde está?** Si la salida descuenta del origen y la recepción (ALM-UC-017) suma al destino, en el medio la mercadería no figura en ningún depósito. ¿Es así a propósito, o debería verse como stock en tránsito?"
+  - "¿Qué estados recorre un movimiento interno? La columna Estado está en el listado pero los valores posibles no están en el código relevado."
+  - "¿Se puede sacar más de lo que hay en el depósito de origen?"
+  - "¿Un movimiento de salida se puede anular si todavía no se recibió en destino?"
+notas:
+  - "**Esta pantalla no existe en el árbol que ve `develop-v3`**: el controlador entró en un commit posterior al puntero del submódulo (H-038 / issue #481). Está relevada contra `origin/develop`, que es lo que corre en el DEMO. Es funcionalidad reciente y por eso el relevamiento es más superficial que el del resto."

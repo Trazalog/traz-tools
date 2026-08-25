@@ -1,0 +1,44 @@
+id: ALM-UC-014
+modulo: ALM
+titulo: Registrar un ajuste de stock
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Ajustestock.php
+    detalle: "index(), nuevoAjuste(), guardarAjuste(), getAjustesList(), getDetalleAjuste(), traerDepositos()"
+  - repo: traz-comp-almacenes
+    path: models/Ajustestocks.php
+  - repo: traz-comp-almacenes
+    path: controllers/general/Tipoajuste.php
+    detalle: "los tipos de ajuste que se pueden elegir"
+pantallas:
+  - "Almacenes → Ajustes de Stock"
+  - "Almacenes → Ajustes de Stock → Nuevo Ajuste"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene tipos de ajuste definidos
+flujo_principal:
+  - paso: "Entra a Almacenes → Ajustes de Stock"
+    resultado: "Se muestra el listado de ajustes con Comprobante, Fecha / Hora, Establecimiento y Depósito"
+  - paso: "Hace clic en 'Nuevo Ajuste'"
+    resultado: "Se abre el formulario de ajuste"
+  - paso: "Elige el establecimiento y el depósito"
+    resultado: "El ajuste queda ubicado"
+  - paso: "Agrega los artículos a ajustar con la cantidad y el tipo de ajuste"
+    resultado: "El detalle acumula las líneas del ajuste"
+  - paso: "Escribe la justificación y confirma"
+    resultado: "El ajuste queda registrado y el stock del depósito cambia según lo indicado"
+validaciones:
+  - "El ajuste modifica el stock del depósito indicado"
+  - "El ajuste queda registrado con su justificación"
+dudas:
+  - "**Ésta es la pantalla que permite cambiar el stock sin que haya entrado ni salido mercadería.** ¿Quién debería poder usarla? Hoy alcanza con tener el menú de Almacenes. Si el ajuste es el mecanismo para corregir diferencias de inventario, probablemente necesite un control más fuerte que el resto del módulo."
+  - "¿Qué tipos de ajuste existen y qué significa cada uno? Salen de una tabla configurable por empresa, así que no están en el código."
+  - "¿La justificación es obligatoria? El formulario la muestra pero el código no la exige."
+  - "¿Un ajuste se puede anular, o solo se corrige con otro ajuste en sentido contrario?"
+  - "¿El ajuste puede dejar el stock en negativo?"
+notas:
+  - "ADR-012 deja explícitamente fuera del piloto MCP las operaciones que mueven stock, y ésta es una de ellas."

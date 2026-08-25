@@ -1,0 +1,31 @@
+id: ALM-UC-013
+modulo: ALM
+titulo: Consultar el stock valorizado
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Stockvalorizado.php
+    detalle: "index(), filtrarListado(), Listar_tabla(), getDepositos()"
+  - repo: traz-comp-almacenes
+    path: models/Stockvalorizados.php
+pantallas:
+  - "Almacenes → Stock Valorizado"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Los artículos tienen precio asociado
+flujo_principal:
+  - paso: "Entra a Almacenes → Stock Valorizado"
+    resultado: "Se muestran los filtros Fecha Desde, Fecha Hasta, Establecimiento, Tipo Depósito y Depósito"
+  - paso: "Elige el período y el alcance"
+    resultado: "Los filtros quedan cargados"
+  - paso: "Hace clic en 'Filtrar'"
+    resultado: "Se lista el stock con su valorización"
+validaciones:
+  - "El informe solo incluye stock de la empresa de la sesión"
+dudas:
+  - "**¿De dónde sale el precio con el que se valoriza?** ¿De la lista de precios (Configuración → ABM Listas de Precios), del último remito de recepción, o de un promedio? El criterio cambia el número y no está escrito en ningún lado."
+  - "¿Qué significa el rango de fechas en una pantalla de stock: la valorización a una fecha de corte, o el movimiento del período?"
+  - "¿Quién usa este informe y para qué — cierre contable, seguros, control interno? De eso depende si necesita ser exportable."

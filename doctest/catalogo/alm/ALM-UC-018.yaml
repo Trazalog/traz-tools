@@ -1,0 +1,34 @@
+id: ALM-UC-018
+modulo: ALM
+titulo: Consultar los movimientos históricos de un artículo
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Reportes.php
+    detalle: "historicoArticulos() y los filtros del reporte"
+  - repo: traz-comp-almacenes
+    path: models/Reportes.php
+  - repo: traz-comp-almacenes
+    path: reports/historico_articulos/
+pantallas:
+  - "Almacenes → Mov Históricos de Stock"
+precondiciones:
+  - Sesión iniciada en Tools
+  - El artículo tiene movimientos registrados
+flujo_principal:
+  - paso: "Entra a Almacenes → Mov Históricos de Stock"
+    resultado: "Se muestran los filtros del reporte"
+  - paso: "Elige el artículo y el período"
+    resultado: "Los filtros quedan cargados"
+  - paso: "Hace clic en 'Filtrar'"
+    resultado: "Se listan los movimientos con Referencia, Cod. Artículo, Descripción, Lote, Cantidad, Depósito, Fecha y Tipo de Movimiento"
+  - paso: "Hace clic en 'Imprimir'"
+    resultado: "El reporte se puede imprimir"
+validaciones:
+  - "El reporte solo incluye movimientos de la empresa de la sesión"
+dudas:
+  - "**¿Este reporte incluye todos los tipos de movimiento?** Recepciones, entregas, ajustes y movimientos internos son cuatro orígenes distintos; si alguno no aparece, el histórico no cierra contra el stock actual y deja de servir para auditar."
+  - "¿Se puede reconstruir el stock a una fecha pasada sumando estos movimientos, o el reporte es solo informativo?"

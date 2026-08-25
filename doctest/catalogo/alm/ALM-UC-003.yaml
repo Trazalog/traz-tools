@@ -1,0 +1,34 @@
+id: ALM-UC-003
+modulo: ALM
+titulo: Editar un artículo
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Articulo.php
+    detalle: "getpencil() trae el artículo por id; editar() y editar_art() guardan los cambios"
+  - repo: traz-comp-almacenes
+    path: models/Articulos.php
+    detalle: "getpencil(), editar(), update_editar($data, $id) — esta última no filtra por empresa"
+pantallas:
+  - "Almacenes → Articulos → (ícono de edición de una fila)"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe al menos un artículo en la empresa
+flujo_principal:
+  - paso: "En el listado de artículos hace clic en el ícono de edición de una fila"
+    resultado: "Se abre el formulario con los datos del artículo cargados"
+  - paso: "Modifica la descripción, el tipo, la unidad de medida o el punto de pedido"
+    resultado: "El formulario acepta los cambios"
+  - paso: "Confirma"
+    resultado: "El artículo queda actualizado y el listado refleja el cambio"
+validaciones:
+  - "Si el punto de pedido se deja vacío, se guarda como 0"
+dudas:
+  - "¿Qué campos de un artículo se pueden cambiar una vez que tiene movimientos de stock? Cambiar la unidad de medida de un artículo con existencias cambiaría el significado de las cantidades ya registradas, y el código no lo impide."
+  - "¿Se puede cambiar el código de un artículo ya usado en pedidos o remitos?"
+  - "El caso describe el ícono de edición del listado porque es como se llega hoy. ¿Es el único camino previsto?"
+notas:
+  - "`update_editar($data, $id)` arma el WHERE solo con el id del artículo, sin empresa: con el id de un artículo ajeno se podría editar el de otra empresa. NO se ejecutó la prueba para no alterar datos de otra empresa — el hallazgo es lo que dice el código (H-037 / issue #479)."

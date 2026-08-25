@@ -1,0 +1,44 @@
+id: ALM-UC-010
+modulo: ALM
+titulo: Entregar materiales contra un pedido
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/new/Entrega_Material.php
+    detalle: "index(), detalle(), getEntregasPedido($pema), guardarEntrega(), cerrarTareaEntrega($caseId)"
+  - repo: traz-comp-almacenes
+    path: models/Ordeninsumos.php
+    detalle: "actualizar_entregas($pema, $cantidades), get_detalle_entrega($pema), traeIdLote(), update_tbllote()"
+pantallas:
+  - "Almacenes → Entrega Materiales"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un pedido de materiales pendiente de entrega
+  - Hay existencias del artículo en el depósito
+flujo_principal:
+  - paso: "Entra a Almacenes → Entrega Materiales"
+    resultado: "Se muestra el listado con N° de Pedido, N° de Entrega, Ord.Trabajo, Fecha, N° Comprobante, Entregado y Estado Ped."
+  - paso: "Abre un pedido pendiente"
+    resultado: "Se muestran los artículos pedidos con la cantidad pedida y la cantidad a entregar"
+  - paso: "Indica cuánto entrega de cada artículo y de qué lote y depósito sale"
+    resultado: "Las cantidades quedan cargadas"
+  - paso: "Confirma la entrega"
+    resultado: "La entrega queda registrada, el stock del depósito baja y el pedido actualiza cuánto lleva entregado"
+flujos_alternativos:
+  - nombre: "Entrega parcial"
+    pasos:
+      - paso: "Indica una cantidad menor a la pedida de un artículo"
+        resultado: "La entrega se registra por esa cantidad"
+      - paso: "Vuelve al listado de pedidos"
+        resultado: "El pedido queda con saldo pendiente y admite una entrega posterior"
+validaciones:
+  - "La entrega descuenta stock del depósito y del lote indicados"
+  - "Lo entregado no debería superar lo pedido"
+dudas:
+  - "**¿Se puede entregar más de lo pedido?** El modelo lleva un campo `resto` por línea, pero el código no verifica el tope. Si la respuesta es que no, el caso necesita esa validación."
+  - "¿Se puede entregar si no hay stock suficiente en el depósito? Hoy nada lo impide y el stock quedaría en negativo."
+  - "¿Quién elige el lote del que sale la mercadería: lo elige quien entrega, o el sistema aplica un criterio (el más viejo primero, por ejemplo)?"
+  - "Una entrega registrada, ¿se puede anular o corregir?"

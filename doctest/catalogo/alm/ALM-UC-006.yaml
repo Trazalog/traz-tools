@@ -1,0 +1,69 @@
+id: ALM-UC-006
+modulo: ALM
+titulo: Pedir materiales al almacén
+perfil: Solicitante
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Notapedido.php
+    detalle: "index() lista; crearPedido() abre el formulario; crearNotaPedido() guarda cabecera y detalle; pedidoNormal() lanza el proceso en Bonita"
+  - repo: traz-comp-almacenes
+    path: models/Notapedidos.php
+    detalle: "notaPedidos_List() filtra por empresa; setCabeceraNotaV2(), setDetaNotaV2(), setCaseId()"
+  - repo: traz-comp-almacenes
+    path: views/notapedido/generar_pedido.php
+  - repo: traz-tools
+    path: doc/adr/ADR-012-almacenes-aislamiento.md
+    detalle: "define crear_pedido_materiales como la única escritura del piloto MCP, con el patrón INSERT → BPM → rollback"
+pantallas:
+  - "Almacenes → Pedido Materiales"
+  - "Almacenes → Pedido Materiales → Agregar"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene artículos cargados
+flujo_principal:
+  - paso: "Entra a Almacenes → Pedido Materiales"
+    resultado: "Se muestra el listado de pedidos con las columnas Acciones, Pedido, Ord.Trabajo, Fecha, Detalle y Estado"
+  - paso: "Hace clic en 'Agregar'"
+    resultado: "Se abre el formulario de pedido nuevo"
+  - paso: "Escribe la justificación del pedido"
+    resultado: "El formulario acepta el texto"
+  - paso: "Busca un artículo, indica la cantidad y lo agrega al pedido"
+    resultado: "El artículo aparece en el detalle del pedido con su cantidad"
+  - paso: "Repite para cada artículo que necesita"
+    resultado: "El detalle acumula todos los artículos pedidos"
+  - paso: "Elige el establecimiento y el depósito al que se le pide"
+    resultado: "El pedido queda dirigido a ese depósito"
+  - paso: "Confirma con 'Guardar'"
+    resultado: "El pedido queda creado en estado 'Creada' y se dispara el proceso de aprobación"
+flujos_alternativos:
+  - nombre: "El pedido nace de una orden de trabajo"
+    pasos:
+      - paso: "Desde una orden de trabajo pide material para esa orden"
+        resultado: "El formulario se abre con la orden ya asociada"
+      - paso: "Carga los artículos y confirma"
+        resultado: "El pedido queda asociado a la orden y aparece en la columna Ord.Trabajo del listado"
+  - nombre: "Pedido extraordinario"
+    pasos:
+      - paso: "En vez de elegir artículos del catálogo, describe en texto libre lo que necesita y lo justifica"
+        resultado: "El pedido se registra como extraordinario"
+      - paso: "Confirma"
+        resultado: "Se dispara el proceso de aprobación de pedidos extraordinarios"
+validaciones:
+  - "La justificación es obligatoria"
+  - "El pedido se crea en estado 'Creada'"
+  - "El pedido queda asociado a la empresa de la sesión"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  articulo: "uno existente de la empresa de prueba"
+  cantidad: 1
+dudas:
+  - "¿La justificación es obligatoria siempre, o solo para los pedidos que no vienen de una orden de trabajo?"
+  - "¿Se puede pedir un artículo en una cantidad mayor a la que hay en stock? El código no lo valida y ADR-012 dice que el pedido no toca stock, pero no aclara si debe avisar."
+  - "**El pedido dispara un proceso en Bonita y no hay vuelta atrás si eso falla.** `crearNotaPedido()` guarda el pedido y `pedidoNormal()` lanza el proceso después: si Bonita falla, el pedido ya quedó guardado sin caso asociado. ADR-012 pide explícitamente el patrón INSERT → BPM → **rollback** para la tool MCP. ¿La pantalla debería comportarse igual, o un pedido sin proceso es un estado aceptable que alguien repara después?"
+  - "El pedido extraordinario se guarda con `empr_id = 1` fijo (H-039 / issue #480). ¿Ese flujo se sigue usando, o quedó reemplazado por el pedido normal?"
+  - "¿Qué estados puede recorrer un pedido y quién los cambia? En el DEMO se ven pedidos 'Entregado', pero el catálogo de estados no está en el código."
+notas:
+  - "Es el flujo central del módulo y el que ADR-012 elige para la única escritura del piloto MCP."
