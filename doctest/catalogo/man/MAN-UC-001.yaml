@@ -26,8 +26,8 @@ flujo_principal:
 validaciones:
   - "El listado solo muestra equipos de la empresa de la sesión"
 dudas:
-  - "**Este caso no se pudo verificar contra la pantalla real**: AssetPlanner tiene su propio padrón de usuarios y no hay credenciales del DEMO (H-048). Está relevado del código y del manual de ayuda existente. Antes de validarlo conviene abrirlo una vez."
+  - "**Este caso no se pudo verificar contra la pantalla real**: ninguna credencial entra a AssetPlanner. No es que falte un dato: la contraseña se guarda en texto plano y asset la compara contra MD5 (H-049 / issue #489). Está relevado del código y del manual de ayuda existente; antes de validarlo hay que abrirlo una vez, y para eso hay que destrabar el ingreso."
   - "¿Qué columnas tiene que mostrar la grilla y cuáles se usan para buscar? El manual legacy de Alta de Equipos no muestra el listado, solo el formulario."
   - "¿El listado incluye los equipos dados de baja, o solo los activos?"
 notas:
-  - "El alta de equipos y componentes **no difiere entre `develop` y `develop-v3`** del repo de asset (verificado con `git diff`), así que este caso no depende de qué versión corra el DEMO."
+  - "El alta de equipos y componentes **no difiere entre `develop` y `develop-v3`** del repo de asset (verificado con `git diff`), así que este caso no depende de esa diferencia. El relevamiento se hace sobre `develop`, que es lo que corre en el DEMO (decisión del PM, 2026-08-25)."

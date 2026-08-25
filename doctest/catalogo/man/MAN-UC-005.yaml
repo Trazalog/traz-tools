@@ -25,7 +25,7 @@ flujo_principal:
 validaciones:
   - "El código del componente lo arma el sistema a partir del último id y de la empresa"
 dudas:
-  - "**No verificado contra la pantalla real** (H-048)."
+  - "**No verificado contra la pantalla real**: ninguna credencial entra a AssetPlanner (H-049 / issue #489)."
   - "¿Qué es un componente para el negocio: una pieza intercambiable del equipo, un subsistema, o un punto de mantenimiento? De eso depende cómo se explica en la ayuda."
   - "El código lo genera `codifNombre()` a partir del último id y de la empresa. ¿El usuario puede cambiarlo, o es siempre automático?"
   - "¿Un componente puede estar asignado a más de un equipo a la vez, o es exclusivo de uno?"

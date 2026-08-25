@@ -8,7 +8,8 @@ escrito para el PM. **No** es el catálogo —eso son los YAML de esta carpeta�
 circuitos, que ya está relevado en el repo de asset (§1).
 
 - **Fecha:** 2026-08-25 · **Fase:** DocTest F2 (issue #439)
-- **Casos:** 6, todos en `borrador` — **ninguno verificado contra la pantalla real** (§3)
+- **Casos:** 6, todos en `borrador` — **ninguno verificado contra la pantalla real**, por el bloqueo de §3
+- **Rama relevada:** `develop` del repo de asset (lo que corre en el DEMO)
 
 ---
 
@@ -23,7 +24,16 @@ duplicar:
 | **Casos de prueba MAN** | `doc/v3/casos-prueba-man.md` (104 líneas) | Un catálogo `CP-01`…`CP-3x` con precondición, pasos, resultado esperado y si está automatizado |
 | **Suite E2E de Playwright** | `tests/e2e/` (6 specs + fixtures + README) | Automatiza parte de esos casos, sobre el requerimiento "asset consume el almacén de tools" |
 
-Tres cosas que ese material ya deja establecidas, y que uso como base:
+> ⚠️ **Cuidado con ese material: describe `develop-v3`, y ahí hay una migración que está en stand by.**
+> Los `CP-XX` y buena parte del doc de circuitos están escritos sobre el reemplazo del almacén y el
+> pañol de asset por los de traz-tools (fases F3/F4/F5 de ese repo), que **quedó detenido hasta
+> tener las ayudas**. Por eso este relevamiento se hace **solo sobre `develop`**, que es lo que corre.
+> Lo que sí se aprovecha del doc es el **mapa funcional** —los circuitos, el modelo de datos, la
+> asimetría entre materiales y herramientas—, que es igual en las dos ramas; lo que se descarta es
+> todo lo que hable de leer catálogos por REST contra tools.
+
+Tres cosas que ese material deja establecidas y que **valen para `develop` igual**, porque son del
+"qué" funcional y no del "cómo" técnico:
 
 1. **Hay un solo motor de generación de OT** — `Calendario::guardar_agregar()`. Backlog, preventivo,
    predictivo y correctivo son el mismo circuito con distinta tabla de origen.
@@ -69,73 +79,70 @@ depende de qué rama corra el DEMO, que es la duda que planteaste.
 
 ---
 
-## 3. Lo que está bloqueado
+## 3. Por qué no se puede entrar a AssetPlanner — y no es un dato que falte
 
-**No pude verificar ningún caso contra la pantalla real.** AssetPlanner **tiene su propio padrón de
-usuarios y no comparte la sesión de Tools**: la app muestra su propio formulario de ingreso, y las
-credenciales de Tools (`jperez@prueba.com`) devuelven *"Error! Revise los datos de acceso
-ingresados"*. Los usuarios viven en la tabla `sisusers` de asset, no en `seg.users` de Dnato — el
-README de la suite existente lo confirma, con sus variables `ASSET_USER` / `ASSET_PASS`.
+La primera lectura fue equivocada y conviene dejarla corregida: pensé que faltaba un usuario de
+AssetPlanner. **El circuito de alta existe, tal como estaba diseñado** — el alta de usuario llega a
+la tabla `sisusers` de asset. Lo que está roto es la contraseña.
 
-Por eso los seis casos están relevados **del código y del manual legacy**, y cada uno lo dice en sus
-dudas. No inventé lo que no pude ver.
+| Punta | Qué hace |
+|---|---|
+| `COREDataService.dbs`, query `setUserAsset` | `INSERT into sisusers(… usrPassword …) values (… :pass …)` — **guarda lo que llega, sin transformar** |
+| `toolsCOREAPI`, recurso `POST /usuario` | manda `json-eval($.usuario.password)` — la contraseña **en texto plano** |
+| AssetPlanner, `Apps::sessionStart_()` | busca `usrPassword = md5($pass)` — **compara contra MD5** |
 
-Esto tiene además una consecuencia de diseño para DocTest: **MAN necesita su propia fixture de
-sesión**, porque el `storageState` de Tools no le sirve. Es un cambio chico, pero hay que hacerlo
-antes de escribir el primer test de MAN.
+Se guarda en claro y se compara hasheado: **nunca coinciden**.
 
----
+Lo llamativo es que el mismo `toolsCOREAPI` **lo hace bien en el otro camino**: el recurso
+`POST /usuario/bpm-asset` manda `password_md5`. O sea que el MD5 estaba contemplado; falta en el
+camino que usa la registración.
 
-## 4. Las tres decisiones que hacen falta
+**Verificado contra el DEMO** con la empresa creada por el alta real: cinco combinaciones probadas
+—el administrador que registró la empresa, y los cinco usuarios por defecto con clave `12345`,
+incluido `mantenimiento@…` que es el que tiene los roles de mantenimiento— y **las cinco
+rechazadas**.
 
-### 4.1 Un usuario de AssetPlanner en el DEMO
+→ Issue **#489**. Es 🔴: **una empresa que se registra hoy no puede usar Mantenimiento**, y sus
+contraseñas quedan en texto plano en la base de asset.
 
-Es lo único que bloquea. Con eso puedo verificar los seis casos, confirmar si el `dump()` rompe el
-alta de componentes, y escribir los tests.
+Por eso los seis casos de este PR están relevados **del código y del manual legacy**, y cada uno lo
+dice en sus dudas. Y por eso DocTest no puede verificar ni testear MAN hasta que esto se corrija:
+no es que falte un dato, es que **no existe ninguna credencial que funcione**.
 
-### 4.2 Qué versión describe el catálogo de MAN
+Queda en pie la consecuencia de diseño: cuando se destrabe, **MAN necesita su propia fixture de
+sesión**, porque tiene su propio ingreso y el `storageState` de Tools no le sirve.
 
-Acá hay una diferencia con lo que pasa en `traz-tools`, y conviene decidirla explícitamente:
+## 4. Lo que hace falta para seguir
 
-| | `traz-tools` | `traz-prod-assetplanner` |
-|---|---|---|
-| Relación entre ramas | `develop` **adelante** de `develop-v3` en 4 submódulos | `develop-v3` **adelante** de `develop` en 34 commits, y contiene todo lo de develop |
-| Qué corre el DEMO | `develop` | `develop` (según tu indicación) |
+### 4.1 Corregir el hash de la contraseña (#489)
 
-O sea que en asset el DEMO corre la versión **anterior**: sin la migración a REST contra tools
-(F3/F4/F5) y sin las mejoras M1 y M2. Los circuitos que documenta `circuitos-man-alm-pan.md` están
-escritos sobre `develop-v3`.
+Es lo único que bloquea, y no es una decisión sino un arreglo. Que `setUserAsset` guarde `MD5(:pass)`,
+o que `POST /usuario` mande la contraseña hasheada como ya hace `/usuario/bpm-asset`.
 
-**La pregunta:** ¿el catálogo de MAN describe lo que hoy usa el usuario (`develop`) o lo que va a ser
-v3 (`develop-v3`, con almacén y pañol consumidos de tools)? Para el piloto no importa —son
-idénticos—, pero para todo el resto del módulo sí.
+Mientras tanto hay un rodeo posible para desbloquear DocTest: **crear a mano un usuario en `sisusers`
+con la contraseña ya en MD5**. Sirve para verificar y testear, pero no arregla el problema de fondo
+—que ninguna empresa nueva puede entrar—, así que conviene tratarlo como lo que es: un parche para
+poder seguir trabajando.
 
-**Mi recomendación:** describir `develop-v3`. Es a donde va el producto, la migración ya está hecha y
-documentada, y un catálogo escrito sobre la versión vieja habría que rehacerlo en el cutover. Con la
-salvedad de que los tests, hasta que exista un entorno con esa versión, no van a poder correr.
+### 4.2 El catálogo de MAN describe `develop` — decidido
+
+Queda cerrado por indicación del PM (2026-08-25): **se releva solo `develop`**, que es lo que corre
+en el DEMO. El material de `develop-v3` se usa como mapa funcional, no como descripción del sistema
+(ver el aviso de §1).
 
 ### 4.3 Qué hacemos con los `CP-XX` y la suite que ya existen
 
-Tres caminos:
+Sigue abierta, pero la respuesta se simplificó con lo anterior: **esos casos prueban la migración que
+está en stand by**, así que no describen el sistema que hay que documentar hoy.
 
-1. **Migrar los `CP-XX` al catálogo DocTest** y absorber la suite. Queda un solo lugar, un solo
-   formato, y las ayudas de MAN salen del mismo catálogo. Es más trabajo de una vez.
-2. **Dejarlos donde están y que DocTest cubra lo que ellos no cubren.** Menos trabajo ahora, pero dos
-   catálogos de casos conviviendo — y la ayuda de usuario no sale de ninguno de los dos.
-3. **Migrar solo los casos y dejar la suite donde está**, porque prueba el requerimiento de migración
-   —que asset consuma el almacén de tools—, que es una preocupación distinta de la cobertura
-   funcional del módulo.
-
-**Mi recomendación: la 3.** Los `CP-XX` describen casuística funcional y encajan bien como casos del
-catálogo; la suite de `tests/e2e/` de asset prueba una migración puntual, tiene su propio ciclo de
-vida y no gana nada mudándose. Cuando esa migración esté cerrada, esa suite se puede retirar y lo que
-quede vivo ya estará cubierto por DocTest.
-
----
+**Mi recomendación:** dejarlos donde están, sin migrarlos. Cuando la migración se retome, esa suite es
+justamente la que hay que correr para validarla. Lo que sí conviene traer al catálogo de DocTest es
+la **casuística funcional que sea independiente de la migración** —el ciclo de la OT, el pedido
+perezoso, la asimetría con herramientas—, que vale para las dos versiones.
 
 ## 5. Después de que decidas
 
-Con el usuario de asset: verificar los seis casos en pantalla, confirmar el `dump()`, agregar la
-fixture de sesión de MAN y escribir los tests. Con la decisión de versión y de los `CP-XX`: seguir el
-relevamiento hacia los circuitos —plan de mantenimiento, OT, informe de servicio—, que es donde está
-el grueso del módulo y donde el material previo ya hizo la mitad del trabajo.
+Con el ingreso destrabado: verificar los seis casos en pantalla, confirmar si el `dump()` rompe el
+alta de componentes, agregar la fixture de sesión de MAN y escribir los tests. Después, seguir el
+relevamiento hacia los circuitos de `develop` —plan de mantenimiento, backlog, OT, informe de
+servicio—, que es donde está el grueso del módulo.

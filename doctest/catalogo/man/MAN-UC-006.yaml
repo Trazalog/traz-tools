@@ -27,7 +27,7 @@ flujo_principal:
 validaciones:
   - "Las asignaciones se guardan en estado 'AC' (activo)"
 dudas:
-  - "**No verificado contra la pantalla real** (H-048)."
+  - "**No verificado contra la pantalla real**: ninguna credencial entra a AssetPlanner (H-049 / issue #489)."
   - "¿Qué es el **sistema** que se elige por componente —hidráulico, eléctrico, neumático—? Aparece como un dato por asignación, no del componente en sí."
   - "¿Se puede desasignar un componente de un equipo? El código guarda un estado, lo que sugiere que sí, pero no aparece el camino."
   - "¿Qué pasa si se asigna dos veces el mismo componente al mismo equipo? El bucle de guardado no verifica duplicados."

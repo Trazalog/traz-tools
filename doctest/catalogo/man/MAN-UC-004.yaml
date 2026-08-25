@@ -22,7 +22,7 @@ flujo_principal:
   - paso: "Confirma"
     resultado: "El equipo queda dado de baja"
 dudas:
-  - "**No verificado contra la pantalla real** (H-048)."
+  - "**No verificado contra la pantalla real**: ninguna credencial entra a AssetPlanner (H-049 / issue #489)."
   - "**¿La baja es lógica?** En DNATO y en ALM la decisión fue que nunca haya borrado físico, porque rompe la trazabilidad de lo que se hizo. Un equipo tiene historial de órdenes de trabajo, así que la respuesta debería ser la misma — pero hay que confirmar qué hace el código."
   - "¿Se puede dar de baja un equipo con órdenes de trabajo abiertas, o con un plan de mantenimiento vigente?"
   - "¿Qué pasa con sus componentes al dar de baja el equipo?"

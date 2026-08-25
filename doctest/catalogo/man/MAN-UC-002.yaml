@@ -42,7 +42,7 @@ flujos_alternativos:
 validaciones:
   - "El equipo se da de alta en la empresa de la sesión"
 dudas:
-  - "**No verificado contra la pantalla real** por falta de credenciales de AssetPlanner en el DEMO (H-048). Relevado del código y del manual legacy `manual_alta_equipos_componentes.html`, que muestra este mismo formulario."
+  - "**No verificado contra la pantalla real** porque ninguna credencial entra a AssetPlanner (H-049 / issue #489). Relevado del código y del manual legacy `manual_alta_equipos_componentes.html`, que muestra este mismo formulario."
   - "¿Cuáles son los campos realmente obligatorios? El manual legacy marca con asterisco Código, Marca, Descripción y N° de Serie, pero el formulario no declara `required` en el HTML: la validación, si existe, está en el JavaScript."
   - "¿El código de equipo tiene que ser único dentro de la empresa? En ALM el código de artículo sí lo es; acá no está claro."
   - "¿Qué significa cada nivel de **criticidad** para el negocio y qué consecuencia tiene? Aparece en el alta y en los reportes, pero el código solo la guarda."

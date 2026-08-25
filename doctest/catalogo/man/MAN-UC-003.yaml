@@ -22,6 +22,6 @@ flujo_principal:
   - paso: "Modifica lo que corresponda y guarda"
     resultado: "El equipo queda actualizado"
 dudas:
-  - "**No verificado contra la pantalla real** (H-048)."
+  - "**No verificado contra la pantalla real**: ninguna credencial entra a AssetPlanner (H-049 / issue #489)."
   - "¿Qué se puede cambiar de un equipo que ya tiene historial —órdenes de trabajo, lecturas, componentes—? Cambiar el área o el proceso reubica el equipo; cambiar el código afecta a todo lo que lo referencia."
   - "¿Se puede cambiar la lectura inicial de un equipo que ya tiene lecturas registradas?"
