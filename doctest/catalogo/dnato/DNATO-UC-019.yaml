@@ -43,3 +43,5 @@ notas:
   - "Nomenclatura resuelta (decisión del PM, 2026-08-24): el catálogo y las ayudas usan el lenguaje de negocio — **Administrador** y **Usuario** — mientras que los datos siguen diciendo `Admin` y `Author`. El renombre de los datos queda anotado como mejora futura (hallazgo H-015), no se toca ahora."
   - "Perfil y roles se editan en la MISMA pantalla y se guardan en la misma operación; se separan en dos casos de uso porque son dos decisiones distintas del administrador."
   - "Validado por el PM el 2026-08-24."
+derivados:
+  feature: features/dnato/DNATO-UC-019.cambiar-el-perfil-de-un-usuario-en-dnato.feature

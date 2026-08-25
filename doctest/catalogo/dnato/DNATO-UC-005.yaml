@@ -37,3 +37,5 @@ dudas: []
 notas:
   - "Las capturas de pantalla de esta página van a contener la contraseña inicial mientras el diseño no cambie. Los reportes son artifacts privados con retención de 30 días (Doc 3 §8.4)."
   - "Validado por el PM el 2026-08-24: por ahora la pantalla muestra la contraseña inicial a propósito. Pedirle al administrador que elija una contraseña para esos usuarios queda como mejora para más adelante, no para esta etapa (hallazgo H-001)."
+derivados:
+  feature: features/dnato/DNATO-UC-005.ver-la-pantalla-de-bienvenida-con-los-usuarios-i.feature

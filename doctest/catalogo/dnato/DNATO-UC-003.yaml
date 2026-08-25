@@ -49,3 +49,5 @@ notas:
   - "Detalle técnico observado: los nombres de campo llevan el prefijo del empr_id temporal (`9000-como_enteraste`, `9000-cantidad_empleados`), mientras que `actividad_empresa[]` y `problemas_principales` no. Los page objects tienen que contemplarlo."
   - "Validado por el PM el 2026-08-24. Hoy las respuestas se guardan y no se usan para nada: la explotación de esos datos va a ser una tool MCP para el superusuario (mejora futura, hallazgo H-022)."
   - "El formulario probablemente cambie. Cuando cambie no se edita este caso: se versiona (bump de `version`) y se regeneran sus derivados, como manda la regla R6."
+derivados:
+  feature: features/dnato/DNATO-UC-003.completar-el-formulario-de-informacion-adicional.feature

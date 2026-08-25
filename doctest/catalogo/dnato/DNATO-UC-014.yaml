@@ -58,3 +58,5 @@ notas:
   - "Verificado en el DEMO el 2026-08-19: las etiquetas con asterisco son Nombre, Apellido, Email, Empresa, Rol, Contraseña y Confirme Contraseña."
   - "Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el desplegable trae todas las empresas del sistema. Registrado como hallazgo H-019."
   - "La etiqueta 'Rol' de este formulario es en realidad el perfil de Dnato: renombrarla queda anotado como mejora (hallazgo H-025), no se toca ahora."
+derivados:
+  feature: features/dnato/DNATO-UC-014.dar-de-alta-un-usuario-de-la-empresa.feature

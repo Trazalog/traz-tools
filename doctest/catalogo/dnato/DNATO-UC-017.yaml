@@ -48,3 +48,5 @@ datos_prueba: {}
 notas:
   - "Este caso queda deliberadamente sin derivar hasta que se resuelva la duda: automatizar un borrado físico contra el entorno de pruebas necesita además decidir qué usuario se sacrifica en cada corrida."
   - "Validado por el PM el 2026-08-24 con una definición fuerte: **nunca debe existir un borrado definitivo, porque rompe la trazabilidad**. El borrado físico que hace hoy el sistema es un bug a corregir (H-002, issue #451). El caso describe el comportamiento esperado, no el actual: sus derivados se generan recién cuando el borrado sea lógico."
+derivados:
+  feature: features/dnato/DNATO-UC-017.eliminar-un-usuario-de-la-empresa.feature

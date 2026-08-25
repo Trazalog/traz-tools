@@ -53,3 +53,5 @@ notas:
   - "Ojo al escribir el test: el trigger asigna menúes a **8** de los 16 roles, y uno de esos ocho está escrito con un nombre que no existe (`Responsable Procesos` en vez de `Responsable de Procesos`) — hallazgos H-012 y H-013."
   - "Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el desplegable de empresas trae todos los grupos del sistema. Registrado como hallazgo H-020."
   - "Que los roles de Mantenimiento no reciban menú es correcto: Mantenimiento todavía no está migrado a Tools y vive en Asset Planner, así que este ABM no lo afecta (aclara el hallazgo H-013, que queda acotado a los roles de SMA/Residuos)."
+derivados:
+  feature: features/dnato/DNATO-UC-025.asignar-opciones-de-menu-a-un-rol-de-una-empresa.feature

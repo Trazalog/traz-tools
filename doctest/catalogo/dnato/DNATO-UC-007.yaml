@@ -30,3 +30,5 @@ datos_prueba: {}
 dudas: []
 notas:
   - "Validado por el PM el 2026-08-24: el destino al salir es la pantalla de login, no otra."
+derivados:
+  feature: features/dnato/DNATO-UC-007.cerrar-sesion.feature

@@ -2,9 +2,10 @@ id: DNATO-UC-028
 modulo: DNATO
 titulo: Eliminar una empresa
 perfil: Superusuario
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.2"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Empresa.php
@@ -17,14 +18,22 @@ pantallas:
 precondiciones:
   - Sesión iniciada con el usuario superusuario del ambiente
 flujo_principal:
-  - paso: "Elige eliminar una empresa del listado"
-    resultado: "PENDIENTE DE DEFINIR — ver dudas: hoy la acción no hace lo que su nombre dice"
-flujos_alternativos: []
-validaciones: []
+  - paso: "Elige dar de baja una empresa del listado"
+    resultado: "Se pide confirmación antes de hacer nada"
+  - paso: "Confirma la baja"
+    resultado: "La empresa queda dada de baja y deja de estar disponible para operar, pero se conserva junto con todo su historial"
+flujos_alternativos:
+  - nombre: "Administrador común"
+    pasos:
+      - paso: "Un administrador que no es el superusuario intenta dar de baja una empresa"
+        resultado: "No puede: la acción es exclusiva del superusuario"
+validaciones:
+  - "La baja es lógica: la empresa y sus datos se conservan, porque borrarlos rompería la trazabilidad"
+  - "Solo el superusuario puede dar de baja una empresa"
 datos_prueba: {}
-dudas:
-  - "🔴 **El caso no se puede escribir hasta decidir qué tiene que hacer, porque hoy hace otra cosa.** `Empresa::borrarEmpresa($empr_id)` es una copia de la baja de usuarios: busca un USUARIO con el id de la empresa, usa una variable que nunca se define (`$busines`) y termina llamando a `deleteUser($empr_id)`, que borra de `seg.users` la fila cuyo id coincida con el id de la empresa. Registrado como hallazgo H-028."
-  - "Además, el PM definió al validar DNATO-UC-017 que **nunca debe existir un borrado definitivo porque rompe la trazabilidad**. ¿Una empresa se da de baja lógicamente? ¿Qué pasa con sus usuarios, sus datos y su grupo en el sistema de procesos?"
-  - "¿Quién puede darla de baja: solo el superusuario, o también soporte?"
+dudas: []
 notas:
+  - "Validado por el PM el 2026-08-24: baja lógica, nunca física, y solo el superusuario. **El caso describe el comportamiento esperado: hoy el sistema hace otra cosa** — ver hallazgo H-028 e issue #462, donde la acción borra un usuario en vez de la empresa. Sus derivados van a fallar hasta que se corrija, que es lo que se espera de una suite de regresión."
   - "El modelo ya tiene `Empresas::eliminarEmpresa()`, que llama a la API y es la que usa el rollback del alta por registración: la pantalla no la usa."
+derivados:
+  feature: features/dnato/DNATO-UC-028.eliminar-una-empresa.feature

@@ -60,3 +60,5 @@ notas:
   - "⚠️ Cambio previsto en v3 (decisión del PM, 2026-08-19): se elimina el desplegable de empresas de esta pantalla. Se valida primero el usuario y, si tiene más de una empresa, recién ahí se le muestra un selector; si tiene una sola, entra directo. Cuando eso se implemente, este caso cambia de comportamiento: hay que subir su `version` y regenerar sus derivados en el mismo PR (regla R6 del validador)."
   - "El combo actual lista todas las empresas del sistema a cualquiera que abra el login, sin sesión (hallazgo H4). El cambio de v3 lo resuelve de paso."
   - "Validado por el PM el 2026-08-24: este es el único login unificado del sistema."
+derivados:
+  feature: features/dnato/DNATO-UC-006.iniciar-sesion-eligiendo-la-empresa.feature

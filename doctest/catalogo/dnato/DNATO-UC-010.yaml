@@ -30,3 +30,5 @@ datos_prueba: {}
 dudas: []
 notas:
   - "Validado por el PM el 2026-08-24: es una pantalla típica de perfil; el único dato que no debe verse es el `usernick`."
+derivados:
+  feature: features/dnato/DNATO-UC-010.ver-el-perfil-propio.feature

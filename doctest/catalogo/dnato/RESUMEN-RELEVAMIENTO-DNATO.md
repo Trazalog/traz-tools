@@ -6,7 +6,7 @@ Es la hoja de ruta de la sesión en la que Rodolfo valida el catálogo funcional
 
 - Fase: **F1** · issue [#438](https://github.com/Trazalog/traz-tools/issues/438) · clase 🟡
 - Fuentes: `traz-comp-dnato` rama `develop-v3` (commit `0927209`) · `traz-tools` (`toolsCOREAPI.xml`) · **verificación en vivo contra el entorno DEMO** (2026-08-19)
-- Estado: **28 casos — 22 validados, 5 en borrador, 1 obsoleto** (validación del PM, 2026-08-24). Nada derivado todavía.
+- Estado: **28 casos — 25 validados, 2 en borrador, 1 obsoleto** (validación del PM, 2026-08-24).
 - Revisión 2 (2026-08-19): incorpora las respuestas del PM y una segunda pasada más profunda sobre código y datos.
 - Revisión 3 (2026-08-24): validación caso por caso del PM, 3 casos nuevos del resto del menú (carga masiva y baja de empresa), y 14 hallazgos más al registro.
 
@@ -132,21 +132,18 @@ Los otros diez (H-003 a H-007, H-009 a H-011, H-013, H-014) quedan en el registr
 ## 7. Estado y próximo paso
 
 ```
-28 casos · validado 22 · borrador 5 · obsoleto 1
+28 casos · validado 25 · borrador 2 · obsoleto 1
 ```
 
 **Los 22 validados habilitan la derivación** (specs, `.feature`, ayudas): es la segunda mitad de F1.
 
-Los **5 que siguen en borrador** son los que necesitan una definición funcional, no más relevamiento:
+Los **2 que siguen en borrador** son los que necesitan una definición funcional, no más relevamiento:
 
 | Caso | Qué falta definir |
 |---|---|
 | DNATO-UC-020 · usuario de empresa externa | Si es para el superusuario creando usuarios de cualquier empresa, o para un administrador con varias empresas |
 | DNATO-UC-024 · ABM de opciones de menú | Sin prioridad ahora; la pantalla es candidata a rehacerse (H-027) |
-| DNATO-UC-026 · descargar plantilla de carga masiva | Qué entidades se pueden cargar hoy y qué trae la plantilla |
-| DNATO-UC-027 · cargar planilla | Qué pasa con las filas con error: ¿se carga lo válido o se rechaza todo? |
-| DNATO-UC-028 · eliminar empresa | Qué significa dar de baja una empresa — hoy la acción hace otra cosa (H-028, issue #462) |
 
 El **obsoleto** es DNATO-UC-021 (configuración del sitio): se conserva por historia y no genera derivados.
 
-**Lo validado no significa "así funciona hoy".** Cinco casos describen el comportamiento **esperado** y el sistema todavía no lo cumple: son los bugs H-002 (borrado lógico), H-007, H-008, H-014, H-016, H-017, H-018, H-019 y H-020, todos con issue abierto. Sus derivados van a fallar hasta que se corrijan, y eso es exactamente lo que tiene que pasar: la suite es de regresión, no una foto del estado actual.
+**Lo validado no significa "así funciona hoy".** Cinco casos describen el comportamiento **esperado** y el sistema todavía no lo cumple: son los bugs H-002 (borrado lógico de usuarios), H-007, H-008, H-014, H-016, H-017, H-018, H-019, H-020 y H-028 (baja lógica de empresas), todos con issue abierto. Sus derivados van a fallar hasta que se corrijan, y eso es exactamente lo que tiene que pasar: la suite es de regresión, no una foto del estado actual.

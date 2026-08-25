@@ -2,9 +2,10 @@ id: DNATO-UC-026
 modulo: DNATO
 titulo: Descargar la plantilla de carga masiva
 perfil: Administrador
-estado: borrador
-version: "0.1"
+estado: validado
+version: "0.2"
 origen: baseline
+fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Bulkload.php
@@ -28,11 +29,14 @@ flujos_alternativos:
     pasos:
       - paso: "Abre la pantalla cuando el servicio que informa las entidades no responde"
         resultado: "Se avisa que se están usando datos de prueba y se muestra una lista mínima"
-validaciones: []
+validaciones:
+  - "Las entidades que se pueden cargar salen de una tabla de configuración: hoy son Artículos, Herramientas y Stock de Artículos"
+  - "La plantilla que se descarga corresponde a la entidad elegida"
 datos_prueba: {}
-dudas:
-  - "¿Qué entidades se pueden cargar hoy en el DEMO? El código trae la lista de un servicio y, si falla, cae a un juego de datos de prueba con artículos y herramientas. Antes de escribir el test hay que saber cuál es la lista real."
-  - "¿La plantilla trae las columnas obligatorias y un ejemplo, o solo los encabezados? De eso depende qué verifica el test."
-  - "¿Quién usa esta pantalla en la práctica: el administrador de la empresa en el alta inicial, o soporte al dar de alta un cliente?"
+dudas: []
 notas:
+  - "Validado por el PM el 2026-08-24. Las entidades son 100% configurables desde una tabla, así que la lista va a crecer; el caso se prueba con las tres de hoy."
+  - "**Equipos no anda**: la carga masiva todavía no funciona contra MariaDB, así que esa entidad falla. Anotado como hallazgo H-030, a resolver en el corto plazo."
   - "La pantalla solo verifica que haya sesión iniciada, no que el usuario sea administrador (hallazgo H-029), aunque el menú se la muestre solo a administradores."
+derivados:
+  feature: features/dnato/DNATO-UC-026.descargar-la-plantilla-de-carga-masiva.feature

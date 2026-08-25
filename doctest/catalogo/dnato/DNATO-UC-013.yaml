@@ -44,3 +44,5 @@ notas:
   - "**Aislamiento verificado con datos reales el 2026-08-24**: el administrador de la primera empresa de test ve sus 6 usuarios y el superadmin; el de la segunda ve los suyos y el superadmin; ninguno ve los de la otra."
   - "Verificado en el DEMO el 2026-08-19: la grilla trae las columnas mencionadas y el filtro por empresa funciona por las membresías del conectado, no por un campo de empresa del usuario."
   - "Validado por el PM el 2026-08-24: por ahora el superusuario aparece en la lista de todas las empresas y se acepta así; queda como posible mejora (hallazgo H-003)."
+derivados:
+  feature: features/dnato/DNATO-UC-013.ver-la-lista-de-usuarios-de-la-empresa.feature

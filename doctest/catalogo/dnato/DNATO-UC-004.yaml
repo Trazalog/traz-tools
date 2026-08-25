@@ -64,3 +64,5 @@ notas:
   - "Los 16 roles no se crean en el PHP sino en la orquestación WSO2 del alta de empresa (`toolsCOREAPI`, POST /empresa), que además los mapea como actores de los procesos de Bonita. Es la fuente canónica del vocabulario de roles de Tools."
   - "Verificado en el entorno DEMO: la empresa Conservas tiene un solo rol ('Almacen'), porque es anterior a este alta automática. Por eso el PM pidió crear una empresa de test nueva desde cero."
   - "Validado por el PM el 2026-08-24, con tres definiciones: el identificador tributario no se valida (máscaras por país, mejora futura), tiene que poder corregirse después desde Dnato (hoy no hay pantalla para eso — hallazgo H-023), y el mensaje de error debe mostrar el contacto de soporte, soporte@trazalog.com (hallazgo H-024)."
+derivados:
+  feature: features/dnato/DNATO-UC-004.dar-de-alta-la-empresa-y-su-configuracion-inicia.feature

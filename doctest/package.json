@@ -19,6 +19,7 @@
     "validate:catalog": "tsx generators/validate-catalog.ts",
     "validate:catalog:selftest": "tsx generators/validate-catalog.ts --selftest",
     "hoja:validacion": "tsx generators/hoja-validacion.ts",
+    "features": "tsx generators/catalog-to-feature.ts",
     "generators:dry-run": "tsx generators/dry-run.ts",
     "typecheck": "tsc --noEmit",
     "hurl:install": "bash scripts/install-hurl.sh"

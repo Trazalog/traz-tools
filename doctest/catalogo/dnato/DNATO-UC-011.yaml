@@ -40,3 +40,5 @@ datos_prueba: {}
 dudas: []
 notas:
   - "Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el formulario permite editar el correo. Registrado como hallazgo H-017."
+derivados:
+  feature: features/dnato/DNATO-UC-011.editar-los-datos-del-perfil-propio.feature

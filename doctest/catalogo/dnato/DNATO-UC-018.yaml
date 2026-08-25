@@ -57,3 +57,5 @@ notas:
   - "Código muerto detectado (hallazgo H6): `Main::associaterol()` carga una vista `membership` que no existe en el repo, y `changelevel.php` / `changeleveluser_old.php` / `changeuser_old` son pantallas anteriores que ya no se enlazan desde el menú."
   - "Verificado en el DEMO: los roles se cargan por empresa vía AJAX al elegirla en el modal; la empresa Conservas devuelve un único rol ('Almacen') por ser anterior al alta automática de 16 roles."
   - "Validado por el PM el 2026-08-24: no existe restricción entre roles."
+derivados:
+  feature: features/dnato/DNATO-UC-018.asignar-y-quitar-roles-de-trabajo-a-un-usuario-e.feature

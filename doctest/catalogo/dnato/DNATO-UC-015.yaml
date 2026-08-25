@@ -37,3 +37,5 @@ datos_prueba: {}
 dudas: []
 notas:
   - "Validado por el PM el 2026-08-24 y confirmados los dos hallazgos: que editar obligue a reescribir la contraseña es un bug (H-007), y que un administrador pueda editar usuarios de otra empresa también (H-008)."
+derivados:
+  feature: features/dnato/DNATO-UC-015.editar-un-usuario-de-la-empresa.feature

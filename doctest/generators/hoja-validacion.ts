@@ -464,7 +464,8 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const modulo = (process.argv[2] ?? '').toLowerCase();
+const DRY_RUN = process.argv.includes('--dry-run');
+const modulo = (process.argv.slice(2).find((a) => !a.startsWith('--')) ?? '').toLowerCase();
 if (!modulo) {
   console.error('Falta el módulo. Uso: npm run hoja:validacion -- dnato');
   process.exit(2);
@@ -482,9 +483,13 @@ const resumenHtml = `<section class="instrucciones" style="border-left-color: va
     <p>El detalle de qué se relevó, qué decisiones ya están tomadas y los hallazgos del código está en <code>doctest/catalogo/${esc(modulo)}/RESUMEN-RELEVAMIENTO-${esc(modulo.toUpperCase())}.md</code>. Esta hoja es solo para decidir caso por caso.</p>
   </section>`;
 
-const destino = join(RAIZ, '.validacion');
-mkdirSync(destino, { recursive: true });
-const archivo = join(destino, `${modulo}.html`);
-writeFileSync(archivo, pagina(modulo, casos, resumenHtml), 'utf8');
-
-console.log(`✓ Hoja de validación de ${modulo.toUpperCase()}: ${casos.length} casos → ${archivo}`);
+const contenido = pagina(modulo, casos, resumenHtml);
+if (DRY_RUN) {
+  console.log(`✓ Hoja de validación de ${modulo.toUpperCase()}: ${casos.length} casos, ${Math.round(contenido.length / 1024)} KB (--dry-run, no se escribió nada)`);
+} else {
+  const destino = join(RAIZ, '.validacion');
+  mkdirSync(destino, { recursive: true });
+  const archivo = join(destino, `${modulo}.html`);
+  writeFileSync(archivo, contenido, 'utf8');
+  console.log(`✓ Hoja de validación de ${modulo.toUpperCase()}: ${casos.length} casos → ${archivo}`);
+}

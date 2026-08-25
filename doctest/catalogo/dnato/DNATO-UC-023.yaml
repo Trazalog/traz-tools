@@ -49,3 +49,5 @@ dudas: []
 notas:
   - "Alcance confirmado por el PM el 2026-08-19."
   - "Validado por el PM el 2026-08-24: los dos caminos de alta tienen que terminar en el mismo resultado y usar la misma API. **Hoy no pasa** — este alta no valida duplicados y no crea establecimiento, depósito ni usuarios iniciales. Registrado como hallazgo H-014, y el caso describe el comportamiento esperado."
+derivados:
+  feature: features/dnato/DNATO-UC-023.dar-de-alta-una-empresa-desde-la-administracion.feature
