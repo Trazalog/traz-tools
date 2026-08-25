@@ -1,0 +1,27 @@
+id: MAN-UC-003
+modulo: MAN
+titulo: Editar un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "getEditar() trae los datos del equipo; editar_equipo() guarda los cambios"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+pantallas:
+  - "Mantenimiento → Equipos → (editar una fila)"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Existe al menos un equipo en la empresa
+flujo_principal:
+  - paso: "En el listado abre un equipo para editarlo"
+    resultado: "Se muestra el formulario con los datos cargados"
+  - paso: "Modifica lo que corresponda y guarda"
+    resultado: "El equipo queda actualizado"
+dudas:
+  - "**No verificado contra la pantalla real** (H-048)."
+  - "¿Qué se puede cambiar de un equipo que ya tiene historial —órdenes de trabajo, lecturas, componentes—? Cambiar el área o el proceso reubica el equipo; cambiar el código afecta a todo lo que lo referencia."
+  - "¿Se puede cambiar la lectura inicial de un equipo que ya tiene lecturas registradas?"

@@ -1,0 +1,31 @@
+id: MAN-UC-005
+modulo: MAN
+titulo: Dar de alta un componente
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Componente.php
+    detalle: "agregar_componente() crea el componente; codifNombre($ultimoId,$empId) arma su código"
+  - repo: traz-prod-assetplanner
+    path: application/models/Componentes.php
+pantallas:
+  - "Mantenimiento → Componentes → Nuevo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Abre el alta de componentes"
+    resultado: "Se muestra el formulario"
+  - paso: "Carga los datos del componente y su marca"
+    resultado: "El formulario acepta los datos"
+  - paso: "Guarda"
+    resultado: "El componente queda dado de alta y disponible para asignarlo a un equipo"
+validaciones:
+  - "El código del componente lo arma el sistema a partir del último id y de la empresa"
+dudas:
+  - "**No verificado contra la pantalla real** (H-048)."
+  - "¿Qué es un componente para el negocio: una pieza intercambiable del equipo, un subsistema, o un punto de mantenimiento? De eso depende cómo se explica en la ayuda."
+  - "El código lo genera `codifNombre()` a partir del último id y de la empresa. ¿El usuario puede cambiarlo, o es siempre automático?"
+  - "¿Un componente puede estar asignado a más de un equipo a la vez, o es exclusivo de uno?"

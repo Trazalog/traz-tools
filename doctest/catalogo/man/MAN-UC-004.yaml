@@ -1,0 +1,28 @@
+id: MAN-UC-004
+modulo: MAN
+titulo: Dar de baja un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "baja_equipo()"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+pantallas:
+  - "Mantenimiento → Equipos → (baja de una fila)"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Existe un equipo activo
+flujo_principal:
+  - paso: "En el listado elige dar de baja un equipo"
+    resultado: "El sistema pide confirmación"
+  - paso: "Confirma"
+    resultado: "El equipo queda dado de baja"
+dudas:
+  - "**No verificado contra la pantalla real** (H-048)."
+  - "**¿La baja es lógica?** En DNATO y en ALM la decisión fue que nunca haya borrado físico, porque rompe la trazabilidad de lo que se hizo. Un equipo tiene historial de órdenes de trabajo, así que la respuesta debería ser la misma — pero hay que confirmar qué hace el código."
+  - "¿Se puede dar de baja un equipo con órdenes de trabajo abiertas, o con un plan de mantenimiento vigente?"
+  - "¿Qué pasa con sus componentes al dar de baja el equipo?"

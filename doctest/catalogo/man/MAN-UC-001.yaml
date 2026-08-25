@@ -1,0 +1,33 @@
+id: MAN-UC-001
+modulo: MAN
+titulo: Ver el listado de equipos
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "index($permission) carga el listado; paginado() es el server-side de la grilla"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/
+pantallas:
+  - "Mantenimiento → Equipos"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - La empresa tiene equipos cargados
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Equipos"
+    resultado: "Se muestra la grilla de equipos de la empresa"
+  - paso: "Busca un equipo por su código o su descripción"
+    resultado: "La grilla se reduce a los equipos que coinciden"
+validaciones:
+  - "El listado solo muestra equipos de la empresa de la sesión"
+dudas:
+  - "**Este caso no se pudo verificar contra la pantalla real**: AssetPlanner tiene su propio padrón de usuarios y no hay credenciales del DEMO (H-048). Está relevado del código y del manual de ayuda existente. Antes de validarlo conviene abrirlo una vez."
+  - "¿Qué columnas tiene que mostrar la grilla y cuáles se usan para buscar? El manual legacy de Alta de Equipos no muestra el listado, solo el formulario."
+  - "¿El listado incluye los equipos dados de baja, o solo los activos?"
+notas:
+  - "El alta de equipos y componentes **no difiere entre `develop` y `develop-v3`** del repo de asset (verificado con `git diff`), así que este caso no depende de qué versión corra el DEMO."

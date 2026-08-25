@@ -1,0 +1,53 @@
+id: MAN-UC-002
+modulo: MAN
+titulo: Dar de alta un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "cargarequipo($permission) abre el formulario; getarea(), getproceso(), getcriti(), getetapa(), getgrupo(), getcliente(), getmarca(), getunidad() llenan los desplegables"
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/view_.php
+    detalle: "formAgregarEquipo — los campos del alta"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+pantallas:
+  - "Mantenimiento → Equipos → Nuevo Equipo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - La empresa tiene cargados sus catálogos de área, proceso, criticidad, sector y grupo
+flujo_principal:
+  - paso: "En el listado de equipos abre el formulario de alta"
+    resultado: "Se muestra el formulario vacío, con la ubicación arriba y los datos del equipo abajo"
+  - paso: "Elige el área, el proceso y la criticidad del equipo"
+    resultado: "Queda definido dónde está el equipo y cuánto importa que funcione"
+  - paso: "Elige el sector o etapa, el grupo y, si corresponde, el cliente"
+    resultado: "El equipo queda ubicado en la estructura productiva"
+  - paso: "Carga el código del equipo, la marca y la descripción"
+    resultado: "El formulario acepta los datos"
+  - paso: "Completa el número de serie y la fecha de ingreso"
+    resultado: "Quedan registrados los datos de identificación"
+  - paso: "Opcionalmente carga la lectura inicial, la garantía, la ubicación georreferencial y la descripción técnica"
+    resultado: "Los datos complementarios quedan asociados al equipo"
+  - paso: "Guarda"
+    resultado: "El equipo queda dado de alta y aparece en el listado"
+flujos_alternativos:
+  - nombre: "Falta una opción en un desplegable"
+    pasos:
+      - paso: "Junto a cada desplegable —área, proceso, criticidad, sector, grupo, cliente— hay un botón para agregar una opción nueva"
+        resultado: "Se puede crear la opción sin salir del formulario, y queda elegida"
+validaciones:
+  - "El equipo se da de alta en la empresa de la sesión"
+dudas:
+  - "**No verificado contra la pantalla real** por falta de credenciales de AssetPlanner en el DEMO (H-048). Relevado del código y del manual legacy `manual_alta_equipos_componentes.html`, que muestra este mismo formulario."
+  - "¿Cuáles son los campos realmente obligatorios? El manual legacy marca con asterisco Código, Marca, Descripción y N° de Serie, pero el formulario no declara `required` en el HTML: la validación, si existe, está en el JavaScript."
+  - "¿El código de equipo tiene que ser único dentro de la empresa? En ALM el código de artículo sí lo es; acá no está claro."
+  - "¿Qué significa cada nivel de **criticidad** para el negocio y qué consecuencia tiene? Aparece en el alta y en los reportes, pero el código solo la guarda."
+  - "**La 'lectura inicial'** es el punto de partida del contador del equipo, que después usan los preventivos por lectura. ¿Se puede corregir más adelante si se cargó mal, o queda fija?"
+  - "¿Un equipo puede existir sin componentes, o el alta se considera incompleta hasta asignarle al menos uno?"
+notas:
+  - "Es el caso piloto de F2 (issue #439): sirve para calibrar el formato y el costo del relevamiento en este módulo."
+  - "A diferencia de ALM, acá **los catálogos se pueden crear desde el propio formulario** con los botones `add*` que hay junto a cada desplegable. Vale la pena documentarlo en la ayuda: evita el rodeo de salir a un ABM y volver."
