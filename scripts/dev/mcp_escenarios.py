@@ -11,6 +11,7 @@ USO:
     python3 scripts/dev/mcp_escenarios.py              # solo lectura (seguro)
     python3 scripts/dev/mcp_escenarios.py --escrituras # incluye crear OT/pedido
     python3 scripts/dev/mcp_escenarios.py --lista      # lista los escenarios
+    python3 scripts/dev/mcp_escenarios.py --solo E7    # uno solo (E7 no necesita el MI)
 
 REQUISITOS: WSO2 MI local corriendo en :8290 con el CAR de ToolsAPIProject, y
 acceso a las bases de desarrollo (VPN). MI_URL para apuntar a otro host.
@@ -642,12 +643,52 @@ def e7(_m):
     afirmar(len(ops) == len(set(ops)), f"operationId duplicados: {ops}")
     paso(f"{len(ops)} operationId únicos: {', '.join(sorted(ops)[:4])}…")
 
+    # --- la spec tiene que ser 3.0 valida, o el APIM la rechaza al subirla ---
+    # Son los dos errores que devolvio el Publisher la primera vez. Se chequean
+    # sin dependencias: el validador de OpenAPI no esta instalado en todos lados
+    # y esto igual cubre el caso concreto que rompio.
+    crudo = open(spec_path, encoding="utf-8").read()
+    afirmar(spec.get("openapi", "").startswith("3.0"),
+            f"la spec dice openapi {spec.get('openapi')}: los chequeos de abajo asumen 3.0")
+
+    listas = [ln.strip() for ln in crudo.split("\n") if re.search(r"type:\s*\[", ln)]
+    afirmar(not listas,
+            "`type` como lista es sintaxis 3.1 y el APIM la rechaza; en 3.0 se "
+            f"escribe `type: string` + `nullable: true`. Lineas: {listas}")
+
+    # Una propiedad puede estar definida en varios schemas (lectura_actual esta
+    # en dos). Se exige que TODOS la declaren nullable: agrupar por nombre y
+    # darse por satisfecho con uno deja pasar el error en el otro.
+    con_null = {m for m in re.findall(r"^\s+([a-z_]+): null\s*$", crudo, re.M)}
+    sin_nullable = sorted(
+        f"{nom}.{prop}"
+        for nom, sc in (spec.get("components", {}).get("schemas") or {}).items()
+        for prop, v in (sc.get("properties") or {}).items()
+        if prop in con_null and isinstance(v, dict) and not v.get("nullable"))
+    afirmar(not sin_nullable,
+            "estas propiedades aparecen con `null` en algun ejemplo pero su "
+            "schema no las declara `nullable: true`, y el APIM rechaza la spec "
+            f"por eso: {sin_nullable}")
+    paso(f"spec {spec['openapi']} sin `type` en lista; {len(con_null)} campos con "
+         f"ejemplo null, todos declarados nullable")
+
 
 # ===========================================================================
 def main():
     escrituras = "--escrituras" in sys.argv
     todos = [v for v in globals().values() if callable(v) and hasattr(v, "_esc")]
     todos.sort(key=lambda f: int(f._esc[0][1:]))   # numérico: E2 antes que E10
+
+    # --solo E7,E13 : corre solo esos. E7 no necesita el MI ni la base, asi que
+    # sirve para validar la OpenAPI antes de subirla al Publisher.
+    if "--solo" in sys.argv:
+        pedidos = {x.strip().upper()
+                   for x in sys.argv[sys.argv.index("--solo") + 1].split(",")}
+        desconocidos = pedidos - {f._esc[0] for f in todos}
+        if desconocidos:
+            print(f"no existen: {', '.join(sorted(desconocidos))}")
+            return 2
+        todos = [f for f in todos if f._esc[0] in pedidos]
 
     if "--lista" in sys.argv:
         for f in todos:
