@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITULO}} · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!--
+  Generado por doctest/generators/build-ayudas.ts — no editar a mano.
+  Contenido: {{FUENTE}}
+  Casos de uso que cubre: {{CASOS}}
+  Versión {{VERSION}} · generado el {{FECHA}}
+-->
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">T</div>
+        <span class="brand-name">TRAZA<span>LOG</span> TOOLS</span>
+      </div>
+      <div class="brand-sub">Manual · {{MODULO}}</div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item" href="index.html" style="color:var(--amber);border-left-color:transparent">
+        <span class="nav-num" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span>
+        Volver al inicio
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">En este manual</div>
+      {{NAV}}
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Otros manuales</div>
+      {{OTROS}}
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title">Manual de Usuario</span>
+        <span class="topbar-sub">· {{MODULO}}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a href="index.html" class="btn-home">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver al inicio
+        </a>
+        <span class="doc-code">{{CODIGO}}</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <section id="cover" class="section visible">
+        <div class="cover-tag">📋 Instructivo de procedimientos</div>
+        <div class="cover-title">{{PORTADA}}</div>
+        <div class="cover-sub">{{SUBTITULO}}</div>
+        <div class="cover-meta">
+          <div class="cover-pill"><strong>{{CODIGO}}</strong></div>
+          <div class="cover-pill">Versión <strong>{{VERSION}}</strong></div>
+          <div class="cover-pill">Módulo <strong>{{MODULO}}</strong></div>
+          <div class="cover-pill"><strong>Trazalog Tools</strong></div>
+        </div>
+      </section>
+
+{{SECCIONES}}
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script src="manual.js"></script>
+
+</body>
+</html>

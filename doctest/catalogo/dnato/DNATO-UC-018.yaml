@@ -58,5 +58,6 @@ notas:
   - "Verificado en el DEMO: los roles se cargan por empresa vía AJAX al elegirla en el modal; la empresa Conservas devuelve un único rol ('Almacen') por ser anterior al alta automática de 16 roles."
   - "Validado por el PM el 2026-08-24: no existe restricción entre roles."
 derivados:
+  ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s08
   test_e2e: tests/e2e/specs/dnato/DNATO-UC-018-019.roles-y-perfil.spec.ts
   feature: features/dnato/DNATO-UC-018.asignar-y-quitar-roles-de-trabajo-a-un-usuario-e.feature

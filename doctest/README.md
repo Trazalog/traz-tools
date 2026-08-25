@@ -24,7 +24,7 @@ código PHP + ayudas actuales ──relevamiento──> catálogo (gate humano) 
 | `features/` | `.feature` Gherkin en español — documentación para testers, sin runtime Cucumber |
 | `tests/e2e/` | Suite Playwright: `playwright.config.ts`, `config/`, `fixtures/` (incluye la casilla de correo descartable), `pages/`, `specs/`, `seeds/` |
 | `tests/api-mcp/` | Suite Hurl de contrato MCP ([README](tests/api-mcp/README.md)) |
-| `ayudas/` | `legacy/` (manuales vigentes, fuente de intención funcional), `plantilla/`, `src/`, `build/` |
+| `ayudas/` | `legacy/` (el sitio publicado, tal cual), `plantilla/` (theme.css + esqueleto extraídos de ahí), `src/` (el contenido nuevo, por módulo) y `build/` (lo publicable, regenerable) |
 | `generators/` | Scripts de validación y derivación catálogo → salidas |
 | `ci/` | [`module-map.json`](ci/module-map.json): mapa path→módulo que usa el CI |
 | `feedback/` | Cómo reporta un tester lo que falta probar |
@@ -56,6 +56,8 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run test:report` | Abre el último reporte HTML de Playwright |
 | `npm run validate:catalog` | Valida el catálogo contra el schema y las reglas duras |
 | `npm run test:report` | Abre el último reporte HTML de Playwright |
+| `npm run ayudas` | Arma el sitio de ayudas publicable en `ayudas/build/`: copia los manuales actuales tal cual, ensambla los nuevos con la plantilla y **regenera el buscador del inicio desde el contenido de todos los manuales** |
+| `npm run test:alta-empresa` | Corre el alta completa de una empresa como test. **Crea una empresa real**: se ejecuta a demanda, está fuera de las corridas normales |
 | `npm run features` | Regenera los `.feature` Gherkin desde los casos **validados** (agregá `-- --dry-run` para ver qué cambiaría). Los `.feature` no se editan a mano |
 | `npm run hoja:validacion -- dnato` | Arma la **hoja de validación** del módulo: los casos en prosa legible, con las dudas al frente y un control para marcar validado / obsoleto / sigue en borrador. Sale en `.validacion/<modulo>.html` (no se commitea) y se publica para que el PM la lea |
 | `npm run generators:dry-run` | Corrida en seco de los generadores (lo mismo que corre el CI) |
@@ -105,7 +107,7 @@ Todo entra por feature branch + PR (metodología git del `CLAUDE.md`). Nunca com
 | Fase | Alcance | Issue | Estado |
 |---|---|---|---|
 | F0 | Infraestructura: árbol, Playwright, Hurl, schema + validador, CI de validación | #437 | ✅ |
-| F1 | DNATO — registración y administración de cuenta | #438 | pendiente |
+| F1 | DNATO — registración y administración de cuenta | #438 | ✅ catálogo validado (25), 25 `.feature`, 55 tests y la ayuda de usuario |
 | F2 | MAN piloto — Alta de Equipos y Componentes | #439 | pendiente |
 | F3 | ALM — almacenes y pedido de materiales | #440 | pendiente |
 | F4 | MCP — suite Hurl de contrato y aislamiento | #441 | pendiente |

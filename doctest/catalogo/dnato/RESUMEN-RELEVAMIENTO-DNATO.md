@@ -135,7 +135,7 @@ Los otros diez (H-003 a H-007, H-009 a H-011, H-013, H-014) quedan en el registr
 28 casos · validado 25 · borrador 2 · obsoleto 1
 ```
 
-**Los 22 validados habilitan la derivación** (specs, `.feature`, ayudas): es la segunda mitad de F1.
+**La derivación ya está hecha** (2026-08-25): los 25 casos validados tienen su `.feature`, la suite E2E cubre 55 tests en verde y la ayuda de usuario está generada. Detalle al final de esta sección.
 
 Los **2 que siguen en borrador** son los que necesitan una definición funcional, no más relevamiento:
 
@@ -145,5 +145,14 @@ Los **2 que siguen en borrador** son los que necesitan una definición funcional
 | DNATO-UC-024 · ABM de opciones de menú | Sin prioridad ahora; la pantalla es candidata a rehacerse (H-027) |
 
 El **obsoleto** es DNATO-UC-021 (configuración del sitio): se conserva por historia y no genera derivados.
+
+### Lo que quedó construido
+
+| Salida | Estado |
+|---|---|
+| `.feature` Gherkin | 25, uno por caso validado, generados con `npm run features` |
+| Tests E2E | **55 tests en verde** sobre 19 archivos; smoke de 6 flujos en 1m37; suite completa 7,3 min |
+| Ayuda de usuario | `ayudas/src/dnato/manual_registracion_y_cuenta.html` — 10 secciones, en tuteo, con la plantilla del sitio real; el buscador del inicio ahora indexa **26 secciones de todos los manuales** |
+| Alta de empresa | `npm run seed:empresa` y el test `@alta-empresa`, que crean una empresa real de punta a punta leyendo el correo solos |
 
 **Lo validado no significa "así funciona hoy".** Cinco casos describen el comportamiento **esperado** y el sistema todavía no lo cumple: son los bugs H-002 (borrado lógico de usuarios), H-007, H-008, H-014, H-016, H-017, H-018, H-019, H-020 y H-028 (baja lógica de empresas), todos con issue abierto. Sus derivados van a fallar hasta que se corrijan, y eso es exactamente lo que tiene que pasar: la suite es de regresión, no una foto del estado actual.
