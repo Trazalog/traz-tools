@@ -369,6 +369,112 @@ de hacer.
 El sistema cambia: el programador agrega una pantalla, se corrige un bug, cambia una regla. Nada de
 eso actualiza el catálogo solo. **Hoy hay que pedirlo, y hay un comando para eso.**
 
+## El ciclo de vida de un caso
+
+Un caso de uso nace, se valida, genera cosas, y a veces muere. Estos son todos sus estados y qué lo
+mueve de uno a otro:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> borrador: se releva del código<br/>y de la pantalla real
+    borrador --> borrador: se responde una duda<br/>pero quedan otras
+    borrador --> validado: el PM confirma la<br/>intención de negocio
+    validado --> validado: cambió el comportamiento<br/>→ se bumpea la versión
+    validado --> obsoleto: el flujo dejó de existir
+    borrador --> obsoleto: se releva algo que<br/>ya no se usa
+    obsoleto --> [*]: se conserva por historia
+
+    note left of borrador
+        NO genera nada.
+        Ni test, ni .feature, ni ayuda.
+    end note
+    note right of validado
+        Genera sus derivados,
+        y el CI verifica que existan.
+    end note
+```
+
+Que un caso en `borrador` no genere nada es la garantía de fondo: **ninguna ayuda le explica a un
+usuario un comportamiento que nadie confirmó**, y ningún test da por buena una regla inventada.
+
+## El circuito completo, hoy
+
+Lo que sigue es el circuito **real**, no el de destino. Los recuadros punteados son los pasos que
+todavía son manuales.
+
+```mermaid
+flowchart TD
+    subgraph entrada ["De dónde vienen los cambios"]
+        COD["El programador toca el código"]
+        BUG["Se corrige un bug"]
+        FB["Un tester abre un issue<br/>test-gap o ayuda-gap"]
+        PM["El PM pide relevar<br/>un módulo nuevo"]
+    end
+
+    COD -.-> CMD
+    BUG -.-> CMD
+    FB -.-> CMD
+    PM -.-> CMD
+
+    CMD["/doctest qué cambió<br/>· en una sesión de Claude Code ·"]
+
+    CMD --> REL["Relevar contra lo desplegado<br/>código + pantalla real"]
+    REL --> CAT["Actualizar el catálogo<br/>catalogo/&lt;modulo&gt;/*.yaml"]
+    CAT --> HOJA["npm run hoja:validacion"]
+    HOJA --> GATE{"El PM valida<br/>caso por caso"}
+
+    GATE -->|queda una duda| CAT
+    GATE -->|validado| DER["Regenerar derivados<br/>npm run features · npm run ayudas"]
+
+    DER --> T["Tests E2E<br/>npm run test:module"]
+    DER --> F[".feature<br/>para el tester"]
+    DER --> A["Ayudas<br/>ayuda/ del repo"]
+
+    T --> CORRE["Correr la suite<br/>contra el DEMO"]
+    CORRE -->|falla| HALL["doc/hallazgos/REGISTRO.md<br/>+ issue si es bug"]
+    CORRE -->|verde| PR
+
+    F --> PR
+    A --> PR
+    HALL --> PR
+
+    PR["Pull Request a develop-v3"]
+    PR --> CI["CI: valida catálogo,<br/>tipa y corre generadores en seco"]
+    CI --> MERGE["Merge"]
+    MERGE --> DEPLOY["Deploy: la ayuda viaja<br/>con el sistema, es un commit más"]
+
+    HALL -.->|el día que se arregle| BUG
+
+    style CMD fill:#fef3c7,stroke:#d97706,color:#78350f
+    style GATE fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    style HALL fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+```
+
+**Tres cosas que conviene leer de ese dibujo:**
+
+1. **Todo pasa por el gate del PM.** No hay camino que llegue a un test o a una ayuda sin que alguien
+   haya confirmado la intención de negocio. Es a propósito: el código dice *qué* hace el sistema, no
+   *para qué*.
+2. **El lazo de abajo es el que más rinde.** Cuando la suite encuentra un bug, el caso ya describe el
+   comportamiento correcto y el test queda con `test.fail()` esperando: el día que se arregle, avisa
+   solo. Nadie tiene que acordarse.
+3. **Hoy el disparador es manual.** Ese recuadro amarillo debería ser un job de CI (§4).
+
+## Cómo se ve la diferencia con el circuito de destino
+
+El Doc 2 dibuja el circuito completo, con cosas que todavía no existen. Para no confundirlos:
+
+| Paso | En el Doc 2 (destino) | Hoy |
+|---|---|---|
+| Disparar la actualización | job de delta en cada PR | **el comando `/doctest`** |
+| Entorno de las pruebas | staging-v3 | **el DEMO de v2** |
+| Ejecutar la suite | en CI, en cada PR | **a mano, antes de pushear** |
+| Evidencia de la corrida | artifact del run | **local y efímera** (§1.3) |
+| Regresión completa | cron semanal | **a demanda** |
+| Feedback de testers | issues `test-gap` | ✅ igual, ya funciona |
+| Gate del PM | validación caso por caso | ✅ igual, ya funciona |
+
 ## El comando
 
 **Dónde se ejecuta:** en una sesión de Claude Code, parado en `traz-tools/`.
