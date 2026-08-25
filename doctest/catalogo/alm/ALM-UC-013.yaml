@@ -30,6 +30,7 @@ validaciones:
   - "El informe solo incluye stock de la empresa de la sesión"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s08
   feature: features/alm/ALM-UC-013.consultar-el-stock-valorizado.feature
 notas:
   - "**De dónde sale el precio, relevado del código.** La valorización se activa por empresa con un registro en `core.tablas` cuya `tabla` contiene `alm_configs`: si su campo `valor2` viene con valor, la pantalla de recepción (ALM-UC-009) muestra Precio Unitario en pesos y en dólares con sus totales, y ése es el valor que después se informa acá. Ver `Remitos::getConfigPrecios()` y la sección de precios de `views/remito/view_.php`."

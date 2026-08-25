@@ -49,6 +49,7 @@ datos_prueba:
   nota_codigo: "sufijo único por corrida, para no chocar con artículos existentes"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s02
   feature: features/alm/ALM-UC-002.dar-de-alta-un-articulo.feature
 notas:
   - "Lotear, en el código: la marca `es_loteado` hace que la recepción exija el número de lote (`views/remito/view_.php` habilita el campo solo para artículos loteados) y que las existencias se guarden por lote en `alm.alm_lotes`, con su depósito. La entrega y el ajuste operan después sobre ese lote."

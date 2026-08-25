@@ -230,6 +230,44 @@ se mantenía a mano y solo encontraba dos de los cinco manuales.
 Cada sección de un manual tiene un ancla estable (`#s01`, `#s02`, …) y, en un comentario HTML
 invisible para el usuario, la versión, la fecha de generación y **los casos de uso que cubre**.
 
+### Las pantallas se dibujan, no se capturan
+
+Los manuales muestran las pantallas del sistema **reconstruidas en HTML**, no con capturas. Es el
+patrón que estrenó el manual de Alta de Equipos y conviene mantenerlo: se ve nítido en cualquier
+resolución, pesa nada, y —lo que más importa— **se versiona y se diffea como texto**, así que cuando
+la interfaz cambia se corrige la línea que cambió en vez de rehacer una imagen.
+
+El marcado es éste, y las clases `screen-*` viven en `ayudas/plantilla/theme.css`:
+
+```html
+<figure class="screen">
+  <div class="screen-card">
+    <div class="screen-bar">
+      <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+      <span class="screen-caption">Trazalog Tools · Pedido de Materiales</span>
+    </div>
+    <div class="screen-body">
+      <div class="screen-app-bar">
+        <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+        <span class="ruta">/ Almacenes / Pedido Materiales</span>
+      </div>
+      <!-- paneles (.screen-panel), campos (.screen-campo), tabla (.screen-tabla),
+           estados (.screen-estado) y botones (.screen-btn) -->
+    </div>
+  </div>
+  <figcaption class="screen-footer">Qué es lo que hay que mirar acá.</figcaption>
+</figure>
+```
+
+Dos reglas al dibujar una pantalla: **datos verosímiles del dominio** —un artículo real del rubro, no
+"Lorem"— y un **pie que diga qué mirar**, porque una pantalla sin pie es decoración. Las tablas anchas
+van dentro de `.screen-scroll`, para que scrolleen solas sin arrastrar la página.
+
+> En los manuales legacy estas clases se usaban pero **nunca tuvieron CSS**: verificado renderizándolos,
+> el marco de ventana no se dibujaba y el título quedaba suelto encima del contenido. Quedó resuelto en
+> el theme, así que los manuales nuevos sí muestran el marco. Los legacy no se tocan — se copian tal
+> cual porque son URLs vivas.
+
 ## 2.2 Cómo dar feedback sobre una ayuda
 
 **Dónde:** en el navegador, en <https://github.com/Trazalog/traz-tools/issues/new/choose> →

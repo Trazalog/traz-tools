@@ -30,6 +30,7 @@ validaciones:
   - "Solo el Responsable de Almacén puede hacer una entrega directa"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s05
   feature: features/alm/ALM-UC-011.entregar-materiales-sin-pedido-previo-entrega-di.feature
 notas:
   - "**Existe a propósito**, confirmado por el PM: hay clientes con procedimientos de almacén menos estrictos —PyMEs— para los que exigir un pedido formal por cada salida no es realista. Por eso el control está en quién puede usarla, no en el flujo."

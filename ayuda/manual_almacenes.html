@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Almacenes · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!--
+  Generado por doctest/generators/build-ayudas.ts — no editar a mano.
+  Contenido: ayudas/src/alm/manual_almacenes.html
+  Casos de uso que cubre: ALM-UC-001 a ALM-UC-006 y ALM-UC-009 a ALM-UC-018 (el stock de producción se documenta cuando se mueva al módulo de Producción)
+  Versión 1.0 · generado el 2026-08-25
+-->
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">T</div>
+        <span class="brand-name">TRAZA<span>LOG</span> TOOLS</span>
+      </div>
+      <div class="brand-sub">Manual · Almacenes</div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item" href="index.html" style="color:var(--amber);border-left-color:transparent">
+        <span class="nav-num" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span>
+        Volver al inicio
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">En este manual</div>
+      <a class="nav-item" href="#s01"><span class="nav-num">01</span> Cómo funciona el almacén</a>
+      <a class="nav-item" href="#s02"><span class="nav-num">02</span> Los artículos</a>
+      <a class="nav-item" href="#s03"><span class="nav-num">03</span> Pedir materiales</a>
+      <a class="nav-item" href="#s04"><span class="nav-num">04</span> Recibir materiales</a>
+      <a class="nav-item" href="#s05"><span class="nav-num">05</span> Entregar materiales</a>
+      <a class="nav-item" href="#s06"><span class="nav-num">06</span> Ajustar el stock</a>
+      <a class="nav-item" href="#s07"><span class="nav-num">07</span> Mover material entre depósitos</a>
+      <a class="nav-item" href="#s08"><span class="nav-num">08</span> Consultas e informes</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Otros manuales</div>
+      <a class="nav-item" href="manual_configuracion_inicial.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Configuración inicial</a>
+      <a class="nav-item" href="manual_alta_equipos_componentes.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Alta de equipos</a>
+      <a class="nav-item" href="manual_mantenimiento_correrctivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento correctivo</a>
+      <a class="nav-item" href="manual_mantenimeinto_preventivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento preventivo</a>
+      <a class="nav-item" href="manual_almacen_mantenimiento.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Almacén</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title">Manual de Usuario</span>
+        <span class="topbar-sub">· Almacenes</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a href="index.html" class="btn-home">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver al inicio
+        </a>
+        <span class="doc-code">ALM.001</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <section id="cover" class="section visible">
+        <div class="cover-tag">📋 Instructivo de procedimientos</div>
+        <div class="cover-title">Almacenes</div>
+        <div class="cover-sub">Cómo se piden, se reciben y se entregan materiales, y cómo se mantiene el stock al día.</div>
+        <div class="cover-meta">
+          <div class="cover-pill"><strong>ALM.001</strong></div>
+          <div class="cover-pill">Versión <strong>1.0</strong></div>
+          <div class="cover-pill">Módulo <strong>Almacenes</strong></div>
+          <div class="cover-pill"><strong>Trazalog Tools</strong></div>
+        </div>
+      </section>
+
+<section id="s01" class="section">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-meta">
+      <h2>Cómo funciona el almacén</h2>
+      <span class="role-badge">Para todos</span>
+    </div>
+  </div>
+
+  <p class="intro-text">El módulo de Almacenes lleva la cuenta de <strong>qué hay, dónde está y quién se lo llevó</strong>. Todo lo demás son variaciones de eso.</p>
+
+  <div class="sub-title">Los dos roles</div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Rol</th><th>Qué hace</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Solicitante de Almacén</strong></td>
+        <td>Pide materiales. No toca el stock: un pedido es una solicitud, no una salida.</td>
+      </tr>
+      <tr>
+        <td><strong>Responsable de Almacén</strong></td>
+        <td>Administra el almacén: da de alta los artículos, recibe la mercadería, entrega contra los pedidos, ajusta las diferencias y mueve material entre depósitos.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Las cuatro cosas que mueven el stock</div>
+
+  <p class="intro-text">Vale tenerlas claras desde el principio, porque son las únicas que cambian las cantidades:</p>
+
+  <div class="steps">
+    <div class="step teal-accent">
+      <div class="step-num teal">1</div>
+      <div class="step-body">
+        <div class="step-title">Recepción de materiales · suma</div>
+        <div class="step-desc">Llega la mercadería del proveedor y alguien la carga. El stock del depósito sube.</div>
+      </div>
+    </div>
+    <div class="step red-accent">
+      <div class="step-num red">2</div>
+      <div class="step-body">
+        <div class="step-title">Entrega de materiales · resta</div>
+        <div class="step-desc">Sale del almacén, contra un pedido o directamente. El stock baja.</div>
+      </div>
+    </div>
+    <div class="step amber-accent">
+      <div class="step-num amber">3</div>
+      <div class="step-body">
+        <div class="step-title">Ajuste de stock · suma o resta</div>
+        <div class="step-desc">Corrige una diferencia entre lo que dice el sistema y lo que hay en el estante. Es el único camino para arreglar un error de carga.</div>
+      </div>
+    </div>
+    <div class="step dark-accent">
+      <div class="step-num dark">4</div>
+      <div class="step-body">
+        <div class="step-title">Movimiento interno · cambia de lugar</div>
+        <div class="step-desc">La mercadería pasa de un depósito a otro. La cantidad total no cambia, pero sí dónde está.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Lo que no mueve stock</div>
+      <div class="alert-text">El <strong>pedido</strong> de materiales. Pedir no es sacar: el stock recién baja cuando el Responsable de Almacén entrega.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Existencia física y existencia disponible</div>
+
+  <p class="intro-text">Son dos números distintos y conviene no confundirlos:</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Número</th><th>Qué es</th><th>Dónde lo ves</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Existencia física</strong></td>
+        <td>Lo que hay en el estante, sin descontar nada.</td>
+        <td>Almacenes → Stock</td>
+      </tr>
+      <tr>
+        <td><strong>Existencia disponible</strong></td>
+        <td>Lo físico menos lo que ya está comprometido en pedidos que todavía no se cerraron.</td>
+        <td>Almacenes → Punto de Pedido</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="s02" class="section">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-meta">
+      <h2>Los artículos</h2>
+      <span class="role-badge">Responsable de Almacén</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Un artículo es cada cosa que el almacén guarda. Antes de recibir o entregar nada hay que darlo de alta: el resto del módulo trabaja siempre sobre artículos que ya existen.</p>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Alta de Artículo</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Almacenes / Articulos / Agregar</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:16px;font-weight:700">Nuevo Artículo</div>
+              <div style="font-size:11px;color:#94A3B8;margin-top:2px">Los campos con <span style="color:#CC1F1A">*</span> son obligatorios</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <span class="screen-btn">Cancelar</span>
+              <span class="screen-btn primario">Guardar</span>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Datos del artículo</div>
+            <div class="cuerpo">
+              <div class="screen-campos dos" style="grid-template-columns:1fr 1fr">
+                <div class="screen-campo">
+                  <div class="et">Código <span class="req">*</span></div>
+                  <div class="val foco">TORN-M8-40</div>
+                </div>
+                <div class="screen-campo">
+                  <div class="et">Tipo <span class="req">*</span></div>
+                  <div class="val lista">Insumo</div>
+                </div>
+              </div>
+              <div class="screen-campos" style="margin-top:14px">
+                <div class="screen-campo">
+                  <div class="et">Descripción <span class="req">*</span></div>
+                  <div class="val">Tornillo hexagonal M8 x 40 mm</div>
+                </div>
+              </div>
+              <div class="screen-campos tres" style="grid-template-columns:1fr 1fr 1fr;margin-top:14px">
+                <div class="screen-campo">
+                  <div class="et">Unidad de medida <span class="req">*</span></div>
+                  <div class="val lista">Unidad</div>
+                </div>
+                <div class="screen-campo">
+                  <div class="et">Punto de pedido</div>
+                  <div class="val">200</div>
+                </div>
+                <div class="screen-campo">
+                  <div class="et">Cantidad por caja</div>
+                  <div class="val vacio">—</div>
+                </div>
+              </div>
+              <div style="margin-top:16px;display:flex;align-items:center;gap:8px">
+                <span style="display:inline-block;width:14px;height:14px;border:1px solid #DDE3EE;border-radius:3px;background:#fff"></span>
+                <span style="font-size:12px;color:#334155">¿Lotear artículo?</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>El formulario de alta.</strong> El <em>código</em> lo escribís vos y tiene que ser único dentro de tu empresa; el identificador interno lo pone el sistema y no se toca.</figcaption>
+  </figure>
+
+  <div class="sub-title">Lotear un artículo</div>
+
+  <p class="intro-text">Si tildás <strong>¿Lotear artículo?</strong>, a partir de ahí las existencias de ese artículo se llevan <strong>por lote dentro de cada depósito</strong>, y al recibirlo vas a tener que indicar el número de lote. Sirve para lo que necesita trazabilidad —una partida de pintura, un rollo de cable, mercadería con vencimiento—: después podés saber de qué lote salió cada entrega.</p>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">El punto de pedido</div>
+      <div class="alert-text">Es el mínimo que querés tener. Cuando la existencia disponible cae por debajo de ese número, el artículo aparece en la pantalla de <strong>Punto de Pedido</strong> para que lo repongas. Es <strong>uno solo por artículo</strong>, no uno por depósito.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Editar y dar de baja</div>
+
+  <div class="steps">
+    <div class="step teal-accent">
+      <div class="step-num teal">1</div>
+      <div class="step-body">
+        <div class="step-title">Editar</div>
+        <div class="step-desc">La descripción, el tipo y el punto de pedido los podés cambiar cuando quieras. El <strong>código</strong> y la <strong>unidad de medida</strong> no: cambiarlos con existencias cargadas alteraría el significado de todo lo que ya se movió. Si hay que corregirlos, lo hace un Administrador de la empresa.</div>
+      </div>
+    </div>
+    <div class="step red-accent">
+      <div class="step-num red">2</div>
+      <div class="step-body">
+        <div class="step-title">Dar de baja</div>
+        <div class="step-desc">La baja es <strong>lógica</strong>: el artículo no se borra nunca, para no perder el rastro de lo que se movió con él. Queda marcado en la columna Estado y deja de ofrecerse en los pedidos nuevos. <strong>No se puede dar de baja un artículo que todavía tiene existencias</strong>: primero hay que dejarlo en cero.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s03" class="section">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-meta">
+      <h2>Pedir materiales</h2>
+      <span class="role-badge">Solicitante</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Un pedido es la forma de decirle al almacén qué necesitás. No saca nada del estante: abre un circuito que alguien tiene que aprobar y después entregar.</p>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Pedido de Materiales</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Almacenes / Pedido Materiales</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+            <div style="font-size:16px;font-weight:700">Pedidos de Materiales</div>
+            <span class="screen-btn primario">Agregar</span>
+          </div>
+          <div class="screen-scroll">
+            <table class="screen-tabla">
+              <thead>
+                <tr><th></th><th>Pedido</th><th>Ord. Trabajo</th><th>Fecha</th><th>Detalle</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color:#94A3B8">&#128065;</td><td class="num">1041</td><td>OT-2088</td><td>25/08/2026</td>
+                  <td>Repuestos bomba B-12</td><td><span class="screen-estado creada">Creada</span></td>
+                </tr>
+                <tr>
+                  <td style="color:#94A3B8">&#128065;</td><td class="num">1038</td><td>—</td><td>22/08/2026</td>
+                  <td>Insumos de limpieza</td><td><span class="screen-estado aprobado">Aprobado</span></td>
+                </tr>
+                <tr>
+                  <td style="color:#94A3B8">&#128065;</td><td class="num">1035</td><td>OT-2081</td><td>19/08/2026</td>
+                  <td>Tornillería línea 2</td><td><span class="screen-estado parcial">Ent. Parcial</span></td>
+                </tr>
+                <tr>
+                  <td style="color:#94A3B8">&#128065;</td><td class="num">1030</td><td>OT-2074</td><td>14/08/2026</td>
+                  <td>Aceite hidráulico</td><td><span class="screen-estado entregado">Entregado</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>El listado de pedidos.</strong> La columna <em>Estado</em> te dice en qué punto del circuito está cada uno. Con <strong>Agregar</strong> arrancás uno nuevo.</figcaption>
+  </figure>
+
+  <div class="sub-title">Cómo se arma un pedido</div>
+
+  <div class="steps">
+    <div class="step teal-accent">
+      <div class="step-num teal">1</div>
+      <div class="step-body">
+        <div class="step-title">Escribí la justificación</div>
+        <div class="step-desc">Es <strong>obligatoria siempre</strong>, venga el pedido de una orden de trabajo o no. Es lo que va a leer quien tenga que aprobarlo, así que conviene que se entienda sin preguntar.</div>
+      </div>
+    </div>
+    <div class="step teal-accent">
+      <div class="step-num teal">2</div>
+      <div class="step-body">
+        <div class="step-title">Agregá los artículos</div>
+        <div class="step-desc">Buscá cada uno, poné la cantidad y sumalo al detalle. Podés pedir la cantidad que necesites: el sistema no te frena aunque no haya existencias, porque pedir no es sacar.</div>
+      </div>
+    </div>
+    <div class="step teal-accent">
+      <div class="step-num teal">3</div>
+      <div class="step-body">
+        <div class="step-title">Elegí a qué depósito le pedís</div>
+        <div class="step-desc">Primero el establecimiento y después el depósito: la lista de depósitos se acomoda al establecimiento que elegiste.</div>
+      </div>
+    </div>
+    <div class="step teal-accent">
+      <div class="step-num teal">4</div>
+      <div class="step-body">
+        <div class="step-title">Guardá</div>
+        <div class="step-desc">El pedido queda en estado <strong>Creada</strong> y arranca el circuito de aprobación.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Los estados de un pedido</div>
+
+  <p class="intro-text">El estado no lo cambiás vos: lo va moviendo el circuito a medida que cada uno hace lo suyo.</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Estado</th><th>Qué significa</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="screen-estado creada">Creada</span></td><td>Recién pedido. Todavía nadie lo miró.</td></tr>
+      <tr><td><span class="screen-estado aprobado">Aprobado</span></td><td>Lo aprobaron. El almacén ya puede entregarlo.</td></tr>
+      <tr><td><span class="screen-estado rechazado">Rechazado</span></td><td>No se aprobó. El motivo queda registrado.</td></tr>
+      <tr><td><span class="screen-estado parcial">Ent. Parcial</span></td><td>Te entregaron una parte. Sigue abierto por el saldo.</td></tr>
+      <tr><td><span class="screen-estado entregado">Entregado</span></td><td>Te entregaron todo lo pedido. Cerrado.</td></tr>
+      <tr><td><span class="screen-estado parcial">Finalizado Ent. Parcial</span></td><td>Se cerró con lo que se había entregado: el saldo ya no se espera.</td></tr>
+      <tr><td><span class="screen-estado rechazado">Finalizado Sin Entrega</span></td><td>Se cerró sin entregar nada.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Un pedido no se edita</div>
+      <div class="alert-text">Una vez guardado, no hay forma de cambiarle los artículos ni las cantidades. Si te equivocaste, avisá para que lo rechacen y cargá uno nuevo.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s04" class="section">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-meta">
+      <h2>Recibir materiales</h2>
+      <span class="role-badge">Responsable de Almacén</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Llega la mercadería del proveedor con su remito y alguien la carga. <strong>No hay orden de compra</strong>: se recibe lo que llega. Ésta es la operación que hace subir el stock.</p>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Recepción de Materiales</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Almacenes / Recepción Materiales / Agregar</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Comprobante</div>
+            <div class="cuerpo">
+              <div class="screen-campos tres" style="grid-template-columns:1fr 1fr 1fr">
+                <div class="screen-campo">
+                  <div class="et">N° de comprobante</div>
+                  <div class="val">0001-00042318</div>
+                </div>
+                <div class="screen-campo">
+                  <div class="et">Fecha</div>
+                  <div class="val">25/08/2026</div>
+                </div>
+                <div class="screen-campo">
+                  <div class="et">Proveedor</div>
+                  <div class="val lista">Ferretería del Oeste SRL</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Artículos recibidos</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead>
+                    <tr><th>Código</th><th>Descripción</th><th>Lote</th><th class="num">Cantidad</th><th>Depósito</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>TORN-M8-40</td><td>Tornillo hexagonal M8 x 40 mm</td><td style="color:#94A3B8">—</td><td class="num">500</td><td>Depósito Central</td></tr>
+                    <tr><td>PINT-EPOX-20</td><td>Pintura epoxi gris · balde 20 L</td><td>L-2608-A</td><td class="num">12</td><td>Depósito Central</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>La recepción.</strong> El tornillo no es loteado y por eso su lote va vacío; la pintura sí, así que el número de lote es obligatorio.</figcaption>
+  </figure>
+
+  <div class="steps">
+    <div class="step teal-accent">
+      <div class="step-num teal">1</div>
+      <div class="step-body">
+        <div class="step-title">Transcribí el comprobante</div>
+        <div class="step-desc">El número es <strong>tal cual figura en el papel</strong> que trae el proveedor. El sistema no lo valida ni exige que sea único: es un dato de referencia para que después puedas encontrar la recepción.</div>
+      </div>
+    </div>
+    <div class="step teal-accent">
+      <div class="step-num teal">2</div>
+      <div class="step-body">
+        <div class="step-title">Cargá cada artículo</div>
+        <div class="step-desc">Con su cantidad y el depósito donde lo estás guardando. Si el artículo es loteado, el <strong>número de lote lo escribís vos</strong>: ponés el que trae la partida.</div>
+      </div>
+    </div>
+    <div class="step teal-accent">
+      <div class="step-num teal">3</div>
+      <div class="step-body">
+        <div class="step-title">Guardá</div>
+        <div class="step-desc">El stock de ese depósito sube por lo que cargaste.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Revisá antes de guardar</div>
+      <div class="alert-text">Una recepción registrada <strong>no se corrige ni se anula</strong>. Si cargaste mal una cantidad, la única forma de arreglarlo es un <strong>ajuste de stock</strong>, que deja constancia de la corrección.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s05" class="section">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-meta">
+      <h2>Entregar materiales</h2>
+      <span class="role-badge">Responsable de Almacén</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Es el momento en que la mercadería sale del almacén y el stock baja. Hay dos caminos.</p>
+
+  <div class="sub-title">Entrega contra un pedido</div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Entrega de Materiales</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Almacenes / Entrega Materiales / Pedido 1038</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Pedido 1038 · Insumos de limpieza</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead>
+                    <tr><th>Artículo</th><th>Descripción</th><th>Lote</th><th class="num">Pedido</th><th class="num">Ya entregado</th><th class="num">Entrego ahora</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>DET-IND-5</td><td>Detergente industrial · 5 L</td><td>L-2511-C</td>
+                      <td class="num">10</td><td class="num">0</td>
+                      <td class="num" style="font-weight:600">10</td>
+                      <td><span style="color:#16A34A">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                      <td>TRAP-ALG</td><td>Trapo de algodón · kg</td><td style="color:#94A3B8">—</td>
+                      <td class="num">25</td><td class="num">0</td>
+                      <td class="num" style="font-weight:600">15</td>
+                      <td><span class="screen-estado parcial">parcial</span></td>
+                    </tr>
+                    <tr style="background:#FAFBFD">
+                      <td>GUAN-NIT-M</td><td>Guantes de nitrilo · talle M</td><td style="color:#94A3B8">—</td>
+                      <td class="num">40</td><td class="num">40</td>
+                      <td class="num" style="color:#94A3B8">—</td>
+                      <td><span class="screen-estado entregado">completo</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn ok">Confirmar entrega</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>La pantalla de entrega.</strong> Los guantes ya se entregaron completos, así que la fila no ofrece cargar nada. Del trapo se entregan 15 de 25: el pedido queda abierto por el saldo.</figcaption>
+  </figure>
+
+  <div class="steps">
+    <div class="step teal-accent">
+      <div class="step-num teal">1</div>
+      <div class="step-body">
+        <div class="step-title">Abrí el pedido pendiente</div>
+        <div class="step-desc">Ves qué se pidió, cuánto se entregó hasta ahora y cuánto falta.</div>
+      </div>
+    </div>
+    <div class="step teal-accent">
+      <div class="step-num teal">2</div>
+      <div class="step-body">
+        <div class="step-title">Elegí el lote y cargá la cantidad</div>
+        <div class="step-desc">Vos elegís de qué lote y de qué depósito sale la mercadería. <strong>No podés entregar más de lo pedido</strong>, ni sacar de un lote que no tenga existencias.</div>
+      </div>
+    </div>
+    <div class="step teal-accent">
+      <div class="step-num teal">3</div>
+      <div class="step-body">
+        <div class="step-title">Confirmá</div>
+        <div class="step-desc">El stock baja del lote y del depósito que elegiste, y el pedido pasa a <strong>Entregado</strong> o a <strong>Ent. Parcial</strong> según hayas cubierto todo o una parte.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Entrega directa, sin pedido</div>
+
+  <p class="intro-text">El botón <strong>Entrega Materiales Directa</strong> permite sacar mercadería sin que haya un pedido detrás. Existe a propósito: no todas las empresas tienen un circuito formal para cada salida, y exigir un pedido por un puñado de tornillos no siempre es realista.</p>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Saltea la aprobación</div>
+      <div class="alert-text">Como no hay pedido, tampoco hay nadie que lo apruebe. Por eso <strong>solo el Responsable de Almacén</strong> puede hacer entregas directas: el control está en quién puede usarla.</div>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Una entrega no se anula</div>
+      <div class="alert-text">Igual que la recepción: si te equivocaste, se corrige con un <strong>ajuste de stock</strong>.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s06" class="section">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-meta">
+      <h2>Ajustar el stock</h2>
+      <span class="role-badge">Responsable de Almacén</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Cuando lo que dice el sistema no coincide con lo que hay en el estante, el ajuste es la forma de emparejarlos. Es también la única manera de corregir una recepción o una entrega mal cargadas.</p>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Nuevo Ajuste de Stock</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Almacenes / Ajustes de Stock / Nuevo Ajuste</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Dónde</div>
+            <div class="cuerpo">
+              <div class="screen-campos dos" style="grid-template-columns:1fr 1fr">
+                <div class="screen-campo">
+                  <div class="et">Establecimiento</div>
+                  <div class="val lista">Planta San Juan</div>
+                </div>
+                <div class="screen-campo">
+                  <div class="et">Depósito</div>
+                  <div class="val lista">Depósito Central</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Líneas del ajuste</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead>
+                    <tr><th>Artículo</th><th>Lote</th><th>Entrada / Salida</th><th>Tipo de ajuste</th><th class="num">Cantidad</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>TORN-M8-40</td><td style="color:#94A3B8">—</td>
+                      <td><span class="screen-estado rechazado">Salida</span></td>
+                      <td>Faltante de inventario</td><td class="num">-18</td>
+                    </tr>
+                    <tr>
+                      <td>PINT-EPOX-20</td><td>L-2608-A</td>
+                      <td><span class="screen-estado entregado">Entrada</span></td>
+                      <td>Error de carga en recepción</td><td class="num">2</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Justificación</div>
+            <div class="cuerpo">
+              <div class="screen-campo">
+                <div class="val" style="min-height:52px">Recuento físico del 25/08. Faltan 18 tornillos y la recepción del remito 0001-00042318 se cargó con 2 baldes de menos.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar ajuste</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Un ajuste con dos líneas.</strong> Cada línea lleva su propio tipo de ajuste y dice si suma o resta; una salida se guarda en negativo.</figcaption>
+  </figure>
+
+  <div class="steps">
+    <div class="step amber-accent">
+      <div class="step-num amber">1</div>
+      <div class="step-body">
+        <div class="step-title">Ubicá el ajuste</div>
+        <div class="step-desc">Elegí el establecimiento y el depósito. A partir de ahí se te ofrecen los lotes que hay ahí.</div>
+      </div>
+    </div>
+    <div class="step amber-accent">
+      <div class="step-num amber">2</div>
+      <div class="step-body">
+        <div class="step-title">Cargá cada línea</div>
+        <div class="step-desc">El ajuste se aplica <strong>sobre un lote concreto</strong>, no sobre el artículo en general. Indicá si es entrada o salida, la cantidad, y el <strong>tipo de ajuste de esa línea</strong> — cada una puede tener el suyo.</div>
+      </div>
+    </div>
+    <div class="step amber-accent">
+      <div class="step-num amber">3</div>
+      <div class="step-body">
+        <div class="step-title">Justificá y guardá</div>
+        <div class="step-desc">La justificación es lo que va a leer el que audite la diferencia dentro de seis meses. Vale la pena escribirla bien.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Quién puede ajustar</div>
+      <div class="alert-text">Solo el <strong>Responsable de Almacén</strong>. Un ajuste cambia las cantidades sin que haya entrado ni salido nada, así que es la operación más delicada del módulo.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s07" class="section">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-meta">
+      <h2>Mover material entre depósitos</h2>
+      <span class="role-badge">Responsable de Almacén</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Cuando la mercadería cambia de depósito, el movimiento se registra en dos pasos: primero sale de un lado y después se recibe del otro. La cantidad total de la empresa no cambia; lo que cambia es dónde está.</p>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-label">Salida</div>
+      <div class="flow-sub">El depósito de origen descuenta</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-label">En tránsito</div>
+      <div class="flow-sub">No figura en ningún depósito</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-label">Recepción</div>
+      <div class="flow-sub">El depósito de destino suma</div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Mientras viaja, la mercadería "no está"</div>
+      <div class="alert-text">Entre la salida y la recepción no aparece en ningún depósito. Es a propósito: el manejo del tránsito es informal. Por eso conviene <strong>no dejar movimientos abiertos</strong> más de lo necesario.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">La salida</div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Movimientos Internos</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Almacenes / Movimientos Internos</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+            <div style="font-size:16px;font-weight:700">Movimientos Internos</div>
+            <div style="display:flex;gap:8px">
+              <span class="screen-btn primario">Nueva Salida</span>
+              <span class="screen-btn">Nueva Recepción</span>
+            </div>
+          </div>
+          <div class="screen-scroll">
+            <table class="screen-tabla">
+              <thead>
+                <tr><th>Remito</th><th>Fecha y hora</th><th>Depósito origen</th><th>Depósito destino</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="num">318</td><td>25/08/2026 09:14</td><td>Depósito Central</td><td>Pañol Línea 2</td><td><span class="screen-estado parcial">En tránsito</span></td></tr>
+                <tr><td class="num">317</td><td>24/08/2026 16:02</td><td>Depósito Central</td><td>Obrador Norte</td><td><span class="screen-estado entregado">Recibido</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>El listado.</strong> El remito 318 salió pero todavía nadie lo recibió: esa mercadería no figura hoy en ningún depósito.</figcaption>
+  </figure>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Nunca se saca más de lo que hay</div>
+      <div class="alert-text">Si ponés una cantidad mayor a la del lote, la pantalla te avisa cuántas unidades tiene y no te deja seguir. Y una salida confirmada <strong>no se anula</strong>.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">La recepción</div>
+
+  <p class="intro-text">Del otro lado, quien recibe carga lo que efectivamente llegó. Si el número no coincide con el que salió, la pantalla lo detecta y <strong>exige una justificación</strong> antes de dejarte confirmar: es la forma de que una diferencia nunca pase inadvertida.</p>
+</section>
+
+<section id="s08" class="section">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-meta">
+      <h2>Consultas e informes</h2>
+      <span class="role-badge">Responsable de Almacén</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Cinco pantallas para mirar, ninguna para operar.</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Pantalla</th><th>Para qué sirve</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Stock</strong></td>
+        <td>Qué hay y dónde. Muestra la <strong>existencia física</strong>. Podés filtrar por establecimiento, depósito, tipo de artículo, y pedir que incluya los artículos que están en cero.</td>
+      </tr>
+      <tr>
+        <td><strong>Punto de Pedido</strong></td>
+        <td>Qué hay que reponer: los artículos cuya <strong>existencia disponible</strong> cayó por debajo de su punto de pedido.</td>
+      </tr>
+      <tr>
+        <td><strong>Entrega Detallada</strong></td>
+        <td>Qué se entregó en un período, con su detalle. Se filtra por fechas, establecimiento y depósito.</td>
+      </tr>
+      <tr>
+        <td><strong>Stock Valorizado</strong></td>
+        <td>Cuánto vale lo que tenés. Solo aparece con contenido si tu empresa carga precios al recibir.</td>
+      </tr>
+      <tr>
+        <td><strong>Mov. Históricos de Stock</strong></td>
+        <td>Todo lo que le pasó a un artículo, movimiento por movimiento.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Punto de pedido: cómo se calcula el disponible</div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Punto de Pedido</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Almacenes / Punto de Pedido</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-scroll">
+            <table class="screen-tabla">
+              <thead>
+                <tr><th>Producto</th><th>Código</th><th class="num">Punto pedido</th><th class="num">Cant. stock</th><th class="num">Cant. disponible</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Tornillo hexagonal M8 x 40 mm</td><td>TORN-M8-40</td>
+                  <td class="num">200</td><td class="num">320</td>
+                  <td class="num" style="color:#CC1F1A;font-weight:700">145</td>
+                </tr>
+                <tr>
+                  <td>Detergente industrial · 5 L</td><td>DET-IND-5</td>
+                  <td class="num">30</td><td class="num">24</td>
+                  <td class="num" style="color:#CC1F1A;font-weight:700">14</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Por qué aparece el tornillo si tiene 320 en stock.</strong> Porque 175 ya están comprometidos en pedidos abiertos: quedan 145 disponibles, por debajo de los 200 del punto de pedido.</figcaption>
+  </figure>
+
+  <p class="intro-text">La cuenta es <strong>existencia física menos lo comprometido en pedidos que todavía no se cerraron</strong>. Un pedido cuenta como comprometido desde que se crea, aunque nadie lo haya aprobado todavía; deja de contar cuando se entrega, se rechaza, se cancela o se finaliza.</p>
+
+  <div class="sub-title">Stock Valorizado</div>
+
+  <p class="intro-text">El valor de cada existencia es <strong>el precio que se cargó al recibir la mercadería</strong>, no el de una lista de precios. Esto se activa por empresa: si la tuya tiene la valorización habilitada, la pantalla de recepción te pide además el precio unitario en pesos y en dólares.</p>
+
+  <div class="sub-title">Movimientos históricos</div>
+
+  <p class="intro-text">El informe incluye <strong>todos</strong> los tipos de movimiento, así que sumándolos se puede reconstruir cómo llegó el stock a estar como está:</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Tipo</th><th>De dónde viene</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Recepción Materiales</td><td>Almacén · entra mercadería</td></tr>
+      <tr><td>Entrega Materiales</td><td>Almacén · sale mercadería</td></tr>
+      <tr><td>Mov. Interno Ingreso / Egreso</td><td>Almacén · cambia de depósito</td></tr>
+      <tr><td>Ajuste Stock</td><td>Almacén · corrección</td></tr>
+      <tr><td>Consumo de MP en Etapa Productiva</td><td>Producción</td></tr>
+      <tr><td>Consumo de Producto Semi Terminado</td><td>Producción</td></tr>
+      <tr><td>Salida de Producto de Etapa Productiva</td><td>Producción</td></tr>
+    </tbody>
+  </table>
+</section>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script src="manual.js"></script>
+
+</body>
+</html>

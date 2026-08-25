@@ -45,6 +45,7 @@ validaciones:
   - "Una recepción registrada no se corrige ni se anula: toda corrección se hace por un ajuste de stock (ALM-UC-014)"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s04
   feature: features/alm/ALM-UC-009.registrar-la-recepcion-de-materiales-de-un-prove.feature
 notas:
   - "**No hay orden de compra en el módulo**: la mercadería llega y alguien la carga. Confirmado por el PM."

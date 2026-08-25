@@ -43,6 +43,7 @@ validaciones:
   - "Una entrega registrada no se anula ni se corrige: toda corrección se hace por un ajuste de stock (ALM-UC-014)"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s05
   feature: features/alm/ALM-UC-010.entregar-materiales-contra-un-pedido.feature
 notas:
   - "**Lo de 'no entregar de más' hoy lo protege la pantalla, no el servidor.** La vista oculta el botón de agregar entrega cuando `cant_pedida <= cant_entregada` o `cant_disponible == 0`, pero `Ordeninsumos::insert_entrega_materiales()` acepta el `resto` que venga del formulario sin recalcularlo. Es el mismo patrón que en DNATO: la vista protege y el servidor no revalida (H-041)."

@@ -31,6 +31,7 @@ validaciones:
   - "Solo se listan artículos de la empresa de la sesión"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s08
   feature: features/alm/ALM-UC-015.ver-los-articulos-que-llegaron-al-punto-de-pedid.feature
 notas:
   - "**El cálculo exacto, relevado de `Lotes::getPuntoPedido()`**: `disponible = SUM(alm_lotes.cantidad) − reservado`, donde `reservado` es la suma del campo `resto` de los detalles de pedidos de la empresa cuyo estado **no** es `Entregado`, `Rechazado`, `Cancelado`, `Finalizado Ent. Parcial` ni `Finalizado Sin Entrega`. Se listan los artículos con `disponible < punto_pedido`."

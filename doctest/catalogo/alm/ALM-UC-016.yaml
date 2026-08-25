@@ -39,6 +39,7 @@ validaciones:
   - "Una salida confirmada no se anula"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s07
   feature: features/alm/ALM-UC-016.mover-mercaderia-entre-depositos-salida.feature
 notas:
   - "El manejo del tránsito es informal y fue pedido así (PM, 2026-08-25): entre la salida y la recepción la mercadería 'no está' en ningún lado. La diferencia, si la hay, se resuelve al recibir con una justificación obligatoria (ALM-UC-017)."

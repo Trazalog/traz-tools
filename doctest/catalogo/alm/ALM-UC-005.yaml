@@ -40,6 +40,7 @@ validaciones:
   - "Los depósitos ofrecidos son los del establecimiento elegido"
 dudas: []
 derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s08
   feature: features/alm/ALM-UC-005.consultar-el-stock-por-establecimiento-y-deposit.feature
 notas:
   - "La existencia **disponible** —física menos lo comprometido— es otra cosa y se usa en el punto de pedido (ALM-UC-015)."
