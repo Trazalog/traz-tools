@@ -41,7 +41,7 @@ validaciones:
   - "El ajuste queda registrado con su justificación"
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s06
+  ayuda: ayudas/src/alm/manual_almacenes.html#s07
   feature: features/alm/ALM-UC-014.registrar-un-ajuste-de-stock.feature
 notas:
   - "ADR-012 deja explícitamente fuera del piloto MCP las operaciones que mueven stock, y ésta es una de ellas."

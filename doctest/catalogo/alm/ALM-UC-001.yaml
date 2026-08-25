@@ -38,7 +38,7 @@ datos_prueba:
   precondicion: "la empresa tiene al menos un artículo cargado"
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s02
+  ayuda: ayudas/src/alm/manual_almacenes.html#s03
   feature: features/alm/ALM-UC-001.ver-el-listado-de-articulos-del-almacen.feature
 notas:
   - "Relevado contra `origin/develop` del submódulo, que es lo desplegado en el DEMO — el puntero de develop-v3 está 25 commits atrás (H-038 / issue #481)."

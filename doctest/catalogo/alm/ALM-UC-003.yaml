@@ -30,7 +30,7 @@ validaciones:
   - "El código y la unidad de medida solo los puede cambiar un Administrador de la empresa: cambiarlos con existencias o con movimientos ya registrados altera el significado de lo que está cargado"
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s02
+  ayuda: ayudas/src/alm/manual_almacenes.html#s03
   feature: features/alm/ALM-UC-003.editar-un-articulo.feature
 notas:
   - "`update_editar($data, $id)` arma el WHERE solo con el id del artículo, sin empresa: con el id de un artículo ajeno se podría editar el de otra empresa. NO se ejecutó la prueba para no alterar datos de otra empresa — el hallazgo es lo que dice el código (H-037 / issue #479)."

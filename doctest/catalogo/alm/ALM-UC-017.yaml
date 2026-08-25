@@ -31,7 +31,7 @@ validaciones:
   - "El stock del depósito de destino sube por la cantidad efectivamente recibida"
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s07
+  ayuda: ayudas/src/alm/manual_almacenes.html#s08
   feature: features/alm/ALM-UC-017.mover-mercaderia-entre-depositos-recepcion.feature
 notas:
   - "La justificación por diferencia la exige la pantalla: `views/depositos/MovimientoRecepcion.php` compara contra la cantidad enviada y muestra *«La cantidad ingresada es distinta a la cantidad enviada, por favor ingrese justificación»*, revelando el campo obligatorio."

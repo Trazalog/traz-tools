@@ -31,7 +31,7 @@ validaciones:
   - "El informe solo incluye entregas de la empresa de la sesión"
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s08
+  ayuda: ayudas/src/alm/manual_almacenes.html#s09
   feature: features/alm/ALM-UC-012.consultar-el-detalle-de-las-entregas-de-un-perio.feature
 notas:
   - "**'Obras' no es lo mismo que orden de trabajo.** Es un formulario dinámico que se carga a mano y solo se usa en clientes constructores; para el resto de las empresas el filtro queda vacío. Confirmado por el PM."

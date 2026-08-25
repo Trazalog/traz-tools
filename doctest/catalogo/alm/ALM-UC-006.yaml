@@ -62,7 +62,7 @@ datos_prueba:
   cantidad: 1
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s03
+  ayuda: ayudas/src/alm/manual_almacenes.html#s04
   feature: features/alm/ALM-UC-006.pedir-materiales-al-almacen.feature
 notas:
   - "Es el flujo central del módulo y el que ADR-012 elige para la única escritura del piloto MCP."

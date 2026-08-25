@@ -37,13 +37,14 @@
     <div class="nav-section">
       <div class="nav-label">En este manual</div>
       <a class="nav-item" href="#s01"><span class="nav-num">01</span> Cómo funciona el almacén</a>
-      <a class="nav-item" href="#s02"><span class="nav-num">02</span> Los artículos</a>
-      <a class="nav-item" href="#s03"><span class="nav-num">03</span> Pedir materiales</a>
-      <a class="nav-item" href="#s04"><span class="nav-num">04</span> Recibir materiales</a>
-      <a class="nav-item" href="#s05"><span class="nav-num">05</span> Entregar materiales</a>
-      <a class="nav-item" href="#s06"><span class="nav-num">06</span> Ajustar el stock</a>
-      <a class="nav-item" href="#s07"><span class="nav-num">07</span> Mover material entre depósitos</a>
-      <a class="nav-item" href="#s08"><span class="nav-num">08</span> Consultas e informes</a>
+      <a class="nav-item" href="#s02"><span class="nav-num">02</span> Preparar el módulo</a>
+      <a class="nav-item" href="#s03"><span class="nav-num">03</span> Los artículos</a>
+      <a class="nav-item" href="#s04"><span class="nav-num">04</span> Pedir materiales</a>
+      <a class="nav-item" href="#s05"><span class="nav-num">05</span> Recibir materiales</a>
+      <a class="nav-item" href="#s06"><span class="nav-num">06</span> Entregar materiales</a>
+      <a class="nav-item" href="#s07"><span class="nav-num">07</span> Ajustar el stock</a>
+      <a class="nav-item" href="#s08"><span class="nav-num">08</span> Mover material entre depósitos</a>
+      <a class="nav-item" href="#s09"><span class="nav-num">09</span> Consultas e informes</a>
     </div>
 
     <div class="nav-section">
@@ -161,20 +162,24 @@
 
   <div class="sub-title">Por dónde empezar si tu empresa es nueva</div>
 
-  <p class="intro-text">Si acabás de registrar tu empresa, el almacén está vacío y hay un orden para llenarlo. Saltear un paso hace que el siguiente no funcione, y ése es el motivo más común de <em>“no me aparece nada en la lista”</em>.</p>
+  <p class="intro-text">Si acabás de registrar tu empresa, el almacén está vacío y hay un orden para llenarlo. Saltear un paso hace que el siguiente no funcione, y ése es el motivo más común de <em>“no me aparece nada en la lista”</em>. Acá va el mapa; el detalle de cada cosa está en la <strong>sección 02</strong>.</p>
 
   <div class="secuencia">
     <div class="paso">
       <div class="paso-titulo">Tus establecimientos y depósitos</div>
-      <div class="paso-texto">Un <strong>establecimiento</strong> es un lugar físico —una planta, un obrador, un galpón— y un <strong>depósito</strong> es un espacio dentro de él. Todo el módulo pide siempre las dos cosas, así que sin al menos uno de cada no vas a poder cargar nada. Se dan de alta desde <strong>Configuración → ABM Establecimientos</strong>.</div>
+      <div class="paso-texto">Un <strong>establecimiento</strong> es un lugar físico —una planta, un obrador, un galpón— y un <strong>depósito</strong> es un espacio dentro de él. Todo el módulo pide siempre las dos cosas, así que sin al menos uno de cada no vas a poder cargar nada.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Quién es encargado de cada depósito, y quién tiene el rol</div>
+      <div class="paso-texto">Son <strong>dos permisos distintos</strong> y hacen falta los dos: el <em>rol</em> hace que a la persona le aparezca el menú de Almacenes, y ser <em>encargado</em> de un depósito es lo que le permite ver su stock.</div>
     </div>
     <div class="paso">
       <div class="paso-titulo">Tus artículos</div>
-      <div class="paso-texto">Cada cosa que el almacén va a guardar. Es lo que se explica en la sección 02. <strong>Hasta que no tengas artículos, ninguna otra pantalla te va a ofrecer nada para elegir.</strong></div>
+      <div class="paso-texto">Cada cosa que el almacén va a guardar. Es lo que se explica en la sección 03. <strong>Hasta que no tengas artículos, ninguna otra pantalla te va a ofrecer nada para elegir.</strong></div>
     </div>
     <div class="paso">
       <div class="paso-titulo">Tus proveedores</div>
-      <div class="paso-texto">Se cargan en <strong>Configuración → ABM Proveedores</strong>. Los vas a necesitar recién cuando registres la primera recepción de mercadería.</div>
+      <div class="paso-texto">Los vas a necesitar recién cuando registres la primera recepción de mercadería, pero conviene cargarlos todos juntos al principio: desde la pantalla de recepción no se pueden crear.</div>
     </div>
     <div class="paso">
       <div class="paso-titulo">Tu primera recepción</div>
@@ -190,7 +195,7 @@
     <div class="alert-bar"></div>
     <div class="alert-body">
       <div class="alert-label">Si una lista te aparece vacía, casi siempre es esto</div>
-      <div class="alert-text">No suele ser un problema de permisos: es que falta cargar algo de la cadena de arriba. Sin depósitos no hay dónde guardar; sin artículos no hay qué elegir; sin recepciones no hay stock del que sacar.</div>
+      <div class="alert-text">Falta cargar algo de la cadena de arriba: sin depósitos no hay dónde guardar, sin artículos no hay qué elegir, sin recepciones no hay stock del que sacar. Y si el menú de Almacenes se ve pero <strong>todas las pantallas de stock aparecen vacías</strong>, casi seguro es que no estás puesto como encargado de ningún depósito — ver sección 02.</div>
     </div>
   </div>
 
@@ -220,6 +225,240 @@
 <section id="s02" class="section">
   <div class="section-header">
     <div class="section-num">02</div>
+    <div class="section-meta">
+      <h2>Preparar el módulo</h2>
+      <span class="role-badge">Administrador de la empresa</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Antes de que alguien pueda pedir o entregar algo, hay que dejar cargados los datos sobre los que trabaja todo el módulo. Son <strong>cuatro cosas</strong> y se hacen una sola vez.</p>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Esta sección la hace el Administrador, no el Responsable de Almacén</div>
+      <div class="alert-text">Todo lo que sigue está en el menú <strong>Configuración</strong> y en <strong>Gestión de Usuarios</strong>. Es el mismo usuario que dio de alta la empresa al registrarse.</div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <thead><tr><th>Qué</th><th>Dónde</th><th>Sin eso, no podés…</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Establecimientos y depósitos</strong></td><td>Configuración → ABM Establecimientos</td><td>…cargar nada: todo el módulo pide siempre un depósito</td></tr>
+      <tr><td><strong>Encargados de cada depósito</strong></td><td>en la misma pantalla, al crear el depósito</td><td>…ver stock ni entregar, aunque tengas el rol</td></tr>
+      <tr><td><strong>El rol de almacén a cada persona</strong></td><td>Gestión de Usuarios → Asignar Rol</td><td>…ver el menú de Almacenes</td></tr>
+      <tr><td><strong>Proveedores</strong></td><td>Configuración → ABM Proveedores</td><td>…registrar una recepción de materiales</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">1 · Establecimientos y depósitos</div>
+
+  <p class="intro-text">Un <strong>establecimiento</strong> es un lugar físico: una planta, un obrador, un galpón. Un <strong>depósito</strong> es un espacio de guardado dentro de ese lugar. Los depósitos <strong>no tienen pantalla propia</strong>: se cargan adentro de cada establecimiento, y ése es el punto que más cuesta encontrar.</p>
+
+  <div class="secuencia">
+
+    <div class="paso">
+      <div class="paso-titulo">Creá el establecimiento</div>
+      <div class="paso-texto">En <strong>Configuración → ABM Establecimientos</strong>, botón <strong>Nuevo Establecimiento</strong>. Pide nombre, calle, altura, y después país, estado y localidad —cada uno acota al siguiente, así que van en ese orden—.</div>
+      <figure class="screen">
+        <div class="screen-card">
+          <div class="screen-bar">
+            <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+            <span class="screen-caption">Trazalog Tools · Nuevo Establecimiento</span>
+          </div>
+          <div class="screen-body">
+            <div class="screen-app-bar">
+              <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+              <span class="ruta">/ Configuración / ABM Establecimientos</span>
+            </div>
+            <div style="padding:18px 22px">
+              <div class="screen-panel">
+                <div class="cab">Datos del establecimiento</div>
+                <div class="cuerpo">
+                  <div class="screen-campos" style="grid-template-columns:2fr 1fr 1fr;display:grid">
+                    <div class="screen-campo"><div class="et">Nombre <span class="req">*</span></div><div class="val foco">Planta San Juan</div></div>
+                    <div class="screen-campo"><div class="et">Calle <span class="req">*</span></div><div class="val">Ruta 40</div></div>
+                    <div class="screen-campo"><div class="et">Altura <span class="req">*</span></div><div class="val">2450</div></div>
+                  </div>
+                  <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid;margin-top:14px">
+                    <div class="screen-campo"><div class="et">País</div><div class="val lista">Argentina</div></div>
+                    <div class="screen-campo"><div class="et">Estado</div><div class="val lista">San Juan</div></div>
+                    <div class="screen-campo"><div class="et">Localidad</div><div class="val lista">Pocito</div></div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px">
+                <span class="screen-btn">Cerrar</span>
+                <span class="screen-btn primario">Guardar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption class="screen-footer"><strong>País, estado y localidad van en cadena.</strong> Si la lista de localidades te sale vacía, es que falta elegir el estado.</figcaption>
+      </figure>
+    </div>
+
+    <div class="paso">
+      <div class="paso-titulo">Entrá al establecimiento para cargarle depósitos</div>
+      <div class="paso-texto">Ya creado, en la lista lo seleccionás y se abre su detalle. Ahí abajo hay una tabla de <strong>depósitos</strong> con su botón <strong>Agregar</strong>. Éste es el paso que casi nadie encuentra a la primera: los depósitos no están en el menú, viven adentro del establecimiento.</div>
+    </div>
+
+    <div class="paso">
+      <div class="paso-titulo">Creá cada depósito y asignale sus encargados</div>
+      <div class="paso-texto">
+        El depósito pide <strong>nombre</strong>, el <strong>establecimiento asociado</strong> —que ya viene puesto—, una <strong>descripción</strong> y, lo más importante, sus <strong>encargados</strong>.
+        <br><br>
+        Los encargados se eligen de la lista de usuarios de tu empresa, y podés poner más de uno.
+      </div>
+      <figure class="screen">
+        <div class="screen-card">
+          <div class="screen-bar">
+            <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+            <span class="screen-caption">Trazalog Tools · Nuevo Depósito</span>
+          </div>
+          <div class="screen-body">
+            <div class="screen-app-bar">
+              <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+              <span class="ruta">/ Configuración / ABM Establecimientos / Planta San Juan / Depósitos</span>
+            </div>
+            <div style="padding:18px 22px">
+              <div class="screen-panel">
+                <div class="cab">Datos del depósito</div>
+                <div class="cuerpo">
+                  <div class="screen-campos dos" style="grid-template-columns:1fr 1fr">
+                    <div class="screen-campo"><div class="et">Nombre <span class="req">*</span></div><div class="val foco">Depósito Central</div></div>
+                    <div class="screen-campo"><div class="et">Establecimiento asociado <span class="req">*</span></div><div class="val lista">Planta San Juan</div></div>
+                  </div>
+                  <div class="screen-campos" style="margin-top:14px">
+                    <div class="screen-campo"><div class="et">Descripción <span class="req">*</span></div><div class="val">Depósito general de insumos y repuestos</div></div>
+                  </div>
+                  <div class="screen-campos" style="margin-top:14px">
+                    <div class="screen-campo">
+                      <div class="et">Encargados <span class="req">*</span></div>
+                      <div class="val lista">M. Quiroga · R. Olivares</div>
+                      <div class="screen-hint">Solo estas personas van a ver el stock de este depósito</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px">
+                <span class="screen-btn">Cerrar</span>
+                <span class="screen-btn primario">Guardar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption class="screen-footer"><strong>El campo Encargados no es informativo.</strong> Es el que decide qué stock ve cada persona.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Lo más importante de esta sección</div>
+      <div class="alert-text">
+        <strong>El encargado de un depósito es lo que determina qué stock ve una persona.</strong> Alguien que no esté puesto como encargado de ningún depósito va a entrar al módulo, ver el menú completo… y las pantallas de stock le van a aparecer vacías. No es un error del sistema ni le falta un permiso: le falta estar en la lista de encargados.
+        <br><br>
+        Es la causa número uno de <em>“entro a Almacenes y no veo nada”</em>. Si alguien te lo reporta, empezá por acá.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">2 · Darle a alguien el rol de almacén</div>
+
+  <p class="intro-text">Hay <strong>dos permisos distintos</strong> que se suelen confundir, y hacen falta los dos:</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Permiso</th><th>Qué habilita</th><th>Dónde se da</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>El rol de almacén</strong></td>
+        <td>Que le aparezca el <strong>menú</strong> de Almacenes al entrar</td>
+        <td>Gestión de Usuarios → Asignar Rol</td>
+      </tr>
+      <tr>
+        <td><strong>Ser encargado de un depósito</strong></td>
+        <td>Que <strong>vea el stock</strong> de ese depósito y pueda entregar desde él</td>
+        <td>ABM Establecimientos → el depósito → Encargados</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Abrí “Asignar Rol” sobre el usuario</div>
+      <div class="paso-texto">En <strong>Gestión de Usuarios → Lista de Usuarios</strong>, elegí a la persona y usá la acción <strong>Asignar Rol</strong>. Se abre la pantalla <em>Cambio de Rol</em>, con su correo, su perfil actual y la tabla de los roles que ya tiene.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Agregá el rol que corresponda</div>
+      <div class="paso-texto">
+        Botón <strong>Agregar Rol</strong>, elegís la empresa y el rol. Para almacenes hay dos:
+        <br><br>
+        <strong>Responsable de Almacén</strong> — administra: da de alta artículos, recibe, entrega, ajusta y mueve entre depósitos.<br>
+        <strong>Solicitante de Almacén</strong> — solo pide materiales.
+        <br><br>
+        Los dos roles ya existen: los crea el sistema cuando se registra la empresa, no hay que inventarlos.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Guardá, y no te olvides del depósito</div>
+      <div class="paso-texto">
+        Con el rol guardado, la persona ya ve el menú de Almacenes la próxima vez que entre.
+        <br><br>
+        <strong>Si es Responsable de Almacén, volvé al ABM de Establecimientos y ponela como encargada de los depósitos que va a manejar.</strong> Sin ese segundo paso ve el menú pero no ve stock.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">3 · Proveedores</div>
+
+  <p class="intro-text">Se cargan en <strong>Configuración → ABM Proveedores</strong> y son los que vas a poder elegir al registrar una recepción de materiales. Los datos son los de cualquier proveedor: nombre, identificación fiscal y domicilio, con la misma cadena de país → estado → localidad que los establecimientos.</p>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Desde la recepción no se pueden crear</div>
+      <div class="alert-text">Si estás cargando un remito y el proveedor no está en la lista, tenés que salir, darlo de alta acá y volver. Conviene cargarlos todos juntos al principio.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">4 · Unidades de medida y tipos de artículo</div>
+
+  <p class="intro-text">Los dos son <strong>listas de valores</strong> de tu empresa y se administran en <strong>Configuración → ABM Lista de Valores</strong>. Son las opciones que después vas a elegir al dar de alta un artículo, así que conviene revisarlas antes de empezar a cargar.</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Lista</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Unidades de medida</strong></td><td>Unidad, kilos, litros, metros… Es el campo obligatorio del alta de artículo que después no conviene cambiar.</td></tr>
+      <tr><td><strong>Tipos de artículo</strong></td><td>Insumo, Materia Prima, Producto Final… Sirve para filtrar en las consultas de stock.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Acá también se activa la valorización del stock</div>
+      <div class="alert-text">Si querés que el sistema lleve <strong>cuánto vale</strong> lo que tenés guardado, se habilita desde esta misma pantalla. Cuando está activa, la recepción de materiales te pide además el precio unitario, y ese número es el que informa <em>Stock Valorizado</em> (sección 09).</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Lo que NO hace falta tocar</div>
+
+  <p class="intro-text">El menú de Configuración tiene varios ABMs más —Clientes, Envases, Equipos, Transportistas, Listas de Precios—. <strong>Ninguno afecta al módulo de Almacenes</strong>: son de producción, mantenimiento y comercial. Si estás preparando el almacén, podés ignorarlos.</p>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Y algo que no se configura desde el sistema</div>
+      <div class="alert-text">Los <strong>tipos de ajuste</strong> —los motivos que elegís al corregir stock, como “Faltante de inventario” o “Rotura”— vienen precargados y <strong>no tienen pantalla de administración</strong>. Si necesitás uno que no está, elegí el más parecido y aclará el resto en la justificación del ajuste.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s03" class="section">
+  <div class="section-header">
+    <div class="section-num">03</div>
     <div class="section-meta">
       <h2>Los artículos</h2>
       <span class="role-badge">Responsable de Almacén</span>
@@ -364,9 +603,9 @@
   </div>
 </section>
 
-<section id="s03" class="section">
+<section id="s04" class="section">
   <div class="section-header">
-    <div class="section-num">03</div>
+    <div class="section-num">04</div>
     <div class="section-meta">
       <h2>Pedir materiales</h2>
       <span class="role-badge">Solicitante</span>
@@ -483,9 +722,9 @@
   </div>
 </section>
 
-<section id="s04" class="section">
+<section id="s05" class="section">
   <div class="section-header">
-    <div class="section-num">04</div>
+    <div class="section-num">05</div>
     <div class="section-meta">
       <h2>Recibir materiales</h2>
       <span class="role-badge">Responsable de Almacén</span>
@@ -589,9 +828,9 @@
   </div>
 </section>
 
-<section id="s05" class="section">
+<section id="s06" class="section">
   <div class="section-header">
-    <div class="section-num">05</div>
+    <div class="section-num">06</div>
     <div class="section-meta">
       <h2>Entregar materiales</h2>
       <span class="role-badge">Responsable de Almacén</span>
@@ -706,9 +945,9 @@
   </div>
 </section>
 
-<section id="s06" class="section">
+<section id="s07" class="section">
   <div class="section-header">
-    <div class="section-num">06</div>
+    <div class="section-num">07</div>
     <div class="section-meta">
       <h2>Ajustar el stock</h2>
       <span class="role-badge">Responsable de Almacén</span>
@@ -805,8 +1044,8 @@
       <div class="alert tip">
         <div class="alert-bar"></div>
         <div class="alert-body">
-          <div class="alert-label">Los tipos los define tu empresa</div>
-          <div class="alert-text">La lista que ves —“Faltante de inventario”, “Rotura”, “Error de carga”— sale de la configuración de tu empresa, así que puede ser distinta de la de otra. Si te falta un motivo, se agrega ahí.</div>
+          <div class="alert-label">Los tipos de ajuste no se editan desde el sistema</div>
+          <div class="alert-text">La lista que ves —“Faltante de inventario”, “Rotura”, “Error de carga”— viene configurada para tu empresa, pero <strong>no hay una pantalla donde agregar o cambiar motivos</strong>. Si te falta uno, elegí el que más se parezca y explicá el resto en la justificación.</div>
         </div>
       </div>
     </div>
@@ -957,7 +1196,7 @@
       </tr>
       <tr>
         <td><strong>“No hay artículos disponibles”</strong></td>
-        <td>Tu empresa todavía no dio de alta ningún artículo. Empezá por la sección 02 de este manual.</td>
+        <td>Tu empresa todavía no dio de alta ningún artículo. Empezá por la sección 03 de este manual.</td>
       </tr>
     </tbody>
   </table>
@@ -971,9 +1210,9 @@
   </div>
 </section>
 
-<section id="s07" class="section">
+<section id="s08" class="section">
   <div class="section-header">
-    <div class="section-num">07</div>
+    <div class="section-num">08</div>
     <div class="section-meta">
       <h2>Mover material entre depósitos</h2>
       <span class="role-badge">Responsable de Almacén</span>
@@ -1252,9 +1491,9 @@
   </div>
 </section>
 
-<section id="s08" class="section">
+<section id="s09" class="section">
   <div class="section-header">
-    <div class="section-num">08</div>
+    <div class="section-num">09</div>
     <div class="section-meta">
       <h2>Consultas e informes</h2>
       <span class="role-badge">Responsable de Almacén</span>
@@ -1321,7 +1560,7 @@
     <div class="alert-bar"></div>
     <div class="alert-body">
       <div class="alert-label">Si esta pantalla te aparece vacía</div>
-      <div class="alert-text">No es que esté todo bien: puede ser que <strong>ningún artículo tenga cargado su punto de pedido</strong>. Sin ese número el sistema no sabe cuál es tu mínimo y no puede avisarte. Se carga en la ficha de cada artículo (sección 02).</div>
+      <div class="alert-text">No es que esté todo bien: puede ser que <strong>ningún artículo tenga cargado su punto de pedido</strong>. Sin ese número el sistema no sabe cuál es tu mínimo y no puede avisarte. Se carga en la ficha de cada artículo (sección 03).</div>
     </div>
   </div>
 

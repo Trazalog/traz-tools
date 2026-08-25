@@ -33,7 +33,7 @@ validaciones:
   - "El reporte solo incluye movimientos de la empresa de la sesión"
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s08
+  ayuda: ayudas/src/alm/manual_almacenes.html#s09
   feature: features/alm/ALM-UC-018.consultar-los-movimientos-historicos-de-un-artic.feature
 notas:
   - "**Los ocho tipos que cubre**, relevados de `reports/historico_articulos/Historico_articulos.view.php`: Recepción Materiales (`INGRESO`), Entrega Materiales (`EGRESO`), Mov. Interno Ingreso y Egreso (`MOV.ENTRADA` / `MOV.SALIDA`), Ajuste Stock (`AJUSTE`), y tres de producción — Consumo de MP en Etapa Productiva, Consumo de Producto Semi Terminado, y Salida de Producto de Etapa Productiva. Es decir que sí cubre todo lo que mueve existencias, incluida la producción."

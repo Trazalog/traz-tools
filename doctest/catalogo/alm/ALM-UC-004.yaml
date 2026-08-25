@@ -35,7 +35,7 @@ validaciones:
   - "La columna Estado del listado distingue los artículos dados de baja"
 dudas: []
 derivados:
-  ayuda: ayudas/src/alm/manual_almacenes.html#s02
+  ayuda: ayudas/src/alm/manual_almacenes.html#s03
   feature: features/alm/ALM-UC-004.dar-de-baja-un-articulo.feature
 notas:
   - "No se ejecutó ninguna baja contra el DEMO: sería modificar datos de una empresa real."
