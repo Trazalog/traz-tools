@@ -688,6 +688,179 @@
       </faultSequence>
    </resource>
 
+   <resource methods="GET" uri-template="/mcp/alm/movimientos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              el empr_id de core.empresas (ADR-012). Los filtros van vacios si el
+              agente no los manda; toolsALMAPI los traduce al centinela 'TODOS'. -->
+         <property name="f_tipo" expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <property name="f_depo" expression="fn:concat('',get-property('query.param.depo_id'))"/>
+         <property name="f_arti" expression="fn:concat('',get-property('query.param.arti_id'))"/>
+         <property name="f_lote" expression="fn:concat('',get-property('query.param.lote_id'))"/>
+
+         <property name="uri.var.almMovimientos"
+                   expression="fn:concat($ctx:api_url,'/alm/movimientos/',get-property('jwt_empr_id'),'?tipo=',$ctx:f_tipo,'&amp;desde=',$ctx:f_desde,'&amp;hasta=',$ctx:f_hasta,'&amp;depo_id=',$ctx:f_depo,'&amp;arti_id=',$ctx:f_arti,'&amp;lote_id=',$ctx:f_lote)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_movimientos | iniciando (toolsMCPAPI -&gt; toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almMovimientos}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/movimientos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_movimientos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/alm/entregas">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              el empr_id de core.empresas (ADR-012). Los filtros van vacios si el
+              agente no los manda; toolsALMAPI los traduce al centinela 'TODOS'. -->
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <property name="f_obra" expression="fn:concat('',get-property('query.param.obra'))"/>
+         <property name="f_depo" expression="fn:concat('',get-property('query.param.depo_id'))"/>
+
+         <property name="uri.var.almEntregas"
+                   expression="fn:concat($ctx:api_url,'/alm/entregas/',get-property('jwt_empr_id'),'?desde=',$ctx:f_desde,'&amp;hasta=',$ctx:f_hasta,'&amp;obra=',$ctx:f_obra,'&amp;depo_id=',$ctx:f_depo)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_entregas | iniciando (toolsMCPAPI -&gt; toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almEntregas}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/entregas - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_entregas (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/alm/movimientos-internos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              el empr_id de core.empresas (ADR-012). Los filtros van vacios si el
+              agente no los manda; toolsALMAPI los traduce al centinela 'TODOS'. -->
+         <property name="f_estado" expression="fn:concat('',get-property('query.param.estado'))"/>
+         <property name="f_origen" expression="fn:concat('',get-property('query.param.origen'))"/>
+         <property name="f_destino" expression="fn:concat('',get-property('query.param.destino'))"/>
+         <property name="f_moin" expression="fn:concat('',get-property('query.param.moin_id'))"/>
+
+         <property name="uri.var.almMovInternos"
+                   expression="fn:concat($ctx:api_url,'/alm/movimientos-internos/',get-property('jwt_empr_id'),'?estado=',$ctx:f_estado,'&amp;origen=',$ctx:f_origen,'&amp;destino=',$ctx:f_destino,'&amp;moin_id=',$ctx:f_moin)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_movimientos_internos | iniciando (toolsMCPAPI -&gt; toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almMovInternos}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/movimientos-internos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_movimientos_internos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
    <resource methods="GET" uri-template="/mcp/alm/depositos">
       <inSequence>
          <sequence key="emprIdFromHeader"/>

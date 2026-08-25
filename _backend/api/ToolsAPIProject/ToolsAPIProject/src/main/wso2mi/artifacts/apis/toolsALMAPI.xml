@@ -150,6 +150,209 @@
       </faultSequence>
    </resource>
 
+   <resource methods="GET" uri-template="/movimientos/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- filtros opcionales: la query usa el centinela 'TODOS' para "sin filtrar",
+              asi que un parametro ausente se traduce a 'TODOS' antes de armar el path -->
+         <property name="f_tipo" expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <filter source="$ctx:f_tipo" regex="^$">
+            <then><property name="f_tipo" value="TODOS"/></then>
+         </filter>
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <filter source="$ctx:f_desde" regex="^$">
+            <then><property name="f_desde" value="1900-01-01"/></then>
+         </filter>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <filter source="$ctx:f_hasta" regex="^$">
+            <then><property name="f_hasta" value="2100-01-01"/></then>
+         </filter>
+         <property name="f_depo" expression="fn:concat('',get-property('query.param.depo_id'))"/>
+         <filter source="$ctx:f_depo" regex="^$">
+            <then><property name="f_depo" value="TODOS"/></then>
+         </filter>
+         <property name="f_arti" expression="fn:concat('',get-property('query.param.arti_id'))"/>
+         <filter source="$ctx:f_arti" regex="^$">
+            <then><property name="f_arti" value="TODOS"/></then>
+         </filter>
+         <property name="f_lote" expression="fn:concat('',get-property('query.param.lote_id'))"/>
+         <filter source="$ctx:f_lote" regex="^$">
+            <then><property name="f_lote" value="TODOS"/></then>
+         </filter>
+
+         <property name="uri.var.getMovimientos"
+                   expression="fn:concat($ctx:dataservices_url,'/ALMDataService/movimientos/tipo/',$ctx:f_tipo,'/desde/',$ctx:f_desde,'/hasta/',$ctx:f_hasta,'/deposito/',$ctx:f_depo,'/articulo/',$ctx:f_arti,'/lote/',$ctx:f_lote,'/empresa/',get-property('uri.var.empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | ALM | get_movimientos | iniciando (toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getMovimientos}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /movimientos - ALMDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en ALM get_movimientos (toolsALMAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/entregas/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- filtros opcionales: la query usa el centinela 'TODOS' para "sin filtrar",
+              asi que un parametro ausente se traduce a 'TODOS' antes de armar el path -->
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <filter source="$ctx:f_desde" regex="^$">
+            <then><property name="f_desde" value="TODOS"/></then>
+         </filter>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <filter source="$ctx:f_hasta" regex="^$">
+            <then><property name="f_hasta" value="TODOS"/></then>
+         </filter>
+         <property name="f_obra" expression="fn:concat('',get-property('query.param.obra'))"/>
+         <filter source="$ctx:f_obra" regex="^$">
+            <then><property name="f_obra" value="TODOS"/></then>
+         </filter>
+         <property name="f_depo" expression="fn:concat('',get-property('query.param.depo_id'))"/>
+         <filter source="$ctx:f_depo" regex="^$">
+            <then><property name="f_depo" value="TODOS"/></then>
+         </filter>
+
+         <property name="uri.var.getEntregas"
+                   expression="fn:concat($ctx:dataservices_url,'/ALMDataService/entrega/fec_desde/',$ctx:f_desde,'/fec_hasta/',$ctx:f_hasta,'/obra/',$ctx:f_obra,'/depo/',$ctx:f_depo,'/empr/',get-property('uri.var.empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | ALM | get_entregas | iniciando (toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getEntregas}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /entregas - ALMDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en ALM get_entregas (toolsALMAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/movimientos-internos/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- filtros opcionales: la query usa el centinela 'TODOS' para "sin filtrar",
+              asi que un parametro ausente se traduce a 'TODOS' antes de armar el path -->
+         <property name="f_estado" expression="fn:concat('',get-property('query.param.estado'))"/>
+         <filter source="$ctx:f_estado" regex="^$">
+            <then><property name="f_estado" value="TODOS"/></then>
+         </filter>
+         <property name="f_origen" expression="fn:concat('',get-property('query.param.origen'))"/>
+         <filter source="$ctx:f_origen" regex="^$">
+            <then><property name="f_origen" value="TODOS"/></then>
+         </filter>
+         <property name="f_destino" expression="fn:concat('',get-property('query.param.destino'))"/>
+         <filter source="$ctx:f_destino" regex="^$">
+            <then><property name="f_destino" value="TODOS"/></then>
+         </filter>
+         <property name="f_moin" expression="fn:concat('',get-property('query.param.moin_id'))"/>
+         <filter source="$ctx:f_moin" regex="^$">
+            <then><property name="f_moin" value="TODOS"/></then>
+         </filter>
+
+         <property name="uri.var.getMovInternos"
+                   expression="fn:concat($ctx:dataservices_url,'/ALMDataService/movimientosInternos/estado/',$ctx:f_estado,'/origen/',$ctx:f_origen,'/destino/',$ctx:f_destino,'/moin_id/',$ctx:f_moin,'/empresa/',get-property('uri.var.empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | ALM | get_movimientos_internos | iniciando (toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getMovInternos}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /movimientos-internos - ALMDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en ALM get_movimientos_internos (toolsALMAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
    <resource methods="GET" uri-template="/depositos/{empr_id}">
       <inSequence>
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
