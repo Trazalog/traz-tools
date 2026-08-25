@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-014 — Dar de alta un usuario de la empresa
- * Catálogo: catalogo/dnato/DNATO-UC-014.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-014.yaml
  * Gherkin:  features/dnato/DNATO-UC-014.dar-de-alta-un-usuario-de-la-empresa.feature
  *
  * El alta crea un usuario real con prefijo `doctest+`, según la decisión del PM de

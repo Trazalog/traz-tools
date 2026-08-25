@@ -1,7 +1,7 @@
 /**
  * Casos de uso: DNATO-UC-002 (activación), UC-003 (información adicional),
  * UC-004 (alta de la empresa) y UC-005 (bienvenida).
- * Catálogo: catalogo/dnato/DNATO-UC-00{2,3,4,5}.yaml (validados 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-00{2,3,4,5}.yaml
  *
  * ⚠️ Etiquetado `@alta-empresa` y EXCLUIDO de las corridas normales: cada ejecución
  * crea una empresa real con sus 16 roles, su establecimiento, su depósito y cinco

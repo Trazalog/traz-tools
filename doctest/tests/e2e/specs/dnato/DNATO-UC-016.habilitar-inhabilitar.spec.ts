@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-016 — Habilitar o inhabilitar un usuario
- * Catálogo: catalogo/dnato/DNATO-UC-016.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-016.yaml
  * Gherkin:  features/dnato/DNATO-UC-016.habilitar-o-inhabilitar-un-usuario.feature
  *
  * Es la baja lógica del sistema: la única forma de sacar a alguien de circulación

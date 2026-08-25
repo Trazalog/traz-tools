@@ -4,6 +4,9 @@
 
 Punto de entrada de DocTest: qué hay en este árbol, qué comando corrés y dónde, y cómo se contribuye. Está escrito para cualquiera que toque el repo — developer que va a correr la suite antes de pushear, tester que quiere leer los casos, o Claude Code al implementar una fase. **No** cubre el diseño de la solución ni el porqué de las decisiones: eso está en los tres documentos ancla de `doc/v3/` (`TRAZALOG_v3_DOCTEST_01_REQUERIMIENTOS.md`, `..._02_CICLO_VIDA_CICD.md`, `..._03_ARQUITECTURA.md`).
 
+> **¿Buscás dónde queda la evidencia de una corrida, dónde se anotan los hallazgos, o cómo se
+> publican y se opinan las ayudas?** Está todo en [`GUIA-PRUEBAS-Y-AYUDAS.md`](GUIA-PRUEBAS-Y-AYUDAS.md).
+
 ---
 
 ## La idea en cuatro líneas
@@ -27,7 +30,7 @@ código PHP + ayudas actuales ──relevamiento──> catálogo (gate humano) 
 | `ayudas/` | `legacy/` (el sitio publicado, tal cual), `plantilla/` (theme.css + esqueleto extraídos de ahí), `src/` (el contenido nuevo, por módulo) y `build/` (lo publicable, regenerable) |
 | `generators/` | Scripts de validación y derivación catálogo → salidas |
 | `ci/` | [`module-map.json`](ci/module-map.json): mapa path→módulo que usa el CI |
-| `feedback/` | Cómo reporta un tester lo que falta probar |
+| `feedback/` | [`PROCESO.md`](feedback/PROCESO.md): cómo reporta un tester lo que falta probar o lo que está mal en una ayuda |
 | `scripts/` | Envoltorios de ejecución (`pw.mjs`, `test-module.mjs`, `install-hurl.sh`) |
 
 ## Puesta a punto (una sola vez)

@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-013 — Ver la lista de usuarios de la empresa
- * Catálogo: catalogo/dnato/DNATO-UC-013.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-013.yaml
  * Gherkin:  features/dnato/DNATO-UC-013.ver-la-lista-de-usuarios-de-la-empresa.feature
  *
  * El caso más valioso del módulo: verifica que un administrador NO vea usuarios de

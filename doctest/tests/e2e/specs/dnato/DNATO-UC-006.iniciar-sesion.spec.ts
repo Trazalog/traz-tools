@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-006 — Iniciar sesión eligiendo la empresa
- * Catálogo: catalogo/dnato/DNATO-UC-006.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-006.yaml
  * Gherkin:  features/dnato/DNATO-UC-006.iniciar-sesion-eligiendo-la-empresa.feature
  *
  * Es la puerta de entrada de todo el sistema: si esto falla, no hay suite.

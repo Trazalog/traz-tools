@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-007 — Cerrar sesión
- * Catálogo: catalogo/dnato/DNATO-UC-007.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-007.yaml
  * Gherkin:  features/dnato/DNATO-UC-007.cerrar-sesion.feature
  *
  * ⚠️ Este caso NO usa la sesión compartida de las fixtures: cerrar sesión ejecuta un

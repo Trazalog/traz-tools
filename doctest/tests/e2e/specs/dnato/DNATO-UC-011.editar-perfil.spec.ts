@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-011 — Editar los datos del perfil propio
- * Catálogo: catalogo/dnato/DNATO-UC-011.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-011.yaml
  * Gherkin:  features/dnato/DNATO-UC-011.editar-los-datos-del-perfil-propio.feature
  */
 

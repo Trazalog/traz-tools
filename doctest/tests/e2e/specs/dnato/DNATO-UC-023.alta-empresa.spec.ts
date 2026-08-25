@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-023 — Dar de alta una empresa desde la administración
- * Catálogo: catalogo/dnato/DNATO-UC-023.yaml (v0.2, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-023.yaml
  *
  * El camino principal es del superusuario del ambiente, que no es ninguna de las
  * empresas de test. Se verifica la mitad que protege al sistema.

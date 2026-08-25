@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-015 — Editar un usuario de la empresa
- * Catálogo: catalogo/dnato/DNATO-UC-015.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-015.yaml
  * Gherkin:  features/dnato/DNATO-UC-015.editar-un-usuario-de-la-empresa.feature
  *
  * ⚠️ El caso describe lo que el PM validó que tiene que pasar. Hoy no pasa: la

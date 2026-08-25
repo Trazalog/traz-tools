@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-009 — Iniciar sesión desde un agente de IA (OAuth 2.1)
- * Catálogo: catalogo/dnato/DNATO-UC-009.yaml (v0.2, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-009.yaml
  * Gherkin:  features/dnato/DNATO-UC-009.iniciar-sesion-desde-un-agente-de-ia-oauth-2-1.feature
  *
  * Acá se prueba la PANTALLA de ingreso del agente. El intercambio de tokens y el

@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-017 — Eliminar un usuario de la empresa
- * Catálogo: catalogo/dnato/DNATO-UC-017.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-017.yaml
  * Gherkin:  features/dnato/DNATO-UC-017.eliminar-un-usuario-de-la-empresa.feature
  *
  * ⚠️ Este caso NO ejecuta la eliminación. Hoy el sistema borra físicamente (hallazgo

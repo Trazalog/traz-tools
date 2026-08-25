@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-008 — Recuperar la contraseña olvidada
- * Catálogo: catalogo/dnato/DNATO-UC-008.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-008.yaml
  * Gherkin:  features/dnato/DNATO-UC-008.recuperar-la-contrasena-olvidada.feature
  *
  * El camino completo se prueba con un usuario propio y descartable: registra una

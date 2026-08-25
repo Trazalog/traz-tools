@@ -1,6 +1,6 @@
 /**
  * Casos de uso: DNATO-UC-026 (descargar plantilla) y DNATO-UC-027 (cargar planilla)
- * Catálogo: catalogo/dnato/DNATO-UC-026.yaml y DNATO-UC-027.yaml (validados 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-026.yaml y DNATO-UC-027.yaml
  *
  * ⚠️ No se ejecuta ninguna carga válida: una carga que termina bien **no se puede
  * deshacer** (regla validada por el PM), así que automatizarla dejaría datos en la

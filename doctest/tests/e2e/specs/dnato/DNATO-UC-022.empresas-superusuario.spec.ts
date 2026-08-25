@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-022 — Ver la lista de empresas del sistema
- * Catálogo: catalogo/dnato/DNATO-UC-022.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-022.yaml
  * Gherkin:  features/dnato/DNATO-UC-022.ver-la-lista-de-empresas-del-sistema.feature
  *
  * El camino principal lo ejecuta el superusuario del ambiente, que no es ninguna de

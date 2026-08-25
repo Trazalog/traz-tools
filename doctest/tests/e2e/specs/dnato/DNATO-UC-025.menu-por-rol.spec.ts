@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-025 — Asignar opciones de menú a un rol de una empresa
- * Catálogo: catalogo/dnato/DNATO-UC-025.yaml (v0.2, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-025.yaml
  * Gherkin:  features/dnato/DNATO-UC-025.asignar-opciones-de-menu-a-un-rol-de-una-emp.feature
  *
  * No se guarda ninguna asignación: tocar los menúes cambia lo que ven todos los

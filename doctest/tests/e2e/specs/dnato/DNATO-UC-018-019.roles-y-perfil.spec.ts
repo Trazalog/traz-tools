@@ -1,6 +1,6 @@
 /**
  * Casos de uso: DNATO-UC-018 (roles de trabajo) y DNATO-UC-019 (perfil de Dnato)
- * Catálogo: catalogo/dnato/DNATO-UC-018.yaml y DNATO-UC-019.yaml (validados 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-018.yaml y DNATO-UC-019.yaml
  *
  * Los dos viven en la misma pantalla, "Cambio de Rol", y se guardan juntos. Acá se
  * verifica la pantalla y la carga de roles por empresa **sin guardar nada**: cambiar

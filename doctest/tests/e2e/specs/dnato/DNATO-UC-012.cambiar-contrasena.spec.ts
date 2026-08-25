@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-012 — Cambiar la contraseña propia
- * Catálogo: catalogo/dnato/DNATO-UC-012.yaml (v0.3, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-012.yaml
  * Gherkin:  features/dnato/DNATO-UC-012.cambiar-la-contrasena-propia.feature
  *
  * Cambiar la contraseña del usuario de prueba es delicado: si el test se corta a la

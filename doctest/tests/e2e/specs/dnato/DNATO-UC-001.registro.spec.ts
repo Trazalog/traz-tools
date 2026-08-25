@@ -1,6 +1,6 @@
 /**
  * Caso de uso: DNATO-UC-001 — Registrar una empresa nueva (paso 1: datos de contacto)
- * Catálogo: catalogo/dnato/DNATO-UC-001.yaml (v0.4, validado 2026-08-24)
+ * Catálogo: catalogo/dnato/DNATO-UC-001.yaml
  * Gherkin:  features/dnato/DNATO-UC-001.registrar-una-empresa-nueva-paso-1-datos-de-cont.feature
  *
  * El camino feliz crea una cuenta real (sin activar) usando una casilla descartable:
