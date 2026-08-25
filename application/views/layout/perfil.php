@@ -15,6 +15,17 @@
 </div>
 <div class="navbar-custom-menu">
 	<ul class="nav navbar-nav">
+		<!-- Help Menu Link -->
+		<!-- La ayuda se sirve desde este mismo repo (carpeta /ayuda), no desde un
+		     sitio aparte: decision del PM del 2026-08-25. base_url() la resuelve en
+		     cualquier entorno. En develop (v2) esta linea apunta todavia a
+		     https://trazalog.com/ayudatools/ — al sincronizar v2 hacia v3 hay que
+		     quedarse con esta version. -->
+		<li>
+			<a href="<?php echo base_url(); ?>ayuda/" target="_blank" title="Ayuda">
+				<i class="fa fa-question-circle"></i>
+			</a>
+		</li>
 		<!-- User Account: style can be found in dropdown.less -->
 		<!-- Bloque PRUEBA -->
 		<li class="dropdown notifications-menu">

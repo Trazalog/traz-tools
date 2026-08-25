@@ -6,9 +6,6 @@ tests/e2e/.playwright-report/
 tests/e2e/.test-results/
 tests/e2e/.auth/
 
-# Ayudas ensambladas: se regeneran con `npm run build:ayudas` desde ayudas/src + plantilla
-ayudas/build/
-
 # Variables de entorno locales — la plantilla versionada es .env.example
 .env
 .env.local

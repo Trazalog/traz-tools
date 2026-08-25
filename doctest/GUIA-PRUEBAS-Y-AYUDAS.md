@@ -173,7 +173,7 @@ código que lo explica. Un hallazgo se escribe con la causa encontrada, no con e
 | `ayudas/legacy/` | El sitio de ayuda que ya existía, tal como estaba, con sus 5 manuales. **Es un insumo histórico** | no se toca |
 | `ayudas/plantilla/` | `theme.css` + el esqueleto HTML, extraídos de esos manuales reales | sí, si cambia el diseño |
 | `ayudas/src/<modulo>/` | **El contenido nuevo. Acá se escribe** | sí — es la fuente |
-| `ayudas/build/` | El sitio armado y publicable | **no**: se regenera y te pisa el cambio |
+| `../ayuda/` (raíz del repo) | **El sitio armado, ya servido por el frontend** | **no**: se regenera y te pisa el cambio |
 
 **Para regenerar el sitio** — en una terminal, parado en `doctest/`:
 
@@ -183,7 +183,8 @@ npm run ayudas
 
 Copia los manuales viejos tal cual, ensambla los nuevos con la plantilla, agrega su tarjeta a la
 portada y **regenera el buscador del inicio recorriendo el contenido de todos los manuales**. Hoy
-son 7 manuales y 26 secciones indexadas. Esto último era una deuda del sitio anterior: el buscador
+son 7 manuales y 26 secciones indexadas. Sale en **`ayuda/`, en la raíz del repo del frontend**, y
+esa carpeta **va versionada**: el resultado se commitea como cualquier otro archivo. Esto último era una deuda del sitio anterior: el buscador
 se mantenía a mano y solo encontraba dos de los cinco manuales.
 
 Cada sección de un manual tiene un ancla estable (`#s01`, `#s02`, …) y, en un comentario HTML
@@ -212,62 +213,71 @@ mal.
 
 ## 2.3 Cómo se publican
 
-El destino está definido: **`trazalog.com/ayudatools`** recibe el build publicado, y desde que las
-ayudas entraron al repo, **el repo es la fuente canónica** — se terminó la edición manual de HTML
-productivo (RF-05.7 del Doc 1).
+**Decisión del PM (2026-08-25): las ayudas son parte de `traz-tools`, no un sitio aparte.** Se
+sirven desde el propio frontend, en `<base_url>ayuda/`.
 
-Lo que hay hoy es el sitio armado y listo. **Dónde:** terminal, parado en `doctest/`.
+Eso funciona sin agregar nada: el `.htaccess` de la raíz manda a CodeIgniter **solo lo que no existe
+en disco** (`RewriteCond %{REQUEST_FILENAME} !-f` y `!-d`), así que una carpeta estática en la raíz
+se sirve tal cual — es lo mismo que ya pasa con `assets/` y `user_guide/`.
 
-```bash
-npm run ayudas
-ls ayudas/build/
-```
+| | |
+|---|---|
+| Dónde sale el build | `ayuda/`, en la raíz del repo |
+| Cómo se ve | `https://demo.cloudtrazalog.com/traz-tools/ayuda/` en el DEMO; `base_url()` lo resuelve en cada entorno |
+| ¿Versionado? | **Sí.** El frontend no tiene build step: el deploy es el mismo de siempre y no necesita Node |
+| Cómo se actualiza | `npm run ayudas` desde `doctest/`, y se commitea el resultado |
 
-Quedan 7 manuales, `index.html`, `theme.css` y `manual.js`. Son archivos estáticos, sin backend:
-alcanza con copiarlos al directorio que sirve ese hosting.
+Publicar una corrección de la ayuda es, entonces, **un commit más**: entra por PR, se revisa como
+código y se despliega con el sistema. No hay un segundo lugar que pueda quedar desactualizado.
 
-> ⚠️ **Pendiente — requiere una decisión tuya.** El paso de "están en `build/`" a "están en
-> `trazalog.com/ayudatools`" **no está definido**: el sitio anterior lo servía un XAMPP y el repo no
-> registra ni por dónde se sube ni quién lo sirve hoy. Es lo primero que hay que resolver para que
-> esto se publique solo. Las opciones y lo que hace falta saber están en la
-> [sección 3](#3-lo-que-todavía-no-está).
+> El sitio anterior, `trazalog.com/ayudatools`, sigue siendo el que ve **v2**. Se apaga cuando v3
+> pase a producción; hasta entonces conviven y no se pisan.
 
 ## 2.4 Cómo se referencian desde el código
 
-**Hoy, ninguna pantalla del sistema enlaza a su ayuda** — lo verifiqué buscando en todo
-`application/`: no hay una sola referencia a los manuales. La ayuda se llega escribiendo la
-dirección.
+**Hay un acceso a la ayuda en la barra superior**, a la izquierda de las notificaciones: el ícono de
+signo de pregunta (`fa-question-circle`), que abre la ayuda en una pestaña nueva.
 
-Lo que sí está listo para que eso se pueda hacer:
+Lo agregó el equipo en la rama `develop` (v2) apuntando a `https://trazalog.com/ayudatools/`. En
+`develop-v3` apunta a la carpeta propia:
 
-- Las **anclas son estables**: `manual_registracion_y_cuenta.html#s04` apunta siempre a la misma
-  sección, y el generador no las reordena.
-- **Cada caso de uso sabe cuál es su sección de ayuda**: el campo `derivados.ayuda` del YAML, que el
-  validador verifica que exista. Ese es el mapeo pantalla → ayuda, ya escrito para los 28 casos de
-  DNATO.
+```php
+<a href="<?php echo base_url(); ?>ayuda/" target="_blank" title="Ayuda">
+```
 
-Falta el otro extremo del mapeo: qué controlador o vista corresponde a qué caso. También está en el
-YAML (`referencias_codigo`), así que la tabla "vista PHP → sección de ayuda" se puede generar del
-catálogo sin escribir nada a mano.
+**Dónde está:** `application/views/layout/perfil.php`, que es la barra que comparten todas las
+pantallas — o sea que el acceso aparece en todas sin tocar ninguna vista más.
 
-> ⚠️ **Pendiente — requiere una decisión tuya.** Antes de tocar el PHP hacen falta tres definiciones
-> que son de producto, no técnicas: cuál es la URL base de la ayuda publicada, **dónde va el acceso**
-> (un signo de pregunta en la barra de cada pantalla, una entrada de menú, o un enlace al pie), y si
-> abre en pestaña nueva o dentro del sistema. Mi recomendación está en la sección 3; con eso
-> definido, la implementación es un helper de CodeIgniter y una línea por vista.
+> ⚠️ **Ojo con la sincronización semanal de v2 → v3.** Esa línea existe en las dos ramas con destinos
+> distintos, así que el sync la va a marcar como conflicto. **Se resuelve quedándose con la versión
+> de v3** (la de `base_url()`). Está anotado en un comentario en la propia vista para que quien lo
+> resuelva no tenga que acordarse.
 
----
+### El paso que sigue: que cada pantalla abra su propia sección
+
+Hoy el ícono abre la portada de la ayuda. Lo que falta para que abra **la sección de la pantalla en
+la que estás** ya existe como dato, no hay que escribirlo a mano:
+
+- las **anclas son estables** (`manual_registracion_y_cuenta.html#s04`) y el generador no las reordena;
+- **cada caso sabe cuál es su sección de ayuda** (`derivados.ayuda` en el YAML, que el validador
+  verifica que exista) **y qué código la implementa** (`referencias_codigo`).
+
+Con esos dos campos, la tabla "vista PHP → sección de ayuda" se genera del catálogo. Queda pendiente
+de hacer.
 
 # 3. Lo que todavía no está
 
 | Qué falta | Quién lo destraba | Nota |
 |---|---|---|
-| **Publicar las ayudas a `trazalog.com/ayudatools`** | vos | Hace falta saber quién sirve ese sitio hoy y por dónde se sube (¿FTP, SSH, panel?). Con eso, se automatiza en un script y después en el CI. **Mi recomendación:** que lo publique el mismo pipeline que despliega el frontend, para que ayuda y sistema no se separen de versión |
-| **Enlazar la ayuda desde las pantallas** | vos | Tres definiciones: URL base, dónde va el acceso, y si abre en pestaña nueva. **Mi recomendación:** un signo de pregunta en la barra superior que abra en pestaña nueva la sección exacta de esa pantalla; es lo más barato de implementar y lo menos invasivo para el usuario |
+| **Que cada pantalla abra su propia sección de ayuda** | pendiente de hacer | El ícono de la barra abre la portada. El mapeo vista → sección ya está en el catálogo (§2.4); falta generarlo y usarlo |
 | **Ejecutar la suite en CI** (`doctest-e2e.yml`) y guardar la evidencia como artifact | F5 | Necesita un entorno donde correr y sus credenciales como secrets. Hasta que exista staging-v3, correría contra DEMO |
-| **Triaje de 18 hallazgos** sin issue | vos | Casi todos mejoras, en el registro |
-| **2 casos de DNATO en borrador** | vos | `DNATO-UC-020` (usuario externo) y `DNATO-UC-024` (ABM de menúes): falta definición de negocio |
+| **2 casos de DNATO en borrador** | vos | `DNATO-UC-020` (usuario externo) y `DNATO-UC-024` (ABM de menúes): falta definición de negocio. Son las dos únicas preguntas abiertas |
 | Cobertura de los demás módulos | F2/F3/F4 | ALM es el próximo |
+| La carga masiva de Equipos no corre contra MariaDB | issue #470 | El PM lo quiere en el corto plazo |
+
+**Ya resuelto** (2026-08-25): las ayudas se publican desde el propio repo (§2.3), el acceso está en
+la barra superior de todas las pantallas (§2.4), y el triaje de hallazgos quedó hecho — 8 pasaron a
+issue (#470 a #477) y 10 se quedan en el registro porque ya tienen decisión tomada.
 
 ---
 
