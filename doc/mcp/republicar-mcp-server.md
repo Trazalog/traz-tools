@@ -165,8 +165,9 @@ cero → despliega su revisión → verifica el conteo de operaciones.
 > El script **aborta** si un paso falla, en vez de dejar el estado a medias. Backups en
 > `/root/mcp-backup-<fecha>`; se vuelve atrás con `apictl import api -f <zip> -e prod`.
 
-Al terminar tiene que decir **17 operaciones** (o las que correspondan) y **revisión desplegada con
-17 recursos**.
+Al terminar, el conteo de operaciones y el de la revisión desplegada tienen que coincidir con el
+número que el propio script imprime al arrancar (lo cuenta de `doc/api/trazalog-operaciones.yaml`).
+Si la revisión quedó con menos, es el síntoma de mappings incompletos de la sección 7.
 
 ### B.3 Qué confirmar
 
@@ -231,10 +232,13 @@ Estado correcto: **todas en `401`, 0 rotas.**
 Diagnóstico más profundo, por si algo no cierra:
 
 ```bash
-bash scripts/dev/diag-mcp-mapping.sh     # mapping tool por tool, en la base
-bash scripts/dev/diag-api-revisiones.sh  # working copy vs revisión desplegada
-bash scripts/dev/diag-kpi-mttr.sh        # las 3 capas: DataService, MI, gateway
+python3 scripts/dev/validar-tools-e2e.py --desde-log   # el camino REAL, con token
+bash scripts/dev/diag-mcp-mapping.sh                   # mapping tool por tool, en la base
+bash scripts/dev/diag-api-revisiones.sh                # working copy vs revisión desplegada
 ```
+
+Inventario completo de herramientas y qué mirar según el síntoma:
+[`../operaciones/herramientas-mcp.md`](../operaciones/herramientas-mcp.md).
 
 ### D.2 Refrescar el conector en Claude
 
@@ -258,6 +262,7 @@ reconectar el conector.
 [ ] Deploy + Publish del MCP Server (C.5, C.6)
 [ ] Aplicacion suscripta al MCP Server en el DevPortal (C.2)
 [ ] mcp-smoke-tools.py: todas en 401, 0 rotas (D)
+[ ] validar-tools-e2e.py con token real: 0 FAIL, ninguna en 202
 [ ] Conector reconectado y las tools nuevas aparecen en Claude (D.2)
 ```
 
@@ -296,6 +301,51 @@ exactamente esas.
 > Gateway environment**."* — [Deploy an
 > API](https://github.com/wso2/docs-apim/blob/4.6.0/en/docs/api-design-manage/deploy-and-publish/deploy-on-gateway/deploy-api/deploy-an-api.md)
 
+### «La tool falla en el cliente pero el dato se creó igual»
+
+**El síntoma más caro de diagnosticar de toda esta etapa.** El cliente muestra
+`Error occurred during tool execution`, sin código ni detalle — y sin embargo el pedido está creado,
+con su `case_id` de Bonita. El usuario reintenta, y cada reintento crea otro: 14 pedidos y 13 casos
+por un pedido real.
+
+**Causa: el status HTTP.** El MI responde `202 Accepted` en las tools que escriben y el gateway lo
+propaga tal cual. En MCP sobre HTTP, **`202` significa "notificación aceptada, no habrá cuerpo"**: el
+cliente descarta la respuesta —aunque venga completa y con `isError: false`— y reporta error.
+
+Por eso **sólo fallan las tools de escritura**: son las únicas donde el backend responde `202`.
+
+**Lo que lo hizo tan difícil de ver:** el `api.log` del APIM informa `RESPONSE_OUT statusCode:200`
+mientras el cliente recibe `202`. Miramos ese log durante días dando por buena esa línea.
+
+> **La única fuente confiable del status que recibe el cliente es el access log de Caddy:**
+>
+> ```bash
+> sudo tail -5 /var/log/caddy/mcp-access.log | python3 -m json.tool
+> ```
+>
+> Ahí se ve `"status": 202` con `"size": 247` — cuerpo correcto, status equivocado.
+
+**La solución** está en el `Caddyfile` (versionado en `deploy/gcp/reverse-proxy/Caddyfile`): reescribe
+`202 → 200` sólo para `tools/call`, matcheando por el header `Mcp-Method`. Es un parche de borde; el
+arreglo de fondo es que el MI devuelva `200` — la mediación `HTTP_SC` ya está en `toolsMCPAPI.xml`
+pero no toma efecto en runtime, **pendiente de investigar**.
+
+> Cualquier script que valide tools tiene que **mandar los headers `Mcp-*` como el cliente real**, o
+> el rewrite no matchea y da un falso negativo. `validar-tools-e2e.py` los manda.
+
+### «Aparecen 404 sueltos en el log que no corresponden a ninguna tool»
+
+El cliente MCP (protocolo `2026-07-28`) abre sesión con **`server/discover`**. APIM 4.6.0 no conoce
+ese método —su `ALLOWED_METHODS` en `APIConstants.java` tiene `initialize`, `tools/list`,
+`tools/call`, `ping`, `notifications/initialized`, `resources/*`, `prompts/list` y
+`logging/setLevel`— y responde **`404` con un cuerpo de Synapse que no es JSON-RPC**, violando el
+protocolo (correspondería `-32601`).
+
+En la práctica el cliente hace fallback a `2025-06-18` y sigue, así que es benigno; pero ensucia el
+log y **es un gap real de compatibilidad**. El `Caddyfile` contesta el `-32601` correcto.
+
+**No está reportado en WSO2.**
+
 ### Lo que NO arregla el mapping — probado, no supuesto
 
 | Intento | Resultado |
@@ -304,9 +354,12 @@ exactamente esas.
 | `PUT` del mapping por el Publisher REST API | acepta con `200` y **guarda `null` igual** (2 veces) |
 | Recrear el MCP Server desde la UI | mismas tools rotas |
 | Recrearlo con **nombre y contexto nuevos** | mismas tools rotas → descarta que sea el artefacto |
-| `apictl import --update` | `500` — `No backends found to update for API` |
+| `apictl import --update` | `500` — `No backends found to update for API` ([#4997](https://github.com/wso2/api-manager/issues/4997)) |
 | `apictl import` como nuevo, con los mappings en el YAML | importa, pero **descarta el mapping** |
-| **Recrear la API** | **17/17 operativas** |
+| **Recrear la API** | **17/17 mapeadas** |
+
+Y una vez mapeadas, faltaba todavía el `202` de arriba para que las tools de escritura funcionaran
+**en el cliente**. Son dos problemas distintos que se veían casi igual desde afuera.
 
 El `--update` roto es [wso2/api-manager#4997](https://github.com/wso2/api-manager/issues/4997) / fix
 [carbon-apimgt#13822](https://github.com/wso2/carbon-apimgt/pull/13822): los MCP Server de subtipo
