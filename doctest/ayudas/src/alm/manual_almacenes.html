@@ -366,7 +366,126 @@
     <div class="alert-bar"></div>
     <div class="alert-body">
       <div class="alert-label">Acá también se activa la valorización del stock</div>
-      <div class="alert-text">Si querés que el sistema lleve <strong>cuánto vale</strong> lo que tenés guardado, se habilita desde esta misma pantalla. Cuando está activa, la recepción de materiales te pide además el precio unitario, y ese número es el que informa <em>Stock Valorizado</em> (sección 09).</div>
+      <div class="alert-text">Si querés que el sistema lleve <strong>cuánto vale</strong> lo que tenés guardado, se habilita desde esta misma pantalla creando la lista <code>alm_configs</code> — está explicado en el punto 5. Cuando está activa, la recepción de materiales te pide además el precio unitario, y ese número es el que informa <em>Stock Valorizado</em> (sección 09).</div>
+    </div>
+  </div>
+
+  <div class="sub-title">5 · Los datos que salen en tus impresiones</div>
+
+  <p class="intro-text">Cuando imprimís un remito o un comprobante, el sistema busca tu logo, tu dirección y tus datos de contacto en una lista de valores. <strong>Esos parámetros no vienen creados</strong>: si nunca los cargaste, tus remitos salen sin logo y sin datos de la empresa. Se crean en la misma pantalla, <strong>Configuración → ABM Lista de Valores</strong>.</p>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Por qué no los ves en ningún lado</div>
+      <div class="alert-text">La pantalla de Lista de Valores muestra las listas que <strong>ya existen</strong> en tu empresa. Como éstas no se crean al registrarte, no aparecen — y no hay nada que te avise de que podés cargarlas. Hay que crearlas a mano, con el nombre exacto de la tabla de abajo.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Cómo se crea un parámetro</div>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Creá la lista con su nombre exacto</div>
+      <div class="paso-texto">
+        En <strong>Configuración → ABM Lista de Valores</strong>, botón para agregar una lista nueva. El <strong>nombre</strong> tiene que escribirse <strong>tal cual figura en la tabla de abajo</strong>: el sistema lo busca por ese nombre, así que <code>remito_logo</code> funciona y <code>Remito Logo</code> no.
+        <br><br>
+        Elegí también tu empresa en el campo Empresa.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Agregale un valor</div>
+      <div class="paso-texto">
+        Ya creada la lista, la seleccionás y usás <strong>Agregar valor</strong>. El formulario pide <strong>Descripción</strong>, <strong>Valor 1</strong>, <strong>Valor 2</strong> y <strong>Valor 3</strong>.
+        <br><br>
+        Para estos parámetros el contenido va en <strong>Valor 1</strong> —salvo la valorización, que va en Valor 2—. La <em>Descripción</em> es libre: poné algo que te sirva para reconocerlo, como “Dirección para remitos”.
+      </div>
+      <figure class="screen">
+        <div class="screen-card">
+          <div class="screen-bar">
+            <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+            <span class="screen-caption">Trazalog Tools · ABM Lista de Valores</span>
+          </div>
+          <div class="screen-body">
+            <div class="screen-app-bar">
+              <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+              <span class="ruta">/ Configuración / ABM Lista de Valores / remito_direccion</span>
+            </div>
+            <div style="padding:18px 22px">
+              <div class="screen-panel">
+                <div class="cab">Nuevo valor</div>
+                <div class="cuerpo">
+                  <div class="screen-campos dos" style="grid-template-columns:1fr 1fr">
+                    <div class="screen-campo"><div class="et">Lista</div><div class="val vacio">remito_direccion</div></div>
+                    <div class="screen-campo"><div class="et">Empresa</div><div class="val lista">Mi Empresa SRL</div></div>
+                  </div>
+                  <div class="screen-campos" style="margin-top:14px">
+                    <div class="screen-campo"><div class="et">Descripción <span class="req">*</span></div><div class="val">Dirección para remitos</div></div>
+                  </div>
+                  <div class="screen-campos" style="grid-template-columns:2fr 1fr 1fr;display:grid;margin-top:14px">
+                    <div class="screen-campo">
+                      <div class="et">Valor 1 <span class="req">*</span></div>
+                      <div class="val foco">Ruta 40 Km 2450 · Pocito, San Juan</div>
+                      <div class="screen-hint">Acá va el contenido del parámetro</div>
+                    </div>
+                    <div class="screen-campo"><div class="et">Valor 2</div><div class="val vacio">—</div></div>
+                    <div class="screen-campo"><div class="et">Valor 3</div><div class="val vacio">—</div></div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px">
+                <span class="screen-btn">Cerrar</span>
+                <span class="screen-btn primario">Guardar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption class="screen-footer"><strong>El contenido va en Valor 1.</strong> El nombre de la lista es lo que el sistema busca, así que tiene que ser exacto.</figcaption>
+      </figure>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Para modificarlo después</div>
+      <div class="paso-texto">Volvés a la misma pantalla, elegís la lista, y editás el valor que ya está. <strong>No crees un segundo valor en la misma lista</strong> para estos parámetros: el sistema toma el primero, y dos valores hacen que el resultado dependa del orden.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">La lista completa</div>
+
+  <p class="intro-text">Estos son todos los parámetros que usa el módulo de Almacenes. Ninguno es obligatorio para operar —el sistema funciona sin ellos—, pero sin ellos tus impresiones salen incompletas.</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Nombre de la lista</th><th>Qué controla</th><th>Dónde va</th></tr></thead>
+    <tbody>
+      <tr><td><code>remito_logo</code></td><td>Tu logo en el remito de movimiento interno</td><td>Valor 1</td></tr>
+      <tr><td><code>remito_direccion</code></td><td>La dirección de tu empresa en ese remito</td><td>Valor 1</td></tr>
+      <tr><td><code>remito_telefono</code></td><td>Tu teléfono en ese remito</td><td>Valor 1</td></tr>
+      <tr><td><code>remito_email</code></td><td>Tu correo en ese remito</td><td>Valor 1</td></tr>
+      <tr><td><code>texto_pie_remito</code></td><td>Un texto libre al pie del remito</td><td>Valor 1</td></tr>
+      <tr><td><code>logo_pdf_stock</code></td><td>Logo del PDF de la consulta de stock</td><td>Valor 1</td></tr>
+      <tr><td><code>logo_pdf_movimientointerno</code></td><td>Logo del PDF de movimientos internos</td><td>Valor 1</td></tr>
+      <tr><td><code>logo_impresion_recepcion_materiales</code></td><td>Logo de la impresión de una recepción</td><td>Valor 1</td></tr>
+      <tr><td><code>logo_impresion_entrega_materiales</code></td><td>Logo de la impresión de una entrega</td><td>Valor 1</td></tr>
+      <tr><td><code>alm_configs</code></td><td><strong>Activa la valorización del stock</strong>: con esto cargado, la recepción te pide el precio unitario</td><td><strong>Valor 2</strong></td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Cómo se carga un logo</div>
+      <div class="alert-text">
+        En Valor 1 podés poner una de dos cosas: la <strong>imagen codificada</strong> —un texto largo que empieza con <code>data:image/png;base64,</code>, que se obtiene con cualquier conversor de imagen a base64— o la <strong>ruta del archivo</strong> en el servidor. Lo primero es lo práctico si no tenés acceso al servidor, que es el caso habitual.
+        <br><br>
+        Son cinco logos distintos porque cada impresión tiene el suyo. Si querés el mismo en todas, cargá el mismo contenido en las cinco listas.
+      </div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Y las dos listas que sí vienen cargadas</div>
+      <div class="alert-text"><code>unidades_medida</code> y <code>tipo_articulo</code> se crean solas al registrar la empresa, con valores por defecto —litros, metros, milímetros, unidades; insumo, materia prima, producto en proceso, producto final—. Se editan en esta misma pantalla si querés agregar o cambiar opciones.</div>
     </div>
   </div>
 
