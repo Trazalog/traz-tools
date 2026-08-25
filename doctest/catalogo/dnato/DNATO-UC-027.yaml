@@ -54,4 +54,6 @@ notas:
   - "Validado por el PM el 2026-08-24 con tres definiciones: la carga es todo o nada, la empresa sale de la sesión y se asume que los datos son de esa empresa, y una carga exitosa no se deshace."
   - "El archivo queda guardado en el servidor (`bulkload_stage_files`) con nombre único mientras se procesa; hay limpieza de temporales."
 derivados:
+  ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s09
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-026-027.carga-masiva.spec.ts
   feature: features/dnato/DNATO-UC-027.cargar-datos-masivamente-desde-una-planilla.feature
