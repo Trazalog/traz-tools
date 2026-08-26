@@ -60,6 +60,7 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run validate:catalog` | Valida el catálogo contra el schema y las reglas duras |
 | `npm run test:report` | Abre el último reporte HTML de Playwright |
 | `npm run ayudas` | Arma el sitio de ayudas en `ayuda/` (raíz del repo, versionado): copia los manuales actuales tal cual, ensambla los nuevos con la plantilla y **regenera el buscador del inicio desde el contenido de todos los manuales** |
+| `npm run ayudas:unico` | Empaqueta todo el sitio de ayudas en un archivo navegable (`.validacion/sitio-ayudas.html`) para revisarlo antes de publicar |
 | `npm run verificar:asset` | ¿Un usuario creado por la registración puede entrar a AssetPlanner? Es la verificación del issue #489 (la contraseña se guardaba sin hashear). Solo intenta ingresar, no escribe nada |
 | `npm run test:alta-empresa` | Corre el alta completa de una empresa como test. **Crea una empresa real**: se ejecuta a demanda, está fuera de las corridas normales |
 | `npm run features` | Regenera los `.feature` Gherkin desde los casos **validados** (agregá `-- --dry-run` para ver qué cambiaría). Los `.feature` no se editan a mano |

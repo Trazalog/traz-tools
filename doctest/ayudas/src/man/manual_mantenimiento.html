@@ -529,6 +529,67 @@
     </div>
   </div>
 
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Plan de Mantenimiento</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Plan de Mantenimiento</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Pendientes de programar</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Origen</th><th>Equipo</th><th>Tarea</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="screen-estado rechazado">Solicitud urgente</span></td>
+                      <td>BOMB-001</td><td>Cambio de sello mecánico</td><td>hoy</td>
+                      <td><span class="screen-estado creada">Solicitada</span></td>
+                    </tr>
+                    <tr>
+                      <td><span class="screen-estado aprobado">Preventivo</span></td>
+                      <td>COMP-003</td><td>Cambio de aceite · 500 h</td><td>28/08/2026</td>
+                      <td><span class="screen-estado creada">Pendiente</span></td>
+                    </tr>
+                    <tr>
+                      <td><span class="screen-estado parcial">Backlog</span></td>
+                      <td>BOMB-001</td><td>Reemplazo de manómetro</td><td>—</td>
+                      <td><span class="screen-estado creada">Pendiente</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Programar</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Fecha de programación <span class="req">*</span></div><div class="val foco">28/08/2026</div></div>
+                <div class="screen-campo"><div class="et">Hora</div><div class="val">08:00</div></div>
+                <div class="screen-campo off"><div class="et">Meses a generar</div><div class="val">1</div><div class="screen-hint">se programa de a una orden</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Generar Orden</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Los cuatro orígenes conviven en la misma pantalla.</strong> Una solicitud urgente, un preventivo que vence y un pendiente del backlog se programan igual: eligiendo fecha y generando la orden.</figcaption>
+  </figure>
+
   <div class="alert info">
     <div class="alert-bar"></div>
     <div class="alert-body">
@@ -582,6 +643,71 @@
     </div>
   </div>
 
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Ejecutar OT 1042</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mis Tareas / Ejecutar OT</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Orden 1042 · BOMB-001</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:2fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Tarea</div><div class="val vacio">Cambio de sello mecánico</div></div>
+                <div class="screen-campo"><div class="et">Origen</div><div class="val vacio">Solicitud 318 · urgente</div></div>
+                <div class="screen-campo"><div class="et">Programada</div><div class="val vacio">26/08/2026</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Materiales que se van a pedir</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Código</th><th>Descripción</th><th class="num">Cantidad</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>SELL-M32</td><td>Sello mecánico 32 mm</td><td class="num">1</td><td style="color:#CC1F1A">&#128465;</td></tr>
+                    <tr><td>JUNT-EPDM</td><td>Junta EPDM · brida DN50</td><td class="num">2</td><td style="color:#CC1F1A">&#128465;</td></tr>
+                    <tr style="background:#FAFBFD"><td colspan="4" style="color:#94A3B8">+ Agregar material</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Herramientas previstas</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Herramienta</th><th>Marca</th><th class="num">Cantidad</th></tr></thead>
+                  <tbody>
+                    <tr><td>Llave de torque</td><td>Bahco</td><td class="num">1</td></tr>
+                    <tr><td>Extractor de poleas</td><td>Bahco</td><td class="num">1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:10px 14px;font-size:11px;color:#94A3B8">Es una lista de referencia: las herramientas no se piden al pañol desde acá.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Ejecutar y pedir materiales</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Acá nace el pedido al almacén.</strong> Los materiales vienen de lo previsto en el plan; podés sacar o agregar antes de confirmar. Después de este botón, sumar algo significa otro pedido.</figcaption>
+  </figure>
+
   <div class="alert info">
     <div class="alert-bar"></div>
     <div class="alert-body">
@@ -628,6 +754,74 @@
       </div>
     </div>
   </div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Informe de Servicio · OT 1042</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Informe de Servicios / Nuevo</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Qué se hizo</div>
+            <div class="cuerpo">
+              <div class="screen-campo">
+                <div class="et">Detalle del trabajo <span class="req">*</span></div>
+                <div class="val foco" style="min-height:52px">Se desmontó el cuerpo de bomba y se reemplazó el sello mecánico. Se cambiaron las dos juntas de brida. Prueba de estanqueidad OK a 4 bar.</div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Fecha inicio</div><div class="val">26/08/2026 08:15</div></div>
+                <div class="screen-campo"><div class="et">Fecha fin</div><div class="val">26/08/2026 11:40</div></div>
+                <div class="screen-campo"><div class="et">Lectura del equipo</div><div class="val">8.412</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Quiénes trabajaron</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Operario</th><th class="num">Horas hombre</th></tr></thead>
+                  <tbody>
+                    <tr><td>M. Quiroga</td><td class="num">3,5</td></tr>
+                    <tr><td>R. Olivares</td><td class="num">3,5</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Insumos usados</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Código</th><th>Descripción</th><th class="num">Cantidad</th></tr></thead>
+                  <tbody>
+                    <tr><td>SELL-M32</td><td>Sello mecánico 32 mm</td><td class="num">1</td></tr>
+                    <tr><td>JUNT-EPDM</td><td>Junta EPDM · brida DN50</td><td class="num">2</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:10px 14px;font-size:11px;color:#A96A05">⚠ Estas cantidades son las que se <strong>pidieron</strong> al almacén, no las que se entregaron.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar informe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Las horas hombre que cargues acá son las que después salen en los reportes.</strong> Y el detalle del trabajo es lo que va a leer quien revise si el problema vuelve.</figcaption>
+  </figure>
 
   <div class="alert warn">
     <div class="alert-bar"></div>
@@ -702,6 +896,68 @@
     </div>
   </div>
 
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Nuevo Preventivo</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Preventivo / Nuevo</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Qué se hace y sobre qué</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Equipo <span class="req">*</span></div><div class="val lista foco">COMP-003</div></div>
+                <div class="screen-campo"><div class="et">Componente</div><div class="val lista vacio">— todo el equipo —</div></div>
+                <div class="screen-campo"><div class="et">Tarea <span class="req">*</span></div><div class="val lista">Cambio de aceite</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Cada cuánto se repite</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Período <span class="req">*</span></div><div class="val lista">Mes</div></div>
+                <div class="screen-campo"><div class="et">Frecuencia <span class="req">*</span></div><div class="val">3</div><div class="screen-hint">cada 3 meses</div></div>
+                <div class="screen-campo"><div class="et">Fecha base <span class="req">*</span></div><div class="val">01/06/2026</div></div>
+                <div class="screen-campo"><div class="et">Horas hombre</div><div class="val">2</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Qué va a hacer falta</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Tipo</th><th>Código</th><th>Descripción</th><th class="num">Cantidad</th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="screen-estado aprobado">Insumo</span></td><td>ACE-ISO68</td><td>Aceite ISO VG68 · 20 L</td><td class="num">1</td></tr>
+                    <tr><td><span class="screen-estado aprobado">Insumo</span></td><td>FILT-AC12</td><td>Filtro de aceite</td><td class="num">1</td></tr>
+                    <tr><td><span class="screen-estado creada">Herramienta</span></td><td>—</td><td>Llave de filtro</td><td class="num">1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:10px 14px;font-size:11px;color:#94A3B8">Quedan <strong>declarados</strong>: se copian a cada orden que se genere, y el pedido al almacén nace al ejecutarla.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Período y frecuencia se leen juntos:</strong> <em>Mes</em> + <em>3</em> es cada tres meses. La <em>fecha base</em> es desde cuándo se cuenta el primer vencimiento.</figcaption>
+  </figure>
+
   <div class="alert tip">
     <div class="alert-bar"></div>
     <div class="alert-body">
@@ -768,6 +1024,67 @@
   <div class="sub-title">La disponibilidad y su meta</div>
 
   <p class="intro-text">El indicador central es la <strong>disponibilidad</strong>: qué porcentaje del tiempo el equipo estuvo en condiciones de trabajar. A cada equipo se le puede fijar una <strong>meta</strong> —desde la acción <em>Asignar Meta</em> del listado de equipos— y el panel compara la real contra ella.</p>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Panel de KPIs</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Reportes / Panel de KPIs</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Filtros</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Grupo</div><div class="val lista vacio">Todos</div></div>
+                <div class="screen-campo"><div class="et">Sector</div><div class="val lista vacio">Todos</div></div>
+                <div class="screen-campo"><div class="et">Equipo</div><div class="val lista vacio">Todos</div></div>
+                <div class="screen-campo"><div class="et">Desde</div><div class="val">01/08/2026</div></div>
+                <div class="screen-campo"><div class="et">Hasta</div><div class="val">26/08/2026</div></div>
+              </div>
+              <div style="text-align:right;margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+                <span class="screen-btn">Limpiar</span><span class="screen-btn primario">Filtrar</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Disponibilidad por equipo</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Equipo</th><th>Descripción</th><th class="num">Meta</th><th class="num">Disponibilidad</th><th></th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td>BOMB-001</td><td>Bomba centrífuga 5 HP</td>
+                      <td class="num">95%</td><td class="num" style="font-weight:700;color:#CC1F1A">88%</td>
+                      <td><span class="screen-estado rechazado">bajo la meta</span></td>
+                    </tr>
+                    <tr>
+                      <td>COMP-003</td><td>Compresor de tornillo</td>
+                      <td class="num">90%</td><td class="num" style="font-weight:700;color:#16A34A">97%</td>
+                      <td><span class="screen-estado entregado">cumple</span></td>
+                    </tr>
+                    <tr>
+                      <td>CINT-012</td><td>Cinta transportadora</td>
+                      <td class="num" style="color:#94A3B8">—</td><td class="num">92%</td>
+                      <td><span class="screen-estado creada">sin meta</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>La bomba es la que hay que mirar:</strong> te propusiste 95% de disponibilidad y estuvo en 88%. La cinta no tiene meta, así que su número es informativo nada más.</figcaption>
+  </figure>
 
   <div class="alert tip">
     <div class="alert-bar"></div>

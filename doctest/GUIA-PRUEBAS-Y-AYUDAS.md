@@ -242,6 +242,11 @@ npm run ayudas
 Copia los manuales viejos tal cual, ensambla los nuevos con la plantilla, agrega su tarjeta a la
 portada y **regenera el buscador del inicio recorriendo el contenido de todos los manuales**.
 
+**Para revisar el sitio antes de publicarlo**, `npm run ayudas:unico` lo empaqueta entero en un solo
+archivo —`.validacion/sitio-ayudas.html`— con el índice y todos los manuales enlazados entre sí. Se
+abre con doble clic y se recorre como lo haría un usuario, sin desplegar nada. No reemplaza al sitio:
+es la copia para mirar.
+
 > **Un manual solo se publica si algún caso `validado` lo declara como derivado.** Es la misma regla
 > que rige para los tests y los `.feature`: un caso en `borrador` no genera nada. Se puede escribir un
 > manual mientras sus casos todavía se están validando —queda en `ayudas/src/` y el generador avisa
@@ -282,6 +287,11 @@ El marcado es éste, y las clases `screen-*` viven en `ayudas/plantilla/theme.cs
   <figcaption class="screen-footer">Qué es lo que hay que mirar acá.</figcaption>
 </figure>
 ```
+
+**Toda sección que explique una función importante lleva su pantalla.** Una sección de puro texto se
+lee como teoría, y en un manual operativo eso es exactamente lo que no sirve: quien lo abre está
+frente al sistema tratando de hacer algo. Si una sección no tiene pantalla, la pregunta no es "¿hace
+falta?" sino "¿por qué no la tiene?".
 
 Dos reglas al dibujar una pantalla: **datos verosímiles del dominio** —un artículo real del rubro, no
 "Lorem"— y un **pie que diga qué mirar**, porque una pantalla sin pie es decoración. Las tablas anchas

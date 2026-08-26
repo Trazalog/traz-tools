@@ -25,7 +25,8 @@
     "generators:dry-run": "tsx generators/dry-run.ts",
     "typecheck": "tsc --noEmit",
     "hurl:install": "bash scripts/install-hurl.sh",
-    "verificar:asset": "tsx tests/e2e/seeds/verificar-ingreso-asset.ts"
+    "verificar:asset": "tsx tests/e2e/seeds/verificar-ingreso-asset.ts",
+    "ayudas:unico": "tsx generators/sitio-en-un-archivo.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
