@@ -19,5 +19,6 @@ Característica: Habilitar o inhabilitar un equipo
     Entonces El equipo vuelve a estar activo
 
   # Reglas que este caso verifica:
+  #   - Inhabilitar deja el equipo en estado `IN`; habilitar lo devuelve a activo
   #   - El equipo tiene dos estados: activo (`AC`) e inhabilitado (`AN`)
   #   - La acción que se ofrece depende del estado actual: a un equipo activo se le ofrece Inhabilitar y a uno inactivo, Habilitar

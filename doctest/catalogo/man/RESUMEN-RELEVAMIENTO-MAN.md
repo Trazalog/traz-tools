@@ -17,7 +17,8 @@ Deja `.validacion/man.html`. Se abre en el navegador, se lee caso por caso, se m
 cada uno, y el botón **Copiar** arma el texto con todas las decisiones para pegarme acá.
 
 - **Fecha:** 2026-08-25 · **Fase:** DocTest F2 (issue #439)
-- **Casos:** 37, todos en `borrador` · **un caso por acción de cada listado, más cinco de ciclo de vida**
+- **Casos:** 37 — **27 validados**, 9 en borrador, 1 obsoleto
+- **Derivados:** el manual de Mantenimiento (10 secciones) y **16 tests E2E en verde**
 - **Cobertura:** las 12 pantallas de Mantenimiento y las 4 de Reportes — todo el menú
 - **Rama relevada:** `develop` del repo de asset (lo que corre en el DEMO)
 

@@ -26,6 +26,7 @@ validaciones:
   - "La columna Origen dice de dónde vino la orden: solicitud, preventivo, predictivo o backlog"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-010.ordenes-trabajo.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s07
 notas:
   - "**Qué hacen Parcial y Total, verificado en el código:** son las dos formas de cerrar una orden desde el listado. *Parcial* (`CambioParcial()`) la deja en `TE` —se hizo parte del trabajo—; *Total* la finaliza. Es la única acción del listado además de los filtros."

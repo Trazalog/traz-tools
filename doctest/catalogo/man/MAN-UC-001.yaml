@@ -31,6 +31,7 @@ validaciones:
   - "El listado solo muestra equipos de la empresa de la sesión"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-001.listado-equipos.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s02
 notas:
   - "El listado muestra los equipos en cualquiera de sus tres estados; la columna Estado los distingue."

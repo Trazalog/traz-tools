@@ -32,6 +32,7 @@ validaciones:
   - "El equipo, el parámetro, el máximo, el mínimo y la descripción son obligatorios"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s09
 notas:
   - "**Qué pasa cuando una lectura se sale del rango: nada automático.** Se buscó en el código y **no hay ninguna comparación contra el máximo y el mínimo** al registrar una lectura — no se genera una orden ni un aviso. Los límites son una referencia para quien mira: el que carga la lectura o el que revisa el historial. Vale decirlo en la ayuda, para que nadie espere una alarma que no existe."

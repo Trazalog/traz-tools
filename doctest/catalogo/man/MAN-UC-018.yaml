@@ -31,6 +31,7 @@ validaciones:
   - "Las herramientas y los insumos quedan declarados, no pedidos"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s09
 notas:
   - "**Preventivo y predictivo, la diferencia en criollo:** el preventivo se hace **cada tanto** —por tiempo o por uso—, aunque el equipo esté perfecto. El predictivo se hace **cuando el equipo avisa**: se le mide algo —temperatura, vibración, presión— y se interviene cuando ese valor se sale de lo normal. Uno va por calendario, el otro por síntoma."

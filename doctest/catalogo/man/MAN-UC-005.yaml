@@ -29,6 +29,7 @@ validaciones:
   - "El código del componente lo arma el sistema a partir del último id y de la empresa"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-005-006.componentes.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s03
 notas:
   - "Un componente es una **pieza intercambiable del equipo** (PM, 2026-08-26)."

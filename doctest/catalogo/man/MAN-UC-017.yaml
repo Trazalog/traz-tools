@@ -28,6 +28,7 @@ validaciones:
   - "La lectura queda como la última del equipo"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-012-020.informes-reportes.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s04
 notas:
   - "**Salirse del rango no dispara nada** (ver MAN-UC-016): los límites configurados son de referencia. Quien carga la lectura es el que tiene que darse cuenta y, si corresponde, reportar la falla — lo puede hacer en el mismo acto desde Mantenimiento Autónomo (MAN-UC-024)."

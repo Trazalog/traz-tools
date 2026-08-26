@@ -24,6 +24,7 @@ validaciones:
   - "Cada tarea corresponde a un paso del circuito que le toca a este usuario"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-012-020.informes-reportes.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s01
 notas:
   - "**Es el lugar de trabajo del día a día.** Salvo lanzar una solicitud y planificar en el calendario, todo el resto del proceso llega acá: analizar una solicitud, editar un backlog, asignar un responsable, ejecutar una orden, confeccionar el informe, verificarlo y prestar conformidad. El detalle de qué tarea le toca a cada rol está en `doc/man/proceso-mantenimiento.md`."

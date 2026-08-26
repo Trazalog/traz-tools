@@ -1,6 +1,7 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
 # Fuente: catalogo/man/MAN-UC-018.yaml (versión 1.0, validado 2026-08-26).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
+# Test que lo implementa: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
 
 @man @MAN-UC-018
 Característica: Definir un mantenimiento predictivo
