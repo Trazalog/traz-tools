@@ -30,8 +30,9 @@ flujo_principal:
   - paso: "Entra a Reportes → Panel de KPIs, filtra por grupo, sector, equipo y período"
     resultado: "Se muestran los indicadores del período"
 validaciones:
+  - "El indicador central es la **disponibilidad** de cada equipo, que se compara contra su meta (MAN-UC-026)"
+  - "Los equipos inhabilitados quedan fuera del cálculo"
   - "Los tres reportes se acotan por período"
 dudas:
-  - "**¿Qué indicadores muestra el Panel de KPIs y cómo se calcula cada uno?** Es lo que un dueño de PyME va a querer mirar —cuánto para, cuánto cuesta, si mejora— y no hay nada escrito. Hay que relevarlo con la pantalla cargada de datos."
-  - "El reporte de informes muestra 'H.H Ejecutadas'. ¿Sale de lo que carga el mantenedor en el informe?"
+  - "**Falta relevar el resto de los indicadores del panel.** Está identificado que el central es la disponibilidad —`kpiCalcularDisponibilidad()`, sobre el historial de lecturas y excluyendo los equipos inhabilitados— y que hay un conteo de órdenes por tipo (`kpiCantTipoOrdenTrabajo()`). Falta abrir el panel con datos cargados para ver qué más muestra y cómo se calcula cada uno."
   - "¿Los reportes se pueden exportar o imprimir?"

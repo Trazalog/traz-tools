@@ -2,9 +2,10 @@ id: MAN-UC-029
 modulo: MAN
 titulo: El ciclo de vida de una solicitud de servicio
 perfil: Solicitante
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/models/Sservicios.php
@@ -27,11 +28,12 @@ flujo_principal:
   - paso: "La orden se ejecuta, se informa y se verifica"
     resultado: "Cuando el solicitante presta conformidad, la solicitud queda cerrada"
 validaciones:
+  - "Los estados los mueve el proceso, no el usuario: `S` solicitada, `PL` planificada, `C` en curso, `T` terminada, `CE` cerrada y `CN` conforme"
+  - "Si el solicitante no presta conformidad, la solicitud vuelve a `S` y se reanaliza"
   - "El listado muestra el Nº de OT de la solicitud una vez programada"
   - "Los tiempos de ciclo, asignación y generación se miden sobre este recorrido"
-dudas:
-  - "**Hay que confirmar el catálogo de estados y qué nombre lleva cada uno en pantalla.** En el código del modelo aparecen los códigos `AC`, `AN`, `ASC`, `C`, `CN`, `EL`, `GET`, `S` y `T`; en pantalla se ven nombres como *Solicitada*, *Planificada*, *Terminada* y *Conforme*. **No se puede deducir con seguridad cuál corresponde a cuál** — no quise inventar la traducción."
-  - "**¿Qué mide cada una de las tres columnas de tiempo del listado?** T. de ciclo, T. Asignación y T. Generación. Son los indicadores de servicio y dependen de estas transiciones."
-  - "¿Qué pasa con una solicitud rechazada: queda registrada, se le avisa a quien la pidió, se puede reabrir?"
+dudas: []
 notas:
+  - "**El recorrido completo está descifrado en `doc/man/proceso-mantenimiento.md`**, a partir del diagrama BPMN del proceso. Los estados y qué paso los pone están en la tabla de ese documento."
+  - "Quedan seis códigos en el modelo que no se pudo confirmar qué son —`RE`, `IN`, `P`, `EL`, `ASC`, `GET`—: pueden ser de versiones anteriores. Están anotados en ese documento para verificar antes de documentarlos."
   - "Es el recorrido del **circuito correctivo** completo. Cada paso tiene su caso propio; éste los hilvana y es el que hay que leer primero para entender el módulo."

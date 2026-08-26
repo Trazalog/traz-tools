@@ -2,9 +2,10 @@ id: MAN-UC-007
 modulo: MAN
 titulo: Pedir un servicio cuando algo falla
 perfil: Solicitante
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Sservicio.php
@@ -27,10 +28,10 @@ flujo_principal:
   - paso: "Confirma"
     resultado: "La solicitud queda registrada y a la espera de que alguien la analice"
 validaciones:
+  - "Puede pedir un servicio cualquier usuario con el rol *Solicitante de Mantenimiento* en Bonita"
   - "La solicitud queda asociada al equipo y al solicitante"
-dudas:
-  - "**El listado tiene tres columnas de tiempo —T. de ciclo, T. Asignación y T. Generación— que ningún manual explica.** ¿Qué mide cada una y desde cuándo? Son indicadores de servicio y conviene documentarlos bien, porque es lo que el cliente va a mirar para saber si lo atienden rápido."
-  - "¿Qué estados recorre una solicitud desde que se crea hasta que termina? El manual de mantenimiento correctivo tiene una sección de estados; hay que contrastarla con lo que hace el código hoy."
-  - "¿Cualquier usuario puede pedir un servicio, o hace falta un rol? El manual dice que es el Solicitante."
+dudas: []
 notas:
+  - "**El proceso arranca acá.** La solicitud entra al proceso de mantenimiento por la puerta *Solicitud de Servicio*, y lo primero que le va a pasar es el análisis del Supervisor (MAN-UC-008). El recorrido completo está en `doc/man/proceso-mantenimiento.md`."
+  - "Las tres columnas de tiempo del listado —ciclo, asignación y generación— miden ese recorrido: cuánto tardó en atenderse, en asignarse y en generarse la orden."
   - "Es el arranque del **circuito correctivo**: algo se rompe, alguien lo reporta. El manual de ayuda existente `manual_mantenimiento_correrctivo.html` tiene una sección dedicada (s05) con el flujo validado."

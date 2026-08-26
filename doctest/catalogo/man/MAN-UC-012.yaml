@@ -3,7 +3,7 @@ modulo: MAN
 titulo: Cargar el informe de servicio
 perfil: Mantenedor
 estado: borrador
-version: "0.1"
+version: "1.0"
 origen: baseline
 referencias_codigo:
   - repo: traz-prod-assetplanner
@@ -27,10 +27,10 @@ flujo_principal:
   - paso: "Confirma"
     resultado: "El informe queda cargado y a la espera de verificación"
 validaciones:
+  - "Si el Supervisor rechaza el informe, **vuelve al Mantenedor para corregirlo** y presentarlo de nuevo"
   - "El informe queda asociado a la orden de trabajo"
 dudas:
-  - "**El informe muestra los materiales bajo el rótulo 'Insumos Usados', pero lo que muestra es lo PEDIDO**, no lo entregado ni lo realmente consumido. En el código hay un comentario que admite que falta guardar el consumo real. ¿Se documenta como está, o se corrige antes? Es un dato que el usuario va a leer como consumo real."
-  - "¿Cuáles son las secciones del informe y cuáles son obligatorias? El manual de ayuda existente habla de *cinco solapas*; hay que contrastarlo con la pantalla."
-  - "¿Se puede corregir un informe ya cargado?"
+  - "**Cuáles son las secciones del informe y qué se exige en cada una hay que relevarlo del código del guardado**, no del HTML ni de la base. El manual de ayuda existente habla de *cinco solapas*: falta contrastarlo con `Ordenservicio::setOrdenServ()` y ver qué valida antes de guardar."
 notas:
-  - "El informe también registra un **vale de salida** con las herramientas usadas, pero es referencial: no mueve stock de pañol ni registra devolución."
+  - "**Lo que el informe muestra como \"Insumos Usados\" es en realidad lo PEDIDO**, no lo entregado ni lo consumido. Se documenta así, tal como está. **Mejora anotada (PM, 2026-08-26): en próximas versiones va a mostrar lo entregado, cuando se complete la integración con el Almacenes de Tools —que está en curso.**"
+  - "El informe registra además un vale de salida con las herramientas usadas, pero es referencial: no mueve stock de pañol ni registra devolución."

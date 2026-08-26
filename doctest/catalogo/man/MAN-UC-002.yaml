@@ -40,17 +40,17 @@ flujos_alternativos:
       - paso: "Junto a cada desplegable —área, proceso, criticidad, sector/etapa, grupo, cliente y marca— hay un botón 'Agregar'"
         resultado: "Se abre un formulario chico para crear la opción sin salir del alta. El de Cliente pide además nombre, apellido, DNI, dirección, teléfono y razón social"
 validaciones:
+  - "El **código del equipo tiene que ser único dentro de la empresa**: si se repite, el alta debe dar error"
+  - "La **criticidad** se usa para filtrar y para los reportes"
+  - "Un equipo **puede existir sin componentes**"
   - "La pantalla marca con asterisco **Área, Proceso, Criticidad y Sector/Etapa** — los datos de ubicación. Grupo y Cliente no lo llevan"
   - "Ningún campo declara `required` en el HTML: si hay validación, está en el JavaScript"
   - "El equipo se da de alta en la empresa de la sesión"
 dudas:
-  - "**No verificado contra la pantalla real** porque ninguna credencial entra a AssetPlanner (H-049 / issue #489). Relevado del código y del manual legacy `manual_alta_equipos_componentes.html`, que muestra este mismo formulario."
-  - "**Los obligatorios no coinciden con el manual de ayuda existente y hay que definir cuáles son.** Ese manual dice que son Código de Equipo, Marca, Descripción y N° de Serie; la pantalla, en cambio, **pone el asterisco en Área, Proceso, Criticidad y Sector/Etapa**, y ninguno de los de datos del equipo lo lleva. Además **ningún campo declara `required` en el HTML**, así que la validación —si existe— está en el JavaScript: mismo patrón que en DNATO y ALM."
-  - "¿El código de equipo tiene que ser único dentro de la empresa? En ALM el código de artículo sí lo es; acá no está claro."
-  - "¿Qué significa cada nivel de **criticidad** para el negocio y qué consecuencia tiene? Aparece en el alta y en los reportes, pero el código solo la guarda."
-  - "**La 'lectura inicial'** es el punto de partida del contador del equipo, que después usan los preventivos por lectura. ¿Se puede corregir más adelante si se cargó mal, o queda fija?"
-  - "¿Un equipo puede existir sin componentes, o el alta se considera incompleta hasta asignarle al menos uno?"
+  - "**Cuáles son los campos obligatorios de verdad hay que relevarlo del código del guardado, no de la pantalla.** Ya está verificado que ni el HTML ni la etiqueta sirven de fuente: la pantalla pone asterisco en Área, Proceso, Criticidad y Sector/Etapa, el manual anterior decía Código/Marca/Descripción/N° de serie, y **ningún campo declara `required`**. Falta ubicar el método que guarda el equipo y ver qué valida — es lo que queda pendiente de este caso."
+  - "**La unicidad del código tampoco está garantizada del lado del servidor:** `getcodigo()` trae todos los equipos sin filtrar, lo que sugiere que la verificación de duplicados la hace el JavaScript. Si es así, es el mismo patrón de DNATO y ALM y hay que anotarlo como hallazgo."
 notas:
+  - "**Lectura inicial — buena práctica de mantenimiento:** es el valor del contador del equipo (horas, kilómetros, ciclos) al momento de incorporarlo al sistema. Importa porque los mantenimientos que se disparan por uso se calculan **desde ahí**: si se carga en cero un equipo que ya tiene 8.000 horas, el primer preventivo por horas se va a programar 8.000 horas tarde. La práctica habitual es cargar la lectura real del horómetro el día del alta, y si el equipo es nuevo, cero."
   - "Es el caso piloto de F2 (issue #439): sirve para calibrar el formato y el costo del relevamiento en este módulo."
   - "A diferencia de ALM, acá **los catálogos se pueden crear desde el propio formulario**, y está **verificado en pantalla**: los botones `addarea`, `addproceso`, `addcriti`, `addetapa`, `addgrupo` y `addcliente` están visibles y abren su formulario. **El manual de ayuda existente dice lo contrario** —que las listas *\"deben cargarse previamente desde el ABM correspondiente\"*—, así que quedó desactualizado en ese punto."
   - "**Campos verificados en pantalla** (2026-08-26): ubicación —Área, Proceso, Criticidad, Sector/Etapa, Grupo, Cliente— y datos —Código, Marca, Descripción, Número de serie, Ubicación georreferencial, Fecha de Ingreso, **Fecha de Garantía**, **Fecha de Lectura Inicial**, Lectura Inicial y Descripción Técnica. Dos diferencias con el manual de ayuda existente: la garantía es una **fecha**, no una cantidad de meses, y la **fecha de lectura inicial** no figura en ese manual."

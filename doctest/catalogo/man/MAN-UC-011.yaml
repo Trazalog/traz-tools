@@ -2,9 +2,10 @@ id: MAN-UC-011
 modulo: MAN
 titulo: Ejecutar una orden de trabajo y pedir los materiales
 perfil: Mantenedor
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Otrabajo.php
@@ -25,10 +26,11 @@ flujo_principal:
   - paso: "Confirma la ejecución"
     resultado: "El pedido se manda al almacén para que lo aprueben y lo entreguen"
 validaciones:
+  - "El pedido se crea, y desde ahí lo toma el almacenero: **aprueba o rechaza, y después entrega**"
   - "El pedido de materiales se arma con los insumos declarados en la orden"
-dudas:
-  - "**El pedido de materiales nace recién acá, no antes.** Al generar la orden solo se anota qué insumos harán falta; el pedido al almacén se crea al abrir esta pantalla y se manda al confirmar. ¿Cómo se le explica eso al usuario, que puede esperar que el pedido ya exista?"
-  - "¿Qué pasa si la orden no tiene insumos declarados? ¿Y si el almacén no tiene stock?"
-  - "**Las herramientas no se piden**: solo se listan las que se declararon. No hay entrega ni devolución de pañol asociada a la orden. ¿Es lo esperado o falta ese circuito?"
+dudas: []
+
 notas:
+  - "Es **el mismo proceso de Bonita que el pedido de materiales de Almacenes en Tools**: se crea el pedido, el almacenero lo aprueba o lo rechaza, y al entregar descuenta el stock. El circuito completo está en el manual de Almacenes."
+  - "**Las herramientas hoy solo se listan** —no se piden ni se entregan—. En v3 eso va a cambiar: se van a asociar a las herramientas de Tools. Por ahora la ayuda explica lo que hay."
   - "Es el punto donde Mantenimiento se engancha con Almacenes. Del otro lado, el pedido sigue el circuito que documenta el manual de Almacenes: aprobación y entrega, que es lo único que descuenta stock."

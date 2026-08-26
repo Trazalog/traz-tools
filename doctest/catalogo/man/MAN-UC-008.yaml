@@ -2,9 +2,10 @@ id: MAN-UC-008
 modulo: MAN
 titulo: Analizar una solicitud y decidir qué hacer
 perfil: Supervisor
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Sservicio.php
@@ -20,12 +21,17 @@ precondiciones:
 flujo_principal:
   - paso: "Abre la solicitud pendiente, desde el listado o desde Mis Tareas"
     resultado: "Se muestra qué equipo es, qué reportó el solicitante y los archivos que adjuntó"
-  - paso: "Decide si la solicitud procede"
-    resultado: "La solicitud avanza a planificación o se rechaza"
+  - paso: "Decide si el trabajo es urgente"
+    resultado: "De esa única decisión sale todo lo demás"
+  - paso: "Si es urgente: la solicitud se marca como urgente y el propio Supervisor la planifica"
+    resultado: "El Supervisor le pone fecha y después asigna el mantenedor que la va a hacer"
+  - paso: "Si no es urgente: la solicitud se convierte en un backlog"
+    resultado: "El Supervisor completa el backlog y a partir de ahí lo toma el Planificador, que le pone fecha y asigna el mantenedor"
 validaciones:
+  - "**La urgencia es la única decisión de este paso, y define quién sigue**: si es urgente, el Supervisor planifica y asigna; si no, pasa al Planificador por la vía del backlog"
   - "Una solicitud rechazada no genera orden de trabajo"
-dudas:
-  - "**¿Quién puede aceptar o rechazar una solicitud, y qué pasa cuando se rechaza?** ¿Se le avisa al solicitante? ¿Puede volver a pedirlo?"
-  - "El análisis parece pasar por una tarea de Bonita que aparece en *Mis Tareas*. ¿El supervisor trabaja siempre desde ahí, o también desde el listado de solicitudes?"
+dudas: []
 notas:
+  - "Es la bifurcación del proceso: la compuerta *¿Es Urgente?* del diagrama. Todo lo que viene después depende de esta respuesta — ver `doc/man/proceso-mantenimiento.md` §2."
+  - "La tarea llega a la bandeja de entrada del Supervisor; no hace falta ir a buscarla al listado de solicitudes."
   - "El manual de ayuda existente le dedica una sección propia (s06, *Analizar la Solicitud*)."

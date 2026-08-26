@@ -2,8 +2,8 @@ id: MAN-UC-021
 modulo: MAN
 titulo: Administrar el envío de órdenes
 perfil: Planificador
-estado: borrador
-version: "0.1"
+estado: obsoleto
+version: "1.0"
 origen: baseline
 referencias_codigo:
   - repo: traz-prod-assetplanner
@@ -17,9 +17,7 @@ precondiciones:
 flujo_principal:
   - paso: "Entra a Mantenimiento → Administrar Ordenes"
     resultado: "Se lista con ID, Número, Fecha Inicio, Fecha Entrega, Fecha Terminada, Fecha Aviso, Detalle y Estado"
-dudas:
-  - "**No se pudo determinar para qué sirve esta pantalla.** El listado estaba vacío en el DEMO y el nombre no lo aclara: tiene una *Fecha de Entrega* y una *Fecha de Aviso* que no aparecen en el listado normal de órdenes de trabajo. ¿Es para órdenes que se mandan a un tercero —un contratista, un service externo—? Se relaciona con el `ABM Contratista` y con la tabla de *Contratistas Asignados* que aparece en el listado de equipos."
-  - "¿Quién la usa y en qué momento del circuito?"
-  - "Si es funcionalidad que quedó sin uso, conviene saberlo y no documentarla."
+dudas: []
 notas:
+  - "**Declarada obsoleta por el PM (2026-08-26).** Se conserva por historia y no genera derivados."
   - "Es la única pantalla del menú de Mantenimiento que no se pudo interpretar ni desde el código ni desde los manuales existentes."

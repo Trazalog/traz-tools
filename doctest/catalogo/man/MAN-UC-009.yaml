@@ -2,9 +2,10 @@ id: MAN-UC-009
 modulo: MAN
 titulo: Programar una orden de trabajo desde el plan de mantenimiento
 perfil: Planificador
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Calendario.php
@@ -23,16 +24,12 @@ flujo_principal:
     resultado: "El formulario pide la fecha de programación según el tipo de trabajo"
   - paso: "Confirma con 'Generar Orden'"
     resultado: "Se crea la orden de trabajo y arranca su circuito"
-flujos_alternativos:
-  - nombre: "Programar preventivos en serie"
-    pasos:
-      - paso: "Elige un preventivo repetitivo e indica por cuántos meses lo quiere programar"
-        resultado: "Se crean varias órdenes de trabajo de una sola vez, una por cada vencimiento"
 validaciones:
+  - "Las órdenes se programan **de a una**"
+  - "**No se debería poder programar una actividad ya vencida**"
   - "La orden hereda las herramientas y los insumos declarados en el trabajo de origen"
-dudas:
-  - "**Esta pantalla es el corazón del módulo y no tiene manual.** Es la que convierte cualquier trabajo pendiente —una solicitud aceptada, un preventivo vencido, un backlog, un predictivo— en una orden de trabajo. ¿Cómo se explica al usuario que las cuatro cosas se programan desde acá?"
-  - "El formulario tiene fechas separadas por tipo (correctivo, preventivo, backlog, predictivo) y una cantidad de meses para los repetitivos. ¿Se programan de a uno o se puede hacer una tanda?"
-  - "¿Qué pasa si se programa un preventivo antes de que venza? ¿Y si ya venció hace rato?"
+dudas: []
 notas:
+  - "Es una de las dos únicas pantallas donde se trabaja **fuera** de la bandeja de tareas: acá y al lanzar una solicitud. Todo lo demás del proceso llega como tarea."
+  - "Del plan salen las órdenes de los cuatro orígenes. La diferencia con el camino urgente es que ahí planifica el Supervisor desde su propia tarea, no desde esta pantalla."
   - "**Un solo motor para todo**: `Calendario::guardar_agregar()` crea la OT en los cuatro casos; lo único que cambia es de qué tabla copia las herramientas y los insumos. El tipo 2 (correctivo) no copia nada: se cargan a mano en la OT."

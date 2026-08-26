@@ -2,9 +2,10 @@ id: MAN-UC-018
 modulo: MAN
 titulo: Definir un mantenimiento predictivo
 perfil: Planificador
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Predictivo.php
@@ -26,7 +27,9 @@ flujo_principal:
   - paso: "Declara herramientas e insumos"
     resultado: "Quedan asociados, igual que en el preventivo"
 validaciones:
+  - "Las herramientas e insumos quedan declarados, no pedidos — igual que en el preventivo"
   - "Las herramientas y los insumos quedan declarados, no pedidos"
-dudas:
-  - "**¿Cuál es la diferencia real entre preventivo y predictivo para el usuario?** Las dos pantallas se parecen mucho. Por lo que se ve en el código, el preventivo se dispara por tiempo y el predictivo por la lectura de un parámetro — pero eso hay que confirmarlo y explicarlo bien, porque es la duda más probable de alguien que arranca."
-  - "El listado tiene 'Cantidad' donde el preventivo tiene 'Frecuencia'. ¿Es el valor del parámetro que lo dispara?"
+dudas: []
+notas:
+  - "**Preventivo y predictivo, la diferencia en criollo:** el preventivo se hace **cada tanto** —por tiempo o por uso—, aunque el equipo esté perfecto. El predictivo se hace **cuando el equipo avisa**: se le mide algo —temperatura, vibración, presión— y se interviene cuando ese valor se sale de lo normal. Uno va por calendario, el otro por síntoma."
+  - "Por eso el predictivo necesita dos cosas que el preventivo no: **parámetros configurados** en el equipo (MAN-UC-016) y **lecturas cargadas** (MAN-UC-017). Sin eso, no tiene con qué compararse."

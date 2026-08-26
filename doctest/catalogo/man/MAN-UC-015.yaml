@@ -2,9 +2,10 @@ id: MAN-UC-015
 modulo: MAN
 titulo: Anotar trabajo pendiente en el backlog
 perfil: Supervisor
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Backlog.php
@@ -21,8 +22,10 @@ flujo_principal:
   - paso: "Declara las herramientas y los insumos que va a necesitar"
     resultado: "Quedan asociados al backlog, para copiarse a la orden cuando se programe"
 validaciones:
+  - "**El backlog es lo no urgente**: es donde va a parar una solicitud de servicio que el Supervisor decidió que puede esperar"
+  - "Un backlog **no vence ni caduca**: queda pendiente hasta que se lo programe"
   - "El backlog nace en estado 'C' y pasa a planificado cuando se le genera la orden"
-dudas:
-  - "**¿Cuándo se usa el backlog en vez de una solicitud de servicio?** Los dos terminan en una orden de trabajo. La diferencia parece ser la urgencia —el backlog es trabajo detectado que puede esperar— pero conviene decirlo con claridad, porque es la primera duda de alguien que arranca."
-  - "¿Quién puede cargar un backlog? ¿El mantenedor que detecta algo mientras hace otra cosa?"
-  - "¿El backlog vence o caduca si nadie lo programa?"
+dudas: []
+notas:
+  - "**Buena práctica de mantenimiento:** el backlog es la lista de trabajo conocido y no ejecutado. Sirve para dos cosas — que nada detectado se pierda, y para dimensionar cuánto trabajo pendiente se acumula. Un backlog que solo crece es señal de que la capacidad del taller no alcanza; que se mantenga estable, de que el equipo está al día."
+  - "Se llena por dos vías: a mano, cuando alguien detecta algo mientras hace otra cosa, y **automáticamente**, cuando una solicitud de servicio se analiza y resulta no urgente."

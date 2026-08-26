@@ -23,9 +23,8 @@ flujo_principal:
   - paso: "Guarda"
     resultado: "El componente queda dado de alta y disponible para asignarlo a un equipo"
 validaciones:
+  - "Un componente es una **pieza intercambiable del equipo**"
   - "El código del componente lo arma el sistema a partir del último id y de la empresa"
 dudas:
-  - "**No verificado contra la pantalla real**: ninguna credencial entra a AssetPlanner (H-049 / issue #489)."
-  - "¿Qué es un componente para el negocio: una pieza intercambiable del equipo, un subsistema, o un punto de mantenimiento? De eso depende cómo se explica en la ayuda."
-  - "El código lo genera `codifNombre()` a partir del último id y de la empresa. ¿El usuario puede cambiarlo, o es siempre automático?"
-  - "¿Un componente puede estar asignado a más de un equipo a la vez, o es exclusivo de uno?"
+  - "El código lo arma `codifNombre()` a partir del último id y de la empresa. **¿El usuario puede cambiarlo o es siempre automático?** Conviene verificarlo en pantalla al escribir la ayuda."
+  - "¿Un mismo componente puede estar asignado a más de un equipo a la vez?"

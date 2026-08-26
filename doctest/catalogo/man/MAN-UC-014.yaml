@@ -2,9 +2,10 @@ id: MAN-UC-014
 modulo: MAN
 titulo: Definir un mantenimiento preventivo
 perfil: Planificador
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Preventivo.php
@@ -31,9 +32,10 @@ flujo_principal:
     resultado: "El preventivo queda activo y va a aparecer en el plan de mantenimiento cuando venza"
 validaciones:
   - "Las herramientas y los insumos quedan **declarados**, no pedidos: el pedido nace al ejecutar cada orden"
-dudas:
-  - "**¿Qué es exactamente el 'Período' y en qué se diferencia de la 'Frecuencia'?** Son dos campos distintos y para alguien que arranca no es obvio: ¿período es la unidad (días, meses) y frecuencia el número?"
-  - "**La 'Fecha Base'** es desde cuándo se cuenta el primer vencimiento. ¿Qué pasa si se pone una fecha pasada?"
-  - "¿Un preventivo se puede desactivar sin borrarlo, por ejemplo si el equipo sale de servicio un tiempo?"
+dudas: []
 notas:
+  - "**Período y frecuencia, en buena práctica de mantenimiento:** el *período* es la unidad con la que se cuenta —días, semanas, meses— y la *frecuencia*, cada cuántas de esas unidades se repite. \"Período: mes, frecuencia: 3\" es cada tres meses. La **fecha base** es desde cuándo se empieza a contar el primer vencimiento."
+  - "**Por qué existe el preventivo:** la idea es intervenir el equipo antes de que falle, en un momento elegido por uno y no por la máquina. Cuesta menos que reparar una rotura —no hay parada imprevista, no hay daños secundarios, el repuesto está disponible— y por eso la práctica habitual es que la mayor parte del trabajo de un taller sea planificado y no correctivo."
+  - "**Cómo elegir la frecuencia:** el punto de partida es lo que dice el fabricante en el manual del equipo. Después se ajusta con la experiencia: si el equipo se rompe entre dos preventivos, la frecuencia es muy larga; si al intervenirlo nunca hay nada para hacer, es muy corta."
+  - "**Las herramientas e insumos que se cargan acá quedan declarados, no pedidos.** Se copian a cada orden que se genere, y el pedido al almacén recién nace al ejecutar esa orden."
   - "El manual de ayuda existente `manual_mantenimeinto_preventivo.html` tiene el flujo completo en siete secciones —creación, período y frecuencia, duración y recursos, herramientas e insumos, planificación—, así que es una fuente de intención sólida para este caso."
