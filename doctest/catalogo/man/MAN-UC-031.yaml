@@ -1,0 +1,31 @@
+id: MAN-UC-031
+modulo: MAN
+titulo: El ciclo de vida de un backlog
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Backlog.php
+    detalle: "guardar_backlog() lo crea en estado 'C'; Calendario::guardar_agregar() tipo=4 lo pasa a 'PL'"
+pantallas:
+  - "Mantenimiento → Backlog"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Se anota el trabajo pendiente con su equipo, componente y tarea (MAN-UC-015)"
+    resultado: "El backlog nace en estado 'C' y queda a la espera"
+  - paso: "Cuando hay lugar en el plan, se le programa una orden de trabajo (MAN-UC-009)"
+    resultado: "El backlog pasa a planificado y sus herramientas e insumos se copian a la orden"
+  - paso: "La orden sigue su propio ciclo (MAN-UC-030)"
+    resultado: "El backlog queda cerrado cuando se completa el trabajo"
+validaciones:
+  - "El backlog nace en estado 'C' y pasa a planificado al generarle la orden"
+  - "Al programarlo se cierra además la tarea de Bonita 'Planificar Backlog'"
+dudas:
+  - "**En el listado del DEMO se ven los estados *Solicitada*, *Planificada*, *Terminada* y *Conforme*.** Hay que confirmar si son los del backlog o los de la orden de trabajo asociada, porque la columna Estado no aclara de qué es."
+  - "¿Un backlog puede descartarse sin ejecutarlo, si se decide que ya no hace falta?"
+  - "¿Caduca si nadie lo programa? Un backlog viejo puede referirse a algo que ya se resolvió por otro lado."
+notas:
+  - "El backlog es el único de los cuatro orígenes que **no tiene disparador automático**: ni fecha de vencimiento como el preventivo, ni lectura fuera de rango como el predictivo, ni un pedido como la solicitud. Depende de que alguien decida programarlo, y por eso es el que más riesgo tiene de quedar olvidado."

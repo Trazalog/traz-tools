@@ -1,0 +1,37 @@
+id: MAN-UC-030
+modulo: MAN
+titulo: El ciclo de vida de una orden de trabajo
+perfil: Planificador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/models/Otrabajos.php
+    detalle: "los códigos de estado que aparecen: AC, AN, C, CE, CN, IN, P, RE, T, TE"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Calendario.php
+    detalle: "guardar_agregar() la crea en estado 'PL' (planificada)"
+pantallas:
+  - "Mantenimiento → Ordenes de trabajo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Se programa desde el plan de mantenimiento (MAN-UC-009), venga de una solicitud, un preventivo, un predictivo o un backlog"
+    resultado: "La orden nace planificada, con las herramientas y los insumos copiados de su origen"
+  - paso: "Se ejecuta (MAN-UC-011)"
+    resultado: "Se pide el material al almacén y la orden queda en curso"
+  - paso: "Se carga el informe de servicio (MAN-UC-012)"
+    resultado: "Queda registrado qué se hizo, quiénes y en cuánto tiempo"
+  - paso: "El supervisor verifica y el solicitante presta conformidad (MAN-UC-013)"
+    resultado: "La orden queda cerrada"
+validaciones:
+  - "La columna Origen dice de cuál de los cuatro caminos vino la orden"
+  - "Los filtros del listado permiten ver las órdenes por estado y por período programado"
+dudas:
+  - "**Los estados de la orden de trabajo son el dato más pedido del módulo y no están documentados.** En el código aparecen los códigos `AC`, `AN`, `C`, `CE`, `CN`, `IN`, `P`, `RE`, `T` y `TE` — diez. Hay que confirmar cuáles se usan de verdad, qué significa cada uno y cómo se llaman en pantalla."
+  - "**¿Qué hacen los botones Parcial y Total** del listado? Aparecen como acciones y podrían ser formas de cerrar la orden."
+  - "¿Una orden se puede cancelar una vez programada? ¿Y reprogramar a otra fecha?"
+  - "¿Qué pasa con el pedido de materiales si la orden se cancela?"
+notas:
+  - "Cuatro caminos distintos —correctivo, preventivo, predictivo y backlog— desembocan en el mismo tipo de orden y siguen desde ahí el mismo recorrido. Entender eso es entender el módulo."

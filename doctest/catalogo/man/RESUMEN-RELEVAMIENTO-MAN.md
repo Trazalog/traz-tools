@@ -17,7 +17,7 @@ Deja `.validacion/man.html`. Se abre en el navegador, se lee caso por caso, se m
 cada uno, y el botón **Copiar** arma el texto con todas las decisiones para pegarme acá.
 
 - **Fecha:** 2026-08-25 · **Fase:** DocTest F2 (issue #439)
-- **Casos:** 21, todos en `borrador` · **63 preguntas abiertas**
+- **Casos:** 37, todos en `borrador` · **un caso por acción de cada listado, más cinco de ciclo de vida**
 - **Cobertura:** las 12 pantallas de Mantenimiento y las 4 de Reportes — todo el menú
 - **Rama relevada:** `develop` del repo de asset (lo que corre en el DEMO)
 
@@ -82,6 +82,34 @@ Reportes, barridas una por una contra el DEMO. Las 16 responden.
 | MAN-UC-019 | Trabajar desde la bandeja de tareas | Mantenedor |
 | MAN-UC-020 | Consultar los reportes e indicadores | Supervisor |
 | MAN-UC-021 | Administrar el envío de órdenes | Planificador |
+
+### Un caso por acción, y un caso por ciclo de vida
+
+Al revisar el listado de equipos apareció que **un caso "ver el listado" esconde todo lo que se puede
+hacer desde ahí**. El listado de equipos tiene **once acciones** en su columna Acciones, y el
+catálogo original solo cubría cuatro. Se revisó ítem por ítem del menú:
+
+| Listado | Acciones que ofrece | Casos que las cubren |
+|---|---|---|
+| **Equipos** | Editar · Eliminar · Habilitar · Inhabilitar · Contratista · Mantenimiento Autónomo · Historial de Lecturas · Editar lectura · Asignar Meta · Agregar/Editar/Eliminar Adjunto | UC-003, 004, 022, 023, 024, 025, 026, 027 |
+| **Componentes** | Editar asociación · Eliminar asociación | UC-036 |
+| **Preventivo** | Editar · Eliminar · Ver Archivo | UC-033 |
+| **Predictivo** | Editar · Eliminar · Ver Archivo · Adjuntos | UC-034 |
+| **Backlog** | Editar · Eliminar · Ver Archivo · Adjuntos | UC-035 |
+| **Informe de Servicios** | Ver Informe · Verificar · selección múltiple | UC-013, UC-037 |
+| **Órdenes de trabajo** | Parcial · Total · filtros | UC-010 (con la duda de qué hacen Parcial y Total) |
+| **Solicitud de Servicio** | adjuntos | UC-007 |
+
+Y se agregaron **cinco casos de ciclo de vida** —uno por entidad— que no describen una pantalla sino
+el recorrido completo: qué le puede pasar a un equipo, a una solicitud, a una orden, a un backlog y a
+un plan preventivo a lo largo del tiempo. Son los que contestan *"¿cómo funciona esto?"* en vez de
+*"¿dónde aprieto?"*, y ninguna pantalla los responde por sí sola.
+
+> **Los estados están relevados pero sin traducir, y a propósito.** En el código aparecen los códigos
+> —la orden de trabajo tiene diez: `AC`, `AN`, `C`, `CE`, `CN`, `IN`, `P`, `RE`, `T`, `TE`; la
+> solicitud nueve— y en pantalla se ven nombres como *Solicitada*, *Planificada*, *Terminada* y
+> *Conforme*. **No se puede deducir con seguridad cuál código corresponde a cuál nombre**, así que no
+> lo inventé: está como duda en cada caso de ciclo de vida. Es la información más pedida del módulo.
 
 ### Las preguntas que más importan para alguien sin soporte
 

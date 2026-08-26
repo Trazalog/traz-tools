@@ -1,6 +1,6 @@
 id: MAN-UC-004
 modulo: MAN
-titulo: Dar de baja un equipo
+titulo: Eliminar un equipo
 perfil: Supervisor
 estado: borrador
 version: "0.1"
@@ -12,17 +12,18 @@ referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/models/Equipos.php
 pantallas:
-  - "Mantenimiento → Equipos → (baja de una fila)"
+  - "Mantenimiento → Equipos → Eliminar"
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Existe un equipo activo
 flujo_principal:
-  - paso: "En el listado elige dar de baja un equipo"
+  - paso: "En la columna Acciones del listado elige Eliminar"
     resultado: "El sistema pide confirmación"
   - paso: "Confirma"
-    resultado: "El equipo queda dado de baja"
+    resultado: "El equipo deja de figurar en el listado"
 dudas:
   - "**No verificado contra la pantalla real**: ninguna credencial entra a AssetPlanner (H-049 / issue #489)."
-  - "**¿La baja es lógica?** En DNATO y en ALM la decisión fue que nunca haya borrado físico, porque rompe la trazabilidad de lo que se hizo. Un equipo tiene historial de órdenes de trabajo, así que la respuesta debería ser la misma — pero hay que confirmar qué hace el código."
+  - "**Eliminar e inhabilitar son dos acciones distintas y conviven en el mismo listado** (ver MAN-UC-022). ¿Cuándo se usa cada una? Para el usuario, *eliminar* suena definitivo e *inhabilitar* reversible, pero hay que confirmar qué hace realmente cada una."
+  - "**¿El borrado es lógico o físico?** En DNATO y en ALM la decisión fue que nunca haya borrado físico, porque rompe la trazabilidad. Un equipo tiene historial de órdenes de trabajo, lecturas e informes: si se borra de verdad, todo eso queda huérfano."
   - "¿Se puede dar de baja un equipo con órdenes de trabajo abiertas, o con un plan de mantenimiento vigente?"
   - "¿Qué pasa con sus componentes al dar de baja el equipo?"

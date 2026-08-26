@@ -75,6 +75,23 @@ vacía.
 Un caso en borrador no genera nada **a propósito**: es la garantía de que ninguna ayuda le explique
 a un usuario un comportamiento que nadie confirmó.
 
+### Cuántos casos tiene una pantalla
+
+No uno. La regla que salió de relevar Mantenimiento:
+
+- **Un caso por cada acción del listado.** La columna *Acciones* de una grilla esconde el grueso de
+  la funcionalidad: el listado de equipos tiene once acciones —editar, eliminar, habilitar,
+  inhabilitar, asignar contratistas, cargar una lectura, ver el historial, asignar una meta,
+  adjuntos— y un solo caso "ver el listado" las dejaba todas afuera. Al relevar una pantalla, lo
+  primero es enumerar sus acciones.
+- **Un caso de ciclo de vida por entidad.** No describe una pantalla sino el recorrido completo: qué
+  le puede pasar a un equipo, a una orden de trabajo o a un pedido a lo largo del tiempo, con sus
+  estados y quién los cambia. Es lo que contesta *"¿cómo funciona esto?"* en vez de *"¿dónde
+  aprieto?"*, y es lo que más le sirve a alguien que arranca solo.
+
+Los estados se relevan del código, pero **su traducción a lenguaje de usuario se pregunta, no se
+deduce**: un `CE` o un `ASC` en la base no dicen cómo se llaman en pantalla.
+
 ### Cómo se valida un caso
 
 **Dónde:** en una terminal, parado en `traz-tools/doctest/`.

@@ -1,0 +1,32 @@
+id: MAN-UC-036
+modulo: MAN
+titulo: Editar o quitar la asociación de un componente
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/views/componente/list.php
+    detalle: "las acciones 'Editar asociación' y 'Eliminar asociación'"
+pantallas:
+  - "Mantenimiento → Componentes"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo tiene componentes asociados (MAN-UC-006)
+flujo_principal:
+  - paso: "En la tabla de componentes del equipo elige Editar asociación"
+    resultado: "Se pueden cambiar el código trazable y el sistema de esa asociación"
+  - paso: "Guarda"
+    resultado: "La asociación queda actualizada"
+flujos_alternativos:
+  - nombre: "Quitar el componente del equipo"
+    pasos:
+      - paso: "Elige Eliminar asociación"
+        resultado: "El componente deja de estar asociado a ese equipo, pero sigue existiendo en el catálogo"
+validaciones:
+  - "Quitar la asociación no borra el componente del catálogo"
+dudas:
+  - "**¿Qué pasa con el historial cuando se quita un componente de un equipo?** Si hubo órdenes de trabajo sobre ese componente, ¿siguen apuntando a él?"
+  - "**Cambiar el código trazable** es cambiar la identificación de la pieza física. ¿Se usa para registrar que se reemplazó la pieza, o eso se hace de otra manera?"
+  - "¿Se puede mover un componente de un equipo a otro?"

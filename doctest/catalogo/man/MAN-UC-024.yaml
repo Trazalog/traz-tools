@@ -1,0 +1,37 @@
+id: MAN-UC-024
+modulo: MAN
+titulo: Registrar una lectura desde el equipo y reportar una falla
+perfil: Mantenedor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "setLectura() — si viene el campo `falla`, además crea la solicitud de servicio y lanza el proceso de Bonita"
+pantallas:
+  - "Mantenimiento → Equipos → Mantenimiento Autónomo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo está dado de alta
+flujo_principal:
+  - paso: "En el listado de equipos elige la acción Mantenimiento Autónomo"
+    resultado: "Se abre el formulario para cargar la lectura del equipo"
+  - paso: "Carga la lectura, el operario, el turno y las observaciones"
+    resultado: "Los datos quedan cargados"
+  - paso: "Si además detectó una falla, la reporta en el mismo formulario"
+    resultado: "Se registra la lectura **y** se crea una solicitud de servicio con esa falla, que arranca el circuito correctivo"
+flujos_alternativos:
+  - nombre: "Solo cargar la lectura, sin falla"
+    pasos:
+      - paso: "Completa la lectura y deja el campo de falla vacío"
+        resultado: "La lectura queda registrada y no se genera ninguna solicitud"
+validaciones:
+  - "Lectura, operario, turno y observaciones son obligatorios"
+  - "La solicitud de servicio solo se crea si se reporta una falla"
+dudas:
+  - "**Esta es probablemente la pantalla más importante para una PyME chica y no está documentada en ningún lado.** Deja que el que opera la máquina cargue su lectura y, si ve algo raro, lo reporte en el mismo acto — sin tener que saber que existe la pantalla de Solicitud de Servicio. ¿Es así como se piensa usar?"
+  - "¿Quién carga estas lecturas: el operario de la máquina o el mantenedor? De eso depende cómo se escribe el manual."
+  - "¿En qué se diferencia esta lectura de la de *Registro de Parametros* (MAN-UC-017)? ¿Son la misma cosa por dos caminos o miden cosas distintas?"
+notas:
+  - "El nombre *Mantenimiento Autónomo* viene del concepto de TPM: el operador se hace cargo del cuidado básico de su equipo. Vale la pena explicarlo, porque el nombre solo no lo dice."

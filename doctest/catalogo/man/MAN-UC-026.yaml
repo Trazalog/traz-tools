@@ -1,0 +1,34 @@
+id: MAN-UC-026
+modulo: MAN
+titulo: Asignar una meta a un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "asignarMeta()"
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/list.php
+    detalle: "el modal 'Equipos | Asignar Meta' — un número entre 1 y 100, con opción de borrarla"
+pantallas:
+  - "Mantenimiento → Equipos → Asignar Meta"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "En el listado de equipos elige la acción Asignar Meta"
+    resultado: "Se abre el formulario con la meta actual, si tiene"
+  - paso: "Carga un valor entre 1 y 100"
+    resultado: "La meta queda asignada al equipo"
+flujos_alternativos:
+  - nombre: "Quitar la meta"
+    pasos:
+      - paso: "Usa la opción 'Borrar Meta'"
+        resultado: "El equipo queda sin meta"
+validaciones:
+  - "El valor va de 1 a 100"
+dudas:
+  - "**¿Meta de qué?** El campo acepta un número de 1 a 100 y no dice de qué es. Por el rango parece un porcentaje —de disponibilidad, de cumplimiento del plan—, y probablemente lo use el Panel de KPIs (MAN-UC-020). **Sin saber qué mide, no se puede documentar ni usar.**"
+  - "¿Contra qué se compara la meta y dónde se ve si se cumple?"
+  - "¿Tiene sentido ponerle meta a todos los equipos o solo a los críticos?"

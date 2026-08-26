@@ -1,0 +1,36 @@
+id: MAN-UC-034
+modulo: MAN
+titulo: Editar o eliminar un plan predictivo
+perfil: Planificador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/views/predictivo/list.php
+    detalle: "las acciones Editar, Eliminar y Ver Archivo de la columna Acciones"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Predictivo.php
+pantallas:
+  - "Mantenimiento → Predictivo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Existe al menos un plan predictivo cargado (MAN-UC-018)
+flujo_principal:
+  - paso: "En el listado elige la acción Editar sobre una fila"
+    resultado: "Se abren los datos para modificarlos"
+  - paso: "Cambia lo que corresponda y guarda"
+    resultado: "Queda actualizado"
+flujos_alternativos:
+  - nombre: "Eliminar"
+    pasos:
+      - paso: "Elige la acción Eliminar"
+        resultado: "El sistema pide confirmación"
+      - paso: "Confirma"
+        resultado: "Deja de figurar en el listado"
+validaciones:
+  - "El listado ofrece Editar, Eliminar y Ver Archivo sobre cada fila"
+dudas:
+  - "**¿Hasta cuándo se puede editar?** Si ya generó órdenes de trabajo, cambiarlo ahora ¿afecta a las que están en curso o solo a las futuras?"
+  - "**¿Qué pasa al eliminar uno que ya generó órdenes?** ¿Se borran también, quedan huérfanas, o el sistema lo impide?"
+  - "¿El borrado es lógico o físico? Es la misma pregunta que en el resto del sistema."

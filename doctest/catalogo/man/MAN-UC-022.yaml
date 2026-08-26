@@ -1,0 +1,32 @@
+id: MAN-UC-022
+modulo: MAN
+titulo: Habilitar o inhabilitar un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/list.php
+    detalle: "las acciones habilitarEquipo() e inhabilitarEquipo() de la columna Acciones"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+    detalle: "los estados 'AC' (activo) y 'AN' del equipo"
+pantallas:
+  - "Mantenimiento → Equipos → Habilitar / Inhabilitar"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Existe el equipo
+flujo_principal:
+  - paso: "En el listado, sobre un equipo activo, elige Inhabilitar"
+    resultado: "El equipo pasa a estado inactivo y la columna Estado lo refleja"
+  - paso: "Sobre un equipo inactivo, elige Habilitar"
+    resultado: "El equipo vuelve a estar activo"
+validaciones:
+  - "La acción que se ofrece depende del estado actual: a un equipo activo se le ofrece Inhabilitar y a uno inactivo, Habilitar"
+dudas:
+  - "**¿Qué deja de poder hacerse con un equipo inhabilitado?** ¿Se le pueden pedir servicios, sigue apareciendo en los planes de mantenimiento, se le pueden cargar lecturas? Es la pregunta que define para qué sirve la acción."
+  - "**¿Qué pasa con lo que ya estaba en curso?** Si el equipo tiene órdenes de trabajo abiertas o preventivos vigentes al inhabilitarlo, ¿siguen, se cancelan, quedan en espera?"
+  - "¿Se usa para equipos que salen de servicio temporalmente —una parada programada, una reparación larga— o para los que se dan de baja definitivamente? De eso depende cómo se explica frente a Eliminar (MAN-UC-004)."
+notas:
+  - "Es el **ciclo de vida del equipo**: en la base son los estados `AC` y `AN`. Es la única transición de estado que el usuario controla a mano desde el listado."

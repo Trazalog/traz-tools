@@ -23,6 +23,8 @@ flujo_principal:
     resultado: "Se muestra la grilla con las columnas Acciones, Código Equipo, Descripción, Área, Proceso, Sector, Criticidad, Cliente y Estado"
   - paso: "Busca un equipo por su código o su descripción"
     resultado: "La grilla se reduce a los equipos que coinciden"
+  - paso: "Mira la columna Acciones de una fila"
+    resultado: "Se ofrecen las once acciones que se pueden hacer sobre ese equipo, cada una con su caso propio: editar (MAN-UC-003), eliminar (MAN-UC-004), habilitar o inhabilitar (MAN-UC-022), asignar contratistas (MAN-UC-023), registrar una lectura o reportar una falla (MAN-UC-024), ver el historial de lecturas (MAN-UC-025), asignar una meta (MAN-UC-026) y adjuntar documentación (MAN-UC-027)"
 validaciones:
   - "El listado solo muestra equipos de la empresa de la sesión"
 dudas:

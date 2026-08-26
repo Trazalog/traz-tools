@@ -1,0 +1,36 @@
+id: MAN-UC-032
+modulo: MAN
+titulo: El ciclo de vida de un plan preventivo
+perfil: Planificador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Preventivo.php
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Calendario.php
+    detalle: "guardar_agregar() tipo=3 y setOTenSerie() para los repetitivos"
+pantallas:
+  - "Mantenimiento → Preventivo"
+  - "Mantenimiento → Plan de Mantenimiento"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Se define el preventivo con su período, frecuencia y fecha base (MAN-UC-014)"
+    resultado: "Queda activo, con sus herramientas e insumos declarados"
+  - paso: "Al llegar el vencimiento, aparece en el plan de mantenimiento"
+    resultado: "Queda disponible para programarle una orden"
+  - paso: "Se le genera la orden de trabajo, sola o en serie para varios meses"
+    resultado: "Se crean una o varias órdenes, cada una con los insumos copiados"
+  - paso: "Cada orden sigue su ciclo (MAN-UC-030)"
+    resultado: "Al completarse, el preventivo vuelve a contar hasta el próximo vencimiento"
+validaciones:
+  - "Un preventivo es **repetitivo**: no se cierra, vuelve a vencer"
+  - "Generar en serie crea varias órdenes de una vez, pero **ningún pedido de materiales**: cada pedido nace al ejecutar su orden"
+dudas:
+  - "**¿Desde cuándo se cuenta el próximo vencimiento: desde la fecha programada o desde que el trabajo se terminó?** Cambia todo el plan: si un preventivo se atrasa dos semanas, ¿el siguiente se corre también?"
+  - "**Si se generan doce órdenes en serie y el equipo se para en el mes cuatro, ¿qué pasa con las otras ocho?** Quedan programadas para un equipo que no está funcionando."
+  - "¿Un preventivo se puede pausar sin borrarlo?"
+notas:
+  - "A diferencia de la solicitud y el backlog, el preventivo **no se consume**: es un plan que vuelve a vencer. Esa es la diferencia conceptual que hay que explicar primero."

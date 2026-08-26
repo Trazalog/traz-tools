@@ -1,0 +1,36 @@
+id: MAN-UC-028
+modulo: MAN
+titulo: El ciclo de vida de un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+    detalle: "los estados 'AC' y 'AN' del equipo"
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/list.php
+    detalle: "habilitarEquipo(), inhabilitarEquipo(), eliminarEquipo()"
+pantallas:
+  - "Mantenimiento → Equipos"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Se da de alta el equipo (MAN-UC-002)"
+    resultado: "Nace activo y ya puede recibir solicitudes, planes y órdenes de trabajo"
+  - paso: "Mientras está activo, acumula historia: lecturas, órdenes, informes, componentes"
+    resultado: "Todo eso queda asociado al equipo"
+  - paso: "Si sale de servicio, se inhabilita (MAN-UC-022)"
+    resultado: "Pasa a inactivo, y la columna Estado del listado lo muestra"
+  - paso: "Si vuelve a servicio, se habilita de nuevo"
+    resultado: "Vuelve a estar activo, conservando toda su historia"
+validaciones:
+  - "En la base el equipo tiene dos estados: `AC` (activo) y `AN`"
+  - "La única transición que el usuario controla a mano es habilitar / inhabilitar"
+dudas:
+  - "**Hay que confirmar qué significa cada estado y qué se puede hacer en cada uno.** En el código el equipo tiene `AC` y `AN`; se asume que son activo e inactivo, pero eso hay que validarlo, y sobre todo definir **qué deja de poder hacerse con un equipo inactivo**."
+  - "**¿Dónde entra Eliminar en este ciclo?** Es una acción aparte de inhabilitar (MAN-UC-004). Si el borrado es físico, el equipo sale del ciclo llevándose su historia; si es lógico, es un tercer estado que hoy no está nombrado."
+  - "¿Un equipo inactivo se puede eliminar? ¿Y uno con órdenes abiertas?"
+notas:
+  - "Este caso no describe una pantalla sino **el recorrido completo de la entidad**. Es el que responde la pregunta \"¿qué le puede pasar a un equipo a lo largo del tiempo?\", que ninguna pantalla contesta por sí sola."

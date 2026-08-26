@@ -1,0 +1,35 @@
+id: MAN-UC-027
+modulo: MAN
+titulo: Adjuntar documentación a un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/list.php
+    detalle: "las acciones Agregar, Editar y Eliminar Adjunto"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+pantallas:
+  - "Mantenimiento → Equipos → Agregar Adjunto"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "En el listado de equipos elige Agregar Adjunto"
+    resultado: "Se abre el formulario para subir el archivo"
+  - paso: "Elige el archivo y confirma"
+    resultado: "El archivo queda asociado al equipo y se puede abrir desde el listado"
+flujos_alternativos:
+  - nombre: "Reemplazar o quitar un adjunto"
+    pasos:
+      - paso: "Usa Editar Adjunto para cambiarlo, o Eliminar Adjunto para sacarlo"
+        resultado: "El adjunto queda actualizado o eliminado"
+validaciones:
+  - "El adjunto queda asociado al equipo"
+dudas:
+  - "**¿Qué tipos de archivo se aceptan y de qué tamaño?** Es lo primero que alguien va a chocar: el manual del fabricante suele ser un PDF pesado."
+  - "¿Cuántos adjuntos puede tener un equipo?"
+  - "¿Para qué se piensa usar: manuales, planos, certificados de garantía, fotos? Vale la pena sugerirlo en la ayuda para que el campo se use."
+notas:
+  - "Los adjuntos también existen en Backlog y Predictivo, con las mismas tres acciones. Si el comportamiento es idéntico, se documenta una sola vez."
