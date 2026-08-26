@@ -8,6 +8,10 @@ ellas, cómo se publican, cómo se enlazan desde el sistema) y **cómo se mantie
 el sistema cambia. Está escrito para el PM y para
 cualquiera que se sume al proyecto sin haber estado en la construcción.
 
+> **Si sos el programador y lo único que querés es verificar que tu cambio no rompió nada**, andá
+> derecho a [§1.6](#16-correr-las-pruebas-contra-tu-propia-máquina-para-el-programador): tiene los
+> pasos para correr la suite en tu máquina, contra tu servidor local, sin leer el resto.
+
 **No** cubre el diseño de la solución ni por qué se decidió así — eso está en los tres documentos
 ancla de [`../doc/v3/`](../doc/v3/) — ni el detalle de cómo se instala el entorno, que está en el
 [README](README.md).
@@ -112,11 +116,16 @@ a punto del [README](README.md#puesta-a-punto-una-sola-vez) (`npm install`, el n
 
 | Comando | Qué corre | Cuánto tarda |
 |---|---|---|
-| `npm run test:smoke` | los 6 flujos críticos. **Es el que se corre antes de cada push** | ~1,5 min |
-| `npm run test:all` | los 55 tests, sin lo que esté en cuarentena | ~8 min |
+| `npm run test:smoke` | los 11 flujos críticos. **Es el que se corre antes de cada push** | ~1,5 min |
+| `npm run test:all` | los 71 tests, sin lo que esté en cuarentena | ~8 min |
 | `npm run test:module -- dnato` | un módulo entero | según el módulo |
 | `npm run test:list` | lista qué tests hay, sin ejecutarlos | segundos |
 | `npm run test:alta-empresa` | el alta completa de una empresa. **Crea una empresa real**, por eso está fuera de las corridas normales | ~2 min |
+
+> Estos comandos corren contra el entorno que diga `DOCTEST_ENV`. **Para correrlos contra tu propia
+> máquina** —el caso del programador que quiere verificar que su cambio no rompió nada— está
+> [§1.6](#16-correr-las-pruebas-contra-tu-propia-máquina-para-el-programador), con la configuración,
+> los datos que hacen falta y qué hacer cuando algo falla.
 
 **Contra qué entorno corre:** contra el que diga `DOCTEST_ENV` (`demo` por defecto), con las URLs de
 `doctest/.env`. Los entornos declarados son `local`, `demo` y `staging-v3`. **Producción no es un
@@ -197,7 +206,7 @@ Si coinciden, lo que estás leyendo es lo que corre. Si no, mirá primero qué e
 
 **Un solo lugar: [`doc/hallazgos/REGISTRO.md`](../doc/hallazgos/REGISTRO.md).** Ahí van los bugs,
 las deudas y las mejoras que aparecen mientras se hace otra cosa y que **no se corrigen en esa misma
-tarea**. Hoy tiene 35 hallazgos.
+tarea**. Hoy tiene 60 hallazgos.
 
 Cada fila lleva id (`H-NNN`, nunca se reutiliza), fecha, origen, módulo, tipo, severidad, resumen,
 **evidencia concreta** (archivo y línea, o la consulta que lo demuestra — un hallazgo sin evidencia
@@ -219,6 +228,166 @@ código que lo explica. Un hallazgo se escribe con la causa encontrada, no con e
 > **Lección de método que quedó escrita en el registro:** un hallazgo de interfaz no se reporta sin
 > verificarlo contra la pantalla real. Cuatro hallazgos leídos del controlador resultaron falsos —
 > la vista ya protegía lo que el controlador parecía dejar abierto.
+
+---
+
+## 1.6 Correr las pruebas contra tu propia máquina (para el programador)
+
+**Para quién es esta sección.** Sos el programador, modificaste código en tu máquina y querés saber
+**antes de pushear** si rompiste algo que ya andaba. Todo lo de acá se ejecuta **en tu máquina**,
+contra **tu propio servidor local**: no toca el DEMO, no toca producción, y no depende de que nadie
+te habilite nada.
+
+> ⚠️ **El estado real de esto, para que no pierdas tiempo:** hasta hoy la suite solo se corrió contra
+> el DEMO. El entorno `local` está declarado y soportado por la configuración, pero **nadie la
+> ejecutó todavía contra un Apache local**. Si un paso de acá no cierra en tu máquina, no es que lo
+> estés haciendo mal: es un hueco de esta sección. Avisá y se corrige.
+
+### Qué cubre la suite hoy — y qué significa que dé verde
+
+| Etiqueta | Qué prueba | Qué repo estás tocando si te importa |
+|---|---|---|
+| `@dnato` | registro de empresa, ingreso, cierre de sesión, recuperación de contraseña, perfil, alta y edición de usuarios, roles, carga masiva, empresas del superusuario | `traz-comp-dnato` |
+| `@man` | equipos, componentes, solicitudes de servicio, órdenes de trabajo, plan preventivo, backlog, predictivo, informes y reportes | `traz-prod-assetplanner` |
+| `@alm` | almacenes — **todavía no está en esta rama**, entra con el PR #482 | `application/modules/traz-comp-almacenes` |
+
+Son **71 tests en 24 archivos**.
+
+**Verde no quiere decir "no rompí nada".** Quiere decir *"no rompí nada de lo que está cubierto"*. Si
+tocaste `traz-comp-pan`, `traz-comp-formularios`, `traz-prod-trazasoft` o cualquier módulo que
+todavía no tiene casos, **la suite te va a dar verde igual**. Mirá la tabla antes de sacar
+conclusiones.
+
+### Paso 0 — puesta a punto (una sola vez)
+
+**Dónde:** en una terminal de tu máquina, parado en `traz-tools/doctest/`. Hace falta Node 20 o más
+nuevo.
+
+```bash
+npm install
+npx playwright install chromium
+cp .env.example .env
+```
+
+### Paso 1 — apuntar el `.env` a tus URLs
+
+**Dónde:** editás a mano el archivo `doctest/.env` que acabás de crear. No se commitea.
+
+| Línea a tocar | Qué dice hoy | Qué le ponés |
+|---|---|---|
+| `DOCTEST_ENV=` | `demo` | `local` |
+| `DOCTEST_LOCAL_URL_TOOLS=` | vacía | la URL con la que abrís Trazalog Tools en tu navegador — ej. `http://localhost/traz-tools` |
+| `DOCTEST_LOCAL_URL_DNATO=` | vacía | la **pantalla de ingreso** de Dnato — ej. `http://localhost/traz-comp-dnato/main/login` |
+| `DOCTEST_LOCAL_URL_MAN=` | vacía | la raíz de AssetPlanner — ej. `http://localhost/traz-prod-assetplanner` |
+
+Si no tenés AssetPlanner levantado, dejá `DOCTEST_LOCAL_URL_MAN` vacía y no corras `@man`: esos
+tests fallan con un mensaje que dice exactamente qué variable falta. Al revés es igual.
+
+**Lo único que la suite no te va a dejar hacer** es apuntar a `cloudtrazalog.com` sin subdominio:
+`config/apps.ts` lo rechaza con un error explícito. Los subdominios (`demo.`, `mcp.`) sí se aceptan,
+porque son entornos de trabajo.
+
+### Paso 2 — que tu base tenga con qué probar
+
+Esto es lo que **no** es automático, y conviene saberlo antes de arrancar: la suite no crea los datos
+que necesita, entra con usuarios que ya existen.
+
+| Variable de `.env` | Qué usuario es | Qué pasa si falta |
+|---|---|---|
+| `DOCTEST_EMPRESA1_USER` / `_PASS` | un usuario de una empresa cualquiera de tu base local | el arranque avisa `empresa1: sin credenciales configuradas` y sigue; los tests que la usan fallan |
+| `DOCTEST_EMPRESA2_USER` / `_PASS` | un usuario de **otra** empresa — es lo que permite verificar que una empresa no ve los datos de la otra | igual que arriba |
+| `DOCTEST_MAN_USER` / `_PASS` | usuario de **AssetPlanner**, que tiene padrón propio: **no son los de Tools** (issue #489) | los `@man` fallan diciéndolo |
+
+Dos formas de conseguirlos:
+
+- **La rápida:** dos empresas que ya estén en el dump de tu base local. Solo completás las variables.
+- **La completa:** `npm run seed:empresa` recorre el registro real —empresa, 16 roles,
+  establecimiento, depósito y 5 usuarios— contra lo que diga `DOCTEST_ENV`. Con `DOCTEST_ENV=local`
+  lo hace en tu máquina, pero **necesita que tu local pueda mandar el mail de activación**. Si no
+  puede, quedate con la forma rápida.
+
+### Paso 3 — correr lo que corresponde a lo que tocaste
+
+**Dónde:** terminal, en `traz-tools/doctest/`.
+
+| Situación | Comando | Cuánto |
+|---|---|---|
+| Chequeo rápido antes de pushear | `npm run test:smoke` | 11 tests, ~1,5 min |
+| Tocaste Dnato | `npm run test:module -- dnato` | 19 archivos |
+| Tocaste AssetPlanner | `npm run test:module -- man` | 6 archivos |
+| Querés la suite entera | `npm run test:all` | 71 tests, ~8 min |
+| Un caso puntual | `node scripts/pw.mjs --grep @MAN-UC-010` | segundos |
+| Un archivo puntual | `node scripts/pw.mjs tests/e2e/specs/man/MAN-UC-010.ordenes-trabajo.spec.ts` | segundos |
+| Ver qué hay, sin correr nada | `npm run test:list` | segundos |
+
+**Para mirar el navegador mientras corre** —que es lo que más sirve cuando algo falla y no se
+entiende por qué— agregale `--headed`, o `--debug` para ir paso a paso:
+
+```bash
+node scripts/pw.mjs --grep @MAN-UC-010 --headed
+```
+
+Dos cosas de cómo está configurada la corrida, para que no te sorprendan:
+
+- **Corre en serie** (`workers: 1`), a propósito. En paralelo, contra una máquina chica, empiezan a
+  fallar tests al azar por lentitud y no por el sistema. No lo subas para que termine antes.
+- **El navegador está fijado en `es-AR` y zona horaria San Juan.** Los casos que miran fechas asumen
+  ese formato.
+
+> ⚠️ **Los tests escriben.** `npm run test:alta-empresa` **crea una empresa de verdad** —por eso está
+> fuera de `test:all`— y varios casos de Dnato dan de alta usuarios, los editan y los habilitan.
+> Contra tu base local eso es tuyo y no molesta a nadie. Contra el DEMO deja rastro en el entorno que
+> el PM usa para mostrar el sistema.
+
+### Paso 4 — falló un test: ¿es mi cambio o es el test?
+
+Es la pregunta que importa, y tiene tres respuestas posibles. El orden para averiguarlo:
+
+1. **Abrí el reporte:** `npm run test:report`. Trae la captura y el video del momento del fallo, y el
+   mensaje dice qué esperaba y qué encontró. Si no alcanza,
+   `tests/e2e/.test-results/<test>/error-context.md` tiene el árbol de la pantalla tal como estaba en
+   ese instante — sirve justo para distinguir "el sistema hizo otra cosa" de "el selector quedó
+   viejo".
+2. **Reproducilo a mano** en tu local, en esa misma pantalla.
+3. Según lo que veas:
+
+| Lo que ves | Qué es | Qué hacés |
+|---|---|---|
+| La pantalla hace algo distinto de lo que el caso dice, y vos no querías cambiar eso | **rompiste algo** | lo arreglás — el test tenía razón |
+| La pantalla hace algo distinto **porque lo cambiaste a propósito** | el caso quedó viejo | **no edites el spec** — ver abajo |
+| Falla una vez, a la siguiente pasa, con un tiempo agotado | ruido del banco de pruebas | volvé a correrlo. Si falla siempre, no era ruido |
+
+**Si el caso quedó viejo:** el archivo de `tests/e2e/specs/` es **derivado** de
+`catalogo/<modulo>/<ID>.yaml`. Editarlo a mano para que pase deja el catálogo mintiendo — y la ayuda
+de usuario, que sale del mismo catálogo, también. Pedí la actualización: `/doctest <qué cambiaste>`
+en una sesión de Claude Code parada en `traz-tools/`, o un issue con la plantilla **"Falta probar
+algo (test-gap)"**. Contá qué cambió **funcionalmente**, no qué selector se rompió; el circuito
+completo está en [§3](#3-cómo-se-mantiene-actualizado).
+
+**Si de paso encontraste otra cosa rota**, no la arregles en el mismo diff: va al registro de
+hallazgos ([§1.5](#15-dónde-se-recopilan-los-hallazgos)). Mezclar arreglos ajenos es lo que hace
+imposible revisar un PR.
+
+### Paso 5 — antes de pushear
+
+**Dónde:** terminal, en `traz-tools/doctest/`.
+
+```bash
+npm run validate:catalog
+npm run typecheck
+npm run test:smoke
+```
+
+Las dos primeras son las que corre `doctest-validate.yml` en todo PR que toque `doctest/`. **La
+tercera no la corre nadie más que vos:** CI todavía no ejecuta la suite contra ningún entorno —falta
+`doctest-e2e.yml`, que es parte de F5—, así que si no la corrés vos, no se corre.
+
+### Las cuatro cosas que no hay que hacer
+
+1. **No edites un spec para que pase.** Es derivado; el original es el YAML del caso.
+2. **No apuntes el `.env` a producción.** La suite lo rechaza, pero ni lo intentes.
+3. **No commitees el `.env`.** Tiene contraseñas.
+4. **No confundas verde con cubierto.** Volvé a la tabla del principio de la sección.
 
 ---
 
