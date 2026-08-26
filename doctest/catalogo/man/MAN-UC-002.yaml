@@ -37,20 +37,20 @@ flujo_principal:
 flujos_alternativos:
   - nombre: "Falta una opción en un desplegable"
     pasos:
-      - paso: "Junto a cada desplegable —área, proceso, criticidad, sector, grupo, cliente— hay un botón para agregar una opción nueva"
-        resultado: "Se puede crear la opción sin salir del formulario, y queda elegida"
+      - paso: "Junto a cada desplegable —área, proceso, criticidad, sector/etapa, grupo, cliente y marca— hay un botón 'Agregar'"
+        resultado: "Se abre un formulario chico para crear la opción sin salir del alta. El de Cliente pide además nombre, apellido, DNI, dirección, teléfono y razón social"
 validaciones:
-  - "Son obligatorios el Código de Equipo, la Marca, la Descripción y el N° de Serie"
-  - "Quedan como opcionales la ubicación georreferencial, la fecha de ingreso, la garantía, la lectura inicial y la descripción técnica"
+  - "La pantalla marca con asterisco **Área, Proceso, Criticidad y Sector/Etapa** — los datos de ubicación. Grupo y Cliente no lo llevan"
+  - "Ningún campo declara `required` en el HTML: si hay validación, está en el JavaScript"
   - "El equipo se da de alta en la empresa de la sesión"
 dudas:
   - "**No verificado contra la pantalla real** porque ninguna credencial entra a AssetPlanner (H-049 / issue #489). Relevado del código y del manual legacy `manual_alta_equipos_componentes.html`, que muestra este mismo formulario."
-  - "Los obligatorios salen del manual de ayuda existente —Código, Marca, Descripción y N° de Serie—, pero el formulario **no declara `required` en el HTML**: si la validación existe, está en el JavaScript. Es el mismo patrón que en DNATO y ALM, donde la vista protege y el servidor no revalida. **Hay que verificarlo en pantalla.**"
-  - "**El manual de ayuda existente y el código no coinciden en un punto:** el manual dice que las listas desplegables *\"deben cargarse previamente desde el ABM correspondiente\"*, pero el formulario tiene un botón para agregar una opción al lado de cada combo (`addarea`, `addproceso`, `addcriti`, `addetapa`, `addgrupo`, `addcliente`). ¿El botón es nuevo y el manual quedó viejo, o el botón no funciona? Cambia lo que hay que documentar."
+  - "**Los obligatorios no coinciden con el manual de ayuda existente y hay que definir cuáles son.** Ese manual dice que son Código de Equipo, Marca, Descripción y N° de Serie; la pantalla, en cambio, **pone el asterisco en Área, Proceso, Criticidad y Sector/Etapa**, y ninguno de los de datos del equipo lo lleva. Además **ningún campo declara `required` en el HTML**, así que la validación —si existe— está en el JavaScript: mismo patrón que en DNATO y ALM."
   - "¿El código de equipo tiene que ser único dentro de la empresa? En ALM el código de artículo sí lo es; acá no está claro."
   - "¿Qué significa cada nivel de **criticidad** para el negocio y qué consecuencia tiene? Aparece en el alta y en los reportes, pero el código solo la guarda."
   - "**La 'lectura inicial'** es el punto de partida del contador del equipo, que después usan los preventivos por lectura. ¿Se puede corregir más adelante si se cargó mal, o queda fija?"
   - "¿Un equipo puede existir sin componentes, o el alta se considera incompleta hasta asignarle al menos uno?"
 notas:
   - "Es el caso piloto de F2 (issue #439): sirve para calibrar el formato y el costo del relevamiento en este módulo."
-  - "A diferencia de ALM, acá **los catálogos se pueden crear desde el propio formulario** con los botones `add*` que hay junto a cada desplegable. Vale la pena documentarlo en la ayuda: evita el rodeo de salir a un ABM y volver."
+  - "A diferencia de ALM, acá **los catálogos se pueden crear desde el propio formulario**, y está **verificado en pantalla**: los botones `addarea`, `addproceso`, `addcriti`, `addetapa`, `addgrupo` y `addcliente` están visibles y abren su formulario. **El manual de ayuda existente dice lo contrario** —que las listas *\"deben cargarse previamente desde el ABM correspondiente\"*—, así que quedó desactualizado en ese punto."
+  - "**Campos verificados en pantalla** (2026-08-26): ubicación —Área, Proceso, Criticidad, Sector/Etapa, Grupo, Cliente— y datos —Código, Marca, Descripción, Número de serie, Ubicación georreferencial, Fecha de Ingreso, **Fecha de Garantía**, **Fecha de Lectura Inicial**, Lectura Inicial y Descripción Técnica. Dos diferencias con el manual de ayuda existente: la garantía es una **fecha**, no una cantidad de meses, y la **fecha de lectura inicial** no figura en ese manual."

@@ -79,11 +79,35 @@ depende de qué rama corra el DEMO, que es la duda que planteaste.
 
 ---
 
-## 3. Por qué no se puede entrar a AssetPlanner — y no es un dato que falte
+## 3. El ingreso, destrabado — y por qué estaba roto
 
-La primera lectura fue equivocada y conviene dejarla corregida: pensé que faltaba un usuario de
-AssetPlanner. **El circuito de alta existe, tal como estaba diseñado** — el alta de usuario llega a
-la tabla `sisusers` de asset. Lo que está roto es la contraseña.
+**Desde el 2026-08-26 hay un usuario que funciona** (`supman@novu.com`), que proveyó el PM. Con eso
+las seis pantallas del piloto quedaron **verificadas contra el DEMO**, y lo que sigue explica por qué
+ninguna credencial de una empresa registrada entra — que sigue siendo un problema abierto.
+
+### Lo verificado en pantalla (2026-08-26)
+
+| Qué | Resultado |
+|---|---|
+| El menú de AssetPlanner | Mantenimiento, Pañol, **Almacenes**, Compras, 19 ABMs y Reportes. Que tenga Almacenes y Pañol propios **confirma que el DEMO corre `develop`**, la versión anterior a la migración |
+| Listado de equipos | Código Equipo, Descripción, Área, Proceso, Sector, Criticidad, Cliente y Estado — más una segunda tabla, **Contratistas Asignados**, que no está en ningún manual |
+| Formulario de alta | Los asteriscos están en **Área, Proceso, Criticidad y Sector/Etapa**, no en Código/Marca/Descripción/N° de serie como decía el manual anterior. **Ningún campo declara `required` en el HTML** |
+| Los botones de agregar opciones | **Existen y están visibles** (`addarea`, `addproceso`, `addcriti`, `addetapa`, `addgrupo`, `addcliente`). El manual anterior decía que las listas "deben cargarse previamente desde el ABM": quedó desactualizado |
+| Garantía | Es una **fecha**, no una cantidad de meses. Y hay además una **Fecha de Lectura Inicial** que el manual anterior no menciona |
+| ABM Componentes | Marca, Descripción, Información y Adjunto |
+| Asociar componentes | Equipo, Descripción (se completa sola), Componente y Código |
+
+Dos cosas que **no** resultaron ser hallazgos, y conviene dejar dicho para no volver a levantarlas:
+`ABM Sistemas` daba 404 porque yo estaba probando la URL equivocada —el controlador es `SistemaABM`—,
+y las etiquetas repetidas en la pantalla de asociar componentes eran un error de mi extractor: en la
+vista son correctas (*Equipo*, *Descripción*, *Componente*, *Código*).
+
+### Por qué no entra ningún usuario de una empresa registrada
+
+
+
+El circuito de alta existe, tal como estaba diseñado: el alta de usuario llega a la tabla `sisusers`
+de asset. Lo que está roto es la contraseña.
 
 | Punta | Qué hace |
 |---|---|
@@ -128,12 +152,12 @@ DataServices de MAN, ALM, TAR y Producción— más una menor: `AssetPlannerData
 driver de MySQL y sus parámetros de conexión, pero **las dos ramas apuntan a la misma base**
 (`10.142.0.13:3306/assetv2`), así que el DEMO no está escribiendo en otro lado.
 
-Por eso los seis casos de este PR están relevados **del código y del manual legacy**, y cada uno lo
-dice en sus dudas. Y por eso DocTest no puede verificar ni testear MAN hasta que esto se corrija:
-no es que falte un dato, es que **no existe ninguna credencial que funcione**.
+Sigue siendo 🔴 aunque el relevamiento esté destrabado: **una empresa que se registra hoy no puede
+usar Mantenimiento.** El usuario prestado sirve para relevar y para escribir los tests, no para
+resolver eso.
 
-Queda en pie la consecuencia de diseño: cuando se destrabe, **MAN necesita su propia fixture de
-sesión**, porque tiene su propio ingreso y el `storageState` de Tools no le sirve.
+Queda en pie la consecuencia de diseño: **MAN necesita su propia fixture de sesión**, porque tiene su
+propio ingreso y el `storageState` de Tools no le sirve.
 
 ## 4. Lo que hace falta para seguir
 

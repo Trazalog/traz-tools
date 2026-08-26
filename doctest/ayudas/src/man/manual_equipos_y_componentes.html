@@ -2,10 +2,9 @@
   Contenido del manual de Equipos y Componentes (módulo MAN / AssetPlanner).
   Solo las secciones: la portada, el menú lateral y el pie los pone la plantilla.
 
-  ⚠️ ESTADO: los casos de los que sale este manual están en `borrador` — no se pudieron
-  verificar contra la pantalla real porque el ingreso a AssetPlanner está bloqueado
-  (issue #489). El contenido se apoya en el código de `develop` y en el manual de ayuda
-  anterior. NO PUBLICAR hasta verificar y validar los casos.
+  ESTADO: las pantallas están verificadas contra el DEMO (2026-08-26), pero los casos
+  siguen en `borrador` hasta que el PM los valide. El generador no publica este manual
+  mientras eso no pase — lo avisa en cada corrida de `npm run ayudas`.
 
   meta:titulo=Equipos y Componentes
   meta:portada=Equipos<br><em>y Componentes</em>
@@ -89,7 +88,7 @@
 
   <div class="sub-title">Cómo llegar</div>
 
-  <p class="intro-text">Menú lateral → <strong>Mantenimiento</strong> → <strong>Equipos</strong>. Se abre el listado de los equipos que ya tenés; el botón <strong>Agregar</strong> abre el formulario.</p>
+  <p class="intro-text">Menú lateral → <strong>Mantenimiento</strong> → <strong>Equipos</strong>. Se abre el listado con las columnas <em>Código Equipo, Descripción, Área, Proceso, Sector, Criticidad, Cliente</em> y <em>Estado</em>; el botón <strong>Agregar</strong> abre el formulario.</p>
 
   <figure class="screen">
     <div class="screen-card">
@@ -106,7 +105,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
             <div>
               <div style="font-size:16px;font-weight:700">Nuevo Equipo</div>
-              <div style="font-size:11px;color:#94A3B8;margin-top:2px">Completá todos los campos obligatorios <span style="color:#CC1F1A">*</span></div>
+              <div style="font-size:11px;color:#94A3B8;margin-top:2px">Los campos con <span style="color:#CC1F1A">*</span> son obligatorios</div>
             </div>
             <div style="display:flex;gap:8px">
               <span class="screen-btn">Cancelar</span>
@@ -118,12 +117,12 @@
             <div class="cab">Ubicación del equipo / sector</div>
             <div class="cuerpo">
               <div class="screen-campos tres" style="grid-template-columns:1fr 1fr 1fr">
-                <div class="screen-campo"><div class="et">Área</div><div class="val lista">Producción</div></div>
-                <div class="screen-campo"><div class="et">Proceso</div><div class="val lista">Línea 1</div></div>
-                <div class="screen-campo"><div class="et">Criticidad</div><div class="val lista">Alta</div></div>
+                <div class="screen-campo"><div class="et">Área <span class="req">*</span></div><div class="val lista">Producción</div></div>
+                <div class="screen-campo"><div class="et">Proceso <span class="req">*</span></div><div class="val lista">Línea 1</div></div>
+                <div class="screen-campo"><div class="et">Criticidad <span class="req">*</span></div><div class="val lista">Alta</div></div>
               </div>
               <div class="screen-campos tres" style="grid-template-columns:1fr 1fr 1fr;margin-top:14px">
-                <div class="screen-campo"><div class="et">Sector / Etapa</div><div class="val lista">Envasado</div></div>
+                <div class="screen-campo"><div class="et">Sector / Etapa <span class="req">*</span></div><div class="val lista">Envasado</div></div>
                 <div class="screen-campo"><div class="et">Grupo</div><div class="val lista">Bombas</div></div>
                 <div class="screen-campo"><div class="et">Cliente</div><div class="val lista vacio">— Sin cliente —</div></div>
               </div>
@@ -134,24 +133,24 @@
             <div class="cab">Datos del equipo</div>
             <div class="cuerpo">
               <div class="screen-campos dos" style="grid-template-columns:1fr 1fr">
-                <div class="screen-campo"><div class="et">Código de Equipo <span class="req">*</span></div><div class="val foco">BOMB-001</div></div>
-                <div class="screen-campo"><div class="et">Marca <span class="req">*</span></div><div class="val lista">Grundfos</div></div>
+                <div class="screen-campo"><div class="et">Código de Equipo</div><div class="val foco">BOMB-001</div></div>
+                <div class="screen-campo"><div class="et">Marca</div><div class="val lista">Grundfos</div></div>
               </div>
               <div class="screen-campos" style="margin-top:14px">
-                <div class="screen-campo"><div class="et">Descripción <span class="req">*</span></div><div class="val">Bomba centrífuga horizontal de 5 HP</div></div>
+                <div class="screen-campo"><div class="et">Descripción</div><div class="val">Bomba centrífuga horizontal de 5 HP</div></div>
               </div>
               <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr;display:grid;margin-top:14px">
-                <div class="screen-campo"><div class="et">N° de Serie <span class="req">*</span></div><div class="val">GF-2024-00412</div></div>
+                <div class="screen-campo"><div class="et">Número de serie</div><div class="val">GF-2024-00412</div></div>
                 <div class="screen-campo"><div class="et">Fecha de ingreso</div><div class="val">15/03/2024</div></div>
                 <div class="screen-campo"><div class="et">Lectura inicial</div><div class="val">0</div></div>
-                <div class="screen-campo"><div class="et">Garantía (meses)</div><div class="val">24</div></div>
+                <div class="screen-campo"><div class="et">Fecha de Garantía</div><div class="val">15/03/2026</div></div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <figcaption class="screen-footer"><strong>Los cuatro obligatorios son Código, Marca, Descripción y N° de Serie.</strong> Todo lo demás se puede completar después.</figcaption>
+    <figcaption class="screen-footer"><strong>Los asteriscos están arriba, en la ubicación.</strong> Área, Proceso, Criticidad y Sector/Etapa son los que la pantalla marca como obligatorios.</figcaption>
   </figure>
 
   <div class="sub-title">Los campos, uno por uno</div>
@@ -167,7 +166,7 @@
       <tr><td><strong>Descripción</strong> <span style="color:#CC1F1A">*</span></td><td>Qué es, en las palabras de quien trabaja con él. Es lo que va a leer el que reciba una solicitud de servicio</td></tr>
       <tr><td><strong>N° de Serie</strong> <span style="color:#CC1F1A">*</span></td><td>El del fabricante. Es lo que identifica a esta unidad concreta frente al proveedor o la garantía</td></tr>
       <tr><td><strong>Lectura inicial</strong></td><td>El valor del contador —horas, kilómetros, ciclos— al momento de cargarlo. <strong>Importa más de lo que parece</strong>: es el punto de partida de los mantenimientos que se disparan por uso, no por fecha</td></tr>
-      <tr><td><strong>Garantía (meses)</strong></td><td>Cuánto dura la garantía desde la fecha de ingreso</td></tr>
+      <tr><td><strong>Fecha de Garantía</strong></td><td>Hasta cuándo está en garantía. Es una <strong>fecha</strong>, no una cantidad de meses</td></tr>
       <tr><td><strong>Ubicación georreferencial</strong></td><td>Para equipos que no están siempre en el mismo lugar</td></tr>
       <tr><td><strong>Descripción técnica</strong></td><td>Texto libre: caudal, tensión, potencia. Lo que le sirva al que lo vaya a intervenir</td></tr>
     </tbody>
@@ -176,8 +175,12 @@
   <div class="alert warn">
     <div class="alert-bar"></div>
     <div class="alert-body">
-      <div class="alert-label">Las listas desplegables se cargan antes</div>
-      <div class="alert-text">Marca, área, proceso, criticidad, sector, grupo y cliente salen de listas que se administran desde el menú <strong>ABM</strong>. Si un desplegable te aparece vacío, no es un error: falta cargar esa lista.</div>
+      <div class="alert-label">Si falta una opción, la creás sin salir del formulario</div>
+      <div class="alert-text">
+        Área, proceso, criticidad, sector, grupo, cliente y marca salen de listas. Pero <strong>no hace falta ir a cargarlas antes</strong>: al lado de cada desplegable hay un botón <strong>Agregar</strong> que abre un formulario chico, crea la opción y la deja elegida. El de Cliente pide un poco más —nombre, apellido, DNI, dirección, teléfono y razón social—.
+        <br><br>
+        Igual, si vas a cargar muchos equipos, conviene dejar las listas armadas de entrada desde el menú <strong>ABM</strong>: cargarlas de a una mientras completás el alta se hace lento.
+      </div>
     </div>
   </div>
 </section>
