@@ -40,10 +40,13 @@ flujos_alternativos:
       - paso: "Junto a cada desplegable —área, proceso, criticidad, sector, grupo, cliente— hay un botón para agregar una opción nueva"
         resultado: "Se puede crear la opción sin salir del formulario, y queda elegida"
 validaciones:
+  - "Son obligatorios el Código de Equipo, la Marca, la Descripción y el N° de Serie"
+  - "Quedan como opcionales la ubicación georreferencial, la fecha de ingreso, la garantía, la lectura inicial y la descripción técnica"
   - "El equipo se da de alta en la empresa de la sesión"
 dudas:
   - "**No verificado contra la pantalla real** porque ninguna credencial entra a AssetPlanner (H-049 / issue #489). Relevado del código y del manual legacy `manual_alta_equipos_componentes.html`, que muestra este mismo formulario."
-  - "¿Cuáles son los campos realmente obligatorios? El manual legacy marca con asterisco Código, Marca, Descripción y N° de Serie, pero el formulario no declara `required` en el HTML: la validación, si existe, está en el JavaScript."
+  - "Los obligatorios salen del manual de ayuda existente —Código, Marca, Descripción y N° de Serie—, pero el formulario **no declara `required` en el HTML**: si la validación existe, está en el JavaScript. Es el mismo patrón que en DNATO y ALM, donde la vista protege y el servidor no revalida. **Hay que verificarlo en pantalla.**"
+  - "**El manual de ayuda existente y el código no coinciden en un punto:** el manual dice que las listas desplegables *\"deben cargarse previamente desde el ABM correspondiente\"*, pero el formulario tiene un botón para agregar una opción al lado de cada combo (`addarea`, `addproceso`, `addcriti`, `addetapa`, `addgrupo`, `addcliente`). ¿El botón es nuevo y el manual quedó viejo, o el botón no funciona? Cambia lo que hay que documentar."
   - "¿El código de equipo tiene que ser único dentro de la empresa? En ALM el código de artículo sí lo es; acá no está claro."
   - "¿Qué significa cada nivel de **criticidad** para el negocio y qué consecuencia tiene? Aparece en el alta y en los reportes, pero el código solo la guarda."
   - "**La 'lectura inicial'** es el punto de partida del contador del equipo, que después usan los preventivos por lectura. ¿Se puede corregir más adelante si se cargó mal, o queda fija?"

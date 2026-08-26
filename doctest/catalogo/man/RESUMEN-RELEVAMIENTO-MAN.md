@@ -163,7 +163,30 @@ justamente la que hay que correr para validarla. Lo que sí conviene traer al ca
 la **casuística funcional que sea independiente de la migración** —el ciclo de la OT, el pedido
 perezoso, la asimetría con herramientas—, que vale para las dos versiones.
 
-## 5. Después de que decidas
+## 5. El manual ya está escrito, y esperando
+
+`ayudas/src/man/manual_equipos_y_componentes.html` — tres secciones: por qué los equipos van
+primero, el alta paso a paso con el formulario dibujado y los campos explicados uno por uno, y los
+dos caminos para cargar componentes.
+
+**No se publica**, y eso es a propósito: el generador solo arma los manuales que algún caso
+`validado` declara como derivado, así que mientras los casos de MAN estén en `borrador` el manual
+queda escrito pero fuera del sitio. `npm run ayudas` lo avisa en cada corrida. Es la misma regla que
+ya regía para los tests y los `.feature`, ahora también para las ayudas.
+
+Sale del código de `develop` y del manual de ayuda anterior, que aporta el vocabulario y los pasos
+validados. Dos cosas de ahí que quedaron como duda porque **no se pudieron verificar en pantalla**:
+
+- el manual anterior dice que las listas desplegables *"deben cargarse previamente desde el ABM"*,
+  pero el formulario tiene un botón para agregar la opción al lado de cada combo. ¿El botón es nuevo
+  y el manual quedó viejo, o el botón no funciona?
+- los cuatro campos obligatorios salen del manual anterior; el formulario **no declara `required`**
+  en el HTML, así que la validación —si existe— está en el JavaScript. Mismo patrón que en DNATO y
+  ALM: la vista protege, el servidor no revalida.
+
+---
+
+## 6. Después de que decidas
 
 Con el ingreso destrabado: verificar los seis casos en pantalla, confirmar si el `dump()` rompe el
 alta de componentes, agregar la fixture de sesión de MAN y escribir los tests. Después, seguir el

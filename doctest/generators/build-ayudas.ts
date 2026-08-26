@@ -154,14 +154,46 @@ function copiarLegacy(): string[] {
   return copiados;
 }
 
+/**
+ * Manuales que algún caso **validado** declara como derivado.
+ *
+ * Es el mismo criterio que rige para los tests y los `.feature`: un caso en `borrador` no genera
+ * nada (RF-01.3), y la regla R1 del validador impide que un borrador declare derivados. Así que
+ * alcanza con mirar quién está declarado: si un manual no aparece, es que sus casos todavía no se
+ * validaron y no debe publicarse.
+ */
+function manualesHabilitados(): Set<string> {
+  const habilitados = new Set<string>();
+  const catalogo = join(RAIZ, 'catalogo');
+  if (!existsSync(catalogo)) return habilitados;
+  for (const modulo of readdirSync(catalogo, { withFileTypes: true }).filter((d) => d.isDirectory())) {
+    for (const archivo of readdirSync(join(catalogo, modulo.name)).filter((f) => f.endsWith('.yaml'))) {
+      const yaml = readFileSync(join(catalogo, modulo.name, archivo), 'utf8');
+      if (!/^estado:\s*validado\s*$/m.test(yaml)) continue;
+      const ayuda = /^\s*ayuda:\s*(\S+)/m.exec(yaml);
+      if (ayuda) habilitados.add(basename(ayuda[1].split('#')[0]));
+    }
+  }
+  return habilitados;
+}
+
 function armarManuales(): { archivo: string; casos: string }[] {
   if (!existsSync(SRC)) return [];
   const plantilla = readFileSync(join(PLANTILLA, 'manual.html'), 'utf8');
   const armados: { archivo: string; casos: string }[] = [];
   const hoy = new Date().toISOString().slice(0, 10);
 
+  const habilitados = manualesHabilitados();
+
   for (const modulo of readdirSync(SRC, { withFileTypes: true }).filter((d) => d.isDirectory())) {
     for (const archivo of readdirSync(join(SRC, modulo.name)).filter((f) => f.endsWith('.html'))) {
+      if (!habilitados.has(archivo)) {
+        console.log(
+          `  · ${archivo} NO se publica: ningún caso validado lo declara como derivado ` +
+            `(sus casos siguen en borrador)`,
+        );
+        continue;
+      }
       const contenido = readFileSync(join(SRC, modulo.name, archivo), 'utf8');
       const meta = metadata(contenido);
       const secciones = contenido.replace(/^<!--[\s\S]*?-->\s*/, '');

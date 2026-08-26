@@ -223,7 +223,13 @@ npm run ayudas
 ```
 
 Copia los manuales viejos tal cual, ensambla los nuevos con la plantilla, agrega su tarjeta a la
-portada y **regenera el buscador del inicio recorriendo el contenido de todos los manuales**. Hoy
+portada y **regenera el buscador del inicio recorriendo el contenido de todos los manuales**.
+
+> **Un manual solo se publica si algún caso `validado` lo declara como derivado.** Es la misma regla
+> que rige para los tests y los `.feature`: un caso en `borrador` no genera nada. Se puede escribir un
+> manual mientras sus casos todavía se están validando —queda en `ayudas/src/` y el generador avisa
+> que no lo publica— pero no llega al sitio hasta que el PM valide. Así ninguna ayuda le explica a un
+> usuario algo que nadie confirmó, ni siquiera por un descuido al generar. Hoy
 son 7 manuales y 26 secciones indexadas. Sale en **`ayuda/`, en la raíz del repo del frontend**, y
 esa carpeta **va versionada**: el resultado se commitea como cualquier otro archivo. Esto último era una deuda del sitio anterior: el buscador
 se mantenía a mano y solo encontraba dos de los cinco manuales.
