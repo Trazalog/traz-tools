@@ -513,7 +513,11 @@
     </div>
     <div class="paso">
       <div class="paso-titulo">Elegí qué vas a programar y para cuándo</div>
-      <div class="paso-texto">Las órdenes se generan <strong>de a una</strong>. Y <strong>no se debería programar algo ya vencido</strong>: si un preventivo se pasó de fecha, corresponde revisar por qué antes de emitir la orden.</div>
+      <div class="paso-texto">
+        Lo habitual es generar <strong>una orden por vez</strong>. Y <strong>no conviene programar algo ya vencido</strong>: si un preventivo se pasó de fecha, corresponde revisar por qué antes de emitir la orden.
+        <br><br>
+        Para los preventivos que se repiten todos los meses hay además una opción de <strong>generar varias de una vez</strong>, indicando por cuántos meses. Se crean todas las órdenes del período — pero <strong>ningún pedido de materiales</strong>: cada pedido nace al ejecutar su propia orden.
+      </div>
     </div>
     <div class="paso">
       <div class="paso-titulo">Generá la orden</div>
@@ -887,8 +891,12 @@
       </div>
     </div>
     <div class="paso">
-      <div class="paso-titulo">Cargá las horas hombre que lleva</div>
-      <div class="paso-texto">Es la duración estimada. Sirve para dimensionar cuánto trabajo planificado tiene el taller por delante.</div>
+      <div class="paso-titulo">Indicá cuánto lleva y cuánta gente</div>
+      <div class="paso-texto">
+        Cargás la <strong>duración</strong>, su <strong>unidad</strong> —minutos, horas— y la <strong>cantidad de operarios</strong>. Las <strong>horas hombre se calculan solas</strong>: el campo no se escribe.
+        <br><br>
+        Ocho horas con dos operarios son 16 horas hombre. Es el número que después dimensiona cuánto trabajo planificado tiene el taller por delante.
+      </div>
     </div>
     <div class="paso">
       <div class="paso-titulo">Declará herramientas e insumos</div>
@@ -922,11 +930,12 @@
           <div class="screen-panel">
             <div class="cab">Cada cuánto se repite</div>
             <div class="cuerpo">
-              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr;display:grid">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;display:grid">
                 <div class="screen-campo"><div class="et">Período <span class="req">*</span></div><div class="val lista">Mes</div></div>
                 <div class="screen-campo"><div class="et">Frecuencia <span class="req">*</span></div><div class="val">3</div><div class="screen-hint">cada 3 meses</div></div>
                 <div class="screen-campo"><div class="et">Fecha base <span class="req">*</span></div><div class="val">01/06/2026</div></div>
-                <div class="screen-campo"><div class="et">Horas hombre</div><div class="val">2</div></div>
+                <div class="screen-campo"><div class="et">Duración · operarios</div><div class="val">8 h · 2</div></div>
+                <div class="screen-campo off"><div class="et">Horas hombre</div><div class="val">16</div><div class="screen-hint">se calcula solo: 8 h × 2 operarios</div></div>
               </div>
             </div>
           </div>

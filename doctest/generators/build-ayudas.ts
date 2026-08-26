@@ -54,6 +54,7 @@ interface EntradaBusqueda {
 }
 
 const ICONOS: Record<string, string> = {
+  manual: '📘',
   correctivo: '🔧',
   preventivo: '🗓️',
   equipos: '⚙️',
@@ -96,6 +97,7 @@ function claveManual(archivo: string): string {
   if (n.includes('almacen')) return 'almacen';
   if (n.includes('configuracion')) return 'configuracion';
   if (n.includes('registracion')) return 'registracion';
+  if (n.includes('mantenimiento')) return 'correctivo';
   return 'manual';
 }
 
@@ -143,12 +145,46 @@ function navDeSecciones(html: string): string {
   return items.join('\n      ');
 }
 
+/**
+ * Qué manual nuevo reemplaza a cada uno de los publicados antes.
+ *
+ * Los cinco manuales viejos quedaron **cubiertos por los tres nuevos**, y no dicen lo mismo: el de
+ * almacén afirma que el sistema descuenta stock al ejecutar una OT y que avisa cuando se llega al
+ * punto de pedido —ninguna de las dos cosas pasa (H-050)— y el de equipos da por obligatorios
+ * campos que no lo son (H-053). Publicar las dos versiones deja al usuario eligiendo entre
+ * información que se contradice.
+ *
+ * Las direcciones viejas **no se rompen**: la gente las tiene guardadas y linkeadas. Se conservan,
+ * pero salen del índice y llevan arriba un aviso que remite al manual vigente.
+ */
+const REEMPLAZADOS: Record<string, { por: string; titulo: string }> = {
+  'manual_configuracion_inicial.html': { por: 'manual_registracion_y_cuenta.html', titulo: 'Registración y Cuenta' },
+  'manual_alta_equipos_componentes.html': { por: 'manual_mantenimiento.html', titulo: 'Mantenimiento' },
+  'manual_mantenimiento_correrctivo.html': { por: 'manual_mantenimiento.html', titulo: 'Mantenimiento' },
+  'manual_mantenimeinto_preventivo.html': { por: 'manual_mantenimiento.html', titulo: 'Mantenimiento' },
+  'manual_almacen_mantenimiento.html': { por: 'manual_almacenes.html', titulo: 'Almacenes' },
+};
+
+/** El aviso que se le pone arriba a un manual reemplazado. */
+function avisoDeReemplazo(destino: string, titulo: string): string {
+  return `<div style="background:#FFF4E5;border-bottom:2px solid #F5A623;padding:14px 20px;font-family:'DM Sans',sans-serif;font-size:14px;color:#78350f;text-align:center">
+  Esta es una <strong>versión anterior</strong> de la ayuda y puede tener información desactualizada.
+  La versión vigente está en <a href="${destino}" style="color:#991510;font-weight:700">${titulo}</a>.
+</div>
+`;
+}
+
 function copiarLegacy(): string[] {
   const copiados: string[] = [];
   for (const archivo of readdirSync(LEGACY)) {
     const origen = join(LEGACY, archivo);
     if (!statSync(origen).isFile() || !archivo.endsWith('.html')) continue;
-    if (!DRY_RUN) copyFileSync(origen, join(BUILD, archivo));
+    let html = readFileSync(origen, 'utf8');
+    const reemplazo = REEMPLAZADOS[archivo];
+    if (reemplazo) {
+      html = html.replace(/(<body[^>]*>)/i, `$1\n${avisoDeReemplazo(reemplazo.por, reemplazo.titulo)}`);
+    }
+    if (!DRY_RUN) writeFileSync(join(BUILD, archivo), html, 'utf8');
     copiados.push(archivo);
   }
   return copiados;
@@ -248,7 +284,7 @@ function agregarTarjeta(html: string, archivo: string, meta: Record<string, stri
   if (html.includes(`href="${archivo}"`)) return html;
   const tarjeta = `      <a href="${archivo}" class="card">
         <div class="card-header">
-          <div class="card-icon amber">&#128273;</div>
+          <div class="card-icon amber">${ICONOS[claveManual(archivo)] ?? '&#128214;'}</div>
           <div class="card-meta">
             <h3>${meta.titulo ?? archivo}</h3>
             <p>${meta.modulo ?? ''}</p>
@@ -269,6 +305,48 @@ function agregarTarjeta(html: string, archivo: string, meta: Record<string, stri
 }
 
 /**
+ * Deja en el índice **un solo manual por tema**.
+ *
+ * El índice traía una tarjeta por cada manual publicado, así que después de sumar los nuevos había
+ * ocho tarjetas para tres temas: quien entra no sabe cuál leer, y las versiones se contradicen
+ * (H-058). Las tarjetas de los reemplazados se sacan de la grilla y quedan al pie, en una línea
+ * discreta: las direcciones siguen andando para quien las tenga guardadas, pero no compiten con la
+ * versión vigente.
+ */
+function dejarUnManualPorTema(html: string): string {
+  const viejos = Object.keys(REEMPLAZADOS);
+  let salida = html;
+
+  // El encabezado de la grilla decía "Mantenimiento" porque antes agrupaba solo ese módulo; ahora
+  // están los tres manuales del sistema debajo.
+  salida = salida.replace(
+    /(<div class="section-heading">\s*<h2>)Mantenimiento(<\/h2>)/i,
+    '$1Los manuales$2',
+  );
+
+  for (const archivo of viejos) {
+    // Cada tarjeta es un <a href="archivo" class="card"> … </a>: se saca entera.
+    const tarjeta = new RegExp(`\\s*<a href="${archivo.replace('.', '\\.')}"[^>]*class="card"[\\s\\S]*?</a>`, 'g');
+    salida = salida.replace(tarjeta, '');
+  }
+
+  const enlaces = viejos
+    .filter((a) => html.includes(`href="${a}"`))
+    .map((a) => `<a href="${a}" style="color:inherit">${REEMPLAZADOS[a].titulo === 'Mantenimiento' && a.includes('preventivo') ? 'Mantenimiento Preventivo' : a.replace('manual_', '').replace('.html', '').replace(/_/g, ' ')}</a>`)
+    .join(' · ');
+
+  if (!enlaces) return salida;
+
+  const pie = `
+  <div style="max-width:1100px;margin:40px auto 0;padding:18px 24px;border-top:1px solid #E8EDF5;font-family:'DM Sans',sans-serif;font-size:12.5px;color:#94A3B8;text-align:center">
+    Versiones anteriores de la ayuda, que se conservan porque hay enlaces guardados a ellas:
+    <span style="color:#64748B">${enlaces}</span>
+  </div>
+`;
+  return salida.replace(/(<\/main>)/i, `${pie}$1`);
+}
+
+/**
  * Reescribe el índice del buscador del inicio con TODAS las secciones de TODOS los
  * manuales. Antes se mantenía a mano y cubría dos: esa era la deuda del RF-05.3.
  */
@@ -276,8 +354,14 @@ function regenerarBuscador(): number {
   const indice = join(BUILD, 'index.html');
   if (!existsSync(indice)) return 0;
 
+  // Solo se indexan los manuales **vigentes**: si el buscador llevara a una versión reemplazada,
+  // volvería a poner al usuario frente a información que se contradice con la actual (H-058). Las
+  // direcciones viejas siguen andando para quien las tenga guardadas; lo que no hacen es aparecer
+  // como resultado de una búsqueda.
   const entradas: EntradaBusqueda[] = [];
-  for (const archivo of readdirSync(BUILD).filter((f) => f.endsWith('.html') && f !== 'index.html')) {
+  const vigentes = readdirSync(BUILD)
+    .filter((f) => f.endsWith('.html') && f !== 'index.html' && !(f in REEMPLAZADOS));
+  for (const archivo of vigentes) {
     entradas.push(...entradasDeManual(archivo, readFileSync(join(BUILD, archivo), 'utf8')));
   }
 
@@ -313,8 +397,14 @@ console.log(`  · ${legacy.length} archivo(s) del sitio actual copiados tal cual
 const armados = armarManuales();
 for (const m of armados) console.log(`  · ${m.archivo} armado con la plantilla (cubre ${m.casos})`);
 
+// Un solo manual por tema en el índice: las tarjetas de los reemplazados salen de la grilla.
+if (!DRY_RUN) {
+  const indice = join(BUILD, 'index.html');
+  writeFileSync(indice, dejarUnManualPorTema(readFileSync(indice, 'utf8')), 'utf8');
+}
+
 const entradas = regenerarBuscador();
-console.log(`  · buscador del inicio: ${entradas} secciones indexadas de todos los manuales`);
+console.log(`  · buscador del inicio: ${entradas} secciones indexadas de los manuales vigentes`);
 
 console.log(
   DRY_RUN
