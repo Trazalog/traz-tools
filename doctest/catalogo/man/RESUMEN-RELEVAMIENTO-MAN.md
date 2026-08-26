@@ -105,6 +105,29 @@ rechazadas**.
 → Issue **#489**. Es 🔴: **una empresa que se registra hoy no puede usar Mantenimiento**, y sus
 contraseñas quedan en texto plano en la base de asset.
 
+### No es que un deploy haya pisado la versión buena
+
+Se planteó esa hipótesis y **no se sostiene: no existe una versión correcta en el repositorio.**
+
+| Qué se comparó | Resultado |
+|---|---|
+| `toolsCOREAPI.xml` entre `develop`, `develop-v3` y `master` | **idéntico** — `git diff` sin salida en las tres combinaciones |
+| `setUserAsset` de `COREDataService.dbs` entre `develop` y `develop-v3` | **idéntico**, sin `MD5` en ninguna |
+| La copia del **proyecto Maven**, que es la que se compila y despliega | **también** manda la contraseña en texto plano, en las tres ramas |
+
+El arreglo hay que hacerlo, no recuperarlo de otra rama.
+
+**De paso apareció otra cosa:** el archivo está **dos veces en el repo** y las copias no coinciden.
+`_backend/api/toolsCOREAPI.xml` (el suelto, el de la ruta obvia) está **28 líneas atrás** del que
+compila el proyecto Maven — le falta el paso que vincula `empr_id_mysql` en `core.empresas`. O sea
+que quien lo abra por la ruta corta lee la versión vieja creyendo que es la que corre → issue
+**#490**.
+
+Las otras diferencias del backend entre ramas son las esperables de v3 —las sequences de JWT y los
+DataServices de MAN, ALM, TAR y Producción— más una menor: `AssetPlannerDataSource.xml` actualiza el
+driver de MySQL y sus parámetros de conexión, pero **las dos ramas apuntan a la misma base**
+(`10.142.0.13:3306/assetv2`), así que el DEMO no está escribiendo en otro lado.
+
 Por eso los seis casos de este PR están relevados **del código y del manual legacy**, y cada uno lo
 dice en sus dudas. Y por eso DocTest no puede verificar ni testear MAN hasta que esto se corrija:
 no es que falte un dato, es que **no existe ninguna credencial que funcione**.
