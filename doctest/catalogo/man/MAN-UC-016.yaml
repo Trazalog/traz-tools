@@ -2,9 +2,10 @@ id: MAN-UC-016
 modulo: MAN
 titulo: Definir qué parámetros se le miden a un equipo
 perfil: Planificador
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Parametro.php
@@ -26,8 +27,12 @@ flujo_principal:
   - paso: "Guarda"
     resultado: "El parámetro queda activo para ese equipo"
 validaciones:
+  - "El máximo y el mínimo quedan registrados como referencia del rango normal del parámetro"
+  - "Un equipo puede tener varios parámetros configurados"
   - "El equipo, el parámetro, el máximo, el mínimo y la descripción son obligatorios"
-dudas:
-  - "**¿Qué pasa cuando una lectura se sale del rango?** ¿Se genera algo automáticamente —una orden, un aviso— o alguien tiene que estar mirando? Es la pregunta central de esta pantalla y no está documentada."
-  - "¿Un equipo puede tener varios parámetros configurados a la vez?"
-  - "¿Los parámetros —temperatura, vibración, presión— salen de un catálogo propio? Hay un `ABM Parametros` en el menú."
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
+notas:
+  - "**Qué pasa cuando una lectura se sale del rango: nada automático.** Se buscó en el código y **no hay ninguna comparación contra el máximo y el mínimo** al registrar una lectura — no se genera una orden ni un aviso. Los límites son una referencia para quien mira: el que carga la lectura o el que revisa el historial. Vale decirlo en la ayuda, para que nadie espere una alarma que no existe."
+  - "Los parámetros —temperatura, vibración, presión— salen del catálogo `ABM Parametros`."

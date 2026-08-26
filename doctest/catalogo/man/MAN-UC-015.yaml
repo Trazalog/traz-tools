@@ -26,6 +26,8 @@ validaciones:
   - "Un backlog **no vence ni caduca**: queda pendiente hasta que se lo programe"
   - "El backlog nace en estado 'C' y pasa a planificado cuando se le genera la orden"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
 notas:
   - "**Buena práctica de mantenimiento:** el backlog es la lista de trabajo conocido y no ejecutado. Sirve para dos cosas — que nada detectado se pierda, y para dimensionar cuánto trabajo pendiente se acumula. Un backlog que solo crece es señal de que la capacidad del taller no alcanza; que se mantenga estable, de que el equipo está al día."
   - "Se llena por dos vías: a mano, cuando alguien detecta algo mientras hace otra cosa, y **automáticamente**, cuando una solicitud de servicio se analiza y resulta no urgente."

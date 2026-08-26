@@ -33,6 +33,8 @@ validaciones:
   - "La meta es **opcional**: un equipo puede no tener ninguna"
   - "El valor va de 1 a 100"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s10
 notas:
   - "**Qué es la meta, relevado del código:** la columna se llama `meta_disponibilidad` y la usa `kpiCalcularDisponibilidad()`. Es el porcentaje de tiempo que uno se propone que el equipo esté disponible, y el Panel de KPIs compara contra ella la disponibilidad real."
   - "**Buena práctica:** conviene ponerle meta a los equipos críticos, no a todos. Una meta sin sentido —95% en un equipo que se usa dos veces al año— solo agrega ruido al panel."

@@ -2,9 +2,10 @@ id: MAN-UC-005
 modulo: MAN
 titulo: Dar de alta un componente
 perfil: Supervisor
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Componente.php
@@ -23,8 +24,12 @@ flujo_principal:
   - paso: "Guarda"
     resultado: "El componente queda dado de alta y disponible para asignarlo a un equipo"
 validaciones:
+  - "El **código trazable lo escribe el usuario**: no se genera solo"
   - "Un componente es una **pieza intercambiable del equipo**"
   - "El código del componente lo arma el sistema a partir del último id y de la empresa"
-dudas:
-  - "El código lo arma `codifNombre()` a partir del último id y de la empresa. **¿El usuario puede cambiarlo o es siempre automático?** Conviene verificarlo en pantalla al escribir la ayuda."
-  - "¿Un mismo componente puede estar asignado a más de un equipo a la vez?"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s03
+notas:
+  - "Un componente es una **pieza intercambiable del equipo** (PM, 2026-08-26)."
+  - "**Corrección de la primera pasada:** se había supuesto que `codifNombre()` armaba el código del componente. No es así — esa función arma el nombre de un archivo adjunto, con id, empresa y fecha. El código del componente viene del formulario."

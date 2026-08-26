@@ -29,6 +29,8 @@ validaciones:
   - "**No se debería poder programar una actividad ya vencida**"
   - "La orden hereda las herramientas y los insumos declarados en el trabajo de origen"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s06
 notas:
   - "Es una de las dos únicas pantallas donde se trabaja **fuera** de la bandeja de tareas: acá y al lanzar una solicitud. Todo lo demás del proceso llega como tarea."
   - "Del plan salen las órdenes de los cuatro orígenes. La diferencia con el camino urgente es que ahí planifica el Supervisor desde su propia tarea, no desde esta pantalla."

@@ -2,9 +2,10 @@ id: MAN-UC-035
 modulo: MAN
 titulo: Editar o eliminar un pendiente del backlog
 perfil: Supervisor
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/views/backlog/list.php
@@ -29,8 +30,10 @@ flujos_alternativos:
       - paso: "Confirma"
         resultado: "Deja de figurar en el listado"
 validaciones:
+  - "Editar el pendiente del backlog afecta a las órdenes que se generen **de ahí en adelante**: las ya creadas conservan lo que se les copió"
   - "El listado ofrece Editar, Eliminar y Ver Archivo sobre cada fila"
-dudas:
-  - "**¿Hasta cuándo se puede editar?** Si ya generó órdenes de trabajo, cambiarlo ahora ¿afecta a las que están en curso o solo a las futuras?"
-  - "**¿Qué pasa al eliminar uno que ya generó órdenes?** ¿Se borran también, quedan huérfanas, o el sistema lo impide?"
-  - "¿El borrado es lógico o físico? Es la misma pregunta que en el resto del sistema."
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
+notas:
+  - "**Por qué editar no toca las órdenes en curso:** al programar una orden, las herramientas y los insumos se **copian** del plan a la orden. Desde ese momento la orden tiene su propia lista, independiente. Es lo que permite corregir un plan sin alterar trabajo que ya está en la calle."

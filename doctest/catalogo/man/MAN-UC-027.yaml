@@ -26,10 +26,11 @@ flujos_alternativos:
       - paso: "Usa Editar Adjunto para cambiarlo, o Eliminar Adjunto para sacarlo"
         resultado: "El adjunto queda actualizado o eliminado"
 validaciones:
+  - "Un equipo puede tener varios adjuntos, y cada uno se puede reemplazar o quitar"
   - "El adjunto queda asociado al equipo"
 dudas:
-  - "**¿Qué tipos de archivo se aceptan y de qué tamaño?** Es lo primero que alguien va a chocar: el manual del fabricante suele ser un PDF pesado."
-  - "¿Cuántos adjuntos puede tener un equipo?"
-  - "¿Para qué se piensa usar: manuales, planos, certificados de garantía, fotos? Vale la pena sugerirlo en la ayuda para que el campo se use."
+  - "**Falta confirmar qué tipos de archivo se aceptan y de qué tamaño máximo.** No se encontró la configuración de la subida, y es lo primero con lo que alguien choca: el manual de un equipo suele ser un PDF pesado."
 notas:
+  - "El nombre del archivo lo arma el sistema con `codifNombre()`: id del equipo, empresa y fecha y hora. Así dos adjuntos nunca se pisan."
+  - "**Para qué conviene usarlo:** el manual del fabricante, los planos, el certificado de garantía y las fotos del equipo instalado. Es la documentación que alguien va a necesitar en el momento de intervenirlo."
   - "Los adjuntos también existen en Backlog y Predictivo, con las mismas tres acciones. Si el comportamiento es idéntico, se documenta una sola vez."

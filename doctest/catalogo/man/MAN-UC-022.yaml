@@ -24,9 +24,13 @@ flujo_principal:
   - paso: "Sobre un equipo inactivo, elige Habilitar"
     resultado: "El equipo vuelve a estar activo"
 validaciones:
+  - "Inhabilitar deja el equipo en estado `IN`; habilitar lo devuelve a activo"
   - "El equipo tiene dos estados: activo (`AC`) e inhabilitado (`AN`)"
   - "La acción que se ofrece depende del estado actual: a un equipo activo se le ofrece Inhabilitar y a uno inactivo, Habilitar"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s02
 notas:
+  - "**Es distinto de eliminar** (MAN-UC-004), que deja el equipo en `AN`. Inhabilitar es para un equipo que sale de servicio un tiempo y va a volver; eliminar, para el que se da de baja."
   - "Es la única transición de estado del módulo que el usuario controla a mano; todas las demás las mueve el proceso."
   - "Es el **ciclo de vida del equipo**: en la base son los estados `AC` y `AN`. Es la única transición de estado que el usuario controla a mano desde el listado."

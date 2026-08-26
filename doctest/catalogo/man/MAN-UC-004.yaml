@@ -23,6 +23,9 @@ flujo_principal:
   - paso: "Confirma"
     resultado: "El equipo deja de figurar en el listado"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s02
 notas:
+  - "**Verificado en el código:** eliminar e inhabilitar son acciones distintas y dejan estados distintos — `AN` la primera, `IN` la segunda. Ninguna borra el registro, así que el historial del equipo se conserva en los dos casos."
   - "Es la misma decisión que en DNATO y en ALM: nunca borrado físico, porque rompe la trazabilidad de lo que se hizo. Un equipo acumula órdenes de trabajo, lecturas e informes."
   - "**Eliminar e inhabilitar son cosas distintas:** inhabilitar (MAN-UC-022) es reversible y para equipos que salen de servicio un tiempo; eliminar es para el que nunca se usó."

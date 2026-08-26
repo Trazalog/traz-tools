@@ -47,8 +47,7 @@ validaciones:
   - "Ningún campo declara `required` en el HTML: si hay validación, está en el JavaScript"
   - "El equipo se da de alta en la empresa de la sesión"
 dudas:
-  - "**Cuáles son los campos obligatorios de verdad hay que relevarlo del código del guardado, no de la pantalla.** Ya está verificado que ni el HTML ni la etiqueta sirven de fuente: la pantalla pone asterisco en Área, Proceso, Criticidad y Sector/Etapa, el manual anterior decía Código/Marca/Descripción/N° de serie, y **ningún campo declara `required`**. Falta ubicar el método que guarda el equipo y ver qué valida — es lo que queda pendiente de este caso."
-  - "**La unicidad del código tampoco está garantizada del lado del servidor:** `getcodigo()` trae todos los equipos sin filtrar, lo que sugiere que la verificación de duplicados la hace el JavaScript. Si es así, es el mismo patrón de DNATO y ALM y hay que anotarlo como hallazgo."
+  - "**Falta ubicar dónde se guarda el equipo para saber qué valida.** Los endpoints del alta que sí se identificaron son los de los catálogos (`agregar_area`, `agregar_marca`…), `baja_equipo`, `cambio_equipo` y `editar_equipo`, pero no el del alta en sí. Es lo único que queda de este caso: confirmar los obligatorios y si la unicidad del código se verifica en el servidor o solo en el JavaScript (H-056)."
 notas:
   - "**Lectura inicial — buena práctica de mantenimiento:** es el valor del contador del equipo (horas, kilómetros, ciclos) al momento de incorporarlo al sistema. Importa porque los mantenimientos que se disparan por uso se calculan **desde ahí**: si se carga en cero un equipo que ya tiene 8.000 horas, el primer preventivo por horas se va a programar 8.000 horas tarde. La práctica habitual es cargar la lectura real del horómetro el día del alta, y si el equipo es nuevo, cero."
   - "Es el caso piloto de F2 (issue #439): sirve para calibrar el formato y el costo del relevamiento en este módulo."

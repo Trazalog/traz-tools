@@ -23,6 +23,8 @@ validaciones:
   - "Es la bandeja de entrada del proceso: refleja el Inbox de Bonita"
   - "Cada tarea corresponde a un paso del circuito que le toca a este usuario"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s01
 notas:
   - "**Es el lugar de trabajo del día a día.** Salvo lanzar una solicitud y planificar en el calendario, todo el resto del proceso llega acá: analizar una solicitud, editar un backlog, asignar un responsable, ejecutar una orden, confeccionar el informe, verificarlo y prestar conformidad. El detalle de qué tarea le toca a cada rol está en `doc/man/proceso-mantenimiento.md`."
   - "Por eso, para alguien que arranca, **conviene enseñar esta pantalla antes que el menú**: el trabajo viene solo."

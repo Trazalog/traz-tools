@@ -33,6 +33,8 @@ flujo_principal:
 validaciones:
   - "Las herramientas y los insumos quedan **declarados**, no pedidos: el pedido nace al ejecutar cada orden"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
 notas:
   - "**Período y frecuencia, en buena práctica de mantenimiento:** el *período* es la unidad con la que se cuenta —días, semanas, meses— y la *frecuencia*, cada cuántas de esas unidades se repite. \"Período: mes, frecuencia: 3\" es cada tres meses. La **fecha base** es desde cuándo se empieza a contar el primer vencimiento."
   - "**Por qué existe el preventivo:** la idea es intervenir el equipo antes de que falle, en un momento elegido por uno y no por la máquina. Cuesta menos que reparar una rotura —no hay parada imprevista, no hay daños secundarios, el repuesto está disponible— y por eso la práctica habitual es que la mayor parte del trabajo de un taller sea planificado y no correctivo."

@@ -2,9 +2,10 @@ id: MAN-UC-028
 modulo: MAN
 titulo: El ciclo de vida de un equipo
 perfil: Supervisor
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/models/Equipos.php
@@ -26,11 +27,14 @@ flujo_principal:
   - paso: "Si vuelve a servicio, se habilita de nuevo"
     resultado: "Vuelve a estar activo, conservando toda su historia"
 validaciones:
+  - "El equipo tiene **tres** estados: `AC` activo, `IN` inhabilitado y `AN` dado de baja"
+  - "Ninguna de las dos acciones borra el registro: el historial del equipo se conserva siempre"
   - "En la base el equipo tiene dos estados: `AC` (activo) y `AN`"
   - "La única transición que el usuario controla a mano es habilitar / inhabilitar"
-dudas:
-  - "**Hay que confirmar qué significa cada estado y qué se puede hacer en cada uno.** En el código el equipo tiene `AC` y `AN`; se asume que son activo e inactivo, pero eso hay que validarlo, y sobre todo definir **qué deja de poder hacerse con un equipo inactivo**."
-  - "**¿Dónde entra Eliminar en este ciclo?** Es una acción aparte de inhabilitar (MAN-UC-004). Si el borrado es físico, el equipo sale del ciclo llevándose su historia; si es lógico, es un tercer estado que hoy no está nombrado."
-  - "¿Un equipo inactivo se puede eliminar? ¿Y uno con órdenes abiertas?"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s02
 notas:
+  - "**Los tres estados, verificados en el código:** el equipo nace `AC`; *Inhabilitar* lo pasa a `IN` (`cambio_equipo()`) y *Habilitar* lo devuelve; *Eliminar* lo pasa a `AN` (`baja_equipo()`). Es el único ciclo del módulo que el usuario mueve a mano — todos los demás los mueve el proceso."
+  - "Los equipos en `AN` quedan **fuera del cálculo de disponibilidad** del Panel de KPIs."
   - "Este caso no describe una pantalla sino **el recorrido completo de la entidad**. Es el que responde la pregunta \"¿qué le puede pasar a un equipo a lo largo del tiempo?\", que ninguna pantalla contesta por sí sola."

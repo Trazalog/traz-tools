@@ -2,9 +2,10 @@ id: MAN-UC-017
 modulo: MAN
 titulo: Registrar la lectura de un parámetro
 perfil: Mantenedor
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Lectura.php
@@ -22,11 +23,13 @@ flujo_principal:
   - paso: "Carga la fecha y el valor medido"
     resultado: "La lectura queda registrada"
 validaciones:
+  - "La lectura queda como la última del equipo y alimenta los mantenimientos que se disparan por uso"
   - "Equipo, parámetro, fecha y valor son obligatorios"
   - "La lectura queda como la última del equipo"
-dudas:
-  - "**¿Qué pasa si el valor se sale del rango configurado?** Es la contraparte de la duda de MAN-UC-016: acá es donde el valor entra."
-  - "¿Se puede corregir una lectura mal cargada? Si la lectura dispara mantenimientos, un valor errado puede generar trabajo que no corresponde."
-  - "¿Con qué frecuencia se espera que se carguen? ¿Hay forma de saber a qué equipos les falta la lectura?"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s04
 notas:
+  - "**Salirse del rango no dispara nada** (ver MAN-UC-016): los límites configurados son de referencia. Quien carga la lectura es el que tiene que darse cuenta y, si corresponde, reportar la falla — lo puede hacer en el mismo acto desde Mantenimiento Autónomo (MAN-UC-024)."
+  - "**Buena práctica:** la lectura conviene tomarla siempre en el mismo momento del turno y por la misma persona, porque un salto raro en la serie es tan informativo como el valor en sí."
   - "Es lo que alimenta el mantenimiento por uso: los preventivos que se disparan por horas o ciclos, no por fecha, se comparan contra la última lectura del equipo."

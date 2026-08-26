@@ -27,6 +27,8 @@ validaciones:
   - "El backlog nace en estado 'C' y pasa a planificado al generarle la orden"
   - "Al programarlo se cierra además la tarea de Bonita 'Planificar Backlog'"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
 notas:
   - "Que el backlog sea el destino de lo no urgente explica por qué lo planifica el **Planificador** y no el Supervisor: en el camino urgente el Supervisor se queda con la planificación y la asignación; en el no urgente, delega. Ver `doc/man/proceso-mantenimiento.md` §2."
   - "El backlog es el único de los cuatro orígenes que **no tiene disparador automático**: ni fecha de vencimiento como el preventivo, ni lectura fuera de rango como el predictivo, ni un pedido como la solicitud. Depende de que alguien decida programarlo, y por eso es el que más riesgo tiene de quedar olvidado."

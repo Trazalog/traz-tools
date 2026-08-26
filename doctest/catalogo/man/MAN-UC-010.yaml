@@ -2,9 +2,10 @@ id: MAN-UC-010
 modulo: MAN
 titulo: Ver y filtrar las órdenes de trabajo
 perfil: Planificador
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Otrabajo.php
@@ -21,8 +22,10 @@ flujo_principal:
   - paso: "Elige el rango de fechas, el equipo o el estado que le interesa y filtra"
     resultado: "El listado muestra Nº Orden, Fecha Programada, Fecha Inicio, Fecha Terminada, Detalle, Tarea estándar, Equipo, Origen, Id Solicitud y a quién está asignada"
 validaciones:
+  - "**Parcial** deja la orden en estado terminada-parcial (`TE`); **Total** la finaliza"
   - "La columna Origen dice de dónde vino la orden: solicitud, preventivo, predictivo o backlog"
-dudas:
-  - "**¿Qué estados puede tener una orden de trabajo y qué significa cada uno?** Es lo primero que alguien mira, y no está documentado. En el código aparecen `PL` (planificada) y otros que hay que relevar."
-  - "El listado tiene botones **Parcial** y **Total** cuya función no es evidente desde la pantalla. ¿Son formas de cerrar la orden?"
-  - "¿El listado muestra todas las órdenes de la empresa o solo las del usuario?"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s07
+notas:
+  - "**Qué hacen Parcial y Total, verificado en el código:** son las dos formas de cerrar una orden desde el listado. *Parcial* (`CambioParcial()`) la deja en `TE` —se hizo parte del trabajo—; *Total* la finaliza. Es la única acción del listado además de los filtros."

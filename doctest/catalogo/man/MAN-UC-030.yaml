@@ -2,9 +2,10 @@ id: MAN-UC-030
 modulo: MAN
 titulo: El ciclo de vida de una orden de trabajo
 perfil: Planificador
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/models/Otrabajos.php
@@ -26,12 +27,14 @@ flujo_principal:
   - paso: "El supervisor verifica y el solicitante presta conformidad (MAN-UC-013)"
     resultado: "La orden queda cerrada"
 validaciones:
+  - "Una orden se puede cerrar **parcial** (`TE`) o **total** desde el listado"
   - "La orden nace `PL` (planificada), pasa a `C` (en curso) cuando el mantenedor la arranca, a `T` (terminada) cuando la cierra, a `CE` (cerrada) cuando el supervisor da por bueno el informe, y a `CN` (conforme) cuando el solicitante acepta"
   - "La columna Origen dice de cuál de los cuatro caminos vino la orden"
   - "Los filtros del listado permiten ver las órdenes por estado y por período programado"
-dudas:
-  - "**¿Qué hacen los botones *Parcial* y *Total* del listado?** Son las dos únicas acciones de esa pantalla que no se pudieron interpretar: no aparecen en el proceso ni tienen un método evidente en el código. ¿Son formas de cerrar la orden con trabajo incompleto?"
-  - "¿Una orden se puede cancelar o reprogramar una vez creada? El proceso no muestra ese camino, pero la pantalla podría permitirlo."
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s07
 notas:
+  - "**El ciclo completo, con los estados verificados:** nace `PL` al programarse, pasa a `C` cuando el mantenedor la arranca, a `T` cuando la cierra —o a `TE` si se cierra parcial—, a `CE` cuando el supervisor valida el informe y a `CN` cuando el solicitante presta conformidad. La tabla completa está en `doc/man/proceso-mantenimiento.md`."
   - "Los cuatro orígenes —solicitud urgente, backlog, preventivo y predictivo— desembocan en el mismo tipo de orden y siguen desde ahí el mismo recorrido. La diferencia está en **quién asigna el responsable**: en el camino urgente lo hace el Supervisor; en el resto, el Planificador."
   - "Cuatro caminos distintos —correctivo, preventivo, predictivo y backlog— desembocan en el mismo tipo de orden y siguen desde ahí el mismo recorrido. Entender eso es entender el módulo."

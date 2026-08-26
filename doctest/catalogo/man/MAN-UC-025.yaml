@@ -22,8 +22,7 @@ flujo_principal:
   - paso: "Si una está mal, la corrige con la acción de editar"
     resultado: "La lectura queda corregida"
 validaciones:
+  - "El historial muestra las lecturas del equipo, y se pueden corregir"
   - "El historial muestra solo las lecturas del equipo elegido"
 dudas:
-  - "**Corregir una lectura puede tener consecuencias.** Si los mantenimientos por uso se disparan comparando contra la última lectura, corregir un valor hacia arriba o hacia abajo puede adelantar o postergar trabajo. ¿El sistema recalcula algo, o solo cambia el número?"
-  - "¿Se puede borrar una lectura, o solo corregirla?"
-  - "¿Queda registro de quién la corrigió?"
+  - "**Corregir una lectura puede mover el plan de mantenimiento**, porque los preventivos por uso se calculan contra la última lectura. Falta confirmar si al corregirla se recalcula algo o solo cambia el número — y si queda registro de quién la corrigió."

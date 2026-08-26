@@ -30,6 +30,8 @@ validaciones:
   - "El pedido de materiales se arma con los insumos declarados en la orden"
 dudas: []
 
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s07
 notas:
   - "Es **el mismo proceso de Bonita que el pedido de materiales de Almacenes en Tools**: se crea el pedido, el almacenero lo aprueba o lo rechaza, y al entregar descuenta el stock. El circuito completo está en el manual de Almacenes."
   - "**Las herramientas hoy solo se listan** —no se piden ni se entregan—. En v3 eso va a cambiar: se van a asociar a las herramientas de Tools. Por ahora la ayuda explica lo que hay."

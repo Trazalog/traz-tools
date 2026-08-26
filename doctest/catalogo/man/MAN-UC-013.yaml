@@ -30,6 +30,8 @@ validaciones:
   - "Si el Solicitante no presta conformidad, la solicitud **vuelve al análisis del Supervisor**: no queda marcada como no conforme, reabre el circuito"
   - "Son dos aprobaciones distintas: la del supervisor sobre el trabajo, y la del solicitante que pidió el servicio"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s08
 notas:
   - "**Son los dos únicos puntos donde el proceso retrocede**, y por eso un mismo trabajo puede recorrerse más de una vez. Ver `doc/man/proceso-mantenimiento.md`."
   - "En el código: al verificar el informe la orden pasa a `CE` (Cerrada); al prestar conformidad, a `CN` (Conforme). Si el solicitante rechaza, el estado vuelve a `S` (Solicitada) — el mismo con el que nació."

@@ -2,9 +2,10 @@ id: MAN-UC-001
 modulo: MAN
 titulo: Ver el listado de equipos
 perfil: Supervisor
-estado: borrador
+estado: validado
 version: "0.1"
 origen: baseline
+fecha_validacion: 2026-08-26
 referencias_codigo:
   - repo: traz-prod-assetplanner
     path: application/controllers/Equipo.php
@@ -26,10 +27,12 @@ flujo_principal:
   - paso: "Mira la columna Acciones de una fila"
     resultado: "Se ofrecen las once acciones que se pueden hacer sobre ese equipo, cada una con su caso propio: editar (MAN-UC-003), eliminar (MAN-UC-004), habilitar o inhabilitar (MAN-UC-022), asignar contratistas (MAN-UC-023), registrar una lectura o reportar una falla (MAN-UC-024), ver el historial de lecturas (MAN-UC-025), asignar una meta (MAN-UC-026) y adjuntar documentación (MAN-UC-027)"
 validaciones:
+  - "La columna Estado distingue los tres estados del equipo: activo, inhabilitado y dado de baja"
   - "El listado solo muestra equipos de la empresa de la sesión"
-dudas:
-  - "El listado tiene además una **segunda tabla, 'Contratistas Asignados'** por equipo, que no aparece en ningún manual. ¿Qué es un contratista asignado a un equipo y quién lo asigna? Hay un `ABM Contratista` en el menú."
-  - "¿La columna Estado distingue activos de dados de baja, y el listado los muestra a todos?"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s02
 notas:
+  - "El listado muestra los equipos en cualquiera de sus tres estados; la columna Estado los distingue."
   - "**Verificado en pantalla el 2026-08-26** contra el DEMO, con el usuario que proveyó el PM."
   - "El alta de equipos y componentes **no difiere entre `develop` y `develop-v3`** del repo de asset (verificado con `git diff`), así que este caso no depende de esa diferencia. El relevamiento se hace sobre `develop`, que es lo que corre en el DEMO (decisión del PM, 2026-08-25)."

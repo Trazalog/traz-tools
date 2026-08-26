@@ -33,6 +33,8 @@ validaciones:
   - "El listado muestra el Nº de OT de la solicitud una vez programada"
   - "Los tiempos de ciclo, asignación y generación se miden sobre este recorrido"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s05
 notas:
   - "**El recorrido completo está descifrado en `doc/man/proceso-mantenimiento.md`**, a partir del diagrama BPMN del proceso. Los estados y qué paso los pone están en la tabla de ese documento."
   - "Quedan seis códigos en el modelo que no se pudo confirmar qué son —`RE`, `IN`, `P`, `EL`, `ASC`, `GET`—: pueden ser de versiones anteriores. Están anotados en ese documento para verificar antes de documentarlos."

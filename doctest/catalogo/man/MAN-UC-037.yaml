@@ -26,7 +26,6 @@ flujos_alternativos:
         resultado: "Quedan seleccionadas para operar sobre todas juntas"
 validaciones:
   - "El listado se puede filtrar por estado"
+  - "El listado se puede filtrar por estado"
 dudas:
-  - "**¿Para qué sirve el casillero de selección múltiple?** Está en cada fila y no es evidente qué acción se puede hacer sobre varios informes a la vez: ¿verificarlos, imprimirlos, exportarlos?"
-  - "¿Qué estados puede tener un informe y cuáles se ofrecen en el filtro?"
-  - "¿El informe se puede imprimir o exportar?"
+  - "**Falta confirmar para qué sirve el casillero de selección múltiple** de cada fila: no se encontró qué acción opera sobre varios informes a la vez. Se ve en pantalla, así que es rápido de confirmar cuando se escriban los tests."

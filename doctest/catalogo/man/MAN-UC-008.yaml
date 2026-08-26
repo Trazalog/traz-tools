@@ -31,6 +31,8 @@ validaciones:
   - "**La urgencia es la única decisión de este paso, y define quién sigue**: si es urgente, el Supervisor planifica y asigna; si no, pasa al Planificador por la vía del backlog"
   - "Una solicitud rechazada no genera orden de trabajo"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s06
 notas:
   - "Es la bifurcación del proceso: la compuerta *¿Es Urgente?* del diagrama. Todo lo que viene después depende de esta respuesta — ver `doc/man/proceso-mantenimiento.md` §2."
   - "La tarea llega a la bandeja de entrada del Supervisor; no hace falta ir a buscarla al listado de solicitudes."

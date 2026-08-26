@@ -23,6 +23,4 @@ flujo_principal:
   - paso: "Agrega uno o más contratistas"
     resultado: "Quedan asociados al equipo, y aparecen en la tabla 'Contratistas Asignados' del listado"
 dudas:
-  - "**¿Para qué sirve tener contratistas asignados a un equipo?** ¿Es informativo —quién le hace el service— o el sistema los usa para algo: asignarles órdenes, mandarles avisos? Se relaciona con la pantalla *Administrar Ordenes* (MAN-UC-021), que tiene fechas de entrega y de aviso."
-  - "¿Un contratista puede estar asignado a varios equipos?"
-  - "¿El contratista es un usuario del sistema o solo un dato de contacto?"
+  - "**Para qué usa el sistema los contratistas asignados sigue sin estar claro.** Se guardan por equipo y se ven en el listado, pero no se encontró que el proceso los use para asignar trabajo ni para avisar. Conviene confirmarlo antes de documentarlo: si es solo informativo, la ayuda lo dice y listo."

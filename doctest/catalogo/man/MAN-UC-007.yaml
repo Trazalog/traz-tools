@@ -31,6 +31,8 @@ validaciones:
   - "Puede pedir un servicio cualquier usuario con el rol *Solicitante de Mantenimiento* en Bonita"
   - "La solicitud queda asociada al equipo y al solicitante"
 dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s05
 notas:
   - "**El proceso arranca acá.** La solicitud entra al proceso de mantenimiento por la puerta *Solicitud de Servicio*, y lo primero que le va a pasar es el análisis del Supervisor (MAN-UC-008). El recorrido completo está en `doc/man/proceso-mantenimiento.md`."
   - "Las tres columnas de tiempo del listado —ciclo, asignación y generación— miden ese recorrido: cuánto tardó en atenderse, en asignarse y en generarse la orden."
