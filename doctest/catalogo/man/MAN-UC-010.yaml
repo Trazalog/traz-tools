@@ -1,0 +1,28 @@
+id: MAN-UC-010
+modulo: MAN
+titulo: Ver y filtrar las órdenes de trabajo
+perfil: Planificador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Otrabajo.php
+    detalle: "listOrden() y sus filtros"
+  - repo: traz-prod-assetplanner
+    path: application/models/Otrabajos.php
+pantallas:
+  - "Mantenimiento → Ordenes de trabajo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Ordenes de trabajo"
+    resultado: "Se muestran los filtros —Programada Desde, Programada Hasta, Equipo y Estado— sobre el listado"
+  - paso: "Elige el rango de fechas, el equipo o el estado que le interesa y filtra"
+    resultado: "El listado muestra Nº Orden, Fecha Programada, Fecha Inicio, Fecha Terminada, Detalle, Tarea estándar, Equipo, Origen, Id Solicitud y a quién está asignada"
+validaciones:
+  - "La columna Origen dice de dónde vino la orden: solicitud, preventivo, predictivo o backlog"
+dudas:
+  - "**¿Qué estados puede tener una orden de trabajo y qué significa cada uno?** Es lo primero que alguien mira, y no está documentado. En el código aparecen `PL` (planificada) y otros que hay que relevar."
+  - "El listado tiene botones **Parcial** y **Total** cuya función no es evidente desde la pantalla. ¿Son formas de cerrar la orden?"
+  - "¿El listado muestra todas las órdenes de la empresa o solo las del usuario?"

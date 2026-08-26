@@ -1,0 +1,36 @@
+id: MAN-UC-012
+modulo: MAN
+titulo: Cargar el informe de servicio
+perfil: Mantenedor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Ordenservicio.php
+    detalle: "setOrdenServ() guarda el informe; getInsumosPorOT() trae los insumos"
+  - repo: traz-prod-assetplanner
+    path: application/models/Ordenservicios.php
+    detalle: "setOrdenServicios() escribe orden_servicio, deta_ordenservicio, asignausuario y el vale de salida de herramientas"
+pantallas:
+  - "Mantenimiento → Informe de Servicios"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - La orden de trabajo se ejecutó
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Informe de Servicios"
+    resultado: "Se muestra el listado con Nº Informe, Nº OT, Descripción, Tarea, Equipo, fechas y recursos humanos"
+  - paso: "Carga el informe de la orden que ejecutó"
+    resultado: "Se abre el formulario con las secciones del informe"
+  - paso: "Registra qué se hizo, quiénes trabajaron y cuánto tiempo llevó"
+    resultado: "Quedan registradas las tareas realizadas y los operarios"
+  - paso: "Confirma"
+    resultado: "El informe queda cargado y a la espera de verificación"
+validaciones:
+  - "El informe queda asociado a la orden de trabajo"
+dudas:
+  - "**El informe muestra los materiales bajo el rótulo 'Insumos Usados', pero lo que muestra es lo PEDIDO**, no lo entregado ni lo realmente consumido. En el código hay un comentario que admite que falta guardar el consumo real. ¿Se documenta como está, o se corrige antes? Es un dato que el usuario va a leer como consumo real."
+  - "¿Cuáles son las secciones del informe y cuáles son obligatorias? El manual de ayuda existente habla de *cinco solapas*; hay que contrastarlo con la pantalla."
+  - "¿Se puede corregir un informe ya cargado?"
+notas:
+  - "El informe también registra un **vale de salida** con las herramientas usadas, pero es referencial: no mueve stock de pañol ni registra devolución."

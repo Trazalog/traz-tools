@@ -1,0 +1,37 @@
+id: MAN-UC-020
+modulo: MAN
+titulo: Consultar los reportes e indicadores de mantenimiento
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Reporteorden.php
+    detalle: "reporte de órdenes de trabajo"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Reporte.php
+    detalle: "reporte de informes de servicio"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Otrabajo.php
+    detalle: "el panel de KPIs"
+pantallas:
+  - "Reportes → Rep Ordenes de trabajo"
+  - "Reportes → Rep Informe de Servicios"
+  - "Reportes → Panel de KPIs"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Hay órdenes e informes registrados en el período que se consulta
+flujo_principal:
+  - paso: "Entra a Reportes → Rep Ordenes de trabajo, elige equipo, estado y período, y consulta"
+    resultado: "Se listan las órdenes con su descripción, tarea estándar, equipo y fechas de programación y terminación"
+  - paso: "Entra a Reportes → Rep Informe de Servicios, elige sector, equipo y período, y consulta"
+    resultado: "Se listan los informes con la tarea, las fechas, la cantidad de personas, las horas hombre ejecutadas y el estado"
+  - paso: "Entra a Reportes → Panel de KPIs, filtra por grupo, sector, equipo y período"
+    resultado: "Se muestran los indicadores del período"
+validaciones:
+  - "Los tres reportes se acotan por período"
+dudas:
+  - "**¿Qué indicadores muestra el Panel de KPIs y cómo se calcula cada uno?** Es lo que un dueño de PyME va a querer mirar —cuánto para, cuánto cuesta, si mejora— y no hay nada escrito. Hay que relevarlo con la pantalla cargada de datos."
+  - "El reporte de informes muestra 'H.H Ejecutadas'. ¿Sale de lo que carga el mantenedor en el informe?"
+  - "¿Los reportes se pueden exportar o imprimir?"

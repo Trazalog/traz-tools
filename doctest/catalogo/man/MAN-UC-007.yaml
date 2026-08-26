@@ -1,0 +1,36 @@
+id: MAN-UC-007
+modulo: MAN
+titulo: Pedir un servicio cuando algo falla
+perfil: Solicitante
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Sservicio.php
+  - repo: traz-prod-assetplanner
+    path: application/models/Sservicios.php
+pantallas:
+  - "Mantenimiento → Solicitud de Servicio"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo que falla está dado de alta
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Solicitud de Servicio"
+    resultado: "Se muestra el listado con Nro, Nro de OT, Fecha, Fecha Fin, tiempos de ciclo, asignación y generación, Solicitante, Equipo y Sector"
+  - paso: "Crea una solicitud nueva"
+    resultado: "Se abre el formulario"
+  - paso: "Elige el equipo que tiene el problema y describe qué pasa"
+    resultado: "Quedan registrados el equipo y la descripción de la falla"
+  - paso: "Adjunta fotos o documentos si los tiene"
+    resultado: "Los archivos quedan asociados a la solicitud"
+  - paso: "Confirma"
+    resultado: "La solicitud queda registrada y a la espera de que alguien la analice"
+validaciones:
+  - "La solicitud queda asociada al equipo y al solicitante"
+dudas:
+  - "**El listado tiene tres columnas de tiempo —T. de ciclo, T. Asignación y T. Generación— que ningún manual explica.** ¿Qué mide cada una y desde cuándo? Son indicadores de servicio y conviene documentarlos bien, porque es lo que el cliente va a mirar para saber si lo atienden rápido."
+  - "¿Qué estados recorre una solicitud desde que se crea hasta que termina? El manual de mantenimiento correctivo tiene una sección de estados; hay que contrastarla con lo que hace el código hoy."
+  - "¿Cualquier usuario puede pedir un servicio, o hace falta un rol? El manual dice que es el Solicitante."
+notas:
+  - "Es el arranque del **circuito correctivo**: algo se rompe, alguien lo reporta. El manual de ayuda existente `manual_mantenimiento_correrctivo.html` tiene una sección dedicada (s05) con el flujo validado."

@@ -1,14 +1,24 @@
-# Relevamiento de MAN — piloto de Alta de Equipos y Componentes
+# Relevamiento de MAN — el módulo de Mantenimiento completo
 
 ## Objetivo
 
-Deja registro de cómo arrancó F2 (Mantenimiento / AssetPlanner): qué material previo había, qué se
-relevó, **qué está bloqueado y por qué**, y las tres decisiones que hacen falta para seguir. Está
-escrito para el PM. **No** es el catálogo —eso son los YAML de esta carpeta— ni el detalle de los
-circuitos, que ya está relevado en el repo de asset (§1).
+Es lo que tenés que leer para validar el catálogo de Mantenimiento: qué se relevó, qué se encontró y
+qué preguntas hay que responder para que los casos salgan de `borrador`. Está escrito para el PM.
+**No** es el catálogo —eso son los YAML de esta carpeta— ni el detalle de los circuitos, que ya está
+relevado en el repo de asset (§1).
+
+**Cómo validar, en concreto.** En una terminal, parado en `traz-tools/doctest/`:
+
+```bash
+npm run hoja:validacion -- man
+```
+
+Deja `.validacion/man.html`. Se abre en el navegador, se lee caso por caso, se marca la decisión de
+cada uno, y el botón **Copiar** arma el texto con todas las decisiones para pegarme acá.
 
 - **Fecha:** 2026-08-25 · **Fase:** DocTest F2 (issue #439)
-- **Casos:** 6, todos en `borrador` — **ninguno verificado contra la pantalla real**, por el bloqueo de §3
+- **Casos:** 21, todos en `borrador` · **63 preguntas abiertas**
+- **Cobertura:** las 12 pantallas de Mantenimiento y las 4 de Reportes — todo el menú
 - **Rama relevada:** `develop` del repo de asset (lo que corre en el DEMO)
 
 ---
@@ -51,33 +61,57 @@ un TODO en el código que lo admite.
 
 ## 2. Lo que releva este PR
 
-El piloto que pide el issue #439: **el alta de equipos y componentes**. Seis casos:
+**Todo el menú de Mantenimiento**, no solo el piloto: las 12 pantallas del módulo más las 4 de
+Reportes, barridas una por una contra el DEMO. Las 16 responden.
 
-| Caso | Título |
-|---|---|
-| MAN-UC-001 | Ver el listado de equipos |
-| MAN-UC-002 | **Dar de alta un equipo** (el caso piloto) |
-| MAN-UC-003 | Editar un equipo |
-| MAN-UC-004 | Dar de baja un equipo |
-| MAN-UC-005 | Dar de alta un componente |
-| MAN-UC-006 | Asignar componentes a un equipo |
+| Caso | Título | Perfil |
+|---|---|---|
+| MAN-UC-001 a 006 | Equipos y componentes — listar, dar de alta, editar, dar de baja, asignar | Supervisor |
+| MAN-UC-007 | Pedir un servicio cuando algo falla | Solicitante |
+| MAN-UC-008 | Analizar una solicitud y decidir qué hacer | Supervisor |
+| MAN-UC-009 | **Programar una orden desde el plan de mantenimiento** | Planificador |
+| MAN-UC-010 | Ver y filtrar las órdenes de trabajo | Planificador |
+| MAN-UC-011 | **Ejecutar una orden y pedir los materiales** | Mantenedor |
+| MAN-UC-012 | Cargar el informe de servicio | Mantenedor |
+| MAN-UC-013 | Verificar el informe y dar la conformidad | Supervisor |
+| MAN-UC-014 | Definir un mantenimiento preventivo | Planificador |
+| MAN-UC-015 | Anotar trabajo pendiente en el backlog | Supervisor |
+| MAN-UC-016 | Definir qué parámetros se le miden a un equipo | Planificador |
+| MAN-UC-017 | Registrar la lectura de un parámetro | Mantenedor |
+| MAN-UC-018 | Definir un mantenimiento predictivo | Planificador |
+| MAN-UC-019 | Trabajar desde la bandeja de tareas | Mantenedor |
+| MAN-UC-020 | Consultar los reportes e indicadores | Supervisor |
+| MAN-UC-021 | Administrar el envío de órdenes | Planificador |
 
-**Una buena noticia sobre las versiones:** el alta de equipos y componentes **no difiere entre
-`develop` y `develop-v3`** del repo de asset — verificado con `git diff`. Así que este piloto no
-depende de qué rama corra el DEMO, que es la duda que planteaste.
+### Las preguntas que más importan para alguien sin soporte
 
-**Dos cosas que aparecieron al leer el código:**
+De las 63, éstas son las que dejan trabado a alguien que arranca solo:
 
-- **Los catálogos se pueden crear desde el propio formulario.** Junto a cada desplegable del alta
-  —área, proceso, criticidad, sector, grupo, cliente— hay un botón para agregar una opción nueva sin
-  salir de la pantalla. Es distinto de ALM, donde hay que ir al ABM y volver, y vale la pena
-  documentarlo en la ayuda.
-- **Quedaron llamadas de depuración activas.** `dump()` no es un log: imprime un bloque HTML amarillo
-  en la salida. Hay más de 15 llamadas activas en 8 archivos, y **una de ellas está dentro de
-  `guardar_componente()`**, que es justo el alta del piloto. Donde la respuesta se consume por AJAX
-  esperando JSON, ese HTML la corrompe. → issue **#486**.
+1. **¿Cuál es la diferencia entre preventivo y predictivo?** (UC-018) Las dos pantallas se parecen
+   mucho. Por el código, el preventivo se dispara por tiempo y el predictivo por la lectura de un
+   parámetro — pero hay que confirmarlo y decirlo bien.
+2. **¿Cuándo uso backlog y cuándo solicitud de servicio?** (UC-015) Los dos terminan en una orden de
+   trabajo. Parece ser cuestión de urgencia, pero conviene que lo diga el manual.
+3. **¿Qué pasa cuando una lectura se sale del rango configurado?** (UC-016, UC-017) ¿Se genera algo
+   solo o alguien tiene que estar mirando? Es la razón de ser del predictivo.
+4. **¿Qué estados tiene una orden de trabajo?** (UC-010) Es lo primero que alguien mira y no está
+   escrito en ningún lado.
+5. **¿Qué mide cada uno de los KPIs?** (UC-020) Es lo que un dueño de PyME va a querer ver, y no hay
+   nada documentado.
+6. **El informe muestra lo pedido rotulado "Insumos Usados"** (UC-012). El usuario lo va a leer como
+   consumo real. ¿Se documenta así o se corrige antes?
+7. **¿Para qué sirve "Administrar Ordenes"?** (UC-021) Es la única pantalla que no se pudo
+   interpretar ni desde el código ni desde los manuales.
 
----
+### Dos cosas del código que ordenan todo el módulo
+
+- **Un solo motor de órdenes.** Solicitud aceptada, preventivo vencido, backlog y predictivo
+  terminan todos en `Calendario::guardar_agregar()`. Lo único que cambia es de qué tabla se copian
+  las herramientas y los insumos. Por eso el **Plan de Mantenimiento** no es una pantalla más: es
+  donde se convierte cualquier pendiente en trabajo real.
+- **El pedido de materiales es perezoso.** Los planes solo *declaran* qué insumos harán falta; el
+  pedido al almacén nace **al abrir la ejecución de la orden**. Es contraintuitivo y hay que
+  explicarlo, porque el usuario puede esperar que el pedido ya exista.
 
 ## 3. El ingreso, destrabado — y por qué estaba roto
 
@@ -187,7 +221,22 @@ justamente la que hay que correr para validarla. Lo que sí conviene traer al ca
 la **casuística funcional que sea independiente de la migración** —el ciclo de la OT, el pedido
 perezoso, la asimetría con herramientas—, que vale para las dos versiones.
 
-## 5. El manual ya está escrito, y esperando
+## 5. El manual: lo que hay y lo que falta
+
+`ayudas/src/man/manual_equipos_y_componentes.html` cubre **equipos y componentes** (UC-001 a UC-006),
+con las pantallas dibujadas y verificadas. Es un tercio del módulo.
+
+**Falta el resto, y es donde está el valor para alguien sin soporte**: el circuito completo —pedir un
+servicio, planificarlo, ejecutarlo, informarlo, verificarlo—, los preventivos, el predictivo con sus
+lecturas, el backlog y los reportes. Eso se escribe cuando los casos estén validados, porque la mitad
+de las respuestas que faltan cambian lo que hay que explicar (§2).
+
+**Ningún manual de MAN se publica todavía**: el generador solo arma los que algún caso `validado`
+declara como derivado, y lo avisa en cada corrida de `npm run ayudas`.
+
+---
+
+## 6. Después de que valides
 
 `ayudas/src/man/manual_equipos_y_componentes.html` — tres secciones: por qué los equipos van
 primero, el alta paso a paso con el formulario dibujado y los campos explicados uno por uno, y los
@@ -210,9 +259,9 @@ validados. Dos cosas de ahí que quedaron como duda porque **no se pudieron veri
 
 ---
 
-## 6. Después de que decidas
+Con los casos en `validado`: se escribe el manual completo del módulo —el circuito de punta a punta,
+los preventivos, el predictivo, el backlog y los reportes—, se agrega la fixture de sesión propia de
+MAN y se escriben los tests.
 
-Con el ingreso destrabado: verificar los seis casos en pantalla, confirmar si el `dump()` rompe el
-alta de componentes, agregar la fixture de sesión de MAN y escribir los tests. Después, seguir el
-relevamiento hacia los circuitos de `develop` —plan de mantenimiento, backlog, OT, informe de
-servicio—, que es donde está el grueso del módulo.
+Las siete preguntas de §2 son las que más cambian el manual, así que conviene responderlas aunque el
+resto quede para después.

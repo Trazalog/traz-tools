@@ -1,0 +1,32 @@
+id: MAN-UC-018
+modulo: MAN
+titulo: Definir un mantenimiento predictivo
+perfil: Planificador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Predictivo.php
+  - repo: traz-prod-assetplanner
+    path: application/models/Predictivos.php
+    detalle: "tbl_predictivo + sus tablas de insumos y herramientas"
+pantallas:
+  - "Mantenimiento → Predictivo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo tiene parámetros configurados y lecturas cargadas
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Predictivo"
+    resultado: "Se listan los predictivos con Id, Equipo, Tarea, Fecha, Período, Cantidad y Horas Hombre"
+  - paso: "Crea uno nuevo: elige el equipo y la tarea"
+    resultado: "Queda definido el trabajo"
+  - paso: "Define el período y la cantidad que lo dispara"
+    resultado: "Queda definido cuándo corresponde hacerlo"
+  - paso: "Declara herramientas e insumos"
+    resultado: "Quedan asociados, igual que en el preventivo"
+validaciones:
+  - "Las herramientas y los insumos quedan declarados, no pedidos"
+dudas:
+  - "**¿Cuál es la diferencia real entre preventivo y predictivo para el usuario?** Las dos pantallas se parecen mucho. Por lo que se ve en el código, el preventivo se dispara por tiempo y el predictivo por la lectura de un parámetro — pero eso hay que confirmarlo y explicarlo bien, porque es la duda más probable de alguien que arranca."
+  - "El listado tiene 'Cantidad' donde el preventivo tiene 'Frecuencia'. ¿Es el valor del parámetro que lo dispara?"

@@ -1,0 +1,33 @@
+id: MAN-UC-016
+modulo: MAN
+titulo: Definir qué parámetros se le miden a un equipo
+perfil: Planificador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Parametro.php
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Altparametro.php
+    detalle: "el ABM de parámetros disponibles"
+pantallas:
+  - "Mantenimiento → Parametrizar Predictivo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo está dado de alta y el parámetro existe en el ABM
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Parametrizar Predictivo"
+    resultado: "Se listan los parámetros ya configurados con su equipo, máximo y mínimo"
+  - paso: "Elige el equipo y el parámetro que se le va a medir"
+    resultado: "Queda definido qué se controla en ese equipo"
+  - paso: "Carga el valor máximo y el mínimo aceptables, y una descripción"
+    resultado: "Quedan definidos los límites que disparan la alerta"
+  - paso: "Guarda"
+    resultado: "El parámetro queda activo para ese equipo"
+validaciones:
+  - "El equipo, el parámetro, el máximo, el mínimo y la descripción son obligatorios"
+dudas:
+  - "**¿Qué pasa cuando una lectura se sale del rango?** ¿Se genera algo automáticamente —una orden, un aviso— o alguien tiene que estar mirando? Es la pregunta central de esta pantalla y no está documentada."
+  - "¿Un equipo puede tener varios parámetros configurados a la vez?"
+  - "¿Los parámetros —temperatura, vibración, presión— salen de un catálogo propio? Hay un `ABM Parametros` en el menú."

@@ -1,0 +1,38 @@
+id: MAN-UC-009
+modulo: MAN
+titulo: Programar una orden de trabajo desde el plan de mantenimiento
+perfil: Planificador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Calendario.php
+    detalle: "indexot() muestra el calendario; guardar_agregar() es el motor que crea la OT — ramifica por tipo: 2 correctivo, 3 preventivo, 4 backlog, 5 predictivo"
+  - repo: traz-prod-assetplanner
+    path: application/models/Calendarios.php
+pantallas:
+  - "Mantenimiento → Plan de Mantenimiento"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Hay trabajo pendiente de programar (una solicitud aceptada, un preventivo vencido, un backlog o un predictivo)
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Plan de Mantenimiento"
+    resultado: "Se muestra el calendario con lo que hay para programar"
+  - paso: "Elige qué va a programar y para cuándo"
+    resultado: "El formulario pide la fecha de programación según el tipo de trabajo"
+  - paso: "Confirma con 'Generar Orden'"
+    resultado: "Se crea la orden de trabajo y arranca su circuito"
+flujos_alternativos:
+  - nombre: "Programar preventivos en serie"
+    pasos:
+      - paso: "Elige un preventivo repetitivo e indica por cuántos meses lo quiere programar"
+        resultado: "Se crean varias órdenes de trabajo de una sola vez, una por cada vencimiento"
+validaciones:
+  - "La orden hereda las herramientas y los insumos declarados en el trabajo de origen"
+dudas:
+  - "**Esta pantalla es el corazón del módulo y no tiene manual.** Es la que convierte cualquier trabajo pendiente —una solicitud aceptada, un preventivo vencido, un backlog, un predictivo— en una orden de trabajo. ¿Cómo se explica al usuario que las cuatro cosas se programan desde acá?"
+  - "El formulario tiene fechas separadas por tipo (correctivo, preventivo, backlog, predictivo) y una cantidad de meses para los repetitivos. ¿Se programan de a uno o se puede hacer una tanda?"
+  - "¿Qué pasa si se programa un preventivo antes de que venza? ¿Y si ya venció hace rato?"
+notas:
+  - "**Un solo motor para todo**: `Calendario::guardar_agregar()` crea la OT en los cuatro casos; lo único que cambia es de qué tabla copia las herramientas y los insumos. El tipo 2 (correctivo) no copia nada: se cargan a mano en la OT."

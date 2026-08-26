@@ -1,0 +1,32 @@
+id: MAN-UC-017
+modulo: MAN
+titulo: Registrar la lectura de un parámetro
+perfil: Mantenedor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Lectura.php
+    detalle: "escribe historial_lecturas y actualiza equipos.ultima_lectura"
+pantallas:
+  - "Mantenimiento → Registro de Parametros"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo tiene parámetros configurados (MAN-UC-016)
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Registro de Parametros"
+    resultado: "Se listan las lecturas ya cargadas con Equipo, Parámetro, Fecha y Valor"
+  - paso: "Elige el equipo y el parámetro que midió"
+    resultado: "El formulario queda listo para el valor"
+  - paso: "Carga la fecha y el valor medido"
+    resultado: "La lectura queda registrada"
+validaciones:
+  - "Equipo, parámetro, fecha y valor son obligatorios"
+  - "La lectura queda como la última del equipo"
+dudas:
+  - "**¿Qué pasa si el valor se sale del rango configurado?** Es la contraparte de la duda de MAN-UC-016: acá es donde el valor entra."
+  - "¿Se puede corregir una lectura mal cargada? Si la lectura dispara mantenimientos, un valor errado puede generar trabajo que no corresponde."
+  - "¿Con qué frecuencia se espera que se carguen? ¿Hay forma de saber a qué equipos les falta la lectura?"
+notas:
+  - "Es lo que alimenta el mantenimiento por uso: los preventivos que se disparan por horas o ciclos, no por fecha, se comparan contra la última lectura del equipo."

@@ -1,0 +1,28 @@
+id: MAN-UC-019
+modulo: MAN
+titulo: Trabajar desde la bandeja de tareas
+perfil: Mantenedor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Tarea.php
+    detalle: "la bandeja del proceso de Bonita"
+pantallas:
+  - "Mis Tareas"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Entra a Mis Tareas"
+    resultado: "Se listan las tareas pendientes con su tipo, estado, a quién están asignadas, la fecha de asignación, el equipo, el sector, el cliente, la tarea y los identificadores de solicitud, orden y pedido"
+  - paso: "Abre una tarea"
+    resultado: "Se muestra el detalle de lo que hay que hacer y el formulario para resolverla"
+validaciones:
+  - "Cada tarea corresponde a un paso del circuito que le toca a este usuario"
+dudas:
+  - "**¿Esta pantalla reemplaza a las otras o las complementa?** Un supervisor puede analizar una solicitud desde el listado de solicitudes o desde acá. ¿Cuál es el camino que hay que enseñar?"
+  - "¿Qué tipos de tarea aparecen y quién las recibe? Depende de los roles del proceso."
+  - "¿Se puede reasignar una tarea a otra persona?"
+notas:
+  - "Es la bandeja del proceso: lo que el circuito le pone a cada uno para hacer. Para alguien que arranca, **puede ser el mejor punto de entrada diario** — en vez de recorrer pantallas, mirar qué le tocó."

@@ -1,0 +1,28 @@
+id: MAN-UC-015
+modulo: MAN
+titulo: Anotar trabajo pendiente en el backlog
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Backlog.php
+    detalle: "guardar_backlog() inserta en tbl_back con estado 'C' y sus tablas de herramientas e insumos"
+pantallas:
+  - "Mantenimiento → Backlog"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Backlog"
+    resultado: "Se listan los pendientes con Nº Backlog, Equipo, Componente, Sistema, Tarea, Fecha, Duración y Estado"
+  - paso: "Anota un trabajo que hay que hacer pero no es urgente"
+    resultado: "Queda registrado con el equipo, el componente y la tarea"
+  - paso: "Declara las herramientas y los insumos que va a necesitar"
+    resultado: "Quedan asociados al backlog, para copiarse a la orden cuando se programe"
+validaciones:
+  - "El backlog nace en estado 'C' y pasa a planificado cuando se le genera la orden"
+dudas:
+  - "**¿Cuándo se usa el backlog en vez de una solicitud de servicio?** Los dos terminan en una orden de trabajo. La diferencia parece ser la urgencia —el backlog es trabajo detectado que puede esperar— pero conviene decirlo con claridad, porque es la primera duda de alguien que arranca."
+  - "¿Quién puede cargar un backlog? ¿El mantenedor que detecta algo mientras hace otra cosa?"
+  - "¿El backlog vence o caduca si nadie lo programa?"
