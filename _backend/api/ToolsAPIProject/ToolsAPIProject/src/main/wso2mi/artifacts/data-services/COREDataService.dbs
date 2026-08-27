@@ -369,7 +369,7 @@
       <param name="cuit" sqlType="STRING"/>
    </query>
    <query id="setUserAsset" useConfig="AssetPlannerDataSource">
-      <sql>INSERT into sisusers(usrNick, usrName, usrLastName, usrPassword, usrimag) &#xd;values (:nick, :name, :lastName, :pass, :image)</sql>
+      <sql>INSERT into sisusers(usrNick, usrName, usrLastName, usrPassword, usrimag) &#xd;values (:nick, :name, :lastName, MD5(:pass), :image)</sql>
       <param name="nick" sqlType="STRING"/>
       <param name="name" sqlType="STRING"/>
       <param name="lastName" sqlType="STRING"/>
