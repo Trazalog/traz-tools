@@ -534,6 +534,39 @@ código y se despliega con el sistema. No hay un segundo lugar que pueda quedar 
 > El sitio anterior, `trazalog.com/ayudatools`, sigue siendo el que ve **v2**. Se apaga cuando v3
 > pase a producción; hasta entonces conviven y no se pisan.
 
+### Cuando `ayuda/` da conflicto de merge
+
+Pasa, y va a seguir pasando: `ayuda/` es **salida generada** que además se versiona, así que dos
+ramas que toquen las ayudas van a chocar en los mismos archivos. La regla es corta:
+
+**No se resuelve el conflicto de `ayuda/` a mano. Se resuelven las fuentes y se regenera.**
+
+**Dónde:** terminal, parado en `traz-tools/`.
+
+```bash
+git checkout --ours -- ayuda/
+git add ayuda/
+```
+
+Con eso `ayuda/` deja de bloquear el merge. Después se resuelven de verdad los archivos que **sí**
+son fuente —`doctest/ayudas/src/`, `doctest/ayudas/plantilla/`, `doctest/generators/`— y recién ahí:
+
+```bash
+cd doctest && npm run ayudas
+```
+
+Eso reescribe `ayuda/` entero desde las fuentes ya mergeadas. Cualquier resolución hecha a mano
+sobre el HTML generado se pierde en la siguiente regeneración, así que hacerla es trabajo tirado.
+
+Dos cosas que reducen el problema, ya aplicadas:
+
+- **Los manuales generados no llevan fecha.** Estampar el día de generación hacía que regenerar
+  produjera un diff en *todos* los manuales aunque el contenido fuera idéntico. La versión, que sale
+  del caso de uso, sí queda: es lo que de verdad cambia.
+- **`.gitattributes` marca `ayuda/**` como `linguist-generated`**, así GitHub la colapsa en el diff
+  del PR. Sin eso, un PR de ayudas muestra veinte mil líneas de HTML y el cambio real queda
+  enterrado.
+
 ## 2.4 Cómo se referencian desde el código
 
 **Hay un acceso a la ayuda en la barra superior**, a la izquierda de las notificaciones: el ícono de

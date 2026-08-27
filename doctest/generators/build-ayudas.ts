@@ -217,7 +217,6 @@ function armarManuales(): { archivo: string; casos: string }[] {
   if (!existsSync(SRC)) return [];
   const plantilla = readFileSync(join(PLANTILLA, 'manual.html'), 'utf8');
   const armados: { archivo: string; casos: string }[] = [];
-  const hoy = new Date().toISOString().slice(0, 10);
 
   const habilitados = manualesHabilitados();
 
@@ -241,7 +240,6 @@ function armarManuales(): { archivo: string; casos: string }[] {
         .replace(/\{\{MODULO\}\}/g, meta.modulo ?? modulo.name.toUpperCase())
         .replace(/\{\{CODIGO\}\}/g, meta.codigo ?? '—')
         .replace(/\{\{VERSION\}\}/g, meta.version ?? '1.0')
-        .replace(/\{\{FECHA\}\}/g, hoy)
         .replace(/\{\{CASOS\}\}/g, meta.casos ?? '—')
         .replace(/\{\{FUENTE\}\}/g, `ayudas/src/${modulo.name}/${archivo}`)
         .replace(/\{\{NAV\}\}/g, navDeSecciones(secciones))

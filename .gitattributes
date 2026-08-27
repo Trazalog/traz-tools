@@ -1,0 +1,10 @@
+# El sitio de ayudas que sirve el frontend es SALIDA GENERADA por
+# doctest/generators/build-ayudas.ts a partir de doctest/ayudas/. Se versiona porque
+# Apache lo sirve directo desde el repo, pero no se edita a mano nunca.
+#
+# `linguist-generated` hace que GitHub lo colapse en el diff del PR: sin esto, un PR
+# de ayudas muestra veinte mil líneas de HTML generado y el cambio real queda enterrado.
+#
+# Si esto te da conflicto de merge, NO lo resuelvas a mano: resolvé las fuentes
+# (doctest/ayudas/src/ y la plantilla) y después regenerá con `npm run ayudas`.
+ayuda/** linguist-generated=true
