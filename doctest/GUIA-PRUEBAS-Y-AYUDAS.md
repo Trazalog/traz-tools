@@ -6,6 +6,9 @@ Responde tres preguntas concretas: **dónde viven las pruebas** (los casos, la e
 corrida, los hallazgos), **cómo funciona el circuito de las ayudas** de usuario (cómo se opina sobre
 ellas, cómo se publican, cómo se enlazan desde el sistema) y **cómo se mantiene todo al día** cuando
 el sistema cambia. Está escrito para el PM y para
+Responde dos preguntas concretas: **dónde viven las pruebas** (los casos, la evidencia de cada
+corrida, los hallazgos) y **cómo funciona el circuito de las ayudas** de usuario (cómo se opina
+sobre ellas, cómo se publican, cómo se enlazan desde el sistema). Está escrito para el PM y para
 cualquiera que se sume al proyecto sin haber estado en la construcción.
 
 **No** cubre el diseño de la solución ni por qué se decidió así — eso está en los tres documentos
@@ -215,6 +218,7 @@ código que lo explica. Un hallazgo se escribe con la causa encontrada, no con e
 | `ayudas/plantilla/` | `theme.css` + el esqueleto HTML, extraídos de esos manuales reales | sí, si cambia el diseño |
 | `ayudas/src/<modulo>/` | **El contenido nuevo. Acá se escribe** | sí — es la fuente |
 | `../ayuda/` (raíz del repo) | **El sitio armado, ya servido por el frontend** | **no**: se regenera y te pisa el cambio |
+| `ayudas/build/` | El sitio armado y publicable | **no**: se regenera y te pisa el cambio |
 
 **Para regenerar el sitio** — en una terminal, parado en `doctest/`:
 
@@ -226,6 +230,7 @@ Copia los manuales viejos tal cual, ensambla los nuevos con la plantilla, agrega
 portada y **regenera el buscador del inicio recorriendo el contenido de todos los manuales**. Hoy
 son 7 manuales y 26 secciones indexadas. Sale en **`ayuda/`, en la raíz del repo del frontend**, y
 esa carpeta **va versionada**: el resultado se commitea como cualquier otro archivo. Esto último era una deuda del sitio anterior: el buscador
+son 7 manuales y 26 secciones indexadas. Esto último era una deuda del sitio anterior: el buscador
 se mantenía a mano y solo encontraba dos de los cinco manuales.
 
 Cada sección de un manual tiene un ancla estable (`#s01`, `#s02`, …) y, en un comentario HTML

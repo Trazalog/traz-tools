@@ -61,6 +61,9 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 **Dependencia concreta entre fases:** la empresa de test no tiene el menú de Almacenes —el trigger solo se lo asigna al rol Administrador—, así que para que la suite de ALM corra con datos propios hay que asignárselo desde el ABM de menúes, que es `DNATO-UC-024`, uno de los dos casos de DNATO que quedaron en borrador.
 
 **Lo único que espera decisión del PM en DNATO** (no bloquea ALM): los 2 casos en borrador — DNATO-UC-020 (usuario externo) y DNATO-UC-024 (ABM de menúes). El triaje de hallazgos ya está hecho: 25 de los 35 tienen issue, y los 10 restantes tienen decisión escrita en su fila.
+**DocTest:** F0, los documentos ancla y **F1 (DNATO) están completos**. Lo próximo es **F3 (ALM)**, que ya tiene todo el andamiaje listo: infraestructura, fixtures de sesión, casilla de correo descartable, dos empresas de test creadas y los generadores de `.feature` y de ayudas funcionando. El método quedó probado punta a punta: relevar → validar con el PM sobre la hoja generada → derivar. F4 (MCP, Hurl) sigue disponible en paralelo.
+
+**Lo que espera decisión del PM en DNATO** (no bloquea ALM): los 2 casos en borrador (DNATO-UC-020 usuario externo y DNATO-UC-024 ABM de menúes) y el triaje de los 36 hallazgos del registro, 14 de ellos con issue abierto.
 
 ### Decisiones recientes (últimas 5)
 
