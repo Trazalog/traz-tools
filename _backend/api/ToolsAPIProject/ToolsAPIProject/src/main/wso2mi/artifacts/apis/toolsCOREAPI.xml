@@ -723,7 +723,9 @@
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
          <property name="ba_email" expression="json-eval($.usuario.email)" type="STRING"/>
          <property name="ba_password" expression="json-eval($.usuario.password)" type="STRING"/>
-         <property name="ba_password_md5" expression="json-eval($.usuario.password_md5)" type="STRING"/>
+         <!-- password_md5 ya no se usa: el hash MD5 lo aplica la propia query setUserAsset,
+              asi que este recurso manda la contrasena en claro igual que POST /usuario.
+              Si se vuelve a leer del payload, quedaria hasheada dos veces. -->
          <property name="ba_firstname" expression="json-eval($.usuario.firstname)" type="STRING"/>
          <property name="ba_lastname" expression="json-eval($.usuario.lastname)" type="STRING"/>
          <property name="ba_nick_from_body" expression="json-eval($.usuario.usernick)" type="STRING"/>
@@ -793,7 +795,7 @@
                <arg evaluator="xml" expression="get-property('ba_nick')"/>
                <arg evaluator="xml" expression="get-property('ba_firstname')"/>
                <arg evaluator="xml" expression="get-property('ba_lastname')"/>
-               <arg evaluator="xml" expression="get-property('ba_password_md5')"/>
+               <arg evaluator="xml" expression="get-property('ba_password')"/>
                <arg evaluator="xml" expression="get-property('ba_asset_img')"/>
             </args>
          </payloadFactory>
