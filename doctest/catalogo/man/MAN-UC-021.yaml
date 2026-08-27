@@ -1,0 +1,23 @@
+id: MAN-UC-021
+modulo: MAN
+titulo: Administrar el envío de órdenes
+perfil: Planificador
+estado: obsoleto
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Envio.php
+  - repo: traz-prod-assetplanner
+    path: application/models/Administraciones.php
+pantallas:
+  - "Mantenimiento → Administrar Ordenes"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Administrar Ordenes"
+    resultado: "Se lista con ID, Número, Fecha Inicio, Fecha Entrega, Fecha Terminada, Fecha Aviso, Detalle y Estado"
+dudas: []
+notas:
+  - "**Declarada obsoleta por el PM (2026-08-26).** Se conserva por historia y no genera derivados."
+  - "Es la única pantalla del menú de Mantenimiento que no se pudo interpretar ni desde el código ni desde los manuales existentes."

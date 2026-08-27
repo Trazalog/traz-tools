@@ -447,6 +447,14 @@ body {
   margin: 18px 0;
   border-collapse: collapse;
 }
+/* El encabezado lleva su fondo acá y no en cada tabla.
+ *
+ * En los manuales publicados este `color: white` venía sin fondo, y cada `<th>` lo resolvía con un
+ * `style="background:var(--red)"` inline. Una tabla que se olvidara de ponerlo quedaba con el texto
+ * blanco sobre blanco — invisible. Con el fondo por defecto eso no puede pasar; los inline del
+ * legacy siguen ganando, así que sus tablas de colores no cambian. */
+.compare-table thead th { background: var(--dark); }
+
 .compare-table th {
   padding: 12px 18px;
   color: white;

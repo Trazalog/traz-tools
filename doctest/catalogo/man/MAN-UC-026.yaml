@@ -1,0 +1,40 @@
+id: MAN-UC-026
+modulo: MAN
+titulo: Asignar una meta a un equipo
+perfil: Supervisor
+estado: validado
+version: "0.1"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "asignarMeta()"
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/list.php
+    detalle: "el modal 'Equipos | Asignar Meta' — un número entre 1 y 100, con opción de borrarla"
+pantallas:
+  - "Mantenimiento → Equipos → Asignar Meta"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "En el listado de equipos elige la acción Asignar Meta"
+    resultado: "Se abre el formulario con la meta actual, si tiene"
+  - paso: "Carga un valor entre 1 y 100"
+    resultado: "La meta queda asignada al equipo"
+flujos_alternativos:
+  - nombre: "Quitar la meta"
+    pasos:
+      - paso: "Usa la opción 'Borrar Meta'"
+        resultado: "El equipo queda sin meta"
+validaciones:
+  - "Es la **meta de disponibilidad** del equipo, en porcentaje"
+  - "Es opcional: un equipo puede no tener ninguna"
+  - "La meta es **opcional**: un equipo puede no tener ninguna"
+  - "El valor va de 1 a 100"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s10
+notas:
+  - "**Qué es la meta, relevado del código:** la columna se llama `meta_disponibilidad` y la usa `kpiCalcularDisponibilidad()`. Es el porcentaje de tiempo que uno se propone que el equipo esté disponible, y el Panel de KPIs compara contra ella la disponibilidad real."
+  - "**Buena práctica:** conviene ponerle meta a los equipos críticos, no a todos. Una meta sin sentido —95% en un equipo que se usa dos veces al año— solo agrega ruido al panel."

@@ -1,0 +1,29 @@
+id: MAN-UC-003
+modulo: MAN
+titulo: Editar un equipo
+perfil: Supervisor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "getEditar() trae los datos del equipo; editar_equipo() guarda los cambios"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+pantallas:
+  - "Mantenimiento → Equipos → (editar una fila)"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Existe al menos un equipo en la empresa
+flujo_principal:
+  - paso: "En el listado abre un equipo para editarlo"
+    resultado: "Se muestra el formulario con los datos cargados"
+  - paso: "Modifica lo que corresponda y guarda"
+    resultado: "El equipo queda actualizado"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s02
+notas:
+  - "**Mejora a analizar (PM, 2026-08-26):** permitir que un Administrador sí pueda cambiar el código, para corregir una carga mal hecha. Hoy la pantalla lo deja editar a cualquiera, que es lo contrario de lo que se busca — queda anotado en el registro de hallazgos."

@@ -1,0 +1,40 @@
+id: MAN-UC-007
+modulo: MAN
+titulo: Pedir un servicio cuando algo falla
+perfil: Solicitante
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Sservicio.php
+  - repo: traz-prod-assetplanner
+    path: application/models/Sservicios.php
+pantallas:
+  - "Mantenimiento → Solicitud de Servicio"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo que falla está dado de alta
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Solicitud de Servicio"
+    resultado: "Se muestra el listado con Nro, Nro de OT, Fecha, Fecha Fin, tiempos de ciclo, asignación y generación, Solicitante, Equipo y Sector"
+  - paso: "Crea una solicitud nueva"
+    resultado: "Se abre el formulario"
+  - paso: "Elige el equipo que tiene el problema y describe qué pasa"
+    resultado: "Quedan registrados el equipo y la descripción de la falla"
+  - paso: "Adjunta fotos o documentos si los tiene"
+    resultado: "Los archivos quedan asociados a la solicitud"
+  - paso: "Confirma"
+    resultado: "La solicitud queda registrada y a la espera de que alguien la analice"
+validaciones:
+  - "Puede pedir un servicio cualquier usuario con el rol *Solicitante de Mantenimiento* en Bonita"
+  - "La solicitud queda asociada al equipo y al solicitante"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-007.solicitud-servicio.spec.ts
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s05
+notas:
+  - "**El proceso arranca acá.** La solicitud entra al proceso de mantenimiento por la puerta *Solicitud de Servicio*, y lo primero que le va a pasar es el análisis del Supervisor (MAN-UC-008). El recorrido completo está en `doc/man/proceso-mantenimiento.md`."
+  - "Las tres columnas de tiempo del listado —ciclo, asignación y generación— miden ese recorrido: cuánto tardó en atenderse, en asignarse y en generarse la orden."
+  - "Es el arranque del **circuito correctivo**: algo se rompe, alguien lo reporta. El manual de ayuda existente `manual_mantenimiento_correrctivo.html` tiene una sección dedicada (s05) con el flujo validado."

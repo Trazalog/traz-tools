@@ -10,7 +10,10 @@
   Generado por doctest/generators/build-ayudas.ts — no editar a mano.
   Contenido: ayudas/src/alm/manual_almacenes.html
   Casos de uso que cubre: ALM-UC-001 a ALM-UC-006 y ALM-UC-009 a ALM-UC-018 (el stock de producción se documenta cuando se mueva al módulo de Producción)
-  Versión 1.0 · generado el 2026-08-25
+  Versión 1.0
+  (Sin fecha de generación a propósito: estampar el día hacía que regenerar el sitio produjera un
+  diff en TODOS los manuales aunque el contenido fuera idéntico, y eso terminaba en conflictos de
+  merge en cada PR. La versión sale del caso de uso, que es lo que de verdad cambia.)
 -->
 </head>
 <body>
@@ -98,6 +101,8 @@
   </div>
 
   <p class="intro-text">El módulo de Almacenes lleva la cuenta de <strong>qué hay, dónde está y quién se lo llevó</strong>. Todo lo demás son variaciones de eso.</p>
+
+  <p class="intro-text">Se usa de dos maneras, y conviene saber cuál es la tuya: como <strong>almacén propio</strong> —pedís, recibís y entregás por tu cuenta— o como <strong>el almacén que abastece al mantenimiento</strong>, donde los pedidos nacen de una orden de trabajo. El circuito es el mismo; lo que cambia es de dónde viene el pedido.</p>
 
   <div class="sub-title">Los dos roles</div>
 
@@ -584,7 +589,7 @@
     </div>
   </div>
 
-  <p class="intro-text">Un artículo es cada cosa que el almacén guarda. Antes de recibir o entregar nada hay que darlo de alta: el resto del módulo trabaja siempre sobre artículos que ya existen.</p>
+  <p class="intro-text">Un artículo es cada cosa que el almacén guarda. Al conjunto se lo llama el <strong>Maestro de Artículos</strong>: contiene todos los repuestos, insumos y materiales que después van a poder pedirse — entre otras cosas, desde una orden de trabajo de mantenimiento. Antes de recibir o entregar nada hay que darlo de alta, porque el resto del módulo trabaja siempre sobre artículos que ya existen.</p>
 
   <figure class="screen">
     <div class="screen-card">
@@ -689,6 +694,18 @@
       </tr>
     </tbody>
   </table>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Definí una convención de códigos antes de cargar el primero</div>
+      <div class="alert-text">
+        El código es lo primero que vas a ver en todas las listas y buscadores del módulo, así que una convención clara desde el arranque te ahorra mucho después. Una que funciona: <code>REP-001</code> para repuestos, <code>INS-001</code> para insumos, <code>HER-001</code> para herramientas.
+        <br><br>
+        Cambiar el código de un artículo que ya tiene movimientos es caro —lo tiene que hacer un Administrador—, así que conviene acertar de entrada.
+      </div>
+    </div>
+  </div>
 
   <div class="sub-title">Lotear un artículo</div>
 
