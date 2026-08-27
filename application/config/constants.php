@@ -92,6 +92,15 @@ define('FILES', 'files/');
 define('LOGIN', true);
 define('DNATO', 'http://localhost/traz-comp-dnato/');
 
+# AYUDA DE USUARIO
+# Direccion del sitio de ayudas, la que abre el signo de pregunta de la barra superior.
+# Es lo que se toca al desplegar si la ayuda cambia de lugar.
+#   - Valor relativo (el default): se resuelve con base_url(), asi que sirve igual en DEV,
+#     DEMO y produccion sin tocar nada. La carpeta /ayuda es parte de este mismo repo.
+#   - Valor absoluto (arranca con http:// o https://): se usa tal cual, para apuntar a un
+#     sitio de ayuda externo. Es lo que hace v2, que apunta a https://trazalog.com/ayudatools/
+define('URL_AYUDA', 'ayuda/');
+
 define('TOOLS_ADMIN_USER','admin@gmail.com');
 
 define('PORT', ':3000/');

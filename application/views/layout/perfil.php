@@ -17,12 +17,22 @@
 	<ul class="nav navbar-nav">
 		<!-- Help Menu Link -->
 		<!-- La ayuda se sirve desde este mismo repo (carpeta /ayuda), no desde un
-		     sitio aparte: decision del PM del 2026-08-25. base_url() la resuelve en
-		     cualquier entorno. En develop (v2) esta linea apunta todavia a
+		     sitio aparte: decision del PM del 2026-08-25. La direccion sale de
+		     URL_AYUDA en constants.php, que es lo que se toca al desplegar.
+		     El defined() es la red para la sync semanal desde develop (v2): si llega
+		     una vista sin la constante, el enlace sigue funcionando en vez de tirar
+		     un fatal. En develop (v2) esta linea apunta todavia a
 		     https://trazalog.com/ayudatools/ — al sincronizar v2 hacia v3 hay que
 		     quedarse con esta version. -->
+		<?php
+			$url_ayuda = defined('URL_AYUDA') ? URL_AYUDA : 'ayuda/';
+			if ( ! preg_match('#^https?://#i', $url_ayuda))
+			{
+				$url_ayuda = base_url() . ltrim($url_ayuda, '/');
+			}
+		?>
 		<li>
-			<a href="<?php echo base_url(); ?>ayuda/" target="_blank" title="Ayuda">
+			<a href="<?php echo $url_ayuda; ?>" target="_blank" title="Ayuda">
 				<i class="fa fa-question-circle"></i>
 			</a>
 		</li>
