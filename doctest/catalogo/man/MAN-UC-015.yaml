@@ -1,0 +1,34 @@
+id: MAN-UC-015
+modulo: MAN
+titulo: Anotar trabajo pendiente en el backlog
+perfil: Supervisor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Backlog.php
+    detalle: "guardar_backlog() inserta en tbl_back con estado 'C' y sus tablas de herramientas e insumos"
+pantallas:
+  - "Mantenimiento → Backlog"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Backlog"
+    resultado: "Se listan los pendientes con Nº Backlog, Equipo, Componente, Sistema, Tarea, Fecha, Duración y Estado"
+  - paso: "Anota un trabajo que hay que hacer pero no es urgente"
+    resultado: "Queda registrado con el equipo, el componente y la tarea"
+  - paso: "Declara las herramientas y los insumos que va a necesitar"
+    resultado: "Quedan asociados al backlog, para copiarse a la orden cuando se programe"
+validaciones:
+  - "**El backlog es lo no urgente**: es donde va a parar una solicitud de servicio que el Supervisor decidió que puede esperar"
+  - "Un backlog **no vence ni caduca**: queda pendiente hasta que se lo programe"
+  - "El backlog nace en estado 'C' y pasa a planificado cuando se le genera la orden"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
+notas:
+  - "**Buena práctica de mantenimiento:** el backlog es la lista de trabajo conocido y no ejecutado. Sirve para dos cosas — que nada detectado se pierda, y para dimensionar cuánto trabajo pendiente se acumula. Un backlog que solo crece es señal de que la capacidad del taller no alcanza; que se mantenga estable, de que el equipo está al día."
+  - "Se llena por dos vías: a mano, cuando alguien detecta algo mientras hace otra cosa, y **automáticamente**, cuando una solicitud de servicio se analiza y resulta no urgente."

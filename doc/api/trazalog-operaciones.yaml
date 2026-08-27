@@ -1,0 +1,1784 @@
+openapi: 3.0.3
+
+info:
+  title: Trazalog Operaciones API — Trazalog MCP (Unificada)
+  version: "1.0.0"
+  description: |
+    Fachada única de operaciones de Trazalog: Mantenimiento (equipos, órdenes
+    de trabajo) y Almacenes (stock, pedidos de materiales). Reemplaza a las
+    dos APIs separadas de Sprint 2 (`EquiposAPI-TrazalogMCP`,
+    `OrdenesdeTrabajoAPI-TrazalogMCP`) — ver ADR-013.
+
+    **Por qué una sola API:** WSO2 API Manager 4.6.0 genera un Virtual MCP
+    Server desde UNA sola API (no combina varias APIs distintas — confirmado
+    contra la doc oficial y el entorno real, ver `doc/v3/relevamiento-unificacion-mcp.md`).
+    Un cliente MCP (Claude.ai) se conecta una sola vez a esta API y ve las
+    9 tools de ambos módulos.
+
+    **Prefijo por módulo en el nombre de la tool:** `man_` (mantenimiento),
+    `alm_` (almacenes) — decisión de diseño (ADR-013 #3), no restricción
+    técnica. Evita colisiones de nombre entre módulos futuros.	
+
+    **La empresa se determina automáticamente desde el token JWT.**
+    No existe ningún parámetro de empresa en ninguna operación — el gateway
+    lo inyecta de forma transparente a partir del claim `empr_id` del token
+    (vía Key Manager federado con Dnato, ADR-008, y la sequence
+    `EmprIdFromHeader` en el MI, ADR-009). El agente nunca pasa ni ve el
+    identificador de empresa.
+
+    **Backend:** todas las operaciones son fachada delgada de `toolsMCPAPI`
+    (WSO2 MI, context `/tools/mcp`). Las tools de mantenimiento replican
+    1:1 la lógica de `toolsMANAPI` (ya probada en producción). Las tools de
+    almacenes delegan a `toolsALMAPI` (nuevo, orquestación INSERT+BPM+rollback
+    reusable a futuro también desde el PHP de v2).
+
+servers:
+  - url: http://10.142.0.13:8280/tools/mcp
+    description: WSO2 Micro Integrator — DEV directo (toolsMCPAPI)
+  - url: https://{apim_host}:8243/trazalog/mcp/1.0
+    description: |
+      WSO2 API Manager 4.6.0 — Gateway (PROD/staging). Contexto real
+      confirmado 2026-08-08: Rodolfo publicó la API como "Trazalog MCP
+      Server", contexto `/trazalog/mcp`, versión `1.0` — no `trazalog-operaciones`
+      como sugería ADR-013 originalmente. Endpoint MCP resultante:
+      `/trazalog/mcp/1.0/mcp`.
+    variables:
+      apim_host:
+        default: localhost
+        description: Host del API Manager
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Mantenimiento
+    description: Equipos y Órdenes de Trabajo (Asset Planner)
+  - name: Almacenes
+    description: Stock y pedidos de materiales
+
+paths:
+
+  # ══════════════════════════════════════════════════════════════
+  # MANTENIMIENTO — réplica 1:1 de equipos.yaml + ot.yaml (Sprint 2),
+  # rutas prefijadas /mcp/man/... en toolsMCPAPI (ADR-013 #2)
+  # ══════════════════════════════════════════════════════════════
+
+  /mcp/man/equipos:
+    get:
+      operationId: man_get_equipos
+      summary: Listar equipos activos de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve todos los equipos activos (estado AC o RE, no AN) registrados
+        para la empresa del token. Incluye código, descripción, estado
+        operativo, sector, grupo funcional, criticidad, marca, área y
+        proceso industrial asociado.
+
+        **Cuándo usar esta operación:**
+        - Para encontrar el `id_equipo` de un equipo antes de crear una OT.
+        - Para ver qué equipos están actualmente en reparación (`estado = RE`).
+        - Para obtener el inventario completo de activos y sus sectores.
+        - Cuando el usuario menciona el nombre o código del equipo pero no el ID.
+      tags:
+        - Mantenimiento
+      responses:
+        "200":
+          description: Lista de equipos activos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquiposList"
+              example:
+                equipos:
+                  equipo:
+                    - id_equipo: "10"
+                      codigo: "COMP-001"
+                      descripcion: "Compresor Atlas Copco GA110"
+                      estado: "AC"
+                      empr_id: "42"
+                      empresa: "Minera San Juan S.A."
+                      marca: "Atlas Copco"
+                      sector: "Planta Principal"
+                      grupo: "Compresores"
+                      criticidad: "Alta"
+                      area: "Producción"
+                      proceso: "Compresión de Aire"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/man/equipo/{equi_id}:
+    get:
+      operationId: man_get_equipo
+      summary: Obtener el detalle técnico de un equipo
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los datos técnicos completos de un equipo identificado por
+        su `id_equipo`. Incluye marca, sector, criticidad, área, proceso
+        industrial y estado operativo actual.
+
+        **Cuándo usar esta operación:**
+        - Para confirmar los datos de un equipo antes de crear una OT.
+        - Para verificar el estado actual (`AC`/`RE`) de un equipo dado.
+        - Cuando ya se conoce el `id_equipo` y se necesita el detalle completo.
+
+        Si el equipo no pertenece a la empresa del token, la respuesta contiene
+        la estructura vacía `{ "equipo": {} }` sin código de error — garantiza
+        el aislamiento multi-empresa sin revelar la existencia de otros registros.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: equi_id
+          in: path
+          required: true
+          description: |
+            ID numérico del equipo en Asset Planner. Obtenerlo previamente
+            con `man_get_equipos` si solo se conoce el código o nombre.
+          schema:
+            type: string
+            example: "10"
+      responses:
+        "200":
+          description: Datos técnicos del equipo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipoDetalle"
+              examples:
+                equipo_activo:
+                  summary: Equipo activo
+                  value:
+                    equipo:
+                      id_equipo: "10"
+                      codigo: "COMP-001"
+                      descripcion: "Compresor Atlas Copco GA110"
+                      estado: "AC"
+                      empr_id: "42"
+                      empresa: "Minera San Juan S.A."
+                      marca: "Atlas Copco"
+                      sector: "Planta Principal"
+                      grupo: "Compresores"
+                      criticidad: "Alta"
+                      area: "Producción"
+                      proceso: "Compresión de Aire"
+                sin_resultado:
+                  summary: Equipo no encontrado o de otra empresa
+                  value:
+                    equipo: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/man/ot:
+    post:
+      operationId: man_create_ot
+      summary: Crear una Orden de Trabajo correctiva
+      x-mcp-annotations:
+        destructiveHint: true
+      description: |
+        Crea una solicitud de servicio correctiva para un equipo con falla.
+        Cuatro pasos atómicos: (1) INSERT solicitud, (2) obtiene el ID
+        generado, (3) instancia el proceso "Proceso de Mantenimiento
+        AssetPlanner SIM" en Bonita BPM, (4) vincula el `case_id` a la
+        solicitud. Si cualquier paso falla después del INSERT, la solicitud
+        se elimina automáticamente (rollback) — nunca queda inconsistente.
+
+        **Cuándo usar esta operación:**
+        - Cuando el usuario reporta una falla y solicita abrir una OT.
+        - Para registrar formalmente un trabajo de mantenimiento correctivo.
+
+        **Requiere confirmación explícita del usuario antes de ejecutar**
+        (dispara un proceso real en Bonita que un mantenedor va a atender).
+
+        Si el usuario describe el equipo por nombre pero no por ID, usar
+        primero `man_get_equipos`.
+      tags:
+        - Mantenimiento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOTRequest"
+            examples:
+              falla_compresor:
+                summary: Falla en compresor
+                value:
+                  equipo_id: "10"
+                  descripcion: "Ruido inusual en compresor COMP-001. Posible falla en rodamiento."
+      responses:
+        "200":
+          description: OT creada exitosamente. El proceso BPM fue iniciado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOTResponse"
+              example:
+                resultado: "ok"
+                ot_id: "1842"
+                case_id: "5301"
+                estado: "S"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    get:
+      operationId: man_get_ots
+      summary: Listar Órdenes de Trabajo abiertas de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve todas las OTs activas de la empresa del token, excluyendo
+        anuladas (`AN`) y conformadas-cerradas (`CN`). Incluye equipo
+        afectado, sector, mantenedor asignado y fechas clave.
+
+        **Cuándo usar esta operación:**
+        - Para ver qué OTs están abiertas actualmente.
+        - Antes de confirmar si ya existe una OT abierta para un equipo.
+      tags:
+        - Mantenimiento
+      responses:
+        "200":
+          description: Lista de OTs abiertas de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OTList"
+              example:
+                solicitudes:
+                  solicitud:
+                    - id_solicitud: "1842"
+                      numero: "OT-2026-1842"
+                      estado: "S"
+                      id_empresa: "42"
+                      equipo: "COMP-001"
+                      causa: "Ruido inusual en compresor COMP-001"
+                      case_id: "5301"
+                      mantenedor: ""
+                      f_solicitado: "2026-05-30 18:00:00"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/man/ot/{id_solicitud}:
+    get:
+      operationId: man_get_ot
+      summary: Obtener el detalle completo de una OT
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve el detalle completo de una OT: estado, causa, equipo,
+        sector, mantenedor asignado, fechas de inicio/asignación/cierre.
+
+        **Cuándo usar esta operación:**
+        - Para confirmar que una OT recién creada se registró bien.
+        - Para obtener el `case_id` del proceso BPM asociado.
+
+        Si la OT no pertenece a la empresa del token, devuelve lista vacía
+        (aislamiento multi-empresa por SQL, sin código de error).
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: id_solicitud
+          in: path
+          required: true
+          description: ID de la OT. Se obtiene como `ot_id` de `man_create_ot` o de `man_get_ots`.
+          schema:
+            type: string
+            example: "1842"
+      responses:
+        "200":
+          description: Detalle de la OT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OTList"
+              examples:
+                ot_recien_creada:
+                  summary: OT recién creada
+                  value:
+                    solicitudes:
+                      solicitud:
+                        - id_solicitud: "1842"
+                          estado: "S"
+                          id_empresa: "42"
+                          equipo: "COMP-001"
+                          case_id: "5301"
+                          mantenedor: ""
+                no_pertenece:
+                  summary: OT de otra empresa
+                  value:
+                    solicitudes:
+                      solicitud: []
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ══════════════════════════════════════════════════════════════
+  # ALMACENES — nuevas (E1-ALM), rutas /mcp/alm/... en toolsMCPAPI,
+  # que delegan a toolsALMAPI (ADR-013 #1, #2)
+  # ══════════════════════════════════════════════════════════════
+
+  /mcp/man/lecturas:
+    get:
+      operationId: man_get_lecturas
+      summary: Control de lecturas de horómetro por equipo
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve, para **cada equipo** de la empresa, cuántas lecturas de
+        horómetro/odómetro tiene registradas, cuál es la última y hace cuántos
+        días se tomó.
+
+        **Cuándo usar esta operación:**
+        - «¿A qué equipos no les están tomando la lectura?» → filtrar por
+          `dias_sin_lectura` alto o `cantidad_lecturas` en cero.
+        - Junto con `man_get_preventivos`: un plan por `Horas`, `Kilómetros` o
+          `Ciclos` **no se puede evaluar** si el equipo no tiene lecturas. Si un
+          equipo tiene plan por uso y `cantidad_lecturas` es 0, nadie puede saber
+          si ese mantenimiento está vencido.
+
+        Incluye los equipos que **nunca** tuvieron una lectura (con
+        `cantidad_lecturas` en 0 y sin fecha) — son justamente los relevantes.
+      tags:
+        - Mantenimiento
+      responses:
+        "200":
+          description: Resumen de lecturas por equipo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturasList"
+              examples:
+                con_desactualizados:
+                  summary: Un equipo al día y otro sin control
+                  value:
+                    lecturas:
+                      equipo:
+                        - id_equipo: "21"
+                          equipo: "EQ-04-2020"
+                          equipo_descripcion: "Generador Eléctrico C330D5"
+                          equipo_estado: "AC"
+                          criticidad: "Muy Alta"
+                          cantidad_lecturas: "3"
+                          lectura_actual: "125"
+                          fecha_ultima_lectura: "2020-04-29"
+                          dias_sin_lectura: "2296"
+                        - id_equipo: "133"
+                          equipo: "GEN-001"
+                          equipo_descripcion: "Generador Sullair 750kVA"
+                          equipo_estado: "AC"
+                          criticidad: "Muy Alta"
+                          cantidad_lecturas: "0"
+                          lectura_actual: null
+                          fecha_ultima_lectura: null
+                          dias_sin_lectura: null
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/man/preventivos:
+    get:
+      operationId: man_get_preventivos
+      summary: Listar el plan de mantenimiento preventivo
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los planes de mantenimiento preventivo de los equipos de la
+        empresa, con su estado, periodicidad, intervalo y la lectura actual
+        del horómetro/odómetro del equipo.
+
+        **Cuándo usar esta operación:**
+        - «¿Qué mantenimientos tengo vencidos?» → filtrar por `estadoprev`.
+        - «¿Qué equipos no tienen plan preventivo?» → cruzar los `id_equipo` de
+          esta operación contra los de `man_get_equipos`; los que no aparecen
+          acá no tienen plan.
+        - Para priorizar, cada plan trae la `criticidad` del equipo.
+        - Antes de pedir repuestos: la `tarea` describe en lenguaje natural qué
+          insumo hace falta (ej. *"cambiar aceite de motor 15W40"*), que después
+          se puede buscar con `alm_get_stock`.
+
+        **Estados (`estadoprev`)** — se devuelven tal como los calcula el
+        sistema: `C` en curso · `CR` crítico (cerca del intervalo) · `VE`
+        vencido · `PL` planificado · `AS` asignado · `CE` cerrado · `M` en
+        mantenimiento. Los anulados no se devuelven.
+
+        **Planes por uso** (periodicidad `Horas`, `Kilómetros` o `Ciclos`):
+        comparar `lectura_actual` contra `lectura_base + intervalo` para estimar
+        cuánto falta. `umbral_alerta` es el valor a partir del cual conviene
+        avisar. Si `lectura_actual` viene vacío, ese equipo no tiene lecturas
+        registradas y no se puede saber si está vencido.
+      tags:
+        - Mantenimiento
+      responses:
+        "200":
+          description: Planes preventivos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreventivosList"
+              examples:
+                con_planes:
+                  summary: Equipos con plan, uno vencido
+                  value:
+                    preventivos:
+                      preventivo:
+                        - prevId: "131"
+                          id_equipo: "131"
+                          equipo: "BOMB-001"
+                          equipo_descripcion: "Bomba centrífuga Grundfos CM10"
+                          equipo_estado: "RE"
+                          criticidad: "Media"
+                          tarea: "Cambiar Aceite de Motor (cada 250 hs según horómetro, utilizar aceite 15W40)."
+                          periodicidad: "Horas"
+                          intervalo: "250.0"
+                          ultima_ejecucion: "2026-05-01"
+                          estadoprev: "C"
+                          umbral_alerta: "210.0"
+                          lectura_base: "0.0"
+                          lectura_actual: "180"
+                          fecha_ultima_lectura: "2026-08-01"
+                          duracion_estimada: "120.0"
+                sin_planes:
+                  summary: Empresa sin plan preventivo cargado
+                  value:
+                    preventivos: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/man/kpi/disponibilidad:
+    get:
+      operationId: man_get_kpi_disponibilidad
+      summary: KPI de disponibilidad de la flota
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Porcentaje del tiempo en que los equipos de la empresa estuvieron
+        operativos durante el período pedido. Es el indicador que el cliente
+        presenta periódicamente a su propio cliente.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuál fue la disponibilidad del mes pasado?»
+        - Para comparar períodos: llamarla una vez por cada rango.
+        - Junto con `man_get_kpi_fallas` da el panorama: cuánto estuvo parada la
+          flota y en cuántos eventos.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de disponibilidad de la flota
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      disponibilidad:
+                        type: string
+                        example: "99.74"
+
+  /mcp/man/kpi/mttr:
+    get:
+      operationId: man_get_kpi_mttr
+      summary: KPI de tiempo medio de reparación (MTTR)
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Tiempo medio de reparación en el período: cuánto tarda en promedio un
+        equipo en volver a servicio desde que sale.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuánto tardamos en reparar?»
+        - Para ver si el tiempo de respuesta mejora o empeora entre períodos.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de tiempo medio de reparación (MTTR)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      mttr:
+                        type: string
+                        example: "0.21"
+
+  /mcp/man/kpi/mttf:
+    get:
+      operationId: man_get_kpi_mttf
+      summary: KPI de tiempo medio entre fallas (MTTF/MTBF)
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Tiempo medio entre fallas en el período: cuánto opera en promedio la
+        flota entre un evento de falla y el siguiente.
+
+        **Cuándo usar esta operación:**
+        - «¿Cada cuánto se nos rompen los equipos?»
+        - Para acompañar al MTTR: uno mide cuánto tarda la reparación, el otro
+          cada cuánto hace falta.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de tiempo medio entre fallas (MTTF/MTBF)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      mttf:
+                        type: string
+                        example: "580.12"
+
+  /mcp/man/kpi/fallas:
+    get:
+      operationId: man_get_kpi_fallas
+      summary: KPI de cantidad de fallas del período
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Cantidad de fallas registradas en el período para toda la empresa.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuántas fallas tuvimos el mes pasado?»
+        - Es el denominador de `man_get_kpi_mttr` y `man_get_kpi_mttf`: si este
+          número es muy chico, esos dos promedios se calculan sobre muy pocos
+          eventos y hay que leerlos con cuidado.
+        **Importante — el valor se devuelve tal cual lo calcula el sistema**, sin
+        ninguna corrección, para que coincida exactamente con el tablero de
+        AssetPlanner. Hay salvedades documentadas sobre cómo se construye este
+        indicador: ver `doc/mantenimiento/kpis-consultas-a-ingenieria.md`. No
+        presentar el número como una verdad operativa sin esa lectura.
+      tags:
+        - Mantenimiento
+      parameters:
+        - name: fec_inicio
+          in: query
+          required: true
+          description: Inicio del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: fec_fin
+          in: query
+          required: true
+          description: Fin del período, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: KPI de cantidad de fallas del período
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  respuesta:
+                    type: object
+                    properties:
+                      numero_fallos:
+                        type: string
+                        example: "4"
+
+  /mcp/alm/stock:
+    get:
+      operationId: alm_get_stock
+      parameters:
+        - name: depo_id
+          in: query
+          required: false
+          description: |
+            Filtra a los artículos **con stock en ese depósito**, y el `stock`
+            devuelto pasa a ser el de ese depósito en vez del consolidado.
+            Obtener el ID con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+        - name: tipo
+          in: query
+          required: false
+          description: |
+            Filtra por tipo de artículo, por su nombre legible: `Insumo`,
+            `Materia Prima`, `Producto`, `En Proceso`, `Final`, `Scrap`.
+          schema: { type: string }
+          example: "Insumo"
+        - name: buscar
+          in: query
+          required: false
+          description: |
+            Busca el texto dentro de la descripción del artículo (sin distinguir
+            mayúsculas). Usarlo para ubicar insumos concretos —por ejemplo
+            `filtro`, `aceite`, `rodamiento`— en vez de traer el catálogo entero
+            y filtrar después: con catálogos grandes eso no escala.
+          schema: { type: string }
+          example: "filtro"
+      
+      summary: Consultar stock de artículos de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve el catálogo de artículos de almacén con su stock agregado
+        (suma de todos los depósitos) para la empresa del token. Incluye
+        código de barras, descripción, unidad de medida, costo y punto de
+        pedido.
+
+        **Cuándo usar esta operación:**
+        - Para verificar si hay stock de un material antes de armar un pedido.
+        - Para consultar el catálogo completo de artículos de almacén.
+        - Cuando el usuario pregunta "¿cuánto stock hay de X?".
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Catálogo de artículos con stock agregado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockList"
+              example:
+                materias:
+                  materia:
+                    - id: "5"
+                      barcode: "7791234567890"
+                      titulo: "Filtro de aceite"
+                      descripcion: "Filtro de aceite hidráulico HF-35"
+                      costo: "1200.50"
+                      cantidad_caja: "1"
+                      punto_pedido: "10"
+                      estado: "AC"
+                      unidad_medida: "UN"
+                      es_loteado: "true"
+                      stock: "24"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/depositos:
+    get:
+      operationId: alm_get_depositos
+      summary: Listar los depósitos de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los depósitos (almacenes) de la empresa del token, con el
+        establecimiento al que pertenece cada uno.
+
+        **Cuándo usar esta operación:**
+        - **Antes de `alm_crear_pedido_materiales`**: esa operación exige un
+          `depo_id` por cada artículo, y esta es la única forma de conocerlos.
+          No preguntarle al usuario el ID del depósito: consultarlo acá y, si
+          hay varios, ofrecerle elegir por nombre.
+        - Cuando el usuario pregunta dónde tiene almacenados sus materiales o
+          qué depósitos maneja.
+
+        Solo devuelve depósitos no eliminados de la empresa del token.
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Depósitos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositosList"
+              examples:
+                con_depositos:
+                  summary: Empresa con varios depósitos
+                  value:
+                    depositos:
+                      deposito:
+                        - depo_id: "2000"
+                          descripcion: "ALMACEN"
+                          esta_id: "6"
+                          establecimiento: "Planta Principal"
+                        - depo_id: "1000"
+                          descripcion: "DEPOSITO_TRANSPORTE"
+                          esta_id: "1000"
+                          establecimiento: "ESTABLECIMIENTO_TRANSPORTE"
+                sin_depositos:
+                  summary: Empresa sin depósitos cargados
+                  value:
+                    depositos: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/vencimientos:
+    get:
+      operationId: alm_get_vencimientos
+      summary: Listar lotes por vencer o vencidos
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve los lotes con stock que tienen fecha de vencimiento, con los
+        días que faltan y una clasificación ya calculada.
+
+        **Clasificación (`estado_vencimiento`):**
+        - `Vencido` — la fecha ya pasó (`dias_restantes` ≤ 0)
+        - `Critico` — vence en menos de 10 días
+        - `Activo` — todavía tiene margen
+
+        **Cuándo usar esta operación:** cuando pregunten qué se vence, o al
+        planificar consumo de insumos con vida útil (lubricantes, adhesivos,
+        reactivos, sellantes). Solo incluye lotes con cantidad mayor a cero:
+        un lote vencido sin stock no es un problema.
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Lotes con vencimiento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VencimientosList"
+              examples:
+                con_vencidos:
+                  summary: Hay lotes vencidos y otros por vencer
+                  value:
+                    vencimientos:
+                      lote:
+                        - lote_id: "1075"
+                          lote: "L-2024-088"
+                          arti_id: "345"
+                          articulo: "Aceite hidráulico ISO 68"
+                          barcode: "778955684"
+                          tipo_articulo: "Insumo"
+                          cantidad: "938"
+                          unidad_medida: "LT"
+                          depo_id: "8"
+                          deposito: "Productivo"
+                          fec_vencimiento: "2026-08-20"
+                          dias_restantes: "8"
+                          estado_vencimiento: "Critico"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/movimientos:
+    get:
+      operationId: alm_get_movimientos
+      parameters:
+        - name: tipo
+          in: query
+          required: false
+          description: |
+            Filtra por tipo de movimiento. **Los valores van sin espacios** y
+            deben escribirse exactamente así:
+
+            - `INGRESO` — recepción de materiales de un proveedor.
+            - `EGRESO` — entrega de materiales a una obra, tarea u operario.
+            - `MOV.SALIDA` / `MOV.ENTRADA` — las dos patas de un movimiento
+              interno entre depósitos. Un traslado genera las dos.
+            - `AJUSTE` — corrección de inventario (conteo físico, rotura,
+              merma).
+            - `INGRESOPRODUCTO`, `ETAPAPRODINGRESO`, `ETAPAPRODEGRESO` — altas
+              y bajas del módulo de Producción.
+
+            Escribir `MOV. SALIDA` con espacio devuelve **cero resultados**, no
+            un error: el filtro compara texto exacto. Ante un resultado vacío
+            inesperado, revisar primero que el valor esté bien escrito.
+
+            Sin este parámetro devuelve todos los tipos.
+          schema: { type: string }
+          example: "AJUSTE"
+        - name: desde
+          in: query
+          required: false
+          description: |
+            Fecha de inicio del rango, `YYYY-MM-DD`. **Conviene mandarla
+            siempre**: sin rango la operación devuelve el histórico completo
+            del almacén, que en una empresa con años de operación son miles de
+            movimientos. Ante un pedido sin período explícito, acotar a los
+            últimos 30 o 90 días y aclararlo en la respuesta.
+          schema: { type: string }
+          example: "2026-06-01"
+        - name: hasta
+          in: query
+          required: false
+          description: Fecha de fin del rango, `YYYY-MM-DD`.
+          schema: { type: string }
+          example: "2026-08-24"
+        - name: depo_id
+          in: query
+          required: false
+          description: Limita a un depósito. Obtener el ID con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+        - name: arti_id
+          in: query
+          required: false
+          description: |
+            Limita a un artículo. Obtener el ID (campo `id`) con
+            `alm_get_stock`. Es el filtro para responder "qué pasó con este
+            material".
+          schema: { type: string }
+          example: "5"
+        - name: lote_id
+          in: query
+          required: false
+          description: |
+            Limita a un lote puntual. Es el filtro de **trazabilidad**: dado un
+            lote, devuelve todo lo que le pasó desde que ingresó.
+          schema: { type: string }
+          example: "812"
+      summary: Consultar el historial de movimientos de stock
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        El libro mayor del almacén: toda entrada, salida, traslado y ajuste que
+        afectó al stock, unificado en una sola línea de tiempo y ordenado del
+        más reciente al más viejo.
+
+        **Cuándo usar esta operación:**
+        - "¿Por qué bajó el stock de este filtro?" — filtrar por `arti_id`.
+        - Trazabilidad de un lote: filtrar por `lote_id` para reconstruir su
+          recorrido completo.
+        - Auditar el movimiento de un depósito en un período.
+        - Investigar un faltante: buscar `AJUSTE` en el rango de fechas.
+
+        **Cómo leerla:** `cantidad` es lo que movió esa operación;
+        `stock_actual` es el saldo del lote **hoy**, no el saldo posterior a
+        ese movimiento — no sirve para reconstruir el saldo histórico.
+        `referencia` es el ID del documento que originó el movimiento (entrega,
+        recepción, ajuste o movimiento interno según el `tipo_mov`).
+
+        Un traslado entre depósitos aparece **dos veces**, como `MOV.SALIDA` y
+        como `MOV.ENTRADA`: al contar movimientos, no sumarlos como si fueran
+        dos operaciones distintas.
+
+        La respuesta trae el **nombre** del depósito (`deposito`) pero no su
+        ID, así que para filtrar por depósito hay que obtener el `depo_id` con
+        `alm_get_depositos`.
+      tags: [Almacenes]
+      responses:
+        "200":
+          description: Movimientos del período, del más reciente al más antiguo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MovimientosList" }
+              example:
+                movimientos:
+                  movimiento:
+                    - referencia: "1043"
+                      codigo: "7791234567890"
+                      descripcion: "Filtro de aceite hidráulico HF-35"
+                      lote: "L-2026-0087"
+                      cantidad: "12"
+                      stock_actual: "24"
+                      deposito: "ALMACEN"
+                      tipo_mov: "EGRESO"
+                      fec_alta_formatted: "2026-08-20 14:32:07"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/entregas:
+    get:
+      operationId: alm_get_entregas
+      parameters:
+        - name: desde
+          in: query
+          required: false
+          description: Fecha de inicio del rango, `YYYY-MM-DD`. Sin rango devuelve todo el histórico.
+          schema: { type: string }
+          example: "2026-06-01"
+        - name: hasta
+          in: query
+          required: false
+          description: Fecha de fin del rango, `YYYY-MM-DD`.
+          schema: { type: string }
+          example: "2026-08-24"
+        - name: obra
+          in: query
+          required: false
+          description: |
+            Limita a una obra o centro de costo, por su ID. Es el filtro para
+            responder cuánto material consumió un proyecto.
+          schema: { type: string }
+          example: "42"
+        - name: depo_id
+          in: query
+          required: false
+          description: Limita al depósito que entregó. Obtener el ID con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+      summary: Consultar el historial de entregas de materiales
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Qué se entregó realmente del almacén, contra qué pedido, de qué lote y
+        para qué obra. Es la pantalla de Entrega de Materiales: el consumo
+        efectivo, no lo solicitado.
+
+        **Cuándo usar esta operación:**
+        - "¿Cuánto material consumió esta obra?" — filtrar por `obra`.
+        - Verificar si un pedido se entregó y en qué cantidad: cruzar el
+          `pema_id` con `alm_get_pedido_material`.
+        - Analizar consumo de un insumo en el tiempo, para revisar si el punto
+          de pedido está bien puesto.
+
+        **Diferencia con `alm_get_pedidos_materiales`:** esa operación devuelve
+        lo que se **pidió** (con su estado en el circuito de aprobación); esta
+        devuelve lo que se **entregó**. Un pedido puede estar aprobado y no
+        entregado, o entregado parcialmente. Para responder "¿lo recibieron?"
+        hay que mirar acá.
+
+        `lote` viene como `S/L` cuando el artículo no maneja lotes.
+      tags: [Almacenes]
+      responses:
+        "200":
+          description: Entregas del período, de la más reciente a la más antigua
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EntregasList" }
+              example:
+                historicosEntrega:
+                  historicoEntrega:
+                    - fec_alta: "20-08-2026 14:32"
+                      pema_id: "1483"
+                      barcode: "7791234567890"
+                      desc_articulo: "Filtro de aceite hidráulico HF-35"
+                      lote: "L-2026-0087"
+                      cantidad: "12"
+                      unidad_medida: "UN"
+                      deposito: "ALMACEN"
+                      obra: "Planta de chancado"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/movimientos-internos:
+    get:
+      operationId: alm_get_movimientos_internos
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: |
+            Filtra por estado del traslado:
+
+            - `EN_CURSO` — despachado del depósito de origen, todavía no
+              recibido en destino. **Es el estado que hay que vigilar**: el
+              stock está en tránsito.
+            - `RECIBIDO` — llegó a destino.
+            - `FINALIZADO` — cerrado. Aparece en el código del sistema pero no
+              se observó en datos; puede no usarse.
+          schema: { type: string }
+          example: "EN_CURSO"
+        - name: origen
+          in: query
+          required: false
+          description: ID del depósito que despacha. Obtenerlo con `alm_get_depositos`.
+          schema: { type: string }
+          example: "2000"
+        - name: destino
+          in: query
+          required: false
+          description: ID del depósito que recibe.
+          schema: { type: string }
+          example: "1000"
+        - name: moin_id
+          in: query
+          required: false
+          description: Trae un movimiento puntual por su ID, con todo su detalle.
+          schema: { type: string }
+          example: "77"
+      summary: Consultar los movimientos internos de stock entre depósitos
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Traslados de materiales entre depósitos de la empresa, con su estado y
+        el detalle de lo que viaja en cada uno. Es la pantalla de Movimientos
+        Internos.
+
+        **Cada movimiento ya trae su detalle anidado** en
+        `detallesMovimientosInternos`: no hace falta una segunda llamada para
+        ver qué artículos lleva.
+
+        **Cuándo usar esta operación:**
+        - "¿Qué hay en tránsito?" — filtrar por `estado=EN_CURSO`.
+        - Detectar traslados despachados hace tiempo y nunca recibidos: son
+          stock que el sistema da por movido y nadie confirmó.
+        - Rastrear dónde está un material que no aparece en el depósito
+          esperado.
+
+        **Cómo leer el detalle:** `cantidad_cargada` es lo que salió del origen
+        y `cantidad_recibida` lo que se confirmó en destino.
+
+        `cantidad_recibida` viene en **`null`** mientras el traslado no se
+        recibió. Eso **no es un faltante**: es que todavía no llegó. Solo tiene
+        sentido comparar las dos cantidades en movimientos ya `RECIBIDO`, y
+        únicamente cuando `cantidad_recibida` no es `null` — también aparece
+        `null` en traslados recibidos donde nadie cargó la cantidad. Cuando las
+        dos están cargadas y difieren, ahí sí hay faltante y vale señalarlo en
+        vez de reportar solo un número.
+      tags: [Almacenes]
+      responses:
+        "200":
+          description: Movimientos internos con su detalle
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MovimientosInternosList" }
+              example:
+                movimientosInternos:
+                  movimientoInterno:
+                    - moin_id: "77"
+                      num_comprobante: "0001-00000077"
+                      depo_id_origen: "2000"
+                      depo_id_destino: "1000"
+                      nombre_depo_destino: "DEPOSITO_TRANSPORTE"
+                      estado: "EN_CURSO"
+                      patente: "AB123CD"
+                      acoplado: ""
+                      conductor: "J. Pérez"
+                      fec_envio: "2026-08-22"
+                      fec_recepcion: ""
+                      observaciones_recepcion: ""
+                      detallesMovimientosInternos:
+                        detalleMovimientoInterno:
+                          - cod_lote: "L-2026-0087"
+                            arti_id: "5"
+                            barcode: "7791234567890"
+                            descripcion: "Filtro de aceite hidráulico HF-35"
+                            nom_proveedor: "Distribuidora del Oeste"
+                            cantidad_cargada: "12"
+                            cantidad_recibida: null
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/pedidos:
+    get:
+      operationId: alm_get_pedidos_materiales
+      summary: Listar pedidos de materiales de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve todos los pedidos de materiales de la empresa del token
+        (no eliminados), con su estado actual, fecha y justificación.
+
+        **Cuándo usar esta operación:**
+        - Para ver qué pedidos de materiales están en curso.
+        - Antes de crear un pedido nuevo, para verificar si ya existe uno
+          similar reciente.
+      tags:
+        - Almacenes
+      responses:
+        "200":
+          description: Lista de pedidos de materiales de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PedidosList"
+              example:
+                pedidos:
+                  pedido:
+                    - pema_id: "301"
+                      case_id: "8801"
+                      estado: "Solicitado"
+                      fecha: "2026-08-01"
+                      justificacion: "Reposición filtros para mantenimiento programado"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/pedido/{pema_id}:
+    get:
+      operationId: alm_get_pedido_material
+      summary: Obtener el detalle de un pedido de materiales
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve el detalle completo de un pedido de materiales identificado
+        por su `pema_id`, incluyendo el detalle de artículos pedidos.
+
+        **Cuándo usar esta operación:**
+        - Para confirmar que un pedido recién creado se registró bien.
+        - Para ver el estado y los artículos de un pedido específico.
+
+        Si el pedido no pertenece a la empresa del token, la respuesta
+        contiene la lista vacía sin código de error (aislamiento multi-empresa).
+      tags:
+        - Almacenes
+      parameters:
+        - name: pema_id
+          in: path
+          required: true
+          description: ID del pedido de materiales. Se obtiene como `pema_id` de `alm_crear_pedido_materiales` o de `alm_get_pedidos_materiales`.
+          schema:
+            type: string
+            example: "301"
+      responses:
+        "200":
+          description: Detalle del pedido de materiales
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PedidosList"
+              examples:
+                pedido_encontrado:
+                  summary: Pedido de la empresa del token
+                  value:
+                    pedidos:
+                      pedido:
+                        - pema_id: "301"
+                          case_id: "8801"
+                          estado: "Solicitado"
+                          fecha: "2026-08-01"
+                          justificacion: "Reposición filtros para mantenimiento programado"
+                no_pertenece:
+                  summary: Pedido de otra empresa
+                  value:
+                    pedidos:
+                      pedido: []
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/alm/pedido:
+    post:
+      operationId: alm_crear_pedido_materiales
+      summary: Crear un pedido de materiales
+      x-mcp-annotations:
+        destructiveHint: true
+      description: |
+        Crea un pedido de materiales con una lista de artículos, cantidad y
+        depósito de destino por cada uno. Tres pasos: (1) INSERT del
+        encabezado del pedido, (2) INSERT del detalle de artículos,
+        (3) instancia el proceso "Pedido de Recursos Materiales" en Bonita
+        BPM y vincula el `case_id`. Si cualquier paso falla, el pedido y su
+        detalle se eliminan automáticamente (rollback) — nunca queda
+        inconsistente.
+
+        **No mueve stock** — es una solicitud, no un movimiento de
+        inventario (ADR-012). No suma ni resta cantidades de artículos.
+
+        **Cuándo usar esta operación:**
+        - Cuando el usuario quiere pedir materiales para mantenimiento u
+          otra necesidad operativa.
+        - Después de confirmar con `alm_get_stock` qué artículos necesita.
+
+        **Requiere confirmación explícita del usuario antes de ejecutar**
+        (dispara un proceso real en Bonita que un responsable de almacén
+        va a atender).
+      tags:
+        - Almacenes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrearPedidoRequest"
+            examples:
+              pedido_simple:
+                summary: Pedido de un artículo
+                value:
+                  justificacion: "Reposición filtros para mantenimiento programado"
+                  articulos:
+                    - arti_id: "5"
+                      cantidad: "10"
+                      depo_id: "1"
+              pedido_multiple:
+                summary: Pedido de varios artículos
+                value:
+                  justificacion: "Insumos para parada de planta"
+                  articulos:
+                    - arti_id: "5"
+                      cantidad: "10"
+                      depo_id: "1"
+                    - arti_id: "12"
+                      cantidad: "3"
+                      depo_id: "2"
+      responses:
+        "200":
+          description: Pedido creado exitosamente. El proceso BPM fue iniciado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrearPedidoResponse"
+              example:
+                resultado: "ok"
+                pema_id: "301"
+                case_id: "8801"
+                estado: "Solicitado"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT emitido por Dnato, firmado con RS256.
+        Claims requeridos: `iss="trazalog-dnato"`, `aud="trazalog-mcp"`,
+        `empr_id` (string), `exp` (Unix timestamp).
+        El gateway valida la firma y extrae `empr_id` — el agente nunca
+        lo pasa como parámetro, en ninguna de las 9 tools.
+
+  responses:
+    Unauthorized:
+      description: Token ausente, expirado, con firma inválida o sin claim `empr_id`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            sin_header:
+              value:
+                error: "Unauthorized"
+                message: "Missing Authorization header"
+            expirado:
+              value:
+                error: "Unauthorized"
+                message: "JWT has expired"
+    InternalError:
+      description: |
+        Error en algún paso de la orquestación (DataService o BPM).
+        El registro no fue creado (rollback automático si ya se había
+        insertado el header).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            respuesta:
+              codigo: "1000"
+              error: "POST /mcp/alm/pedido - BPM failed, pedido rolled back"
+
+  schemas:
+
+    Equipo:
+      type: object
+      properties:
+        id_equipo: { type: string, example: "10" }
+        codigo: { type: string, example: "COMP-001" }
+        descripcion: { type: string, example: "Compresor Atlas Copco GA110" }
+        estado: { type: string, enum: [AC, RE], example: "AC" }
+        empr_id: { type: string, example: "42" }
+        empresa: { type: string, example: "Minera San Juan S.A." }
+        marca: { type: string, example: "Atlas Copco" }
+        sector: { type: string, example: "Planta Principal" }
+        grupo: { type: string, example: "Compresores" }
+        criticidad: { type: string, example: "Alta" }
+        area: { type: string, example: "Producción" }
+        proceso: { type: string, example: "Compresión de Aire" }
+
+    EquiposList:
+      type: object
+      properties:
+        equipos:
+          type: object
+          properties:
+            equipo:
+              type: array
+              items: { $ref: "#/components/schemas/Equipo" }
+
+    EquipoDetalle:
+      type: object
+      properties:
+        equipo: { $ref: "#/components/schemas/Equipo" }
+
+    CreateOTRequest:
+      type: object
+      required: [equipo_id, descripcion]
+      properties:
+        equipo_id:
+          type: string
+          description: ID numérico del equipo con la falla. Usar `man_get_equipos` si solo se conoce el código.
+          example: "10"
+        descripcion:
+          type: string
+          description: Descripción clara de la falla o trabajo requerido.
+          example: "Ruido inusual en compresor COMP-001."
+          minLength: 10
+          maxLength: 500
+
+    CreateOTResponse:
+      type: object
+      properties:
+        resultado: { type: string, example: "ok" }
+        ot_id: { type: string, example: "1842" }
+        case_id: { type: string, example: "5301" }
+        estado: { type: string, example: "S" }
+
+    OT:
+      type: object
+      properties:
+        id_solicitud: { type: string, example: "1842" }
+        numero: { type: string, example: "OT-2026-1842" }
+        estado: { type: string, enum: [S, AC, CN, AN], example: "S" }
+        id_empresa: { type: string, example: "42" }
+        equipo: { type: string, example: "COMP-001" }
+        sector: { type: string, example: "Planta Principal" }
+        causa: { type: string, example: "Ruido inusual en compresor COMP-001" }
+        case_id: { type: string, example: "5301" }
+        mantenedor: { type: string, example: "" }
+        f_solicitado: { type: string, format: date-time, example: "2026-05-30 18:00:00" }
+
+    OTList:
+      type: object
+      properties:
+        solicitudes:
+          type: object
+          properties:
+            solicitud:
+              type: array
+              items: { $ref: "#/components/schemas/OT" }
+
+    ArticuloStock:
+      type: object
+      properties:
+        id: { type: string, example: "5" }
+        barcode: { type: string, example: "7791234567890" }
+        titulo: { type: string, example: "Filtro de aceite" }
+        descripcion: { type: string, example: "Filtro de aceite hidráulico HF-35" }
+        costo: { type: string, example: "1200.50" }
+        cantidad_caja: { type: string, example: "1" }
+        punto_pedido: { type: string, example: "10" }
+        estado: { type: string, example: "AC" }
+        unidad_medida: { type: string, example: "UN" }
+        es_loteado: { type: string, example: "true" }
+        stock: { type: string, description: Suma de stock en todos los depósitos., example: "24" }
+
+    StockList:
+      type: object
+      properties:
+        materias:
+          type: object
+          properties:
+            materia:
+              type: array
+              items: { $ref: "#/components/schemas/ArticuloStock" }
+
+    LecturaEquipo:
+      type: object
+      properties:
+        id_equipo: { type: string, example: "21" }
+        equipo: { type: string, example: "EQ-04-2020" }
+        equipo_descripcion: { type: string, example: "Generador Eléctrico C330D5" }
+        equipo_estado:
+          type: string
+          description: "`AC` activo · `RE` en reparación"
+          example: "AC"
+        criticidad: { type: string, example: "Muy Alta" }
+        cantidad_lecturas:
+          type: string
+          description: Cantidad de lecturas registradas. `0` = nunca se le tomó ninguna.
+          example: "3"
+        lectura_actual:
+          type: string
+          nullable: true
+          description: Lectura más alta registrada (el horómetro solo crece). Vacío si no hay lecturas.
+          example: "125"
+        fecha_ultima_lectura:
+          type: string
+          nullable: true
+          description: Vacío si no hay lecturas.
+          example: "2020-04-29"
+        dias_sin_lectura:
+          type: string
+          nullable: true
+          description: Días desde la última lectura. Vacío si nunca hubo ninguna.
+          example: "2296"
+
+    LecturasList:
+      type: object
+      properties:
+        lecturas:
+          type: object
+          properties:
+            equipo:
+              type: array
+              items: { $ref: "#/components/schemas/LecturaEquipo" }
+
+    LoteVencimiento:
+      type: object
+      properties:
+        lote_id: { type: string, example: "1075" }
+        lote:
+          type: string
+          description: Código del lote. Vacío si no tiene.
+          example: "L-2024-088"
+        arti_id: { type: string, example: "345" }
+        articulo: { type: string, example: "Aceite hidráulico ISO 68" }
+        barcode: { type: string, example: "778955684" }
+        tipo_articulo: { type: string, example: "Insumo" }
+        cantidad: { type: string, example: "938" }
+        unidad_medida: { type: string, example: "LT" }
+        depo_id: { type: string, example: "8" }
+        deposito: { type: string, example: "Productivo" }
+        fec_vencimiento: { type: string, example: "2026-08-20" }
+        dias_restantes:
+          type: string
+          description: Días hasta el vencimiento. Negativo si ya venció.
+          example: "8"
+        estado_vencimiento:
+          type: string
+          description: "`Vencido` · `Critico` (<10 días) · `Activo`"
+          example: "Critico"
+
+    VencimientosList:
+      type: object
+      properties:
+        vencimientos:
+          type: object
+          properties:
+            lote:
+              type: array
+              items: { $ref: "#/components/schemas/LoteVencimiento" }
+
+    Preventivo:
+      type: object
+      properties:
+        prevId:
+          type: string
+          description: ID del plan preventivo.
+          example: "131"
+        id_equipo:
+          type: string
+          description: ID del equipo. Cruzar con `man_get_equipos` para saber qué equipos no tienen plan.
+          example: "131"
+        equipo:
+          type: string
+          example: "BOMB-001"
+        equipo_descripcion:
+          type: string
+          example: "Bomba centrífuga Grundfos CM10"
+        equipo_estado:
+          type: string
+          description: "`AC` activo · `RE` en reparación"
+          example: "RE"
+        criticidad:
+          type: string
+          description: Criticidad del equipo — sirve para priorizar. Muy Alta · Alta · Media · Baja.
+          example: "Alta"
+        tarea:
+          type: string
+          description: Descripción de la tarea en lenguaje natural. Suele indicar el insumo necesario.
+          example: "Cambiar Aceite de Motor (cada 250 hs según horómetro, utilizar aceite 15W40)."
+        periodicidad:
+          type: string
+          description: Diario · Semanal · Mensual · Semestral · Anual · Horas · Kilómetros · Ciclos
+          example: "Horas"
+        intervalo:
+          type: string
+          description: Cada cuánto corresponde, en la unidad de `periodicidad`.
+          example: "250.0"
+        ultima_ejecucion:
+          type: string
+          description: Fecha de la última vez que se ejecutó (YYYY-MM-DD).
+          example: "2026-05-01"
+        estadoprev:
+          type: string
+          description: "`C` en curso · `CR` crítico · `VE` vencido · `PL` planificado · `AS` asignado · `CE` cerrado · `M` en mantenimiento"
+          example: "VE"
+        umbral_alerta:
+          type: string
+          description: Valor de lectura a partir del cual conviene avisar (antes del vencimiento).
+          example: "210.0"
+        lectura_base:
+          type: string
+          description: Lectura del equipo cuando se ejecutó el plan por última vez.
+          example: "0.0"
+        lectura_actual:
+          type: string
+          nullable: true
+          description: Lectura más alta registrada del equipo. Vacío si nunca se le tomó lectura.
+          example: "180"
+        fecha_ultima_lectura:
+          type: string
+          nullable: true
+          example: "2026-08-01"
+        duracion_estimada:
+          type: string
+          description: Duración estimada de la tarea, en minutos.
+          example: "120.0"
+
+    PreventivosList:
+      type: object
+      properties:
+        preventivos:
+          type: object
+          properties:
+            preventivo:
+              type: array
+              items: { $ref: "#/components/schemas/Preventivo" }
+
+    Deposito:
+      type: object
+      properties:
+        depo_id:
+          type: string
+          description: ID del depósito. Es el valor que hay que pasar en `depo_id`
+            al crear un pedido de materiales.
+          example: "2000"
+        descripcion:
+          type: string
+          example: "ALMACEN"
+        esta_id:
+          type: string
+          description: ID del establecimiento al que pertenece.
+          example: "6"
+        establecimiento:
+          type: string
+          description: Nombre del establecimiento. Vacío si el depósito no tiene uno asociado.
+          example: "Planta Principal"
+
+    Movimiento:
+      type: object
+      properties:
+        referencia:
+          type: string
+          description: ID del documento que originó el movimiento (entrega, recepción, ajuste o detalle de movimiento interno, según `tipo_mov`).
+        codigo: { type: string, description: Código de barras del artículo. }
+        descripcion: { type: string }
+        lote: { type: string }
+        cantidad: { type: string, description: Cantidad que movió esta operación. }
+        stock_actual:
+          type: string
+          description: Saldo del lote HOY, no el saldo posterior a este movimiento.
+        deposito: { type: string }
+        tipo_mov:
+          type: string
+          description: "Sin espacios: `INGRESO` · `EGRESO` · `MOV.ENTRADA` · `MOV.SALIDA` · `AJUSTE` · `INGRESOPRODUCTO` · `ETAPAPRODINGRESO` · `ETAPAPRODEGRESO`"
+        fec_alta_formatted: { type: string, example: "2026-08-20 14:32:07" }
+
+    MovimientosList:
+      type: object
+      properties:
+        movimientos:
+          type: object
+          properties:
+            movimiento:
+              type: array
+              items: { $ref: "#/components/schemas/Movimiento" }
+
+    Entrega:
+      type: object
+      properties:
+        fec_alta: { type: string, example: "20-08-2026 14:32" }
+        pema_id:
+          type: string
+          description: Pedido de materiales contra el que se entregó. Cruzable con `alm_get_pedido_material`.
+        barcode: { type: string }
+        desc_articulo: { type: string }
+        lote: { type: string, description: "`S/L` si el artículo no maneja lotes." }
+        cantidad: { type: string }
+        unidad_medida: { type: string }
+        deposito: { type: string }
+        obra:
+          type: string
+          nullable: true
+          description: >-
+            Obra o centro de costo al que se imputó. Viene `null` en la mayoría
+            de las entregas, porque el campo es opcional al entregar: no asumir
+            que una obra sin entregas no consumió material.
+
+    EntregasList:
+      type: object
+      properties:
+        historicosEntrega:
+          type: object
+          properties:
+            historicoEntrega:
+              type: array
+              items: { $ref: "#/components/schemas/Entrega" }
+
+    DetalleMovimientoInterno:
+      type: object
+      properties:
+        cod_lote: { type: string }
+        arti_id: { type: string }
+        barcode: { type: string }
+        descripcion: { type: string }
+        prov_id: { type: string }
+        nom_proveedor: { type: string }
+        cantidad_cargada: { type: string, description: Lo que salió del depósito de origen. }
+        cantidad_recibida:
+          type: string
+          nullable: true
+          description: >-
+            Lo confirmado en destino. Es `null` mientras el traslado no se
+            recibió (y también en algunos ya recibidos donde no se cargó): en
+            ese caso NO es un faltante. Solo hay faltante si difiere de
+            `cantidad_cargada` estando ambas cargadas.
+        lote_id_origen: { type: string }
+        lote_id_destino: { type: string }
+        demi_id: { type: string }
+
+    MovimientoInterno:
+      type: object
+      properties:
+        moin_id: { type: string }
+        num_comprobante: { type: string }
+        depo_id_origen: { type: string }
+        depo_id_destino: { type: string }
+        nombre_depo_destino: { type: string }
+        estado: { type: string, description: "`EN_CURSO` en tránsito · `RECIBIDO` · `FINALIZADO` (en el código, no visto en datos)" }
+        patente: { type: string }
+        acoplado: { type: string }
+        conductor: { type: string }
+        fec_envio: { type: string, example: "2026-08-22" }
+        fec_recepcion: { type: string, description: Vacío mientras no se recibió. }
+        observaciones_recepcion: { type: string }
+        detallesMovimientosInternos:
+          type: object
+          description: Detalle anidado — no requiere una segunda llamada.
+          properties:
+            detalleMovimientoInterno:
+              type: array
+              items: { $ref: "#/components/schemas/DetalleMovimientoInterno" }
+
+    MovimientosInternosList:
+      type: object
+      properties:
+        movimientosInternos:
+          type: object
+          properties:
+            movimientoInterno:
+              type: array
+              items: { $ref: "#/components/schemas/MovimientoInterno" }
+
+    DepositosList:
+      type: object
+      properties:
+        depositos:
+          type: object
+          properties:
+            deposito:
+              type: array
+              items: { $ref: "#/components/schemas/Deposito" }
+
+    ArticuloPedido:
+      type: object
+      required: [arti_id, cantidad, depo_id]
+      properties:
+        arti_id:
+          type: string
+          description: ID del artículo. Obtenerlo con `alm_get_stock`.
+          example: "5"
+        cantidad:
+          type: string
+          example: "10"
+        depo_id:
+          type: string
+          description: ID del depósito de destino. **Obtenerlo con `alm_get_depositos`** —
+            no preguntárselo al usuario.
+          example: "2000"
+
+    CrearPedidoRequest:
+      type: object
+      required: [justificacion, articulos]
+      properties:
+        justificacion:
+          type: string
+          description: Motivo del pedido.
+          example: "Reposición filtros para mantenimiento programado"
+          minLength: 5
+          maxLength: 500
+        ortr_id:
+          type: string
+          description: ID de la Orden de Trabajo relacionada, si el pedido es para atenderla. Opcional.
+          example: "1842"
+        articulos:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/ArticuloPedido" }
+
+    CrearPedidoResponse:
+      type: object
+      properties:
+        resultado: { type: string, example: "ok" }
+        pema_id: { type: string, example: "301" }
+        case_id: { type: string, example: "8801" }
+        estado: { type: string, example: "Solicitado" }
+
+    Pedido:
+      type: object
+      properties:
+        pema_id: { type: string, example: "301" }
+        case_id: { type: string, example: "8801" }
+        estado: { type: string, example: "Solicitado" }
+        fecha: { type: string, format: date, example: "2026-08-01" }
+        justificacion: { type: string, example: "Reposición filtros para mantenimiento programado" }
+
+    PedidosList:
+      type: object
+      properties:
+        pedidos:
+          type: object
+          properties:
+            pedido:
+              type: array
+              items: { $ref: "#/components/schemas/Pedido" }
+
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string, example: "Unauthorized" }
+        message: { type: string, example: "JWT has expired" }

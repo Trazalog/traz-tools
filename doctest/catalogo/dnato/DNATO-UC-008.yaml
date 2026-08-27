@@ -1,0 +1,66 @@
+id: DNATO-UC-008
+modulo: DNATO
+titulo: Recuperar la contraseña olvidada
+perfil: Usuario
+estado: validado
+version: "0.4"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "forgot() (1484-1586), reset_password() (1587-1629), successresetpassword() (1257-1270)"
+  - repo: traz-comp-dnato
+    path: application/views/forgot.php
+  - repo: traz-comp-dnato
+    path: application/views/reset_password.php
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "getUserInfoByEmail(), insertToken(), isTokenValid(), updatePassword()"
+pantallas:
+  - "Login → 'Olvido su contraseña? Recupere contraseña'"
+  - "Recuperar Contraseña"
+  - "Restablecer Contraseña"
+precondiciones:
+  - Sin sesión iniciada
+  - La cuenta existe y está aprobada
+flujo_principal:
+  - paso: "Desde la pantalla de ingreso hace clic en 'Recupere contraseña'"
+    resultado: "Se muestra el formulario para ingresar el correo"
+  - paso: "Ingresa su correo y confirma"
+    resultado: "Se envía un correo con el enlace para restablecer la contraseña y se muestra la confirmación"
+  - paso: "Abre el enlace del correo, ingresa la contraseña nueva y su confirmación, y confirma"
+    resultado: "Se muestra que la contraseña se actualizó correctamente y ya puede iniciar sesión con ella"
+flujos_alternativos:
+  - nombre: "Correo no registrado"
+    pasos:
+      - paso: "Ingresa un correo que no existe en el sistema"
+        resultado: "Se muestra 'No encontramos esa dirección de correo en el sistema.' y no se envía ningún correo"
+  - nombre: "Cuenta todavía no aprobada"
+    pasos:
+      - paso: "Ingresa el correo de una cuenta que no está aprobada"
+        resultado: "Se muestra 'Tu cuenta aún no está aprobada.' y no se envía el enlace"
+  - nombre: "Enlace vencido o ya usado"
+    pasos:
+      - paso: "Abre un enlace de restablecimiento inválido o expirado"
+        resultado: "Se muestra 'El token es inválido o expiró.' y vuelve a la pantalla de ingreso"
+  - nombre: "Contraseña que no cumple la política"
+    pasos:
+      - paso: "Ingresa 'doctest2026' (10 caracteres, sin mayúscula ni símbolo)"
+        resultado: "Se muestra el error de validación y la contraseña no se cambia"
+validaciones:
+  - "El correo es obligatorio y con formato válido"
+  - "Solo se envía el enlace si la cuenta existe y está aprobada"
+  - "El enlace de restablecimiento vence a la medianoche del día en que se generó (misma regla que la activación)"
+  - "La contraseña nueva exige 10 caracteres o más, mayúscula, minúscula, dígito y símbolo, y coincidir con su confirmación"
+  - "Solo puede recuperar la contraseña quien tenga el correo validado: el administrador que dio de alta la empresa. Los cinco usuarios iniciales y los que crea el administrador NO tienen correo validado y no deben poder usarla"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas: []
+notas:
+  - "El mensaje distingue entre 'no encontramos ese correo' y 'tu cuenta aún no está aprobada', lo que permite averiguar desde afuera si un correo está registrado (hallazgo H5)."
+  - "Validado por el PM el 2026-08-24 con una regla nueva: la recuperación es solo para usuarios con correo validado. **Hoy el sistema no la cumple** — los usuarios creados automáticamente y los creados por el administrador nacen en estado `approved`, que es lo único que mira la pantalla, así que pueden recuperar contraseña. Registrado como hallazgo H-016."
+derivados:
+  ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s06
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-008.recuperar-contrasena.spec.ts
+  feature: features/dnato/DNATO-UC-008.recuperar-la-contrasena-olvidada.feature

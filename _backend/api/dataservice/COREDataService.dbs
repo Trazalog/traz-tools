@@ -600,6 +600,11 @@ WHERE email = :email AND "group" = :group AND "role" = :role</sql>
       <param name="tabla" sqlType="STRING"/>
       <param name="valor" sqlType="STRING"/>
    </query>
+   <query id="getEmpresaByMysqlId" useConfig="ToolsDataSource">
+      <sql>SELECT empr_id, descripcion FROM core.empresas WHERE empr_id_mysql = cast(:empr_id_mysql as integer)</sql>
+      <result outputType="json">{&#xd;    "empresa":{&#xd;        "empr_id":"$empr_id",&#xd;        "descripcion":"$descripcion"&#xd;    }&#xd;}</result>
+      <param name="empr_id_mysql" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/menuitems/porEmail/{email}/porGrupo/{group}">
       <call-query href="getMenuByUserPermission">
          <with-param name="email" query-param="email"/>
@@ -803,6 +808,11 @@ WHERE email = :email AND "group" = :group AND "role" = :role</sql>
    <resource method="DELETE" path="/transportista">
       <call-query href="deleteTransportista">
          <with-param name="tran_id" query-param="tran_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/empresa/porAssetId/{empr_id_mysql}">
+      <call-query href="getEmpresaByMysqlId">
+         <with-param name="empr_id_mysql" query-param="empr_id_mysql"/>
       </call-query>
    </resource>
    <resource method="GET" path="/empresas">

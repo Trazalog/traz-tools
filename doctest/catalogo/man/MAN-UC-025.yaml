@@ -1,0 +1,28 @@
+id: MAN-UC-025
+modulo: MAN
+titulo: Ver y corregir el historial de lecturas de un equipo
+perfil: Mantenedor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/list.php
+    detalle: "las acciones historialLectura() y 'Editar lectura'"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Lectura.php
+pantallas:
+  - "Mantenimiento → Equipos → Historial de Lecturas"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo tiene lecturas cargadas
+flujo_principal:
+  - paso: "En el listado de equipos elige la acción Historial de Lecturas"
+    resultado: "Se muestran las lecturas registradas de ese equipo"
+  - paso: "Si una está mal, la corrige con la acción de editar"
+    resultado: "La lectura queda corregida"
+validaciones:
+  - "El historial muestra las lecturas del equipo, y se pueden corregir"
+  - "El historial muestra solo las lecturas del equipo elegido"
+dudas:
+  - "**Corregir una lectura puede mover el plan de mantenimiento**, porque los preventivos por uso se calculan contra la última lectura. Falta confirmar si al corregirla se recalcula algo o solo cambia el número — y si queda registro de quién la corrigió."

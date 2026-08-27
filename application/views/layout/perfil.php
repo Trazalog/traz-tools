@@ -16,8 +16,23 @@
 <div class="navbar-custom-menu">
 	<ul class="nav navbar-nav">
 		<!-- Help Menu Link -->
+		<!-- La ayuda se sirve desde este mismo repo (carpeta /ayuda), no desde un
+		     sitio aparte: decision del PM del 2026-08-25. La direccion sale de
+		     URL_AYUDA en constants.php, que es lo que se toca al desplegar.
+		     El defined() es la red por si llegara una vista sin la constante: el
+		     enlace sigue funcionando en vez de tirar un fatal.
+		     Hasta v2.4 esta linea apuntaba a https://trazalog.com/ayudatools/, el
+		     sitio de afuera. Desde v2.5 la ayuda es parte del repo y se sirve desde
+		     /ayuda; el sitio viejo queda solo para las versiones anteriores. -->
+		<?php
+			$url_ayuda = defined('URL_AYUDA') ? URL_AYUDA : 'ayuda/';
+			if ( ! preg_match('#^https?://#i', $url_ayuda))
+			{
+				$url_ayuda = base_url() . ltrim($url_ayuda, '/');
+			}
+		?>
 		<li>
-			<a href="https://trazalog.com/ayudatools/" target="_blank" title="Ayuda">
+			<a href="<?php echo $url_ayuda; ?>" target="_blank" title="Ayuda">
 				<i class="fa fa-question-circle"></i>
 			</a>
 		</li>

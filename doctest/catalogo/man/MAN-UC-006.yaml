@@ -1,0 +1,40 @@
+id: MAN-UC-006
+modulo: MAN
+titulo: Asignar componentes a un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Componente.php
+    detalle: "asigna($permission) abre la pantalla; traerequipo(); guardar_componente() graba las asignaciones con estado 'AC'; getcompo() lista los del equipo"
+  - repo: traz-prod-assetplanner
+    path: application/models/Componentes.php
+    detalle: "insert_componente()"
+pantallas:
+  - "Mantenimiento → Componentes → Asociar Componentes a Equipo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Existe el equipo y existen los componentes a asignar
+flujo_principal:
+  - paso: "Abre la pantalla de asociar componentes y elige el equipo"
+    resultado: "Se muestran los componentes que el equipo ya tiene"
+  - paso: "Por cada componente: lo busca en el catálogo, indica su **código trazable** y elige el **sistema** al que pertenece"
+    resultado: "Con 'Asociar', la fila se suma a la tabla de componentes del equipo"
+  - paso: "Repite para cada componente del equipo"
+    resultado: "La tabla acumula todas las asociaciones"
+  - paso: "Guarda"
+    resultado: "Los componentes quedan asociados al equipo, en estado activo"
+validaciones:
+  - "Cada asociación guarda el **código trazable** de esa pieza concreta y el **sistema** al que pertenece"
+  - "Las asociaciones se guardan en estado activo (`AC`)"
+  - "Las asignaciones se guardan en estado 'AC' (activo)"
+  - "Si el componente no existe en el catálogo, se puede crear desde la misma pantalla con '+ Nuevo'"
+dudas:
+  - "**El bucle de guardado no verifica duplicados**: si se asocia dos veces el mismo componente al mismo equipo, entran dos filas. ¿Es válido —dos piezas iguales en el mismo equipo, con códigos trazables distintos— o debería impedirse?"
+notas:
+  - "El *sistema* sale del catálogo `ABM Sistemas` y es un dato **de la asociación**, no del componente: el mismo componente puede pertenecer a sistemas distintos en equipos distintos."
+  - "**Hay dos caminos para llegar acá**, y el manual de ayuda existente los llama Método 1 y Método 2: el ABM de Componentes —independiente, para dar de alta el componente sin asociarlo— y esta pantalla, que asocia al equipo y permite crear el componente en el momento con '+ Nuevo'."
+  - "El manual legacy `manual_alta_equipos_componentes.html` muestra esta pantalla —el panel *Datos de Equipo* con el desplegable de equipo— así que hay una fuente de intención para contrastar."
+  - "⚠️ `guardar_componente()` tiene una llamada `dump($sistema, 'sist: ')` activa, que imprime HTML en la respuesta (H-047 / issue #486). Si la pantalla guarda por AJAX, esto puede romper el guardado. **Verificarlo es lo primero que hay que hacer cuando haya credenciales.**"

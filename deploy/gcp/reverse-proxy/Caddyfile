@@ -1,0 +1,77 @@
+# Caddyfile — reverse proxy nativo para mcp.cloudtrazalog.com (ADR-011 #7, #9)
+#
+# TLS Let's Encrypt automático (HTTP-01 sobre :80, sirve en :443).
+# Solo expone el Gateway del APIM (:8243). La consola de administración
+# (:9443) NUNCA se expone acá — se accede por red interna/túnel (ADR-011 #9).
+#
+# Variables tomadas del entorno del servicio systemd `caddy`
+# (EnvironmentFile=/etc/caddy/gcp.env, ver setup-reverse-proxy.sh).
+#
+# ────────────────────────────────────────────────────────────────────────────
+# Los dos bloques de compatibilidad MCP NO son opcionales: sin ellos, las
+# tools que escriben fallan en el cliente aunque el backend haga todo bien.
+# Detalle completo en doc/mcp/republicar-mcp-server.md §7.
+# ────────────────────────────────────────────────────────────────────────────
+
+{
+	email {$LETSENCRYPT_EMAIL}
+}
+
+{$MCP_DOMAIN} {
+	# ── Compatibilidad 1: server/discover ────────────────────────────────
+	# El cliente MCP (protocolo 2026-07-28) abre sesión con `server/discover`.
+	# APIM 4.6.0 no conoce ese método —su lista ALLOWED_METHODS tiene
+	# initialize, tools/list, tools/call, ping, notifications/initialized,
+	# resources/*, prompts/list y logging/setLevel— y responde `404` con un
+	# cuerpo de error de Synapse que NO es JSON-RPC.
+	# Acá se contesta el error que el protocolo define para método
+	# desconocido (-32601), que el cliente maneja con gracia.
+	@discover header Mcp-Method server/discover
+	handle @discover {
+		header Content-Type application/json
+		respond `{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found: server/discover"}}` 200
+	}
+
+	# ── Compatibilidad 2: 202 → 200 en tools/call ────────────────────────
+	# El MI responde `202 Accepted` en las tools que escriben
+	# (alm_crear_pedido_materiales, man_create_ot) y el gateway propaga ese
+	# status tal cual. En MCP sobre HTTP, `202` significa "notificación
+	# aceptada, no habrá cuerpo": el cliente descarta la respuesta —aunque
+	# venga completa y con isError:false— y reporta error de ejecución.
+	# Resultado: el pedido queda creado y el usuario cree que falló, así que
+	# reintenta y duplica pedidos y casos de Bonita.
+	#
+	# Esto es un parche de borde. El arreglo de fondo es que el MI devuelva
+	# 200 (mediación HTTP_SC en toolsMCPAPI.xml, ya en el CAR pero sin
+	# efecto en runtime — pendiente). Mientras tanto, este rewrite es lo que
+	# hace que las tools de escritura funcionen desde el cliente.
+	@toolcall header Mcp-Method tools/call
+	handle @toolcall {
+		reverse_proxy https://127.0.0.1:8243 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+			@accepted status 202
+			handle_response @accepted {
+				copy_response 200
+			}
+		}
+	}
+
+	# ── Todo lo demás: passthrough ───────────────────────────────────────
+	# El Gateway usa certificado self-signed en localhost:8243 (ver
+	# doc/infra/wso2-install.md). Válido acá porque el salto Caddy→APIM
+	# es loopback, nunca sale de la VM; el cliente solo ve el cert de
+	# Let's Encrypt de Caddy.
+	handle {
+		reverse_proxy https://127.0.0.1:8243 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	log {
+		output file /var/log/caddy/mcp-access.log
+	}
+}

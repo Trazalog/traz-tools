@@ -1,0 +1,50 @@
+id: ALM-UC-014
+modulo: ALM
+titulo: Registrar un ajuste de stock
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Ajustestock.php
+    detalle: "index(), nuevoAjuste(), guardarAjuste(), getAjustesList(), getDetalleAjuste(), traerDepositos()"
+  - repo: traz-comp-almacenes
+    path: models/Ajustestocks.php
+  - repo: traz-comp-almacenes
+    path: controllers/general/Tipoajuste.php
+    detalle: "los tipos de ajuste que se pueden elegir"
+pantallas:
+  - "Almacenes → Ajustes de Stock"
+  - "Almacenes → Ajustes de Stock → Nuevo Ajuste"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene tipos de ajuste definidos
+flujo_principal:
+  - paso: "Entra a Almacenes → Ajustes de Stock"
+    resultado: "Se muestra el listado de ajustes con Comprobante, Fecha / Hora, Establecimiento y Depósito"
+  - paso: "Hace clic en 'Nuevo Ajuste'"
+    resultado: "Se abre el formulario de ajuste"
+  - paso: "Elige el establecimiento y el depósito"
+    resultado: "Se ofrecen los lotes disponibles en ese depósito"
+  - paso: "Agrega cada línea indicando el lote, si es una entrada o una salida, la cantidad y el tipo de ajuste"
+    resultado: "El detalle acumula las líneas. Cada línea lleva su propio tipo de ajuste"
+  - paso: "Escribe la justificación y confirma"
+    resultado: "El ajuste queda registrado y el stock del lote cambia según lo indicado"
+validaciones:
+  - "Solo el Responsable de Almacén puede registrar un ajuste"
+  - "El ajuste se aplica sobre un lote concreto, no sobre el artículo en general"
+  - "Una salida se registra como cantidad negativa"
+  - "El tipo de ajuste va en cada línea del detalle, no en la cabecera"
+  - "El ajuste es el único camino para corregir una recepción o una entrega ya registradas"
+  - "El ajuste queda registrado con su justificación"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s07
+  feature: features/alm/ALM-UC-014.registrar-un-ajuste-de-stock.feature
+notas:
+  - "ADR-012 deja explícitamente fuera del piloto MCP las operaciones que mueven stock, y ésta es una de ellas."
+  - "**El ajuste no escribe en la base desde el PHP**: `Ajustestocks::guardarDetalleAjustes()` arma el lote de líneas y lo manda a `REST_ALM + /stock/ajuste/detalle_batch_req`. La lógica de cómo impacta en el stock vive del otro lado, en el DataService — por eso no se puede responder desde el PHP si admite dejar existencias en negativo."
+  - "El código dice explícitamente que el tipo de ajuste ya no va en la cabecera: `// ya no se usa tipo de ajuste en la cabecera por eso lo mando vacío` en `Ajustestock::guardarAjuste()`."
+  - "**Corrección de la primera pasada:** las dudas que había planteado (si la justificación es obligatoria, si admite negativos, si se puede anular) salían de haber capturado el modal de *detalle* de un ajuste existente en vez del formulario de alta, y de buscar en el PHP una lógica que está en el DataService. El PM lo marcó y se rehizo el relevamiento."

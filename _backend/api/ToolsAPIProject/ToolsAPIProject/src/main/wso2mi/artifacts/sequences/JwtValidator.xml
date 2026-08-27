@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NOTA (ADR-008, Mayo 2026): Esta sequence NO se invoca desde el flujo MCP.
+
+  La validación de JWTs para tráfico MCP la realiza el APIM Gateway directamente
+  vía el Key Manager federado "Dnato" (RS256 + JWKS). La inyección del empr_id
+  la realiza la in-sequence EmprIdInjectorPolicy del APIM. El MI solo lee
+  el header X-Empr-Id ya inyectado, vía la sequence EmprIdFromHeader.xml.
+
+  Esta sequence se mantiene en el repo como referencia histórica (documentaba
+  el patrón "JWT passthrough" descartado por ADR-008) y por si se necesitara
+  validación JWT en contextos fuera del flujo MCP (ej: acceso directo al MI
+  en DEV sin pasar por el APIM — solo para debugging).
+
+  Referencia: doc/identity/empr-id-injection.md, doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md §14
+-->
+<sequence name="jwtValidator" xmlns="http://ws.apache.org/ns/synapse">
+
+    <!-- Extract Authorization transport header into default scope -->
+    <property name="jwt_auth_header"
+              expression="$trp:Authorization"
+              scope="default" type="STRING"/>
+
+    <!-- Load Dnato RS256 public key from registry -->
+    <property name="dnato_public_key"
+              expression="get-property('registry','conf:identity/dnato-public-key.pem')"
+              scope="default" type="STRING"/>
+
+    <!-- Validate JWT: format → alg → exp → iss → aud → empr_id → RS256 signature -->
+    <script language="js"><![CDATA[
+        var Base64     = Java.type("java.util.Base64");
+        var KeyFactory = Java.type("java.security.KeyFactory");
+        var JSig       = Java.type("java.security.Signature");
+        var X509Spec   = Java.type("java.security.spec.X509EncodedKeySpec");
+        var JavaString = Java.type("java.lang.String");
+
+        var JWT_ISS = "trazalog-dnato";
+        var JWT_AUD = "trazalog-mcp";
+
+        function mediator(mc) {
+            try {
+                var authHeader = mc.getProperty("jwt_auth_header");
+
+                if (!authHeader || authHeader.toString().trim() === "") {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Missing Authorization header");
+                    return true;
+                }
+
+                var authStr = authHeader.toString().trim();
+                if (authStr.indexOf("Bearer ") !== 0) {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Authorization header must use Bearer scheme");
+                    return true;
+                }
+
+                var token = authStr.substring(7).trim();
+                var parts = token.split("\\.");
+                if (parts.length !== 3) {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Malformed JWT: expected 3 parts separated by '.'");
+                    return true;
+                }
+
+                var decoder = Base64.getUrlDecoder();
+                var headerJson  = new JavaString(decoder.decode(parts[0]), "UTF-8");
+                var payloadJson = new JavaString(decoder.decode(parts[1]), "UTF-8");
+
+                var jwtHeader  = JSON.parse(headerJson);
+                var jwtPayload = JSON.parse(payloadJson);
+
+                if (jwtHeader.alg !== "RS256") {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Unsupported algorithm: expected RS256, got " + jwtHeader.alg);
+                    return true;
+                }
+
+                var nowSec = Math.floor(Date.now() / 1000);
+                if (!jwtPayload.exp || Number(jwtPayload.exp) < nowSec) {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "JWT has expired");
+                    return true;
+                }
+
+                if (jwtPayload.iss !== JWT_ISS) {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Invalid issuer: expected " + JWT_ISS);
+                    return true;
+                }
+
+                var aud = jwtPayload.aud;
+                var validAud = (aud === JWT_AUD) ||
+                               (Array.isArray(aud) && aud.indexOf(JWT_AUD) >= 0);
+                if (!validAud) {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Invalid audience: expected " + JWT_AUD);
+                    return true;
+                }
+
+                if (!jwtPayload.empr_id) {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Missing required claim: empr_id");
+                    return true;
+                }
+
+                // Validate RS256 signature using Dnato public key
+                var pemStr = mc.getProperty("dnato_public_key");
+                if (!pemStr || pemStr.toString().trim() === "") {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "Public key not configured in registry at conf:identity/dnato-public-key.pem");
+                    return true;
+                }
+
+                var pemClean = pemStr.toString()
+                    .replace(/-----BEGIN PUBLIC KEY-----/g, "")
+                    .replace(/-----END PUBLIC KEY-----/g, "")
+                    .replace(/[\r\n\s]+/g, "");
+
+                var keyBytes = Base64.getDecoder().decode(pemClean);
+                var keySpec  = new X509Spec(keyBytes);
+                var pubKey   = KeyFactory.getInstance("RSA").generatePublic(keySpec);
+
+                var signingInput = parts[0] + "." + parts[1];
+                var sigBytes     = decoder.decode(parts[2]);
+
+                var sigVerifier  = JSig.getInstance("SHA256withRSA");
+                sigVerifier.initVerify(pubKey);
+                sigVerifier.update(new JavaString(signingInput).getBytes("UTF-8"));
+
+                if (!sigVerifier.verify(sigBytes)) {
+                    mc.setProperty("jwt_valid", "false");
+                    mc.setProperty("jwt_error", "JWT signature verification failed");
+                    return true;
+                }
+
+                mc.setProperty("jwt_valid", "true");
+                mc.setProperty("jwt_empr_id", jwtPayload.empr_id.toString());
+
+            } catch (e) {
+                mc.setProperty("jwt_valid", "false");
+                mc.setProperty("jwt_error", "JWT validation exception: " + e.message);
+            }
+            return true;
+        }
+    ]]></script>
+
+    <!-- Short-circuit with 401 if JWT is invalid -->
+    <filter xpath="get-property('jwt_valid') = 'false'">
+        <then>
+            <payloadFactory media-type="json">
+                <format>{"error":"Unauthorized","message":"$1"}</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('jwt_error')"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="401"/>
+            <respond/>
+        </then>
+    </filter>
+
+</sequence>

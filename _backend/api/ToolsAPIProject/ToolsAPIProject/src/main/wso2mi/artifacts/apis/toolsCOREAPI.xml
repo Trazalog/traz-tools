@@ -133,6 +133,34 @@
             <property name="msg despues post empresa asset" expression="json-eval($)"/>
             <property name="asset_id_empresa" expression="$ctx:asset_id_empresa"/>
          </log>
+         <!-- Paso 3.c) Vincular empr_id_mysql en core.empresas (PostgreSQL).
+              DSS query-param en PUT acepta XML body: <request><param>val</param></request>.
+              No-bloqueante: si falla se loguea pero no hace rollback. -->
+         <payloadFactory media-type="xml" description="vincular empr_id_mysql en core.empresas">
+            <format><request><empr_id>$1</empr_id><empr_id_mysql>$2</empr_id_mysql></request></format>
+            <args>
+               <arg evaluator="xml" expression="get-property('empr_id')"/>
+               <arg evaluator="xml" expression="get-property('asset_id_empresa')"/>
+            </args>
+         </payloadFactory>
+         <property name="uri.var.link_asset_id_url"
+                   expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa/asset-id')"
+                   scope="default"/>
+         <call>
+            <endpoint>
+               <http method="PUT" uri-template="{uri.var.link_asset_id_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <log level="custom" category="WARN">
+                  <property name="text" value="#TRAZA | CORE | POST /empresa | empr_id_mysql no vinculado en core.empresas — reconciliar manualmente"/>
+                  <property name="empr_id"       expression="$ctx:empr_id"/>
+                  <property name="asset_id_empresa" expression="$ctx:asset_id_empresa"/>
+               </log>
+            </else>
+         </filter>
          <header name="Accept" scope="transport" value="application/json"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
          <payloadFactory media-type="json" description="crear empresa bonita">

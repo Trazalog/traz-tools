@@ -1,0 +1,39 @@
+id: MAN-UC-013
+modulo: MAN
+titulo: Verificar el informe y dar la conformidad
+perfil: Supervisor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Tarea.php
+    detalle: "verificarInforme() y prestarConformidad() — las dos tareas del proceso de Bonita"
+pantallas:
+  - "Mantenimiento → Informe de Servicios"
+  - "Mis Tareas"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Hay un informe de servicio cargado
+flujo_principal:
+  - paso: "Filtra los informes por estado para ver los pendientes de verificar"
+    resultado: "El listado muestra los que esperan revisión"
+  - paso: "Abre uno y usa 'Verificar'"
+    resultado: "Se muestra qué se hizo, quiénes trabajaron y qué materiales se pidieron"
+  - paso: "Aprueba o rechaza"
+    resultado: "Si aprueba, el informe pasa a la conformidad del solicitante"
+  - paso: "El solicitante presta conformidad"
+    resultado: "La orden de trabajo queda cerrada"
+validaciones:
+  - "Si el Supervisor rechaza el informe, **vuelve al Mantenedor** para que lo corrija y lo presente de nuevo"
+  - "Si el Solicitante no presta conformidad, la solicitud **vuelve al análisis del Supervisor**: no queda marcada como no conforme, reabre el circuito"
+  - "Son dos aprobaciones distintas: la del supervisor sobre el trabajo, y la del solicitante que pidió el servicio"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s08
+notas:
+  - "**Son los dos únicos puntos donde el proceso retrocede**, y por eso un mismo trabajo puede recorrerse más de una vez. Ver `doc/man/proceso-mantenimiento.md`."
+  - "En el código: al verificar el informe la orden pasa a `CE` (Cerrada); al prestar conformidad, a `CN` (Conforme). Si el solicitante rechaza, el estado vuelve a `S` (Solicitada) — el mismo con el que nació."
+  - "Es distinta de la aprobación del **pedido de materiales**, que la hace el almacenero y vive en el circuito de Almacenes."
+  - "El manual de ayuda existente le dedica una sección (s09) con los dos pasos: *Supervisor verifica el informe* y *Solicitante presta conformidad*."

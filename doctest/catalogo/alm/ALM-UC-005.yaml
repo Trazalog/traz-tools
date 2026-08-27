@@ -1,0 +1,46 @@
+id: ALM-UC-005
+modulo: ALM
+titulo: Consultar el stock por establecimiento y depósito
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Lote.php
+    detalle: "indexStock(), filtrarListadoStock(), Listar_tabla_stock(), getDepositos()"
+  - repo: traz-comp-almacenes
+    path: models/Lotes.php
+pantallas:
+  - "Almacenes → Stock"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene establecimientos y depósitos definidos
+flujo_principal:
+  - paso: "Entra a Almacenes → Stock"
+    resultado: "Se muestran los filtros: Establecimiento, Depósito, Tipo de Artículo, Artículo y la opción de incluir artículos con stock en cero"
+  - paso: "Elige un establecimiento"
+    resultado: "El desplegable de depósitos se limita a los de ese establecimiento"
+  - paso: "Hace clic en 'Filtrar'"
+    resultado: "Se listan las existencias que cumplen el filtro"
+  - paso: "Hace clic en 'Limpiar'"
+    resultado: "Los filtros vuelven a su valor inicial"
+flujos_alternativos:
+  - nombre: "Incluir artículos sin existencias"
+    pasos:
+      - paso: "Marca 'Incluir artículos con stock en 0'"
+        resultado: "La opción queda tildada"
+      - paso: "Hace clic en 'Filtrar'"
+        resultado: "El listado agrega los artículos cuya existencia es cero"
+validaciones:
+  - "La cantidad que muestra esta pantalla es la **existencia física**: lo que hay, sin descontar lo comprometido en pedidos"
+  - "Es una pantalla de consulta: no permite operar sobre el stock"
+  - "El stock listado corresponde solo a la empresa de la sesión"
+  - "Los depósitos ofrecidos son los del establecimiento elegido"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s09
+  feature: features/alm/ALM-UC-005.consultar-el-stock-por-establecimiento-y-deposit.feature
+notas:
+  - "La existencia **disponible** —física menos lo comprometido— es otra cosa y se usa en el punto de pedido (ALM-UC-015)."

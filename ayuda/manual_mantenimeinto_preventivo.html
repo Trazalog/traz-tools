@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual — Mantenimiento Preventivo · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Variables ──────────────────────────────────── */
+:root{
+  --red:#CC1F1A; --red-dk:#991510;
+  --dark:#0F1923; --dark2:#1A2535;
+  --amber:#F5A623; --amber2:#E8891A;
+  --teal:#0D7377; --green:#16A34A;
+  --white:#fff;
+  --lgray:#E8EDF5; --mgray:#94A3B8; --dgray:#334155;
+  --bg:#F7F8FC;
+  --sidebar:270px;
+  --r:8px;
+  --sh:0 2px 14px rgba(15,25,35,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dgray);line-height:1.65;font-size:15px}
+
+/* ── Layout ─────────────────────────────────────── */
+.layout{display:flex;min-height:100vh}
+
+/* ── Sidebar ────────────────────────────────────── */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);
+  background:var(--dark);
+  position:sticky;top:0;height:100vh;
+  overflow-y:auto;display:flex;flex-direction:column;
+  z-index:100;transition:transform .3s
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--dark2);border-radius:4px}
+
+.sb-brand{padding:22px 18px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-logo{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.sb-icon{width:32px;height:32px;background:var(--red);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:900;color:#fff;font-family:'DM Serif Display',serif;letter-spacing:-1px}
+.sb-name{font-size:14px;font-weight:700;color:#fff}
+.sb-name span{color:var(--red)}
+.sb-sub{font-size:10px;color:var(--mgray);letter-spacing:.8px;text-transform:uppercase;font-weight:500}
+
+.nav-group{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.nav-group:last-of-type{border:none}
+.nav-lbl{padding:10px 18px 4px;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--amber)}
+
+.nav-a{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 18px;text-decoration:none;
+  color:var(--mgray);font-size:12.5px;font-weight:500;
+  border-left:3px solid transparent;transition:all .16s;cursor:pointer
+}
+.nav-a:hover{color:#fff;background:rgba(255,255,255,.05);border-left-color:var(--amber)}
+.nav-a.active{color:#fff;background:rgba(204,31,26,.13);border-left-color:var(--red)}
+.nav-n{
+  min-width:20px;height:20px;border-radius:4px;
+  background:rgba(255,255,255,.07);
+  font-size:9.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--mgray);font-family:'JetBrains Mono',monospace;transition:all .16s
+}
+.nav-a.active .nav-n{background:var(--red);color:#fff}
+.nav-a:hover .nav-n{background:rgba(255,255,255,.14);color:#fff}
+
+.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.06);font-size:10.5px;color:var(--mgray)}
+.sb-footer a{color:var(--amber);text-decoration:none}
+
+/* ── Main ───────────────────────────────────────── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+
+/* Topbar */
+.topbar{
+  position:sticky;top:0;z-index:90;
+  background:#fff;border-bottom:3px solid var(--red);
+  padding:0 36px;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 10px rgba(0,0,0,.06)
+}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-title{font-size:13px;font-weight:700;color:var(--dark)}
+.tb-sub{font-size:11px;color:var(--mgray)}
+.tb-code{background:var(--red);color:#fff;font-size:10px;font-weight:700;
+  padding:3px 9px;border-radius:5px;font-family:'JetBrains Mono',monospace;letter-spacing:.4px}
+.tb-actions{display:flex;gap:8px}
+.btn-pdf{
+  background:var(--dark);color:#fff;border:none;cursor:pointer;
+  font-size:11.5px;font-weight:600;padding:7px 16px;border-radius:6px;
+  display:flex;align-items:center;gap:6px;transition:background .2s;font-family:'DM Sans',sans-serif
+}
+.btn-pdf:hover{background:var(--red)}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:5px;color:var(--dark);font-size:19px}
+.btn-home{
+  display:flex;align-items:center;gap:6px;
+  background:none;border:1.5px solid var(--lgray);border-radius:7px;
+  padding:6px 14px;font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;color:var(--dgray);
+  cursor:pointer;text-decoration:none;white-space:nowrap;
+  transition:border-color .18s,color .18s,background .18s
+}
+.btn-home:hover{border-color:var(--red);color:var(--red);background:#fef5f5}
+
+/* Content */
+.content{padding:36px;max-width:900px}
+
+/* ── Progress bar ───────────────────────────────── */
+#progress-bar{position:fixed;top:0;left:var(--sidebar);right:0;height:3px;
+  background:var(--red);transform-origin:left;transform:scaleX(0);
+  transition:transform .08s linear;z-index:200}
+
+/* ── Back top ────────────────────────────────────── */
+#back-top{
+  position:fixed;bottom:24px;right:24px;
+  width:42px;height:42px;border-radius:50%;
+  background:var(--red);color:#fff;border:none;cursor:pointer;
+  font-size:17px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(204,31,26,.4);
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:150
+}
+#back-top.visible{opacity:1;pointer-events:all}
+#back-top:hover{transform:translateY(-3px)}
+
+/* ── Overlay mobile ─────────────────────────────── */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
+
+/* ── Hero / Cover ────────────────────────────────── */
+.hero{
+  background:var(--dark);border-radius:0 0 14px 14px;
+  padding:52px 36px;position:relative;overflow:hidden;margin-bottom:44px
+}
+.hero::before{content:'';position:absolute;right:-80px;top:-80px;
+  width:360px;height:360px;background:var(--amber2);border-radius:50%;opacity:.10}
+.hero::after{content:'';position:absolute;right:60px;top:30px;
+  width:160px;height:160px;background:var(--red);border-radius:50%;opacity:.14}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.28);
+  color:var(--amber);font-size:10.5px;font-weight:600;
+  padding:4px 12px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:18px}
+.hero-title{font-family:'DM Serif Display',serif;font-size:40px;color:#fff;line-height:1.1;margin-bottom:6px;position:relative;z-index:1}
+.hero-title em{color:var(--red);font-style:normal}
+.hero-desc{font-size:14px;color:var(--mgray);max-width:520px;margin-bottom:26px;position:relative;z-index:1;line-height:1.7}
+.hero-pills{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.hero-pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);
+  color:var(--mgray);font-size:11px;padding:4px 13px;border-radius:20px;font-weight:500}
+.hero-pill strong{color:#fff}
+
+/* ── Section ─────────────────────────────────────── */
+.section{margin-bottom:64px;opacity:0;transform:translateY(20px);transition:opacity .45s ease,transform .45s ease}
+.section.visible{opacity:1;transform:translateY(0)}
+
+.sec-header{
+  display:flex;align-items:stretch;border-radius:var(--r);
+  overflow:hidden;margin-bottom:24px;box-shadow:var(--sh)
+}
+.sec-num{
+  background:var(--red);color:#fff;font-size:22px;font-weight:800;
+  font-family:'JetBrains Mono',monospace;
+  padding:14px 20px;display:flex;align-items:center;min-width:64px;justify-content:center
+}
+.sec-meta{background:var(--dark);padding:12px 20px;flex:1}
+.sec-meta h2{font-size:18px;font-weight:700;color:#fff;font-family:'DM Serif Display',serif;margin-bottom:3px}
+.role-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.07);color:var(--mgray);
+  font-size:10.5px;font-weight:500;padding:2px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.06)
+}
+
+/* ── Intro text ─────────────────────────────────── */
+.intro{font-size:14.5px;color:var(--dgray);line-height:1.75;margin-bottom:22px}
+.intro strong{color:var(--dark);font-weight:600}
+
+/* ── Sub-title ──────────────────────────────────── */
+.sub-h{
+  font-size:13.5px;font-weight:700;color:var(--red);
+  margin:24px 0 12px;display:flex;align-items:center;gap:8px
+}
+.sub-h::after{content:'';flex:1;height:1px;background:var(--lgray)}
+
+/* ── Steps ──────────────────────────────────────── */
+.steps{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+.step{
+  display:flex;align-items:stretch;border-radius:var(--r);
+  overflow:hidden;background:#fff;
+  box-shadow:0 1px 5px rgba(0,0,0,.06);transition:transform .14s,box-shadow .14s
+}
+.step:hover{transform:translateX(3px);box-shadow:0 3px 12px rgba(0,0,0,.1)}
+.step-n{
+  min-width:44px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0
+}
+.c-red{background:var(--red)}.c-teal{background:var(--teal)}.c-amber{background:var(--amber2)}.c-dark{background:var(--dark)}.c-green{background:var(--green)}
+.step-body{flex:1;padding:11px 16px}
+.step-body b{border-left-width:3px;border-left-style:solid;padding-left:0}
+.step-t{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px}
+.step-d{font-size:12px;color:var(--mgray);line-height:1.5}
+.step.brd-red .step-body{border-left:3px solid var(--red)}
+.step.brd-teal .step-body{border-left:3px solid var(--teal)}
+.step.brd-amber .step-body{border-left:3px solid var(--amber2)}
+.step.brd-dark .step-body{border-left:3px solid var(--dark)}
+
+/* ── Alert boxes ────────────────────────────────── */
+.alert{display:flex;border-radius:var(--r);overflow:hidden;margin:16px 0;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.alert-bar{width:5px;flex-shrink:0}
+.alert-body{flex:1;padding:12px 16px}
+.alert-lbl{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;margin-bottom:4px}
+.alert-txt{font-size:12.5px;line-height:1.6}
+.alert.info{background:#E0F7FA}.alert.info .alert-bar{background:var(--teal)}.alert.info .alert-lbl{color:var(--teal)}.alert.info .alert-txt{color:#0E5D60}
+.alert.warn{background:#FFFBEB}.alert.warn .alert-bar{background:var(--amber2)}.alert.warn .alert-lbl{color:var(--amber2)}.alert.warn .alert-txt{color:#7C4A00}
+.alert.tip{background:#F0FDF4}.alert.tip .alert-bar{background:var(--green)}.alert.tip .alert-lbl{color:var(--green)}.alert.tip .alert-txt{color:#145229}
+.alert.note{background:#FEF2F2}.alert.note .alert-bar{background:var(--red)}.alert.note .alert-lbl{color:var(--red)}.alert.note .alert-txt{color:#7F1D1D}
+
+/* ── Screen capture card ────────────────────────── */
+.screen-card{
+  background:#fff;border-radius:var(--r);overflow:hidden;
+  box-shadow:var(--sh);margin:18px 0
+}
+.screen-bar{
+  background:var(--dark2);padding:9px 16px;
+  display:flex;align-items:center;gap:7px
+}
+.screen-dots span{
+  display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px
+}
+.screen-dots .d1{background:#FF5F57}.screen-dots .d2{background:#FFBC2E}.screen-dots .d3{background:#2ABF44}
+.screen-caption{font-size:11px;color:var(--mgray);font-family:'JetBrains Mono',monospace}
+.screen-img{display:block;width:100%;border-top:1px solid var(--lgray)}
+.screen-footer{
+  background:var(--bg);border-top:1px solid var(--lgray);
+  padding:10px 16px;font-size:12px;color:var(--dgray);line-height:1.5
+}
+.screen-footer strong{color:var(--dark)}
+
+/* ── Flow diagram ───────────────────────────────── */
+.flow-diagram{
+  display:flex;align-items:center;
+  margin:20px 0;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)
+}
+.flow-step{
+  flex:1;padding:14px 10px;text-align:center;position:relative
+}
+.flow-step::after{
+  content:'→';position:absolute;right:-8px;top:50%;transform:translateY(-50%);
+  color:rgba(255,255,255,.55);font-size:13px;z-index:2
+}
+.flow-step:last-child::after{display:none}
+.flow-lbl{font-size:11.5px;font-weight:700;color:#fff;margin-bottom:2px}
+.flow-sub{font-size:10px;color:rgba(255,255,255,.68)}
+
+/* ── Graphic flow (vertical numbered) ───────────── */
+.gflow{display:flex;flex-direction:column;gap:0;margin:20px 0}
+.gflow-row{display:flex;align-items:flex-start;gap:14px;position:relative}
+.gflow-row:not(:last-child)::before{
+  content:'';position:absolute;left:19px;top:40px;
+  width:2px;height:calc(100% + 8px);
+  background:linear-gradient(to bottom,var(--red),transparent);
+  z-index:0
+}
+.gflow-num{
+  min-width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;
+  font-family:'JetBrains Mono',monospace;
+  flex-shrink:0;position:relative;z-index:1;margin-top:4px
+}
+.gflow-content{
+  flex:1;background:#fff;border-radius:var(--r);
+  padding:12px 16px;margin-bottom:8px;
+  box-shadow:0 1px 5px rgba(0,0,0,.06);
+  border-left:3px solid var(--lgray)
+}
+.gflow-content.hl{border-left-color:var(--red)}
+.gflow-t{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:3px}
+.gflow-d{font-size:12px;color:var(--mgray);line-height:1.5}
+
+/* ── Field table ────────────────────────────────── */
+.field-table{width:100%;border-collapse:collapse;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin:16px 0}
+.field-table thead th{background:var(--dark);color:#fff;padding:10px 14px;font-size:11.5px;font-weight:700;text-align:left}
+.field-table tbody td{padding:10px 14px;font-size:12.5px;border-bottom:1px solid var(--lgray);background:#fff}
+.field-table tbody tr:nth-child(even) td{background:var(--bg)}
+.field-table tbody tr:last-child td{border:none}
+.field-table td:first-child{font-weight:700;color:var(--dark);font-family:'JetBrains Mono',monospace;font-size:11.5px;white-space:nowrap}
+.field-table .req{color:var(--red);font-weight:900}
+.field-table .opt{color:var(--mgray);font-size:10px;font-weight:600;letter-spacing:.4px}
+.tag-req{display:inline-block;background:#FEF2F2;color:var(--red);font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid rgba(204,31,26,.2)}
+.tag-opt{display:inline-block;background:var(--lgray);color:var(--mgray);font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px}
+.tag-cond{display:inline-block;background:#FFFBEB;color:var(--amber2);font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid rgba(232,137,26,.25)}
+
+/* ── Tabs indicator ─────────────────────────────── */
+.tab-row{display:flex;gap:6px;margin:16px 0}
+.tab-chip{
+  padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;
+  cursor:default;transition:all .2s
+}
+.tab-chip.active{background:var(--teal);color:#fff;box-shadow:0 2px 8px rgba(13,115,119,.3)}
+.tab-chip.inactive{background:#fff;color:var(--mgray);border:1px solid var(--lgray)}
+
+/* ── Period tags ────────────────────────────────── */
+.period-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.period-card{
+  background:#fff;border-radius:var(--r);padding:10px 12px;
+  box-shadow:0 1px 5px rgba(0,0,0,.06);text-align:center;
+  border-top:3px solid var(--lgray);transition:all .2s
+}
+.period-card.sp{border-top-color:var(--teal)}
+.period-card.sp-cond{border-top-color:var(--amber2)}
+.period-lbl{font-size:11.5px;font-weight:700;color:var(--dark);margin-bottom:2px}
+.period-desc{font-size:10.5px;color:var(--mgray);line-height:1.4}
+
+/* ── URL block ──────────────────────────────────── */
+.url-block{background:var(--lgray);border-radius:var(--r);padding:12px 16px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red);
+  font-weight:600;margin:12px 0;border-left:4px solid var(--red)}
+
+/* ── States bar ─────────────────────────────────── */
+.states-bar{display:flex;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin:16px 0}
+.state-item{flex:1;padding:11px 6px;text-align:center;color:#fff;font-size:11px;font-weight:700}
+
+/* ── Responsive ─────────────────────────────────── */
+@media(max-width:900px){
+  :root{--sidebar:260px}
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  #overlay{display:block}
+  .hamburger{display:flex}
+  .content{padding:20px 16px}
+  .topbar{padding:0 14px}
+  #progress-bar{left:0}
+  .hero{padding:36px 20px;border-radius:0}
+  .hero-title{font-size:28px}
+  .period-grid{grid-template-columns:repeat(2,1fr)}
+  .flow-diagram{flex-direction:column}
+  .flow-step::after{display:none}
+}
+
+/* ── Print / PDF styles ─────────────────────────── */
+@media print{
+  .sidebar,.topbar,.hamburger,#back-top,#progress-bar,.tb-actions{display:none!important}
+  .layout{display:block}
+  .main{display:block}
+  .content{padding:0;max-width:100%}
+  .section{opacity:1!important;transform:none!important;page-break-inside:avoid;margin-bottom:32px}
+  .hero{border-radius:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  body{background:#fff;font-size:13px}
+  .screen-card{box-shadow:none;border:1px solid #ddd}
+  .gflow-row:not(:last-child)::before{background:var(--red)}
+}
+</style>
+</head>
+<body>
+<div style="background:#FFF4E5;border-bottom:2px solid #F5A623;padding:14px 20px;font-family:'DM Sans',sans-serif;font-size:14px;color:#78350f;text-align:center">
+  Esta es una <strong>versión anterior</strong> de la ayuda y puede tener información desactualizada.
+  La versión vigente está en <a href="manual_mantenimiento.html" style="color:#991510;font-weight:700">Mantenimiento</a>.
+</div>
+
+
+<div id="progress-bar"></div>
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">
+      <div class="sb-icon">T</div>
+      <span class="sb-name">TRAZA<span>LOG</span> TOOLS</span>
+    </div>
+    <div class="sb-sub">Manual · Mantenimiento Preventivo</div>
+  </div>
+
+  <div class="nav-group">
+    <a class="nav-a" href="index.html" style="color:var(--amber);border-left-color:transparent">
+      <span class="nav-n" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span> Volver al inicio
+    </a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-lbl">Proceso</div>
+    <a class="nav-a" href="#s01"><span class="nav-n">01</span> Introducción</a>
+    <a class="nav-a" href="#s02"><span class="nav-n">02</span> Crear Preventivo</a>
+    <a class="nav-a" href="#s03"><span class="nav-n">03</span> Período y Frecuencia</a>
+    <a class="nav-a" href="#s04"><span class="nav-n">04</span> Duración y Recursos</a>
+    <a class="nav-a" href="#s05"><span class="nav-n">05</span> Herramientas e Insumos</a>
+    <a class="nav-a" href="#s06"><span class="nav-n">06</span> Adjuntos</a>
+    <a class="nav-a" href="#s07"><span class="nav-n">07</span> Planificación y OT</a>
+  </div>
+
+  <div class="sb-footer">
+    MA.020 · Versión 1.0<br>
+    <a href="https://www.trazalog.com" target="_blank">www.trazalog.com</a>
+  </div>
+</aside>
+
+<!-- ── MAIN ───────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <span class="tb-title">Manual de Usuario</span>
+      <span class="tb-sub">· Mantenimiento Preventivo</span>
+    </div>
+    <div class="tb-actions">
+      <a href="index.html" class="btn-home">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Volver al inicio
+      </a>
+      <button class="btn-pdf" onclick="window.print()">🖨️ Exportar a PDF</button>
+      <span class="tb-code">MA.020</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ── COVER ──────────────────────────────────────────── -->
+  <section id="cover" class="hero section visible">
+    <div class="hero-tag">📋 Instructivo de procedimientos</div>
+    <div class="hero-title">Mantenimiento<br><em>Preventivo</em></div>
+    <div class="hero-desc">Guía paso a paso para la carga, configuración y generación de Órdenes de Trabajo desde el módulo de Mantenimiento Preventivo de Trazalog Tools.</div>
+    <div class="hero-pills">
+      <div class="hero-pill"><strong>MA.020</strong></div>
+      <div class="hero-pill">Versión <strong>1.0</strong></div>
+      <div class="hero-pill">Perfil: <strong>Planificador / Supervisor</strong></div>
+      <div class="hero-pill"><strong>Trazalog Tools</strong></div>
+    </div>
+  </section>
+
+  <!-- ── S01 INTRODUCCIÓN ───────────────────────────────── -->
+  <section id="s01" class="section">
+    <div class="sec-header">
+      <div class="sec-num">01</div>
+      <div class="sec-meta">
+        <h2>Introducción</h2>
+        <span class="role-badge">Perfil: Planificador / Supervisor</span>
+      </div>
+    </div>
+
+    <p class="intro">En este apartado explicaremos el proceso completo de carga de <strong>Mantenimiento Preventivo</strong> en Trazalog Tools. El mantenimiento preventivo permite planificar intervenciones periódicas sobre los equipos <em>antes</em> de que ocurra una falla, reduciendo costos correctivos, extendiendo la vida útil de los activos y garantizando la continuidad operativa.</p>
+
+    <p class="intro">A diferencia de una Solicitud de Servicio (que reacciona ante una falla), el preventivo es <strong>programado con anticipación</strong>: el sistema calcula automáticamente cuándo corresponde realizar cada servicio según el período y la frecuencia configurados, y lo presenta al Planificador listo para convertirse en Orden de Trabajo.</p>
+
+    <!-- Flow graphic -->
+    <div class="sub-h">Flujo del proceso — visión general</div>
+
+    <div class="gflow">
+      <div class="gflow-row">
+        <div class="gflow-num c-red">1</div>
+        <div class="gflow-content hl">
+          <div class="gflow-t">Crear el Preventivo</div>
+          <div class="gflow-d">El Supervisor o Planificador carga el preventivo: equipo, tarea, período, frecuencia, duración, herramientas e insumos requeridos.</div>
+        </div>
+      </div>
+      <div class="gflow-row">
+        <div class="gflow-num c-teal">2</div>
+        <div class="gflow-content">
+          <div class="gflow-t">El sistema calcula el vencimiento</div>
+          <div class="gflow-d">Según el período (Diario, Semanal, Mensual, Anual, Horas, km, Ciclos) y la frecuencia configurada, el sistema determina cuándo corresponde realizar el próximo servicio.</div>
+        </div>
+      </div>
+      <div class="gflow-row">
+        <div class="gflow-num c-amber">3</div>
+        <div class="gflow-content">
+          <div class="gflow-t">Aparece en el Calendario del Planificador</div>
+          <div class="gflow-d">En la pantalla de planificación, el preventivo se muestra en verde cuando está listo para generar una OT. El Planificador decide cuándo convertirlo en Orden de Trabajo.</div>
+        </div>
+      </div>
+      <div class="gflow-row">
+        <div class="gflow-num c-dark">4</div>
+        <div class="gflow-content">
+          <div class="gflow-t">Generación de la Orden de Trabajo (OT)</div>
+          <div class="gflow-d">El Planificador selecciona el preventivo, define fecha, hora y tipo de evento (Único o Mensual con cantidad de meses a futuro) y genera la OT.</div>
+        </div>
+      </div>
+      <div class="gflow-row">
+        <div class="gflow-num c-green">5</div>
+        <div class="gflow-content">
+          <div class="gflow-t">El Mantenedor ejecuta y cierra</div>
+          <div class="gflow-d">La OT es ejecutada por el Mantenedor, quien registra lecturas, tareas, herramientas e insumos, y confecciona el informe de servicio para la conformidad final.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert info">
+      <div class="alert-bar"></div>
+      <div class="alert-body">
+        <div class="alert-lbl">ℹ INFO</div>
+        <div class="alert-txt">El mantenimiento preventivo requiere que el equipo esté previamente cargado en el sistema. Verificá que el equipo al que querés asignar el preventivo exista en el módulo de Equipos antes de comenzar.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S02 CREAR PREVENTIVO ───────────────────────────── -->
+  <section id="s02" class="section">
+    <div class="sec-header">
+      <div class="sec-num">02</div>
+      <div class="sec-meta">
+        <h2>Crear un Mantenimiento Preventivo</h2>
+        <span class="role-badge">Perfil: Supervisor / Planificador</span>
+      </div>
+    </div>
+
+    <p class="intro">El primer paso es acceder al módulo de Mantenimiento Preventivo y cargar la información del servicio: a qué equipo corresponde, qué tarea se realizará, y con qué frecuencia debe ejecutarse.</p>
+
+    <div class="steps">
+      <div class="step brd-red">
+        <div class="step-n c-red">1</div>
+        <div class="step-body">
+          <div class="step-t">Menú → Mantenimiento → Preventivo</div>
+          <div class="step-d">Accedé desde el menú lateral izquierdo del sistema.</div>
+        </div>
+      </div>
+      <div class="step brd-red">
+        <div class="step-n c-red">2</div>
+        <div class="step-body">
+          <div class="step-t">Clic en Agregar</div>
+          <div class="step-d">Se abre el formulario de alta de mantenimiento preventivo.</div>
+        </div>
+      </div>
+      <div class="step brd-red">
+        <div class="step-n c-red">3</div>
+        <div class="step-body">
+          <div class="step-t">Seleccioná el Equipo al que aplica el preventivo</div>
+          <div class="step-d">Buscá por código o nombre. El sistema autocompleta los datos del equipo seleccionado.</div>
+        </div>
+      </div>
+      <div class="step brd-red">
+        <div class="step-n c-red">4</div>
+        <div class="step-body">
+          <div class="step-t">Ingresá el nombre de la Tarea</div>
+          <div class="step-d">Describí claramente el trabajo a realizar. Ejemplo: "Limpieza de filtros", "Cambio de aceite", "Revisión eléctrica general".</div>
+        </div>
+      </div>
+      <div class="step brd-red">
+        <div class="step-n c-red">5</div>
+        <div class="step-body">
+          <div class="step-t">Seleccioná el Período y configurá la Frecuencia</div>
+          <div class="step-d">Definí cada cuánto tiempo se realizará el servicio. Ver sección 03 para detalle completo.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S03 PERÍODO Y FRECUENCIA ───────────────────────── -->
+  <section id="s03" class="section">
+    <div class="sec-header">
+      <div class="sec-num">03</div>
+      <div class="sec-meta">
+        <h2>Período y Frecuencia</h2>
+        <span class="role-badge">Campo obligatorio</span>
+      </div>
+    </div>
+
+    <p class="intro">El <strong>Período</strong> define la unidad de tiempo o medida con la que se mide el intervalo del servicio. La <strong>Frecuencia</strong> indica cuántas unidades de ese período deben pasar entre cada intervención. Juntos determinan exactamente cada cuánto el sistema programará el próximo mantenimiento.</p>
+
+    <div class="sub-h">Pantalla — Selector de Período</div>
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Campo Período</span>
+      </div>
+      <img class="screen-img" src="data:image/png;base64,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" alt="Selector de período">
+      <div class="screen-footer">
+        <strong>Campo Período (*):</strong> Desplegable con las opciones de unidad temporal o de medida disponibles para el mantenimiento preventivo.
+      </div>
+    </div>
+
+    <div class="sub-h">Tipos de período disponibles</div>
+    <div class="period-grid">
+      <div class="period-card sp">
+        <div class="period-lbl">Diario</div>
+        <div class="period-desc">Se ejecuta cada N días. Ej: frecuencia 1 = cada día.</div>
+      </div>
+      <div class="period-card sp">
+        <div class="period-lbl">Semanal</div>
+        <div class="period-desc">Cada N semanas. Ej: frecuencia 2 = cada dos semanas.</div>
+      </div>
+      <div class="period-card sp">
+        <div class="period-lbl">Mensual</div>
+        <div class="period-desc">Cada N meses. Ej: frecuencia 3 = cada tres meses.</div>
+      </div>
+      <div class="period-card sp">
+        <div class="period-lbl">Semestral</div>
+        <div class="period-desc">Cada N semestres (6 meses).</div>
+      </div>
+      <div class="period-card sp">
+        <div class="period-lbl">Anual</div>
+        <div class="period-desc">Cada N años.</div>
+      </div>
+      <div class="period-card sp-cond">
+        <div class="period-lbl">Horas ⚡</div>
+        <div class="period-desc">Habilita <em>Lectura Base</em> y campo <em>Alerta</em>.</div>
+      </div>
+      <div class="period-card sp-cond">
+        <div class="period-lbl">Kilómetros ⚡</div>
+        <div class="period-desc">Habilita <em>Lectura Base</em> y campo <em>Alerta</em>.</div>
+      </div>
+      <div class="period-card sp-cond">
+        <div class="period-lbl">Ciclos ⚡</div>
+        <div class="period-desc">Habilita <em>Lectura Base</em> y campo <em>Alerta</em>.</div>
+      </div>
+    </div>
+
+    <div class="alert warn">
+      <div class="alert-bar"></div>
+      <div class="alert-body">
+        <div class="alert-lbl">⚠ CAMPOS CONDICIONALES</div>
+        <div class="alert-txt">Cuando el período es <strong>Horas, Kilómetros o Ciclos</strong>, el sistema habilita dos campos adicionales:<br><br>
+        <strong>Lectura Base:</strong> ingresá el valor actual del horómetro / odómetro / contador desde el cual el sistema calculará el próximo vencimiento.<br>
+        <strong>Alerta (días):</strong> cantidad de días con anticipación en que el sistema avisará del vencimiento próximo del servicio.</div>
+      </div>
+    </div>
+
+    <div class="sub-h">Ejemplo práctico</div>
+    <table class="field-table">
+      <thead><tr><th>Período</th><th>Frecuencia</th><th>Resultado</th></tr></thead>
+      <tbody>
+        <tr><td>Mensual</td><td>3</td><td>El servicio se realiza cada 3 meses</td></tr>
+        <tr><td>Semanal</td><td>2</td><td>El servicio se realiza cada 2 semanas</td></tr>
+        <tr><td>Horas</td><td>500</td><td>El servicio se realiza cada 500 horas de uso del equipo</td></tr>
+        <tr><td>Kilómetros</td><td>10000</td><td>El servicio se realiza cada 10.000 km recorridos</td></tr>
+        <tr><td>Diario</td><td>1</td><td>El servicio se realiza todos los días</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── S04 DURACIÓN Y RECURSOS ────────────────────────── -->
+  <section id="s04" class="section">
+    <div class="sec-header">
+      <div class="sec-num">04</div>
+      <div class="sec-meta">
+        <h2>Duración y Recursos Humanos</h2>
+        <span class="role-badge">Cálculo de Horas Hombre</span>
+      </div>
+    </div>
+
+    <p class="intro">Estos campos permiten al sistema calcular automáticamente las <strong>Horas Hombre (HH)</strong> que demandará cada ejecución del preventivo. Esta información es clave para la planificación de recursos y la estimación de costos de mantenimiento.</p>
+
+    <div class="sub-h">Pantalla — Duración, Unidad de tiempo y Operarios</div>
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Campos de duración y recursos</span>
+      </div>
+      <img class="screen-img" src="data:image/png;base64,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" alt="Duración y operarios">
+      <div class="screen-footer">
+        <strong>HH: 16</strong> — El sistema calcula automáticamente: 8 horas × 2 operarios = <strong>16 Horas Hombre</strong>. Este valor se actualiza en tiempo real al modificar cualquiera de los tres campos.
+      </div>
+    </div>
+
+    <div class="sub-h">Campos a completar</div>
+    <table class="field-table">
+      <thead><tr><th>Campo</th><th>Tipo</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Duración <span class="req">*</span></td>
+          <td><span class="tag-req">Requerido</span></td>
+          <td>Cantidad numérica de tiempo que dura el servicio. Ej: <strong>8</strong></td>
+        </tr>
+        <tr>
+          <td>U. de Tiempo <span class="req">*</span></td>
+          <td><span class="tag-req">Requerido</span></td>
+          <td>Unidad de medida del tiempo: <strong>Horas</strong> o <strong>Minutos</strong></td>
+        </tr>
+        <tr>
+          <td>Cant. Operarios <span class="req">*</span></td>
+          <td><span class="tag-req">Requerido</span></td>
+          <td>Cantidad de personas necesarias para ejecutar el servicio. Ej: <strong>2</strong></td>
+        </tr>
+        <tr>
+          <td>HH (calculado)</td>
+          <td><span class="tag-opt">Auto</span></td>
+          <td>Horas Hombre = Duración × Cantidad de Operarios. <strong>Se calcula automáticamente.</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert tip">
+      <div class="alert-bar"></div>
+      <div class="alert-body">
+        <div class="alert-lbl">✓ TIP</div>
+        <div class="alert-txt">El campo <strong>HH</strong> se actualiza en tiempo real. Si ingresás 8 horas y 2 operarios, el sistema mostrará HH: 16 inmediatamente, sin necesidad de guardar.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S05 HERRAMIENTAS E INSUMOS ─────────────────────── -->
+  <section id="s05" class="section">
+    <div class="sec-header">
+      <div class="sec-num">05</div>
+      <div class="sec-meta">
+        <h2>Herramientas e Insumos</h2>
+        <span class="role-badge">Pestañas: Herramientas · Insumos · Adjunto</span>
+      </div>
+    </div>
+
+    <p class="intro">Una vez completados los datos principales del preventivo, el sistema habilitará tres pestañas para cargar los recursos materiales necesarios para la ejecución del servicio: <strong>Herramientas</strong>, <strong>Insumos</strong> y <strong>Adjunto</strong>.</p>
+
+    <div class="tab-row">
+      <div class="tab-chip active">🔧 Herramientas</div>
+      <div class="tab-chip inactive">📦 Insumos</div>
+      <div class="tab-chip inactive">📎 Adjunto</div>
+    </div>
+
+    <div class="sub-h">Pantalla — Carga de Herramientas</div>
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Pestaña Herramientas</span>
+      </div>
+      <img class="screen-img" src="data:image/png;base64,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317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAHxpZXyrK2SNrHRvtVGuuRfqovnkm0+xnpP09X++T/psNAkDLHPVSo50dPCrUe5qK6ZUVcnKnlb+o1GfD/0Dv30v/UcAvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ763d6f317BfW7vT++vYaABnvrd3p/fXsF9bu9P769hoAGe+t3en99ewX1u70/vr2GgAZ45p9ZbDNDGy5jnIrJFd5KifNE2mgzyf8Sh/cyfxYaCDPiH6Bv76L/qNNB8K5r3U/5tivckjHWoqIqojkVfP9SH5rE241HFH3F2Dgf5KJ/6hEqaaP4zZ0V8VJZI9ZFVfzjrvromflknkh958CrZklkXEIGVMs/xvjMp3tWNbGs+plJ4eDfHPNF+aHL6xNuNRxR9w1ibcajij7iRFF24xuD18dAtDDicccLZb41SFzX5K5XK1zmvRV8/lb/FD7YBg/5KuVahJldCyLOy37KvXPzX7/I26xNuNRxR9w1ibcajij7iluL/ACJUph8mGtrokovFYm6v9di3XNRVuyciL8skzT/+kOwKsWokrExCBKuVZEkVaZVjte1jckbfmip8Nvjmvz/w5fWJtxqOKPuGsTbjUcUfcSYsvO3W8RwKpp2QMp3vlarvzj2ReKIkDYrckei5Ot88/DmbKPBq3KGV08FNlJrXwPg3rHMsdmVyOTNqKvlln8szmNYm3Go4o+4axNuNRxR9xc9abKfkbK5Jmq+pp3R5/WakCoqpbtu+94+Xl4frNJn1ibcajij7hrE241HFH3BWgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKGgGfWJtxqOKPuGsTbjUcUfcKDDP8AhtL+5Z/BDQfGhY6KigjemTmRta5Nioh9iAZ8M/4bS/uWfwQ0GKjknhpIYXUM6uZG1q5OZlmiZfeKNoM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UNAM+sTbjUcUfcNYm3Go4o+4UFJ+nq/3yf9NhoM9Gkl1RJJE6P4klzWuVFXK1qfJV2KaBIGfD/wBA799L/wBRxoMdO+eFr41o5n/nHuRzXMyVFcqp5u/WBsBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3ChoBn1ibcajij7hrE241HFH3Cgk/4lD+5k/iw0GViyy1scjqeSJrI3tVXq3xVVbl5KuxTUQdd+kzHKvRrQHGseoIGTVVFSPlia9FVqOT+k5E8VRPNf1Ip0zG9McV0H0SjrJ9IqDTKuqXLLG17dXX4bYPiuRiU8T80yRVRX2oiKmbl+fqcjGSRujkY17HIrXNcmaKi+aKhwDdBtCm0aUTdEMASlSb46Qph0ViSZZX225XZeGfnkSYnOtyxWV73TV+lWvlxymp6TR2ndh8k+GwSTy16tla6tivjyYkaoqNXwVbv7k8fDr+E/SdjrMEwfSHSOncq541KsGH1SWSx0qOVGyMdFnmltrVRyeSOXPNWp7C3R/AWORzcEw1qo+J6KlKxMnRJlEvl5sTwav8ARTyyPnBozo5BUyVMGj+FRTySSSvkZRxo5z5Etkcq5Zqrk8HL808y4s7rfXlX1TD/AOb3Xv139Hk9B9J2kdLPpFV4hDhUlQstAygw9tbLLE34tM+VUY+OBz3OVGoqorURPFbkRM1nGvpZxjGqXDPyDQRYZC5+DTVk0tX+eRKuZv5qNnw1R7bUVrnKrfPwTwPUI9CNDI6FaFmiOAMpHSNlWBuHRIxXtztcrbcs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XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13EosbtdxKAAsbtdxKLG7XcSgALG7XcSixu13EoACxu13Ep+taieWf+K5gAf/Z" alt="Herramientas">
+      <div class="screen-footer">
+        <strong>Ejemplo cargado:</strong> Código HLA-MARCA · Marca CAT01 · Descripción MARTILLO-01 · Cantidad 1.<br>
+        Al ingresar el código, el sistema completa automáticamente la Marca y Descripción de la herramienta.
+      </div>
+    </div>
+
+    <div class="sub-h">Cómo cargar Herramientas</div>
+    <div class="steps">
+      <div class="step brd-teal">
+        <div class="step-n c-teal">1</div>
+        <div class="step-body">
+          <div class="step-t">Hacé clic en la pestaña "Herramientas"</div>
+          <div class="step-d">Se habilitará el formulario de carga de herramientas para este preventivo.</div>
+        </div>
+      </div>
+      <div class="step brd-teal">
+        <div class="step-n c-teal">2</div>
+        <div class="step-body">
+          <div class="step-t">Ingresá el Código de la herramienta</div>
+          <div class="step-d">El sistema buscará automáticamente y completará los campos <strong>Marca</strong> y <strong>Descripción</strong>.</div>
+        </div>
+      </div>
+      <div class="step brd-teal">
+        <div class="step-n c-teal">3</div>
+        <div class="step-body">
+          <div class="step-t">Ingresá la Cantidad necesaria</div>
+          <div class="step-d">Indicá cuántas unidades de esa herramienta se requieren para el servicio.</div>
+        </div>
+      </div>
+      <div class="step brd-teal">
+        <div class="step-n c-teal">4</div>
+        <div class="step-body">
+          <div class="step-t">Clic en el botón "Agregar"</div>
+          <div class="step-d">La herramienta se agrega al listado inferior. Podés repetir el proceso para agregar más herramientas.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-h">Cómo cargar Insumos</div>
+    <p class="intro">El proceso para cargar Insumos es idéntico al de Herramientas. Hacé clic en la pestaña <strong>Insumos</strong> y seguí los mismos pasos: código → marca/descripción autocomplete → cantidad → Agregar.</p>
+
+    <div class="alert info">
+      <div class="alert-bar"></div>
+      <div class="alert-body">
+        <div class="alert-lbl">ℹ INFO</div>
+        <div class="alert-txt">Tanto las herramientas como los insumos deben estar previamente cargados en el sistema (Pañol y Almacén respectivamente) para que el autocomplete funcione. Verificá con el área correspondiente que todos los artículos estén dados de alta antes de cargar el preventivo.</div>
+      </div>
+    </div>
+
+    <div class="sub-h">Adjuntos — Documentación del procedimiento</div>
+    <p class="intro">En la pestaña <strong>Adjunto</strong> podés cargar documentación en formato PDF que describa el procedimiento del servicio preventivo. Esto permite que el técnico ejecutor acceda al instructivo directamente desde la Orden de Trabajo.</p>
+
+    <div class="steps">
+      <div class="step brd-amber">
+        <div class="step-n c-amber">1</div>
+        <div class="step-body">
+          <div class="step-t">Hacé clic en la pestaña "Adjunto"</div>
+          <div class="step-d">Se habilitará el área de carga de archivos.</div>
+        </div>
+      </div>
+      <div class="step brd-amber">
+        <div class="step-n c-amber">2</div>
+        <div class="step-body">
+          <div class="step-t">Seleccioná el archivo PDF del procedimiento</div>
+          <div class="step-d">Cheklist de inspección, manual del fabricante, protocolo de seguridad, etc.</div>
+        </div>
+      </div>
+      <div class="step brd-amber">
+        <div class="step-n c-amber">3</div>
+        <div class="step-body">
+          <div class="step-t">Clic en Guardar para confirmar el preventivo completo</div>
+          <div class="step-d">El sistema guarda todos los datos, herramientas, insumos y adjuntos del preventivo.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S06 ADJUNTOS (era el 06, ahora integrado arriba, dejamos referencia visual) ── -->
+
+  <!-- ── S07 PLANIFICACIÓN Y OT ─────────────────────────── -->
+  <section id="s07" class="section">
+    <div class="sec-header">
+      <div class="sec-num">07</div>
+      <div class="sec-meta">
+        <h2>Planificación y Generación de OT</h2>
+        <span class="role-badge">Perfil: Planificador</span>
+      </div>
+    </div>
+
+    <p class="intro">Una vez cargado el preventivo, el sistema comienza a calcularlo y lo mostrará en la pantalla de <strong>Planificación</strong> cuando corresponda realizar el servicio. Desde allí, el Planificador decide cuándo convertirlo en una <strong>Orden de Trabajo (OT)</strong>.</p>
+
+    <div class="sub-h">Pantalla — Calendario de Planificación</div>
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Pantalla de Planificación — Calendario Abril 2026</span>
+      </div>
+      <div class="screen-img" style="border-top:1px solid #E8EDF5;background:#f2f3f7;font-family:'DM Sans',sans-serif;font-size:12px;display:flex;min-height:460px">
+
+  <!-- LEFT: Calendar panel -->
+  <div style="flex:0 0 57%;border-right:1px solid #dde3ee;padding:12px 10px;background:#fff">
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:14px;color:#334155">&#128438;</span>
+      <span style="font-size:14px;color:#334155">&#9776;</span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center">
+      <span style="font-size:10px;color:#334155;font-weight:600">Referencias de colores:</span>
+      <span style="background:#CC1F1A;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px">Urgente</span>
+      <span style="background:#1D4ED8;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px">Correctivo</span>
+      <span style="background:#16A34A;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px">Preventivo</span>
+      <span style="background:#7C3AED;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px">Predictivo</span>
+      <span style="background:#0F1923;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px">Orden Trabajo</span>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="display:flex;gap:4px">
+        <button style="background:#f0f3f8;border:1px solid #dde3ee;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">&#9664;</button>
+        <button style="background:#f0f3f8;border:1px solid #dde3ee;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">Hoy</button>
+        <button style="background:#f0f3f8;border:1px solid #dde3ee;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer">&#9654;</button>
+      </div>
+      <strong style="font-size:14px;color:#0F1923">Abril 2026</strong>
+      <div style="display:flex;gap:3px">
+        <button style="background:#0F1923;color:#fff;border:none;border-radius:4px;padding:3px 7px;font-size:9px;cursor:pointer">Mes</button>
+        <button style="background:#f0f3f8;border:1px solid #dde3ee;border-radius:4px;padding:3px 7px;font-size:9px;cursor:pointer">Semana</button>
+        <button style="background:#f0f3f8;border:1px solid #dde3ee;border-radius:4px;padding:3px 7px;font-size:9px;cursor:pointer">Día</button>
+      </div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+      <thead>
+        <tr>
+          <th style="background:#f0f3f8;padding:4px 2px;font-size:10px;font-weight:700;color:#334155;border:1px solid #dde3ee;text-align:center">Dom</th>
+          <th style="background:#f0f3f8;padding:4px 2px;font-size:10px;font-weight:700;color:#334155;border:1px solid #dde3ee;text-align:center">Lun</th>
+          <th style="background:#f0f3f8;padding:4px 2px;font-size:10px;font-weight:700;color:#334155;border:1px solid #dde3ee;text-align:center">Mar</th>
+          <th style="background:#f0f3f8;padding:4px 2px;font-size:10px;font-weight:700;color:#334155;border:1px solid #dde3ee;text-align:center">Mié</th>
+          <th style="background:#f0f3f8;padding:4px 2px;font-size:10px;font-weight:700;color:#334155;border:1px solid #dde3ee;text-align:center">Jue</th>
+          <th style="background:#f0f3f8;padding:4px 2px;font-size:10px;font-weight:700;color:#334155;border:1px solid #dde3ee;text-align:center">Vie</th>
+          <th style="background:#f0f3f8;padding:4px 2px;font-size:10px;font-weight:700;color:#334155;border:1px solid #dde3ee;text-align:center">Sáb</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="height:54px;vertical-align:top">
+          <td style="border:1px solid #dde3ee;padding:2px 3px;color:#bbb;font-size:10px">30</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;color:#bbb;font-size:10px">31</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">1</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">2
+            <div style="background:#1D4ED8;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Cv 4231 COMP-0045</div>
+            <div style="background:#1D4ED8;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Cv 4232 CLIM-003</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">3
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3201 BOMB-001</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">4
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3202 TBL-220</div>
+            <div style="background:#CC1F1A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Urg 4300 MOTOR-12</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">5</td>
+        </tr>
+        <tr style="height:54px;vertical-align:top">
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">6</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">7
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3203 TRANS-08</div>
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3204 BOMB-002</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">8
+            <div style="background:#0F1923;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">OT 5101 CLIM-003</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">9
+            <div style="background:#1D4ED8;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Cv 4233 COMP-0045</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">10
+            <div style="background:#7C3AED;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pd 6001 MOTOR-12</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">11
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3205 TBL-220</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">12</td>
+        </tr>
+        <tr style="height:54px;vertical-align:top">
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">13</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">14
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3206 BOMB-001</div>
+            <div style="background:#0F1923;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">OT 5102 TRANS-08</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">15
+            <div style="background:#1D4ED8;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Cv 4234 CLIM-003</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">16
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3207 COMP-0045</div>
+            <div style="background:#CC1F1A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Urg 4301 BOMB-002</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">17</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">18
+            <div style="background:#7C3AED;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pd 6002 TBL-220</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">19</td>
+        </tr>
+        <tr style="height:54px;vertical-align:top">
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">20</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">21
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3208 TBL-220</div>
+            <div style="background:#0F1923;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">OT 5103 BOMB-001</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">22
+            <div style="background:#1D4ED8;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Cv 4235 MOTOR-12</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">23
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3209 CLIM-003</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">24</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">25
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3210 BOMB-002</div>
+            <div style="background:#7C3AED;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pd 6003 COMP-0045</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">26</td>
+        </tr>
+        <tr style="height:54px;vertical-align:top">
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">27</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">28
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3211 TRANS-08</div>
+            <div style="background:#0F1923;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">OT 5104 TBL-220</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">29
+            <div style="background:#1D4ED8;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Cv 4236 BOMB-001</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;font-size:10px;color:#334155">30
+            <div style="background:#16A34A;color:#fff;font-size:8px;padding:1px 3px;border-radius:2px;margin-top:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Pv 3212 COMP-0045</div>
+          </td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;color:#bbb;font-size:10px">1</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;color:#bbb;font-size:10px">2</td>
+          <td style="border:1px solid #dde3ee;padding:2px 3px;color:#bbb;font-size:10px">3</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RIGHT: Panels -->
+  <div style="flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto">
+
+    <div style="border:1px solid #dde3ee;border-radius:6px;overflow:hidden">
+      <div style="background:#f0f3f8;padding:7px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:600;color:#334155">Solicitud de Servicios (Abril 2026)</span>
+        <span style="color:#94a3b8;font-size:16px;line-height:1;cursor:pointer">+</span>
+      </div>
+    </div>
+
+    <div style="border:1px solid #dde3ee;border-radius:6px;overflow:hidden">
+      <div style="background:#f0f3f8;padding:7px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:600;color:#334155">Preventivo (Abril 2026)</span>
+        <span style="color:#94a3b8;font-size:16px;line-height:1;cursor:pointer">&#8722;</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <thead>
+          <tr style="background:#f8fafc;border-bottom:1px solid #e4e8f0">
+            <th style="padding:5px 4px;width:14px"></th>
+            <th style="padding:5px 4px;text-align:left;color:#334155;font-weight:700">OT</th>
+            <th style="padding:5px 4px;text-align:left;color:#334155;font-weight:700">Equipo</th>
+            <th style="padding:5px 6px;text-align:left;color:#334155;font-weight:700">Tarea</th>
+            <th style="padding:5px 4px;text-align:left;color:#334155;font-weight:700">Fecha</th>
+            <th style="padding:5px 4px;text-align:left;color:#334155;font-weight:700">Periodo</th>
+            <th style="padding:5px 4px;text-align:left;color:#334155;font-weight:700">Frec.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #eef1f7">
+            <td style="padding:5px 4px"><span style="display:inline-block;width:11px;height:11px;border:1.5px solid #94a3b8;border-radius:2px"></span></td>
+            <td style="padding:5px 4px;font-weight:600;color:#334155">3201</td>
+            <td style="padding:5px 4px;color:#334155">BOMB-001</td>
+            <td style="padding:5px 6px;color:#334155">Bomba Centrífuga — cambio de sellos y lubricación</td>
+            <td style="padding:5px 4px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;03</td>
+            <td style="padding:5px 4px;color:#334155">Mensual</td>
+            <td style="padding:5px 4px;color:#334155">1</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eef1f7;background:#fafbfd">
+            <td style="padding:5px 4px"><span style="display:inline-block;width:11px;height:11px;border:1.5px solid #94a3b8;border-radius:2px"></span></td>
+            <td style="padding:5px 4px;font-weight:600;color:#334155">3202</td>
+            <td style="padding:5px 4px;color:#334155">COMP&#8209;0045</td>
+            <td style="padding:5px 6px;color:#334155">Compresor — verificación de presión y filtros</td>
+            <td style="padding:5px 4px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;04</td>
+            <td style="padding:5px 4px;color:#334155">Semanal</td>
+            <td style="padding:5px 4px;color:#334155">1</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eef1f7">
+            <td style="padding:5px 4px"><span style="display:inline-block;width:11px;height:11px;border:1.5px solid #94a3b8;border-radius:2px"></span></td>
+            <td style="padding:5px 4px;font-weight:600;color:#334155">3203</td>
+            <td style="padding:5px 4px;color:#334155">TBL-220</td>
+            <td style="padding:5px 6px;color:#334155">Tablero Eléctrico — relevamiento termográfico</td>
+            <td style="padding:5px 4px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;05</td>
+            <td style="padding:5px 4px;color:#334155">Mensual</td>
+            <td style="padding:5px 4px;color:#334155">3</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eef1f7;background:#fafbfd">
+            <td style="padding:5px 4px"><span style="display:inline-block;width:11px;height:11px;border:1.5px solid #94a3b8;border-radius:2px"></span></td>
+            <td style="padding:5px 4px;font-weight:600;color:#334155">3204</td>
+            <td style="padding:5px 4px;color:#334155">CLIM-003</td>
+            <td style="padding:5px 6px;color:#334155">Climatizador — limpieza de filtros y circuito refrigerante</td>
+            <td style="padding:5px 4px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;08</td>
+            <td style="padding:5px 4px;color:#334155">Diario</td>
+            <td style="padding:5px 4px;color:#334155">14</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="border:1px solid #dde3ee;border-radius:6px;overflow:hidden">
+      <div style="background:#f0f3f8;padding:7px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:600;color:#334155">Preventivo por ciclos/horas (Abril 2026)</span>
+        <span style="color:#94a3b8;font-size:16px;line-height:1;cursor:pointer">+</span>
+      </div>
+    </div>
+
+    <div style="border:1px solid #dde3ee;border-radius:6px;overflow:hidden">
+      <div style="background:#f0f3f8;padding:7px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:600;color:#334155">Backlog (Abril 2026)</span>
+        <span style="color:#94a3b8;font-size:16px;line-height:1;cursor:pointer">+</span>
+      </div>
+    </div>
+
+    <div style="border:1px solid #dde3ee;border-radius:6px;overflow:hidden">
+      <div style="background:#f0f3f8;padding:7px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:600;color:#334155">Predictivo (Abril 2026)</span>
+        <span style="color:#94a3b8;font-size:16px;line-height:1;cursor:pointer">+</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+      <div class="screen-footer">
+        Las OTs generadas desde preventivos aparecen en <strong style="color:#16A34A">verde</strong> en el calendario. El panel derecho muestra, por mes, todas las solicitudes y preventivos listos para gestionar.
+      </div>
+    </div>
+
+    <div class="alert info">
+      <div class="alert-bar"></div>
+      <div class="alert-body">
+        <div class="alert-lbl">ℹ REFERENCIAS DE COLORES DEL CALENDARIO</div>
+        <div class="alert-txt">
+          <strong style="color:#CC1F1A">Urgente</strong> · 
+          <strong style="color:#94A3B8">Backlog</strong> · 
+          <strong style="color:#16A34A">Preventivo</strong> · 
+          <strong style="color:#0D7377">Predictivo</strong> · 
+          <strong style="color:#1D4ED8">Orden de Trabajo</strong><br><br>
+          Las OTs de origen preventivo se distinguen fácilmente por su color verde en el calendario.
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-h">Pantalla — Lista de Preventivos del mes</div>
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Solapa "Preventivo (Abril 2026)"</span>
+      </div>
+      <div class="screen-img" style="border-top:1px solid #E8EDF5;padding:0;background:#f5f6fa;font-family:'DM Sans',sans-serif;font-size:13px">
+  <!-- mockup window chrome -->
+  <div style="background:#e8edf5;padding:6px 14px;font-size:11px;color:#334155;font-weight:600;border-bottom:1px solid #dde3ee">
+    Preventivo (Abril 2026)
+    <span style="float:right;cursor:pointer;color:#94a3b8;font-weight:400">&#8722;</span>
+  </div>
+  <!-- table -->
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;background:#fff">
+    <thead>
+      <tr style="background:#f0f3f8;border-bottom:2px solid #dde3ee">
+        <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:#334155;width:36px"></th>
+        <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:#334155">OT</th>
+        <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:#334155">Equipo</th>
+        <th style="padding:9px 16px;text-align:left;font-size:11px;font-weight:700;color:#334155">Tarea</th>
+        <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:#334155">Fecha</th>
+        <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:#334155">Periodo</th>
+        <th style="padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:#334155">Frec.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #eef1f7">
+        <td style="padding:9px 10px"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #94a3b8;border-radius:3px;vertical-align:middle"></span></td>
+        <td style="padding:9px 10px;color:#334155;font-weight:600">3201</td>
+        <td style="padding:9px 10px;color:#334155">BOMB-001</td>
+        <td style="padding:9px 16px;color:#334155">Bomba Centrífuga BOMB-001 — Cambio de sellos y lubricación general</td>
+        <td style="padding:9px 10px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;07</td>
+        <td style="padding:9px 10px;color:#334155">Mensual</td>
+        <td style="padding:9px 10px;color:#334155">1</td>
+      </tr>
+      <tr style="border-bottom:1px solid #eef1f7;background:#fafbfd">
+        <td style="padding:9px 10px"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #94a3b8;border-radius:3px;vertical-align:middle"></span></td>
+        <td style="padding:9px 10px;color:#334155;font-weight:600">3202</td>
+        <td style="padding:9px 10px;color:#334155">COMP-<br>0045</td>
+        <td style="padding:9px 16px;color:#334155">Compresor COMP0045 — Verificación de presión y filtros de aire</td>
+        <td style="padding:9px 10px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;14</td>
+        <td style="padding:9px 10px;color:#334155">Semanal</td>
+        <td style="padding:9px 10px;color:#334155">1</td>
+      </tr>
+      <tr style="border-bottom:1px solid #eef1f7">
+        <td style="padding:9px 10px"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #94a3b8;border-radius:3px;vertical-align:middle"></span></td>
+        <td style="padding:9px 10px;color:#334155;font-weight:600">3203</td>
+        <td style="padding:9px 10px;color:#334155">TBL-220</td>
+        <td style="padding:9px 16px;color:#334155">Tablero Eléctrico TBL-220 — Relevamiento termográfico y ajuste de conexiones</td>
+        <td style="padding:9px 10px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;21</td>
+        <td style="padding:9px 10px;color:#334155">Mensual</td>
+        <td style="padding:9px 10px;color:#334155">3</td>
+      </tr>
+      <tr style="border-bottom:1px solid #eef1f7;background:#fafbfd">
+        <td style="padding:9px 10px"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #94a3b8;border-radius:3px;vertical-align:middle"></span></td>
+        <td style="padding:9px 10px;color:#334155;font-weight:600">3204</td>
+        <td style="padding:9px 10px;color:#334155">CLIM-<br>003</td>
+        <td style="padding:9px 16px;color:#334155">Climatizador CLIM-003 — Limpieza de filtros y revisión de circuito refrigerante</td>
+        <td style="padding:9px 10px;color:#334155;white-space:nowrap">2026&#8209;04&#8209;28</td>
+        <td style="padding:9px 10px;color:#334155">Diario</td>
+        <td style="padding:9px 10px;color:#334155">14</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <div style="padding:10px 14px">
+    <button style="background:#0F1923;color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Orden de Trabajo</button>
+  </div>
+</div>
+      <div class="screen-footer">
+        La solapa <strong>Preventivo (mes en curso)</strong> muestra todos los mantenimientos preventivos que el sistema considera listos para ejecutarse. El Planificador decide cuáles convertir en OT haciendo clic en el checkbox (✓ negro) de cada fila.
+      </div>
+    </div>
+
+    <div class="sub-h">Cómo generar una Orden de Trabajo desde un Preventivo</div>
+    <div class="steps">
+      <div class="step brd-red">
+        <div class="step-n c-red">1</div>
+        <div class="step-body">
+          <div class="step-t">Abrí la solapa "Preventivo (mes en curso)"</div>
+          <div class="step-d">En el panel derecho del calendario verás todos los preventivos listos para ejecutar en el período actual.</div>
+        </div>
+      </div>
+      <div class="step brd-red">
+        <div class="step-n c-red">2</div>
+        <div class="step-body">
+          <div class="step-t">Hacé clic en el checkbox (✓) del preventivo que querés convertir</div>
+          <div class="step-d">Se abrirá automáticamente la pantalla emergente de creación de Orden de Trabajo.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-h">Pantalla — Creación de Orden de Trabajo</div>
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Modal "Creación de Orden de Trabajo"</span>
+      </div>
+      <img class="screen-img" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADvAb4DASIAAhEBAxEB/8QAHAABAAICAwEAAAAAAAAAAAAAAAIEBgcDBQgB/8QAUxAAAQMDAgEHBA0JBgQEBwAAAQACAwQFEQYSIRMUMVFUkpMIIkHRFRhSU1Zhc5TD0tPU4QcjMjM1VYSRsxc0QnGBsSRyobIJFjZ1JUZkg6PBxP/EABoBAQEAAwEBAAAAAAAAAAAAAAABAgMEBgX/xAA3EQEAAQICBAsHAwUAAAAAAAAAAQIRA5EEFKHhEhMVFjFSU2FiY9EFIUFRcbHwMjSBIiMzwfH/2gAMAwEAAhEDEQA/APZaIiAiIgIvj3NY3c9waMgZJwuGetpIKunpJqmKOoqS4QROcA6TaMu2j04HSg50RRlkjiifLK9scbAXOc44DQOkk+gIJIjSHAEEEHiCPSiAiKEssURYJJGML3bGbnAbndOB1ngUE0REBFCWWKINMsjIw5wY3c4DLjwAHxlTQEREBFB0sTZmwukYJHglrC4bnAYyQPTjI/mpoCL41zXOc1rgS04cAehfUBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBEVSW5UcT3xvm2yMcGlm07iT0YHSf9EFteVf/ABAf/kn+P/8A5l6qXlny+4J5jorkYZJMc/zsaTj+79S24P64acf34ct//lSqamk0PXzU88tON0TZ5onbXxQOla2V4PoIjLjn0Yz6F1t7o7To/Ts8uiqO0WuuqJKVuIohte187I+UexpG/g8+d0nrWcPa17HMe0Oa4YIIyCOpdTbNLaZtkUsNt09aaOOZ7Xysgo42B7mnLSQBxIPEdR6FqbmF1l81o3UddaLXBX3N9p5uHOayjYyp5QbnOl3yMe1uCWt5NvAtJJdxaPsusrpDqunfTPq6+01clZCwPp4Y4i6Bj3Yiw4ylwdGWkvG05y3Hpzi56fsNzr6evuVlt1ZV02DBPPTMkkjwcja4jI48eHpUaXTmn6W5yXSmsVsgr5HmR9VHSMbK5xBBcXgZyQTxz6T1oMOkrblU/k+o75crhRXUXJ9BMKZ9HG6CDlJ48hnSSAHcC4khwyCOgcXs9czcRqPl6Q4vvsGKDmzN/I8tyeeU/T35/O4zt2/4f8SzOj0vpqjmqJqTT9pp5Kl4fO6OjjaZXB24FxA4kO87j6ePSuYWGxi9m+CzW/2UI2895szl8Yx+njd0cOnoQYZp6/6ikumn6iuuUNRTXatraR1M2laxsTYuVLHB2S4u/N4PHBzwAIyeL8o9wutfHq+2QXOO3UdqsvKujMLXmqMrJM7i7iGAMwNuDuzx4YWfx223R8hydBSs5s90kG2Fo5Jzs7nN4eaTudkjpyetVrvp6wXipiqbtY7bcJoWlsUlTSslcxp6QC4HA+JBg51Fq2o1BU0FktlZNDa3UkXJxilEMrXxse90pklbIPNcQ3Y3GW8d36I7LUdvtt9/KVS2fUdLT1ttbanT0dHVND4ZpuUxI4sPmucxuzGQcbyQsmrtO2Cur6a4VtkttTWUuBTzy0rHyRYORtcRkYPEY6FyXuy2e+UzaW9WqhuUDHb2x1VO2VrXdYDgcH40GutPVt4ZzOxWO5ints19raSmqXsE7m0scbn7Yy7I814cxpOQA3oOF9Nwu14qtP3esubOQdqWWmZbxC382IhURg7v0i87cnPDjgAYydkwW63wR0scFBSxMoxilayFoEAxtwwAebw4cPRwVVunNPNvDrw2xWwXJ7g91WKRnLFwGM78ZzjhnKDA9O6q1jcqB98dbqplvmpKqV7pRSiCmcwOMYj2SmVxy3a4Pb08cMxhdzo67X5+o6Wgu1xirmV1kZcfMphEIZN7WlrMEnaQ4HziTkdODgZFDpvTsNyqblFYbXHW1TXMqKhtIwSStd+kHOxkg+nPSrsVDRRTsnio6eOWOHkGSNjAc2PIOwH0NyBw6OCDW1zuF1vElNcai5RxUsOrIqGO3CFvART7Q4v/AEt5I3dW0gY/xK9ovUWrL5eYa11sqxapqupgn381EFOyNz2tLC2UzF+5rQ4ObjicBuOOXv05p6S8G8PsVsfciWk1bqRhmy3G078ZyMDHH0BSh0/YYb0+9Q2W3R3OTIfWNpmCZ2Rg5fjJ4cOlBh+r9M6bq/ym6bkq9P2mofVsrHVLpaONxmLY49peSPOI9GehQjvV79j6uomu8rHz3ae222joaKIyERyPwGmQhu/ax3nOIYAOgnitgS0tNLUw1MlPC+eAOEUrmAuj3cHbT0jOBnHThU6+xWSvoH2+us9vqqN8pmfBLTMfG6QncXlpGN2STnpyUGt7Jcb3qW7adkluRttdGy7U0tQIInyObFNGwHGTGHnaCcbm9OBxBELnru+v0Y26UVTK+40NBLWVLKWlh5CRjJJGMlkdK8ERyckSGx5fxyDjC2HVaU0vVUMdDU6bs81LEXGOF9FG5jC4guw0jAyQCcdOFOv0xpuvdTOrtP2qqNLHyVPy1HG/kme5bkcB8Q4IMOqr9WQXG4RULKOgmuF6o6I1gp25jElKx+5x4b3/AOBpdni5vAgYOSaJuVdWSXm319Q2sfa680ratrAzl28mx/nBvm7m79pxgZHQOhfbVpeFsN4jvhorsy61IllgNGGwNY1jGMZsc5+cBgySeJ4gDoXc2u30FroY6G2UVNRUsedkNPEI2NycnDQMDigsoiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgLram1mat56ap7Z2uHJENGGNHSMenPFdkiAvOvlodOk/wCM+gXopedfLQY550ntftxzz0Z94QeikUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEkUdjet3eKbG9bu8UEl558sr9LSn+VZ9AvQmxvW7vFed/LKa4VGktoBZtrdxJJOc0+MfF0/9EHopFxVtVTUVJLV1lRDTU8TS6SWV4YxjR0kk8AFC219Dc6Nlbba2mraWTOyanlbIx2Dg4c0kHigsIuKkqYKuAT00rJYy5zdzTkZaS0j/Qgj/RcqAi44aiCaWaKKaN74XBkrWuBLHEAgHqOCD/quRARRlkZFE6WRwaxjS5zj0ADpK+QSxzwRzwvbJFI0PY5p4OBGQQgmirUtwpKmsqaSnm5SalcGzgNOGOIyG7sYzgg4zkZGekLkq6mCkpn1NVKyKGMZe9xwAEHKiLiq6iCkpZaqplbFBEwvke44DWjiSUHKiA5GQqFDerNXV01BRXagqquDPLQQ1DHyR4ODuaDkYPDigvoiICIiAiKm6628R08jalkjambkYTEDJvfkggbc9G05PQMHOMILiIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgLzz5ZXTpT+M+gXoZedfLQLgdJ7XEf3z6BBvXVtK2tsM9O6iq63JY5sVLKyObc14c1zC9zW5aQHcTg49PQsIkt2u6uoo31UlwZAA9jHRmJtRGRKC2SZsc8cRcW46A8cD5o3EHZiINZuserWSUUMQraela+oB5tI0uie6qe8SEcvG0gsLcZD8YcC0ZINgW7UAhibUW3UE8rK4yXB8V1a0VcWZNohHLDY0ExktwzzRt49B2IiDAK62390rpH0N7mtpqg8UUNzDKnk+asa385yo4NkD8jfxPned0ngoLBq9klJW1VTXOr46qkD3eyDjFyIpw2YmPdsd5+c+bkniPQtjIgwbRdq1JFaLlDen1jqqWkEO2Z+6OSXDw6RhM0h84kehgxt80cQK2n6DVMeorO+a31lJR08Ucc552HRuYKXBDm8sRnlMDDYx+jnccrYSINbXnTmooa6vqba2u5Crucs00cNU4vex0EbWPaOXiAAcHjG4f4TtOBic9jv1TaLzbq6kvFZXVDHNirXV7WwPjOza0RiXzHgDiQ3pDiHccnYyINYX2zawhirqG1U9zlg5zM+gnFzc6SMGOLZkunadu/lDl2/GCA3Dl2f5SbTeroZ4aehuVdTzWx8MDKSubAyKoJ4ulBkZvaRtA/SAw7hx454iDC9K27UkGq6ue6y1hp985Y4OzBKxzgYxgzHBa0AcIm8Q7ic5dTm0ldX2GrlFVWsuLJa00UMUscfJiadzt4e3DslmOl3DPRkDGwEQa+ulsvlFeJpKb2WbTwzRyQ1vsiXQQ0jYsSMfG55c95IecljslzTu83h1Gjqauu0lFDJV3flDJS1NfGLk8tEHN5WtcHtmd+nIAS0EHoyMZJ2woQxRQtLYYmRtJLiGtABJ6Sg1vTWjV9XcajnNPcqOlmnpzIxlxcBtbUl0mx3LudjkzxI2ZGBtGABzw2PUtupp30rLjVvfTVkRjmusj8/8Q3m+Myghwi3YIc0noLgTlbERBrqx23U0NTSOu9De6qkbJPyUMNxax8JdKHMdJ+f85u3gBvftAIxxUKq06v2xh0d0lqDEG0ssNxDI6WXnD3F8zeUHKNLDHww/g0twM8dkIgwzS9nvlDqCmrKqSudDLDW88E1e6VgeahpgwwvIb+b3Y2gYHArM0RAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQF518tDp0n/GfQL0UvO3lnxiQ6Ty5zcc86D8gg9EoiIMQo9c0kl5ulHUyWqGK3SuifHHXmWtJDmtaebNjyA4uAGHEnI4cV2sOqbPNPDTwyVUs8pcOSZRzOfHtfsJkAblg3cMuxniRwBKq3Kx2Grs9ws9VWNMVXVOqZN0kZdHLvDwQHAjg4Dg4EcMHKr0FgtdBNTT0GoJKOWJnJSGAUrGzs3l4a5gj2jBLuLQ04ccknilhyaa1pb7vbGzPhrIqsUzKiWnbRTElrnbcx+Z+cGRjLcgdPRxXb2i9UF2a11C6oe1zC/e6mkY0YeWFpLmgBwc0gt6R1YWO1OktOzUUVL7LysbFRx0bTy0TssZIJBua5pa7JGCCCCOGF2mm6C3WKnbTU17fNTtDzyUr4Q3e6Rz3P8xrcEl2MDzQAMD0q2Hfoq/PqLtlP4o9ac+ou2U/ij1pYWEVfn1F2yn8UetOfUXbKfxR60sLCKvz6i7ZT+KPWnPqLtlP4o9aWFhFX59Rdsp/FHrTn1F2yn8UetLCwir8+ou2U/ij1pz6i7ZT+KPWlhYRV+fUXbKfxR61YUBRldsjc/GdoJwpKM2zkX73BrNp3EnGAgw20flI05cWUz4q+ika63OraoU9U2d9KQYwI3NYC4uJkwBgEluAMldvFq2yS1EFMySrNRPK+FsHMpuUa5gaXbm7csAD2nLsDBByqM+ndPzW+ionXOQMoqHmUL21DA4N3Rua/oxvDomEcMdOQVKhsVnp6t1bLfKiqrH8tys8k8bXPMrY2k+Y1oGGxMA2gdHHJ4q2HZ0GorbXTGCAVvKtlbE+N9DMxzC5he0uDmja0gHzjgZ4ZzwXbLEtM6etOnyeY3+XznxmUHmzRI1jXNDCGRgY87JIw4kDj0g5Lz6i7ZT+KPWlhYRV+fUXbKfxR6059Rdsp/FHrSwsIq/PqLtlP4o9ac+ou2U/ij1pYWEVfn1F2yn8UetOfUXbKfxR60sLCKvz6i7ZT+KPWnPqLtlP4o9aWFhFX59Rdsp/FHrTn1F2yn8UetLCwi4G1lG5wa2rgc4nAAkBJK51AREQEREBERAREQEREBERAREQEREBERAXnLy1JKhh0lzeGKXPPd2+XZj9R8RyvRq82+W9TuqP/KAbRUlTjnp/4h2Nv6jo80qSPSSIior2/wDUO+Wl/qOVhV7f+od8tL/Ucuh1NNFFqzTzzS18j2SybpIaOaWNjXRuaNzmNLW+dt6Tw6ehJIZMiwLRrL7ST1IbaKKaue3dWTzwS0jnScoeDpiH8twJLS0AAADgCFwU1HexXVLbTRyQXSRtU2uqZ2viZJunbyThIWEPcI923GQ3oOOhBsRFhOnGXG3aIipbpYt9BBDMJoWTSzVLgHu2sbFyeZNwx0uGc+kLoYqWSSgjfHaq9rnRSG3Qi3zRtoal0ocGtDmDYGtLRvwG4D8EDIQbURa1uzTU3C9exFrr6Fw2RTF1sqAK1omY6aQnaBIA3c1oDtzgXY4ELMdFh7LDHG6hgomMkkbFHDSupmFgedrhE4ksyOOCg7lERAREQEREFe5/s2q+Rf8A7FWFXuf7NqvkX/7FWFfgCr3P9m1XyL/9irCr3P8AZtV8i/8A2KR0iwiLrq241kFRJFFYbjVMYGlssT4A1+enG+Vp4enIHxZUHYourFXNC+cw09zuJNWI3M5OOMQAtHFpfs3xjpyC85JAzjAuW+pmqoHST0FTQuDy0RzujLiB/i8xzhg/55+IILCIiAiIgIiICIiDp73qvS9jrIqK9aks1sqpmh0UNZXRwveCcAhrnAkZ4cPSu4BBGRxC0w6+UOm3XKC8XS1W6+s1DV1twpbpUch7M0MhmZTticQeWDYZIA1rWuAfDyZwfOWe/kmpqul0HRQ1dNPSM5WpfR007S2SnpHTyOponNPFpbAYmlp4txg9CDIrh+ob8tF/UarCr3D9Q35aL+o1WFfgCIigIiICIiAiIgIiICIiAiIgIiICIiAvPPlldOlP4z6Behl558srp0p/GfQIPQyIiCvb/wBQ75aX+o5WFwOo6Nzi51JA5xOSTGCSV85jRdjp/CHqVFhFX5jRdjp/CHqTmNF2On8IepBYRV+Y0XY6fwh6k5jRdjp/CHqQWEVfmNF2On8IepOY0XY6fwh6kFhFX5jRdjp/CHqTmNF2On8IepBYRV+Y0XY6fwh6k5jRdjp/CHqQWEVfmNF2On8IepOY0XY6fwh6kC5/s2q+Rf8A7FWFX5jRdjp/CHqVhAVe5/s2q+Rf/sVYXxzWuaWuaHNIwQRkEKD6ir8xoux0/hD1JzGi7HT+EPUqLCKvzGi7HT+EPUnMaLsdP4Q9SCwir8xoux0/hD1JzGi7HT+EPUgsIq/MaLsdP4Q9Scxoux0/hD1ILCKvzGi7HT+EPUnMaLsdP4Q9SCwir8xoux0/hD1JzGi7HT+EPUgsIq/MaLsdP4Q9Scxoux0/hD1IFw/UN+Wi/qNVhcDaOja4ObSQNcDkERgEFc6AiIoCIiAiIgIiICIiAiIgIiICIiAiIgLzz5ZYBOlMjtn0C9DLzz5ZXTpT+M+gQbz1SLobFUCyytirjtEbiWg43DcG7wW79udu4EZxngsSota1MDobXT0N2u1ZE1zqvncO2oYRJtLCKeIxFw4nOWtPm8TkkZzcKKjuNHJR3Ckgq6aTG+GeMPY7jni08DxVL/y5p7kaaH2CtnJUji6nZzVmISTklox5pJ4nHpQYpQ6zuEEdPRNt1RdKpxqJpHNbIXcmKp8bWt2RuGQGn9ItHAceJI7GHVV0qKeingtFFsuVY6mot9c4HDeUJdJiM7TtjJ2jcckA44ld5NYLHMYjNZrfIYZHSxb6Zh2Pc7c5wyOBJ4k+k8Vxy6Z05K6odLYLW81Tg+cupIyZXA5Bdw4nPHJ9PFB0h1Jc2Xae2Q0UE9e+r5JrJ6zZBGG00crtrxFuIy7ABBJ4ngBgVaHX1TVyUtQ2zRNt001PA6Q1ZMzXTQiUYYGYIGQM7hnp+JZTUafsNRRcynsltlpdzXci+lYWZa0NaduMZDQGj4hjoXO22W1u3bb6QbXskGIW8HMG1rujpAAAPoAwg6DS+rKm82upuMlnlpoGUjaqB5EgbIHBx2ZfG3zgAMlu4ed0rr4Na3h81FRusVCKytbTSQtZcXOjayZkrsvdyQII5I8ADnPSsphsdppoKyKht9LRc8a4Tup4WxueTnicDieJPHrK4rHpux2WhgpLfa6OFsOxwc2nY1zntbsDzgDzsZGfjKDHX66qo6V1XLZ4eRmpp56PZVlz3CKRrDyg2eZncD5u8jiMZwDOHWF25bZU2ihpomw1VS+eWskazkYXta14/Nbju3Z6OjiM8M91c9K2SspbhFHQUtHNcG4qaiCnjEko3biHEjzgT0g5zk9a+WXTFrttPUwmngqBUl4ka6Bgjax4aHRsYBhsZ2glvpOSclB0cWtbpURiKmslOawVMsDmT1MkLAGQNm3edFvBIcBgtHFfKfXFdJR7pLTSR1UkdPNTQiqlk5Rk0b3geZCXbgGHPDaBx3cFlVFZLNQxtjorTQUzGuc5rYqdjAHOG1x4DpI4E+kKNVYLFVwtgqrNbp4mhgDJKZjmgMBDBgjoAc4DqBPWgxtmr625Wavr6G3RxU1LbWVU0jqvbM1z4DKAxvJuacAtG53AnPDhg8P/AJoqBdYq59I91Gx8lBH/AMdhzpmw8q57ogwAg7C0EuJA4hoDisol09YJZYpZbHbZJIYeQic6lYSyPBGwHHBuCRjowT1qfsJZvZB1w9iKDnjo+TdUc3ZyhZjG3djOMADHUg6vR2oqy81E9NX26CjmjpaerZyNSZmlkwcQCSxuHDYc8COjiskXBT0dHTSGSnpYIXmNsZdHGGksbna3I9AycD0ZK50BERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAXnnyyunSn8Z9AvQy88+WXnOlMf/WfQIPQyIiDqBqjTJq5qRuobS6pgDjLCKyMvjDQS7Lc5GMHPVgrtmkOaHNIIIyCPSsSu9qvDrjquqoYntfW2mGCikZK1rnTNE3AHOWkF7eJx09PBY66k1LcLndfYc3WGshraiPnktwPNQzm2Gxti3nDuUc052ADBOfQQ2guKKpglnmgjlY6WAgSsB4sJGRn/McVhtst+om2G/x0cNyt75qZrbfDX1wnmZMIyHOD979oJ2487pBOBnj0rrHqRjKqe2W27UVPLXQyS09TX8vUSxtgLD57akHAftOOVGcHgeghsS7Xi02iOOS7XSht7JCWxuqqhsQcR6BuIyrjHNewPY4Oa4ZBByCFgmobbqFlPpmak9nqieihkZVS0TqMVOXMaPOFQ4xnJHHBJz6fSoXu1axqZLnFQTVUNO2N1RRudUgPe+XZuhO14ILQJcHIAMjdrhtyAz9RY9jy4Me1xYdrgDnacZwf9CP5rWlXp7VNVa6gslvLJm0FW6kj5+6Ax1JcwxN82d+4cHkb3uAyRwGAuSaw3mmvFwm9jL5U0k9wdUTNpLrybp2up2tZtJmbtDXh2R5v+EjIaEGyUXX6ZiuEGnrfDdZOUr2U7G1Di7cS8NGcn0nPp9K7BAREQEREBERARFw18L6ihqKeKUxSSxOY2QdLSQQD/ogr2682e5VNTTW660NZPSu21EUFQyR0JyRh4BJacg9PUrywVjb+zRtNZ4NL1lPUUcVPA97amMNeGkBxi5OdjnDAzhxZkHjk5auuisGrpLdFNNJdG1tNT0ggb7JlvnNqnmTeBIWvPI7AS4uz0ZJyg2KKulM8cAqYTLJv2MDxl2w4dgenBIz1L7FUwSzzQRysdLAQJWA8WEjIz/mOK15SWDUtFR1dNa4q+lk/+KESS1+9sj5ZA6BzcvcRwzxIGDkkccmpPZdRMprj7GWK9U8dXOwtE905Spbtp9u7cKoZG7hxecHjtPSA2dUVMFOYhPKyMzSCOPccbnHJAHx8CuOa42+FtU6aupY20gDqkvlaBCCMgvyfN4cePoWBQWbUc1/t09zobnUTQ1lPMaoV7ebRxNp9r2mLlBl/KbiSGHO4HPV81rpC83Sq1BLQRx8jco9krDIA6cRwMMOPQPzoc07scCUGxwQQCDkHoKLXE1n1W653Q1Et45J4l5F1DMwB8bmgMY3fUANc34o2nIPnedkxitms5a62SVDK2mgDGAtgmLjE9s7nOc8OqsYezZwPLYAc0fGGyUWL6FprvTS3Flyp65sJka6nlrJw+V+S4uBDZZG8OHnN2ZBxtG3JyhAREQEREBERAREQEREBERAREQEREBERAREQEREBERAXnnyyunSn8Z9AvQy86eWdGXT6ReHOw1tcC3OAcmn4/wDT/qg9FoiIKdOyeZr5DWTM/OPaGtazAAcQOlvxLkFNKOiuqO7H9VLf+od8tL/UcqeqrjNarJJXU7GPkbLEwB4JGHytYej4nFVFzm83bqjux/VTm83bqjux/VXS1eo5KS7VNCaCarcKmOnp2U+0PcXQmQlxe4DA2lV6LWNPVvifT0tVPzpkBp6ZsbGybpBI45cX7eAjcT0YxwLshLqyLm83bqjux/VTm83bqjux/VXVM1LCbg2kfbq6NnLspXzu5MsjmcwPEZw4nPEDIBGTjK71Livzebt1R3Y/qpzebt1R3Y/qqwiXFfm83bqjux/VTm83bqjux/VVhEuK/N5u3VHdj+qnN5u3VHdj+qrCJcV+bzduqO7H9VObzduqO7H9VWFi161zZ7Hq2GwXoS25lTT8tTV9RhtNK4E7o9+eDgMHjjp+MZXHeVkc8NJNM2unLmRucMtZjIGfcq6sW0zquk1fp653G3UlXFQxvlhp6idm1tU1reMjB07c5HHq/wAwMpQFw1z3RUU8jDhzI3OaeogLmVe5/s2q+Rf/ALFI6R13LVfbJe6z6qctV9sl7rPqqKJcS5ar7ZL3WfVTlqvtkvdZ9VRRLiXLVfbJe6z6qctV9sl7rPqqKJcS5ar7ZL3WfVTlqvtkvdZ9VRRLiXLVfbJe6z6qctV9sl7rPqqKJcS5ar7ZL3WfVTlqvtkvdZ9VRRLiXLVfbJe6z6qctV9sl7rPqqKJcSFRVtkizVSOBkY0gtbgguAPQPjXcro3fpxfLR/94XeICIigIiICIiAiIgIiICIiAiIgIiICIiAvPPlldOlP4z6Behl558srp0p/GfQIPQyKOZPct734JmT3Le9+CDht/wCod8tL/Ucvtwo6a4UM1FWRCWCZpa9hJGR/mOIPxjiFxRw10Qc2OanDS9zgHRuJGXE9OfjUttx9+pfCd9ZVFWisFrpDG6OGZ8jJ+cCSaokleZNhZkuc4k+aSME4C4G6UsTKdkEVJJEIxGI3R1MjHs2btu1wduHB7hwPEEg5C7HbcffqXwnfWTbcffqXwnfWRVOLTlpjr464QzmaNzXjfVSuaXtbsD3NLtrn7eG4gn412yq7bj79S+E76ybbj79S+E76yC0iq7bj79S+E76ybbj79S+E76yC0iq7bj79S+E76ybbj79S+E76yC0iq7bj79S+E76ybbj79S+E76yC0uq1VpyzaotRtd9oY6ylLw8NcSC1w6CCOIPo4egkelW9tx9+pfCd9ZNtx9+pfCd9ZBCop4KSyS0tLDHDBFTuZHHG0NaxobgAAdAV1Up4a+aCSF09MGvaWnETs4Ix7pW8ye5b3vwQSVe5/s2q+Rf/ALFc2ZPct734LjqY5JqaWHDW8owtznOMjHUpA6pFz+x9X2iDwz609j6vtEHhn1qjgRc/sfV9og8M+tPY+r7RB4Z9aDgRc/sfV9og8M+tPY+r7RB4Z9aDgRc/sfV9og8M+tPY+r7RB4Z9aDgRc/sfV9og8M+tPY+r7RB4Z9aDgRc/sfV9og8M+tPY+r7RB4Z9aDgRc/sfV9og8M+tPY+r7RB4Z9aCu79OL5aP/vC7xdW23VO9hfPCQ17XEBhBOCD1/EuyzJ7lve/BBJFHMnuW978EzJ7lve/BQSRRzJ7lve/BMye5b3vwQSRRzJ7lve/BMye5b3vwQSRRzJ7lve/BMye5b3vwQSRRzJ7lve/BMye5b3vwQSRRzJ7lve/BMye5b3vwQSRRzJ7lve/BMye5b3vwQSRRzJ7lve/BMye5b3vwQSRRzJ7lve/BMye5b3vwQSXnnyyyAdKZPbPoF6EzJ7lve/BeevLI3Z0puAH986Dn3hB6HREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBEVG5Na+eFjwHN2vODxGct9aC8i6nm9P7xF3AnN6f3iLuBB2yLqeb0/vEXcCc3p/eIu4EHbIup5vT+8RdwJzen94i7gQdsi6jkoo3xvjjYx3KMGWjB4uAWrPKikft09BvdyT+cvczPmucOSAJHWNx/mVv0bB4/FjDva7n0vSNXwZxbXs3Ui8UcnH723+ScnH723+S+tyJ49m98TnB5e3c9rovFHJx+9t/knJx+9t/knInj2bznB5e3c9rovFHJx+9t/knJx+9t/knInj2bznB5e3c9rovFHJx+9t/knJx+9t/knInj2bznB5e3c9rovFHJx+9t/kgjYDkMaP9E5E8ezec4PL27ntdedfLMlDajSMODlzK5wPo4GnH/7W8NByyz6GsE80jpJZLZTPe9xyXOMTSST6StJ+WV+lpT/ACrPoF8OqODMw9DTVwqYn5vQyIijIREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQFSr/71D/yP/wB2q6qVf/eof+R/+7UHS6wnraXTFxqLfv5zHA4sLG7nN6yBg5IGSBjpCxe46itFksYfp2/xVhlkP5yprTWsDhGXYL5JhszgHaHEnjhvpGfL5gdQ60GDDVN6dWwTtbRczfVUtO6nELjKeWgEhIfvwMOOANvQqUut7i210FRHcbNNJVgmbYxrW0b9hIhk5Sdo3E5HEg+Y7zePDY6+YHUEGs6/WFZZ6O5Tc4pWVrqqSXkZi2SPzaeF2xrjIzAJdwDdxOcgdJWZadr7hcLhdXVD6YUtNU8hBGyIh/6tjy5zi7B/TIwAOhd1gZzgZX1BCTpj+VZ/3Bam8qL9bpv/AJav6FbZk6Y/lWf9wWpvKi/W6b/5av6Fd3sz91T/AD9pfO9rftK/4+8NU6XhoqjUduguTw2jkqWNmJOBtJHSfQPjWx5NJNuTny3SnipBFJPyVFDbRSukLQC1rXsa50rMcchpPStTKfKybmO5R+WABpzxbjox1L02Lg1VzemqzyeDj04dMxVTdsqXR2m/7vFHcuVniq5IpJXmMxGFjXAFjmAni7HHHAZ9K5KvRemqJsr5W3KZlPTST72F4ZUNbFv3B7owwHPDDS7gfiK1eSSSSSSeklfXPc5rWlzi1v6IJ4D/ACWvV8Try2a1h9nDaFu0HaamjoKippqul5eVhc1lSZA6N7HOADjG1uRgfol3xnK6LTUFPU2q+VlhtDam4RyQimpZ4W1bo4STucGubhxzjJ28AfR0rDHOc4AOcSGjABPQjHOY4OY4tcOgg4KyjArtN6r/AJ9WM6RReLUW/wCfT4Np12ltM1N3ax8EsU1VXileynlayOB4p2SOa0YIJ3EtAzgF3xYVibS9ruFvt5q7ZXUZpqJpFCS8zYdM4OcdkRc7aMf4fSMnC1EpiSQSGQSODznzs8ePxrCdFr939fR+fNnGl4d5/tx7/wA+TP7xpWwQWiu5o2u5zTW9ta2eWTAcDM6PaYy0EHAz08D6Fr1EXRhUVURN5u5sXEprmJpps9cfk8/9Aad/9qpf6TVpbyyunSn8Z9At0/k8/wDQGnf/AGql/pNWlvLK6dKfxn0C8Xifrn6ve4P+On6Q9DItH+2Z0b8GtWeDS/eE9szo34Nas8Gl+8LGzPhQ3gi0f7ZnRvwa1Z4NL94T2zOjfg1qzwaX7wljhQ3gi0f7ZnRvwa1Z4NL94T2zOjfg1qzwaX7wljhQ3gi0f7ZnRvwa1Z4NL94XJF5SuiXM3Psep4uOMOgpyf8ApMUsXbsRaQd5TGjQ4gab1W4A9IhpcH/86+e2Z0b8GtWeDS/eEsXbwRaP9szo34Nas8Gl+8J7ZnRvwa1Z4NL94SxwobwRaP8AbM6N+DWrPBpfvCe2Z0b8GtWeDS/eEscKG8EWj/bM6N+DWrPBpfvCe2Z0b8GtWeDS/eEscKG8EWk3eUrokRbhY9Tl+0nkxBT7v8v12M/6qr7Z/SPwQ1j4VF95Vpomro+8F29kWifbP6R+CGsfCovvKe2f0j8ENY+FRfeVlxVXdnHqXb2RaJ9s/pH4Iax8Ki+8p7Z/SPwQ1j4VF95Tiqu7OPUu3si0T7Z/SPwQ1j4VF95T2z+kfghrHwqL7ynFVd2cepdvZFotnlO6Qc8NOk9YMBOC4xUeB8fCpyuap8pfRcTcx6f1TUHOC2OCmBHDp86cKTRMTb/cLdu5Fon2z+kfghrHwqL7yntn9I/BDWPhUX3lXiqu7OPVLt7ItE+2f0j8ENY+FRfeU9s/pH4Iax8Ki+8pxVXdnHqXb2RaJ9s/pH4Iax8Ki+8p7Z/SPwQ1j4VF95Tiqu7OPUu3si0T7Z/SPwQ1j4VF95U4PKb0fJKGP0tq6Fp6XvhpCB/KoJ/6JOHMfLOC7ea454Ipsco0nb0EOII/1C0bcPKk0BRTNils2qCS3cNtNAR/W+JTt3lQaBrt/I2fU7dmM7qaAdP/AN74lrVurmNP1S+M/wBacxp+qXxn+tagPlI6HAz7E6j+bw/aqPtlNDfujUnzeD7ZBuHmNP1S+M/1pzGn6pfGf61p72ymhv3RqT5vB9svrfKT0MTj2J1J83g+1Qbg5jT9UvjP9acxp+qXxn+tag9sjof906j+bw/ap7ZHQ/7p1H83h+1QbgZR07Xhwa8kHI3SOIz/AJErrtU6XsOp4YYr5b21bYHF0R5R7HMJ6cFpBwcDh8QWrpvKU0NFE6R1o1IQ0ZOKeD7ZUPbU/k+/cuqfm1P9srTVNM3pm0saqKa4tVF4bC/sm0B+4nfPqj7RP7JtAfuJ3z6o+0WGt8pLQzmBwtOo8EZ/u8H2q++2R0P+6dR/N4ftVu1rH685y0ano/ZxlDMf7JtAfuJ3z6o+0T+ybQH7id8+qPtFg9d5TWh6WMSGx6olaSGnZT0/AkgDpmHpKjH5Tmh5JzE2wapy0gSO5CmxGSM4P5/jwI6MprWP15zldT0fs4yhnX9k2gP3E759UfaJ/ZNoD9xO+fVH2iwSLyntDStc9lh1SWDO13N6bDyDjA/P56evCiPKi0CWscLLqjiTu/4an8zDtpz+e6+HDKa1j9ec5NT0fs4yhnv9k2gP3E759UfaJ/ZNoD9xO+fVH2iw72yOh/3TqP5vD9qntkdD/unUfzeH7VNax+vOcmp6P2cZQzH+ybQH7id8+qPtEH5J9AZ/YTvntR9dYcPKR0Pj9k6j+bw/ap7ZHQ/7p1H83h+1TWsfrznJqej9nGUNyUsENLTRU1PE2KGFgjjY0YDWgYAHxALz75ZfTpTj2z6Bd97ZHQ/7p1H83h+1Wrfy+flIsf5QTZDZqS40/MOccrzuNjd3Kcnjbte73BznHoWh0P/Z" alt="Crear OT modal">
+      <div class="screen-footer">
+        <strong>Campos:</strong> Fecha y Hora de programación · Tipo de Evento (Único / Mensual) · Cantidad de Meses (solo si Tipo = Mensual).
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step brd-amber">
+        <div class="step-n c-amber">3</div>
+        <div class="step-body">
+          <div class="step-t">Seleccioná la Fecha y Hora de programación</div>
+          <div class="step-d">Definí cuándo se ejecutará esta orden de trabajo.</div>
+        </div>
+      </div>
+      <div class="step brd-amber">
+        <div class="step-n c-amber">4</div>
+        <div class="step-body">
+          <div class="step-t">Elegí el Tipo de Evento</div>
+          <div class="step-d"><strong>Único:</strong> genera una sola OT para esa fecha.<br><strong>Mensual:</strong> habilita el campo "Cantidad Meses" para crear OTs programadas a futuro de forma automática.</div>
+        </div>
+      </div>
+      <div class="step brd-amber">
+        <div class="step-n c-amber">5</div>
+        <div class="step-body">
+          <div class="step-t">Si elegiste Mensual → ingresá la Cantidad de Meses</div>
+          <div class="step-d">El sistema generará OTs para cada mes durante el período indicado. Ej: 6 meses = 6 órdenes de trabajo futuras.</div>
+        </div>
+      </div>
+      <div class="step brd-amber">
+        <div class="step-n c-amber">6</div>
+        <div class="step-body">
+          <div class="step-t">Clic en "Generar Orden"</div>
+          <div class="step-d">La(s) OT(s) quedan creadas y aparecen en verde en el calendario. Ya están listas para ser asignadas a un Mantenedor.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert warn">
+      <div class="alert-bar"></div>
+      <div class="alert-body">
+        <div class="alert-lbl">⚠ IMPORTANTE — Tipo de Evento</div>
+        <div class="alert-txt">
+          <strong>Único:</strong> genera una OT para la fecha seleccionada. Ideal cuando querés controlar la programación manualmente cada vez.<br><br>
+          <strong>Mensual + Cantidad de Meses:</strong> genera automáticamente OTs a futuro para todos los meses del período indicado. El período entre OTs respeta la frecuencia configurada en el preventivo. Usá esta opción para planificar con mucha anticipación sin intervención mensual.
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-h">¿Qué pasa después de generar la OT?</div>
+    <div class="states-bar">
+      <div class="state-item" style="background:#64748B">Preventivo<br>cargado</div>
+      <div class="state-item" style="background:#16A34A">Listo en<br>calendario</div>
+      <div class="state-item" style="background:#E8891A">OT generada<br>y asignada</div>
+      <div class="state-item" style="background:#0D7377">En ejecución<br>Mantenedor</div>
+      <div class="state-item" style="background:#CC1F1A">Informe<br>de servicio</div>
+      <div class="state-item" style="background:#16A34A">Conforme<br>✓ Cerrado</div>
+    </div>
+
+    <div class="alert tip">
+      <div class="alert-bar"></div>
+      <div class="alert-body">
+        <div class="alert-lbl">✓ PROCESO COMPLETO</div>
+        <div class="alert-txt">Una vez generada la OT, el proceso sigue el flujo estándar de ejecución: el Mantenedor la recibe en su bandeja, la ejecuta en campo, confecciona el informe de servicio, y el Supervisor da su conformidad. Todo queda trazado con fecha, técnico, herramientas e insumos utilizados.</div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// Progress bar
+const pb = document.getElementById('progress-bar');
+window.addEventListener('scroll', () => {
+  const d = document.documentElement;
+  pb.style.transform = `scaleX(${d.scrollTop/(d.scrollHeight-d.clientHeight)})`;
+  document.getElementById('back-top').classList.toggle('visible', window.scrollY > 280);
+  updateNav();
+});
+
+// Active nav
+function updateNav() {
+  const secs = document.querySelectorAll('section[id]');
+  let cur = 'cover';
+  secs.forEach(s => { if (window.scrollY >= s.offsetTop - 120) cur = s.id; });
+  document.querySelectorAll('.nav-a').forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + cur);
+  });
+}
+
+function setActive(el) {
+  document.querySelectorAll('.nav-a').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  if (window.innerWidth < 900) closeSidebar();
+}
+
+// Mobile sidebar
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('open');
+  document.getElementById('overlay').style.display = sb.classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').style.display = 'none';
+}
+
+// Intersection observer fade-in
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.05 });
+document.querySelectorAll('.section').forEach(s => obs.observe(s));
+
+// Add onclick to nav items
+document.querySelectorAll('.nav-a').forEach(a => {
+  a.addEventListener('click', () => setActive(a));
+});
+</script>
+</body>
+</html>

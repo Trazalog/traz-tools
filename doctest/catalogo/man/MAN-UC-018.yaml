@@ -1,0 +1,38 @@
+id: MAN-UC-018
+modulo: MAN
+titulo: Definir un mantenimiento predictivo
+perfil: Planificador
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Predictivo.php
+  - repo: traz-prod-assetplanner
+    path: application/models/Predictivos.php
+    detalle: "tbl_predictivo + sus tablas de insumos y herramientas"
+pantallas:
+  - "Mantenimiento → Predictivo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo tiene parámetros configurados y lecturas cargadas
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Predictivo"
+    resultado: "Se listan los predictivos con Id, Equipo, Tarea, Fecha, Período, Cantidad y Horas Hombre"
+  - paso: "Crea uno nuevo: elige el equipo y la tarea"
+    resultado: "Queda definido el trabajo"
+  - paso: "Define el período y la cantidad que lo dispara"
+    resultado: "Queda definido cuándo corresponde hacerlo"
+  - paso: "Declara herramientas e insumos"
+    resultado: "Quedan asociados, igual que en el preventivo"
+validaciones:
+  - "Las herramientas e insumos quedan declarados, no pedidos — igual que en el preventivo"
+  - "Las herramientas y los insumos quedan declarados, no pedidos"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
+notas:
+  - "**Preventivo y predictivo, la diferencia en criollo:** el preventivo se hace **cada tanto** —por tiempo o por uso—, aunque el equipo esté perfecto. El predictivo se hace **cuando el equipo avisa**: se le mide algo —temperatura, vibración, presión— y se interviene cuando ese valor se sale de lo normal. Uno va por calendario, el otro por síntoma."
+  - "Por eso el predictivo necesita dos cosas que el preventivo no: **parámetros configurados** en el equipo (MAN-UC-016) y **lecturas cargadas** (MAN-UC-017). Sin eso, no tiene con qué compararse."
