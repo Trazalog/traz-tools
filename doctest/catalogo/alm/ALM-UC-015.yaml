@@ -1,0 +1,38 @@
+id: ALM-UC-015
+modulo: ALM
+titulo: Ver los artículos que llegaron al punto de pedido
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Lote.php
+    detalle: "puntoPedList()"
+  - repo: traz-comp-almacenes
+    path: models/Lotes.php
+  - repo: traz-comp-almacenes
+    path: controllers/Articulo.php
+    detalle: "el punto de pedido se carga en el alta y la edición del artículo (ALM-UC-002 y ALM-UC-003)"
+pantallas:
+  - "Almacenes → Punto de Pedido"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Hay artículos con punto de pedido cargado
+flujo_principal:
+  - paso: "Entra a Almacenes → Punto de Pedido"
+    resultado: "Se listan los artículos con las columnas Producto, Código, Punto Pedido, Cant. Stock y Cant. Disponible"
+validaciones:
+  - "Un artículo aparece cuando su **cantidad disponible** queda por debajo de su punto de pedido"
+  - "La cantidad disponible es la existencia física menos lo que está comprometido en pedidos todavía abiertos"
+  - "El punto de pedido es uno solo por artículo y por empresa, no por depósito"
+  - "Es una pantalla de consulta: no dispara ninguna acción"
+  - "Solo se listan artículos de la empresa de la sesión"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s09
+  feature: features/alm/ALM-UC-015.ver-los-articulos-que-llegaron-al-punto-de-pedid.feature
+notas:
+  - "**El cálculo exacto, relevado de `Lotes::getPuntoPedido()`**: `disponible = SUM(alm_lotes.cantidad) − reservado`, donde `reservado` es la suma del campo `resto` de los detalles de pedidos de la empresa cuyo estado **no** es `Entregado`, `Rechazado`, `Cancelado`, `Finalizado Ent. Parcial` ni `Finalizado Sin Entrega`. Se listan los artículos con `disponible < punto_pedido`."
+  - "**Un matiz sobre lo validado:** lo comprometido no son solo los pedidos *aprobados*. Como el filtro es por exclusión de estados cerrados, un pedido en `Creada` —todavía sin aprobar— ya descuenta disponible. Vale confirmar si es lo que se espera."

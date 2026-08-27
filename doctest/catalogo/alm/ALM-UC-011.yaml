@@ -1,0 +1,36 @@
+id: ALM-UC-011
+modulo: ALM
+titulo: Entregar materiales sin pedido previo (entrega directa)
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/new/Entrega_Material.php
+    detalle: "entregaMaterialesDirecto()"
+  - repo: traz-comp-almacenes
+    path: views/new/entregas_materiales/list.php
+    detalle: "el botón 'Entrega Materiales Directa' del listado"
+pantallas:
+  - "Almacenes → Entrega Materiales → Entrega Materiales Directa"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Hay existencias del artículo en el depósito
+flujo_principal:
+  - paso: "En Entrega Materiales hace clic en 'Entrega Materiales Directa'"
+    resultado: "Se abre el formulario de entrega sin pedido asociado"
+  - paso: "Elige los artículos, las cantidades y el depósito de salida"
+    resultado: "El detalle queda cargado"
+  - paso: "Confirma"
+    resultado: "La entrega queda registrada y el stock baja, sin que exista un pedido detrás"
+validaciones:
+  - "La entrega directa descuenta stock igual que la entrega contra pedido"
+  - "Solo el Responsable de Almacén puede hacer una entrega directa"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s06
+  feature: features/alm/ALM-UC-011.entregar-materiales-sin-pedido-previo-entrega-di.feature
+notas:
+  - "**Existe a propósito**, confirmado por el PM: hay clientes con procedimientos de almacén menos estrictos —PyMEs— para los que exigir un pedido formal por cada salida no es realista. Por eso el control está en quién puede usarla, no en el flujo."

@@ -1,8 +1,14 @@
 /**
  * build-ayudas.ts — arma el sitio de ayudas publicable (Doc 1 RF-05, Doc 3 §6).
  *
+ * **Dónde sale:** en `ayuda/`, en la raíz del repo del frontend. Esa carpeta se sirve
+ * como `<base_url>ayuda/` sin pasar por CodeIgniter (el `.htaccess` rutea a `index.php`
+ * solo lo que no existe en disco), y va **versionada**: el frontend no tiene build step,
+ * así que el deploy es el mismo de siempre y no necesita Node. Decisión del PM
+ * (2026-08-25): las ayudas son parte de traz-tools, no un sitio aparte.
+ *
  * Qué hace:
- *   1. Copia el sitio actual (`ayudas/legacy/`) tal cual a `ayudas/build/`. Los
+ *   1. Copia el sitio actual (`ayudas/legacy/`) tal cual al destino. Los
  *      manuales publicados se respetan como están, **incluidos los nombres de
  *      archivo con typo** (`correrctivo`, `mantenimeinto`): son URLs que la gente ya
  *      tiene guardadas y linkeadas.
@@ -19,7 +25,7 @@
  * la plantilla.
  *
  * Uso (en una terminal, parado en `doctest/`):
- *   npm run ayudas             # arma ayudas/build/
+ *   npm run ayudas             # arma <repo>/ayuda/
  *   npm run ayudas -- --dry-run
  */
 
@@ -32,7 +38,8 @@ const RAIZ = resolve(HERE, '..');
 const LEGACY = join(RAIZ, 'ayudas', 'legacy');
 const PLANTILLA = join(RAIZ, 'ayudas', 'plantilla');
 const SRC = join(RAIZ, 'ayudas', 'src');
-const BUILD = join(RAIZ, 'ayudas', 'build');
+// El sitio armado vive en el frontend, no dentro de doctest/: es lo que se publica.
+const BUILD = resolve(RAIZ, '..', 'ayuda');
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
@@ -280,5 +287,5 @@ console.log(`  · buscador del inicio: ${entradas} secciones indexadas de todos 
 console.log(
   DRY_RUN
     ? '\n(--dry-run: no se escribió nada)\n'
-    : `\n✓ Sitio armado en ayudas/build/ — ${legacy.length + armados.length} manuales\n`,
+    : `\n✓ Sitio armado en ayuda/ (raíz del repo) — ${legacy.length + armados.length} manuales\n`,
 );

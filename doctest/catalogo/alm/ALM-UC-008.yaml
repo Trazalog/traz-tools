@@ -1,0 +1,32 @@
+id: ALM-UC-008
+modulo: ALM
+titulo: Editar un pedido de materiales
+perfil: Solicitante
+estado: obsoleto
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Notapedido.php
+    detalle: "editarPedido() abre la vista; editPedidoV2() reemplaza el detalle completo; editarDetalle() cambia una cantidad; eliminarDetalle(); editaDeposito()"
+  - repo: traz-comp-almacenes
+    path: models/Notapedidos.php
+    detalle: "eliminaDetallePedidoViejo(), setDetaNotaV2(), editaJustificacion(), updateaDeposito()"
+pantallas:
+  - "Almacenes → Pedido Materiales → (editar una fila)"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un pedido de la empresa que todavía admite cambios
+flujo_principal:
+  - paso: "En el listado de pedidos abre uno para editarlo"
+    resultado: "Se muestran la justificación y los artículos pedidos"
+  - paso: "Cambia la cantidad de un artículo, agrega otro o saca uno"
+    resultado: "El detalle refleja los cambios"
+  - paso: "Confirma"
+    resultado: "El pedido queda actualizado"
+validaciones:
+  - "Un pedido ya entregado no debería poder modificarse"
+dudas: []
+notas:
+  - "**Declarado obsoleto por el PM el 2026-08-25: hoy un pedido de materiales no se puede editar.** El código de edición sigue existiendo (`editarPedido()`, `editPedidoV2()`, `editarDetalle()`, `eliminarDetalle()`, `editaDeposito()`) pero no hay camino en la pantalla que lleve ahí. Se conserva el caso por historia y no genera ningún derivado."
+  - "Que el código siga expuesto sin que la pantalla lo use tiene una consecuencia: esos métodos son alcanzables por URL y no verifican ni empresa ni estado del pedido. Queda anotado en el registro de hallazgos."

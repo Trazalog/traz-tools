@@ -1,0 +1,39 @@
+id: ALM-UC-018
+modulo: ALM
+titulo: Consultar los movimientos históricos de un artículo
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Reportes.php
+    detalle: "historicoArticulos() y los filtros del reporte"
+  - repo: traz-comp-almacenes
+    path: models/Reportes.php
+  - repo: traz-comp-almacenes
+    path: reports/historico_articulos/
+pantallas:
+  - "Almacenes → Mov Históricos de Stock"
+precondiciones:
+  - Sesión iniciada en Tools
+  - El artículo tiene movimientos registrados
+flujo_principal:
+  - paso: "Entra a Almacenes → Mov Históricos de Stock"
+    resultado: "Se muestran los filtros del reporte"
+  - paso: "Elige el artículo y el período"
+    resultado: "Los filtros quedan cargados"
+  - paso: "Hace clic en 'Filtrar'"
+    resultado: "Se listan los movimientos con Referencia, Cod. Artículo, Descripción, Lote, Cantidad, Depósito, Fecha y Tipo de Movimiento"
+  - paso: "Hace clic en 'Imprimir'"
+    resultado: "El reporte se puede imprimir"
+validaciones:
+  - "El reporte incluye **todos** los tipos de movimiento, así que sumándolos se puede reconstruir el stock"
+  - "El reporte solo incluye movimientos de la empresa de la sesión"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s09
+  feature: features/alm/ALM-UC-018.consultar-los-movimientos-historicos-de-un-artic.feature
+notas:
+  - "**Los ocho tipos que cubre**, relevados de `reports/historico_articulos/Historico_articulos.view.php`: Recepción Materiales (`INGRESO`), Entrega Materiales (`EGRESO`), Mov. Interno Ingreso y Egreso (`MOV.ENTRADA` / `MOV.SALIDA`), Ajuste Stock (`AJUSTE`), y tres de producción — Consumo de MP en Etapa Productiva, Consumo de Producto Semi Terminado, y Salida de Producto de Etapa Productiva. Es decir que sí cubre todo lo que mueve existencias, incluida la producción."

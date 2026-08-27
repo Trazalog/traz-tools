@@ -36,8 +36,8 @@
     },
     "perfil": {
       "type": "string",
-      "enum": ["Solicitante", "Supervisor", "Planificador", "Mantenedor", "Administrador", "Usuario", "Visitante", "Superusuario", "Usuario externo"],
-      "description": "Perfil funcional que ejecuta el flujo. Vocabulario FIJO de roles del dominio (Doc 3 v1.1 §3 y Doc 1 v1.1 RF-05.4). Los cuatro primeros son los roles de mantenimiento ya validados. Los cinco últimos salieron del relevamiento de DNATO (F1, issue #438) y están PENDIENTES de validación del PM: Administrador (perfil `Admin` de seg.roles: administra usuarios, menúes, carga masiva y configuración), Usuario (perfil no administrador — en los datos del DEMO figura como `Author`), Visitante (todavía no tiene cuenta), Superusuario (el correo definido en TOOLS_ADMIN_USER: además da de alta empresas), Usuario externo (rol 8: representa a una empresa de afuera). Ningún valor nuevo se agrega sin que el PM lo valide."
+      "enum": ["Solicitante", "Supervisor", "Planificador", "Mantenedor", "Responsable de Almacén", "Administrador", "Usuario", "Visitante", "Superusuario", "Usuario externo"],
+      "description": "Perfil funcional que ejecuta el flujo. Vocabulario FIJO de roles del dominio (Doc 3 v1.1 §3 y Doc 1 v1.1 RF-05.4). Los cuatro primeros son los roles de mantenimiento ya validados. Los cinco últimos salieron del relevamiento de DNATO (F1, issue #438) y están PENDIENTES de validación del PM: Administrador (perfil `Admin` de seg.roles: administra usuarios, menúes, carga masiva y configuración), Usuario (perfil no administrador — en los datos del DEMO figura como `Author`), Visitante (todavía no tiene cuenta), Superusuario (el correo definido en TOOLS_ADMIN_USER: además da de alta empresas), Usuario externo (rol 8: representa a una empresa de afuera). `Responsable de Almacén` salió del relevamiento de ALM (F3, issue #440) y el PM lo validó el 2026-08-25: es uno de los dos roles de almacén que crea el alta de empresa en `toolsCOREAPI` (el otro, `Solicitante de Almacén`, entra en el `Solicitante` que ya existe). Ningún valor nuevo se agrega sin que el PM lo valide."
     },
     "estado": {
       "type": "string",

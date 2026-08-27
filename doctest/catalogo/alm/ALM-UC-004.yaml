@@ -1,0 +1,41 @@
+id: ALM-UC-004
+modulo: ALM
+titulo: Dar de baja un artículo
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Articulo.php
+    detalle: "baja_articulo(), getestado()"
+  - repo: traz-comp-almacenes
+    path: models/Articulos.php
+    detalle: "eliminar($id) — no filtra por empresa"
+pantallas:
+  - "Almacenes → Articulos → (acción de baja de una fila)"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un artículo activo en la empresa
+flujo_principal:
+  - paso: "En el listado hace clic en la acción de baja de un artículo sin existencias"
+    resultado: "El sistema pide confirmación"
+  - paso: "Confirma la baja"
+    resultado: "El artículo queda dado de baja —la baja es lógica, el artículo no se borra— y la columna Estado lo refleja"
+flujos_alternativos:
+  - nombre: "El artículo todavía tiene existencias"
+    pasos:
+      - paso: "Intenta dar de baja un artículo con stock"
+        resultado: "El sistema no lo permite: primero hay que dejar el artículo en cero"
+validaciones:
+  - "La baja es lógica: el artículo nunca se borra, para no romper la trazabilidad de lo que se movió con él"
+  - "No se puede dar de baja un artículo que todavía tiene existencias"
+  - "Un artículo dado de baja no se ofrece para elegir en un pedido nuevo"
+  - "La columna Estado del listado distingue los artículos dados de baja"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s03
+  feature: features/alm/ALM-UC-004.dar-de-baja-un-articulo.feature
+notas:
+  - "No se ejecutó ninguna baja contra el DEMO: sería modificar datos de una empresa real."
