@@ -1,0 +1,36 @@
+id: MAN-UC-017
+modulo: MAN
+titulo: Registrar la lectura de un parámetro
+perfil: Mantenedor
+estado: validado
+version: "0.1"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Lectura.php
+    detalle: "escribe historial_lecturas y actualiza equipos.ultima_lectura"
+pantallas:
+  - "Mantenimiento → Registro de Parametros"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo tiene parámetros configurados (MAN-UC-016)
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Registro de Parametros"
+    resultado: "Se listan las lecturas ya cargadas con Equipo, Parámetro, Fecha y Valor"
+  - paso: "Elige el equipo y el parámetro que midió"
+    resultado: "El formulario queda listo para el valor"
+  - paso: "Carga la fecha y el valor medido"
+    resultado: "La lectura queda registrada"
+validaciones:
+  - "La lectura queda como la última del equipo y alimenta los mantenimientos que se disparan por uso"
+  - "Equipo, parámetro, fecha y valor son obligatorios"
+  - "La lectura queda como la última del equipo"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-012-020.informes-reportes.spec.ts
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s04
+notas:
+  - "**Salirse del rango no dispara nada** (ver MAN-UC-016): los límites configurados son de referencia. Quien carga la lectura es el que tiene que darse cuenta y, si corresponde, reportar la falla — lo puede hacer en el mismo acto desde Mantenimiento Autónomo (MAN-UC-024)."
+  - "**Buena práctica:** la lectura conviene tomarla siempre en el mismo momento del turno y por la misma persona, porque un salto raro en la serie es tan informativo como el valor en sí."
+  - "Es lo que alimenta el mantenimiento por uso: los preventivos que se disparan por horas o ciclos, no por fecha, se comparan contra la última lectura del equipo."

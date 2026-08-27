@@ -1,0 +1,25 @@
+[Unit]
+Description=WSO2 API Manager 4.6.0 (Trazalog v3 - ADR-011)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User={{WSO2_USER}}
+Group={{WSO2_USER}}
+Environment="JAVA_HOME={{JAVA_HOME}}"
+# System properties que lee el CAR OAuthDiscovery para servir el PRM (RFC 9728).
+# En DEV las inyecta scripts/dev/setup-ngrok.sh vía JAVA_OPTS; acá van fijas en
+# el unit porque las URLs del ambiente no cambian. Ver deployment-gcp.md §6.2-bis.
+Environment="JAVA_OPTS=-Dtrazalog.mcp.resource.url={{MCP_RESOURCE_URL}} -Dtrazalog.dnato.oauth.url={{DNATO_OAUTH_URL}}"
+WorkingDirectory={{APIM_HOME}}
+ExecStart={{APIM_HOME}}/bin/api-manager.sh start
+ExecStop={{APIM_HOME}}/bin/api-manager.sh stop
+PIDFile={{APIM_HOME}}/wso2carbon.pid
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=300
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

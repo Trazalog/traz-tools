@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Variables ─────────────────────────────────────────── */
+:root {
+  --red:     #CC1F1A;
+  --red-dk:  #991510;
+  --dark:    #0F1923;
+  --dark2:   #1A2535;
+  --amber:   #F5A623;
+  --amber2:  #E8891A;
+  --teal:    #0D7377;
+  --green:   #16A34A;
+  --white:   #FFFFFF;
+  --lgray:   #E8EDF5;
+  --mgray:   #94A3B8;
+  --dgray:   #334155;
+  --bg:      #F7F8FC;
+  --sidebar: 280px;
+  --radius:  8px;
+  --shadow:  0 2px 12px rgba(15,25,35,.10);
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--dgray);
+  line-height: 1.65;
+}
+
+/* ── Layout ────────────────────────────────────────────── */
+.layout { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ───────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar);
+  min-width: var(--sidebar);
+  background: var(--dark);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform .3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--dark2); border-radius: 4px; }
+
+.sidebar-brand {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.brand-icon {
+  width: 34px; height: 34px;
+  background: var(--red);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: white;
+  font-family: 'DM Serif Display', serif;
+  letter-spacing: -1px;
+}
+.brand-name { font-size: 15px; font-weight: 700; color: white; letter-spacing: .3px; }
+.brand-name span { color: var(--red); }
+.brand-sub {
+  font-size: 10.5px;
+  color: var(--mgray);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.nav-section {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.nav-section:last-child { border-bottom: none; }
+.nav-label {
+  padding: 10px 20px 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  text-decoration: none;
+  color: var(--mgray);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .18s ease;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+.nav-item:hover {
+  color: white;
+  background: rgba(255,255,255,.05);
+  border-left-color: var(--amber);
+}
+.nav-item.active {
+  color: white;
+  background: rgba(204,31,26,.12);
+  border-left-color: var(--red);
+}
+.nav-num {
+  min-width: 22px; height: 22px;
+  border-radius: 5px;
+  background: rgba(255,255,255,.08);
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--mgray);
+  font-family: 'JetBrains Mono', monospace;
+  transition: all .18s;
+}
+.nav-item.active .nav-num { background: var(--red); color: white; }
+.nav-item:hover .nav-num { background: rgba(255,255,255,.15); color: white; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  font-size: 11px;
+  color: var(--mgray);
+}
+.sidebar-footer a { color: var(--amber); text-decoration: none; }
+
+/* ── Main content ──────────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top bar */
+.topbar {
+  position: sticky; top: 0; z-index: 90;
+  background: white;
+  border-bottom: 3px solid var(--red);
+  padding: 0 40px;
+  height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-title { font-size: 13.5px; font-weight: 600; color: var(--dark); }
+.topbar-sub { font-size: 11.5px; color: var(--mgray); }
+.doc-code {
+  background: var(--red);
+  color: white;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .5px;
+}
+.hamburger {
+  display: none;
+  background: none; border: none;
+  cursor: pointer; padding: 6px;
+  color: var(--dark);
+  font-size: 20px;
+}
+.btn-home {
+  display: flex; align-items: center; gap: 6px;
+  background: none;
+  border: 1.5px solid var(--lgray);
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  color: var(--dgray);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color .18s, color .18s, background .18s;
+  white-space: nowrap;
+}
+.btn-home:hover { border-color: var(--red); color: var(--red); background: #fef5f5; }
+.btn-home svg { flex-shrink: 0; }
+
+/* Content area */
+.content {
+  padding: 40px;
+  max-width: 860px;
+}
+
+/* ── Section ───────────────────────────────────────────── */
+.section { margin-bottom: 72px; }
+
+.section-header {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+}
+.section-num {
+  background: var(--red);
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 16px 22px;
+  display: flex; align-items: center;
+  min-width: 72px; justify-content: center;
+}
+.section-meta {
+  background: var(--dark);
+  padding: 14px 22px;
+  flex: 1;
+}
+.section-meta h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  font-family: 'DM Serif Display', serif;
+  letter-spacing: .2px;
+  margin-bottom: 2px;
+}
+.section-meta .role-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.08);
+  color: var(--mgray);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.07);
+}
+
+/* Intro text */
+.intro-text {
+  font-size: 15px;
+  color: var(--dgray);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+.intro-text strong { color: var(--dark); font-weight: 600; }
+
+/* ── Subsection title ──────────────────────────────────── */
+.sub-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--red);
+  margin: 28px 0 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sub-title::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: var(--lgray);
+}
+
+/* ── Step rows ─────────────────────────────────────────── */
+.steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+
+.step {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  transition: transform .15s, box-shadow .15s;
+}
+.step:hover { transform: translateX(3px); box-shadow: 0 3px 14px rgba(0,0,0,.1); }
+
+.step-num {
+  min-width: 48px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-num.red    { background: var(--red); }
+.step-num.teal   { background: var(--teal); }
+.step-num.amber  { background: var(--amber2); }
+.step-num.dark   { background: var(--dark); }
+.step-num.green  { background: var(--green); }
+
+.step-body {
+  flex: 1;
+  padding: 12px 18px;
+  border-left: 3px solid transparent;
+}
+.step.red-accent  .step-body { border-left-color: var(--red); }
+.step.teal-accent .step-body { border-left-color: var(--teal); }
+.step.amber-accent .step-body { border-left-color: var(--amber2); }
+.step.dark-accent .step-body { border-left-color: var(--dark); }
+
+.step-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 2px;
+}
+.step-desc {
+  font-size: 12.5px;
+  color: var(--mgray);
+  line-height: 1.5;
+}
+
+/* ── Alert boxes ───────────────────────────────────────── */
+.alert {
+  display: flex;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 18px 0;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+}
+.alert-bar { width: 5px; flex-shrink: 0; }
+.alert-body { flex: 1; padding: 14px 18px; }
+.alert-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.alert-text { font-size: 13px; line-height: 1.6; }
+
+.alert.info  { background: #E0F7FA; }
+.alert.info  .alert-bar { background: var(--teal); }
+.alert.info  .alert-label { color: var(--teal); }
+.alert.info  .alert-text { color: #0E5D60; }
+
+.alert.warn  { background: #FFFBEB; }
+.alert.warn  .alert-bar { background: var(--amber2); }
+.alert.warn  .alert-label { color: var(--amber2); }
+.alert.warn  .alert-text { color: #7C4A00; }
+
+.alert.tip   { background: #F0FDF4; }
+.alert.tip   .alert-bar { background: var(--green); }
+.alert.tip   .alert-label { color: var(--green); }
+.alert.tip   .alert-text { color: #145229; }
+
+.alert.note  { background: #FEF2F2; }
+.alert.note  .alert-bar { background: var(--red); }
+.alert.note  .alert-label { color: var(--red); }
+.alert.note  .alert-text { color: #7F1D1D; }
+
+/* ── Flow diagram ──────────────────────────────────────── */
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin: 18px 0 24px;
+}
+.flow-step {
+  flex: 1;
+  padding: 14px 12px;
+  text-align: center;
+  position: relative;
+}
+.flow-step::after {
+  content: '→';
+  position: absolute;
+  right: -8px;
+  top: 50%; transform: translateY(-50%);
+  color: rgba(255,255,255,.6);
+  font-size: 14px;
+  z-index: 2;
+}
+.flow-step:last-child::after { display: none; }
+.flow-label { font-size: 12px; font-weight: 700; color: white; }
+.flow-sub { font-size: 10.5px; color: rgba(255,255,255,.7); margin-top: 2px; }
+
+/* ── Role cards ────────────────────────────────────────── */
+.roles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+.role-card {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: white;
+}
+.role-card-header {
+  padding: 12px;
+  text-align: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+.role-card-body {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--dgray);
+  line-height: 1.5;
+}
+.role-card-body li {
+  list-style: none;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--lgray);
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.role-card-body li:last-child { border-bottom: none; }
+.role-card-body li::before {
+  content: '·';
+  font-weight: 900;
+  font-size: 16px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+/* ── Comparison table ──────────────────────────────────── */
+.compare-table {
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin: 18px 0;
+  border-collapse: collapse;
+}
+.compare-table th {
+  padding: 12px 18px;
+  color: white;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+  letter-spacing: .3px;
+}
+.compare-table td {
+  padding: 11px 18px;
+  font-size: 13px;
+  color: var(--dgray);
+  border-bottom: 1px solid var(--lgray);
+  background: white;
+}
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table tr:nth-child(even) td { background: var(--bg); }
+
+/* ── States bar ────────────────────────────────────────── */
+.states-bar {
+  display: flex;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin: 18px 0;
+}
+.state {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  color: white;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* ── URL block ─────────────────────────────────────────── */
+.url-block {
+  background: var(--lgray);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: var(--red);
+  font-weight: 600;
+  margin: 14px 0;
+  border-left: 4px solid var(--red);
+  word-break: break-all;
+}
+
+/* ── Solapas table ─────────────────────────────────────── */
+.solapas-table {
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin: 18px 0;
+  border-collapse: collapse;
+}
+.solapas-table thead th {
+  background: var(--dark);
+  color: white;
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+.solapas-table tbody td {
+  padding: 11px 18px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--lgray);
+}
+.solapas-table tbody tr:nth-child(even) td { background: var(--bg); }
+.solapas-table tbody tr:last-child td { border-bottom: none; }
+.solapas-table tbody td:first-child {
+  font-weight: 700;
+  color: var(--dark);
+  white-space: nowrap;
+}
+
+/* ── Cover / Hero ──────────────────────────────────────── */
+#cover {
+  background: var(--dark);
+  padding: 60px 40px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 48px;
+  border-radius: 0 0 16px 16px;
+}
+#cover::before {
+  content: '';
+  position: absolute;
+  right: -60px; top: -60px;
+  width: 340px; height: 340px;
+  background: var(--amber2);
+  border-radius: 50%;
+  opacity: .12;
+}
+#cover::after {
+  content: '';
+  position: absolute;
+  right: 40px; top: 30px;
+  width: 180px; height: 180px;
+  background: var(--red);
+  border-radius: 50%;
+  opacity: .15;
+}
+.cover-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(245,166,35,.15);
+  border: 1px solid rgba(245,166,35,.3);
+  color: var(--amber);
+  font-size: 11px; font-weight: 600;
+  padding: 4px 12px; border-radius: 20px;
+  letter-spacing: .5px; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.cover-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 44px;
+  color: white;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  position: relative; z-index: 1;
+}
+.cover-title em { color: var(--red); font-style: normal; }
+.cover-sub {
+  font-size: 15px;
+  color: var(--mgray);
+  margin-bottom: 28px;
+  max-width: 480px;
+  position: relative; z-index: 1;
+}
+.cover-meta {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  position: relative; z-index: 1;
+}
+.cover-pill {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--mgray);
+  font-size: 11.5px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.cover-pill strong { color: white; }
+
+/* ── Progress indicator ────────────────────────────────── */
+#progress-bar {
+  position: fixed; top: 0; left: var(--sidebar); right: 0;
+  height: 3px;
+  background: var(--red);
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform .1s linear;
+  z-index: 200;
+}
+
+/* ── Back to top ───────────────────────────────────────── */
+#back-top {
+  position: fixed;
+  bottom: 28px; right: 28px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--red);
+  color: white;
+  border: none; cursor: pointer;
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(204,31,26,.4);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 150;
+}
+#back-top.visible { opacity: 1; pointer-events: all; }
+#back-top:hover { transform: translateY(-3px); }
+
+/* ── Mobile overlay ────────────────────────────────────── */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 99;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --sidebar: 260px; }
+  .sidebar {
+    position: fixed; left: 0; top: 0;
+    transform: translateX(-100%);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .overlay { display: block; }
+  .hamburger { display: flex; }
+  .content { padding: 24px 20px; }
+  .topbar { padding: 0 16px; }
+  #progress-bar { left: 0; }
+  .roles-grid { grid-template-columns: repeat(2, 1fr); }
+  #cover { padding: 40px 24px; border-radius: 0; }
+  .cover-title { font-size: 32px; }
+}
+@media (max-width: 500px) {
+  .roles-grid { grid-template-columns: 1fr 1fr; }
+  .flow { flex-direction: column; border-radius: var(--radius); }
+  .flow-step::after { display: none; }
+}
+
+/* ── Fade-in animation ─────────────────────────────────── */
+.section {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .5s ease, transform .5s ease;
+}
+.section.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div style="background:#FFF4E5;border-bottom:2px solid #F5A623;padding:14px 20px;font-family:'DM Sans',sans-serif;font-size:14px;color:#78350f;text-align:center">
+  Esta es una <strong>versión anterior</strong> de la ayuda y puede tener información desactualizada.
+  La versión vigente está en <a href="manual_almacenes.html" style="color:#991510;font-weight:700">Almacenes</a>.
+</div>
+
+
+<div id="progress-bar"></div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">T</div>
+        <span class="brand-name">TRAZA<span>LOG</span> TOOLS</span>
+      </div>
+      <div class="brand-sub">Manual · Almacén de Mantenimiento</div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item" href="index.html" style="color:var(--amber);border-left-color:transparent">
+        <span class="nav-num" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span> Volver al inicio
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Contenido</div>
+      <a class="nav-item" href="#s01" onclick="setActive(this)">
+        <span class="nav-num">01</span> Artículos del Almacén
+      </a>
+      <a class="nav-item" href="#s02" onclick="setActive(this)">
+        <span class="nav-num">02</span> Cómo funciona el Almacén
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      MA.006 · Versión 1.0<br>
+      <a href="https://www.trazalog.com" target="_blank">www.trazalog.com</a>
+    </div>
+  </aside>
+
+  <div class="main">
+
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+        <span class="topbar-title">Manual de Usuario</span>
+        <span class="topbar-sub">· Almacén de Mantenimiento</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a href="index.html" class="btn-home">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver al inicio
+        </a>
+        <span class="doc-code">MA.006</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <section id="cover" class="section visible">
+        <div class="cover-tag">&#128203; Instructivo de procedimientos</div>
+        <div class="cover-title">Almacén de<br><em>Mantenimiento</em></div>
+        <div class="cover-sub">Guía completa para la gestión del almacén de repuestos, herramientas e insumos vinculados al módulo de mantenimiento en Trazalog Tools.</div>
+        <div class="cover-meta">
+          <div class="cover-pill"><strong>MA.006</strong></div>
+          <div class="cover-pill">Versión <strong>1.0</strong></div>
+          <div class="cover-pill">Módulo <strong>Almacén de Mantenimiento</strong></div>
+          <div class="cover-pill"><strong>Trazalog Tools</strong></div>
+        </div>
+      </section>
+
+<!-- ── S04 ARTÍCULOS ──────────────────────────────── -->
+      <section id="s01" class="section">
+        <div class="section-header">
+          <div class="section-num">01</div>
+          <div class="section-meta">
+            <h2>Artículos del Almacén</h2>
+            <span class="role-badge">Gestión de repuestos e insumos</span>
+          </div>
+        </div>
+        <p class="intro-text">El <strong>Maestro de Artículos</strong> contiene todos los repuestos, herramientas e insumos que pueden solicitarse en una Orden de Trabajo. Mantenerlo actualizado garantiza que los pedidos de materiales se gestionen correctamente.</p>
+        <div class="steps">
+          <div class="step teal-accent"><div class="step-num teal">1</div><div class="step-body"><div class="step-title">Menú → Almacenes → Artículos</div><div class="step-desc">Accedé desde el menú principal.</div></div></div>
+          <div class="step teal-accent"><div class="step-num teal">2</div><div class="step-body"><div class="step-title">Clic en Agregar</div><div class="step-desc">Se abre el modal de nuevo artículo.</div></div></div>
+          <div class="step teal-accent"><div class="step-num teal">3</div><div class="step-body"><div class="step-title">Ingresá Código (*) y Descripción (*)</div><div class="step-desc">Usá una convención coherente para facilitar la búsqueda posterior.</div></div></div>
+          <div class="step teal-accent"><div class="step-num teal">4</div><div class="step-body"><div class="step-title">Seleccioná la Unidad de Medida (*)</div><div class="step-desc">Ejemplos: unidad, metro, litro, kg.</div></div></div>
+          <div class="step teal-accent"><div class="step-num teal">5</div><div class="step-body"><div class="step-title">Configurá el punto de pedido (opcional)</div><div class="step-desc">El sistema alertará cuando el stock baje de este valor.</div></div></div>
+          <div class="step teal-accent"><div class="step-num teal">6</div><div class="step-body"><div class="step-title">Activá ¿Lotear Artículo? si corresponde</div><div class="step-desc">Permite llevar stocks independientes por número de lote.</div></div></div>
+          <div class="step teal-accent"><div class="step-num teal">7</div><div class="step-body"><div class="step-title">Clic en Guardar</div><div class="step-desc">El artículo queda disponible para pedidos en Órdenes de Trabajo.</div></div></div>
+        </div>
+        <div class="alert tip">
+          <div class="alert-bar"></div>
+          <div class="alert-body">
+            <div class="alert-label">✓ TIP</div>
+            <div class="alert-text">Definí una convención de nomenclatura clara desde el inicio. Ejemplos: REP-001 para repuestos, INS-001 para insumos, HER-001 para herramientas.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── S02 CÓMO FUNCIONA ─────────────────────────── -->
+      <section id="s02" class="section">
+        <div class="section-header">
+          <div class="section-num">02</div>
+          <div class="section-meta">
+            <h2>Cómo funciona el Almacén</h2>
+            <span class="role-badge">Perfil: Supervisor / Planificador / Mantenedor</span>
+          </div>
+        </div>
+
+        <p class="intro-text">El almacén de mantenimiento centraliza todos los materiales, repuestos y herramientas que pueden requerirse al ejecutar una Orden de Trabajo. Su correcto mantenimiento asegura que el <strong>Mantenedor</strong> pueda registrar los insumos utilizados con trazabilidad completa y que el <strong>Supervisor</strong> tenga visibilidad real del consumo.</p>
+
+        <div class="sub-title">Flujo del almacén</div>
+        <div class="steps">
+          <div class="step teal-accent">
+            <div class="step-num teal">1</div>
+            <div class="step-body">
+              <div class="step-title">Alta de artículos en el Maestro</div>
+              <div class="step-desc">El Supervisor carga los artículos con código, descripción, unidad de medida y punto de pedido.</div>
+            </div>
+          </div>
+          <div class="step teal-accent">
+            <div class="step-num teal">2</div>
+            <div class="step-body">
+              <div class="step-title">Ingreso de stock inicial</div>
+              <div class="step-desc">Se registra la cantidad disponible en el almacén para cada artículo dado de alta.</div>
+            </div>
+          </div>
+          <div class="step teal-accent">
+            <div class="step-num teal">3</div>
+            <div class="step-body">
+              <div class="step-title">Consumo desde la Orden de Trabajo</div>
+              <div class="step-desc">Al ejecutar una OT, el Mantenedor selecciona los artículos utilizados y las cantidades. El sistema descuenta el stock automáticamente.</div>
+            </div>
+          </div>
+          <div class="step teal-accent">
+            <div class="step-num teal">4</div>
+            <div class="step-body">
+              <div class="step-title">Alerta de punto de pedido</div>
+              <div class="step-desc">Cuando el stock cae por debajo del punto de pedido configurado, el sistema genera una alerta para reponer el artículo.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-title">Stock y punto de pedido</div>
+        <p class="intro-text">Cada artículo en el Maestro tiene dos valores clave:</p>
+        <div class="compare-table" style="border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin:18px 0">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="background:var(--teal);padding:12px 18px;color:white;font-size:12.5px;font-weight:700;text-align:left">Concepto</th>
+                <th style="background:var(--teal);padding:12px 18px;color:white;font-size:12.5px;font-weight:700;text-align:left">Descripción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:11px 18px;font-size:13px;font-weight:700;color:var(--dark);border-bottom:1px solid var(--lgray);background:white">Stock actual</td>
+                <td style="padding:11px 18px;font-size:13px;color:var(--dgray);border-bottom:1px solid var(--lgray);background:white">Cantidad disponible en este momento. Se actualiza con cada OT ejecutada.</td>
+              </tr>
+              <tr>
+                <td style="padding:11px 18px;font-size:13px;font-weight:700;color:var(--dark);background:var(--bg)">Punto de pedido</td>
+                <td style="padding:11px 18px;font-size:13px;color:var(--dgray);background:var(--bg)">Cantidad mínima antes de reponer. Cuando el stock baja de este valor, el sistema alerta al Supervisor.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert info">
+          <div class="alert-bar"></div>
+          <div class="alert-body">
+            <div class="alert-label">&#8505; INFO</div>
+            <div class="alert-text">El punto de pedido se configura por artículo al momento del alta o en cualquier momento posterior desde el Maestro de Artículos. Definirlo correctamente evita que una OT quede sin los materiales necesarios para su ejecución.</div>
+          </div>
+        </div>
+
+        <div class="sub-title">Gestión por lotes</div>
+        <p class="intro-text">Cuando se activa la opción <strong>"Lotear Artículo"</strong> en el alta, el sistema lleva stocks independientes por número de lote. Esto es útil para:</p>
+        <div class="steps">
+          <div class="step amber-accent">
+            <div class="step-num amber">·</div>
+            <div class="step-body">
+              <div class="step-title">Repuestos con número de serie</div>
+              <div class="step-desc">Permite rastrear exactamente qué pieza fue usada en qué OT.</div>
+            </div>
+          </div>
+          <div class="step amber-accent">
+            <div class="step-num amber">·</div>
+            <div class="step-body">
+              <div class="step-title">Insumos con fecha de vencimiento</div>
+              <div class="step-desc">Cada lote tiene su propia fecha, permitiendo consumir primero los que vencen antes (FEFO).</div>
+            </div>
+          </div>
+          <div class="step amber-accent">
+            <div class="step-num amber">·</div>
+            <div class="step-body">
+              <div class="step-title">Materiales de distintos proveedores</div>
+              <div class="step-desc">Se puede distinguir el origen de cada ingreso para trazabilidad de calidad.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert tip">
+          <div class="alert-bar"></div>
+          <div class="alert-body">
+            <div class="alert-label">&#10003; TIP</div>
+            <div class="alert-text">Mantener el Maestro de Artículos actualizado es fundamental para que los Mantenedores puedan registrar los insumos con precisión. Se recomienda realizar una auditoría de stock mensual y ajustar el punto de pedido según el consumo histórico de cada artículo.</div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+
+<script>
+// ── Progress bar ──────────────────────────────────────────────
+const progressBar = document.getElementById('progress-bar');
+window.addEventListener('scroll', () => {
+  const doc = document.documentElement;
+  const scrolled = doc.scrollTop / (doc.scrollHeight - doc.clientHeight);
+  progressBar.style.transform = `scaleX(${scrolled})`;
+  // Back to top
+  document.getElementById('back-top').classList.toggle('visible', window.scrollY > 300);
+  // Active nav
+  updateActiveNav();
+});
+
+// ── Active nav from scroll ────────────────────────────────────
+function updateActiveNav() {
+  const sections = document.querySelectorAll('section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+  let current = 'cover';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navItems.forEach(item => {
+    const href = item.getAttribute('href');
+    item.classList.toggle('active', href === '#' + current);
+  });
+}
+
+// ── Nav click ─────────────────────────────────────────────────
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  if (window.innerWidth < 900) closeSidebar();
+}
+
+// ── Mobile sidebar ────────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').style.display =
+    document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').style.display = 'none';
+}
+
+// ── Intersection Observer for fade-in ────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.05 });
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
+

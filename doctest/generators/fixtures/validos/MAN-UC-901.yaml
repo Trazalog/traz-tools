@@ -1,0 +1,25 @@
+# Fixture del validador — caso en borrador bien formado. NO es un caso real del catálogo.
+id: MAN-UC-901
+modulo: MAN
+titulo: Fixture de caso en borrador con dudas declaradas
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipos.php
+    detalle: método de ejemplo para la fixture
+pantallas:
+  - "Mantenimiento → Equipos → Agregar"
+precondiciones:
+  - Usuario autenticado con perfil Supervisor
+flujo_principal:
+  - paso: "Hace clic en 'Agregar' en el listado de equipos"
+    resultado: "Se abre el formulario de alta vacío"
+flujos_alternativos: []
+validaciones: []
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "El código de equipo, ¿lo asigna el usuario o lo genera el sistema? El código no lo aclara."

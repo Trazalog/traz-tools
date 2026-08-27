@@ -1,0 +1,43 @@
+id: DNATO-UC-015
+modulo: DNATO
+titulo: Editar un usuario de la empresa
+perfil: Administrador
+estado: validado
+version: "0.3"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "edituser() (742-771)"
+  - repo: traz-comp-dnato
+    path: application/views/usersList.php
+    detalle: "acción de edición en la columna Acciones"
+pantallas:
+  - "Usuarios → Lista de Usuarios → Editar"
+precondiciones:
+  - Sesión iniciada con perfil de administrador
+  - El usuario a editar existe
+flujo_principal:
+  - paso: "Elige 'Editar' sobre un usuario del listado"
+    resultado: "Se muestra el formulario con los datos actuales del usuario"
+  - paso: "Modifica los datos y confirma"
+    resultado: "Los cambios quedan guardados y se vuelve al listado"
+flujos_alternativos:
+  - nombre: "Campos obligatorios incompletos"
+    pasos:
+      - paso: "Borra nombre, apellido, correo o rol y confirma"
+        resultado: "Se muestra el error de validación y no se guarda"
+validaciones:
+  - "Nombre, apellido, correo y rol son obligatorios"
+  - "La contraseña, si se cambia, exige al menos 10 caracteres y su confirmación"
+  - "Un administrador solo puede editar usuarios de una empresa suya"
+  - "Editar los datos de un usuario no exige cambiarle la contraseña"
+datos_prueba: {}
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24 y confirmados los dos hallazgos: que editar obligue a reescribir la contraseña es un bug (H-007), y que un administrador pueda editar usuarios de otra empresa también (H-008)."
+derivados:
+  ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s08
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-015.editar-usuario.spec.ts
+  feature: features/dnato/DNATO-UC-015.editar-un-usuario-de-la-empresa.feature

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<artifact name="OAuthDiscovery"
+          groupId="com.trazalog.apim"
+          version="1.0.0"
+          type="synapse/api"
+          serverRole="APIManager">
+    <file>oauth-discovery.xml</file>
+</artifact>

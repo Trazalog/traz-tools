@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registración y Cuenta · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!--
+  Generado por doctest/generators/build-ayudas.ts — no editar a mano.
+  Contenido: ayudas/src/dnato/manual_registracion_y_cuenta.html
+  Casos de uso que cubre: DNATO-UC-001 a DNATO-UC-019 y DNATO-UC-026/027 (las pantallas de plataforma —empresas y menúes— no se documentan para el usuario final)
+  Versión 1.0
+  (Sin fecha de generación a propósito: estampar el día hacía que regenerar el sitio produjera un
+  diff en TODOS los manuales aunque el contenido fuera idéntico, y eso terminaba en conflictos de
+  merge en cada PR. La versión sale del caso de uso, que es lo que de verdad cambia.)
+-->
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">T</div>
+        <span class="brand-name">TRAZA<span>LOG</span> TOOLS</span>
+      </div>
+      <div class="brand-sub">Manual · Registración y Cuenta</div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item" href="index.html" style="color:var(--amber);border-left-color:transparent">
+        <span class="nav-num" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span>
+        Volver al inicio
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">En este manual</div>
+      <a class="nav-item" href="#s01"><span class="nav-num">01</span> Antes de empezar</a>
+      <a class="nav-item" href="#s02"><span class="nav-num">02</span> Registrar tu empresa</a>
+      <a class="nav-item" href="#s03"><span class="nav-num">03</span> Activar la cuenta y elegir tu contraseña</a>
+      <a class="nav-item" href="#s04"><span class="nav-num">04</span> Completar los datos de tu empresa</a>
+      <a class="nav-item" href="#s05"><span class="nav-num">05</span> Entrar y salir</a>
+      <a class="nav-item" href="#s06"><span class="nav-num">06</span> Si olvidaste tu contraseña</a>
+      <a class="nav-item" href="#s07"><span class="nav-num">07</span> Tus datos y tu contraseña</a>
+      <a class="nav-item" href="#s08"><span class="nav-num">08</span> Administrar los usuarios de tu empresa</a>
+      <a class="nav-item" href="#s09"><span class="nav-num">09</span> Cargar datos en lote</a>
+      <a class="nav-item" href="#s10"><span class="nav-num">10</span> Conectar un asistente de IA</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Otros manuales</div>
+      <a class="nav-item" href="manual_configuracion_inicial.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Configuración inicial</a>
+      <a class="nav-item" href="manual_alta_equipos_componentes.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Alta de equipos</a>
+      <a class="nav-item" href="manual_mantenimiento_correrctivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento correctivo</a>
+      <a class="nav-item" href="manual_mantenimeinto_preventivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento preventivo</a>
+      <a class="nav-item" href="manual_almacen_mantenimiento.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Almacén</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title">Manual de Usuario</span>
+        <span class="topbar-sub">· Registración y Cuenta</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a href="index.html" class="btn-home">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver al inicio
+        </a>
+        <span class="doc-code">RC.001</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <section id="cover" class="section visible">
+        <div class="cover-tag">📋 Instructivo de procedimientos</div>
+        <div class="cover-title">Registración<br><em>y Cuenta</em></div>
+        <div class="cover-sub">Cómo crear tu empresa en Trazalog Tools, entrar al sistema y administrar los usuarios de tu equipo.</div>
+        <div class="cover-meta">
+          <div class="cover-pill"><strong>RC.001</strong></div>
+          <div class="cover-pill">Versión <strong>1.0</strong></div>
+          <div class="cover-pill">Módulo <strong>Registración y Cuenta</strong></div>
+          <div class="cover-pill"><strong>Trazalog Tools</strong></div>
+        </div>
+      </section>
+
+<section id="s01" class="section">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-meta">
+      <h2>Antes de empezar</h2>
+      <span class="role-badge">Para todos</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Para trabajar en Trazalog Tools necesitás dos cosas: que tu <strong>empresa</strong> esté dada de alta y que vos tengas un <strong>usuario</strong> dentro de ella. Este manual cubre las dos, desde que te registrás por primera vez hasta que administrás a tu equipo.</p>
+
+  <div class="sub-title">Los dos permisos que conviven</div>
+
+  <p class="intro-text">Es la confusión más común, así que vale aclararla de entrada:</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th style="background:var(--teal)">TU PERFIL</th>
+        <th style="background:var(--dark)">TUS ROLES DE TRABAJO</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Dice qué podés <strong>administrar</strong>: crear usuarios, tocar menúes, cargar datos masivamente.</td>
+        <td>Dicen qué podés <strong>hacer</strong> en el día a día: pedir materiales, aprobar una orden de trabajo, ejecutarla.</td>
+      </tr>
+      <tr>
+        <td>Es uno solo y vale para todo el sistema.</td>
+        <td>Son varios y son <strong>por empresa</strong>: podés tener roles distintos en cada una.</td>
+      </tr>
+      <tr>
+        <td>Lo cambia un administrador desde <em>Gestión de Usuarios</em>.</td>
+        <td>Los asigna un administrador desde la misma pantalla, en <em>Roles en el Sistema</em>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-info">
+    <strong>Sin roles no se entra.</strong> Un usuario recién creado todavía no puede trabajar: hasta que alguien le asigne al menos un rol en la empresa, el sistema no lo deja ingresar.
+  </div>
+</section>
+
+<section id="s02" class="section">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-meta">
+      <h2>Registrar tu empresa</h2>
+      <span class="role-badge">Todavía no tenés cuenta</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Registrarte crea al mismo tiempo <strong>tu usuario</strong> y la <strong>empresa</strong> que vas a administrar. El que se registra queda como Administrador.</p>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">1</div>
+    <div class="step-body">
+      <div class="step-title">Entrá a la pantalla de registro</div>
+      <div class="step-desc">En la pantalla de ingreso, hacé clic en <strong>“Registrese por favor”</strong>.</div>
+    </div>
+  </div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">2</div>
+    <div class="step-body">
+      <div class="step-title">Completá los seis datos</div>
+      <div class="step-desc">Nombre, apellido, correo electrónico, razón social de tu empresa, teléfono y país. Los seis son obligatorios.</div>
+    </div>
+  </div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">3</div>
+    <div class="step-body">
+      <div class="step-title">Revisá tu correo</div>
+      <div class="step-desc">Vas a recibir el mail <strong>“Activar cuenta en Trazalog.com”</strong>. Ese enlace es el que continúa el registro.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Qué puede rechazarte el sistema</div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th style="background:var(--red)">SI PASA ESTO</th><th style="background:var(--dgray)">QUÉ HACER</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>“El email que intenta registrar ya existe”</td><td>Esa dirección ya tiene cuenta. Entrá con ella o recuperá la contraseña (sección 06).</td></tr>
+      <tr><td>“La Razón Social ingresada ya existe…”</td><td>Alguien de tu empresa ya la registró: pedile que te dé de alta como usuario.</td></tr>
+      <tr><td>“Formato de teléfono inválido para el país seleccionado”</td><td>Escribilo con el código de país, por ejemplo <code>+54 92645123456</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-warning">
+    <strong>El enlace de activación vence el mismo día.</strong> Si lo dejás para mañana, tenés que volver a registrarte o pedir ayuda a soporte.
+  </div>
+</section>
+
+<section id="s03" class="section">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-meta">
+      <h2>Activar la cuenta y elegir tu contraseña</h2>
+      <span class="role-badge">Todavía no tenés cuenta</span>
+    </div>
+  </div>
+
+  <div class="step red-accent">
+    <div class="step-num red">1</div>
+    <div class="step-body">
+      <div class="step-title">Abrí el enlace del correo</div>
+      <div class="step-desc">Se abre la pantalla <strong>Establecer Contraseña</strong>, con tu nombre y tu correo.</div>
+    </div>
+  </div>
+
+  <div class="step red-accent">
+    <div class="step-num red">2</div>
+    <div class="step-body">
+      <div class="step-title">Elegí una contraseña que cumpla la política</div>
+      <div class="step-desc">Al menos <strong>10 caracteres</strong>, con una mayúscula, una minúscula, un número y un símbolo. La pantalla te muestra cuáles condiciones ya cumpliste.</div>
+    </div>
+  </div>
+
+  <div class="step red-accent">
+    <div class="step-num red">3</div>
+    <div class="step-body">
+      <div class="step-title">Confirmá</div>
+      <div class="step-desc">Tu cuenta queda activa y seguís con los datos de tu empresa, sin volver a ingresar.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s04" class="section">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-meta">
+      <h2>Completar los datos de tu empresa</h2>
+      <span class="role-badge">Perfil: Administrador</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Son dos pantallas cortas: unas preguntas sobre tu empresa y los datos con los que se da de alta.</p>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">1</div>
+    <div class="step-body">
+      <div class="step-title">Respondé la información adicional</div>
+      <div class="step-desc">Cómo te enteraste de Trazalog, a qué se dedica tu empresa (podés marcar más de una) y cuántos empleados tiene. Si querés, contanos qué problemas estás tratando de resolver.</div>
+    </div>
+  </div>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">2</div>
+    <div class="step-body">
+      <div class="step-title">Cargá los datos de la empresa</div>
+      <div class="step-desc">Identificador tributario, provincia y localidad. Si te registraste con un correo de Gmail, Hotmail o similar, además te vamos a pedir el <strong>dominio de tu empresa</strong>: con ese dominio se crean los usuarios iniciales.</div>
+    </div>
+  </div>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">3</div>
+    <div class="step-body">
+      <div class="step-title">Listo: tu empresa queda armada</div>
+      <div class="step-desc">Se crean sus roles de trabajo, un establecimiento con su depósito, y cinco usuarios para que empieces a operar.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Los cinco usuarios que se crean solos</div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th style="background:var(--teal)">USUARIO</th><th style="background:var(--dark)">PARA QUÉ SIRVE</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>usuario@</code></td><td>Pide materiales y solicita servicios de mantenimiento</td></tr>
+      <tr><td><code>almacen@</code></td><td>Responsable de Almacén — además queda como encargado del depósito</td></tr>
+      <tr><td><code>panol@</code></td><td>Responsable de Pañol</td></tr>
+      <tr><td><code>produccion@</code></td><td>Responsable de Producción</td></tr>
+      <tr><td><code>mantenimiento@</code></td><td>Supervisor y Planificador de Mantenimiento</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-warning">
+    <strong>Anotá la contraseña que te muestra la pantalla de bienvenida.</strong> Es la misma para esos cinco usuarios: entrá con cada uno y cambiala (sección 07) antes de empezar a trabajar.
+  </div>
+</section>
+
+<section id="s05" class="section">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-meta">
+      <h2>Entrar y salir</h2>
+      <span class="role-badge">Para todos</span>
+    </div>
+  </div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">1</div>
+    <div class="step-body">
+      <div class="step-title">Elegí tu empresa</div>
+      <div class="step-desc">En la pantalla de ingreso, seleccionala de la lista. Si trabajás para más de una, vas a entrar a la que elijas: para cambiar, salís y volvés a entrar.</div>
+    </div>
+  </div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">2</div>
+    <div class="step-body">
+      <div class="step-title">Ingresá tu correo y tu contraseña</div>
+      <div class="step-desc">Si el sistema te dice <em>“El usuario no corresponde a la empresa seleccionada”</em>, elegiste otra empresa: revisá la lista.</div>
+    </div>
+  </div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">3</div>
+    <div class="step-body">
+      <div class="step-title">Para salir, usá “Salir” en tu menú de usuario</div>
+      <div class="step-desc">Volvés a la pantalla de ingreso. Si después apretás el botón “atrás” del navegador, el sistema te va a pedir que entres de nuevo: es lo correcto.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>¿Te dice que estás inhabilitado?</strong> Un administrador de tu empresa te dio de baja temporalmente. Pedile que te habilite (sección 08).
+  </div>
+</section>
+
+<section id="s06" class="section">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-meta">
+      <h2>Si olvidaste tu contraseña</h2>
+      <span class="role-badge">Para todos</span>
+    </div>
+  </div>
+
+  <div class="step red-accent">
+    <div class="step-num red">1</div>
+    <div class="step-body">
+      <div class="step-title">Pedí el enlace</div>
+      <div class="step-desc">En la pantalla de ingreso, hacé clic en <strong>“Recupere contraseña”</strong> e ingresá tu correo.</div>
+    </div>
+  </div>
+
+  <div class="step red-accent">
+    <div class="step-num red">2</div>
+    <div class="step-body">
+      <div class="step-title">Abrí el enlace que te llega</div>
+      <div class="step-desc">Como el de activación, <strong>vence el mismo día</strong> en que lo pediste.</div>
+    </div>
+  </div>
+
+  <div class="step red-accent">
+    <div class="step-num red">3</div>
+    <div class="step-body">
+      <div class="step-title">Elegí la contraseña nueva</div>
+      <div class="step-desc">Rige la misma política: 10 caracteres, mayúscula, minúscula, número y símbolo.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>Si tu usuario lo creó un administrador</strong>, pedile a esa persona que te asigne una contraseña: la recuperación por correo es para las cuentas que se registraron y confirmaron su dirección.
+  </div>
+</section>
+
+<section id="s07" class="section">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-meta">
+      <h2>Tus datos y tu contraseña</h2>
+      <span class="role-badge">Para todos</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Desde el menú de usuario, arriba a la derecha, tenés dos opciones: <strong>Perfil</strong> para ver tus datos y <strong>Editar Perfil</strong> para cambiarlos.</p>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">1</div>
+    <div class="step-body">
+      <div class="step-title">Cambiar tu nombre, apellido o foto</div>
+      <div class="step-desc">En <em>Editar Perfil</em>, solapa <strong>Info General</strong>. Tu correo no se puede cambiar: es tu identidad en todo el sistema.</div>
+    </div>
+  </div>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">2</div>
+    <div class="step-body">
+      <div class="step-title">Cambiar tu contraseña</div>
+      <div class="step-desc">En la solapa de <strong>Contraseña</strong>: escribila dos veces y confirmá. Rige la misma política de siempre.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s08" class="section">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-meta">
+      <h2>Administrar los usuarios de tu empresa</h2>
+      <span class="role-badge">Perfil: Administrador</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Todo vive en el menú <strong>Gestión de Usuarios</strong>. Vas a ver únicamente a los usuarios de tus empresas.</p>
+
+  <div class="sub-title">Dar de alta a alguien</div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">1</div>
+    <div class="step-body">
+      <div class="step-title">Agregar Usuario</div>
+      <div class="step-desc">Completá nombre, apellido, correo, empresa, perfil y una contraseña que cumpla la política. Teléfono, DNI y foto son opcionales.</div>
+    </div>
+  </div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">2</div>
+    <div class="step-body">
+      <div class="step-title">Asignale sus roles de trabajo</div>
+      <div class="step-desc">Desde <em>Lista de Usuarios</em>, ícono <strong>Asignar Rol</strong>: elegí la empresa, elegí el rol y guardá. Podés darle varios, y en más de una empresa.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    <strong>Sin roles, esa persona no va a poder entrar.</strong> Es el paso que más se olvida.
+  </div>
+
+  <div class="sub-title">Habilitar o inhabilitar</div>
+
+  <p class="intro-text">En <strong>Habilitar/Deshabilitar Usuario</strong> elegís a la persona y su estado. Un usuario inhabilitado no puede ingresar, pero conserva todo su historial: es la forma correcta de sacar de circulación a alguien que dejó la empresa.</p>
+
+  <div class="sub-title">Cambiar el perfil de alguien</div>
+
+  <p class="intro-text">En la misma pantalla de <em>Asignar Rol</em>, el campo <strong>Perfil</strong> define si esa persona puede administrar (usuarios, menúes, carga masiva, configuración) o solo trabajar con sus datos.</p>
+</section>
+
+<section id="s09" class="section">
+  <div class="section-header">
+    <div class="section-num">09</div>
+    <div class="section-meta">
+      <h2>Cargar datos en lote</h2>
+      <span class="role-badge">Perfil: Administrador</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Sirve para arrancar: en vez de cargar los artículos o las herramientas de a uno, los subís desde una planilla.</p>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">1</div>
+    <div class="step-body">
+      <div class="step-title">Elegí qué vas a cargar</div>
+      <div class="step-desc">En <strong>Carga Masiva</strong>, seleccioná la entidad: artículos, herramientas o stock de artículos, entre otras.</div>
+    </div>
+  </div>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">2</div>
+    <div class="step-body">
+      <div class="step-title">Descargá la plantilla y completala</div>
+      <div class="step-desc">Trae las columnas que el sistema espera. Guardala en Excel (<code>.xlsx</code> o <code>.xls</code>): otros formatos se rechazan.</div>
+    </div>
+  </div>
+
+  <div class="step dark-accent">
+    <div class="step-num dark">3</div>
+    <div class="step-body">
+      <div class="step-title">Subila y confirmá</div>
+      <div class="step-desc">Los datos se cargan en <strong>tu</strong> empresa, la que estás usando en este momento.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    <strong>Es todo o nada.</strong> Si una sola fila tiene un error, no se carga ninguna: corregí la planilla y volvé a subirla. Y una carga que salió bien <strong>no se puede deshacer</strong>, así que revisá antes de confirmar.
+  </div>
+</section>
+
+<section id="s10" class="section">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <div class="section-meta">
+      <h2>Conectar un asistente de IA</h2>
+      <span class="role-badge">Para todos</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Trazalog Tools se puede conectar a un asistente de IA para consultar tus datos en lenguaje natural: qué stock tenés, qué órdenes de trabajo están abiertas, y demás.</p>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">1</div>
+    <div class="step-body">
+      <div class="step-title">El asistente te trae a la pantalla de Trazalog</div>
+      <div class="step-desc">Vas a ver una pantalla que dice qué aplicación está pidiendo el acceso.</div>
+    </div>
+  </div>
+
+  <div class="step teal-accent">
+    <div class="step-num teal">2</div>
+    <div class="step-body">
+      <div class="step-title">Ingresá con tu correo y tu contraseña</div>
+      <div class="step-desc">Las mismas de siempre. Al confirmar, volvés al asistente ya conectado.</div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <strong>El asistente ve solo lo tuyo.</strong> Trabaja con los datos de tu empresa y con los permisos de tu usuario: no puede consultar información de otras empresas.
+  </div>
+</section>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script src="manual.js"></script>
+
+</body>
+</html>

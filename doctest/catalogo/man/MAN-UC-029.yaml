@@ -1,0 +1,41 @@
+id: MAN-UC-029
+modulo: MAN
+titulo: El ciclo de vida de una solicitud de servicio
+perfil: Solicitante
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/models/Sservicios.php
+    detalle: "los códigos de estado que aparecen: AC, AN, ASC, C, CN, EL, GET, S, T"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Tarea.php
+    detalle: "las tareas de Bonita que mueven la solicitud entre estados"
+pantallas:
+  - "Mantenimiento → Solicitud de Servicio"
+  - "Mis Tareas"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Alguien reporta una falla y crea la solicitud (MAN-UC-007), o la reporta al cargar una lectura (MAN-UC-024)"
+    resultado: "La solicitud queda registrada y esperando análisis"
+  - paso: "El supervisor la analiza y decide (MAN-UC-008)"
+    resultado: "La solicitud se acepta y pasa a planificación, o se rechaza"
+  - paso: "Se le programa una orden de trabajo (MAN-UC-009)"
+    resultado: "La solicitud queda vinculada a esa orden — el listado muestra el Nº de OT"
+  - paso: "La orden se ejecuta, se informa y se verifica"
+    resultado: "Cuando el solicitante presta conformidad, la solicitud queda cerrada"
+validaciones:
+  - "Los estados los mueve el proceso, no el usuario: `S` solicitada, `PL` planificada, `C` en curso, `T` terminada, `CE` cerrada y `CN` conforme"
+  - "Si el solicitante no presta conformidad, la solicitud vuelve a `S` y se reanaliza"
+  - "El listado muestra el Nº de OT de la solicitud una vez programada"
+  - "Los tiempos de ciclo, asignación y generación se miden sobre este recorrido"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s05
+notas:
+  - "**El recorrido completo está descifrado en `doc/man/proceso-mantenimiento.md`**, a partir del diagrama BPMN del proceso. Los estados y qué paso los pone están en la tabla de ese documento."
+  - "Quedan seis códigos en el modelo que no se pudo confirmar qué son —`RE`, `IN`, `P`, `EL`, `ASC`, `GET`—: pueden ser de versiones anteriores. Están anotados en ese documento para verificar antes de documentarlos."
+  - "Es el recorrido del **circuito correctivo** completo. Cada paso tiene su caso propio; éste los hilvana y es el que hay que leer primero para entender el módulo."

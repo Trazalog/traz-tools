@@ -1,0 +1,22 @@
+# Dependencias y artefactos de ejecución de DocTest
+node_modules/
+
+# Reportes y resultados de Playwright (se publican como artifact de CI, no se versionan)
+tests/e2e/.playwright-report/
+tests/e2e/.test-results/
+tests/e2e/.auth/
+
+# Variables de entorno locales — la plantilla versionada es .env.example
+.env
+.env.local
+tests/api-mcp/env/*.env
+!tests/api-mcp/env/*.env.example
+
+# Fuente original de las ayudas legacy: el .rar contiene exactamente los mismos
+# archivos ya extraídos en ayudas/legacy/ (verificado con `unrar l`), y la carpeta
+# .claude/ es config local del proyecto donde se generaron. No aportan al repo.
+ayudas/legacy/*.rar
+ayudas/legacy/.claude/
+
+# Hojas de validación generadas — se regeneran con `npm run hoja:validacion`
+.validacion/

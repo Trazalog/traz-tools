@@ -3,7 +3,7 @@
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
    <query id="getArticulos" useConfig="ToolsDataSource">
-      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock, unidad_medida as um, (array_agg(C.batch_id order by batch_id))[1] as batch_id&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = false&#xd;GROUP BY A.arti_id</sql>
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock, unidad_medida as um, (array_agg(C.batch_id order by batch_id))[1] as batch_id&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id AND C.empr_id = A.empr_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = false&#xd;GROUP BY A.arti_id</sql>
       <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock",&#xd;                "batch_id": "$batch_id"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
@@ -53,12 +53,14 @@
       <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="getArticulos2" useConfig="ToolsDataSource">
-      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = 1&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id AND C.empr_id = A.empr_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;GROUP BY A.arti_id</sql>
       <result outputType="json">{&#xd;    "materias": {&#xd;        "materia": [&#xd;            {&#xd;                "id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getArticulo" useConfig="ToolsDataSource">
-      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id&#xd;WHERE A.empr_id = 1&#xd;AND A.eliminado = FALSE&#xd;AND A.arti_id = CAST(:arti_id as INTEGER)&#xd;GROUP BY A.arti_id</sql>
+      <sql>SELECT A.*, coalesce(sum(cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id AND C.empr_id = A.empr_id&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;AND A.arti_id = CAST(:arti_id as INTEGER)&#xd;GROUP BY A.arti_id</sql>
       <result outputType="json">{&#xd;    "articulos": {&#xd;        "articulo": [&#xd;            {&#xd;                "arti_id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
       <param name="arti_id" sqlType="STRING"/>
    </query>
    <query id="setNotaPedido" keyColumns="pema_id" returnGeneratedKeys="true" useConfig="ToolsDataSource">
@@ -624,9 +626,66 @@
       <param name="order_column" sqlType="STRING"/>
       <param name="order_dir" sqlType="STRING"/>
    </query>
+   <query id="getPedidosMaterialesEmpresa" useConfig="ToolsDataSource">
+      <sql>select * from alm.alm_pedidos_materiales where empr_id = cast(:empr_id as integer) and not eliminado order by pema_id desc</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "case_id":"$case_id",&#xd;            "estado":"$estado",&#xd;            "fecha":"$fecha",&#xd;            "justificacion":"$justificacion"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setCaseIdPedido" useConfig="ToolsDataSource">
+      <sql>update alm.alm_pedidos_materiales set case_id = cast(:case_id as integer), estado = :estado where pema_id = cast(:pema_id as integer)</sql>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="deletePedido" useConfig="ToolsDataSource">
+      <sql>delete from alm.alm_pedidos_materiales where pema_id = cast(:pema_id as integer)</sql>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="getDepositosMcp" useConfig="ToolsDataSource">
+      <sql>SELECT d.depo_id, d.descripcion, d.esta_id, e.nombre AS establecimiento&#xd;FROM alm.alm_depositos d&#xd;LEFT JOIN prd.establecimientos e ON e.esta_id = d.esta_id AND e.empr_id = d.empr_id&#xd;WHERE d.empr_id = cast(:empr_id as integer)&#xd;AND d.eliminado = false&#xd;ORDER BY d.descripcion</sql>
+      <result outputType="json">{&#xd;    "depositos": {&#xd;        "deposito": [&#xd;            {&#xd;                "depo_id": "$depo_id",&#xd;                "descripcion": "$descripcion",&#xd;                "esta_id": "$esta_id",&#xd;                "establecimiento": "$establecimiento"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getPedidoPorOrden" useConfig="ToolsDataSource">
+      <sql>select pema_id, fecha, ortr_id, estado, case_id, justificacion from alm.alm_pedidos_materiales where ortr_id = cast(:ortr_id as integer) and empr_id = cast(:empr_id as integer) and not eliminado order by pema_id desc</sql>
+      <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "fecha":"$fecha",&#xd;            "ortr_id":"$ortr_id",&#xd;            "estado":"$estado",&#xd;            "case_id":"$case_id",&#xd;            "justificacion":"$justificacion"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setPedidoOrden" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.alm_pedidos_materiales (fecha, ortr_id, estado, empr_id) VALUES(CURRENT_TIMESTAMP, cast(:ortr_id as integer), :estado, cast(:empr_id as integer)) returning pema_id</sql>
+      <result outputType="json">{&#xd;    "respuesta":{&#xd;        "pema_id": "$pema_id"&#xd;    }&#xd;}</result>
+      <param name="ortr_id" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setEstadoPedido" useConfig="ToolsDataSource">
+      <sql>update alm.alm_pedidos_materiales set estado = :estado where pema_id = cast(:pema_id as integer)</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/pedidos/orden/{ortr_id}/{empr_id}">
+      <call-query href="getPedidoPorOrden">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/pedidos/orden">
+      <call-query href="setPedidoOrden">
+         <with-param name="ortr_id" query-param="ortr_id"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/estado">
+      <call-query href="setEstadoPedido">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pema_id" query-param="pema_id"/>
       </call-query>
    </resource>
    <resource method="POST" path="/pedidos">
@@ -657,6 +716,23 @@
          <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/pedidos/empresa/{empr_id}">
+      <call-query href="getPedidosMaterialesEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/pedidos/caseid">
+      <call-query href="setCaseIdPedido">
+         <with-param name="case_id" query-param="case_id"/>
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/pedidos">
+      <call-query href="deletePedido">
+         <with-param name="pema_id" query-param="pema_id"/>
+      </call-query>
+   </resource>
    <resource method="GET" path="/pedidos/batch/{batch_id}">
       <call-query href="getPedidoXBatch">
          <with-param name="batch_id" query-param="batch_id"/>
@@ -670,11 +746,14 @@
          <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/articulos">
-      <call-query href="getArticulos2"/>
+   <resource method="GET" path="/mcp/depositos/{empr_id}">
+      <call-query href="getDepositosMcp">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
    </resource>
-   <resource method="GET" path="/articulos/obtener/{arti_id}">
+   <resource method="GET" path="/articulos/obtener/{empr_id}/{arti_id}">
       <call-query href="getArticulo">
+         <with-param name="empr_id" query-param="empr_id"/>
          <with-param name="arti_id" query-param="arti_id"/>
       </call-query>
    </resource>
