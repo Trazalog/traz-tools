@@ -572,20 +572,29 @@ Dos cosas que reducen el problema, ya aplicadas:
 **Hay un acceso a la ayuda en la barra superior**, a la izquierda de las notificaciones: el ícono de
 signo de pregunta (`fa-question-circle`), que abre la ayuda en una pestaña nueva.
 
-Lo agregó el equipo en la rama `develop` (v2) apuntando a `https://trazalog.com/ayudatools/`. En
-`develop-v3` apunta a la carpeta propia:
+Lo agregó el equipo en la rama `develop` (v2) con la dirección escrita a mano en la vista
+(`https://trazalog.com/ayudatools/`). En `develop-v3` **la dirección salió de la vista y pasó a ser
+una constante**, para que se pueda cambiar al desplegar sin tocar código:
 
 ```php
-<a href="<?php echo base_url(); ?>ayuda/" target="_blank" title="Ayuda">
+# application/config/constants.php
+define('URL_AYUDA', 'ayuda/');
 ```
 
-**Dónde está:** `application/views/layout/perfil.php`, que es la barra que comparten todas las
-pantallas — o sea que el acceso aparece en todas sin tocar ninguna vista más.
+| Si `URL_AYUDA` vale | El enlace queda |
+|---|---|
+| `ayuda/` — el default | `base_url() . 'ayuda/'`, o sea la carpeta de este mismo repo. Sirve igual en DEV, DEMO y producción **sin tocar nada** |
+| cualquier cosa que arranque con `http://` o `https://` | se usa tal cual, para apuntar a un sitio externo — es lo que hace v2 |
+
+**Dónde se usa:** `application/views/layout/perfil.php`, que es la barra que comparten todas las
+pantallas — o sea que el acceso aparece en todas sin tocar ninguna vista más. La vista resuelve el
+valor con un `defined('URL_AYUDA')` como red: si por la sincronización semanal llegara una vista sin
+la constante definida, el enlace sigue funcionando en vez de tirar un fatal.
 
 > ⚠️ **Ojo con la sincronización semanal de v2 → v3.** Esa línea existe en las dos ramas con destinos
 > distintos, así que el sync la va a marcar como conflicto. **Se resuelve quedándose con la versión
-> de v3** (la de `base_url()`). Está anotado en un comentario en la propia vista para que quien lo
-> resuelva no tenga que acordarse.
+> de v3** (la que lee `URL_AYUDA`). Está anotado en un comentario en la propia vista para que quien
+> lo resuelva no tenga que acordarse.
 
 ### El paso que sigue: que cada pantalla abra su propia sección
 
