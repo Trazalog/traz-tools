@@ -244,10 +244,11 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="crearDetalleAjuste" useConfig="ToolsDataSource">
-      <sql>call alm.ajuste_detalle_ingresar(&#xd; cast(:ajus_id as integer)&#xd;,cast(:lote_id as integer)&#xd;,cast (:cantidad as float) );</sql>
+      <sql>call alm.ajuste_detalle_ingresar(&#xd; cast(:ajus_id as integer)&#xd;,cast(:lote_id as integer)&#xd;,cast (:cantidad as float)&#xd;, :tipo_ajuste );</sql>
       <param name="ajus_id" sqlType="STRING"/>
       <param name="lote_id" sqlType="STRING"/>
       <param name="cantidad" sqlType="STRING"/>
+      <param name="tipo_ajuste" sqlType="STRING"/>
    </query>
    <query id="getLotePorArticuloYDeposito" useConfig="ToolsDataSource">
       <sql>SELECT &#xd;    al.codigo, &#xd;    al.lote_id, &#xd;    al.batch_id, &#xd;    ap.nombre AS proveedor, &#xd;    al.cantidad&#xd;FROM &#xd;    alm.alm_lotes al&#xd;LEFT JOIN &#xd;    alm.alm_proveedores ap ON ap.prov_id = al.prov_id&#xd;LEFT JOIN &#xd;    prd.lotes l ON al.batch_id = l.batch_id&#xd;CROSS JOIN &#xd;    (SELECT :depo_id AS depo_id) param&#xd;WHERE &#xd;    al.arti_id = CAST(:arti_id AS INTEGER) &#xd;    AND al.eliminado = FALSE &#xd;    AND (&#xd;        (al.batch_id IS NOT NULL AND l.estado = 'En Curso') &#xd;        OR al.batch_id IS NULL &#xd;    )&#xd;    AND al.depo_id = CASE &#xd;        WHEN param.depo_id = 'TODOS' THEN al.depo_id &#xd;        ELSE CAST(param.depo_id AS INTEGER) &#xd;    END;</sql>
@@ -504,7 +505,7 @@
    </query>
    <query id="getMovimientoxdemiId" useConfig="ToolsDataSource">
       <sql>SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id&#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen&#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id = CAST(:demi_id1 AS integer)&#xd;UNION ALL&#xd;SELECT &#xd;    dmi.*, &#xd;    mi.*, &#xd;    art.descripcion AS descripcion_articulo,&#xd;    art.unidad_medida AS unidad_medida,&#xd;    ad.esta_id AS esta_id,&#xd;    ad1.descripcion AS descr_depo_origen,&#xd;    e.nombre AS desc_lote_destino&#xd;FROM &#xd;    alm.deta_movimientos_internos dmi&#xd;JOIN &#xd;    alm.movimientos_internos mi ON dmi.moin_id = mi.moin_id  &#xd;JOIN &#xd;    alm.alm_articulos art ON dmi.arti_id = art.arti_id  &#xd;JOIN &#xd;    alm.alm_depositos ad ON ad.depo_id = mi.depo_id_destino&#xd;JOIN &#xd;    alm.alm_depositos ad1 ON ad1.depo_id = mi.depo_id_origen &#xd;JOIN&#xd;    prd.establecimientos e ON e.esta_id = ad.esta_id&#xd;WHERE &#xd;    dmi.demi_id != CAST(:demi_id2 AS integer) &#xd;    AND mi.moin_id = (&#xd;        SELECT moin_id &#xd;        FROM alm.deta_movimientos_internos &#xd;        WHERE demi_id = CAST(:demi_id3 AS integer)&#xd;    )&#xd;    AND mi.empr_id = CAST(:empr_id AS integer);</sql>
-      <result outputType="json">{&#xd;   "movimientosInternos":{&#xd;      "movimientoInterno":[&#xd;         {&#xd;            "moin_id":"$moin_id",&#xd;            "num_comprobante":"$num_comprobante",&#xd;            "depo_id_origen":"$depo_id_origen",&#xd;            "depo_id_destino":"$depo_id_destino",&#xd;            "patente":"$patente",&#xd;            "acoplado":"$acoplado",&#xd;            "conductor":"$conductor",&#xd;            "arti_id":"$arti_id",&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "descripcion_articulo":"$descripcion_articulo",&#xd;            "desc_lote_destino":"$desc_lote_destino",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "descr_depo_origen":"$descr_depo_origen",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "observaciones_recepcion":"$observaciones_recepcion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <result outputType="json">{&#xd;   "movimientosInternos":{&#xd;      "movimientoInterno":[&#xd;         {&#xd;            "moin_id":"$moin_id",&#xd;            "num_comprobante":"$num_comprobante",&#xd;            "depo_id_origen":"$depo_id_origen",&#xd;            "depo_id_destino":"$depo_id_destino",&#xd;            "patente":"$patente",&#xd;            "acoplado":"$acoplado",&#xd;            "conductor":"$conductor",&#xd;            "arti_id":"$arti_id",&#xd;            "cantidad_cargada":"$cantidad_cargada",&#xd;            "cantidad_recibida":"$cantidad_recibida",&#xd;            "descripcion_articulo":"$descripcion_articulo",&#xd;            "desc_lote_destino":"$desc_lote_destino",&#xd;            "unidad_medida":"$unidad_medida",&#xd;            "descr_depo_origen":"$descr_depo_origen",&#xd;            "lote_id_origen":"$lote_id_origen",&#xd;            "justificacion":"$justificacion",&#xd;            "observaciones_recepcion":"$observaciones_recepcion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="demi_id1" sqlType="STRING"/>
       <param name="demi_id2" sqlType="STRING"/>
@@ -531,8 +532,8 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getAjustexdeajId" useConfig="ToolsDataSource">
-      <sql>select a.ajus_id, a.tipo_ajuste, a.justificacion  &#xd;from &#xd;alm.ajustes a left join alm.deta_ajustes da on da.ajus_id = a.ajus_id &#xd;where da.deaj_id  = cast(:deaj_id as integer)</sql>
-      <result outputType="json">{&#xd;   "ajustes": {&#xd;      "ajuste": [&#xd;         {&#xd;            "ajus_id": "$ajus_id",&#xd;            "tipo_ajuste": "$tipo_ajuste",&#xd;            "justificacion": "$justificacion"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
+      <sql>SELECT a.ajus_id, a.tipo_ajuste, a.justificacion, da.cantidad, da.fec_alta, da.tipo_ajuste as tipo_ajuste_detalle,&#xd;       art.descripcion, art.barcode, art.unidad_medida &#xd;FROM alm.ajustes a&#xd;LEFT JOIN alm.deta_ajustes da ON da.ajus_id = a.ajus_id&#xd;LEFT JOIN alm.alm_lotes lot ON lot.lote_id = da.lote_id&#xd;LEFT JOIN alm.alm_articulos art ON art.arti_id = lot.arti_id&#xd;WHERE a.ajus_id = (&#xd;    SELECT ajus_id &#xd;    FROM alm.deta_ajustes &#xd;    WHERE deaj_id = CAST(:deaj_id AS INTEGER)&#xd;)</sql>
+      <result outputType="json">{&#xd;   "ajustes": {&#xd;      "ajuste": [&#xd;         {&#xd;            "ajus_id": "$ajus_id",&#xd;            "tipo_ajuste": "$tipo_ajuste",&#xd;            "justificacion": "$justificacion",&#xd;            "cantidad": "$cantidad",&#xd;            "fec_alta": "$fec_alta",&#xd;            "tipo_ajuste_detalle":"$tipo_ajuste_detalle",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "unidad_medida":"$unidad_medida"&#xd;         }&#xd;      ]&#xd;   }&#xd;}</result>
       <param name="deaj_id" sqlType="STRING"/>
    </query>
    <query id="getDataMovimientoInternoXdemiId" useConfig="ToolsDataSource">
@@ -548,6 +549,82 @@
       <param name="obra" sqlType="STRING"/>
       <param name="depo" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="getStockPaginado" useConfig="ToolsDataSource">
+      <sql>SELECT  &#xd;    aa.descripcion as artdescription,&#xd;    aa.barcode as artbarcode,&#xd;    T.descripcion as arttype,&#xd;    al.fec_alta as fecha_nueva,&#xd;    T1.descripcion as un_medida,&#xd;    al.*,&#xd;    alm_depositos.depo_id,&#xd;    alm_depositos.descripcion as depositodescrip,&#xd;    E2.nombre as establecimiento,&#xd;    prd.recipientes.reci_id,&#xd;    prd.recipientes.nombre as nom_reci,&#xd;    P.nombre as proveedor&#xd;FROM alm.alm_articulos aa&#xd;JOIN alm.alm_lotes al ON aa.arti_id = al.arti_id&#xd;JOIN alm.alm_depositos ON al.depo_id = alm_depositos.depo_id&#xd;LEFT JOIN prd.establecimientos E2 ON alm_depositos.esta_id = E2.esta_id&#xd;LEFT JOIN alm.alm_proveedores P ON P.prov_id = al.prov_id&#xd;LEFT JOIN core.tablas T ON T.tabl_id = aa.tiar_id &#xd;LEFT JOIN core.tablas T1 ON T1.tabl_id = aa.unme_id &#xd;LEFT JOIN prd.lotes ON al.batch_id = prd.lotes.batch_id&#xd;LEFT JOIN prd.recipientes ON prd.lotes.reci_id = prd.recipientes.reci_id&#xd;JOIN core.encargados_depositos E ON alm_depositos.depo_id = E.depo_id&#xd;,(SELECT &#xd;    :depo_id as depo_id, &#xd;    :reci_id as reci_id, &#xd;    :art_type as art_type, &#xd;    :stock0 as stock0, &#xd;    :search as search,&#xd;    :fec_desde as fec_desde,&#xd;    :fec_hasta as fec_hasta,&#xd;    :establecimiento as esta_id,&#xd;    :art_barcode as a_barcode,&#xd;    :art_descrip as a_desc,&#xd;    :order_column as order_column,&#xd;    :order_dir as order_dir&#xd; ) AS filter&#xd;WHERE al.empr_id = CAST(:empr_id AS INTEGER) &#xd;  AND aa.eliminado != true &#xd;  AND E.user_id = CAST(:id_user AS INTEGER)&#xd;  AND al.depo_id = CASE WHEN filter.depo_id = 'TODOS' THEN al.depo_id ELSE CAST(filter.depo_id AS INTEGER) END&#xd;  AND COALESCE(prd.recipientes.reci_id, 0) = CASE WHEN filter.reci_id = 'TODOS' THEN COALESCE(prd.recipientes.reci_id, 0) ELSE CAST(filter.reci_id AS INTEGER) END&#xd;  AND aa.tiar_id = CASE WHEN filter.art_type = 'TODOS' THEN aa.tiar_id ELSE filter.art_type END&#xd;  AND alm_depositos.esta_id = CASE WHEN filter.esta_id = 'TODOS' THEN alm_depositos.esta_id ELSE CAST(filter.esta_id AS INTEGER) END&#xd;  AND (filter.fec_desde = '' OR al.fec_alta &gt;= CAST(filter.fec_desde AS DATE))&#xd;  AND (filter.fec_hasta = '' OR al.fec_alta &lt;= CAST(filter.fec_hasta AS DATE))&#xd;  AND (filter.a_barcode = '' OR aa.barcode = filter.a_barcode)&#xd;  AND (filter.a_desc = '' OR aa.descripcion = filter.a_desc)&#xd;  AND (filter.search = '' OR aa.descripcion ILIKE '%' || filter.search || '%' OR aa.barcode ILIKE '%' || filter.search || '%')&#xd;  AND (CASE WHEN filter.stock0 = 'true' THEN 1 ELSE (CASE WHEN COALESCE(al.cantidad, 0) &gt; 0 THEN 1 ELSE 0 END) END) = 1&#xd;ORDER BY &#xd;  CASE WHEN filter.order_column = 'artdescription' AND filter.order_dir = 'ASC'  THEN aa.descripcion END ASC,&#xd;  CASE WHEN filter.order_column = 'artdescription' AND filter.order_dir = 'DESC' THEN aa.descripcion END DESC,&#xd;  CASE WHEN filter.order_column = 'artbarcode' AND filter.order_dir = 'ASC'  THEN aa.barcode END ASC,&#xd;  CASE WHEN filter.order_column = 'artbarcode' AND filter.order_dir = 'DESC' THEN aa.barcode END DESC,&#xd;  CASE WHEN filter.order_column = 'arttype' AND filter.order_dir = 'ASC'  THEN T.descripcion END ASC,&#xd;  CASE WHEN filter.order_column = 'arttype' AND filter.order_dir = 'DESC' THEN T.descripcion END DESC,&#xd;  CASE WHEN filter.order_column = 'un_medida' AND filter.order_dir = 'ASC'  THEN T1.descripcion END ASC,&#xd;  CASE WHEN filter.order_column = 'un_medida' AND filter.order_dir = 'DESC' THEN T1.descripcion END DESC,&#xd;  CASE WHEN filter.order_column = 'cantidad' AND filter.order_dir = 'ASC'  THEN al.cantidad END ASC,&#xd;  CASE WHEN filter.order_column = 'cantidad' AND filter.order_dir = 'DESC' THEN al.cantidad END DESC,&#xd;  CASE WHEN filter.order_column = 'establecimiento' AND filter.order_dir = 'ASC'  THEN E2.nombre END ASC,&#xd;  CASE WHEN filter.order_column = 'establecimiento' AND filter.order_dir = 'DESC' THEN E2.nombre END DESC,&#xd;  CASE WHEN filter.order_column = 'depositodescrip' AND filter.order_dir = 'ASC'  THEN alm_depositos.descripcion END ASC,&#xd;  CASE WHEN filter.order_column = 'depositodescrip' AND filter.order_dir = 'DESC' THEN alm_depositos.descripcion END DESC,&#xd;  CASE WHEN filter.order_column = 'codigo' AND filter.order_dir = 'ASC'  THEN al.codigo END ASC,&#xd;  CASE WHEN filter.order_column = 'codigo' AND filter.order_dir = 'DESC' THEN al.codigo END DESC,&#xd;  CASE WHEN filter.order_column = 'fecha_nueva' AND filter.order_dir = 'ASC'  THEN al.fec_alta END ASC,&#xd;  CASE WHEN filter.order_column = 'fecha_nueva' AND filter.order_dir = 'DESC' THEN al.fec_alta END DESC,&#xd;  al.fec_alta DESC&#xd;LIMIT CAST(:limit AS INTEGER) OFFSET CAST(:offset AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "lotes": {&#xd;        "stock": [&#xd;            {&#xd;                "artdescription": "$artdescription",&#xd;                "artbarcode": "$artbarcode",&#xd;                "arttype": "$arttype",&#xd;                "fecha_nueva": "$fecha_nueva",&#xd;                "un_medida": "$un_medida",&#xd;                "lote_id": "$lote_id",&#xd;                "prov_id": "$prov_id",&#xd;                "arti_id": "$arti_id",&#xd;                "depo_id": "$depo_id",&#xd;                "codigo": "$codigo",&#xd;                "cantidad": "$cantidad",&#xd;                "estado": "$estado",&#xd;                "fec_vencimiento": "$fec_vencimiento",&#xd;                "fec_alta": "$fec_alta",&#xd;                "batch_id": "$batch_id",&#xd;                "depositodescrip": "$depositodescrip",&#xd;                "reci_id": "$reci_id",&#xd;                "nom_reci": "$nom_reci",&#xd;                "proveedor": "$proveedor",&#xd;                "establecimiento": "$establecimiento",&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="id_user" sqlType="STRING"/>
+      <param name="stock0" sqlType="STRING"/>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="reci_id" sqlType="STRING"/>
+      <param name="art_type" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="fec_desde" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
+      <param name="establecimiento" sqlType="STRING"/>
+      <param name="art_barcode" sqlType="STRING"/>
+      <param name="art_descrip" sqlType="STRING"/>
+      <param name="order_column" sqlType="STRING"/>
+      <param name="order_dir" sqlType="STRING"/>
+   </query>
+   <query id="totalPaginadoStock" useConfig="ToolsDataSource">
+      <sql>SELECT COUNT(*) as total&#xd;FROM alm.alm_articulos aa&#xd;JOIN alm.alm_lotes al ON aa.arti_id = al.arti_id&#xd;JOIN alm.alm_depositos ON al.depo_id = alm.alm_depositos.depo_id&#xd;LEFT JOIN prd.lotes ON al.batch_id = prd.lotes.batch_id&#xd;LEFT JOIN prd.recipientes ON prd.lotes.reci_id = prd.recipientes.reci_id&#xd;JOIN core.encargados_depositos E ON alm.alm_depositos.depo_id = E.depo_id&#xd;,(SELECT &#xd;    :depo_id as depo_id, &#xd;    :reci_id as reci_id, &#xd;    :art_type as art_type, &#xd;    :stock0 as stock0, &#xd;    :search as search,&#xd;    :fec_desde as fec_desde,&#xd;    :fec_hasta as fec_hasta,&#xd;    :establecimiento as esta_id,&#xd;    :art_barcode as a_barcode,&#xd;    :art_descrip as a_desc&#xd; ) AS filter&#xd;WHERE al.empr_id = CAST(:empr_id AS INTEGER) &#xd;  AND aa.eliminado != true &#xd;  AND E.user_id = CAST(:id_user AS INTEGER)&#xd;  AND al.depo_id = CASE WHEN filter.depo_id = 'TODOS' THEN al.depo_id ELSE CAST(filter.depo_id AS INTEGER) END&#xd;  AND COALESCE(prd.recipientes.reci_id, 0) = CASE WHEN filter.reci_id = 'TODOS' THEN COALESCE(prd.recipientes.reci_id, 0) ELSE CAST(filter.reci_id AS INTEGER) END&#xd;  AND aa.tiar_id = CASE WHEN filter.art_type = 'TODOS' THEN aa.tiar_id ELSE filter.art_type END&#xd;  AND alm.alm_depositos.esta_id = CASE WHEN filter.esta_id = 'TODOS' THEN alm.alm_depositos.esta_id ELSE CAST(filter.esta_id AS INTEGER) END&#xd;  AND (filter.fec_desde = '' OR al.fec_alta &gt;= CAST(filter.fec_desde AS DATE))&#xd;  AND (filter.fec_hasta = '' OR al.fec_alta &lt;= CAST(filter.fec_hasta AS DATE))&#xd;  AND (filter.a_barcode = '' OR aa.barcode = filter.a_barcode)&#xd;  AND (filter.a_desc = '' OR aa.descripcion = filter.a_desc)&#xd;  AND (filter.search = '' OR aa.descripcion ILIKE '%' || filter.search || '%' OR aa.barcode ILIKE '%' || filter.search || '%')&#xd;  AND (CASE WHEN filter.stock0 = 'true' THEN 1 ELSE (CASE WHEN COALESCE(al.cantidad, 0) &gt; 0 THEN 1 ELSE 0 END) END) = 1</sql>
+      <result outputType="json">{&#xd; "totales": {&#xd; "total": "$total"&#xd; }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="reci_id" sqlType="STRING"/>
+      <param name="art_type" sqlType="STRING"/>
+      <param name="stock0" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="id_user" sqlType="STRING"/>
+      <param name="fec_desde" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
+      <param name="establecimiento" sqlType="STRING"/>
+      <param name="art_barcode" sqlType="STRING"/>
+      <param name="art_descrip" sqlType="STRING"/>
+   </query>
+   <query id="getHistoricoMovimientosPaginado" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    mh.*,&#xd;    TO_CHAR(mh.fec_alta, 'YYYY-MM-DD HH24:MI:SS') AS fec_alta_formatted,&#xd;    COUNT(*) OVER() AS total_count&#xd;FROM&#xd;    alm.movimientos_historicos_vw mh,&#xd;    (&#xd;        SELECT&#xd;            :depo_id AS depo_id,&#xd;            :tipo AS tipo,&#xd;            :arti_id AS arti_id,&#xd;            :lote_id AS lote_id,&#xd;            :empr_id AS empr_id,&#xd;            :search AS search&#xd;    ) param&#xd;WHERE&#xd;    mh.fec_alta BETWEEN TO_DATE(:fec1, 'YYYY-MM-DD')&#xd;                    AND TO_DATE(:fec2, 'YYYY-MM-DD')&#xd;    AND CAST(param.empr_id AS INTEGER) = mh.empr_id&#xd;    AND mh.depo_id = CASE&#xd;        WHEN param.depo_id = 'TODOS' THEN mh.depo_id&#xd;        ELSE CAST(param.depo_id AS INTEGER)&#xd;    END&#xd;    AND mh.tipo_mov = CASE&#xd;        WHEN param.tipo = 'TODOS' THEN mh.tipo_mov&#xd;        ELSE param.tipo&#xd;    END&#xd;    AND mh.arti_id = CASE&#xd;        WHEN param.arti_id = 'TODOS' THEN mh.arti_id&#xd;        ELSE CAST(param.arti_id AS INTEGER)&#xd;    END&#xd;    AND mh.lote_id = CASE&#xd;        WHEN param.lote_id = 'TODOS' THEN mh.lote_id&#xd;        ELSE CAST(param.lote_id AS INTEGER)&#xd;    END&#xd;    AND (&#xd;        param.search IS NULL&#xd;        OR param.search = ''&#xd;        OR UPPER(mh.descripcion) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.codigo) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.lote) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.deposito) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(mh.tipo_mov) LIKE UPPER('%' || param.search || '%')&#xd;    )&#xd;ORDER BY&#xd;    mh.fec_alta DESC&#xd;LIMIT CAST(:limit AS INTEGER)&#xd;OFFSET CAST(:offset AS INTEGER);</sql>
+      <result outputType="json">{&#xd;  "movimientos":{&#xd;    "movimiento":[&#xd;      {&#xd;        "referencia": "$referencia",&#xd;        "codigo": "$codigo",&#xd;        "descripcion": "$descripcion",&#xd;        "cantidad": "$cantidad",&#xd;        "stock_actual": "$stock_actual",&#xd;        "deposito": "$deposito",&#xd;        "fec_alta": "$fec_alta",&#xd;        "tipo_mov": "$tipo_mov",&#xd;        "lote":"$lote",&#xd;        "fec_alta_formatted":"$fec_alta_formatted",&#xd;        "total_count":"$total_count"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="depo_id" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="arti_id" sqlType="STRING"/>
+      <param name="lote_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="fec1" sqlType="STRING"/>
+      <param name="fec2" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+   </query>
+   <query id="getEntregaxBatch" useConfig="ToolsDataSource">
+      <sql>select apm.pema_id,&#xd;       apm.estado,&#xd;       aem.comprobante,&#xd;       aem.solicitante,&#xd;       aem.fecha as fec_alta,&#xd;       adem.cantidad,&#xd;       aa.barcode,&#xd;       aem.enma_id,&#xd;       aa.descripcion as articulo,&#xd;       ad.descripcion as deposito,&#xd;       l.lote_id as lote&#xd;from  prd.lotes_hijos lh&#xd;inner join prd.lotes l on l.batch_id = lh.batch_id_padre&#xd;inner join alm.alm_pedidos_materiales apm on apm.batch_id = lh.batch_id_padre &#xd;inner join alm.alm_entrega_materiales aem on aem.pema_id = apm.pema_id&#xd;inner join alm.alm_deta_entrega_materiales adem on adem.enma_id = aem.enma_id &#xd;inner join alm.alm_articulos aa on aa.arti_id = adem.arti_id&#xd;inner join alm.alm_lotes al on adem.lote_id = al.lote_id &#xd;inner join alm.alm_depositos ad on ad.depo_id = adem.depo_id &#xd;where lh.batch_id = cast(:batch_id as integer)</sql>
+      <result outputType="json">{&#xd;  "entregas": {&#xd;    "entrega": [&#xd;      {&#xd;        "pema_id": "$pema_id",&#xd;        "enma_id":"$enma_id",&#xd;        "estado": "$estado",&#xd;        "cantidad": "$cantidad",&#xd;        "comprobante": "$comprobante",&#xd;        "deposito": "$deposito",&#xd;        "fec_alta": "$fec_alta",&#xd;        "solicitante": "$solicitante",&#xd;        "barcode": "$barcode",&#xd;        "articulo": "$articulo",&#xd;        "lote":"$lote"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="batch_id" sqlType="STRING"/>
+   </query>
+   <query id="getMovimientosInternosPaginado" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    mi.moin_id,&#xd;    mi.num_comprobante,&#xd;    mi.depo_id_origen,&#xd;    mi.depo_id_destino,&#xd;    mi.patente,&#xd;    mi.acoplado,&#xd;    mi.conductor,&#xd;    mi.estado,&#xd;    TO_CHAR(mi.fec_envio,     'YYYY-MM-DD HH24:MI:SS') AS fec_envio,&#xd;    TO_CHAR(mi.fec_recepcion, 'YYYY-MM-DD HH24:MI:SS') AS fec_recepcion,&#xd;    TO_CHAR(mi.fec_alta,      'YYYY-MM-DD HH24:MI:SS') AS fec_alta,&#xd;    mi.observaciones_recepcion,&#xd;    ad.descripcion AS nombre_depo_destino,&#xd;    ad1.descripcion AS nombre_depo_origen,&#xd;    dmi.demi_id,&#xd;    e.nombre as establecimiento_destino,&#xd;    e2.nombre as establecimiento_origen,&#xd;    COUNT(*) OVER() AS total_count&#xd;FROM alm.movimientos_internos mi&#xd;LEFT JOIN alm.alm_depositos ad&#xd;       ON ad.depo_id = mi.depo_id_destino&#xd;left join prd.establecimientos e &#xd;       on ad.esta_id = e.esta_id &#xd;LEFT JOIN alm.alm_depositos ad1&#xd;       ON ad1.depo_id = mi.depo_id_origen&#xd;LEFT JOIN prd.establecimientos e2 &#xd;       on ad1.esta_id = e2.esta_id &#xd;LEFT JOIN alm.deta_movimientos_internos dmi&#xd;       ON dmi.moin_id = mi.moin_id&#xd;CROSS JOIN (&#xd;    SELECT&#xd;        COALESCE(:search, '') AS search,&#xd;        :order_column AS order_column,&#xd;        :order_dir AS order_dir&#xd;) AS filter&#xd;WHERE mi.empr_id = CAST(:empr_id AS INTEGER)&#xd;  AND mi.eliminado = false&#xd;  AND EXISTS (&#xd;        SELECT 1&#xd;        FROM core.encargados_depositos ed&#xd;        WHERE ed.user_id = CAST(:user_id AS INTEGER)&#xd;          AND (&#xd;                ed.depo_id = mi.depo_id_origen&#xd;                OR ed.depo_id = mi.depo_id_destino&#xd;              )&#xd;      )&#xd;  AND (&#xd;        filter.search = ''&#xd;        OR CAST(mi.moin_id AS TEXT) ILIKE '%' || filter.search || '%'&#xd;        OR mi.num_comprobante ILIKE '%' || filter.search || '%'&#xd;        OR mi.estado ILIKE '%' || filter.search || '%'&#xd;        OR mi.patente ILIKE '%' || filter.search || '%'&#xd;        OR mi.acoplado ILIKE '%' || filter.search || '%'&#xd;        OR mi.conductor ILIKE '%' || filter.search || '%'&#xd;        OR ad.descripcion ILIKE '%' || filter.search || '%'&#xd;        OR ad1.descripcion ILIKE '%' || filter.search || '%'&#xd;        OR e.nombre ILIKE '%' || filter.search || '%'&#xd;        OR e2.nombre ILIKE '%' || filter.search || '%'&#xd;        OR TO_CHAR(mi.fec_envio, 'YYYY-MM-DD') ILIKE '%' || filter.search || '%'&#xd;        OR TO_CHAR(mi.fec_recepcion, 'YYYY-MM-DD') ILIKE '%' || filter.search || '%'&#xd;        OR TO_CHAR(mi.fec_alta, 'YYYY-MM-DD') ILIKE '%' || filter.search || '%'&#xd;      )&#xd;ORDER BY&#xd;    CASE&#xd;        WHEN filter.order_column = 'num_comprobante'&#xd;         AND filter.order_dir = 'ASC'&#xd;        THEN mi.num_comprobante&#xd;    END ASC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'num_comprobante'&#xd;         AND filter.order_dir = 'DESC'&#xd;        THEN mi.num_comprobante&#xd;    END DESC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'fec_alta'&#xd;         AND filter.order_dir = 'ASC'&#xd;        THEN mi.fec_alta&#xd;    END ASC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'fec_alta'&#xd;         AND filter.order_dir = 'DESC'&#xd;        THEN mi.fec_alta&#xd;    END DESC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'nombre_depo_origen'&#xd;         AND filter.order_dir = 'ASC'&#xd;        THEN ad1.descripcion&#xd;    END ASC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'nombre_depo_origen'&#xd;         AND filter.order_dir = 'DESC'&#xd;        THEN ad1.descripcion&#xd;    END DESC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'nombre_depo_destino'&#xd;         AND filter.order_dir = 'ASC'&#xd;        THEN ad.descripcion&#xd;    END ASC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'nombre_depo_destino'&#xd;         AND filter.order_dir = 'DESC'&#xd;        THEN ad.descripcion&#xd;    END DESC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'establecimiento_destino'&#xd;         AND filter.order_dir = 'ASC'&#xd;        THEN e.nombre &#xd;    END ASC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'establecimiento_destino'&#xd;         AND filter.order_dir = 'DESC'&#xd;        THEN e.nombre &#xd;    END DESC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'establecimiento_origen'&#xd;         AND filter.order_dir = 'ASC'&#xd;        THEN e2.nombre &#xd;    END ASC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'establecimiento_origen'&#xd;         AND filter.order_dir = 'DESC'&#xd;        THEN e2.nombre &#xd;    END DESC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'estado'&#xd;         AND filter.order_dir = 'ASC'&#xd;        THEN mi.estado&#xd;    END ASC,&#xd;    CASE&#xd;        WHEN filter.order_column = 'estado'&#xd;         AND filter.order_dir = 'DESC'&#xd;        THEN mi.estado&#xd;    END DESC,&#xd;    mi.moin_id DESC&#xd;LIMIT CAST(:limit AS INTEGER)&#xd;OFFSET CAST(:offset AS INTEGER);</sql>
+      <result outputType="json">{&#xd;  "movimientos":{&#xd;    "movimiento":[&#xd;      {&#xd;        "moin_id":"$moin_id",&#xd;        "num_comprobante":"$num_comprobante",&#xd;        "depo_id_origen":"$depo_id_origen",&#xd;        "depo_id_destino":"$depo_id_destino",&#xd;        "patente":"$patente",&#xd;        "acoplado":"$acoplado",&#xd;        "conductor":"$conductor",&#xd;        "estado":"$estado",&#xd;        "fec_envio":"$fec_envio",&#xd;        "fec_recepcion":"$fec_recepcion",&#xd;"fec_alta":"$fec_alta",&#xd;        "observaciones_recepcion":"$observaciones_recepcion",&#xd;        "nombre_depo_destino":"$nombre_depo_destino",&#xd;        "total_count":"$total_count",&#xd;        "demi_id":"$demi_id",&#xd;       "nombre_depo_origen":"$nombre_depo_origen",&#xd;       "establecimiento_destino":"$establecimiento_destino",&#xd;       "establecimiento_origen":"$establecimiento_origen"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="user_id" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="order_column" sqlType="STRING"/>
+      <param name="order_dir" sqlType="STRING"/>
+   </query>
+   <query id="getAjustePaginado" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;   aj.ajus_id,&#xd;   aj.tipo_ajuste,&#xd;   aj.justificacion,&#xd;   aj.usuario_app,&#xd;   aj.empr_id,&#xd;   TO_CHAR(aj.fec_alta, 'YYYY-MM-DD HH24:MI:SS') AS fec_alta_ajuste,&#xd;    MIN(daj.deaj_id)     AS deaj_id,&#xd;   MIN(dep.descripcion) AS deposito,&#xd;   MIN(e.nombre)        AS establecimiento,&#xd;   COUNT(*) OVER()      AS total_count&#xd;FROM alm.ajustes aj&#xd;JOIN alm.deta_ajustes daj ON daj.ajus_id = aj.ajus_id&#xd;JOIN alm.alm_lotes al     ON al.lote_id  = daj.lote_id&#xd;JOIN alm.alm_depositos dep ON dep.depo_id = al.depo_id&#xd;JOIN prd.establecimientos e ON e.esta_id  = dep.esta_id&#xd;CROSS JOIN (&#xd;   SELECT&#xd;      COALESCE(:search, '')        AS search,&#xd;      COALESCE(:order_column, '')  AS order_column,&#xd;      COALESCE(:order_dir, 'DESC') AS order_dir&#xd;) AS filter&#xd;WHERE aj.empr_id = CAST(:empr_id AS INTEGER)&#xd;  AND (&#xd;        filter.search = ''&#xd;        OR CAST(aj.ajus_id AS TEXT)      ILIKE '%' || filter.search || '%'&#xd;        OR CAST(e.nombre AS TEXT)        ILIKE '%' || filter.search || '%'&#xd;        OR CAST(dep.descripcion AS TEXT) ILIKE '%' || filter.search || '%'&#xd;        OR CAST(daj.lote_id AS TEXT)     ILIKE '%' || filter.search || '%'&#xd;  )&#xd;GROUP BY&#xd;   aj.ajus_id,&#xd;   aj.tipo_ajuste,&#xd;   aj.justificacion,&#xd;   aj.usuario_app,&#xd;   aj.empr_id,&#xd;   aj.fec_alta,&#xd;   filter.order_column,&#xd;   filter.order_dir&#xd;ORDER BY&#xd;   CASE WHEN filter.order_column = 'ajus_id'         AND filter.order_dir = 'ASC'  THEN aj.ajus_id  END ASC,&#xd;   CASE WHEN filter.order_column = 'ajus_id'         AND filter.order_dir = 'DESC' THEN aj.ajus_id  END DESC,&#xd;   CASE WHEN filter.order_column = 'fec_alta_ajuste' AND filter.order_dir = 'ASC'  THEN aj.fec_alta END ASC,&#xd;   CASE WHEN filter.order_column = 'fec_alta_ajuste' AND filter.order_dir = 'DESC' THEN aj.fec_alta END DESC,&#xd;   CASE WHEN filter.order_column = 'deposito'        AND filter.order_dir = 'ASC'  THEN MIN(dep.descripcion) END ASC,&#xd;   CASE WHEN filter.order_column = 'deposito'        AND filter.order_dir = 'DESC' THEN MIN(dep.descripcion) END DESC,&#xd;   CASE WHEN filter.order_column = 'establecimiento' AND filter.order_dir = 'ASC'  THEN MIN(e.nombre) END ASC,&#xd;   CASE WHEN filter.order_column = 'establecimiento' AND filter.order_dir = 'DESC' THEN MIN(e.nombre) END DESC,&#xd;   aj.ajus_id DESC&#xd;LIMIT  CAST(:limit  AS INTEGER)&#xd;OFFSET CAST(:offset AS INTEGER)</sql>
+      <result outputType="json">{&#xd;  "ajustes": {&#xd;    "ajuste": [&#xd;      {&#xd;        "ajus_id":          "$ajus_id",&#xd;        "tipo_ajuste":      "$tipo_ajuste",&#xd;        "justificacion":    "$justificacion",&#xd;        "usuario_app":      "$usuario_app",&#xd;        "fec_alta_ajuste":  "$fec_alta_ajuste",&#xd;        "establecimiento":  "$establecimiento",&#xd;        "deposito":  "$deposito",&#xd;        "deaj_id":  "$deaj_id",&#xd;        "total_count":      "$total_count"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="order_column" sqlType="STRING"/>
+      <param name="order_dir" sqlType="STRING"/>
    </query>
    <query id="getPedidosMaterialesEmpresa" useConfig="ToolsDataSource">
       <sql>select * from alm.alm_pedidos_materiales where empr_id = cast(:empr_id as integer) and not eliminado order by pema_id desc</sql>
@@ -875,6 +952,7 @@
          <with-param name="ajus_id" query-param="ajus_id"/>
          <with-param name="lote_id" query-param="lote_id"/>
          <with-param name="cantidad" query-param="cantidad"/>
+         <with-param name="tipo_ajuste" query-param="tipo_ajuste"/>
       </call-query>
    </resource>
    <resource method="GET" path="deposito/{depo_id}/articulo/{arti_id}/lote/list">
@@ -1210,6 +1288,82 @@
          <with-param name="obra" query-param="obra"/>
          <with-param name="depo" query-param="depo"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="lotes/stock/paginado">
+      <call-query href="getStockPaginado">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="id_user" query-param="id_user"/>
+         <with-param name="stock0" query-param="stock0"/>
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="reci_id" query-param="reci_id"/>
+         <with-param name="art_type" query-param="art_type"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="fec_desde" query-param="fec_desde"/>
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+         <with-param name="establecimiento" query-param="establecimiento"/>
+         <with-param name="art_barcode" query-param="art_barcode"/>
+         <with-param name="art_descrip" query-param="art_descrip"/>
+         <with-param name="order_column" query-param="order_column"/>
+         <with-param name="order_dir" query-param="order_dir"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/total/stock">
+      <call-query href="totalPaginadoStock">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="reci_id" query-param="reci_id"/>
+         <with-param name="art_type" query-param="art_type"/>
+         <with-param name="stock0" query-param="stock0"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="id_user" query-param="id_user"/>
+         <with-param name="fec_desde" query-param="fec_desde"/>
+         <with-param name="fec_hasta" query-param="fec_hasta"/>
+         <with-param name="establecimiento" query-param="establecimiento"/>
+         <with-param name="art_barcode" query-param="art_barcode"/>
+         <with-param name="art_descrip" query-param="art_descrip"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientos/paginados/tipo/{tipo}/desde/{fec1}/hasta/{fec2}/deposito/{depo_id}/articulo/{arti_id}/lote/{lote_id}/empresa/{empr_id}/{offset}/{limit}/{search}">
+      <call-query href="getHistoricoMovimientosPaginado">
+         <with-param name="depo_id" query-param="depo_id"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="arti_id" query-param="arti_id"/>
+         <with-param name="lote_id" query-param="lote_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="fec1" query-param="fec1"/>
+         <with-param name="fec2" query-param="fec2"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/entrega/batch/{batch_id}">
+      <call-query href="getEntregaxBatch">
+         <with-param name="batch_id" query-param="batch_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getmovimientointerno/paginado/{empr_id}/{user_id}/{limit}/{offset}/{search}/{order_column}/{order_dir}">
+      <call-query href="getMovimientosInternosPaginado">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="user_id" query-param="user_id"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="order_column" query-param="order_column"/>
+         <with-param name="order_dir" query-param="order_dir"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/getajustes/{empr_id}/{limit}/{offset}/{order_column}/{order_dir}/{search}">
+      <call-query href="getAjustePaginado">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="order_column" query-param="order_column"/>
+         <with-param name="order_dir" query-param="order_dir"/>
       </call-query>
    </resource>
 </data>

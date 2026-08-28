@@ -33,6 +33,24 @@ class BPM
         return $this->msj(true, 'OK', json_decode($rsp['data'], true));
     }
 
+    public function getTodoListPaginado($page = 0, $limit = 10)
+    {
+        log_message('DEBUG', '#TRAZA | #BPM >> Obtener Bandeja Paginada userID: ' . userId() . " page: $page limit: $limit");
+
+        $resource = 'API/bpm/humanTask?p=' . intval($page) . '&c=' . intval($limit) . '&f=user_id%3D' . userId() . '&o=reachedStateDate%20DESC';
+
+        $url = BONITA_URL . $resource;
+
+        $rsp = $this->REST->callAPI('GET', $url, false, $this->loggin(BPM_ADMIN_USER, BPM_ADMIN_PASS));
+
+        if (!$rsp['status']) {
+            log_message('DEBUG', '#TRAZA | #BPM >> ' . ASP_111);
+            return $this->msj(false, ASP_111);
+        }
+
+        return $this->msj(true, 'OK', json_decode($rsp['data'], true));
+    }
+
     public function getTarea($id)
     {
 
