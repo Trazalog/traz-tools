@@ -1,5 +1,5 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/dnato/DNATO-UC-026.yaml (versión 0.3, validado 2026-08-24).
+# Fuente: catalogo/dnato/DNATO-UC-026.yaml (versión 0.4, validado 2026-08-24).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 # Test que lo implementa: tests/e2e/specs/dnato/DNATO-UC-026-027.carga-masiva.spec.ts
 
@@ -23,9 +23,9 @@ Característica: Descargar la plantilla de carga masiva
     Entonces Se avisa que se están usando datos de prueba y se muestra una lista mínima
 
   # Reglas que este caso verifica:
-  #   - Las entidades que se pueden cargar salen de una tabla de configuración. Hoy la pantalla ofrece cinco: Articulos, Herramientas, Stock Articulos, Mantenimiento Equipos y Solicitantes de Transporte
+  #   - Las entidades que se pueden cargar salen de una tabla de configuración (`sta.entidades_negocio`), así que la lista crece sin tocar código. Las verificadas en pantalla son Articulos, Herramientas, Stock Articulos, Mantenimiento Equipos y Solicitantes de Transporte; la configuración declara además Mantenimiento Articulos
   #   - La plantilla que se descarga corresponde a la entidad elegida
 
   # ⚠️ Atención al ejecutarlo:
-  #   **Mantenimiento Equipos no anda**: la carga masiva todavía no funciona contra MariaDB, así que esa entidad falla. Anotado como hallazgo H-030, a resolver en el corto plazo.
+  #   **Mantenimiento Equipos ya funciona** (2026-09-01). Hasta el 2026-08-31 esa entidad fallaba con "Stored procedure no encontrado" porque su procedimiento vive en MariaDB y la carga solo sabía ejecutar contra PostgreSQL. Lo corrigió el PR #34 de `traz-comp-dnato`, que agrega el despacho por motor. Era el hallazgo H-030 / issue #470.
   #   La pantalla solo verifica que haya sesión iniciada, no que el usuario sea administrador (hallazgo H-029), aunque el menú se la muestre solo a administradores.

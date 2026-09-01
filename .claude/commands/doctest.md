@@ -16,10 +16,13 @@ funcional y en todo lo que se deriva de él: los tests, los `.feature` y las ayu
 
 1. Leé `doctest/GUIA-PRUEBAS-Y-AYUDAS.md` — cómo está organizado todo y dónde va cada cosa.
 2. Leé `doc/v3/STATE.md` — en qué está el proyecto.
-3. **Relevá contra lo que está desplegado, no contra tu rama.** `develop-v3` tiene submódulos atrás
-   de `develop`, que es lo que corre en el DEMO. La guía §1.4 tiene los comandos para leer la otra
-   rama sin cambiar de rama. Verificá que el commit del submódulo que estás leyendo coincida con el
-   que apunta `origin/develop` del repo padre.
+3. **Relevá contra lo que está desplegado, no contra tu rama.** Lo que corre en el DEMO es
+   `develop`. Desde la sincronización del 2026-08-31 (PR #495) las dos ramas arrancan con el mismo
+   contenido, pero vuelven a diverger: verificá igual que el commit del submódulo que estás leyendo
+   coincida con el que apunta `origin/develop` del repo padre. La guía §1.4 tiene los comandos para
+   leer la otra rama sin cambiar de rama.
+   Y acordate de los repos que no son submódulos —`traz-comp-dnato` y `traz-prod-assetplanner` son
+   repos aparte, con sus propias ramas—: ahí el relevamiento va contra su `origin/develop`.
 4. Trabajá en una rama propia (`feature/...`), nunca sobre `develop-v3`.
 
 ## Identificá qué casos toca el cambio
