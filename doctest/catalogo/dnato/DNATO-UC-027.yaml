@@ -3,13 +3,16 @@ modulo: DNATO
 titulo: Cargar datos masivamente desde una planilla
 perfil: Administrador
 estado: validado
-version: "0.2"
+version: "0.3"
 origen: baseline
 fecha_validacion: 2026-08-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Bulkload.php
     detalle: "procesarCarga() (152-330): valida entidad y archivo, lo convierte a CSV y lo procesa; mostrarResultado() (670-710)"
+  - repo: traz-comp-dnato
+    path: application/models/Bulkloads.php
+    detalle: "El despacho por motor: segun el `motor_bd` de la entidad, la carga va a PostgreSQL (camino original) o a MariaDB. ejecutarCargaMariaDB() (740+) vuelca el CSV en la tabla de staging y despues llama al procedimiento; resolverEmprIdAssetPlanner() (1020+) traduce el id de empresa entre las dos bases"
   - repo: traz-comp-dnato
     path: application/config/constants.php
     detalle: "BULKLOAD_STAGING_DIR (208): dónde se deja el archivo mientras se procesa"
@@ -43,14 +46,26 @@ flujos_alternativos:
     pasos:
       - paso: "Confirma sin adjuntar ningún archivo"
         resultado: "Se muestra 'Error al cargar el archivo. Verifique que el archivo sea válido.'"
+  - nombre: "Quedó una carga anterior sin terminar (entidades de Mantenimiento)"
+    pasos:
+      - paso: "Carga una entidad de Mantenimiento cuando la tabla de staging todavía tiene filas sin procesar de una corrida anterior"
+        resultado: "No se carga nada y se avisa cuántas filas quedaron sin procesar, con la indicación de revisarlas y limpiarlas antes de reintentar. No se borran solas: podrían ser de otro usuario cargando al mismo tiempo"
+  - nombre: "La empresa no está vinculada con Mantenimiento"
+    pasos:
+      - paso: "Carga una entidad de Mantenimiento desde una empresa que no tiene definido su vínculo con AssetPlanner"
+        resultado: "No se carga nada y se avisa que la empresa no tiene el vínculo definido"
 validaciones:
   - "La entidad de negocio es obligatoria"
   - "Solo se aceptan planillas .xlsx o .xls"
   - "**La carga es todo o nada**: si alguna fila tiene un error, no se carga ninguna"
   - "Los datos se cargan en la empresa de la sesión: no hace falta que la planilla la identifique ni se valida contra ella"
   - "Una carga que terminó bien no se puede deshacer"
+  - "Cada entidad se carga contra la base donde vive su procedimiento: las de Mantenimiento (Equipos y Articulos) contra la de AssetPlanner, el resto contra la de Tools. Para quien usa la pantalla es lo mismo: el flujo, el mensaje de resultado y el 'todo o nada' no cambian"
+  - "Para las entidades de Mantenimiento, la empresa de la sesión se traduce a su equivalente en AssetPlanner. Si ese vínculo no está definido, la carga no se hace"
 dudas: []
 notas:
+  - "**El despacho por motor lo agregó el PR #34 de `traz-comp-dnato` (2026-08-31)**, que es lo que hizo funcionar Mantenimiento Equipos (hallazgo H-030 / issue #470). El controlador, la vista y el flujo del usuario no cambiaron: lo que cambió es contra qué base ejecuta el modelo."
+  - "El vínculo empresa Tools ↔ empresa AssetPlanner es el campo `empr_id_mysql` de `core.empresas`, el mismo que escribe el alta de empresa. **Una empresa creada mientras el issue #491 estaba roto no lo tiene**, así que su carga masiva de Mantenimiento va a fallar hasta que se le complete."
   - "Validado por el PM el 2026-08-24 con tres definiciones: la carga es todo o nada, la empresa sale de la sesión y se asume que los datos son de esa empresa, y una carga exitosa no se deshace."
   - "El archivo queda guardado en el servidor (`bulkload_stage_files`) con nombre único mientras se procesa; hay limpieza de temporales."
 derivados:
