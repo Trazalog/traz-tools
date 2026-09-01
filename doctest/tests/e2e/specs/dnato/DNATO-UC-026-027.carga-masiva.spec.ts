@@ -27,6 +27,9 @@ test.describe('@dnato @DNATO-UC-026 @DNATO-UC-027 Carga masiva', () => {
     expect(entidades).toContain('Articulos');
     expect(entidades).toContain('Herramientas');
     expect(entidades).toContain('Stock Articulos');
+    // Mantenimiento Equipos se carga contra la base de Asset Planner, no contra la de Tools.
+    // Estuvo ofrecida y rota hasta el 2026-08-31 (H-030); se verifica que siga ofreciéndose.
+    expect(entidades).toContain('Mantenimiento Equipos');
   });
 
   test('la plantilla de una entidad se puede obtener', async ({ paginaEmpresa1 }) => {
