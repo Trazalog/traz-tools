@@ -56,11 +56,22 @@ async def fijar_empresa(con: psycopg.AsyncConnection, empr_id: int) -> None:
 async def buscar_conocimiento(
     con: psycopg.AsyncConnection, cfg: Config, embedding: list[float],
     *, tipo_equipo: str | None = None, situacion: str | None = None,
+    modulo: str | None = None,
 ) -> list[Fragmento]:
-    """Conocimiento minero compartido, comun a todos los clientes."""
+    """Conocimiento minero compartido, comun a todos los clientes.
+
+    Cubre las dos areas del agente: mantenimiento y almacenes. Por defecto NO
+    filtra por modulo -- la similitud vectorial ya separa bien, y muchas
+    consultas cruzan las dos ("¿tengo el filtro para el preventivo de la
+    chancadora?"). El filtro esta disponible para cuando se sabe el area de
+    antemano, por ejemplo desde un job de monitoreo.
+
+    Cuando se filtra, el conocimiento 'general' (seguridad, normativa
+    transversal) se recupera igual: aplica a las dos areas.
+    """
     sql = """
         SELECT c.chunk_id, c.contenido, c.tipo_equipo, c.situacion, c.confianza,
-               f.tipo AS fuente_tipo, f.nombre AS fuente_nombre,
+               c.modulo, f.tipo AS fuente_tipo, f.nombre AS fuente_nombre,
                c.embedding <=> %(emb)s::vector AS distancia
         FROM agente.chunk c
         JOIN agente.fuente f USING (fuente_id)
@@ -68,13 +79,14 @@ async def buscar_conocimiento(
           AND c.embedding IS NOT NULL
           AND (%(tipo_equipo)s::text IS NULL OR c.tipo_equipo = %(tipo_equipo)s)
           AND (%(situacion)s::text  IS NULL OR c.situacion  = %(situacion)s)
+          AND (%(modulo)s::text     IS NULL OR c.modulo IN (%(modulo)s, 'general'))
         ORDER BY c.embedding <=> %(emb)s::vector
         LIMIT %(k)s
     """
     async with con.cursor() as cur:
         await cur.execute(sql, {
             "emb": _a_vector(embedding), "tipo_equipo": tipo_equipo,
-            "situacion": situacion, "k": cfg.rag_top_k,
+            "situacion": situacion, "modulo": modulo, "k": cfg.rag_top_k,
         })
         filas = await cur.fetchall()
 
@@ -84,7 +96,7 @@ async def buscar_conocimiento(
             distancia=float(f["distancia"]),
             metadata={
                 "tipo_equipo": f["tipo_equipo"], "situacion": f["situacion"],
-                "confianza": float(f["confianza"]),
+                "modulo": f["modulo"], "confianza": float(f["confianza"]),
                 "fuente": f"{f['fuente_tipo']}: {f['fuente_nombre']}",
             },
         )
@@ -172,10 +184,15 @@ def armar_contexto(fragmentos: list[Fragmento]) -> str:
     partes: list[str] = []
 
     if conocimiento:
-        partes.append("## Conocimiento minero (general, no de esta empresa)\n")
+        partes.append("## Conocimiento minero — mantenimiento y almacenes (general, no de esta empresa)\n")
         for f in conocimiento:
             conf = f.metadata.get("confianza")
             etiquetas = [f"fuente: {f.metadata.get('fuente')}"]
+            modulo = f.metadata.get("modulo")
+            if modulo and modulo != "general":
+                etiquetas.append(
+                    {"man": "área: mantenimiento", "alm": "área: almacenes"}.get(modulo, modulo)
+                )
             if conf is not None:
                 etiquetas.append(f"confianza: {conf:.2f}")
             if f.metadata.get("tipo_equipo"):

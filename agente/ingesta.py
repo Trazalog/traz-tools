@@ -1,8 +1,14 @@
 """Pipeline de ingesta documental: PDF/MD/TXT -> chunks -> embeddings -> pgvector.
 
 Uso:
-    python -m agente.ingesta archivo.pdf --tipo-equipo chancadora --situacion mantenimiento
-    python -m agente.ingesta carpeta/ --tipo documento --dry-run
+    python -m agente.ingesta manual.pdf --modulo man --tipo-equipo chancadora
+    python -m agente.ingesta procedimiento-deposito.md --modulo alm
+    python -m agente.ingesta norma-seguridad.pdf --modulo general --tipo normativa
+    python -m agente.ingesta carpeta/ --dry-run
+
+El --modulo dice a que area aplica el material: man (mantenimiento), alm
+(almacenes) o general (transversal, como seguridad o normativa). El conocimiento
+general se recupera siempre, sin importar el area de la consulta.
 
 Escribe en agente.chunk, que es el conocimiento COMPARTIDO. Por ADR-A4 eso
 requiere el rol agente_curador: el usuario del orquestador (agente_app) tiene
@@ -74,7 +80,7 @@ def trocear(texto: str, *, objetivo: int = 900, solape: int = 150) -> list[str]:
 # ---------------------------------------------------------------- ingesta
 async def ingestar(
     cfg: Config, archivos: list[Path], *, tipo_fuente: str, tipo_equipo: str | None,
-    situacion: str | None, confianza: float, dry_run: bool,
+    situacion: str | None, modulo: str, confianza: float, dry_run: bool,
 ) -> int:
     total = 0
     con = await abrir(cfg)
@@ -112,11 +118,11 @@ async def ingestar(
                                 """
                                 INSERT INTO agente.chunk
                                     (fuente_id, contenido, embedding, tipo_equipo,
-                                     situacion, confianza)
-                                VALUES (%s, %s, %s::vector, %s, %s, %s)
+                                     situacion, modulo, confianza)
+                                VALUES (%s, %s, %s::vector, %s, %s, %s, %s)
                                 """,
                                 (fuente_id, contenido, _a_vector(vector),
-                                 tipo_equipo, situacion, confianza),
+                                 tipo_equipo, situacion, modulo, confianza),
                             )
                     await con.commit()
                     total += len(lote)
@@ -149,8 +155,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tipo", default="documento",
                     choices=["documento", "normativa", "manual"],
                     help="Tipo de fuente (default: documento)")
+    ap.add_argument("--modulo", default="general", choices=["man", "alm", "general"],
+                    help="Area a la que aplica: man (mantenimiento), alm (almacenes) "
+                         "o general (transversal: seguridad, normativa). "
+                         "El conocimiento general se recupera siempre, sin importar "
+                         "el area de la consulta. Default: general")
     ap.add_argument("--tipo-equipo", default=None,
-                    help="Familia de equipo a la que aplica (chancadora, molino...)")
+                    help="Familia de equipo a la que aplica (chancadora, molino...). "
+                         "Solo tiene sentido con --modulo man")
     ap.add_argument("--situacion", default=None,
                     help="Situacion operativa (mantenimiento, falla, seguridad...)")
     ap.add_argument("--confianza", type=float, default=0.8,
@@ -185,7 +197,8 @@ def main(argv: list[str] | None = None) -> int:
 
     total = asyncio.run(ingestar(
         cfg, archivos, tipo_fuente=args.tipo, tipo_equipo=args.tipo_equipo,
-        situacion=args.situacion, confianza=args.confianza, dry_run=False,
+        situacion=args.situacion, modulo=args.modulo, confianza=args.confianza,
+        dry_run=False,
     ))
     print(f"\nListo: {total} fragmentos ingestados desde {len(archivos)} archivo(s).")
     return 0

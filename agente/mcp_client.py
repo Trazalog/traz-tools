@@ -219,44 +219,74 @@ def _contenido_mcp(result: dict) -> Any:
 
 
 # --- Tools del modo desarrollo -------------------------------------------
-# Subconjunto de las tools reales, con las rutas REST del MI. Solo lectura: el
-# modo dev no expone escritura para no crear OTs sin querer mientras se prueba.
+# Subconjunto de las tools reales, con las rutas REST del MI. Cubre las DOS
+# areas del agente: mantenimiento (man_) y almacenes (alm_). Solo lectura: el
+# modo dev no expone escritura para no crear OTs ni pedidos sin querer mientras
+# se prueba -- en modo apim si estan disponibles, porque las declara el gateway.
 _RUTAS_DEV = {
+    # Mantenimiento
     "man_get_equipos": "/man/equipos",
     "man_get_equipo": "/man/equipo/{equi_id}",
     "man_get_ots": "/man/ots",
-    "man_get_kpi_mtbf": "/man/kpi/mtbf",
+    "man_get_preventivos": "/man/preventivos",
     "man_get_kpi_disponibilidad": "/man/kpi/disponibilidad",
+    "man_get_kpi_mttr": "/man/kpi/mttr",
+    "man_get_kpi_mttf": "/man/kpi/mttf",
+    "man_get_kpi_fallas": "/man/kpi/fallas",
+    # Almacenes
+    "alm_get_stock": "/alm/stock",
+    "alm_get_depositos": "/alm/depositos",
+    "alm_get_movimientos": "/alm/movimientos",
+    "alm_get_entregas": "/alm/entregas",
+    "alm_get_vencimientos": "/alm/vencimientos",
+    "alm_get_pedidos_materiales": "/alm/pedidos-materiales",
 }
 
+def _tool(nombre: str, descripcion: str, propiedades: dict | None = None,
+          requeridos: list[str] | None = None) -> dict:
+    esquema: dict = {"type": "object", "properties": propiedades or {}}
+    if requeridos:
+        esquema["required"] = requeridos
+    return {"type": "function",
+            "function": {"name": nombre, "description": descripcion,
+                         "parameters": esquema}}
+
+
+# Las descripciones importan: son lo unico que el modelo lee para decidir si
+# una tool sirve. Una descripcion vaga hace que no la llame cuando deberia.
 _TOOLS_DEV = [
-    {"type": "function", "function": {
-        "name": "man_get_equipos",
-        "description": "Lista los equipos de la empresa del usuario.",
-        "parameters": {"type": "object", "properties": {}},
-    }},
-    {"type": "function", "function": {
-        "name": "man_get_equipo",
-        "description": "Ficha de un equipo por su id.",
-        "parameters": {
-            "type": "object",
-            "properties": {"equi_id": {"type": "string", "description": "Id del equipo"}},
-            "required": ["equi_id"],
-        },
-    }},
-    {"type": "function", "function": {
-        "name": "man_get_ots",
-        "description": "Ordenes de trabajo de la empresa del usuario.",
-        "parameters": {"type": "object", "properties": {}},
-    }},
-    {"type": "function", "function": {
-        "name": "man_get_kpi_mtbf",
-        "description": "MTBF (tiempo medio entre fallas) de los equipos.",
-        "parameters": {"type": "object", "properties": {}},
-    }},
-    {"type": "function", "function": {
-        "name": "man_get_kpi_disponibilidad",
-        "description": "Disponibilidad de los equipos.",
-        "parameters": {"type": "object", "properties": {}},
-    }},
+    # --- Mantenimiento ---------------------------------------------------
+    _tool("man_get_equipos",
+          "Lista los equipos de la empresa del usuario, con su codigo, sector y estado."),
+    _tool("man_get_equipo",
+          "Ficha completa de un equipo: datos, ubicacion y componentes.",
+          {"equi_id": {"type": "string", "description": "Id del equipo"}}, ["equi_id"]),
+    _tool("man_get_ots",
+          "Ordenes de trabajo de la empresa: estado, equipo, asignado y fechas."),
+    _tool("man_get_preventivos",
+          "Planes de mantenimiento preventivo y su frecuencia."),
+    _tool("man_get_kpi_disponibilidad",
+          "Disponibilidad de los equipos: porcentaje de tiempo en condiciones de operar."),
+    _tool("man_get_kpi_mttr",
+          "MTTR: tiempo medio de reparacion. Cuanto se tarda en volver a poner un equipo en marcha."),
+    _tool("man_get_kpi_mttf",
+          "MTTF: tiempo medio hasta la falla. Cada cuanto falla un equipo."),
+    _tool("man_get_kpi_fallas",
+          "Cantidad de fallas por equipo en el periodo."),
+    # --- Almacenes -------------------------------------------------------
+    _tool("alm_get_stock",
+          "Stock disponible de articulos: cantidades por deposito. Sirve para saber si hay "
+          "un repuesto o insumo antes de planificar una tarea.",
+          {"depo_id": {"type": "string", "description": "Filtrar por deposito (opcional)"},
+           "buscar": {"type": "string", "description": "Texto a buscar en el articulo (opcional)"}}),
+    _tool("alm_get_depositos",
+          "Depositos de la empresa, con su codigo y descripcion."),
+    _tool("alm_get_movimientos",
+          "Movimientos de stock: entradas, salidas y ajustes, con fecha y articulo."),
+    _tool("alm_get_entregas",
+          "Entregas de materiales realizadas: que se entrego, a quien y cuando."),
+    _tool("alm_get_vencimientos",
+          "Articulos vencidos o proximos a vencer. Importante para no entregar material fuera de fecha."),
+    _tool("alm_get_pedidos_materiales",
+          "Pedidos de materiales: que se pidio, su estado y para que obra o equipo."),
 ]

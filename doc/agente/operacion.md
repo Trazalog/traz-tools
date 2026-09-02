@@ -96,6 +96,18 @@ Primero conviene ver cómo queda troceado, sin escribir ni gastar tokens:
 .venv-agente/bin/python -m agente.ingesta carpeta/ --dry-run
 ```
 
+**Etiquetá el área con `--modulo`**, porque de eso depende que el conocimiento se recupere donde corresponde:
+
+| Valor | Para qué material |
+|---|---|
+| `man` | Manuales de equipos, procedimientos de mantenimiento, planes preventivos |
+| `alm` | Procedimientos de depósito, manejo de materiales, criterios de stock |
+| `general` | Lo que aplica a las dos: seguridad, normativa transversal. **Se recupera siempre**, sin importar el área de la consulta |
+
+```
+.venv-agente/bin/python -m agente.ingesta procedimiento-deposito.md --modulo alm --tipo manual
+```
+
 ⚠️ **La ingesta escribe en el conocimiento compartido, así que necesita el rol `agente_curador`.** Con las credenciales del orquestador (`agente_app`) va a fallar con `permission denied for table chunk`, y eso es correcto: por ADR-A4 el runtime no escribe conocimiento compartido. Usá las credenciales del curador para ingestar.
 
 ---

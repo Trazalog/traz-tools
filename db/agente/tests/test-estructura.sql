@@ -188,6 +188,25 @@ SELECT 'indice unico de dedupe en agente.notificacion',
        ), 'evita repetir el mismo hallazgo en cada corrida';
 
 -- ---------------------------------------------------------------------------
+-- Alcance: el agente cubre mantenimiento Y almacenes (009)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' tiene columna modulo',
+       EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_schema = 'agente' AND table_name = t AND column_name = 'modulo'
+       ), 'mantenimiento / almacenes / general'
+FROM unnest(ARRAY['chunk', 'candidato', 'hecho', 'tema']) AS t;
+
+INSERT INTO _resultado
+SELECT 'notificacion acepta el tipo de alerta ' || tipo,
+       pg_get_constraintdef(c.oid) LIKE '%' || tipo || '%',
+       'alertas de almacenes'
+FROM unnest(ARRAY['stock_critico', 'material_por_vencer', 'pedido_demorado']) AS tipo,
+     pg_constraint c
+WHERE c.conname = 'notificacion_tipo_ck';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -196,7 +215,7 @@ SELECT 'script ' || s || ' registrado en schema_version',
 FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
-    '008-destinatarios-alerta'
+    '009-alcance-almacenes'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
