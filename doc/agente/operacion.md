@@ -112,6 +112,44 @@ Primero conviene ver cómo queda troceado, sin escribir ni gastar tokens:
 
 ---
 
+## El chat dentro de Tools
+
+La vista vive en `application/modules/traz-comp-agente/` y se entra por:
+
+```
+<base_url>/traz-comp-agente/agente
+```
+
+El panel de feedback negativo, por:
+
+```
+<base_url>/traz-comp-agente/agente/admin
+```
+
+### Antes de que funcione, tres cosas
+
+**1. El orquestador tiene que estar corriendo y ser alcanzable desde el PHP.** La URL sale de la constante `REST_AGENTE` (`application/config/constants.php`), que se puede pisar con la variable de entorno `AGENTE_URL`. Por defecto apunta a `http://127.0.0.1:8099`.
+
+**2. Dnato tiene que estar accesible en la URL de la constante `DNATO`**, y compartir sesión con Tools — que es lo normal, porque corren en el mismo host con la misma cookie `ci_session`. Si no compartieran sesión, el usuario tendría que loguearse otra vez al entrar al chat.
+
+**3. El módulo tiene que estar en el menú.** El menú de Tools sale de la tabla `sismenu`, así que es un alta de **datos**, no de código: hay que dar de alta la entrada apuntando a `traz-comp-agente/agente` y asignarla a los roles que correspondan. Mientras tanto se entra por URL directa.
+
+### Verificar que la conexión con el agente funciona
+
+Desde el navegador, con sesión iniciada en Tools:
+
+```
+<base_url>/traz-comp-agente/agente/salud
+```
+
+Devuelve el mismo JSON que `/salud` del orquestador. Si dice `"estado": "inaccesible"`, el problema es de red o de `REST_AGENTE`, no del agente.
+
+### Si el chat pide reconectar todo el tiempo
+
+El JWT que emite Dnato tiene un TTL (`jwt_ttl` en su `config/jwt.php`). Cuando está por vencer, `/consulta` devuelve `401` y el JS reconecta solo — sin perder lo escrito. Si eso pasa **en cada consulta**, el TTL está muy corto o el reloj del servidor está desfasado.
+
+---
+
 ## Troubleshooting
 
 | Síntoma | Causa probable | Qué hacer |
@@ -125,6 +163,10 @@ Primero conviene ver cómo queda troceado, sin escribir ni gastar tokens:
 | Las consultas no ven memoria | Falta la partición de esa empresa | `SELECT agente.crear_particion_empresa(<empr_id>);` |
 | `El modelo X devolvio vectores de N dimensiones` | El modelo de embeddings no coincide con el esquema | Ver "Cambiar el modelo de embeddings" |
 | Una tool falla siempre | `AGENTE_MCP_MODO` o `AGENTE_MCP_URL` mal | Verificá contra qué apunta. En dev, que el MI esté levantado |
+| El chat redirige a Dnato y vuelve con error | `client_id` o `redirect_uri` que Dnato no acepta | El `client_id` tiene que ser el de `AGENTE_OAUTH_CLIENT_ID`; el `redirect_uri` se arma solo con `base_url()` |
+| "No se pudo validar la vuelta del login" | El `state` no coincide: sesión perdida entre el redirect y la vuelta | Suele ser que Tools y Dnato no comparten la cookie de sesión |
+| `code_verifier incorrecto` al canjear | El challenge no coincide con el verifier | `php tests/agente/test-pkce.php` — verifica el cálculo contra el de Dnato |
+| El chat dice "el agente no está disponible" | El PHP no llega al orquestador | `<base_url>/traz-comp-agente/agente/salud` lo dice con detalle |
 
 ### Dónde mirar cuando algo salió mal
 

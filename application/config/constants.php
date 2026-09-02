@@ -156,6 +156,9 @@ define('COD', 'traz-comp-codigos/');
 #COMPONENTE NOTIFICACIONES
 define('NOTI', 'traz-comp-notificaciones/');
 
+#COMPONENTE AGENTE MINERO
+define('AGE', 'traz-comp-agente/');
+
 #COMPONENTE MANTENIMIENTO
 define('MAN', 'traz-tools-man/');
 
@@ -233,6 +236,16 @@ define('REST_BPM', HOST.'/tools/bpm');
 define('REST_CORE', HOST.'/services/COREDataService');
 define('REST_FRM', HOST.'/services/FRMDataService');
 define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
+
+#AGENTE MINERO — el orquestador NO va detras de HOST: es un servicio propio,
+#que en demo y produccion tiene que quedar detras del gateway o en una red
+#donde solo llegue trafico ya validado (ver doc/agente/operacion.md).
+define('REST_AGENTE', getenv('AGENTE_URL') ?: 'http://127.0.0.1:8099');
+
+#Cliente OAuth contra Dnato. Es el unico client_id que Dnato acepta hoy
+#(Oauth::ALLOWED_CLIENT_ID, "fase 1: cliente unico fijo"). Cuando Dnato soporte
+#varios clientes, Tools deberia tener el suyo — ver la nota del controller.
+define('AGENTE_OAUTH_CLIENT_ID', 'trazalog-mcp-connector');
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
 define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
