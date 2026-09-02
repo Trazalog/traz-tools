@@ -51,3 +51,10 @@ doc/v3/files.zip
 # Config local de Claude Code — los comandos compartidos (.claude/commands/) sí se versionan
 .claude/settings.local.json
 .claude/worktrees/
+
+# Agente Minero
+.env
+.venv-agente/
+agente/__pycache__/
+tests/__pycache__/
+.pytest_cache/

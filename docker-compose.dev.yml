@@ -1,0 +1,50 @@
+# =============================================================================
+# Entorno de desarrollo del Agente Minero
+# =============================================================================
+# Levanta el orquestador y, opcionalmente, un PostgreSQL con pgvector propio.
+#
+#   docker compose -f docker-compose.dev.yml up orquestador
+#
+# Por defecto el orquestador se conecta al PostgreSQL del HOST (host.docker.
+# internal), que es donde ya está aplicado el esquema. Si preferís una base
+# descartable dentro de Docker, levantá también el perfil "db":
+#
+#   docker compose -f docker-compose.dev.yml --profile db up
+#
+# Requiere un archivo .env en la raíz (copiar de .env.example).
+# =============================================================================
+
+services:
+  orquestador:
+    image: python:3.12-slim
+    working_dir: /app
+    env_file: .env
+    environment:
+      AGENTE_PROMPT_PATH: /app/prompts/agente-minero.md
+    ports:
+      - "8099:8099"
+    volumes:
+      - .:/app:ro
+    extra_hosts:
+      # Para llegar al PostgreSQL y al WSO2 MI que corren en la máquina.
+      - "host.docker.internal:host-gateway"
+    command: >
+      sh -c "pip install --quiet --no-cache-dir -r agente/requirements.txt &&
+             uvicorn agente.api:app --host 0.0.0.0 --port 8099 --reload"
+
+  # Base descartable, solo si no querés usar la del host.
+  db:
+    profiles: ["db"]
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: agente_minero
+      POSTGRES_PASSWORD: ${AGENTE_DB_PASSWORD:-agente}
+    ports:
+      - "5433:5432"
+    volumes:
+      # Los scripts numerados se aplican solos en el primer arranque.
+      - ./db/agente:/docker-entrypoint-initdb.d:ro
+      - agente_pgdata:/var/lib/postgresql/data
+
+volumes:
+  agente_pgdata:
