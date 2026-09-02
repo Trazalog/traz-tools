@@ -15,7 +15,7 @@ Este documento es el **instructivo paso a paso para instalar y dejar operativos 
 | **WSO2 Streaming Integrator** | ✅ §1 — instalado y verificado 2026-09-02 | ⏳ §2 — pendiente | ⏳ pendiente |
 | Esquema PostgreSQL del agente | ⏳ E1 | ⏳ | ⏳ |
 | Orquestador Python/FastAPI | ⏳ E2 | ⏳ | ⏳ |
-| `FirebaseConnectorAPI` en el MI | ⏳ (hoy no está desplegado en el MI local) | — ya existe | — ya existe |
+| **`FirebaseConnectorAPI` en el MI** | ✅ §1-bis — desplegado y verificado hasta FCM el 2026-09-02 | — ya existe | — ya existe |
 
 ---
 
@@ -202,6 +202,86 @@ Cuando termines, **borrá la fila de prueba y el archivo `.siddhi`** — el arch
 | Captura de una fila nueva | ✅ evento capturado con su `data_json` |
 
 La prueba de captura se hizo insertando una fila marcada en `assetv2.synch_notificacion_queue` (base de desarrollo) y **borrándola inmediatamente después**; la tabla quedó con las mismas 434 filas y el mismo último id (562) que antes de la prueba.
+
+---
+
+## 1-bis. Conector Firebase en el WSO2 MI
+
+El `FirebaseConnectorAPI` es el que efectivamente manda el push a FCM. Vive en `_backend/api/FirebaseConnectorAPI/` y **ya está desplegado en los ambientes existentes**; estos pasos son para montarlo en un MI nuevo (por ejemplo el local de desarrollo, donde no estaba).
+
+Todos los comandos van en **la terminal local**.
+
+### 1-bis.1 Construir y desplegar el CAR
+
+```
+cd _backend/api/FirebaseConnectorAPI/FirebaseConnectorAPICompositeExporter && \
+  export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 && mvn clean install
+```
+```
+cp target/FirebaseConnectorAPICompositeExporter_1.0.0-SNAPSHOT.car \
+  ~/.wso2-mi/micro-integrator/wso2mi-4.5.0/repository/deployment/server/carbonapps/
+```
+
+⚠️ El build de Maven **borra archivos versionados** dentro de `FirebaseConnectorAPICompositeExporter/tmp/` y deja un `target/` sin trackear. Después de construir, revisar `git status` y restaurar:
+
+```
+git checkout -- _backend/api/FirebaseConnectorAPI/FirebaseConnectorAPICompositeExporter/tmp/
+```
+
+### 1-bis.2 Reiniciar el MI — el hot deploy no alcanza
+
+El CAR se despliega en caliente y el API aparece, **pero el connector `googlefirebase` no queda registrado**: el primer `POST` falla con `Sequence template org.wso2.carbon.connector.googlefirebase.init cannot be found`. Hay que reiniciar el MI para que registre la Synapse Library.
+
+### 1-bis.3 El connector no trae el SDK de Firebase
+
+Después del reinicio el connector se despliega, pero falla al instanciar:
+
+```
+NoClassDefFoundError: com/google/firebase/messaging/FirebaseMessagingException
+```
+
+El `googlefirebase-connector-1.0.2.zip` contiene **solo las clases del conector, cero jars**. Hay que resolver el SDK y sus transitivas, y dejarlas en `<MI_HOME>/lib`. Con Maven, creando un `pom.xml` mínimo con la dependencia `com.google.firebase:firebase-admin:6.12.2` y ejecutando:
+
+```
+mvn dependency:copy-dependencies -DoutputDirectory=jars
+```
+
+Son **67 jars, unos 25 MB**. **No los copies todos:** siete ya existen en el MI (`guava`, `gson`, `jackson-core`, `commons-codec`, `commons-lang3`, `commons-logging`, `slf4j-api`) y pisarlos puede romper el runtime. Copiá a `<MI_HOME>/lib` solo los **60 restantes**, comparando por nombre de artefacto contra lo que ya hay en `lib/`, `wso2/lib/`, `dropins/` y `wso2/components/plugins/`.
+
+Después, reiniciar el MI otra vez.
+
+### 1-bis.4 Verificación
+
+```
+curl -s -X POST http://localhost:8290/tools/firebase/send \
+  -H "Content-Type: application/json" \
+  -d '{"xformValues":{"registrationToken":"TOKEN_INVALIDO","notificationTitle":"Prueba","webPushNotificationBody":"smoke test","webPushNotificationDirection":"AUTO"}}'
+```
+
+Si el conector está bien montado, la respuesta trae el rechazo de FCM:
+
+```
+{"Result":{"Error":"400 Bad Request\nPOST https://fcm.googleapis.com/v1/projects/traz-prod-assetplanner/messages:send ... The registration token is not a valid FCM registration token"}}
+```
+
+Eso **es el resultado esperado** con un token de descarte: significa que el conector se autenticó con la cuenta de servicio y llegó hasta Google.
+
+### 1-bis.5 ⚠️ Un fallo de envío sale como HTTP 200
+
+Prestá atención al status de esa respuesta: es **200**, con el error adentro del cuerpo. No es un caso de borde — un rechazo explícito de Google sale como éxito HTTP.
+
+Cualquier cosa que consuma este API **tiene que parsear el cuerpo y buscar `Result.Error`**; mirar el status code no alcanza. Es el riesgo R4 del análisis de E0, y es la razón por la que `agente.envio` tiene un `estado` de cuatro valores en vez de un flag binario.
+
+### 1-bis.6 Verificado en desarrollo el 2026-09-02
+
+| Qué | Resultado |
+|---|---|
+| CAR construido y desplegado en el MI local | ✅ el API aparece en `/management/apis` |
+| Connector `googlefirebase` registrado tras reiniciar | ✅ `Successfully created Synapse Import: googlefirebase` |
+| 60 jars del SDK en `lib/`, sin pisar los 7 solapados | ✅ arranque sin `NoClassDefFoundError` |
+| `POST` real hasta FCM | ✅ autenticación correcta con la cuenta de servicio; FCM responde |
+| Token inválido | ✅ rechazado por FCM — **y devuelto como HTTP 200** |
+| Push a un dispositivo real | ⏳ pendiente: hace falta un token FCM válido |
 
 ---
 
