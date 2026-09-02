@@ -130,7 +130,11 @@ El panel de feedback negativo, por:
 
 **1. El orquestador tiene que estar corriendo y ser alcanzable desde el PHP.** La URL sale de la constante `REST_AGENTE` (`application/config/constants.php`), que se puede pisar con la variable de entorno `AGENTE_URL`. Por defecto apunta a `http://127.0.0.1:8099`.
 
-**2. Dnato tiene que estar accesible en la URL de la constante `DNATO`**, y compartir sesión con Tools — que es lo normal, porque corren en el mismo host con la misma cookie `ci_session`. Si no compartieran sesión, el usuario tendría que loguearse otra vez al entrar al chat.
+**2. Dnato tiene que estar accesible y compartir sesión con Tools** — que es lo normal, porque corren en el mismo host con la misma cookie `ci_session`.
+
+⚠️ **Cuidado con el host.** El flujo OAuth usa la constante `AGENTE_DNATO_OAUTH`, que por defecto vale lo mismo que `DNATO`, pero se puede pisar con la variable de entorno `DNATO_OAUTH_URL`. Hace falta cuando el vhost no coincide con lo que dice `DNATO`: en el entorno de desarrollo, por ejemplo, `DNATO` apunta a `http://localhost/traz-comp-dnato/` mientras el vhost real de XAMPP es `traz-comp.local` con DocumentRoot en `/mnt/win/dev/git`. Si quedan desalineados, el navegador termina en una URL que no sirve.
+
+**El valor tiene que ser el mismo host por el que entra el usuario**, o la cookie de sesión no viaja y Dnato le pide login de nuevo — justamente lo que este flujo evita.
 
 **3. El módulo tiene que estar en el menú.** El menú de Tools sale de la tabla `sismenu`, así que es un alta de **datos**, no de código: hay que dar de alta la entrada apuntando a `traz-comp-agente/agente` y asignarla a los roles que correspondan. Mientras tanto se entra por URL directa.
 

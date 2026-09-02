@@ -246,6 +246,16 @@ define('REST_AGENTE', getenv('AGENTE_URL') ?: 'http://127.0.0.1:8099');
 #(Oauth::ALLOWED_CLIENT_ID, "fase 1: cliente unico fijo"). Cuando Dnato soporte
 #varios clientes, Tools deberia tener el suyo — ver la nota del controller.
 define('AGENTE_OAUTH_CLIENT_ID', 'trazalog-mcp-connector');
+
+#Base de Dnato para el flujo OAuth del agente.
+#
+#Por defecto usa DNATO, pero se puede pisar con la variable de entorno
+#DNATO_OAUTH_URL. Hace falta cuando el vhost no coincide con lo que dice DNATO:
+#en el entorno de desarrollo, por ejemplo, DNATO apunta a localhost mientras el
+#vhost real es traz-comp.local, y el navegador terminaria en una URL que no
+#sirve. El valor tiene que ser el mismo host por el que entra el usuario, o la
+#cookie de sesion no viaja y Dnato le pide login de nuevo.
+define('AGENTE_DNATO_OAUTH', getenv('DNATO_OAUTH_URL') ?: DNATO);
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
 define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');

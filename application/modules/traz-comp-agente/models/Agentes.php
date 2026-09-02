@@ -37,7 +37,7 @@ class Agentes extends CI_Model
 
         // Form-urlencoded, no JSON: es lo que pide el estandar de OAuth y lo
         // que lee el endpoint de Dnato con $this->input->post().
-        $curl = curl_init(DNATO . 'oauth/token');
+        $curl = curl_init(rtrim(AGENTE_DNATO_OAUTH, '/') . '/oauth/token');
         curl_setopt_array($curl, [
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => $post,

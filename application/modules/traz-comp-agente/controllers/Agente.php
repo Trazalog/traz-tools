@@ -95,7 +95,7 @@ class Agente extends CI_Controller
         ];
 
         log_message('DEBUG', '#TRAZA | AGENTE | Agente | conectar() >> pidiendo code a Dnato');
-        redirect(DNATO . 'oauth/authorize?' . http_build_query($params));
+        redirect(rtrim(AGENTE_DNATO_OAUTH, '/') . '/oauth/authorize?' . http_build_query($params));
     }
 
     /**
