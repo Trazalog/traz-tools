@@ -277,7 +277,7 @@ Cosas a resolver, en orden, que salen de haber elegido C:
 | 3 | **Driver JDBC de PostgreSQL** | Las apps Siddhi existentes usan `com.mysql.jdbc.Driver` contra MariaDB. La cola del agente vive en PostgreSQL: hay que dejar el driver de Postgres en `lib/` del SI y usar `org.postgresql.Driver`. |
 | 4 | **Columna de polling** | El `cdc` source en modo `polling` necesita una columna monótona. La tabla `envio` la lleva desde el diseño (`fec_alta` o un `id` serial), definida en E1. |
 | 5 | **Credenciales fuera del `.siddhi`** | Los tres `.siddhi` de `traz-int` tienen usuario y contraseña de base **en claro**. La app nueva usa referencias del `deployment.yaml` del SI / secure vault. No repetir el patrón. |
-| 6 | **Formato del mensaje** | Alinear lo que el Siddhi envía con lo que `MessageCreateSeq` del MI espera (`$.xformValues.*`). Hoy los tres artefactos no coinciden entre sí (§5.1 punto 7) — **por eso la prueba real de R4 se hace antes de escribir la app**, no después. |
+| 6 | **Formato del mensaje — ✅ RESUELTO 2026-09-02** | **El formato correcto es `{"xformValues": {...}}`**, confirmado con un `POST` real contra el MI local: `MessageCreateSeq` parseó los campos y logueó `notificationTitle` correctamente. Ninguna de las tres apps Siddhi existentes emite ese formato — de ahí la inconsistencia de §5.1 punto 7. La app del agente debe emitir el JSON envuelto en `xformValues`, con al menos `registrationToken`, `notificationTitle`, `webPushNotificationBody`, `webPushNotificationIcon` y `webPushNotificationDirection`. |
 | 7 | **Dónde versionar la app Siddhi** | Las existentes viven en `traz-int/siddhi/notificaciones/`. La del agente es del frente v3.5: propongo `_backend/siddhi/` en **este** repo (que ya tiene la carpeta declarada en la estructura del CLAUDE.md), para que el frente quede completo en un solo lugar. **A confirmar.** |
 
 ### 6.5 Qué implica esto para ADR-A6
@@ -286,6 +286,32 @@ ADR-A6 dice **"notificaciones vía sistema de alertas de Asset Planner extendido
 
 No hace falta ADR nuevo ni modificar A6. Sí corresponde dejar asentado en el ADR del agente que el SI pasa a ser **pieza estándar de la arquitectura**, por la extensibilidad futura del sistema de alarmas — eso es información nueva respecto de lo que A6 decía.
 
+### 6.6 Resultado de la prueba real contra el conector (2026-09-02)
+
+Se desplegó `FirebaseConnectorAPI` en el **MI local de desarrollo** (antes solo tenía `ToolsAPIProject`) y se hizo un `POST` contra `http://localhost:8290/tools/firebase/send`. Tres resultados:
+
+**1. ✅ El formato de mensaje quedó determinado.** El cuerpo tiene que ir envuelto en `xformValues`:
+
+```json
+{
+  "xformValues": {
+    "registrationToken": "<token FCM del dispositivo>",
+    "notificationTitle": "Nueva Orden de Trabajo asignada",
+    "webPushNotificationBody": "Por favor revise su bandeja.",
+    "webPushNotificationIcon": "https://...",
+    "webPushNotificationDirection": "AUTO"
+  }
+}
+```
+
+`MessageCreateSeq` lo parseó bien y logueó los campos. **Ninguna de las tres apps Siddhi existentes emite este formato** — la de desarrollo manda `{queue_id, token}` y la de producción `{queue_id, data_json}`. Eso confirma la inconsistencia de §5.1 punto 7 y da la especificación exacta que debe cumplir la app del agente.
+
+**2. 🔴 El conector devuelve 202 aunque falle.** Ver R4. Es el hallazgo más importante de la prueba: invalida la premisa de que "2xx = enviado" sobre la que está construido el `post-grabacion` de las apps Siddhi actuales.
+
+**3. ⚠️ El connector `googlefirebase` no queda registrado por el hot deploy del CAR.** El `.car` sí lo trae (`googlefirebase-connector_1.0.2/googlefirebase-connector-1.0.2.zip`) y el MI lo extrajo a `tmp/libs/`, pero el sequence template `org.wso2.carbon.connector.googlefirebase.init` no aparece. Falta **reiniciar el MI** para que lo registre. No se hizo: el MI de desarrollo lleva días corriendo y el reinicio lo decide el PM.
+
+**Lo que falta para cerrar la prueba de punta a punta:** reiniciar el MI local, y un token FCM real (abrir AssetPlanner en el navegador y aceptar el permiso de notificaciones) para confirmar que el push efectivamente llega al dispositivo. Lo que define el diseño del `.siddhi` —el formato— ya está resuelto.
+
 ## 7. Riesgos
 
 | # | Riesgo | Sev. | Detalle y mitigación propuesta |
@@ -293,7 +319,7 @@ No hace falta ADR nuevo ni modificar A6. Sí corresponde dejar asentado en el AD
 | **R1** | **Clave privada de cuenta de servicio de Firebase commiteada en el repo** | 🔴 Alta | `_backend/api/FirebaseConnectorAPI/.../FirebaseConnectorAPI.xml` tiene la `privateKey` completa del service account `firebase-adminsdk-3ag87@traz-prod-assetplanner.iam.gserviceaccount.com`, en claro, en `traz-tools` y en sus copias `.backup`/`tmp`. Con ella se puede enviar push a cualquier dispositivo del proyecto. **Mitigación:** rotar la clave en la consola de Firebase y moverla a la configuración del MI (no al artefacto versionado). Es trabajo aparte de esta etapa; lo señalo para que decidas cuándo. |
 | **R2** | **`getNotificaciones` sin filtro de `empr_id`** | 🟠 Media | El DataService filtra solo por `user_id` recibido por path. Hoy lo llama el PHP con el id de sesión, pero el endpoint no valida nada por sí mismo. Contradice ADR-009. **Mitigación:** no reutilizarlo en el puente del agente; si además se decide corregirlo para AssetPlanner, es tarea del otro repo. |
 | **R3** | **Marcar como leída sin verificar dueño** | 🟡 Baja | §5.1 punto 6. No expone contenido, pero permite ocultarle notificaciones a otro usuario. **Mitigación:** en el puente nuevo, filtrar por dueño; en asset, reportarlo como hallazgo. |
-| **R4** | **El push no está verificado end-to-end en ningún ambiente al que tenga acceso** | 🟠 Media | 434 filas y 0 procesadas en desarrollo; los `.siddhi` apuntan a bases distintas de la de DEV; los tres formatos de mensaje no coinciden (§5.1 punto 7). **No puedo afirmar que el push funcione hoy en producción.** **Mitigación:** antes de escribir la app Siddhi, hacer una prueba controlada contra `FirebaseConnectorAPI` con un token real. Con la Opción C esto sube de prioridad: esa prueba es la que define el formato exacto que la app tiene que emitir. |
+| **R4** | **El conector responde 2xx aunque el envío falle** | 🔴 **Alta — confirmado 2026-09-02** | El `faultSequence` de `FirebaseConnectorAPI` está **vacío**: cuando la mediación falla, el API igual devuelve `202`. Verificado con un `POST` real contra el MI local — el conector no pudo inicializarse (`Sequence template org.wso2.carbon.connector.googlefirebase.init cannot be found`) y aun así respondió `202` sin cuerpo. **Esto es grave para la Opción C:** el Siddhi marca `procesado = 1` con cualquier respuesta 2xx, así que un fallo de envío se registra como éxito y **la notificación se pierde en silencio**. Explica por qué en desarrollo hay 434 filas con 0 procesadas y nadie se enteró. **Mitigación obligatoria antes de conectar el agente:** completar el `faultSequence` para que devuelva 5xx, y que la app Siddhi solo marque enviado con un 2xx real. |
 | **R5** | **Dependencia de un servicio externo (FCM) para el canal proactivo** | 🟡 Baja | FCM es gratuito y cumple ADR-005 (costo $0), pero el proyecto Firebase se llama `traz-prod-assetplanner` y está atado a esa app. **Mitigación:** la campanita in-app funciona sin FCM y cubre el caso base; el push es el extra. Diseñar el puente para que la falla de FCM no pierda el hallazgo (la cola queda, la campanita lo muestra). |
 | **R6** | **Fatiga de alertas** | 🟠 Media | El mecanismo actual notifica eventos que el usuario provocó. Los hallazgos del agente son distintos: se generan solos, en lote, y pueden repetirse en cada corrida del job. Sin deduplicación ni umbral, el agente se vuelve ruido en dos semanas. **Mitigación:** deduplicación por (empresa, equipo, tipo de hallazgo, ventana temporal) desde el día uno, y umbrales configurables — a definir con vos en E5. |
 | **R7** | **Dos colas conviviendo** | 🟡 Baja | Consecuencia aceptada de la Opción B. **Mitigación:** documentarlo, y unificar cuando AssetPlanner migre a `traz-tools-man`. |
@@ -320,7 +346,7 @@ Opciones, para que elijas: liberar espacio en `/` (con ~3-4 GB alcanza cómodo),
 1. **¿Quién recibe una alerta proactiva del agente?** El mecanismo actual solo sabe notificar a un usuario concreto (el asignado de una OT). Para "el equipo X viene fallando más de lo normal" hace falta destinatario: ¿un rol de Tools (jefe de mantenimiento)? ¿todos los usuarios de la empresa con cierto permiso? ¿un usuario configurado por empresa? Es funcional/de negocio. **Bloquea E5, no E1** — la tabla se modela con destinatario genérico y la resolución se define después.
 2. **¿Push + campanita, o campanita sola en esta versión?** La campanita cubre el caso de uso y no depende de FCM ni de la rotación de la clave. El push suma alcance pero arrastra R1 y R4.
 3. **¿Rotamos la clave privada de Firebase (R1) ahora o queda como tarea aparte?** Si el puente va a usar el conector, en algún momento hay que hacerlo.
-4. **¿Autorizás la prueba controlada de R4** (un `POST` real a `/tools/firebase/send` con un token de prueba)? Con la Opción C esta prueba pasa a ser **más importante**: define el formato exacto que la app Siddhi tiene que emitir, y hoy los tres artefactos existentes no coinciden entre sí. Conviene hacerla **antes** de escribir el `.siddhi`.
+4. ✅ **Prueba del conector: hecha** (§6.6). El formato quedó determinado (`xformValues`) y apareció un riesgo nuevo de severidad alta: **el conector responde 202 aunque el envío falle**, lo que hace que el patrón "2xx = enviado" de las apps Siddhi actuales pierda notificaciones en silencio. **Falta tu decisión sobre dos cosas:** reiniciar el MI local para que registre el connector `googlefirebase` (no lo hice, lleva días corriendo), y si el `faultSequence` vacío del conector se corrige ahora — es requisito para que el agente pueda confiar en el envío.
 5. **¿Dónde se versiona la app Siddhi del agente?** Las de AssetPlanner viven en `traz-int/siddhi/notificaciones/`. Propongo `_backend/siddhi/` en **este** repo —la carpeta ya está declarada en la estructura del `CLAUDE.md`— para que el frente v3.5 quede completo en un solo lugar.
 
 **E1 (base de datos) puede arrancar ya**, sin depender de ninguna de estas. Las tablas `notificacion`, `envio` y `dispositivo` quedan definidas según §6.2 y §6.3, con la columna de polling que el CDC del SI necesita.
