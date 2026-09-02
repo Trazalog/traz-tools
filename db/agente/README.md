@@ -39,6 +39,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 005 | `005-feedback.sql` | `interaccion` y `feedback` — el registro de cada consulta y su calificación |
 | 006 | `006-entrevistador.sql` | `tema`, `sesion_entrevista`, `hecho` y `validacion_cruzada` — la captura de conocimiento experto |
 | 007 | `007-notificaciones.sql` | `dispositivo`, `notificacion` y `envio` — el puente de alertas de la Opción C |
+| 008 | `008-destinatarios-alerta.sql` | `destinatario_alerta` — quién recibe cada tipo de alerta, configurable por empresa |
 
 Aplicación completa, desde el directorio del repo:
 
@@ -145,6 +146,19 @@ Además, `envio.envio_id` es la columna de polling del CDC: monótona creciente,
 
 En AssetPlanner el flag es binario (`procesado` 0/1) y el Siddhi lo pone en 1 con cualquier respuesta 2xx. Como el conector Firebase **devuelve 202 aunque el envío falle** (hallazgo verificado, R4 del análisis de E0), un fallo se registra como éxito y la notificación se pierde en silencio. Por eso `envio.estado` tiene cuatro valores (`pendiente`, `enviado`, `fallido`, `descartado`), lleva `intentos` y `ultimo_error`, y `fec_envio` se escribe de verdad — a diferencia del `fec_realizado` de AssetPlanner, que está declarado y nunca se usa.
 
+### Por qué los destinatarios se configuran en el agente y no se heredan
+
+Decisión del PM del 2026-09-02, después de mirar qué roles existen realmente:
+
+- **Dnato**, que es la identidad de Tools, tiene solo `admin` y `user`, y sin empresa. Le llegaría todo al administrador sin importar si es quien decide sobre mantenimiento.
+- **AssetPlanner** (`assetv2.sisgroups`) sí tiene roles ricos y por empresa — Administrador, Mantenedor, Planificador, Supervisor de Taller —, pero tiene login propio sin Dnato: no existe un mapeo usuario de Tools ↔ usuario de AssetPlanner, y su esquema está congelado y va a migrar a `traz-tools-man`.
+
+Así que `agente.destinatario_alerta` guarda, por empresa y tipo de alerta, qué usuarios de Tools la reciben, con una `etiqueta` legible ("Jefe de mantenimiento") que sirve para auditar por qué le llegó. La carga inicial de cada cliente se puede sembrar mirando sus roles de AssetPlanner, pero eso es un dato, no una dependencia.
+
+`agente.destinatarios_de(empr_id, tipo)` resuelve la lista, sumando los configurados con `'*'`. Si no hay nadie configurado devuelve vacío: el hallazgo **se registra igual** en la memoria del cliente, pero no se notifica — silencio, en vez de un aviso a alguien al azar.
+
+El `rol_destino` de `agente.notificacion` queda como dato informativo (se copia de la etiqueta), no como mecanismo de resolución.
+
 ### Deduplicación de hallazgos
 
 `notificacion.dedupe_key` con índice único parcial sobre las no vencidas. Sin esto, el monitoreo programado de E5 notifica el mismo equipo con MTBF en deterioro en cada corrida y el agente se vuelve ruido en dos semanas (R6 del análisis de E0). La clave la arma el orquestador combinando empresa, entidad, tipo de hallazgo y ventana temporal.
@@ -159,8 +173,8 @@ Aplicado y verificado el **2026-09-02** contra **PostgreSQL 16.15 con pgvector 0
 |---|---|
 | Aplicar `001..007` sobre base vacía | ✅ los 7 sin error |
 | **Idempotencia** — aplicarlos una segunda vez | ✅ los 7 sin error, y los tests siguen en verde después |
-| `tests/test-estructura.sql` | ✅ **53 de 53** |
-| `tests/test-aislamiento.sql` | ✅ **12 de 12** |
+| `tests/test-estructura.sql` | ✅ **58 de 58** |
+| `tests/test-aislamiento.sql` | ✅ **16 de 16** |
 | **Búsqueda vectorial real** — ingesta de 3 chunks y consulta por similitud coseno | ✅ distancia `0.0000` contra sí mismo y `1.0000` contra los ortogonales, usando `chunk_embedding_hnsw_ix` |
 | Conexión real como `agente_orq` (rol del orquestador) | ✅ no es superusuario, lee `agente.chunk` y al intentar escribirlo recibe `permission denied for table chunk` |
 | **Rollback** en orden inverso `007 → 002`, y luego `001` | ✅ verificado en una corrida previa: deja el esquema y los roles limpios |

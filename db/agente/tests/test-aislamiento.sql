@@ -64,12 +64,18 @@ VALUES (:EMPRESA_A, 'SECRETO DE LA EMPRESA A: la chancadora 7 falla los martes',
 INSERT INTO agente.notificacion (empr_id, usr_id, tipo, titulo, cuerpo)
 VALUES (:EMPRESA_A, 1, 'hallazgo', 'Alerta privada de A', 'cuerpo A');
 
+INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
+VALUES (:EMPRESA_A, 'mtbf_deterioro', 11, 'Jefe de mantenimiento de A');
+
 SET LOCAL agente.empr_id = :'EMPRESA_B';
 INSERT INTO agente.memoria (empr_id, contenido, origen)
 VALUES (:EMPRESA_B, 'SECRETO DE LA EMPRESA B: el molino 3 consume de mas', 'consulta');
 
 INSERT INTO agente.notificacion (empr_id, usr_id, tipo, titulo, cuerpo)
 VALUES (:EMPRESA_B, 1, 'hallazgo', 'Alerta privada de B', 'cuerpo B');
+
+INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
+VALUES (:EMPRESA_B, 'mtbf_deterioro', 22, 'Jefe de mantenimiento de B');
 
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
@@ -113,6 +119,24 @@ SELECT 'notificacion: con contexto A, las de B son invisibles',
        NOT EXISTS (SELECT 1 FROM agente.notificacion WHERE titulo LIKE '%de B'),
        'RLS';
 
+INSERT INTO _resultado
+SELECT 'destinatario_alerta: con contexto A, los de B son invisibles',
+       NOT EXISTS (SELECT 1 FROM agente.destinatario_alerta WHERE usr_id = 22),
+       'configuracion de alertas de otra empresa';
+
+-- La resolucion de destinatarios tampoco puede cruzar empresas: preguntar por
+-- la empresa B desde el contexto de A no debe devolver a su jefe de
+-- mantenimiento.
+INSERT INTO _resultado
+SELECT 'destinatarios_de(): con contexto A, preguntar por B no devuelve nada',
+       NOT EXISTS (SELECT 1 FROM agente.destinatarios_de(900002, 'mtbf_deterioro')),
+       'resolucion de destinatarios aislada';
+
+INSERT INTO _resultado
+SELECT 'destinatarios_de(): con contexto A, devuelve al destinatario de A',
+       EXISTS (SELECT 1 FROM agente.destinatarios_de(900001, 'mtbf_deterioro') WHERE usr_id = 11),
+       'la funcion sigue sirviendo dentro de la empresa';
+
 -- ---------------------------------------------------------------------------
 -- CONTROL 2 — Simetrico: con el contexto de B, A es invisible
 -- ---------------------------------------------------------------------------
@@ -143,6 +167,11 @@ SELECT 'memoria: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
 INSERT INTO _resultado
 SELECT 'notificacion: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
        NOT EXISTS (SELECT 1 FROM agente.notificacion),
+       'no debe devolver todo';
+
+INSERT INTO _resultado
+SELECT 'destinatario_alerta: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.destinatario_alerta),
        'no debe devolver todo';
 
 -- ---------------------------------------------------------------------------

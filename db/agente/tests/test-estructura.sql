@@ -56,7 +56,8 @@ SELECT 'tabla agente.' || t,
 FROM unnest(ARRAY[
     'schema_version', 'fuente', 'chunk', 'memoria', 'candidato',
     'interaccion', 'feedback', 'tema', 'experto', 'sesion_entrevista',
-    'hecho', 'validacion_cruzada', 'dispositivo', 'notificacion', 'envio'
+    'hecho', 'validacion_cruzada', 'dispositivo', 'notificacion', 'envio',
+    'destinatario_alerta'
 ]) AS t;
 
 -- ---------------------------------------------------------------------------
@@ -80,7 +81,8 @@ SELECT 'funcion agente.' || f,
            WHERE n.nspname = 'agente' AND p.proname = f
        ), ''
 FROM unnest(ARRAY[
-    'crear_particion_empresa', 'expandir_envios', 'tg_set_fec_mod', 'tg_validacion_no_autovalida'
+    'crear_particion_empresa', 'expandir_envios', 'tg_set_fec_mod', 'tg_validacion_no_autovalida',
+    'destinatarios_de'
 ]) AS f;
 
 -- ---------------------------------------------------------------------------
@@ -129,7 +131,7 @@ SELECT 'RLS activo en agente.' || t,
            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
            WHERE n.nspname = 'agente' AND c.relname = t
        ), false), 'aislamiento multi-tenant'
-FROM unnest(ARRAY['memoria', 'notificacion']) AS t;
+FROM unnest(ARRAY['memoria', 'notificacion', 'destinatario_alerta']) AS t;
 
 INSERT INTO _resultado
 SELECT 'policy de aislamiento en agente.' || t,
@@ -137,7 +139,7 @@ SELECT 'policy de aislamiento en agente.' || t,
            SELECT 1 FROM pg_policies
            WHERE schemaname = 'agente' AND tablename = t
        ), ''
-FROM unnest(ARRAY['memoria', 'notificacion']) AS t;
+FROM unnest(ARRAY['memoria', 'notificacion', 'destinatario_alerta']) AS t;
 
 -- ---------------------------------------------------------------------------
 -- ADR-A4: agente_app NO puede escribir el conocimiento compartido
@@ -193,7 +195,8 @@ SELECT 'script ' || s || ' registrado en schema_version',
        EXISTS (SELECT 1 FROM agente.schema_version WHERE script = s), ''
 FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
-    '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones'
+    '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
+    '008-destinatarios-alerta'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
