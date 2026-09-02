@@ -68,16 +68,24 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 **Lo único que espera decisión del PM en DNATO** (no bloquea ALM): los 2 casos en borrador — DNATO-UC-020 (usuario externo) y DNATO-UC-024 (ABM de menúes). El triaje de hallazgos ya está hecho: 25 de los 35 tienen issue, y los 10 restantes tienen decisión escrita en su fila.
 
 
-**Agente Minero v3.5 (frente nuevo, rama `develop-v3.5`):** E0 entregado (PR #498), **gate 1 resuelto — Opción C**, y el
-**Streaming Integrator ya está instalado y verificado** en la máquina de desarrollo (AGENTE-SI-01, con CDC polling
-probado contra una tabla real). **Lo próximo es E1 (base de datos):** las tablas `notificacion` / `envio` / `dispositivo`
-quedan definidas en §6.2-6.3 del análisis, con la columna de polling que el CDC necesita, más el resto del esquema del
-agente (pgvector, conocimiento compartido, memoria por `empr_id`, cola de candidatos, feedback, tablas del entrevistador).
-Cuatro definiciones menores siguen abiertas y ninguna frena E1: quién es el destinatario de una alerta proactiva de empresa
-(bloquea E5), push + campanita o campanita sola, si se rota ahora la clave de Firebase commiteada, y dónde se versiona la
-app Siddhi del agente (se propone `_backend/siddhi/` en este repo). **Pendiente antes de escribir el `.siddhi`:** desplegar
-`FirebaseConnectorAPI` en el MI local —hoy no está, el MI solo tiene `ToolsAPIProject`— y hacer el POST real de prueba, que
-es lo que define el formato exacto que la app debe emitir.
+**Agente Minero v3.5 (frente nuevo, rama `develop-v3.5`):** E0 entregado (PR #498, gate 1 resuelto — **Opción C**), el
+**Streaming Integrator instalado y verificado** con CDC polling andando contra una tabla real, el **`FirebaseConnectorAPI`
+desplegado en el MI local** con el formato de mensaje confirmado por prueba real, y **E1 completo (PR #499)**: esquema
+entero probado contra PostgreSQL 16, idempotente, con rollback verificado y **aislamiento multi-tenant 12/12 en verde**.
+**Hay dos PRs abiertos — el tope de la metodología —, así que E2 no arranca hasta que se mergee alguno.** Nota de merge:
+`STATE.md` va a dar conflicto entre los dos PRs (la rama de E1 salió de `develop-v3.5` limpio y no tiene las filas de E0);
+se resuelve conservando las tres filas: AGENTE-E0, AGENTE-SI-01 y AGENTE-E1.
+
+**Lo que espera decisión del PM, en orden de urgencia:**
+1. **Dónde vive la base del agente.** El Postgres de DEV (`10.142.0.13`) es 11.18 y no tiene pgvector disponible; el local
+   de la máquina de desarrollo es 16.15 y alcanza con `sudo apt install postgresql-16-pgvector`. Sin esto E1 no se puede
+   aplicar en ningún ambiente.
+2. **Corregir el `faultSequence` vacío del `FirebaseConnectorAPI`** — devuelve 202 aunque el envío falle, y con la Opción C
+   eso hace que el Siddhi marque enviado lo que se perdió. Es requisito antes de conectar el agente.
+3. **Quién recibe una alerta proactiva de empresa** (bloquea E5; la tabla ya lo contempla con `rol_destino`).
+4. Reiniciar el MI local para que registre el connector `googlefirebase`, y un token FCM real para cerrar la prueba de push.
+5. Menores: push + campanita o campanita sola; si se rota ahora la clave de Firebase commiteada; y dónde se versiona la app
+   Siddhi del agente (se propone `_backend/siddhi/` en este repo).
 
 ### Decisiones recientes (últimas 5)
 
