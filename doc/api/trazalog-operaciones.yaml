@@ -649,6 +649,55 @@ paths:
                         type: string
                         example: "4"
 
+  /mcp/core/empresa:
+    get:
+      operationId: core_get_empresa_actual
+      summary: Consultar con qué empresa está conectada la sesión
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Devuelve la empresa a la que corresponde esta conexión: la que el
+        usuario eligió al autorizar el acceso.
+
+        **Cuándo usar esta operación:**
+        - Cuando el usuario pregunta "¿con qué empresa estoy conectado?" o
+          "¿qué empresa estoy viendo?".
+        - **Antes de responder algo que dependa de la empresa**, si hay
+          cualquier ambigüedad. Todas las demás operaciones devuelven datos
+          de esta empresa y solo de esta: si el usuario parece estar
+          preguntando por otra, conviene aclararlo antes que darle un número
+          equivocado.
+        - Al empezar una conversación, para nombrar la empresa en la primera
+          respuesta y que el usuario confirme que es la que espera.
+
+        **La empresa no se puede cambiar desde acá.** Queda fijada al
+        autorizar el acceso y vale para toda la sesión. Un usuario que opera
+        para varias empresas y quiere cambiar tiene que desconectar y volver
+        a conectar el conector de Trazalog, y ahí elige de nuevo. No existe
+        ninguna operación que cambie la empresa activa — si el usuario lo
+        pide, hay que explicarle ese camino.
+
+        No recibe parámetros a propósito: la empresa sale del token, no de lo
+        que pida el agente.
+      tags:
+        - Identidad
+      responses:
+        "200":
+          description: La empresa de esta sesión
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmpresaActual" }
+              example:
+                empresa:
+                  empr_id: "8"
+                  descripcion: "Minera Andes SA"
+                  cuit: "30-12345678-9"
+                  telefono: "+54 264 555-0100"
+                  email: "administracion@mineraandes.com"
+                  empr_id_mysql: "3"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /mcp/alm/stock:
     get:
       operationId: alm_get_stock
@@ -1404,6 +1453,30 @@ components:
         unidad_medida: { type: string, example: "UN" }
         es_loteado: { type: string, example: "true" }
         stock: { type: string, description: Suma de stock en todos los depósitos., example: "24" }
+
+    EmpresaActual:
+      type: object
+      properties:
+        empresa:
+          type: object
+          properties:
+            empr_id:
+              type: string
+              description: Identificador de la empresa. Es el que aplica a todas las demás operaciones.
+            descripcion:
+              type: string
+              description: Nombre de la empresa, para nombrarla al usuario.
+            cuit: { type: string, nullable: true }
+            telefono: { type: string, nullable: true }
+            email: { type: string, nullable: true }
+            empr_id_mysql:
+              type: string
+              nullable: true
+              description: >-
+                Identificador de la misma empresa en la base de Mantenimiento.
+                Es interno: no hace falta mencionárselo al usuario. Si viene
+                `null`, la empresa no tiene mapeo con Mantenimiento y las
+                operaciones `man_*` pueden no devolver datos.
 
     StockList:
       type: object

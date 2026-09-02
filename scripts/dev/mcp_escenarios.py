@@ -602,6 +602,41 @@ def e14(m):
 
 
 # ===========================================================================
+# E15 — La sesion sabe con que empresa esta conectada
+# ===========================================================================
+@escenario("E15", "Identificar la empresa de la sesión")
+def e15(m):
+    r = m.core_get_empresa_actual()
+    emp = lista(r, "empresa")
+    afirmar(emp, "core_get_empresa_actual no devolvió ninguna empresa")
+    e = emp[0]
+    paso(f"core_get_empresa_actual -> empr_id={e.get('empr_id')} "
+         f"{str(e.get('descripcion'))[:40]!r}")
+
+    # tiene que ser LA del token, no otra
+    afirmar(str(e.get("empr_id")) == str(EMPR_ID),
+            f"devolvió la empresa {e.get('empr_id')} pero el token es de la {EMPR_ID}")
+    afirmar(e.get("descripcion"), "la empresa vino sin descripcion: el agente no puede nombrarla")
+
+    # y con otro token tiene que dar otra empresa: es la prueba de que sale
+    # del JWT y no de un valor fijo en la fachada
+    otra = MCP(OTRA_EMPR, OTRA_EMPR_MYSQL)
+    otra._escrituras = False
+    eo = lista(otra.core_get_empresa_actual(), "empresa")
+    afirmar(eo, f"con el token de la empresa {OTRA_EMPR} no devolvió nada")
+    afirmar(str(eo[0].get("empr_id")) == str(OTRA_EMPR),
+            f"con el token de la {OTRA_EMPR} devolvió la {eo[0].get('empr_id')}: "
+            "la empresa no sale del token")
+    paso(f"con otro token -> empr_id={eo[0].get('empr_id')} "
+         f"{str(eo[0].get('descripcion'))[:32]!r} (sale del JWT, no es fijo)")
+
+    # el empr_id_mysql explica si las tools de mantenimiento van a traer datos
+    if not e.get("empr_id_mysql"):
+        paso(f"{AMAR}[la empresa no tiene empr_id_mysql: las tools man_* "
+             f"pueden venir vacías]{FIN}")
+
+
+# ===========================================================================
 # E7 — El contrato publicado y lo implementado no se desincronizan
 #      La OpenAPI es lo que consume el Virtual MCP Server del APIM: si declara
 #      una operación que el MI no implementa, la tool aparece en Claude y falla

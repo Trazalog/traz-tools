@@ -128,6 +128,10 @@ class MCP:
                           tool="man_create_ot")
 
     # ---------------------------------------------------------------- almacenes
+    def core_get_empresa_actual(self):
+        """La empresa del token. No toma parametros a proposito."""
+        return self._call("GET", "/core/empresa", tool="core_get_empresa_actual")
+
     def alm_get_stock(self, depo_id=None, tipo=None, buscar=None):
         """Filtros opcionales: sin ninguno devuelve el catálogo completo."""
         q = []

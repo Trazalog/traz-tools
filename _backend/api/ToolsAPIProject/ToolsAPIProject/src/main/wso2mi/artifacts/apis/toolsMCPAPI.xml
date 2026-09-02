@@ -576,6 +576,57 @@
    ══════════════════════════════════════════════════════════════ -->
 
    <!-- alm_get_stock — lista de artículos con stock agregado de la empresa. -->
+   <resource methods="GET" uri-template="/mcp/core/empresa">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- La empresa se toma del token, nunca de un parametro: es la que el
+              usuario eligio al autorizar el acceso. Si viniera por parametro, un
+              agente podria pedir datos de otra empresa (ADR-012). -->
+         <property name="uri.var.coreEmpresa_url"
+                   expression="fn:concat($ctx:api_url,'/core/empresa/',get-property('jwt_empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | core_get_empresa_actual | iniciando (toolsMCPAPI -&gt; toolsCOREAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.coreEmpresa_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/core/empresa - toolsCOREAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP core_get_empresa_actual (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
    <resource methods="GET" uri-template="/mcp/alm/stock">
       <inSequence>
          <sequence key="emprIdFromHeader"/>
