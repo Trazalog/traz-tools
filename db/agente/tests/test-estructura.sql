@@ -206,6 +206,14 @@ FROM unnest(ARRAY['stock_critico', 'material_por_vencer', 'pedido_demorado']) AS
      pg_constraint c
 WHERE c.conname = 'notificacion_tipo_ck';
 
+INSERT INTO _resultado
+SELECT 'destinatario_alerta acepta el tipo ' || tipo,
+       pg_get_constraintdef(c.oid) LIKE '%' || tipo || '%',
+       'destinatarios de alertas de almacenes'
+FROM unnest(ARRAY['stock_critico', 'material_por_vencer', 'pedido_demorado']) AS tipo,
+     pg_constraint c
+WHERE c.conname = 'destinatario_tipo_ck';
+
 -- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
@@ -215,7 +223,7 @@ SELECT 'script ' || s || ' registrado en schema_version',
 FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
-    '009-alcance-almacenes'
+    '008-destinatarios-alerta', '009-alcance-almacenes'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
