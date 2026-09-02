@@ -314,6 +314,32 @@ Se desplegó `FirebaseConnectorAPI` en el **MI local de desarrollo** (antes solo
 
 **Lo único que falta** para cerrar el push de punta a punta es un token FCM real: abrir AssetPlanner en el navegador, aceptar el permiso de notificaciones, y usar el token que quede registrado. Todo lo que define el diseño del `.siddhi` —el formato del mensaje y cómo detectar un fallo— ya está resuelto.
 
+### 6.7 Corrección del conector: el recurso `/send-strict` (2026-09-02)
+
+Decisión del PM sobre el hallazgo de R4. La corrección **no podía ser modificar `/send`**: el Siddhi de AssetPlanner en producción declara `http.status.code = '2\d+'` en su `http-call-response` y `on.error='WAIT'` en el sink. Si `/send` empezara a devolver 502 ante un rechazo de FCM, esas filas nunca se marcarían como procesadas y **el sink reintentaría indefinidamente**. Un token inválido bastaría para dejar producción en loop.
+
+Por eso el cambio es **aditivo**, respetando la regla de que ningún objeto existente rompe lo que v2 consume:
+
+| Recurso | Contrato | Quién lo usa |
+|---|---|---|
+| `POST /tools/firebase/send` | **Sin cambios.** 2xx siempre; el error de FCM viaja en `Result.Error` dentro del cuerpo | AssetPlanner (producción) |
+| `POST /tools/firebase/send-strict` | **Nuevo.** `200` si FCM aceptó · `502` si FCM rechazó · `500` si falló la mediación | Agente Minero |
+
+Para no duplicar las credenciales de la cuenta de servicio, el bloque `googlefirebase.init` + `sendMessage` se extrajo a una sequence compartida **`FirebaseSendSeq`** que ambos recursos invocan. El comportamiento de `/send` no cambia: una sequence se expande inline.
+
+**Detalle de implementación que costó una vuelta:** `json-eval` no se puede componer dentro del atributo `source` de un `filter` — el despliegue del CApp entero falla con `Invalid XPath expression for attribute source`, y al revertirse se cae también `/send`. Hay que extraer primero a una property y filtrar sobre ella.
+
+**Verificado contra el MI local:**
+
+| Caso | Resultado |
+|---|---|
+| `/send` con token inválido | `HTTP 200` con `{"Result":{"Error":"400 Bad Request ..."}}` — histórico intacto |
+| `/send-strict` con token inválido | **`HTTP 502`** con `{"status":"error","origen":"fcm","detail":"..."}` |
+| Rama de éxito del filtro (respuesta sin `Result.Error`) | `HTTP 200` — verificado aparte con un API temporal, para descartar un falso 502 en el camino feliz |
+| Cuerpo sin `Result` | `HTTP 200` — no rompe |
+
+La rama de éxito se probó de forma aislada porque confirmarla end-to-end necesita un token FCM válido, que sigue pendiente. Lo importante era descartar que el filtro marcara como fallidas las notificaciones que sí se envían.
+
 ## 7. Riesgos
 
 | # | Riesgo | Sev. | Detalle y mitigación propuesta |
@@ -321,7 +347,7 @@ Se desplegó `FirebaseConnectorAPI` en el **MI local de desarrollo** (antes solo
 | **R1** | **Clave privada de cuenta de servicio de Firebase commiteada en el repo** | 🔴 Alta | `_backend/api/FirebaseConnectorAPI/.../FirebaseConnectorAPI.xml` tiene la `privateKey` completa del service account `firebase-adminsdk-3ag87@traz-prod-assetplanner.iam.gserviceaccount.com`, en claro, en `traz-tools` y en sus copias `.backup`/`tmp`. Con ella se puede enviar push a cualquier dispositivo del proyecto. **Mitigación:** rotar la clave en la consola de Firebase y moverla a la configuración del MI (no al artefacto versionado). Es trabajo aparte de esta etapa; lo señalo para que decidas cuándo. |
 | **R2** | **`getNotificaciones` sin filtro de `empr_id`** | 🟠 Media | El DataService filtra solo por `user_id` recibido por path. Hoy lo llama el PHP con el id de sesión, pero el endpoint no valida nada por sí mismo. Contradice ADR-009. **Mitigación:** no reutilizarlo en el puente del agente; si además se decide corregirlo para AssetPlanner, es tarea del otro repo. |
 | **R3** | **Marcar como leída sin verificar dueño** | 🟡 Baja | §5.1 punto 6. No expone contenido, pero permite ocultarle notificaciones a otro usuario. **Mitigación:** en el puente nuevo, filtrar por dueño; en asset, reportarlo como hallazgo. |
-| **R4** | **El conector responde 2xx aunque FCM rechace el envío** | 🔴 **Alta — confirmado con evidencia directa 2026-09-02** | Con el conector ya operativo, un `POST` con un token inválido devolvió **`HTTP 200`** y el error de FCM escondido en el cuerpo: `{"Result":{"Error":"400 Bad Request ... The registration token is not a valid FCM registration token"}}`. No es solo que el `faultSequence` esté vacío —que lo está—: es que **un rechazo explícito de Google sale como 200 OK**. Para la Opción C es determinante, porque el `post-grabacion` de las apps Siddhi marca `procesado = 1` mirando únicamente el status code. Resultado: **la notificación se pierde en silencio y queda registrada como enviada**. Es la explicación más probable de las 434 filas encoladas desde 2024 que nadie miró. **Dos mitigaciones, ambas obligatorias antes de conectar el agente:** (1) completar el `faultSequence` para que un fallo salga como 5xx; (2) que la app Siddhi **parsee el cuerpo** y solo marque `enviado` si no viene `Result.Error` — el status code no alcanza. |
+| **R4** | **El conector responde 2xx aunque FCM rechace el envío** | 🔴 **Alta — confirmado con evidencia directa 2026-09-02** | Con el conector ya operativo, un `POST` con un token inválido devolvió **`HTTP 200`** y el error de FCM escondido en el cuerpo: `{"Result":{"Error":"400 Bad Request ... The registration token is not a valid FCM registration token"}}`. No es solo que el `faultSequence` esté vacío —que lo está—: es que **un rechazo explícito de Google sale como 200 OK**. Para la Opción C es determinante, porque el `post-grabacion` de las apps Siddhi marca `procesado = 1` mirando únicamente el status code. Resultado: **la notificación se pierde en silencio y queda registrada como enviada**. Es la explicación más probable de las 434 filas encoladas desde 2024 que nadie miró. **✅ MITIGADO 2026-09-02** con un recurso nuevo `POST /send-strict`, aditivo: devuelve 200 solo si FCM aceptó, **502 si FCM rechazó** y 500 si falló la mediación, con `faultSequence` completo. `/send` **queda intacto** — cambiarlo rompería producción: el Siddhi de AssetPlanner filtra por `http.status.code='2\d+'` con `on.error='WAIT'`, así que un 502 dejaría esas filas sin marcar y el sink reintentaría para siempre. La app Siddhi del agente apunta a `/send-strict`. Ver §6.7. |
 | **R5** | **Dependencia de un servicio externo (FCM) para el canal proactivo** | 🟡 Baja | FCM es gratuito y cumple ADR-005 (costo $0), pero el proyecto Firebase se llama `traz-prod-assetplanner` y está atado a esa app. **Mitigación:** la campanita in-app funciona sin FCM y cubre el caso base; el push es el extra. Diseñar el puente para que la falla de FCM no pierda el hallazgo (la cola queda, la campanita lo muestra). |
 | **R6** | **Fatiga de alertas** | 🟠 Media | El mecanismo actual notifica eventos que el usuario provocó. Los hallazgos del agente son distintos: se generan solos, en lote, y pueden repetirse en cada corrida del job. Sin deduplicación ni umbral, el agente se vuelve ruido en dos semanas. **Mitigación:** deduplicación por (empresa, equipo, tipo de hallazgo, ventana temporal) desde el día uno, y umbrales configurables — a definir con vos en E5. |
 | **R7** | **Dos colas conviviendo** | 🟡 Baja | Consecuencia aceptada de la Opción B. **Mitigación:** documentarlo, y unificar cuando AssetPlanner migre a `traz-tools-man`. |
@@ -343,7 +369,13 @@ La partición raíz de la máquina de desarrollo (Ubuntu 24.04, `/dev/nvme0n1p5`
 
 Opciones, para que elijas: liberar espacio en `/` (con ~3-4 GB alcanza cómodo), instalarlo igual en `/mnt/win` asumiendo el riesgo, o dejar el SI para la VM de demo y desarrollar contra ella. **No avanzo con la instalación hasta que definas.**
 
-### ❓ Definiciones abiertas (ninguna bloquea E1)
+### ✅ Decisiones del PM del 2026-09-02
+
+1. **Corregir el conector: sí.** Resuelto con `/send-strict` (§6.7), de forma aditiva para no romper producción.
+2. **Destinatario de una alerta proactiva de empresa: por rol.** La columna `rol_destino` de `agente.notificacion` ya lo contempla; falta definir **qué rol concreto** y cómo se resuelve rol → usuarios.
+3. **Canal: push + campanita**, los dos.
+
+### ❓ Definiciones abiertas
 
 1. **¿Quién recibe una alerta proactiva del agente?** El mecanismo actual solo sabe notificar a un usuario concreto (el asignado de una OT). Para "el equipo X viene fallando más de lo normal" hace falta destinatario: ¿un rol de Tools (jefe de mantenimiento)? ¿todos los usuarios de la empresa con cierto permiso? ¿un usuario configurado por empresa? Es funcional/de negocio. **Bloquea E5, no E1** — la tabla se modela con destinatario genérico y la resolución se define después.
 2. **¿Push + campanita, o campanita sola en esta versión?** La campanita cubre el caso de uso y no depende de FCM ni de la rotación de la clave. El push suma alcance pero arrastra R1 y R4.
