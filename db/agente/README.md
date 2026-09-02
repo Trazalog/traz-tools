@@ -153,23 +153,24 @@ En AssetPlanner el flag es binario (`procesado` 0/1) y el Siddhi lo pone en 1 co
 
 ## Verificación hecha
 
-Los scripts se probaron el **2026-09-02** contra un PostgreSQL 16.15 local, en una base descartable creada para eso. Como pgvector todavía no está instalado en ninguna base accesible, la corrida se hizo con un stub que reemplaza `vector(1024)` por `text` y los índices HNSW por índices comunes. **Eso valida todo menos lo específico de pgvector**, que queda pendiente de verificar cuando la extensión esté disponible.
+Aplicado y verificado el **2026-09-02** contra **PostgreSQL 16.15 con pgvector 0.6.0**, en la base `agente_minero` del PostgreSQL local de la máquina de desarrollo.
 
 | Qué se probó | Resultado |
 |---|---|
-| Aplicar `001..007` sobre base vacía | ✅ los 7 scripts sin error |
-| **Idempotencia** — aplicar los 7 una segunda vez | ✅ los 7 sin error |
-| `tests/test-aislamiento.sql` | ✅ **12 de 12 controles en verde** |
-| `tests/test-estructura.sql` | ✅ 49 de 53. Las 4 fallas son exactamente las que dependen de pgvector (la extensión y los 3 índices HNSW) |
-| **Rollback** en orden inverso `007 → 002` | ✅ los 6 sin error; en el esquema solo quedó `schema_version` |
-| Rollback `001` | ✅ esquema y roles eliminados por completo |
+| Aplicar `001..007` sobre base vacía | ✅ los 7 sin error |
+| **Idempotencia** — aplicarlos una segunda vez | ✅ los 7 sin error, y los tests siguen en verde después |
+| `tests/test-estructura.sql` | ✅ **53 de 53** |
+| `tests/test-aislamiento.sql` | ✅ **12 de 12** |
+| **Búsqueda vectorial real** — ingesta de 3 chunks y consulta por similitud coseno | ✅ distancia `0.0000` contra sí mismo y `1.0000` contra los ortogonales, usando `chunk_embedding_hnsw_ix` |
+| Conexión real como `agente_orq` (rol del orquestador) | ✅ no es superusuario, lee `agente.chunk` y al intentar escribirlo recibe `permission denied for table chunk` |
+| **Rollback** en orden inverso `007 → 002`, y luego `001` | ✅ verificado en una corrida previa: deja el esquema y los roles limpios |
 
-Dos cosas que aparecieron al probar y que están corregidas en los scripts:
+O sea que ADR-A4 no es una convención documentada: **se comprobó con el usuario real que el orquestador no puede escribir el conocimiento compartido**.
 
-1. **El índice de deduplicación no podía usar `now()`.** PostgreSQL exige que las funciones del predicado de un índice sean `IMMUTABLE`. La primera versión tenía `WHERE ... vence_en > now()` y fallaba con `functions in index predicate must be marked IMMUTABLE`. Se resolvió metiendo la ventana temporal **dentro** de la `dedupe_key`, lo que además es determinista.
-2. **El test de aislamiento daba falso verde corriendo como `postgres`.** Ver la advertencia sobre superusuarios más arriba.
+### Dos cosas que aparecieron al probar y están corregidas
 
-Lo que **falta verificar** cuando haya pgvector: que la extensión cree, que los tres índices HNSW se construyan, y que las columnas queden efectivamente como `vector(1024)`. Los controles ya están escritos en `test-estructura.sql`; hoy son las 4 que fallan.
+1. **El índice de deduplicación no podía usar `now()`.** PostgreSQL exige que las funciones del predicado de un índice sean `IMMUTABLE`; la primera versión fallaba con `functions in index predicate must be marked IMMUTABLE`. Se resolvió metiendo la ventana temporal **dentro** de la `dedupe_key`, lo que además la vuelve determinista.
+2. **El test de aislamiento daba falso verde corriendo como `postgres`.** Ver la advertencia sobre superusuarios más arriba — fue el primer resultado que dio al escribirlo, y es la razón por la que ahora hace `SET ROLE agente_app`.
 
 ---
 
@@ -177,8 +178,12 @@ Lo que **falta verificar** cuando haya pgvector: que la extensión cree, que los
 
 | Ambiente | Base | Estado |
 |---|---|---|
-| **Desarrollo** | a definir — ver nota | ⏳ **No aplicado.** pgvector no está disponible en ninguna de las dos bases accesibles hoy |
+| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ **Aplicado y verificado el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app` |
 | Demo | a definir | ⏳ pendiente |
 | Producción | a definir | ⏳ pendiente |
 
-> **Nota — dónde va a vivir la base del agente (pendiente de decisión del PM):** el PostgreSQL de desarrollo (`10.142.0.13`) es **11.18** y no tiene pgvector disponible; además, la última versión de pgvector que soporta PG 11 es 0.5.1. El PostgreSQL local de la máquina de desarrollo es **16.15** y tampoco lo tiene instalado, pero ahí alcanza con `sudo apt install postgresql-16-pgvector`. Los scripts están escritos para PG 13+ y verificados en 16.
+> **Por qué una base aparte y no la de producción.** El agente **no necesita** que su base y la productiva sean la misma, ni que estén federadas: los datos del cliente (equipos, OTs, KPIs) los obtiene **vía MCP Gateway** (ADR-A3), nunca por SQL directo. Lo único que vive en esta base es la capa vectorial — conocimiento, memoria, feedback, entrevistas y notificaciones. Son dos caminos independientes, sin joins entre ellos.
+>
+> Eso permitió dejar intacto el PostgreSQL productivo (`10.142.0.13`), que es **11.18** y no tiene pgvector disponible — además, la última versión de pgvector que soporta PG 11 es la 0.5.1. **No hay ninguna migración de producción involucrada.**
+>
+> Las credenciales de desarrollo del usuario `agente_orq` quedaron en `~/.agente-minero.env` (permisos 600), **fuera del repo**. Para demo y producción se generan por ambiente.
