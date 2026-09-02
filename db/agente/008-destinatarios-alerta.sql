@@ -22,6 +22,10 @@
 -- identidad de un producto en migracion. La carga inicial de cada cliente se
 -- puede sembrar mirando sus roles de AssetPlanner, pero eso es un dato, no una
 -- dependencia.
+--
+-- Los tipos de alerta cubren las DOS areas del agente, mantenimiento y
+-- almacenes: quien recibe un aviso de MTBF en deterioro no es necesariamente
+-- quien tiene que enterarse de que un material esta por vencer.
 -- =============================================================================
 
 \set ON_ERROR_STOP on
@@ -36,14 +40,42 @@ CREATE TABLE IF NOT EXISTS agente.destinatario_alerta (
     fec_alta        timestamptz NOT NULL DEFAULT now(),
     fec_mod         timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT destinatario_tipo_ck
-        CHECK (tipo_alerta IN ('*', 'mtbf_deterioro', 'ot_critica_atrasada', 'hallazgo', 'sistema')),
+        CHECK (tipo_alerta IN (
+            '*',
+            -- Mantenimiento
+            'mtbf_deterioro', 'ot_critica_atrasada',
+            -- Almacenes
+            'stock_critico', 'material_por_vencer', 'pedido_demorado',
+            -- Transversales
+            'hallazgo', 'sistema'
+        )),
     CONSTRAINT destinatario_uk UNIQUE (empr_id, tipo_alerta, usr_id)
 );
 
 COMMENT ON TABLE  agente.destinatario_alerta             IS 'Quien recibe cada tipo de alerta, por empresa. Configuracion propia del agente: no depende de los roles de Dnato ni de AssetPlanner.';
-COMMENT ON COLUMN agente.destinatario_alerta.tipo_alerta IS 'Tipo de alerta, o "*" para recibir todas. Los valores coinciden con agente.notificacion.tipo.';
+COMMENT ON COLUMN agente.destinatario_alerta.tipo_alerta IS 'Tipo de alerta, o "*" para recibir todas. Los valores coinciden con agente.notificacion.tipo, y cubren las dos areas del agente: mantenimiento (mtbf_deterioro, ot_critica_atrasada) y almacenes (stock_critico, material_por_vencer, pedido_demorado).';
 COMMENT ON COLUMN agente.destinatario_alerta.usr_id      IS 'Usuario de Tools (identidad Dnato) que recibe la alerta.';
 COMMENT ON COLUMN agente.destinatario_alerta.etiqueta    IS 'Funcion legible del destinatario ("Jefe de mantenimiento", "Planificador"). Solo informativa: sirve para que la pantalla de configuracion se entienda y para auditar por que esa persona recibe eso.';
+
+-- El CHECK se recrea SIEMPRE, no solo en la creacion de la tabla.
+--
+-- CREATE TABLE IF NOT EXISTS no toca una tabla que ya existe, asi que sobre una
+-- base donde este script ya corrio, ampliar la lista de tipos ahi arriba no
+-- tendria ningun efecto: el constraint viejo seguiria vigente y rechazaria los
+-- tipos nuevos. Recrearlo aca hace que el script sea idempotente de verdad --
+-- que se pueda volver a correr y deje la base en el estado que el archivo
+-- describe, no en el que quedo la primera vez.
+ALTER TABLE agente.destinatario_alerta DROP CONSTRAINT IF EXISTS destinatario_tipo_ck;
+ALTER TABLE agente.destinatario_alerta ADD CONSTRAINT destinatario_tipo_ck
+    CHECK (tipo_alerta IN (
+        '*',
+        -- Mantenimiento
+        'mtbf_deterioro', 'ot_critica_atrasada',
+        -- Almacenes
+        'stock_critico', 'material_por_vencer', 'pedido_demorado',
+        -- Transversales
+        'hallazgo', 'sistema'
+    ));
 
 CREATE INDEX IF NOT EXISTS destinatario_empresa_tipo_ix
     ON agente.destinatario_alerta (empr_id, tipo_alerta) WHERE activo;

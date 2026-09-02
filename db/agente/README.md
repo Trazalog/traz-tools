@@ -155,6 +155,8 @@ Decisión del PM del 2026-09-02, después de mirar qué roles existen realmente:
 
 Así que `agente.destinatario_alerta` guarda, por empresa y tipo de alerta, qué usuarios de Tools la reciben, con una `etiqueta` legible ("Jefe de mantenimiento") que sirve para auditar por qué le llegó. La carga inicial de cada cliente se puede sembrar mirando sus roles de AssetPlanner, pero eso es un dato, no una dependencia.
 
+Los tipos cubren **las dos áreas del agente**: mantenimiento (`mtbf_deterioro`, `ot_critica_atrasada`) y almacenes (`stock_critico`, `material_por_vencer`, `pedido_demorado`), más los transversales. Quien recibe un aviso de MTBF en deterioro no es necesariamente quien tiene que enterarse de que un material está por vencer.
+
 `agente.destinatarios_de(empr_id, tipo)` resuelve la lista, sumando los configurados con `'*'`. Si no hay nadie configurado devuelve vacío: el hallazgo **se registra igual** en la memoria del cliente, pero no se notifica — silencio, en vez de un aviso a alguien al azar.
 
 El `rol_destino` de `agente.notificacion` queda como dato informativo (se copia de la etiqueta), no como mecanismo de resolución.
