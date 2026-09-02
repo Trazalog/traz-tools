@@ -17,7 +17,7 @@ Este documento describe **cómo funciona hoy el mecanismo de notificaciones de A
 | ADR que lo motiva | **ADR-A6** — "Notificaciones vía sistema de alertas de Asset Planner extendido a Tools" |
 | Fuentes revisadas | `traz-prod-assetplanner` (rama `develop-v3`), `traz-tools` (`develop-v3`), `traz-int` (apps Siddhi), y la **base de desarrollo `assetv2` en `10.142.0.13`** (triggers, stored procedures y datos reales de la cola, consultados por VPN el 2026-09-02) |
 | Clase de riesgo | 🟢 (documento, sin efecto en runtime) |
-| Estado | **Esperando validación del PM (gate 1)** |
+| Estado | **Gate 1 parcialmente resuelto.** El PM decidió la **Opción C** el 2026-09-02 (§6.1). Quedan abiertas 4 definiciones menores y un bloqueo de infraestructura (§8) |
 
 ---
 
@@ -32,9 +32,9 @@ Lo que sí tiene, y **funciona y está probado**, son cuatro piezas reutilizable
 3. Un **conector Firebase ya construido en el WSO2 MI** (`FirebaseConnectorAPI`, `POST /tools/firebase/send`) que habla FCM con una cuenta de servicio real.
 4. Una **campanita in-app** en el frontend PHP (dropdown con contador y marcado de leídas).
 
-Y tiene una pieza que **conviene no arrastrar**: el transporte entre la cola y el conector es una app **Siddhi sobre WSO2 Streaming Integrator** que hace polling CDC sobre la tabla. Es un componente extra a operar, no está corriendo contra la base de desarrollo, y sus artefactos versionados muestran inconsistencias de mapeo con el conector (detalle en §5).
+El transporte entre la cola y el conector es una app **Siddhi sobre WSO2 Streaming Integrator** que hace polling CDC sobre la tabla. No está corriendo contra la base de desarrollo y sus artefactos versionados muestran inconsistencias de mapeo con el conector (detalle en §5), pero **el PM decidió conservar el SI como pieza estándar de la arquitectura** por la extensibilidad futura del sistema de alarmas — ver §6.1.
 
-**Recomendación (a validar en el gate):** reutilizar las piezas 1-4 **replicando el patrón dentro de Tools** sobre PostgreSQL, con el orquestador Python como emisor directo al `FirebaseConnectorAPI` — en lugar de escribir en la base de AssetPlanner y depender del Streaming Integrator. Los fundamentos, las alternativas descartadas y lo que esto implica para ADR-A6 están en §6.
+**Decisión del PM (2026-09-02): Opción C.** Se replica el patrón completo dentro de Tools —cola propia en PostgreSQL, app Siddhi nueva sobre el Streaming Integrator, y el `FirebaseConnectorAPI` existente— sin tocar `assetv2`. El orquestador solo encola; el transporte es del SI, que se instala como pieza estándar por la extensibilidad futura de las alarmas. Fundamentos, alternativas descartadas y las implicancias técnicas, en §6.
 
 ---
 
@@ -173,7 +173,7 @@ Conclusión operativa: **el nombre "extender el sistema de alertas de AssetPlann
 | **Service worker + `firebase_config.js`** | ✅ **Casi tal cual** | Se copia al frontend de Tools apuntando al mismo proyecto Firebase. El `apiKey` y el VAPID key del cliente son públicos por diseño de FCM; no hay problema en portarlos. |
 | **Campanita in-app** (dropdown + contador + marcar leídas) | ✅ **El patrón** | El JS de `dash.php` es directamente portable al layout de Tools. Es la parte que además **funciona sin push**, lo que la hace el canal más confiable de los dos. |
 | **Disparadores por triggers de BD** | ❌ **No reutilizar** | Los hallazgos del agente los produce el orquestador Python, no un `UPDATE` de tabla. Meter la lógica del agente en triggers sería un retroceso: invisible, no testeable, y atado al esquema congelado de asset. |
-| **Transporte Siddhi / Streaming Integrator** | ❌ **No reutilizar** (recomendación) | Suma un producto WSO2 más a operar; la VM de GCP de ADR-011 corre APIM + MI nativos, **sin Streaming Integrator**. El orquestador ya es un proceso Python que puede hacer el POST al MI directamente, eliminando el polling. Además, sus artefactos tienen inconsistencias (abajo). |
+| **Transporte Siddhi / Streaming Integrator** | ✅ **El patrón, con app nueva** (decisión del PM, §6.1) | Se conserva como pieza estándar de la arquitectura por la extensibilidad futura del sistema de alarmas. Implica instalar el SI —hoy no está en la máquina de desarrollo ni en la VM de GCP de ADR-011, que corre APIM + MI nativos— y escribir una app nueva contra PostgreSQL, sin heredar los defectos de las existentes (§6.3 y §6.4). |
 | **`MANDataService.getNotificaciones`** | ❌ **No reutilizar como está** | Filtra **solo por `user_id`, sin `empr_id`** — incompatible con el patrón de aislamiento de ADR-009 (ver §7, R2). |
 
 ### 5.1 Defectos del mecanismo actual que no hay que replicar
@@ -192,69 +192,99 @@ Encontrados leyendo los artefactos y la base; los listo porque cada uno es una d
 
 ## 6. Propuesta de integración con el orquestador
 
-### 6.1 Las tres opciones
+### 6.1 Las tres opciones evaluadas — y la decisión
 
 **Opción A — Escribir en la cola de AssetPlanner.** El orquestador inserta en `assetv2.synch_notificacion_queue` y deja que el pipeline existente haga el resto.
 *A favor:* es lo más literal respecto de ADR-A6 y no construye casi nada.
-*En contra:* ata el agente a la base de un producto con **esquema congelado** y clientes en producción; hereda los siete defectos de §5.1; obliga a resolver la identidad de Tools contra `sisusers` de asset; y depende del Streaming Integrator, que no corre en la VM de GCP.
+*En contra:* ata el agente a la base de un producto con **esquema congelado** y clientes en producción; hereda los siete defectos de §5.1; obliga a resolver la identidad de Tools contra `sisusers` de asset; y depende de que el Streaming Integrator lea esa base.
 
-**Opción B — Replicar el patrón dentro de Tools, con el orquestador como emisor. ← recomendada**
-Cola propia en PostgreSQL (esquema del agente, definido en E1), registro de tokens contra la identidad Dnato de Tools, y el orquestador Python haciendo `POST` directo al `FirebaseConnectorAPI` del MI. Campanita en el layout de Tools leyendo la cola propia, filtrada por `empr_id` + usuario.
-*A favor:* no toca AssetPlanner ni su base; reutiliza lo que de verdad vale (conector Firebase, modelo de cola, service worker, patrón de campanita); corrige los defectos de §5.1 de entrada; no agrega productos a operar; y el aislamiento sale por el mismo camino que el resto del agente.
-*En contra:* durante un tiempo van a existir dos colas de notificación en la plataforma (la de asset y la del agente). Es el precio de no tocar producción, y converge naturalmente cuando AssetPlanner migre a `traz-tools-man`.
+**Opción B — Replicar el patrón en Tools con el orquestador como emisor directo.** Cola propia en PostgreSQL y el orquestador Python haciendo `POST` al conector Firebase del MI, sin Streaming Integrator.
+*A favor:* un componente menos que operar, sin polling.
+*En contra:* pone al orquestador a hacer de transporte además de razonar, y **descarta el motor de streaming** — que es justamente la pieza que permitiría, más adelante, alarmas definidas por reglas sin escribir código nuevo.
 
-**Opción C — Cola en Tools + app Siddhi nueva.** Igual que B pero conservando el Streaming Integrator como transporte.
-*En contra:* toda la complejidad operativa de A sin ninguna de sus ventajas. La descarto salvo que haya una razón de infraestructura que no conozca.
+**Opción C — Cola en Tools + app Siddhi nueva sobre el Streaming Integrator. ✅ DECIDIDA (PM, 2026-09-02)**
+Cola propia en PostgreSQL (esquema del agente, E1), el orquestador Python solo **encola**, y una app Siddhi nueva sobre el SI hace CDC polling sobre esa tabla y postea al `FirebaseConnectorAPI` del MI, que ya existe.
 
-### 6.2 Cómo quedaría la Opción B
+**Fundamento de la decisión (PM):** mantener el Streaming Integrator como pieza estándar de la arquitectura, por la extensibilidad futura del sistema de alarmas — el día que las alertas necesiten reglas, ventanas temporales o correlación de eventos, el motor ya está y no hay que construirlo. Y no sumar responsabilidades al orquestador: el agente razona y encola; el transporte es del SI.
+
+> **Nota sobre el orquestador:** el servicio Python/FastAPI no es un componente nuevo — está aprobado como el caso de uso de Python en la arquitectura (lógica de IA). Lo que la Opción C evita es que además cumpla el rol de emisor de notificaciones.
+
+### 6.2 Cómo queda la arquitectura del puente
 
 ```mermaid
 graph TD
-    subgraph ORQ["🧠 Orquestador (Python/FastAPI)"]
+    subgraph ORQ["🧠 Orquestador (Python/FastAPI) — solo encola"]
         SCH[⏰ Job de monitoreo E5<br/>MTBF en deterioro · OTs críticas atrasadas]
-        NOT[📮 Emisor de notificaciones]
     end
     subgraph PG["🗄️ PostgreSQL — esquema del agente (E1)"]
         MEM[(memoria por empr_id<br/>hallazgo registrado)]
-        COLA[(cola de notificaciones<br/>empr_id · destinatario · payload<br/>estado · leido · fec_envio)]
-        TOK[(tokens de dispositivo<br/>por usuario Dnato)]
+        NOTI[(notificacion<br/>empr_id · destinatario · titulo · cuerpo<br/>leido · fec_alta)]
+        ENV[(envio<br/>una fila por dispositivo destino<br/>token · estado · fec_envio)]
+        TOK[(dispositivo<br/>token FCM por usuario Dnato)]
+    end
+    subgraph SI["⚙️ WSO2 Streaming Integrator (nuevo en esta máquina)"]
+        SID["NotificacionesAgente.siddhi<br/>CDC polling sobre 'envio'"]
     end
     subgraph TOOLS["💬 Trazalog Tools (PHP/CI3)"]
         CAMP[🔔 Campanita en el layout]
         SWT[🌐 Service worker]
     end
-    MIF["🔌 WSO2 MI<br/>FirebaseConnectorAPI"]
+    MIF["🔌 WSO2 MI — FirebaseConnectorAPI<br/>POST /tools/firebase/send (existente)"]
     FCM[☁️ FCM]
 
-    SCH -->|"consulta datos vía MCP<br/>(JWT de servicio, ADR-A3)"| SCH
+    SCH -->|"consulta datos vía MCP<br/>(token de servicio, ADR-A3)"| SCH
     SCH --> MEM
-    SCH --> COLA
-    COLA --> NOT
-    TOK --> NOT
-    NOT -->|"POST /tools/firebase/send<br/>(uno por token activo)"| MIF --> FCM --> SWT
-    NOT -.->|"marca enviado + fec_envio"| COLA
-    COLA -->|"pendientes del usuario<br/>filtrado por empr_id"| CAMP
-    CAMP -.->|"marcar leída (verificando dueño)"| COLA
+    SCH -->|"1 notificación"| NOTI
+    NOTI -->|"expandida por dispositivo activo"| ENV
+    TOK -.-> ENV
+    ENV -->|"poll"| SID -->|"HTTP POST"| MIF --> FCM --> SWT
+    SID -.->|"estado=enviado + fec_envio"| ENV
+    NOTI -->|"pendientes del usuario<br/>filtrado por empr_id"| CAMP
+    CAMP -.->|"marcar leída (verificando dueño)"| NOTI
 ```
 
 **Dónde corre cada cosa, para que quede explícito:**
 
-| Componente | Dónde vive | Quién lo levanta |
+| Componente | Dónde vive | Estado |
 |---|---|---|
-| Job de monitoreo + emisor | Proceso Python del orquestador (cron o scheduler interno) | En desarrollo, la máquina de Rodolfo vía `docker-compose.dev.yml`; en demo, la VM según el instructivo de instalación |
-| Cola y tokens | PostgreSQL, esquema del agente | Scripts SQL versionados de `db/agente/` (E1) |
-| `FirebaseConnectorAPI` | WSO2 MI — **ya desplegado**, no se toca | Existente |
-| Campanita y service worker | Frontend PHP de Tools | Se suma en la misma etapa del puente (E5), reusando el patrón de `dash.php` |
+| Job de monitoreo (E5) | Proceso Python del orquestador | A construir |
+| Tablas `notificacion` / `envio` / `dispositivo` | PostgreSQL, esquema del agente | A construir en **E1** |
+| `NotificacionesAgente.siddhi` | WSO2 Streaming Integrator | A construir; el SI **se instala primero** en la máquina de desarrollo |
+| `FirebaseConnectorAPI` | WSO2 MI | **Ya desplegado, no se toca** |
+| Campanita y service worker | Frontend PHP de Tools | A construir en **E5**, reusando el patrón de `dash.php` |
 
-**Sobre el aislamiento (innegociable, regla 3 del prompt):** la cola lleva `empr_id` y la consulta de la campanita filtra **siempre** por el `empr_id` de la sesión más el usuario, nunca solo por `user_id` como hace hoy `getNotificaciones`. Los datos que originan el hallazgo se obtienen vía MCP con el token de servicio del cliente (ADR-A3), así que el `empr_id` del hallazgo es el que el gateway ya resolvió — no un parámetro que el agente elija.
+**Aislamiento (regla innegociable):** `notificacion` lleva `empr_id`, y la consulta de la campanita filtra **siempre** por el `empr_id` de la sesión más el usuario — nunca solo por `user_id` como hace hoy `getNotificaciones`. El `empr_id` del hallazgo es el que el MCP Gateway ya resolvió del token de servicio (ADR-A3); no es un parámetro que el agente elija.
 
-### 6.3 Qué implica esto para ADR-A6
+### 6.3 Decisiones de diseño que corrigen los defectos de §5.1
 
-ADR-A6 dice **"notificaciones vía sistema de alertas de Asset Planner extendido a Tools"**. Lo que este análisis muestra es que lo que existe no es un sistema extensible sino un pipeline cableado, y que "extenderlo" en sentido literal (Opción A) sale más caro y más riesgoso que replicar su patrón (Opción B).
+La Opción C reutiliza el patrón, **no sus errores**. Lo que cambia respecto del mecanismo de AssetPlanner:
 
-La Opción B **respeta el espíritu de ADR-A6** — reutilización sobre construcción, empezando por el conector Firebase que es la pieza cara — pero **no su letra**. Por eso no la ejecuto sin tu confirmación: es exactamente el gate 1.
+1. **Notificación y envío se separan en dos tablas.** Una `notificacion` (lo que el usuario lee en la campanita) y N filas de `envio`, una por dispositivo activo del destinatario. Resuelve el "un solo dispositivo por usuario" del `LIMIT 1`, y deja el Siddhi trivial: lee una fila, postea, marca.
+2. **El token FCM nunca entra en el contenido que ve el frontend.** Vive solo en `envio`; la campanita lee `notificacion`, que no lo tiene.
+3. **`fec_envio` se escribe de verdad** (el `fec_realizado` de asset está declarado y nunca se usa), y `estado` distingue pendiente / enviado / fallido.
+4. **Deduplicación explícita** por (empresa, entidad, tipo de hallazgo, ventana temporal) antes de encolar — es lo que evita que el monitoreo programado se vuelva ruido (R6).
+5. **Marcar como leída verifica dueño** (`empr_id` + usuario), no solo el id de la fila.
+6. **Política de retención** desde el arranque: la cola de asset lleva 434 filas sin purga desde 2024, y el agente genera bastante más volumen.
 
----
+### 6.4 Implicancias técnicas de sumar el Streaming Integrator
+
+Cosas a resolver, en orden, que salen de haber elegido C:
+
+| # | Punto | Detalle |
+|---|---|---|
+| 1 | **Instalación del SI** | Versión actual: **WSO2 Integrator: SI 4.4.0** (mayo 2026), 110 MB comprimido. Se instala primero en la máquina de desarrollo; para demo y producción se documenta el despliegue y se arma el flujo allí. **Bloqueado por espacio en disco** — ver §8. |
+| 2 | **JDK** | El SI 4.3.0 estaba probado con JDK 11 y 17. La máquina tiene JDK 17 como default de `sdkman` y Temurin 21 instalado (que es el que pide APIM 4.6.0). Se levanta el SI con `JAVA_HOME` propio apuntando a 17, sin tocar el del APIM. **A confirmar contra la doc de 4.4.0 al instalar.** |
+| 3 | **Driver JDBC de PostgreSQL** | Las apps Siddhi existentes usan `com.mysql.jdbc.Driver` contra MariaDB. La cola del agente vive en PostgreSQL: hay que dejar el driver de Postgres en `lib/` del SI y usar `org.postgresql.Driver`. |
+| 4 | **Columna de polling** | El `cdc` source en modo `polling` necesita una columna monótona. La tabla `envio` la lleva desde el diseño (`fec_alta` o un `id` serial), definida en E1. |
+| 5 | **Credenciales fuera del `.siddhi`** | Los tres `.siddhi` de `traz-int` tienen usuario y contraseña de base **en claro**. La app nueva usa referencias del `deployment.yaml` del SI / secure vault. No repetir el patrón. |
+| 6 | **Formato del mensaje** | Alinear lo que el Siddhi envía con lo que `MessageCreateSeq` del MI espera (`$.xformValues.*`). Hoy los tres artefactos no coinciden entre sí (§5.1 punto 7) — **por eso la prueba real de R4 se hace antes de escribir la app**, no después. |
+| 7 | **Dónde versionar la app Siddhi** | Las existentes viven en `traz-int/siddhi/notificaciones/`. La del agente es del frente v3.5: propongo `_backend/siddhi/` en **este** repo (que ya tiene la carpeta declarada en la estructura del CLAUDE.md), para que el frente quede completo en un solo lugar. **A confirmar.** |
+
+### 6.5 Qué implica esto para ADR-A6
+
+ADR-A6 dice **"notificaciones vía sistema de alertas de Asset Planner extendido a Tools"**. La Opción C lo respeta **en su letra**: se conserva el mecanismo completo —cola → Streaming Integrator → conector Firebase → FCM → campanita—, se reutiliza el conector tal cual, y lo que se agrega es una instancia del patrón para el agente en la base de Tools, sin tocar `assetv2`.
+
+No hace falta ADR nuevo ni modificar A6. Sí corresponde dejar asentado en el ADR del agente que el SI pasa a ser **pieza estándar de la arquitectura**, por la extensibilidad futura del sistema de alarmas — eso es información nueva respecto de lo que A6 decía.
 
 ## 7. Riesgos
 
@@ -263,7 +293,7 @@ La Opción B **respeta el espíritu de ADR-A6** — reutilización sobre constru
 | **R1** | **Clave privada de cuenta de servicio de Firebase commiteada en el repo** | 🔴 Alta | `_backend/api/FirebaseConnectorAPI/.../FirebaseConnectorAPI.xml` tiene la `privateKey` completa del service account `firebase-adminsdk-3ag87@traz-prod-assetplanner.iam.gserviceaccount.com`, en claro, en `traz-tools` y en sus copias `.backup`/`tmp`. Con ella se puede enviar push a cualquier dispositivo del proyecto. **Mitigación:** rotar la clave en la consola de Firebase y moverla a la configuración del MI (no al artefacto versionado). Es trabajo aparte de esta etapa; lo señalo para que decidas cuándo. |
 | **R2** | **`getNotificaciones` sin filtro de `empr_id`** | 🟠 Media | El DataService filtra solo por `user_id` recibido por path. Hoy lo llama el PHP con el id de sesión, pero el endpoint no valida nada por sí mismo. Contradice ADR-009. **Mitigación:** no reutilizarlo en el puente del agente; si además se decide corregirlo para AssetPlanner, es tarea del otro repo. |
 | **R3** | **Marcar como leída sin verificar dueño** | 🟡 Baja | §5.1 punto 6. No expone contenido, pero permite ocultarle notificaciones a otro usuario. **Mitigación:** en el puente nuevo, filtrar por dueño; en asset, reportarlo como hallazgo. |
-| **R4** | **El push no está verificado end-to-end en ningún ambiente al que tenga acceso** | 🟠 Media | 434 filas y 0 procesadas en desarrollo; los `.siddhi` apuntan a bases distintas de la de DEV; los tres formatos de mensaje no coinciden (§5.1 punto 7). **No puedo afirmar que el push funcione hoy en producción.** **Mitigación:** antes de construir el puente, hacer una prueba controlada contra `FirebaseConnectorAPI` con un token real y verificar que llega. Es media hora y evita construir sobre una pieza rota. |
+| **R4** | **El push no está verificado end-to-end en ningún ambiente al que tenga acceso** | 🟠 Media | 434 filas y 0 procesadas en desarrollo; los `.siddhi` apuntan a bases distintas de la de DEV; los tres formatos de mensaje no coinciden (§5.1 punto 7). **No puedo afirmar que el push funcione hoy en producción.** **Mitigación:** antes de escribir la app Siddhi, hacer una prueba controlada contra `FirebaseConnectorAPI` con un token real. Con la Opción C esto sube de prioridad: esa prueba es la que define el formato exacto que la app tiene que emitir. |
 | **R5** | **Dependencia de un servicio externo (FCM) para el canal proactivo** | 🟡 Baja | FCM es gratuito y cumple ADR-005 (costo $0), pero el proyecto Firebase se llama `traz-prod-assetplanner` y está atado a esa app. **Mitigación:** la campanita in-app funciona sin FCM y cubre el caso base; el push es el extra. Diseñar el puente para que la falla de FCM no pierda el hallazgo (la cola queda, la campanita lo muestra). |
 | **R6** | **Fatiga de alertas** | 🟠 Media | El mecanismo actual notifica eventos que el usuario provocó. Los hallazgos del agente son distintos: se generan solos, en lote, y pueden repetirse en cada corrida del job. Sin deduplicación ni umbral, el agente se vuelve ruido en dos semanas. **Mitigación:** deduplicación por (empresa, equipo, tipo de hallazgo, ventana temporal) desde el día uno, y umbrales configurables — a definir con vos en E5. |
 | **R7** | **Dos colas conviviendo** | 🟡 Baja | Consecuencia aceptada de la Opción B. **Mitigación:** documentarlo, y unificar cuando AssetPlanner migre a `traz-tools-man`. |
@@ -271,15 +301,29 @@ La Opción B **respeta el espíritu de ADR-A6** — reutilización sobre constru
 
 ---
 
-## 8. Lo que necesito que decidas (gate 1)
+## 8. Estado del gate 1 y qué falta definir
 
-1. **¿Opción A, B o C?** Mi recomendación es **B** por los fundamentos de §6.1. Si elegís B, confirmame que estás de acuerdo con apartarse de la letra de ADR-A6 (§6.3) y lo dejo asentado en el ADR del agente.
-2. **¿Quién recibe una alerta proactiva del agente?** El mecanismo actual solo sabe notificar a un usuario concreto. Para "el equipo X viene fallando más de lo normal" hace falta definir destinatario: ¿un rol de Tools (jefe de mantenimiento)? ¿todos los usuarios de la empresa con cierto permiso? ¿un usuario configurado por empresa? Es funcional/de negocio, así que no lo decido yo.
-3. **¿Push + campanita, o campanita sola en esta versión?** La campanita cubre el caso de uso y no depende de FCM ni de la rotación de R1. El push suma alcance pero arrastra R1 y R4. Se puede hacer campanita en E5 y push apenas se resuelva la clave.
-4. **¿Rotamos la clave de Firebase (R1) ahora o queda como tarea aparte?** Si el puente va a usar el conector, en algún momento hay que hacerlo.
-5. **¿Autorizás la prueba controlada de R4** (un `POST` real a `/tools/firebase/send` con un token de prueba, para confirmar que el conector funciona) antes de construir el puente?
+### ✅ Resuelto — Opción C (PM, 2026-09-02)
 
-Hasta tener estas respuestas **no avanzo con el puente de alertas**, según lo acordado. Lo que sí puede seguir en paralelo sin depender de este gate es **E1 (base de datos)**, dejando la tabla de cola de notificaciones para el final del esquema o en un script aparte, según lo que decidas acá.
+El puente se construye conservando el Streaming Integrator: orquestador → cola en PostgreSQL → app Siddhi nueva → `FirebaseConnectorAPI` del MI → FCM, más la campanita en Tools. Fundamento: mantener el SI como pieza estándar por la extensibilidad futura del sistema de alarmas, y no cargar al orquestador con el transporte. ADR-A6 queda respetado en su letra (§6.5).
+
+Se instala el SI primero en la máquina de desarrollo; para demo y producción se documenta el despliegue y se arma el flujo allí, donde ya va a estar instalado.
+
+### 🚧 Bloqueo de infraestructura — espacio en disco
+
+La partición raíz de la máquina de desarrollo (Ubuntu 24.04, `/dev/nvme0n1p5`) está al **99%: 1,5 GB libres sobre 117 GB**. El instalable de SI 4.4.0 son 110 MB comprimidos y varias veces eso descomprimido, más los logs y el estado de runtime. **No hay margen para instalarlo en `/` sin liberar espacio antes.** `/mnt/win` (NTFS) tiene 9,3 GB libres, pero no es buen lugar para un runtime Java por el manejo de locks y permisos.
+
+Opciones, para que elijas: liberar espacio en `/` (con ~3-4 GB alcanza cómodo), instalarlo igual en `/mnt/win` asumiendo el riesgo, o dejar el SI para la VM de demo y desarrollar contra ella. **No avanzo con la instalación hasta que definas.**
+
+### ❓ Definiciones abiertas (ninguna bloquea E1)
+
+1. **¿Quién recibe una alerta proactiva del agente?** El mecanismo actual solo sabe notificar a un usuario concreto (el asignado de una OT). Para "el equipo X viene fallando más de lo normal" hace falta destinatario: ¿un rol de Tools (jefe de mantenimiento)? ¿todos los usuarios de la empresa con cierto permiso? ¿un usuario configurado por empresa? Es funcional/de negocio. **Bloquea E5, no E1** — la tabla se modela con destinatario genérico y la resolución se define después.
+2. **¿Push + campanita, o campanita sola en esta versión?** La campanita cubre el caso de uso y no depende de FCM ni de la rotación de la clave. El push suma alcance pero arrastra R1 y R4.
+3. **¿Rotamos la clave privada de Firebase (R1) ahora o queda como tarea aparte?** Si el puente va a usar el conector, en algún momento hay que hacerlo.
+4. **¿Autorizás la prueba controlada de R4** (un `POST` real a `/tools/firebase/send` con un token de prueba)? Con la Opción C esta prueba pasa a ser **más importante**: define el formato exacto que la app Siddhi tiene que emitir, y hoy los tres artefactos existentes no coinciden entre sí. Conviene hacerla **antes** de escribir el `.siddhi`.
+5. **¿Dónde se versiona la app Siddhi del agente?** Las de AssetPlanner viven en `traz-int/siddhi/notificaciones/`. Propongo `_backend/siddhi/` en **este** repo —la carpeta ya está declarada en la estructura del `CLAUDE.md`— para que el frente v3.5 quede completo en un solo lugar.
+
+**E1 (base de datos) puede arrancar ya**, sin depender de ninguna de estas. Las tablas `notificacion`, `envio` y `dispositivo` quedan definidas según §6.2 y §6.3, con la columna de polling que el CDC del SI necesita.
 
 ---
 
