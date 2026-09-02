@@ -77,6 +77,12 @@ VALUES (:EMPRESA_B, 1, 'hallazgo', 'Alerta privada de B', 'cuerpo B');
 INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
 VALUES (:EMPRESA_B, 'mtbf_deterioro', 22, 'Jefe de mantenimiento de B');
 
+-- Un destinatario de una alerta de ALMACENES: el agente cubre las dos areas,
+-- y quien recibe un aviso de MTBF no es necesariamente quien tiene que
+-- enterarse de un vencimiento de material.
+INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
+VALUES (:EMPRESA_B, 'material_por_vencer', 23, 'Encargado de deposito de B');
+
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
 
