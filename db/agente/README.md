@@ -40,6 +40,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 006 | `006-entrevistador.sql` | `tema`, `sesion_entrevista`, `hecho` y `validacion_cruzada` — la captura de conocimiento experto |
 | 007 | `007-notificaciones.sql` | `dispositivo`, `notificacion` y `envio` — el puente de alertas de la Opción C |
 | 008 | `008-destinatarios-alerta.sql` | `destinatario_alerta` — quién recibe cada tipo de alerta, configurable por empresa |
+| 009 | `009-alcance-almacenes.sql` | Tipos de alerta de Almacenes y columna `modulo` en el conocimiento |
 
 Aplicación completa, desde el directorio del repo:
 
@@ -155,9 +156,20 @@ Decisión del PM del 2026-09-02, después de mirar qué roles existen realmente:
 
 Así que `agente.destinatario_alerta` guarda, por empresa y tipo de alerta, qué usuarios de Tools la reciben, con una `etiqueta` legible ("Jefe de mantenimiento") que sirve para auditar por qué le llegó. La carga inicial de cada cliente se puede sembrar mirando sus roles de AssetPlanner, pero eso es un dato, no una dependencia.
 
+Los tipos cubren **las dos áreas del agente**: mantenimiento (`mtbf_deterioro`, `ot_critica_atrasada`) y almacenes (`stock_critico`, `material_por_vencer`, `pedido_demorado`), más los transversales. Quien recibe un aviso de MTBF en deterioro no es necesariamente quien tiene que enterarse de que un material está por vencer.
+
 `agente.destinatarios_de(empr_id, tipo)` resuelve la lista, sumando los configurados con `'*'`. Si no hay nadie configurado devuelve vacío: el hallazgo **se registra igual** en la memoria del cliente, pero no se notifica — silencio, en vez de un aviso a alguien al azar.
 
 El `rol_destino` de `agente.notificacion` queda como dato informativo (se copia de la etiqueta), no como mecanismo de resolución.
+
+### El agente cubre Mantenimiento y Almacenes
+
+El esquema de E1 se escribió pensando solo en Mantenimiento — un sesgo que el PM detectó el 2026-09-02. La capa MCP expone las **dos** áreas (11 tools `man_*` y 9 `alm_*`), así que el script `009` amplía el esquema:
+
+- **Tipos de alerta de almacenes**: `stock_critico`, `material_por_vencer`, `pedido_demorado`, junto a los de mantenimiento (`mtbf_deterioro`, `ot_critica_atrasada`) y los transversales (`hallazgo`, `sistema`).
+- **Columna `modulo`** en `chunk`, `candidato`, `hecho` y `tema`, con valores `man`, `alm` o `general`. El `general` —seguridad, normativa transversal— se recupera siempre, sin importar el área de la consulta.
+
+**Pañol y Tareas quedan para una versión posterior.** Cuando sus tools existan, alcanza con sumar sus valores a los `CHECK` de `009`.
 
 ### Deduplicación de hallazgos
 
