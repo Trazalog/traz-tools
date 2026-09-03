@@ -249,13 +249,33 @@ define('AGENTE_OAUTH_CLIENT_ID', 'trazalog-mcp-connector');
 
 #Base de Dnato para el flujo OAuth del agente.
 #
-#Por defecto usa DNATO, pero se puede pisar con la variable de entorno
-#DNATO_OAUTH_URL. Hace falta cuando el vhost no coincide con lo que dice DNATO:
-#en el entorno de desarrollo, por ejemplo, DNATO apunta a localhost mientras el
-#vhost real es traz-comp.local, y el navegador terminaria en una URL que no
-#sirve. El valor tiene que ser el mismo host por el que entra el usuario, o la
-#cookie de sesion no viaja y Dnato le pide login de nuevo.
-define('AGENTE_DNATO_OAUTH', getenv('DNATO_OAUTH_URL') ?: DNATO);
+#Se deriva del HOST POR EL QUE ENTRO EL USUARIO, conservando el path que define
+#DNATO. Es lo correcto para OAuth: la cookie de sesion pertenece a ese host, asi
+#que si el redirect fuera a otro, Dnato no reconoceria la sesion y le pediria
+#login de nuevo -- justo lo que este flujo evita.
+#
+#Ademas resuelve un desajuste real del entorno de desarrollo: DNATO apunta a
+#localhost, pero el vhost de XAMPP que sirve los proyectos es traz-comp.local
+#(DocumentRoot /mnt/win/dev/git). Derivando del host, el chat funciona por
+#cualquiera de los dos sin tocar configuracion.
+#
+#Se puede forzar con la variable de entorno DNATO_OAUTH_URL.
+if (!defined('AGENTE_DNATO_OAUTH')) {
+    $_agente_oauth = getenv('DNATO_OAUTH_URL');
+    if (!$_agente_oauth) {
+        $_agente_path = parse_url(DNATO, PHP_URL_PATH);
+        $_agente_host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+        #Solo hosts con forma valida: evita colgarse de un Host header raro.
+        if ($_agente_host && preg_match('/^[A-Za-z0-9.\-]+(:[0-9]+)?$/', $_agente_host)) {
+            $_agente_scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $_agente_oauth  = $_agente_scheme . '://' . $_agente_host . $_agente_path;
+        } else {
+            $_agente_oauth = DNATO;
+        }
+    }
+    define('AGENTE_DNATO_OAUTH', $_agente_oauth);
+    unset($_agente_oauth, $_agente_path, $_agente_host, $_agente_scheme);
+}
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
 define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');

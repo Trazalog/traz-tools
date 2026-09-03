@@ -33,7 +33,10 @@ class Agente extends CI_Controller
         $data = $this->session->userdata();
         if (empty($data['email'])) {
             log_message('DEBUG', '#TRAZA | AGENTE | Agente | __construct() >> Sesion expirada');
-            redirect(DNATO . 'main/login');
+            // Al login por el mismo host por el que entro el usuario, no por el
+            // que dice DNATO: si difieren, la cookie de sesion no viaja y el
+            // login no lo reconoce al volver.
+            redirect(rtrim(AGENTE_DNATO_OAUTH, '/') . '/main/login');
         }
     }
 
