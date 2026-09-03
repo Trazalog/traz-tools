@@ -21,6 +21,68 @@ class Agentes extends CI_Model
     }
 
     /**
+     * Hace el flujo OAuth completo contra Dnato, desde el servidor.
+     *
+     * Reenvia la cookie de sesion del usuario: como Tools y Dnato la comparten,
+     * el authorize lo reconoce y devuelve el code sin pedir credenciales, y sin
+     * sacar al usuario de la SPA.
+     *
+     * @param string $challenge   code_challenge S256
+     * @param string $verifier    code_verifier que lo genero
+     * @param string $cookie      "ci_session=..." del usuario
+     * @return array ['ok' => bool, 'access_token' => string, 'expires_in' => int, 'error' => string]
+     */
+    public function obtenerToken($challenge, $verifier, $cookie)
+    {
+        if ($cookie === '') {
+            return array('ok' => false, 'error' => 'no hay cookie de sesion para reenviar');
+        }
+
+        $redirectUri = base_url() . AGE . 'agente';
+        $url = rtrim(AGENTE_DNATO_OAUTH, '/') . '/oauth/authorize?' . http_build_query(array(
+            'client_id'             => AGENTE_OAUTH_CLIENT_ID,
+            'redirect_uri'          => $redirectUri,
+            'response_type'         => 'code',
+            'code_challenge'        => $challenge,
+            'code_challenge_method' => 'S256',
+            'state'                 => 'server-side',
+        ));
+
+        // No seguimos el redirect: lo que interesa es el 'code' del Location.
+        $curl = curl_init($url);
+        curl_setopt_array($curl, array(
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_HEADER         => true,
+            CURLOPT_TIMEOUT        => 20,
+            CURLOPT_COOKIE         => $cookie,
+        ));
+        $rsp     = curl_exec($curl);
+        $status  = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $errCurl = curl_error($curl);
+        curl_close($curl);
+
+        if ($rsp === false) {
+            return array('ok' => false, 'error' => 'no se pudo contactar a Dnato: ' . $errCurl);
+        }
+        if ($status < 300 || $status >= 400) {
+            // 200 = Dnato devolvio la pantalla de login: no reconocio la sesion.
+            return array('ok' => false, 'error' => "authorize respondio $status (¿la sesion no viajo?)");
+        }
+        if (!preg_match('/^Location:\s*(\S+)/mi', $rsp, $m)) {
+            return array('ok' => false, 'error' => 'authorize redirigio sin Location');
+        }
+
+        parse_str((string) parse_url(trim($m[1]), PHP_URL_QUERY), $params);
+        if (empty($params['code'])) {
+            $destino = trim($m[1]);
+            return array('ok' => false, 'error' => 'el redirect no trae code: ' . substr($destino, 0, 120));
+        }
+
+        return $this->canjearCode($params['code'], $verifier, $redirectUri);
+    }
+
+    /**
      * Canjea el authorization code por el JWT del usuario (OAuth 2.1 + PKCE).
      *
      * @return array ['ok' => bool, 'access_token' => string, 'expires_in' => int, 'error' => string]

@@ -132,20 +132,26 @@ Módulo `application/modules/traz-comp-agente/`, con el patrón habitual de Tool
 | `views/chat.php` | La conversación, el resumen de fuentes y el control de feedback |
 | `views/feedback_admin.php` | Feedback negativo agrupado por motivo |
 
-### Las vistas son fragmentos, no páginas
+### El módulo devuelve solo fragmentos, nunca el layout
 
-`layout/Admin.php` es la **página completa** — trae `<html>`, `<head>`, `<body>` y su propio `content-wrapper` con un `<section id="content">` vacío. El contenido de cada módulo se inyecta ahí por AJAX, con `linkTo(url)` de `lib/props/navegacion.js`, que hace `$("#content").load(url)`.
+`layout/Admin.php` es la **página completa** — trae `<html>`, `<head>`, `<body>` y un `<section id="content">` vacío donde el menú inyecta el contenido de cada módulo con `linkTo(url)` (`lib/props/navegacion.js`, que hace `$("#content").load(url)`).
 
-Por eso las vistas de los módulos empiezan directo con `<div class="box box-primary">`, sin layout propio. Cargar el layout **y después** la vista deja el fragmento **después de `</html>`**: se renderiza sin estilos, debajo de todo. Fue exactamente el error de la primera versión de esta vista.
+Dos razones para no servirlo desde el módulo, y la segunda es la que obliga:
 
-El módulo expone entonces dos cosas por cada pantalla:
+1. **La convención.** Todas las vistas de módulo son fragmentos: empiezan en `<div class="box box-primary">`, sin layout propio.
+2. **El layout no funciona fuera del Dash.** Referencia sus CSS con rutas relativas (`lib/bower_components/...`), así que servido desde `/traz-tools/traz-comp-agente/agente` el navegador los busca en `/traz-tools/traz-comp-agente/lib/...` y recibe 404. La página queda sin una sola hoja de estilo.
 
-| Ruta | Qué devuelve |
-|---|---|
-| `agente/` y `agente/admin` | La página: layout + un `linkTo()` al fragmento |
-| `agente/panel` y `agente/panel_feedback` | El fragmento solo |
+La primera versión de esta vista cargaba el layout y la vista una detrás de otra, lo que dejaba el fragmento **después de `</html>`**. La segunda cargaba el layout desde la URL del módulo, y se rompían los assets. La correcta es la de todos los demás: **solo el fragmento**, y se entra por el menú.
 
-Los fragmentos son lo que va a apuntar el menú cuando el módulo se dé de alta en `sismenu`; las páginas hacen que la URL directa funcione mientras tanto.
+### El OAuth se hace desde el servidor, no con redirects
+
+Consecuencia directa de lo anterior: si el módulo vive dentro de la SPA, no puede sacar al usuario a Dnato y traerlo de vuelta cada vez que vence el token — eso recargaría la página entera y lo dejaría fuera del contexto donde estaba.
+
+Como **Tools y Dnato comparten la sesión PHP**, el controller resuelve el flujo entero desde el backend: le pide el `code` a `/oauth/authorize` **reenviando la cookie de sesión del usuario**, y lo canjea en `/oauth/token`. Dnato reconoce la sesión y responde sin pedir credenciales. El usuario no se entera.
+
+Un detalle que importa: **la sesión de CI usa archivos y queda bloqueada durante el request.** Si el controller llama a Dnato sin cerrarla, Dnato se queda esperando el mismo archivo y el `curl` expira. Por eso hay un `session_write_close()` antes de la llamada y un `session_start()` después.
+
+Medido en el entorno local: la primera consulta tarda ~4,5 s (incluye obtener el token) y las siguientes ~1,7 s, con el token ya en sesión.
 
 ### El navegador nunca habla directo con el orquestador
 

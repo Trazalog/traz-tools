@@ -29,9 +29,8 @@ El vhost está en `/opt/lampp/etc/extra/httpd-vhosts.conf` y `traz-comp.local` y
 |---|---|
 | Tools | `http://traz-comp.local/traz-tools/` |
 | Dnato | `http://traz-comp.local/traz-comp-dnato/` |
-| **Chat del agente** | `http://traz-comp.local/traz-tools/traz-comp-agente/agente` |
-| Panel de feedback | `http://traz-comp.local/traz-tools/traz-comp-agente/agente/admin` |
-| Estado del orquestador | `http://traz-comp.local/traz-tools/traz-comp-agente/agente/salud` |
+| **Chat del agente** | Se entra **por el menú**, desde el Dash — ver abajo |
+| Fragmento del chat (directo) | `http://traz-comp.local/traz-tools/traz-comp-agente/agente` (sin estilos: es un fragmento) |
 | Orquestador (directo) | `http://127.0.0.1:8099` |
 | Bonita | `http://10.142.0.13:8080/bonita` |
 
@@ -76,17 +75,19 @@ Todo desde **el navegador**, salvo el primer paso.
 ./agente/dev.sh
 ```
 
-**2. Entrar al chat:**
+**2. Entrar a Tools y loguearte:**
 
 ```
-http://traz-comp.local/traz-tools/traz-comp-agente/agente
+http://traz-comp.local/traz-tools/Dash
 ```
 
-**3. Loguearse** con el usuario de prueba, si Tools pide sesión.
+**3. Buscar "Agente Minero" en el menú lateral.** Ya está dado de alta para el rol Administrador de la empresa de prueba, con su submenú "Feedback del agente".
 
-**4. La primera vez, el chat te manda a Dnato y vuelve solo.** No te va a pedir credenciales de nuevo: como Tools y Dnato comparten la sesión, el `authorize` la reconoce y devuelve el código de una. Si te pide login otra vez, es que entraste por un host distinto al de la sesión.
+**4. No te va a pedir nada más.** El módulo obtiene su token de Dnato **desde el servidor**, aprovechando que Tools y Dnato comparten la sesión. La primera consulta tarda un segundo más que las siguientes porque incluye ese paso.
 
 **5. Preguntale algo.** La vista trae cuatro ejemplos clickeables, dos de mantenimiento y dos de almacenes.
+
+> ⚠️ **No entres por la URL del módulo directamente.** Devuelve el fragmento sin estilos: el layout de Tools referencia sus CSS con rutas relativas y solo funciona desde una URL de un segmento como `/Dash`. Por eso todos los módulos se abren desde el menú.
 
 ### Qué esperar
 
@@ -104,12 +105,23 @@ Circuito completo, el 2026-09-02, con este usuario:
 
 | Paso | Resultado |
 |---|---|
+| Menú del Dash | ✅ "Agente Minero" y "Feedback del agente" aparecen para el rol Administrador |
+| Fragmento del chat | ✅ 200, arranca en `<div class="box box-primary">`, sin layout propio |
+| OAuth desde el servidor | ✅ token obtenido sin sacar al usuario de la SPA; 1ª consulta 4,5 s, siguientes 1,7 s |
 | Login en Dnato | ✅ `sesión abierta. email=agente.minero.test@trazalog.local empr_id=191` |
 | `/oauth/authorize` con la sesión | ✅ devuelve el `code` **sin pedir credenciales** |
 | Canje del `code` | ✅ JWT con `empr_id: 191`, `sub: agenteminero`, TTL 24 h |
 | Consulta al orquestador con ese JWT | ✅ aceptado; la interacción quedó registrada **con `empr_id` 191 derivado del token** |
 
 Lo único que falta para una respuesta real es una `OPENROUTER_API_KEY` válida en el `.env`.
+
+---
+
+## Deuda anotada: el módulo del menú va como `CORE`
+
+El alta en `seg.menues` usa `modulo = 'CORE'` en vez de uno propio, porque el constraint `menues_check` tiene una **lista cerrada** de módulos —`PRD, CORE, ALM, MAN, TAR, PAN, LOG, SEG, TRZ, PRO, FIS, BPM, RESI`— que no incluye al agente.
+
+Agregarle un valor es un cambio de esquema de la base de Tools, así que queda a decisión del PM. Funciona igual: el `modulo` solo agrupa, y lo que resuelve la navegación es la `url`.
 
 ---
 
@@ -123,3 +135,5 @@ Lo único que falta para una respuesta real es una `OPENROUTER_API_KEY` válida 
 | El chat pide reconectar siempre | El host del OAuth no es el de la sesión | Entrá y quedate en `traz-comp.local` |
 | El chat dice que el agente no está disponible | El orquestador no corre | `./agente/dev.sh`, y mirar `/agente/salud` |
 | El registro web falla con 500 | El MI local no tiene `/usuario/registro` | Es del entorno, no del agente. Crear el usuario a mano como se documentó arriba |
+| El chat se ve sin estilos | Entraste por la URL del módulo | Entrá por el Dash y usá el menú |
+| "No se pudo obtener la autorización" | La cookie de sesión no llegó a Dnato | Verificá que entraste por el mismo host, y mirá el log: `_asegurarToken()` deja el detalle |
