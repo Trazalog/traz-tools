@@ -156,6 +156,9 @@ define('COD', 'traz-comp-codigos/');
 #COMPONENTE NOTIFICACIONES
 define('NOTI', 'traz-comp-notificaciones/');
 
+#COMPONENTE AGENTE MINERO
+define('AGE', 'traz-comp-agente/');
+
 #COMPONENTE MANTENIMIENTO
 define('MAN', 'traz-tools-man/');
 
@@ -233,6 +236,46 @@ define('REST_BPM', HOST.'/tools/bpm');
 define('REST_CORE', HOST.'/services/COREDataService');
 define('REST_FRM', HOST.'/services/FRMDataService');
 define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
+
+#AGENTE MINERO — el orquestador NO va detras de HOST: es un servicio propio,
+#que en demo y produccion tiene que quedar detras del gateway o en una red
+#donde solo llegue trafico ya validado (ver doc/agente/operacion.md).
+define('REST_AGENTE', getenv('AGENTE_URL') ?: 'http://127.0.0.1:8099');
+
+#Cliente OAuth contra Dnato. Es el unico client_id que Dnato acepta hoy
+#(Oauth::ALLOWED_CLIENT_ID, "fase 1: cliente unico fijo"). Cuando Dnato soporte
+#varios clientes, Tools deberia tener el suyo — ver la nota del controller.
+define('AGENTE_OAUTH_CLIENT_ID', 'trazalog-mcp-connector');
+
+#Base de Dnato para el flujo OAuth del agente.
+#
+#Se deriva del HOST POR EL QUE ENTRO EL USUARIO, conservando el path que define
+#DNATO. Es lo correcto para OAuth: la cookie de sesion pertenece a ese host, asi
+#que si el redirect fuera a otro, Dnato no reconoceria la sesion y le pediria
+#login de nuevo -- justo lo que este flujo evita.
+#
+#Ademas resuelve un desajuste real del entorno de desarrollo: DNATO apunta a
+#localhost, pero el vhost de XAMPP que sirve los proyectos es traz-comp.local
+#(DocumentRoot /mnt/win/dev/git). Derivando del host, el chat funciona por
+#cualquiera de los dos sin tocar configuracion.
+#
+#Se puede forzar con la variable de entorno DNATO_OAUTH_URL.
+if (!defined('AGENTE_DNATO_OAUTH')) {
+    $_agente_oauth = getenv('DNATO_OAUTH_URL');
+    if (!$_agente_oauth) {
+        $_agente_path = parse_url(DNATO, PHP_URL_PATH);
+        $_agente_host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+        #Solo hosts con forma valida: evita colgarse de un Host header raro.
+        if ($_agente_host && preg_match('/^[A-Za-z0-9.\-]+(:[0-9]+)?$/', $_agente_host)) {
+            $_agente_scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $_agente_oauth  = $_agente_scheme . '://' . $_agente_host . $_agente_path;
+        } else {
+            $_agente_oauth = DNATO;
+        }
+    }
+    define('AGENTE_DNATO_OAUTH', $_agente_oauth);
+    unset($_agente_oauth, $_agente_path, $_agente_host, $_agente_scheme);
+}
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
 define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
