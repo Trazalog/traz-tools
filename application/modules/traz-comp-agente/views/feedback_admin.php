@@ -3,13 +3,7 @@
   Feedback negativo agrupado. Es el tablero del ciclo de mejora: ver
   doc/agente/feedback.md para que hacer con cada caso.
 -->
-<div class="content-wrapper">
-  <section class="content-header">
-    <h1>Agente Minero <small>feedback a revisar</small></h1>
-  </section>
-
-  <section class="content">
-    <?php if (!empty($feedback['error'])): ?>
+<?php if (!empty($feedback['error'])): ?>
       <div class="callout callout-warning">
         <p>No se pudo leer el feedback: <?= html_escape($feedback['error']) ?></p>
       </div>
@@ -70,8 +64,6 @@
         </div>
       </div>
     </div>
-  </section>
-</div>
 
 <style>
 .ag-caso { border-bottom: 1px solid #eee; padding: 12px 0; }

@@ -41,6 +41,18 @@ class Agente extends CI_Controller
     }
 
     // ---------------------------------------------------------------- vistas
+    /**
+     * Pagina completa del chat.
+     *
+     * Como el resto de Tools, el contenido de un modulo es un FRAGMENTO que se
+     * inyecta en el #content del layout: 'layout/Admin' ya trae <html>, <head>
+     * y <body>, asi que cargar el layout y despues la vista deja el fragmento
+     * despues de </html> -- que es exactamente como se rompe.
+     *
+     * Este metodo carga el layout y le pide al JS de navegacion que traiga el
+     * fragmento, igual que haria un click en el menu. Asi la URL directa
+     * funciona mientras el modulo no este dado de alta en `sismenu`.
+     */
     public function index()
     {
         log_message('DEBUG', '#TRAZA | AGENTE | Agente | index()');
@@ -50,6 +62,16 @@ class Agente extends CI_Controller
         }
 
         $this->load->view('layout/Admin');
+        $this->_cargarEnContent(base_url() . AGE . 'agente/panel');
+    }
+
+    /** El chat, como fragmento. Es lo que va a apuntar el menu. */
+    public function panel()
+    {
+        if (!$this->_tieneTokenVigente()) {
+            $this->_json(['error' => 'sesion_vencida'], 401);
+            return;
+        }
         $this->load->view(AGE . 'chat');
     }
 
@@ -65,8 +87,18 @@ class Agente extends CI_Controller
             redirect(base_url() . AGE . 'agente/conectar');
         }
 
-        $data['feedback'] = $this->Agentes->feedbackNegativo($this->_token());
         $this->load->view('layout/Admin');
+        $this->_cargarEnContent(base_url() . AGE . 'agente/panel_feedback');
+    }
+
+    /** El panel de feedback, como fragmento. */
+    public function panel_feedback()
+    {
+        if (!$this->_tieneTokenVigente()) {
+            $this->_json(['error' => 'sesion_vencida'], 401);
+            return;
+        }
+        $data['feedback'] = $this->Agentes->feedbackNegativo($this->_token());
         $this->load->view(AGE . 'feedback_admin', $data);
     }
 
@@ -219,9 +251,22 @@ class Agente extends CI_Controller
             ->set_output(json_encode($data, JSON_UNESCAPED_UNICODE));
     }
 
+    /**
+     * Le pide al JS del layout que cargue un fragmento en #content.
+     *
+     * linkTo() vive en lib/props/navegacion.js y hace $("#content").load(url),
+     * que es la misma via por la que el menu carga cualquier modulo.
+     */
+    private function _cargarEnContent($url)
+    {
+        echo '<script>$(function () { linkTo("' . $url . '"); });</script>';
+    }
+
     private function _error($mensaje)
     {
         $this->load->view('layout/Admin');
+        echo '<div class="container" style="margin-top:20px">';
         $this->load->view(AGE . 'error', ['mensaje' => $mensaje]);
+        echo '</div>';
     }
 }

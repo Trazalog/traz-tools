@@ -132,6 +132,21 @@ Módulo `application/modules/traz-comp-agente/`, con el patrón habitual de Tool
 | `views/chat.php` | La conversación, el resumen de fuentes y el control de feedback |
 | `views/feedback_admin.php` | Feedback negativo agrupado por motivo |
 
+### Las vistas son fragmentos, no páginas
+
+`layout/Admin.php` es la **página completa** — trae `<html>`, `<head>`, `<body>` y su propio `content-wrapper` con un `<section id="content">` vacío. El contenido de cada módulo se inyecta ahí por AJAX, con `linkTo(url)` de `lib/props/navegacion.js`, que hace `$("#content").load(url)`.
+
+Por eso las vistas de los módulos empiezan directo con `<div class="box box-primary">`, sin layout propio. Cargar el layout **y después** la vista deja el fragmento **después de `</html>`**: se renderiza sin estilos, debajo de todo. Fue exactamente el error de la primera versión de esta vista.
+
+El módulo expone entonces dos cosas por cada pantalla:
+
+| Ruta | Qué devuelve |
+|---|---|
+| `agente/` y `agente/admin` | La página: layout + un `linkTo()` al fragmento |
+| `agente/panel` y `agente/panel_feedback` | El fragmento solo |
+
+Los fragmentos son lo que va a apuntar el menú cuando el módulo se dé de alta en `sismenu`; las páginas hacen que la URL directa funcione mientras tanto.
+
 ### El navegador nunca habla directo con el orquestador
 
 Todo pasa por el controller PHP, que agrega el `Authorization: Bearer`. Dos motivos: el JWT no queda expuesto al JavaScript, y el orquestador puede seguir sin estar publicado — que es requisito, porque lee los claims sin validar la firma.
