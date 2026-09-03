@@ -227,8 +227,9 @@ _RUTAS_DEV = {
     # Mantenimiento
     "man_get_equipos": "/man/equipos",
     "man_get_equipo": "/man/equipo/{equi_id}",
-    "man_get_ots": "/man/ots",
+    "man_get_ots": "/man/ot",
     "man_get_preventivos": "/man/preventivos",
+    "man_get_lecturas": "/man/lecturas",
     "man_get_kpi_disponibilidad": "/man/kpi/disponibilidad",
     "man_get_kpi_mttr": "/man/kpi/mttr",
     "man_get_kpi_mttf": "/man/kpi/mttf",
@@ -237,10 +238,12 @@ _RUTAS_DEV = {
     "alm_get_stock": "/alm/stock",
     "alm_get_depositos": "/alm/depositos",
     "alm_get_movimientos": "/alm/movimientos",
+    "alm_get_movimientos_internos": "/alm/movimientos-internos",
     "alm_get_entregas": "/alm/entregas",
     "alm_get_vencimientos": "/alm/vencimientos",
-    "alm_get_pedidos_materiales": "/alm/pedidos-materiales",
+    "alm_get_pedidos_materiales": "/alm/pedidos",
 }
+
 
 def _tool(nombre: str, descripcion: str, propiedades: dict | None = None,
           requeridos: list[str] | None = None) -> dict:
@@ -265,6 +268,8 @@ _TOOLS_DEV = [
           "Ordenes de trabajo de la empresa: estado, equipo, asignado y fechas."),
     _tool("man_get_preventivos",
           "Planes de mantenimiento preventivo y su frecuencia."),
+    _tool("man_get_lecturas",
+          "Lecturas de horometro y contadores de los equipos."),
     _tool("man_get_kpi_disponibilidad",
           "Disponibilidad de los equipos: porcentaje de tiempo en condiciones de operar."),
     _tool("man_get_kpi_mttr",
@@ -276,13 +281,13 @@ _TOOLS_DEV = [
     # --- Almacenes -------------------------------------------------------
     _tool("alm_get_stock",
           "Stock disponible de articulos: cantidades por deposito. Sirve para saber si hay "
-          "un repuesto o insumo antes de planificar una tarea.",
-          {"depo_id": {"type": "string", "description": "Filtrar por deposito (opcional)"},
-           "buscar": {"type": "string", "description": "Texto a buscar en el articulo (opcional)"}}),
+          "un repuesto o insumo antes de planificar una tarea."),
     _tool("alm_get_depositos",
           "Depositos de la empresa, con su codigo y descripcion."),
     _tool("alm_get_movimientos",
           "Movimientos de stock: entradas, salidas y ajustes, con fecha y articulo."),
+    _tool("alm_get_movimientos_internos",
+          "Movimientos internos entre depositos de la empresa."),
     _tool("alm_get_entregas",
           "Entregas de materiales realizadas: que se entrego, a quien y cuando."),
     _tool("alm_get_vencimientos",

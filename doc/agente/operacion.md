@@ -64,6 +64,21 @@ La lista completa con explicaciones está en `.env.example`. Estas son las que m
 | `AGENTE_MCP_MODO` | `apim` (real) o `mi` (desarrollo) | **En demo y producción va `apim`**, siempre |
 | `AGENTE_TEMPERATURA` | Cuánta variación en las respuestas | 0.2 por defecto. Para un agente técnico, bajo es mejor |
 
+### Los modelos: cuáles funcionan y cuáles cuestan
+
+Verificado contra la API el 2026-09-03:
+
+| | Situación |
+|---|---|
+| **Chat** | Hay **17 modelos gratuitos con tool-calling** (los que terminan en `:free`). Funcionan con cuenta sin crédito. `minimax/minimax-m3:free` está verificado: responde bien en español técnico y hace tool-calling |
+| **Embeddings** | **No hay ninguno gratuito.** Necesitan crédito, aunque es barato |
+
+⚠️ **OpenRouter no lista sus modelos de embeddings en `/models`, pero sí los sirve.** Hoy solo están los de OpenAI (`text-embedding-3-small`, `-large`). **`cohere/embed-multilingual-v3.0` no existe ahí**, aunque el nombre suene plausible — fue un error de la primera configuración.
+
+**Sin crédito, el agente igual responde**: si la vectorización falla, sigue sin RAG, con las tools y lo que el modelo sepa. Queda anotado en `agente.interaccion.error` como `RAG no disponible`. Una respuesta sin conocimiento propio es peor que una con él, pero muchísimo mejor que ninguna.
+
+Lo que **no** funciona sin crédito: ingestar documentos y recuperar conocimiento. O sea, media razón de ser del agente.
+
 ### Cambiar el modelo de embeddings no es gratis
 
 La dimensión del vector vive en el DDL (`vector(1024)`). Si el modelo nuevo devuelve otra dimensión hay que alterar las columnas, recrear los índices HNSW **y re-generar todos los embeddings existentes** — los vectores viejos no son comparables con los nuevos. Ver `db/agente/README.md`.

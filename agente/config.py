@@ -52,8 +52,12 @@ class Config:
     # Modelo configurable, nunca hardcodeado. DeepSeek por defecto: barato para
     # desarrollo y con tool-calling. Se cambia sin tocar codigo.
     modelo: str = field(default_factory=lambda: _env("AGENTE_MODELO", "deepseek/deepseek-chat"))
+    # OJO: OpenRouter NO lista sus modelos de embeddings en /models, pero sí los
+    # sirve. Hoy solo están los de OpenAI: text-embedding-3-small y -large.
+    # cohere/embed-multilingual-v3.0 NO existe ahí, aunque el nombre suene
+    # plausible -- verificado contra la API el 2026-09-03.
     modelo_embeddings: str = field(
-        default_factory=lambda: _env("AGENTE_MODELO_EMBEDDINGS", "cohere/embed-multilingual-v3.0")
+        default_factory=lambda: _env("AGENTE_MODELO_EMBEDDINGS", "openai/text-embedding-3-small")
     )
     # Tiene que coincidir con la dimension del DDL (vector(1024) en db/agente).
     dim_embeddings: int = field(default_factory=lambda: _env_int("AGENTE_DIM_EMBEDDINGS", 1024))
