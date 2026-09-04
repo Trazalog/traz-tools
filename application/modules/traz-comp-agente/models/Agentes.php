@@ -178,6 +178,36 @@ class Agentes extends CI_Model
         return $rsp['ok'] ? $rsp['data'] : ['resumen' => [], 'detalle' => [], 'error' => $rsp['error']];
     }
 
+    // --------------------------------------------------------- entrevistador
+    public function agenda($jwt)
+    {
+        $rsp = $this->_llamar('GET', '/entrevista/agenda', null, $jwt);
+        return $rsp['ok'] ? $rsp['data'] : array('temas' => array(), 'error' => $rsp['error']);
+    }
+
+    public function expertos($jwt)
+    {
+        $rsp = $this->_llamar('GET', '/entrevista/expertos', null, $jwt);
+        return $rsp['ok'] ? $rsp['data'] : array('expertos' => array(), 'error' => $rsp['error']);
+    }
+
+    /**
+     * Proxy a un endpoint del entrevistador.
+     *
+     * Las entrevistas usan el timeout largo: el modelo tiene que leer toda la
+     * conversacion antes de repreguntar, y estructurar es mas lento todavia.
+     */
+    public function entrevista($jwt, $ruta, $cuerpo)
+    {
+        $metodo = ($cuerpo === null && strpos($ruta, '?') === false) ? 'GET' : 'POST';
+        $rsp = $this->_llamar($metodo, $ruta, $cuerpo, $jwt, self::TIMEOUT_CONSULTA);
+        if (!$rsp['ok']) {
+            log_message('ERROR', '#TRAZA | AGENTE | Agentes | entrevista() >> ' . $rsp['error']);
+            return array('error' => $rsp['error']);
+        }
+        return $rsp['data'];
+    }
+
     /** Estado del orquestador. No necesita token. */
     public function salud()
     {

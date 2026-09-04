@@ -119,6 +119,74 @@ class Agente extends CI_Controller
         ));
     }
 
+    // ---------------------------------------------------------- entrevistador
+    /** La pantalla de captura de conocimiento. Fragmento, como todo el modulo. */
+    public function entrevista()
+    {
+        log_message('DEBUG', '#TRAZA | AGENTE | Agente | entrevista()');
+        $this->load->view(AGE . 'entrevista');
+    }
+
+    /** Temas de la agenda, ordenados por lo que mas falta. */
+    public function agenda()
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('error' => 'sin_autorizacion', 'temas' => array()));
+            return;
+        }
+        $this->_json($this->Agentes->agenda($this->_token()));
+    }
+
+    public function expertos()
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('error' => 'sin_autorizacion', 'expertos' => array()));
+            return;
+        }
+        $this->_json($this->Agentes->expertos($this->_token()));
+    }
+
+    public function entrevista_iniciar()
+    {
+        $this->_proxyEntrevista('/entrevista/iniciar', array(
+            'experto_id' => (int) $this->input->post('experto_id'),
+            'tema_id'    => (int) $this->input->post('tema_id'),
+        ));
+    }
+
+    public function entrevista_responder()
+    {
+        $this->_proxyEntrevista('/entrevista/responder', array(
+            'sesion_id' => (string) $this->input->post('sesion_id'),
+            'respuesta' => (string) $this->input->post('respuesta'),
+        ));
+    }
+
+    public function entrevista_estructurar()
+    {
+        $sesion = urlencode((string) $this->input->post('sesion_id'));
+        $this->_proxyEntrevista('/entrevista/estructurar?sesion_id=' . $sesion, null);
+    }
+
+    public function entrevista_validar()
+    {
+        $contenido = (string) $this->input->post('contenido');
+        $cuerpo = array(
+            'hecho_id' => (int) $this->input->post('hecho_id'),
+            'aprobado' => filter_var($this->input->post('aprobado'), FILTER_VALIDATE_BOOLEAN),
+        );
+        if ($contenido !== '') {
+            $cuerpo['contenido'] = $contenido;
+        }
+        $this->_proxyEntrevista('/entrevista/validar', $cuerpo);
+    }
+
+    public function entrevista_cerrar()
+    {
+        $sesion = urlencode((string) $this->input->post('sesion_id'));
+        $this->_proxyEntrevista('/entrevista/cerrar?sesion_id=' . $sesion, null);
+    }
+
     /** Estado del orquestador, para diagnosticar desde la UI. */
     public function salud()
     {
@@ -162,6 +230,16 @@ class Agente extends CI_Controller
         ));
         log_message('DEBUG', '#TRAZA | AGENTE | Agente | _asegurarToken() >> token obtenido');
         return true;
+    }
+
+    /** Proxy generico a los endpoints del entrevistador. */
+    private function _proxyEntrevista($ruta, $cuerpo)
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('error' => 'No se pudo obtener la autorización'));
+            return;
+        }
+        $this->_json($this->Agentes->entrevista($this->_token(), $ruta, $cuerpo));
     }
 
     /** La cookie de sesion del usuario, para reenviarsela a Dnato. */

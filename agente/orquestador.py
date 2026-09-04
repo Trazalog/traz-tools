@@ -22,6 +22,8 @@ import time
 import uuid
 from dataclasses import dataclass, field
 
+import logging
+
 import psycopg
 
 from . import rag
@@ -29,6 +31,8 @@ from .config import Config
 from .llm import LLMError, OpenRouter
 from .mcp_client import ClienteMCP, MCPError
 from .prompt import cargar as cargar_prompt
+
+log = logging.getLogger("agente.orquestador")
 
 
 @dataclass
@@ -90,12 +94,26 @@ class Orquestador:
     # ------------------------------------------------------------------ loop
     async def _loop(self, con, consulta, llm, mcp, res: Resultado) -> Resultado:
         # 1-2. Recuperacion
-        vector = (await llm.embeddings([consulta.pregunta]))[0]
-        fragmentos = (
-            await rag.buscar_conocimiento(con, self.cfg, vector)
-            + await rag.buscar_memoria(con, self.cfg, consulta.empr_id, vector)
-        )
-        fragmentos.sort(key=lambda f: f.distancia)
+        #
+        # Si la vectorizacion falla, el agente NO se cae: sigue sin RAG, con las
+        # tools y lo que el modelo sepa. Una respuesta sin conocimiento propio es
+        # peor que una con el, pero es muchisimo mejor que ninguna -- y el caso
+        # tipico es quedarse sin credito para embeddings, que no tiene por que
+        # dejar al agente mudo.
+        #
+        # Queda registrado en la interaccion para que se vea por que esa
+        # respuesta no tuvo fragmentos.
+        fragmentos = []
+        try:
+            vector = (await llm.embeddings([consulta.pregunta]))[0]
+            fragmentos = (
+                await rag.buscar_conocimiento(con, self.cfg, vector)
+                + await rag.buscar_memoria(con, self.cfg, consulta.empr_id, vector)
+            )
+            fragmentos.sort(key=lambda f: f.distancia)
+        except LLMError as e:
+            res.error = f"RAG no disponible: {e}"
+            log.warning("Sin embeddings, se responde sin RAG: %s", e)
         res.fragmentos = [
             {"cita": f.cita, "origen": f.origen, "id": f.id,
              "distancia": round(f.distancia, 4)}

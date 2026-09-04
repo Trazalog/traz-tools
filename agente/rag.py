@@ -175,8 +175,11 @@ def armar_contexto(fragmentos: list[Fragmento]) -> str:
     """
     if not fragmentos:
         return (
-            "No hay conocimiento ni memoria registrada que aplique a esta consulta. "
-            "Respondé según las reglas de 'Cuando no sabés'."
+            "No hay conocimiento ni memoria registrada que aplique a esta consulta.\n\n"
+            "Podés responder con lo que sepas del dominio y con los datos que "
+            "consultes por las herramientas, pero **avisá que no tenés conocimiento "
+            "registrado sobre el tema** y aplicá las reglas de 'Cuando no sabés': "
+            "nada de números inventados."
         )
 
     conocimiento = [f for f in fragmentos if f.origen == "conocimiento"]
