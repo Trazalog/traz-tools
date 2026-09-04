@@ -30,6 +30,6 @@ test.describe('@dnato @DNATO-UC-022 Ver la lista de empresas del sistema', () =>
 
   test('sin sesión, la lista de empresas manda al ingreso', async ({ page }) => {
     await page.goto(urlDnato('empresa/listarEmpresas'), { waitUntil: 'domcontentloaded' });
-    await expect(new LoginPage(page).empresa).toBeVisible();
+    await expect(new LoginPage(page).email).toBeVisible();
   });
 });

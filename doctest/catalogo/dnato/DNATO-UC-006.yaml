@@ -3,38 +3,55 @@ modulo: DNATO
 titulo: Iniciar sesión eligiendo la empresa
 perfil: Usuario
 estado: validado
-version: "0.3"
+version: "0.4"
 origen: baseline
-fecha_validacion: 2026-08-24
+fecha_validacion: 2026-09-04
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Main.php
-    detalle: "login() (1362-1475)"
+    detalle: "login() (paso 1) y seleccionar_empresa() / _confirmarEmpresa() / _finalizarLogin() (paso 2)"
   - repo: traz-comp-dnato
     path: application/models/User_model.php
-    detalle: "chekEmpresa(), checkLogin()"
+    detalle: "getEmpresasDeUsuario(), chekEmpresaByEmprId(), checkLogin()"
   - repo: traz-comp-dnato
     path: application/views/login.php
+    detalle: "paso 1 — sólo correo y contraseña"
+  - repo: traz-comp-dnato
+    path: application/views/login_empresa.php
+    detalle: "paso 2 — tarjetas de empresa"
 pantallas:
-  - "Bienvenido! Ingrese por favor"
+  - "Bienvenido"
+  - "¿Con qué empresa querés ingresar?"
 precondiciones:
   - Sin sesión iniciada
   - La cuenta está activada y habilitada
-  - El usuario tiene rol asignado en la empresa que elige
+  - El usuario tiene al menos una empresa con membresía resoluble
 flujo_principal:
   - paso: "Abre la pantalla de ingreso"
-    resultado: "Se muestra el formulario con la lista de empresas, correo y contraseña"
-  - paso: "Elige su empresa, ingresa correo y contraseña, y confirma"
-    resultado: "Inicia sesión y entra a Trazalog Tools con esa empresa como empresa activa"
+    resultado: "Se muestra el formulario con dos campos: correo y contraseña. No se ofrece ninguna lista de empresas"
+  - paso: "Ingresa correo y contraseña, y confirma"
+    resultado: "Se validan las credenciales y el sistema resuelve por su cuenta a qué empresas pertenece el usuario"
+  - paso: "Si pertenece a una sola empresa, no hace nada más"
+    resultado: "Inicia sesión con esa empresa como empresa activa y entra a Trazalog Tools"
+  - paso: "Si pertenece a más de una, elige una de las empresas que se le muestran"
+    resultado: "Inicia sesión con la empresa elegida como empresa activa y entra a Trazalog Tools"
 flujos_alternativos:
-  - nombre: "El usuario no pertenece a la empresa elegida"
-    pasos:
-      - paso: "Elige una empresa en la que no tiene roles e ingresa sus credenciales"
-        resultado: "Se muestra 'El usuario no corresponde a la empresa seleccionada.' y no inicia sesión"
   - nombre: "Correo o contraseña incorrectos"
     pasos:
       - paso: "Ingresa una contraseña equivocada"
         resultado: "Se muestra 'Correo o contraseña incorrectos.' y no inicia sesión"
+  - nombre: "El usuario no tiene ninguna empresa"
+    pasos:
+      - paso: "Ingresa credenciales correctas de una cuenta sin membresías resolubles"
+        resultado: "Se muestra que no tiene ninguna empresa asignada y que contacte al administrador, y no inicia sesión"
+  - nombre: "Se intenta llegar a la elección de empresa sin haber ingresado"
+    pasos:
+      - paso: "Abre la pantalla de elección de empresa por dirección directa, sin credenciales validadas"
+        resultado: "Se muestra 'Tu sesión expiró. Ingresá nuevamente.' y vuelve a la pantalla de ingreso"
+  - nombre: "Se confirma una empresa que no es del usuario"
+    pasos:
+      - paso: "Se envía la elección con una empresa en la que el usuario no tiene membresía"
+        resultado: "Se muestra que la empresa seleccionada no corresponde a su usuario, se descarta el ingreso a medias y vuelve a la pantalla de ingreso"
   - nombre: "Usuario inhabilitado"
     pasos:
       - paso: "Ingresa credenciales correctas de una cuenta inhabilitada"
@@ -49,17 +66,24 @@ flujos_alternativos:
         resultado: "Se muestra 'Error de inicio de sesión en BPM.' y no inicia sesión"
 validaciones:
   - "Correo y contraseña son obligatorios; el correo debe tener formato válido"
-  - "Un usuario puede pertenecer a varias empresas y elige con cuál entra"
-  - "La pertenencia a la empresa elegida se verifica antes de validar la contraseña"
+  - "Las credenciales se validan ANTES que cualquier otra cosa: nada del sistema se revela a quien no se autenticó"
+  - "La pantalla de ingreso no expone ninguna empresa: sin sesión no se puede saber qué empresas existen"
+  - "Las empresas de un usuario las resuelve el servidor a partir de sus membresías; nunca llegan desde el formulario"
+  - "Un usuario puede pertenecer a varias empresas y elige con cuál entra, pero sólo entre las suyas"
+  - "Con una sola empresa no se pide elegir: entra directo"
+  - "La empresa confirmada se vuelve a verificar contra la base antes de abrir la sesión"
+  - "La elección de empresa exige credenciales ya validadas y un token de seguridad propio del formulario"
   - "Una cuenta inhabilitada no puede iniciar sesión aunque la contraseña sea correcta"
 datos_prueba:
   empresa: EMPRESA_TEST_1
 dudas: []
 notas:
-  - "Confirmado contra el DEMO: un usuario puede tener roles en varias empresas (el usuario de prueba tiene seis)."
-  - "⚠️ Cambio previsto en v3 (decisión del PM, 2026-08-19): se elimina el desplegable de empresas de esta pantalla. Se valida primero el usuario y, si tiene más de una empresa, recién ahí se le muestra un selector; si tiene una sola, entra directo. Cuando eso se implemente, este caso cambia de comportamiento: hay que subir su `version` y regenerar sus derivados en el mismo PR (regla R6 del validador)."
-  - "El combo actual lista todas las empresas del sistema a cualquiera que abra el login, sin sesión (hallazgo H4). El cambio de v3 lo resuelve de paso."
-  - "Validado por el PM el 2026-08-24: este es el único login unificado del sistema."
+  - "Versión 0.4 (2026-09-04): implementado el cambio de dos pasos que este caso ya anticipaba. Entró por el PR #26 de traz-comp-dnato y está desplegado en DEMO como v2.5.0.2. Se actualizó el caso contra el comportamiento real verificado en ese entorno; la decisión funcional de fondo es la del PM del 2026-08-19, ya registrada acá abajo."
+  - "Decisión del PM (2026-08-19): se elimina el desplegable de empresas de la pantalla de ingreso. Se valida primero el usuario y, si tiene más de una empresa, recién ahí se le muestran para elegir; si tiene una sola, entra directo."
+  - "Cierra el hallazgo H4: el desplegable viejo listaba TODAS las empresas del sistema a cualquiera que abriera el login sin sesión. También cierra dos problemas que no estaban documentados: la pertenencia se verificaba ANTES que la contraseña (permitía averiguar si un correo pertenecía a una empresa sin credenciales) y el empr_id llegaba desde el POST del cliente."
+  - "El escenario viejo 'El usuario no pertenece a la empresa elegida' se retiró porque dejó de ser reproducible desde la interfaz: ya no se elige empresa antes de autenticarse, y en el paso 2 sólo se ofrecen las empresas propias. El control equivalente sigue existiendo del lado del servidor y quedó cubierto por los dos escenarios nuevos de acceso directo y de confirmación de una empresa ajena."
+  - "Confirmado contra el DEMO: un usuario puede tener roles en varias empresas (el usuario de prueba tenía seis)."
+  - "Validado por el PM el 2026-08-24: este es el único login unificado del sistema. El login OAuth para agentes (DNATO-UC-009) es una pantalla aparte y sigue rechazando usuarios multi-empresa (TAD-IDENT-02); las dos NO comparten código."
 derivados:
   ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s05
   test_e2e: tests/e2e/specs/dnato/DNATO-UC-006.iniciar-sesion.spec.ts

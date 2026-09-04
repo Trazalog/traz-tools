@@ -21,17 +21,17 @@ test.describe('@dnato @DNATO-UC-007 Cerrar sesión', () => {
     const login = new LoginPage(page);
     await login.abrir(requerirUrlDeApp('dnato'));
     await login.ingresar(credenciales('empresa1'));
-    expect(await login.sesionIniciada()).toBe(true);
+    await expect.poll(() => login.sesionIniciada()).toBe(true);
 
     const usuarios = new UsuariosListPage(page);
     await usuarios.abrir();
     expect(await usuarios.visible()).toBe(true);
 
     await page.goto(urlDnato('main/logout'), { waitUntil: 'domcontentloaded' });
-    await expect(login.empresa).toBeVisible();
+    await expect(login.email).toBeVisible();
 
     // Volver a una pantalla interna después de salir tiene que devolver al ingreso.
     await page.goto(urlDnato('main/users'), { waitUntil: 'domcontentloaded' });
-    await expect(login.empresa).toBeVisible();
+    await expect(login.email).toBeVisible();
   });
 });
