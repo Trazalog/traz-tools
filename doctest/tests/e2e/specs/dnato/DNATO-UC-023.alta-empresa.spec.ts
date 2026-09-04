@@ -20,6 +20,6 @@ test.describe('@dnato @DNATO-UC-023 Dar de alta una empresa desde la administrac
 
   test('sin sesión, el alta de empresas manda al ingreso', async ({ page }) => {
     await page.goto(urlDnato('empresa/agregarEmpresa'), { waitUntil: 'domcontentloaded' });
-    await expect(new LoginPage(page).empresa).toBeVisible();
+    await expect(new LoginPage(page).email).toBeVisible();
   });
 });
