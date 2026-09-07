@@ -1,0 +1,32 @@
+id: ALM-UC-024
+modulo: ALM
+titulo: Ver el detalle de un ajuste de stock
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Ajustestock.php
+    detalle: "getDetalleAjuste() trae el detalle; getDataAjuste() alimenta la vista"
+  - repo: traz-comp-almacenes
+    path: views/ajustestock/list.php
+    detalle: "el botón Ver Detalle de la columna Acciones"
+pantallas:
+  - "Almacenes → Ajustes de Stock"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe al menos un ajuste registrado en la empresa
+flujo_principal:
+  - paso: "En el listado de ajustes, usa la acción Ver Detalle de una fila"
+    resultado: "Se muestra el detalle del ajuste: qué se ajustó, en qué depósito, la cantidad, el tipo de ajuste y la justificación"
+validaciones:
+  - "El detalle solo debería ser visible para la empresa dueña del ajuste"
+  - "El detalle es de consulta: un ajuste registrado no se edita ni se borra — corregirlo es registrar otro ajuste"
+dudas:
+  - "**¿La justificación se muestra en el detalle?** Es el dato que explica por qué se ajustó y el que valida quien audita, pero no pude confirmar desde el código que llegue a esta pantalla. Si no se muestra, es una falta a corregir, no algo a documentar como está."
+  - "¿El detalle dice **quién** registró el ajuste? Para una corrección de stock es lo primero que se pregunta al revisar."
+  - "¿Se puede imprimir o exportar el detalle de un ajuste, como sí se puede con los movimientos históricos?"
+notas:
+  - "Acción **nueva**, parte de la pantalla de listado que entró en `develop` (v2.4.x). Ver ALM-UC-023."
+  - "El aislamiento entre empresas de ALM está verificado como roto en otras pantallas (issues #478 / #479); acá se declara como validación esperada, no como comportamiento actual."

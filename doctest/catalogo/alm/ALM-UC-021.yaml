@@ -1,0 +1,35 @@
+id: ALM-UC-021
+modulo: ALM
+titulo: Imprimir el remito de un movimiento interno
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Movimientointerno.php
+    detalle: "getDatosCabeceraRemito() trae la cabecera; getDataMovimientoInterno() el detalle; getLogo() el logo de la empresa que va impreso"
+  - repo: traz-comp-almacenes
+    path: views/movimientosinternos/list.php
+    detalle: "el botón Imprimir de la columna Acciones"
+pantallas:
+  - "Almacenes → Movimientos Internos"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe al menos un movimiento interno de la empresa
+flujo_principal:
+  - paso: "En el listado de movimientos internos, usa la acción Imprimir de una fila"
+    resultado: "Se arma el remito de ese movimiento, con la cabecera —origen, destino, fecha— y el detalle de lo que se movió"
+flujos_alternativos:
+  - nombre: "La empresa no tiene logo cargado"
+    pasos:
+      - paso: "Imprime el remito de una empresa que no tiene logo configurado"
+        resultado: "El remito se arma igual, sin el logo"
+validaciones:
+  - "El remito solo debería armarse para movimientos de la empresa de la sesión"
+  - "El logo que se imprime es el de la empresa de la sesión"
+dudas:
+  - "**¿Qué es exactamente este remito y para qué se usa?** ¿Es el papel que acompaña físicamente la mercadería entre depósitos —o sea que se imprime *antes* de mover—, o es un comprobante de lo que ya se movió? De eso depende si tiene sentido imprimirlo cuando el movimiento está `En Curso`, cuando está `Recibido`, o en los dos casos."
+  - "¿Se puede reimprimir cuantas veces se quiera, o debería quedar registro de que se imprimió? Hoy el código no anota nada al imprimir."
+notas:
+  - "Acción **nueva**, parte de la pantalla de listado que entró en `develop` (v2.4.x). Ver ALM-UC-020."

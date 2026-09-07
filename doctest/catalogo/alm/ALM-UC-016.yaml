@@ -42,6 +42,7 @@ derivados:
   ayuda: ayudas/src/alm/manual_almacenes.html#s08
   feature: features/alm/ALM-UC-016.mover-mercaderia-entre-depositos-salida.feature
 notas:
+  - "El **listado** de movimientos internos, la impresión del remito y el ciclo de vida completo se relevaron aparte, en ALM-UC-020, ALM-UC-021 y ALM-UC-022: la pantalla de listado es nueva de `develop` (v2.4.x). Una salida registrada acá deja el movimiento en estado **En Curso** hasta que se registre la recepción."
   - "El manejo del tránsito es informal y fue pedido así (PM, 2026-08-25): entre la salida y la recepción la mercadería 'no está' en ningún lado. La diferencia, si la hay, se resuelve al recibir con una justificación obligatoria (ALM-UC-017)."
   - "El tope de cantidad lo verifica la pantalla: `if (valor < 0 || enteroCantidad < valor)` en `views/depositos/MovimientoSalida.php` avisa cuántas unidades tiene el lote elegido."
   - "**Esta pantalla no existe en el árbol que ve `develop-v3`**: el controlador entró en un commit posterior al puntero del submódulo (H-038 / issue #481). Está relevada contra `origin/develop`, que es lo que corre en el DEMO. Es funcionalidad reciente y por eso el relevamiento es más superficial que el del resto."

@@ -1,5 +1,5 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/alm/ALM-UC-018.yaml (versión 1.0, validado 2026-08-25).
+# Fuente: catalogo/alm/ALM-UC-018.yaml (versión 1.1, validado 2026-08-25).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 
 @alm @ALM-UC-018
@@ -19,6 +19,8 @@ Característica: Consultar los movimientos históricos de un artículo
     Entonces Los filtros quedan cargados
     Y cuando Hace clic en 'Filtrar'
     Entonces Se listan los movimientos con Referencia, Cod. Artículo, Descripción, Lote, Cantidad, Depósito, Fecha y Tipo de Movimiento
+    Y cuando Cambia de página o busca dentro del resultado
+    Entonces La grilla se actualiza. El paginado lo resuelve el servidor, así que un período largo no depende de que el navegador aguante todas las filas
     Y cuando Hace clic en 'Imprimir'
     Entonces El reporte se puede imprimir
 

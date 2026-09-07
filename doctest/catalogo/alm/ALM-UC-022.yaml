@@ -1,0 +1,44 @@
+id: ALM-UC-022
+modulo: ALM
+titulo: El ciclo de vida de un movimiento interno
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Movimientointerno.php
+    detalle: "getMovimientoInternoPaginado() (120-150): normaliza y colorea el estado — los dos valores que reconoce son EN CURSO y RECIBIDO"
+  - repo: traz-comp-almacenes
+    path: controllers/Movimdeposalida.php
+    detalle: "registra la salida, que es lo que crea el movimiento"
+  - repo: traz-comp-almacenes
+    path: controllers/Movimdeporecepcion.php
+    detalle: "registra la recepción, que es lo que lo cierra"
+pantallas:
+  - "Almacenes → Movimientos Internos"
+  - "Almacenes → Movimientos Internos → Nueva Salida"
+  - "Almacenes → Movimientos Internos → Recepción"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Hay stock en el depósito de origen
+flujo_principal:
+  - paso: "Registra la salida de mercadería de un depósito hacia otro (ALM-UC-016)"
+    resultado: "El movimiento aparece en el listado en estado **En Curso**. La mercadería ya salió del depósito de origen"
+  - paso: "Registra la recepción en el depósito de destino (ALM-UC-017)"
+    resultado: "El movimiento pasa a **Recibido**. La mercadería queda disponible en el depósito de destino"
+flujos_alternativos:
+  - nombre: "El movimiento queda en tránsito"
+    pasos:
+      - paso: "Consulta el listado después de la salida y antes de la recepción"
+        resultado: "El movimiento se muestra **En Curso**: ya no está en el origen y todavía no está en el destino"
+validaciones:
+  - "Un movimiento nace **En Curso** con la salida y pasa a **Recibido** con la recepción"
+  - "Los dos son los únicos estados que la pantalla reconoce y colorea"
+dudas:
+  - "**¿Se puede cancelar o revertir un movimiento que quedó En Curso?** Por ejemplo, una salida que se registró por error, o mercadería que nunca llegó. No encontré en el código ningún camino para hacerlo, pero necesito saber si es que no existe o es que no lo encontré."
+  - "**¿Qué pasa si lo que se recibe no coincide con lo que salió** —llega menos, o llega roto? ¿Se recibe la diferencia y el faltante se resuelve con un ajuste de stock (ALM-UC-014), o hay otro camino?"
+  - "¿Hay algún aviso o control sobre movimientos que quedan En Curso demasiado tiempo?"
+notas:
+  - "Los dos estados salen del código, verificados en `Movimientointerno.php`. **Su traducción a lenguaje de usuario y las reglas de negocio del ciclo se preguntan, no se deducen.**"
+  - "Caso de ciclo de vida, según la regla que fijó el PM para MAN: un caso por cada acción del listado, y un caso de ciclo de vida por entidad."

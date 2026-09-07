@@ -1,0 +1,39 @@
+id: ALM-UC-023
+modulo: ALM
+titulo: Ver el listado de ajustes de stock
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Ajustestock.php
+    detalle: "index() dibuja el listado; getAjustesList() lo alimenta"
+  - repo: traz-comp-almacenes
+    path: models/Ajustestocks.php
+  - repo: traz-comp-almacenes
+    path: views/ajustestock/list.php
+pantallas:
+  - "Almacenes → Ajustes de Stock"
+precondiciones:
+  - Sesión iniciada en Tools
+  - El rol tiene asignado el menú de Almacenes
+flujo_principal:
+  - paso: "Entra a Almacenes → Ajustes de Stock"
+    resultado: "Se muestra la grilla con las columnas Fecha / Hora, Establecimiento, Depósito, Código, Descripción, U. Med, Cantidad, Tipo Ajuste, Comprobante y Acciones"
+  - paso: "Usa el buscador de la grilla"
+    resultado: "La grilla se reduce a los ajustes que coinciden"
+flujos_alternativos:
+  - nombre: "La empresa todavía no registró ajustes"
+    pasos:
+      - paso: "Entra a la pantalla"
+        resultado: "La grilla aparece vacía y solo se ofrece el acceso a Nuevo Ajuste"
+validaciones:
+  - "El listado solo muestra ajustes de la empresa de la sesión"
+  - "Cada fila es una **línea** de ajuste —un artículo en un depósito—, no un ajuste completo: un ajuste con tres artículos aparece como tres filas"
+dudas:
+  - "**¿La grilla es una fila por línea o una por ajuste?** Lo deduje de las columnas —Código, Descripción, U. Med y Cantidad son de un artículo, no de una cabecera—, pero no lo pude verificar en pantalla. Si fuera una fila por ajuste, la validación de arriba está mal."
+  - "¿Qué es la columna **Comprobante**: un número que genera el sistema, o un dato que carga quien registra el ajuste (por ejemplo el remito o el acta que lo respalda)?"
+  - "¿Se puede filtrar por período o por tipo de ajuste, o solo está el buscador de la grilla? La pantalla de alta pide establecimiento y depósito, pero en el listado no encontré filtros propios."
+notas:
+  - "Pantalla de listado **nueva**: entró en `develop` (v2.4.x) con el commit \"nueva pantalla ajuste stock\". El registro del ajuste en sí ya estaba relevado en ALM-UC-014."

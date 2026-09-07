@@ -44,6 +44,7 @@ derivados:
   ayuda: ayudas/src/alm/manual_almacenes.html#s07
   feature: features/alm/ALM-UC-014.registrar-un-ajuste-de-stock.feature
 notas:
+  - "El **listado** de ajustes y su acción Ver Detalle se relevaron aparte, en ALM-UC-023 y ALM-UC-024: son pantalla nueva de `develop` (v2.4.x). Este caso cubre el registro del ajuste. La pantalla de alta se rehizo en esa misma tanda, pero **sin campos nuevos**: el rework fue de presentación."
   - "ADR-012 deja explícitamente fuera del piloto MCP las operaciones que mueven stock, y ésta es una de ellas."
   - "**El ajuste no escribe en la base desde el PHP**: `Ajustestocks::guardarDetalleAjustes()` arma el lote de líneas y lo manda a `REST_ALM + /stock/ajuste/detalle_batch_req`. La lógica de cómo impacta en el stock vive del otro lado, en el DataService — por eso no se puede responder desde el PHP si admite dejar existencias en negativo."
   - "El código dice explícitamente que el tipo de ajuste ya no va en la cabecera: `// ya no se usa tipo de ajuste en la cabecera por eso lo mando vacío` en `Ajustestock::guardarAjuste()`."

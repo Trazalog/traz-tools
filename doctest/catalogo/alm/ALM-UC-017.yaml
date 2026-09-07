@@ -34,5 +34,6 @@ derivados:
   ayuda: ayudas/src/alm/manual_almacenes.html#s08
   feature: features/alm/ALM-UC-017.mover-mercaderia-entre-depositos-recepcion.feature
 notas:
+  - "Ver ALM-UC-020 (listado), ALM-UC-021 (remito) y ALM-UC-022 (ciclo de vida). Registrar la recepción acá es lo que lleva el movimiento de **En Curso** a **Recibido** en el listado."
   - "La justificación por diferencia la exige la pantalla: `views/depositos/MovimientoRecepcion.php` compara contra la cantidad enviada y muestra *«La cantidad ingresada es distinta a la cantidad enviada, por favor ingrese justificación»*, revelando el campo obligatorio."
   - "Misma advertencia que ALM-UC-016: pantalla que no está en el árbol de `develop-v3` (H-038 / issue #481)."
