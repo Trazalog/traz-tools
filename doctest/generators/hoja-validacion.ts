@@ -147,7 +147,7 @@ function pagina(modulo: string, casos: Caso[], resumenHtml: string): string {
   const borradores = casos.filter((c) => c.estado === 'borrador').length;
   const obsoletos = casos.filter((c) => c.estado === 'obsoleto').length;
 
-  return `<title>Validación DNATO</title>
+  return `<title>Validación ${modulo.toUpperCase()}</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
   :root {
