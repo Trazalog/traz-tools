@@ -79,8 +79,14 @@ export class RegistroPage {
    * Leer el body una sola vez apenas vuelve el POST es una carrera: cuando el
    * DEMO está cargado, la respuesta todavía no terminó de pintar y el test falla
    * sin que haya nada roto en el sistema.
+   *
+   * El margen por defecto se subió de 20 s a 60 s el 2026-09-07: con la suite
+   * completa corriendo, "rechaza una razón social ya usada" fallaba pidiendo un
+   * mensaje que nunca llegaba, y en aislamiento pasaba en menos de 4 s. El control
+   * de duplicados estaba bien; lo que faltaba era paciencia. Es la misma medida que
+   * ya se había tomado para las grillas (`pages/man/grilla.ts`).
    */
-  async esperarMensaje(esperado: RegExp, timeout = 20_000): Promise<string> {
+  async esperarMensaje(esperado: RegExp, timeout = 60_000): Promise<string> {
     const leer = async () => (await this.page.locator('body').innerText()).replace(/\s+/g, ' ');
     await expect.poll(leer, { timeout }).toMatch(esperado);
     return leer();
