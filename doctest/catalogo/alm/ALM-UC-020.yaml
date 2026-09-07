@@ -2,16 +2,17 @@ id: ALM-UC-020
 modulo: ALM
 titulo: Ver el listado de movimientos internos
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-09-07
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Movimientointerno.php
     detalle: "index() dibuja el listado; getMovimientoInternoPaginado() es el server-side de la grilla, con búsqueda y ordenamiento por columna"
   - repo: traz-comp-almacenes
     path: models/Movimientosinternos.php
-    detalle: "getMovimientosPaginados() — recibe empr_id y user_id"
+    detalle: "getMovimientosPaginados() — pasa empr_id y user_id al DataService; toda la lógica de filtrado vive en la consulta"
   - repo: traz-comp-almacenes
     path: views/movimientosinternos/list.php
 pantallas:
@@ -33,13 +34,17 @@ flujos_alternativos:
         resultado: "La grilla aparece vacía"
 validaciones:
   - "El listado solo muestra movimientos de la empresa de la sesión"
+  - "**Cada usuario ve solo los movimientos de los depósitos que tiene a cargo.** La consulta exige que exista una fila en `core.encargados_depositos` para ese usuario y el depósito de **origen o** el de **destino** del movimiento: alcanza con estar a cargo de una de las dos puntas"
+  - "Es una pantalla de solo listado: los accesos a Nueva Salida y a Recepción siguen estando donde estaban, no se agregaron acá"
   - "El estado se muestra como un indicador de color: **En Curso** en verde y **Recibido** en azul. Cualquier otro valor se muestra tal como viene, sin color"
 datos_prueba:
   empresa: EMPRESA_TEST_1
   precondicion: "la empresa tiene al menos un movimiento interno registrado"
-dudas:
-  - "**La grilla se pagina y se busca contra el servidor, y el modelo recibe además del `empr_id` un `user_id`.** ¿Qué significa ese `user_id`: el listado muestra **solo los movimientos que registró ese usuario**, o muestra todos los de la empresa y el usuario se usa para otra cosa (por ejemplo, los depósitos que tiene asignados)? La respuesta cambia lo que el caso tiene que verificar."
-  - "¿Esta pantalla **reemplaza** el acceso a Nueva Salida y Nueva Recepción, o convive con los accesos que ya existían? En el controlador las tres cosas cuelgan del mismo lugar (`index()`, `movimientoSalida()`, `movimientoRecepcion()`), pero no puedo determinar desde el código cómo quedó el menú."
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-020.ver-el-listado-de-movimientos-internos.feature
 notas:
+  - "**El filtro por encargado de depósito se verificó en la consulta**, a pedido del PM: `getMovimientosInternosPaginado` en `ALMDataService.dbs` tiene un `EXISTS` contra `core.encargados_depositos` con `ed.depo_id = mi.depo_id_origen OR ed.depo_id = mi.depo_id_destino`. La intuición del PM era correcta."
+  - "El buscador de la grilla busca sobre más columnas de las que se muestran: además del número, el comprobante y el estado, busca por **patente, acoplado y conductor**, que son datos del transporte que la grilla no exhibe."
   - "Pantalla **nueva**: entró en `develop` (v2.4.x) mientras `develop-v3` estaba congelada. El controlador `Movimientointerno.php` y la vista `movimientosinternos/list.php` no existían en el punto en que se abrió `develop-v3`."
   - "Relevado contra `de535f68` del submódulo, que es lo que apunta `origin/develop` y lo que corre en el DEMO."

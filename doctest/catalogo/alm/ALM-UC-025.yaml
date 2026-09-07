@@ -1,0 +1,32 @@
+id: ALM-UC-025
+modulo: ALM
+titulo: Imprimir el comprobante de un ajuste de stock
+perfil: Responsable de Almacén
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: views/ajustestock/list.php
+    detalle: "el botón de la columna Comprobante (`.btn-comprobante`) abre `#modal-comprobante`; `printComprobante()` lo manda a imprimir"
+  - repo: traz-comp-almacenes
+    path: controllers/Ajustestock.php
+    detalle: "getDataAjuste() alimenta el comprobante"
+pantallas:
+  - "Almacenes → Ajustes de Stock"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe al menos un ajuste registrado en la empresa
+flujo_principal:
+  - paso: "En el listado de ajustes, usa el botón de la columna Comprobante de una fila"
+    resultado: "Se abre el comprobante de ese ajuste"
+  - paso: "Manda a imprimir"
+    resultado: "El comprobante se imprime"
+validaciones:
+  - "El comprobante solo debería armarse para ajustes de la empresa de la sesión"
+  - "Se puede reimprimir todas las veces que haga falta: no se registra la impresión"
+dudas:
+  - "**Este caso lo encontré analizando el código, no lo viste al validar.** El listado de ajustes tiene **dos** acciones —Ver Detalle y este comprobante—, no una. ¿Qué es este comprobante y para qué se usa: es el respaldo que se archiva o se firma cuando se corrige stock, como el remito lo es del movimiento interno (ALM-UC-021)?"
+  - "¿Tiene que incluir la **justificación**? Es lo que explica el ajuste y lo primero que mira quien audita, pero no pude confirmar desde el código qué campos se imprimen."
+notas:
+  - "Acción de la pantalla de listado que entró en `develop` (v2.4.x). Ver ALM-UC-023."

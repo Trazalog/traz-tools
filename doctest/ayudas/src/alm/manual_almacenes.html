@@ -1265,9 +1265,27 @@
     <div class="alert-bar"></div>
     <div class="alert-body">
       <div class="alert-label">Quién puede ajustar</div>
-      <div class="alert-text">Solo el <strong>Responsable de Almacén</strong>. Un ajuste cambia las cantidades sin que haya entrado ni salido nada, así que es la operación más delicada del módulo: todo lo que hagas acá queda con tu nombre y tu justificación.</div>
+      <div class="alert-text">Solo el <strong>Responsable de Almacén</strong>. Un ajuste cambia las cantidades sin que haya entrado ni salido nada, así que es la operación más delicada del módulo: queda registrado con tu justificación, que es lo que después explica el movimiento.</div>
     </div>
   </div>
+
+  <div class="sub-title">El listado: los ajustes que ya se hicieron</div>
+
+  <p class="intro-text">La pantalla lista <strong>un ajuste por fila</strong> —no una por artículo—, con su número de <strong>Comprobante</strong>, la fecha y hora, el establecimiento y el depósito. El número lo pone el sistema: no es un dato que cargues vos.</p>
+
+  <p class="intro-text">Cada fila tiene dos accesos:</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Acción</th><th>Qué te muestra</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ver Detalle</strong></td><td>El tipo de ajuste, la <strong>justificación</strong> y la lista de artículos ajustados con su cantidad y unidad de medida.</td></tr>
+      <tr><td><strong>Comprobante</strong></td><td>El comprobante del ajuste, listo para imprimir.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="intro-text">Ojo con el tipo de ajuste: aparece dos veces y no son lo mismo. Hay uno en la cabecera y <strong>uno por cada artículo</strong>, y el que manda para cada línea es el de la línea.</p>
+
+  <p class="intro-text">Un ajuste registrado <strong>no se edita ni se borra</strong>. Si te equivocaste, se corrige con otro ajuste — así la historia queda completa y se puede reconstruir qué pasó.</p>
 </section>
 
 <section id="s08" class="section">
@@ -1548,6 +1566,26 @@
       <div class="paso-titulo">Confirmá</div>
       <div class="paso-texto">El stock del depósito de destino sube por <strong>lo que efectivamente recibiste</strong> —148, no 150— y el movimiento se cierra. Las 2 unidades que faltaron no aparecen en ningún lado: si se recuperan, entran por un ajuste; si no, la justificación queda como el registro de la pérdida.</div>
     </div>
+  </div>
+
+  <div class="sub-title">El listado: qué está en camino y qué llegó</div>
+
+  <p class="intro-text">La pantalla <strong>Movimientos Internos</strong> lista lo que se movió, con el establecimiento y el depósito de cada punta, el remito y el estado. Son dos estados y se leen de un vistazo por el color:</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Estado</th><th>Qué significa</th></tr></thead>
+    <tbody>
+      <tr><td><strong>En Curso</strong></td><td>La mercadería salió del origen y todavía nadie la recibió. Está en tránsito: ya no está en un depósito y aún no está en el otro.</td></tr>
+      <tr><td><strong>Recibido</strong></td><td>Alguien registró la recepción en el destino. El movimiento se cerró.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="intro-text">No vas a ver todos los movimientos de la empresa, sino <strong>los de los depósitos que tenés a cargo</strong> — alcanza con estar a cargo de una de las dos puntas, la de origen o la de destino.</p>
+
+  <p class="intro-text">El botón <strong>Imprimir</strong> de cada fila saca el <strong>remito</strong> del movimiento. Podés imprimirlo <strong>antes</strong>, para que acompañe físicamente la mercadería, y <strong>después</strong>, como comprobante de lo que se movió. Se puede reimprimir las veces que haga falta.</p>
+
+  <div class="alert alert-warning">
+    <strong>Un movimiento no se cancela.</strong> Si diste una salida por error, no hay botón para deshacerla. La corrección la hace el Responsable de Almacén con un <strong>ajuste de stock</strong>, ingresando la diferencia y <strong>justificando el porqué</strong> — es obligatorio. Por eso conviene revisar antes de confirmar una salida.
   </div>
 </section>
 

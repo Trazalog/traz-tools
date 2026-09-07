@@ -2,9 +2,10 @@ id: ALM-UC-021
 modulo: ALM
 titulo: Imprimir el remito de un movimiento interno
 perfil: Responsable de Almacén
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-09-07
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Movimientointerno.php
@@ -28,8 +29,11 @@ flujos_alternativos:
 validaciones:
   - "El remito solo debería armarse para movimientos de la empresa de la sesión"
   - "El logo que se imprime es el de la empresa de la sesión"
-dudas:
-  - "**¿Qué es exactamente este remito y para qué se usa?** ¿Es el papel que acompaña físicamente la mercadería entre depósitos —o sea que se imprime *antes* de mover—, o es un comprobante de lo que ya se movió? De eso depende si tiene sentido imprimirlo cuando el movimiento está `En Curso`, cuando está `Recibido`, o en los dos casos."
-  - "¿Se puede reimprimir cuantas veces se quiera, o debería quedar registro de que se imprimió? Hoy el código no anota nada al imprimir."
+  - "**Es el comprobante del movimiento y se imprime en cualquier momento**: antes de mover, para que acompañe físicamente la mercadería, y después, para auditar lo que se movió. No depende del estado"
+  - "Se puede reimprimir todas las veces que haga falta: no se registra la impresión"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-021.imprimir-el-remito-de-un-movimiento-interno.feature
 notas:
+  - "Validado por el PM el 2026-09-07: *\"antes y después, es el comprobante, se usa para enviar o para auditar\"*. Por eso el caso no ata la impresión a un estado."
   - "Acción **nueva**, parte de la pantalla de listado que entró en `develop` (v2.4.x). Ver ALM-UC-020."
