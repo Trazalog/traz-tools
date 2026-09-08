@@ -20,21 +20,61 @@ export const PANTALLAS = {
   ajustes: 'Ajustestock',
   movimientosInternos: 'Movimientointerno',
   historico: 'Reportes/historicoArticulos',
+  pedidos: 'Notapedido',
 } as const;
 
 export type Pantalla = keyof typeof PANTALLAS;
 
-/** URL de una pantalla de Almacenes en el entorno configurado. */
+/** Ruta del módulo, tal como la usa el menú de Tools. */
+export function rutaAlm(pantalla: Pantalla): string {
+  return `traz-comp-almacenes/${PANTALLAS[pantalla]}`;
+}
+
+/** URL directa. **Solo para diagnóstico**: ver `abrir()` para saber por qué no se usa. */
 export function urlAlm(pantalla: Pantalla): string {
-  const base = requerirUrlDeApp('tools').replace(/\/$/, '');
-  return `${base}/traz-comp-almacenes/${PANTALLAS[pantalla]}`;
+  return `${requerirUrlDeApp('tools').replace(/\/$/, '')}/${rutaAlm(pantalla)}`;
 }
 
 export class AlmacenesPage {
   constructor(private readonly page: Page) {}
 
+  /**
+   * Abre la pantalla **como la abre el usuario**: desde el shell de Tools.
+   *
+   * ⚠️ No se navega a la URL del módulo directamente, y esto no es un detalle. El menú
+   * usa `linkTo(ruta)`, que hace `$('#content').load(...)`: las vistas del módulo son
+   * **fragmentos** que se inyectan en el shell, y es el shell el que trae jQuery y
+   * DataTables. Yendo derecho a la URL se obtiene el fragmento pelado: los `<th>`
+   * estáticos están —así que un test flojo pasa igual— pero **no hay jQuery, no se
+   * inicializa ninguna grilla y ningún botón funciona**. Cualquier prueba que
+   * interactúe fallaría con un `$ is not defined` que no dice nada del sistema.
+   */
   async abrir(pantalla: Pantalla): Promise<void> {
-    await this.page.goto(urlAlm(pantalla), { waitUntil: 'domcontentloaded' });
+    const base = requerirUrlDeApp('tools');
+    const enElShell = async () =>
+      this.page.evaluate(() => typeof (window as unknown as { linkTo?: unknown }).linkTo === 'function');
+
+    if (!(await enElShell().catch(() => false))) {
+      // Una sola recarga de reintento: contra el DEMO cargado, el shell a veces no
+      // termina de armar sus scripts en el primer intento. Reintentar es más honesto
+      // que subir el margen otra vez, que es tapar el síntoma (H-066).
+      await this.page.goto(base, { waitUntil: 'domcontentloaded' });
+      if (!(await enElShell().catch(() => false))) {
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+      }
+    }
+    // El tercer parámetro son las opciones; el segundo es el argumento de la función.
+    // Pasar `{ timeout }` en el medio lo convierte en argumento y el timeout queda en el
+    // default de 15 s, que contra el DEMO cargado no alcanza.
+    await this.page.waitForFunction(
+      () => typeof (window as unknown as { linkTo?: unknown }).linkTo === 'function',
+      undefined,
+      { timeout: 60_000 },
+    );
+    await this.page.evaluate((ruta) => {
+      (window as unknown as { linkTo: (r: string) => void }).linkTo(ruta);
+    }, rutaAlm(pantalla));
+    await this.page.waitForTimeout(1500);
   }
 
   /**
