@@ -11,6 +11,8 @@ Característica: Ver el listado de movimientos internos
   Antecedentes:
     Dado Sesión iniciada en Tools
     Y El rol tiene asignado el menú de Almacenes
+    Y El usuario está a cargo del depósito de origen o del de destino: si no, no ve el movimiento
+    Y Hay movimientos registrados (ALM-UC-016)
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Movimientos Internos

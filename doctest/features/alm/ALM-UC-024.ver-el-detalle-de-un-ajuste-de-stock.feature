@@ -10,7 +10,7 @@ Característica: Ver el detalle de un ajuste de stock
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Existe al menos un ajuste registrado en la empresa
+    Y Existe al menos un ajuste, registrado con ALM-UC-014
 
   Escenario: Camino principal
     Cuando En el listado de ajustes, usa la acción Ver Detalle de una fila

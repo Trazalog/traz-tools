@@ -15,8 +15,15 @@ referencias_codigo:
 pantallas:
   - "Mantenimiento → Plan de Mantenimiento"
 precondiciones:
-  - Sesión iniciada en AssetPlanner
-  - Hay trabajo pendiente de programar (una solicitud aceptada, un preventivo vencido, un backlog o un predictivo)
+  - "Sesión iniciada en AssetPlanner con perfil Planificador"
+  - "Hay trabajo pendiente de programar. Puede venir de cuatro lados: una solicitud aceptada (MAN-UC-008), un preventivo vencido (MAN-UC-014), un pendiente del backlog (MAN-UC-015) o un predictivo disparado (MAN-UC-018)"
+produce:
+  - "Una orden de trabajo en estado `PL` (Planificada), con su mantenedor asignado"
+depende_de:
+  - MAN-UC-008
+  - MAN-UC-014
+  - MAN-UC-015
+  - MAN-UC-018
 flujo_principal:
   - paso: "Entra a Mantenimiento → Plan de Mantenimiento"
     resultado: "Se muestra el calendario con lo que hay para programar"

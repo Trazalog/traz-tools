@@ -17,6 +17,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - La orden de trabajo se ejecutó
+produce:
+  - "El informe de servicio de la orden, que la deja Terminada (`T`)"
+depende_de:
+  - MAN-UC-011
 flujo_principal:
   - paso: "Entra a Mantenimiento → Informe de Servicios"
     resultado: "Se muestra el listado con Nº Informe, Nº OT, Descripción, Tarea, Equipo, fechas y recursos humanos"

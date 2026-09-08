@@ -27,7 +27,8 @@
     "hurl:install": "bash scripts/install-hurl.sh",
     "verificar:asset": "tsx tests/e2e/seeds/verificar-ingreso-asset.ts",
     "ayudas:unico": "tsx generators/sitio-en-un-archivo.ts",
-    "test:ciclo": "node scripts/pw.mjs --grep @ciclo"
+    "test:ciclo": "node scripts/pw.mjs --grep @ciclo",
+    "flujo": "tsx generators/flujo-de-datos.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

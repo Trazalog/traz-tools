@@ -19,8 +19,13 @@ pantallas:
   - "Almacenes → Ajustes de Stock"
   - "Almacenes → Ajustes de Stock → Nuevo Ajuste"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene tipos de ajuste definidos
+  - "Sesión iniciada en Tools con perfil Responsable de Almacén"
+  - "Existe el lote a ajustar: el ajuste se aplica sobre un lote concreto, que entró por una recepción (ALM-UC-009)"
+  - "La empresa tiene tipos de ajuste definidos. **No hay pantalla para administrarlos** (H-044)"
+produce:
+  - "Un ajuste de stock con su justificación, y la corrección de la cantidad del lote"
+depende_de:
+  - ALM-UC-009
 flujo_principal:
   - paso: "Entra a Almacenes → Ajustes de Stock"
     resultado: "Se muestra el listado de ajustes con Comprobante, Fecha / Hora, Establecimiento y Depósito"

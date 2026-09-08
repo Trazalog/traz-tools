@@ -16,8 +16,10 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Movimientos Internos"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Existe al menos un movimiento interno de la empresa
+  - "Sesión iniciada en Tools"
+  - "Existe al menos un movimiento interno, creado con ALM-UC-016"
+depende_de:
+  - ALM-UC-016
 flujo_principal:
   - paso: "En el listado de movimientos internos, usa la acción Imprimir de una fila"
     resultado: "Se arma el remito de ese movimiento, con la cabecera —origen, destino, fecha— y el detalle de lo que se movió"

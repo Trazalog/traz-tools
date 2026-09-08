@@ -9,8 +9,9 @@ Característica: Registrar un ajuste de stock
   Dónde: Almacenes → Ajustes de Stock · Almacenes → Ajustes de Stock → Nuevo Ajuste
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y La empresa tiene tipos de ajuste definidos
+    Dado Sesión iniciada en Tools con perfil Responsable de Almacén
+    Y Existe el lote a ajustar: el ajuste se aplica sobre un lote concreto, que entró por una recepción (ALM-UC-009)
+    Y La empresa tiene tipos de ajuste definidos. **No hay pantalla para administrarlos** (H-044)
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Ajustes de Stock

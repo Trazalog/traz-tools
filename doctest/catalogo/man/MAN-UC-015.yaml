@@ -14,6 +14,10 @@ pantallas:
   - "Mantenimiento → Backlog"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+produce:
+  - "Un pendiente en el backlog, a la espera de ser programado"
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "Entra a Mantenimiento → Backlog"
     resultado: "Se listan los pendientes con Nº Backlog, Equipo, Componente, Sistema, Tarea, Fecha, Duración y Estado"

@@ -11,6 +11,7 @@ Característica: Ver el listado de ajustes de stock
   Antecedentes:
     Dado Sesión iniciada en Tools
     Y El rol tiene asignado el menú de Almacenes
+    Y Hay ajustes registrados (ALM-UC-014). Sin ninguno la grilla aparece vacía
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Ajustes de Stock

@@ -15,8 +15,10 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Ajustes de Stock"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Existe al menos un ajuste registrado en la empresa
+  - "Sesión iniciada en Tools"
+  - "Existe al menos un ajuste, registrado con ALM-UC-014"
+depende_de:
+  - ALM-UC-014
 flujo_principal:
   - paso: "En el listado de ajustes, usa el botón de la columna Comprobante de una fila"
     resultado: "Se abre el comprobante de ese ajuste"

@@ -10,7 +10,8 @@ Característica: Consultar el stock por establecimiento y depósito
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y La empresa tiene establecimientos y depósitos definidos
+    Y Hay existencias cargadas: entran al sistema por una recepción (ALM-UC-009)
+    Y La empresa tiene establecimientos y depósitos — los crea el alta de la empresa (DNATO-UC-004)
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Stock

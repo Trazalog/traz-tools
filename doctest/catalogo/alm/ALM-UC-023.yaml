@@ -17,8 +17,11 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Ajustes de Stock"
 precondiciones:
-  - Sesión iniciada en Tools
-  - El rol tiene asignado el menú de Almacenes
+  - "Sesión iniciada en Tools"
+  - "El rol tiene asignado el menú de Almacenes"
+  - "Hay ajustes registrados (ALM-UC-014). Sin ninguno la grilla aparece vacía"
+depende_de:
+  - ALM-UC-014
 flujo_principal:
   - paso: "Entra a Almacenes → Ajustes de Stock"
     resultado: "Se muestra la grilla con las columnas Acciones, Comprobante, Fecha / Hora, Establecimiento y Depósito"

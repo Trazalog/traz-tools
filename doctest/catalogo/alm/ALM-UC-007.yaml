@@ -16,8 +16,10 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Pedido Materiales → (ver detalle de una fila)"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Existe un pedido de la empresa
+  - "Sesión iniciada en Tools"
+  - "Existe un pedido, creado con ALM-UC-006"
+depende_de:
+  - ALM-UC-006
 flujo_principal:
   - paso: "En el listado de pedidos abre el detalle de una fila"
     resultado: "Se muestran los artículos pedidos con su cantidad, cuánto se entregó y de qué depósito"

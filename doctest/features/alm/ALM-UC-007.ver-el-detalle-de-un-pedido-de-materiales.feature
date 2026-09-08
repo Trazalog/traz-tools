@@ -10,7 +10,7 @@ Característica: Ver el detalle de un pedido de materiales
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Existe un pedido de la empresa
+    Y Existe un pedido, creado con ALM-UC-006
 
   Escenario: Camino principal
     Cuando En el listado de pedidos abre el detalle de una fila

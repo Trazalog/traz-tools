@@ -10,7 +10,8 @@ Característica: El ciclo de vida de un movimiento interno
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Hay stock en el depósito de origen
+    Y Hay existencias en el depósito de origen (ALM-UC-009)
+    Y La empresa tiene al menos dos depósitos
 
   Escenario: Camino principal
     Cuando Registra la salida de mercadería de un depósito hacia otro (ALM-UC-016)

@@ -21,8 +21,11 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Stock"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene establecimientos y depósitos definidos
+  - "Sesión iniciada en Tools"
+  - "Hay existencias cargadas: entran al sistema por una recepción (ALM-UC-009)"
+  - "La empresa tiene establecimientos y depósitos — los crea el alta de la empresa (DNATO-UC-004)"
+depende_de:
+  - ALM-UC-009
 flujo_principal:
   - paso: "Entra a Almacenes → Stock"
     resultado: "Se muestran los filtros: Establecimiento, Depósito, Tipo de Artículo, Artículo y la opción de incluir artículos con stock en cero"

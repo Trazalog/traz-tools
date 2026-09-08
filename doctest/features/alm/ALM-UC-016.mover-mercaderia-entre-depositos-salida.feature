@@ -9,9 +9,9 @@ Característica: Mover mercadería entre depósitos — salida
   Dónde: Almacenes → Movimientos Internos · Almacenes → Movimientos Internos → Nueva Salida
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y La empresa tiene al menos dos depósitos
-    Y Hay existencias en el depósito de origen
+    Dado Sesión iniciada en Tools con perfil Responsable de Almacén
+    Y Hay existencias en el depósito de origen, que entraron por una recepción (ALM-UC-009)
+    Y La empresa tiene al menos dos depósitos. **El alta de empresa crea uno solo** (DNATO-UC-004): el segundo hay que crearlo
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Movimientos Internos

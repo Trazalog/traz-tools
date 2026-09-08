@@ -21,8 +21,11 @@ pantallas:
   - "Almacenes → Movimientos Internos → Nueva Salida"
   - "Almacenes → Movimientos Internos → Recepción"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Hay stock en el depósito de origen
+  - "Sesión iniciada en Tools"
+  - "Hay existencias en el depósito de origen (ALM-UC-009)"
+  - "La empresa tiene al menos dos depósitos"
+depende_de:
+  - ALM-UC-009
 flujo_principal:
   - paso: "Registra la salida de mercadería de un depósito hacia otro (ALM-UC-016)"
     resultado: "El movimiento aparece en el listado en estado **En Curso**. La mercadería ya salió del depósito de origen"

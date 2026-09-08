@@ -17,6 +17,8 @@ pantallas:
   - "Mantenimiento → Equipos → Asignar Meta"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "En el listado de equipos elige la acción Asignar Meta"
     resultado: "Se abre el formulario con la meta actual, si tiene"

@@ -16,6 +16,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Hay un informe de servicio cargado
+produce:
+  - "La conformidad del solicitante: `CN` si la acepta. Si la rechaza, **la solicitud vuelve a `S`** y el circuito se reabre"
+depende_de:
+  - MAN-UC-012
 flujo_principal:
   - paso: "Filtra los informes por estado para ver los pendientes de verificar"
     resultado: "El listado muestra los que esperan revisión"

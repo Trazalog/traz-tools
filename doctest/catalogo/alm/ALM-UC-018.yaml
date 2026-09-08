@@ -17,8 +17,13 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Mov Históricos de Stock"
 precondiciones:
-  - Sesión iniciada en Tools
-  - El artículo tiene movimientos registrados
+  - "Sesión iniciada en Tools"
+  - "El artículo tiene movimientos: los produce cualquiera de las operaciones del módulo — recepción (ALM-UC-009), entrega (ALM-UC-010), ajuste (ALM-UC-014) o movimiento interno (ALM-UC-016)"
+depende_de:
+  - ALM-UC-009
+  - ALM-UC-010
+  - ALM-UC-014
+  - ALM-UC-016
 flujo_principal:
   - paso: "Entra a Almacenes → Mov Históricos de Stock"
     resultado: "Se muestran los filtros del reporte"

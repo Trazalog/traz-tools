@@ -14,8 +14,10 @@ referencias_codigo:
 pantallas:
   - "Producción → Stock Producción"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa usa artículos loteados
+  - "Sesión iniciada en Tools"
+  - "La empresa usa artículos loteados: es una marca del alta del artículo (ALM-UC-002)"
+depende_de:
+  - ALM-UC-002
 flujo_principal:
   - paso: "Entra a Producción → Stock Producción"
     resultado: "Se muestran los filtros de fecha de creación, establecimiento, tipo de depósito y depósito"

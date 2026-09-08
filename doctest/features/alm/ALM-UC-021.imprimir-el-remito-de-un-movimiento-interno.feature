@@ -10,7 +10,7 @@ Característica: Imprimir el remito de un movimiento interno
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Existe al menos un movimiento interno de la empresa
+    Y Existe al menos un movimiento interno, creado con ALM-UC-016
 
   Escenario: Camino principal
     Cuando En el listado de movimientos internos, usa la acción Imprimir de una fila

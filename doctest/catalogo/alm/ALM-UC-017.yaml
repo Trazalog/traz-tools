@@ -15,8 +15,12 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Movimientos Internos → Nueva Recepción"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Existe un movimiento de salida pendiente de recibir
+  - "Sesión iniciada en Tools con perfil Responsable de Almacén"
+  - "Existe un movimiento de salida pendiente de recibir, creado con ALM-UC-016"
+produce:
+  - "El movimiento interno en estado `Recibido` y la mercadería disponible en el depósito de destino"
+depende_de:
+  - ALM-UC-016
 flujo_principal:
   - paso: "En Movimientos Internos hace clic en 'Nueva Recepción'"
     resultado: "Se abre el formulario de recepción en depósito"

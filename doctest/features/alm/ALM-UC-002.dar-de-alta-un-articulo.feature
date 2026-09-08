@@ -9,8 +9,8 @@ Característica: Dar de alta un artículo
   Dónde: Almacenes → Articulos → Agregar
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y La empresa tiene cargadas sus unidades de medida y sus tipos de artículo
+    Dado Sesión iniciada en Tools con perfil Responsable de Almacén
+    Y La empresa tiene sus unidades de medida y tipos de artículo — los crea el alta de la empresa (DNATO-UC-004), no hay que cargarlos
 
   Escenario: Camino principal
     Cuando En el listado de artículos hace clic en 'Agregar'

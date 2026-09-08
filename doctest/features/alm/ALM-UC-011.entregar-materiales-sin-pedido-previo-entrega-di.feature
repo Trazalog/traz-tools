@@ -9,8 +9,8 @@ Característica: Entregar materiales sin pedido previo (entrega directa)
   Dónde: Almacenes → Entrega Materiales → Entrega Materiales Directa
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y Hay existencias del artículo en el depósito
+    Dado Sesión iniciada en Tools con perfil Responsable de Almacén
+    Y Hay existencias del artículo en el depósito, que entraron por una recepción (ALM-UC-009)
 
   Escenario: Camino principal
     Cuando En Entrega Materiales hace clic en 'Entrega Materiales Directa'

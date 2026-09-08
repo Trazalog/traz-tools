@@ -18,9 +18,13 @@ pantallas:
   - "Almacenes → Movimientos Internos"
   - "Almacenes → Movimientos Internos → Nueva Salida"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene al menos dos depósitos
-  - Hay existencias en el depósito de origen
+  - "Sesión iniciada en Tools con perfil Responsable de Almacén"
+  - "Hay existencias en el depósito de origen, que entraron por una recepción (ALM-UC-009)"
+  - "La empresa tiene al menos dos depósitos. **El alta de empresa crea uno solo** (DNATO-UC-004): el segundo hay que crearlo"
+produce:
+  - "Un movimiento interno en estado `En Curso`, con la mercadería fuera del depósito de origen y todavía no en el de destino"
+depende_de:
+  - ALM-UC-009
 flujo_principal:
   - paso: "Entra a Almacenes → Movimientos Internos"
     resultado: "Se muestra el listado con Remito, Fecha y Hora, Establecimiento y Depósito de origen, Establecimiento y Depósito de destino, y Estado"
