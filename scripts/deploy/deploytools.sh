@@ -7,6 +7,9 @@
 #    Actualiza el codigo desde git y despliega en WSO2 los DataServices y los
 #    artefactos Synapse (APIs, sequences, templates, local-entries).
 #
+#    Todo sale de UNA sola copia, la del proyecto Maven:
+#      _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/
+#
 #  DONDE SE EJECUTA
 #    En el servidor, parado en el directorio que contiene al producto — el
 #    htdocs de Apache, por ejemplo /var/www/html:
@@ -30,6 +33,7 @@
 #      PROPUESTAS" al pie.
 #
 #  @author rruiz
+#  v3.1  copia unica de artefactos: todo sale del proyecto Maven
 #  v3.0  APIs y artefactos Synapse, salida limpia, log completo, verificaciones
 #  v2.0  agregador de deploy de dss, deteccion de distribucion y mejoras varias
 # =============================================================================
@@ -91,6 +95,7 @@ preflight() {
     }
     WSO2DSS="$WSO2HOME/repository/deployment/server/dataservices"
     WSO2SYN="$WSO2HOME/repository/deployment/server/synapse-configs/default"
+    ARTEFACTOS="$PRODUCTO/_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts"
     ok "WSO2 $WSO2VER en $WSO2HOME"
     return 0
 }
@@ -193,7 +198,10 @@ copiar_artefacto() {
 desplegar_dataservices() {
     mkdir -p "$WSO2DSS" || { falla "no se pudo crear $WSO2DSS"; return 1; }
     n=0
-    for f in "$PRODUCTO"/_backend/api/dataservice/*.dbs; do
+    # Copia unica: los .dbs viven en el proyecto Maven junto al resto de los
+    # artefactos. Hasta v2.5 estaban duplicados tambien en `_backend/api/dataservice/`,
+    # y las dos copias venian divergiendo — de ahi salieron dos incidentes.
+    for f in "$ARTEFACTOS"/data-services/*.dbs; do
         [ -f "$f" ] && { copiar_artefacto "$f" "$WSO2DSS" && n=$((n + 1)); }
     done
     ok "$n dataservices del producto"
@@ -210,7 +218,6 @@ desplegar_dataservices() {
 }
 
 desplegar_synapse() {
-    ARTEFACTOS="$PRODUCTO/_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts"
     if [ ! -d "$ARTEFACTOS" ]; then
         aviso "sin artefactos Synapse para este producto, se omite"
         return 0
@@ -279,7 +286,11 @@ main() {
     actualizar_codigo || { resumen; return 1; }
 
     paso "4/6  desplegando dataservices"
-    desplegar_dataservices
+    if [ -d "$ARTEFACTOS" ]; then
+        desplegar_dataservices
+    else
+        falla "no se encuentra $ARTEFACTOS — sin artefactos que desplegar"
+    fi
 
     paso "5/6  desplegando APIs y artefactos Synapse"
     desplegar_synapse
