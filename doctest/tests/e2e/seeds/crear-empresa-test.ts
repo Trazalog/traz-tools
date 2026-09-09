@@ -330,6 +330,24 @@ async function main(): Promise<void> {
 
   const browser = await chromium.launch({ headless: !HEADED });
   const page = await browser.newPage({ ignoreHTTPSErrors: true, locale: 'es-AR' });
+
+  // Con DOCTEST_SEED_TRACE=1 se ve qué contesta el servidor en cada POST. El alta
+  // encadena llamadas a core, Asset, Bonita, roles y establecimiento, y cuando falla la
+  // pantalla dice siempre lo mismo —"No hubo conexión con el servidor de aplicaciones"—
+  // sin decir cuál de las cinco fue. Sin esto, diagnosticar es adivinar.
+  if (process.env.DOCTEST_SEED_TRACE === '1') {
+    page.on('response', async (r) => {
+      if (r.request().method() !== 'POST') return;
+      let cuerpo = '';
+      try {
+        cuerpo = (await r.text()).replace(/\s+/g, ' ').slice(0, 300);
+      } catch {
+        cuerpo = '(sin cuerpo legible)';
+      }
+      console.log(`  · POST ${r.status()} ${r.url().replace(/^https?:\/\/[^/]+/, '')}\n      ${cuerpo}`);
+    });
+    page.on('pageerror', (e) => console.log(`  · JS ERROR: ${e.message.slice(0, 160)}`));
+  }
   page.setDefaultNavigationTimeout(180_000);
   page.setDefaultTimeout(60_000);
   try {
