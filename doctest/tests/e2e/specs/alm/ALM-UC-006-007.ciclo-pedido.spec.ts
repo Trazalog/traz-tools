@@ -29,7 +29,7 @@
  * mirando la respuesta de red del POST, como se resolvió el alta de artículo.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { AlmacenesPage } from '../../pages/alm/AlmacenesPage.ts';
 import { sesionDeRol } from '../../fixtures/roles-alm.ts';
@@ -39,6 +39,44 @@ const MARCA = `DocTest ciclo ${new Date().toISOString().slice(0, 19)}`;
 
 /** Código del artículo que crea la preparación, único por corrida. */
 const CODIGO_ARTICULO = `DT-${Date.now().toString().slice(-8)}`;
+
+
+/**
+ * Crea un pedido de materiales completo, con la justificación que se le pase como marca.
+ *
+ * Los nombres de los botones engañan y conviene tenerlo escrito: **Agregar** suma la línea
+ * al detalle (`guardar_pedido()`) y **Hecho** es el que crea el pedido y lanza el proceso
+ * en Bonita (`lanzarPedido()`). Se los busca por su función y no por su texto, porque
+ * "Agregar" es además el botón que abre el modal.
+ */
+async function crearPedido(page: Page, justificacion: string): Promise<void> {
+  await new AlmacenesPage(page).abrir('pedidos');
+  await expect(page.locator('table thead th').first()).toBeVisible({ timeout: 60_000 });
+
+  await page.getByRole('button', { name: /Agregar/i }).first().click();
+  await expect(page.locator('#just')).toBeVisible({ timeout: 15_000 });
+  await page.locator('#just').fill(justificacion);
+
+  // El artículo se elige del datalist: se toma el primero que ofrezca la empresa, en vez
+  // de fijar un código que mañana puede no existir.
+  const opciones = page.locator('datalist option');
+  await expect(opciones.first()).toHaveCount(1, { timeout: 15_000 });
+  const articulo = (await opciones.first().getAttribute('value')) ?? '';
+  expect(articulo, 'la empresa tiene que tener al menos un artículo cargado').not.toBe('');
+
+  await page.locator('#inputarti').fill(articulo);
+  await page.locator('#add_cantidad').fill('1');
+  await page.locator('button[onclick*="guardar_pedido"]').click();
+  await page.waitForTimeout(2000);
+
+  // El pedido va dirigido a un depósito concreto: es un paso del caso, no un detalle.
+  await page.locator('#establecimiento').selectOption({ index: 1 });
+  await page.waitForTimeout(1500);
+  await page.locator('#deposito').selectOption({ index: 0 });
+
+  await page.locator('button[onclick*="lanzarPedido"]').click();
+  await page.waitForTimeout(5000);
+}
 
 test.describe.serial('@alm @ciclo @ALM-UC-002 @ALM-UC-006 @ALM-UC-007 El ciclo de vida de un pedido de materiales', () => {
   /**
@@ -109,48 +147,16 @@ test.describe.serial('@alm @ciclo @ALM-UC-002 @ALM-UC-006 @ALM-UC-007 El ciclo d
   test('el Solicitante crea el pedido y queda registrado', async ({ browser }) => {
     const page = await sesionDeRol(browser, 'solicitante');
     try {
-      await new AlmacenesPage(page).abrir('pedidos');
-      await expect(page.locator('table thead th').first()).toBeVisible({ timeout: 60_000 });
-
-      const sinPedidos = /Ning[úu]n dato disponible/i.test(await page.locator('#content').innerText());
-
-      await page.getByRole('button', { name: /Agregar/i }).first().click();
-      await expect(page.locator('#just')).toBeVisible({ timeout: 15_000 });
-      await page.locator('#just').fill(MARCA);
-
-      // El artículo se elige de un datalist: se toma el primero que ofrezca la empresa,
-      // en vez de fijar un código que mañana puede no existir.
-      const opciones = page.locator('datalist option');
-      await expect(opciones.first()).toHaveCount(1, { timeout: 15_000 });
-      const articulo = (await opciones.first().getAttribute('value')) ?? '';
-      expect(articulo, 'la empresa tiene que tener al menos un artículo cargado').not.toBe('');
-
-      await page.locator('#inputarti').fill(articulo);
-      await page.locator('#add_cantidad').fill('1');
-
-      // Los nombres de los botones engañan y conviene tenerlo escrito: **Agregar** suma la
-      // línea al detalle (`guardar_pedido()`) y **Hecho** es el que crea el pedido y lanza
-      // el proceso en Bonita (`lanzarPedido()`). Se los busca por su función y no por su
-      // texto, porque "Agregar" es además el botón que abre el modal.
-      await page.locator('button[onclick*="guardar_pedido"]').click();
-      await page.waitForTimeout(2000);
-
-      // El pedido va dirigido a un depósito concreto: es un paso del caso, no un detalle.
-      await page.locator('#establecimiento').selectOption({ index: 1 });
-      await page.waitForTimeout(1500);
-      await page.locator('#deposito').selectOption({ index: 0 });
-
-      await page.locator('button[onclick*="lanzarPedido"]').click();
-      await page.waitForTimeout(5000);
+      await crearPedido(page, MARCA);
 
       await new AlmacenesPage(page).abrir('pedidos');
       await expect(page.locator('table thead th').first()).toBeVisible({ timeout: 60_000 });
-      // El pedido creado lleva la justificación como marca, así que se lo busca por ella
-      // y no por un conteo que la fila de relleno de DataTables vuelve mentiroso.
-      expect(sinPedidos || true, 'referencia del estado inicial').toBeDefined();
-      await expect(page.locator('#content'), 'el pedido tiene que aparecer en el listado').not.toContainText(
-        /Ning[úu]n dato disponible/i,
-        { timeout: 30_000 },
+      // Se busca el pedido de ESTA corrida por su justificación, que es única. Un conteo
+      // de filas miente por la fila de relleno de DataTables, y una negación de "Ningún
+      // dato" pasaría con el pedido de otra corrida: esto verifica el propio.
+      await expect(page.locator('#content'), 'el pedido creado tiene que aparecer en el listado').toContainText(
+        MARCA,
+        { timeout: 60_000 },
       );
     } finally {
       await page.context().close();
@@ -170,6 +176,40 @@ test.describe.serial('@alm @ciclo @ALM-UC-002 @ALM-UC-006 @ALM-UC-007 El ciclo d
       // es que el pedido nazca dentro del circuito: un pedido sin estado quedaría huérfano,
       // sin nadie que lo apruebe ni lo entregue.
       expect(primera).toMatch(/Creada|Aprobado|Rechazado|Entregado|Ent\. Parcial|Finalizado|Cancelado/i);
+    } finally {
+      await page.context().close();
+    }
+  });
+
+  /**
+   * FALLA CONOCIDA — H-070 / issue #508.
+   *
+   * `ALM-UC-006` dice que al confirmar se dispara el proceso de aprobación. Hoy el
+   * pedido se crea igual aunque el proceso no arranque: se verificó en vivo que
+   * `crearNotaPedido` devuelve `pema_id` y acto seguido `pedidoNormal` devuelve
+   * `{"status":false,"msj":"Error al Inciar Proceso"}`. El pedido queda huérfano — el
+   * solicitante lo ve y lo espera, y nadie puede aprobarlo ni entregarlo.
+   *
+   * El test verifica lo que el caso dice que debe pasar, así que **falla a propósito**
+   * hasta que se corrija. El día que se arregle, la suite avisa que hay que sacarle el
+   * `test.fail()`.
+   */
+  test('el pedido arranca su proceso de aprobación', async ({ browser }) => {
+    test.fail();
+    const page = await sesionDeRol(browser, 'solicitante');
+    try {
+      let procesoOk: boolean | null = null;
+      page.on('response', async (r) => {
+        if (!/pedidoNormal/.test(r.url())) return;
+        try {
+          procesoOk = JSON.parse(await r.text())?.status === true;
+        } catch {
+          procesoOk = false;
+        }
+      });
+
+      await crearPedido(page, `${MARCA} · proceso`);
+      expect(procesoOk, 'el proceso de aprobación tiene que quedar lanzado').toBe(true);
     } finally {
       await page.context().close();
     }
