@@ -1,0 +1,54 @@
+id: ALM-UC-022
+modulo: ALM
+titulo: El ciclo de vida de un movimiento interno
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-07
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Movimientointerno.php
+    detalle: "getMovimientoInternoPaginado() (120-150): normaliza y colorea el estado — los dos valores que reconoce son EN CURSO y RECIBIDO"
+  - repo: traz-comp-almacenes
+    path: controllers/Movimdeposalida.php
+    detalle: "registra la salida, que es lo que crea el movimiento"
+  - repo: traz-comp-almacenes
+    path: controllers/Movimdeporecepcion.php
+    detalle: "registra la recepción, que es lo que lo cierra"
+pantallas:
+  - "Almacenes → Movimientos Internos"
+  - "Almacenes → Movimientos Internos → Nueva Salida"
+  - "Almacenes → Movimientos Internos → Recepción"
+precondiciones:
+  - "Sesión iniciada en Tools"
+  - "Hay existencias en el depósito de origen (ALM-UC-009)"
+  - "La empresa tiene al menos dos depósitos"
+depende_de:
+  - ALM-UC-009
+flujo_principal:
+  - paso: "Registra la salida de mercadería de un depósito hacia otro (ALM-UC-016)"
+    resultado: "El movimiento aparece en el listado en estado **En Curso**. La mercadería ya salió del depósito de origen"
+  - paso: "Registra la recepción en el depósito de destino (ALM-UC-017)"
+    resultado: "El movimiento pasa a **Recibido**. La mercadería queda disponible en el depósito de destino"
+flujos_alternativos:
+  - nombre: "Llegó menos de lo que salió"
+    pasos:
+      - paso: "Recibe una cantidad menor a la que salió del depósito de origen"
+        resultado: "Se registra lo que llegó. La diferencia no se resuelve acá: el Responsable de Almacén la corrige con un ajuste de stock (ALM-UC-014), justificando el motivo"
+  - nombre: "El movimiento queda en tránsito"
+    pasos:
+      - paso: "Consulta el listado después de la salida y antes de la recepción"
+        resultado: "El movimiento se muestra **En Curso**: ya no está en el origen y todavía no está en el destino"
+validaciones:
+  - "Un movimiento nace **En Curso** con la salida y pasa a **Recibido** con la recepción"
+  - "Los dos son los únicos estados que la pantalla reconoce y colorea"
+  - "**Un movimiento no se cancela.** No hay forma de anular una salida ya registrada: si se registró de más o por error, la corrección se hace con un **ajuste de stock**"
+  - "**Si llega menos de lo que salió, se recibe lo que efectivamente llegó** y la diferencia la corrige el Responsable de Almacén con un ajuste, que **exige justificar el porqué**"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-022.el-ciclo-de-vida-de-un-movimiento-interno.feature
+notas:
+  - "Validado por el PM el 2026-09-07, que respondió las tres preguntas: **no se puede cancelar**; la corrección va por ajuste del Responsable de Almacén, ingresando menos y justificando obligatoriamente; y **no hay aviso** por movimientos que quedan En Curso mucho tiempo — el PM pidió anotarlo como mejora (H-065)."
+  - "Los dos estados salen del código, verificados en `Movimientointerno.php`. **Su traducción a lenguaje de usuario y las reglas de negocio del ciclo se preguntan, no se deducen.**"
+  - "Caso de ciclo de vida, según la regla que fijó el PM para MAN: un caso por cada acción del listado, y un caso de ciclo de vida por entidad."

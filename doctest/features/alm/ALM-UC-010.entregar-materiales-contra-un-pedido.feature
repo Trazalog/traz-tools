@@ -9,9 +9,9 @@ Característica: Entregar materiales contra un pedido
   Dónde: Almacenes → Entrega Materiales
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y Existe un pedido de materiales pendiente de entrega
-    Y Hay existencias del artículo en el depósito
+    Dado Sesión iniciada en Tools con perfil Responsable de Almacén
+    Y Existe un pedido pendiente de entrega (ALM-UC-006), ya aprobado por el proceso de Bonita
+    Y Hay existencias del artículo en el depósito, que entraron por una recepción (ALM-UC-009)
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Entrega Materiales

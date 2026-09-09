@@ -22,8 +22,12 @@ pantallas:
   - "Almacenes → Pedido Materiales"
   - "Almacenes → Pedido Materiales → Agregar"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene artículos cargados
+  - "Sesión iniciada en Tools con perfil Solicitante"
+  - "Hay artículos en el maestro para pedir: los carga el Responsable de Almacén con ALM-UC-002. **Una empresa recién creada no tiene ninguno**"
+produce:
+  - "Un pedido de materiales en estado `Creada`, y el proceso de aprobación lanzado en Bonita"
+depende_de:
+  - ALM-UC-002
 flujo_principal:
   - paso: "Entra a Almacenes → Pedido Materiales"
     resultado: "Se muestra el listado de pedidos con las columnas Acciones, Pedido, Ord.Trabajo, Fecha, Detalle y Estado"

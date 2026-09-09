@@ -19,6 +19,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - La empresa tiene cargados sus catálogos de área, proceso, criticidad, sector y grupo
+produce:
+  - "Un equipo en el padrón de la empresa: es la raíz de todo Mantenimiento — no se pide un servicio, ni se planifica, ni se mide nada que no sea sobre un equipo"
+depende_de:
+  - DNATO-UC-004
 flujo_principal:
   - paso: "En el listado de equipos abre el formulario de alta"
     resultado: "Se muestra el formulario vacío, con la ubicación arriba y los datos del equipo abajo"

@@ -16,9 +16,14 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Entrega Materiales"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Existe un pedido de materiales pendiente de entrega
-  - Hay existencias del artículo en el depósito
+  - "Sesión iniciada en Tools con perfil Responsable de Almacén"
+  - "Existe un pedido pendiente de entrega (ALM-UC-006), ya aprobado por el proceso de Bonita"
+  - "Hay existencias del artículo en el depósito, que entraron por una recepción (ALM-UC-009)"
+produce:
+  - "Una entrega registrada contra el pedido, y el descuento del stock entregado"
+depende_de:
+  - ALM-UC-006
+  - ALM-UC-009
 flujo_principal:
   - paso: "Entra a Almacenes → Entrega Materiales"
     resultado: "Se muestra el listado con N° de Pedido, N° de Entrega, Ord.Trabajo, Fecha, N° Comprobante, Entregado y Estado Ped."

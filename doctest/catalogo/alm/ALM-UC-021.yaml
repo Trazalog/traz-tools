@@ -1,0 +1,41 @@
+id: ALM-UC-021
+modulo: ALM
+titulo: Imprimir el remito de un movimiento interno
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-07
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Movimientointerno.php
+    detalle: "getDatosCabeceraRemito() trae la cabecera; getDataMovimientoInterno() el detalle; getLogo() el logo de la empresa que va impreso"
+  - repo: traz-comp-almacenes
+    path: views/movimientosinternos/list.php
+    detalle: "el botón Imprimir de la columna Acciones"
+pantallas:
+  - "Almacenes → Movimientos Internos"
+precondiciones:
+  - "Sesión iniciada en Tools"
+  - "Existe al menos un movimiento interno, creado con ALM-UC-016"
+depende_de:
+  - ALM-UC-016
+flujo_principal:
+  - paso: "En el listado de movimientos internos, usa la acción Imprimir de una fila"
+    resultado: "Se arma el remito de ese movimiento, con la cabecera —origen, destino, fecha— y el detalle de lo que se movió"
+flujos_alternativos:
+  - nombre: "La empresa no tiene logo cargado"
+    pasos:
+      - paso: "Imprime el remito de una empresa que no tiene logo configurado"
+        resultado: "El remito se arma igual, sin el logo"
+validaciones:
+  - "El remito solo debería armarse para movimientos de la empresa de la sesión"
+  - "El logo que se imprime es el de la empresa de la sesión"
+  - "**Es el comprobante del movimiento y se imprime en cualquier momento**: antes de mover, para que acompañe físicamente la mercadería, y después, para auditar lo que se movió. No depende del estado"
+  - "Se puede reimprimir todas las veces que haga falta: no se registra la impresión"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-021.imprimir-el-remito-de-un-movimiento-interno.feature
+notas:
+  - "Validado por el PM el 2026-09-07: *\"antes y después, es el comprobante, se usa para enviar o para auditar\"*. Por eso el caso no ata la impresión a un estado."
+  - "Acción **nueva**, parte de la pantalla de listado que entró en `develop` (v2.4.x). Ver ALM-UC-020."

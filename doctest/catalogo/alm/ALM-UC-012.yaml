@@ -16,8 +16,11 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Entrega Detallada"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Hay entregas registradas en el período que se consulta
+  - "Sesión iniciada en Tools"
+  - "Hay entregas registradas en el período: las produce ALM-UC-010 (contra pedido) o ALM-UC-011 (directa)"
+depende_de:
+  - ALM-UC-010
+  - ALM-UC-011
 flujo_principal:
   - paso: "Entra a Almacenes → Entrega Detallada"
     resultado: "Se muestran los filtros Desde, Hasta, Obras, Establecimiento y Depósito"

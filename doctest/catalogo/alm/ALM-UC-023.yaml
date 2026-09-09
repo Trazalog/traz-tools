@@ -1,0 +1,47 @@
+id: ALM-UC-023
+modulo: ALM
+titulo: Ver el listado de ajustes de stock
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-07
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Ajustestock.php
+    detalle: "index() dibuja el listado; getAjustesList() es el server-side de la grilla y traduce el orden de columna"
+  - repo: traz-comp-almacenes
+    path: models/Ajustestocks.php
+  - repo: traz-comp-almacenes
+    path: views/ajustestock/list.php
+pantallas:
+  - "Almacenes → Ajustes de Stock"
+precondiciones:
+  - "Sesión iniciada en Tools"
+  - "El rol tiene asignado el menú de Almacenes"
+  - "Hay ajustes registrados (ALM-UC-014). Sin ninguno la grilla aparece vacía"
+depende_de:
+  - ALM-UC-014
+flujo_principal:
+  - paso: "Entra a Almacenes → Ajustes de Stock"
+    resultado: "Se muestra la grilla con las columnas Acciones, Comprobante, Fecha / Hora, Establecimiento y Depósito"
+  - paso: "Usa el buscador de la grilla"
+    resultado: "La grilla se reduce a los ajustes que coinciden"
+flujos_alternativos:
+  - nombre: "La empresa todavía no registró ajustes"
+    pasos:
+      - paso: "Entra a la pantalla"
+        resultado: "La grilla aparece vacía y solo se ofrece el acceso a Nuevo Ajuste"
+validaciones:
+  - "El listado solo muestra ajustes de la empresa de la sesión"
+  - "**Cada fila es un ajuste completo, no una línea.** Un ajuste sobre tres artículos aparece una sola vez: la consulta agrupa por ajuste y el establecimiento y el depósito que muestra son los de la primera línea. El detalle de los artículos está en ALM-UC-024"
+  - "**Comprobante es el número del ajuste que genera el sistema** (`ajus_id`), no un dato que se carga a mano"
+  - "El listado **no tiene filtros propios**: solo el buscador de la grilla, que además del número busca por establecimiento, depósito y número de lote"
+  - "La grilla se pagina, busca y ordena contra el servidor"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-023.ver-el-listado-de-ajustes-de-stock.feature
+notas:
+  - "**Las tres dudas se resolvieron leyendo el código, como pidió el PM.** La consulta `getAjustePaginado` de `ALMDataService.dbs` agrupa por ajuste (`GROUP BY` con `MIN(dep.descripcion)` y `MIN(e.nombre)`), así que la fila es el ajuste. Mi suposición de que era una fila por línea **estaba equivocada**: las columnas Código, Descripción, Cantidad y U. Med que había visto pertenecen al modal de detalle, no a la grilla."
+  - "El listado tiene **dos** acciones, no una: Ver Detalle (ALM-UC-024) e imprimir el comprobante (ALM-UC-025)."
+  - "Pantalla de listado **nueva**: entró en `develop` (v2.4.x) con el commit \"nueva pantalla ajuste stock\". El registro del ajuste en sí ya estaba relevado en ALM-UC-014."

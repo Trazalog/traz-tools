@@ -17,6 +17,8 @@ pantallas:
   - "Mantenimiento → Ordenes de trabajo"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+depende_de:
+  - MAN-UC-009
 flujo_principal:
   - paso: "Se programa desde el plan de mantenimiento (MAN-UC-009), venga de una solicitud, un preventivo, un predictivo o un backlog"
     resultado: "La orden nace planificada, con las herramientas y los insumos copiados de su origen"

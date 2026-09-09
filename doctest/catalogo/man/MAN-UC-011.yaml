@@ -16,8 +16,13 @@ referencias_codigo:
 pantallas:
   - "Mantenimiento → Ordenes de trabajo → Ejecutar"
 precondiciones:
-  - Sesión iniciada en AssetPlanner
-  - Existe una orden de trabajo programada
+  - "Sesión iniciada en AssetPlanner con perfil Mantenedor"
+  - "Existe una orden de trabajo programada, creada con MAN-UC-009"
+  - "La tarea llegó a su bandeja de entrada (MAN-UC-019)"
+produce:
+  - "La orden de trabajo en curso (`C`) y, si hizo falta material, un pedido al almacén"
+depende_de:
+  - MAN-UC-009
 flujo_principal:
   - paso: "Abre la orden de trabajo y elige ejecutarla"
     resultado: "Se muestra qué hay que hacer, con las herramientas y los insumos que se declararon"

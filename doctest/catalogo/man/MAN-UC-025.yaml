@@ -16,6 +16,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - El equipo tiene lecturas cargadas
+depende_de:
+  - MAN-UC-017
 flujo_principal:
   - paso: "En el listado de equipos elige la acción Historial de Lecturas"
     resultado: "Se muestran las lecturas registradas de ese equipo"

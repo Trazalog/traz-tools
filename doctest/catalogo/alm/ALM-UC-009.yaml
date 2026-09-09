@@ -17,9 +17,13 @@ pantallas:
   - "Almacenes → Recepción Materiales"
   - "Almacenes → Recepción Materiales → Agregar"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene proveedores y depósitos cargados
-  - Los artículos a recibir están dados de alta
+  - "Sesión iniciada en Tools con perfil Responsable de Almacén"
+  - "Los artículos a recibir están dados de alta (ALM-UC-002)"
+  - "La empresa tiene proveedores y depósitos — el depósito lo crea el alta de la empresa (DNATO-UC-004)"
+produce:
+  - "**Stock**: un lote del artículo en un depósito. Es la fuente de la que sale toda existencia del módulo: sin una recepción no hay nada que consultar, entregar, ajustar ni mover"
+depende_de:
+  - ALM-UC-002
 flujo_principal:
   - paso: "Entra a Almacenes → Recepción Materiales"
     resultado: "Se muestra el listado de recepciones con Nº de Comprobante, Fecha y Proveedor"

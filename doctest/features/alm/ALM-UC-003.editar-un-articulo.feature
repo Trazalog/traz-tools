@@ -10,7 +10,7 @@ Característica: Editar un artículo
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Existe al menos un artículo en la empresa
+    Y Existe al menos un artículo, dado de alta con ALM-UC-002
 
   Escenario: Camino principal
     Cuando En el listado de artículos hace clic en el ícono de edición de una fila

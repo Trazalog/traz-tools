@@ -17,6 +17,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Existe al menos un equipo en la empresa
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "En el listado abre un equipo para editarlo"
     resultado: "Se muestra el formulario con los datos cargados"

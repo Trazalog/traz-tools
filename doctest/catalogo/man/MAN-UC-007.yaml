@@ -14,8 +14,12 @@ referencias_codigo:
 pantallas:
   - "Mantenimiento → Solicitud de Servicio"
 precondiciones:
-  - Sesión iniciada en AssetPlanner
-  - El equipo que falla está dado de alta
+  - "Sesión iniciada en AssetPlanner con perfil Solicitante"
+  - "El equipo que falla está dado de alta (MAN-UC-002). **Una empresa recién creada no tiene ninguno**"
+produce:
+  - "Una solicitud de servicio en estado `S` (Solicitada), y el proceso de mantenimiento lanzado en Bonita"
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "Entra a Mantenimiento → Solicitud de Servicio"
     resultado: "Se muestra el listado con Nro, Nro de OT, Fecha, Fecha Fin, tiempos de ciclo, asignación y generación, Solicitante, Equipo y Sector"

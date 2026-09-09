@@ -17,6 +17,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - El equipo está dado de alta
+produce:
+  - "Un plan de mantenimiento preventivo, que es lo que genera trabajo programado sin que nadie lo pida"
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "Entra a Mantenimiento → Preventivo"
     resultado: "Se listan los preventivos con Id tarea, Tarea, Equipo, Grupo, Componente, Período, Frecuencia, Fecha Base y Horas Hombre"

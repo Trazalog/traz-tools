@@ -17,6 +17,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - El equipo está dado de alta y el parámetro existe en el ABM
+produce:
+  - "La definición de qué parámetros se le miden a un equipo"
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "Entra a Mantenimiento → Parametrizar Predictivo"
     resultado: "Se listan los parámetros ya configurados con su equipo, máximo y mínimo"

@@ -17,6 +17,11 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Existe el equipo y existen los componentes a asignar
+produce:
+  - "La asociación entre un equipo y sus componentes"
+depende_de:
+  - MAN-UC-002
+  - MAN-UC-005
 flujo_principal:
   - paso: "Abre la pantalla de asociar componentes y elige el equipo"
     resultado: "Se muestran los componentes que el equipo ya tiene"

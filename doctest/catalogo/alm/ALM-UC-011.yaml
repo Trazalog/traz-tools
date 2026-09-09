@@ -16,8 +16,12 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Entrega Materiales → Entrega Materiales Directa"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Hay existencias del artículo en el depósito
+  - "Sesión iniciada en Tools con perfil Responsable de Almacén"
+  - "Hay existencias del artículo en el depósito, que entraron por una recepción (ALM-UC-009)"
+produce:
+  - "Una entrega registrada sin pedido previo, y el descuento del stock entregado"
+depende_de:
+  - ALM-UC-009
 flujo_principal:
   - paso: "En Entrega Materiales hace clic en 'Entrega Materiales Directa'"
     resultado: "Se abre el formulario de entrega sin pedido asociado"

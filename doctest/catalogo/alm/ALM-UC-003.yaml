@@ -16,8 +16,10 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Articulos → (ícono de edición de una fila)"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Existe al menos un artículo en la empresa
+  - "Sesión iniciada en Tools"
+  - "Existe al menos un artículo, dado de alta con ALM-UC-002"
+depende_de:
+  - ALM-UC-002
 flujo_principal:
   - paso: "En el listado de artículos hace clic en el ícono de edición de una fila"
     resultado: "Se abre el formulario con los datos del artículo cargados"

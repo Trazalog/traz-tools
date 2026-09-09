@@ -18,8 +18,12 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Punto de Pedido"
 precondiciones:
-  - Sesión iniciada en Tools
-  - Hay artículos con punto de pedido cargado
+  - "Sesión iniciada en Tools"
+  - "Hay artículos con punto de pedido cargado: es un campo del alta del artículo (ALM-UC-002)"
+  - "Hay existencias para comparar contra ese punto (ALM-UC-009)"
+depende_de:
+  - ALM-UC-002
+  - ALM-UC-009
 flujo_principal:
   - paso: "Entra a Almacenes → Punto de Pedido"
     resultado: "Se listan los artículos con las columnas Producto, Código, Punto Pedido, Cant. Stock y Cant. Disponible"
