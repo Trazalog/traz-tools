@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EmprIdFromHeader — deriva empr_id del backend JWT que firma e inyecta el APIM.
+
+  ADR-008 (jun-2026, Opción 1): la operation policy del gateway NO puede leer el JWT
+  (APIM elimina Authorization tras validar y el backend JWT se agrega recién al despachar).
+  Por eso el empr_id se deriva acá, del header X-JWT-Assertion: el backend JWT que APIM
+  genera tras validar el token de Dnato. Es la propagación de identidad canónica de WSO2.
+
+  SEGURIDAD:
+  - X-JWT-Assertion lo firma APIM; el cliente no puede falsificarlo a través del gateway.
+  - NO se confía en X-Empr-Id del cliente (sin la policy del gateway que lo eliminaba,
+    sería spoofeable). Solo el X-JWT-Assertion es fuente de verdad.
+  - PROD: validar la firma de la assertion contra el cert del gateway y asegurar que el
+    MI (8290) no sea alcanzable directamente por clientes.
+
+  Setea jwt_empr_id (nombre heredado) para compatibilidad con toolsMANAPI.xml.
+-->
+<sequence name="emprIdFromHeader" xmlns="http://ws.apache.org/ns/synapse">
+
+    <property name="x_jwt_assertion"
+              expression="$trp:X-JWT-Assertion"
+              scope="default" type="STRING"/>
+
+    <!-- Rhino/Nashorn-safe: Packages.java.* funciona en ambos motores.
+         split(".") literal. Fail-closed: jwt_empr_id queda vacío si algo falla. -->
+    <script language="js"><![CDATA[
+        mc.setProperty("jwt_empr_id", "");
+        mc.setProperty("jwt_mysql_empresa_id", "");
+        try {
+            var assertion = mc.getProperty("x_jwt_assertion");
+            if (assertion) {
+                var parts = ("" + assertion).split(".");
+                if (parts.length === 3) {
+                    var bytes   = Packages.java.util.Base64.getUrlDecoder().decode(parts[1]);
+                    var payload = JSON.parse("" + new Packages.java.lang.String(bytes, "UTF-8"));
+                    if (payload.empr_id || payload.empr_id === 0) {
+                        mc.setProperty("jwt_empr_id", "" + payload.empr_id);
+                    }
+                    if (payload.empr_id_mysql || payload.empr_id_mysql === 0) {
+                        mc.setProperty("jwt_mysql_empresa_id", "" + payload.empr_id_mysql);
+                    }
+                }
+            }
+        } catch (e) {
+            mc.setProperty("dbg_err", "" + e);
+        }
+    ]]></script>
+
+    <filter xpath="get-property('jwt_empr_id') = '' or not(boolean(get-property('jwt_empr_id')))">
+        <then>
+            <log level="custom" category="WARN">
+                <property name="text" value="#TRAZA | MI | EmprIdFromHeader | empr_id NO resuelto desde X-JWT-Assertion — verificar backend JWT del APIM con claim empr_id"/>
+                <property name="path" expression="get-property('REST_FULL_REQUEST_PATH')"/>
+            </log>
+            <payloadFactory media-type="json">
+                <format>{"error":"identity_missing","message":"empr_id no resuelto desde X-JWT-Assertion. Verificar que el APIM genere backend JWT con el claim empr_id."}</format>
+                <args/>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="503"/>
+            <respond/>
+        </then>
+    </filter>
+
+    <log level="custom" category="DEBUG">
+        <property name="text"              value="#TRAZA | MCP | EmprIdFromHeader | identidad resuelta desde X-JWT-Assertion"/>
+        <property name="empr_id"           expression="get-property('jwt_empr_id')"/>
+        <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+    </log>
+
+</sequence>

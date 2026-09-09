@@ -1,18 +1,18 @@
 <data enableBatchRequests="true" enableBoxcarring="true" name="TareasSTD" transports="http https local">
-   <config enableOData="false" id="produccionDS">
+   <config enableOData="false" id="ToolsDataSource">
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
-   <query id="getTareas" useConfig="produccionDS">
+   <query id="getTareas" useConfig="ToolsDataSource">
       <sql>SELECT * FROM tst.tareas_std&#xd;WHERE empr_id = CAST(:empr_id as integer)&#xd;AND not eliminado&#xd;ORDER BY nombre</sql>
       <result outputType="json">{&#xd;    "tareas":{&#xd;       "tarea":[&#xd;           {&#xd;            "tare_id":"$tare_id",&#xd;            "nombre":"$nombre",&#xd;            "descripcion":"$descripcion",&#xd;            "duracion":"$duracion",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "proc_id":"$proc_id"&#xd;           }&#xd;       ] &#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
-   <query id="getTarea" useConfig="produccionDS">
+   <query id="getTarea" useConfig="ToolsDataSource">
       <sql>SELECT *&#xd;FROM tst.tareas_std&#xd;WHERE tare_id = CAST(:tare_id as integer)&#xd;AND not eliminado</sql>
       <result outputType="json">{&#xd;    "tareas":{&#xd;       "tarea":[&#xd;           {&#xd;            "tare_id":"$tare_id",&#xd;            "nombre":"$nombre",&#xd;            "descripcion":"$descripcion",&#xd;            "duracion":"$duracion",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "proc_id":"$proc_id"&#xd;           }&#xd;       ] &#xd;    }&#xd;}</result>
       <param name="tare_id" sqlType="STRING"/>
    </query>
-   <query id="setTarea" useConfig="produccionDS">
+   <query id="setTarea" useConfig="ToolsDataSource">
       <sql>INSERT INTO tst.tareas_std&#xd;(nombre, descripcion, duracion, form_id, rece_id, proc_id, empr_id)&#xd;VALUES(:nombre, :descripcion, :duracion, CAST(:form_id as integer), CAST(:rece_id as integer), :proc_id, CAST(:empr_id as integer));</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -22,7 +22,7 @@
       <param name="proc_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
-   <query id="updateTarea" useConfig="produccionDS">
+   <query id="updateTarea" useConfig="ToolsDataSource">
       <sql>UPDATE tst.tareas_std&#xd;SET nombre=:nombre, descripcion=:descripcion, duracion=:duracion, form_id= CAST(:form_id as integer), rece_id= CAST(:rece_id as integer), proc_id=:proc_id&#xd;WHERE tare_id=CAST(:tare_id as integer)</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -32,27 +32,27 @@
       <param name="proc_id" sqlType="STRING"/>
       <param name="tare_id" sqlType="STRING"/>
    </query>
-   <query id="deleteTarea" useConfig="produccionDS">
+   <query id="deleteTarea" useConfig="ToolsDataSource">
       <sql>UPDATE tst.tareas_std&#xd;SET eliminado = true&#xd;WHERE tare_id=CAST(:tare_id as integer)</sql>
       <param name="tare_id" sqlType="STRING"/>
    </query>
-   <query id="getSubtareas" useConfig="produccionDS">
+   <query id="getSubtareas" useConfig="ToolsDataSource">
       <sql>SELECT * &#xd;FROM tst.subtareas&#xd;WHERE tare_id = CAST(:tare_id as integer)&#xd;AND not eliminado</sql>
       <result outputType="json">{&#xd;  "subtareas": {&#xd;    "subtarea": [&#xd;      {&#xd;        "suta_id": "$suta_id",&#xd;        "nombre": "$nombre",&#xd;        "descripcion": "$descripcion",&#xd;        "duracion": "$duracion",&#xd;        "tare_id": "$tare_id",&#xd;        "form_id": "$form_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="tare_id" sqlType="STRING"/>
    </query>
-   <query id="getSubtarea" useConfig="produccionDS">
+   <query id="getSubtarea" useConfig="ToolsDataSource">
       <sql>SELECT *&#xd;FROM tst.subtareas&#xd;WHERE suta_id = CAST(:suta_id as integer)</sql>
       <result outputType="json">{&#xd;  "subtareas": {&#xd;    "subtarea": [&#xd;      {&#xd;        "suta_id": "$suta_id",&#xd;        "nombre": "$nombre",&#xd;        "descripcion": "$descripcion",&#xd;        "duracion": "$duracion",&#xd;        "tare_id": "$tare_id",&#xd;        "form_id": "$form_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="suta_id" sqlType="STRING"/>
    </query>
-   <query id="setSubtarea" useConfig="produccionDS">
+   <query id="setSubtarea" useConfig="ToolsDataSource">
       <sql>INSERT INTO tst.subtareas&#xd;(descripcion, tare_id, form_id)&#xd;VALUES(:descripcion, CAST(:tare_id as integer), CAST(:form_id as integer))</sql>
       <param name="descripcion" sqlType="STRING"/>
       <param name="tare_id" sqlType="STRING"/>
       <param name="form_id" sqlType="STRING"/>
    </query>
-   <query id="updateSubtarea" useConfig="produccionDS">
+   <query id="updateSubtarea" useConfig="ToolsDataSource">
       <sql>UPDATE tst.subtareas&#xd;SET nombre=:nombre, descripcion=:descripcion, tare_id=CAST(:tare_id as integer), form_id=CAST(:form_id as integer)&#xd;WHERE suta_id= CAST(:suta_id as integer)</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
@@ -60,50 +60,50 @@
       <param name="form_id" sqlType="STRING"/>
       <param name="suta_id" sqlType="STRING"/>
    </query>
-   <query id="deleteSubtarea" useConfig="produccionDS">
+   <query id="deleteSubtarea" useConfig="ToolsDataSource">
       <sql>UPDATE tst.subtareas&#xd;SET eliminado = true&#xd;WHERE suta_id= CAST(:suta_id as integer)</sql>
       <param name="suta_id" sqlType="STRING"/>
    </query>
-   <query id="getPlantillas" useConfig="produccionDS">
+   <query id="getPlantillas" useConfig="ToolsDataSource">
       <sql>SELECT *&#xd;FROM tst.plantillas&#xd;WHERE empr_id = CAST(:empr_id as integer)&#xd;AND not eliminado&#xd;ORDER BY nombre</sql>
       <result outputType="json">{&#xd;  "plantillas": {&#xd;    "plantilla": [&#xd;      {&#xd;        "plan_id": "$plan_id",&#xd;        "nombre": "$nombre",&#xd;        "@getTareasPlantilla":$plan_id-&gt;plan_id&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
-   <query id="getPlantilla" useConfig="produccionDS">
+   <query id="getPlantilla" useConfig="ToolsDataSource">
       <sql>SELECT * &#xd;FROM tst.plantillas&#xd;WHERE plan_id = CAST(:plan_id as integer)</sql>
       <result outputType="json">{&#xd;  "plantillas": {&#xd;    "plantilla": [&#xd;      {&#xd;        "plan_id": "$plan_id",&#xd;        "nombre": "$nombre"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="plan_id" sqlType="STRING"/>
    </query>
-   <query id="setPlantilla" useConfig="produccionDS">
+   <query id="setPlantilla" useConfig="ToolsDataSource">
       <sql>INSERT INTO tst.plantillas&#xd;(nombre, empr_id)&#xd;VALUES(:nombre, CAST(:empr_id as integer))</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
-   <query id="updatePlantilla" useConfig="produccionDS">
+   <query id="updatePlantilla" useConfig="ToolsDataSource">
       <sql>UPDATE tst.plantillas&#xd;SET nombre= :nombre&#xd;WHERE plan_id = CAST(:plan_id as integer)</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="plan_id" sqlType="STRING"/>
    </query>
-   <query id="deletePlantilla" useConfig="produccionDS">
+   <query id="deletePlantilla" useConfig="ToolsDataSource">
       <sql>UPDATE tst.plantillas&#xd;SET eliminado = true&#xd;WHERE plan_id = CAST(:plan_id as integer)</sql>
       <param name="plan_id" sqlType="STRING"/>
    </query>
-   <query id="asociarPlantillaTarea" useConfig="produccionDS">
+   <query id="asociarPlantillaTarea" useConfig="ToolsDataSource">
       <sql>INSERT INTO tst.rel_plantillas_tareas&#xd;(plan_id, tare_id)&#xd;VALUES(CAST(:plan_id as integer), CAST(:tare_id as integer));</sql>
       <param name="plan_id" sqlType="STRING"/>
       <param name="tare_id" sqlType="STRING"/>
    </query>
-   <query id="deletePlantillaTarea" useConfig="produccionDS">
+   <query id="deletePlantillaTarea" useConfig="ToolsDataSource">
       <sql>DELETE&#xd;FROM tst.rel_plantillas_tareas&#xd;WHERE plan_id = CAST(:plan_id as integer)&#xd;AND tare_id = CAST(:tare_id as integer)</sql>
       <param name="plan_id" sqlType="STRING"/>
       <param name="tare_id" sqlType="STRING"/>
    </query>
-   <query id="getTareasPlantilla" useConfig="produccionDS">
+   <query id="getTareasPlantilla" useConfig="ToolsDataSource">
       <sql>SELECT TS.* FROM TST.REL_PLANTILLAS_TAREAS RPT , TST.TAREAS_STD TS &#xd;WHERE RPT.TARE_ID = TS.TARE_ID AND PLAN_ID = CAST(:plan_id AS INTEGER) AND NOT TS.ELIMINADO</sql>
       <result outputType="json">{&#xd;    "tareas":{&#xd;       "tarea":[&#xd;           {&#xd;            "tare_id":"$tare_id",&#xd;            "nombre":"$nombre",&#xd;            "descripcion":"$descripcion",&#xd;            "duracion":"$duracion",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "proc_id":"$proc_id"&#xd;           }&#xd;       ] &#xd;    }&#xd;}</result>
       <param name="plan_id" sqlType="STRING"/>
    </query>
-   <query id="setTareaPlanificada" useConfig="produccionDS">
+   <query id="setTareaPlanificada" useConfig="ToolsDataSource">
       <sql>INSERT&#xd;	INTO&#xd;	tst.tareas_planificadas (tapl_id, nombre, fecha, user_id, info_id, case_id, tare_id, proc_id, form_id, descripcion, rece_id)&#xd;SELECT&#xd;	CASE&#xd;		WHEN IDT.id IS NULL&#xd;		OR IDT.ID = '' THEN nextval('tst.tareas_planificadas_tapl_id_seq')&#xd;		ELSE CAST(idt.id AS INTEGER)&#xd;	END&#xd;	, :nombre, TO_DATE(:fecha,'YYYY-MM-DD'),:user_id, CAST(:info_id as integer), CAST(:case_id as integer), CAST(:tare_id as integer), :proc_id, cast(:form_id as integer), :descripcion, cast(:rece_id as integer)&#xd;FROM&#xd;	(SELECT :tapl_id ID) AS IDT&#xd;ON CONFLICT (tapl_id) DO&#xd;UPDATE&#xd;SET&#xd;    nombre = excluded.nombre,&#xd;    fecha = excluded.fecha,&#xd;    user_id = excluded.user_id,&#xd;    info_id = excluded.info_id,&#xd;    case_id = excluded.case_id,&#xd;    tare_id = excluded.tare_id,&#xd;    proc_id = excluded.proc_id,&#xd;    form_id = excluded.form_id,&#xd;    descripcion = excluded.descripcion,&#xd;    rece_id = excluded.rece_id&#xd; returning tapl_id;</sql>
       <result outputType="json">{"respuesta":{"tapl_id":"$tapl_id"}}</result>
       <param name="nombre" sqlType="STRING"/>
@@ -118,7 +118,7 @@
       <param name="descripcion" sqlType="STRING"/>
       <param name="rece_id" sqlType="STRING"/>
    </query>
-   <query id="updateTareaPlanificada" useConfig="produccionDS">
+   <query id="updateTareaPlanificada" useConfig="ToolsDataSource">
       <sql>update tst.tareas_planificadas &#xd;    set&#xd;        nombre = :nombre,&#xd;        fecha = TO_DATE(:fecha,'YYYY-MM-DD'),&#xd;        hora =:hora,&#xd;        user_id = :user_id,&#xd;        equi_id = cast(:equi_id as integer),&#xd;        case_id = cast(:case_id as integer),&#xd;        tare_id = cast(:tare_id as integer)&#xd;    where tapl_id = CAST(:tapl_id as integer);</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="fecha" sqlType="STRING"/>
@@ -129,51 +129,51 @@
       <param name="tare_id" sqlType="STRING"/>
       <param name="tapl_id" sqlType="STRING"/>
    </query>
-   <query id="deleteTareaPlanificada" useConfig="produccionDS">
+   <query id="deleteTareaPlanificada" useConfig="ToolsDataSource">
       <sql>UPDATE tst.tareas_planificadas&#xd;SET eliminado = true&#xd;WHERE tapl_id = CAST(:tapl_id as integer)</sql>
       <param name="tapl_id" sqlType="STRING"/>
    </query>
-   <query id="deleteTareaRecuros" useConfig="produccionDS">
+   <query id="deleteTareaRecuros" useConfig="ToolsDataSource">
       <sql>DELETE FROM tst.recursos_tareas&#xd;WHERE tapl_id  = CAST(:tapl_id as integer)</sql>
       <param name="tapl_id" sqlType="STRING"/>
    </query>
-   <query id="setTareaRecursos" useConfig="produccionDS">
+   <query id="setTareaRecursos" useConfig="ToolsDataSource">
       <sql>INSERT INTO tst.recursos_tareas&#xd;(tapl_id, recu_id)&#xd;VALUES(cast(:tapl_id as integer), cast(:recu_id as integer));</sql>
       <param name="tapl_id" sqlType="STRING"/>
       <param name="recu_id" sqlType="STRING"/>
    </query>
-   <query id="getTareasPlanificadas" useConfig="produccionDS">
+   <query id="getTareasPlanificadas" useConfig="ToolsDataSource">
       <sql>select tp.*&#xd;from tst.origen_tarea_planficada otp &#xd;join tst.tareas_planificadas tp &#xd;on otp.tapl_id = tp.tapl_id &#xd;where otp.origen = :origen&#xd;and otp.orta_id = cast(:orta_id as integer)&#xd;and not eliminado&#xd;order by tp.tapl_id</sql>
       <result outputType="json">{&#xd;  "tareas": {&#xd;    "tarea": [&#xd;        {&#xd;            "tapl_id":"$tapl_id",&#xd;            "nombre":"$nombre",&#xd;            "user_id":"$user_id",&#xd;            "info_id":"$info_id",&#xd;            "case_id":"$case_id",&#xd;            "tare_id":"$tare_id",&#xd;            "fecha":"$fecha",&#xd;            "proc_id":"$proc_id",&#xd;            "form_id":"$form_id",&#xd;            "rece_id":"$rece_id",&#xd;            "descripcion":"$descripcion",&#xd;            "@getTareaRecursos":$tapl_id-&gt;tapl_id&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="orta_id" sqlType="STRING"/>
       <param name="origen" sqlType="STRING"/>
    </query>
-   <query id="getTareaRecursos" useConfig="produccionDS">
+   <query id="getTareaRecursos" useConfig="ToolsDataSource">
       <sql>select r.*, e.codigo &#xd;from tst.recursos_tareas rt &#xd;join prd.recursos r&#xd;on rt.recu_id = r.recu_id &#xd;join core.equipos e &#xd;on e.equi_id = r.equi_id &#xd;where rt.tapl_id = cast(:tapl_id as integer)</sql>
       <result outputType="json">{&#xd;  "recursos": {&#xd;    "recurso": [&#xd;        {&#xd;            "recu_id":"$recu_id",&#xd;            "tipo":"$tipo",&#xd;            "equi_id":"$equi_id",&#xd;            "arti_id":"$arti_id",&#xd;            "codigo":"$codigo"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="tapl_id" sqlType="STRING"/>
    </query>
-   <query id="setTareaOrigen" useConfig="produccionDS">
+   <query id="setTareaOrigen" useConfig="ToolsDataSource">
       <sql>INSERT INTO tst.origen_tarea_planficada&#xd;(origen, tapl_id, orta_id)&#xd;VALUES(:origen, cast(:tapl_id as integer), cast(:orta_id as integer))&#xd;ON CONFLICT(origen, tapl_id, orta_id) DO NOTHING</sql>
       <param name="origen" sqlType="STRING"/>
       <param name="tapl_id" sqlType="STRING"/>
       <param name="orta_id" sqlType="STRING"/>
    </query>
-   <query id="getSectores" useConfig="produccionDS">
+   <query id="getSectores" useConfig="ToolsDataSource">
       <sql>select *&#xd;from core.tablas t&#xd;where t.tabla = 'sectores'</sql>
       <result outputType="json">{&#xd;  "sectores": {&#xd;    "sector": [&#xd;        {&#xd;            "sect_id":"$tabl_id",&#xd;            "nombre":"$valor",&#xd;            "descripcion":"$descripcion",&#xd;            "@getEquiposXSector":"$sect_id-&gt;tabl_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
    </query>
-   <query id="getEquiposXSector" useConfig="produccionDS">
+   <query id="getEquiposXSector" useConfig="ToolsDataSource">
       <sql>select r.recu_id, e.*&#xd;from core.equipos e&#xd;join prd.recursos r&#xd;on e.equi_id = r.equi_id&#xd;where sect_id = :sect_id</sql>
       <result outputType="json">{&#xd;  "equipos": {&#xd;    "equipo": [&#xd;        {&#xd;            "recu_id": "$recu_id",&#xd;            "equi_id":"$equi_id",&#xd;            "descripcion":"$descripcion",&#xd;            "marca":"$marca",&#xd;            "codigo":"$codigo"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="sect_id" sqlType="STRING"/>
    </query>
-   <query id="setEstadoTarea" useConfig="produccionDS">
+   <query id="setEstadoTarea" useConfig="ToolsDataSource">
       <sql>UPDATE&#xd;tst.tareas_planificadas&#xd;SET estado = :estado&#xd;WHERE tapl_id = cast(:tapl_id as integer)</sql>
       <param name="estado" sqlType="STRING"/>
       <param name="tapl_id" sqlType="STRING"/>
    </query>
-   <query id="getTareaPlanificadaXCaseId" useConfig="produccionDS">
+   <query id="getTareaPlanificadaXCaseId" useConfig="ToolsDataSource">
       <sql>SELECT * FROM tst.tareas_planificadas tp&#xd;JOIN tst.origen_tarea_planficada otp on otp.tapl_id = tp.tapl_id&#xd;WHERE tp.case_id = cast(:case_id as integer)</sql>
       <result outputType="json">{&#xd;  "tareas": {&#xd;    "tarea": [&#xd;        {&#xd;            "tapl_id":"$tapl_id",&#xd;            "nombre":"$nombre",&#xd;            "user_id":"$user_id",&#xd;            "info_id":"$info_id",&#xd;            "case_id":"$case_id",&#xd;            "tare_id":"$tare_id",&#xd;            "fecha":"$fecha",&#xd;            "origen":"$origen",&#xd;            "orta_id":"$orta_id",&#xd;            "proc_id":"$proc_id",&#xd;            "estado":"$estado",&#xd;            "descripcion":"$descripcion",&#xd;            "@getTareaRecursos":"$tapl_id-&gt;tapl_id",&#xd;            "@getSubtareas":"$tare_id-&gt;tare_id"&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="case_id" sqlType="STRING"/>

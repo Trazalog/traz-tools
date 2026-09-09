@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="emprIdInjector" xmlns="http://ws.apache.org/ns/synapse">
+
+    <!-- Inject empr_id from validated JWT claim as transport header for downstream services.
+         Must be called after jwtValidator (depends on jwt_empr_id context property). -->
+    <header name="X-Empr-Id"
+            scope="transport"
+            expression="get-property('jwt_empr_id')"/>
+
+    <log level="custom">
+        <property name="text"    value="#TRAZA | MCP | EmprIdInjector | X-Empr-Id inyectado"/>
+        <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+    </log>
+
+</sequence>

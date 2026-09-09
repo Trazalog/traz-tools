@@ -1,0 +1,1385 @@
+<api xmlns="http://ws.apache.org/ns/synapse" name="toolsMCPAPI" context="/tools/mcp">
+   <!-- ══════════════════════════════════════════════════════════════
+        E2-MCP-11 (ADR-013): fachada ÚNICA y DELGADA de la capa MCP.
+
+        Esta API NO reimplementa lógica de negocio. Por cada tool:
+          1. Resuelve empr_id UNA vez (sequence emprIdFromHeader, ADR-009 —
+             la misma que ya usa toolsMANAPI, sin cambios).
+          2. Rutea al DataService/lógica que YA existe (mismo patrón que
+             toolsMANAPI: fn:concat($ctx:dataservices_url, '/<DataService>/...')).
+
+        Reemplaza, resource por resource, a los recursos /mcp/* hoy repartidos
+        entre toolsMANAPI (y, cuando se sumen, los de almacenes) — ver ADR-013
+        decisión #1 y #2. Rutas internas prefijadas por módulo: /mcp/man/...,
+        /mcp/alm/... (decisión #2). Nombres de tool con prefijo man_/alm_
+        (decisión #3) — el nombre de tool lo define la spec OpenAPI que se
+        publique en el Publisher (Tarea 3.4), no este artefacto MI.
+
+        Esta tarea (E2-MCP-11) implementa UNA sola tool de punta a punta
+        (man_get_equipos) para validar el patrón completo antes de migrar el
+        resto (Tarea 3.2). Es EXACTAMENTE la misma llamada que ya hace
+        toolsMANAPI en /mcp/equipos (mismo DataService, mismo query, mismo
+        formato de URL) — se copia el patrón verificado, no se reinventa.
+   -->
+
+   <!-- man_get_equipos — lista de equipos activos de la empresa del JWT.
+        Réplica 1:1 del recurso GET /mcp/equipos de toolsMANAPI.xml, bajo la
+        ruta prefijada por módulo que define ADR-013. -->
+   <resource methods="GET" uri-template="/mcp/man/equipos">
+      <inSequence>
+         <!-- ADR-009: deriva empr_id del backend JWT (X-JWT-Assertion) que firma el APIM. -->
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="uri.var.getEquipos_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANEquiposDataService/mcp/equipos/',get-property('jwt_mysql_empresa_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"              value="#TRAZA | MCP | man_get_equipos | iniciando (toolsMCPAPI, fachada ADR-013)"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="url"               expression="$ctx:uri.var.getEquipos_url"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <!-- ADR-008 fix: un GET sin body NO debe enviar Content-Type: application/json;
+              rompe el JsonStreamBuilder del DSS (NullPointerException: charsetName → 500).
+              El Accept ya define el formato de salida JSON. -->
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getEquipos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/equipos - MANEquiposDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_equipos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- ══════════════════════════════════════════════════════════════
+        E2-MCP-12 (ADR-013): resto de las tools de mantenimiento.
+        Cada resource de acá abajo es réplica 1:1 de su equivalente en
+        toolsMANAPI.xml — mismo DataService, misma query, mismo flujo.
+        Solo cambia la ruta (prefijo /mcp/man/...) y las etiquetas de log
+        (toolsMCPAPI en vez de toolsMANAPI). Sin lógica nueva.
+   ══════════════════════════════════════════════════════════════ -->
+
+   <!-- man_get_equipo — detalle de un equipo. Réplica de GET /mcp/equipo/{equi_id}
+        de toolsMANAPI. DataService: MANDataService.getEquipoIsolated. -->
+   <resource methods="GET" uri-template="/mcp/man/equipo/{equi_id}">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="uri.var.getEquipo_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/equipo/',get-property('jwt_mysql_empresa_id'),'/',get-property('uri.var.equi_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"              value="#TRAZA | MCP | man_get_equipo | iniciando (toolsMCPAPI)"/>
+            <property name="equi_id"           expression="get-property('uri.var.equi_id')"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="url"               expression="$ctx:uri.var.getEquipo_url"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getEquipo_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/equipo - MANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_equipo (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_create_ot — crea una OT correctiva. Réplica de POST /mcp/ot de
+        toolsMANAPI: INSERT solicitud → GET id → POST BPM → PUT case_id,
+        con rollback (DELETE solicitud [+ DELETE instancia BPM]) si algún
+        paso falla (ADR-003, Opción A). NO reimplementa el flujo — mismo
+        DataService, mismo proceso Bonita, mismo mecanismo de rollback. -->
+   <resource methods="POST" uri-template="/mcp/man/ot">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="equipo_id"  expression="json-eval($.equipo_id)"/>
+         <property name="descripcion" expression="json-eval($.descripcion)"/>
+
+         <!-- f_solicitado: timestamp servidor -->
+         <script language="js"><![CDATA[
+            var sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            mc.setProperty("f_solicitado", sdf.format(new java.util.Date()));
+         ]]></script>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"      value="#TRAZA | MCP | man_create_ot | iniciando (toolsMCPAPI)"/>
+            <property name="equipo_id" expression="get-property('equipo_id')"/>
+            <property name="empr_id"   expression="get-property('jwt_mysql_empresa_id')"/>
+         </log>
+
+         <!-- Paso 1: INSERT solicitud_reparacion -->
+         <payloadFactory media-type="json">
+            <format>{"solicitudRepracion":{"f_solicitado":"$1","id_equipo":"$2","estado":"S","usrId":"0","solicitante":"mcp-agent","causa":"$3","foto":"","id_empresa":"$4"}}</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('f_solicitado')"/>
+               <arg evaluator="xml" expression="get-property('equipo_id')"/>
+               <arg evaluator="xml" expression="get-property('descripcion')"/>
+               <arg evaluator="xml" expression="get-property('jwt_mysql_empresa_id')"/>
+            </args>
+         </payloadFactory>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.solicitud_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.solicitud_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/man/ot - INSERT solicitud failed" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+
+         <!-- Paso 2: GET id de la solicitud recién creada -->
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.ultimaSolicitud_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio/ultima/',get-property('equipo_id'))"/>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.ultimaSolicitud_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/man/ot - GET ultima solicitud failed" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <property name="sose_id" expression="json-eval($.resultado.sose_id)"/>
+
+         <!-- Paso 3: POST BPM — instanciar proceso.
+              Session vacía: bpmAPICallTemplate hace auto-login en 401. -->
+         <payloadFactory media-type="json">
+            <format>{"nombre_proceso":"Proceso de Mantenimiento AssetPlanner SIM","payload":{"idSolicitudServicio":"$1","idOT":"0"},"session":"","emprId":"$2"}</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('sose_id')"/>
+               <arg evaluator="xml" expression="get-property('jwt_mysql_empresa_id')"/>
+            </args>
+         </payloadFactory>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.bpm_url"
+                   expression="fn:concat($ctx:api_url,'/bpm/proceso/instancia')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.bpm_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Rollback Opción A: DELETE solicitud si BPM falla -->
+               <payloadFactory media-type="json">
+                  <format>{"_delete_solicitudServicio":{"soco_id":"$1"}}</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('sose_id')"/>
+                  </args>
+               </payloadFactory>
+               <property name="uri.var.deleteSolicitud_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio')"/>
+               <call>
+                  <endpoint>
+                     <http method="DELETE" uri-template="{uri.var.deleteSolicitud_url}"/>
+                  </endpoint>
+               </call>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/man/ot - BPM failed, solicitud rolled back" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <property name="case_id" expression="json-eval($.payload.caseId)" type="STRING"/>
+
+         <!-- Paso 4: PUT case_id en solicitud -->
+         <payloadFactory media-type="json">
+            <format>{"_put_solicitudServicio_caseid":{"case_id":"$1","sose_id":"$2"}}</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('case_id')"/>
+               <arg evaluator="xml" expression="get-property('sose_id')"/>
+            </args>
+         </payloadFactory>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.caseId_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio/caseid')"/>
+         <call>
+            <endpoint>
+               <http method="PUT" uri-template="{uri.var.caseId_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Rollback Opción A: DELETE solicitud + DELETE instancia BPM -->
+               <payloadFactory media-type="json">
+                  <format>{"_delete_solicitudServicio":{"soco_id":"$1"}}</format>
+                  <args>
+                     <arg evaluator="xml" expression="get-property('sose_id')"/>
+                  </args>
+               </payloadFactory>
+               <property name="uri.var.deleteSolicitud_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/solicitudServicio')"/>
+               <call>
+                  <endpoint>
+                     <http method="DELETE" uri-template="{uri.var.deleteSolicitud_url}"/>
+                  </endpoint>
+               </call>
+               <property name="uri.var.deleteBPM_url"
+                         expression="fn:concat($ctx:api_url,'/bpm/proceso/instancia/')"/>
+               <call>
+                  <endpoint>
+                     <http method="DELETE" uri-template="{uri.var.deleteBPM_url}"/>
+                  </endpoint>
+               </call>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/man/ot - caseid update failed, solicitud and BPM rolled back" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+
+         <loopback/>
+      </inSequence>
+      <outSequence>
+         <payloadFactory media-type="json">
+            <format>{"resultado":"ok","ot_id":"$1","case_id":"$2","estado":"S"}</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('sose_id')"/>
+               <arg evaluator="xml" expression="get-property('case_id')"/>
+            </args>
+         </payloadFactory>
+         <send/>
+      </outSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error general en MCP man_create_ot (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_ots — lista de OTs de la empresa del JWT. Réplica de GET /mcp/ot
+        de toolsMANAPI. Param ?estado= opcional (sin estado: todo excepto AN). -->
+   <resource methods="GET" uri-template="/mcp/man/ot">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- Leer ?estado= del request entrante; vacío si no viene -->
+         <property name="ot_estado_filter"
+                   expression="get-property('query.param.estado')"
+                   scope="default" type="STRING"/>
+         <filter xpath="not(boolean(get-property('ot_estado_filter')))">
+            <then>
+               <property name="ot_estado_filter" value="" scope="default" type="STRING"/>
+            </then>
+         </filter>
+
+         <property name="uri.var.listaOTs_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/ots/',get-property('jwt_mysql_empresa_id'),'?estado=',get-property('ot_estado_filter'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | man_get_ots | lista (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_mysql_empresa_id')"/>
+            <property name="estado"  expression="get-property('ot_estado_filter')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.listaOTs_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <!-- El backend responde 202 Accepted y <respond/> lo propaga tal cual.
+                    La OpenAPI declara 200/401/500, asi que el MCP Server recibe un
+                    status fuera del contrato y marca la tool como fallida: el pedido
+                    queda creado y el cliente ve "Error occurred during tool execution".
+                    La operacion es sincrona y ya termino, asi que 200 es lo correcto. -->
+               <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/ot - MANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_ots (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_ot — detalle de OT filtrado por empresa del JWT. Réplica de
+        GET /mcp/ot/{id_solicitud} de toolsMANAPI. -->
+   <resource methods="GET" uri-template="/mcp/man/ot/{id_solicitud}">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="uri.var.detalleOT_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/ot/',get-property('jwt_mysql_empresa_id'),'/',get-property('uri.var.id_solicitud'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"         value="#TRAZA | MCP | man_get_ot | detalle (toolsMCPAPI)"/>
+            <property name="id_solicitud" expression="get-property('uri.var.id_solicitud')"/>
+            <property name="empr_id"      expression="get-property('jwt_mysql_empresa_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.detalleOT_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/ot/{id} - MANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_ot detalle (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_preventivos — plan de mantenimiento preventivo de la empresa.
+        Habilita las tres preguntas de gestión de activos que hoy no se pueden
+        responder: qué está vencido, qué equipos no tienen plan (cruzando contra
+        man_get_equipos) y cuáles de esos son críticos.
+        Devuelve la lectura actual del horómetro junto al intervalo, para que el
+        agente pueda estimar cuánto falta en los planes por Horas/Km/Ciclos. -->
+   <!-- man_get_lecturas — control del horometro por equipo: cuando fue la
+        ultima lectura y cuantos dias pasaron. Sin lecturas al dia, los
+        preventivos por Horas/Km/Ciclos no se pueden evaluar. -->
+   <resource methods="GET" uri-template="/mcp/man/lecturas">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="uri.var.getLecturas_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/lecturas/',get-property('jwt_mysql_empresa_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"              value="#TRAZA | MCP | man_get_lecturas | iniciando (toolsMCPAPI)"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getLecturas_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/lecturas - MANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_lecturas (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <resource methods="GET" uri-template="/mcp/man/preventivos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="uri.var.getPreventivos_url"
+                   expression="fn:concat($ctx:dataservices_url,'/MANDataService/mcp/preventivos/',get-property('jwt_mysql_empresa_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"              value="#TRAZA | MCP | man_get_preventivos | iniciando (toolsMCPAPI)"/>
+            <property name="mysql_empresa_id"  expression="get-property('jwt_mysql_empresa_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getPreventivos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/man/preventivos - MANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_preventivos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- ══════════════════════════════════════════════════════════════
+        E2-MCP-13 (ADR-013): tools de Almacenes. A diferencia de mantenimiento
+        (que replica la lógica de toolsMANAPI inline), estas 4 tools son
+        FACHADA DELGADA de verdad: solo resuelven empr_id del JWT y delegan
+        toda la orquestación a toolsALMAPI (nueva, ver artifacts/apis/
+        toolsALMAPI.xml) — que recibe empr_id como parámetro explícito, no
+        derivado de un header. Decisión de Rodolfo: así toolsALMAPI queda
+        reusable a futuro por el PHP de v2 (que hoy hace esta orquestación
+        a mano, sin rollback), no solo por el MCP.
+   ══════════════════════════════════════════════════════════════ -->
+
+   <!-- alm_get_stock — lista de artículos con stock agregado de la empresa. -->
+   <resource methods="GET" uri-template="/mcp/alm/stock">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              alm.alm_lotes.empr_id, que es el id de core.empresas (ADR-012). -->
+         <property name="f_depo"   expression="fn:concat('',get-property('query.param.depo_id'))"/>
+         <property name="f_tipo"   expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <property name="f_buscar" expression="fn:concat('',get-property('query.param.buscar'))"/>
+
+         <property name="uri.var.almStock_url"
+                   expression="fn:concat($ctx:api_url,'/alm/stock/',get-property('jwt_empr_id'),'?depo_id=',$ctx:f_depo,'&amp;tipo=',$ctx:f_tipo,'&amp;buscar=',$ctx:f_buscar)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_stock | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almStock_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/stock - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_stock (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- alm_get_depositos — depósitos de la empresa, con su establecimiento.
+        Habilita el encadenado alm_get_stock -> alm_get_depositos ->
+        alm_crear_pedido_materiales: sin esta tool el agente no tiene de dónde
+        sacar el depo_id que exige el alta del pedido. -->
+   <!-- alm_get_vencimientos — lotes por vencer o vencidos, con dias restantes.
+        Para insumos con vida util (lubricantes, adhesivos, reactivos). -->
+   <resource methods="GET" uri-template="/mcp/alm/vencimientos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
+         <property name="uri.var.almVencimientos_url"
+                   expression="fn:concat($ctx:api_url,'/alm/vencimientos/',get-property('jwt_empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_vencimientos | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almVencimientos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/vencimientos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_vencimientos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <resource methods="GET" uri-template="/mcp/alm/movimientos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              el empr_id de core.empresas (ADR-012). Los filtros van vacios si el
+              agente no los manda; toolsALMAPI los traduce al centinela 'TODOS'. -->
+         <property name="f_tipo" expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <property name="f_depo" expression="fn:concat('',get-property('query.param.depo_id'))"/>
+         <property name="f_arti" expression="fn:concat('',get-property('query.param.arti_id'))"/>
+         <property name="f_lote" expression="fn:concat('',get-property('query.param.lote_id'))"/>
+
+         <property name="uri.var.almMovimientos"
+                   expression="fn:concat($ctx:api_url,'/alm/movimientos/',get-property('jwt_empr_id'),'?tipo=',$ctx:f_tipo,'&amp;desde=',$ctx:f_desde,'&amp;hasta=',$ctx:f_hasta,'&amp;depo_id=',$ctx:f_depo,'&amp;arti_id=',$ctx:f_arti,'&amp;lote_id=',$ctx:f_lote)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_movimientos | iniciando (toolsMCPAPI -&gt; toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almMovimientos}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/movimientos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_movimientos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/alm/entregas">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              el empr_id de core.empresas (ADR-012). Los filtros van vacios si el
+              agente no los manda; toolsALMAPI los traduce al centinela 'TODOS'. -->
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <property name="f_obra" expression="fn:concat('',get-property('query.param.obra'))"/>
+         <property name="f_depo" expression="fn:concat('',get-property('query.param.depo_id'))"/>
+
+         <property name="uri.var.almEntregas"
+                   expression="fn:concat($ctx:api_url,'/alm/entregas/',get-property('jwt_empr_id'),'?desde=',$ctx:f_desde,'&amp;hasta=',$ctx:f_hasta,'&amp;obra=',$ctx:f_obra,'&amp;depo_id=',$ctx:f_depo)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_entregas | iniciando (toolsMCPAPI -&gt; toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almEntregas}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/entregas - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_entregas (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/alm/movimientos-internos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- usa jwt_empr_id (id de PostgreSQL) — NUNCA el empr_id_mysql de assetv2.
+              ALMDataService corre sobre ToolsDataSource (PostgreSQL) y filtra por
+              el empr_id de core.empresas (ADR-012). Los filtros van vacios si el
+              agente no los manda; toolsALMAPI los traduce al centinela 'TODOS'. -->
+         <property name="f_estado" expression="fn:concat('',get-property('query.param.estado'))"/>
+         <property name="f_origen" expression="fn:concat('',get-property('query.param.origen'))"/>
+         <property name="f_destino" expression="fn:concat('',get-property('query.param.destino'))"/>
+         <property name="f_moin" expression="fn:concat('',get-property('query.param.moin_id'))"/>
+
+         <property name="uri.var.almMovInternos"
+                   expression="fn:concat($ctx:api_url,'/alm/movimientos-internos/',get-property('jwt_empr_id'),'?estado=',$ctx:f_estado,'&amp;origen=',$ctx:f_origen,'&amp;destino=',$ctx:f_destino,'&amp;moin_id=',$ctx:f_moin)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_movimientos_internos | iniciando (toolsMCPAPI -&gt; toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almMovInternos}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/movimientos-internos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_movimientos_internos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/alm/depositos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
+         <property name="uri.var.almDepositos_url"
+                   expression="fn:concat($ctx:api_url,'/alm/depositos/',get-property('jwt_empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_depositos | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almDepositos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/depositos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_depositos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- alm_get_pedidos_materiales — lista de pedidos de la empresa. -->
+   <resource methods="GET" uri-template="/mcp/alm/pedidos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
+         <property name="uri.var.almPedidos_url"
+                   expression="fn:concat($ctx:api_url,'/alm/pedidos/',get-property('jwt_empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_pedidos_materiales | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almPedidos_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/pedidos - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_pedidos_materiales (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- alm_get_pedido_material — detalle de un pedido; vacío si es de otra empresa. -->
+   <resource methods="GET" uri-template="/mcp/alm/pedido/{pema_id}">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
+         <property name="uri.var.almPedido_url"
+                   expression="fn:concat($ctx:api_url,'/alm/pedido/',get-property('uri.var.pema_id'),'/',get-property('jwt_empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_get_pedido_material | detalle (toolsMCPAPI -> toolsALMAPI)"/>
+            <property name="pema_id" expression="get-property('uri.var.pema_id')"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.almPedido_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/alm/pedido - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_get_pedido_material (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- alm_crear_pedido_materiales — crea un pedido de materiales. Toda la
+        orquestación (INSERT + BPM + rollback) vive en toolsALMAPI; acá solo
+        se resuelve empr_id del JWT y se inyecta en el payload antes de
+        delegar. El agente NUNCA manda empr_id — si lo manda, se ignora y
+        se pisa con el del JWT. -->
+   <resource methods="POST" uri-template="/mcp/alm/pedido">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- Inyectar empr_id del JWT en el body ANTES de delegar — nunca el
+              que mande el agente. justificacion/ortr_id/articulos pasan tal
+              cual vinieron del request. -->
+         <!-- jwt_empr_id (PostgreSQL), no empr_id_mysql — ver nota en alm_get_stock -->
+         <script language="js"><![CDATA[
+            var body = mc.getPayloadJSON();
+            body.empr_id = "" + mc.getProperty('jwt_empr_id');
+            mc.setPayloadJSON(body);
+         ]]></script>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_crear_pedido_materiales | iniciando (toolsMCPAPI -> toolsALMAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="uri.var.almCrearPedido_url"
+                   expression="fn:concat($ctx:api_url,'/alm/pedido')"/>
+
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.almCrearPedido_url}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then>
+               <!-- El backend responde 202 Accepted y <respond/> lo propaga tal cual.
+                    La OpenAPI declara 200/401/500, asi que el MCP Server recibe un
+                    status fuera del contrato y marca la tool como fallida: el pedido
+                    queda creado y el cliente ve "Error occurred during tool execution".
+                    La operacion es sincrona y ya termino, asi que 200 es lo correcto. -->
+               <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/alm/pedido - toolsALMAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_crear_pedido_materiales (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_kpi_disponibilidad — porcentaje del tiempo que la flota estuvo operativa. Es el KPI que el
+         cliente presenta a su propio cliente.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/disponibilidad">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_disponibilidad requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiDisp_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/kpiDisponibilidadxFecha/',$ctx:emp,'/fecinicio/',$ctx:f_ini,'/fecfin/',$ctx:f_fin,'/idempr/',$ctx:emp,'/fecinicio2/',$ctx:f_ini,'/fecfin2/',$ctx:f_fin)"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_disponibilidad | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiDisp_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/disponibilidad - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_disponibilidad (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_kpi_mttr — tiempo medio de reparacion.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/mttr">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_mttr requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiMttr_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/KpiMttrxFecha/empresa/',$ctx:emp,'/fec_inicio/',$ctx:f_ini,'/fec_fin/',$ctx:f_fin,'/empresa2/',$ctx:emp,'/fec_inicio2/',$ctx:f_ini,'/fec_fin2/',$ctx:f_fin)"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_mttr | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiMttr_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/mttr - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_mttr (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_kpi_mttf — tiempo medio entre fallas.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/mttf">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_mttf requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiMttf_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/KpiMttfxFecha/empresa/',$ctx:emp,'/fec_inicio/',$ctx:f_ini,'/fec_fin/',$ctx:f_fin,'/empresa2/',$ctx:emp,'/fec_inicio2/',$ctx:f_ini,'/fec_fin2/',$ctx:f_fin)"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_mttf | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiMttf_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/mttf - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_mttf (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- man_get_kpi_fallas — cantidad de fallas registradas en el periodo.
+         Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin
+         modificarla: el numero que devuelve esta tool es EXACTAMENTE el que ve
+         el cliente en pantalla. Las salvedades sobre como se calcula estan en
+         doc/mantenimiento/kpis-consultas-a-ingenieria.md.
+         fec_inicio y fec_fin son obligatorios, formato YYYY-MM-DD. -->
+   <resource methods="GET" uri-template="/mcp/man/kpi/fallas">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url"
+                   expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_ini" expression="fn:concat('',get-property('query.param.fec_inicio'))"/>
+         <property name="f_fin" expression="fn:concat('',get-property('query.param.fec_fin'))"/>
+         <!-- usa jwt_mysql_empresa_id (id nativo assetv2) — nunca el empr_id de Postgres -->
+         <property name="emp"   expression="fn:concat('',get-property('jwt_mysql_empresa_id'))"/>
+
+         <!-- sin rango de fechas la query no tiene sentido: cortar con un error
+              explicativo en vez de dejar que el DataService falle sin contexto -->
+         <filter xpath="fn:string-length($ctx:f_ini) = 0 or fn:string-length($ctx:f_fin) = 0">
+            <then>
+               <property name="TOOLS_ERROR"
+                         value="man_get_kpi_fallas requiere fec_inicio y fec_fin en formato YYYY-MM-DD"
+                         type="STRING"/>
+               <sequence key="toolsFault"/>
+            </then>
+            <else>
+               <property name="uri.var.getKpiFallos_url"
+                         expression="fn:concat($ctx:dataservices_url,'/MANDataService/getCantidadFallos/',$ctx:f_ini,'/',$ctx:f_fin,'/',$ctx:emp,'/all/all')"/>
+
+               <log level="custom" category="DEBUG">
+                  <property name="text"             value="#TRAZA | MCP | man_get_kpi_fallas | iniciando (toolsMCPAPI)"/>
+                  <property name="mysql_empresa_id" expression="get-property('jwt_mysql_empresa_id')"/>
+                  <property name="fec_inicio"       expression="$ctx:f_ini"/>
+                  <property name="fec_fin"          expression="$ctx:f_fin"/>
+               </log>
+
+               <header name="Accept" scope="transport" value="application/json"/>
+               <property name="messageType" scope="axis2" action="remove"/>
+               <property name="ContentType" scope="axis2" action="remove"/>
+               <header name="Content-Type" scope="transport" action="remove"/>
+               <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+               <call>
+                  <endpoint>
+                     <http method="GET" uri-template="{uri.var.getKpiFallos_url}"/>
+                  </endpoint>
+               </call>
+
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <respond/>
+                  </then>
+                  <else>
+                     <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+                     <property name="TOOLS_ERROR" value="GET /mcp/man/kpi/fallas - MANDataService error" type="STRING"/>
+                     <sequence key="toolsFault"/>
+                  </else>
+               </filter>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP man_get_kpi_fallas (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+</api>
