@@ -151,12 +151,22 @@ test.describe.serial('@alm @ciclo @ALM-UC-002 @ALM-UC-006 @ALM-UC-007 El ciclo d
 
       await new AlmacenesPage(page).abrir('pedidos');
       await expect(page.locator('table thead th').first()).toBeVisible({ timeout: 60_000 });
-      // Se busca el pedido de ESTA corrida por su justificación, que es única. Un conteo
-      // de filas miente por la fila de relleno de DataTables, y una negación de "Ningún
-      // dato" pasaría con el pedido de otra corrida: esto verifica el propio.
-      await expect(page.locator('#content'), 'el pedido creado tiene que aparecer en el listado').toContainText(
+
+      // Se busca el pedido de ESTA corrida por su justificación, que es única — y se lo
+      // busca CON EL BUSCADOR de la grilla, no mirando la página que quedó a la vista.
+      //
+      // Mirar la página visible funcionó las primeras veces y despues empezó a fallar:
+      // cada corrida deja un pedido, la grilla muestra 10 por página y el listado no
+      // declara ORDER BY, así que el pedido nuevo no tiene por qué caer en la primera.
+      // Un test que depende de eso caduca solo, y encima falla acusando al sistema.
+      const buscador = page.locator('#content input[type="search"]').first();
+      await expect(buscador).toBeVisible({ timeout: 30_000 });
+      await buscador.fill(MARCA);
+      await page.waitForTimeout(1500);
+
+      await expect(page.locator('#content'), 'el pedido creado tiene que aparecer al buscarlo').toContainText(
         MARCA,
-        { timeout: 60_000 },
+        { timeout: 30_000 },
       );
     } finally {
       await page.context().close();
