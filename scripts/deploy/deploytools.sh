@@ -176,8 +176,29 @@ xml_bien_formado() {
     esac
 }
 
-# Copia un XML validando que este bien formado. Un artefacto roto que llega al
-# servidor no se despliega y ademas ensucia el log del WSO2 en cada arranque.
+# Synapse identifica el artefacto por su atributo `name`, NO por el nombre del
+# archivo. Si no coinciden, el archivo viejo con ese mismo `name` sigue registrado y
+# el nuevo queda huerfano fallando en cada barrido del deployer con
+# "Duplicate resource definition by the name". Paso con toolsBPMAPI.xml, que
+# declaraba name="toolsbpmAPI".
+nombre_coincide() {
+    archivo="$1"; base=$(basename "$archivo" .xml)
+    declarado=$(grep -oE '<(api|sequence|template|localEntry)[^>]*name="[^"]*"' "$archivo" 2>/dev/null |
+                head -1 | sed -E 's/.*name="([^"]*)".*/\1/')
+    [ -z "$declarado" ] && return 0          # no declara nombre: nada que verificar
+    [ "$declarado" = "$base" ] && return 0
+
+    # AVISO y no error: un desajuste por si solo no rompe nada mientras haya UN solo
+    # archivo con ese `name`. Rompe cuando aparece un segundo. El script no puede
+    # saber que hay en el servidor, asi que lo informa y sigue — bloquear aca dejaria
+    # sin desplegar artefactos que hoy funcionan.
+    aviso "$(basename "$archivo"): declara name=\"$declarado\" pero el archivo se llama \"$base\". Si en el servidor ya hay otro archivo con ese name, este va a fallar con \"Duplicate resource definition\""
+    return 0
+}
+
+# Copia un XML validando que este bien formado y que su nombre coincida con el
+# `name` declarado. Un artefacto roto que llega al servidor no se despliega y
+# ademas ensucia el log del WSO2 en cada arranque.
 copiar_artefacto() {
     origen="$1"; destino="$2"; nombre=$(basename "$origen")
     case "$nombre" in
@@ -185,7 +206,8 @@ copiar_artefacto() {
             if ! xml_bien_formado "$origen"; then
                 falla "$nombre: XML mal formado, NO se despliega"
                 return 1
-            fi ;;
+            fi
+            nombre_coincide "$origen" || return 1 ;;
     esac
     if correr cp "$origen" "$destino/"; then
         DESPLEGADOS=$((DESPLEGADOS + 1)); log "    desplegado: $nombre -> $destino"
