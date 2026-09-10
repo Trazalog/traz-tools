@@ -73,6 +73,9 @@ log()   { [ -n "$LOG" ] && printf '%s\n' "$*" >> "$LOG"; }
 paso()  { printf '  %s\n' "$*"; log "--- $*"; }
 ok()    { printf '     ok   %s\n' "$*"; log "    OK: $*"; }
 aviso() { printf '     !    %s\n' "$*"; log "    AVISO: $*"; }
+# Para lo que es asi por diseno y sale en todos los despliegues. Va con marca neutra
+# a proposito: si se usa `!` para algo invariante, se termina ignorando los `!` de verdad.
+nota()  { printf '     ·    %s\n' "$*"; log "    NOTA: $*"; }
 falla() { printf '     ERROR %s\n' "$*"; log "    ERROR: $*"; ERRORES=$((ERRORES + 1)); }
 
 # Ejecuta un comando mandando toda su salida al log. Devuelve su codigo.
@@ -186,18 +189,40 @@ xml_bien_formado() {
 # el nuevo queda huerfano fallando en cada barrido del deployer con
 # "Duplicate resource definition by the name". Paso con toolsBPMAPI.xml, que
 # declaraba name="toolsbpmAPI".
+# Devuelve el `name` que declara un artefacto Synapse, o vacio si no declara.
+nombre_declarado() {
+    grep -oE '<(api|sequence|template|localEntry)[^>]*name="[^"]*"' "$1" 2>/dev/null |
+        head -1 | sed -E 's/.*name="([^"]*)".*/\1/'
+}
+
 nombre_coincide() {
-    archivo="$1"; base=$(basename "$archivo" .xml)
-    declarado=$(grep -oE '<(api|sequence|template|localEntry)[^>]*name="[^"]*"' "$archivo" 2>/dev/null |
-                head -1 | sed -E 's/.*name="([^"]*)".*/\1/')
+    archivo="$1"; destino="$2"; base=$(basename "$archivo" .xml)
+    declarado=$(nombre_declarado "$archivo")
     [ -z "$declarado" ] && return 0          # no declara nombre: nada que verificar
     [ "$declarado" = "$base" ] && return 0
 
-    # AVISO y no error: un desajuste por si solo no rompe nada mientras haya UN solo
-    # archivo con ese `name`. Rompe cuando aparece un segundo. El script no puede
-    # saber que hay en el servidor, asi que lo informa y sigue — bloquear aca dejaria
-    # sin desplegar artefactos que hoy funcionan.
-    aviso "$(basename "$archivo"): declara name=\"$declarado\" pero el archivo se llama \"$base\". Si en el servidor ya hay otro archivo con ese name, este va a fallar con \"Duplicate resource definition\""
+    # El desajuste POR SI SOLO no rompe nada: rompe cuando en el servidor ya hay OTRO
+    # archivo declarando ese mismo `name`. Antes esto se avisaba en pantalla en cada
+    # despliegue "por si acaso", lo que dejaba cuatro lineas de alarma permanentes sobre
+    # artefactos que funcionan — y un aviso que sale siempre es un aviso que se deja de
+    # leer. Como el script corre EN el servidor, no hay que suponer: se mira.
+    conflicto=""
+    for otro in "$destino"/*.xml; do
+        [ -f "$otro" ] || continue
+        [ "$(basename "$otro")" = "$(basename "$archivo")" ] && continue
+        if [ "$(nombre_declarado "$otro")" = "$declarado" ]; then
+            conflicto=$(basename "$otro"); break
+        fi
+    done
+
+    if [ -n "$conflicto" ]; then
+        falla "$(basename "$archivo"): declara name=\"$declarado\" y en el servidor \"$conflicto\" ya declara ese mismo name. Los dos van a fallar con \"Duplicate resource definition\" — hay que borrar el viejo del servidor. NO se despliega"
+        return 1
+    fi
+
+    # Sin conflicto no hay nada que hacer hoy, pero queda en el log para el dia que
+    # aparezca un segundo archivo con ese name.
+    log "    nota: $(basename "$archivo") declara name=\"$declarado\" (no coincide con el archivo, pero hoy no hay conflicto en $destino)"
     return 0
 }
 
@@ -212,7 +237,7 @@ copiar_artefacto() {
                 falla "$nombre: XML mal formado, NO se despliega"
                 return 1
             fi
-            nombre_coincide "$origen" || return 1 ;;
+            nombre_coincide "$origen" "$destino" || return 1 ;;
     esac
     if correr cp "$origen" "$destino/"; then
         DESPLEGADOS=$((DESPLEGADOS + 1)); log "    desplegado: $nombre -> $destino"
@@ -305,7 +330,7 @@ desplegar_synapse() {
         return 1
     fi
 
-    aviso "data-sources y registry NO se despliegan: van a mano"
+    nota "data-sources y registry no se despliegan por diseno: van a mano"
     return 0
 }
 
