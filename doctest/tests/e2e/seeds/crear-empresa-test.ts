@@ -72,6 +72,32 @@ const DATOS = {
   empleados: process.env.DOCTEST_SEED_EMPLEADOS ?? '5 a 20',
 };
 
+/**
+ * Variante irrepetible de una casilla de Gmail, usando PUNTOS.
+ *
+ * Gmail ignora los puntos de la parte local: admin.doctest@gmail.com y
+ * admindoctest@gmail.com son la misma casilla. Trazalog, en cambio, los ve como
+ * usuarios distintos, así que cada corrida puede estrenar administrador sin crear
+ * cuentas nuevas. Con 12 caracteres salen 2048 variantes.
+ *
+ * ¿Por qué puntos y no el `+`, que sería más legible? Porque el `+` NO FUNCIONA:
+ * el usernick es el correo completo y `toolsbpmAPI` lo mete sin escapar en un query
+ * string, donde un `+` crudo se decodifica como espacio. Bonita no encuentra al
+ * usuario, falla la asignación de rol y el alta se revierte entera. Es el hallazgo
+ * H-084, y hasta que se despliegue el arreglo este rodeo es lo que permite crear
+ * empresas de prueba con usuarios propios.
+ */
+export function variantePorPuntos(casilla: string, n: number): string {
+  const [local, dominio] = casilla.split('@');
+  let salida = local[0];
+  for (let i = 1; i < local.length; i++) {
+    // Cada bit de `n` decide si va un punto antes de esta letra.
+    if ((n >> (i - 1)) & 1) salida += '.';
+    salida += local[i];
+  }
+  return `${salida}@${dominio}`;
+}
+
 const IMAP = {
   host: process.env.DOCTEST_MAIL_IMAP_HOST ?? '',
   port: Number(process.env.DOCTEST_MAIL_IMAP_PORT ?? 993),
@@ -89,7 +115,16 @@ function abortar(motivo: string): never {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Cliente IMAP mínimo (LOGIN → SELECT → SEARCH → FETCH), sin dependencias. */
-function imapBuscarEnlace(asunto: string, minutos = 30): Promise<string | null> {
+/**
+ * Busca en la casilla el mail de activación DIRIGIDO A `destinatario`.
+ *
+ * El filtro por destinatario no es un lujo: la casilla es una sola —todas las corridas
+ * usan el mismo buzón, con el `+` de Gmail para distinguirse— así que buscar solo por
+ * asunto devuelve el mail de la corrida ANTERIOR y lo devuelve al instante, sin esperar
+ * al nuevo. Pasó exactamente eso: se activó la cuenta vieja y el alta siguió con el
+ * usuario equivocado.
+ */
+function imapBuscarEnlace(asunto: string, destinatario: string, minutos = 30): Promise<string | null> {
   return new Promise((resolveP, rejectP) => {
     const socket = tlsConnect({ host: IMAP.host, port: IMAP.port, servername: IMAP.host });
     let buffer = '';
@@ -110,7 +145,7 @@ function imapBuscarEnlace(asunto: string, minutos = 30): Promise<string | null> 
         enviar('SELECT INBOX');
       } else if (paso === 2 && /a2 OK/.test(buffer)) {
         buffer = '';
-        enviar(`SEARCH SINCE ${desde} SUBJECT "${asunto}"`);
+        enviar(`SEARCH SINCE ${desde} TO "${destinatario}" SUBJECT "${asunto}"`);
       } else if (paso === 3 && /a3 OK/.test(buffer)) {
         const ids = (/\* SEARCH([^\r\n]*)/.exec(buffer)?.[1] ?? '').trim().split(/\s+/).filter(Boolean);
         if (ids.length === 0) {
@@ -147,9 +182,9 @@ async function enlaceDesdeCasilla(casilla: Casilla): Promise<string> {
 
 async function obtenerEnlaceActivacion(): Promise<string> {
   if (IMAP.host && IMAP.pass) {
-    console.log(`→ Buscando el mail de activación en ${IMAP.user} (${IMAP.host})...`);
+    console.log(`→ Buscando el mail de activación para ${DATOS.email} en ${IMAP.user} (${IMAP.host})...`);
     for (let intento = 1; intento <= 10; intento++) {
-      const enlace = await imapBuscarEnlace('Activar cuenta');
+      const enlace = await imapBuscarEnlace('Activar cuenta', DATOS.email);
       if (enlace) {
         console.log('✓ Enlace de activación encontrado');
         return enlace;
@@ -247,6 +282,14 @@ async function completarFormulario(page: Page): Promise<void> {
 }
 
 async function crearEmpresa(page: Page): Promise<void> {
+  // Esperar el formulario ANTES de mirar qué campos trae. El paso 3 responde un JSON con
+  // un redirect a register/crearEmpresa que sigue el JavaScript, así que al llegar acá el
+  // navegador todavía puede estar en la pantalla anterior. `count()` es una foto: no espera,
+  // devuelve 0 y el campo se saltea en silencio. No se notaba porque con una casilla
+  // descartable el dominio corporativo nunca se pide; con un webmail es obligatorio y el
+  // alta moría pidiéndolo. Se espera por el CUIT, que está siempre.
+  await page.locator('input[name="cuit"]').waitFor({ timeout: 60_000 });
+
   // El dominio corporativo solo se pide si el correo del registro es de un webmail público.
   const dominio = page.locator('input[name="company_domain"]');
   if (await dominio.count()) {
@@ -314,16 +357,6 @@ async function main(): Promise<void> {
     const sufijo = new Date().toISOString().slice(2, 16).replace(/[-:T]/g, '');
     DATOS.razonSocial = `${DATOS.razonSocial} ${sufijo}`;
     DATOS.cuit = `30-${sufijo.slice(-8)}-9`;
-    // El dominio también, y no es un detalle: los cinco usuarios por defecto se llaman
-    // SIEMPRE igual (usuario@, almacen@, …) y lo único que los distingue entre empresas es
-    // el dominio. Si se repite, `crearUsuariosPorDefecto()` encuentra que ya existen y
-    // solo les reasigna roles (Register.php:1127) en vez de crearlos — con lo cual la
-    // empresa "nueva" hereda los usuarios de otra y no se puede verificar nada sobre ellos.
-    // Ojo: hoy esto solo tiene efecto si el correo del registro es de un webmail público,
-    // que es cuando el alta pide el dominio corporativo. Ver H-083.
-    if (!process.env.DOCTEST_SEED_DOMINIO) {
-      DATOS.dominioEmpresa = `doctest-${sufijo}.com`;
-    }
     console.log('→ Casilla descartable creada:', DATOS.email);
   }
 
@@ -332,12 +365,6 @@ async function main(): Promise<void> {
   console.log('  registra  :', DATOS.email || '(casilla descartable, se crea al arrancar)');
   console.log('  empresa   :', DATOS.razonSocial, '| CUIT', DATOS.cuit, '|', DATOS.provincia);
   console.log('  dominio   :', DATOS.dominioEmpresa, '(solo se usa si el correo es de webmail)');
-  if (casilla) {
-    console.log('  ⚠ la casilla descartable es @uberip.com y mail.tm no ofrece otro dominio, así que');
-    console.log('    esta empresa va a COMPARTIR los usuarios por defecto con las corridas anteriores.');
-    console.log('    Para una empresa con usuarios propios hace falta registrarse con un webmail:');
-    console.log('    completá DOCTEST_MAIL_IMAP_HOST/PASS en .env. Ver H-083.');
-  }
   console.log('  modo      :', DESDE_ENLACE ? 'retomar desde el enlace de activación' : SOLO_REGISTRO ? 'solo el paso 1 (registro)' : 'completo');
   if (DRY_RUN) {
     console.log('\n(--dry-run: no se ejecuta nada)\n');
