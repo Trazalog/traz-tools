@@ -315,14 +315,12 @@
          <sequence key="toolsCreateRole"/>
          <property name="role_name" expression="fn:concat('Administrador ',$ctx:empr_nombre)" type="STRING"/>
          <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('SMA - Transportista ',$ctx:empr_nombre)" type="STRING"/>
-         <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('SMA - Generador ',$ctx:empr_nombre)" type="STRING"/>
-         <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('SMA - Operario Descarga ',$ctx:empr_nombre)" type="STRING"/>
-         <sequence key="toolsCreateRole"/>
-         <property name="role_name" expression="fn:concat('SMA - Operador de Bascula ',$ctx:empr_nombre)" type="STRING"/>
-         <sequence key="toolsCreateRole"/>
+         <!-- Los cuatro roles SMA-* (residuos) salieron de aca: ahora se configuran por
+              instancia en ALTA_EMPRESA_ROLES_EXTRA del constants.php de dnato, junto con
+              sus mapeos de actores. El motivo es que residuos corre en instalaciones
+              ON-PREMISE del cliente, que si crean empresas y si los necesitan, mientras que
+              en la nube no se usan nunca. Tenerlos aca obligaba a un despliegue manual de
+              artefacto WSO2 para cambiar la lista. Ver #516. -->
          <log level="custom" description="mapeos actor/membership Bonita post-roles">
             <property name="actormap" value="inicio empr_id_nombre grupo empresa"/>
             <property name="empr_id_nombre" expression="$ctx:empr_id_nombre"/>
@@ -355,38 +353,15 @@
          <property name="actormap_nombre_proceso" value="TST001 - Tarea Planificada" type="STRING"/>
          <property name="actormap_nombre_actor" value="Employee actor" type="STRING"/>
          <sequence key="toolsBpmActorGrupo"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM01 - Solicitud de Contenedores" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Solicitante Transporte" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Generador ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM01 - Solicitud de Contenedores" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Transportista" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Transportista ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM02 - Solicitud de Retiro de Contenedores" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Solicitante Transporte" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Generador ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM02 - Solicitud de Retiro de Contenedores" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Transportista" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Transportista ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM03 - Generación Orden de Transporte" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Operario Báscula" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Operador de Bascula ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM03 - Generación Orden de Transporte" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Operario Descarga" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Operario Descarga ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM03 - Generación Orden de Transporte" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Solicitante de Transporte" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Generador ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
-         <property name="actormap_nombre_proceso" value="TERSU-BPM03 - Generación Orden de Transporte" type="STRING"/>
-         <property name="actormap_nombre_actor" value="Transportista" type="STRING"/>
-         <property name="actormap_nombre_rol" expression="fn:concat($ctx:empr_id,'-',fn:concat('SMA - Transportista ',$ctx:empr_nombre))" type="STRING"/>
-         <sequence key="toolsBpmActorMembership"/>
+         <!-- Los mapeos de actores de TERSU (residuos) se sacaron del alta a pedido del PM.
+              Solo tres procesos son obligatorios para registrarse: Almacenes ("Pedido de
+              Recursos Materiales"), Mantenimiento ("proceso de Mantenimiento AssetPlanner")
+              y "TST001 - Tarea Planificada". TERSU y Yudi se dan de alta a mano y esas
+              empresas nunca se registran solas, asi que exigir sus procesos rompia el alta
+              en cualquier ambiente donde no estuvieran publicados — y por el bug de
+              toolsFault, la rompia colgada 30 s en vez de dar un error. Ver #516.
+              Los roles SMA-* los sigue creando toolsCreateRole: hacen falta para el alta
+              manual de TERSU. -->
          <loopback/>
       </inSequence>
       <outSequence>
