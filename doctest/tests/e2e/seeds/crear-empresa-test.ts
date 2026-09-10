@@ -314,6 +314,16 @@ async function main(): Promise<void> {
     const sufijo = new Date().toISOString().slice(2, 16).replace(/[-:T]/g, '');
     DATOS.razonSocial = `${DATOS.razonSocial} ${sufijo}`;
     DATOS.cuit = `30-${sufijo.slice(-8)}-9`;
+    // El dominio también, y no es un detalle: los cinco usuarios por defecto se llaman
+    // SIEMPRE igual (usuario@, almacen@, …) y lo único que los distingue entre empresas es
+    // el dominio. Si se repite, `crearUsuariosPorDefecto()` encuentra que ya existen y
+    // solo les reasigna roles (Register.php:1127) en vez de crearlos — con lo cual la
+    // empresa "nueva" hereda los usuarios de otra y no se puede verificar nada sobre ellos.
+    // Ojo: hoy esto solo tiene efecto si el correo del registro es de un webmail público,
+    // que es cuando el alta pide el dominio corporativo. Ver H-083.
+    if (!process.env.DOCTEST_SEED_DOMINIO) {
+      DATOS.dominioEmpresa = `doctest-${sufijo}.com`;
+    }
     console.log('→ Casilla descartable creada:', DATOS.email);
   }
 
@@ -322,6 +332,12 @@ async function main(): Promise<void> {
   console.log('  registra  :', DATOS.email || '(casilla descartable, se crea al arrancar)');
   console.log('  empresa   :', DATOS.razonSocial, '| CUIT', DATOS.cuit, '|', DATOS.provincia);
   console.log('  dominio   :', DATOS.dominioEmpresa, '(solo se usa si el correo es de webmail)');
+  if (casilla) {
+    console.log('  ⚠ la casilla descartable es @uberip.com y mail.tm no ofrece otro dominio, así que');
+    console.log('    esta empresa va a COMPARTIR los usuarios por defecto con las corridas anteriores.');
+    console.log('    Para una empresa con usuarios propios hace falta registrarse con un webmail:');
+    console.log('    completá DOCTEST_MAIL_IMAP_HOST/PASS en .env. Ver H-083.');
+  }
   console.log('  modo      :', DESDE_ENLACE ? 'retomar desde el enlace de activación' : SOLO_REGISTRO ? 'solo el paso 1 (registro)' : 'completo');
   if (DRY_RUN) {
     console.log('\n(--dry-run: no se ejecuta nada)\n');
@@ -330,6 +346,35 @@ async function main(): Promise<void> {
 
   const browser = await chromium.launch({ headless: !HEADED });
   const page = await browser.newPage({ ignoreHTTPSErrors: true, locale: 'es-AR' });
+
+  // Con DOCTEST_SEED_TRACE=1 se ve qué contesta el servidor en cada POST. El alta
+  // encadena llamadas a core, Asset, Bonita, roles y establecimiento, y cuando falla la
+  // pantalla dice siempre lo mismo —"No hubo conexión con el servidor de aplicaciones"—
+  // sin decir cuál de las cinco fue. Sin esto, diagnosticar es adivinar.
+  if (process.env.DOCTEST_SEED_TRACE === '1') {
+    // El tiempo importa tanto como el cuerpo: cuando el alta muere por timeout, el POST
+    // vuelve a los ~30 s —el CURLOPT_TIMEOUT de REST.php— y eso lo distingue de un
+    // recurso que no existe, que contesta al instante. Ver H-077.
+    const arranque = new Map<string, number>();
+    page.on('request', (r) => {
+      if (r.method() === 'POST') arranque.set(r.url(), Date.now());
+    });
+    page.on('response', async (r) => {
+      if (r.request().method() !== 'POST') return;
+      const t0 = arranque.get(r.url());
+      const tardanza = t0 ? `${((Date.now() - t0) / 1000).toFixed(1)} s` : '?';
+      let cuerpo = '';
+      try {
+        cuerpo = (await r.text()).replace(/\s+/g, ' ').slice(0, 300);
+      } catch {
+        cuerpo = '(sin cuerpo legible)';
+      }
+      console.log(
+        `  · POST ${r.status()} ${r.url().replace(/^https?:\/\/[^/]+/, '')} — ${tardanza}\n      ${cuerpo}`,
+      );
+    });
+    page.on('pageerror', (e) => console.log(`  · JS ERROR: ${e.message.slice(0, 160)}`));
+  }
   page.setDefaultNavigationTimeout(180_000);
   page.setDefaultTimeout(60_000);
   try {
