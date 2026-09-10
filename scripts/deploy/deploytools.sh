@@ -33,6 +33,7 @@
 #      PROPUESTAS" al pie.
 #
 #  @author rruiz
+#  v3.2  cero artefactos desplegados es ERROR, no exito silencioso
 #  v3.1  copia unica de artefactos: todo sale del proyecto Maven
 #  v3.0  APIs y artefactos Synapse, salida limpia, log completo, verificaciones
 #  v2.0  agregador de deploy de dss, deteccion de distribucion y mejoras varias
@@ -63,6 +64,7 @@ destino_de() {
 LOG=""
 ERRORES=0
 DESPLEGADOS=0
+TOTAL_SYN=0
 
 log()   { [ -n "$LOG" ] && printf '%s\n' "$*" >> "$LOG"; }
 paso()  { printf '  %s\n' "$*"; log "--- $*"; }
@@ -204,6 +206,15 @@ desplegar_dataservices() {
     for f in "$ARTEFACTOS"/data-services/*.dbs; do
         [ -f "$f" ] && { copiar_artefacto "$f" "$WSO2DSS" && n=$((n + 1)); }
     done
+    # Cero dataservices NO es un exito: es que el origen cambio de lugar y el
+    # despliegue no hizo nada. Paso exactamente eso cuando se unifico la copia de
+    # artefactos y el servidor todavia corria el script viejo, que leia de
+    # `_backend/api/dataservice/` — ese `cp` fallaba y el DEMO se quedaba con los
+    # dataservices de antes, sin que nada lo dijera.
+    if [ "$n" -eq 0 ]; then
+        falla "NINGUN dataservice desplegado — revisar que exista $ARTEFACTOS/data-services/"
+        return 1
+    fi
     ok "$n dataservices del producto"
 
     m=0
@@ -236,8 +247,20 @@ desplegar_synapse() {
         for f in "$origen"/*.xml; do
             [ -f "$f" ] && { copiar_artefacto "$f" "$destino" && n=$((n + 1)); }
         done
-        [ "$n" -gt 0 ] && ok "$n en $sub/"
+        if [ "$n" -gt 0 ]; then
+            ok "$n en $sub/"
+            TOTAL_SYN=$((TOTAL_SYN + n))
+        else
+            aviso "$tipo/ existe pero no tiene XML que desplegar"
+        fi
     done
+
+    # Las APIs son lo que el resto referencia: si no se desplego ninguna, el
+    # despliegue no sirvio de nada aunque los otros tipos hayan copiado bien.
+    if [ "$TOTAL_SYN" -eq 0 ]; then
+        falla "NINGUN artefacto Synapse desplegado — revisar $ARTEFACTOS"
+        return 1
+    fi
 
     aviso "data-sources y registry NO se despliegan: van a mano"
     return 0
