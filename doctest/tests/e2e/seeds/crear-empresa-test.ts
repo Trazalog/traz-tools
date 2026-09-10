@@ -336,15 +336,26 @@ async function main(): Promise<void> {
   // pantalla dice siempre lo mismo —"No hubo conexión con el servidor de aplicaciones"—
   // sin decir cuál de las cinco fue. Sin esto, diagnosticar es adivinar.
   if (process.env.DOCTEST_SEED_TRACE === '1') {
+    // El tiempo importa tanto como el cuerpo: cuando el alta muere por timeout, el POST
+    // vuelve a los ~30 s —el CURLOPT_TIMEOUT de REST.php— y eso lo distingue de un
+    // recurso que no existe, que contesta al instante. Ver H-077.
+    const arranque = new Map<string, number>();
+    page.on('request', (r) => {
+      if (r.method() === 'POST') arranque.set(r.url(), Date.now());
+    });
     page.on('response', async (r) => {
       if (r.request().method() !== 'POST') return;
+      const t0 = arranque.get(r.url());
+      const tardanza = t0 ? `${((Date.now() - t0) / 1000).toFixed(1)} s` : '?';
       let cuerpo = '';
       try {
         cuerpo = (await r.text()).replace(/\s+/g, ' ').slice(0, 300);
       } catch {
         cuerpo = '(sin cuerpo legible)';
       }
-      console.log(`  · POST ${r.status()} ${r.url().replace(/^https?:\/\/[^/]+/, '')}\n      ${cuerpo}`);
+      console.log(
+        `  · POST ${r.status()} ${r.url().replace(/^https?:\/\/[^/]+/, '')} — ${tardanza}\n      ${cuerpo}`,
+      );
     });
     page.on('pageerror', (e) => console.log(`  · JS ERROR: ${e.message.slice(0, 160)}`));
   }

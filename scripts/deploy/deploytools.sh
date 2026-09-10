@@ -10,6 +10,9 @@
 #    Todo sale de UNA sola copia, la del proyecto Maven:
 #      _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/
 #
+#    Sirve tambien para productos que NO tienen backend WSO2 —traz-comp-dnato es
+#    todo PHP—: en ese caso avisa y despliega solo el codigo, sin marcar error.
+#
 #  DONDE SE EJECUTA
 #    En el servidor, parado en el directorio que contiene al producto — el
 #    htdocs de Apache, por ejemplo /var/www/html:
@@ -221,23 +224,41 @@ copiar_artefacto() {
 
 desplegar_dataservices() {
     mkdir -p "$WSO2DSS" || { falla "no se pudo crear $WSO2DSS"; return 1; }
+
+    # Hay que separar dos situaciones que se parecen y no son lo mismo:
+    #
+    #   a) el producto NO tiene backend WSO2 (traz-comp-dnato es todo PHP). No hay
+    #      nada que desplegar y eso es lo correcto: se avisa y se sigue, igual que
+    #      hace el paso de Synapse. Marcarlo como error hacia que un despliegue
+    #      perfecto terminara en "1 errores".
+    #   b) el producto SI lo tiene, pero el directorio quedo vacio o la ruta cambio.
+    #      Eso es un despliegue que no hizo nada y hay que gritarlo: paso exactamente
+    #      cuando se unifico la copia de artefactos y el servidor todavia corria el
+    #      script viejo, que leia de `_backend/api/dataservice/` — ese `cp` fallaba y
+    #      el DEMO se quedaba con los dataservices de antes, sin que nada lo dijera.
+    #
+    # Los dataservices de los submodulos se buscan siempre, exista o no el proyecto
+    # Maven del producto: hay submodulos que traen los suyos (ddpe-tools-pro,
+    # sein-tools-almpantar).
     n=0
-    # Copia unica: los .dbs viven en el proyecto Maven junto al resto de los
-    # artefactos. Hasta v2.5 estaban duplicados tambien en `_backend/api/dataservice/`,
-    # y las dos copias venian divergiendo — de ahi salieron dos incidentes.
-    for f in "$ARTEFACTOS"/data-services/*.dbs; do
-        [ -f "$f" ] && { copiar_artefacto "$f" "$WSO2DSS" && n=$((n + 1)); }
-    done
-    # Cero dataservices NO es un exito: es que el origen cambio de lugar y el
-    # despliegue no hizo nada. Paso exactamente eso cuando se unifico la copia de
-    # artefactos y el servidor todavia corria el script viejo, que leia de
-    # `_backend/api/dataservice/` — ese `cp` fallaba y el DEMO se quedaba con los
-    # dataservices de antes, sin que nada lo dijera.
-    if [ "$n" -eq 0 ]; then
-        falla "NINGUN dataservice desplegado — revisar que exista $ARTEFACTOS/data-services/"
+    if [ -d "$ARTEFACTOS/data-services" ]; then
+        # Copia unica: los .dbs viven en el proyecto Maven junto al resto de los
+        # artefactos. Hasta v2.5 estaban duplicados tambien en `_backend/api/dataservice/`,
+        # y las dos copias venian divergiendo — de ahi salieron dos incidentes.
+        for f in "$ARTEFACTOS"/data-services/*.dbs; do
+            [ -f "$f" ] && { copiar_artefacto "$f" "$WSO2DSS" && n=$((n + 1)); }
+        done
+        if [ "$n" -eq 0 ]; then
+            falla "NINGUN dataservice desplegado — $ARTEFACTOS/data-services/ existe pero esta vacio"
+            return 1
+        fi
+        ok "$n dataservices del producto"
+    elif [ -d "$ARTEFACTOS" ]; then
+        falla "no se encuentra $ARTEFACTOS/data-services/ — la ruta de los artefactos cambio"
         return 1
+    else
+        aviso "el producto no tiene backend WSO2 propio, se omiten los dataservices"
     fi
-    ok "$n dataservices del producto"
 
     m=0
     for dire in "$PRODUCTO"/application/modules/*; do
@@ -252,7 +273,7 @@ desplegar_dataservices() {
 
 desplegar_synapse() {
     if [ ! -d "$ARTEFACTOS" ]; then
-        aviso "sin artefactos Synapse para este producto, se omite"
+        aviso "el producto no tiene backend WSO2 propio, se omiten las APIs y sequences"
         return 0
     fi
 
@@ -331,11 +352,7 @@ main() {
     actualizar_codigo || { resumen; return 1; }
 
     paso "4/6  desplegando dataservices"
-    if [ -d "$ARTEFACTOS" ]; then
-        desplegar_dataservices
-    else
-        falla "no se encuentra $ARTEFACTOS — sin artefactos que desplegar"
-    fi
+    desplegar_dataservices
 
     paso "5/6  desplegando APIs y artefactos Synapse"
     desplegar_synapse
