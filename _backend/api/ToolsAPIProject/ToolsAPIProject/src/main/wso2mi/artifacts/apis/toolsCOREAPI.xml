@@ -841,6 +841,16 @@
          <property name="rol_group_id" expression="json-eval($.group_id)" type="STRING"/>
          <property name="rol_role_id" expression="json-eval($.role_id)" type="STRING"/>
          <property name="rol_bpmSession" expression="json-eval($.bpmSession)" type="STRING"/>
+         <!-- OPCIONALES. Habilitan que asignar un rol tambien le de al usuario acceso a
+              AssetPlanner con el menu que le corresponde. Si no vienen, el recurso se
+              comporta igual que antes: es un agregado, no un cambio de contrato.
+                rol_empr_id    empr_id de PostgreSQL; aca se traduce al de AssetPlanner
+                rol_role_base  el rol SIN el sufijo de empresa. Se pide aparte porque
+                               `role` llega como "Responsable de Almacen &lt;empresa&gt;" y
+                               separar el sufijo dentro de Synapse es fragil; quien
+                               llama ya lo tiene a mano. -->
+         <property name="rol_empr_id" expression="json-eval($.empr_id)" type="STRING"/>
+         <property name="rol_role_base" expression="json-eval($.role_base)" type="STRING"/>
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="api_url" expression="$ctx:apiconf//api_url"/>
          <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd" name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
@@ -977,6 +987,26 @@
                </call>
                <property name="TOOLS_ERROR" value="POST BPM memberships con problemas, rollback BD realizado" type="STRING"/>
                <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <!-- Asignar un rol es la operacion que define QUE PUEDE HACER una persona, asi
+              que darle el acceso equivalente en AssetPlanner es parte de ella y no un
+              efecto colateral del que se ocupe quien llama. Poniendolo aca quedan
+              cubiertos de una vez los tres caminos que asignan roles —la registracion y
+              los dos puntos del ABM de usuarios— sin tocar ninguna pantalla.
+              Ver la regla en CLAUDE.md &gt; Convenciones de codigo. -->
+         <filter xpath="boolean(get-property('rol_empr_id')) and boolean(get-property('rol_role_base'))">
+            <then>
+               <property name="asset_rol_base" expression="$ctx:rol_role_base" scope="default" type="STRING"/>
+               <property name="asset_nick" expression="$ctx:rol_usernick" scope="default" type="STRING"/>
+               <property name="asset_empr_id" expression="$ctx:rol_empr_id" scope="default" type="STRING"/>
+               <sequence key="toolsAssetUserEmpresa"/>
+            </then>
+            <else>
+               <log level="custom" category="DEBUG">
+                  <property name="rol/asignar" value="sin empr_id o role_base: no se toca AssetPlanner"/>
+                  <property name="email" expression="$ctx:rol_email"/>
+               </log>
             </else>
          </filter>
          <payloadFactory media-type="json" description="respuesta ok asignar">
