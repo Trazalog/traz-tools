@@ -22,8 +22,27 @@
 
     NO FALLA SI EL ROL NO MAPEA A NINGUN GRUPO. Que un rol no de acceso a
     AssetPlanner es una decision de negocio explicita, no un error.
+
+    Y NUNCA INVOCA toolsFault, a proposito. toolsFault pone HTTP_SC 404 y RESPONDE,
+    asi que llamarlo desde aca convertiria el POST /rol/asignar entero en un 404:
+    PHP lo leeria como "Error al asignar el rol" y el alta de empresa se revertiria
+    completa. Paso exactamente eso en el DEMO el 2026-09-11, con la primera version
+    de esta sequence. El rol YA quedo asignado en Tools y en Bonita cuando se llega
+    aca; que ademas falle el acceso a AssetPlanner es un problema menor que se
+    registra en el log y se arregla despues, no algo por lo que tirar abajo una
+    empresa. Buscar en wso2carbon.log: toolsAssetUserEmpresa.
 -->
 <sequence name="toolsAssetUserEmpresa" xmlns="http://ws.apache.org/ns/synapse">
+
+    <!-- Apagar FORCE_ERROR_ON_SOAP_FAULT mientras dure esta sequence.
+         Quien la invoca lo deja en `true` con scope default, asi que una respuesta de
+         error del DataService LANZA EXCEPCION, la excepcion sube al faultSequence del
+         recurso, y ese llama a toolsFault, que responde 404. Resultado: un problema al
+         vincular en AssetPlanner tumbaba la asignacion de rol entera y con ella el alta
+         de empresa. Aca se revisan los codigos HTTP a mano, que es lo que corresponde
+         para una integracion que NO debe poder hacer fallar a la operacion que la
+         invoca. -->
+    <property name="FORCE_ERROR_ON_SOAP_FAULT" value="false" scope="default" type="STRING"/>
 
     <!-- ── 1) Que grupo le toca a este rol ──────────────────────────────────────
          Los cinco grupos los crea sp_create_empresa_groups_and_actions por cada
@@ -106,8 +125,12 @@
                     <!-- Sin el vinculo empr_id_mysql no hay a que empresa asociarlo.
                          Pasa con las empresas creadas mientras el paso 3.c estuvo roto
                          (issue #491): hay que reconciliarlas a mano. -->
-                    <property name="TOOLS_ERROR" value="La empresa no tiene empr_id_mysql: no se puede vincular el usuario en AssetPlanner" type="STRING"/>
-                    <sequence key="toolsFault"/>
+                    <log level="custom" category="ERROR">
+                        <property name="toolsAssetUserEmpresa" value="la empresa no tiene empr_id_mysql: NO se vincula al usuario en AssetPlanner"/>
+                        <property name="nick" expression="$ctx:asset_nick"/>
+                        <property name="empr_id" expression="$ctx:asset_empr_id"/>
+                        <property name="reconciliar" value="ver issue #491: las empresas creadas mientras el paso 3.c estuvo roto no tienen el vinculo"/>
+                    </log>
                 </then>
                 <else/>
             </filter>
@@ -158,8 +181,7 @@
                         <property name="empresa_asset" expression="$ctx:asset_empr_id_mysql"/>
                         <property name="detalle" expression="json-eval($)"/>
                     </log>
-                    <property name="TOOLS_ERROR" value="No se pudo vincular al usuario con su empresa en AssetPlanner" type="STRING"/>
-                    <sequence key="toolsFault"/>
+
                 </else>
             </filter>
         </then>
