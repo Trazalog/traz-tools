@@ -392,6 +392,34 @@
       <sql>DELETE FROM empresas WHERE id_empresa = cast(:id_empresa as INTEGER)</sql>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
+   <!-- Vincula un usuario de sisusers con su empresa, que es lo que el login de
+        AssetPlanner exige: Users::sessionStart_() hace JOIN usuarioasempresa y pide
+        tipo = 1. Sin esta fila el usuario existe, la clave es correcta, y el login
+        devuelve cero filas igual.
+
+        Resuelve usrId y grpId adentro de la propia sentencia porque:
+          · setUserAsset no tiene returnGeneratedKeys, asi que nadie conoce el usrId
+            de MariaDB; se lo busca por usrNick y no hay que tocar esa query.
+          · sisgroups.grpId es AUTO_INCREMENT y sisgroups tiene id_empresa, o sea que
+            CADA empresa estrena sus cinco grupos. El grpId NO es un valor fijo: lo
+            unico estable es el nombre. Los crea sp_create_empresa_groups_and_actions,
+            versionado en development/sql/asset-empresa-trigger.sql.
+
+        Si el usuario o el grupo no existen, el SELECT no devuelve filas y no inserta
+        NADA, sin error. Quien llama tiene que verificar el efecto, no asumirlo.
+
+        El ON DUPLICATE KEY UPDATE resuelve dos cosas: que reasignar un rol no rompa
+        por clave duplicada (la PK es empresaid+usrId), y que un usuario con varios
+        roles no BAJE de nivel. El :rango es la precedencia del grupo que se quiere
+        poner (1 Solicitante, 2 Mantenedor, 3 Supervisor de Taller, 4 Admin) y solo
+        pisa al actual si es mayor o igual. -->
+   <query id="setUsuarioAsEmpresa" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO usuarioasempresa (empresaid, usrId, fecha, tipo, grpId, estado)&#xd;SELECT g.id_empresa, u.usrId, NOW(), 1, g.grpId, 'AC'&#xd;FROM sisusers u&#xd;JOIN sisgroups g&#xd;  ON g.id_empresa = CAST(:empresaid AS UNSIGNED)&#xd; AND g.grpName    = :grpname&#xd;WHERE u.usrNick = :nick&#xd;ON DUPLICATE KEY UPDATE&#xd;  grpId  = IF(CAST(:rango AS SIGNED) &gt;= COALESCE((SELECT FIELD(a.grpName, 'Solicitante', 'Mantenedor', 'Supervisor de Taller', 'Admin') FROM sisgroups a WHERE a.grpId = usuarioasempresa.grpId), 0), VALUES(grpId), usuarioasempresa.grpId),&#xd;  estado = 'AC'</sql>
+      <param name="empresaid" sqlType="STRING"/>
+      <param name="nick" sqlType="STRING"/>
+      <param name="grpname" sqlType="STRING"/>
+      <param name="rango" sqlType="STRING"/>
+   </query>
    <query id="getListasPrecios" useConfig="ToolsDataSource">
       <sql>SELECT &#xd;    lp.lipr_id, &#xd;    lp.nombre, &#xd;    lp.detalle, &#xd;    lp.tipo, &#xd;    lp.empr_id, &#xd;    to_char(lp.fec_alta, 'YYYY-MM-DD HH24:MI') AS fec_alta, &#xd;    lp.usr_alta, &#xd;    lp.usr_app_alta, &#xd;    to_char(lp.fec_ult_modif, 'YYYY-MM-DD HH24:MI') AS fec_ult_modif, &#xd;    lp.usr_ult_modif, &#xd;    lp.usr_app_ult_modif, &#xd;    vlp.nro_version, &#xd;    vlp.descripcion&#xd;FROM &#xd;    core.listas_precios lp&#xd;LEFT JOIN &#xd;    core.versiones_listas_precios vlp &#xd;    ON lp.lipr_id = vlp.lipr_id&#xd;    AND vlp.nro_version = (&#xd;        SELECT MAX(vlp_inner.nro_version)&#xd;        FROM core.versiones_listas_precios vlp_inner&#xd;        WHERE vlp_inner.lipr_id = lp.lipr_id&#xd;    )&#xd;WHERE &#xd;    lp.empr_id = CAST(:empr_id AS INTEGER)&#xd;ORDER BY &#xd;    lp.nombre ASC;</sql>
       <result outputType="json">{&#xd;   "listas": {&#xd;      "lista": [&#xd;        {&#xd;          "lipr_id": "$lipr_id",&#xd;          "nombre": "$nombre",&#xd;          "detalle": "$detalle",&#xd;          "tipo": "$tipo",&#xd;          "empr_id": "$empr_id",&#xd;          "fec_alta": "$fec_alta",&#xd;          "usr_alta": "$usr_alta",&#xd;          "usr_app_alta": "$usr_app_alta",&#xd;          "fec_ult_modif": "$fec_ult_modif",&#xd;          "usr_ult_modif": "$usr_ult_modif",&#xd;          "usr_app_ult_modif": "$usr_app_ult_modif",&#xd;          "nro_version": "$nro_version",&#xd;          "descripcion": "$descripcion",&#xd;          "@getArticulosListaPrecios":"$lipr_id-&gt;lipr_id"&#xd;        }&#xd;      ]&#xd;   }&#xd;}</result>
@@ -1005,6 +1033,15 @@ WHERE email = :email AND "group" = :group AND "role" = :role</sql>
          <with-param name="lastName" query-param="lastName"/>
          <with-param name="pass" query-param="pass"/>
          <with-param name="image" query-param="image"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/assetuser/empresa">
+      <description>Vincula un usuario de AssetPlanner con su empresa y su grupo de menu</description>
+      <call-query href="setUsuarioAsEmpresa">
+         <with-param name="empresaid" query-param="empresaid"/>
+         <with-param name="nick" query-param="nick"/>
+         <with-param name="grpname" query-param="grpname"/>
+         <with-param name="rango" query-param="rango"/>
       </call-query>
    </resource>
    <resource method="GET" path="/listas_precios/{empr_id}">

@@ -54,6 +54,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Convenciones de código
 
+### 🧱 La lógica de negocio va en las APIs, no en los controllers
+
+**Siempre que se pueda, la lógica de negocio se abstrae en APIs y se saca de los controllers.** Así
+se unifica el comportamiento, aumenta la cohesión de las operaciones del sistema, y queda habilitado
+el acceso desde nuevos canales y tecnologías —**MCP** entre ellas— sin reimplementar nada.
+
+**Corolario**: si una operación tiene que impactar en varios subsistemas (PostgreSQL vía
+DataServices, Bonita, AssetPlanner), eso es **parte de la operación**, no del orquestador. Quien
+llama aporta datos; el API decide qué significan.
+
+Al diseñar un cambio que toca varios subsistemas, la pregunta no es "¿en qué controller lo pongo?"
+sino **"¿de qué operación forma parte?"**, y llevarlo al recurso del API que la representa. Si hace
+falta un dato que el API no recibe, se agrega al payload como campo **opcional** — pasar un dato no
+es lo mismo que delegar la decisión.
+
+El objetivo concreto: que desde todos los lados donde se cree un usuario se invoque siempre el mismo
+código.
+
 - **PHP**: PSR-12. Sin direct DB queries desde PHP — todos los datos van por WSO2 MI.
 - **APIs**: URLs en kebab-case, JSON keys en snake_case.
 - **BD**: nombres de tablas y columnas en snake_case.

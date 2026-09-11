@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    toolsAssetUserEmpresa — le da a un usuario acceso a AssetPlanner con el menu que
+    le corresponde por su rol.
+
+    POR QUE EXISTE
+      El login de AssetPlanner (Users::sessionStart_) no alcanza con el usuario y la
+      clave: hace JOIN contra `usuarioasempresa` y exige `tipo = 1`. Hasta el
+      2026-09-10 NADA en Tools escribia esa fila, asi que ningun usuario creado por
+      la registracion ni por el ABM podia entrar — y como el login devuelve cero
+      filas igual que con una clave mala, el sintoma era indistinguible.
+
+    POR QUE ES UNA SEQUENCE Y NO CODIGO SUELTO
+      Regla del proyecto: la logica de negocio va en las APIs, no en los controllers,
+      para que todos los canales —la registracion, el ABM, MCP mañana— invoquen el
+      mismo codigo. Esta sequence ES esa logica: decide que grupo le toca a cada rol.
+
+    ENTRADA (propiedades de contexto que setea quien la invoca)
+      asset_rol_base   nombre del rol SIN el sufijo de empresa ("Responsable de Almacen")
+      asset_nick       usernick del usuario, que es su correo
+      asset_empr_id    empr_id de PostgreSQL; aca adentro se traduce al de AssetPlanner
+
+    NO FALLA SI EL ROL NO MAPEA A NINGUN GRUPO. Que un rol no de acceso a
+    AssetPlanner es una decision de negocio explicita, no un error.
+-->
+<sequence name="toolsAssetUserEmpresa" xmlns="http://ws.apache.org/ns/synapse">
+
+    <!-- ── 1) Que grupo le toca a este rol ──────────────────────────────────────
+         Los cinco grupos los crea sp_create_empresa_groups_and_actions por cada
+         empresa (ver development/sql/asset-empresa-trigger.sql). Se resuelven por
+         NOMBRE y no por id: sisgroups.grpId es AUTO_INCREMENT, o sea que cada
+         empresa estrena los suyos.
+
+         El rango es la precedencia, y sirve para que un usuario con varios roles
+         nunca BAJE de nivel: 1 Solicitante, 2 Mantenedor, 3 Supervisor de Taller,
+         4 Admin. Lo aplica el ON DUPLICATE KEY UPDATE de la query.
+
+         "Almacen" no se usa a proposito: el procedure lo deja SIN acciones, asi que
+         quien caiga ahi entraria para ver un menu vacio. Por eso los responsables
+         de almacen y de pañol van a Solicitante.
+    -->
+    <property name="asset_grupo" value="" scope="default" type="STRING"/>
+    <property name="asset_rango" value="0" scope="default" type="STRING"/>
+    <switch source="get-property('asset_rol_base')" xmlns:ns="http://org.apache.synapse/xsd">
+        <case regex="Administrador">
+            <property name="asset_grupo" value="Admin" scope="default" type="STRING"/>
+            <property name="asset_rango" value="4" scope="default" type="STRING"/>
+        </case>
+        <case regex="Supervisor de Mantenimiento">
+            <property name="asset_grupo" value="Supervisor de Taller" scope="default" type="STRING"/>
+            <property name="asset_rango" value="3" scope="default" type="STRING"/>
+        </case>
+        <case regex="Planificador de Mantenimiento">
+            <property name="asset_grupo" value="Supervisor de Taller" scope="default" type="STRING"/>
+            <property name="asset_rango" value="3" scope="default" type="STRING"/>
+        </case>
+        <case regex="Mantenedor">
+            <property name="asset_grupo" value="Mantenedor" scope="default" type="STRING"/>
+            <property name="asset_rango" value="2" scope="default" type="STRING"/>
+        </case>
+        <case regex="Responsable de Almac.n">
+            <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
+            <property name="asset_rango" value="1" scope="default" type="STRING"/>
+        </case>
+        <case regex="Responsable de Pa.ol">
+            <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
+            <property name="asset_rango" value="1" scope="default" type="STRING"/>
+        </case>
+        <case regex="Solicitante de Almac.n">
+            <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
+            <property name="asset_rango" value="1" scope="default" type="STRING"/>
+        </case>
+        <case regex="Solicitante de Mantenimiento">
+            <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
+            <property name="asset_rango" value="1" scope="default" type="STRING"/>
+        </case>
+        <default>
+            <!-- Responsable de Produccion, Responsable de Lote, Planificador de
+                 Tareas, Responsable de Procesos y cualquier rol futuro. -->
+            <log level="custom" category="DEBUG">
+                <property name="toolsAssetUserEmpresa" value="el rol no da acceso a AssetPlanner, no se vincula"/>
+                <property name="rol" expression="$ctx:asset_rol_base"/>
+                <property name="nick" expression="$ctx:asset_nick"/>
+            </log>
+        </default>
+    </switch>
+
+    <filter source="boolean(get-property('asset_grupo'))" regex="true">
+        <then>
+            <!-- ── 2) Traducir el empr_id de PostgreSQL al de AssetPlanner ──────
+                 Lo escribio el paso 3.c del POST /empresa en core.empresas.empr_id_mysql.
+            -->
+            <property name="uri.var.asset_empresa_url"
+                      expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa/',$ctx:asset_empr_id)"
+                      scope="default" type="STRING"/>
+            <header name="Accept" scope="transport" value="application/json"/>
+            <call>
+                <endpoint>
+                    <http method="GET" uri-template="{uri.var.asset_empresa_url}"/>
+                </endpoint>
+            </call>
+            <property name="asset_empr_id_mysql" expression="json-eval($.empresa.empr_id_mysql)" scope="default" type="STRING"/>
+
+            <filter source="boolean(get-property('asset_empr_id_mysql'))" regex="false">
+                <then>
+                    <!-- Sin el vinculo empr_id_mysql no hay a que empresa asociarlo.
+                         Pasa con las empresas creadas mientras el paso 3.c estuvo roto
+                         (issue #491): hay que reconciliarlas a mano. -->
+                    <property name="TOOLS_ERROR" value="La empresa no tiene empr_id_mysql: no se puede vincular el usuario en AssetPlanner" type="STRING"/>
+                    <sequence key="toolsFault"/>
+                </then>
+                <else/>
+            </filter>
+
+            <!-- ── 3) Escribir el vinculo ───────────────────────────────────────
+                 Si el usuario no esta en sisusers, o el grupo no existe para esa
+                 empresa, la query no inserta NADA y devuelve 2xx igual. Por eso el
+                 paso 4 mira las filas afectadas y no se conforma con el codigo HTTP.
+            -->
+            <payloadFactory media-type="json" description="vincular usuario con su empresa en AssetPlanner">
+                <format>{ "_post_assetuser_empresa": { "empresaid":"$1", "nick":"$2", "grpname":"$3", "rango":"$4" } }</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('asset_empr_id_mysql')"/>
+                    <arg evaluator="xml" expression="get-property('asset_nick')"/>
+                    <arg evaluator="xml" expression="get-property('asset_grupo')"/>
+                    <arg evaluator="xml" expression="get-property('asset_rango')"/>
+                </args>
+            </payloadFactory>
+            <property name="uri.var.asset_vinculo_url"
+                      expression="fn:concat($ctx:dataservices_url,'/COREDataService/assetuser/empresa')"
+                      scope="default" type="STRING"/>
+            <call>
+                <endpoint>
+                    <http method="POST" uri-template="{uri.var.asset_vinculo_url}"/>
+                </endpoint>
+            </call>
+
+            <!-- ── 4) Verificar el EFECTO, no el codigo HTTP ────────────────────
+                 El DataService devuelve el numero de filas afectadas. Cero significa
+                 que falto el usuario en sisusers o el grupo en sisgroups.
+            -->
+            <property name="asset_afectadas" expression="json-eval($..affectedrowcount)" scope="default" type="STRING"/>
+            <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                <then>
+                    <log level="custom" category="INFO">
+                        <property name="toolsAssetUserEmpresa" value="usuario vinculado en AssetPlanner"/>
+                        <property name="nick" expression="$ctx:asset_nick"/>
+                        <property name="grupo" expression="$ctx:asset_grupo"/>
+                        <property name="empresa_asset" expression="$ctx:asset_empr_id_mysql"/>
+                        <property name="filas" expression="$ctx:asset_afectadas"/>
+                    </log>
+                </then>
+                <else>
+                    <log level="custom" category="ERROR">
+                        <property name="toolsAssetUserEmpresa" value="NO se pudo vincular al usuario en AssetPlanner"/>
+                        <property name="nick" expression="$ctx:asset_nick"/>
+                        <property name="grupo" expression="$ctx:asset_grupo"/>
+                        <property name="empresa_asset" expression="$ctx:asset_empr_id_mysql"/>
+                        <property name="detalle" expression="json-eval($)"/>
+                    </log>
+                    <property name="TOOLS_ERROR" value="No se pudo vincular al usuario con su empresa en AssetPlanner" type="STRING"/>
+                    <sequence key="toolsFault"/>
+                </else>
+            </filter>
+        </then>
+        <else/>
+    </filter>
+</sequence>
