@@ -72,6 +72,32 @@ const DATOS = {
   empleados: process.env.DOCTEST_SEED_EMPLEADOS ?? '5 a 20',
 };
 
+/**
+ * Variante irrepetible de una casilla de Gmail, usando PUNTOS.
+ *
+ * Gmail ignora los puntos de la parte local: admin.doctest@gmail.com y
+ * admindoctest@gmail.com son la misma casilla. Trazalog, en cambio, los ve como
+ * usuarios distintos, así que cada corrida puede estrenar administrador sin crear
+ * cuentas nuevas. Con 12 caracteres salen 2048 variantes.
+ *
+ * ¿Por qué puntos y no el `+`, que sería más legible? Porque el `+` NO FUNCIONA:
+ * el usernick es el correo completo y `toolsbpmAPI` lo mete sin escapar en un query
+ * string, donde un `+` crudo se decodifica como espacio. Bonita no encuentra al
+ * usuario, falla la asignación de rol y el alta se revierte entera. Es el hallazgo
+ * H-084, y hasta que se despliegue el arreglo este rodeo es lo que permite crear
+ * empresas de prueba con usuarios propios.
+ */
+export function variantePorPuntos(casilla: string, n: number): string {
+  const [local, dominio] = casilla.split('@');
+  let salida = local[0];
+  for (let i = 1; i < local.length; i++) {
+    // Cada bit de `n` decide si va un punto antes de esta letra.
+    if ((n >> (i - 1)) & 1) salida += '.';
+    salida += local[i];
+  }
+  return `${salida}@${dominio}`;
+}
+
 const IMAP = {
   host: process.env.DOCTEST_MAIL_IMAP_HOST ?? '',
   port: Number(process.env.DOCTEST_MAIL_IMAP_PORT ?? 993),
@@ -89,7 +115,16 @@ function abortar(motivo: string): never {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Cliente IMAP mínimo (LOGIN → SELECT → SEARCH → FETCH), sin dependencias. */
-function imapBuscarEnlace(asunto: string, minutos = 30): Promise<string | null> {
+/**
+ * Busca en la casilla el mail de activación DIRIGIDO A `destinatario`.
+ *
+ * El filtro por destinatario no es un lujo: la casilla es una sola —todas las corridas
+ * usan el mismo buzón, con el `+` de Gmail para distinguirse— así que buscar solo por
+ * asunto devuelve el mail de la corrida ANTERIOR y lo devuelve al instante, sin esperar
+ * al nuevo. Pasó exactamente eso: se activó la cuenta vieja y el alta siguió con el
+ * usuario equivocado.
+ */
+function imapBuscarEnlace(asunto: string, destinatario: string, minutos = 30): Promise<string | null> {
   return new Promise((resolveP, rejectP) => {
     const socket = tlsConnect({ host: IMAP.host, port: IMAP.port, servername: IMAP.host });
     let buffer = '';
@@ -110,7 +145,7 @@ function imapBuscarEnlace(asunto: string, minutos = 30): Promise<string | null> 
         enviar('SELECT INBOX');
       } else if (paso === 2 && /a2 OK/.test(buffer)) {
         buffer = '';
-        enviar(`SEARCH SINCE ${desde} SUBJECT "${asunto}"`);
+        enviar(`SEARCH SINCE ${desde} TO "${destinatario}" SUBJECT "${asunto}"`);
       } else if (paso === 3 && /a3 OK/.test(buffer)) {
         const ids = (/\* SEARCH([^\r\n]*)/.exec(buffer)?.[1] ?? '').trim().split(/\s+/).filter(Boolean);
         if (ids.length === 0) {
@@ -147,9 +182,9 @@ async function enlaceDesdeCasilla(casilla: Casilla): Promise<string> {
 
 async function obtenerEnlaceActivacion(): Promise<string> {
   if (IMAP.host && IMAP.pass) {
-    console.log(`→ Buscando el mail de activación en ${IMAP.user} (${IMAP.host})...`);
+    console.log(`→ Buscando el mail de activación para ${DATOS.email} en ${IMAP.user} (${IMAP.host})...`);
     for (let intento = 1; intento <= 10; intento++) {
-      const enlace = await imapBuscarEnlace('Activar cuenta');
+      const enlace = await imapBuscarEnlace('Activar cuenta', DATOS.email);
       if (enlace) {
         console.log('✓ Enlace de activación encontrado');
         return enlace;
@@ -247,6 +282,14 @@ async function completarFormulario(page: Page): Promise<void> {
 }
 
 async function crearEmpresa(page: Page): Promise<void> {
+  // Esperar el formulario ANTES de mirar qué campos trae. El paso 3 responde un JSON con
+  // un redirect a register/crearEmpresa que sigue el JavaScript, así que al llegar acá el
+  // navegador todavía puede estar en la pantalla anterior. `count()` es una foto: no espera,
+  // devuelve 0 y el campo se saltea en silencio. No se notaba porque con una casilla
+  // descartable el dominio corporativo nunca se pide; con un webmail es obligatorio y el
+  // alta moría pidiéndolo. Se espera por el CUIT, que está siempre.
+  await page.locator('input[name="cuit"]').waitFor({ timeout: 60_000 });
+
   // El dominio corporativo solo se pide si el correo del registro es de un webmail público.
   const dominio = page.locator('input[name="company_domain"]');
   if (await dominio.count()) {
@@ -330,6 +373,35 @@ async function main(): Promise<void> {
 
   const browser = await chromium.launch({ headless: !HEADED });
   const page = await browser.newPage({ ignoreHTTPSErrors: true, locale: 'es-AR' });
+
+  // Con DOCTEST_SEED_TRACE=1 se ve qué contesta el servidor en cada POST. El alta
+  // encadena llamadas a core, Asset, Bonita, roles y establecimiento, y cuando falla la
+  // pantalla dice siempre lo mismo —"No hubo conexión con el servidor de aplicaciones"—
+  // sin decir cuál de las cinco fue. Sin esto, diagnosticar es adivinar.
+  if (process.env.DOCTEST_SEED_TRACE === '1') {
+    // El tiempo importa tanto como el cuerpo: cuando el alta muere por timeout, el POST
+    // vuelve a los ~30 s —el CURLOPT_TIMEOUT de REST.php— y eso lo distingue de un
+    // recurso que no existe, que contesta al instante. Ver H-077.
+    const arranque = new Map<string, number>();
+    page.on('request', (r) => {
+      if (r.method() === 'POST') arranque.set(r.url(), Date.now());
+    });
+    page.on('response', async (r) => {
+      if (r.request().method() !== 'POST') return;
+      const t0 = arranque.get(r.url());
+      const tardanza = t0 ? `${((Date.now() - t0) / 1000).toFixed(1)} s` : '?';
+      let cuerpo = '';
+      try {
+        cuerpo = (await r.text()).replace(/\s+/g, ' ').slice(0, 300);
+      } catch {
+        cuerpo = '(sin cuerpo legible)';
+      }
+      console.log(
+        `  · POST ${r.status()} ${r.url().replace(/^https?:\/\/[^/]+/, '')} — ${tardanza}\n      ${cuerpo}`,
+      );
+    });
+    page.on('pageerror', (e) => console.log(`  · JS ERROR: ${e.message.slice(0, 160)}`));
+  }
   page.setDefaultNavigationTimeout(180_000);
   page.setDefaultTimeout(60_000);
   try {
