@@ -20,28 +20,30 @@
       asset_nick       usernick del usuario, que es su correo
       asset_empr_id    empr_id de PostgreSQL; aca adentro se traduce al de AssetPlanner
 
+    CONTRATO CON QUIEN LA INVOCA — NO PUEDE HACERLO FALLAR
+      Cuando se llega aca el rol YA quedo asignado en Tools y en Bonita. Que ademas
+      falle el acceso a AssetPlanner se registra en el log y se arregla despues; no
+      es algo por lo que tirar abajo una asignacion de rol ni una empresa. Por eso:
+        · NUNCA invoca toolsFault: pone HTTP_SC 404 y RESPONDE, o sea que convertiria
+          el POST /rol/asignar entero en un 404.
+        · Apaga FORCE_ERROR_ON_SOAP_FAULT: quien la invoca lo deja en true, y con eso
+          una respuesta de error del DataService lanza excepcion hasta el faultSequence.
+        · Revisa los codigos HTTP a mano.
+      Las tres cosas pasaron en el DEMO el 2026-09-11 y revirtieron altas enteras.
+      Ver doc/analisis/impacto-vinculo-asset-rol-asignar.md.
+
+    ESTADO QUE DEJA DETRAS (para quien agregue algo despues de invocarla)
+      · FORCE_ERROR_ON_SOAP_FAULT queda en false.
+      · HTTP_SC queda con el codigo de la ULTIMA llamada; quien responda tiene que
+        fijar el suyo (POST /rol/asignar pone 200 antes de <respond/>).
+      · HTTP_METHOD queda en GET; no importa, el method del endpoint manda.
+      · Propiedades asset_* y uri.var.asset_*: prefijo propio, nadie mas las lee.
+
     NO FALLA SI EL ROL NO MAPEA A NINGUN GRUPO. Que un rol no de acceso a
     AssetPlanner es una decision de negocio explicita, no un error.
-
-    Y NUNCA INVOCA toolsFault, a proposito. toolsFault pone HTTP_SC 404 y RESPONDE,
-    asi que llamarlo desde aca convertiria el POST /rol/asignar entero en un 404:
-    PHP lo leeria como "Error al asignar el rol" y el alta de empresa se revertiria
-    completa. Paso exactamente eso en el DEMO el 2026-09-11, con la primera version
-    de esta sequence. El rol YA quedo asignado en Tools y en Bonita cuando se llega
-    aca; que ademas falle el acceso a AssetPlanner es un problema menor que se
-    registra en el log y se arregla despues, no algo por lo que tirar abajo una
-    empresa. Buscar en wso2carbon.log: toolsAssetUserEmpresa.
 -->
 <sequence name="toolsAssetUserEmpresa" xmlns="http://ws.apache.org/ns/synapse">
 
-    <!-- Apagar FORCE_ERROR_ON_SOAP_FAULT mientras dure esta sequence.
-         Quien la invoca lo deja en `true` con scope default, asi que una respuesta de
-         error del DataService LANZA EXCEPCION, la excepcion sube al faultSequence del
-         recurso, y ese llama a toolsFault, que responde 404. Resultado: un problema al
-         vincular en AssetPlanner tumbaba la asignacion de rol entera y con ella el alta
-         de empresa. Aca se revisan los codigos HTTP a mano, que es lo que corresponde
-         para una integracion que NO debe poder hacer fallar a la operacion que la
-         invoca. -->
     <property name="FORCE_ERROR_ON_SOAP_FAULT" value="false" scope="default" type="STRING"/>
 
     <!-- ── 1) Que grupo le toca a este rol ──────────────────────────────────────
@@ -50,48 +52,42 @@
          NOMBRE y no por id: sisgroups.grpId es AUTO_INCREMENT, o sea que cada
          empresa estrena los suyos.
 
-         El rango es la precedencia, y sirve para que un usuario con varios roles
-         nunca BAJE de nivel: 1 Solicitante, 2 Mantenedor, 3 Supervisor de Taller,
-         4 Admin. Lo aplica el ON DUPLICATE KEY UPDATE de la query.
+         Si el usuario ya tenia grupo, el ultimo rol asignado gana. NO hay precedencia
+         entre grupos, a proposito: la version con precedencia llevaba una subconsulta
+         correlacionada nunca probada contra MariaDB y se saco para bajar riesgo (ver
+         el analisis de impacto, §5.1). En la registracion no cambia nada porque los
+         roles de cada usuario por defecto mapean al mismo grupo; en el ABM, asignar un
+         rol menor despues de uno mayor baja el grupo, cosa visible y reversible.
 
          "Almacen" no se usa a proposito: el procedure lo deja SIN acciones, asi que
          quien caiga ahi entraria para ver un menu vacio. Por eso los responsables
          de almacen y de pañol van a Solicitante.
     -->
     <property name="asset_grupo" value="" scope="default" type="STRING"/>
-    <property name="asset_rango" value="0" scope="default" type="STRING"/>
     <switch source="get-property('asset_rol_base')" xmlns:ns="http://org.apache.synapse/xsd">
         <case regex="Administrador">
             <property name="asset_grupo" value="Admin" scope="default" type="STRING"/>
-            <property name="asset_rango" value="4" scope="default" type="STRING"/>
         </case>
         <case regex="Supervisor de Mantenimiento">
             <property name="asset_grupo" value="Supervisor de Taller" scope="default" type="STRING"/>
-            <property name="asset_rango" value="3" scope="default" type="STRING"/>
         </case>
         <case regex="Planificador de Mantenimiento">
             <property name="asset_grupo" value="Supervisor de Taller" scope="default" type="STRING"/>
-            <property name="asset_rango" value="3" scope="default" type="STRING"/>
         </case>
         <case regex="Mantenedor">
             <property name="asset_grupo" value="Mantenedor" scope="default" type="STRING"/>
-            <property name="asset_rango" value="2" scope="default" type="STRING"/>
         </case>
         <case regex="Responsable de Almac.n">
             <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
-            <property name="asset_rango" value="1" scope="default" type="STRING"/>
         </case>
         <case regex="Responsable de Pa.ol">
             <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
-            <property name="asset_rango" value="1" scope="default" type="STRING"/>
         </case>
         <case regex="Solicitante de Almac.n">
             <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
-            <property name="asset_rango" value="1" scope="default" type="STRING"/>
         </case>
         <case regex="Solicitante de Mantenimiento">
             <property name="asset_grupo" value="Solicitante" scope="default" type="STRING"/>
-            <property name="asset_rango" value="1" scope="default" type="STRING"/>
         </case>
         <default>
             <!-- Responsable de Produccion, Responsable de Lote, Planificador de
@@ -108,16 +104,20 @@
         <then>
             <!-- ── 2) Traducir el empr_id de PostgreSQL al de AssetPlanner ──────
                  Lo escribio el paso 3.c del POST /empresa en core.empresas.empr_id_mysql.
+
+                 GET LIMPIO, a proposito: sin cuerpo Y SIN Content-Type. Esta sequence
+                 corre DESPUES de varios payloadFactory y call, asi que el mensaje
+                 arrastra el body JSON de la ultima respuesta y el header
+                 Content-Type: application/json. Con ese header, el DataService busca
+                 los parametros en un JSON en vez de en la URL, no los encuentra, y
+                 contesta INCOMPATIBLE_PARAMETERS_ERROR como HTML 500. Verificado en
+                 aislamiento el 2026-09-11: el mismo GET da 200 sin el header y 500 con
+                 el. NO_ENTITY_BODY solo saca el cuerpo; el header hay que quitarlo.
             -->
             <property name="uri.var.asset_empresa_url"
                       expression="fn:concat($ctx:dataservices_url,'/COREDataService/empresa/',$ctx:asset_empr_id)"
                       scope="default" type="STRING"/>
-            <!-- GET sin cuerpo, a proposito. Esta sequence corre DESPUES de varios
-                 payloadFactory y call, asi que el mensaje arrastra el body JSON de la
-                 ultima respuesta. Si ese body viaja en el GET, el DataService lee los
-                 parametros de ahi en vez de la URL, encuentra {} y contesta
-                 INCOMPATIBLE_PARAMETERS_ERROR — paso en el DEMO el 2026-09-11. Es el
-                 mismo idioma que usa POST /rol/asignar para su GET a Bonita. -->
+            <header name="Content-Type" scope="transport" action="remove"/>
             <header name="Accept" scope="transport" value="application/json"/>
             <property name="HTTP_METHOD" value="GET" scope="axis2" type="STRING"/>
             <property name="NO_ENTITY_BODY" value="true" scope="axis2" type="BOOLEAN"/>
@@ -127,11 +127,33 @@
                 </endpoint>
             </call>
             <property name="NO_ENTITY_BODY" action="remove" scope="axis2"/>
-            <property name="asset_empr_id_mysql" expression="json-eval($.empresa.empr_id_mysql)" scope="default" type="STRING"/>
 
-            <filter source="boolean(get-property('asset_empr_id_mysql'))" regex="false">
+            <!-- Leer el cuerpo SOLO si vino 2xx. Un json-eval sobre una respuesta de
+                 error —que el DataService manda como HTML— lanza excepcion, y esa
+                 excepcion sube hasta cortar la conexion aunque FORCE_ERROR este apagado.
+                 Primero el codigo, despues el cuerpo. -->
+            <property name="asset_empr_id_mysql" value="" scope="default" type="STRING"/>
+            <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
                 <then>
-                    <!-- Sin el vinculo empr_id_mysql no hay a que empresa asociarlo.
+                    <property name="asset_empr_id_mysql" expression="json-eval($.empresa.empr_id_mysql)" scope="default" type="STRING"/>
+                </then>
+                <else>
+                    <log level="custom" category="ERROR">
+                        <property name="toolsAssetUserEmpresa" value="no se pudo leer la empresa en el DataService"/>
+                        <property name="empr_id" expression="$ctx:asset_empr_id"/>
+                        <property name="http" expression="get-property('axis2', 'HTTP_SC')"/>
+                    </log>
+                </else>
+            </filter>
+
+            <!-- Un empr_id_mysql NULL en la base llega como la CADENA "null": json-eval
+                 convierte el null de JSON en texto, y boolean("null") es verdadero. Sin
+                 esta segunda condicion la sequence seguia, mandaba CAST('null' AS UNSIGNED)
+                 y MariaDB lo rechazaba con DATABASE_ERROR. Visto en el arnes local. -->
+            <filter xpath="not(boolean(get-property('asset_empr_id_mysql'))) or get-property('asset_empr_id_mysql') = 'null'">
+                <then>
+                    <!-- Sin el vinculo empr_id_mysql no hay a que empresa asociarlo, y
+                         seguir con un empresaid vacio seria ensuciar. Se corta aca.
                          Pasa con las empresas creadas mientras el paso 3.c estuvo roto
                          (issue #491): hay que reconciliarlas a mano. -->
                     <log level="custom" category="ERROR">
@@ -141,56 +163,58 @@
                         <property name="reconciliar" value="ver issue #491: las empresas creadas mientras el paso 3.c estuvo roto no tienen el vinculo"/>
                     </log>
                 </then>
-                <else/>
-            </filter>
-
-            <!-- ── 3) Escribir el vinculo ───────────────────────────────────────
-                 Si el usuario no esta en sisusers, o el grupo no existe para esa
-                 empresa, la query no inserta NADA y devuelve 2xx igual. Por eso el
-                 paso 4 mira las filas afectadas y no se conforma con el codigo HTTP.
-            -->
-            <payloadFactory media-type="json" description="vincular usuario con su empresa en AssetPlanner">
-                <format>{ "_post_assetuser_empresa": { "empresaid":"$1", "nick":"$2", "grpname":"$3", "rango":"$4" } }</format>
-                <args>
-                    <arg evaluator="xml" expression="get-property('asset_empr_id_mysql')"/>
-                    <arg evaluator="xml" expression="get-property('asset_nick')"/>
-                    <arg evaluator="xml" expression="get-property('asset_grupo')"/>
-                    <arg evaluator="xml" expression="get-property('asset_rango')"/>
-                </args>
-            </payloadFactory>
-            <property name="uri.var.asset_vinculo_url"
-                      expression="fn:concat($ctx:dataservices_url,'/COREDataService/assetuser/empresa')"
-                      scope="default" type="STRING"/>
-            <call>
-                <endpoint>
-                    <http method="POST" uri-template="{uri.var.asset_vinculo_url}"/>
-                </endpoint>
-            </call>
-
-            <!-- ── 4) Verificar el EFECTO, no el codigo HTTP ────────────────────
-                 El DataService devuelve el numero de filas afectadas. Cero significa
-                 que falto el usuario en sisusers o el grupo en sisgroups.
-            -->
-            <property name="asset_afectadas" expression="json-eval($..affectedrowcount)" scope="default" type="STRING"/>
-            <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
-                <then>
-                    <log level="custom" category="INFO">
-                        <property name="toolsAssetUserEmpresa" value="usuario vinculado en AssetPlanner"/>
-                        <property name="nick" expression="$ctx:asset_nick"/>
-                        <property name="grupo" expression="$ctx:asset_grupo"/>
-                        <property name="empresa_asset" expression="$ctx:asset_empr_id_mysql"/>
-                        <property name="filas" expression="$ctx:asset_afectadas"/>
-                    </log>
-                </then>
                 <else>
-                    <log level="custom" category="ERROR">
-                        <property name="toolsAssetUserEmpresa" value="NO se pudo vincular al usuario en AssetPlanner"/>
-                        <property name="nick" expression="$ctx:asset_nick"/>
-                        <property name="grupo" expression="$ctx:asset_grupo"/>
-                        <property name="empresa_asset" expression="$ctx:asset_empr_id_mysql"/>
-                        <property name="detalle" expression="json-eval($)"/>
-                    </log>
+                    <!-- ── 3) Escribir el vinculo ───────────────────────────────
+                         Si el usuario no esta en sisusers, o el grupo no existe para
+                         esa empresa, la query no inserta NADA y devuelve 2xx igual.
+                         Por eso el paso 4 mira las filas afectadas.
+                    -->
+                    <payloadFactory media-type="json" description="vincular usuario con su empresa en AssetPlanner">
+                        <format>{ "_post_assetuser_empresa": { "empresaid":"$1", "nick":"$2", "grpname":"$3" } }</format>
+                        <args>
+                            <arg evaluator="xml" expression="get-property('asset_empr_id_mysql')"/>
+                            <arg evaluator="xml" expression="get-property('asset_nick')"/>
+                            <arg evaluator="xml" expression="get-property('asset_grupo')"/>
+                        </args>
+                    </payloadFactory>
+                    <property name="uri.var.asset_vinculo_url"
+                              expression="fn:concat($ctx:dataservices_url,'/COREDataService/assetuser/empresa')"
+                              scope="default" type="STRING"/>
+                    <call>
+                        <endpoint>
+                            <http method="POST" uri-template="{uri.var.asset_vinculo_url}"/>
+                        </endpoint>
+                    </call>
 
+                    <!-- ── 4) Verificar el codigo HTTP ─────────────────────────
+                         LIMITACION CONOCIDA: el DataService responde 202 con cuerpo
+                         VACIO a este INSERT (verificado el 2026-09-11), asi que no hay
+                         forma de saber cuantas filas toco. Un 2xx significa "la
+                         sentencia corrio", no "el vinculo existe": si el usuario no
+                         estaba en sisusers o el grupo no existia, la query no inserta
+                         nada y responde 2xx igual. Se deja asentado en el log lo que se
+                         intento; la verificacion real es un SELECT, ver el analisis de
+                         impacto. No se hace json-eval del cuerpo por el mismo motivo del
+                         paso 2. -->
+                    <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                        <then>
+                            <log level="custom" category="INFO">
+                                <property name="toolsAssetUserEmpresa" value="vinculo enviado a AssetPlanner"/>
+                                <property name="nick" expression="$ctx:asset_nick"/>
+                                <property name="grupo" expression="$ctx:asset_grupo"/>
+                                <property name="empresa_asset" expression="$ctx:asset_empr_id_mysql"/>
+                            </log>
+                        </then>
+                        <else>
+                            <log level="custom" category="ERROR">
+                                <property name="toolsAssetUserEmpresa" value="NO se pudo vincular al usuario en AssetPlanner"/>
+                                <property name="nick" expression="$ctx:asset_nick"/>
+                                <property name="grupo" expression="$ctx:asset_grupo"/>
+                                <property name="empresa_asset" expression="$ctx:asset_empr_id_mysql"/>
+                                <property name="http" expression="get-property('axis2', 'HTTP_SC')"/>
+                            </log>
+                        </else>
+                    </filter>
                 </else>
             </filter>
         </then>

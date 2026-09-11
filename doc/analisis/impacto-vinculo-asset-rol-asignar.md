@@ -81,8 +81,8 @@ código existente, no supuestas.
 | La empresa no tiene `empr_id_mysql` (creadas mientras #491 estuvo roto) | GET responde sin ese campo; loguea ERROR con "reconciliar"; **sigue al paso 3 con `empresaid` vacío** | 2xx. ⚠️ Ver §5.3 |
 | El DataService no responde / cae | `call` sin `FORCE_ERROR` no lanza; `HTTP_SC` queda en 5xx; loguea ERROR | 2xx gracias al `HTTP_SC=200` |
 | MariaDB rechaza el SQL | ídem: DSS responde 500, se loguea, sigue | 2xx; **el vínculo no se escribe** — ver §5.1 |
-| El usuario no está en `sisusers` (falló `/assetuser/add`, que es no bloqueante) | el `INSERT … SELECT` no encuentra filas, **no inserta y responde 2xx** | 2xx; se loguea `filas=0` |
-| El grupo no existe para esa empresa (el trigger no corrió) | ídem, 0 filas | 2xx; se loguea `filas=0` |
+| El usuario no está en `sisusers` (falló `/assetuser/add`, que es no bloqueante) | el `INSERT … SELECT` no encuentra filas, **no inserta y responde 2xx** | 2xx. ⚠️ **No se puede detectar**: el DataService responde 202 con cuerpo vacío, no devuelve filas afectadas (verificado en local). El log dice "vínculo enviado" aunque no haya insertado nada |
+| El grupo no existe para esa empresa (el trigger no corrió) | ídem, 0 filas | 2xx, mismo problema: indetectable desde la sequence |
 | Segunda asignación al mismo usuario/empresa (re-corrida, o usuario con dos roles) | `ON DUPLICATE KEY UPDATE` | 2xx; el grupo se mantiene o sube según precedencia |
 
 Nada de esto puede devolver un no-2xx al invocador. **Ese es el cambio de fondo respecto de lo
@@ -155,6 +155,44 @@ despliegan por separado: un dnato viejo contra un tools nuevo es un escenario re
 
 ---
 
+## 5-bis. Lo que la prueba en local encontró — y el análisis de escritorio no
+
+Se cargó el `.car` reconstruido en el MI 4.5.0 local contra las bases de DEV (`tools_prod_t` y
+`assetv2` en `10.142.0.13`), y se ejercitó la sequence con un arnés que reproduce las condiciones
+de `/rol/asignar` (un `call` previo que deja cuerpo y código HTTP, `FORCE_ERROR` en `true`,
+respuesta con `HTTP_SC=200`). Seis escenarios, un usuario descartable, todo limpio al final.
+
+**Tres defectos más que el #526 no tenía, y que el DEMO habría mostrado en un cuarto despliegue:**
+
+| Defecto | Cómo se vio | Arreglo |
+|---|---|---|
+| **El GET fallaba por el header `Content-Type`, no por el cuerpo.** `NO_ENTITY_BODY` saca el cuerpo pero deja `Content-Type: application/json`, y con ese header el DataService busca los parámetros en un JSON que no existe | en aislamiento: el mismo GET da **200 sin el header y 500 con él** | `<header name="Content-Type" action="remove"/>` antes del GET |
+| **`json-eval` sobre una respuesta de error explota antes de llegar al filtro del código HTTP.** El DataService responde los errores como HTML; `json-eval` lanza `Illegal character: <r>` y la excepción sube hasta cortar la conexión (HTTP 000) | escenario A, primera corrida | primero el código, después el cuerpo: `json-eval` solo dentro del `2xx` |
+| **Un `empr_id_mysql` NULL llega como la cadena `"null"`**, `boolean("null")` es verdadero, la sequence sigue y MariaDB rechaza `CAST('null' AS UNSIGNED)` | escenario C: 200 pero con `DATABASE_ERROR` en el log | el filtro también compara contra `'null'` |
+
+Y **una afirmación de este mismo documento que era falsa**: el paso 4 no puede "verificar el
+efecto" porque el DataService responde **202 con cuerpo vacío** a este INSERT — no devuelve filas
+afectadas. Corregido en §4 y en el archivo de la sequence: un 2xx significa "la sentencia corrió",
+no "el vínculo existe".
+
+Un dato más: **el 202 del DataService se filtra a la respuesta** aunque el recurso ponga
+`HTTP_SC=200` — Synapse respeta el 202 por su semántica de *accepted*. Es inocuo: `REST.php` hace
+`status => ($response_code < 300)` y los tres invocadores miran `code >= 300`. Y el escenario C
+prueba que un **500 sí se pisa a 200**, que es el caso que importa.
+
+**Resultado final de los seis escenarios**, con la sequence corregida:
+
+| | Escenario | Respuesta | Base | Log |
+|---|---|---|---|---|
+| A | rol que mapea, empresa con vínculo | 202 ok | fila `Supervisor de Taller`, `tipo=1`, `AC` | INFO vínculo enviado |
+| B | rol que no mapea | 200 ok | sin cambios | DEBUG |
+| C | empresa sin `empr_id_mysql` | 200 ok | **sin cambios** | ERROR "no tiene empr_id_mysql" |
+| D | empresa inexistente | 200 ok | sin cambios | ERROR ídem |
+| E | segundo rol al mismo usuario | 202 ok | la fila pasa a `Admin` | INFO |
+| F | usuario que no está en `sisusers` | 202 ok | sin cambios | INFO (limitación de arriba) |
+
+Ninguno devuelve un no-2xx. Ninguno deja una excepción en el log.
+
 ## 6. Lo que NO cambia
 
 - **Bonita**: la sequence corre *después* de que la membership quedó creada y no la toca.
@@ -172,15 +210,17 @@ despliegan por separado: un dnato viejo contra un tools nuevo es un escenario re
 
 ## 7. Recomendación
 
-**No desplegar el #526 tal como está.** Primero:
+Los tres pasos se hicieron (2026-09-11, ver §5-bis):
 
-1. **Simplificar el SQL** a "el último gana" (§5.1) y **cortar** en la sequence cuando falta
-   `empr_id_mysql` (§5.3). Los dos son cambios chicos y bajan riesgo.
-2. **Cargar los artefactos en el WSO2 local** para confirmar que despliegan (§5.2). Es la única
-   forma de descartar el riesgo de radio grande sin usar el DEMO de laboratorio.
-3. Recién ahí desplegar, y **la primera corrida es diagnóstica**, no de aceptación: alta de empresa
-   + `verificar:asset` + un curl sin los campos nuevos (§5.6) + mirar el log de WSO2 buscando
-   `toolsAssetUserEmpresa`.
+1. ✅ SQL simplificado a "el último gana"; la sequence corta cuando falta `empr_id_mysql`.
+2. ✅ Artefactos cargados en el MI local: **despliegan**. El DataService registra la query y el
+   recurso; la sequence y el API también. Y además se ejecutaron, que fue lo que destapó los tres
+   defectos de §5-bis.
+3. ✅ Compatibilidad hacia atrás verificada: un cliente sin los campos nuevos falla **en el mismo
+   lugar** que uno con ellos (§5.6).
+
+**Ahora sí se puede desplegar.** La primera corrida en el DEMO sigue siendo diagnóstica: alta de
+empresa + `verificar:asset` + mirar `wso2carbon.log` buscando `toolsAssetUserEmpresa`.
 
 Y una regla para mí, que sale de esto: **un cambio en un artefacto de WSO2 se prueba desplegado
 antes de darse por listo.** El XML que parsea, los idiomas que "tienen precedente" y el análisis
