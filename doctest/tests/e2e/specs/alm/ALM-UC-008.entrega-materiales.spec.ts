@@ -24,10 +24,14 @@
  *
  * Pasos:
  *   · `puertaDeEntrada` (la tarea llega a la bandeja) y `aprueba` están VERIFICADOS.
- *   · La ENTREGA (total y parcial) queda en `test.fixme()`: ya NO está bloqueada por el
- *     sistema —hay tarea real contra la cual correr—, pero su UI (tabla #entregas + modal
- *     de lote que se puebla por AJAX al 'Realizar Entrega') necesita escribirse y
- *     verificarse en vivo. No se marca verde lo que todavía no se ejecutó.
+ *   · La ENTREGA (total y parcial) queda en `test.fixme()`. Reconocido en vivo el
+ *     2026-09-12: la tabla de ítems muestra el '+' de lote SOLO si el artículo tiene
+ *     stock en el depósito (`view_entrega_pedido_pendiente.php:53`: la clase es `hidden`
+ *     cuando `cant_disponible == 0`). Una empresa freemium nace SIN stock (H-068), así
+ *     que no hay nada que entregar hasta cargarlo. Para probar la entrega total/parcial
+ *     de verdad falta una PRECONDICIÓN: crear stock (recepción de materiales o ajuste),
+ *     que es un flujo aparte a automatizar. No es un bloqueo del circuito de entrega en
+ *     sí —que ya funciona hasta la aprobación— sino la falta del dato de stock.
  * ════════════════════════════════════════════════════════════════════════════════════
  *
  * Referencias de código (para la verificación en vivo pendiente):
@@ -194,6 +198,11 @@ test.describe.serial('@alm @ciclo @ALM-UC-008 Aprobar y entregar un pedido de ma
    * Verificación dura esperada: el stock del lote BAJA en la cantidad entregada
    * (Ordeninsumos::actualizar_lote), y el pedido NO queda cerrado.
    */
+  // PRECONDICIÓN FALTANTE: el artículo necesita stock en el depósito para que aparezca el
+  // '+' de lote (hoy oculto por cant_disponible==0, H-068). Falta automatizar una recepción
+  // que cree stock antes de este paso. Selectores de entrega ya reconocidos:
+  //   tabla de ítems (7 columnas, sin id) · '+' = a.btnEntrega[onclick=ver_info] ·
+  //   #realizarEntrega · #btncerrarTarea (parcial) · #btnHecho (total).
   test.fixme('una entrega parcial descuenta stock y deja el pedido pendiente', async () => {
     // Selectores del código, sin verificar: .btnEntrega / ver_info(modal lote) /
     //   #btncerrarTarea. Estado esperado: 'Ent. Parcial'.
