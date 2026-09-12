@@ -1013,6 +1013,15 @@
             <format>{"respuesta":{"resultado":"ok"}}</format>
             <args/>
          </payloadFactory>
+         <!-- El codigo HTTP se fija a mano: <respond/> responde con el HTTP_SC que dejo el
+              ULTIMO call, no con uno propio. Mientras el ultimo call fue siempre la
+              membership de Bonita (2xx) no se notaba; el vinculo con AssetPlanner agrego
+              llamadas que pueden terminar en 500, y ese 500 salia pegado a un cuerpo que
+              decia "ok". PHP mira el codigo y lo daba por fallido — asi se revirtieron
+              altas de empresa enteras el 2026-09-11. Mismo idioma que usan POST /usuario/
+              registro y POST /usuario/bpm-asset. -->
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="HTTP_SC" value="200" scope="axis2"/>
          <respond/>
       </inSequence>
       <faultSequence>
