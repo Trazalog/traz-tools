@@ -27,7 +27,7 @@
 
 import { chromium, type Page } from '@playwright/test';
 import { createInterface } from 'node:readline/promises';
-import { connect as tlsConnect } from 'node:tls';
+import { connect as tlsConnect, type ConnectionOptions as TlsConnectionOptions } from 'node:tls';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -126,7 +126,11 @@ function abortar(motivo: string): never {
  */
 function imapBuscarEnlace(asunto: string, destinatario: string, minutos = 30): Promise<string | null> {
   return new Promise((resolveP, rejectP) => {
-    const socket = tlsConnect({ host: IMAP.host, port: IMAP.port, servername: IMAP.host });
+    // family: 4 fuerza IPv4. Sin esto, en una red con IPv6 configurado pero sin ruta real
+    // (caso comun detras de algunas VPN), Node intenta la direccion v6 primero y muere con
+    // ENETUNREACH antes de probar v4. servername queda con el host real para que el cert valide.
+    // `family` es valido en runtime (va al socket subyacente) pero no esta en el tipo de tls.
+    const socket = tlsConnect({ host: IMAP.host, port: IMAP.port, servername: IMAP.host, family: 4 } as TlsConnectionOptions & { family: number });
     let buffer = '';
     let paso = 0;
     const enviar = (cmd: string) => socket.write(`a${++paso} ${cmd}\r\n`);
