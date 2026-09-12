@@ -15,26 +15,19 @@
  * y DESCUENTA STOCK). Se corre a demanda con `npm run test:ciclo`.
  *
  * ════════════════════════════════════════════════════════════════════════════════════
- * ESTADO AL 2026-09-12 — BLOQUEADO AGUAS ARRIBA POR H-070.
+ * ESTADO AL 2026-09-12 — H-070 RESUELTO. La aprobación funciona y está verificada en vivo.
  *
- * Todo este tramo se ejecuta desde la Bandeja de Tareas del Responsable
- * (`traz-comp-bpm/Proceso`), que se llena con las humanTasks que Bonita crea al lanzar el
- * proceso del pedido. Pero HOY el proceso no arranca: `pedidoNormal` devuelve
- * `{"status":false}` (H-070 / issue #508), así que **no llega ninguna tarea a la bandeja**
- * y no hay nada que aprobar ni entregar. Verificado en vivo el 2026-09-12: se creó un
- * pedido y la bandeja del Responsable quedó vacía.
+ * El proceso de Bonita ya arranca (PR #42 de dnato: la clave de Bonita del alta freemium
+ * quedó alineada a BPM_USER_PASS), así que la tarea llega a la bandeja del Responsable y
+ * se puede aprobar. Verificado el 2026-09-12: el pedido pasa Solicitado → Aprobado y la
+ * tarea se convierte en 'Entrega pedido pendiente'.
  *
- * Por eso el caso está partido en dos:
- *   · `puertaDeEntrada` verifica lo único ejecutable hoy —que la tarea llegue a la
- *     bandeja— y **falla a propósito** (`test.fail()`) mientras H-070 siga abierto, igual
- *     que hace ALM-UC-006-007 con el lanzamiento del proceso. El día que se arregle,
- *     Playwright avisa "unexpectedly passed" y hay que habilitar el resto.
- *   · Los pasos de aprobación y entrega van con `test.fixme()`: están escritos desde el
- *     BPMN y el mapa de código (controladores, vistas y funciones JS reales), pero **sin
- *     verificación en vivo**, porque no hay tarea contra la cual correrlos. Sus selectores
- *     son los que declara el código; hay que confirmarlos en la primera corrida real una
- *     vez que H-070 esté resuelto. No se marcan como verdes para no afirmar como probado
- *     algo que no se pudo ejecutar.
+ * Pasos:
+ *   · `puertaDeEntrada` (la tarea llega a la bandeja) y `aprueba` están VERIFICADOS.
+ *   · La ENTREGA (total y parcial) queda en `test.fixme()`: ya NO está bloqueada por el
+ *     sistema —hay tarea real contra la cual correr—, pero su UI (tabla #entregas + modal
+ *     de lote que se puebla por AJAX al 'Realizar Entrega') necesita escribirse y
+ *     verificarse en vivo. No se marca verde lo que todavía no se ejecutó.
  * ════════════════════════════════════════════════════════════════════════════════════
  *
  * Referencias de código (para la verificación en vivo pendiente):
@@ -100,17 +93,11 @@ async function crearPedido(page: Page, justificacion: string): Promise<void> {
 
 test.describe.serial('@alm @ciclo @ALM-UC-008 Aprobar y entregar un pedido de materiales', () => {
   /**
-   * PUERTA DE ENTRADA — lo único ejecutable hoy, y la razón por la que el resto no corre.
-   *
-   * El circuito de entrega arranca cuando la tarea "Aprueba pedido…" aparece en la
-   * bandeja del Responsable. Se crea un pedido y se comprueba que la tarea llegue. HOY
-   * NO LLEGA (H-070), así que el test **falla a propósito**. Cuando se arregle H-070 y
-   * la tarea aparezca, este `test.fail()` va a "pasar inesperadamente" y avisa que se
-   * pueden habilitar los pasos de abajo.
+   * El pedido que crea el Solicitante llega como tarea "Aprueba pedido…" a la bandeja del
+   * Responsable. Es el arranque del circuito de entrega. Fue H-070 (el proceso no
+   * arrancaba); resuelto y verificado el 2026-09-12.
    */
   test('el pedido aprobado llega como tarea a la bandeja del Responsable', async ({ browser }) => {
-    test.fail();
-
     const sol = await sesionDeRol(browser, 'solicitante');
     try {
       await crearPedido(sol, MARCA);
@@ -136,17 +123,64 @@ test.describe.serial('@alm @ciclo @ALM-UC-008 Aprobar y entregar un pedido de ma
   });
 
   /**
-   * APROBAR — pendiente de verificación en vivo (bloqueado por H-070, ver cabecera).
-   *
-   * Flujo derivado del código: abrir la tarea en la bandeja → tomarla (#btnTomarTarea) →
-   * en view_aprueba_pedido elegir establecimiento y depósito, marcar el radio
-   * result=true, y confirmar con #btnHecho → cerrarTarea() hace POST a
-   * Proceso/cerrarTarea/{taskId} con apruebaPedido=true → el pedido pasa a 'Aprobado' y
-   * el gateway ¿Pedido aprobado? deriva a "Entrega pedido pendiente".
+   * El Responsable toma la tarea de aprobación, aprueba, y el pedido pasa a 'Aprobado':
+   * la tarea se convierte en "Entrega pedido pendiente". Selectores verificados en vivo
+   * (2026-09-12): Tomar tarea → establecimiento + depósito (obligatorios) → radio
+   * result=true → #btnHecho (cerrarTarea → apruebaPedido=true).
    */
-  test.fixme('el Responsable aprueba el pedido y queda en estado Aprobado', async () => {
-    // Requiere una tarea real en la bandeja (H-070). Selectores del código, sin verificar:
-    //   input[name="result"][value="true"] · #establecimientos · #depositos · #btnHecho
+  test('el Responsable aprueba el pedido y pasa a Entrega pendiente', async ({ browser }) => {
+    const rep = await sesionDeRol(browser, 'almacen');
+    try {
+      await abrirBandeja(rep);
+      const tarea = rep
+        .locator('#tareas tbody tr')
+        .filter({ hasText: MARCA })
+        .filter({ hasText: /Aprueba pedido/i });
+      await expect(tarea.first(), 'la tarea de aprobación del pedido de esta corrida tiene que estar en la bandeja').toBeVisible({ timeout: 30_000 });
+      await tarea.first().click();
+
+      // Tomar la tarea antes de operarla (la asigna al usuario en Bonita).
+      await rep.locator('button[onclick*="tomarTarea"]').first().click().catch(() => {});
+      await rep.waitForTimeout(2500);
+
+      // Establecimiento y depósito son obligatorios, pero la vista los PRE-SELECCIONA con
+      // los del pedido. No hay que forzarlos —cambiar el establecimiento dispara un AJAX
+      // que repuebla los depósitos y genera una carrera—: solo se espera a que el depósito
+      // tenga un valor real. Si por algún motivo llegara vacío, ahí sí se elige.
+      const depoTieneValor = async () =>
+        rep.locator('#depositos').evaluate(
+          (el) => el instanceof HTMLSelectElement && !el.disabled && !!el.value && el.value !== '0',
+        ).catch(() => false);
+      if (!(await depoTieneValor())) {
+        await rep.locator('#establecimientos').selectOption({ index: 1 });
+        await rep.waitForFunction(
+          () => {
+            const el = document.querySelector('#depositos');
+            return el instanceof HTMLSelectElement && !el.disabled && el.options.length > 1;
+          },
+          undefined,
+          { timeout: 15_000 },
+        );
+        await rep.locator('#depositos').selectOption({ index: 1 });
+      }
+
+      // Aprobar (result=true) y confirmar.
+      await rep.locator('input[name="result"][value="true"]').check();
+      await rep.locator('#btnHecho').click();
+      await rep.waitForTimeout(6000);
+
+      // Verificación: en la bandeja, la tarea del pedido pasa a "Entrega pedido pendiente"
+      // con estado Aprobado. Es el efecto de haber aprobado, no solo que el click no falló.
+      await abrirBandeja(rep);
+      const entrega = rep
+        .locator('#tareas tbody tr')
+        .filter({ hasText: MARCA })
+        .filter({ hasText: /Entrega pedido pendiente/i });
+      await expect(entrega.first(), 'aprobado el pedido, tiene que aparecer la tarea de entrega').toBeVisible({ timeout: 30_000 });
+      await expect(entrega.first()).toContainText(/Aprobado/i);
+    } finally {
+      await rep.context().close();
+    }
   });
 
   /**

@@ -185,27 +185,22 @@ test.describe.serial('@alm @ciclo @ALM-UC-002 @ALM-UC-006 @ALM-UC-007 El ciclo d
       // Los ocho estados del pedido los mueve Bonita, no la pantalla. Lo que se verifica
       // es que el pedido nazca dentro del circuito: un pedido sin estado quedaría huérfano,
       // sin nadie que lo apruebe ni lo entregue.
-      expect(primera).toMatch(/Creada|Aprobado|Rechazado|Entregado|Ent\. Parcial|Finalizado|Cancelado/i);
+      expect(primera).toMatch(/Solicitado|Creada|Aprobado|Rechazado|Entregado|Ent\. Parcial|Finalizado|Cancelado/i);
     } finally {
       await page.context().close();
     }
   });
 
   /**
-   * FALLA CONOCIDA — H-070 / issue #508.
+   * `ALM-UC-006`: al confirmar, el pedido dispara su proceso de aprobación en Bonita.
    *
-   * `ALM-UC-006` dice que al confirmar se dispara el proceso de aprobación. Hoy el
-   * pedido se crea igual aunque el proceso no arranque: se verificó en vivo que
-   * `crearNotaPedido` devuelve `pema_id` y acto seguido `pedidoNormal` devuelve
-   * `{"status":false,"msj":"Error al Inciar Proceso"}`. El pedido queda huérfano — el
-   * solicitante lo ve y lo espera, y nadie puede aprobarlo ni entregarlo.
-   *
-   * El test verifica lo que el caso dice que debe pasar, así que **falla a propósito**
-   * hasta que se corrija. El día que se arregle, la suite avisa que hay que sacarle el
-   * `test.fail()`.
+   * Fue H-070 (issue #508): el proceso no arrancaba —`pedidoNormal` devolvía
+   * `{"status":false,"msj":"Error al Inciar Proceso"}`— porque la registración freemium
+   * creaba al usuario de Bonita con la clave de la app en vez de BPM_USER_PASS, y
+   * `lanzarProceso` no podía autenticarse. Resuelto en el PR #42 de dnato (clave de Bonita
+   * alineada a BPM_USER_PASS) y verificado en vivo el 2026-09-12. Ya no lleva `test.fail()`.
    */
   test('el pedido arranca su proceso de aprobación', async ({ browser }) => {
-    test.fail();
     const page = await sesionDeRol(browser, 'solicitante');
     try {
       let procesoOk: boolean | null = null;
