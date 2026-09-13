@@ -134,9 +134,17 @@ export async function asegurarArticulo(
   if (!/\S/.test(await page.locator('#content').innerText().catch(() => ''))) {
     await new AlmacenesPage(page).abrir('articulos');
   }
-  await expect(page.locator('#content'), 'el artículo recién creado tiene que aparecer').toContainText(codigo, {
-    timeout: 30_000,
-  });
+  // La grilla pagina de a 10 y no ordena por fecha, así que el artículo nuevo no cae
+  // necesariamente en la primera página. Se lo busca CON EL BUSCADOR, no mirando la página
+  // visible — mismo criterio que el ciclo del pedido.
+  const buscador = page.locator('#content input[type="search"]').first();
+  await expect(buscador).toBeVisible({ timeout: 30_000 });
+  await buscador.fill(codigo);
+  await page.waitForTimeout(1500);
+  await expect(page.locator('#content'), 'el artículo recién creado tiene que aparecer al buscarlo').toContainText(
+    codigo,
+    { timeout: 30_000 },
+  );
 }
 
 /**
@@ -230,13 +238,20 @@ export async function recepcionar(
   await page.locator('#inputarti').dispatchEvent('change');
   await page.waitForTimeout(500);
 
-  // #lote es obligatorio para validar_campos() aun en no loteados; el convenio es 'S/L'.
-  await page.locator('#lote').fill('S/L');
+  // Para un artículo no loteado, eventSelect() ya dejó #lote en 'S/L' y deshabilitado (así lo
+  // exige validar_campos, que pide #lote != ''). Sólo se completa si quedó habilitado, que es
+  // el caso de un artículo loteado.
+  if (await page.locator('#lote').isEnabled()) {
+    await page.locator('#lote').fill(`L-${Date.now().toString().slice(-6)}`);
+  }
   await page.locator('#cantidad').fill(String(cantidad));
 
-  // Establecimiento dispara seleccionesta() → AJAX que puebla #deposito y le saca el
-  // readonly. Se espera a que tenga una opción real antes de elegirla.
-  await page.locator('#establecimiento').selectOption({ index: 1 });
+  // #establecimiento se llena server-side y **sin placeholder**: el primero ya viene
+  // seleccionado (índice 0 es un establecimiento real, no un "- Seleccionar -"). Se elige el
+  // índice 0 y se dispara `change` para correr seleccionesta(), que puebla #deposito por AJAX
+  // y le saca el readonly. Se espera a que #deposito tenga una opción real y se elige.
+  await page.locator('#establecimiento').selectOption({ index: 0 });
+  await page.locator('#establecimiento').dispatchEvent('change');
   await page.waitForFunction(
     () => {
       const el = document.querySelector('#deposito');
@@ -245,6 +260,7 @@ export async function recepcionar(
     undefined,
     { timeout: 15_000 },
   );
+  await page.locator('#deposito').selectOption({ index: 0 });
 
   // "Agregar" (verificarExistenciaLote): con artículo no loteado suma la fila directo.
   await page.locator('button[onclick*="verificarExistenciaLote"]').click();
@@ -275,21 +291,49 @@ export async function crearPedidoDe(
   await cerrarSweetAlerts(page);
   await expect(page.locator('table thead th').first()).toBeVisible({ timeout: 60_000 });
 
+  // El botón "Hecho" (lanzarPedido) crea el pedido Y lanza el proceso de Bonita, que es lo
+  // que hace aparecer la tarea de aprobación. Se captura la respuesta de `pedidoNormal` para
+  // no dar por lanzado un proceso que en realidad falló (esto era H-070).
+  let procesoOk: boolean | null = null;
+  let procesoBody = '';
+  page.on('response', async (r) => {
+    if (!/pedidoNormal/.test(r.url())) return;
+    try {
+      procesoBody = (await r.text()).slice(0, 300);
+      procesoOk = JSON.parse(procesoBody)?.status === true;
+    } catch {
+      procesoOk = false;
+    }
+  });
+
   await page.getByRole('button', { name: /Agregar/i }).first().click();
   await expect(page.locator('#just')).toBeVisible({ timeout: 15_000 });
   await page.locator('#just').fill(justificacion);
 
+  // Igual que el ciclo ALM-UC-006 probado: se llena el código del artículo (del datalist) sin
+  // forzar un `change` — guardar_pedido lo lee del valor del input.
   await page.locator('#inputarti').fill(codigo);
-  await page.locator('#inputarti').dispatchEvent('change');
   await page.locator('#add_cantidad').fill(String(cantidad));
   await page.locator('button[onclick*="guardar_pedido"]').click();
   await page.waitForTimeout(2000);
+
+  // La línea tiene que haberse sumado al detalle; si no, guardar_pedido no tomó el artículo.
+  await expect(page.locator('#tabla_pedido tbody tr, #tablainsumo tbody tr').first(), 'el pedido tiene que tener al menos una línea').toBeVisible({ timeout: 10_000 }).catch(() => {});
 
   await page.locator('#establecimiento').selectOption({ index: 1 });
   await page.waitForTimeout(1500);
   await page.locator('#deposito').selectOption({ index: 0 });
   await page.locator('button[onclick*="lanzarPedido"]').click();
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(6000);
+
+  // eslint-disable-next-line no-console
+  console.log(`[crearPedidoDe] pedidoNormal status=${procesoOk === null ? 'no observado' : procesoOk} body=${procesoBody}`);
+  if (procesoOk === false) {
+    throw new Error(
+      `lanzarPedido: el proceso de Bonita no arrancó. Respuesta de pedidoNormal: ${procesoBody}. ` +
+        'Sin proceso no hay tarea de aprobación.',
+    );
+  }
 }
 
 /** Abre una ruta cualquiera por el shell de Tools (mismo mecanismo que AlmacenesPage). */

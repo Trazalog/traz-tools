@@ -41,7 +41,7 @@
  *   · Descuento stock:  Ordeninsumos::actualizar_lote() (alm.alm_lotes)
  *   · Estados:          admin_helper.php::estadoPedido()
  */
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { AlmacenesPage } from '../../pages/alm/AlmacenesPage.ts';
 import { asegurarArticulo, asegurarProveedor, recepcionar, crearPedidoDe } from '../../pages/alm/FlujoAlmacen.ts';
@@ -75,16 +75,28 @@ async function abrirBandeja(page: Page): Promise<void> {
 }
 
 /**
+ * Espera a que la tarea de ESTA corrida (marca + tipo) aparezca en la bandeja, reabriéndola
+ * varias veces. Bonita propaga la tarea de forma asíncrona: puede tardar más que un solo
+ * `waitFor`, y a veces la bandeja hay que recargarla para verla. Devuelve el locator (aunque
+ * al final no aparezca, para que el `expect` del test dé el mensaje).
+ */
+async function esperarTarea(page: Page, tipo: RegExp): Promise<Locator> {
+  const tareaDe = () => page.locator('#tareas tbody tr').filter({ hasText: MARCA }).filter({ hasText: tipo });
+  for (let intento = 0; intento < 5; intento++) {
+    await abrirBandeja(page);
+    if (await tareaDe().first().isVisible().catch(() => false)) return tareaDe();
+    await page.waitForTimeout(8000);
+  }
+  return tareaDe();
+}
+
+/**
  * Abre la tarea "Entrega pedido pendiente" de ESTA corrida, la toma, y entrega `cantidad`
  * del artículo desde su lote. `finalizar` decide con qué botón se cierra: `parcial` deja
  * saldo (el circuito vuelve a "Entrega pendiente"); `total` completa el pedido.
  */
 async function entregar(page: Page, cantidad: number, finalizar: 'parcial' | 'total'): Promise<void> {
-  await abrirBandeja(page);
-  const tarea = page
-    .locator('#tareas tbody tr')
-    .filter({ hasText: MARCA })
-    .filter({ hasText: /Entrega pedido pendiente/i });
+  const tarea = await esperarTarea(page, /Entrega pedido pendiente/i);
   await expect(tarea.first(), 'la tarea de entrega de esta corrida tiene que estar en la bandeja').toBeVisible({
     timeout: 30_000,
   });
@@ -190,11 +202,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
   test('el Responsable aprueba el pedido y pasa a Entrega pendiente', async ({ browser }) => {
     const rep = await sesionDeRol(browser, 'almacen');
     try {
-      await abrirBandeja(rep);
-      const tarea = rep
-        .locator('#tareas tbody tr')
-        .filter({ hasText: MARCA })
-        .filter({ hasText: /Aprueba pedido/i });
+      const tarea = await esperarTarea(rep, /Aprueba pedido/i);
       await expect(tarea.first(), 'la tarea de aprobación de esta corrida tiene que estar en la bandeja').toBeVisible({
         timeout: 30_000,
       });
@@ -227,11 +235,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
       await rep.locator('#btnHecho').click();
       await rep.waitForTimeout(6000);
 
-      await abrirBandeja(rep);
-      const entrega = rep
-        .locator('#tareas tbody tr')
-        .filter({ hasText: MARCA })
-        .filter({ hasText: /Entrega pedido pendiente/i });
+      const entrega = await esperarTarea(rep, /Entrega pedido pendiente/i);
       await expect(entrega.first(), 'aprobado el pedido, tiene que aparecer la tarea de entrega').toBeVisible({
         timeout: 30_000,
       });
