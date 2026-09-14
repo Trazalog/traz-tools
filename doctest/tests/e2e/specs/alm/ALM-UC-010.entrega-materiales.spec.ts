@@ -24,8 +24,11 @@
  *
  * ── Estado ───────────────────────────────────────────────────────────────────────────
  * H-070 resuelto (el proceso de Bonita arranca; clave alineada a BPM_USER_PASS, PR #42 de
- * dnato) y verificado en vivo el 2026-09-12: el pedido pasa Solicitado → Aprobado y la
- * tarea se convierte en "Entrega pedido pendiente".
+ * dnato). Circuito completo verificado en vivo el 2026-09-14 (DEMO v2.5.1.18), 5/5 en dos
+ * escenarios: (a) empresa nueva con el formulario "Entrega Materiales" clonado de la 9000
+ * (SP v2.8.1.3) — se completa en la entrega; (b) empresa sin formulario — se entrega igual
+ * (la vista permite finalizar sin formulario). Pasa: recepción → pedido → aprobación →
+ * entrega parcial (Ent. Parcial) → entrega del resto (Entregado).
  *
  * Referencias de código:
  *   · Recepción:        traz-comp-almacenes/controllers/Remito.php (guardar_mejor)
@@ -34,9 +37,11 @@
  *                       #realizarEntrega → a.btnEntrega(ver_info) abre #modal_view con la
  *                       tabla de lotes (Articulo/getLotes); input .cantidad + #btn-extraccion
  *                       (guardar_entrega, sólo apila en el data-json de la fila);
- *                       #btncerrarTarea=parcial (cerrarTareaParcial) / #btnHecho=total
- *                       (cerrarTarea). Ambos confirman con un modal SweetAlert (.swal2-*),
- *                       que NO es un diálogo nativo del navegador.
+ *                       #btnHecho (cerrarTarea) finaliza: calcula `completa` según lo entregado,
+ *                       así una entrega menor deja "Ent. Parcial" y la del resto "Entregado".
+ *                       Postea directo (sin confirm); el aviso de éxito es un SweetAlert.
+ *                       Si la empresa tiene el formulario "Entrega Materiales" clonado, se completa
+ *                       antes de finalizar; si no, la vista permite entregar sin formulario.
  *   · Botones wrapper:  traz-comp-bpm/views/notificacion_estandar.php
  *   · Descuento stock:  Ordeninsumos::actualizar_lote() (alm.alm_lotes)
  *   · Estados:          admin_helper.php::estadoPedido()
@@ -44,7 +49,13 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { AlmacenesPage } from '../../pages/alm/AlmacenesPage.ts';
-import { asegurarArticulo, asegurarProveedor, recepcionar, crearPedidoDe } from '../../pages/alm/FlujoAlmacen.ts';
+import {
+  asegurarArticulo,
+  asegurarProveedor,
+  recepcionar,
+  crearPedidoDe,
+  cerrarSweetAlerts,
+} from '../../pages/alm/FlujoAlmacen.ts';
 import { sesionDeRol } from '../../fixtures/roles-alm.ts';
 import { requerirUrlDeApp } from '../../config/apps.ts';
 
@@ -91,11 +102,51 @@ async function esperarTarea(page: Page, tipo: RegExp): Promise<Locator> {
 }
 
 /**
- * Abre la tarea "Entrega pedido pendiente" de ESTA corrida, la toma, y entrega `cantidad`
- * del artículo desde su lote. `finalizar` decide con qué botón se cierra: `parcial` deja
- * saldo (el circuito vuelve a "Entrega pendiente"); `total` completa el pedido.
+ * Completa el formulario dinámico "Entrega Materiales" si la empresa lo tiene clonado.
+ *
+ * Las empresas creadas después del SP v2.8.1.3 traen el formulario clonado de la 9000; hay que
+ * llenarlo antes de finalizar (si no, `frmGuardarConPromesa` falla y la entrega no cierra). Las
+ * empresas viejas no tienen formulario: ahí `#form-dinamico` no trae `<form>` y esto es un no-op
+ * (la vista permite entregar sin formulario). El llenado es best-effort por tipo de campo.
  */
-async function entregar(page: Page, cantidad: number, finalizar: 'parcial' | 'total'): Promise<void> {
+async function completarFormularioEntrega(page: Page): Promise<void> {
+  const form = page.locator('#form-dinamico form');
+  if ((await form.count()) === 0) {
+    // eslint-disable-next-line no-console
+    console.log('[entrega] sin formulario dinamico (empresa sin clon) → se entrega sin formulario');
+    return;
+  }
+  const campos = form.locator('input, select, textarea');
+  const n = await campos.count();
+  // eslint-disable-next-line no-console
+  console.log(`[entrega] formulario "Entrega Materiales" clonado presente: ${n} campos → se completa`);
+  for (let i = 0; i < n; i++) {
+    const el = campos.nth(i);
+    if (!(await el.isVisible().catch(() => false)) || !(await el.isEnabled().catch(() => false))) continue;
+    const tag = await el.evaluate((e) => e.tagName.toLowerCase());
+    const type = await el.evaluate((e) => ((e as HTMLInputElement).type || '').toLowerCase());
+    if (tag === 'select') {
+      await el.selectOption({ index: 1 }).catch(() => {});
+    } else if (type === 'radio' || type === 'checkbox') {
+      await el.check().catch(() => {});
+    } else if (type === 'date') {
+      await el.fill(new Date().toISOString().slice(0, 10)).catch(() => {});
+    } else if (type !== 'hidden' && type !== 'file') {
+      await el.fill('DocTest').catch(() => {});
+    }
+  }
+}
+
+/**
+ * Entrega `cantidad` del artículo del pedido y finaliza con **"Hecho"** (`cerrarTarea`).
+ *
+ * Siempre se usa `#btnHecho`, no `#btncerrarTarea`: `cerrarTarea` calcula `completa` según lo
+ * entregado, así una entrega menor a lo pedido deja el pedido en **"Ent. Parcial"** (y reabre una
+ * tarea de entrega para el saldo), y la entrega del resto lo pasa a **"Entregado"**.
+ * `#btncerrarTarea` (`cerrarTareaParcial`), en cambio, fuerza el cierre como completo. `cerrarTarea`
+ * **postea directo, sin confirm**; el aviso de éxito es un SweetAlert que se cierra.
+ */
+async function entregar(page: Page, cantidad: number): Promise<void> {
   const tarea = await esperarTarea(page, /Entrega pedido pendiente/i);
   await expect(tarea.first(), 'la tarea de entrega de esta corrida tiene que estar en la bandeja').toBeVisible({
     timeout: 30_000,
@@ -105,9 +156,9 @@ async function entregar(page: Page, cantidad: number, finalizar: 'parcial' | 'to
   await page.locator('.btn-tomar').first().click().catch(() => {});
   await page.waitForTimeout(2500);
 
-  // Realizar Entrega: muestra los '+' de cada ítem y el botón de finalizar parcial.
+  // Realizar Entrega: muestra los '+' de cada ítem (y el formulario dinámico si lo hay).
   await page.locator('#realizarEntrega').click();
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1500);
 
   // '+' del primer ítem (el único de este pedido) → modal con la tabla de lotes.
   await page.locator('a.btnEntrega').first().click();
@@ -125,13 +176,13 @@ async function entregar(page: Page, cantidad: number, finalizar: 'parcial' | 'to
   await page.locator('#btn-extraccion').click(); // guardar_entrega(): apila en la fila y cierra el modal
   await page.waitForTimeout(1500);
 
-  // Finalizar. El POST real (Proceso/cerrarTarea) va dentro del confirm de SweetAlert.
-  await page.locator(finalizar === 'parcial' ? '#btncerrarTarea' : '#btnHecho').click();
-  await page.locator('.swal2-confirm').first().click({ timeout: 15_000 });
-  await page.waitForTimeout(4000);
-  // El aviso de éxito es otro SweetAlert: se acepta si aparece.
-  await page.locator('.swal2-confirm').first().click({ timeout: 8_000 }).catch(() => {});
-  await page.waitForTimeout(3000);
+  // Si la empresa tiene el formulario clonado, se completa antes de finalizar.
+  await completarFormularioEntrega(page);
+
+  await page.locator('#btnHecho').click();
+  await page.waitForTimeout(6000);
+  await cerrarSweetAlerts(page); // cierra el aviso "Guardado!" (Swal)
+  await page.waitForTimeout(2000);
 }
 
 /** Estado del pedido de esta corrida, buscándolo por su marca en la grilla de pedidos. */
@@ -254,7 +305,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
   test('una entrega parcial deja el pedido en Ent. Parcial con saldo pendiente', async ({ browser }) => {
     const rep = await sesionDeRol(browser, 'almacen');
     try {
-      await entregar(rep, CANT_PARCIAL, 'parcial');
+      await entregar(rep, CANT_PARCIAL);
 
       const estado = await estadoDelPedido(rep);
       expect(estado, 'una entrega parcial tiene que dejar el pedido en estado parcial').toMatch(/Parcial/i);
@@ -271,7 +322,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
   test('la entrega del resto completa el pedido y lo deja Entregado', async ({ browser }) => {
     const rep = await sesionDeRol(browser, 'almacen');
     try {
-      await entregar(rep, CANT_RESTO, 'total');
+      await entregar(rep, CANT_RESTO);
 
       const estado = await estadoDelPedido(rep);
       expect(estado, 'entregado el saldo, el pedido tiene que quedar Entregado/Finalizado').toMatch(
