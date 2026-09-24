@@ -65,4 +65,60 @@ class Dashs extends CI_Model {
 
   }
 
+  /**
+  * Cuenta los usuarios generados para la empresa actual.
+  * Usa el endpoint existente GET /users/{empr_id} (getUsersXGroup) y cuenta del lado del cliente
+  * — supuesto A4: no requiere query nueva ni deploy de API.
+  * @return int|null cantidad, o null si no se pudo obtener
+  */
+  function contarUsuariosEmpresa(){
+    $empr_id = empresa();
+    if(empty($empr_id)){
+      return null;
+    }
+    try {
+      $resp = $this->rest->callAPI("GET", REST_CORE."/users/".$empr_id);
+      if(!isset($resp["data"])){
+        return null;
+      }
+      $data = json_decode($resp["data"]);
+      if(!isset($data->usuarios) || !isset($data->usuarios->usuario)){
+        return 0;
+      }
+      $usuarios = $data->usuarios->usuario;
+      // el DataService devuelve objeto suelto si hay un solo usuario, array si hay varios
+      return is_array($usuarios) ? count($usuarios) : 1;
+    } catch (Exception $e) {
+      log_message('ERROR', '#TRAZA | CORE | Dashs | contarUsuariosEmpresa() >> '.$e->getMessage());
+      return null;
+    }
+  }
+
+  /**
+  * Devuelve el nombre visible de la empresa actual a partir de las memberships.
+  * @param array $memberships payload de obtenerMemberships()
+  * @return string
+  */
+  function nombreEmpresaActual($memberships){
+    $empr_id = (string) empresa();
+    if(!empty($memberships) && is_array($memberships)){
+      foreach($memberships as $m){
+        if(is_object($m) && isset($m->group_id)){
+          $nom = isset($m->group_id->name) ? explode("-", $m->group_id->name) : array();
+          $id_grupo = isset($nom[0]) ? (string) $nom[0] : '';
+          if($id_grupo === $empr_id && isset($m->group_id->displayName)){
+            return (string) $m->group_id->displayName;
+          }
+        }
+      }
+      // fallback: primer displayName disponible
+      foreach($memberships as $m){
+        if(is_object($m) && isset($m->group_id) && isset($m->group_id->displayName)){
+          return (string) $m->group_id->displayName;
+        }
+      }
+    }
+    return 'Tu empresa';
+  }
+
 }

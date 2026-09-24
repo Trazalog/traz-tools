@@ -26,6 +26,9 @@ class Dash extends CI_Controller {
 			$aux = $this->Dashs->obtenerMenu();
 			$data['menu'] = menu($aux);
 
+			//Aterrizaje: el Administrador entra al tablero; el resto, a la vista por defecto (intacto).
+			$data['landing'] = esAdministrador($data['memberships']) ? 'Dash/dashboard' : DEF_VIEW;
+
 			//copyright de footer configurado en core.tablas 
 			$footer = $this->Tablas->obtenerTabla('configuraciones_uitoolsfotterCopyright');
 			$data['copyright'] = $footer['data'][0]->valor;
@@ -42,6 +45,61 @@ class Dash extends CI_Controller {
 			log_message("DEBUG","#TRAZA | CORE | Dash | index() >> Sesion vencida");
 			redirect(DNATO."main/login");
 		}
+	}
+
+
+	/**
+	 * Tablero / Landing del Administrador. Se carga como fragmento dentro de #content
+	 * (via linkTo AJAX), por eso NO monta layout/Admin, sólo la vista dashboard/admin_dashboard.
+	 * Ver doc/analisis/dashboard-administrador-landing.md
+	 */
+	function dashboard(){
+		log_message("DEBUG","#TRAZA | CORE | Dash | dashboard()");
+		if(!$this->session->userdata('empr_id')){
+			redirect(DNATO."main/login");
+			return;
+		}
+
+		$this->config->load('dashboard', TRUE);
+		$cfg = $this->config->item('dashboard');
+
+		$memberships = $this->Dashs->obtenerMemberships();
+
+		// --- Sector Suscripción ---
+		$nombre = trim((string) $this->session->userdata('first_name').' '.(string) $this->session->userdata('last_name'));
+		if($nombre === ''){
+			$nombre = (string) $this->session->userdata('usernick');
+		}
+		if($nombre === ''){
+			$nombre = (string) $this->session->userdata('email');
+		}
+
+		// Logo del navbar reutilizado como logo de empresa (supuesto A3)
+		$logo = $this->Tablas->obtenerTabla('configuraciones_uitoolsLogoNavbar');
+		$data['logo_empresa'] = isset($logo['data'][0]->valor) ? $logo['data'][0]->valor : '';
+
+		$data['nombre_usuario']    = $nombre;
+		$data['fecha_hoy']         = $this->fechaLarga();
+		$data['welcome_msg']       = $cfg['dashboard_welcome_msg'];
+		$data['nombre_empresa']    = $this->Dashs->nombreEmpresaActual($memberships);
+		$data['cantidad_usuarios'] = $this->Dashs->contarUsuariosEmpresa();
+		// Tipo de suscripción (supuesto A5): constante por ahora — Freemium para altas recientes.
+		$data['tipo_suscripcion']  = 'Freemium';
+		$data['modulos']           = $cfg['dashboard_modulos'];
+		$data['actividad']         = $cfg['dashboard_actividad'];
+
+		// --- Sector KPI (scaffolding en Fase 1) ---
+		$data['kpis'] = $cfg['dashboard_kpis'];
+
+		$this->load->view('dashboard/admin_dashboard', $data);
+	}
+
+	/** Fecha larga en español (server-side). */
+	private function fechaLarga(){
+		$dias = array('domingo','lunes','martes','miércoles','jueves','viernes','sábado');
+		$meses = array('','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre');
+		$d = (int) date('w'); $dia = (int) date('j'); $mes = (int) date('n'); $anio = date('Y');
+		return ucfirst($dias[$d]).' '.$dia.' de '.$meses[$mes].' de '.$anio;
 	}
 
 
