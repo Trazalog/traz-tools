@@ -342,9 +342,11 @@ if(!function_exists('esAdministrador')){
 		foreach($memberships as $m){
 			$role = '';
 			if(is_object($m) && isset($m->role_id) && isset($m->role_id->name)){
-				$role = (string) $m->role_id->name;
+				$role = trim((string) $m->role_id->name);
 			}
-			if(stripos($role, 'Administrador ') === 0){
+			// Matchea tanto "Administrador" a secas como "Administrador <empresa>"
+			// (en la base conviven ambos formatos).
+			if(strcasecmp($role, 'Administrador') === 0 || stripos($role, 'Administrador ') === 0){
 				return true;
 			}
 		}
