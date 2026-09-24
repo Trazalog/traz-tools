@@ -43,27 +43,29 @@ $config['dashboard_actividad'] = array(
 );
 
 /* Cajas de KPI (Sector B). En Fase 1 se muestran como scaffolding; el dato llega en Fase 2. */
+// fuente: 'tools' => caché Postgres via ToolsKPIDataService (Dash/kpi). 'man' => caché de
+// AssetPlanner via MANKPIDataService (pendiente de wiring — supuesto A10).
 $config['dashboard_kpis'] = array(
     array(
-        'id' => 'alm_reorder', 'sector' => 'kpi', 'modulo' => 'ALM',
+        'id' => 'alm_reorder', 'sector' => 'kpi', 'modulo' => 'ALM', 'fuente' => 'tools',
         'titulo' => 'Artículos bajo punto de pedido',
         'orden' => 10, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 300,
         'color' => '#2f855a', 'kpi_nombre' => 'alm_reorder', 'chart' => 'bar',
     ),
     array(
-        'id' => 'alm_mov_sin_entregar', 'sector' => 'kpi', 'modulo' => 'ALM',
+        'id' => 'alm_mov_sin_entregar', 'sector' => 'kpi', 'modulo' => 'ALM', 'fuente' => 'tools',
         'titulo' => 'Movimientos internos sin entregar',
         'orden' => 20, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 300,
         'color' => '#2f855a', 'kpi_nombre' => 'alm_mov_sin_entregar', 'chart' => 'doughnut',
     ),
     array(
-        'id' => 'her_transito', 'sector' => 'kpi', 'modulo' => 'HER',
+        'id' => 'her_transito', 'sector' => 'kpi', 'modulo' => 'HER', 'fuente' => 'tools',
         'titulo' => 'Herramientas en tránsito vs total',
         'orden' => 30, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
         'color' => '#c05621', 'kpi_nombre' => 'her_transito', 'chart' => 'doughnut',
     ),
     array(
-        'id' => 'man_disponibilidad', 'sector' => 'kpi', 'modulo' => 'MAN',
+        'id' => 'man_disponibilidad', 'sector' => 'kpi', 'modulo' => 'MAN', 'fuente' => 'man',
         'titulo' => 'Disponibilidad de equipos',
         'orden' => 40, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
         'color' => '#2b6cb0', 'kpi_nombre' => 'man_disponibilidad', 'chart' => 'line',

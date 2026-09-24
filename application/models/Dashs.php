@@ -95,6 +95,43 @@ class Dashs extends CI_Model {
   }
 
   /**
+  * Lee un KPI de la caché (kpi.cache) via ToolsKPIDataService para la empresa actual.
+  * El tablero SIEMPRE lee de acá, nunca del DataService de negocio (ver Fase 2 del doc de análisis).
+  * @param string $nombre nombre del KPI en la caché
+  * @return array ['valor'=>..,'valor_json'=>mixed,'calculado_en'=>..] o [] si no hay dato
+  */
+  function obtenerKPI($nombre){
+    $empr_id = empresa();
+    if(empty($empr_id) || empty($nombre)){
+      return array();
+    }
+    try {
+      $resp = $this->rest->callAPI("GET", REST_KPI."/kpi/".rawurlencode($nombre)."/emprid/".$empr_id);
+      if(!isset($resp["data"])){
+        return array();
+      }
+      $data = json_decode($resp["data"]);
+      if(!isset($data->kpi)){
+        return array();
+      }
+      $kpi = $data->kpi;
+      $valor_json = null;
+      if(isset($kpi->valor_json) && $kpi->valor_json !== '' && $kpi->valor_json !== null){
+        $valor_json = json_decode($kpi->valor_json); // valor_json viene como texto (jsonb::text)
+      }
+      return array(
+        'nombre'       => isset($kpi->nombre) ? $kpi->nombre : $nombre,
+        'valor'        => isset($kpi->valor) ? $kpi->valor : null,
+        'valor_json'   => $valor_json,
+        'calculado_en' => isset($kpi->calculado_en) ? $kpi->calculado_en : null,
+      );
+    } catch (Exception $e) {
+      log_message('ERROR', '#TRAZA | CORE | Dashs | obtenerKPI() >> '.$e->getMessage());
+      return array();
+    }
+  }
+
+  /**
   * Devuelve el nombre visible de la empresa actual a partir de las memberships.
   * @param array $memberships payload de obtenerMemberships()
   * @return string

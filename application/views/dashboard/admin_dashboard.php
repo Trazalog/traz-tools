@@ -56,12 +56,26 @@
 .tzdash .tz-kpi .tz-kpi-accent{width:4px;align-self:stretch;border-radius:3px;}
 .tzdash .tz-kpi .tz-kpi-title{font-size:14px;font-weight:700;color:var(--tz-ink);}
 .tzdash .tz-kpi .tz-kpi-tag{font-size:10px;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px;margin-left:auto;}
-.tzdash .tz-kpi .tz-kpi-body{padding:0 16px 16px;display:flex;align-items:center;justify-content:center;}
-.tzdash .tz-skel{width:100%;height:100%;min-height:150px;border-radius:10px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:10px;color:var(--tz-muted);
-  background:repeating-linear-gradient(115deg,#f3f5f8,#f3f5f8 12px,#eef1f6 12px,#eef1f6 24px);}
-.tzdash .tz-skel i{font-size:26px;opacity:.5;}
-.tzdash .tz-skel span{font-size:12px;font-weight:600;}
+.tzdash .tz-kpi .tz-kpi-body{padding:0 16px 8px;position:relative;}
+.tzdash .tz-kpi .tz-kpi-body canvas{width:100%;height:100%;display:block;}
+.tzdash .tz-kpi.tz-loading .tz-kpi-body:after{content:"Cargando…";position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;color:var(--tz-muted);font-size:12px;
+  background:rgba(255,255,255,.6);}
+.tzdash .tz-kpi.tz-error .tz-kpi-body:after{content:"No disponible";position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;color:#c05621;font-size:12px;}
+.tzdash .tz-kpi-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 16px 14px;font-size:12px;color:var(--tz-muted);}
+.tzdash .tz-kpi-foot .tz-kpi-drill{color:var(--tz-brand);font-weight:600;cursor:pointer;white-space:nowrap;}
+.tzdash .tz-kpi-updated{font-size:10px;color:#a0aec0;}
+.tzdash .tz-kpi-detail{border-top:1px solid var(--tz-border);padding:8px 16px 14px;}
+.tzdash .tz-kpi-detail table{width:100%;border-collapse:collapse;font-size:12px;}
+.tzdash .tz-kpi-detail th{text-align:left;color:var(--tz-muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--tz-border);}
+.tzdash .tz-kpi-detail td{padding:4px 6px;color:var(--tz-ink);border-bottom:1px solid #f0f2f6;}
+.tzdash .tz-kpi-na{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  height:100%;min-height:150px;color:var(--tz-muted);text-align:center;padding:0 12px;
+  background:repeating-linear-gradient(115deg,#f6f7f9,#f6f7f9 12px,#eef1f6 12px,#eef1f6 24px);border-radius:10px;}
+.tzdash .tz-kpi-na b{color:var(--tz-slate);font-size:13px;}
+.tzdash .tz-kpi-na span{font-size:11px;}
 </style>
 
 <div class="tzdash">
@@ -116,24 +130,50 @@
   <!-- ===== SECTOR B: KPIs (scaffolding Fase 1) ===== -->
   <div class="tz-section-title">Indicadores de tu operación</div>
   <div class="tz-kpis">
-    <?php foreach($kpis as $k): ?>
+    <?php foreach($kpis as $k): $fuente = isset($k['fuente']) ? $k['fuente'] : 'tools'; ?>
       <div class="tz-kpi-col col-lg-<?php echo (int) $k['ancho']; ?> col-md-6 col-12">
         <div class="tz-card tz-kpi" data-kpi="<?php echo htmlspecialchars($k['kpi_nombre'], ENT_QUOTES, 'UTF-8'); ?>"
-             data-refresh="<?php echo (int) $k['refresh_seg']; ?>" data-chart="<?php echo htmlspecialchars($k['chart'], ENT_QUOTES, 'UTF-8'); ?>">
+             data-fuente="<?php echo htmlspecialchars($fuente, ENT_QUOTES, 'UTF-8'); ?>"
+             data-refresh="<?php echo (int) $k['refresh_seg']; ?>"
+             data-chart="<?php echo htmlspecialchars($k['chart'], ENT_QUOTES, 'UTF-8'); ?>"
+             data-color="<?php echo htmlspecialchars($k['color'], ENT_QUOTES, 'UTF-8'); ?>">
           <div class="tz-kpi-head">
             <div class="tz-kpi-accent" style="background:<?php echo $k['color']; ?>"></div>
             <div class="tz-kpi-title"><?php echo htmlspecialchars($k['titulo'], ENT_QUOTES, 'UTF-8'); ?></div>
             <div class="tz-kpi-tag" style="background:<?php echo $k['color']; ?>"><?php echo htmlspecialchars($k['modulo'], ENT_QUOTES, 'UTF-8'); ?></div>
           </div>
           <div class="tz-kpi-body" style="height:<?php echo (int) $k['alto']; ?>px;">
-            <div class="tz-skel">
-              <i class="fa fa-bar-chart"></i>
-              <span>Datos en preparación &middot; Fase 2</span>
-            </div>
+            <?php if($fuente === 'tools'): ?>
+              <canvas></canvas>
+            <?php else: ?>
+              <div class="tz-kpi-na">
+                <b>Disponible próximamente</b>
+                <span>Este indicador lee de la caché de AssetPlanner (Mantenimiento).</span>
+              </div>
+            <?php endif; ?>
           </div>
+          <?php if($fuente === 'tools'): ?>
+          <div class="tz-kpi-foot">
+            <span class="tz-foot-info">&mdash;</span>
+            <span>
+              <span class="tz-kpi-updated"></span>
+              <a class="tz-kpi-drill">Ver detalle &rarr;</a>
+            </span>
+          </div>
+          <div class="tz-kpi-detail" hidden></div>
+          <?php endif; ?>
         </div>
       </div>
     <?php endforeach; ?>
   </div>
 
 </div>
+
+<script>
+(function(){
+  var base = '<?php echo base_url(); ?>';
+  function go(){ if(window.TZDash){ TZDash.init(base); } }
+  if(window.TZDash){ go(); }
+  else{ $.getScript(base + 'lib/props/dashboard_kpis.js').done(go); }
+})();
+</script>

@@ -236,6 +236,7 @@ define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
 define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
+define('REST_KPI', HOST.'/services/ToolsKPIDataService');
 define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');

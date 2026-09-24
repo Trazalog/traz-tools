@@ -1,0 +1,31 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="ToolsKPIDataService" transports="http https local">
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <!-- Devuelve el valor cacheado de un KPI para una empresa. El tablero llama SIEMPRE acá,
+        nunca al DataService de negocio. La caché la puebla kpi.correr() (ver
+        _backend/database/scripts/versiones/v2.8.1.4/kpi_cache_engine.sql). -->
+   <query id="getKPI" useConfig="ToolsDataSource">
+      <sql>select c.valor, c.valor_json::text as valor_json, to_char(c.calculado_en,'YYYY-MM-DD HH24:MI') as calculado_en from kpi.cache c where c.nombre = :nombre and c.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{"kpi":{"nombre":"$nombre","valor":"$valor","valor_json":"$valor_json","calculado_en":"$calculado_en"}}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <!-- Todos los KPIs cacheados de una empresa (para pintar el tablero de una). -->
+   <query id="getKPIsXEmpresa" useConfig="ToolsDataSource">
+      <sql>select c.nombre, c.valor, c.valor_json::text as valor_json, to_char(c.calculado_en,'YYYY-MM-DD HH24:MI') as calculado_en from kpi.cache c where c.empr_id = cast(:empr_id as integer)</sql>
+      <result outputType="json">{"kpis":{"kpi":[{"nombre":"$nombre","valor":"$valor","valor_json":"$valor_json","calculado_en":"$calculado_en"}]}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/kpi/{nombre}/emprid/{empr_id}">
+      <call-query href="getKPI">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/kpis/emprid/{empr_id}">
+      <call-query href="getKPIsXEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+</data>

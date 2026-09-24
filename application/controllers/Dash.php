@@ -94,6 +94,22 @@ class Dash extends CI_Controller {
 		$this->load->view('dashboard/admin_dashboard', $data);
 	}
 
+	/**
+	 * Endpoint AJAX que devuelve un KPI cacheado (JSON) para las cajas del tablero.
+	 * Lo consume dashboard_kpis.js. Ruta: Dash/kpi/<nombre>
+	 */
+	function kpi($nombre = null){
+		if(!$this->session->userdata('empr_id')){
+			$this->output->set_status_header(401);
+			echo json_encode(array('error' => 'sin_sesion'));
+			return;
+		}
+		$kpi = $this->Dashs->obtenerKPI($nombre);
+		$this->output
+			->set_content_type('application/json')
+			->set_output(json_encode($kpi));
+	}
+
 	/** Fecha larga en español (server-side). */
 	private function fechaLarga(){
 		$dias = array('domingo','lunes','martes','miércoles','jueves','viernes','sábado');

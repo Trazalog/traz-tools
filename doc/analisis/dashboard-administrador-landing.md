@@ -135,17 +135,18 @@ Tablas nuevas en un schema `kpi` (o `core`, a confirmar — **A12**):
   `vence_en`. Dos fases (tmp → publish) como AssetPlanner para no servir datos a medio calcular.
 - Guardar `valor_json` habilita desglose y drill-down sin ir al dato vivo.
 
-### 5.4 Scheduler — **la decisión 🔴 que necesita tu OK (A13)**
-AssetPlanner usa **events de MySQL** (cada 10 min). En Postgres las opciones:
-- **(rec.) `pg_cron`** — cron dentro de Postgres, simple, pero requiere instalar la extensión.
-- **cron del SO** que invoca `psql`/una función — no depende de extensiones, más piezas.
-- **Tarea programada de WSO2** (scheduled task) que pega al DataService — mantiene todo en la capa
-  de integración, coherente con la arquitectura MCP/APIM.
-- **Streaming Integrator (Siddhi)** — ya hay SI instalado (offset 10); es matar mosca a cañonazo
-  para esto.
+### 5.4 Scheduler — **A13 (RESUELTO por verificación contra la BD)**
+Se había aprobado `pg_cron`, pero se verificó contra `tools_prod_t` (PostgreSQL **11.18**) que
+**pg_cron NO está instalado ni disponible** (extensiones presentes: `dblink`, `pgcrypto`,
+`plpgsql`). Así que el scheduler **no puede vivir dentro de Postgres**. Queda elegir entre:
+- **(A) cron del SO** en el server de Postgres: `*/5 * * * * psql ... -c "select kpi.correr();"`
+  (con `~/.pgpass` y un usuario con `EXECUTE` sobre `kpi.correr()`). Simple, una línea.
+- **(B) Tarea programada de WSO2** (ScheduledTask) que invoque un recurso del DataService que corra
+  `kpi.correr()`. Coherente con la capa de integración/MCP, pero requiere exponer un resource de
+  escritura y versionarlo.
 
-**No elijo scheduler solo** (es infra/arquitectura). Recomiendo `pg_cron` por simplicidad;
-confirmámelo y ahí escribo la Fase 2. Mientras tanto la caché se puede poblar a mano para demo.
+El motor (`kpi_cache_engine.sql`) ya documenta las dos en su sección SCHEDULER. **Mientras se define,
+la caché se puebla a mano con `SELECT kpi.correr();`** (sirve para demo).
 
 ### 5.5 KPIDataService (Tools/Postgres)
 `.dbs` nuevo, espejo de `MANKPIDataService`, contra el datasource Postgres de Tools. Expone
@@ -168,8 +169,21 @@ este DataService, nunca a los DataService de negocio.
 - **Fase 1 (esta rama, ya):** hook de aterrizaje + `Dash::dashboard()` + vista + config default +
   sector Suscripción completo (con supuestos A1–A8) + cajas KPI como scaffolding. Demoable sin
   tocar backend 🔴. La query de conteo de usuarios (A4) es el único cambio de API (aditivo).
-- **Fase 2 (tras tu OK del scheduler A13):** caché Postgres + KPIDataService + los 4–5 KPIs +
-  gráficos + drill-down.
+- **Fase 2 (implementada en esta rama):** motor de caché Postgres (`kpi.*`) + definiciones de los
+  3 KPIs de Tools (verificadas contra la BD) + `ToolsKPIDataService.dbs` + endpoint `Dash/kpi` +
+  frontend con gráficos propios (canvas) + drill-down. Falta: elegir/activar el scheduler (A13, §5.4)
+  y el wiring del KPI de MAN (lee de AssetPlanner, no de Postgres — supuesto A10).
+
+### Estado de verificación (Fase 2)
+- Las 3 queries de Tools se **corrieron read-only contra `tools_prod_t`** (empr_id=1) y dieron datos
+  reales: reorder = 4 filas por depósito; movs sin entregar = 10; herramientas 16 en tránsito / 37.
+- KPI reorder: stock = `SUM(alm_lotes.cantidad)` de lotes `estado='AC'`, comparado contra
+  `alm_articulos.punto_pedido` (global por artículo, no por depósito). Borde: artículo con
+  `punto_pedido>0` pero sin lotes en un depósito (stock 0) no aparece.
+- El motor aísla cada cálculo en su `BEGIN/EXCEPTION`: un KPI que falle no rompe al resto (queda en
+  `kpi.event_log`). Igual, **probar en dev antes de desplegar** (regla de sistema productivo).
+- Deploy: `ToolsKPIDataService.dbs` lo sube el script de deploy (es DataService, no API). Los 2 `.sql`
+  de `v2.8.1.4/` se corren en Postgres a mano. Rebuild del `.car` con `./mvnw clean install`.
 
 ## 7. Compatibilidad y rollback
 
@@ -187,6 +201,6 @@ este DataService, nunca a los DataService de negocio.
 | A5 | Freemium ≥ 2026-09-01, si no Full | etiqueta de suscripción |
 | A6 | Módulos fijos MAN/ALM/HER | sector A item 4 |
 | A11 | Dato de Herramientas en Pañol | KPI 3 |
-| A12 | Schema `kpi` para la caché | Fase 2 |
-| **A13** | **Scheduler = `pg_cron`** | **Fase 2 — bloqueante, necesita tu OK** |
+| A12 | Schema `kpi` para la caché | Fase 2 (implementado) |
+| **A13** | ~~pg_cron~~ **NO disponible en la BD** → cron del SO (rec.) o tarea WSO2 | **Falta elegir/activar (§5.4)** |
 | A14 | Gráficos con Chart.js | Fase 2 frontend |
