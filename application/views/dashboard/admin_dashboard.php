@@ -57,6 +57,13 @@
 .tzdash .tz-kpi .tz-kpi-accent{width:4px;align-self:stretch;border-radius:3px;}
 .tzdash .tz-kpi .tz-kpi-title{font-size:14px;font-weight:700;color:var(--tz-ink);}
 .tzdash .tz-kpi .tz-kpi-tag{font-size:10px;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px;margin-left:auto;}
+.tzdash .tz-kpi-head{cursor:grab;}
+.tzdash .tz-kpi-head:active{cursor:grabbing;}
+.tzdash .tz-grip{color:#cbd2dc;font-size:14px;line-height:1;letter-spacing:-2px;user-select:none;}
+.tzdash .tz-kpi-col.tz-dragging{opacity:.45;}
+.tzdash .tz-kpi-col.tz-over-before .tz-kpi{box-shadow:inset 4px 0 0 var(--tz-brand);}
+.tzdash .tz-kpi-col.tz-over-after .tz-kpi{box-shadow:inset -4px 0 0 var(--tz-brand);}
+.tzdash .tz-reorder-hint{font-size:11px;color:var(--tz-muted);font-weight:500;text-transform:none;letter-spacing:0;margin-left:8px;}
 .tzdash .tz-kpi .tz-kpi-body{padding:0 16px 8px;position:relative;}
 .tzdash .tz-kpi .tz-kpi-body canvas{width:100%;height:100%;display:block;}
 .tzdash .tz-kpi.tz-loading .tz-kpi-body:after{content:"Cargando…";position:absolute;inset:0;
@@ -129,7 +136,7 @@
   </div>
 
   <!-- ===== SECTOR B: KPIs (scaffolding Fase 1) ===== -->
-  <div class="tz-section-title">Indicadores de tu operación</div>
+  <div class="tz-section-title">Indicadores de tu operación <span class="tz-reorder-hint">— arrastrá las cajas para reordenarlas</span></div>
   <div class="tz-kpis">
     <?php foreach($kpis as $k): $fuente = isset($k['fuente']) ? $k['fuente'] : 'tools'; ?>
       <div class="tz-kpi-col" style="grid-column:span <?php echo (int) $k['ancho']; ?>;">
@@ -139,6 +146,7 @@
              data-chart="<?php echo htmlspecialchars($k['chart'], ENT_QUOTES, 'UTF-8'); ?>"
              data-color="<?php echo htmlspecialchars($k['color'], ENT_QUOTES, 'UTF-8'); ?>">
           <div class="tz-kpi-head">
+            <span class="tz-grip" title="Arrastrá para reordenar">⠿</span>
             <div class="tz-kpi-accent" style="background:<?php echo $k['color']; ?>"></div>
             <div class="tz-kpi-title"><?php echo htmlspecialchars($k['titulo'], ENT_QUOTES, 'UTF-8'); ?></div>
             <div class="tz-kpi-tag" style="background:<?php echo $k['color']; ?>"><?php echo htmlspecialchars($k['modulo'], ENT_QUOTES, 'UTF-8'); ?></div>
@@ -173,7 +181,8 @@
 <script>
 (function(){
   var base = '<?php echo base_url(); ?>';
-  function go(){ if(window.TZDash){ TZDash.init(base); } }
+  var empr = '<?php echo isset($empr_id_dash) ? $empr_id_dash : ""; ?>';
+  function go(){ if(window.TZDash){ TZDash.init(base, empr); } }
   if(window.TZDash){ go(); }
   else{ $.getScript(base + 'lib/props/dashboard_kpis.js').done(go); }
 })();

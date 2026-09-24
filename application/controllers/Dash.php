@@ -89,8 +89,9 @@ class Dash extends CI_Controller {
 		$data['modulos']           = $cfg['dashboard_modulos'];
 		$data['actividad']         = $cfg['dashboard_actividad'];
 
-		// --- Sector KPI (scaffolding en Fase 1) ---
+		// --- Sector KPI ---
 		$data['kpis'] = $cfg['dashboard_kpis'];
+		$data['empr_id_dash'] = empresa(); // para persistir el orden de las cajas por empresa (localStorage)
 
 		$this->load->view('dashboard/admin_dashboard', $data);
 	}
