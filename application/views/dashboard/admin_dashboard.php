@@ -12,6 +12,7 @@
   --tz-card:#ffffff;--tz-border:#e6eaf0;--tz-brand:#2b6cb0;--tz-brand-soft:#ebf2fb;
   color:var(--tz-slate);font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:4px 2px 18px;}
 .tzdash *{box-sizing:border-box;}
+.tzdash [hidden]{display:none !important;}
 .tzdash .tz-hero{display:grid;grid-template-columns:1.4fr .9fr;gap:16px;margin-bottom:16px;}
 @media(max-width:900px){.tzdash .tz-hero{grid-template-columns:1fr;}}
 .tzdash .tz-card{background:var(--tz-card);border:1px solid var(--tz-border);border-radius:14px;
@@ -21,6 +22,18 @@
 .tzdash .tz-welcome .tz-date{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.85;}
 .tzdash .tz-welcome h2{margin:6px 0 4px;font-size:26px;font-weight:700;line-height:1.15;color:#fff;}
 .tzdash .tz-welcome p{margin:0;font-size:14px;opacity:.92;max-width:46ch;}
+.tzdash .tz-start{margin-top:16px;display:flex;flex-direction:column;align-items:flex-start;gap:12px;}
+.tzdash .tz-start-q{font-size:23px;font-weight:800;color:#fff;line-height:1.15;text-shadow:0 1px 2px rgba(0,0,0,.18);}
+.tzdash .tz-start-btn{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--tz-brand);border:none;
+  border-radius:12px;padding:11px 26px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);
+  transition:transform .12s ease,box-shadow .2s ease;animation:tzPulse 2.2s ease-in-out infinite;}
+.tzdash .tz-start-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.28);}
+.tzdash .tz-start-arrow{transition:transform .15s ease;}
+.tzdash .tz-start-btn:hover .tz-start-arrow{transform:translateX(4px);}
+@keyframes tzPulse{0%,100%{box-shadow:0 3px 10px rgba(0,0,0,.18);}50%{box-shadow:0 0 0 6px rgba(255,255,255,.18),0 3px 14px rgba(0,0,0,.22);}}
+#tz-kpis-wrap.tz-reveal{animation:tzReveal .85s ease both;}
+@keyframes tzReveal{from{opacity:0;filter:blur(16px);transform:translateY(10px);}to{opacity:1;filter:blur(0);transform:none;}}
+@media(prefers-reduced-motion:reduce){.tzdash .tz-start-btn{animation:none;}#tz-kpis-wrap.tz-reveal{animation:none;}}
 .tzdash .tz-company{padding:18px 20px;display:flex;align-items:center;gap:16px;}
 .tzdash .tz-company .tz-logo{width:56px;height:56px;border-radius:12px;object-fit:contain;
   background:var(--tz-brand-soft);padding:6px;flex:none;}
@@ -93,7 +106,11 @@
     <div class="tz-card tz-welcome">
       <div class="tz-date"><?php echo htmlspecialchars($fecha_hoy, ENT_QUOTES, 'UTF-8'); ?></div>
       <h2>Hola, <?php echo htmlspecialchars($nombre_usuario, ENT_QUOTES, 'UTF-8'); ?></h2>
-      <p><?php echo htmlspecialchars($welcome_msg, ENT_QUOTES, 'UTF-8'); ?></p>
+      <p class="tz-welcome-msg"><?php echo htmlspecialchars($welcome_msg, ENT_QUOTES, 'UTF-8'); ?></p>
+      <div class="tz-start" hidden>
+        <div class="tz-start-q">¿Comenzamos el día?</div>
+        <button type="button" class="tz-start-btn">Comenzar <span class="tz-start-arrow">→</span></button>
+      </div>
     </div>
     <div class="tz-card tz-company">
       <?php if(!empty($logo_empresa)): ?>
@@ -135,7 +152,8 @@
     </div>
   </div>
 
-  <!-- ===== SECTOR B: KPIs (scaffolding Fase 1) ===== -->
+  <!-- ===== SECTOR B: KPIs ===== -->
+  <div id="tz-kpis-wrap">
   <div class="tz-section-title">Indicadores de tu operación <span class="tz-reorder-hint">— arrastrá las cajas para reordenarlas</span></div>
   <div class="tz-kpis">
     <?php foreach($kpis as $k): $fuente = isset($k['fuente']) ? $k['fuente'] : 'tools'; ?>
@@ -175,6 +193,7 @@
       </div>
     <?php endforeach; ?>
   </div>
+  </div><!-- /#tz-kpis-wrap -->
 
 </div>
 
@@ -182,7 +201,8 @@
 (function(){
   var base = '<?php echo base_url(); ?>';
   var empr = '<?php echo isset($empr_id_dash) ? $empr_id_dash : ""; ?>';
-  function go(){ if(window.TZDash){ TZDash.init(base, empr); } }
+  var hoy  = '<?php echo date('Y-m-d'); ?>';
+  function go(){ if(window.TZDash){ TZDash.init(base, empr, hoy); } }
   if(window.TZDash){ go(); }
   else{ $.getScript(base + 'lib/props/dashboard_kpis.js').done(go); }
 })();
