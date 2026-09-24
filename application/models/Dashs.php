@@ -95,6 +95,33 @@ class Dashs extends CI_Model {
   }
 
   /**
+  * ¿El usuario logueado es Administrador de la empresa activa?
+  * Se resuelve contra Postgres (seg.memberships_users), que es la fuente autoritativa del rol
+  * — NO contra las memberships de Bonita, que guardan el rol funcional activo (Almacen, Mantenedor,
+  * etc.), nunca 'Administrador'. Ver doc/analisis/dashboard-administrador-landing.md (A1).
+  * @return bool
+  */
+  function esAdminEmpresa(){
+    $email = $this->session->userdata('email');
+    $empr_id = empresa();
+    if(empty($email) || empty($empr_id)){
+      return false;
+    }
+    try {
+      $resp = $this->rest->callAPI("GET", REST_CORE."/usuario/esadmin/porEmail/".rawurlencode($email)."/empresa/".$empr_id);
+      if(!isset($resp["data"])){
+        return false;
+      }
+      $data = json_decode($resp["data"]);
+      return isset($data->respuesta->es_admin)
+          && ($data->respuesta->es_admin === 'true' || $data->respuesta->es_admin === true);
+    } catch (Exception $e) {
+      log_message('ERROR', '#TRAZA | CORE | Dashs | esAdminEmpresa() >> '.$e->getMessage());
+      return false;
+    }
+  }
+
+  /**
   * Lee un KPI de la caché (kpi.cache) via ToolsKPIDataService para la empresa actual.
   * El tablero SIEMPRE lee de acá, nunca del DataService de negocio (ver Fase 2 del doc de análisis).
   * @param string $nombre nombre del KPI en la caché

@@ -326,31 +326,4 @@ if(!function_exists('validarInactividad')){
 		}
 	}
 }
-
-/**
-* Determina si el usuario logueado es Administrador de su empresa.
-* Supuesto A1 (ver doc/analisis/dashboard-administrador-landing.md): el SP de alta de empresa
-* crea el rol como 'Administrador '||nombre_empresa, asi que se detecta por prefijo del role.
-* @param array $memberships payload de Dashs->obtenerMemberships()
-* @return bool
-*/
-if(!function_exists('esAdministrador')){
-	function esAdministrador($memberships){
-		if(empty($memberships) || !is_array($memberships)){
-			return false;
-		}
-		foreach($memberships as $m){
-			$role = '';
-			if(is_object($m) && isset($m->role_id) && isset($m->role_id->name)){
-				$role = trim((string) $m->role_id->name);
-			}
-			// Matchea tanto "Administrador" a secas como "Administrador <empresa>"
-			// (en la base conviven ambos formatos).
-			if(strcasecmp($role, 'Administrador') === 0 || stripos($role, 'Administrador ') === 0){
-				return true;
-			}
-		}
-		return false;
-	}
-}
 ?>

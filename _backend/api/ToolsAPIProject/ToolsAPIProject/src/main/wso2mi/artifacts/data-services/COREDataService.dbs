@@ -99,6 +99,12 @@
       <result outputType="json">{&#xd;    "usuarios":{&#xd;                    "usuario": [&#xd;                      {&#xd;                        "id": "$id",&#xd;                        "first_name": "$first_name",&#xd;                        "last_name": "$last_name",&#xd;                        "usernick": "$usernick"&#xd;                      }&#xd;                    ]&#xd;    }&#xd;}</result>
       <param name="group" sqlType="STRING"/>
    </query>
+   <query id="getEsAdminXEmailEmpresa" useConfig="ToolsDataSource">
+      <sql>select case when exists( select 1 from seg.memberships_users mu join core.empresas e on e.descripcion = mu."group" where lower(mu.email) = lower(:email) and e.empr_id = cast(:empr_id as integer) and mu.role ilike 'Administrador%') then 'true' else 'false' end as es_admin</sql>
+      <result outputType="json">{"respuesta":{"es_admin":"$es_admin"}}</result>
+      <param name="email" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <query id="getCliente" useConfig="ToolsDataSource">
       <sql>select&#xd;	c.clie_id ,&#xd;	c.nombre,&#xd;	c.dir_entrega,&#xd;	c.observaciones ,&#xd;	t.valor tipo_cliente,&#xd;	estado,&#xd;	to_char( c.fec_alta, 'YYYY-MM-DD HH24:MI') fec_alta&#xd;from&#xd;	core.clientes c ,&#xd;	core.tablas t&#xd;where&#xd;	t.tabl_id = c.ticl_id&#xd;	and c.clie_id = cast(:clie_id as integer)</sql>
       <result outputType="json">{&#xd;   "cliente":{&#xd;      "clie_id":"$clie_id",&#xd;      "nombre":"$nombre",&#xd;      "dir_entrega":"$dir_entrega",&#xd;      "observaciones":"$observaciones",&#xd;      "tipo_cliente":"$tipo_cliente",&#xd;      "estado":"$estado",&#xd;      "fec_alta":"$fec_alta"&#xd;   }&#xd;}</result>
@@ -729,6 +735,12 @@ WHERE email = :email AND "group" = :group AND "role" = :role</sql>
    <resource method="GET" path="/users/{group}">
       <call-query href="getUsersXGroup">
          <with-param name="group" query-param="group"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/usuario/esadmin/porEmail/{email}/empresa/{empr_id}">
+      <call-query href="getEsAdminXEmailEmpresa">
+         <with-param name="email" query-param="email"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/cliente/{clie_id}">

@@ -27,7 +27,8 @@ class Dash extends CI_Controller {
 			$data['menu'] = menu($aux);
 
 			//Aterrizaje: el Administrador entra al tablero; el resto, a la vista por defecto (intacto).
-			$data['landing'] = esAdministrador($data['memberships']) ? 'Dash/dashboard' : DEF_VIEW;
+			//El rol admin se resuelve contra Postgres (no Bonita) — ver Dashs::esAdminEmpresa().
+			$data['landing'] = $this->Dashs->esAdminEmpresa() ? 'Dash/dashboard' : DEF_VIEW;
 
 			//copyright de footer configurado en core.tablas 
 			$footer = $this->Tablas->obtenerTabla('configuraciones_uitoolsfotterCopyright');

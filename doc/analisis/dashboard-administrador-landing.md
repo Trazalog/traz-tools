@@ -46,9 +46,14 @@ registración: alcanza con cambiar **qué ruta recibe `linkTo`** en `Admin.php`,
   - Si el usuario es **Administrador** → `'Dash/dashboard'`.
   - Si no → `DEF_VIEW` (comportamiento actual, intacto).
 - `Admin.php:497` pasa a `linkTo('<?php echo $landing ?>')`.
-- Detección de admin: **SUPUESTO A1** — se considera admin si alguna de sus memberships tiene
-  `role` que empieza con `"Administrador "` (así los crea el SP `configuracion_inicial_empresa_trg`,
-  línea 38: `'Administrador '||new.nombre`). Se encapsula en helper `esAdministrador($memberships)`.
+- Detección de admin: **A1 (CORREGIDO tras probar en dev)** — NO se puede detectar por las
+  memberships de **Bonita**: ahí el rol es el funcional activo (`Almacen`, `Mantenedor`, …), nunca
+  `Administrador`. La fuente autoritativa es **Postgres `seg.memberships_users`** (rol
+  `Administrador%` para la empresa actual). Se resuelve con `Dashs::esAdminEmpresa()`, que pega al
+  endpoint nuevo `COREDataService GET /usuario/esadmin/porEmail/{email}/empresa/{empr_id}`.
+  ⚠️ Ese endpoint es un cambio de `COREDataService.dbs` → **requiere deploy del ToolsAPIProject al MI**
+  (va junto con el `ToolsKPIDataService.dbs`, un solo deploy). Hasta que se deploye, `esAdminEmpresa()`
+  devuelve false y todos aterrizan en `DEF_VIEW` (degrada sin romper nada).
 
 ### 2.2 El tablero es un fragmento en el core (Fase 1)
 - Método nuevo `Dash::dashboard()` → `load->view('dashboard/admin_dashboard', $data)`.
@@ -239,7 +244,7 @@ Para una primera carga inmediata (sin esperar al cron), correr a mano: `SELECT k
 
 | ID | Supuesto | Impacto si cambia |
 |---|---|---|
-| A1 | Admin = role que empieza con "Administrador " | detección de aterrizaje |
+| A1 | ~~Admin por memberships de Bonita~~ **Corregido: admin por Postgres `seg.memberships_users` (endpoint nuevo, requiere deploy)** | detección de aterrizaje |
 | A4 | Conteo de usuarios por `users_business`/memberships | query del sector A |
 | A5 | Freemium ≥ 2026-09-01, si no Full | etiqueta de suscripción |
 | A6 | Módulos fijos MAN/ALM/HER | sector A item 4 |
