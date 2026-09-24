@@ -144,16 +144,16 @@
             <div class="tz-kpi-tag" style="background:<?php echo $k['color']; ?>"><?php echo htmlspecialchars($k['modulo'], ENT_QUOTES, 'UTF-8'); ?></div>
           </div>
           <div class="tz-kpi-body" style="height:<?php echo (int) $k['alto']; ?>px;">
-            <?php if($fuente === 'tools'): ?>
+            <?php if($fuente === 'tools' || $fuente === 'man'): ?>
               <canvas></canvas>
             <?php else: ?>
               <div class="tz-kpi-na">
                 <b>Disponible próximamente</b>
-                <span>Este indicador lee de la caché de AssetPlanner (Mantenimiento).</span>
+                <span>Indicador aún no configurado.</span>
               </div>
             <?php endif; ?>
           </div>
-          <?php if($fuente === 'tools'): ?>
+          <?php if($fuente === 'tools' || $fuente === 'man'): ?>
           <div class="tz-kpi-foot">
             <span class="tz-foot-info">&mdash;</span>
             <span>

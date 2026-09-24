@@ -65,11 +65,13 @@ $config['dashboard_kpis'] = array(
         'color' => '#c05621', 'kpi_nombre' => 'her_transito', 'chart' => 'doughnut',
     ),
     array(
-        // Disponibilidad de MAN: el dato se origina en AssetPlanner (MariaDB) y se deja en kpi.cache
-        // (lo sirve el ToolsKPIDataService como cualquier otro KPI). Ver doc de análisis, Fase 2 MAN.
-        'id' => 'man_disponibilidad', 'sector' => 'kpi', 'modulo' => 'MAN', 'fuente' => 'tools',
+        // Disponibilidad de MAN: la calcula el evento periódico de AssetPlanner y la deja en su
+        // kpi_cache; el ToolsKPIDataService la lee via AssetPlannerDataSource (fuente='man' ->
+        // endpoint Dash/kpiMan, que mapea empr_id Tools -> id AssetPlanner). kpi_nombre = el nombre
+        // registrado en assetv2.kpi_queries_a_cachear.
+        'id' => 'man_disponibilidad', 'sector' => 'kpi', 'modulo' => 'MAN', 'fuente' => 'man',
         'titulo' => 'Disponibilidad de equipos',
         'orden' => 40, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
-        'color' => '#2b6cb0', 'kpi_nombre' => 'man_disponibilidad', 'chart' => 'doughnut',
+        'color' => '#2b6cb0', 'kpi_nombre' => 'getDisponibilidad', 'chart' => 'doughnut',
     ),
 );

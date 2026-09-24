@@ -189,13 +189,14 @@ este DataService, nunca a los DataService de negocio.
   `kpi.event_log`). Igual, **probar en dev antes de desplegar** (regla de sistema productivo).
 - Deploy: `ToolsKPIDataService.dbs` lo sube el script de deploy (es DataService, no API). Los 2 `.sql`
   de `v2.8.1.4/` se corren en Postgres a mano. Rebuild del `.car` con `./mvnw clean install`.
-- **KPI MAN "Disponibilidad" (implementado):** el motor Postgres no puede consultar MariaDB, así que
-  la disponibilidad se calcula en **AssetPlanner** (query en `_backend/database/scripts/kpi-man-disponibilidad-assetplanner.sql`,
-  replica en SQL la lógica AC/RE del PHP `Kpi.php::calcularDisponibilidad`; validada ~65% ≈ el ~64%
-  que muestra AssetPlanner) y su resultado se **UPSERTea en `kpi.cache`** como `man_disponibilidad`,
-  de donde lo sirve el `ToolsKPIDataService` como cualquier KPI (config `fuente='tools'`). **Pendiente:**
-  un job periódico que corra esa query por empresa y actualice la caché (hoy se cargó a mano para demo,
-  empresa 8 de AssetPlanner). Mapeo empresa: AssetPlanner `id_empresa` = `core.empresas.empr_id_mysql`.
+- **KPI MAN "Disponibilidad" (versión nueva, implementada):** se calcula con el **mecanismo de eventos
+  propio de AssetPlanner** (igual que sus otros KPIs): la query se registra en
+  `assetv2.kpi_queries_a_cachear` (`_backend/database/scripts/assetplanner/kpi-disponibilidad.sql`,
+  replica la lógica AC/RE del PHP `Kpi.php::calcularDisponibilidad`, binding MENSUAL fi/ff/fi/ff/empr_id;
+  validada ~65% ≈ el ~64% de AssetPlanner) y el event periódico la deja en `kpi_cache`. El
+  `ToolsKPIDataService` la **lee de esa caché** via `AssetPlannerDataSource` (query `getManKPI`), y el
+  tablero la pide por `Dash/kpiMan` (config `fuente='man'`), que mapea el `empr_id` de Tools a
+  `core.empresas.empr_id_mysql`. Despliegue en `doc/despliegue/dashboard-administrador-despliegue.md`.
 
 ## 6-bis. Puesta en marcha del scheduler (cron del SO) — decidido por el PM
 

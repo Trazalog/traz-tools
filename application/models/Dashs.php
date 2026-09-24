@@ -159,6 +159,56 @@ class Dashs extends CI_Model {
   }
 
   /**
+  * Lee un KPI de Mantenimiento desde la caché de AssetPlanner (kpi_cache, MariaDB) via
+  * ToolsKPIDataService. Mapea el empr_id de Tools (Postgres) al id de AssetPlanner
+  * (core.empresas.empr_id_mysql). Devuelve el promedio de los meses cacheados.
+  * @param string $nombre nombre del KPI en assetv2.kpi_queries_a_cachear (ej. 'getDisponibilidad')
+  * @return array ['nombre','valor','valor_json'] o [] si la empresa no está vinculada a AssetPlanner
+  */
+  function obtenerKpiMan($nombre){
+    $empr_id = empresa();
+    if(empty($empr_id) || empty($nombre)){
+      return array();
+    }
+    try {
+      // Tools empr_id -> AssetPlanner id_empresa (empr_id_mysql)
+      $mysqlId = null;
+      $emp = $this->rest->callAPI("GET", REST_CORE."/empresa/".$empr_id);
+      if(isset($emp["data"])){
+        $d = json_decode($emp["data"]);
+        if(isset($d->empresa->empr_id_mysql) && $d->empresa->empr_id_mysql !== '' && $d->empresa->empr_id_mysql !== null){
+          $mysqlId = $d->empresa->empr_id_mysql;
+        }
+      }
+      if($mysqlId === null){
+        return array(); // empresa sin vínculo a AssetPlanner: sin datos de MAN
+      }
+      $resp = $this->rest->callAPI("GET", REST_KPI."/man/".rawurlencode($nombre)."/emprid/".$mysqlId);
+      if(!isset($resp["data"])){
+        return array();
+      }
+      $data = json_decode($resp["data"]);
+      if(!isset($data->kpi)){
+        return array();
+      }
+      $valor = isset($data->kpi->valor) ? $data->kpi->valor : null;
+      $meses = isset($data->kpi->meses) ? (int) $data->kpi->meses : 0;
+      return array(
+        'nombre'       => $nombre,
+        'valor'        => $valor,
+        'valor_json'   => array(
+          'disponibilidad' => ($valor !== null ? (float) $valor : 0),
+          'periodo'        => ($meses > 0 ? 'Prom. '.$meses.' meses' : 'Sin datos'),
+        ),
+        'calculado_en' => null,
+      );
+    } catch (Exception $e) {
+      log_message('ERROR', '#TRAZA | CORE | Dashs | obtenerKpiMan() >> '.$e->getMessage());
+      return array();
+    }
+  }
+
+  /**
   * Devuelve el nombre visible de la empresa actual a partir de las memberships.
   * @param array $memberships payload de obtenerMemberships()
   * @return string

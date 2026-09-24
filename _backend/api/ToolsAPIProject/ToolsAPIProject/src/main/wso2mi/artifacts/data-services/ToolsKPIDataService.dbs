@@ -2,6 +2,9 @@
    <config enableOData="false" id="ToolsDataSource">
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
+   <config enableOData="false" id="AssetPlannerDataService">
+      <property name="carbon_datasource_name">AssetPlannerDataSource</property>
+   </config>
    <!-- Devuelve el valor cacheado de un KPI para una empresa. El tablero llama SIEMPRE acá,
         nunca al DataService de negocio. La caché la puebla kpi.correr() (ver
         _backend/database/scripts/versiones/v2.8.1.4/kpi_cache_engine.sql). -->
@@ -17,6 +20,21 @@
       <result outputType="json">{"kpis":{"kpi":[{"nombre":"$nombre","valor":"$valor","valor_json":"$valor_json","calculado_en":"$calculado_en"}]}}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <!-- KPIs de Mantenimiento: se leen de la caché de AssetPlanner (kpi_cache, MariaDB), que
+        puebla el evento periódico de AssetPlanner. empr_id acá es el id de AssetPlanner
+        (= core.empresas.empr_id_mysql). Devuelve el promedio de los meses cacheados. -->
+   <query id="getManKPI" useConfig="AssetPlannerDataService">
+      <sql>select coalesce(round(avg(valor),2),0) as valor, count(*) as meses from kpi_cache where nombre = :nombre and empr_id = :empr_id</sql>
+      <result outputType="json">{"kpi":{"valor":"$valor","meses":"$meses"}}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/man/{nombre}/emprid/{empr_id}">
+      <call-query href="getManKPI">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
    <resource method="GET" path="/kpi/{nombre}/emprid/{empr_id}">
       <call-query href="getKPI">
          <with-param name="nombre" query-param="nombre"/>

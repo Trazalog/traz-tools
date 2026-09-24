@@ -111,6 +111,22 @@ class Dash extends CI_Controller {
 			->set_output(json_encode($kpi));
 	}
 
+	/**
+	 * Endpoint AJAX para KPIs de Mantenimiento (leen de la caché de AssetPlanner).
+	 * Lo consume dashboard_kpis.js para las cajas con fuente='man'. Ruta: Dash/kpiMan/<nombre>
+	 */
+	function kpiMan($nombre = null){
+		if(!$this->session->userdata('empr_id')){
+			$this->output->set_status_header(401);
+			echo json_encode(array('error' => 'sin_sesion'));
+			return;
+		}
+		$kpi = $this->Dashs->obtenerKpiMan($nombre);
+		$this->output
+			->set_content_type('application/json')
+			->set_output(json_encode($kpi));
+	}
+
 	/** Fecha larga en español (server-side). */
 	private function fechaLarga(){
 		$dias = array('domingo','lunes','martes','miércoles','jueves','viernes','sábado');
