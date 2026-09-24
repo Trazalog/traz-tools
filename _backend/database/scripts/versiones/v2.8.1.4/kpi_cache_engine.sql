@@ -154,19 +154,12 @@ END;
 $function$;
 
 -- ===========================================================================
--- SCHEDULER (supuesto A13).
--- OJO: se había aprobado pg_cron, pero se verificó contra la BD (tools_prod_t, PG 11.18)
--- que pg_cron NO está instalado ni disponible (extensiones presentes: dblink, pgcrypto,
--- plpgsql). Así que el scheduler NO va dentro de Postgres. Dos opciones (elegir una):
---
---   (A) cron del SO en el server de Postgres — una línea de crontab, cada 5 min:
---       */5 * * * *  psql -h 127.0.0.1 -U postgres -d tools_prod_t -c "select kpi.correr();"
---       (con ~/.pgpass para la clave; usuario de bajo privilegio con EXECUTE sobre kpi.correr()).
---
---   (B) Tarea programada de WSO2 (ScheduledTask) que invoque un recurso del DataService
---       que corra kpi.correr(). Mantiene todo en la capa de integración (coherente con MCP/APIM),
---       pero requiere exponer un resource de escritura y versionarlo. Ver doc de análisis.
---
--- Mientras se define/instala el scheduler, la caché se puede poblar a mano para demo:
---       SELECT kpi.correr();
+-- SCHEDULER (supuesto A13 — DECIDIDO: cron del SO).
+-- pg_cron NO está disponible en la BD (tools_prod_t, PG 11.18; extensiones: dblink, pgcrypto,
+-- plpgsql), así que el disparo periódico va por CRON DEL SO en el server de Postgres.
+-- Puesta en marcha completa (crear rol kpi_cron, ~/.pgpass, línea de crontab, verificación):
+--   ver doc/analisis/dashboard-administrador-landing.md, sección "6-bis".
+-- Resumen de la línea de crontab (cada 5 min):
+--   */5 * * * * psql -h 127.0.0.1 -U kpi_cron -d tools_prod_t -c "select kpi.correr();"
+-- Para una carga inmediata a mano (demo / primera vez):  SELECT kpi.correr();
 -- ===========================================================================

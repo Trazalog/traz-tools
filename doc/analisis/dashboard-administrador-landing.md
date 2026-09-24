@@ -185,6 +185,49 @@ este DataService, nunca a los DataService de negocio.
 - Deploy: `ToolsKPIDataService.dbs` lo sube el script de deploy (es DataService, no API). Los 2 `.sql`
   de `v2.8.1.4/` se corren en Postgres a mano. Rebuild del `.car` con `./mvnw clean install`.
 
+## 6-bis. Puesta en marcha del scheduler (cron del SO) — decidido por el PM
+
+> Todo esto se ejecuta **por SSH en el servidor de PostgreSQL** (el host de `tools_prod_t`), NO en
+> tu máquina ni en la consola web. Se hace **una sola vez** por ambiente.
+
+**Paso 1 — Crear un usuario de BD de bajo privilegio para el cron** (en `psql` como `postgres`,
+en el server de Postgres). Que solo pueda ejecutar la función, no tocar datos:
+
+```sql
+CREATE ROLE kpi_cron LOGIN PASSWORD 'PONER_UNA_CLAVE';
+GRANT USAGE ON SCHEMA kpi TO kpi_cron;
+GRANT EXECUTE ON FUNCTION kpi.correr() TO kpi_cron;
+```
+
+**Paso 2 — Guardar la clave en `~/.pgpass`** del usuario del SO que corre el cron (shell del server
+de Postgres), para no ponerla en el crontab. Formato `host:port:db:user:password`:
+
+```
+127.0.0.1:5432:tools_prod_t:kpi_cron:PONER_UNA_CLAVE
+```
+
+Y darle permisos restringidos al archivo:
+
+```bash
+chmod 600 ~/.pgpass
+```
+
+**Paso 3 — Agregar la línea al crontab** (shell del server de Postgres, `crontab -e`). Cada 5
+minutos corre `kpi.correr()`, que recalcula solo lo vencido (respeta `refresh_seg`) y publica:
+
+```
+*/5 * * * * psql -h 127.0.0.1 -U kpi_cron -d tools_prod_t -c "select kpi.correr();" >> /var/log/kpi_cron.log 2>&1
+```
+
+**Verificación** (en `psql`): que la caché se esté poblando y no haya errores acumulados:
+
+```sql
+SELECT nombre, empr_id, valor, calculado_en FROM kpi.cache ORDER BY calculado_en DESC LIMIT 20;
+SELECT * FROM kpi.event_log WHERE estado = 'ERROR' ORDER BY fecha DESC LIMIT 20;
+```
+
+Para una primera carga inmediata (sin esperar al cron), correr a mano: `SELECT kpi.correr();`.
+
 ## 7. Compatibilidad y rollback
 
 - **Compat v2:** cero cambios en contratos existentes. El hook de aterrizaje solo agrega una rama
