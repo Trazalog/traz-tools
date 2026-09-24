@@ -49,8 +49,9 @@
 .tzdash .tz-timeline li:before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--tz-brand);}
 .tzdash .tz-section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
   color:var(--tz-muted);margin:6px 4px 12px;}
-.tzdash .tz-kpis{display:flex;flex-wrap:wrap;gap:16px;margin:0 -8px;}
-.tzdash .tz-kpi-col{padding:0 8px;}
+.tzdash .tz-kpis{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;}
+.tzdash .tz-kpi-col{grid-column:span 6;min-width:0;}
+@media(max-width:900px){.tzdash .tz-kpi-col{grid-column:1 / -1;}}
 .tzdash .tz-kpi{position:relative;overflow:hidden;}
 .tzdash .tz-kpi .tz-kpi-head{display:flex;align-items:center;gap:8px;padding:14px 16px 10px;}
 .tzdash .tz-kpi .tz-kpi-accent{width:4px;align-self:stretch;border-radius:3px;}
@@ -131,7 +132,7 @@
   <div class="tz-section-title">Indicadores de tu operación</div>
   <div class="tz-kpis">
     <?php foreach($kpis as $k): $fuente = isset($k['fuente']) ? $k['fuente'] : 'tools'; ?>
-      <div class="tz-kpi-col col-lg-<?php echo (int) $k['ancho']; ?> col-md-6 col-12">
+      <div class="tz-kpi-col" style="grid-column:span <?php echo (int) $k['ancho']; ?>;">
         <div class="tz-card tz-kpi" data-kpi="<?php echo htmlspecialchars($k['kpi_nombre'], ENT_QUOTES, 'UTF-8'); ?>"
              data-fuente="<?php echo htmlspecialchars($fuente, ENT_QUOTES, 'UTF-8'); ?>"
              data-refresh="<?php echo (int) $k['refresh_seg']; ?>"

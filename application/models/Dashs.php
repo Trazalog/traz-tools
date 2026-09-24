@@ -182,6 +182,20 @@ class Dashs extends CI_Model {
         }
       }
     }
+    // Fallback confiable: nombre real desde core.empresas (las memberships de BPM pueden venir vacías).
+    if(!empty($empr_id)){
+      try {
+        $resp = $this->rest->callAPI("GET", REST_CORE."/empresa/".$empr_id);
+        if(isset($resp["data"])){
+          $d = json_decode($resp["data"]);
+          if(isset($d->empresa->descripcion) && trim((string) $d->empresa->descripcion) !== ''){
+            return (string) $d->empresa->descripcion;
+          }
+        }
+      } catch (Exception $e) {
+        log_message('ERROR', '#TRAZA | CORE | Dashs | nombreEmpresaActual() >> '.$e->getMessage());
+      }
+    }
     return 'Tu empresa';
   }
 
