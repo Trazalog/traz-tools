@@ -224,7 +224,21 @@ if(!function_exists('empresa')){
     function empresa(){
         $ci =& get_instance();
         $empr_id  = $ci->session->userdata('empr_id');
-				return  $empr_id;
+
+        // Se devuelve SIEMPRE como string. Los DataServices declaran 2.314 de
+        // sus 2.321 parametros como STRING, asi que un entero en el payload JSON
+        // los rompe con "Value type miss match, Expected value type - string,
+        // but found - NUMBER" y la operacion no se hace (hallazgo H-071).
+        //
+        // El tipo que tenia la sesion dependia de quien la escribio, y ya hubo
+        // dos incidentes por eso: el empr_id temporal del registro definido como
+        // entero (H-072) y los call sites que mandan empresa() sin castear
+        // (H-073). Castear aca cubre los ~360 usos del helper de una vez, en vez
+        // de arreglar cada payload por separado.
+        //
+        // Se preserva el null: quien no tiene sesion sigue recibiendo null y no
+        // una cadena vacia, para no cambiar el comportamiento de los if.
+        return $empr_id === null ? null : (string) $empr_id;
     }
 }
 
