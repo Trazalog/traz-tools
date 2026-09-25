@@ -1,0 +1,32 @@
+id: PAN-UC-007
+modulo: PAN
+titulo: Consultar una herramienta escaneando su QR, sin estar logueado
+perfil: Usuario externo
+estado: borrador
+version: "0.9"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: views/herramienta/vista_qr_herramienta.php
+pantallas:
+  - "URL pública de traz-comp-codigos"
+precondiciones:
+  - La herramienta tiene su etiqueta QR impresa y pegada
+flujo_principal:
+  - paso: "Escanea la etiqueta QR de la herramienta con el celular"
+    resultado: "Se abre una URL pública de traz-comp-codigos"
+  - paso: "Mira la pantalla"
+    resultado: "Se muestra el mismo detalle que la acción Info: código, tipo, descripción, marca, modelo y las tres solapas"
+  - paso: "Navega entre las solapas"
+    resultado: "Se puede ver Trazabilidad, Certificaciones y Checklists igual que estando logueado en Tools"
+flujos_alternativos: []
+validaciones:
+  - "La vista se sirve sin sesión de Tools: alcanza con escanear la etiqueta"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Qué pasa si alguien de otra empresa escanea la etiqueta? La URL no pide sesión, así que cualquiera con el link ve la trazabilidad de la herramienta. ¿Es intencional o hay que acotarlo?"
+derivados: {}
+notas:
+  - "La vista pública la sirve traz-comp-codigos, que no es uno de los repos del catálogo: la referencia queda en esta nota."
+  - "Es la funcionalidad con más valor en campo: el operario ve el estado y las certificaciones de la herramienta sin entrar al sistema."
