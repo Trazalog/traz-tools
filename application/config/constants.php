@@ -279,3 +279,6 @@ define('EMPRESAS_RESI_ADMIN', json_encode([1]));
 
 // RESIDUOS - IDs para camiones con tolva/contenedor
 define('TIPOS_VEHICULOS_TOLVA', 999);
+
+// PAÑOL - dias aviso vencimiento certificado
+define('dias_vencimiento', 30);
