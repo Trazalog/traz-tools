@@ -176,6 +176,12 @@
       <result outputType="json">{&#xd;    "herramientas":{&#xd;      "herramienta":[&#xd;        {&#xd;          "herr_id": "$herr_id",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca",&#xd;          "marca_id": "$marca_id",&#xd;          "pano_id": "$pano_id",&#xd;          "modelo": "$modelo",&#xd;          "tipo": "$tipo",&#xd;          "descripcion": "$descripcion",&#xd;          "pan_descrip":"$pan_descrip"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="estado" sqlType="STRING"/>
    </query>
+   <query id="herramientasPanolGetPorEstadoEmpresa" useConfig="ToolsDataSource">
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, H.pano_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;     , P.nombre as pan_descrip&#xd;  from pan.herramientas H, core.tablas T, pan.panol P,&#xd;  (	select&#xd;	:estado estado) param&#xd;  where H.empr_id = cast(:empr_id as INTEGER)&#xd;   and H.marca = T.tabl_id&#xd;  and H.pano_id = P.pano_id&#xd;  and H.eliminado = false&#xd;  and H.estado =&#xd;	case when param.estado = 'TODOS' then H.estado&#xd;	else param.estado end</sql>
+      <result outputType="json">{&#xd;    "herramientas":{&#xd;      "herramienta":[&#xd;        {&#xd;          "herr_id": "$herr_id",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca",&#xd;          "marca_id": "$marca_id",&#xd;          "pano_id": "$pano_id",&#xd;          "modelo": "$modelo",&#xd;          "tipo": "$tipo",&#xd;          "descripcion": "$descripcion",&#xd;          "pan_descrip":"$pan_descrip"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
    <query id="establecimientoPorEmpresa" useConfig="ToolsDataSource">
       <sql>select E.esta_id, E.nombre&#xd;  from prd.establecimientos E&#xd;  where E.empr_id = CAST(:empr_id as INTEGER)</sql>
       <result outputType="json">{&#xd; "establecimientos":{&#xd;   "establecimiento":[&#xd;        {&#xd;          "esta_id": "$esta_id",&#xd;          "nombre": "$nombre"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
@@ -316,6 +322,12 @@
       <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion, H.pano_id, H.estado,  P.descripcion as pan_descrip&#xd;  from pan.herramientas H, core.tablas T, pan.panol P&#xd;  where H.herr_id  = cast (:herr_id as INTEGER)&#xd;  and H.marca = T.tabl_id&#xd;  and H.pano_id = P.pano_id&#xd;  and H.eliminado = false</sql>
       <result outputType="json"> {&#xd;  "herramientas":{&#xd;    "herramienta":[&#xd;      {&#xd;        "herr_id": "$herr_id",&#xd;        "codigo": "$codigo",&#xd;        "marca": "$marca",&#xd;        "marca_id": "$marca_id",&#xd;        "modelo": "$modelo",&#xd;        "tipo": "$tipo",&#xd;        "descripcion": "$descripcion",&#xd;        "pano_id": "$pano_id",&#xd;        "estado": "$estado",&#xd;        "pan_descrip": "$pan_descrip"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="herr_id" sqlType="STRING"/>
+   </query>
+   <query id="getHerramientaxIdEmpresa" useConfig="ToolsDataSource">
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion, H.pano_id, H.estado,  P.descripcion as pan_descrip&#xd;  from pan.herramientas H, core.tablas T, pan.panol P&#xd;  where H.herr_id  = cast (:herr_id as INTEGER)&#xd;   and H.empr_id = cast(:empr_id as INTEGER)&#xd;  and H.marca = T.tabl_id&#xd;  and H.pano_id = P.pano_id&#xd;  and H.eliminado = false</sql>
+      <result outputType="json"> {&#xd;  "herramientas":{&#xd;    "herramienta":[&#xd;      {&#xd;        "herr_id": "$herr_id",&#xd;        "codigo": "$codigo",&#xd;        "marca": "$marca",&#xd;        "marca_id": "$marca_id",&#xd;        "modelo": "$modelo",&#xd;        "tipo": "$tipo",&#xd;        "descripcion": "$descripcion",&#xd;        "pano_id": "$pano_id",&#xd;        "estado": "$estado",&#xd;        "pan_descrip": "$pan_descrip"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <resource method="POST" path="/panol">
       <call-query href="panolSet">
@@ -496,6 +508,12 @@
          <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/herramientas/estado/{estado}/empresa/{empr_id}">
+      <call-query href="herramientasPanolGetPorEstadoEmpresa">
+         <with-param name="estado" query-param="estado"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
    <resource method="GET" path="/establecimientos/empresa/{empr_id}">
       <call-query href="establecimientoPorEmpresa">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -646,6 +664,12 @@
    <resource method="GET" path="/herramienta/{herr_id}">
       <call-query href="getHerramientaxId">
          <with-param name="herr_id" query-param="herr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/herramienta/{herr_id}/empresa/{empr_id}">
+      <call-query href="getHerramientaxIdEmpresa">
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
 </data>
