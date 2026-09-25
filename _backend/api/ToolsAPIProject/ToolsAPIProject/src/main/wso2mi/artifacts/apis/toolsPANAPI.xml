@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api xmlns="http://ws.apache.org/ns/synapse" name="toolsPANAPI" context="/tools/pan">
+   <!-- Capa intermedia de Herramientas (Panol). Mismo patron que toolsALMAPI:
+        la fachada MCP llama aca y aca se arma la URL del DataService.
+        Los filtros opcionales viajan vacios y la query los ignora. -->
+   <resource methods="GET" uri-template="/herramientas/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_search" expression="fn:concat('',get-property('query.param.buscar'))"/>
+         <filter source="$ctx:f_search" regex="^$">
+            <then><property name="f_search" value=""/></then>
+         </filter>
+         <property name="f_size" expression="fn:concat('',get-property('query.param.limite'))"/>
+         <filter source="$ctx:f_size" regex="^$">
+            <then><property name="f_size" value="200"/></then>
+         </filter>
+         <property name="f_start" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <filter source="$ctx:f_start" regex="^$">
+            <then><property name="f_start" value="0"/></then>
+         </filter>
+         <property name="f_esta" expression="fn:concat('',get-property('query.param.esta_id'))"/>
+         <filter source="$ctx:f_esta" regex="^$">
+            <then><property name="f_esta" value=""/></then>
+         </filter>
+         <property name="f_pano" expression="fn:concat('',get-property('query.param.pano_id'))"/>
+         <filter source="$ctx:f_pano" regex="^$">
+            <then><property name="f_pano" value=""/></then>
+         </filter>
+         <property name="f_tipo" expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <filter source="$ctx:f_tipo" regex="^$">
+            <then><property name="f_tipo" value=""/></then>
+         </filter>
+         <property name="f_cert" expression="fn:concat('',get-property('query.param.cert_vencer'))"/>
+         <filter source="$ctx:f_cert" regex="^$">
+            <then><property name="f_cert" value=""/></then>
+         </filter>
+         <property name="f_dias" expression="fn:concat('',get-property('query.param.dias_vencimiento'))"/>
+         <filter source="$ctx:f_dias" regex="^$">
+            <then><property name="f_dias" value="30"/></then>
+         </filter>
+         <property name="uri.var.getHerramientas"
+                   expression="fn:concat($ctx:dataservices_url,'/PANDataService/herramientas/paginado?empr_id=',get-property('uri.var.empr_id'),'&amp;search=',$ctx:f_search,'&amp;page_size=',$ctx:f_size,'&amp;start=',$ctx:f_start,'&amp;order_dir=asc&amp;esta_id=',$ctx:f_esta,'&amp;pano_id=',$ctx:f_pano,'&amp;tipo=',$ctx:f_tipo,'&amp;cert_vencer=',$ctx:f_cert,'&amp;dias_vencimiento=',$ctx:f_dias)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | PAN | get_herramientas | iniciando (toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getHerramientas}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /herramientas - PANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en PAN get_herramientas (toolsPANAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/herramienta/{herr_id}/empresa/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+
+         <property name="uri.var.getHerramienta"
+                   expression="fn:concat($ctx:dataservices_url,'/PANDataService/herramienta/',get-property('uri.var.herr_id'),'/empresa/',get-property('uri.var.empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | PAN | get_herramienta | iniciando (toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getHerramienta}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /herramienta - PANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en PAN get_herramienta (toolsPANAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/movimientos/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_tipo" expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <filter source="$ctx:f_tipo" regex="^$">
+            <then><property name="f_tipo" value="TODOS"/></then>
+         </filter>
+         <property name="f_herr" expression="fn:concat('',get-property('query.param.herr_id'))"/>
+         <filter source="$ctx:f_herr" regex="^$">
+            <then><property name="f_herr" value="TODOS"/></then>
+         </filter>
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <filter source="$ctx:f_desde" regex="^$">
+            <then><property name="f_desde" value="TODOS"/></then>
+         </filter>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <filter source="$ctx:f_hasta" regex="^$">
+            <then><property name="f_hasta" value="TODOS"/></then>
+         </filter>
+         <property name="f_busca" expression="fn:concat('',get-property('query.param.buscar'))"/>
+         <filter source="$ctx:f_busca" regex="^$">
+            <then><property name="f_busca" value="TODOS"/></then>
+         </filter>
+         <property name="f_limit" expression="fn:concat('',get-property('query.param.limite'))"/>
+         <filter source="$ctx:f_limit" regex="^$">
+            <then><property name="f_limit" value="200"/></then>
+         </filter>
+         <property name="f_off" expression="fn:concat('',get-property('query.param.offset'))"/>
+         <filter source="$ctx:f_off" regex="^$">
+            <then><property name="f_off" value="0"/></then>
+         </filter>
+         <property name="uri.var.getMovimientos"
+                   expression="fn:concat($ctx:dataservices_url,'/PANDataService/herramientas/movimientos?empr_id=',get-property('uri.var.empr_id'),'&amp;tipo_movimiento=',$ctx:f_tipo,'&amp;herr_id=',$ctx:f_herr,'&amp;fecha_desde=',$ctx:f_desde,'&amp;fecha_hasta=',$ctx:f_hasta,'&amp;busqueda=',$ctx:f_busca,'&amp;limit=',$ctx:f_limit,'&amp;offset=',$ctx:f_off)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | PAN | get_movimientos | iniciando (toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getMovimientos}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /movimientos - PANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en PAN get_movimientos (toolsPANAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/certificaciones/{empr_id}">
+      <inSequence>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <property name="f_herr" expression="fn:concat('',get-property('query.param.herr_id'))"/>
+         <filter source="$ctx:f_herr" regex="^$">
+            <then><property name="f_herr" value=""/></then>
+         </filter>
+         <property name="f_search" expression="fn:concat('',get-property('query.param.buscar'))"/>
+         <filter source="$ctx:f_search" regex="^$">
+            <then><property name="f_search" value=""/></then>
+         </filter>
+         <property name="f_size" expression="fn:concat('',get-property('query.param.limite'))"/>
+         <filter source="$ctx:f_size" regex="^$">
+            <then><property name="f_size" value="200"/></then>
+         </filter>
+         <property name="f_start" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <filter source="$ctx:f_start" regex="^$">
+            <then><property name="f_start" value="0"/></then>
+         </filter>
+         <property name="uri.var.getCertificaciones"
+                   expression="fn:concat($ctx:dataservices_url,'/PANDataService/certificaciones/herramienta?empr_id=',get-property('uri.var.empr_id'),'&amp;herr_id=',$ctx:f_herr,'&amp;herr_id2=',$ctx:f_herr,'&amp;herr_id3=',$ctx:f_herr,'&amp;search=',$ctx:f_search,'&amp;order_dir=asc&amp;page_size=',$ctx:f_size,'&amp;start=',$ctx:f_start)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | PAN | get_certificaciones | iniciando (toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('uri.var.empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.getCertificaciones}"/>
+            </endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /certificaciones - PANDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en PAN get_certificaciones (toolsPANAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+</api>

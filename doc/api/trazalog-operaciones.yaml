@@ -649,6 +649,218 @@ paths:
                         type: string
                         example: "4"
 
+  /mcp/pan/herramientas:
+    get:
+      operationId: pan_get_herramientas
+      summary: Listar las herramientas del pañol
+      x-mcp-annotations:
+        readOnlyHint: true
+        openWorldHint: false
+      parameters:
+        - name: cert_vencer
+          in: query
+          required: false
+          description: |
+            En `true`, devuelve **solo las herramientas que necesitan atención**:
+            las que tienen una certificación vencida o próxima a vencer. Es el
+            filtro para responder "¿qué tengo que renovar?".
+          schema: { type: string }
+          example: "true"
+        - name: dias_vencimiento
+          in: query
+          required: false
+          description: |
+            Cuántos días hacia adelante se considera "próximo a vencer".
+            Por defecto 30.
+          schema: { type: string }
+          example: "30"
+        - name: buscar
+          in: query
+          required: false
+          description: Busca el texto en el código y la descripción de la herramienta.
+          schema: { type: string }
+          example: "amoladora"
+        - name: tipo
+          in: query
+          required: false
+          description: Filtra por tipo de herramienta. Una herramienta puede tener varios tipos.
+          schema: { type: string }
+        - name: esta_id
+          in: query
+          required: false
+          description: Limita a un establecimiento.
+          schema: { type: string }
+        - name: pano_id
+          in: query
+          required: false
+          description: Limita a un pañol.
+          schema: { type: string }
+      description: |
+        Las herramientas de la empresa, con dónde está cada una, su estado y el
+        estado de sus certificaciones.
+
+        **Cuándo usar esta operación:**
+        - "¿Qué herramientas tengo?", "¿dónde está la amoladora?".
+        - **"¿Qué certificaciones tengo que renovar?"** — con `cert_vencer=true`.
+          Es el uso de más valor: una herramienta con la certificación vencida es
+          un problema de auditoría en una obra.
+        - Para saber si una herramienta está disponible antes de prometerla.
+
+        **Cómo leer el estado:** `ACTIVO` está en el pañol y se puede entregar;
+        `TRANSITO` la tiene alguien y **no puede volver a entregarse** hasta que
+        se registre su devolución; `INHABILITADO` está fuera de servicio.
+
+        La pantalla los muestra como *Activa*, *Entregada* e *Inhabilitada*, pero
+        la operación devuelve los valores de la base: usar estos al filtrar.
+
+        Un vencimiento **avisa pero no bloquea**: una herramienta con la
+        certificación vencida se puede entregar igual. Si el usuario va a
+        entregar una, conviene mencionárselo, no impedirlo.
+      tags: [Herramientas]
+      responses:
+        "200":
+          description: Herramientas de la empresa
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HerramientasList" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/pan/herramienta/{herr_id}:
+    get:
+      operationId: pan_get_herramienta
+      summary: Ver el detalle de una herramienta
+      x-mcp-annotations:
+        readOnlyHint: true
+        openWorldHint: false
+      parameters:
+        - name: herr_id
+          in: path
+          required: true
+          description: Identificador de la herramienta, tal como lo devuelve `pan_get_herramientas`.
+          schema: { type: string }
+      description: |
+        Los datos de una herramienta: código, descripción, marca, modelo, tipo,
+        el pañol donde está y su estado.
+
+        **Cuándo usar esta operación:** cuando el usuario pregunta por una
+        herramienta puntual y hace falta más detalle del que trae el listado.
+        Para su historial de movimientos, usar `pan_get_movimientos` con el
+        `herr_id`; para sus certificaciones, `pan_get_certificaciones`.
+
+        Solo devuelve herramientas de la empresa del token.
+      tags: [Herramientas]
+      responses:
+        "200":
+          description: La herramienta
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HerramientaDetalle" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/pan/movimientos:
+    get:
+      operationId: pan_get_movimientos
+      summary: Consultar el historial de entregas y devoluciones de herramientas
+      x-mcp-annotations:
+        readOnlyHint: true
+        openWorldHint: false
+      parameters:
+        - name: herr_id
+          in: query
+          required: false
+          description: |
+            Limita al historial de **una herramienta**. Es el filtro de
+            trazabilidad: qué le pasó a esa herramienta desde que se cargó.
+          schema: { type: string }
+        - name: tipo
+          in: query
+          required: false
+          description: |
+            Filtra por tipo de movimiento: `Entrega`, `Recepción`, `Habilitación`,
+            `Inhabilitación` o `Alta`.
+          schema: { type: string }
+          example: "Entrega"
+        - name: desde
+          in: query
+          required: false
+          description: Fecha de inicio del rango, `YYYY-MM-DD`.
+          schema: { type: string }
+        - name: hasta
+          in: query
+          required: false
+          description: Fecha de fin del rango, `YYYY-MM-DD`.
+          schema: { type: string }
+        - name: buscar
+          in: query
+          required: false
+          description: Busca el texto en el responsable, el código o la descripción.
+          schema: { type: string }
+      description: |
+        La línea de tiempo de las herramientas: cada entrega, devolución,
+        habilitación e inhabilitación, con su número de vale y quién la tuvo.
+
+        **Cuándo usar esta operación:**
+        - "¿Quién tiene la amoladora?" — filtrar por `herr_id` y mirar el
+          movimiento más reciente.
+        - "¿Qué se entregó esta semana?" — filtrar por fechas.
+        - Reconstruir qué pasó con una herramienta que no aparece.
+
+        **Cómo leerla:** las filas de `Habilitación` e `Inhabilitación` **no
+        tienen número de vale**, porque no son movimientos de entrega sino
+        cambios de estado; en esas, `justificacion_observacion` trae el motivo
+        que escribió quien la inhabilitó.
+      tags: [Herramientas]
+      responses:
+        "200":
+          description: Movimientos, del más reciente al más antiguo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MovimientosHerramientaList" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/pan/certificaciones:
+    get:
+      operationId: pan_get_certificaciones
+      summary: Consultar las certificaciones de las herramientas
+      x-mcp-annotations:
+        readOnlyHint: true
+        openWorldHint: false
+      parameters:
+        - name: herr_id
+          in: query
+          required: false
+          description: Limita a las certificaciones de una herramienta.
+          schema: { type: string }
+        - name: buscar
+          in: query
+          required: false
+          description: Busca en la entidad certificadora o en los datos de la herramienta.
+          schema: { type: string }
+      description: |
+        Las certificaciones cargadas, con su fecha de vencimiento y la entidad
+        que las emitió.
+
+        **Cuándo usar esta operación:**
+        - Cuando el usuario pregunta por el detalle de las certificaciones de una
+          herramienta.
+        - Para armar el detalle después de que `pan_get_herramientas` con
+          `cert_vencer=true` mostró cuáles necesitan atención.
+
+        Para saber *cuáles* están por vencer conviene `pan_get_herramientas`, que
+        ya trae ese cálculo; esta operación sirve para el detalle de cada una.
+      tags: [Herramientas]
+      responses:
+        "200":
+          description: Certificaciones
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CertificacionesList" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /mcp/alm/stock:
     get:
       operationId: alm_get_stock
@@ -1404,6 +1616,102 @@ components:
         unidad_medida: { type: string, example: "UN" }
         es_loteado: { type: string, example: "true" }
         stock: { type: string, description: Suma de stock en todos los depósitos., example: "24" }
+
+    Herramienta:
+      type: object
+      properties:
+        herr_id: { type: string }
+        codigo: { type: string, example: "RM487C" }
+        descripcion: { type: string, example: "Retromartillo Bahco 487C" }
+        marca: { type: string, example: "BAHCO" }
+        modelo: { type: string }
+        tipo: { type: string, description: Puede traer varios tipos separados. }
+        pan_descrip: { type: string, description: Pañol donde está la herramienta. }
+        estado:
+          type: string
+          description: "`ACTIVO` en el pañol · `TRANSITO` la tiene alguien · `INHABILITADO` fuera de servicio"
+        cert_estado:
+          type: string
+          nullable: true
+          description: >-
+            Estado de las certificaciones: vencida, por vencer, o vacío si están
+            al día o no tiene ninguna cargada.
+
+    HerramientasList:
+      type: object
+      properties:
+        herramientas:
+          type: object
+          properties:
+            herramienta:
+              type: array
+              items: { $ref: "#/components/schemas/Herramienta" }
+
+    HerramientaDetalle:
+      type: object
+      properties:
+        herramientas:
+          type: object
+          properties:
+            herramienta:
+              type: array
+              items: { $ref: "#/components/schemas/Herramienta" }
+
+    MovimientoHerramienta:
+      type: object
+      properties:
+        nro_vale:
+          type: string
+          nullable: true
+          description: >-
+            Número del vale. Viene vacío en las habilitaciones e
+            inhabilitaciones, que no son movimientos de entrega.
+        herr_id: { type: string }
+        herr_codigo: { type: string }
+        herr_descripcion: { type: string }
+        tipo_movimiento:
+          type: string
+          description: "`Entrega` · `Recepción` · `Habilitación` · `Inhabilitación` · `Alta`"
+        fecha_hora: { type: string }
+        responsable: { type: string, description: Quién retiró o devolvió la herramienta. }
+        establecimiento_panol: { type: string }
+        justificacion_observacion:
+          type: string
+          nullable: true
+          description: >-
+            En las inhabilitaciones, el motivo que escribió quien la sacó de
+            servicio. En los vales, las observaciones de la entrega.
+
+    MovimientosHerramientaList:
+      type: object
+      properties:
+        movimientos:
+          type: object
+          properties:
+            movimiento:
+              type: array
+              items: { $ref: "#/components/schemas/MovimientoHerramienta" }
+
+    CertificacionHerramienta:
+      type: object
+      properties:
+        cert_id: { type: string }
+        herr_id: { type: string }
+        herr_codigo: { type: string }
+        herr_descripcion: { type: string }
+        fec_alta: { type: string }
+        fec_vencimiento: { type: string, description: Cuándo vence la certificación. }
+        entidad_certificadora: { type: string, nullable: true }
+
+    CertificacionesList:
+      type: object
+      properties:
+        certificaciones:
+          type: object
+          properties:
+            certificacion:
+              type: array
+              items: { $ref: "#/components/schemas/CertificacionHerramienta" }
 
     StockList:
       type: object
