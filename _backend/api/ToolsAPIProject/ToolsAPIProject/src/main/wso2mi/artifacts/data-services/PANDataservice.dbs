@@ -17,14 +17,11 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="panolUpdate" useConfig="ToolsDataSource">
-      <sql>update pan.panol set  descripcion = :descripcion, loca_id = :loca_id, prov_id = :prov_id, pais_id = :pais_id, lat = :lat, lng = :lng&#xd;  where pano_id = CAST(:pano_id AS INTEGER)</sql>
+      <sql>UPDATE pan.panol SET nombre = :nombre, descripcion = :descripcion, esta_id = CAST(:esta_id AS INTEGER) WHERE pano_id = CAST(:pano_id AS INTEGER)</sql>
       <param name="descripcion" sqlType="STRING"/>
-      <param name="loca_id" sqlType="STRING"/>
-      <param name="prov_id" sqlType="STRING"/>
-      <param name="pais_id" sqlType="STRING"/>
-      <param name="lat" sqlType="STRING"/>
-      <param name="lng" sqlType="STRING"/>
       <param name="pano_id" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
    </query>
    <query id="panolDelete" useConfig="ToolsDataSource">
       <sql>update pan.panol set eliminado = CAST(:eliminado AS BOOLEAN)&#xd;  where pano_id = CAST(:pano_id as INTEGER)</sql>
@@ -32,12 +29,11 @@
       <param name="pano_id" sqlType="STRING"/>
    </query>
    <query id="herramientasSet" useConfig="ToolsDataSource">
-      <sql>insert into pan.herramientas(codigo, marca, modelo, tipo, descripcion, pano_id, usuario_app, empr_id)&#xd;  values(:codigo, :marca, :modelo, :tipo, :descripcion, CAST(:pano_id AS INTEGER), :usuario_app, cast(:empr_id as INTEGER))&#xd;  returning herr_id</sql>
+      <sql>insert into pan.herramientas(codigo, marca, modelo, descripcion, pano_id, usuario_app, empr_id)&#xd;  values(:codigo, :marca, :modelo, :descripcion, CAST(:pano_id AS INTEGER), :usuario_app, cast(:empr_id as INTEGER))&#xd;  returning herr_id</sql>
       <result outputType="json">{&#xd;  "respuesta":{&#xd;     "herr_id": "$herr_id"&#xd;  }&#xd;}</result>
       <param name="codigo" sqlType="STRING"/>
       <param name="marca" sqlType="STRING"/>
       <param name="modelo" sqlType="STRING"/>
-      <param name="tipo" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
       <param name="pano_id" sqlType="STRING"/>
       <param name="usuario_app" sqlType="STRING"/>
@@ -58,18 +54,17 @@
       <param name="herr_id" sqlType="STRING"/>
    </query>
    <query id="herramientasUpdate" useConfig="ToolsDataSource">
-      <sql>update &#xd;pan.herramientas &#xd;  set codigo = :codigo, marca = :marca, modelo = :modelo, tipo = :tipo, descripcion = :descripcion, usuario_app = :usuario_app, empr_id = CAST(:empr_id as INTEGER)&#xd;where &#xd;  herr_id = CAST(:herr_id AS INTEGER)</sql>
+      <sql>update &#xd;pan.herramientas &#xd;  set codigo = :codigo, marca = :marca, modelo = :modelo, descripcion = :descripcion, usuario_app = :usuario_app, empr_id = CAST(:empr_id as INTEGER)&#xd;where &#xd;  herr_id = CAST(:herr_id AS INTEGER)</sql>
       <param name="codigo" sqlType="STRING"/>
       <param name="marca" sqlType="STRING"/>
       <param name="modelo" sqlType="STRING"/>
-      <param name="tipo" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
       <param name="herr_id" sqlType="STRING"/>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="salidaHerramientasSet" useConfig="ToolsDataSource">
-      <sql>insert into pan.salida_panol (usuario_app, destino, empr_id, pano_id, observaciones, comprobante, responsable)&#xd;  values(:usuario_app, :destino, cast(:empr_id as INTEGER), CAST(:pano_id as INTEGER), :observaciones, :comprobante, :responsable) returning sapa_id</sql>
+      <sql>insert into pan.salida_panol (usuario_app, destino, empr_id, pano_id, observaciones, comprobante, responsable, info_id)&#xd;  values(:usuario_app, :destino, cast(:empr_id as INTEGER), CAST(:pano_id as INTEGER), :observaciones, :comprobante, :responsable, cast(:info_id as INTEGER)) returning sapa_id</sql>
       <result outputType="json">{&#xd;    "respuesta":{&#xd;      "sapa_id": "$sapa_id"&#xd;    }&#xd;  }</result>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="destino" sqlType="STRING"/>
@@ -78,6 +73,7 @@
       <param name="observaciones" sqlType="STRING"/>
       <param name="comprobante" sqlType="STRING"/>
       <param name="responsable" sqlType="STRING"/>
+      <param name="info_id" sqlType="STRING"/>
    </query>
    <query id="salidaHerramientasDetaSet" useConfig="ToolsDataSource">
       <sql>insert into pan.deta_salida_panol (sapa_id, herr_id)&#xd;  values(CAST(:sapa_id AS INTEGER), CAST(:herr_id AS INTEGER))</sql>
@@ -85,8 +81,8 @@
       <param name="herr_id" sqlType="STRING"/>
    </query>
    <query id="salidasPanol" useConfig="ToolsDataSource">
-      <sql>select SP.destino, SP.observaciones, SP.comprobante, SP.responsable&#xd;  , SP.fec_alta, H.codigo, T.valor as marca&#xd;  from pan.salida_panol SP, pan.deta_salida_panol DSP, pan.herramientas H, core.tablas T&#xd;  where&#xd;  sp.sapa_id = DSP.sapa_id&#xd;  and DSP.herr_id = H.herr_id&#xd;  and T.tabl_id = H.marca&#xd;  and SP.empr_id = cast (:empr_id as integer)&#xd;  order by SP.fec_alta DESC</sql>
-      <result outputType="json"> {&#xd;    "salidas":{&#xd;        "salida":          [&#xd;            {&#xd;              "destino": "$destino",&#xd;              "observaciones": "$observaciones",&#xd;              "comprobante": "$comprobante",&#xd;              "responsable": "$responsable",&#xd;              "fec_alta": "$fec_alta",&#xd;              "codigo": "$codigo",&#xd;              "marca": "$marca"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
+      <sql>select SP.destino, SP.observaciones, SP.comprobante, SP.responsable&#xd;  , SP.fec_alta, H.codigo, T.valor as marca, SP.sapa_id&#xd;  from pan.salida_panol SP, pan.deta_salida_panol DSP, pan.herramientas H, core.tablas T&#xd;  where&#xd;  sp.sapa_id = DSP.sapa_id&#xd;  and DSP.herr_id = H.herr_id&#xd;  and T.tabl_id = H.marca&#xd;  and SP.empr_id = cast (:empr_id as integer)&#xd;  order by SP.fec_alta DESC</sql>
+      <result outputType="json"> {&#xd;    "salidas":{&#xd;        "salida":          [&#xd;            {&#xd;              "destino": "$destino",&#xd;              "observaciones": "$observaciones",&#xd;              "comprobante": "$comprobante",&#xd;              "responsable": "$responsable",&#xd;              "fec_alta": "$fec_alta",&#xd;              "codigo": "$codigo",&#xd;              "marca": "$marca",&#xd;              "sapa_id": "$sapa_id"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="herramientasSetEstado" useConfig="ToolsDataSource">
@@ -100,7 +96,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="entradaHerramientasSet" useConfig="ToolsDataSource">
-      <sql>insert into pan.entrada_panol (usuario_app, destino, empr_id, pano_id, observaciones, comprobante, responsable)&#xd;  values(:usuario_app, :destino, cast(:empr_id as INTEGER), CAST(:pano_id as INTEGER), :observaciones, :comprobante, :responsable) returning enpa_id</sql>
+      <sql>insert into pan.entrada_panol (usuario_app, destino, empr_id, pano_id, observaciones, comprobante, responsable, info_id)&#xd;  values(:usuario_app, :destino, cast(:empr_id as INTEGER), CAST(:pano_id as INTEGER), :observaciones, :comprobante, :responsable, cast(:info_id as INTEGER)) returning enpa_id</sql>
       <result outputType="json">{&#xd;    "respuesta":{&#xd;      "enpa_id": "$enpa_id"&#xd;    }&#xd;  }</result>
       <param name="usuario_app" sqlType="STRING"/>
       <param name="destino" sqlType="STRING"/>
@@ -109,6 +105,7 @@
       <param name="observaciones" sqlType="STRING"/>
       <param name="comprobante" sqlType="STRING"/>
       <param name="responsable" sqlType="STRING"/>
+      <param name="info_id" sqlType="STRING"/>
    </query>
    <query id="entradaHerramientasDetaSet" useConfig="ToolsDataSource">
       <sql>insert into pan.deta_entrada_panol (enpa_id, herr_id)&#xd;  values(CAST(:enpa_id AS INTEGER), CAST(:herr_id AS INTEGER))</sql>
@@ -175,9 +172,8 @@
       <param name="pano_id" sqlType="STRING"/>
    </query>
    <query id="herramientasPanolGetPorEstado" useConfig="ToolsDataSource">
-      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;  from pan.herramientas H, core.tablas T,&#xd;  (	select&#xd;	:pano_id pano_id,&#xd;	:estado estado) param&#xd;  where H.marca = T.tabl_id&#xd;  and H.pano_id = cast(param.pano_id as integer)&#xd;  and H.eliminado = false&#xd;  and H.estado =&#xd;	case when param.estado = 'TODOS' then H.estado&#xd;	else param.estado end</sql>
-      <result outputType="json">{&#xd;    "herramientas":{&#xd;      "herramienta":[&#xd;        {&#xd;          "herr_id": "$herr_id",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca",&#xd;          "marca_id": "$marca_id",&#xd;          "modelo": "$modelo",&#xd;          "tipo": "$tipo",&#xd;          "descripcion": "$descripcion"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
-      <param name="pano_id" sqlType="STRING"/>
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, H.pano_id, T.valor as marca, H.modelo, H.tipo, H.descripcion&#xd;     , P.nombre as pan_descrip&#xd;  from pan.herramientas H, core.tablas T, pan.panol P,&#xd;  (	select&#xd;	:estado estado) param&#xd;  where H.marca = T.tabl_id&#xd;  and H.pano_id = P.pano_id&#xd;  and H.eliminado = false&#xd;  and H.estado =&#xd;	case when param.estado = 'TODOS' then H.estado&#xd;	else param.estado end</sql>
+      <result outputType="json">{&#xd;    "herramientas":{&#xd;      "herramienta":[&#xd;        {&#xd;          "herr_id": "$herr_id",&#xd;          "codigo": "$codigo",&#xd;          "marca": "$marca",&#xd;          "marca_id": "$marca_id",&#xd;          "pano_id": "$pano_id",&#xd;          "modelo": "$modelo",&#xd;          "tipo": "$tipo",&#xd;          "descripcion": "$descripcion",&#xd;          "pan_descrip":"$pan_descrip"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
       <param name="estado" sqlType="STRING"/>
    </query>
    <query id="establecimientoPorEmpresa" useConfig="ToolsDataSource">
@@ -206,6 +202,121 @@
       <param name="herr_id" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <query id="panolGetxId" useConfig="ToolsDataSource">
+      <sql>select p.pano_id , p.descripcion , p.nombre, u.first_name , u.last_name &#xd;from pan.panol p&#xd;join pan.encargado_panol ep on ep.pano_id = p.pano_id &#xd;join seg.users u on u.id = ep.user_id &#xd;where p.pano_id = cast (:pan_id as integer)</sql>
+      <result outputType="json">{&#xd;    "panoles":{&#xd;      "panol":[&#xd;        {&#xd;          "pano_id": "$pano_id",&#xd;          "nombre": "$nombre",&#xd;          "descripcion": "$descripcion",&#xd;          "first_name": "$first_name",&#xd;          "last_name": "$last_name"&#xd;        }&#xd;      ]&#xd;    }&#xd;  }</result>
+      <param name="pan_id" sqlType="STRING"/>
+   </query>
+   <query id="deleteEncargadoPanol" useConfig="ToolsDataSource">
+      <sql>DELETE FROM pan.encargado_panol &#xd;WHERE pano_id = CAST(:pano_id AS INTEGER);</sql>
+      <param name="pano_id" sqlType="STRING"/>
+   </query>
+   <query id="getSalidaxSapaId" useConfig="ToolsDataSource">
+      <sql>select sp.sapa_id, sp.info_id, sp.observaciones, u.last_name , u.first_name , u.dni , sp.fec_alta, t.label, t.valor, p.nombre as panol, e.nombre as establecimiento, h.codigo as codigoherramienta, h.descripcion as descherramienta  &#xd;from pan.salida_panol sp &#xd;inner join pan.deta_salida_panol dsp on sp.sapa_id = dsp.sapa_id &#xd;inner join pan.herramientas h on h.herr_id = dsp.herr_id &#xd;inner join frm.instancias_formularios t on t.info_id = sp.info_id&#xd;inner join pan.panol p on p.pano_id = sp.pano_id&#xd;inner join prd.establecimientos e on e.esta_id = p.esta_id &#xd;inner join seg.users u on u.usernick = sp.responsable &#xd;where sp.sapa_id = cast(:sapa_id as integer);</sql>
+      <result outputType="json"> {&#xd;    "salidas":{&#xd;        "salida":          [&#xd;            {&#xd;              "sapa_id": "$sapa_id",&#xd;              "observaciones": "$observaciones",&#xd;              "fec_alta": "$fec_alta",&#xd;              "establecimiento": "$establecimiento",&#xd;              "panol": "$panol",&#xd;              "first_name": "$first_name",&#xd;              "last_name": "$last_name",&#xd;              "dni": "$dni",&#xd;              "info_id": "$info_id",&#xd;              "codigoherramienta":"$codigoherramienta",&#xd;              "descherramienta":"$descherramienta"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
+      <param name="sapa_id" sqlType="STRING"/>
+   </query>
+   <query id="movimientosHerramientaspaginado" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;            mov.*,&#xd;            COUNT(*) OVER() AS total_count&#xd;        FROM&#xd;            (&#xd;                SELECT&#xd;                    'ENTREGA' AS tipo,&#xd;                    SP.destino,&#xd;                    SP.observaciones,&#xd;                    SP.comprobante,&#xd;                    SP.responsable,&#xd;                    SP.fec_alta,&#xd;                    SP.sapa_id AS movimiento_id,&#xd;                    EST.nombre || ' / ' || P.descripcion AS establecimiento,&#xd;                    string_agg(&#xd;                        H.codigo || '-' || H.descripcion,&#xd;                        ' / ' ORDER BY H.codigo&#xd;                    ) AS herramientas&#xd;                FROM&#xd;                    pan.salida_panol SP,&#xd;                    pan.deta_salida_panol DSP,&#xd;                    pan.herramientas H,&#xd;                    core.tablas T,&#xd;                    pan.panol P,&#xd;                    prd.establecimientos EST&#xd;                WHERE&#xd;                    SP.sapa_id = DSP.sapa_id&#xd;                    AND DSP.herr_id = H.herr_id&#xd;                    AND T.tabl_id = H.marca&#xd;                    AND SP.pano_id = P.pano_id&#xd;                    AND P.esta_id = EST.esta_id&#xd;                    AND SP.empr_id = CAST(:empr_id1 AS INTEGER)&#xd;                GROUP BY&#xd;                    SP.destino,&#xd;                    SP.observaciones,&#xd;                    SP.comprobante,&#xd;                    SP.responsable,&#xd;                    SP.fec_alta,&#xd;                    SP.sapa_id,&#xd;                    EST.nombre,&#xd;                    P.descripcion&#xd;                UNION ALL&#xd;                SELECT&#xd;                    'RECEPCION' AS tipo,&#xd;                    EP.destino,&#xd;                    EP.observaciones,&#xd;                    EP.comprobante,&#xd;                    EP.responsable,&#xd;                    EP.fec_alta,&#xd;                    EP.enpa_id AS movimiento_id,&#xd;                    EST.nombre || ' / ' || P.descripcion AS establecimiento,&#xd;                    string_agg(&#xd;                        H.codigo || '-' || H.descripcion,&#xd;                        ' / ' ORDER BY H.codigo&#xd;                    ) AS herramientas&#xd;                FROM&#xd;                    pan.entrada_panol EP,&#xd;                    pan.deta_entrada_panol DEP,&#xd;                    pan.herramientas H,&#xd;                    core.tablas T,&#xd;                    pan.panol P,&#xd;                    prd.establecimientos EST&#xd;                WHERE&#xd;                    EP.enpa_id = DEP.enpa_id&#xd;                    AND DEP.herr_id = H.herr_id&#xd;                    AND T.tabl_id = H.marca&#xd;                    AND EP.pano_id = P.pano_id&#xd;                    AND P.esta_id = EST.esta_id&#xd;                    AND EP.empr_id = CAST(:empr_id2 AS INTEGER)&#xd;                GROUP BY&#xd;                    EP.destino,&#xd;                    EP.observaciones,&#xd;                    EP.comprobante,&#xd;                    EP.responsable,&#xd;                    EP.fec_alta,&#xd;                    EP.enpa_id,&#xd;                    EST.nombre,&#xd;                    P.descripcion&#xd;            ) mov,&#xd;            (&#xd;                SELECT&#xd;                    :search AS search&#xd;            ) param&#xd;        WHERE&#xd;            param.search IS NULL&#xd;            OR param.search = ''&#xd;            OR UPPER(COALESCE(mov.tipo, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(mov.destino, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(mov.observaciones, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(mov.comprobante, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(mov.responsable, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(mov.establecimiento, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(mov.herramientas, '')) LIKE UPPER('%' || param.search || '%')&#xd;        ORDER BY&#xd;            mov.fec_alta DESC&#xd;        LIMIT CAST(:page_size AS INTEGER)&#xd;        OFFSET CAST(:start AS INTEGER)</sql>
+      <result outputType="json">{&#xd;    "movimientos":{&#xd;        "movimiento":          [&#xd;            {&#xd;                 "tipo": "$tipo",&#xd;                 "destino": "$destino",&#xd;                 "observaciones": "$observaciones",&#xd;                 "comprobante": "$comprobante",&#xd;                 "responsable": "$responsable",&#xd;                 "fec_alta": "$fec_alta",&#xd;                 "herramientas": "$herramientas",&#xd;                 "movimiento_id": "$movimiento_id",&#xd;                 "establecimiento": "$establecimiento",&#xd;                 "total_count":"$total_count"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
+      <param name="empr_id1" sqlType="STRING"/>
+      <param name="empr_id2" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="page_size" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+   </query>
+   <query id="getEntradaxEnpaId" useConfig="ToolsDataSource">
+      <sql>select ep.enpa_id, ep.info_id, ep.observaciones, u.last_name , u.first_name , u.dni , ep.fec_alta, t.label, t.valor, p.nombre as panol, e.nombre as establecimiento, h.codigo as codigoherramienta, h.descripcion as descherramienta&#xd;from pan.entrada_panol ep &#xd;inner join pan.deta_entrada_panol dep on dep.enpa_id  = ep.enpa_id  &#xd;inner join pan.herramientas h on h.herr_id = dep.herr_id &#xd;inner join frm.instancias_formularios t on t.info_id = ep.info_id&#xd;inner join pan.panol p on p.pano_id = ep.pano_id&#xd;inner join prd.establecimientos e on e.esta_id = p.esta_id &#xd;inner join seg.users u on u.usernick = ep.responsable &#xd;where ep.enpa_id = cast(:enpa_id as integer);</sql>
+      <result outputType="json">{&#xd;    "entradas":{&#xd;        "entrada":          [&#xd;            {&#xd;              "enpa_id": "$enpa_id",&#xd;              "observaciones": "$observaciones",&#xd;              "fec_alta": "$fec_alta",&#xd;              "establecimiento": "$establecimiento",&#xd;              "panol": "$panol",&#xd;              "first_name": "$first_name",&#xd;              "last_name": "$last_name",&#xd;              "dni": "$dni",&#xd;              "info_id": "$info_id",&#xd; "codigoherramienta":"$codigoherramienta",&#xd;              "descherramienta":"$descherramienta"&#xd;            }&#xd;          ]&#xd;   }&#xd;  }</result>
+      <param name="enpa_id" sqlType="STRING"/>
+   </query>
+   <query id="herramientasGetPaginado" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    h.*,&#xd;    COUNT(*) OVER() AS total_count&#xd;FROM&#xd;    (&#xd;        SELECT&#xd;            H.herr_id,&#xd;            H.codigo,&#xd;            H.marca AS marca_id,&#xd;            T.valor AS marca,&#xd;            H.modelo,&#xd;            H.tipo,&#xd;            H.descripcion,&#xd;            H.pano_id,&#xd;            H.estado,&#xd;            H.fec_alta,&#xd;            P.descripcion AS pan_descrip,&#xd;            e.esta_id,&#xd;            e.nombre AS establecimiento,&#xd;            th_agg.tipoHerramienta,&#xd;            th_agg.colorTipo,&#xd;            cert.fec_vencimiento,&#xd;            cert.estado_certificacion&#xd;        FROM pan.herramientas H&#xd;        INNER JOIN core.tablas T&#xd;            ON H.marca = T.tabl_id&#xd;        INNER JOIN pan.panol P&#xd;            ON H.pano_id = P.pano_id&#xd;        INNER JOIN prd.establecimientos e&#xd;            ON e.esta_id = P.esta_id&#xd;        LEFT JOIN (&#xd;            SELECT&#xd;                th.herr_id,&#xd;                STRING_AGG(t2.descripcion, '-' ORDER BY t2.descripcion) AS tipoHerramienta,&#xd;                STRING_AGG(t2.valor2, '-' ORDER BY t2.descripcion) AS colorTipo&#xd;            FROM pan.tipos_herramienta th&#xd;            INNER JOIN core.tablas t2&#xd;                ON t2.tabl_id = th.tipo_id&#xd;            GROUP BY th.herr_id&#xd;        ) th_agg&#xd;            ON th_agg.herr_id = H.herr_id&#xd;        LEFT JOIN (&#xd;    SELECT DISTINCT ON (herr_id) &#xd;        herr_id, &#xd;        fec_vencimiento,&#xd;        CASE&#xd;            WHEN fec_vencimiento &lt; now() THEN 'VENCIDO'&#xd;            WHEN fec_vencimiento &lt; now() + (COALESCE(NULLIF(CAST(:dias_vencimiento AS VARCHAR), ''), '30')::INTEGER * INTERVAL '1 day')&#xd;                THEN 'POR_VENCER'&#xd;            ELSE 'VIGENTE'&#xd;        END AS estado_certificacion&#xd;    FROM pan.certificaciones&#xd;    ORDER BY herr_id, fec_vencimiento DESC&#xd;) cert ON cert.herr_id = H.herr_id&#xd;        WHERE&#xd;            H.empr_id = CAST(:empr_id AS INTEGER)&#xd;            AND H.eliminado = false&#xd;    ) h,&#xd;    (&#xd;        SELECT &#xd;            CAST(:search AS VARCHAR)      AS search,&#xd;            CAST(:order_dir AS VARCHAR)   AS order_dir,&#xd;            CAST(:esta_id AS VARCHAR)     AS esta_id,&#xd;            CAST(:pano_id AS VARCHAR)     AS pano_id,&#xd;            CAST(:tipo AS VARCHAR)        AS tipo,&#xd;            CAST(:cert_vencer AS VARCHAR) AS cert_vencer&#xd;    ) param&#xd;WHERE&#xd;    (&#xd;        param.search IS NULL&#xd;        OR param.search = ''&#xd;        OR UPPER(COALESCE(h.codigo, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(h.descripcion, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(h.modelo, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(h.tipo, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(h.marca, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(h.pan_descrip, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(h.estado, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(h.estado_certificacion, '')) LIKE UPPER('%' || param.search || '%')&#xd;    )&#xd;    AND (&#xd;        param.esta_id IS NULL &#xd;        OR param.esta_id = '' &#xd;        OR h.esta_id = CAST(param.esta_id AS INTEGER)&#xd;    )&#xd;    AND (&#xd;        param.pano_id IS NULL &#xd;        OR param.pano_id = '' &#xd;        OR h.pano_id = CAST(param.pano_id AS INTEGER)&#xd;    )&#xd;    AND (&#xd;        param.tipo IS NULL &#xd;        OR param.tipo = ''&#xd;        OR EXISTS (&#xd;            SELECT 1 &#xd;            FROM pan.tipos_herramienta th2&#xd;            INNER JOIN core.tablas t3 &#xd;                ON t3.tabl_id = th2.tipo_id&#xd;            WHERE th2.herr_id = h.herr_id&#xd;              AND (&#xd;                  t3.valor = ANY(STRING_TO_ARRAY(param.tipo, ','))&#xd;                  OR t3.descripcion = ANY(STRING_TO_ARRAY(param.tipo, ','))&#xd;              )&#xd;        )&#xd;    )&#xd;    AND (&#xd;        param.cert_vencer IS NULL &#xd;        OR param.cert_vencer = ''&#xd;        OR param.cert_vencer = '0'&#xd;        OR (param.cert_vencer = '1' AND h.estado_certificacion IN ('VENCIDO', 'POR_VENCER'))&#xd;    )&#xd;ORDER BY&#xd;    CASE WHEN LOWER(param.order_dir) = 'asc'  THEN h.fec_alta END ASC,&#xd;    CASE WHEN LOWER(param.order_dir) = 'desc' THEN h.fec_alta END DESC&#xd;LIMIT CAST(:page_size AS INTEGER)&#xd;OFFSET CAST(:start AS INTEGER)</sql>
+      <result outputType="json">{&#xd;  "herramientas":{&#xd;    "herramienta":[&#xd;      {&#xd;        "herr_id": "$herr_id",&#xd;        "codigo": "$codigo",&#xd;        "marca": "$marca",&#xd;        "marca_id": "$marca_id",&#xd;        "modelo": "$modelo",&#xd;        "tipo": "$tipo",&#xd;        "descripcion": "$descripcion",&#xd;        "pano_id": "$pano_id",&#xd;        "estado": "$estado",&#xd;        "pan_descrip": "$pan_descrip",&#xd;        "total_count": "$total_count",&#xd;        "establecimiento":"$establecimiento",&#xd;        "colorTipo":"$colorTipo",&#xd;        "tipoHerramienta":"$tipoHerramienta",&#xd;        "estado_certificacion":"$estado_certificacion"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="page_size" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+      <param name="order_dir" sqlType="STRING"/>
+      <param name="esta_id" sqlType="STRING"/>
+      <param name="pano_id" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="cert_vencer" sqlType="STRING"/>
+      <param name="dias_vencimiento" sqlType="STRING"/>
+   </query>
+   <query id="setTiposHerramienta" useConfig="ToolsDataSource">
+      <sql>insert into pan.tipos_herramienta(herr_id, tipo_id)&#xd;  values(CAST(:herr_id AS INTEGER), :tipo_id )&#xd;  returning tiphe_id</sql>
+      <result outputType="json">{&#xd;  "tipos":{&#xd;    "tipo":[&#xd;      {&#xd;        "tiphe_id": "$tiphe_id"&#xd;&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="tipo_id" sqlType="STRING"/>
+   </query>
+   <query id="setInhabilitacion" useConfig="ToolsDataSource">
+      <sql>INSERT INTO pan.habilitaciones_herramienta&#xd;    (herr_id, user_app, justificacion, tipo_movimiento)&#xd;VALUES&#xd;    (CAST(:herr_id AS INTEGER),&#xd;     CAST(:user_app AS VARCHAR),&#xd;     CAST(:justificacion AS VARCHAR),&#xd;      CAST(:tipo_movimiento AS VARCHAR))</sql>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="user_app" sqlType="STRING"/>
+      <param name="justificacion" sqlType="STRING"/>
+      <param name="tipo_movimiento" sqlType="STRING"/>
+   </query>
+   <query id="getMovimientosherramientas" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    v.nro_vale,&#xd;    v.tipo_movimiento,&#xd;    v.fecha_hora,&#xd;    v.responsable,&#xd;    v.establecimiento_panol,&#xd;    v.justificacion_observacion,&#xd;    v.empr_id,&#xd;    v.eliminado,&#xd;    v.herr_id,&#xd;    v.herr_codigo,&#xd;    v.herr_descripcion,&#xd;    COUNT(*) OVER() AS total_registros&#xd;FROM pan.vw_movimientos_panol v&#xd;CROSS JOIN (&#xd;    SELECT&#xd;        CAST(:empr_id AS integer) AS empr_id_param,&#xd;        CAST(:tipo_movimiento AS text) AS tipo_movimiento_param,&#xd;        CAST(:herr_id AS text) AS herr_id_param,&#xd;        CAST(:fecha_desde AS text) AS fecha_desde_param,&#xd;        CAST(:fecha_hasta AS text) AS fecha_hasta_param,&#xd;        CAST(:busqueda AS text) AS busqueda_param&#xd;) p&#xd;WHERE v.eliminado = false&#xd;  AND v.empr_id = COALESCE(&#xd;        NULLIF(p.empr_id_param, -1),&#xd;        v.empr_id&#xd;      )&#xd;  AND v.tipo_movimiento = COALESCE(&#xd;        NULLIF(p.tipo_movimiento_param, 'TODOS'),&#xd;        v.tipo_movimiento&#xd;      )&#xd;  AND v.herr_id IS NOT DISTINCT FROM COALESCE(&#xd;        CAST(NULLIF(p.herr_id_param, 'TODOS') AS integer),&#xd;        v.herr_id&#xd;      )&#xd;  AND v.fecha_hora &gt;= COALESCE(&#xd;        CAST(NULLIF(p.fecha_desde_param, 'TODOS') AS date),&#xd;        v.fecha_hora::date&#xd;      )&#xd;  AND v.fecha_hora &lt; COALESCE(&#xd;        CAST(NULLIF(p.fecha_hasta_param, 'TODOS') AS date),&#xd;        v.fecha_hora::date&#xd;      ) + INTERVAL '1 day'&#xd;  AND concat_ws(&#xd;        ' ',&#xd;        v.responsable,&#xd;        v.herr_codigo,&#xd;        v.herr_descripcion,&#xd;        v.establecimiento_panol,&#xd;        v.tipo_movimiento, &#xd;        v.justificacion_observacion&#xd;      ) ILIKE '%' || COALESCE(&#xd;        NULLIF(p.busqueda_param, 'TODOS'),&#xd;        ''&#xd;      ) || '%'&#xd;ORDER BY v.fecha_hora DESC&#xd;LIMIT cast(:limit as integer) OFFSET cast(:offset as integer)</sql>
+      <result outputType="json">{&#xd;  "movimientos":{&#xd;    "movimiento":[&#xd;      {&#xd;        "nro_vale": "$nro_vale",&#xd;        "herr_id": "$herr_id",&#xd;        "tipo_movimiento": "$tipo_movimiento",&#xd;        "fecha_hora": "$fecha_hora",&#xd;        "responsable": "$responsable",&#xd;        "establecimiento_panol": "$establecimiento_panol",&#xd;        "justificacion_observacion": "$justificacion_observacion",&#xd;        "herr_codigo": "$herr_codigo",&#xd;        "herr_descripcion": "$herr_descripcion",&#xd;        "total_registros": "$total_registros"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="tipo_movimiento" sqlType="STRING"/>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="fecha_desde" sqlType="STRING"/>
+      <param name="fecha_hasta" sqlType="STRING"/>
+      <param name="busqueda" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+   </query>
+   <query id="setCertificacion" useConfig="ToolsDataSource">
+      <sql>insert into pan.certificaciones(herr_id, fecha_hora ,fec_vencimiento, entidad_id, adjunto, adjunto_nombre)&#xd;values (&#xd; cast(:herr_id as integer),&#xd; cast(:fecha_hora as timestamp),&#xd; cast(:fec_vencimiento as timestamp),&#xd; :entidad_id,&#xd; cast(:adjunto as bytea),&#xd; :adjunto_nombre&#xd; )</sql>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="fecha_hora" sqlType="STRING"/>
+      <param name="fec_vencimiento" sqlType="STRING"/>
+      <param name="entidad_id" sqlType="STRING"/>
+      <param name="adjunto" sqlType="STRING"/>
+      <param name="adjunto_nombre" sqlType="STRING"/>
+   </query>
+   <query id="getCertificacionxHerrId" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;            c.*,&#xd;            COUNT(*) OVER() AS total_count&#xd;        FROM&#xd;            (&#xd;                SELECT&#xd;                    C.cert_id,&#xd;                    C.herr_id,&#xd;                    H.codigo AS herr_codigo,&#xd;                    H.descripcion AS herr_descripcion,&#xd;                    C.fec_alta,&#xd;                    C.fec_vencimiento,&#xd;                    C.entidad_id,&#xd;C.adjunto,&#xd;C.adjunto_nombre,&#xd;                    T.valor AS entidad_nombre,&#xd;                    C.fecha_hora,&#xd;                    CASE&#xd;                        WHEN C.fec_vencimiento &lt; now() THEN 'VENCIDO'&#xd;                        WHEN C.fec_vencimiento &lt; now() + interval '30 days' THEN 'POR_VENCER'&#xd;                        ELSE 'VIGENTE'&#xd;                    END AS estado_certificacion&#xd;                FROM pan.certificaciones C&#xd;                INNER JOIN pan.herramientas H&#xd;                    ON H.herr_id = C.herr_id&#xd;                LEFT JOIN core.tablas T&#xd;                    ON T.tabl_id = C.entidad_id&#xd;                WHERE&#xd;                    H.empr_id = CAST(:empr_id AS INTEGER)&#xd;                    AND H.eliminado = false&#xd;                    AND (&#xd;                        CAST(:herr_id AS VARCHAR) IS NULL&#xd;                        OR CAST(:herr_id2 AS VARCHAR) = ''&#xd;                        OR C.herr_id = CAST(:herr_id3 AS INTEGER)&#xd;                    )&#xd;            ) c,&#xd;            (&#xd;                SELECT CAST(:search AS VARCHAR)    AS search,&#xd;                       CAST(:order_dir AS VARCHAR) AS order_dir&#xd;            ) param&#xd;        WHERE&#xd;            param.search IS NULL&#xd;            OR param.search = ''&#xd;            OR UPPER(COALESCE(c.herr_codigo, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(c.herr_descripcion, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(c.entidad_nombre, '')) LIKE UPPER('%' || param.search || '%')&#xd;            OR UPPER(COALESCE(c.estado_certificacion, '')) LIKE UPPER('%' || param.search || '%')&#xd;        ORDER BY&#xd;            CASE WHEN LOWER(param.order_dir) = 'asc'  THEN c.fec_vencimiento END ASC,&#xd;            CASE WHEN LOWER(param.order_dir) = 'desc' THEN c.fec_vencimiento END DESC&#xd;        LIMIT CAST(:page_size AS INTEGER)&#xd;        OFFSET CAST(:start AS INTEGER)</sql>
+      <result outputType="json">{&#xd;  "certificaciones":{&#xd;    "certificacion":[&#xd;      {&#xd;        "herr_id": "$herr_id",&#xd;        "fecha_hora": "$fecha_hora",&#xd;        "adjunto": "$adjunto",&#xd;        "fec_vencimiento": "$fec_vencimiento",&#xd;        "entidad_nombre": "$entidad_nombre",&#xd;        "adjunto_nombre": "$adjunto_nombre",&#xd;        "total_count": "$total_count"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="order_dir" sqlType="STRING"/>
+      <param name="page_size" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+      <param name="herr_id2" sqlType="STRING"/>
+      <param name="herr_id3" sqlType="STRING"/>
+   </query>
+   <query id="setChecklist" useConfig="ToolsDataSource">
+      <sql>insert into pan.checklists (herr_id, fecha_hora,responsable, username, info_id)&#xd;values (&#xd; cast(:herr_id as integer),&#xd; cast(:fecha_hora as timestamp),&#xd; cast(:responsable as integer),&#xd; :username,&#xd; cast(:info_id as integer)&#xd; )</sql>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="fecha_hora" sqlType="STRING"/>
+      <param name="responsable" sqlType="STRING"/>
+      <param name="username" sqlType="STRING"/>
+      <param name="info_id" sqlType="STRING"/>
+   </query>
+   <query id="getchecklist" useConfig="ToolsDataSource">
+      <sql>SELECT&#xd;    c.*,&#xd;    COUNT(*) OVER() AS total_count&#xd;FROM&#xd;    (&#xd;        SELECT&#xd;            C.check_id,&#xd;            C.herr_id,&#xd;            H.codigo,&#xd;            H.descripcion AS herramienta,&#xd;            C.responsable,&#xd;            TRIM(COALESCE(U.first_name, '') || ' ' || COALESCE(U.last_name, '')) AS responsable_nombre,&#xd;            C.fecha_hora,&#xd;            C.fec_alta,&#xd;            C.username,&#xd;            C.info_id&#xd;        FROM&#xd;            pan.checklists C&#xd;            LEFT JOIN pan.herramientas H ON C.herr_id = H.herr_id&#xd;            LEFT JOIN seg.users U ON C.responsable = U.id&#xd;        WHERE&#xd;            H.empr_id = CAST(:empr_id AS INTEGER)&#xd;    ) c,&#xd;    (&#xd;        SELECT CAST(:search AS VARCHAR)    AS search,&#xd;               CAST(:order_dir AS VARCHAR) AS order_dir,&#xd;               CAST(:herr_id AS VARCHAR)   AS herr_id&#xd;    ) param&#xd;WHERE&#xd;    (&#xd;        param.search IS NULL&#xd;        OR param.search = ''&#xd;        OR UPPER(COALESCE(c.codigo, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(c.herramienta, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(c.responsable_nombre, '')) LIKE UPPER('%' || param.search || '%')&#xd;        OR UPPER(COALESCE(c.username, '')) LIKE UPPER('%' || param.search || '%')&#xd;    )&#xd;    AND (&#xd;        param.herr_id IS NULL&#xd;        OR param.herr_id = ''&#xd;        OR c.herr_id = CAST(param.herr_id AS INTEGER)&#xd;    )&#xd;ORDER BY&#xd;    CASE WHEN LOWER(param.order_dir) = 'asc'  THEN c.fec_alta END ASC,&#xd;    CASE WHEN LOWER(param.order_dir) = 'desc' THEN c.fec_alta END DESC&#xd;LIMIT CAST(:page_size AS INTEGER)&#xd;OFFSET CAST(:start AS INTEGER)</sql>
+      <result outputType="json">{&#xd;       "checklists":{&#xd;           "checklist": [&#xd;               {&#xd;                 "check_id": "$check_id",&#xd;                 "herr_id": "$herr_id",&#xd;                 "codigo": "$codigo",&#xd;                 "herramienta": "$herramienta",&#xd;                 "responsable": "$responsable",&#xd;                 "responsable_nombre": "$responsable_nombre",&#xd;                 "fecha_hora": "$fecha_hora",&#xd;                 "fec_alta": "$fec_alta",&#xd;                 "username": "$username",&#xd;                 "info_id": "$info_id",&#xd;                 "total_count": "$total_count"&#xd;               }&#xd;             ]&#xd;      }&#xd;    }</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="search" sqlType="STRING"/>
+      <param name="order_dir" sqlType="STRING"/>
+      <param name="herr_id" sqlType="STRING"/>
+      <param name="page_size" sqlType="STRING"/>
+      <param name="start" sqlType="STRING"/>
+   </query>
+   <query id="deleteTipoHerramienta" useConfig="ToolsDataSource">
+      <sql>delete from pan.tipos_herramienta where herr_id = CAST(:herr_id AS INTEGER)</sql>
+      <param name="herr_id" sqlType="STRING"/>
+   </query>
+   <query id="getHerramientaxId" useConfig="ToolsDataSource">
+      <sql>select H.herr_id, H.codigo, H.marca as marca_id, T.valor as marca, H.modelo, H.tipo, H.descripcion, H.pano_id, H.estado,  P.descripcion as pan_descrip&#xd;  from pan.herramientas H, core.tablas T, pan.panol P&#xd;  where H.herr_id  = cast (:herr_id as INTEGER)&#xd;  and H.marca = T.tabl_id&#xd;  and H.pano_id = P.pano_id&#xd;  and H.eliminado = false</sql>
+      <result outputType="json"> {&#xd;  "herramientas":{&#xd;    "herramienta":[&#xd;      {&#xd;        "herr_id": "$herr_id",&#xd;        "codigo": "$codigo",&#xd;        "marca": "$marca",&#xd;        "marca_id": "$marca_id",&#xd;        "modelo": "$modelo",&#xd;        "tipo": "$tipo",&#xd;        "descripcion": "$descripcion",&#xd;        "pano_id": "$pano_id",&#xd;        "estado": "$estado",&#xd;        "pan_descrip": "$pan_descrip"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="herr_id" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/panol">
       <call-query href="panolSet">
          <with-param name="descripcion" query-param="descripcion"/>
@@ -218,12 +329,9 @@
    <resource method="PUT" path="/panol">
       <call-query href="panolUpdate">
          <with-param name="descripcion" query-param="descripcion"/>
-         <with-param name="loca_id" query-param="loca_id"/>
-         <with-param name="prov_id" query-param="prov_id"/>
-         <with-param name="pais_id" query-param="pais_id"/>
-         <with-param name="lat" query-param="lat"/>
-         <with-param name="lng" query-param="lng"/>
          <with-param name="pano_id" query-param="pano_id"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="esta_id" query-param="esta_id"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/panol/estado">
@@ -237,7 +345,6 @@
          <with-param name="codigo" query-param="codigo"/>
          <with-param name="marca" query-param="marca"/>
          <with-param name="modelo" query-param="modelo"/>
-         <with-param name="tipo" query-param="tipo"/>
          <with-param name="descripcion" query-param="descripcion"/>
          <with-param name="pano_id" query-param="pano_id"/>
          <with-param name="usuario_app" query-param="usuario_app"/>
@@ -265,7 +372,6 @@
          <with-param name="codigo" query-param="codigo"/>
          <with-param name="marca" query-param="marca"/>
          <with-param name="modelo" query-param="modelo"/>
-         <with-param name="tipo" query-param="tipo"/>
          <with-param name="descripcion" query-param="descripcion"/>
          <with-param name="herr_id" query-param="herr_id"/>
          <with-param name="usuario_app" query-param="usuario_app"/>
@@ -281,6 +387,7 @@
          <with-param name="observaciones" query-param="observaciones"/>
          <with-param name="comprobante" query-param="comprobante"/>
          <with-param name="responsable" query-param="responsable"/>
+         <with-param name="info_id" query-param="info_id"/>
       </call-query>
    </resource>
    <resource method="POST" path="panol/salida/herramientas/detalle">
@@ -313,6 +420,7 @@
          <with-param name="observaciones" query-param="observaciones"/>
          <with-param name="comprobante" query-param="comprobante"/>
          <with-param name="responsable" query-param="responsable"/>
+         <with-param name="info_id" query-param="info_id"/>
       </call-query>
    </resource>
    <resource method="POST" path="/panol/entrada/herramientas/detalle">
@@ -383,9 +491,8 @@
          <with-param name="pano_id" query-param="pano_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/herramientas/panol/{pano_id}/estado/{estado}">
+   <resource method="GET" path="/herramientas/estado/{estado}">
       <call-query href="herramientasPanolGetPorEstado">
-         <with-param name="pano_id" query-param="pano_id"/>
          <with-param name="estado" query-param="estado"/>
       </call-query>
    </resource>
@@ -419,6 +526,126 @@
       <call-query href="validaEstadoHerramienta">
          <with-param name="herr_id" query-param="herr_id"/>
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/id/{pan_id}">
+      <call-query href="panolGetxId">
+         <with-param name="pan_id" query-param="pan_id"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/panol/encargado">
+      <call-query href="deleteEncargadoPanol">
+         <with-param name="pano_id" query-param="pano_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/salida/{sapa_id}">
+      <call-query href="getSalidaxSapaId">
+         <with-param name="sapa_id" query-param="sapa_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientos/herramientas">
+      <call-query href="movimientosHerramientaspaginado">
+         <with-param name="empr_id1" query-param="empr_id1"/>
+         <with-param name="empr_id2" query-param="empr_id2"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="page_size" query-param="page_size"/>
+         <with-param name="start" query-param="start"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/panol/entrada/{enpa_id}">
+      <call-query href="getEntradaxEnpaId">
+         <with-param name="enpa_id" query-param="enpa_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/herramientas/paginado">
+      <call-query href="herramientasGetPaginado">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="page_size" query-param="page_size"/>
+         <with-param name="start" query-param="start"/>
+         <with-param name="order_dir" query-param="order_dir"/>
+         <with-param name="esta_id" query-param="esta_id"/>
+         <with-param name="pano_id" query-param="pano_id"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="cert_vencer" query-param="cert_vencer"/>
+         <with-param name="dias_vencimiento" query-param="dias_vencimiento"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/herramientas/tipos">
+      <call-query href="setTiposHerramienta">
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="tipo_id" query-param="tipo_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/inhabilitacion">
+      <call-query href="setInhabilitacion">
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="user_app" query-param="user_app"/>
+         <with-param name="justificacion" query-param="justificacion"/>
+         <with-param name="tipo_movimiento" query-param="tipo_movimiento"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/herramientas/movimientos">
+      <call-query href="getMovimientosherramientas">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="tipo_movimiento" query-param="tipo_movimiento"/>
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="fecha_desde" query-param="fecha_desde"/>
+         <with-param name="fecha_hasta" query-param="fecha_hasta"/>
+         <with-param name="busqueda" query-param="busqueda"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="offset" query-param="offset"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/certificacion">
+      <call-query href="setCertificacion">
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="fecha_hora" query-param="fecha_hora"/>
+         <with-param name="fec_vencimiento" query-param="fec_vencimiento"/>
+         <with-param name="entidad_id" query-param="entidad_id"/>
+         <with-param name="adjunto" query-param="adjunto"/>
+         <with-param name="adjunto_nombre" query-param="adjunto_nombre"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/certificaciones/herramienta">
+      <call-query href="getCertificacionxHerrId">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="order_dir" query-param="order_dir"/>
+         <with-param name="page_size" query-param="page_size"/>
+         <with-param name="start" query-param="start"/>
+         <with-param name="herr_id2" query-param="herr_id2"/>
+         <with-param name="herr_id3" query-param="herr_id3"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/checklist">
+      <call-query href="setChecklist">
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="fecha_hora" query-param="fecha_hora"/>
+         <with-param name="responsable" query-param="responsable"/>
+         <with-param name="username" query-param="username"/>
+         <with-param name="info_id" query-param="info_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/checklists/paginado">
+      <call-query href="getchecklist">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="search" query-param="search"/>
+         <with-param name="order_dir" query-param="order_dir"/>
+         <with-param name="herr_id" query-param="herr_id"/>
+         <with-param name="page_size" query-param="page_size"/>
+         <with-param name="start" query-param="start"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/herramientas/tipos/eliminar">
+      <call-query href="deleteTipoHerramienta">
+         <with-param name="herr_id" query-param="herr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/herramienta/{herr_id}">
+      <call-query href="getHerramientaxId">
+         <with-param name="herr_id" query-param="herr_id"/>
       </call-query>
    </resource>
 </data>
