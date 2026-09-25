@@ -1,0 +1,46 @@
+id: PAN-UC-006
+modulo: PAN
+titulo: Ver la trazabilidad completa de una herramienta
+perfil: Usuario
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "listarMovimientosHerramientaPaginados(), listarCertificacionesHerramientaPaginadas()"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "getMovimientosherramientas, getCertificacionxHerrId, getchecklist"
+pantallas:
+  - "Herramientas → Herramientas → acción Info"
+precondiciones:
+  - La herramienta tiene al menos un movimiento registrado
+flujo_principal:
+  - paso: "Usa la acción Info sobre una herramienta"
+    resultado: "Se abre el detalle con Código, Tipo, Descripción, Marca y Modelo, y tres solapas: Trazabilidad, Certificaciones y Checklists"
+  - paso: "Mira la solapa Trazabilidad"
+    resultado: "Se muestran Nro. Vale, Tipo, Fecha y Hora, Responsable, Establecimiento/Pañol y Justificación/Observación, ordenado por fecha y hora descendente"
+  - paso: "Observa los tipos de movimiento"
+    resultado: "Aparecen mezclados Entrega, Recepción, Habilitación, Inhabilitación y Alta"
+  - paso: "Mira la solapa Certificaciones"
+    resultado: "Se muestran Fecha y Hora, Vencimiento, Entidad Certificadora y el adjunto"
+  - paso: "Mira la solapa Checklists"
+    resultado: "Se muestran Fecha y Hora y Responsable, con la lupa para ver el checklist completo"
+flujos_alternativos:
+  - nombre: "Exportar la trazabilidad"
+    pasos:
+      - paso: "Usa Exportar a Excel o PDF"
+        resultado: "La exportación incluye todas las páginas y agrega la fecha de hoy, el código, la descripción, el modelo y la marca de la herramienta"
+validaciones:
+  - "La trazabilidad mezcla los vales con la tabla de inhabilitaciones en una sola línea de tiempo"
+  - "La última columna muestra la justificación en las inhabilitaciones y las observaciones del vale en los movimientos"
+  - "Las filas de habilitación e inhabilitación no tienen Nro. de Vale"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  precondicion: "una herramienta con entregas, recepciones y al menos una inhabilitación"
+dudas: []
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s07
+notas: []
