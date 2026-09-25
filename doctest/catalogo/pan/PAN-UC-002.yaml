@@ -1,0 +1,45 @@
+id: PAN-UC-002
+modulo: PAN
+titulo: Dar de alta una herramienta con su tipo y su QR
+perfil: Usuario
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "el alta manda empr_id desde empresa() (líneas 78 y 92)"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "herramientasSet; setTiposHerramienta y deleteTipoHerramienta para los tipos; getTablas para el catálogo"
+pantallas:
+  - "Herramientas → Herramientas → Agregar"
+precondiciones:
+  - La empresa tiene al menos un establecimiento con un pañol
+  - Hay tipos de herramienta cargados en core.tablas
+flujo_principal:
+  - paso: "Abre Agregar"
+    resultado: "Se abre el modal de alta con Establecimiento, Pañol, Código, Descripción, Modelo, Tipo y Marca, todos obligatorios"
+  - paso: "Selecciona uno o varios tipos de herramienta"
+    resultado: "Los tipos se muestran como etiquetas de colores y se pueden seleccionar y deseleccionar varios"
+  - paso: "Completa el resto y guarda"
+    resultado: "La herramienta se crea en estado Activa y aparece en la grilla"
+  - paso: "Usa la acción de código QR sobre la herramienta"
+    resultado: "Se muestra el QR con código, descripción, modelo, marca y los tipos, y se puede imprimir"
+flujos_alternativos:
+  - nombre: "Reimprimir el QR más adelante"
+    pasos:
+      - paso: "Vuelve a usar la acción de código QR sobre una herramienta ya creada"
+        resultado: "Se vuelve a mostrar el QR, listo para imprimir"
+validaciones:
+  - "Los tipos NO se graban en la tabla de la herramienta: van en una tabla intermedia contra core.tablas, y una herramienta puede tener varios"
+  - "Cada tipo se muestra gris salvo que su `valor2` traiga un código de color"
+  - "Las dimensiones del QR se configuran en core.tablas"
+  - "El `empr_id` del payload tiene que viajar como string: el DataService lo declara STRING (H-084)"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas: []
+derivados: {}
+notas:
+  - "La etiqueta QR impresa, al escanearse, abre una URL pública de traz-comp-codigos — ver PAN-UC-007."

@@ -1,0 +1,55 @@
+id: PAN-UC-001
+modulo: PAN
+titulo: Ver el listado de herramientas y detectar las que tienen certificación vencida
+perfil: Usuario
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "index() carga la pantalla; listarHerramientasPaginado() es el server-side de la grilla"
+  - repo: traz-comp-pan
+    path: views/herramienta/list.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "herramientasGetPaginado, herramientasPanolGetPorEstado"
+pantallas:
+  - "Herramientas → Herramientas"
+precondiciones:
+  - Sesión iniciada en Tools
+  - El rol tiene asignado el menú de Herramientas
+flujo_principal:
+  - paso: "Entra a Herramientas"
+    resultado: "Se muestra la grilla con Acciones, Código, Tipo, Descripción, Modelo, Marca, Establecimiento/Pañol y Estado"
+  - paso: "Observa la columna Estado"
+    resultado: "Cada herramienta muestra Activa, Entregada o Inhabilitada"
+  - paso: "Observa las herramientas con certificación próxima a vencer o vencida"
+    resultado: "Las que tienen certificación por vencer muestran una alerta naranja; las que tienen alguna vencida, una roja. Cuando hay vencidas no se muestra además la naranja"
+  - paso: "Pasa el mouse sobre la alerta"
+    resultado: "Se muestra la leyenda: 'Certificado por vencer' o 'Certificados vencidos'"
+  - paso: "Hace clic en la alerta"
+    resultado: "Se abre el modal de certificaciones de esa herramienta"
+flujos_alternativos:
+  - nombre: "Filtrar solo lo que necesita atención"
+    pasos:
+      - paso: "Marca el filtro 'Cert. por vencer'"
+        resultado: "La grilla queda solo con las herramientas que tienen alerta naranja o roja"
+  - nombre: "Filtrar por ubicación o tipo"
+    pasos:
+      - paso: "Usa los filtros de Establecimiento, Pañol o Tipo de Herramienta"
+        resultado: "La grilla se reduce a lo seleccionado"
+validaciones:
+  - "El listado solo muestra herramientas de la empresa de la sesión"
+  - "Los tres estados posibles son Activa, Entregada e Inhabilitada"
+  - "Una certificación vencida tiene prioridad visual sobre una por vencer: se muestra la roja y no la naranja"
+  - "El vencimiento avisa pero NO bloquea ninguna operación"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  precondicion: "la empresa tiene herramientas en un pañol, al menos una con certificación por vencer y otra con certificación vencida"
+dudas: []
+derivados: {}
+notas:
+  - "Relevado contra el tag v2.5.1.11 (submódulo en 07473dc6) y contra la maqueta 'Herramientas v3'."
+  - "El módulo se llama Herramientas en el menú, no Pañol."
