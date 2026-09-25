@@ -198,4 +198,32 @@ class Establecimiento extends CI_Controller
         // Devolver el resultado en formato JSON
         echo json_encode(['tieneDeposito' => $tieneDeposito]);
     }
+
+		/**
+	* la infomacion del pañol 
+	* @param array datos pañol
+	* @return bool true o false segun resultado de servicio de guardado
+	*/
+	public function verPanol(){
+		log_message('ERROR', '#TRAZA | #CORE | Establecimiento | verPanol() >> ');
+		$data = $this->input->post('data');
+
+		$resp = $this->Establecimientos->getPanol($data);
+
+        echo json_encode($resp);
+	}
+
+	/**
+	* Edita la infomacion del pañol y los usuarios encargados
+	* @param array datos pañol y encargados
+	* @return json resultado de servicio de guardado
+	*/
+	public function editarPanol(){
+		log_message('ERROR', '#TRAZA | #CORE | Establecimiento | editarPanol() >> ');
+		$data = $this->input->post('data');
+
+		$resp = $this->Establecimientos->editarPanol($data);
+
+        echo json_encode($resp);
+	}
 }

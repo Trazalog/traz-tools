@@ -17,7 +17,7 @@
 	<ul class="nav navbar-nav">
 		<!-- Help Menu Link -->
 		<li>
-			<a href="https://trazalog.com/ayudatools/" target="_blank" title="Ayuda">
+			<a href="#" data-toggle="modal" data-target="#modalAyuda" title="Ayuda">
 				<i class="fa fa-question-circle"></i>
 			</a>
 		</li>
@@ -110,6 +110,31 @@
 		</li>
 	</ul>
 </div>
+
+<!-- Modal Ayuda Amplio -->
+<div class="modal fade" id="modalAyuda" tabindex="-1" role="dialog" aria-labelledby="modalAyudaLabel" style="z-index: 1050;">
+    <div class="modal-dialog modal-lg" role="document" style="width: 90%; max-width: 1200px; margin: 30px auto;">
+        <div class="modal-content">
+            <div class="modal-header bg-blue" style="color: #fff;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.8;"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="modalAyudaLabel"><i class="fa fa-question-circle"></i> Centro de Ayuda Trazalog Tools</h4>
+            </div>
+            <div class="modal-body" style="padding: 0; height: 75vh;">
+                <iframe src="https://trazalog.com/ayudatools/" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Mover el modal al <body> para evitar problemas de stacking context dentro del navbar de AdminLTE
+    $('#modalAyuda').appendTo('body');
+});
+</script>
 
 <style>
 	.notFA {margin-left: 27px;}

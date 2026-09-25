@@ -18,3 +18,11 @@ application/logs/*
 /imgTEST/
 application/config/constants.php
 
+# Antigravity agents / skills locales
+.agents/
+
+# Conocimiento local del sistema (no versionar)
+AGENTS.md
+
+# QR generados al probar vistas públicas — artefactos, no código
+codigosQR/

@@ -172,6 +172,7 @@
   });
 
   $(".btnPanoles").on("click", function(e) {
+    wo();
     $("#modalpanoles td").remove();
     $(".modal-header h4").remove();
     //guardo el tipo de operacion en el modal
@@ -193,13 +194,18 @@
           result.forEach(e => {
             $(tabla).append(
               "<tr data-json= ' "+ JSON.stringify(e) +" '>" +
-              "<td><button type='button' title='Eliminar Pañol' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarPanol(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true' ></span></button>" +
+                "<td>" +
+                  "<button type='button' title='Ver Pañol' class='btn btn-primary btn-circle btnVer' onclick='verPanol(this)' id='btnVer'><span class='glyphicon glyphicon-eye-open' aria-hidden='true'></span></button>&nbsp;" +
+                  "<button type='button' title='Editar Pañol' class='btn btn-primary btn-circle btnEditar' onclick='editarPanol(this)' id='btnEditar'><span class='glyphicon glyphicon-pencil' aria-hidden='true'></span></button>&nbsp;" +
+                  "<button type='button' title='Eliminar Pañol' class='btn btn-primary btn-circle btnEliminar' onclick='eliminarPanol(this)' id='btnBorrar'><span class='glyphicon glyphicon-trash' aria-hidden='true'></span></button>" +
+                "</td>" +
                 "<td>" + e.nombre + "</td>" +
               "</tr>"
             );
           });            
         };
         $('#modalpanoles').modal('show'); 
+        wc();
       },
       error: function(result) {
           alert('Error');
