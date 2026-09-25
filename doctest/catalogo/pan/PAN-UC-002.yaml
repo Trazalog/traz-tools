@@ -1,0 +1,39 @@
+id: PAN-UC-002
+modulo: PAN
+titulo: Dar de alta una herramienta
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: relevamiento PAN 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "el alta arma el payload con empr_id desde empresa() (líneas 78 y 92)"
+  - repo: traz-comp-pan
+    path: views/herramienta/modals/modal_editar.php
+    detalle: "el mismo modal sirve para alta y edición"
+pantallas:
+  - "Pañol → Herramientas → (alta)"
+precondiciones:
+  - Sesión iniciada en Tools con el menú de Pañol
+  - La empresa tiene al menos un establecimiento con un pañol
+flujo_principal:
+  - paso: "Abre el formulario de alta desde el listado"
+    resultado: "Se abre el modal con los campos de la herramienta"
+  - paso: "Completa código, tipo, descripción, modelo, marca y el pañol donde queda"
+    resultado: "El selector de marca se carga desde core.tablas (tabla marcas_herramientas de la empresa)"
+  - paso: "Guarda"
+    resultado: "La herramienta aparece en la grilla con estado ACTIVO"
+flujos_alternativos: []
+validaciones:
+  - "La herramienta se crea siempre dentro de la empresa de la sesión"
+  - "El `empr_id` del payload tiene que viajar como string: el DataService lo declara STRING y un entero lo rechaza (H-084)"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  precondicion: "la empresa tiene un pañol creado y marcas cargadas en core.tablas"
+dudas:
+  - "¿Qué campos son obligatorios? El modal no se relevó campo por campo."
+  - "¿El código de la herramienta lo pone el usuario o lo genera el sistema? ¿Se valida que no se repita?"
+derivados: {}
+notas:
+  - "Este caso es el que expone el riesgo de H-084: `Herramienta.php:78` y `:92` mandan `empresa()` al DataService."

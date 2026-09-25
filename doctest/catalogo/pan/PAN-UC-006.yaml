@@ -1,0 +1,34 @@
+id: PAN-UC-006
+modulo: PAN
+titulo: Certificar una herramienta
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: relevamiento PAN 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "getEntidadesCertificadoras(), guardarCertificacion(), listarCertificacionesHerramientaPaginadas()"
+  - repo: traz-comp-pan
+    path: views/herramienta/modals/modal_certificar.php
+pantallas:
+  - "Pañol → Herramientas → acción Certificar"
+precondiciones:
+  - Existe una herramienta cargada
+  - Hay entidades certificadoras disponibles
+flujo_principal:
+  - paso: "Usa la acción Certificar sobre una herramienta"
+    resultado: "Se abre el modal con el selector de entidad certificadora"
+  - paso: "Elige la entidad, completa los datos de la certificación y guarda"
+    resultado: "La certificación queda registrada y aparece en el historial de certificaciones de la herramienta"
+flujos_alternativos: []
+validaciones:
+  - "El historial de certificaciones es por herramienta y se pagina del lado del servidor"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Las certificaciones vencen? Si vencen, ¿el sistema avisa o bloquea la salida de una herramienta con certificación vencida? Es la pregunta que decide si esto sirve para el control de seguridad de una minera o es solo un registro."
+  - "Las entidades certificadoras, ¿de dónde salen? ¿Es una tabla de core.tablas por empresa o un catálogo global?"
+derivados: {}
+notas:
+  - "Para el segmento minero esta pantalla puede ser la más relevante del módulo: la certificación de herramientas es requisito de auditoría."
