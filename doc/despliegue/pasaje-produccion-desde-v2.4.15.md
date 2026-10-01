@@ -134,8 +134,8 @@ Después: `CALL kpi_calcular_queries_cacheados();` (primera carga de la caché d
 | Script (repo traz-comp-dnato) | Qué hace | Notas |
 |---|---|---|
 | `scripts/modificar_tabla_usuarios.sql` | `ALTER TABLE seg.users ADD COLUMN reg_info_id`. | Necesario. Verificar que la columna no exista ya. |
-| `database/sp_insert_usuario_con_hash_con_imagen.sql` | SP de alta de usuario con hash + imagen. | `CREATE OR REPLACE`. |
-| `database/migrations/001_create_seg_oauth_codes.sql` | Crea `seg.oauth_codes`. | **Solo si se usa OAuth.** Con `DNATO_OAUTH_ISSUER=''` (off) es opcional. |
+| `development/sp_insert_usuario_con_hash_con_imagen.sql` | SP `seg.insert_usuario_con_hash` (PBKDF2-SHA256, compatible con `Password.php`). | Requiere `CREATE EXTENSION IF NOT EXISTS pgcrypto;`. `CREATE OR REPLACE`. |
+| `doc/identity/migrations/001_create_seg_oauth_codes.sql` | Crea `seg.oauth_codes` (codes de un solo uso, OAuth 2.1 + PKCE, E9-IDENT-03). | **Solo si se usa OAuth.** Con `DNATO_OAUTH_ISSUER=''` (off) es opcional. |
 | **Formulario de registro** (`scripts/crear_formulario_registro.sql`, `formulario_registro_usuario.sql`, `corregir_formulario_registro.sql`, `corregir_valo_id.sql`) | Crean el formulario de registro (4 preguntas) + sus items/valores. | **⚠️ NO correr en cadena tal cual:** son iterativos y **hardcodean `form_id=1` y `72`**. En prod el `form_id` lo asigna el serial → hay que **crear el form, ver qué `form_id` quedó, y setear `FORMULARIO_REGISTRO_ID` a ese número** (ver §1.2). Recomiendo **consolidarlos en un script limpio** (te lo armo, ver §5). |
 
 ### 2.4 dnato — AssetPlanner (MariaDB)
@@ -144,6 +144,21 @@ Después: `CALL kpi_calcular_queries_cacheados();` (primera carga de la caché d
 | `development/sql/asset-empresa-trigger.sql` | Trigger de alta de empresa en Asset (crea grupos/acciones). | Correr si la Asset de prod aún no lo tiene (verificar). |
 | `development/sql/asset-createEmpresaGroupsAndActions.sql` | **⚠️ NO CORRER EN PROD.** Tiene INSERTs con **empresas concretas de DEV** (id 17 "Tierras_de_Capayan_Lama", etc.). Es seed de dev, no migración. | Omitir. |
 | `development/verificar_md5_assetplanner.sql` | Solo verificación (SELECT). | Opcional, para chequear. |
+
+### 2.5 Carga Masiva (bulkload) multi-motor — ⚠️ feature grande, review dedicada
+Las constantes `BULKLOAD_*` (§1.2) pertenecen a este feature, que trae **su propio set de scripts** (no
+estaba en versiones anteriores de este doc). **Solo aplica si el ambiente va a usar Carga Masiva.** Tiene
+dependencias cruzadas (dnato + tools) y lado MariaDB; conviene revisarlo aparte antes de prod.
+| Script | Motor / repo | Qué hace |
+|---|---|---|
+| `scripts/sql/despliegue/2026-09-carga-masiva-multimotor.sql` | PostgreSQL · dnato | **Script consolidado de despliegue** (el que se corre en DEMO/PROD): deja `core`+`sta` listos para despachar entidades a PostgreSQL o MariaDB. |
+| `scripts/sql/sta/2026-08-agregar-motor-bd.sql` | PostgreSQL · dnato | **Prerequisito** del consolidado (agrega la columna `motor_bd`). |
+| `scripts/sql/2026-08-core-empresas-empr-id-mysql.sql` | PostgreSQL · **tools** | Agrega `core.empresas.empr_id_mysql` (lo usa carga masiva contra MariaDB **y** el KPI de MAN del tablero). Verificar si prod ya lo tiene. |
+| `scripts/menu/insert_bulkload_menu.sql` | PostgreSQL · dnato | Inserta la opción de menú "Carga Masiva" (`seg.menues`). |
+| `scripts/sql/mariadb/fase0-verificar-entorno.sql` + `scripts/sql/sta/*` | **MariaDB** · dnato | Objetos del esquema `sta` en la MariaDB del ambiente (lado que el consolidado NO cubre — ver sección "QUÉ FALTA DESPUÉS DE ESTO" dentro del propio script consolidado). |
+
+> Recomendación: tratar Carga Masiva como un **sub-pasaje propio**. Si querés, armo una guía dedicada
+> siguiendo el orden que indica el encabezado del script consolidado (§"QUÉ FALTA DESPUÉS DE ESTO").
 
 ---
 
