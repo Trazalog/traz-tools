@@ -152,4 +152,19 @@ class Valores extends CI_Model {
     return $empresas;    
   }
 
+
+  /**
+	* Obtiene los datos cargados en core.tablas por empr_id
+	* @param string columna tabla a buscar
+	* @return array listado de coincidencias
+	*/
+    public function obtenerTablaEmpr_id($tabla)
+    {
+        $url = REST_CORE."/tabla/$tabla/empresa/".empresa();
+		    $aux = $this->rest->callAPI("GET",$url);
+		    $aux = json_decode($aux['data']);
+		    return $aux->tablas->tabla;
+
+    }
+
 }

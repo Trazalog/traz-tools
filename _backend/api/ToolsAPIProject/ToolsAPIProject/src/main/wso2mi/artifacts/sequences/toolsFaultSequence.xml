@@ -7,17 +7,25 @@
         <property expression="get-property('ERROR_MESSAGE')"
             name="detail" xmlns:ns="http://org.apache.synapse/xsd"/>
     </log>
+    <!-- El cuerpo entrante se inserta como JSON, NO entre comillas.
+         Antes era `"payload":"$3"` con literal="false": si el cuerpo era un objeto
+         —el caso normal cuando hay un error— quedaba `"payload":"{"respuesta":...}"`,
+         que es JSON invalido. PayloadFactory explotaba, el faultSequence del recurso
+         volvia a llamar aca y explotaba otra vez, y la excepcion terminaba en el worker
+         pool SIN QUE NADIE MANDARA RESPUESTA: el cliente quedaba colgado hasta su
+         propio timeout. Asi se veia el alta de empresa — 30 s de silencio en lugar de
+         un error. Ver #516. -->
     <property expression="json-eval($)" name="payload" xmlns:ns="http://org.apache.synapse/xsd"/>
     <filter regex="true" source="boolean(get-property('payload'))" xmlns:ns="http://org.apache.synapse/xsd">
         <then>
             <payloadFactory media-type="json">
-                <format>{"respuesta" : {&#xd;                       "codigo" : "1000"  , "error":"$1"  , "detalle":"$2"  ,"payload":"$3"           }&#xd;}</format>
+                <format>{"respuesta" : {&#xd;                       "codigo" : "1000"  , "error":"$1"  , "detalle":"$2"  ,"payload":$3           }&#xd;}</format>
                 <args>
                     <arg evaluator="xml"
                         expression="get-property('TOOLS_ERROR')" literal="false"/>
                     <arg evaluator="xml"
                         expression="get-property('ERROR_MESSAGE')" literal="false"/>
-                    <arg evaluator="json" expression="$" literal="false"/>
+                    <arg evaluator="json" expression="$" literal="true"/>
                 </args>
             </payloadFactory>
         </then>

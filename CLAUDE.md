@@ -54,6 +54,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Convenciones de código
 
+### 🧱 La lógica de negocio va en las APIs, no en los controllers
+
+**Siempre que se pueda, la lógica de negocio se abstrae en APIs y se saca de los controllers.** Así
+se unifica el comportamiento, aumenta la cohesión de las operaciones del sistema, y queda habilitado
+el acceso desde nuevos canales y tecnologías —**MCP** entre ellas— sin reimplementar nada.
+
+**Corolario**: si una operación tiene que impactar en varios subsistemas (PostgreSQL vía
+DataServices, Bonita, AssetPlanner), eso es **parte de la operación**, no del orquestador. Quien
+llama aporta datos; el API decide qué significan.
+
+Al diseñar un cambio que toca varios subsistemas, la pregunta no es "¿en qué controller lo pongo?"
+sino **"¿de qué operación forma parte?"**, y llevarlo al recurso del API que la representa. Si hace
+falta un dato que el API no recibe, se agrega al payload como campo **opcional** — pasar un dato no
+es lo mismo que delegar la decisión.
+
+El objetivo concreto: que desde todos los lados donde se cree un usuario se invoque siempre el mismo
+código.
+
 - **PHP**: PSR-12. Sin direct DB queries desde PHP — todos los datos van por WSO2 MI.
 - **APIs**: URLs en kebab-case, JSON keys en snake_case.
 - **BD**: nombres de tablas y columnas en snake_case.
@@ -84,6 +102,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Regla clave**: `develop` se sincroniza a `develop-v3` semanalmente (E7-CICD-06). No hacer esa sync manualmente.
 
 ---
+
+## 🛑 Sistema PRODUCTIVO — análisis de impacto obligatorio antes de tocar el core
+
+**v2 corre en producción HOY.** Todo lo que está desplegado se asume **funcionando en
+producción** hasta que se demuestre lo contrario. Antes de modificar cualquier cosa del
+núcleo, la primera hipótesis NO es "esto es un bug": es **"esto funciona en producción y
+algún cambio (posiblemente mío) lo dejó de hacer funcionar"**.
+
+### Qué cuenta como "core" (dispara esta regla)
+- Objetos del schema `core.` y de `dnato` (tablas, columnas, triggers, procedures).
+- `application/config/constants.php` (de Tools o de cualquier submódulo, sobre todo dnato).
+- DataServices (`.dbs`) y sus queries.
+- APIs y sequences de WSO2 (`_backend/api/**`).
+- Procesos y artefactos de **Bonita**.
+- El módulo de **formularios** (`traz-comp-formularios`) y el flujo de registración/login.
+
+### El procedimiento — OBLIGATORIO, sin excepción
+1. **Comparar contra `master` (producción) primero.** ¿Cómo está el objeto en producción?
+   Esa es la referencia de "cómo debe estar". Si lo desplegado difiere de `master`, el
+   sospechoso número uno del problema es esa diferencia, NO el código de producción.
+2. **Escribir un análisis de impacto** que responda: qué cambia, qué lo consume (todos los
+   llamadores/canales), qué se rompe si se toca, y por qué lo que hay hoy quedó así.
+   Asumir que cada objeto tiene una razón de ser hasta probar lo contrario.
+3. **El análisis lo aprueba el PM. Sin aprobación, NO se modifica.** No alcanza con que
+   la tarea "parezca" un arreglo obvio: en un sistema productivo un arreglo obvio mal
+   entendido saca producción de servicio.
+4. Recién con el OK, implementar, **probar en un entorno (dev/local con VPN) antes de
+   desplegar**, y desplegar una sola vez — no iterar parches en el ambiente compartido.
+
+### Por qué esta regla existe
+Se generó churn real: múltiples despliegues seguidos "arreglando" síntomas de un cambio
+que en realidad había roto algo que en producción funcionaba, tratándolo como bug nuevo
+en vez de comparar contra `master`. Cada despliegue de más cuesta tiempo del PM y arriesga
+el ambiente. Comparar contra producción primero habría evitado casi todo eso.
 
 ## 🔒 Metodología de Git — OBLIGATORIA
 
