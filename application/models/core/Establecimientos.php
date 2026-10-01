@@ -435,4 +435,83 @@ class Establecimientos extends CI_Model {
       return true; // No tiene depósitos asociados
     }
   }
+
+  public function getPanol($pan_id){
+    $url = REST_PAN.'/panol/id/'.$pan_id;
+    $array = $this->rest->callAPI("GET",$url);
+    $resp =  json_decode($array['data']);
+    return $resp;
+  }
+
+  public function editarPanol($data){
+    $panol['pano_id'] = $data['pano_id'];
+    $panol['nombre'] = $data['nombre'];
+    $panol['descripcion'] = $data['descripcion'];
+    $panol['esta_id'] = isset($data['esta_id']) ? $data['esta_id'] : '';
+    //$panol['empr_id'] = empresa();
+
+    $post['_put_panol'] = $panol;
+    $url_panol = REST_PAN.'/panol';
+    $rsp_panol = $this->rest->callApi('PUT', $url_panol, $post);
+
+    log_message('DEBUG','#TRAZA | #CORE | editarPanol | EDITAR $panol: >> '.json_encode($rsp_panol));
+
+    if($rsp_panol['status']){
+      $rsp['panol']['status'] = $rsp_panol['status'];
+      $rsp['panol']['msj'] = "Se editó el pañol correctamente";
+    }else{
+      $rsp['panol']['status'] = $rsp_panol['status'];
+      $rsp['panol']['data'] = $rsp_panol['data'];
+      $rsp['panol']['msj'] = "Se produjo un error al editar el pañol";
+    }
+
+    // Eliminación de encargados previos
+    $this->borrarEncargadosPanol($data['pano_id']);
+
+    $batch_req = [];
+    if(isset($data['encargados']) && is_array($data['encargados'])){
+      $url_encargados = REST_PAN.'/_post_panol_encargado_batch_req';
+
+      foreach ($data['encargados'] as $key) {
+        $aux['pano_id'] = $data['pano_id'];
+        $aux['user_id'] =  $key;
+
+        $batch_req['_post_panol_encargado_batch_req']['_post_panol_encargado'][] = $aux;
+      }
+      $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $batch_req);
+    } else if (isset($data['encargados'])) {
+      $url_encargados = REST_PAN.'/panol/encargado';
+
+      $aux['pano_id'] = $data['pano_id'];
+      $aux['user_id'] =  $data['encargados'];
+
+      $encargados['_post_panol_encargado'] = $aux;
+
+      $rsp_encargados = $this->rest->callApi('POST', $url_encargados, $encargados);
+    } else {
+      $rsp_encargados['status'] = true;
+    }
+
+    log_message('DEBUG','#TRAZA | #CORE | editarPanol | GUARDAR $encargados: >> '.json_encode($rsp_encargados));
+
+    if(isset($rsp_encargados['status']) && $rsp_encargados['status']){
+      $rsp['encargados']['status'] = $rsp_encargados['status'];
+      $rsp['encargados']['msj'] = "Se actualizaron los encargados correctamente";
+    }else{
+      $rsp['encargados']['status'] = isset($rsp_encargados['status']) ? $rsp_encargados['status'] : false;
+      $rsp['encargados']['data'] = isset($rsp_encargados['data']) ? $rsp_encargados['data'] : null;
+      $rsp['encargados']['msj'] = "Se produjo un error al guardar los encargados";
+    }
+
+    return $rsp;
+  }
+
+  public function borrarEncargadosPanol($pano_id){
+  log_message('DEBUG','#TRAZA | TRAZ-TOOLS | Establecimientos | borrarEncargadosPanol()');
+  $url = REST_PAN.'/panol/encargado';
+  $encargados['pano_id'] = $pano_id;
+  $del['_delete_panol_encargado'] = $encargados; 
+  $aux = $this->rest->callApi('DELETE', $url, $del);  
+  return $aux;
+}
 }

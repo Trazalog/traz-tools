@@ -494,7 +494,7 @@ function cargarCalendar(){
   }
 
 
-linkTo('<?php echo DEF_VIEW ?>');
+linkTo('<?php echo isset($landing) ? $landing : DEF_VIEW ?>');
 
 function collapse(e) {
     e = $(e).closest('.box');
