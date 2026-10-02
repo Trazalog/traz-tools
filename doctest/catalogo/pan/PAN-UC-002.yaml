@@ -40,6 +40,7 @@ validaciones:
 datos_prueba:
   empresa: EMPRESA_TEST_1
 dudas: []
-derivados: {}
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s02
 notas:
   - "La etiqueta QR impresa, al escanearse, abre una URL pública de traz-comp-codigos — ver PAN-UC-007."

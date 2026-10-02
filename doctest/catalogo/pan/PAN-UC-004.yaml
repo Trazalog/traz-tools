@@ -41,6 +41,7 @@ validaciones:
 datos_prueba:
   empresa: EMPRESA_TEST_1
 dudas: []
-derivados: {}
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s03
 notas:
   - "Entrega y Recepción comparten la misma pieza de código y se guardan con tipo distinto."

@@ -49,7 +49,8 @@ datos_prueba:
   empresa: EMPRESA_TEST_1
   precondicion: "la empresa tiene herramientas en un pañol, al menos una con certificación por vencer y otra con certificación vencida"
 dudas: []
-derivados: {}
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s06
 notas:
   - "Relevado contra el tag v2.5.1.11 (submódulo en 07473dc6) y contra la maqueta 'Herramientas v3'."
   - "El módulo se llama Herramientas en el menú, no Pañol."

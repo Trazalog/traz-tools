@@ -39,6 +39,7 @@ datos_prueba:
   empresa: EMPRESA_TEST_1
   precondicion: "una herramienta Activa y otra Entregada"
 dudas: []
-derivados: {}
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s05
 notas:
   - "Las inhabilitaciones viven en su propia tabla y se mezclan con los vales en la trazabilidad (PAN-UC-006)."

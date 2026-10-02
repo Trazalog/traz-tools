@@ -43,6 +43,7 @@ datos_prueba:
   empresa: EMPRESA_TEST_1
   precondicion: "un vale de entrega con al menos dos herramientas"
 dudas: []
-derivados: {}
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s04
 notas:
   - "Confirmado con el PM el 2026-09-25: no se cierra el vale, se genera un vale de entrada."

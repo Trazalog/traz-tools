@@ -41,5 +41,6 @@ datos_prueba:
   empresa: EMPRESA_TEST_1
   precondicion: "una herramienta con entregas, recepciones y al menos una inhabilitación"
 dudas: []
-derivados: {}
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s07
 notas: []
