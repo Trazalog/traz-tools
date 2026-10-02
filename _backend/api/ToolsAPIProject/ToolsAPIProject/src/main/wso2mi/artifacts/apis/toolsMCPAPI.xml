@@ -576,6 +576,208 @@
    ══════════════════════════════════════════════════════════════ -->
 
    <!-- alm_get_stock — lista de artículos con stock agregado de la empresa. -->
+   <resource methods="GET" uri-template="/mcp/pan/herramientas">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- La empresa sale del token. Las queries de PANDataService que no
+              reciben empr_id NO se usan desde aca: para eso estan las variantes
+              /empresa/{empr_id} (H-088). -->
+         <property name="f_buscar" expression="fn:concat('',get-property('query.param.buscar'))"/>
+         <property name="f_esta" expression="fn:concat('',get-property('query.param.esta_id'))"/>
+         <property name="f_pano" expression="fn:concat('',get-property('query.param.pano_id'))"/>
+         <property name="f_tipo" expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <property name="f_cert" expression="fn:concat('',get-property('query.param.cert_vencer'))"/>
+         <property name="f_dias" expression="fn:concat('',get-property('query.param.dias_vencimiento'))"/>
+         <property name="uri.var.panHerramientas"
+                   expression="fn:concat($ctx:api_url,'/pan/herramientas/',get-property('jwt_empr_id'),'?buscar=',$ctx:f_buscar,'&amp;esta_id=',$ctx:f_esta,'&amp;pano_id=',$ctx:f_pano,'&amp;tipo=',$ctx:f_tipo,'&amp;cert_vencer=',$ctx:f_cert,'&amp;dias_vencimiento=',$ctx:f_dias)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | pan_get_herramientas | iniciando (toolsMCPAPI -&gt; toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint><http method="GET" uri-template="{uri.var.panHerramientas}"/></endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/pan/herramientas - toolsPANAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP pan_get_herramientas (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/pan/herramienta/{herr_id}">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- La empresa sale del token. Las queries de PANDataService que no
+              reciben empr_id NO se usan desde aca: para eso estan las variantes
+              /empresa/{empr_id} (H-088). -->
+
+         <property name="uri.var.panHerramienta"
+                   expression="fn:concat($ctx:api_url,'/pan/herramienta/',get-property('uri.var.herr_id'),'/empresa/',get-property('jwt_empr_id'))"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | pan_get_herramienta | iniciando (toolsMCPAPI -&gt; toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint><http method="GET" uri-template="{uri.var.panHerramienta}"/></endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/pan/herramienta/{herr_id} - toolsPANAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP pan_get_herramienta (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/pan/movimientos">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- La empresa sale del token. Las queries de PANDataService que no
+              reciben empr_id NO se usan desde aca: para eso estan las variantes
+              /empresa/{empr_id} (H-088). -->
+         <property name="f_tipo" expression="fn:concat('',get-property('query.param.tipo'))"/>
+         <property name="f_herr" expression="fn:concat('',get-property('query.param.herr_id'))"/>
+         <property name="f_desde" expression="fn:concat('',get-property('query.param.desde'))"/>
+         <property name="f_hasta" expression="fn:concat('',get-property('query.param.hasta'))"/>
+         <property name="f_buscar" expression="fn:concat('',get-property('query.param.buscar'))"/>
+         <property name="uri.var.panMovimientos"
+                   expression="fn:concat($ctx:api_url,'/pan/movimientos/',get-property('jwt_empr_id'),'?tipo=',$ctx:f_tipo,'&amp;herr_id=',$ctx:f_herr,'&amp;desde=',$ctx:f_desde,'&amp;hasta=',$ctx:f_hasta,'&amp;buscar=',$ctx:f_buscar)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | pan_get_movimientos | iniciando (toolsMCPAPI -&gt; toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint><http method="GET" uri-template="{uri.var.panMovimientos}"/></endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/pan/movimientos - toolsPANAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP pan_get_movimientos (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+   <resource methods="GET" uri-template="/mcp/pan/certificaciones">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="api_url" expression="$ctx:apiconf//api_url"/>
+
+         <!-- La empresa sale del token. Las queries de PANDataService que no
+              reciben empr_id NO se usan desde aca: para eso estan las variantes
+              /empresa/{empr_id} (H-088). -->
+         <property name="f_herr" expression="fn:concat('',get-property('query.param.herr_id'))"/>
+         <property name="f_buscar" expression="fn:concat('',get-property('query.param.buscar'))"/>
+         <property name="uri.var.panCertificaciones"
+                   expression="fn:concat($ctx:api_url,'/pan/certificaciones/',get-property('jwt_empr_id'),'?herr_id=',$ctx:f_herr,'&amp;buscar=',$ctx:f_buscar)"/>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | pan_get_certificaciones | iniciando (toolsMCPAPI -&gt; toolsPANAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+         <call>
+            <endpoint><http method="GET" uri-template="{uri.var.panCertificaciones}"/></endpoint>
+         </call>
+
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then><respond/></then>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET /mcp/pan/certificaciones - toolsPANAPI error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP pan_get_certificaciones (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
    <resource methods="GET" uri-template="/mcp/alm/stock">
       <inSequence>
          <sequence key="emprIdFromHeader"/>

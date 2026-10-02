@@ -128,6 +128,24 @@ class MCP:
                           tool="man_create_ot")
 
     # ---------------------------------------------------------------- almacenes
+    # ---- Herramientas (Panol) ----
+    def pan_get_herramientas(self, cert_vencer=None, dias_vencimiento=None,
+                             buscar=None, tipo=None, esta_id=None, pano_id=None):
+        qs = self._qs(cert_vencer=cert_vencer, dias_vencimiento=dias_vencimiento,
+                      buscar=buscar, tipo=tipo, esta_id=esta_id, pano_id=pano_id)
+        return self._call("GET", "/pan/herramientas" + qs, tool="pan_get_herramientas")
+
+    def pan_get_herramienta(self, herr_id):
+        return self._call("GET", f"/pan/herramienta/{herr_id}", tool="pan_get_herramienta")
+
+    def pan_get_movimientos(self, herr_id=None, tipo=None, desde=None, hasta=None, buscar=None):
+        qs = self._qs(herr_id=herr_id, tipo=tipo, desde=desde, hasta=hasta, buscar=buscar)
+        return self._call("GET", "/pan/movimientos" + qs, tool="pan_get_movimientos")
+
+    def pan_get_certificaciones(self, herr_id=None, buscar=None):
+        qs = self._qs(herr_id=herr_id, buscar=buscar)
+        return self._call("GET", "/pan/certificaciones" + qs, tool="pan_get_certificaciones")
+
     def alm_get_stock(self, depo_id=None, tipo=None, buscar=None):
         """Filtros opcionales: sin ninguno devuelve el catálogo completo."""
         q = []
