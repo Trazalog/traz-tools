@@ -1,0 +1,41 @@
+id: PAN-UC-005
+modulo: PAN
+titulo: Registrar la recepción de herramientas devueltas
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: relevamiento PAN 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Movimientoherramientas.php
+    detalle: "nuevaRecepcion()"
+  - repo: traz-comp-pan
+    path: models/Unloads.php
+    detalle: "línea 87 arma el payload de entrada con empresa()"
+  - repo: traz-comp-pan
+    path: views/movimientosherramientas/modal_recepcion.php
+pantallas:
+  - "Pañol → Movimientos de herramientas → Nueva recepción"
+precondiciones:
+  - Existe una salida previa con herramientas sin devolver
+flujo_principal:
+  - paso: "Abre Nueva recepción"
+    resultado: "Se abre el modal de recepción"
+  - paso: "Elige las herramientas que vuelven y confirma"
+    resultado: "Se registra el movimiento de recepción con su propio Nro de Vale"
+flujos_alternativos:
+  - nombre: "Devuelve menos herramientas de las que salieron"
+    pasos:
+      - paso: "Recibe solo parte de lo entregado"
+        resultado: "PENDIENTE DE DEFINIR — ver dudas"
+validaciones:
+  - "La recepción queda asociada a la empresa de la sesión"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Qué pasa si se devuelve menos de lo que salió? ¿Queda un saldo pendiente, se permite la recepción parcial, o hay que cerrarla entera?"
+  - "¿Se puede recibir una herramienta que nunca salió?"
+  - "¿La recepción registra el estado en que vuelve la herramienta (dañada, completa)? El modal_checklist sugiere que sí, pero no está claro si se usa en la recepción."
+derivados: {}
+notas:
+  - "`Unload.php:70` también tiene comentada la línea de `empr_id` — mismo patrón que Order.php."

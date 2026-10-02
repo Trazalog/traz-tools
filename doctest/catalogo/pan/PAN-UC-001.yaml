@@ -1,0 +1,42 @@
+id: PAN-UC-001
+modulo: PAN
+titulo: Ver el listado de herramientas del pañol
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: relevamiento PAN 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "index() carga la pantalla; listarHerramientasPaginado() es el server-side de la grilla"
+  - repo: traz-comp-pan
+    path: models/Herramientas.php
+  - repo: traz-comp-pan
+    path: views/herramienta/list.php
+pantallas:
+  - "Pañol → Herramientas"
+precondiciones:
+  - Sesión iniciada en Tools
+  - El rol tiene asignado el menú de Pañol
+flujo_principal:
+  - paso: "Entra a Pañol → Herramientas"
+    resultado: "Se muestra la grilla con las columnas Acciones, Código, Tipo, Descripción, Modelo, Marca, Establecimiento/Pañol y Estado"
+  - paso: "Usa el buscador de la grilla"
+    resultado: "La grilla se reduce a las herramientas que coinciden"
+flujos_alternativos:
+  - nombre: "La empresa todavía no cargó herramientas"
+    pasos:
+      - paso: "Entra a Pañol → Herramientas"
+        resultado: "La grilla aparece vacía y solo se ofrece el botón de alta"
+validaciones:
+  - "El listado solo muestra herramientas de la empresa de la sesión"
+  - "El acceso se controla por el menú: quien tiene la opción de Pañol, entra"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  precondicion: "la empresa tiene al menos una herramienta cargada en un pañol"
+dudas:
+  - "¿La grilla muestra las herramientas de TODOS los pañoles de la empresa, o solo las del pañol del usuario? `obtenerPanoles()` sugiere que hay un selector, pero no está claro si filtra el listado o solo sirve para el alta."
+derivados: {}
+notas:
+  - "Relevado contra el commit 07473dc6 del submódulo, que es el que apunta origin/develop — el working tree local estaba en c8d92c4a, que borra varias vistas."
+  - "Relevado sobre código, NO verificado en pantalla: falta correrlo contra el DEMO."

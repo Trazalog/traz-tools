@@ -1,0 +1,39 @@
+id: PAN-UC-003
+modulo: PAN
+titulo: Inhabilitar y volver a habilitar una herramienta
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: relevamiento PAN 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "validarEstado() y setEstado() — los estados son ACTIVO e INHABILITADO"
+  - repo: traz-comp-pan
+    path: views/herramienta/modals/modal_inhabilitar.php
+pantallas:
+  - "Pañol → Herramientas → acción Inhabilitar / Habilitar"
+precondiciones:
+  - Existe una herramienta en estado ACTIVO
+flujo_principal:
+  - paso: "En el listado, usa la acción Inhabilitar sobre una herramienta"
+    resultado: "Se pide una justificación"
+  - paso: "Escribe la justificación y confirma"
+    resultado: "La herramienta queda en estado INHABILITADO y deja de poder salir del pañol"
+  - paso: "Usa la acción Habilitar sobre esa misma herramienta"
+    resultado: "Vuelve a estado ACTIVO"
+flujos_alternativos:
+  - nombre: "La herramienta está fuera del pañol"
+    pasos:
+      - paso: "Intenta inhabilitar una herramienta que está entregada a un responsable"
+        resultado: "PENDIENTE DE DEFINIR — ver dudas"
+validaciones:
+  - "El cambio de estado registra la justificación"
+  - "`setEstado()` acepta un `tipo_movimiento`; si no se manda, usa el estado como tipo"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Se puede inhabilitar una herramienta que está entregada (fuera del pañol)? `validarEstado()` existe pero no se relevó qué condición valida."
+  - "La justificación, ¿es obligatoria?"
+derivados: {}
+notas: []

@@ -1,0 +1,41 @@
+id: PAN-UC-004
+modulo: PAN
+titulo: Registrar la salida de herramientas con vale
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: relevamiento PAN 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Movimientoherramientas.php
+    detalle: "nuevaSalida() abre el alta; listarMovimientosPaginados() es el server-side de la grilla"
+  - repo: traz-comp-pan
+    path: models/Orders.php
+    detalle: "línea 94 arma el payload de salida con empresa()"
+  - repo: traz-comp-pan
+    path: views/movimientosherramientas/modal_salida.php
+pantallas:
+  - "Pañol → Movimientos de herramientas → Nueva salida"
+precondiciones:
+  - Hay herramientas en estado ACTIVO en el pañol
+  - Existe un responsable a quien entregarlas
+flujo_principal:
+  - paso: "Entra a Movimientos de herramientas"
+    resultado: "Se muestra la grilla con Nro Vale, Tipo, Fecha y hora, Establecimiento/Pañol, Responsable y Herramientas"
+  - paso: "Abre Nueva salida"
+    resultado: "Se abre el modal de salida"
+  - paso: "Elige el responsable y las herramientas que se entregan, y confirma"
+    resultado: "Se registra el movimiento de salida y se genera un Nro de Vale"
+flujos_alternativos: []
+validaciones:
+  - "El movimiento queda asociado a la empresa de la sesión"
+  - "Cada salida genera un vale numerado"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Una herramienta puede salir dos veces sin haber vuelto? ¿El sistema lo impide o lo permite?"
+  - "El responsable, ¿es un usuario de Tools, un legajo, o texto libre?"
+  - "¿La salida cambia el estado de la herramienta? Los estados relevados son solo ACTIVO e INHABILITADO, así que no hay un estado 'entregada' — hay que confirmar cómo se sabe si está en el pañol o afuera."
+derivados: {}
+notas:
+  - "`Order.php:91` tiene comentada la línea `$cabecera['empr_id'] = empresa();` — conviene entender por qué antes de escribir el test (ver H-084)."
