@@ -1,34 +1,45 @@
 id: PAN-UC-006
 modulo: PAN
-titulo: Certificar una herramienta
+titulo: Ver la trazabilidad completa de una herramienta
 perfil: Usuario
-estado: borrador
-version: "0.1"
-origen: relevamiento PAN 2026-09-25
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
 referencias_codigo:
   - repo: traz-comp-pan
     path: controllers/Herramienta.php
-    detalle: "getEntidadesCertificadoras(), guardarCertificacion(), listarCertificacionesHerramientaPaginadas()"
-  - repo: traz-comp-pan
-    path: views/herramienta/modals/modal_certificar.php
+    detalle: "listarMovimientosHerramientaPaginados(), listarCertificacionesHerramientaPaginadas()"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "getMovimientosherramientas, getCertificacionxHerrId, getchecklist"
 pantallas:
-  - "Pañol → Herramientas → acción Certificar"
+  - "Herramientas → Herramientas → acción Info"
 precondiciones:
-  - Existe una herramienta cargada
-  - Hay entidades certificadoras disponibles
+  - La herramienta tiene al menos un movimiento registrado
 flujo_principal:
-  - paso: "Usa la acción Certificar sobre una herramienta"
-    resultado: "Se abre el modal con el selector de entidad certificadora"
-  - paso: "Elige la entidad, completa los datos de la certificación y guarda"
-    resultado: "La certificación queda registrada y aparece en el historial de certificaciones de la herramienta"
-flujos_alternativos: []
+  - paso: "Usa la acción Info sobre una herramienta"
+    resultado: "Se abre el detalle con Código, Tipo, Descripción, Marca y Modelo, y tres solapas: Trazabilidad, Certificaciones y Checklists"
+  - paso: "Mira la solapa Trazabilidad"
+    resultado: "Se muestran Nro. Vale, Tipo, Fecha y Hora, Responsable, Establecimiento/Pañol y Justificación/Observación, ordenado por fecha y hora descendente"
+  - paso: "Observa los tipos de movimiento"
+    resultado: "Aparecen mezclados Entrega, Recepción, Habilitación, Inhabilitación y Alta"
+  - paso: "Mira la solapa Certificaciones"
+    resultado: "Se muestran Fecha y Hora, Vencimiento, Entidad Certificadora y el adjunto"
+  - paso: "Mira la solapa Checklists"
+    resultado: "Se muestran Fecha y Hora y Responsable, con la lupa para ver el checklist completo"
+flujos_alternativos:
+  - nombre: "Exportar la trazabilidad"
+    pasos:
+      - paso: "Usa Exportar a Excel o PDF"
+        resultado: "La exportación incluye todas las páginas y agrega la fecha de hoy, el código, la descripción, el modelo y la marca de la herramienta"
 validaciones:
-  - "El historial de certificaciones es por herramienta y se pagina del lado del servidor"
+  - "La trazabilidad mezcla los vales con la tabla de inhabilitaciones en una sola línea de tiempo"
+  - "La última columna muestra la justificación en las inhabilitaciones y las observaciones del vale en los movimientos"
+  - "Las filas de habilitación e inhabilitación no tienen Nro. de Vale"
 datos_prueba:
   empresa: EMPRESA_TEST_1
-dudas:
-  - "¿Las certificaciones vencen? Si vencen, ¿el sistema avisa o bloquea la salida de una herramienta con certificación vencida? Es la pregunta que decide si esto sirve para el control de seguridad de una minera o es solo un registro."
-  - "Las entidades certificadoras, ¿de dónde salen? ¿Es una tabla de core.tablas por empresa o un catálogo global?"
+  precondicion: "una herramienta con entregas, recepciones y al menos una inhabilitación"
+dudas: []
 derivados: {}
-notas:
-  - "Para el segmento minero esta pantalla puede ser la más relevante del módulo: la certificación de herramientas es requisito de auditoría."
+notas: []

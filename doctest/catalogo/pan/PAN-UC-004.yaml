@@ -1,41 +1,46 @@
 id: PAN-UC-004
 modulo: PAN
-titulo: Registrar la salida de herramientas con vale
+titulo: Entregar herramientas y emitir el vale
 perfil: Usuario
-estado: borrador
-version: "0.1"
-origen: relevamiento PAN 2026-09-25
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
 referencias_codigo:
   - repo: traz-comp-pan
     path: controllers/Movimientoherramientas.php
-    detalle: "nuevaSalida() abre el alta; listarMovimientosPaginados() es el server-side de la grilla"
+    detalle: "nuevaSalida(); printVale() para el remito"
   - repo: traz-comp-pan
     path: models/Orders.php
-    detalle: "línea 94 arma el payload de salida con empresa()"
-  - repo: traz-comp-pan
-    path: views/movimientosherramientas/modal_salida.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "salidaHerramientasSet y salidaHerramientasDetaSet"
 pantallas:
-  - "Pañol → Movimientos de herramientas → Nueva salida"
+  - "Herramientas → Movimientos Herramientas → Nueva Entrega"
 precondiciones:
-  - Hay herramientas en estado ACTIVO en el pañol
-  - Existe un responsable a quien entregarlas
+  - Hay herramientas en estado Activa en el pañol
 flujo_principal:
-  - paso: "Entra a Movimientos de herramientas"
-    resultado: "Se muestra la grilla con Nro Vale, Tipo, Fecha y hora, Establecimiento/Pañol, Responsable y Herramientas"
-  - paso: "Abre Nueva salida"
-    resultado: "Se abre el modal de salida"
-  - paso: "Elige el responsable y las herramientas que se entregan, y confirma"
-    resultado: "Se registra el movimiento de salida y se genera un Nro de Vale"
+  - paso: "Entra a Movimientos Herramientas"
+    resultado: "Se muestra la grilla con Nro. Vale, Tipo, Fecha y Hora, Establecimiento/Pañol, Responsable y Herramientas, ordenada por fecha y hora descendente"
+  - paso: "Abre Nueva Entrega"
+    resultado: "Se abre el modal con Establecimiento, Pañol, los datos del encargado, Observaciones y el selector de Herramientas"
+  - paso: "Elige las herramientas una por una con Agregar"
+    resultado: "Las herramientas se van sumando a la lista del vale"
+  - paso: "Guarda"
+    resultado: "Se registra la entrega con su Nro. de Vale y las herramientas pasan a estado Entregada"
+  - paso: "Usa la acción de impresión de esa fila"
+    resultado: "Se muestra el vale con el logo de la empresa, Nº, fecha, establecimiento/depósito, nombre y DNI del responsable, la tabla de código y descripción, y las observaciones"
 flujos_alternativos: []
 validaciones:
-  - "El movimiento queda asociado a la empresa de la sesión"
-  - "Cada salida genera un vale numerado"
+  - "Una herramienta que ya está Entregada NO puede volver a entregarse sin haber sido recepcionada antes"
+  - "Una herramienta Inhabilitada no puede entregarse"
+  - "En la grilla, las herramientas del vale se muestran concatenadas como CÓDIGO-DESCRIPCIÓN / CÓDIGO2-DESCRIPCIÓN2, cortadas a 400 caracteres con '...'"
+  - "El número de vale es el id del vale"
+  - "El logo del vale usa el mismo parámetro que el resto de los logos del sistema"
+  - "El vale aclara que no es válido como factura"
 datos_prueba:
   empresa: EMPRESA_TEST_1
-dudas:
-  - "¿Una herramienta puede salir dos veces sin haber vuelto? ¿El sistema lo impide o lo permite?"
-  - "El responsable, ¿es un usuario de Tools, un legajo, o texto libre?"
-  - "¿La salida cambia el estado de la herramienta? Los estados relevados son solo ACTIVO e INHABILITADO, así que no hay un estado 'entregada' — hay que confirmar cómo se sabe si está en el pañol o afuera."
+dudas: []
 derivados: {}
 notas:
-  - "`Order.php:91` tiene comentada la línea `$cabecera['empr_id'] = empresa();` — conviene entender por qué antes de escribir el test (ver H-084)."
+  - "Entrega y Recepción comparten la misma pieza de código y se guardan con tipo distinto."

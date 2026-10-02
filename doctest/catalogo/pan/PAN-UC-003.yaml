@@ -1,39 +1,44 @@
 id: PAN-UC-003
 modulo: PAN
-titulo: Inhabilitar y volver a habilitar una herramienta
+titulo: Inhabilitar una herramienta que no está en condiciones de usarse
 perfil: Usuario
-estado: borrador
-version: "0.1"
-origen: relevamiento PAN 2026-09-25
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
 referencias_codigo:
   - repo: traz-comp-pan
     path: controllers/Herramienta.php
-    detalle: "validarEstado() y setEstado() — los estados son ACTIVO e INHABILITADO"
-  - repo: traz-comp-pan
-    path: views/herramienta/modals/modal_inhabilitar.php
+    detalle: "validarEstado() y setEstado()"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "validaEstadoHerramienta, setInhabilitacion, herramientasSetEstado"
 pantallas:
-  - "Pañol → Herramientas → acción Inhabilitar / Habilitar"
+  - "Herramientas → Herramientas → acción Inhabilitar / Habilitar"
 precondiciones:
-  - Existe una herramienta en estado ACTIVO
+  - Existe una herramienta en estado Activa
 flujo_principal:
-  - paso: "En el listado, usa la acción Inhabilitar sobre una herramienta"
-    resultado: "Se pide una justificación"
-  - paso: "Escribe la justificación y confirma"
-    resultado: "La herramienta queda en estado INHABILITADO y deja de poder salir del pañol"
-  - paso: "Usa la acción Habilitar sobre esa misma herramienta"
-    resultado: "Vuelve a estado ACTIVO"
+  - paso: "Usa la acción Inhabilitar sobre una herramienta Activa"
+    resultado: "Se pide confirmación: '¿Está seguro que desea inhabilitar a la herramienta <código>?'"
+  - paso: "Confirma"
+    resultado: "Se pide una justificación, que es obligatoria"
+  - paso: "Escribe la justificación y guarda"
+    resultado: "La herramienta queda Inhabilitada y no se puede prestar más"
+  - paso: "Usa la acción Habilitar sobre esa herramienta"
+    resultado: "Vuelve a estado Activa"
 flujos_alternativos:
-  - nombre: "La herramienta está fuera del pañol"
+  - nombre: "La herramienta está entregada"
     pasos:
-      - paso: "Intenta inhabilitar una herramienta que está entregada a un responsable"
-        resultado: "PENDIENTE DE DEFINIR — ver dudas"
+      - paso: "Intenta inhabilitar una herramienta en estado Entregada"
+        resultado: "Se muestra el error 'No puede inhabilitar herramienta — No se puede inhabilitar mientras no vuelva a ser recepcionada' y la operación no se hace"
 validaciones:
-  - "El cambio de estado registra la justificación"
-  - "`setEstado()` acepta un `tipo_movimiento`; si no se manda, usa el estado como tipo"
+  - "Una herramienta Entregada no se puede inhabilitar: primero tiene que volver al pañol"
+  - "La justificación es obligatoria y queda registrada en la trazabilidad de la herramienta"
+  - "Una herramienta Inhabilitada no puede salir en un vale de entrega"
 datos_prueba:
   empresa: EMPRESA_TEST_1
-dudas:
-  - "¿Se puede inhabilitar una herramienta que está entregada (fuera del pañol)? `validarEstado()` existe pero no se relevó qué condición valida."
-  - "La justificación, ¿es obligatoria?"
+  precondicion: "una herramienta Activa y otra Entregada"
+dudas: []
 derivados: {}
-notas: []
+notas:
+  - "Las inhabilitaciones viven en su propia tabla y se mezclan con los vales en la trazabilidad (PAN-UC-006)."
