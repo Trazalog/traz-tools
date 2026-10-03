@@ -28,10 +28,10 @@ test.describe('@dnato @DNATO-UC-007 Cerrar sesión', () => {
     expect(await usuarios.visible()).toBe(true);
 
     await page.goto(urlDnato('main/logout'), { waitUntil: 'domcontentloaded' });
-    await expect(login.empresa).toBeVisible();
+    await expect(login.email).toBeVisible();
 
     // Volver a una pantalla interna después de salir tiene que devolver al ingreso.
     await page.goto(urlDnato('main/users'), { waitUntil: 'domcontentloaded' });
-    await expect(login.empresa).toBeVisible();
+    await expect(login.email).toBeVisible();
   });
 });
