@@ -172,6 +172,25 @@ dependencias cruzadas (dnato + tools) y lado MariaDB; conviene revisarlo aparte 
 
 ---
 
+## 3-bis. ⚠️ Artefactos Synapse duplicados (el deploy NO borra lo viejo)
+El `deploytools.sh` **copia pero no borra**. Si un artefacto se **renombró** en el repo (p.ej.
+`toolsFault.xml` → `toolsFaultSequence.xml`, ambos con `name="toolsFault"`), el archivo viejo queda en
+el server y choca con el nuevo → **"Duplicate resource definition"** → se faultea el synapse-config y se
+caen servicios (en demo se cayó `COREDataService`: desapareció el logo y el menú).
+
+**Prevención — correr SIEMPRE después del deploy de WSO2 y ANTES de reiniciar** (en el server):
+```
+sh traz-tools/scripts/deploy/verificar-artefactos-duplicados.sh \
+   /usr/lib64/wso2/wso2ei/6.5.0 \
+   traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts
+```
+Lista los `name` declarados por más de un archivo en `sequences/` y `api/`, y marca cuál **NO está en el
+repo** (ese es el leftover a borrar). Devuelve código 1 si hay duplicados (sirve para cortar un deploy
+automatizado). Borrar el viejo y recién ahí reiniciar WSO2.
+
+**Leftover conocido para ESTE pasaje:** borrar en prod
+`…/synapse-configs/default/sequences/toolsFault.xml` (queda `toolsFaultSequence.xml`, mismo `name`).
+
 ## 4. Orden sugerido del pasaje
 1. **Copia de prod** (BD Postgres + Asset) y probar TODO esto ahí primero.
 2. Código: deploy de tools y dnato (rama/tag a prod).
@@ -179,7 +198,9 @@ dependencias cruzadas (dnato + tools) y lado MariaDB; conviene revisarlo aparte 
 4. BD Postgres core: §2.1 + §2.3.
 5. BD AssetPlanner: §2.2 + §2.4.
 6. `.car` WSO2 (DataServices/APIs) + cron KPI + event Asset (§3).
-7. Verificar: login/registración, alta de empresa, y el tablero del Admin (4 KPIs).
+7. **Verificar artefactos duplicados (§3-bis)** y borrar leftovers, ANTES de reiniciar WSO2.
+8. Reiniciar WSO2 (si hace falta) y verificar el log sin "Duplicate resource definition".
+9. Verificar: login/registración, alta de empresa, y el tablero del Admin (4 KPIs).
 
 ## 5. Pendiente de confirmar / que te puedo armar
 Para dejar esto 100% cerrado necesito un par de datos del estado de prod (o de una copia):
