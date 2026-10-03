@@ -296,6 +296,40 @@ desplegar_dataservices() {
     return 0
 }
 
+# Detecta artefactos Synapse (sequences/api) con el MISMO name en >1 archivo. Pasa cuando un
+# artefacto se renombra en el repo y el deploy (que copia pero NO borra) deja el viejo: los dos
+# declaran el mismo name -> "Duplicate resource definition" -> se faultea el synapse-config y se
+# caen servicios (p.ej. COREDataService: desaparece logo y menu). NO BORRA NADA: avisa e imprime
+# el `rm` recomendado del leftover (el archivo que ya no esta en el repo) para ejecutarlo a mano.
+verificar_duplicados_synapse() {
+    _nombre_de() { grep -oE 'name="[^"]+"' "$1" 2>/dev/null | head -1 | sed -E 's/.*"([^"]+)".*/\1/'; }
+    hay_dup=0
+    for sub in sequences api; do
+        d="$WSO2SYN/$sub"
+        [ -d "$d" ] || continue
+        tmp=$(mktemp)
+        for f in "$d"/*.xml; do
+            [ -f "$f" ] || continue
+            nm=$(_nombre_de "$f")
+            [ -n "$nm" ] && printf '%s|%s\n' "$nm" "$(basename "$f")" >> "$tmp"
+        done
+        for n in $(cut -d'|' -f1 "$tmp" | sort | uniq -d); do
+            hay_dup=1
+            aviso "name duplicado en $sub/: \"$n\" -> 'Duplicate resource definition'. NO reinicies WSO2 sin resolverlo."
+            for arch in $(awk -F'|' -v n="$n" '$1==n{print $2}' "$tmp"); do
+                if [ -f "$ARTEFACTOS/sequences/$arch" ] || [ -f "$ARTEFACTOS/apis/$arch" ]; then
+                    printf '            DEJAR : %s\n' "$arch"; log "       DEJAR: $sub/$arch"
+                else
+                    printf '            BORRAR: rm %s\n' "$d/$arch"; log "       BORRAR (recomendado): rm $d/$arch"
+                fi
+            done
+        done
+        rm -f "$tmp"
+    done
+    [ "$hay_dup" -eq 1 ] && aviso "resolve los duplicados de arriba (borra el/los archivo/s marcados BORRAR) y despues reinicia WSO2."
+    return 0
+}
+
 desplegar_synapse() {
     if [ ! -d "$ARTEFACTOS" ]; then
         aviso "el producto no tiene backend WSO2 propio, se omiten las APIs y sequences"
@@ -329,6 +363,9 @@ desplegar_synapse() {
         falla "NINGUN artefacto Synapse desplegado — revisar $ARTEFACTOS"
         return 1
     fi
+
+    # Chequeo anti "Duplicate resource definition" (no borra, solo avisa el rm recomendado).
+    verificar_duplicados_synapse
 
     nota "data-sources y registry no se despliegan por diseno: van a mano"
     return 0

@@ -178,15 +178,23 @@ El `deploytools.sh` **copia pero no borra**. Si un artefacto se **renombró** en
 el server y choca con el nuevo → **"Duplicate resource definition"** → se faultea el synapse-config y se
 caen servicios (en demo se cayó `COREDataService`: desapareció el logo y el menú).
 
-**Prevención — correr SIEMPRE después del deploy de WSO2 y ANTES de reiniciar** (en el server):
+**Prevención automática (ya integrada en el deploy):** `deploytools.sh`, al final del paso 5 (Synapse),
+corre el chequeo solo. **NO borra nada**: si hay `name` duplicado, lo avisa y **escribe en pantalla el
+`rm` recomendado** del leftover (el archivo que ya no está en el repo), p.ej.:
+```
+     !    name duplicado en sequences/: "toolsFault" -> 'Duplicate resource definition'. NO reinicies WSO2 sin resolverlo.
+            BORRAR: rm .../synapse-configs/default/sequences/toolsFault.xml
+            DEJAR : toolsFaultSequence.xml
+```
+Hay que ejecutar ese `rm` a mano y recién ahí reiniciar WSO2.
+
+**Chequeo manual (mismo detector, para correr aparte cuando quieras):**
 ```
 sh traz-tools/scripts/deploy/verificar-artefactos-duplicados.sh \
    /usr/lib64/wso2/wso2ei/6.5.0 \
    traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts
 ```
-Lista los `name` declarados por más de un archivo en `sequences/` y `api/`, y marca cuál **NO está en el
-repo** (ese es el leftover a borrar). Devuelve código 1 si hay duplicados (sirve para cortar un deploy
-automatizado). Borrar el viejo y recién ahí reiniciar WSO2.
+Devuelve código 1 si hay duplicados (sirve para cortar un deploy automatizado) e imprime el/los `rm`.
 
 **Leftover conocido para ESTE pasaje:** borrar en prod
 `…/synapse-configs/default/sequences/toolsFault.xml` (queda `toolsFaultSequence.xml`, mismo `name`).

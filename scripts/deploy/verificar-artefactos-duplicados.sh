@@ -38,6 +38,9 @@ nombre_de() {
 }
 
 hubo_dup=0
+# Acumula los `rm` recomendados (archivos leftover que ya NO están en el repo).
+# IMPORTANTE: este script NO borra nada; solo imprime los comandos para revisar y ejecutar a mano.
+rm_sugeridos=$(mktemp)
 
 for sub in sequences api; do
     dir="$BASE/$sub"
@@ -66,6 +69,7 @@ for sub in sequences api; do
                         marca="   (está en el repo -> DEJAR)"
                     else
                         marca="   (NO está en el repo -> BORRAR este)"
+                        echo "rm $dir/$arch" >> "$rm_sugeridos"
                     fi
                 fi
                 echo "     - $arch$marca"
@@ -77,10 +81,20 @@ done
 
 echo
 if [ "$hubo_dup" -eq 1 ]; then
-    echo ">> HAY DUPLICADOS. Borrá el archivo VIEJO (el que NO está en el repo) de"
-    echo "   $BASE/<sequences|api>/  y recién después reiniciá WSO2."
+    echo ">> HAY DUPLICADOS. Este script NO borra nada."
+    if [ -s "$rm_sugeridos" ]; then
+        echo ">> Comando(s) de borrado recomendado(s) — revisá y ejecutá a mano:"
+        echo "   ------------------------------------------------------------"
+        sed 's/^/   /' "$rm_sugeridos"
+        echo "   ------------------------------------------------------------"
+        echo ">> Después de borrar, reiniciá WSO2 y verificá el log sin 'Duplicate resource definition'."
+    else
+        echo ">> Pasá el 2do argumento (dir de artefactos del repo) para que te diga cuál borrar."
+    fi
+    rm -f "$rm_sugeridos"
     exit 1
 else
     echo "OK: no hay 'name' duplicados en sequences/ ni api/."
+    rm -f "$rm_sugeridos"
     exit 0
 fi
