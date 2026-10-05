@@ -1,0 +1,50 @@
+id: DNATO-UC-013
+modulo: DNATO
+titulo: Ver la lista de usuarios de la empresa
+perfil: Administrador
+estado: validado
+version: "0.4"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "users() (178-223): arma el listado con las empresas del administrador conectado"
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "gestMembershipsUserInfo(), getListUserDataForGroups(), getListUserData() (658-691)"
+  - repo: traz-comp-dnato
+    path: application/views/usersList.php
+pantallas:
+  - "Gestión de Usuarios → Lista de Usuarios"
+precondiciones:
+  - Sesión iniciada con perfil Administrador
+flujo_principal:
+  - paso: "Abre 'Lista de Usuarios'"
+    resultado: "Se muestra la grilla con id, Empresa, Nombre, Usuario, Último login, Nivel de Usuario, Estado y Acciones, con los usuarios de las empresas del administrador conectado"
+  - paso: "Busca un usuario por su correo"
+    resultado: "La grilla filtra y muestra solo las filas que coinciden"
+flujos_alternativos:
+  - nombre: "Usuario sin perfil de administración"
+    pasos:
+      - paso: "Un usuario con perfil no administrador abre la dirección de la lista de usuarios"
+        resultado: "Se lo redirige a la pantalla principal sin mostrar la lista"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Abre la dirección sin haber iniciado sesión"
+        resultado: "Se lo redirige a la pantalla de ingreso"
+validaciones:
+  - "El listado se limita a las empresas en las que el administrador conectado tiene rol — no muestra usuarios de otras empresas"
+  - "Cada fila ofrece las acciones 'Asignar Rol' y 'Eliminar Usuario'"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  empresa_ajena: EMPRESA_TEST_2
+dudas: []
+notas:
+  - "**Aislamiento verificado con datos reales el 2026-08-24**: el administrador de la primera empresa de test ve sus 6 usuarios y el superadmin; el de la segunda ve los suyos y el superadmin; ninguno ve los de la otra."
+  - "Verificado en el DEMO el 2026-08-19: la grilla trae las columnas mencionadas y el filtro por empresa funciona por las membresías del conectado, no por un campo de empresa del usuario."
+  - "Validado por el PM el 2026-08-24: por ahora el superusuario aparece en la lista de todas las empresas y se acepta así; queda como posible mejora (hallazgo H-003)."
+derivados:
+  ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s08
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-013.lista-de-usuarios.spec.ts
+  feature: features/dnato/DNATO-UC-013.ver-la-lista-de-usuarios-de-la-empresa.feature

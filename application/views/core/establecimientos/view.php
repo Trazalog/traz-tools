@@ -562,6 +562,131 @@
 </div>
 <!---///////--- FIN MODAL AGREGAR PAÑOL ---///////--->
 
+<!---///////--- MODAL VER PAÑOL ---///////--->
+<div class="modal fade bs-example-modal-lg" id="modalVerPanol" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-blue">
+        <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color:white;">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel"><span class="fa fa-fw fa-eye"></span> Detalle Pañol</h4>
+      </div>
+      <div class="modal-body">
+          <div class="form-horizontal">
+            <div class="row">
+              <form id="frmVerPanol">
+                <div class="col-sm-12">
+                    <!-- Nombre -->
+                    <div class="col-md-5 col-sm-5 col-xs-12">
+                        <div class="form-group">
+                            <label for="ver_nombre_panol">Nombre:</label>
+                            <input type="text" class="form-control" id="ver_nombre_panol" readonly>
+                        </div>
+                    </div>
+                    <!-- Encargados -->
+                    <div class="col-md-6 col-sm-6 col-xs-12" style="margin-left: 5%;">
+                        <div class="form-group">
+                            <label for="ver_encargados_panol">Encargados:</label>
+                            <select class="form-control select2" id="ver_encargados_panol" style="width: 100%;" multiple disabled>
+                                <?php
+                                if(!empty($listarEncargados)){
+                                    foreach ($listarEncargados->usuarios->usuario as $users) {
+                                        echo "<option data-json='".json_encode($users)."' value='".$users->id."'>".$users->first_name." ".$users->last_name."</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!--Descripcion-->
+                <div class="col-sm-12">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group">
+                            <label for="ver_descripcion_panol">Descripción:</label>
+                            <textarea class="form-control" id="ver_descripcion_panol" rows="3" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+              </form>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+          <div class="form-group text-right">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!---///////--- FIN MODAL VER PAÑOL ---///////--->
+
+<!---///////--- MODAL EDITAR PAÑOL ---///////--->
+<div class="modal fade bs-example-modal-lg" id="modalEditarPanol" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-blue">
+        <button type="button" class="close close_modal_edit" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color:white;">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel"><span class="fa fa-fw fa-pencil"></span> Editar Pañol</h4>
+      </div>
+      <div class="modal-body">
+          <div class="form-horizontal">
+            <div class="row">
+              <form class="frmPanolEditar" id="frmPanolEditar">
+                <input type="hidden" name="pano_id" id="edit_pano_id">
+                <input type="hidden" name="esta_id" id="edit_esta_id">
+                <div class="col-sm-12">
+                    <!-- Nombre -->
+                    <div class="col-md-5 col-sm-5 col-xs-12">
+                        <div class="form-group">
+                            <label for="edit_nombre_panol">Nombre(<strong style="color: #dd4b39">*</strong>):</label>
+                            <input type="text" class="form-control requerido" name="nombre" id="edit_nombre_panol" placeholder="Ingrese Nombre...">
+                        </div>
+                    </div>
+                    <!-- Encargados -->
+                    <div class="col-md-6 col-sm-6 col-xs-12 ocultar" style="margin-left: 5%;">
+                        <div class="form-group">
+                            <label for="edit_encargados_panol">Encargados(<strong style="color: #dd4b39">*</strong>):</label>
+                            <select class="form-control select2 requerido" name="encargados" id="edit_encargados_panol" required style="width: 100%;" multiple>
+                                <?php
+                                if(!empty($listarEncargados)){
+                                    foreach ($listarEncargados->usuarios->usuario as $users) {
+                                        echo "<option data-json='".json_encode($users)."' value='".$users->id."'>".$users->first_name." ".$users->last_name."</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!--Descripcion-->
+                <div class="col-sm-12">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="form-group">
+                            <label for="edit_descripcion_panol">Descripción:</label>
+                            <textarea class="form-control" name="descripcion" id="edit_descripcion_panol" rows="3" placeholder="Ingrese Observaciones..."></textarea>
+                        </div>
+                    </div>
+                </div>
+              </form>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+          <div class="form-group text-right">
+              <button type="button" class="btn btn-primary" onclick="guardarEdicionPanol()">Guardar</button>
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!---///////--- FIN MODAL EDITAR PAÑOL ---///////--->
+
 <script>
     $(document).ready(function () {
         $(".select2").select2();
@@ -949,6 +1074,7 @@
     function agregarPanol() {
         var form = $('#frmPanol')[0];
         form.reset();
+        $('#encargados').val(null).trigger('change');
         $(".modal-header h4").remove();
         //guardo el tipo de operacion en el modal
         $("#operacion").val("add");
@@ -959,6 +1085,232 @@
         // guardo esta_id en modal para usar en funcion agregar panol
         var esta_id2 = $("#id_esta").val();
         $("#establecimiento_id_panol").val(esta_id2);
+    }
+
+    function verPanol(tag) {
+        var tr = $(tag).closest('tr');
+        var dataAttr = tr.attr('data-json');
+        if (!dataAttr) {
+            alertify.error('Error al obtener datos de la fila');
+            return;
+        }
+        var data = (typeof dataAttr === 'string') ? JSON.parse(dataAttr.trim()) : dataAttr;
+        var panol_id = data.pano_id || data.panol_id || data.id || data.id_panol;
+
+        wo();
+        $.ajax({
+            type: 'POST',
+            data: { data: panol_id },
+            url: 'index.php/core/Establecimiento/verPanol',
+            dataType: 'JSON',
+            success: function(resp) {
+                wc();
+                if (typeof resp === 'string') {
+                    try { resp = JSON.parse(resp); } catch(e) {}
+                }
+
+                // Inicializar select2 si no ha sido inicializado aún
+                var items = [];
+                if (resp) {
+                    var raw = null;
+                    if (resp.users && resp.users.user) {
+                        raw = resp.users.user;
+                    } else if (resp.panoles && resp.panoles.panol) {
+                        raw = resp.panoles.panol;
+                    } else if (resp.panol) {
+                        raw = resp.panol;
+                    } else {
+                        raw = resp;
+                    }
+
+                    if (Array.isArray(raw)) {
+                        items = raw;
+                    } else if (typeof raw === 'object' && raw !== null) {
+                        items = Object.values(raw);
+                    }
+                }
+
+                var nombrePanol = (items.length > 0 && items[0].nombre) ? items[0].nombre : (data.nombre || '');
+                var descripPanol = (items.length > 0 && items[0].descripcion) ? items[0].descripcion : (data.descripcion || '');
+
+                $('#ver_nombre_panol').val(nombrePanol);
+                $('#ver_descripcion_panol').val(descripPanol);
+
+                if (items.length > 0) {
+                    var encargadosSeleccionados = [];
+                    $('#ver_encargados_panol option').each(function() {
+                        var optVal = $(this).val();
+                        var optJsonStr = $(this).attr('data-json');
+                        var optUser = null;
+                        if (optJsonStr) {
+                            try { optUser = JSON.parse(optJsonStr); } catch(e) {}
+                        }
+
+                        items.forEach(function(item) {
+                            if (item.user_id && optVal == item.user_id) {
+                                encargadosSeleccionados.push(optVal);
+                            } else if (item.id && optVal == item.id) {
+                                encargadosSeleccionados.push(optVal);
+                            } else if (optUser) {
+                                var fn1 = (optUser.first_name || '').toString().trim().toLowerCase();
+                                var ln1 = (optUser.last_name || '').toString().trim().toLowerCase();
+                                var fn2 = (item.first_name || '').toString().trim().toLowerCase();
+                                var ln2 = (item.last_name || '').toString().trim().toLowerCase();
+
+                                if (fn1 && ln1 && fn1 === fn2 && ln1 === ln2) {
+                                    encargadosSeleccionados.push(optVal);
+                                }
+                            }
+                        });
+                    });
+                    $('#ver_encargados_panol').val(encargadosSeleccionados).trigger('change');
+                }
+
+                $('#ver_encargados_panol').prop('disabled', true);
+                $("#modalpanoles").modal('hide');
+                $('#modalVerPanol').modal('show');
+            },
+            error: function() {
+                wc();
+                alertify.error('Error al consultar pañol...');
+            }
+        });
+    }
+
+    $('#modalVerPanol').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+        $('#modalpanoles').modal('show');
+    });
+
+    function editarPanol(tag) {
+        var tr = $(tag).closest('tr');
+        var dataAttr = tr.attr('data-json');
+        if (!dataAttr) {
+            alertify.error('Error al obtener datos de la fila');
+            return;
+        }
+        var data = (typeof dataAttr === 'string') ? JSON.parse(dataAttr.trim()) : dataAttr;
+        var panol_id = data.pano_id || data.panol_id || data.id || data.id_panol;
+
+        wo();
+        $.ajax({
+            type: 'POST',
+            data: { data: panol_id },
+            url: 'index.php/core/Establecimiento/verPanol',
+            dataType: 'JSON',
+            success: function(resp) {
+                wc();
+                if (typeof resp === 'string') {
+                    try { resp = JSON.parse(resp); } catch(e) {}
+                }
+
+                if (!$('#edit_encargados_panol').hasClass('select2-hidden-accessible')) {
+                    $('#edit_encargados_panol').select2();
+                }
+
+                $('#edit_pano_id').val(panol_id);
+                $('#edit_esta_id').val($('#id_esta').val());
+                $('#edit_encargados_panol').val(null).trigger('change');
+
+                var items = [];
+                if (resp) {
+                    var raw = null;
+                    if (resp.users && resp.users.user) {
+                        raw = resp.users.user;
+                    } else if (resp.panoles && resp.panoles.panol) {
+                        raw = resp.panoles.panol;
+                    } else if (resp.panol) {
+                        raw = resp.panol;
+                    } else {
+                        raw = resp;
+                    }
+
+                    if (Array.isArray(raw)) {
+                        items = raw;
+                    } else if (typeof raw === 'object' && raw !== null) {
+                        items = Object.values(raw);
+                    }
+                }
+
+                var nombrePanol = (items.length > 0 && items[0].nombre) ? items[0].nombre : (data.nombre || '');
+                var descripPanol = (items.length > 0 && items[0].descripcion) ? items[0].descripcion : (data.descripcion || '');
+
+                $('#edit_nombre_panol').val(nombrePanol);
+                $('#edit_descripcion_panol').val(descripPanol);
+
+                if (items.length > 0) {
+                    var encargadosSeleccionados = [];
+                    $('#edit_encargados_panol option').each(function() {
+                        var optVal = $(this).val();
+                        var optJsonStr = $(this).attr('data-json');
+                        var optUser = null;
+                        if (optJsonStr) {
+                            try { optUser = JSON.parse(optJsonStr); } catch(e) {}
+                        }
+
+                        items.forEach(function(item) {
+                            if (item.user_id && optVal == item.user_id) {
+                                encargadosSeleccionados.push(optVal);
+                            } else if (item.id && optVal == item.id) {
+                                encargadosSeleccionados.push(optVal);
+                            } else if (optUser) {
+                                var fn1 = (optUser.first_name || '').toString().trim().toLowerCase();
+                                var ln1 = (optUser.last_name || '').toString().trim().toLowerCase();
+                                var fn2 = (item.first_name || '').toString().trim().toLowerCase();
+                                var ln2 = (item.last_name || '').toString().trim().toLowerCase();
+
+                                if (fn1 && ln1 && fn1 === fn2 && ln1 === ln2) {
+                                    encargadosSeleccionados.push(optVal);
+                                }
+                            }
+                        });
+                    });
+                    $('#edit_encargados_panol').val(encargadosSeleccionados).trigger('change');
+                }
+
+                $("#modalpanoles").modal('hide');
+                $('#modalEditarPanol').modal('show');
+            },
+            error: function() {
+                wc();
+                alertify.error('Error al consultar pañol...');
+            }
+        });
+    }
+
+    $('#modalEditarPanol').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+        $('#modalpanoles').modal('show');
+    });
+
+    function guardarEdicionPanol() {
+        if( !validarCampos('frmPanolEditar') ){
+            return;
+        }
+        var form = $('#frmPanolEditar')[0];
+        var datos = new FormData(form);
+        var data = formToObject(datos);
+        
+        wo();
+        $.ajax({
+            type: 'POST',
+            data: { data },
+            dataType: 'JSON',
+            url: 'index.php/core/Establecimiento/editarPanol',
+            success: function(result) {
+                wc();
+                if((result.panol && result.panol.status) || result.status){
+                    hecho();
+                    $("#modalEditarPanol").modal('hide');
+                    $("#cargar_tabla").load("index.php/core/Establecimiento/listarEstablecimientos");
+                } else {
+                    var msj = (result.panol && result.panol.msj) ? result.panol.msj : 'Error editando Pañol';
+                    alertify.error(msj);
+                }
+            },
+            error: function(){
+                wc();
+                alertify.error("Error editando Pañol");
+            }
+        });
     }
 
     function guardarPanol () {
@@ -999,7 +1351,7 @@
                 alertify.error("Error agregando Depósito");
             },
             complete: function(){
-                $('#encargados').val(null).trigger('change');
+                $('#encargados_panol').val(null).trigger('change');
             }
         });
     }

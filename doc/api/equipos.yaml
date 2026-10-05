@@ -1,0 +1,290 @@
+openapi: 3.0.3
+
+info:
+  title: Equipos API — Trazalog MCP
+  version: "1.0.0"
+  description: |
+    Acceso al catálogo de equipos industriales registrados en Asset Planner.
+
+    Usá esta API para consultar qué equipos existen, su estado operativo
+    actual y sus datos técnicos completos. Es el punto de partida habitual
+    antes de crear una Orden de Trabajo (OT).
+
+    **La empresa se determina automáticamente desde el token JWT.**
+    No existe ningún parámetro de empresa — el gateway lo inyecta de forma
+    transparente a partir del claim `empr_id` del token. El agente nunca
+    pasa ni ve el identificador de empresa.
+
+    **Estados de equipo:**
+    - `AC` — Activo (operativo)
+    - `RE` — En reparación o mantenimiento
+    - `AN` — Anulado / dado de baja (nunca aparece en los listados)
+
+servers:
+  - url: http://10.142.0.13:8280/tools/man
+    description: WSO2 Micro Integrator — DEV directo
+  - url: https://{apim_host}:8243/equipos/1.0
+    description: WSO2 API Manager 4.6.0 — Gateway (PROD/staging)
+    variables:
+      apim_host:
+        default: localhost
+        description: Host del API Manager
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /mcp/equipos:
+    get:
+      operationId: get_equipos
+      summary: Listar equipos activos de la empresa
+      description: |
+        Devuelve todos los equipos activos (estado AC o RE, no AN) registrados
+        para la empresa del token. La lista incluye el código del equipo,
+        descripción, estado operativo, sector, grupo funcional, criticidad,
+        marca, área y proceso industrial asociado.
+
+        **Cuándo usar esta operación:**
+        - Para encontrar el `id_equipo` de un equipo antes de crear una OT.
+        - Para ver qué equipos están actualmente en reparación (`estado = RE`).
+        - Para obtener el inventario completo de activos y sus sectores.
+        - Cuando el usuario menciona el nombre o código del equipo pero no el ID.
+
+        Los resultados están ordenados por código de equipo (`codigo`).
+      tags:
+        - Equipos
+      responses:
+        "200":
+          description: Lista de equipos activos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquiposList"
+              example:
+                equipos:
+                  equipo:
+                    - id_equipo: "10"
+                      codigo: "COMP-001"
+                      descripcion: "Compresor Atlas Copco GA110"
+                      estado: "AC"
+                      empr_id: "42"
+                      empresa: "Minera San Juan S.A."
+                      marca: "Atlas Copco"
+                      sector: "Planta Principal"
+                      grupo: "Compresores"
+                      criticidad: "Alta"
+                      area: "Producción"
+                      proceso: "Compresión de Aire"
+                    - id_equipo: "11"
+                      codigo: "BOMB-003"
+                      descripcion: "Bomba centrífuga Grundfos 100kW"
+                      estado: "RE"
+                      empr_id: "42"
+                      empresa: "Minera San Juan S.A."
+                      marca: "Grundfos"
+                      sector: "Sala de Bombas"
+                      grupo: "Bombas"
+                      criticidad: "Media"
+                      area: "Servicios"
+                      proceso: "Distribución de Agua"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/equipo/{equi_id}:
+    get:
+      operationId: get_equipo
+      summary: Obtener el detalle técnico de un equipo
+      description: |
+        Devuelve los datos técnicos completos de un equipo identificado por
+        su `id_equipo`. Incluye marca, sector, criticidad, área, proceso
+        industrial y estado operativo actual.
+
+        **Cuándo usar esta operación:**
+        - Para confirmar los datos de un equipo antes de crear una OT.
+        - Para obtener la descripción técnica completa de un activo específico.
+        - Para verificar el estado actual (`AC`/`RE`) de un equipo dado.
+        - Cuando ya se conoce el `id_equipo` y se necesita el detalle completo.
+
+        Si el equipo no pertenece a la empresa del token, la respuesta contiene
+        la estructura vacía `{ "equipo": {} }` sin código de error. Esto garantiza
+        el aislamiento multi-empresa sin revelar la existencia de otros registros.
+      tags:
+        - Equipos
+      parameters:
+        - name: equi_id
+          in: path
+          required: true
+          description: |
+            ID numérico del equipo en Asset Planner. Obtenerlo previamente
+            con `get_equipos` si solo se conoce el código o nombre del equipo.
+          schema:
+            type: string
+            example: "10"
+      responses:
+        "200":
+          description: Datos técnicos del equipo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EquipoDetalle"
+              examples:
+                equipo_activo:
+                  summary: Equipo activo con todos los campos
+                  value:
+                    equipo:
+                      id_equipo: "10"
+                      codigo: "COMP-001"
+                      descripcion: "Compresor Atlas Copco GA110"
+                      estado: "AC"
+                      empr_id: "42"
+                      empresa: "Minera San Juan S.A."
+                      marca: "Atlas Copco"
+                      sector: "Planta Principal"
+                      grupo: "Compresores"
+                      criticidad: "Alta"
+                      area: "Producción"
+                      proceso: "Compresión de Aire"
+                equipo_en_reparacion:
+                  summary: Equipo actualmente en reparación
+                  value:
+                    equipo:
+                      id_equipo: "11"
+                      codigo: "BOMB-003"
+                      descripcion: "Bomba centrífuga Grundfos 100kW"
+                      estado: "RE"
+                      empr_id: "42"
+                      empresa: "Minera San Juan S.A."
+                      marca: "Grundfos"
+                      sector: "Sala de Bombas"
+                      grupo: "Bombas"
+                      criticidad: "Media"
+                      area: "Servicios"
+                      proceso: "Distribución de Agua"
+                sin_resultado:
+                  summary: Equipo no encontrado o pertenece a otra empresa
+                  value:
+                    equipo: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT emitido por Dnato, firmado con RS256.
+        Claims requeridos: `iss="trazalog-dnato"`, `aud="trazalog-mcp"`,
+        `empr_id` (string), `exp` (Unix timestamp).
+        El gateway valida la firma y extrae `empr_id` — el agente nunca
+        lo pasa como parámetro.
+
+  responses:
+    Unauthorized:
+      description: Token ausente, expirado, con firma inválida o sin claim `empr_id`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            sin_header:
+              summary: Sin Authorization header
+              value:
+                error: "Unauthorized"
+                message: "Missing Authorization header"
+            expirado:
+              summary: Token expirado
+              value:
+                error: "Unauthorized"
+                message: "JWT has expired"
+            firma_invalida:
+              summary: Firma inválida
+              value:
+                error: "Unauthorized"
+                message: "JWT signature verification failed"
+
+  schemas:
+
+    Equipo:
+      type: object
+      description: Datos de un equipo industrial
+      properties:
+        id_equipo:
+          type: string
+          description: Identificador único del equipo en Asset Planner
+          example: "10"
+        codigo:
+          type: string
+          description: Código alfanumérico del equipo (único por empresa)
+          example: "COMP-001"
+        descripcion:
+          type: string
+          description: Nombre y modelo completo del equipo
+          example: "Compresor Atlas Copco GA110"
+        estado:
+          type: string
+          description: Estado operativo actual
+          enum: [AC, RE]
+          example: "AC"
+        empr_id:
+          type: string
+          description: Identificador de la empresa (inyectado por el gateway)
+          example: "42"
+        empresa:
+          type: string
+          description: Razón social de la empresa
+          example: "Minera San Juan S.A."
+        marca:
+          type: string
+          description: Fabricante o marca del equipo
+          example: "Atlas Copco"
+        sector:
+          type: string
+          description: Sector o área física donde está instalado
+          example: "Planta Principal"
+        grupo:
+          type: string
+          description: Grupo funcional al que pertenece el equipo
+          example: "Compresores"
+        criticidad:
+          type: string
+          description: Nivel de criticidad operativa
+          example: "Alta"
+        area:
+          type: string
+          description: Área de negocio del equipo
+          example: "Producción"
+        proceso:
+          type: string
+          description: Proceso industrial al que contribuye
+          example: "Compresión de Aire"
+
+    EquiposList:
+      type: object
+      properties:
+        equipos:
+          type: object
+          properties:
+            equipo:
+              type: array
+              items:
+                $ref: "#/components/schemas/Equipo"
+
+    EquipoDetalle:
+      type: object
+      properties:
+        equipo:
+          $ref: "#/components/schemas/Equipo"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Unauthorized"
+        message:
+          type: string
+          example: "JWT has expired"

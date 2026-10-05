@@ -1,0 +1,39 @@
+id: DNATO-UC-028
+modulo: DNATO
+titulo: Eliminar una empresa
+perfil: Superusuario
+estado: validado
+version: "0.2"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Empresa.php
+    detalle: "borrarEmpresa() (132-176)"
+  - repo: traz-comp-dnato
+    path: application/models/Empresas.php
+    detalle: "eliminarEmpresa() — la que sí borra la empresa por API, y que este flujo NO usa"
+pantallas:
+  - "Gestión de Empresas → Lista de Empresas → Eliminar"
+precondiciones:
+  - Sesión iniciada con el usuario superusuario del ambiente
+flujo_principal:
+  - paso: "Elige dar de baja una empresa del listado"
+    resultado: "Se pide confirmación antes de hacer nada"
+  - paso: "Confirma la baja"
+    resultado: "La empresa queda dada de baja y deja de estar disponible para operar, pero se conserva junto con todo su historial"
+flujos_alternativos:
+  - nombre: "Administrador común"
+    pasos:
+      - paso: "Un administrador que no es el superusuario intenta dar de baja una empresa"
+        resultado: "No puede: la acción es exclusiva del superusuario"
+validaciones:
+  - "La baja es lógica: la empresa y sus datos se conservan, porque borrarlos rompería la trazabilidad"
+  - "Solo el superusuario puede dar de baja una empresa"
+datos_prueba: {}
+dudas: []
+notas:
+  - "Validado por el PM el 2026-08-24: baja lógica, nunca física, y solo el superusuario. **El caso describe el comportamiento esperado: hoy el sistema hace otra cosa** — ver hallazgo H-028 e issue #462, donde la acción borra un usuario en vez de la empresa. Sus derivados van a fallar hasta que se corrija, que es lo que se espera de una suite de regresión."
+  - "El modelo ya tiene `Empresas::eliminarEmpresa()`, que llama a la API y es la que usa el rollback del alta por registración: la pantalla no la usa."
+derivados:
+  feature: features/dnato/DNATO-UC-028.eliminar-una-empresa.feature

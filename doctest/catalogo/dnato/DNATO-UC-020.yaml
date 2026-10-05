@@ -1,0 +1,51 @@
+id: DNATO-UC-020
+modulo: DNATO
+titulo: Dar de alta un usuario de una empresa externa
+perfil: Administrador
+estado: borrador
+version: "0.3"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "adduserexterno() (772-838)"
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "addUserExterno() (523-539): inserta en seg.users con role = USUARIO_EXTERNO y status aprobado"
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "USUARIO_EXTERNO = 8"
+  - repo: traz-comp-dnato
+    path: application/views/usuario_externo.php
+    detalle: "campos nombre_razon, email, telefono, cuit_empresa, usernick, password"
+  - repo: traz-comp-dnato
+    path: application/views/list_usuarios_externos.php
+    detalle: "listado que filtra por role = USUARIO_EXTERNO"
+pantallas:
+  - "Alta de usuario externo"
+precondiciones:
+  - Sesión iniciada con perfil Administrador
+flujo_principal:
+  - paso: "Abre la pantalla de alta de usuario externo"
+    resultado: "Se muestra el formulario con razón social, correo, teléfono, identificador tributario de la empresa externa, nombre de usuario y contraseña"
+  - paso: "Completa los datos y confirma"
+    resultado: "Se muestra 'El usuario se agregó correctamente.' y vuelve a la lista de usuarios"
+flujos_alternativos:
+  - nombre: "Correo ya existente"
+    pasos:
+      - paso: "Completa el formulario con un correo ya registrado"
+        resultado: "Se muestra 'El correo del usuario ya existe en el sistema.' y no se crea"
+  - nombre: "Contraseña que no cumple la política"
+    pasos:
+      - paso: "Ingresa una contraseña sin mayúscula, dígito o símbolo"
+        resultado: "Se muestra el error de contraseña y el usuario no se crea"
+validaciones:
+  - "Correo, contraseña y confirmación son obligatorios; el correo no puede repetirse"
+  - "El usuario externo se crea con el perfil 'usuario externo' y queda aprobado y habilitado desde el alta"
+  - "A diferencia del alta común, no se lo vincula a una empresa del sistema ni se lo crea en el sistema de procesos: lleva la razón social y el identificador tributario de SU empresa"
+datos_prueba: {}
+dudas:
+  - "Pregunta abierta del PM (2026-08-24): ¿este alta es para que el SUPERUSUARIO cree usuarios de cualquier empresa, o para que un administrador que tiene varias empresas cree usuarios en una de ellas? Son dos casos de uso distintos y hoy la pantalla no distingue ninguno de los dos."
+  - "Según cuál sea, cambia quién es el perfil del caso y qué debería mostrar la pantalla. Queda en borrador hasta definirlo."
+notas:
+  - "Verificado en el DEMO el 2026-08-19: la pantalla existe y responde en `main/adduserexterno`, con esos seis campos."

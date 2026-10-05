@@ -1,0 +1,54 @@
+name: "La ayuda está mal o falta (ayuda-gap)"
+description: "Feedback sobre un manual de ayuda de usuario"
+title: "[ayuda] "
+labels: ["ayuda-gap", "doctest"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Usá esto para cualquier cosa de la **ayuda de usuario**: dice algo que ya no es así,
+        falta un paso, se entiende mal, o directamente no existe la ayuda de una pantalla.
+
+        Las ayudas se generan desde el catálogo funcional, así que un error en la ayuda
+        muchas veces es un error en el caso de uso: por eso el arreglo entra por acá y no
+        editando el HTML a mano.
+
+  - type: dropdown
+    id: que_pasa
+    attributes:
+      label: Qué pasa
+      options:
+        - "Dice algo que ya no es así (la pantalla cambió)"
+        - "Falta un paso o un caso"
+        - "Se entiende mal / está confuso"
+        - "No existe la ayuda de esta pantalla"
+        - "Error de escritura o de formato"
+    validations:
+      required: true
+
+  - type: input
+    id: manual
+    attributes:
+      label: Manual y sección
+      description: |
+        El nombre del manual y el título de la sección. Si tenés el link con el `#sNN` al final, mejor.
+      placeholder: "Registración y cuenta → 4. Recuperar la contraseña  (manual_registracion_y_cuenta.html#s04)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: detalle
+    attributes:
+      label: Qué dice y qué debería decir
+      placeholder: |
+        Dice que el enlace de recuperación vale 24 horas.
+        En realidad vale hasta la medianoche del mismo día.
+    validations:
+      required: true
+
+  - type: input
+    id: caso
+    attributes:
+      label: Caso de uso relacionado (si lo sabés)
+      description: "Cada sección de la ayuda tiene arriba de todo, en el HTML, los casos que cubre."
+      placeholder: "DNATO-UC-008"

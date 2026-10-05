@@ -1,0 +1,53 @@
+id: ALM-UC-009
+modulo: ALM
+titulo: Registrar la recepción de materiales de un proveedor
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Remito.php
+    detalle: "index(), cargarlista(), getcodigo(), getdeposito(), getproveedor(), getlote(), guardar(), guardar_mejor(), consultar(), alerta()"
+  - repo: traz-comp-almacenes
+    path: models/Remitos.php
+    detalle: "getConsulta($id), getlotecant($id), update_tbllote($id,$data), actualizar_lote($id,$data)"
+pantallas:
+  - "Almacenes → Recepción Materiales"
+  - "Almacenes → Recepción Materiales → Agregar"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene proveedores y depósitos cargados
+  - Los artículos a recibir están dados de alta
+flujo_principal:
+  - paso: "Entra a Almacenes → Recepción Materiales"
+    resultado: "Se muestra el listado de recepciones con Nº de Comprobante, Fecha y Proveedor"
+  - paso: "Hace clic en 'Agregar'"
+    resultado: "Se abre el formulario de recepción"
+  - paso: "Transcribe el número del comprobante físico que trae el proveedor, la fecha y el proveedor"
+    resultado: "Quedan registrados los datos de cabecera"
+  - paso: "Agrega cada artículo recibido con su cantidad, depósito y establecimiento. Si el artículo es loteado, escribe el número de lote"
+    resultado: "El detalle acumula los artículos recibidos"
+  - paso: "Confirma la recepción"
+    resultado: "La recepción queda registrada y el stock de esos artículos aumenta en el depósito indicado"
+flujos_alternativos:
+  - nombre: "Consultar una recepción ya registrada"
+    pasos:
+      - paso: "En el listado abre una recepción"
+        resultado: "Se muestra su detalle con los artículos, las cantidades y el depósito"
+      - paso: "Hace clic en 'Imprimir'"
+        resultado: "La recepción se puede imprimir"
+validaciones:
+  - "La recepción aumenta el stock del depósito indicado"
+  - "El número de comprobante no se valida ni tiene que ser único: es la transcripción del comprobante físico del proveedor"
+  - "Para un artículo loteado, el número de lote es obligatorio y lo escribe quien recibe"
+  - "Una recepción registrada no se corrige ni se anula: toda corrección se hace por un ajuste de stock (ALM-UC-014)"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s05
+  feature: features/alm/ALM-UC-009.registrar-la-recepcion-de-materiales-de-un-prove.feature
+notas:
+  - "**No hay orden de compra en el módulo**: la mercadería llega y alguien la carga. Confirmado por el PM."
+  - "El campo de lote es texto libre y obligatorio, y la vista lo habilita solo para artículos loteados (`views/remito/view_.php`)."
+  - "**Si la empresa tiene activada la valorización**, esta pantalla muestra además Precio Unitario en pesos y en dólares con sus totales — ver ALM-UC-013."

@@ -1,0 +1,44 @@
+id: MAN-UC-014
+modulo: MAN
+titulo: Definir un mantenimiento preventivo
+perfil: Planificador
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Preventivo.php
+  - repo: traz-prod-assetplanner
+    path: application/models/Preventivos.php
+    detalle: "tbl_preventivo + tbl_preventivoinsumos + tbl_preventivoherramientas"
+pantallas:
+  - "Mantenimiento → Preventivo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo está dado de alta
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Preventivo"
+    resultado: "Se listan los preventivos con Id tarea, Tarea, Equipo, Grupo, Componente, Período, Frecuencia, Fecha Base y Horas Hombre"
+  - paso: "Crea uno nuevo y elige el equipo y la tarea a realizar"
+    resultado: "Queda definido qué se hace y sobre qué"
+  - paso: "Define el período y la frecuencia con que se repite, y la fecha base"
+    resultado: "El sistema sabe cuándo vence la próxima vez"
+  - paso: "Indica cuántas horas hombre lleva"
+    resultado: "Queda registrada la duración estimada"
+  - paso: "Agrega las herramientas y los insumos que hacen falta"
+    resultado: "Quedan declarados, para copiarse a cada orden de trabajo que se genere"
+  - paso: "Guarda"
+    resultado: "El preventivo queda activo y va a aparecer en el plan de mantenimiento cuando venza"
+validaciones:
+  - "Las herramientas y los insumos quedan **declarados**, no pedidos: el pedido nace al ejecutar cada orden"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
+notas:
+  - "**Período y frecuencia, en buena práctica de mantenimiento:** el *período* es la unidad con la que se cuenta —días, semanas, meses— y la *frecuencia*, cada cuántas de esas unidades se repite. \"Período: mes, frecuencia: 3\" es cada tres meses. La **fecha base** es desde cuándo se empieza a contar el primer vencimiento."
+  - "**Por qué existe el preventivo:** la idea es intervenir el equipo antes de que falle, en un momento elegido por uno y no por la máquina. Cuesta menos que reparar una rotura —no hay parada imprevista, no hay daños secundarios, el repuesto está disponible— y por eso la práctica habitual es que la mayor parte del trabajo de un taller sea planificado y no correctivo."
+  - "**Cómo elegir la frecuencia:** el punto de partida es lo que dice el fabricante en el manual del equipo. Después se ajusta con la experiencia: si el equipo se rompe entre dos preventivos, la frecuencia es muy larga; si al intervenirlo nunca hay nada para hacer, es muy corta."
+  - "**Las herramientas e insumos que se cargan acá quedan declarados, no pedidos.** Se copian a cada orden que se genere, y el pedido al almacén recién nace al ejecutar esa orden."
+  - "El manual de ayuda existente `manual_mantenimeinto_preventivo.html` tiene el flujo completo en siete secciones —creación, período y frecuencia, duración y recursos, herramientas e insumos, planificación—, así que es una fuente de intención sólida para este caso."

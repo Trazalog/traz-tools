@@ -1,0 +1,56 @@
+id: ALM-UC-002
+modulo: ALM
+titulo: Dar de alta un artículo
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Articulo.php
+    detalle: "guardar() resuelve la unidad de medida contra la tabla de la empresa, descarta arti_id y delega en el modelo"
+  - repo: traz-comp-almacenes
+    path: models/Articulos.php
+    detalle: "guardar(), verificar_articulo(), validarArticulo()"
+pantallas:
+  - "Almacenes → Articulos → Agregar"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene cargadas sus unidades de medida y sus tipos de artículo
+flujo_principal:
+  - paso: "En el listado de artículos hace clic en 'Agregar'"
+    resultado: "Se abre el formulario de alta"
+  - paso: "Completa el código del artículo, el tipo, la descripción y la unidad de medida"
+    resultado: "El formulario acepta los datos. El identificador interno lo asigna el sistema: el usuario solo escribe el código"
+  - paso: "Si el artículo se maneja por lotes, marca '¿Lotear Artículo?'"
+    resultado: "A partir de ahí las existencias de ese artículo se llevan por lote dentro de cada depósito, y al recibirlo hay que indicar el número de lote"
+  - paso: "Opcionalmente carga el punto de pedido y la cantidad por caja"
+    resultado: "Los valores quedan asociados al artículo"
+  - paso: "Confirma con 'Guardar'"
+    resultado: "El artículo queda dado de alta y aparece en el listado"
+flujos_alternativos:
+  - nombre: "El código ya existe en la empresa"
+    pasos:
+      - paso: "Completa el formulario con un código que ya está en uso"
+        resultado: "El formulario acepta los datos"
+      - paso: "Confirma con 'Guardar'"
+        resultado: "El sistema avisa que el artículo ya existe y no lo da de alta"
+validaciones:
+  - "Código, tipo, descripción y unidad de medida son obligatorios"
+  - "El código es único dentro de la empresa"
+  - "El identificador interno del artículo lo asigna el sistema y es único en todo el sistema: el usuario no lo escribe"
+  - "El punto de pedido es uno solo por artículo y por empresa, no por depósito"
+  - "El punto de pedido, si se deja vacío al editar, se guarda como 0"
+  - "El artículo se da de alta en la empresa de la sesión"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  codigo_prefijo: "DOCTEST-ART-"
+  nota_codigo: "sufijo único por corrida, para no chocar con artículos existentes"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s03
+  feature: features/alm/ALM-UC-002.dar-de-alta-un-articulo.feature
+notas:
+  - "Lotear, en el código: la marca `es_loteado` hace que la recepción exija el número de lote (`views/remito/view_.php` habilita el campo solo para artículos loteados) y que las existencias se guarden por lote en `alm.alm_lotes`, con su depósito. La entrega y el ajuste operan después sobre ese lote."
+  - "El alta no verifica el perfil del usuario: alcanza con tener sesión (H-037 / issue #479)."

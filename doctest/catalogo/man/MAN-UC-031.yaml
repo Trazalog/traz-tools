@@ -1,0 +1,34 @@
+id: MAN-UC-031
+modulo: MAN
+titulo: El ciclo de vida de un backlog
+perfil: Supervisor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Backlog.php
+    detalle: "guardar_backlog() lo crea en estado 'C'; Calendario::guardar_agregar() tipo=4 lo pasa a 'PL'"
+pantallas:
+  - "Mantenimiento → Backlog"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "El backlog nace de dos maneras: se anota a mano (MAN-UC-015), o **lo genera el proceso** cuando el Supervisor decide que una solicitud no es urgente"
+    resultado: "Queda a la espera de que el Planificador lo programe"
+  - paso: "Cuando hay lugar en el plan, se le programa una orden de trabajo (MAN-UC-009)"
+    resultado: "El backlog pasa a planificado y sus herramientas e insumos se copian a la orden"
+  - paso: "La orden sigue su propio ciclo (MAN-UC-030)"
+    resultado: "El backlog queda cerrado cuando se completa el trabajo"
+validaciones:
+  - "**El backlog es, sobre todo, la solicitud que no era urgente**: el proceso lo genera automáticamente en esa rama"
+  - "No caduca: queda pendiente hasta que alguien lo programe"
+  - "El backlog nace en estado 'C' y pasa a planificado al generarle la orden"
+  - "Al programarlo se cierra además la tarea de Bonita 'Planificar Backlog'"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
+notas:
+  - "Que el backlog sea el destino de lo no urgente explica por qué lo planifica el **Planificador** y no el Supervisor: en el camino urgente el Supervisor se queda con la planificación y la asignación; en el no urgente, delega. Ver `doc/man/proceso-mantenimiento.md` §2."
+  - "El backlog es el único de los cuatro orígenes que **no tiene disparador automático**: ni fecha de vencimiento como el preventivo, ni lectura fuera de rango como el predictivo, ni un pedido como la solicitud. Depende de que alguien decida programarlo, y por eso es el que más riesgo tiene de quedar olvidado."

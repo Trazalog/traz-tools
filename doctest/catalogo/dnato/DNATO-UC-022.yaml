@@ -1,0 +1,47 @@
+id: DNATO-UC-022
+modulo: DNATO
+titulo: Ver la lista de empresas del sistema
+perfil: Superusuario
+estado: validado
+version: "0.2"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Empresa.php
+    detalle: "listarEmpresas() (20-45): solo accede quien tenga el correo definido en TOOLS_ADMIN_USER"
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "TOOLS_ADMIN_USER (105): define quién es el superusuario, por ambiente"
+  - repo: traz-comp-dnato
+    path: application/views/empresas/list.php
+  - repo: traz-comp-dnato
+    path: application/models/Empresas.php
+    detalle: "listarEmpresas()"
+pantallas:
+  - "Gestión de Empresas → Lista de Empresas"
+precondiciones:
+  - Sesión iniciada con el usuario superusuario del ambiente
+flujo_principal:
+  - paso: "Abre 'Lista de Empresas'"
+    resultado: "Se muestra el listado de todas las empresas del sistema"
+flujos_alternativos:
+  - nombre: "Administrador común"
+    pasos:
+      - paso: "Un administrador que no es el superusuario abre la dirección de la lista de empresas"
+        resultado: "Se lo redirige a la pantalla principal sin mostrar la lista"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Abre la dirección sin haber iniciado sesión"
+        resultado: "Se lo redirige a la pantalla de ingreso"
+validaciones:
+  - "El menú 'Gestión de Empresas' solo aparece para el superusuario del ambiente"
+  - "El superusuario se define hoy en `constants.php` y además tiene que existir como usuario en `seg.users`"
+datos_prueba: {}
+dudas: []
+notas:
+  - "Alcance confirmado por el PM el 2026-08-19: el ABM de Empresas entra en la Ola 1, con el perfil de DNATO correcto."
+  - "Validado por el PM el 2026-08-24: el superusuario sigue siendo por ahora el que define la constante, y el listado muestra los datos de empresa que uno espera ver (nombre, identificador tributario, contacto, ubicación)."
+derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-022.empresas-superusuario.spec.ts
+  feature: features/dnato/DNATO-UC-022.ver-la-lista-de-empresas-del-sistema.feature

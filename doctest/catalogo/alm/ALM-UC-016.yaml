@@ -1,0 +1,47 @@
+id: ALM-UC-016
+modulo: ALM
+titulo: Mover mercadería entre depósitos — salida
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Movimientointerno.php
+    detalle: "index(), movimientoSalida(), getDatosCabeceraRemito(), getMovimientoInternoPaginado()"
+  - repo: traz-comp-almacenes
+    path: models/Movimdeposalida.php
+  - repo: traz-comp-almacenes
+    path: views/movimientosinternos/list.php
+pantallas:
+  - "Almacenes → Movimientos Internos"
+  - "Almacenes → Movimientos Internos → Nueva Salida"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene al menos dos depósitos
+  - Hay existencias en el depósito de origen
+flujo_principal:
+  - paso: "Entra a Almacenes → Movimientos Internos"
+    resultado: "Se muestra el listado con Remito, Fecha y Hora, Establecimiento y Depósito de origen, Establecimiento y Depósito de destino, y Estado"
+  - paso: "Hace clic en 'Nueva Salida'"
+    resultado: "Se abre el formulario de salida de depósito"
+  - paso: "Elige el depósito de origen y el de destino"
+    resultado: "El movimiento queda definido entre esos dos depósitos"
+  - paso: "Agrega los artículos y las cantidades que salen, eligiendo el lote"
+    resultado: "El detalle acumula los artículos. Si la cantidad supera lo que hay en el lote, la pantalla avisa cuánto hay y no deja seguir"
+  - paso: "Confirma la salida"
+    resultado: "El movimiento queda registrado, el stock del depósito de origen baja y el movimiento queda pendiente de recepción en destino"
+validaciones:
+  - "**Nunca** se puede sacar más de lo que hay en el lote de origen"
+  - "El stock del depósito de origen baja al confirmar la salida"
+  - "La mercadería en tránsito no figura en ningún depósito: sale del origen y aparece recién cuando se recibe en destino"
+  - "Una salida confirmada no se anula"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s08
+  feature: features/alm/ALM-UC-016.mover-mercaderia-entre-depositos-salida.feature
+notas:
+  - "El manejo del tránsito es informal y fue pedido así (PM, 2026-08-25): entre la salida y la recepción la mercadería 'no está' en ningún lado. La diferencia, si la hay, se resuelve al recibir con una justificación obligatoria (ALM-UC-017)."
+  - "El tope de cantidad lo verifica la pantalla: `if (valor < 0 || enteroCantidad < valor)` en `views/depositos/MovimientoSalida.php` avisa cuántas unidades tiene el lote elegido."
+  - "**Esta pantalla no existe en el árbol que ve `develop-v3`**: el controlador entró en un commit posterior al puntero del submódulo (H-038 / issue #481). Está relevada contra `origin/develop`, que es lo que corre en el DEMO. Es funcionalidad reciente y por eso el relevamiento es más superficial que el del resto."

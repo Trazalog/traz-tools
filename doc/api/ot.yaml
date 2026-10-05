@@ -1,0 +1,455 @@
+openapi: 3.0.3
+
+info:
+  title: Órdenes de Trabajo API — Trazalog MCP
+  version: "1.0.0"
+  description: |
+    Gestión de Órdenes de Trabajo (OTs) correctivas en Asset Planner.
+
+    Una OT correctiva se origina cuando un equipo presenta una falla o
+    anomalía que requiere intervención del equipo de mantenimiento. Al
+    crear una OT, el sistema registra la solicitud e inicia automáticamente
+    el proceso de mantenimiento en Bonita BPM.
+
+    **La empresa se determina automáticamente desde el token JWT.**
+    No existe ningún parámetro de empresa — el gateway lo inyecta de forma
+    transparente a partir del claim `empr_id` del token. El agente nunca
+    pasa ni ve el identificador de empresa. Esto garantiza que una OT
+    siempre se crea dentro de la empresa del token, sin posibilidad de
+    cross-tenant.
+
+    **Estados de una OT:**
+    - `S`  — Solicitada (recién creada, pendiente de aceptación)
+    - `AC` — Activa / en ejecución
+    - `CN` — Conformada (cerrada con conformidad del solicitante)
+    - `AN` — Anulada
+
+servers:
+  - url: http://10.142.0.13:8280/tools/man
+    description: WSO2 Micro Integrator — DEV directo
+  - url: https://{apim_host}:8243/ordenes-trabajo/1.0
+    description: WSO2 API Manager 4.6.0 — Gateway (PROD/staging)
+    variables:
+      apim_host:
+        default: localhost
+        description: Host del API Manager
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /mcp/ot:
+
+    post:
+      operationId: create_ot
+      summary: Crear una Orden de Trabajo correctiva
+      description: |
+        Crea una solicitud de servicio correctiva para un equipo que presenta
+        una falla o anomalía. El proceso se ejecuta en cuatro pasos atómicos:
+
+        1. Registra la solicitud en Asset Planner (`solicitud_reparacion`)
+        2. Obtiene el ID generado
+        3. Instancia el proceso "Proceso de Mantenimiento AssetPlanner SIM"
+           en Bonita BPM — el equipo de mantenimiento recibe la tarea
+        4. Vincula el case_id del proceso BPM a la solicitud
+
+        Si cualquier paso falla después del INSERT, la solicitud se elimina
+        automáticamente (rollback) — la OT nunca queda en estado inconsistente.
+
+        **Cuándo usar esta operación:**
+        - Cuando el usuario reporta una falla, avería o comportamiento anómalo
+          en un equipo y solicita abrir una OT.
+        - Para registrar formalmente un trabajo de mantenimiento correctivo.
+
+        **Datos requeridos:** el ID del equipo afectado y una descripción de
+        la falla o trabajo requerido. Si el usuario describe el equipo por nombre
+        o código pero no por ID, usar primero `get_equipos` para encontrar el ID.
+
+        La OT se crea con `estado = S` (Solicitada) y con el `empr_id` del token.
+        El campo `solicitante` se registra como `mcp-agent` en esta versión.
+      tags:
+        - Órdenes de Trabajo
+      requestBody:
+        required: true
+        description: Datos mínimos para abrir la OT correctiva
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOTRequest"
+            examples:
+              falla_compresor:
+                summary: Falla en compresor
+                value:
+                  equipo_id: "10"
+                  descripcion: "Ruido inusual en compresor COMP-001. Posible falla en rodamiento. Requiere revisión urgente."
+              perdida_aceite:
+                summary: Pérdida de aceite en bomba
+                value:
+                  equipo_id: "11"
+                  descripcion: "Pérdida de aceite visible en sello de bomba BOMB-003. Parar equipo y revisar."
+      responses:
+        "200":
+          description: OT creada exitosamente. El proceso BPM fue iniciado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOTResponse"
+              example:
+                resultado: "ok"
+                ot_id: "1842"
+                case_id: "5301"
+                estado: "S"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    get:
+      operationId: get_ots
+      summary: Listar Órdenes de Trabajo abiertas de la empresa
+      description: |
+        Devuelve todas las OTs activas de la empresa del token, excluyendo
+        las anuladas (`AN`) y las conformadas-cerradas (`CN`). Incluye
+        datos del equipo afectado, sector, mantenedor asignado y fechas clave.
+
+        **Cuándo usar esta operación:**
+        - Para ver qué OTs están abiertas actualmente.
+        - Para buscar una OT reciente por equipo o descripción.
+        - Para obtener el listado de trabajos de mantenimiento en curso.
+        - Antes de confirmar si ya existe una OT abierta para un equipo
+          antes de crear una nueva.
+      tags:
+        - Órdenes de Trabajo
+      responses:
+        "200":
+          description: Lista de OTs abiertas de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OTList"
+              example:
+                solicitudes:
+                  solicitud:
+                    - id_solicitud: "1842"
+                      numero: "OT-2026-1842"
+                      id_tipo: "1"
+                      solicitante: "mcp-agent"
+                      id_equipo: "10"
+                      correctivo: "S"
+                      causa: "Ruido inusual en compresor COMP-001"
+                      observaciones: ""
+                      estado: "S"
+                      usrId: "0"
+                      id_empresa: "42"
+                      urgente: ""
+                      equipo: "COMP-001"
+                      sector: "Planta Principal"
+                      grupo: "Compresores"
+                      ubicacion: "Sala de Máquinas"
+                      case_id: "5301"
+                      id_usuario_a: ""
+                      mantenedor: ""
+                      fecha_terminada: ""
+                      f_inicio: ""
+                      f_asignacion: ""
+                      f_solicitado: "2026-05-30 18:00:00"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /mcp/ot/{id_solicitud}:
+    get:
+      operationId: get_ot
+      summary: Obtener el detalle completo de una OT
+      description: |
+        Devuelve el detalle completo de una Orden de Trabajo identificada
+        por su `id_solicitud`. Incluye el estado actual, la causa registrada,
+        el equipo afectado, el sector, el mantenedor asignado y las fechas
+        de inicio, asignación y cierre del trabajo.
+
+        **Cuándo usar esta operación:**
+        - Para confirmar que una OT recién creada se registró correctamente.
+        - Para ver el estado actual de una OT específica.
+        - Para obtener el `case_id` del proceso BPM asociado.
+        - Para verificar quién está asignado como mantenedor responsable.
+
+        Si la OT no pertenece a la empresa del token, la respuesta contiene
+        la lista vacía sin código de error (aislamiento multi-empresa por SQL).
+      tags:
+        - Órdenes de Trabajo
+      parameters:
+        - name: id_solicitud
+          in: path
+          required: true
+          description: |
+            ID numérico de la OT (solicitud de servicio). Se obtiene como
+            `ot_id` en la respuesta de `create_ot`, o de la lista devuelta
+            por `get_ots`.
+          schema:
+            type: string
+            example: "1842"
+      responses:
+        "200":
+          description: Detalle de la OT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OTList"
+              examples:
+                ot_recien_creada:
+                  summary: OT recién creada, sin mantenedor aún
+                  value:
+                    solicitudes:
+                      solicitud:
+                        - id_solicitud: "1842"
+                          numero: "OT-2026-1842"
+                          id_tipo: "1"
+                          solicitante: "mcp-agent"
+                          id_equipo: "10"
+                          correctivo: "S"
+                          causa: "Ruido inusual en compresor COMP-001"
+                          observaciones: ""
+                          estado: "S"
+                          usrId: "0"
+                          id_empresa: "42"
+                          urgente: ""
+                          equipo: "COMP-001"
+                          sector: "Planta Principal"
+                          grupo: "Compresores"
+                          ubicacion: "Sala de Máquinas"
+                          case_id: "5301"
+                          id_usuario_a: ""
+                          mantenedor: ""
+                          fecha_terminada: ""
+                          f_inicio: ""
+                          f_asignacion: ""
+                          f_solicitado: "2026-05-30 18:00:00"
+                ot_en_curso:
+                  summary: OT activa con mantenedor asignado
+                  value:
+                    solicitudes:
+                      solicitud:
+                        - id_solicitud: "1800"
+                          numero: "OT-2026-1800"
+                          id_tipo: "1"
+                          solicitante: "juan.perez"
+                          id_equipo: "11"
+                          correctivo: "S"
+                          causa: "Pérdida de aceite en sello de bomba"
+                          observaciones: "Sellado reemplazado, en prueba"
+                          estado: "AC"
+                          usrId: "5"
+                          id_empresa: "42"
+                          urgente: "S"
+                          equipo: "BOMB-003"
+                          sector: "Sala de Bombas"
+                          grupo: "Bombas"
+                          ubicacion: "Edificio B"
+                          case_id: "5200"
+                          id_usuario_a: "8"
+                          mantenedor: "Carlos Rodriguez"
+                          fecha_terminada: ""
+                          f_inicio: "2026-05-28 08:00:00"
+                          f_asignacion: "2026-05-28 07:30:00"
+                          f_solicitado: "2026-05-27 16:00:00"
+                no_pertenece:
+                  summary: OT no pertenece a la empresa del token
+                  value:
+                    solicitudes:
+                      solicitud: []
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT emitido por Dnato, firmado con RS256.
+        Claims requeridos: `iss="trazalog-dnato"`, `aud="trazalog-mcp"`,
+        `empr_id` (string numérico), `exp` (Unix timestamp).
+        El gateway extrae `empr_id` y lo inyecta en cada llamada al backend.
+        El agente nunca lo pasa como parámetro.
+
+  responses:
+    Unauthorized:
+      description: Token ausente, expirado, con firma inválida o sin claim `empr_id`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            sin_header:
+              value:
+                error: "Unauthorized"
+                message: "Missing Authorization header"
+            expirado:
+              value:
+                error: "Unauthorized"
+                message: "JWT has expired"
+            firma_invalida:
+              value:
+                error: "Unauthorized"
+                message: "JWT signature verification failed"
+    InternalError:
+      description: |
+        Error en algún paso de la orquestación (DataService o BPM).
+        La OT no fue creada (rollback automático si el INSERT ya ocurrió).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            respuesta:
+              codigo: "1000"
+              error: "POST /mcp/ot - BPM failed, solicitud rolled back"
+              detalle: ""
+
+  schemas:
+
+    CreateOTRequest:
+      type: object
+      required:
+        - equipo_id
+        - descripcion
+      properties:
+        equipo_id:
+          type: string
+          description: |
+            ID numérico del equipo que presenta la falla. Usar `get_equipos`
+            si solo se conoce el código o nombre del equipo.
+          example: "10"
+        descripcion:
+          type: string
+          description: |
+            Descripción clara de la falla, anomalía o trabajo requerido.
+            Incluir síntomas observados y urgencia si aplica.
+            Se registra en el campo `causa` de la solicitud.
+          example: "Ruido inusual en compresor COMP-001. Posible falla en rodamiento."
+          minLength: 10
+          maxLength: 500
+
+    CreateOTResponse:
+      type: object
+      properties:
+        resultado:
+          type: string
+          description: Confirma que la OT fue creada exitosamente
+          example: "ok"
+        ot_id:
+          type: string
+          description: ID de la solicitud de servicio creada en Asset Planner
+          example: "1842"
+        case_id:
+          type: string
+          description: ID del caso en Bonita BPM — el proceso de mantenimiento ya está activo
+          example: "5301"
+        estado:
+          type: string
+          description: Estado inicial de la OT (siempre S = Solicitada)
+          example: "S"
+
+    OT:
+      type: object
+      description: Solicitud de servicio (Orden de Trabajo) en Asset Planner
+      properties:
+        id_solicitud:
+          type: string
+          description: ID único de la solicitud
+          example: "1842"
+        numero:
+          type: string
+          description: Número de OT legible para el usuario
+          example: "OT-2026-1842"
+        id_tipo:
+          type: string
+          description: Tipo de OT (1 = correctiva)
+          example: "1"
+        solicitante:
+          type: string
+          description: Usuario que creó la solicitud
+          example: "mcp-agent"
+        id_equipo:
+          type: string
+          description: ID del equipo afectado
+          example: "10"
+        causa:
+          type: string
+          description: Descripción de la falla o motivo del trabajo
+          example: "Ruido inusual en compresor COMP-001"
+        observaciones:
+          type: string
+          description: Observaciones adicionales registradas durante el proceso
+          example: ""
+        estado:
+          type: string
+          description: Estado actual de la OT
+          enum: [S, AC, CN, AN]
+          example: "S"
+        id_empresa:
+          type: string
+          description: Empresa a la que pertenece la OT (del token JWT)
+          example: "42"
+        equipo:
+          type: string
+          description: Código del equipo afectado
+          example: "COMP-001"
+        sector:
+          type: string
+          description: Sector donde está el equipo
+          example: "Planta Principal"
+        grupo:
+          type: string
+          description: Grupo funcional del equipo
+          example: "Compresores"
+        ubicacion:
+          type: string
+          description: Ubicación física del equipo
+          example: "Sala de Máquinas"
+        case_id:
+          type: string
+          description: ID del proceso en Bonita BPM
+          example: "5301"
+        mantenedor:
+          type: string
+          description: Nombre del técnico de mantenimiento asignado (vacío si aún no asignado)
+          example: "Carlos Rodriguez"
+        f_solicitado:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación de la OT
+          example: "2026-05-30 18:00:00"
+        f_inicio:
+          type: string
+          format: date-time
+          description: Fecha de inicio del trabajo (vacío si no empezó)
+          example: "2026-05-30 08:00:00"
+        fecha_terminada:
+          type: string
+          format: date-time
+          description: Fecha de cierre del trabajo (vacío si no terminó)
+          example: ""
+
+    OTList:
+      type: object
+      properties:
+        solicitudes:
+          type: object
+          properties:
+            solicitud:
+              type: array
+              items:
+                $ref: "#/components/schemas/OT"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Unauthorized"
+        message:
+          type: string
+          example: "JWT has expired"

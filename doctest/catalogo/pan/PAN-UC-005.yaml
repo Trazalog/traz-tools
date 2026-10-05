@@ -1,0 +1,49 @@
+id: PAN-UC-005
+modulo: PAN
+titulo: Recibir herramientas devueltas
+perfil: Usuario
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Movimientoherramientas.php
+    detalle: "nuevaRecepcion()"
+  - repo: traz-comp-pan
+    path: models/Unloads.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "entradaHerramientasSet y entradaHerramientasDetaSet"
+pantallas:
+  - "Herramientas → Movimientos Herramientas → Nueva Recepción"
+precondiciones:
+  - Hay herramientas en estado Entregada
+flujo_principal:
+  - paso: "Abre Nueva Recepción"
+    resultado: "Se abre el mismo modal que la entrega, con los mismos campos"
+  - paso: "Elige las herramientas que vuelven y guarda"
+    resultado: "Se registra la recepción con su propio Nro. de Vale y las herramientas vuelven a estado Activa"
+flujos_alternativos:
+  - nombre: "Vuelve solo una parte de lo entregado"
+    pasos:
+      - paso: "Recibe únicamente algunas de las herramientas del vale de entrega"
+        resultado: "Se genera igual un vale de entrada con lo que volvió. Las que no volvieron siguen Entregadas y se reciben después con otro vale"
+  - nombre: "Se recibe en un pañol distinto al de origen"
+    pasos:
+      - paso: "Selecciona un pañol distinto al del vale de entrega"
+        resultado: "Se pregunta: 'Esta herramienta fue Entregada en <Pañol origen>. ¿Está seguro que desea recepcionarla en <Pañol seleccionado>?'"
+      - paso: "Confirma"
+        resultado: "La herramienta queda registrada en el pañol nuevo"
+validaciones:
+  - "No existe el concepto de cerrar un vale: cada recepción genera su propio vale de entrada"
+  - "Una devolución parcial es válida y no necesita ninguna acción de cierre sobre el vale de entrega"
+  - "Recibir en otro pañol está permitido, pero se avisa antes porque cambia la ubicación de la herramienta"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  precondicion: "un vale de entrega con al menos dos herramientas"
+dudas: []
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s04
+notas:
+  - "Confirmado con el PM el 2026-09-25: no se cierra el vale, se genera un vale de entrada."

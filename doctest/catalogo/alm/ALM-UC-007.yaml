@@ -1,0 +1,29 @@
+id: ALM-UC-007
+modulo: ALM
+titulo: Ver el detalle de un pedido de materiales
+perfil: Solicitante
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Notapedido.php
+    detalle: "getNotaPedidoId() toma id_nota de la query string; getTablaDetalle()"
+  - repo: traz-comp-almacenes
+    path: models/Notapedidos.php
+    detalle: "getNotaPedidoIds($id) — arma el WHERE solo con pema_id, sin empresa"
+pantallas:
+  - "Almacenes → Pedido Materiales → (ver detalle de una fila)"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Existe un pedido de la empresa
+flujo_principal:
+  - paso: "En el listado de pedidos abre el detalle de una fila"
+    resultado: "Se muestran los artículos pedidos con su cantidad, cuánto se entregó y de qué depósito"
+validaciones:
+  - "El detalle de un pedido solo debería ser visible para la empresa dueña del pedido"
+dudas:
+  - "**Queda una sola pregunta, y la dejaste abierta al validar** (dijiste \"el solicitante debería ver solo los propios, hoy no lo hace creo\"): ¿un Solicitante tiene que ver **solo sus propios pedidos**, o todos los de su empresa? De la respuesta depende si esto es una restricción del caso o una mejora aparte. El resto del caso ya está confirmado: el detalle debe venir vacío para una empresa que no es la dueña."
+notas:
+  - "El aislamiento entre empresas quedó **confirmado por el PM** el 2026-08-25: el detalle no debe verse desde otra empresa. Hoy no se cumple y está verificado en vivo (issue #478). Cuando el caso salga de borrador, el test se deriva con `test.fail()` y el issue anotado."
+  - "El caso sigue en `borrador` **por pedido explícito del PM** (\"no valides esto ahora\"), no porque falte relevamiento."

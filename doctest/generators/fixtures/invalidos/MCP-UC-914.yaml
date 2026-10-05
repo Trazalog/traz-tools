@@ -1,0 +1,20 @@
+# expect-error: SCHEMA
+# Fixture del validador — estado fuera del enum y campo obligatorio ausente (`perfil`).
+id: MCP-UC-914
+modulo: MCP
+titulo: Fixture que no cumple el JSON Schema
+estado: en-revision
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject
+pantallas:
+  - "Gateway MCP (sin UI)"
+precondiciones:
+  - Token OAuth válido de la empresa de test
+flujo_principal:
+  - paso: "Invoca la tool man_get_equipos"
+    resultado: "Devuelve los equipos de la empresa del token"
+dudas:
+  - "Fixture: duda de ejemplo."

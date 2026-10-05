@@ -1,0 +1,58 @@
+id: DNATO-UC-025
+modulo: DNATO
+titulo: Asignar opciones de menú a un rol de una empresa
+perfil: Administrador
+estado: validado
+version: "0.3"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Menu.php
+    detalle: "rolesList() (313-356), addMenuRoles() (98-157), activeMenuRole() (224-245), deleteMenuRole() (272-293)"
+  - repo: traz-comp-dnato
+    path: application/models/Mmenu.php
+    detalle: "addMenuRoles(), updateMembershipsMenues(), getMenuesRoles(): tabla seg.memberships_menues"
+  - repo: traz-comp-dnato
+    path: application/views/menu/rolesList.php
+  - repo: traz-tools
+    path: _backend/database/scripts/versiones/v2.8.1.2/configuracion_inicial_empresa_trg_func.sql
+    detalle: "trigger core.configuracion_inicial_empresa_trg(): al crear la empresa inserta solo las asignaciones de menú de 8 roles en seg.memberships_menues (líneas 33-44)"
+pantallas:
+  - "Gestión de Menúes → Menu por Rol"
+  - "Opción de Menú por Rol"
+precondiciones:
+  - Sesión iniciada con perfil Administrador
+  - La empresa tiene creados sus roles de trabajo (DNATO-UC-004)
+flujo_principal:
+  - paso: "Abre 'Menu por Rol'"
+    resultado: "Se muestra la grilla con Grupo, Módulo, Opciones, Roles, Estado y Acciones, y una empresa recién creada ya trae sus asignaciones iniciales"
+  - paso: "Elige la empresa, el rol, el módulo y la opción de menú, y confirma"
+    resultado: "Se muestra 'Guardado correctamente el registro.' y esa opción pasa a estar disponible para los usuarios con ese rol en esa empresa"
+flujos_alternativos:
+  - nombre: "Activar o desactivar la asignación"
+    pasos:
+      - paso: "Cambia el estado de una asignación existente"
+        resultado: "La opción deja de verse (o vuelve a verse) para los usuarios con ese rol"
+  - nombre: "No se puede guardar"
+    pasos:
+      - paso: "Confirma cuando la operación falla"
+        resultado: "Se muestra 'Error, no se puede guardar el registro'"
+validaciones:
+  - "La asignación es por empresa y rol: dos empresas pueden dar acceso a opciones distintas para el mismo rol"
+  - "Es la pieza que conecta los roles de trabajo creados con la empresa (DNATO-UC-004) con lo que cada usuario ve en el menú de Tools"
+  - "Las asignaciones iniciales de una empresa nueva se crean solas al darla de alta; esta pantalla sirve para ajustarlas después"
+  - "Un administrador solo puede asignar menúes a roles de una empresa suya"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  rol: "Solicitante de Mantenimiento"
+dudas: []
+notas:
+  - "Alcance confirmado por el PM el 2026-08-19."
+  - "Los menúes se asignan solos: el trigger `core.configuracion_inicial_empresa_trg()` inserta las filas de `seg.memberships_menues` al crear la empresa (confirmado por el PM el 2026-08-24). Esta pantalla es el ajuste posterior."
+  - "Ojo al escribir el test: el trigger asigna menúes a **8** de los 16 roles, y uno de esos ocho está escrito con un nombre que no existe (`Responsable Procesos` en vez de `Responsable de Procesos`) — hallazgos H-012 y H-013."
+  - "Validado por el PM el 2026-08-24 con esa regla. **Hoy el sistema no la cumple**: el desplegable de empresas trae todos los grupos del sistema. Registrado como hallazgo H-020."
+  - "Que los roles de Mantenimiento no reciban menú es correcto: Mantenimiento todavía no está migrado a Tools y vive en Asset Planner, así que este ABM no lo afecta (aclara el hallazgo H-013, que queda acotado a los roles de SMA/Residuos)."
+derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-025.menu-por-rol.spec.ts
+  feature: features/dnato/DNATO-UC-025.asignar-opciones-de-menu-a-un-rol-de-una-empresa.feature

@@ -1,0 +1,71 @@
+id: ALM-UC-006
+modulo: ALM
+titulo: Pedir materiales al almacén
+perfil: Solicitante
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Notapedido.php
+    detalle: "index() lista; crearPedido() abre el formulario; crearNotaPedido() guarda cabecera y detalle; pedidoNormal() lanza el proceso en Bonita"
+  - repo: traz-comp-almacenes
+    path: models/Notapedidos.php
+    detalle: "notaPedidos_List() filtra por empresa; setCabeceraNotaV2(), setDetaNotaV2(), setCaseId()"
+  - repo: traz-comp-almacenes
+    path: views/notapedido/generar_pedido.php
+  - repo: traz-tools
+    path: doc/adr/ADR-012-almacenes-aislamiento.md
+    detalle: "define crear_pedido_materiales como la única escritura del piloto MCP, con el patrón INSERT → BPM → rollback"
+pantallas:
+  - "Almacenes → Pedido Materiales"
+  - "Almacenes → Pedido Materiales → Agregar"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene artículos cargados
+flujo_principal:
+  - paso: "Entra a Almacenes → Pedido Materiales"
+    resultado: "Se muestra el listado de pedidos con las columnas Acciones, Pedido, Ord.Trabajo, Fecha, Detalle y Estado"
+  - paso: "Hace clic en 'Agregar'"
+    resultado: "Se abre el formulario de pedido nuevo"
+  - paso: "Escribe la justificación del pedido"
+    resultado: "El formulario acepta el texto"
+  - paso: "Busca un artículo, indica la cantidad y lo agrega al pedido"
+    resultado: "El artículo aparece en el detalle del pedido con su cantidad"
+  - paso: "Repite para cada artículo que necesita"
+    resultado: "El detalle acumula todos los artículos pedidos"
+  - paso: "Elige el establecimiento y el depósito al que se le pide"
+    resultado: "El pedido queda dirigido a ese depósito"
+  - paso: "Confirma con 'Guardar'"
+    resultado: "El pedido queda creado en estado 'Creada' y se dispara el proceso de aprobación en Bonita"
+flujos_alternativos:
+  - nombre: "El pedido nace de una orden de trabajo"
+    pasos:
+      - paso: "Desde una orden de trabajo pide material para esa orden"
+        resultado: "El formulario se abre con la orden ya asociada"
+      - paso: "Carga los artículos y confirma"
+        resultado: "El pedido queda asociado a la orden y aparece en la columna Ord.Trabajo del listado"
+  - nombre: "El proceso en Bonita no arranca"
+    pasos:
+      - paso: "Confirma el pedido y el proceso de Bonita falla"
+        resultado: "El pedido **se elimina**: no debe quedar un pedido guardado sin su proceso de aprobación"
+validaciones:
+  - "La justificación es obligatoria siempre, venga el pedido de una orden de trabajo o no"
+  - "No hay tope de cantidad: se puede pedir lo que sea, aunque no haya existencias — el pedido no mueve stock"
+  - "El pedido se crea en estado 'Creada'"
+  - "Si el proceso de Bonita falla, el pedido se elimina"
+  - "El pedido queda asociado a la empresa de la sesión"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  articulo: "uno existente de la empresa de prueba"
+  cantidad: 1
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s04
+  feature: features/alm/ALM-UC-006.pedir-materiales-al-almacen.feature
+notas:
+  - "Es el flujo central del módulo y el que ADR-012 elige para la única escritura del piloto MCP."
+  - "**Estados del pedido, relevados del código** (`models/Almtareas.php`, `models/Lotes.php`): `Creada` al nacer; `Aprobado` o `Rechazado` según la tarea de Bonita 'Aprueba pedido de Recursos Materiales'; y al entregar, `Entregado` (completa), `Ent. Parcial`, `Finalizado Ent. Parcial` (se cierra con lo entregado) o `Finalizado Sin Entrega`. Existe además `Cancelado`, que aparece en el cálculo del punto de pedido. Son **ocho**, y los cambia Bonita a través de las tareas del proceso, no la pantalla. Los dos estados de cierre —`Finalizado Ent. Parcial` y `Finalizado Sin Entrega`— no estaban en la lista que dio el PM al validar: conviene confirmarlos."
+  - "**Hoy el pedido NO se elimina si Bonita falla**: `crearNotaPedido()` guarda y `pedidoNormal()` lanza el proceso después, sin vuelta atrás. La validación de este caso describe lo que debe pasar; el test se deriva con `test.fail()` hasta que se corrija. Es el mismo patrón INSERT → BPM → rollback que ADR-012 exige para la tool MCP."
+  - "El pedido extraordinario quedó declarado **obsoleto por el PM (2026-08-25)** y se sacó de este caso. El `empr_id` fijo en 1 que tenía (issue #480) deja de ser urgente por eso, pero el issue sigue abierto porque el código está."

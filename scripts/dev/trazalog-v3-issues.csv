@@ -1,0 +1,941 @@
+"Title","Body","Labels","Status","Priority","Mes","Dependencias","Tipo","Origen","Stream CICD","Doc-link","Story Points","Requiere migracion BD","Epica ID"
+"[E0-INF-01] Preparar entorno DEV local en máquina del PM (Ubuntu 24)","Como PM técnico, necesito mi máquina local con Ubuntu 24 configurada como entorno DEV de v3, para construir el MCP Gateway, las APIs nuevas y los Virtual MCP Servers desde mi equipo personal sin necesidad de provisionar una VM dedicada en GCP.
+El acceso a las bases de datos productivas/staging se hace vía VPN (OpenVPN) a la red de Trazalog. Este entorno DEV es exclusivo para desarrollo y experimentación local — TEST sigue siendo VM en GCP (E0-INF-02) y PROD migra in-place en cutover (E0-INF-07).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Máquina local con Ubuntu 24 actualizada (apt update/upgrade ejecutados)
+2. OpenVPN cliente instalado y configurado para conectar a la red de Trazalog
+3. Conexión validada: ping a la BD de staging-v2 y a las VMs corporativas
+4. Cliente DBeaver (u otro) instalado y conectado a la BD vía VPN para inspección de schema
+5. Git, Cursor y Claude Code configurados con credenciales del repo Trazalog
+6. Acceso SSH a las VMs DEV/TEST/PROD configurado con keys
+7. Carpetas de trabajo definidas: ~/trazalog/v3/ con subcarpetas por componente (mcp, apis, regression)
+
+DEFINICIÓN DE LISTO:
+- [ ] VPN se conecta y desconecta sin errores
+- [ ] Cursor abre el repo y puede commitear
+- [ ] Conexión a BD via DBeaver funcionando
+- [ ] Reviewed por PM","e0,type:técnica,must-have","Backlog","Must have","M1","—","Técnica","MCP architecture","Cross-cutting","CICD_STRATEGY.md (entorno PM)","2","No","E0"
+"[E0-INF-02] Provisionar VM nueva TEST con OS soportado","Como PM técnico, necesito una VM nueva con el mismo OS y configuración que DEV para usarla como ambiente TEST/staging-v3, separada del staging-v2 actual.
+Esta VM también es instalación limpia. Va a ser la que ejecute la suite de regresión Pareto contra v3 antes del cutover.
+
+CRITERIOS DE ACEPTACIÓN:
+1. VM provisionada en GCP con el mismo OS elegido en E0-INF-01
+2. Specs equivalentes a DEV (4 vCPU, 4GB RAM, 20GB)
+3. Acceso SSH y OpenVPN configurados
+4. DNS/URL distinta de staging-v2 (ej: staging-v3.cloudtrazalog.com)
+
+DEFINICIÓN DE LISTO:
+- [ ] VM accesible y validada con un ping desde la VM DEV
+- [ ] Reviewed por PM","e0,type:técnica,must-have","Backlog","Must have","M1","E0-INF-01","Técnica","MCP architecture","Cross-cutting","MCP_ARCHITECTURE.md#9","3","No","E0"
+"[E0-INF-03] Instalar JDK 21 (Temurin) en DEV y TEST","Como PM técnico, necesito JDK 21 (Temurin OpenJDK) instalado en las VMs DEV y TEST de v3, porque WSO2 API Manager 4.6.0 requiere Java 21 según la documentación oficial.
+Sin esto el upgrade de WSO2 está bloqueado.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Temurin OpenJDK 21 instalado en DEV y TEST
+2. Variable JAVA_HOME configurada y persistente entre sesiones
+3. java -version devuelve openjdk version 21
+4. Validación con un proceso Java básico que arranca sin errores de glibc
+
+DEFINICIÓN DE LISTO:
+- [ ] Validado por SSH en ambas VMs
+- [ ] Reviewed por PM","e0,type:técnica,must-have","Backlog","Must have","M1","E0-INF-01,E0-INF-02","Técnica","MCP architecture","Cross-cutting","MCP_ARCHITECTURE.md#9.2","2","No","E0"
+"[E0-INF-04] Instalar WSO2 API Manager 4.6.0 en DEV","Como PM técnico, necesito WSO2 API Manager 4.6.0 (open source, Apache 2.0) instalado en la VM DEV con configuración base, porque es el componente central que provee el MCP Gateway, MCP Hub, Developer Portal, OAuth 2.1 y rate limiting.
+Esta versión incluye todo lo necesario para virtualizar APIs como MCP Servers sin código, y es 100% gratuita.
+
+CRITERIOS DE ACEPTACIÓN:
+1. WSO2 4.6.0 corriendo en DEV con consola accesible en https://<dev-vm>:9443/carbon
+2. Developer Portal accesible en https://<dev-vm>:9443/devportal
+3. Publisher accesible en https://<dev-vm>:9443/publisher
+4. Certificado SSL configurado (puede ser self-signed para DEV)
+5. Base de datos H2 inicial OK (PostgreSQL queda para TEST/PROD)
+6. MCP Gateway listado como capability disponible
+
+DEFINICIÓN DE LISTO:
+- [ ] Smoke test: crear API hello-world en publisher y consumir desde devportal
+- [ ] Documentado el procedimiento de instalación en docs/infra/wso2-install.md
+- [ ] Reviewed por PM","e0,type:técnica,must-have","Backlog","Must have","M1","E0-INF-03","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1;MCP_ARCHITECTURE.md#11","5","No","E0"
+"[E0-INF-05] Instalar WSO2 4.6.0 en TEST + PostgreSQL","Como PM técnico, necesito WSO2 4.6.0 instalado en la VM TEST con base de datos PostgreSQL (no H2), porque TEST simula el comportamiento de PROD y PostgreSQL es el motor que va a usar producción.
+TEST también es donde se ejecuta la suite de regresión Pareto contra v3.
+
+CRITERIOS DE ACEPTACIÓN:
+1. WSO2 4.6.0 corriendo en TEST con consolas accesibles vía URL pública (HTTPS)
+2. PostgreSQL configurado como user store y registry
+3. Backup automático diario de la BD configurado
+4. Métricas básicas de WSO2 visibles desde la consola
+
+DEFINICIÓN DE LISTO:
+- [ ] Smoke test end-to-end OK desde un cliente externo
+- [ ] PostgreSQL backup verificado restaurando en una BD temporal
+- [ ] Reviewed por PM","e0,type:técnica,must-have","Backlog","Must have","M1","E0-INF-04","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","5","No","E0"
+"[E0-INF-06] Migrar APIs y configuración de WSO2 4.1.0 a 4.6.0","Como PM técnico, necesito exportar las APIs y configuraciones del WSO2 4.1.0 actual e importarlas a la nueva instancia 4.6.0, para no perder lo que ya está construido y operativo en v2.
+Se usa la herramienta apictl que es la oficial de WSO2 para CI/CD de APIs entre instancias.
+
+CRITERIOS DE ACEPTACIÓN:
+1. apictl instalado y configurado con perfiles para 4.1.0 y 4.6.0
+2. Inventario completo de APIs migradas vs APIs descartadas (con justificación)
+3. Todas las APIs marcadas como 'a migrar' funcionan en 4.6.0
+4. Si hay incompatibilidades documentadas en docs/infra/wso2-migration-issues.md
+5. WSO2 4.1.0 sigue corriendo en paralelo durante M1-M3 hasta validar 4.6.0
+
+DEFINICIÓN DE LISTO:
+- [ ] Smoke test de las 3 APIs más críticas en 4.6.0
+- [ ] Documento de migración revisado por socio técnico
+- [ ] Reviewed por PM","e0,type:técnica,must-have","Backlog","Must have","M1","E0-INF-05","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#13","5","No","E0"
+"[E0-INF-07] Migración in-place de OS en PROD (cutover)","Como PM técnico, necesito un plan de migración in-place del OS de la VM de PROD desde CentOS 7 al OS elegido (Rocky 9 o Ubuntu 22.04), ejecutado durante la ventana de cutover de v2 a v3.
+Esto es distinto de DEV/TEST (donde se hizo instalación limpia). En PROD hay datos y servicios en operación, así que se ejecuta como parte del cutover único orquestado.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Plan de migración documentado paso a paso con tiempos estimados y rollback
+2. Backup completo de la VM de PROD antes de iniciar (snapshot GCP + dump BD)
+3. Procedimiento validado contra TEST en al menos 2 ensayos previos
+4. Ventana de mantenimiento coordinada con clientes (notificación con 7 días)
+5. Post-migración: smoke test completo + suite de regresión contra PROD
+6. Plan de rollback ejecutable en menos de 30 minutos
+
+DEFINICIÓN DE LISTO:
+- [ ] Migración ejecutada en PROD sin pérdida de datos
+- [ ] Suite de regresión pasa contra PROD post-migración
+- [ ] Documento de incidentes y lecciones aprendidas creado
+- [ ] Reviewed por PM y socio comercial (informado)","e0,type:técnica,must-have","Backlog","Must have","M4","E0-INF-06,E8-REG-05","Técnica","MCP architecture","Cross-cutting","MCP_ARCHITECTURE.md#9.3;CICD_STRATEGY.md#8","13","No","E0"
+"[E0-INF-08] Configurar OpenTelemetry Collector para observabilidad","Como PM técnico, necesito un collector de OpenTelemetry (open source, Apache 2.0) para captura de logs y métricas distribuidas de WSO2 y de los servicios PHP, porque la observabilidad nativa es un requisito para diagnosticar problemas durante MVP y cuando se sumen clientes.
+Costo: $0. Se instala en TEST primero, después en PROD.
+
+CRITERIOS DE ACEPTACIÓN:
+1. OTel Collector instalado en TEST
+2. Exporters configurados para WSO2 (logs + métricas)
+3. Backend de visualización elegido (puede ser Grafana + Prometheus, o Jaeger para tracing)
+4. Tracing distribuido funcional entre WSO2 y un endpoint PHP de prueba
+
+DEFINICIÓN DE LISTO:
+- [ ] Trace de prueba visible en el backend
+- [ ] Documentado en docs/infra/observability.md
+- [ ] Reviewed por PM","e0,type:técnica,should-have","Backlog","Should have","M2","E0-INF-05","Técnica","MCP architecture","Cross-cutting","MCP_ARCHITECTURE.md#11","3","No","E0"
+"[E1-API-01] Inventario completo de APIs y DataServices ya expuestos","Como PM técnico, necesito un inventario completo de todas las APIs REST y DataServices que ya están expuestas en WSO2 (post upgrade a 4.6.0), para identificar cuáles puedo virtualizar como MCP Servers directamente y cuáles tengo que crear desde cero.
+Esta es la base del trabajo de E1 y de E2 — sin saber qué hay, no podemos planificar qué falta.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Documento con tabla de todas las APIs en WSO2: nombre, URL, método HTTP, parámetros, qué módulo expone
+2. Para cada API: si tiene OpenAPI spec actualizada (sí/no/desactualizada)
+3. Categorización por módulo: Asset Planner, Almacenes, Procesos, Residuos, Producción, otros
+4. Gap analysis: qué APIs faltan para cubrir los Virtual MCP Servers planeados (Equipos, OTs, Preventivos, KPIs, Stock)
+
+DEFINICIÓN DE LISTO:
+- [ ] Documento en docs/api/inventory-2026.md
+- [ ] Revisado y aprobado por PM","e1,type:investigación,must-have","Backlog","Must have","M1","E0-INF-06","Investigación","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#13","3","No","E1"
+"[E1-API-02] Relevamiento de models CodeIgniter de Asset Planner","Como PM técnico, necesito relevar los models de CodeIgniter de Asset Planner para identificar todos los queries y lógica de orquestación que tendré que exponer como APIs WSO2.
+Asset Planner tiene 59 models y 61 controladores. La mayoría de la lógica de cálculo (KPIs, OTs, preventivos) vive ahí en PHP — hay que migrar parte de eso a WSO2 (ADR-003) y otra parte exponerla con DataServices SQL directos.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Documento por cada entidad clave: Equipos, OTs, Preventivos, Predictivos, Lecturas, Historial, Consumo de materiales, KPIs
+2. Para cada model: nombre, métodos relevantes, queries SQL principales, tablas involucradas, lógica de cálculo no trivial
+3. Identificación de orquestaciones que cruzan varios models (típicamente en controllers) — candidatas a sequence WSO2
+4. Marcado explícito de qué se puede convertir en DataService SQL puro y qué requiere lógica de mediación
+
+DEFINICIÓN DE LISTO:
+- [ ] Documento en docs/api/codeigniter-models-survey.md
+- [ ] Revisado por PM","e1,type:investigación,must-have","Backlog","Must have","M1","—","Investigación","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#13;MCP_ARCHITECTURE.md#3.2","5","No","E1"
+"[E1-API-03] ADR — Mapeo de orquestaciones PHP a estrategia WSO2","Como PM técnico, necesito un ADR formal que decida, para cada orquestación identificada en E1-API-02, si se resuelve con: (a) DataService SQL en WSO2, (b) sequence de mediación WSO2, o (c) excepción que requiere Python en Phase 2.
+El criterio del ADR-003 es: maximizar WSO2, reservar Python solo para AI/ML/RAG. Toda lógica determinista de datos debe migrar a WSO2.
+
+CRITERIOS DE ACEPTACIÓN:
+1. ADR creado en docs/adr/ADR-003-php-to-wso2-mapping.md
+2. Tabla de decisión por orquestación: estrategia elegida + justificación
+3. Listado priorizado para los 5 Virtual MCP Servers del MVP (Equipos, OTs, Preventivos, KPIs, Stock)
+4. Excepciones marcadas explícitamente (lo que sí va a Python en Phase 2)
+
+DEFINICIÓN DE LISTO:
+- [ ] ADR aprobado por PM
+- [ ] Linkeado desde MCP_ARCHITECTURE.md sección 3.2","e1,type:investigación,must-have","Backlog","Must have","M1","E1-API-01,E1-API-02","Investigación","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#3.2","3","No","E1"
+"[E1-API-04] Generar APIs WSO2 — Equipos / Activos","Como agente IA del cliente minero, necesito poder consultar el catálogo de equipos del proveedor con filtros relevantes, para responder preguntas como '¿qué equipos críticos hay en el sector molienda?'.
+Esta API alimenta el Virtual MCP Server de Equipos (E2-MCP-02). La fuente es Asset Planner.
+
+CRITERIOS DE ACEPTACIÓN:
+1. API REST GET /api/equipos con filtros opcionales: estado, criticidad, area, sector, cliente_id
+2. API REST GET /api/equipos/{id} devuelve detalle completo con jerarquía sistema/componente
+3. API REST GET /api/equipos/{id}/disponibilidad devuelve disponibilidad actual y de últimos 12 meses
+4. API REST GET /api/equipos/qr/{codigo_qr} devuelve equipo por código QR
+5. OpenAPI 3.0 spec actualizada y publicada en WSO2
+6. Respeta multi-empresa via header X-Company-Id o claim OAuth
+7. Tiempo de respuesta < 800ms para hasta 500 equipos
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests con Hurl que cubren los 4 endpoints
+- [ ] OpenAPI spec en docs/api/equipos.yaml
+- [ ] Reviewed por PM","e1,type:técnica,must-have","Backlog","Must have","M1","E1-API-03","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","5","No","E1"
+"[E1-API-05] Generar APIs WSO2 — Órdenes de Trabajo (read-only)","Como agente IA del cliente, necesito consultar OTs filtradas por equipo, técnico, estado, tipo y fecha, para responder preguntas como '¿qué OTs vencidas tiene asignadas el técnico Pérez esta semana?'.
+MVP es read-only (writes en Phase 2 / E9). Cubre OTs correctivas, preventivas y predictivas.
+
+CRITERIOS DE ACEPTACIÓN:
+1. API REST GET /api/ot con filtros: equipo_id, tecnico_id, estado, tipo, fecha_desde, fecha_hasta
+2. API REST GET /api/ot/{id} devuelve detalle completo con timestamps (solicitud, asignación, inicio, fin), materiales consumidos, observaciones
+3. API REST GET /api/ot/vencidas devuelve OTs con preventivo vencido y/o sin cerrar más allá del SLA
+4. OpenAPI 3.0 spec actualizada
+5. Respeta multi-empresa
+6. Paginación implementada (max 100 por request)
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests con Hurl que cubren listado, detalle y vencidas
+- [ ] OpenAPI spec en docs/api/ot.yaml
+- [ ] Reviewed por PM","e1,type:técnica,must-have","Backlog","Must have","M1","E1-API-03","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","5","No","E1"
+"[E1-API-06] Generar APIs WSO2 — Preventivos y plan de mantenimiento","Como agente IA del cliente, necesito consultar el plan de mantenimiento preventivo y los preventivos vencidos por período, para soportar la consulta '¿qué preventivos vencen este mes y cuáles están atrasados?'.
+Reusa el dato de Asset Planner. El PM Compliance se calcula sobre estos datos.
+
+CRITERIOS DE ACEPTACIÓN:
+1. API REST GET /api/preventivos con filtros: equipo_id, sector, fecha_desde, fecha_hasta, estado_cumplimiento
+2. API REST GET /api/preventivos/vencidos devuelve los pendientes pasados de su fecha programada
+3. API REST GET /api/preventivos/proximos devuelve los que vencen en los próximos N días (parámetro)
+4. API REST GET /api/preventivos/{equipo_id}/historial devuelve cumplimiento histórico del equipo
+5. OpenAPI 3.0 spec
+6. Multi-empresa respetado
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests Hurl OK
+- [ ] OpenAPI spec en docs/api/preventivos.yaml
+- [ ] Reviewed por PM","e1,type:técnica,must-have","Backlog","Must have","M2","E1-API-03","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","3","No","E1"
+"[E1-API-07] Generar APIs WSO2 — KPIs de mantenimiento","Como agente IA del cliente, necesito obtener los KPIs ya calculados por Asset Planner (Disponibilidad, MTBF, MTTR, MTTF, Confiabilidad, ratio Preventivo/Correctivo/Backlog, Equipos Operativos), para responder preguntas tipo '¿cómo viene la disponibilidad de la flota este mes?'.
+Se replica la lógica del dashboard PHP existente. Decisión técnica del ADR-003: si la lógica es compleja, exponer como sequence WSO2; si es agregación SQL pura, como DataService.
+
+CRITERIOS DE ACEPTACIÓN:
+1. API REST GET /api/kpi/disponibilidad con filtros: grupo_id, sector_id, equipo_id, periodo (YYYY-MM o rango)
+2. API REST GET /api/kpi/mtbf, /api/kpi/mttr, /api/kpi/mttf con mismos filtros
+3. API REST GET /api/kpi/confiabilidad con mismos filtros
+4. API REST GET /api/kpi/ratio-mantenimiento devuelve % preventivo, correctivo, backlog
+5. API REST GET /api/kpi/equipos-operativos devuelve % activos vs en reparación
+6. OpenAPI 3.0 spec
+7. Resultados consistentes con el dashboard PHP actual (validar con 3 escenarios)
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests Hurl que comparan resultados con dashboard PHP
+- [ ] OpenAPI spec en docs/api/kpi.yaml
+- [ ] Reviewed por PM","e1,type:técnica,must-have","Backlog","Must have","M2","E1-API-02,E1-API-03","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","5","No","E1"
+"[E1-API-08] Generar APIs WSO2 — Stock almacén legacy de Asset Planner","Como agente IA del cliente minero, necesito consultar el stock de repuestos del cliente, sabiendo que el early adopter ya tiene los datos cargados en el almacén legacy de Asset Planner (no en traz-comp-almacenes).
+Esta API expone el almacén legacy de Asset Planner. Para clientes nuevos que se onboardeen directo en traz-comp-almacenes se usa otro Virtual MCP Server (E1-API-09). Esta API también sirve como insumo para la migración futura del almacén legacy a traz-comp-almacenes (E9-FUT-01).
+
+CRITERIOS DE ACEPTACIÓN:
+1. API REST GET /api/stock-legacy/articulos lista artículos del almacén legacy
+2. API REST GET /api/stock-legacy/{articulo_id} devuelve stock actual
+3. API REST GET /api/stock-legacy/{articulo_id}/consumo devuelve consumo histórico (parámetro: período)
+4. API REST GET /api/stock-legacy/punto-pedido devuelve artículos bajo punto de pedido
+5. API REST GET /api/stock-legacy/movimientos devuelve movimientos históricos
+6. OpenAPI 3.0 spec con descripción explícita: 'Fuente: Asset Planner ALM legacy. Para clientes nuevos usar /api/stock'
+7. Multi-empresa respetado
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests Hurl OK
+- [ ] OpenAPI spec en docs/api/stock-legacy.yaml
+- [ ] Reviewed por PM","e1,type:técnica,must-have","Backlog","Must have","M1","E1-API-02,E1-API-03","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","5","No","E1"
+"[E1-API-09] Completar APIs de traz-comp-almacenes","Como PM técnico, necesito identificar y completar las APIs faltantes de traz-comp-almacenes (módulo nuevo, multi-depot), para que clientes nuevos que se onboardeen directamente puedan usar el Virtual MCP Server de stock sin pasar por el almacén legacy.
+El módulo es más maduro que el legacy y probablemente tiene mejor cobertura de APIs, pero conviene auditar.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Inventario de APIs actuales de traz-comp-almacenes
+2. Gap analysis vs lo que necesita el Virtual MCP Server de Stock para clientes nuevos
+3. APIs faltantes generadas (mismo patrón que E1-API-08 pero contra traz-comp-almacenes)
+4. OpenAPI 3.0 spec
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests Hurl OK
+- [ ] OpenAPI spec en docs/api/stock.yaml
+- [ ] Reviewed por PM","e1,type:técnica,should-have","Backlog","Should have","M2","E1-API-01","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","3","No","E1"
+"[E1-API-10] Documentación OpenAPI consolidada en WSO2 Publisher","Como PM técnico, necesito que todas las APIs nuevas tengan su OpenAPI 3.0 spec actualizada y publicada en el WSO2 API Publisher, para que el MCP Gateway pueda virtualizarlas automáticamente como Virtual MCP Servers (cero código).
+Esto es prerequisito para toda la épica E2.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Las 6 APIs (Equipos, OTs, Preventivos, KPIs, Stock-legacy, Stock-tools) tienen spec publicada en Publisher
+2. Cada spec tiene descripción semántica clara para cada operación (la descripción se vuelve la descripción del MCP tool)
+3. Cada operación tiene ejemplo de request y response
+4. Naming consistente entre las 6 APIs (snake_case, prefijos claros)
+
+DEFINICIÓN DE LISTO:
+- [ ] Las 6 APIs visibles en el WSO2 Developer Portal
+- [ ] Reviewed por PM","e1,type:documentación,must-have","Backlog","Must have","M2","E1-API-04,E1-API-05,E1-API-06,E1-API-07,E1-API-08","Documentación","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","3","No","E1"
+"[E2-MCP-01] Configurar OAuth 2.1 + DCR en WSO2 MCP Gateway","Como PM técnico, necesito OAuth 2.1 completo configurado en el WSO2 MCP Gateway con Dynamic Client Registration (DCR), porque DCR es requisito para que Trazalog sea listable en el directorio MCP de Anthropic.
+OAuth 2.1 incluye PKCE obligatorio, scopes granulares por tool, resource indicators (RFC 8707) y audience binding.
+
+CRITERIOS DE ACEPTACIÓN:
+1. OAuth 2.1 funcionando con PKCE obligatorio (no se puede saltear)
+2. Scopes granulares definidos por tool (ej: tool:equipos:read, tool:ot:read, tool:kpi:read)
+3. Resource indicators (RFC 8707) implementados — cada token tiene audience específica
+4. Dynamic Client Registration (DCR) endpoint accesible y funcional
+5. Test: registrar un cliente nuevo vía DCR sin intervención manual
+6. Test: token con scope incorrecto no puede invocar tool fuera de su scope
+
+DEFINICIÓN DE LISTO:
+- [ ] Suite de tests OAuth/DCR con Hurl
+- [ ] Documentado en docs/security/oauth-mcp.md
+- [ ] Reviewed por PM","e2,type:técnica,must-have","Backlog","Must have","M1","E0-INF-04","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.1","5","No","E2"
+"[E2-MCP-02] Crear Virtual MCP Server: Equipos / Activos","Como agente IA del cliente minero, necesito un MCP Server que exponga consultas sobre el catálogo de equipos del proveedor, para responder preguntas tipo '¿qué excavadoras críticas tenemos disponibles hoy?'.
+Se configura virtualizando la API E1-API-04 desde la consola de WSO2 sin escribir código.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Virtual MCP Server 'trazalog-equipos' creado en WSO2 MCP Hub
+2. Tools generadas: list_equipos, get_equipo_details, get_disponibilidad, get_equipo_by_qr
+3. Cada tool tiene descripción semántica clara (la usa el LLM para decidir cuándo invocarla)
+4. Tool descriptions incluyen ejemplos de uso típicos en lenguaje natural
+5. MCP Server accesible vía Streamable HTTP en https://<wso2>/mcp/equipos
+6. Validado con MCP Inspector y Claude Desktop
+
+DEFINICIÓN DE LISTO:
+- [ ] PoC documentado: 3 prompts reales que usan el server
+- [ ] Reviewed por PM","e2,type:técnica,must-have","Backlog","Must have","M2","E1-API-04,E1-API-10,E2-MCP-01","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#3.2;MCP_ARCHITECTURE.md#4.1","3","No","E2"
+"[E2-MCP-03] Crear Virtual MCP Server: Órdenes de Trabajo (read-only)","Como agente IA del cliente minero, necesito un MCP Server que exponga consultas sobre OTs, para soportar consultas tipo 'mostrame las OTs vencidas del técnico Pérez' o 'qué OTs cerramos esta semana en el equipo crítico A-104'.
+Solo lectura en MVP. Writes (crear, modificar) van en Phase 2 / E9.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Virtual MCP Server 'trazalog-ot' creado en WSO2
+2. Tools: list_ot, get_ot_details, list_ot_vencidas, list_ot_by_equipo, list_ot_by_tecnico
+3. Descripciones semánticas claras
+4. Streamable HTTP en https://<wso2>/mcp/ot
+5. Validado con MCP Inspector
+
+DEFINICIÓN DE LISTO:
+- [ ] PoC con 3 prompts reales
+- [ ] Reviewed por PM","e2,type:técnica,must-have","Backlog","Must have","M2","E1-API-05,E1-API-10,E2-MCP-01","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#3.2","3","No","E2"
+"[E2-MCP-04] Crear Virtual MCP Server: Preventivos","Como agente IA del cliente, necesito un MCP Server que exponga el plan de preventivos y los vencidos, para responder consultas tipo '¿qué preventivos vencen esta semana?' o 'cuál es el cumplimiento histórico del equipo A-104'.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Virtual MCP Server 'trazalog-preventivos' creado en WSO2
+2. Tools: get_preventive_plan, list_due_preventives, list_upcoming_preventives, get_compliance_history
+3. Descripciones semánticas claras
+4. Streamable HTTP en https://<wso2>/mcp/preventivos
+5. Validado con MCP Inspector
+
+DEFINICIÓN DE LISTO:
+- [ ] PoC con 2 prompts reales
+- [ ] Reviewed por PM","e2,type:técnica,must-have","Backlog","Must have","M2","E1-API-06,E1-API-10,E2-MCP-01","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#3.2","2","No","E2"
+"[E2-MCP-05] Crear Virtual MCP Server: KPIs de mantenimiento","Como agente IA del cliente minero, necesito un MCP Server que devuelva KPIs (Disponibilidad, MTBF, MTTR, MTTF, Confiabilidad, ratio prev/correc, equipos operativos), para responder consultas estratégicas tipo 'resumime los KPIs del último trimestre' o '¿cómo viene la disponibilidad por sector?'.
+Estos KPIs son los que las mineras exigen a sus contratistas.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Virtual MCP Server 'trazalog-kpi' creado en WSO2
+2. Tools: get_disponibilidad, get_mtbf, get_mttr, get_mttf, get_confiabilidad, get_ratio_mantenimiento, get_equipos_operativos
+3. Cada tool acepta parámetros: período (YYYY-MM o rango), filtros (grupo, sector, equipo)
+4. Descripciones semánticas que indican benchmarks típicos del sector minero (ej: disponibilidad >92% es world-class)
+5. Streamable HTTP en https://<wso2>/mcp/kpi
+6. Validado con MCP Inspector
+
+DEFINICIÓN DE LISTO:
+- [ ] PoC con 3 prompts reales (resumen mensual, análisis por sector, comparación con benchmarks)
+- [ ] Reviewed por PM","e2,type:técnica,must-have","Backlog","Must have","M2","E1-API-07,E1-API-10,E2-MCP-01","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#3.2","3","No","E2"
+"[E2-MCP-06] Crear Virtual MCP Server: Stock legacy AP (ADR-004)","Como agente IA del cliente minero (early adopter), necesito un MCP Server que exponga el stock del almacén legacy de Asset Planner, sabiendo que el cliente tiene los repuestos cargados ahí y no en traz-comp-almacenes.
+Las descripciones de los tools deben aclarar EXPLÍCITAMENTE que la fuente es Asset Planner ALM legacy. Esta decisión está formalizada en ADR-004.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Virtual MCP Server 'trazalog-stock-legacy' creado en WSO2
+2. Tools: list_articulos_legacy, get_stock_legacy, get_consumo_historico_legacy, list_punto_pedido_legacy, list_movimientos_legacy
+3. Cada descripción de tool inicia con: 'FUENTE: Asset Planner ALM (almacén legacy). Para clientes nuevos en traz-comp-almacenes usar tools del MCP Server trazalog-stock'
+4. Streamable HTTP en https://<wso2>/mcp/stock-legacy
+5. Validado con MCP Inspector
+
+DEFINICIÓN DE LISTO:
+- [ ] PoC con 2 prompts reales
+- [ ] ADR-004 actualizado con referencia a este server
+- [ ] Reviewed por PM","e2,type:técnica,must-have","Backlog","Must have","M2","E1-API-08,E1-API-10,E2-MCP-01","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#ADR-004","3","No","E2"
+"[E2-MCP-07] Configurar rate limiting por tier en WSO2","Como Trazalog, necesito que WSO2 aplique cuotas distintas por tier de suscripción del cliente, para implementar el modelo de pricing capacity-based del PRICING_STRATEGY.
+MVP solo activa Free y Starter (Professional y Enterprise van en Phase 2).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Tier Free configurado: 100 calls MCP / día, máximo 5 usuarios en plataforma
+2. Tier Starter configurado: 1.000 calls MCP / mes, hasta 15 usuarios, USD 199/mes
+3. Tiers Professional (4.000 calls, USD 449) y Enterprise (15.000+, USD 899) configurados como 'inactive' en MVP
+4. Rate limiting probado: cliente Free que excede 100 calls/día recibe 429 Too Many Requests
+5. Rate limiting probado: cliente Starter que excede 1000 calls/mes recibe 429
+6. Mensajes de error de WSO2 son claros (incluyen tier actual y cuota)
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests con Hurl que validan los 4 tiers
+- [ ] Documentado en docs/pricing/wso2-tiers.md
+- [ ] Reviewed por PM","e2,type:técnica,must-have","Backlog","Must have","M3","E2-MCP-02,E2-MCP-03,E2-MCP-04,E2-MCP-05,E2-MCP-06","Técnica","Pricing strategy","Stream 1 — Features v3","MCP_ARCHITECTURE.md#5.5;PRICING_STRATEGY.docx","3","No","E2"
+"[E2-MCP-08] Publicar tools en MCP Hub con documentación copy-ready","Como cliente minero (admin de cuenta), necesito instrucciones copy-paste para conectar mi instancia de Trazalog a Claude Desktop o VS Code Copilot, para que sea autoservicio.
+El MCP Hub de WSO2 expone esto automáticamente, pero hay que llenarlo con descripciones claras.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Cada Virtual MCP Server tiene su página en el MCP Hub con: descripción del propósito, tools disponibles, ejemplos de prompts, configuración JSON para Claude Desktop, configuración para VS Code Copilot
+2. Tier Free habilitado para autoservicio (cualquiera puede registrarse y probar)
+3. Páginas accesibles desde URL pública (https://hub.cloudtrazalog.com)
+4. Búsqueda funcional sobre el catálogo
+
+DEFINICIÓN DE LISTO:
+- [ ] Cliente externo prueba conexión sin asistencia y reporta éxito
+- [ ] Reviewed por PM","e2,type:documentación,must-have","Backlog","Must have","M3","E2-MCP-02,E2-MCP-03,E2-MCP-04,E2-MCP-05,E2-MCP-06,E2-MCP-07","Documentación","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.2","3","No","E2"
+"[E2-MCP-09] PoC con MCP Inspector y Claude Desktop (validación end-to-end)","Como PM técnico, necesito validar que la cadena completa funciona end-to-end (LLM → Claude Desktop → MCP Server → WSO2 → API → BD), antes de mostrarlo al primer cliente minero.
+Probamos con datos reales del cliente piloto (post auditoría de datos E6-EA-02).
+
+CRITERIOS DE ACEPTACIÓN:
+1. MCP Inspector valida los 5 servers (Equipos, OTs, Preventivos, KPIs, Stock legacy)
+2. Claude Desktop conectado a los 5 servers usando OAuth DCR
+3. Validados al menos 5 prompts reales con datos del cliente: equipos críticos disponibles, OTs vencidas, KPIs del último mes, preventivos próximos, stock bajo
+4. Tiempo de respuesta < 3s end-to-end por prompt
+5. Logs de WSO2 confirman que cada tool call invocó correctamente la API correspondiente
+
+DEFINICIÓN DE LISTO:
+- [ ] Documento de validación con screenshots y resultados en docs/validation/mcp-poc.md
+- [ ] Reviewed por PM","e2,type:funcional,must-have","Backlog","Must have","M3","E2-MCP-08","Funcional","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#13","3","No","E2"
+"[E2-MCP-10] Submission al directorio MCP de Anthropic","Como Trazalog, necesito estar listado en el directorio público de connectors MCP de Anthropic, para ganar credibilidad y visibilidad en el ecosistema MCP.
+Requisito: Remote MCP server con Streamable HTTP + OAuth 2.1 + DCR (cubierto por E2-MCP-01). El directorio es canal de credibilidad, no de adquisición masiva.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Submission completado en claude.com/connectors siguiendo el procedimiento oficial
+2. Repositorio público con configuración de conexión (URL, OAuth setup)
+3. Documento de cumplimiento confirmando: Streamable HTTP, OAuth 2.1, DCR, scopes granulares
+4. Página de aterrizaje en sitio Trazalog que linkea al directorio
+
+DEFINICIÓN DE LISTO:
+- [ ] Listing aprobado por Anthropic
+- [ ] Reviewed por PM y socio comercial","e2,type:funcional,should-have","Backlog","Should have","M4","E2-MCP-09","Funcional","Estrategia","Stream 1 — Features v3","MCP_ARCHITECTURE.md#3.4","5","No","E2"
+"[E3-EXP-01] Biblioteca de prompts para mantenimiento minero","Como jefe de mantenimiento de un proveedor minero, necesito una biblioteca de prompts probados que resuelvan mis consultas más frecuentes, para no tener que aprender a escribir prompts efectivos desde cero.
+Los prompts deben ser resolubles 100% con los Virtual MCP Servers del MVP (read-only, sin Python). Son la primera experiencia que tiene el cliente con Trazalog + IA.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Al menos 10 prompts documentados con: prompt completo, explicación del valor, ejemplo de respuesta esperada, tools del MCP que invoca
+2. Cubre los 4 casos de impacto ALTO de la investigación minera: preventivos vencidos, plan mensual, recomendación de compra, KPIs ejecutivos
+3. Cubre 3 casos de impacto MEDIO: top equipos problemáticos, ratio prev/correc, historial por equipo
+4. Cada prompt validado contra datos reales del cliente piloto
+5. Material entregable: PDF descargable + página en docs.trazalog.com
+
+DEFINICIÓN DE LISTO:
+- [ ] Material disponible en docs/playbook/prompts-mineros.md
+- [ ] Validado con cliente piloto (al menos 5 prompts probados)
+- [ ] Reviewed por PM","e3,type:funcional,must-have","Backlog","Must have","M3","E2-MCP-09","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#4","5","No","E3"
+"[E3-EXP-02] Prompt para informe semanal/mensual a la minera","Como gerente de proveedor minero, necesito poder pedirle a la IA 'armame el informe para Barrick' y obtener en segundos un borrador profesional con OTs completadas, KPIs de disponibilidad, horas-hombre, materiales consumidos, y cumplimiento de plan preventivo.
+Hoy esto se arma a mano en Word/Excel y toma 2-3 horas. Es probablemente el feature con mayor wow-factor del MVP. Sin Python — la composición la hace el LLM con los tools disponibles.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Prompt template documentado que cruza datos de Equipos, OTs, KPIs y Stock legacy
+2. Output formato markdown estructurado: encabezado, resumen ejecutivo, tabla de OTs completadas, KPIs (disponibilidad, MTBF, MTTR), horas-hombre por equipo, materiales consumidos con costos, cumplimiento de plan preventivo, alertas
+3. Output exportable a PDF y Word desde Claude Desktop
+4. Validado contra el formato de informe que el cliente piloto envía actualmente a su minera
+5. Tiempo de generación end-to-end < 30s
+
+DEFINICIÓN DE LISTO:
+- [ ] Validación con cliente piloto (compara informe IA vs informe actual)
+- [ ] Documentado en docs/playbook/informe-minera.md
+- [ ] Reviewed por PM","e3,type:funcional,must-have","Backlog","Must have","M3","E2-MCP-02,E2-MCP-03,E2-MCP-05","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#2.7","3","No","E3"
+"[E3-EXP-03] Prompt para plan de mantenimiento asistido por IA","Como jefe de mantenimiento, necesito que la IA me sugiera el plan de mantenimiento del próximo mes cruzando preventivos por vencer + historial de fallas + criticidad, para no tener que armarlo a mano.
+Sin lógica predictiva ML (eso es Phase 2 con Python). El LLM hace la composición con los datos que devuelven los Virtual MCP Servers. Output es sugerencia — la creación de OTs queda manual en MVP (writes son Phase 2).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Prompt template que cruza tools: list_upcoming_preventives, list_ot_by_equipo (historial), get_disponibilidad, list_equipos (criticidad)
+2. Output: lista priorizada de OTs sugeridas con: equipo, tipo (preventivo/correctivo derivado), prioridad (basada en criticidad y atraso), recursos sugeridos
+3. Output validado: 'esto es sugerencia de la IA, no creó OTs en el sistema; creación manual desde Asset Planner'
+4. Validado con cliente piloto
+
+DEFINICIÓN DE LISTO:
+- [ ] Documentado en docs/playbook/plan-mantenimiento.md
+- [ ] Validado con cliente piloto
+- [ ] Reviewed por PM","e3,type:funcional,must-have","Backlog","Must have","M3","E2-MCP-04,E2-MCP-05,E2-MCP-02","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#4","3","No","E3"
+"[E3-EXP-04] Prompt para análisis de puntos de pedido (recomendación)","Como encargado de compras del proveedor minero, necesito que la IA detecte qué puntos de pedido están desajustados respecto al consumo real de los últimos 90 días, para no quedarme sin stock crítico ni acumular capital innecesario.
+Recomendación, no auto-ajuste. La aplicación del cambio queda manual (writes son Phase 2).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Prompt template que invoca tools: list_punto_pedido_legacy, get_consumo_historico_legacy
+2. Output identifica 2 categorías: artículos con punto bajo (riesgo de stockout) y con punto alto (capital inmovilizado)
+3. Por cada artículo: punto de pedido actual, consumo promedio últimos 90 días, recomendación numérica, justificación
+4. Validado con cliente piloto
+
+DEFINICIÓN DE LISTO:
+- [ ] Documentado en docs/playbook/puntos-pedido.md
+- [ ] Validado con cliente piloto
+- [ ] Reviewed por PM","e3,type:funcional,must-have","Backlog","Must have","M3","E2-MCP-06","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#2.4","3","No","E3"
+"[E3-EXP-05] Documentación de uso del MCP para el cliente","Como admin de cuenta de un proveedor minero, necesito un manual paso a paso para conectar mi instancia de Trazalog a Claude Desktop o VS Code Copilot, para hacerlo sin asistencia técnica de Trazalog.
+Sin esto, la barrera de adopción es muy alta y el MCP queda subutilizado.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Manual con: cómo obtener API key desde portal Trazalog, cómo configurar Claude Desktop (claude_desktop_config.json), cómo configurar VS Code Copilot, ejemplos de los 10 prompts más útiles
+2. Screenshots reales (no mockups)
+3. Versión PDF descargable
+4. Versión web en docs.trazalog.com
+5. Sección de troubleshooting con los 5 errores más comunes
+
+DEFINICIÓN DE LISTO:
+- [ ] Cliente piloto se conecta sin asistencia siguiendo el manual
+- [ ] Reviewed por PM","e3,type:documentación,must-have","Backlog","Must have","M3","E2-MCP-08","Documentación","Mining research","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.2","2","No","E3"
+"[E4-DSC-01] Habilitar analytics nativas de WSO2 para todos los MCP Servers","Como PM, necesito que cada llamada a un Virtual MCP Server quede registrada con metadatos completos (cliente, tool, parámetros, status, duración), para alimentar facturación, descubrimiento de patrones y diagnóstico.
+Las analytics nativas de WSO2 4.6.0 son built-in y gratuitas. Reemplazan a Moesif (descartado por costo, ver MDR-001).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Analytics WSO2 habilitadas para los 5 Virtual MCP Servers
+2. Cada call registra: empr_id, user_id, tool_name, parámetros (sanitizados), timestamp, duración, status code, tier consumido
+3. Retención mínima: 6 meses
+4. Datos consultables vía SQL desde la BD de analytics
+5. Validado: tras 50 calls de prueba, todas figuran en la BD
+
+DEFINICIÓN DE LISTO:
+- [ ] Query SQL de muestra documentada en docs/analytics/wso2-queries.md
+- [ ] Reviewed por PM","e4,type:técnica,must-have","Backlog","Must have","M2","E2-MCP-08","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.3;MCP_ARCHITECTURE.md#5.2","2","No","E4"
+"[E4-DSC-02] Script de reporte de consumo mensual por cliente","Como Trazalog (operación), necesito un script que genere mensualmente un reporte de consumo por cliente con: calls totales, desglose por tool, tier contratado, excedentes para cobro, para soportar facturación manual con AFIP + MercadoPago (MDR-002).
+Sin Stripe — este script reemplaza la lógica de facturación automática.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Script en bash o Python (sin Python complejo, solo SQL + formato) que consulta BD analytics WSO2
+2. Output: CSV o JSON por cliente con calls, costos calculados según tier, excedentes
+3. Ejecutable manualmente o vía cron mensual
+4. Por cada cliente: información lista para que el socio comercial genere factura AFIP
+5. Validado contra al menos 1 cliente real (empr_id) con calls reales del mes
+
+DEFINICIÓN DE LISTO:
+- [ ] Script en repo en scripts/billing/monthly-report.sh (o .py)
+- [ ] Documentado el procedimiento operativo
+- [ ] Reviewed por PM","e4,type:técnica,must-have","Backlog","Must have","M3","E4-DSC-01","Técnica","Pricing strategy","Stream 1 — Features v3","MCP_ARCHITECTURE.md#5.3;PRICING_STRATEGY.docx","3","No","E4"
+"[E4-DSC-03] Dashboard interno de patrones de uso MCP","Como PM, necesito un dashboard interno (solo Trazalog, no expuesto a clientes) que muestre patrones de uso del MCP, para detectar features de mayor valor y consultas que fallan.
+Implementación simple: notebook Jupyter o página PHP con queries a la BD de analytics WSO2.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Dashboard accesible internamente en https://admin.cloudtrazalog.com/mcp-analytics
+2. Métricas mostradas: top 10 tools más invocadas, top 10 tools con error, evolución semanal, hora pico de uso, clientes más activos, % de tools que devuelven vacío
+3. Filtros: por cliente, por período, por server
+4. Actualización automática diaria (no requiere intervención manual)
+
+DEFINICIÓN DE LISTO:
+- [ ] Dashboard en uso por PM al menos una vez por semana
+- [ ] Reviewed por PM","e4,type:funcional,should-have","Backlog","Should have","M3","E4-DSC-01","Funcional","Mining research","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.3","3","No","E4"
+"[E4-DSC-04] Detección de tool calls no soportadas (gaps de producto)","Como PM, necesito detectar cuando un cliente intenta invocar una tool que no existe o que falla por capacidad faltante, para alimentar el backlog de v3.1+ con features que el mercado pide.
+Categorización quincenal manual: el log no se interpreta solo, es input para sesiones de PM.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Query SQL en el dashboard que muestra tool calls con error_no_match o respuestas vacías sospechosas
+2. Sesión quincenal documentada de revisión por parte de PM
+3. Categorización: 'gap real' / 'consulta mal formulada' / 'datos faltantes en el cliente'
+4. Cada gap real se convierte en historia candidata al backlog v3.1
+
+DEFINICIÓN DE LISTO:
+- [ ] Plantilla de sesión quincenal en docs/discovery/template.md
+- [ ] Primera sesión ejecutada antes de fin M3
+- [ ] Reviewed por PM","e4,type:investigación,should-have","Backlog","Should have","M3","E4-DSC-01,E4-DSC-03","Investigación","Mining research","Stream 1 — Features v3","MCP_ARCHITECTURE.md#4.3","2","No","E4"
+"[E5-PRC-01] Configurar tier Free en WSO2 (PDR-001)","Como Trazalog, necesito el tier Free configurado como tier de suscripción nativo en WSO2, para que cualquier prospecto pueda registrarse y probar el sistema sin barrera de entrada.
+PDR-001: hasta 5 usuarios en plataforma, 0 calls MCP (solo demo del catálogo).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Tier 'free' creado en WSO2 con throttling configurado
+2. Throttling: máximo 5 usuarios activos por empresa, 0 calls MCP cuota mensual
+3. Cliente Free que intenta invocar tools MCP recibe 403 con mensaje claro
+4. Cliente Free que intenta crear el 6° usuario recibe error con CTA a upgrade
+5. Validación con flujo end-to-end de un cliente nuevo en tier Free
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests de throttling con Hurl
+- [ ] Documentado en docs/pricing/tier-free.md
+- [ ] Reviewed por PM","e5,type:técnica,must-have","Backlog","Must have","M3","E2-MCP-07","Técnica","Pricing strategy","Stream 1 — Features v3","PRICING_STRATEGY.docx","2","No","E5"
+"[E5-PRC-02] Configurar tier Starter en WSO2 (PDR-002, PDR-003)","Como Trazalog, necesito el tier Starter configurado en WSO2 con su cuota de calls MCP y precio de overage, para validar el modelo capacity-based con el primer cliente minero.
+PDR-002: USD 199/mes, 15 usuarios, 1.000 calls MCP/mes (read-only). PDR-003: USD 0,06 por call de overage.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Tier 'starter' creado en WSO2
+2. Throttling: 15 usuarios activos por empresa, 1.000 calls MCP/mes
+3. Cliente que excede 1.000 calls/mes sigue funcionando (NO se bloquea — el overage se cobra)
+4. Logs registran calls de overage para que E4-DSC-02 los facture
+5. Validación con cliente sintético de 1.100 calls/mes
+
+DEFINICIÓN DE LISTO:
+- [ ] Tests de throttling y overage
+- [ ] Documentado en docs/pricing/tier-starter.md
+- [ ] Reviewed por PM","e5,type:técnica,must-have","Backlog","Must have","M3","E2-MCP-07,E5-PRC-01","Técnica","Pricing strategy","Stream 1 — Features v3","PRICING_STRATEGY.docx","3","No","E5"
+"[E5-PRC-03] Dashboard simple de consumo en portal del cliente","Como admin de cuenta de un proveedor minero, necesito ver mi consumo MCP del mes en el portal de Trazalog, para saber cuánto llevo consumido y cuánto me queda del tier.
+Versión MÍNIMA del dashboard de control. La versión completa (con simulador, alertas, spending caps, breakdown por agente) es Phase 2 (E9-FUT-04).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Página PHP nueva en portal admin: /admin/mcp-consumo
+2. Muestra: calls del mes actual, % del tier consumido, cuota restante, fecha estimada de agotamiento al ritmo actual
+3. Tabla de tools más usadas en el mes
+4. Datos vienen de query a BD analytics WSO2
+5. Carga < 2s para hasta 5.000 calls/mes
+6. Si cliente está en Free: muestra CTA con beneficios de Starter
+
+DEFINICIÓN DE LISTO:
+- [ ] Vista funcional en staging-v3
+- [ ] Tests unitarios del controller
+- [ ] Documentado en docs/pricing/consumo-dashboard.md
+- [ ] Reviewed por PM","e5,type:funcional,must-have","Backlog","Must have","M3","E4-DSC-01,E4-DSC-02","Funcional","Pricing strategy","Stream 1 — Features v3","MCP_ARCHITECTURE.md#5.4;PRICING_STRATEGY.docx","5","No","E5"
+"[E5-PRC-04] Procedimiento manual de facturación AFIP + MercadoPago","Como socio comercial de Trazalog, necesito un procedimiento operativo claro para facturar mensualmente a clientes en tier Starter, para cobrar sin sistema de facturación automatizado.
+MDR-002: cero costo fijo de plataforma de pagos. Solo comisión MercadoPago por transacción.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Documento de procedimiento paso a paso: ejecutar script de reporte (E4-DSC-02) → revisar excedentes → emitir factura electrónica AFIP → enviar link de pago MercadoPago → registrar pago
+2. Plantillas de email para envío de factura
+3. Plantilla de factura AFIP cargada en el sistema de AFIP
+4. Link de pago MercadoPago configurado por cliente o link genérico
+5. Procedimiento ejecutado al menos 1 vez con cliente sintético
+
+DEFINICIÓN DE LISTO:
+- [ ] Documento en docs/operations/billing-procedure.md
+- [ ] Validado con socio comercial
+- [ ] Reviewed por PM","e5,type:documentación,must-have","Backlog","Must have","M4","E4-DSC-02","Documentación","Pricing strategy","Stream 1 — Features v3","MCP_ARCHITECTURE.md#5.6;PRICING_STRATEGY.docx","2","No","E5"
+"[E5-PRC-05] Validar tiers con primer cliente minero","Como socio comercial, necesito validar con el primer cliente minero (early adopter) que el tier Professional (USD 449) sea aceptable como punto de migración futura desde su licencia actual de USD 563/mes.
+Acción comercial pura — no produce código. Output: confirmación o ajuste de pricing.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Reunión comercial ejecutada con el cliente
+2. Pricing presentado: Free (3 meses early adopter), Starter (USD 199), Professional (USD 449 desde mes 4)
+3. Feedback del cliente registrado
+4. Si requiere ajuste: PDR de revisión creado
+
+DEFINICIÓN DE LISTO:
+- [ ] Notas de la reunión en docs/clients/early-adopter-pricing.md
+- [ ] Reviewed por PM y socio","e5,type:funcional,must-have","Backlog","Must have","M3","E5-PRC-02","Funcional","Pricing strategy","N/A","PRICING_STRATEGY.docx","1","No","E5"
+"[E6-EA-01] Preparar deck y acuerdo de early adopter","Como socio comercial, necesito un deck de presentación y un acuerdo formal de early adopter, para activar el programa con el cliente minero candidato.
+Acuerdo: 3 meses sin costo de capa MCP a cambio de feedback estructurado.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Deck (PDF o Google Slides) con: visión MCP, qué va a poder hacer el cliente, qué se espera del cliente, hoja de ruta de 12 semanas
+2. Acuerdo de early adopter firmable: 3 meses sin costo, compromiso de 1 sesión guiada inicial + 4 reuniones quincenales de seguimiento, derecho de uso de logo del cliente como caso de éxito (con su permiso)
+3. Contacto clave del cliente identificado (idealmente jefe de mantenimiento)
+
+DEFINICIÓN DE LISTO:
+- [ ] Materiales en docs/clients/early-adopter-package/
+- [ ] Acuerdo aprobado por PM y socio
+- [ ] Reviewed por PM","e6,type:documentación,must-have","Backlog","Must have","M2","—","Documentación","Mining research","N/A","investigacion-sector-minero-trazalog-v3-2.md#5","2","No","E6"
+"[E6-EA-02] Auditoría de datos del cliente antes de conectar MCP","Como PM, necesito verificar que los datos del cliente en Asset Planner están en condiciones para alimentar el MCP, para evitar que el cliente reciba respuestas pobres por datos incompletos.
+Si falta algo, ayudar a completarlo durante semana 2-3 del programa.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Checklist de calidad ejecutado: equipos con criticidad, OTs con timestamps completos, preventivos programados, lecturas predictivas, repuestos con punto de pedido
+2. Reporte de gaps: qué falta y cuánto esfuerzo es completarlo
+3. Plan de remediación acordado con el cliente
+4. Datos completados antes de conexión MCP
+
+DEFINICIÓN DE LISTO:
+- [ ] Reporte en docs/clients/<cliente>/data-audit.md
+- [ ] Cliente confirma calidad de datos
+- [ ] Reviewed por PM","e6,type:investigación,must-have","Backlog","Must have","M2","E6-EA-01","Investigación","Mining research","N/A","investigacion-sector-minero-trazalog-v3-2.md#5.5","3","No","E6"
+"[E6-EA-03] Conectar MCP a instancia productiva del cliente","Como PM técnico, necesito configurar la suscripción MCP del cliente en WSO2 con su API key y validar que los Virtual MCP Servers devuelven datos correctos y segregados, para tener todo listo antes de la sesión guiada.
+Este es el momento de la verdad técnica del MVP.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Suscripción del cliente creada en WSO2 con tier 'early-adopter' (cuota equivalente a Starter durante 3 meses)
+2. API key entregada al cliente con instrucciones
+3. Probadas 5 consultas reales con datos del cliente desde Claude Desktop
+4. Confirmado: el cliente NO ve datos de otras empresas (multi-empresa funciona)
+5. Tiempo de respuesta < 3s en las 5 consultas
+
+DEFINICIÓN DE LISTO:
+- [ ] Reporte de validación en docs/clients/<cliente>/mcp-connection.md
+- [ ] Cliente recibe instrucciones de conexión
+- [ ] Reviewed por PM","e6,type:técnica,must-have","Backlog","Must have","M3","E2-MCP-09,E6-EA-02","Técnica","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#5.3","3","No","E6"
+"[E6-EA-04] Sesión guiada inicial con contacto clave","Como PM y socio comercial, necesitamos ejecutar la sesión guiada inicial de ~2hs con el contacto clave del cliente, para hacer las primeras consultas usando los prompt templates y registrar lo que el cliente pregunta espontáneamente.
+Esta sesión define el modo de uso posterior (Claude Desktop directo, intermediario por WhatsApp, o esperar a UI propia post-MVP).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Reunión ejecutada (presencial o virtual de 2hs)
+2. Cliente probó los 10 prompts del playbook
+3. Registro de: qué consultó espontáneamente, qué le sorprendió, qué esperaba y no encontró
+4. Decisión documentada de modo de uso posterior
+5. Frecuencia de seguimiento confirmada (quincenal)
+
+DEFINICIÓN DE LISTO:
+- [ ] Notas en docs/clients/<cliente>/sesion-inicial.md
+- [ ] Reviewed por PM y socio","e6,type:funcional,must-have","Backlog","Must have","M3","E6-EA-03,E3-EXP-01","Funcional","Mining research","N/A","investigacion-sector-minero-trazalog-v3-2.md#5.3","3","No","E6"
+"[E6-EA-05] Seguimiento quincenal (semanas 5-12)","Como PM, necesito reuniones quincenales de 15 minutos con el cliente entre las semanas 5 y 12, para revisar el uso real del MCP, capturar feedback fresco y alimentar el motor de descubrimiento.
+Cuatro reuniones en total. Cada una se nutre del dashboard de uso (E4-DSC-03) + feedback verbal del cliente.
+
+CRITERIOS DE ACEPTACIÓN:
+1. 4 reuniones quincenales ejecutadas (semanas 5, 7, 9, 11)
+2. Por cada reunión: dashboard de uso compartido con el cliente, feedback registrado, decisiones tomadas
+3. Patrones detectados que alimentan E4-DSC-04
+4. Si surge un gap crítico: historia agregada al backlog v3.1+
+
+DEFINICIÓN DE LISTO:
+- [ ] Notas de las 4 reuniones en docs/clients/<cliente>/seguimiento/
+- [ ] Lista de patrones detectados consolidada al final del programa
+- [ ] Reviewed por PM","e6,type:funcional,must-have","Backlog","Must have","M3-M4","E6-EA-04,E4-DSC-03","Funcional","Mining research","N/A","investigacion-sector-minero-trazalog-v3-2.md#5.3","5","No","E6"
+"[E6-EA-06] Evaluación final y propuesta de pricing (semana 12)","Como socio comercial, necesito ejecutar la reunión de cierre con el cliente al final de los 3 meses, para presentar métricas de uso, valor entregado, propuesta de pricing y evaluar NPS.
+Si el cliente acepta migrar a Starter o Professional, se documenta como caso de éxito.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Reunión de cierre ejecutada
+2. Métricas presentadas: total de calls del trimestre, top tools usadas, tiempo ahorrado estimado en reportes (input del cliente)
+3. Propuesta de migración: Starter (USD 199) o Professional (USD 449) con comparación de valor vs licencia actual
+4. NPS del cliente capturado (escala 0-10 + comentario)
+5. Si NPS >= 8: caso de éxito autorizado y documentado
+
+DEFINICIÓN DE LISTO:
+- [ ] Acta de reunión en docs/clients/<cliente>/cierre.md
+- [ ] Caso de éxito (si aplica) en docs/cases/<cliente>.md
+- [ ] Reviewed por PM y socio","e6,type:funcional,must-have","Backlog","Must have","M4","E6-EA-05","Funcional","Mining research","N/A","investigacion-sector-minero-trazalog-v3-2.md#5.4","2","No","E6"
+"[E7-CICD-01] Crear rama develop-v3 con protected branch","Como PM técnico, necesito la rama develop-v3 creada y protegida en GitHub, para separar el flujo de features de v3 del flujo de soporte de v2 (que sigue en develop).
+Decisión documentada en CICD_STRATEGY: develop sigue siendo línea de soporte v2 sin cambios; develop-v3 es donde se construye v3.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Rama develop-v3 creada a partir de develop actual
+2. Branch protection configurada: requiere PR, requiere CI verde, no permite force push
+3. Documento de regla en CONTRIBUTING.md: features de v3 → develop-v3, fixes de v2 → develop
+4. PR template configurado con checklist mínimo
+
+DEFINICIÓN DE LISTO:
+- [ ] Rama visible y protegida en GitHub
+- [ ] Documento aprobado por PM","e7,type:técnica,must-have","Backlog","Must have","M1","—","Técnica","CICD strategy","Cross-cutting","CICD_STRATEGY.md#2","1","No","E7"
+"[E7-CICD-02] Workflow v2-ci.yml — pipeline suave para v2","Como equipo de soporte v2, necesito un pipeline de CI no invasivo en develop y master, para tener checks básicos sin afectar el flujo actual de soporte (que usa deploytools.sh, GitKraken, DBeaver).
+Lint en modo warning (no bloquea), tests si existen, smoke check de schema.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Archivo .github/workflows/v2-ci.yml creado
+2. Trigger: PR a develop y a master
+3. Steps: lint PHP en warning (no bloquea), ejecutar tests existentes si hay, validar schema BD coherente con el repo
+4. Pipeline no rompe builds existentes (validado con 3 PRs reales)
+
+DEFINICIÓN DE LISTO:
+- [ ] Pipeline corriendo en GitHub Actions
+- [ ] Equipo soporte confirma que no afecta su flujo
+- [ ] Reviewed por PM","e7,type:técnica,must-have","Backlog","Must have","M1","E7-CICD-01","Técnica","CICD strategy","Stream 3 — Soporte v2","CICD_STRATEGY.md#3;CICD_STRATEGY.md#4.2","3","No","E7"
+"[E7-CICD-03] Workflow v3-ci.yml — pipeline estricto para v3","Como PM técnico de v3, necesito un pipeline de CI estricto en develop-v3, para asegurar calidad en cada PR antes de mergear.
+Lint estricto bloquea, tests PHPUnit obligatorios, tests de API con Hurl, validación con MCP Inspector para tools nuevos.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Archivo .github/workflows/v3-ci.yml creado
+2. Trigger: PR a develop-v3
+3. Steps obligatorios: lint estricto (bloquea si falla), PHPUnit (bloquea si falla), tests Hurl de APIs nuevas, MCP Inspector contra tools afectados
+4. Definition of Done de cada PR: todos los steps verdes
+5. Pipeline corre en < 5 minutos para PRs típicos
+
+DEFINICIÓN DE LISTO:
+- [ ] Pipeline corriendo en GitHub Actions
+- [ ] Documentado en docs/ci/v3-pipeline.md
+- [ ] Reviewed por PM","e7,type:técnica,must-have","Backlog","Must have","M1","E7-CICD-01","Técnica","CICD strategy","Stream 1 — Features v3","CICD_STRATEGY.md#4.2;CICD_STRATEGY.md#5.1","5","No","E7"
+"[E7-CICD-04] Workflow security.yml — escaneo de seguridad compartido","Como PM, necesito un pipeline de seguridad que ejecute escaneos diariamente y en cada PR, para detectar vulnerabilidades, secretos y problemas de código sin esperar a que ocurra un incidente.
+Aplica a v2 y v3.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Archivo .github/workflows/security.yml creado
+2. Steps: Trivy (vulnerabilidades en deps + contenedores), Semgrep (análisis estático), gitleaks (detección de secretos)
+3. Cron diario a las 03:00 UTC + trigger en cada PR
+4. Notificación a Slack/email si severidad alta o crítica
+
+DEFINICIÓN DE LISTO:
+- [ ] Pipeline corriendo
+- [ ] Primer escaneo limpio (todos los hallazgos justificados o resueltos)
+- [ ] Reviewed por PM","e7,type:técnica,must-have","Backlog","Must have","M2","E7-CICD-01","Técnica","CICD strategy","Cross-cutting","CICD_STRATEGY.md#4.1;CICD_STRATEGY.md#5.3","3","No","E7"
+"[E7-CICD-05] Setup de staging-v3 environment","Como PM técnico, necesito un ambiente staging-v3 separado del staging-v2 actual, para probar v3 sin afectar v2.
+Deploy automático desde develop-v3.
+
+CRITERIOS DE ACEPTACIÓN:
+1. VM TEST (E0-INF-02) configurada como staging-v3
+2. URL distinta del staging-v2 (ej: staging-v3.cloudtrazalog.com)
+3. Base de datos PostgreSQL separada con dump anonimizado de datos productivos
+4. Deploy automático en cada merge a develop-v3 (workflow GitHub Actions)
+5. Smoke test post-deploy automático
+
+DEFINICIÓN DE LISTO:
+- [ ] Staging-v3 accesible y operativo
+- [ ] Documentado en docs/ci/staging-v3.md
+- [ ] Reviewed por PM","e7,type:técnica,must-have","Backlog","Must have","M2","E0-INF-05,E7-CICD-03","Técnica","CICD strategy","Stream 1 — Features v3","CICD_STRATEGY.md#4","5","No","E7"
+"[E7-CICD-06] Sincronización semanal develop → develop-v3","Como PM técnico, necesito un proceso documentado y automatizable de sincronización semanal de develop hacia develop-v3, para mantener los fixes de soporte v2 incorporados en v3 y evitar que las ramas se separen demasiado.
+Si pasamos 4 meses sin sincronizar, el merge final del cutover es muy doloroso.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Script bash que ejecuta el merge: git checkout develop-v3 && git merge origin/develop --no-ff -m 'chore: sync v2 fixes from develop'
+2. Reminder semanal (calendar event) para PM
+3. Documento que explica qué hacer si hay conflictos
+4. Primera sincronización ejecutada con éxito
+
+DEFINICIÓN DE LISTO:
+- [ ] Script en scripts/dev/sync-v2-to-v3.sh
+- [ ] Reminder configurado
+- [ ] Documentado en docs/ci/sync-procedure.md
+- [ ] Reviewed por PM","e7,type:técnica,should-have","Backlog","Should have","M1","E7-CICD-01","Técnica","CICD strategy","Cross-cutting","CICD_STRATEGY.md#Apéndice C","1","No","E7"
+"[E8-REG-01] Setup de Playwright + config dual (staging-v2 y staging-v3)","Como PM técnico, necesito Playwright configurado en el repo con dos projects (staging-v2 y staging-v3), para correr la misma suite contra ambos ambientes y detectar regresiones de v3 vs el comportamiento conocido de v2.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Estructura tests/regression/ creada
+2. playwright.config.ts con dos projects: staging-v2 (URL prod-v2) y staging-v3 (URL TEST-v3)
+3. Setup de fixtures, helpers, data-setup
+4. Smoke test de ejemplo corriendo OK contra ambos ambientes
+
+DEFINICIÓN DE LISTO:
+- [ ] Suite arrancando localmente y en CI
+- [ ] Documentado en docs/qa/playwright-setup.md
+- [ ] Reviewed por PM","e8,type:técnica,must-have","Backlog","Must have","M1","E7-CICD-01","Técnica","CICD strategy","Stream 2 — Regresión","CICD_STRATEGY.md#6.7","3","No","E8"
+"[E8-REG-02] Identificar y priorizar los 15 flujos críticos (Pareto)","Como PM y QC, necesitamos identificar los 10-15 flujos más críticos que existen en v2 y deben seguir funcionando en v3, para decidir qué automatizar primero con Playwright.
+Pareto: el 20% de flujos cubre el 80% del riesgo de regresión.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Sesión con QC ejecutada (~2hs)
+2. Lista priorizada de 10-15 flujos: login, OTs correctivas, OTs preventivas, asignar/cerrar OT, consumo material en OT, dashboard KPIs, KoolReport semanal, movimiento de stock, QR de artículo, workflow Bonita, formulario dinámico con adjunto, registro de residuo, registro de producción, permisos de usuario, contexto multi-empresa
+3. Cada flujo con: nombre, descripción, criticidad, frecuencia de uso real
+4. Documento en docs/qa/critical-flows.md
+
+DEFINICIÓN DE LISTO:
+- [ ] Lista aprobada por PM, QC y socio
+- [ ] Reviewed por PM","e8,type:investigación,must-have","Backlog","Must have","M1","—","Investigación","CICD strategy","Stream 2 — Regresión","CICD_STRATEGY.md#6.1;CICD_STRATEGY.md#6.7","3","No","E8"
+"[E8-REG-03] Capturar 15 flujos en Gherkin + implementar en Playwright","Como QC + PM + Claude Code, necesitamos capturar cada uno de los 15 flujos críticos en formato Gherkin (sesiones de captura con QC) y luego implementarlos como tests Playwright (Claude Code).
+Es la story más grande del backlog. Se ejecuta de forma incremental: 1 flujo por sprint en M2-M3.
+
+CRITERIOS DE ACEPTACIÓN:
+1. 15 archivos .spec.ts en tests/regression/flows/, uno por flujo
+2. 15 archivos .feature en formato Gherkin como documentación viva
+3. Cada test pasa contra staging-v2 (verde antes de ejecutar contra v3)
+4. Tests son idempotentes (no requieren reset manual de datos)
+5. Cada test tarda < 2 minutos individualmente
+
+DEFINICIÓN DE LISTO:
+- [ ] 15 specs en repo
+- [ ] Suite completa < 30 min en CI
+- [ ] Reviewed por PM y QC","e8,type:técnica,must-have","Backlog","Must have","M2-M3","E8-REG-01,E8-REG-02","Técnica","CICD strategy","Stream 2 — Regresión","CICD_STRATEGY.md#6.2","21","No","E8"
+"[E8-REG-04] Workflow regression.yml — ejecución contra staging-v2 y staging-v3","Como PM, necesito un workflow que ejecute la suite Playwright contra los dos ambientes en cadencias distintas, para detectar regresiones cuando aparezcan.
+Staging-v2: cron semanal (baseline). Staging-v3: diario + en cada release.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Archivo .github/workflows/regression.yml creado
+2. Trigger 1: cron semanal (lunes 06:00 UTC) contra staging-v2
+3. Trigger 2: cron diario (06:00 UTC) contra staging-v3
+4. Trigger 3: manual (workflow_dispatch) para ambos
+5. Trigger 4: en release tag de develop-v3
+6. Notificación Slack/email si falla algún flujo crítico
+7. Reportes Playwright HTML almacenados como artifacts
+
+DEFINICIÓN DE LISTO:
+- [ ] Pipeline corriendo en GitHub Actions
+- [ ] Documentado en docs/ci/regression.md
+- [ ] Reviewed por PM","e8,type:técnica,must-have","Backlog","Must have","M2","E7-CICD-01,E8-REG-01,E8-REG-03","Técnica","CICD strategy","Stream 2 — Regresión","CICD_STRATEGY.md#4.1;CICD_STRATEGY.md#6.8","5","No","E8"
+"[E8-REG-05] Validar baseline contra v2 (7 días verde) y staging-v3 (3 días verde)","Como PM, necesito que la suite pase 7 días consecutivos contra staging-v2 (baseline confirmado) y 3 días consecutivos contra staging-v3, para autorizar el cutover.
+Esto es la condición Definition of Done del cutover según CICD_STRATEGY.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Suite verde 7 días seguidos contra staging-v2 (si falla, ajustar test para reflejar comportamiento real de v2)
+2. Suite verde 3 días seguidos contra staging-v3
+3. Documentado en docs/qa/cutover-readiness.md
+4. Si algún flujo falla en v3 pero pasa en v2: bug bloqueante de cutover
+
+DEFINICIÓN DE LISTO:
+- [ ] Reporte de baseline aprobado por PM y QC
+- [ ] Reviewed por PM","e8,type:funcional,must-have","Backlog","Must have","M3-M4","E8-REG-04","Funcional","CICD strategy","Stream 2 — Regresión","CICD_STRATEGY.md#6.9","3","No","E8"
+"[E8-REG-06] Runbook de cutover v2 → v3","Como PM, necesito un runbook detallado del cutover único de v2 a v3, para que la operación salga sin sorpresas.
+El cutover incluye: merge develop-v3 → develop, suite completa, promoción a master, deploy en producción, migración de OS de PROD (E0-INF-07), verificación post-deploy.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Runbook paso a paso en docs/ops/cutover-runbook.md
+2. Plan de rollback (revertir merge, restaurar snapshot OS, restaurar BD)
+3. Checklist de verificación post-deploy con 20+ items
+4. Tiempos estimados por paso
+5. Roles asignados (RACI): PM, socio comercial, soporte v2
+6. Comunicación con clientes pre-cutover (template)
+7. Ensayo del cutover ejecutado contra TEST
+
+DEFINICIÓN DE LISTO:
+- [ ] Runbook revisado por PM y socio
+- [ ] Ensayo en TEST exitoso
+- [ ] Aprobado por PM","e8,type:documentación,must-have","Backlog","Must have","M4","E8-REG-05","Documentación","CICD strategy","Cross-cutting","CICD_STRATEGY.md#8","3","No","E8"
+"[E9-FUT-01] Unificación de almacenes: Asset Planner ALM → traz-comp-almacenes","Como PM, necesito migrar los datos del almacén legacy de Asset Planner a traz-comp-almacenes, para deprecar el módulo legacy y permitir cruces nativos repuesto↔OT en el MCP.
+Esto desbloquea EXP-03 y EXP-04 nativos para clientes existentes (hoy funcionan separados por ADR-004).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Plan de migración de datos del almacén legacy AP a traz-comp-almacenes
+2. Modificación de Asset Planner para que consume stock vía APIs de traz-comp-almacenes
+3. Migración ejecutada para Tierra Capayán (cliente existente con datos en almacén legacy)
+4. MCP-06 reapuntado a traz-comp-almacenes
+5. Almacén legacy de Asset Planner deprecado
+
+DEFINICIÓN DE LISTO:
+- [ ] Migración ejecutada sin pérdida de datos
+- [ ] Tests nativos repuesto↔OT verdes
+- [ ] Reviewed por PM","e9,type:técnica,should-have,db-migration","Backlog","Should have","Backlog","—","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#ADR-004","13","Sí","E9"
+"[E9-FUT-02] MCP Server Python (FastMCP) para AI/ML/RAG (Phase 2)","Como Trazalog, necesito un MCP Server adicional en Python (FastMCP) para casos que WSO2 no puede resolver: inferencia ML, RAG sobre documentos, lógica de IA compleja.
+Solo para los ~10-20% de casos que justifican Python según ADR-002.
+
+CRITERIOS DE ACEPTACIÓN:
+1. FastMCP server desplegado en infraestructura propia
+2. Conectado al WSO2 Gateway como upstream para que el cliente vea un solo punto de entrada
+3. Caso de uso piloto: predicción de fallas con ML simple
+4. Documentado en MCP_ARCHITECTURE.md sección Phase 2
+
+DEFINICIÓN DE LISTO:
+- [ ] Server operativo en TEST
+- [ ] Reviewed por PM","e9,type:técnica,could-have","Backlog","Could have","Backlog","—","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md#5","13","No","E9"
+"[E9-FUT-03] MCP Writes — tools de escritura (crear OT, registrar intervención)","Como agente IA del cliente, necesito poder crear OTs, registrar intervenciones y actualizar estado de equipos desde la conversación, para que el sistema sea proactivo y no solo de consulta.
+Phase 2 según ADR-002. Tier Professional (USD 449).
+
+CRITERIOS DE ACEPTACIÓN:
+1. Tool MCP create_work_order con validaciones
+2. Tool MCP register_intervention
+3. Tool MCP update_equipment_status
+4. Confirmaciones por LLM antes de ejecutar acción
+5. Tier Professional activado en WSO2
+
+DEFINICIÓN DE LISTO:
+- [ ] Validado con cliente piloto
+- [ ] Reviewed por PM","e9,type:funcional,should-have","Backlog","Should have","Backlog","E9-FUT-02","Funcional","Mining research","Stream 1 — Features v3","PRICING_STRATEGY.docx","13","No","E9"
+"[E9-FUT-04] Dashboard completo de control de consumo (PDR-004 completo)","Como admin de cuenta del cliente, necesito un dashboard completo de control con: simulador de consumo, alertas, spending caps, breakdown por agente, historial descargable, además del consumo básico (E5-PRC-03).
+PDR-004 completo. Phase 2.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Simulador: 'si invoco esta tool N veces, cuesto X'
+2. Alertas configurables al 50%, 80%, 100% del tier
+3. Spending caps duros (cliente decide limitar consumo)
+4. Breakdown por agente IA (cuál agente consumió cuánto)
+5. Historial descargable en CSV
+
+DEFINICIÓN DE LISTO:
+- [ ] Las 6 features de control listadas en PRICING_STRATEGY operativas
+- [ ] Reviewed por PM","e9,type:funcional,should-have","Backlog","Should have","Backlog","E5-PRC-03","Funcional","Pricing strategy","Stream 1 — Features v3","PRICING_STRATEGY.docx","8","No","E9"
+"[E9-FUT-05] Templates de procesos BPM HSE para minería","Como Trazalog, necesito templates de procesos BPM pre-diseñados para flujos HSE (incidentes, near-miss, EPP, habilitaciones), para acelerar el onboarding de proveedores mineros que necesiten certificar ISO 45001.
+Diseño usando módulo de Procesos existente (BPM Bonita), no construir nuevo módulo.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Template: reporte de incidentes → investigación → acción correctiva → seguimiento (ISO 45001)
+2. Template: checklist de inspección pre-turno
+3. Template: registro de entrega de EPP con firma
+4. Template: control de habilitaciones del personal con alertas de vencimiento
+5. Templates importables a una instancia nueva en < 1h
+
+DEFINICIÓN DE LISTO:
+- [ ] Templates en docs/bpm/templates-hse/
+- [ ] Reviewed por PM","e9,type:funcional,should-have","Backlog","Should have","Backlog","—","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#2.5","8","No","E9"
+"[E9-FUT-06] Kit de certificación ISO empaquetado","Como Trazalog (comercial), necesito un kit de certificación ISO empaquetado como producto, para venderlo a proveedores mineros que necesiten certificar ISO 9001 / 14001 / 45001.
+Material comercial: 'con Trazalog tenés el 70% de lo que necesitás para certificar'.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Mapeo ISO 9001/14001/45001 ↔ funcionalidades de Trazalog
+2. Templates de procesos BPM para los flujos ISO más comunes
+3. Checklist de cumplimiento por norma
+4. Material comercial (one-pager, deck)
+
+DEFINICIÓN DE LISTO:
+- [ ] Validado con auditor ISO externo (al menos 1)
+- [ ] Reviewed por PM y socio","e9,type:documentación,could-have","Backlog","Could have","Backlog","E9-FUT-05","Documentación","Mining research","N/A","investigacion-sector-minero-trazalog-v3-2.md#2.6","5","No","E9"
+"[E9-FUT-07] Interfaz de chat embebida en Trazalog (Opción B)","Como cliente sin Claude Pro, necesito un chat embebido dentro del portal Trazalog que use la API de Claude por detrás + MCP Server, para no depender de tener cuenta de Claude.
+Decisión post early adopter — solo se construye si el volumen de uso lo justifica.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Frontend de chat embebido en portal admin
+2. Backend que orquesta Claude API + MCP Servers
+3. Branding Trazalog (no Claude)
+4. Cobro: incluido en tier Starter / Professional
+
+DEFINICIÓN DE LISTO:
+- [ ] Validado con cliente piloto post-early adopter
+- [ ] Reviewed por PM","e9,type:funcional,could-have","Backlog","Could have","Backlog","E6-EA-06","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#5.6","13","No","E9"
+"[E9-FUT-08] Agentes proactivos (alertas automáticas vía WhatsApp)","Como gerente de proveedor minero, necesito recibir alertas proactivas por WhatsApp cuando hay preventivos por vencer, stock bajo con riesgo de stockout, o KPIs degradándose, para no tener que consultar el sistema.
+Trigger: cuando el log de descubrimiento (E4-DSC-04) revele consultas repetitivas que justifiquen automatizarlas.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Agentes programados (cron) que detectan situaciones
+2. Integración con conector WhatsApp existente
+3. Configuración de qué alertas recibir por usuario
+4. Frecuencia configurable (diaria, semanal)
+
+DEFINICIÓN DE LISTO:
+- [ ] Validado con cliente piloto
+- [ ] Reviewed por PM","e9,type:funcional,could-have","Backlog","Could have","Backlog","E4-DSC-04","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#4","8","No","E9"
+"[E9-FUT-09] Modernización UX del frontend","Como Trazalog, necesito un reskin del frontend (theme moderno, responsive, dashboard landing) sin tocar la lógica de negocio, para no perder oportunidades por percepción de UX legacy.
+Activar solo si el feedback de clientes mineros indica que la UX es barrera de adopción.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Theme nuevo aplicado a las pantallas más visitadas
+2. Responsive mejorado en mobile
+3. Dashboard landing renovado
+4. Sin cambios en la lógica PHP
+
+DEFINICIÓN DE LISTO:
+- [ ] Aprobación visual de PM y socio
+- [ ] Reviewed por PM","e9,type:funcional,could-have","Backlog","Could have","Backlog","—","Funcional","Mining research","Stream 1 — Features v3","investigacion-sector-minero-trazalog-v3-2.md#5.6","13","No","E9"
+"[E9-FUT-10] Migración completa de Asset Planner a Tools (v4)","Como Trazalog, necesito migrar todas las entidades de Asset Planner a la estructura traz-tools, para unificar la base de código, deprecar el proyecto separado y simplificar mantenimiento.
+Es el objetivo de v4. Prerequisito: E9-FUT-01 completado.
+
+CRITERIOS DE ACEPTACIÓN:
+1. Mapeo completo de entidades de Asset Planner a traz-tools
+2. Migración de código y datos
+3. Reapuntar referencias (OTs, preventivos, backlog)
+4. Deprecar proyecto traz-prod-assetplanner
+
+DEFINICIÓN DE LISTO:
+- [ ] Validado con todos los clientes existentes
+- [ ] Reviewed por PM","e9,type:técnica,wont-have,db-migration","Backlog","Won't have","v4","E9-FUT-01","Técnica","MCP architecture","Stream 1 — Features v3","MCP_ARCHITECTURE.md","?","Sí","E9"

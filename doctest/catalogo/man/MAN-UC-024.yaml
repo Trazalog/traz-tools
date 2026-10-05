@@ -1,0 +1,41 @@
+id: MAN-UC-024
+modulo: MAN
+titulo: Registrar una lectura desde el equipo y reportar una falla
+perfil: Mantenedor
+estado: validado
+version: "0.1"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "setLectura() — si viene el campo `falla`, además crea la solicitud de servicio y lanza el proceso de Bonita"
+pantallas:
+  - "Mantenimiento → Equipos → Mantenimiento Autónomo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo está dado de alta
+flujo_principal:
+  - paso: "En el listado de equipos elige la acción Mantenimiento Autónomo"
+    resultado: "Se abre el formulario para cargar la lectura del equipo"
+  - paso: "Carga la lectura, el operario, el turno y las observaciones"
+    resultado: "Los datos quedan cargados"
+  - paso: "Si además detectó una falla, la reporta en el mismo formulario"
+    resultado: "Se registra la lectura **y** se crea una solicitud de servicio con esa falla, que arranca el circuito correctivo"
+flujos_alternativos:
+  - nombre: "Solo cargar la lectura, sin falla"
+    pasos:
+      - paso: "Completa la lectura y deja el campo de falla vacío"
+        resultado: "La lectura queda registrada y no se genera ninguna solicitud"
+validaciones:
+  - "Lo carga el **Mantenedor**"
+  - "La solicitud de servicio se crea solo si se reporta una falla; si no, queda solo la lectura"
+  - "Lectura, operario, turno y observaciones son obligatorios"
+  - "La solicitud de servicio solo se crea si se reporta una falla"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s04
+notas:
+  - "**Es el atajo más útil del módulo para una PyME chica**: quien está frente al equipo carga su lectura y, si ve algo raro, lo reporta en el mismo formulario. El sistema crea la solicitud de servicio y arranca el proceso, sin que esa persona tenga que conocer la pantalla de solicitudes."
+  - "Es la misma lectura que la de *Registro de Parametros* (MAN-UC-017): dos caminos hacia el mismo historial. La diferencia es que acá se puede reportar la falla en el acto."
+  - "El nombre *Mantenimiento Autónomo* viene del concepto de TPM: el operador se hace cargo del cuidado básico de su equipo. Vale la pena explicarlo, porque el nombre solo no lo dice."

@@ -1,0 +1,39 @@
+id: MAN-UC-016
+modulo: MAN
+titulo: Definir qué parámetros se le miden a un equipo
+perfil: Planificador
+estado: validado
+version: "0.1"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Parametro.php
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Altparametro.php
+    detalle: "el ABM de parámetros disponibles"
+pantallas:
+  - "Mantenimiento → Parametrizar Predictivo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - El equipo está dado de alta y el parámetro existe en el ABM
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Parametrizar Predictivo"
+    resultado: "Se listan los parámetros ya configurados con su equipo, máximo y mínimo"
+  - paso: "Elige el equipo y el parámetro que se le va a medir"
+    resultado: "Queda definido qué se controla en ese equipo"
+  - paso: "Carga el valor máximo y el mínimo aceptables, y una descripción"
+    resultado: "Quedan definidos los límites que disparan la alerta"
+  - paso: "Guarda"
+    resultado: "El parámetro queda activo para ese equipo"
+validaciones:
+  - "El máximo y el mínimo quedan registrados como referencia del rango normal del parámetro"
+  - "Un equipo puede tener varios parámetros configurados"
+  - "El equipo, el parámetro, el máximo, el mínimo y la descripción son obligatorios"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s09
+notas:
+  - "**Qué pasa cuando una lectura se sale del rango: nada automático.** Se buscó en el código y **no hay ninguna comparación contra el máximo y el mínimo** al registrar una lectura — no se genera una orden ni un aviso. Los límites son una referencia para quien mira: el que carga la lectura o el que revisa el historial. Vale decirlo en la ayuda, para que nadie espere una alarma que no existe."
+  - "Los parámetros —temperatura, vibración, presión— salen del catálogo `ABM Parametros`."

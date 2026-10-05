@@ -1,0 +1,21 @@
+# expect-error: R4
+# Fixture del validador — el id no coincide con el nombre del archivo.
+id: DNATO-UC-999
+modulo: DNATO
+titulo: Fixture con id que no coincide con el nombre del archivo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Registro.php
+pantallas:
+  - "Registración → Datos de la empresa"
+precondiciones:
+  - Sin sesión iniciada
+flujo_principal:
+  - paso: "Completa el formulario de registración"
+    resultado: "Se crea la cuenta y se envía el mail de activación"
+dudas:
+  - "Fixture: duda de ejemplo para cumplir la regla R1."

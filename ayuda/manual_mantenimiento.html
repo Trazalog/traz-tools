@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mantenimiento · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!--
+  Generado por doctest/generators/build-ayudas.ts — no editar a mano.
+  Contenido: ayudas/src/man/manual_mantenimiento.html
+  Casos de uso que cubre: MAN-UC-001 a MAN-UC-037
+  Versión 1.0
+  (Sin fecha de generación a propósito: estampar el día hacía que regenerar el sitio produjera un
+  diff en TODOS los manuales aunque el contenido fuera idéntico, y eso terminaba en conflictos de
+  merge en cada PR. La versión sale del caso de uso, que es lo que de verdad cambia.)
+-->
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">T</div>
+        <span class="brand-name">TRAZA<span>LOG</span> TOOLS</span>
+      </div>
+      <div class="brand-sub">Manual · Mantenimiento</div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item" href="index.html" style="color:var(--amber);border-left-color:transparent">
+        <span class="nav-num" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span>
+        Volver al inicio
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">En este manual</div>
+      <a class="nav-item" href="#s01"><span class="nav-num">01</span> Cómo funciona el mantenimiento acá</a>
+      <a class="nav-item" href="#s02"><span class="nav-num">02</span> Dar de alta un equipo</a>
+      <a class="nav-item" href="#s03"><span class="nav-num">03</span> Cargar los componentes</a>
+      <a class="nav-item" href="#s04"><span class="nav-num">04</span> Tomar lecturas de los equipos</a>
+      <a class="nav-item" href="#s05"><span class="nav-num">05</span> Pedir un servicio</a>
+      <a class="nav-item" href="#s06"><span class="nav-num">06</span> Planificar el trabajo</a>
+      <a class="nav-item" href="#s07"><span class="nav-num">07</span> Ejecutar la orden y pedir materiales</a>
+      <a class="nav-item" href="#s08"><span class="nav-num">08</span> El informe y el cierre</a>
+      <a class="nav-item" href="#s09"><span class="nav-num">09</span> Planificar el mantenimiento que no espera a la falla</a>
+      <a class="nav-item" href="#s10"><span class="nav-num">10</span> Ver cómo venís</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Otros manuales</div>
+      <a class="nav-item" href="manual_configuracion_inicial.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Configuración inicial</a>
+      <a class="nav-item" href="manual_alta_equipos_componentes.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Alta de equipos</a>
+      <a class="nav-item" href="manual_mantenimiento_correrctivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento correctivo</a>
+      <a class="nav-item" href="manual_mantenimeinto_preventivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento preventivo</a>
+      <a class="nav-item" href="manual_almacen_mantenimiento.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Almacén</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title">Manual de Usuario</span>
+        <span class="topbar-sub">· Mantenimiento</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a href="index.html" class="btn-home">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver al inicio
+        </a>
+        <span class="doc-code">MA.002</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <section id="cover" class="section visible">
+        <div class="cover-tag">📋 Instructivo de procedimientos</div>
+        <div class="cover-title">Mantenimiento</div>
+        <div class="cover-sub">Cómo se pide, se planifica, se ejecuta y se cierra el trabajo de mantenimiento — y cómo se prepara todo antes de empezar.</div>
+        <div class="cover-meta">
+          <div class="cover-pill"><strong>MA.002</strong></div>
+          <div class="cover-pill">Versión <strong>1.0</strong></div>
+          <div class="cover-pill">Módulo <strong>Mantenimiento</strong></div>
+          <div class="cover-pill"><strong>Trazalog Tools</strong></div>
+        </div>
+      </section>
+
+<section id="s01" class="section">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-meta">
+      <h2>Cómo funciona el mantenimiento acá</h2>
+      <span class="role-badge">Para todos</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Antes de tocar una pantalla conviene entender una sola cosa, porque explica todas las demás: <strong>el trabajo de mantenimiento no se hace navegando el menú, se hace atendiendo la bandeja de entrada.</strong></p>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Todo es un solo circuito</div>
+      <div class="alert-text">Desde que alguien avisa que algo se rompió hasta que el trabajo queda cerrado, todo pasa por un mismo proceso. Cada paso le llega a quien le toca <strong>como una tarea en <em>Mis Tareas</em></strong>. Solo hay dos momentos en que uno va a buscar la pantalla: cuando pide un servicio y cuando planifica en el calendario.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">Los cuatro roles</div>
+
+  <table class="compare-table">
+    <thead><tr><th>Rol</th><th>Qué hace en el circuito</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Solicitante</strong></td><td>Avisa que algo se rompió. Al final, dice si quedó conforme con el trabajo</td></tr>
+      <tr><td><strong>Supervisor</strong></td><td>Analiza lo que se pidió y decide <strong>si es urgente</strong>. Después verifica que el informe esté bien</td></tr>
+      <tr><td><strong>Planificador</strong></td><td>Le pone fecha al trabajo que puede esperar y elige quién lo hace</td></tr>
+      <tr><td><strong>Mantenedor</strong></td><td>Hace el trabajo y carga el informe de lo que hizo</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">El recorrido, de principio a fin</div>
+
+  <p class="intro-text">Todo empieza de una de dos maneras: <strong>algo se rompió</strong> (alguien pide un servicio) o <strong>tocaba hacerlo</strong> (venció un plan preventivo o predictivo).</p>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Alguien avisa</div>
+      <div class="paso-texto">Se carga una solicitud de servicio diciendo qué equipo es y qué le pasa (sección 05). Si el que lo detecta está frente a la máquina, puede reportarlo mientras carga su lectura, sin abrir otra pantalla (sección 04).</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">El Supervisor decide si es urgente — y ahí se parte el camino</div>
+      <div class="paso-texto">
+        Es <strong>la decisión que define todo lo que sigue</strong>:
+        <br><br>
+        <strong>Si es urgente</strong> → el propio Supervisor le pone fecha y elige quién lo hace. Va derecho.<br>
+        <strong>Si puede esperar</strong> → la solicitud <strong>se convierte en un pendiente del backlog</strong>, y de ahí en más lo maneja el Planificador.
+        <br><br>
+        Eso es el backlog, y conviene saberlo de entrada: <em>la lista de lo que hay que hacer pero no corre</em>.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Se le pone fecha y responsable</div>
+      <div class="paso-texto">En el camino urgente lo hace el Supervisor; en el otro, el Planificador desde el Plan de Mantenimiento (sección 06). En los dos casos el resultado es el mismo: <strong>una orden de trabajo</strong> con fecha y con alguien a cargo.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">El Mantenedor la ejecuta</div>
+      <div class="paso-texto">Abre la orden, pide al almacén los materiales que necesita, hace el trabajo y carga el informe de lo que hizo (secciones 07 y 08).</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Se verifica, y el que pidió da el visto bueno</div>
+      <div class="paso-texto">
+        El Supervisor revisa el informe. <strong>Si no está bien, vuelve al Mantenedor</strong> para que lo corrija.
+        <br><br>
+        Si está bien y el trabajo nació de una solicitud, el Solicitante dice si quedó conforme. <strong>Si no lo está, la solicitud vuelve al principio</strong> y el Supervisor la analiza de nuevo.
+      </div>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Los estados no se eligen</div>
+      <div class="alert-text">
+        Las solicitudes y las órdenes van cambiando de estado —<em>Solicitada</em>, <em>Planificada</em>, <em>en Curso</em>, <em>Terminada</em>, <em>Cerrada</em>, <em>Conforme</em>— pero <strong>eso lo hace el circuito, no vos</strong>. No hay ninguna pantalla donde uno ponga un estado a mano.
+        <br><br>
+        Si ves un trabajo en un estado que no esperabas, la pregunta no es "quién lo cambió" sino "en qué paso del circuito está".
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Por dónde empezar si tu empresa es nueva</div>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Cargá los catálogos</div>
+      <div class="paso-texto">Área, proceso, criticidad, sector, grupo y marca. Se hacen desde el menú <strong>ABM</strong>, y también sobre la marcha desde el alta de equipos.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Cargá tus equipos</div>
+      <div class="paso-texto">Sección 02. Sin equipos, el módulo no tiene sobre qué trabajar.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Sus componentes, si te sirve el detalle</div>
+      <div class="paso-texto">Sección 03. Se puede dejar para después: un equipo funciona sin componentes cargados.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Recién ahí, a operar</div>
+      <div class="paso-texto">Ya podés pedir servicios, planificar preventivos y emitir órdenes de trabajo.</div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Mantenimiento tiene su propio ingreso</div>
+      <div class="alert-text">A diferencia de los otros módulos, <strong>Mantenimiento se abre con su propia pantalla de ingreso</strong>: entrar a Trazalog Tools no te deja adentro. Vas a necesitar tu usuario y tu contraseña ahí también.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s02" class="section">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-meta">
+      <h2>Dar de alta un equipo</h2>
+      <span class="role-badge">Supervisor</span>
+    </div>
+  </div>
+
+  <p class="intro-text">El formulario tiene dos partes: primero <strong>dónde está</strong> el equipo y después <strong>qué es</strong>. Conviene completarlas en ese orden, que es como está armado.</p>
+
+  <div class="sub-title">Cómo llegar</div>
+
+  <p class="intro-text">Menú lateral → <strong>Mantenimiento</strong> → <strong>Equipos</strong>. Se abre el listado con las columnas <em>Código Equipo, Descripción, Área, Proceso, Sector, Criticidad, Cliente</em> y <em>Estado</em>; el botón <strong>Agregar</strong> abre el formulario.</p>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Nuevo Equipo</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Equipos / Nuevo Equipo</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:16px;font-weight:700">Nuevo Equipo</div>
+              <div style="font-size:11px;color:#94A3B8;margin-top:2px">Los campos con <span style="color:#CC1F1A">*</span> son obligatorios</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <span class="screen-btn">Cancelar</span>
+              <span class="screen-btn primario">Guardar</span>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Ubicación del equipo / sector</div>
+            <div class="cuerpo">
+              <div class="screen-campos tres" style="grid-template-columns:1fr 1fr 1fr">
+                <div class="screen-campo"><div class="et">Área <span class="req">*</span></div><div class="val lista">Producción</div></div>
+                <div class="screen-campo"><div class="et">Proceso <span class="req">*</span></div><div class="val lista">Línea 1</div></div>
+                <div class="screen-campo"><div class="et">Criticidad <span class="req">*</span></div><div class="val lista">Alta</div></div>
+              </div>
+              <div class="screen-campos tres" style="grid-template-columns:1fr 1fr 1fr;margin-top:14px">
+                <div class="screen-campo"><div class="et">Sector / Etapa <span class="req">*</span></div><div class="val lista">Envasado</div></div>
+                <div class="screen-campo"><div class="et">Grupo</div><div class="val lista">Bombas</div></div>
+                <div class="screen-campo"><div class="et">Cliente</div><div class="val lista vacio">— Sin cliente —</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Datos del equipo</div>
+            <div class="cuerpo">
+              <div class="screen-campos dos" style="grid-template-columns:1fr 1fr">
+                <div class="screen-campo"><div class="et">Código de Equipo</div><div class="val foco">BOMB-001</div></div>
+                <div class="screen-campo"><div class="et">Marca</div><div class="val lista">Grundfos</div></div>
+              </div>
+              <div class="screen-campos" style="margin-top:14px">
+                <div class="screen-campo"><div class="et">Descripción</div><div class="val">Bomba centrífuga horizontal de 5 HP</div></div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Número de serie</div><div class="val">GF-2024-00412</div></div>
+                <div class="screen-campo"><div class="et">Fecha de ingreso</div><div class="val">15/03/2024</div></div>
+                <div class="screen-campo"><div class="et">Lectura inicial</div><div class="val">0</div></div>
+                <div class="screen-campo"><div class="et">Fecha de Garantía</div><div class="val">15/03/2026</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Los asteriscos están arriba, en la ubicación.</strong> Área, Proceso, Criticidad y Sector/Etapa son los que la pantalla marca como obligatorios.</figcaption>
+  </figure>
+
+  <div class="sub-title">Los campos, uno por uno</div>
+
+  <table class="compare-table">
+    <thead><tr><th>Campo</th><th>Qué poner</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Área</strong> · <strong>Proceso</strong> · <strong>Sector/Etapa</strong> · <strong>Grupo</strong></td><td>Dónde está el equipo dentro de tu planta. Sirve para filtrar y para agrupar en los reportes: si tenés veinte bombas, el <em>Grupo</em> es lo que te deja verlas juntas</td></tr>
+      <tr><td><strong>Criticidad</strong></td><td>Cuánto importa que este equipo no se detenga. Es lo que después ordena las prioridades cuando hay varias cosas por atender</td></tr>
+      <tr><td><strong>Cliente</strong></td><td>Solo si el equipo es de un tercero al que le prestás servicio. Si es tuyo, dejalo sin cliente</td></tr>
+      <tr><td><strong>Código de Equipo</strong> <span style="color:#CC1F1A">*</span></td><td>Con el que vos lo identificás. Es lo que vas a ver en todas las listas, así que conviene una convención clara desde el arranque: <code>BOMB-001</code>, <code>COMP-003</code></td></tr>
+      <tr><td><strong>Marca</strong> <span style="color:#CC1F1A">*</span></td><td>Sale de una lista. Si la marca no está, se agrega antes desde el ABM</td></tr>
+      <tr><td><strong>Descripción</strong> <span style="color:#CC1F1A">*</span></td><td>Qué es, en las palabras de quien trabaja con él. Es lo que va a leer el que reciba una solicitud de servicio</td></tr>
+      <tr><td><strong>N° de Serie</strong> <span style="color:#CC1F1A">*</span></td><td>El del fabricante. Es lo que identifica a esta unidad concreta frente al proveedor o la garantía</td></tr>
+      <tr><td><strong>Lectura inicial</strong></td><td>El valor del contador —horas, kilómetros, ciclos— al momento de cargarlo. <strong>Importa más de lo que parece</strong>: es el punto de partida de los mantenimientos que se disparan por uso, no por fecha</td></tr>
+      <tr><td><strong>Fecha de Garantía</strong></td><td>Hasta cuándo está en garantía. Es una <strong>fecha</strong>, no una cantidad de meses</td></tr>
+      <tr><td><strong>Ubicación georreferencial</strong></td><td>Para equipos que no están siempre en el mismo lugar</td></tr>
+      <tr><td><strong>Descripción técnica</strong></td><td>Texto libre: caudal, tensión, potencia. Lo que le sirva al que lo vaya a intervenir</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Si falta una opción, la creás sin salir del formulario</div>
+      <div class="alert-text">
+        Área, proceso, criticidad, sector, grupo, cliente y marca salen de listas. Pero <strong>no hace falta ir a cargarlas antes</strong>: al lado de cada desplegable hay un botón <strong>Agregar</strong> que abre un formulario chico, crea la opción y la deja elegida. El de Cliente pide un poco más —nombre, apellido, DNI, dirección, teléfono y razón social—.
+        <br><br>
+        Igual, si vas a cargar muchos equipos, conviene dejar las listas armadas de entrada desde el menú <strong>ABM</strong>: cargarlas de a una mientras completás el alta se hace lento.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s03" class="section">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-meta">
+      <h2>Cargar los componentes</h2>
+      <span class="role-badge">Supervisor</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Los componentes son las partes del equipo que querés poder seguir por separado. Hay <strong>dos caminos</strong> y conviene saber cuál te sirve.</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Camino</th><th>Cuándo usarlo</th><th>Dónde</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>ABM de Componentes</strong></td>
+        <td>Cargar de una vez todos los componentes que usás, sin asociarlos todavía a ningún equipo</td>
+        <td>Menú <strong>ABM → ABM Componentes</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Asociar a un equipo</strong></td>
+        <td>Ir armando cada equipo con sus partes. Podés elegir uno que ya exista o crearlo en el momento</td>
+        <td>Menú <strong>Mantenimiento → Componentes</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Asociar componentes a un equipo</div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Asociar Componentes a Equipo</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Componentes</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Datos de equipo</div>
+            <div class="cuerpo">
+              <div class="screen-campos dos" style="grid-template-columns:1fr 2fr">
+                <div class="screen-campo"><div class="et">Equipo <span class="req">*</span></div><div class="val lista foco">BOMB-001</div></div>
+                <div class="screen-campo"><div class="et">Descripción</div><div class="val vacio">Bomba centrífuga horizontal de 5 HP</div><div class="screen-hint">se completa sola al elegir el equipo</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Asociar componentes</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:2fr 1fr 1fr auto;display:grid;align-items:end;gap:12px">
+                <div class="screen-campo"><div class="et">Componente <span class="req">*</span></div><div class="val lista">Sello mecánico</div></div>
+                <div class="screen-campo"><div class="et">Código trazable</div><div class="val">SM-4412</div></div>
+                <div class="screen-campo"><div class="et">Sistema <span class="req">*</span></div><div class="val lista">Hidráulico</div></div>
+                <div><span class="screen-btn ok">✓ Asociar</span></div>
+              </div>
+              <div style="margin-top:8px"><span class="screen-btn" style="font-size:11px">+ Nuevo</span> <span style="font-size:11px;color:#94A3B8">— si el componente no está en el catálogo, lo creás acá mismo</span></div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Componentes del equipo</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th></th><th>Equipo</th><th>Componente</th><th>Código</th><th>Sistema</th></tr></thead>
+                  <tbody>
+                    <tr><td style="color:#CC1F1A">&#128465;</td><td>BOMB-001</td><td>Sello mecánico</td><td>SM-4412</td><td>Hidráulico</td></tr>
+                    <tr><td style="color:#CC1F1A">&#128465;</td><td>BOMB-001</td><td>Motor eléctrico 5 HP</td><td>ME-0091</td><td>Eléctrico</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Dos pasos que se confunden:</strong> <em>Asociar</em> suma la fila a la tabla; <em>Guardar</em> es lo que la deja registrada. Si te vas sin guardar, se pierde todo.</figcaption>
+  </figure>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Elegí el equipo</div>
+      <div class="paso-texto">La descripción se completa sola, y abajo aparecen los componentes que ese equipo ya tiene. Sirve para no cargar dos veces lo mismo.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Por cada parte: componente, código trazable y sistema</div>
+      <div class="paso-texto">
+        El <strong>componente</strong> sale del catálogo; si no está, <strong>+ Nuevo</strong> te deja crearlo sin salir de la pantalla.
+        <br><br>
+        El <strong>código trazable</strong> es el que identifica a <em>esta</em> pieza en <em>este</em> equipo — el número de la pieza física, no el del catálogo. Es lo que después te va a decir cuál se cambió y cuándo.
+        <br><br>
+        El <strong>sistema</strong> es a qué conjunto pertenece dentro del equipo.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Tocá “Asociar” — y después “Guardar”</div>
+      <div class="paso-texto"><strong>Son dos cosas distintas.</strong> <em>Asociar</em> baja la fila a la tabla de abajo; recién <em>Guardar</em> la deja registrada. Es el error más común: asociar tres componentes, irse, y encontrar el equipo vacío.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s04" class="section">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-meta">
+      <h2>Tomar lecturas de los equipos</h2>
+      <span class="role-badge">Mantenedor</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Muchos equipos se mantienen <strong>por uso, no por calendario</strong>: cada 500 horas, cada 10.000 kilómetros. Para que eso funcione, alguien tiene que ir anotando cuánto llevan. Eso son las lecturas.</p>
+
+  <div class="sub-title">Dos caminos para cargar la misma lectura</div>
+
+  <table class="compare-table">
+    <thead><tr><th>Dónde</th><th>Cuándo conviene</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Equipos → Mantenimiento Autónomo</strong><br><small>desde la fila del equipo, en el listado</small></td>
+        <td>Cuando estás frente a la máquina. <strong>Es el mejor camino</strong>, porque si ves algo raro lo podés reportar en el mismo formulario</td>
+      </tr>
+      <tr>
+        <td><strong>Mantenimiento → Registro de Parametros</strong></td>
+        <td>Cuando cargás varias lecturas juntas, por ejemplo al final del turno</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">El atajo que más sirve: reportar la falla mientras cargás la lectura</div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Mantenimiento Autónomo</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Equipos / BOMB-001 / Mantenimiento Autónomo</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Lectura del equipo</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Lectura <span class="req">*</span></div><div class="val foco">8.412</div><div class="screen-hint">última registrada: 8.180 h</div></div>
+                <div class="screen-campo"><div class="et">Operario <span class="req">*</span></div><div class="val">M. Quiroga</div></div>
+                <div class="screen-campo"><div class="et">Turno <span class="req">*</span></div><div class="val lista">Mañana</div></div>
+              </div>
+              <div class="screen-campos" style="margin-top:14px">
+                <div class="screen-campo"><div class="et">Observaciones <span class="req">*</span></div><div class="val">Ruido en el acople, aumenta con la carga</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="screen-panel">
+            <div class="cab">¿Detectaste una falla?</div>
+            <div class="cuerpo">
+              <div class="screen-campo">
+                <div class="val foco" style="min-height:44px">Vibración fuerte en el acople del motor. Se escucha desde la pasarela.</div>
+                <div class="screen-hint">Si completás esto, se genera además una solicitud de servicio</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Dos cosas en un solo paso.</strong> Si dejás vacío el campo de falla, queda solo la lectura. Si lo completás, además arranca el circuito de reparación.</figcaption>
+  </figure>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">El sistema no te va a avisar si un valor es raro</div>
+      <div class="alert-text">
+        Se le pueden configurar a cada equipo un valor máximo y uno mínimo por parámetro (sección 09), pero <strong>son de referencia</strong>: si una lectura se sale del rango, el sistema <strong>no genera ninguna alerta ni ninguna orden</strong>.
+        <br><br>
+        El que se tiene que dar cuenta es el que carga la lectura. Por eso el campo de falla está justo al lado: es ahí donde uno reporta lo que vio.
+      </div>
+    </div>
+  </div>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Que las lecturas sirvan de algo</div>
+      <div class="alert-text">Tomalas <strong>siempre en el mismo momento del turno y por la misma persona</strong>. Un salto raro en la serie dice tanto como el valor en sí, y eso solo se nota si la serie es pareja.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s05" class="section">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-meta">
+      <h2>Pedir un servicio</h2>
+      <span class="role-badge">Solicitante</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Es la puerta de entrada del mantenimiento correctivo: algo se rompió o funciona mal, y alguien lo reporta. Lo puede hacer <strong>cualquiera que tenga el rol de Solicitante de Mantenimiento</strong>.</p>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Entrá a Mantenimiento → Solicitud de Servicio</div>
+      <div class="paso-texto">Vas a ver las solicitudes ya cargadas, con su número, el equipo, el sector y —cuando ya se les asignó trabajo— el número de la orden.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Elegí el equipo y contá qué pasa</div>
+      <div class="paso-texto">
+        <strong>La descripción es lo único que va a leer el Supervisor para decidir.</strong> Contá qué se ve, qué se escucha y desde cuándo: <em>"la bomba B-12 vibra y pierde caudal desde el lunes"</em> se entiende sola; <em>"anda mal"</em> obliga a ir a ver.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Adjuntá fotos si tenés</div>
+      <div class="paso-texto">Una foto de la pérdida o del ruido en la carcasa ahorra una visita.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Confirmá, y esperá</div>
+      <div class="paso-texto">A partir de acá el circuito se ocupa: le llega al Supervisor como tarea. Vas a volver a saber de esta solicitud al final, cuando te toque decir si quedaste conforme.</div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Los tres tiempos del listado</div>
+      <div class="alert-text">El listado muestra <em>T. de ciclo</em>, <em>T. de asignación</em> y <em>T. de generación</em>. Miden cuánto tardó tu pedido en atenderse, en asignarse a alguien y en convertirse en una orden. Son los números para mirar si te parece que el mantenimiento no da respuesta.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s06" class="section">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-meta">
+      <h2>Planificar el trabajo</h2>
+      <span class="role-badge">Supervisor · Planificador</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Planificar es convertir un pendiente —una solicitud, un preventivo vencido, un backlog— en <strong>una orden de trabajo con fecha y con alguien a cargo</strong>. Es el paso donde el trabajo se vuelve real.</p>
+
+  <div class="sub-title">Quién planifica qué</div>
+
+  <table class="compare-table">
+    <thead><tr><th>Si el trabajo…</th><th>Lo planifica…</th><th>Desde…</th></tr></thead>
+    <tbody>
+      <tr><td>es una solicitud <strong>urgente</strong></td><td>el <strong>Supervisor</strong></td><td>su propia tarea, apenas la marca como urgente</td></tr>
+      <tr><td>es un pendiente del <strong>backlog</strong></td><td>el <strong>Planificador</strong></td><td>Plan de Mantenimiento</td></tr>
+      <tr><td>es un <strong>preventivo</strong> o <strong>predictivo</strong> que venció</td><td>el <strong>Planificador</strong></td><td>Plan de Mantenimiento</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Desde el Plan de Mantenimiento</div>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Entrá a Mantenimiento → Plan de Mantenimiento</div>
+      <div class="paso-texto">Es el calendario: muestra lo que hay para programar, separado por tipo — correctivo, preventivo, backlog y predictivo.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Elegí qué vas a programar y para cuándo</div>
+      <div class="paso-texto">
+        Lo habitual es generar <strong>una orden por vez</strong>. Y <strong>no conviene programar algo ya vencido</strong>: si un preventivo se pasó de fecha, corresponde revisar por qué antes de emitir la orden.
+        <br><br>
+        Para los preventivos que se repiten todos los meses hay además una opción de <strong>generar varias de una vez</strong>, indicando por cuántos meses. Se crean todas las órdenes del período — pero <strong>ningún pedido de materiales</strong>: cada pedido nace al ejecutar su propia orden.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Generá la orden</div>
+      <div class="paso-texto">
+        La orden nace <strong>Planificada</strong>, con las herramientas y los insumos <strong>copiados</strong> del plan o del backlog de origen.
+        <br><br>
+        Ese copiado importa: desde ahí la orden tiene su propia lista. Si después cambiás el plan, las órdenes ya emitidas no se tocan.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Asigná quién la va a hacer</div>
+      <div class="paso-texto">Te llega como tarea a la bandeja. Elegís el Mantenedor y, a partir de ahí, es él quien la ve en la suya.</div>
+    </div>
+  </div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Plan de Mantenimiento</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Plan de Mantenimiento</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Pendientes de programar</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Origen</th><th>Equipo</th><th>Tarea</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="screen-estado rechazado">Solicitud urgente</span></td>
+                      <td>BOMB-001</td><td>Cambio de sello mecánico</td><td>hoy</td>
+                      <td><span class="screen-estado creada">Solicitada</span></td>
+                    </tr>
+                    <tr>
+                      <td><span class="screen-estado aprobado">Preventivo</span></td>
+                      <td>COMP-003</td><td>Cambio de aceite · 500 h</td><td>28/08/2026</td>
+                      <td><span class="screen-estado creada">Pendiente</span></td>
+                    </tr>
+                    <tr>
+                      <td><span class="screen-estado parcial">Backlog</span></td>
+                      <td>BOMB-001</td><td>Reemplazo de manómetro</td><td>—</td>
+                      <td><span class="screen-estado creada">Pendiente</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Programar</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Fecha de programación <span class="req">*</span></div><div class="val foco">28/08/2026</div></div>
+                <div class="screen-campo"><div class="et">Hora</div><div class="val">08:00</div></div>
+                <div class="screen-campo off"><div class="et">Meses a generar</div><div class="val">1</div><div class="screen-hint">se programa de a una orden</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Generar Orden</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Los cuatro orígenes conviven en la misma pantalla.</strong> Una solicitud urgente, un preventivo que vence y un pendiente del backlog se programan igual: eligiendo fecha y generando la orden.</figcaption>
+  </figure>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">De dónde vino cada orden</div>
+      <div class="alert-text">El listado de órdenes tiene una columna <strong>Origen</strong> que dice si salió de una solicitud, de un preventivo, de un predictivo o del backlog. Es lo primero para mirar cuando querés saber cuánto de tu trabajo es planificado y cuánto es apagar incendios.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s07" class="section">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-meta">
+      <h2>Ejecutar la orden y pedir materiales</h2>
+      <span class="role-badge">Mantenedor</span>
+    </div>
+  </div>
+
+  <p class="intro-text">La orden te llega a <strong>Mis Tareas</strong>. Al abrirla ves qué hay que hacer, sobre qué equipo, y qué herramientas e insumos se previeron.</p>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">El pedido al almacén nace acá, no antes</div>
+      <div class="alert-text">
+        Aunque el plan ya decía qué materiales harían falta, <strong>eso era solo una previsión</strong>. El pedido al almacén se arma <strong>cuando abrís la ejecución de la orden</strong>, y se manda cuando confirmás.
+        <br><br>
+        Es lo que más sorprende la primera vez: si buscás tu pedido en Almacenes antes de ejecutar la orden, no está.
+      </div>
+    </div>
+  </div>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Abrí la orden desde Mis Tareas</div>
+      <div class="paso-texto">Ves la tarea a realizar, el equipo y la lista de materiales prevista.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Revisá los materiales y agregá lo que falte</div>
+      <div class="paso-texto">Lo previsto en el plan es un punto de partida. Si sabés que vas a necesitar algo más, agregalo ahora: después de confirmar, sumar materiales significa otro pedido.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Confirmá</div>
+      <div class="paso-texto">
+        El pedido se manda al almacén. Desde ahí sigue <strong>el circuito de Almacenes</strong>: el responsable lo aprueba o lo rechaza, y al entregarlo descuenta el stock. Podés seguirlo desde el módulo de Almacenes.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Hacé el trabajo</div>
+      <div class="paso-texto">La orden queda <strong>en curso</strong> mientras tanto.</div>
+    </div>
+  </div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Ejecutar OT 1042</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mis Tareas / Ejecutar OT</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Orden 1042 · BOMB-001</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:2fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Tarea</div><div class="val vacio">Cambio de sello mecánico</div></div>
+                <div class="screen-campo"><div class="et">Origen</div><div class="val vacio">Solicitud 318 · urgente</div></div>
+                <div class="screen-campo"><div class="et">Programada</div><div class="val vacio">26/08/2026</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Materiales que se van a pedir</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Código</th><th>Descripción</th><th class="num">Cantidad</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td>SELL-M32</td><td>Sello mecánico 32 mm</td><td class="num">1</td><td style="color:#CC1F1A">&#128465;</td></tr>
+                    <tr><td>JUNT-EPDM</td><td>Junta EPDM · brida DN50</td><td class="num">2</td><td style="color:#CC1F1A">&#128465;</td></tr>
+                    <tr style="background:#FAFBFD"><td colspan="4" style="color:#94A3B8">+ Agregar material</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Herramientas previstas</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Herramienta</th><th>Marca</th><th class="num">Cantidad</th></tr></thead>
+                  <tbody>
+                    <tr><td>Llave de torque</td><td>Bahco</td><td class="num">1</td></tr>
+                    <tr><td>Extractor de poleas</td><td>Bahco</td><td class="num">1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:10px 14px;font-size:11px;color:#94A3B8">Es una lista de referencia: las herramientas no se piden al pañol desde acá.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Ejecutar y pedir materiales</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Acá nace el pedido al almacén.</strong> Los materiales vienen de lo previsto en el plan; podés sacar o agregar antes de confirmar. Después de este botón, sumar algo significa otro pedido.</figcaption>
+  </figure>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Las herramientas se listan, no se piden</div>
+      <div class="alert-text">Las herramientas que figuran en la orden son <strong>una lista de lo que vas a necesitar</strong>. No hay pedido al pañol, ni entrega, ni devolución registrada: eso se maneja fuera del sistema. <em>Está previsto que cambie en próximas versiones.</em></div>
+    </div>
+  </div>
+
+  <div class="sub-title">Cerrar la orden: parcial o total</div>
+
+  <p class="intro-text">Desde el listado de órdenes hay dos formas de cerrarla: <strong>Total</strong>, cuando el trabajo quedó terminado, y <strong>Parcial</strong>, cuando se hizo una parte y hay que volver. La orden queda marcada como terminada parcial, para que se vea que no está completa.</p>
+</section>
+
+<section id="s08" class="section">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-meta">
+      <h2>El informe y el cierre</h2>
+      <span class="role-badge">Mantenedor · Supervisor · Solicitante</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Terminado el trabajo, queda registrar qué se hizo. El informe de servicio es lo que después va a permitir saber cuánto costó mantener ese equipo — y es lo que se revisa si el problema vuelve.</p>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">El Mantenedor carga el informe</div>
+      <div class="paso-texto">Qué se hizo, quiénes trabajaron y cuánto tiempo llevó. Las horas hombre que cargues acá son las que después salen en los reportes.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">El Supervisor lo verifica</div>
+      <div class="paso-texto">
+        Le llega como tarea. Si el informe está bien, la orden queda <strong>cerrada</strong>.
+        <br><br>
+        <strong>Si no está bien, vuelve al Mantenedor</strong> para que lo corrija y lo presente de nuevo. No es un rechazo del trabajo: es del informe.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">El Solicitante dice si quedó conforme</div>
+      <div class="paso-texto">
+        Solo si el trabajo nació de una solicitud de servicio. Si el trabajo era planificado —un preventivo—, se cierra en el paso anterior.
+        <br><br>
+        <strong>Si no presta conformidad, la solicitud vuelve al principio</strong>: el Supervisor la analiza otra vez y puede volver a decidir si es urgente. No queda marcada como "no conforme" y olvidada — se reabre.
+      </div>
+    </div>
+  </div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Informe de Servicio · OT 1042</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Informe de Servicios / Nuevo</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Qué se hizo</div>
+            <div class="cuerpo">
+              <div class="screen-campo">
+                <div class="et">Detalle del trabajo <span class="req">*</span></div>
+                <div class="val foco" style="min-height:52px">Se desmontó el cuerpo de bomba y se reemplazó el sello mecánico. Se cambiaron las dos juntas de brida. Prueba de estanqueidad OK a 4 bar.</div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Fecha inicio</div><div class="val">26/08/2026 08:15</div></div>
+                <div class="screen-campo"><div class="et">Fecha fin</div><div class="val">26/08/2026 11:40</div></div>
+                <div class="screen-campo"><div class="et">Lectura del equipo</div><div class="val">8.412</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Quiénes trabajaron</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Operario</th><th class="num">Horas hombre</th></tr></thead>
+                  <tbody>
+                    <tr><td>M. Quiroga</td><td class="num">3,5</td></tr>
+                    <tr><td>R. Olivares</td><td class="num">3,5</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Insumos usados</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Código</th><th>Descripción</th><th class="num">Cantidad</th></tr></thead>
+                  <tbody>
+                    <tr><td>SELL-M32</td><td>Sello mecánico 32 mm</td><td class="num">1</td></tr>
+                    <tr><td>JUNT-EPDM</td><td>Junta EPDM · brida DN50</td><td class="num">2</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:10px 14px;font-size:11px;color:#A96A05">⚠ Estas cantidades son las que se <strong>pidieron</strong> al almacén, no las que se entregaron.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar informe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Las horas hombre que cargues acá son las que después salen en los reportes.</strong> Y el detalle del trabajo es lo que va a leer quien revise si el problema vuelve.</figcaption>
+  </figure>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Los "Insumos Usados" del informe son los pedidos</div>
+      <div class="alert-text">
+        El informe muestra una lista rotulada <em>Insumos Usados</em>. Hoy esa lista es <strong>lo que se pidió al almacén</strong>, no lo que efectivamente se entregó ni lo que se consumió. Si pediste 10 y te entregaron 6, el informe va a decir 10.
+        <br><br>
+        Para saber lo entregado de verdad, hay que mirar el pedido en el módulo de Almacenes. <em>Está en curso el trabajo para que el informe muestre lo entregado.</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Los dos lugares donde el trabajo vuelve atrás</div>
+
+  <table class="compare-table">
+    <thead><tr><th>Si…</th><th>Vuelve a…</th></tr></thead>
+    <tbody>
+      <tr><td>el Supervisor rechaza el informe</td><td>el Mantenedor, a rehacerlo</td></tr>
+      <tr><td>el Solicitante no queda conforme</td><td>el Supervisor, a analizar la solicitud otra vez</td></tr>
+    </tbody>
+  </table>
+
+  <p class="intro-text">Por eso un mismo trabajo puede recorrerse más de una vez. Si ves reaparecer algo que creías cerrado, es esto.</p>
+</section>
+
+<section id="s09" class="section">
+  <div class="section-header">
+    <div class="section-num">09</div>
+    <div class="section-meta">
+      <h2>Planificar el mantenimiento que no espera a la falla</h2>
+      <span class="role-badge">Planificador</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Todo lo anterior arranca cuando algo se rompió. Esta sección es lo contrario: <strong>intervenir antes</strong>, en un momento que elegís vos y no la máquina. Cuesta menos —no hay parada imprevista, no hay daños secundarios, el repuesto está a mano— y es lo que diferencia un taller que va atrás de los problemas de uno que va adelante.</p>
+
+  <div class="sub-title">Preventivo y predictivo: la diferencia en criollo</div>
+
+  <table class="compare-table">
+    <thead><tr><th></th><th>Preventivo</th><th>Predictivo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Cuándo se hace</strong></td><td><strong>Cada tanto</strong>, aunque el equipo esté perfecto</td><td><strong>Cuando el equipo avisa</strong>: un valor medido se sale de lo normal</td></tr>
+      <tr><td><strong>Qué lo dispara</strong></td><td>El calendario o el uso acumulado</td><td>La lectura de un parámetro</td></tr>
+      <tr><td><strong>Qué necesita antes</strong></td><td>Nada más que el equipo cargado</td><td>Parámetros configurados <em>y</em> lecturas que alguien tome</td></tr>
+      <tr><td><strong>Ejemplo</strong></td><td>Cambio de aceite cada 500 horas</td><td>Revisar el rodamiento cuando la vibración pasa de X</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">Definir un preventivo</div>
+
+  <div class="secuencia">
+    <div class="paso">
+      <div class="paso-titulo">Elegí el equipo y la tarea</div>
+      <div class="paso-texto">Qué se hace y sobre qué. Si aplica a un componente en particular, indicalo.</div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Definí cada cuánto se repite</div>
+      <div class="paso-texto">
+        Son dos campos que se leen juntos: el <strong>período</strong> es la unidad —días, semanas, meses— y la <strong>frecuencia</strong>, cada cuántas de esas unidades. <em>Período: mes, frecuencia: 3</em> es cada tres meses.
+        <br><br>
+        La <strong>fecha base</strong> es desde cuándo se empieza a contar el primer vencimiento.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Indicá cuánto lleva y cuánta gente</div>
+      <div class="paso-texto">
+        Cargás la <strong>duración</strong>, su <strong>unidad</strong> —minutos, horas— y la <strong>cantidad de operarios</strong>. Las <strong>horas hombre se calculan solas</strong>: el campo no se escribe.
+        <br><br>
+        Ocho horas con dos operarios son 16 horas hombre. Es el número que después dimensiona cuánto trabajo planificado tiene el taller por delante.
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-titulo">Declará herramientas e insumos</div>
+      <div class="paso-texto">Se copian a cada orden que se genere. Ojo: <strong>quedan declarados, no pedidos</strong> — el pedido al almacén nace al ejecutar cada orden.</div>
+    </div>
+  </div>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Nuevo Preventivo</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Mantenimiento / Preventivo / Nuevo</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Qué se hace y sobre qué</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Equipo <span class="req">*</span></div><div class="val lista foco">COMP-003</div></div>
+                <div class="screen-campo"><div class="et">Componente</div><div class="val lista vacio">— todo el equipo —</div></div>
+                <div class="screen-campo"><div class="et">Tarea <span class="req">*</span></div><div class="val lista">Cambio de aceite</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Cada cuánto se repite</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Período <span class="req">*</span></div><div class="val lista">Mes</div></div>
+                <div class="screen-campo"><div class="et">Frecuencia <span class="req">*</span></div><div class="val">3</div><div class="screen-hint">cada 3 meses</div></div>
+                <div class="screen-campo"><div class="et">Fecha base <span class="req">*</span></div><div class="val">01/06/2026</div></div>
+                <div class="screen-campo"><div class="et">Duración · operarios</div><div class="val">8 h · 2</div></div>
+                <div class="screen-campo off"><div class="et">Horas hombre</div><div class="val">16</div><div class="screen-hint">se calcula solo: 8 h × 2 operarios</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Qué va a hacer falta</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Tipo</th><th>Código</th><th>Descripción</th><th class="num">Cantidad</th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="screen-estado aprobado">Insumo</span></td><td>ACE-ISO68</td><td>Aceite ISO VG68 · 20 L</td><td class="num">1</td></tr>
+                    <tr><td><span class="screen-estado aprobado">Insumo</span></td><td>FILT-AC12</td><td>Filtro de aceite</td><td class="num">1</td></tr>
+                    <tr><td><span class="screen-estado creada">Herramienta</span></td><td>—</td><td>Llave de filtro</td><td class="num">1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:10px 14px;font-size:11px;color:#94A3B8">Quedan <strong>declarados</strong>: se copian a cada orden que se genere, y el pedido al almacén nace al ejecutarla.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <span class="screen-btn">Cancelar</span>
+            <span class="screen-btn primario">Guardar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>Período y frecuencia se leen juntos:</strong> <em>Mes</em> + <em>3</em> es cada tres meses. La <em>fecha base</em> es desde cuándo se cuenta el primer vencimiento.</figcaption>
+  </figure>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Cómo elegir cada cuánto</div>
+      <div class="alert-text">
+        El punto de partida es <strong>lo que dice el fabricante</strong> en el manual del equipo. Después se ajusta con lo que pase:
+        <br><br>
+        Si el equipo <strong>se rompe entre dos preventivos</strong>, la frecuencia es muy larga. Si al intervenirlo <strong>nunca hay nada para hacer</strong>, es muy corta y estás gastando horas de más.
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-title">Configurar el predictivo</div>
+
+  <p class="intro-text">Necesita dos pasos previos: decirle al sistema <strong>qué se le mide</strong> al equipo (Parametrizar Predictivo: el parámetro, su valor máximo y mínimo) y que alguien <strong>cargue las lecturas</strong> (sección 04). Recién con eso el predictivo tiene contra qué comparar.</p>
+
+  <div class="alert warn">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">El máximo y el mínimo no disparan nada solos</div>
+      <div class="alert-text">Son una <strong>referencia para la persona</strong> que mira la lectura. El sistema no genera avisos ni órdenes cuando un valor se sale del rango. Quien lo detecte tiene que reportarlo — y el lugar más práctico para hacerlo es el mismo formulario donde carga la lectura.</div>
+    </div>
+  </div>
+
+  <div class="sub-title">El backlog: lo que hay que hacer pero no corre</div>
+
+  <p class="intro-text">El backlog se llena de dos maneras: <strong>a mano</strong>, cuando alguien detecta algo mientras hace otra cosa, y <strong>solo</strong>, cuando el Supervisor analiza una solicitud y decide que puede esperar.</p>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Para qué mirar el backlog</div>
+      <div class="alert-text">
+        Sirve para dos cosas: que <strong>nada detectado se pierda</strong>, y para saber cuánto trabajo pendiente se te acumula.
+        <br><br>
+        Un backlog que <strong>solo crece</strong> es la señal más clara de que el taller no da abasto. Uno que se mantiene estable dice que estás al día. Es probablemente el número más honesto del módulo.
+        <br><br>
+        Los pendientes <strong>no vencen ni caducan</strong>: quedan hasta que alguien los programe.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s10" class="section">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <div class="section-meta">
+      <h2>Ver cómo venís</h2>
+      <span class="role-badge">Supervisor</span>
+    </div>
+  </div>
+
+  <p class="intro-text">Tres pantallas en el menú <strong>Reportes</strong>, todas con el mismo funcionamiento: elegís los filtros y consultás.</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Reporte</th><th>La pregunta que responde</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Órdenes de trabajo</strong></td><td>¿Qué trabajo hubo en este período, sobre qué equipos, y en qué estado quedó?</td></tr>
+      <tr><td><strong>Informes de Servicio</strong></td><td>¿Cuántas horas hombre se dedicaron y a qué?</td></tr>
+      <tr><td><strong>Panel de KPIs</strong></td><td>¿Mis equipos están disponibles cuando los necesito?</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sub-title">La disponibilidad y su meta</div>
+
+  <p class="intro-text">El indicador central es la <strong>disponibilidad</strong>: qué porcentaje del tiempo el equipo estuvo en condiciones de trabajar. A cada equipo se le puede fijar una <strong>meta</strong> —desde la acción <em>Asignar Meta</em> del listado de equipos— y el panel compara la real contra ella.</p>
+
+  <figure class="screen">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Mantenimiento · Panel de KPIs</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Reportes / Panel de KPIs</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Filtros</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Grupo</div><div class="val lista vacio">Todos</div></div>
+                <div class="screen-campo"><div class="et">Sector</div><div class="val lista vacio">Todos</div></div>
+                <div class="screen-campo"><div class="et">Equipo</div><div class="val lista vacio">Todos</div></div>
+                <div class="screen-campo"><div class="et">Desde</div><div class="val">01/08/2026</div></div>
+                <div class="screen-campo"><div class="et">Hasta</div><div class="val">26/08/2026</div></div>
+              </div>
+              <div style="text-align:right;margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+                <span class="screen-btn">Limpiar</span><span class="screen-btn primario">Filtrar</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel">
+            <div class="cab">Disponibilidad por equipo</div>
+            <div class="cuerpo" style="padding:0">
+              <div class="screen-scroll">
+                <table class="screen-tabla">
+                  <thead><tr><th>Equipo</th><th>Descripción</th><th class="num">Meta</th><th class="num">Disponibilidad</th><th></th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td>BOMB-001</td><td>Bomba centrífuga 5 HP</td>
+                      <td class="num">95%</td><td class="num" style="font-weight:700;color:#CC1F1A">88%</td>
+                      <td><span class="screen-estado rechazado">bajo la meta</span></td>
+                    </tr>
+                    <tr>
+                      <td>COMP-003</td><td>Compresor de tornillo</td>
+                      <td class="num">90%</td><td class="num" style="font-weight:700;color:#16A34A">97%</td>
+                      <td><span class="screen-estado entregado">cumple</span></td>
+                    </tr>
+                    <tr>
+                      <td>CINT-012</td><td>Cinta transportadora</td>
+                      <td class="num" style="color:#94A3B8">—</td><td class="num">92%</td>
+                      <td><span class="screen-estado creada">sin meta</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="screen-footer"><strong>La bomba es la que hay que mirar:</strong> te propusiste 95% de disponibilidad y estuvo en 88%. La cinta no tiene meta, así que su número es informativo nada más.</figcaption>
+  </figure>
+
+  <div class="alert tip">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Poné meta solo donde importa</div>
+      <div class="alert-text">La meta es opcional y conviene reservarla para los <strong>equipos críticos</strong>. Una meta del 95% en un equipo que se usa dos veces al año no dice nada y ensucia el panel.</div>
+    </div>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-bar"></div>
+    <div class="alert-body">
+      <div class="alert-label">Los equipos dados de baja no cuentan</div>
+      <div class="alert-text">Un equipo eliminado queda fuera del cálculo de disponibilidad. Los inhabilitados, en cambio, siguen siendo parte de tu parque.</div>
+    </div>
+  </div>
+</section>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script src="manual.js"></script>
+
+</body>
+</html>

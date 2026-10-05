@@ -1,0 +1,37 @@
+id: ALM-UC-013
+modulo: ALM
+titulo: Consultar el stock valorizado
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Stockvalorizado.php
+    detalle: "index(), filtrarListado(), Listar_tabla(), getDepositos()"
+  - repo: traz-comp-almacenes
+    path: models/Stockvalorizados.php
+pantallas:
+  - "Almacenes → Stock Valorizado"
+precondiciones:
+  - Sesión iniciada en Tools
+  - La empresa tiene activada la valorización
+  - Los materiales se recibieron cargando su precio
+flujo_principal:
+  - paso: "Entra a Almacenes → Stock Valorizado"
+    resultado: "Se muestran los filtros Fecha Desde, Fecha Hasta, Establecimiento, Tipo Depósito y Depósito"
+  - paso: "Elige el período y el alcance"
+    resultado: "Los filtros quedan cargados"
+  - paso: "Hace clic en 'Filtrar'"
+    resultado: "Se lista el stock con su valorización"
+validaciones:
+  - "El valor de cada existencia es el precio que se cargó al recibir la mercadería, no una lista de precios"
+  - "El informe solo incluye stock de la empresa de la sesión"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s09
+  feature: features/alm/ALM-UC-013.consultar-el-stock-valorizado.feature
+notas:
+  - "**De dónde sale el precio, relevado del código.** La valorización se activa por empresa con un registro en `core.tablas` cuya `tabla` contiene `alm_configs`: si su campo `valor2` viene con valor, la pantalla de recepción (ALM-UC-009) muestra Precio Unitario en pesos y en dólares con sus totales, y ése es el valor que después se informa acá. Ver `Remitos::getConfigPrecios()` y la sección de precios de `views/remito/view_.php`."
+  - "El informe nació para un cliente minero que cotizaba y fijaba el valor al momento de recibir la mercadería (PM, 2026-08-25). Por eso el precio es el de recepción y no el de una lista."

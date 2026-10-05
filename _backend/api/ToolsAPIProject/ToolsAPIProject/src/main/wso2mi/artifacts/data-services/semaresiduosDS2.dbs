@@ -1,4 +1,4 @@
-<data name="semaresiduosDS2" transports="http https local">
+<data enableBatchRequests="true" name="semaresiduosDS2" transports="http https local">
    <config enableOData="false" id="semaresiduosDS2">
       <property name="carbon_datasource_name">ToolsDataSource</property>
    </config>
@@ -183,6 +183,26 @@
       <result outputType="json">{&#xd;   "orden_transportes":{&#xd;      "orden_transporte":[&#xd;         {&#xd;            "ortr_id":"$ortr_id",&#xd;            "dominio":"$dominio",&#xd;            "cont_id":"$cont_id",&#xd;            "equi_id":"$equi_id",&#xd;            "teot_id":"$teot_id",&#xd;            "tara":"$tara",&#xd;            "imagen":"$imagen",&#xd;            "contenedor":"$contenedor",&#xd;            "imagencontenedor":"$imagencontenedor",&#xd;            "coen_id":"$coen_id",&#xd;         }&#xd;      ]&#xd;   }&#xd;   &#xd;   &#xd;}</result>
       <param name="ortr_id" sqlType="STRING"/>
    </query>
+   <query id="updateVehiculoContId" useConfig="semaresiduosDS2">
+      <sql>update core.equipos set cont_id = cast(:cont_id AS INTEGER)&#xd;  where equi_id = CAST(:equi_id AS INTEGER)</sql>
+      <param name="cont_id" sqlType="STRING"/>
+      <param name="equi_id" sqlType="STRING"/>
+   </query>
+   <query id="contenedoresEntregadosSetMunicipio" useConfig="semaresiduosDS2">
+      <sql>INSERT INTO log.contenedores_entregados&#xd;(&#xd;    fec_entrega,&#xd;    cont_id,&#xd;    usuario_app,&#xd;    tica_id,&#xd;    equi_id_entrega,&#xd;    porc_llenado,&#xd;    mts_cubicos&#xd;)&#xd;SELECT&#xd;    TO_DATE(:fec_entrega, 'YYYY-MM-DD'),&#xd;    CAST(:cont_id as INTEGER),&#xd;    :usuario_app,&#xd;    :tica_id,&#xd;    CAST(:equi_id_entrega as INTEGER),&#xd;    CAST(:porc_llenado as INTEGER),&#xd;    CAST(:mts_cubicos as INTEGER)&#xd;RETURNING coen_id</sql>
+      <result outputType="json">{&#xd;        "respuesta":{&#xd;            "coen_id":"$coen_id"&#xd;        }&#xd;    }</result>
+      <param name="fec_entrega" sqlType="STRING"/>
+      <param name="cont_id" sqlType="STRING"/>
+      <param name="usuario_app" sqlType="STRING"/>
+      <param name="tica_id" sqlType="STRING"/>
+      <param name="equi_id_entrega" sqlType="STRING"/>
+      <param name="mts_cubicos" sqlType="STRING"/>
+      <param name="porc_llenado" sqlType="STRING"/>
+   </query>
+   <query id="deleteContenedorEntregado" useConfig="semaresiduosDS2">
+      <sql>delete from log.contenedores_entregados ce &#xd;where ce.coen_id = cast(:coen_id as integer)</sql>
+      <param name="coen_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/choferes/{tran_id}">
       <call-query href="choferesGetPorTransportistas">
          <with-param name="tran_id" query-param="tran_id"/>
@@ -284,10 +304,9 @@
          <with-param name="cont_id" query-param="cont_id"/>
       </call-query>
    </resource>
-   <resource method="GET" path="/ordenes/transporte/{start}/{length}/{search}/{order}/{sotr_id}">
+   <resource method="GET" path="/ordenes/transporte/{start}/{length}/{search}/{sotr_id}">
       <call-query href="getOrdenesTransporte">
          <with-param name="search" query-param="search"/>
-         <with-param name="order" query-param="order"/>
          <with-param name="length" query-param="length"/>
          <with-param name="start" query-param="start"/>
          <with-param name="sotr_id" query-param="sotr_id"/>
@@ -347,6 +366,37 @@
    <resource method="GET" path="/orden/transporte/municipio/{ortr_id}">
       <call-query href="getInfoOtEquipoMunicipio">
          <with-param name="ortr_id" query-param="ortr_id"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/vehiculo/contenedor">
+      <call-query href="updateVehiculoContId">
+         <with-param name="cont_id" query-param="cont_id"/>
+         <with-param name="equi_id" query-param="equi_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/contenedores/entregados/entregar/municipio">
+      <call-query href="contenedoresEntregadosSetMunicipio">
+         <with-param name="fec_entrega" query-param="fec_entrega"/>
+         <with-param name="cont_id" query-param="cont_id"/>
+         <with-param name="usuario_app" query-param="usuario_app"/>
+         <with-param name="tica_id" query-param="tica_id"/>
+         <with-param name="equi_id_entrega" query-param="equi_id_entrega"/>
+         <with-param name="mts_cubicos" query-param="mts_cubicos"/>
+         <with-param name="porc_llenado" query-param="porc_llenado"/>
+      </call-query>
+   </resource>
+   <resource method="DELETE" path="/contenedor/entregado">
+      <call-query href="deleteContenedorEntregado">
+         <with-param name="coen_id" query-param="coen_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/ordenes/transporte/{start}/{length}/{search}/{order}/{sotr_id}">
+      <call-query href="getOrdenesTransporte">
+         <with-param name="search" query-param="search"/>
+         <with-param name="order" query-param="order"/>
+         <with-param name="length" query-param="length"/>
+         <with-param name="start" query-param="start"/>
+         <with-param name="sotr_id" query-param="sotr_id"/>
       </call-query>
    </resource>
 </data>

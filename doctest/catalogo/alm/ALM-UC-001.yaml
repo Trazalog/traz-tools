@@ -1,0 +1,44 @@
+id: ALM-UC-001
+modulo: ALM
+titulo: Ver el listado de artículos del almacén
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Articulo.php
+    detalle: "index() carga el listado; paginado() es el server-side de la grilla"
+  - repo: traz-comp-almacenes
+    path: models/Articulos.php
+    detalle: "getList() — filtra por empresa"
+  - repo: traz-comp-almacenes
+    path: views/articulo/list.php
+pantallas:
+  - "Almacenes → Articulos"
+precondiciones:
+  - Sesión iniciada en Tools
+  - El rol tiene asignado el menú de Almacenes
+flujo_principal:
+  - paso: "Entra a Almacenes → Articulos"
+    resultado: "Se muestra la grilla de artículos con las columnas Acciones, Código, Descripción, Tipo de Producto, Unidad de Medida y Estado"
+  - paso: "Usa el buscador de la grilla para encontrar un artículo"
+    resultado: "La grilla se reduce a los artículos que coinciden"
+flujos_alternativos:
+  - nombre: "La empresa todavía no cargó artículos"
+    pasos:
+      - paso: "Entra a Almacenes → Articulos"
+        resultado: "La grilla aparece vacía y solo se ofrece el botón Agregar"
+validaciones:
+  - "El listado solo muestra artículos de la empresa de la sesión"
+  - "El acceso se controla por el menú: quien tiene la opción de Almacenes, entra"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  precondicion: "la empresa tiene al menos un artículo cargado"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s03
+  feature: features/alm/ALM-UC-001.ver-el-listado-de-articulos-del-almacen.feature
+notas:
+  - "Relevado contra `origin/develop` del submódulo, que es lo desplegado en el DEMO — el puntero de develop-v3 está 25 commits atrás (H-038 / issue #481)."

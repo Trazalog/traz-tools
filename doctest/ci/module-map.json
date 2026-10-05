@@ -1,0 +1,52 @@
+{
+  "$comment": "Mapa path→módulo que usa doctest-e2e.yml para decidir qué suites correr en un PR (Doc 2 §3.1, Doc 3 §7). Los patrones son globs de paths del repo traz-tools; MAN vive en traz-prod-assetplanner (repo aparte) y solo aparece acá por los artefactos que sí están en este repo. Al agregar un módulo nuevo, agregar también su tag @<modulo> en los specs.",
+  "modulos": {
+    "dnato": {
+      "tag": "@dnato",
+      "repo_fuente": "traz-comp-dnato",
+      "paths": [
+        "doctest/tests/e2e/specs/dnato/**",
+        "doctest/tests/e2e/pages/dnato/**",
+        "doctest/catalogo/dnato/**"
+      ],
+      "nota": "El código de Dnato vive en traz-comp-dnato; un PR de este repo no lo toca. La suite se dispara igual cuando cambian sus fixtures o su catálogo."
+    },
+    "man": {
+      "tag": "@man",
+      "repo_fuente": "traz-prod-assetplanner",
+      "paths": [
+        "application/modules/traz-tools-man/**",
+        "_backend/api/ToolsAPIProject/**/MANDataService.dbs",
+        "_backend/api/ToolsAPIProject/**/MANEquiposDataService.dbs",
+        "doctest/tests/e2e/specs/man/**",
+        "doctest/tests/e2e/pages/man/**",
+        "doctest/catalogo/man/**"
+      ]
+    },
+    "alm": {
+      "tag": "@alm",
+      "repo_fuente": "traz-tools",
+      "paths": [
+        "application/modules/traz-comp-almacenes/**",
+        "_backend/api/ToolsAPIProject/**/ALMDataService.dbs",
+        "_backend/api/ToolsAPIProject/**/toolsALMAPI.xml",
+        "doctest/tests/e2e/specs/alm/**",
+        "doctest/tests/e2e/pages/alm/**",
+        "doctest/catalogo/alm/**"
+      ]
+    },
+    "mcp": {
+      "tag": "@mcp",
+      "repo_fuente": "traz-tools",
+      "suite": "hurl",
+      "paths": [
+        "_backend/api/ToolsAPIProject/**",
+        "_backend/api/ApimDiscoveryProject/**",
+        "doc/api/**",
+        "doctest/tests/api-mcp/**",
+        "doctest/catalogo/mcp/**"
+      ],
+      "nota": "La suite Hurl es barata: cuando el diff toca cualquier artefacto WSO2/MI o la OpenAPI, corre entera (Doc 2 §3.1.3)."
+    }
+  }
+}

@@ -1,0 +1,39 @@
+id: MAN-UC-001
+modulo: MAN
+titulo: Ver el listado de equipos
+perfil: Supervisor
+estado: validado
+version: "0.1"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "index($permission) carga el listado; paginado() es el server-side de la grilla"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/
+pantallas:
+  - "Mantenimiento → Equipos"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - La empresa tiene equipos cargados
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Equipos"
+    resultado: "Se muestra la grilla con las columnas Acciones, Código Equipo, Descripción, Área, Proceso, Sector, Criticidad, Cliente y Estado"
+  - paso: "Busca un equipo por su código o su descripción"
+    resultado: "La grilla se reduce a los equipos que coinciden"
+  - paso: "Mira la columna Acciones de una fila"
+    resultado: "Se ofrecen las once acciones que se pueden hacer sobre ese equipo, cada una con su caso propio: editar (MAN-UC-003), eliminar (MAN-UC-004), habilitar o inhabilitar (MAN-UC-022), asignar contratistas (MAN-UC-023), registrar una lectura o reportar una falla (MAN-UC-024), ver el historial de lecturas (MAN-UC-025), asignar una meta (MAN-UC-026) y adjuntar documentación (MAN-UC-027)"
+validaciones:
+  - "La columna Estado distingue los tres estados del equipo: activo, inhabilitado y dado de baja"
+  - "El listado solo muestra equipos de la empresa de la sesión"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-001.listado-equipos.spec.ts
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s02
+notas:
+  - "El listado muestra los equipos en cualquiera de sus tres estados; la columna Estado los distingue."
+  - "**Verificado en pantalla el 2026-08-26** contra el DEMO, con el usuario que proveyó el PM."
+  - "El alta de equipos y componentes **no difiere entre `develop` y `develop-v3`** del repo de asset (verificado con `git diff`), así que este caso no depende de esa diferencia. El relevamiento se hace sobre `develop`, que es lo que corre en el DEMO (decisión del PM, 2026-08-25)."

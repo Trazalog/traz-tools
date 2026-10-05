@@ -1,0 +1,43 @@
+id: DNATO-UC-005
+modulo: DNATO
+titulo: Ver la pantalla de bienvenida con los usuarios iniciales
+perfil: Administrador
+estado: validado
+version: "0.3"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Register.php
+    detalle: "registro_completo() (800-824) y listaUsuariosDefaultParaBienvenida() (825-850)"
+  - repo: traz-comp-dnato
+    path: application/views/bienvenida_page.php
+  - repo: traz-comp-dnato
+    path: application/config/constants.php
+    detalle: "REGISTRACION_USUARIOS_DEFAULT_JSON (250-256)"
+pantallas:
+  - "Registro Completado"
+precondiciones:
+  - La empresa fue creada correctamente (DNATO-UC-004)
+flujo_principal:
+  - paso: "Termina el alta de la empresa"
+    resultado: "Se muestra la bienvenida con los cinco usuarios iniciales de la empresa —usuario, almacen, panol, produccion y mantenimiento, en el dominio de la empresa— con los roles de cada uno y la contraseña con la que fueron creados"
+  - paso: "Hace clic en 'Ir a iniciar sesión'"
+    resultado: "Se cierra la sesión del registro y se muestra la pantalla de ingreso, donde ya puede entrar con su empresa"
+flujos_alternativos:
+  - nombre: "El alta terminó con advertencias"
+    pasos:
+      - paso: "Llega a la bienvenida cuando alguna parte de la configuración inicial dejó advertencias"
+        resultado: "Se muestran las advertencias junto con la lista de usuarios"
+validaciones:
+  - "Los usuarios iniciales son cinco: usuario (Solicitante de Almacén y de Mantenimiento), almacen (Responsable de Almacén), panol (Responsable de Pañol), produccion (Responsable de Producción) y mantenimiento (Supervisor y Planificador de Mantenimiento)"
+  - "La sesión del registro se cierra al llegar a esta pantalla"
+datos_prueba: {}
+dudas: []
+notas:
+  - "Las capturas de pantalla de esta página van a contener la contraseña inicial mientras el diseño no cambie. Los reportes son artifacts privados con retención de 30 días (Doc 3 §8.4)."
+  - "Validado por el PM el 2026-08-24: por ahora la pantalla muestra la contraseña inicial a propósito. Pedirle al administrador que elija una contraseña para esos usuarios queda como mejora para más adelante, no para esta etapa (hallazgo H-001)."
+derivados:
+  ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s04
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-002-005.alta-de-empresa.spec.ts
+  feature: features/dnato/DNATO-UC-005.ver-la-pantalla-de-bienvenida-con-los-usuarios-i.feature

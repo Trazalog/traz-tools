@@ -1,0 +1,37 @@
+id: MAN-UC-009
+modulo: MAN
+titulo: Programar una orden de trabajo desde el plan de mantenimiento
+perfil: Planificador
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Calendario.php
+    detalle: "indexot() muestra el calendario; guardar_agregar() es el motor que crea la OT — ramifica por tipo: 2 correctivo, 3 preventivo, 4 backlog, 5 predictivo"
+  - repo: traz-prod-assetplanner
+    path: application/models/Calendarios.php
+pantallas:
+  - "Mantenimiento → Plan de Mantenimiento"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Hay trabajo pendiente de programar (una solicitud aceptada, un preventivo vencido, un backlog o un predictivo)
+flujo_principal:
+  - paso: "Entra a Mantenimiento → Plan de Mantenimiento"
+    resultado: "Se muestra el calendario con lo que hay para programar"
+  - paso: "Elige qué va a programar y para cuándo"
+    resultado: "El formulario pide la fecha de programación según el tipo de trabajo"
+  - paso: "Confirma con 'Generar Orden'"
+    resultado: "Se crea la orden de trabajo y arranca su circuito"
+validaciones:
+  - "Las órdenes se programan **de a una**"
+  - "**No se debería poder programar una actividad ya vencida**"
+  - "La orden hereda las herramientas y los insumos declarados en el trabajo de origen"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s06
+notas:
+  - "Es una de las dos únicas pantallas donde se trabaja **fuera** de la bandeja de tareas: acá y al lanzar una solicitud. Todo lo demás del proceso llega como tarea."
+  - "Del plan salen las órdenes de los cuatro orígenes. La diferencia con el camino urgente es que ahí planifica el Supervisor desde su propia tarea, no desde esta pantalla."
+  - "**Un solo motor para todo**: `Calendario::guardar_agregar()` crea la OT en los cuatro casos; lo único que cambia es de qué tabla copia las herramientas y los insumos. El tipo 2 (correctivo) no copia nada: se cargan a mano en la OT."

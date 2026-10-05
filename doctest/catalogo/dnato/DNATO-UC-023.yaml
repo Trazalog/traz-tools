@@ -1,0 +1,54 @@
+id: DNATO-UC-023
+modulo: DNATO
+titulo: Dar de alta una empresa desde la administración
+perfil: Superusuario
+estado: validado
+version: "0.2"
+origen: baseline
+fecha_validacion: 2026-08-24
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Empresa.php
+    detalle: "agregarEmpresa() (46-105): mismo control por TOOLS_ADMIN_USER"
+  - repo: traz-comp-dnato
+    path: application/views/empresas/view.php
+    detalle: "campos nombre, cuit, descripcion, telefono, email, pais_id, prov_id, loca_id, image"
+  - repo: traz-comp-dnato
+    path: application/models/Empresas.php
+    detalle: "agregarEmpresa() → POST API_CORE /empresa"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
+    detalle: "resource POST /empresa: crea la empresa, su grupo en Bonita y sus 16 roles de trabajo"
+pantallas:
+  - "Gestión de Empresas → Agregar Empresa"
+  - "Nueva Empresa"
+precondiciones:
+  - Sesión iniciada con el usuario superusuario del ambiente
+flujo_principal:
+  - paso: "Abre 'Agregar Empresa'"
+    resultado: "Se muestra el formulario Nueva Empresa con nombre, identificador tributario, descripción, teléfono, correo, país, provincia, localidad y logo"
+  - paso: "Completa los datos y confirma"
+    resultado: "La empresa queda creada con sus 16 roles de trabajo y aparece en la lista de empresas"
+flujos_alternativos:
+  - nombre: "Campos obligatorios incompletos"
+    pasos:
+      - paso: "Confirma sin nombre, identificador tributario o descripción"
+        resultado: "Se vuelve a mostrar el formulario con el error de validación"
+  - nombre: "Administrador común"
+    pasos:
+      - paso: "Un administrador que no es el superusuario abre la dirección del alta"
+        resultado: "Se lo redirige sin poder crear la empresa"
+validaciones:
+  - "Nombre, identificador tributario y descripción son obligatorios"
+  - "El alta crea los mismos 16 roles de trabajo que el alta por registración (DNATO-UC-004)"
+  - "El alta desde la administración valida lo mismo que la registración: no puede repetirse la empresa para el mismo país e identificador tributario"
+  - "El alta desde la administración deja la empresa igual de configurada que la registración: con su establecimiento, su depósito y sus usuarios iniciales"
+datos_prueba:
+  nombre_prefijo: "DOCTEST EMPRESA "
+dudas: []
+notas:
+  - "Alcance confirmado por el PM el 2026-08-19."
+  - "Validado por el PM el 2026-08-24: los dos caminos de alta tienen que terminar en el mismo resultado y usar la misma API. **Hoy no pasa** — este alta no valida duplicados y no crea establecimiento, depósito ni usuarios iniciales. Registrado como hallazgo H-014, y el caso describe el comportamiento esperado."
+derivados:
+  test_e2e: tests/e2e/specs/dnato/DNATO-UC-023.alta-empresa.spec.ts
+  feature: features/dnato/DNATO-UC-023.dar-de-alta-una-empresa-desde-la-administracion.feature

@@ -1,0 +1,22 @@
+# expect-error: R1
+# Fixture del validador — borrador sin `dudas` y con derivados declarados.
+id: MAN-UC-911
+modulo: MAN
+titulo: Fixture de borrador que viola la regla R1
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipos.php
+pantallas:
+  - "Mantenimiento → Equipos"
+precondiciones:
+  - Usuario autenticado
+flujo_principal:
+  - paso: "Abre el listado de equipos"
+    resultado: "Se muestra el listado"
+dudas: []
+derivados:
+  feature: features/man/MAN-UC-911.fixture.feature

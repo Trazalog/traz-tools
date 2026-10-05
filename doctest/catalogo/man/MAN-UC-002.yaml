@@ -1,0 +1,55 @@
+id: MAN-UC-002
+modulo: MAN
+titulo: Dar de alta un equipo
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Equipo.php
+    detalle: "cargarequipo($permission) abre el formulario; getarea(), getproceso(), getcriti(), getetapa(), getgrupo(), getcliente(), getmarca(), getunidad() llenan los desplegables"
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/view_.php
+    detalle: "formAgregarEquipo — los campos del alta"
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+pantallas:
+  - "Mantenimiento → Equipos → Nuevo Equipo"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - La empresa tiene cargados sus catálogos de área, proceso, criticidad, sector y grupo
+flujo_principal:
+  - paso: "En el listado de equipos abre el formulario de alta"
+    resultado: "Se muestra el formulario vacío, con la ubicación arriba y los datos del equipo abajo"
+  - paso: "Elige el área, el proceso y la criticidad del equipo"
+    resultado: "Queda definido dónde está el equipo y cuánto importa que funcione"
+  - paso: "Elige el sector o etapa, el grupo y, si corresponde, el cliente"
+    resultado: "El equipo queda ubicado en la estructura productiva"
+  - paso: "Carga el código del equipo, la marca y la descripción"
+    resultado: "El formulario acepta los datos"
+  - paso: "Completa el número de serie y la fecha de ingreso"
+    resultado: "Quedan registrados los datos de identificación"
+  - paso: "Opcionalmente carga la lectura inicial, la garantía, la ubicación georreferencial y la descripción técnica"
+    resultado: "Los datos complementarios quedan asociados al equipo"
+  - paso: "Guarda"
+    resultado: "El equipo queda dado de alta y aparece en el listado"
+flujos_alternativos:
+  - nombre: "Falta una opción en un desplegable"
+    pasos:
+      - paso: "Junto a cada desplegable —área, proceso, criticidad, sector/etapa, grupo, cliente y marca— hay un botón 'Agregar'"
+        resultado: "Se abre un formulario chico para crear la opción sin salir del alta. El de Cliente pide además nombre, apellido, DNI, dirección, teléfono y razón social"
+validaciones:
+  - "El **código del equipo tiene que ser único dentro de la empresa**: si se repite, el alta debe dar error"
+  - "La **criticidad** se usa para filtrar y para los reportes"
+  - "Un equipo **puede existir sin componentes**"
+  - "La pantalla marca con asterisco **Área, Proceso, Criticidad y Sector/Etapa** — los datos de ubicación. Grupo y Cliente no lo llevan"
+  - "Ningún campo declara `required` en el HTML: si hay validación, está en el JavaScript"
+  - "El equipo se da de alta en la empresa de la sesión"
+dudas:
+  - "**Falta ubicar dónde se guarda el equipo para saber qué valida.** Los endpoints del alta que sí se identificaron son los de los catálogos (`agregar_area`, `agregar_marca`…), `baja_equipo`, `cambio_equipo` y `editar_equipo`, pero no el del alta en sí. Es lo único que queda de este caso: confirmar los obligatorios y si la unicidad del código se verifica en el servidor o solo en el JavaScript (H-056)."
+notas:
+  - "**Lectura inicial — buena práctica de mantenimiento:** es el valor del contador del equipo (horas, kilómetros, ciclos) al momento de incorporarlo al sistema. Importa porque los mantenimientos que se disparan por uso se calculan **desde ahí**: si se carga en cero un equipo que ya tiene 8.000 horas, el primer preventivo por horas se va a programar 8.000 horas tarde. La práctica habitual es cargar la lectura real del horómetro el día del alta, y si el equipo es nuevo, cero."
+  - "Es el caso piloto de F2 (issue #439): sirve para calibrar el formato y el costo del relevamiento en este módulo."
+  - "A diferencia de ALM, acá **los catálogos se pueden crear desde el propio formulario**, y está **verificado en pantalla**: los botones `addarea`, `addproceso`, `addcriti`, `addetapa`, `addgrupo` y `addcliente` están visibles y abren su formulario. **El manual de ayuda existente dice lo contrario** —que las listas *\"deben cargarse previamente desde el ABM correspondiente\"*—, así que quedó desactualizado en ese punto."
+  - "**Campos verificados en pantalla** (2026-08-26): ubicación —Área, Proceso, Criticidad, Sector/Etapa, Grupo, Cliente— y datos —Código, Marca, Descripción, Número de serie, Ubicación georreferencial, Fecha de Ingreso, **Fecha de Garantía**, **Fecha de Lectura Inicial**, Lectura Inicial y Descripción Técnica. Dos diferencias con el manual de ayuda existente: la garantía es una **fecha**, no una cantidad de meses, y la **fecha de lectura inicial** no figura en ese manual."

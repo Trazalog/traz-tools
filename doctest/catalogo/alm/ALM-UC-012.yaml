@@ -1,0 +1,37 @@
+id: ALM-UC-012
+modulo: ALM
+titulo: Consultar el detalle de las entregas de un período
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-08-25
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Informe.php
+    detalle: "entregaMaterial() arma el informe con desde, hasta, obra y depósito"
+  - repo: traz-comp-almacenes
+    path: models/Informes.php
+    detalle: "entregaMateriales($desde, $hasta, $obra, $depo)"
+pantallas:
+  - "Almacenes → Entrega Detallada"
+precondiciones:
+  - Sesión iniciada en Tools
+  - Hay entregas registradas en el período que se consulta
+flujo_principal:
+  - paso: "Entra a Almacenes → Entrega Detallada"
+    resultado: "Se muestran los filtros Desde, Hasta, Obras, Establecimiento y Depósito"
+  - paso: "Elige el rango de fechas y los filtros que necesita"
+    resultado: "Los desplegables de establecimiento y depósito ofrecen los de la empresa"
+  - paso: "Hace clic en 'Filtrar'"
+    resultado: "Se listan las entregas del período con su detalle"
+validaciones:
+  - "Las fechas Desde y Hasta son obligatorias"
+  - "El filtro de Obras solo tiene contenido si la empresa lo cargó: es un formulario dinámico, no un dato del módulo"
+  - "El informe solo incluye entregas de la empresa de la sesión"
+dudas: []
+derivados:
+  ayuda: ayudas/src/alm/manual_almacenes.html#s09
+  feature: features/alm/ALM-UC-012.consultar-el-detalle-de-las-entregas-de-un-perio.feature
+notas:
+  - "**'Obras' no es lo mismo que orden de trabajo.** Es un formulario dinámico que se carga a mano y solo se usa en clientes constructores; para el resto de las empresas el filtro queda vacío. Confirmado por el PM."

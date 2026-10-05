@@ -1,0 +1,47 @@
+id: PAN-UC-004
+modulo: PAN
+titulo: Entregar herramientas y emitir el vale
+perfil: Usuario
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Movimientoherramientas.php
+    detalle: "nuevaSalida(); printVale() para el remito"
+  - repo: traz-comp-pan
+    path: models/Orders.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "salidaHerramientasSet y salidaHerramientasDetaSet"
+pantallas:
+  - "Herramientas → Movimientos Herramientas → Nueva Entrega"
+precondiciones:
+  - Hay herramientas en estado Activa en el pañol
+flujo_principal:
+  - paso: "Entra a Movimientos Herramientas"
+    resultado: "Se muestra la grilla con Nro. Vale, Tipo, Fecha y Hora, Establecimiento/Pañol, Responsable y Herramientas, ordenada por fecha y hora descendente"
+  - paso: "Abre Nueva Entrega"
+    resultado: "Se abre el modal con Establecimiento, Pañol, los datos del encargado, Observaciones y el selector de Herramientas"
+  - paso: "Elige las herramientas una por una con Agregar"
+    resultado: "Las herramientas se van sumando a la lista del vale"
+  - paso: "Guarda"
+    resultado: "Se registra la entrega con su Nro. de Vale y las herramientas pasan a estado Entregada"
+  - paso: "Usa la acción de impresión de esa fila"
+    resultado: "Se muestra el vale con el logo de la empresa, Nº, fecha, establecimiento/depósito, nombre y DNI del responsable, la tabla de código y descripción, y las observaciones"
+flujos_alternativos: []
+validaciones:
+  - "Una herramienta que ya está Entregada NO puede volver a entregarse sin haber sido recepcionada antes"
+  - "Una herramienta Inhabilitada no puede entregarse"
+  - "En la grilla, las herramientas del vale se muestran concatenadas como CÓDIGO-DESCRIPCIÓN / CÓDIGO2-DESCRIPCIÓN2, cortadas a 400 caracteres con '...'"
+  - "El número de vale es el id del vale"
+  - "El logo del vale usa el mismo parámetro que el resto de los logos del sistema"
+  - "El vale aclara que no es válido como factura"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas: []
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s03
+notas:
+  - "Entrega y Recepción comparten la misma pieza de código y se guardan con tipo distinto."

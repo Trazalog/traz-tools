@@ -1,0 +1,40 @@
+id: MAN-UC-028
+modulo: MAN
+titulo: El ciclo de vida de un equipo
+perfil: Supervisor
+estado: validado
+version: "0.1"
+origen: baseline
+fecha_validacion: 2026-08-26
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/models/Equipos.php
+    detalle: "los estados 'AC' y 'AN' del equipo"
+  - repo: traz-prod-assetplanner
+    path: application/views/equipo/list.php
+    detalle: "habilitarEquipo(), inhabilitarEquipo(), eliminarEquipo()"
+pantallas:
+  - "Mantenimiento → Equipos"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+flujo_principal:
+  - paso: "Se da de alta el equipo (MAN-UC-002)"
+    resultado: "Nace activo y ya puede recibir solicitudes, planes y órdenes de trabajo"
+  - paso: "Mientras está activo, acumula historia: lecturas, órdenes, informes, componentes"
+    resultado: "Todo eso queda asociado al equipo"
+  - paso: "Si sale de servicio, se inhabilita (MAN-UC-022)"
+    resultado: "Pasa a inactivo, y la columna Estado del listado lo muestra"
+  - paso: "Si vuelve a servicio, se habilita de nuevo"
+    resultado: "Vuelve a estar activo, conservando toda su historia"
+validaciones:
+  - "El equipo tiene **tres** estados: `AC` activo, `IN` inhabilitado y `AN` dado de baja"
+  - "Ninguna de las dos acciones borra el registro: el historial del equipo se conserva siempre"
+  - "En la base el equipo tiene dos estados: `AC` (activo) y `AN`"
+  - "La única transición que el usuario controla a mano es habilitar / inhabilitar"
+dudas: []
+derivados:
+  ayuda: ayudas/src/man/manual_mantenimiento.html#s02
+notas:
+  - "**Los tres estados, verificados en el código:** el equipo nace `AC`; *Inhabilitar* lo pasa a `IN` (`cambio_equipo()`) y *Habilitar* lo devuelve; *Eliminar* lo pasa a `AN` (`baja_equipo()`). Es el único ciclo del módulo que el usuario mueve a mano — todos los demás los mueve el proceso."
+  - "Los equipos en `AN` quedan **fuera del cálculo de disponibilidad** del Panel de KPIs."
+  - "Este caso no describe una pantalla sino **el recorrido completo de la entidad**. Es el que responde la pregunta \"¿qué le puede pasar a un equipo a lo largo del tiempo?\", que ninguna pantalla contesta por sí sola."

@@ -1,0 +1,31 @@
+id: MAN-UC-037
+modulo: MAN
+titulo: Ver el detalle de un informe de servicio
+perfil: Supervisor
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-prod-assetplanner
+    path: application/views/ordenservicio/
+    detalle: "el ícono 'Ver Informe' de cada fila y el checkbox de selección múltiple"
+  - repo: traz-prod-assetplanner
+    path: application/controllers/Ordenservicio.php
+pantallas:
+  - "Mantenimiento → Informe de Servicios"
+precondiciones:
+  - Sesión iniciada en AssetPlanner
+  - Hay informes cargados
+flujo_principal:
+  - paso: "En el listado usa el ícono 'Ver Informe' de una fila"
+    resultado: "Se muestra el informe completo: qué se hizo, quiénes trabajaron, cuánto tiempo llevó y qué materiales figuran"
+flujos_alternativos:
+  - nombre: "Trabajar sobre varios informes"
+    pasos:
+      - paso: "Marca los casilleros de varias filas"
+        resultado: "Quedan seleccionadas para operar sobre todas juntas"
+validaciones:
+  - "El listado se puede filtrar por estado"
+  - "El listado se puede filtrar por estado"
+dudas:
+  - "**Falta confirmar para qué sirve el casillero de selección múltiple** de cada fila: no se encontró qué acción opera sobre varios informes a la vez. Se ve en pantalla, así que es rápido de confirmar cuando se escriban los tests."

@@ -1,0 +1,51 @@
+id: DNATO-UC-024
+modulo: DNATO
+titulo: Administrar las opciones de menú del sistema
+perfil: Administrador
+estado: borrador
+version: "0.2"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-dnato
+    path: application/controllers/Menu.php
+    detalle: "menuesList() (56-97), addMenu() (158-205), activeMenu() (206-223), deleteMenu() (246-271)"
+  - repo: traz-comp-dnato
+    path: application/models/Mmenu.php
+    detalle: "getMenues(), addMenues(), updateMenues(), activeMenu(): tabla seg.menues"
+  - repo: traz-comp-dnato
+    path: application/views/menu/menuesList.php
+pantallas:
+  - "Gestión de Menúes → Menues"
+  - "Listado de Menues"
+precondiciones:
+  - Sesión iniciada con perfil Administrador
+flujo_principal:
+  - paso: "Abre 'Menues'"
+    resultado: "Se muestra la grilla con Módulo, Opción, Nombre, URL, Opción Padre, Nro. Orden, Texto MouseOver, Javascript, Url Icono y Acciones"
+  - paso: "Agrega una opción de menú completando módulo, opción, nombre, URL, opción padre, orden e ícono, y confirma"
+    resultado: "Se muestra 'Guardado correctamente el registro.' y la opción aparece en la grilla"
+  - paso: "Edita una opción existente y confirma"
+    resultado: "Se muestra 'Actualizado correctamente el registro.' con los datos nuevos"
+flujos_alternativos:
+  - nombre: "Activar o desactivar una opción"
+    pasos:
+      - paso: "Cambia el estado de una opción de menú"
+        resultado: "La opción queda activada o desactivada, y deja de mostrarse a los usuarios cuando está desactivada"
+  - nombre: "No se puede guardar"
+    pasos:
+      - paso: "Confirma cuando la operación falla"
+        resultado: "Se muestra 'Error, no se puede guardar el registro'"
+  - nombre: "Usuario sin perfil de administración"
+    pasos:
+      - paso: "Un usuario no administrador abre la dirección"
+        resultado: "Se lo redirige a la pantalla principal"
+validaciones:
+  - "Las opciones de menú son del sistema, no de una empresa: se definen una vez y después se asignan por rol (DNATO-UC-025)"
+datos_prueba:
+  opcion_prefijo: "DOCTEST-MENU-"
+dudas:
+  - "El PM lo deja en borrador (2026-08-24): la pantalla no es prioridad ahora. Antes de derivar tests hay que definir qué campos son obligatorios y si el ABM se rehace."
+notas:
+  - "Alcance confirmado por el PM el 2026-08-19."
+  - "Verificado en el DEMO el 2026-08-19: la grilla y el formulario tienen los campos mencionados."
+  - "La pantalla quedó anotada como candidata a rehacerse: hoy es muy rústica, pero no es prioridad (hallazgo H-027)."
