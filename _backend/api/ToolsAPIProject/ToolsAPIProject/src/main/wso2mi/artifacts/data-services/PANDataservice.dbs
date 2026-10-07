@@ -336,6 +336,18 @@
       <result outputType="json"> {&#xd;  "herramientas":{&#xd;    "herramienta":[&#xd;      {&#xd;        "herr_id": "$herr_id",&#xd;        "codigo": "$codigo",&#xd;        "marca": "$marca",&#xd;        "marca_id": "$marca_id",&#xd;        "modelo": "$modelo",&#xd;        "tipo": "$tipo",&#xd;        "descripcion": "$descripcion",&#xd;        "pano_id": "$pano_id",&#xd;        "estado": "$estado",&#xd;        "pan_descrip": "$pan_descrip"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="herr_id" sqlType="STRING"/>
    </query>
+   <query id="salidasPorFecha" useConfig="ToolsDataSource">
+      <sql>select sp.sapa_id, to_char(sp.fec_alta,'YYYY-MM-DD') as fecha, sp.comprobante, sp.responsable, sp.destino from pan.salida_panol sp where sp.empr_id = cast(:empr_id as integer) and sp.eliminado = false and sp.fec_alta &gt;= cast(:desde as date) and sp.fec_alta &lt; (cast(:hasta as date) + 1) order by sp.fec_alta desc</sql>
+      <result outputType="json">{"salidas": {"salida": [{"sapa_id":"$sapa_id","fecha":"$fecha","comprobante":"$comprobante","responsable":"$responsable","destino":"$destino"}]}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="desde" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
+   </query>
+   <query id="herramientasDeSalida" useConfig="ToolsDataSource">
+      <sql>select dsp.sapa_id, dsp.herr_id, h.codigo, h.descripcion from pan.deta_salida_panol dsp inner join pan.herramientas h on h.herr_id = dsp.herr_id where dsp.sapa_id = cast(:sapa_id as integer)</sql>
+      <result outputType="json">{"herramientas": {"herramienta": [{"sapa_id":"$sapa_id","herr_id":"$herr_id","codigo":"$codigo","descripcion":"$descripcion"}]}}</result>
+      <param name="sapa_id" sqlType="STRING"/>
+   </query>
    <resource method="POST" path="/panol">
       <call-query href="panolSet">
          <with-param name="descripcion" query-param="descripcion"/>
@@ -675,5 +687,11 @@
    </resource>
    <resource method="GET" path="/salida/fecha/{sapa_id}">
       <call-query href="getSalidaFecha"><with-param name="sapa_id" query-param="sapa_id"/></call-query>
+   </resource>
+   <resource method="GET" path="/salidas/empresa/{empr_id}/desde/{desde}/hasta/{hasta}">
+      <call-query href="salidasPorFecha"><with-param name="empr_id" query-param="empr_id"/><with-param name="desde" query-param="desde"/><with-param name="hasta" query-param="hasta"/></call-query>
+   </resource>
+   <resource method="GET" path="/panol/salida/{sapa_id}/herramientas">
+      <call-query href="herramientasDeSalida"><with-param name="sapa_id" query-param="sapa_id"/></call-query>
    </resource>
 </data>
