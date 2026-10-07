@@ -212,6 +212,27 @@
       <result outputType="json">{&#xd;    "adjuntos": {&#xd;        "adjunto": [{&#xd;            "id_adjunto": "$id_adjunto",&#xd;            "url": "$url",&#xd;            "adjunto": "$adjunto",&#xd;            "nombre": "$nombre"&#xd;        }]&#xd;    }&#xd;}</result>
       <param name="id_solicitud" sqlType="STRING"/>
    </query>
+   <query id="otsSinCerrarPorUsuario" useConfig="AssetPlannerDataSource">
+      <sql>select ot.id_orden, ot.estado, date_format(ot.f_asignacion,'%Y-%m-%d') as fecha from orden_trabajo ot where ot.id_usuario_a = :usrId and ot.id_empresa = :id_empresa and ot.estado not in ('CE','CN') order by ot.f_asignacion desc</sql>
+      <result outputType="json">{"ordenes": {"orden": [{"id_orden":"$id_orden","estado":"$estado","fecha":"$fecha"}]}}</result>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtVale" returnRequestStatus="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_otvales (otId, sapa_id, origen, usrId, fecha, id_empresa) VALUES (:otId, :sapa_id, :origen, :usrId, now(), :id_empresa)</sql>
+      <param name="otId" sqlType="STRING"/>
+      <param name="sapa_id" sqlType="STRING"/>
+      <param name="origen" sqlType="STRING"/>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtHerramientaUsada" returnRequestStatus="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_otherramientasusadas (otId, herrId, sapa_id, activa, id_empresa) VALUES (:otId, :herrId, :sapa_id, 1, :id_empresa)</sql>
+      <param name="otId" sqlType="STRING"/>
+      <param name="herrId" sqlType="STRING"/>
+      <param name="sapa_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/kpiDisponibilidadxFecha/{id_empresa}/fecinicio/{fec_inicio}/fecfin/{fec_fin}/idempr/{id_empresa2}/fecinicio2/{fec_inicio2}/fecfin2/{fec_fin2}">
       <description>obtengo porcentaje de disponibilidad de los equipos por una fecha                                  &#xd;                                    &#xd;                                    </description>
       <call-query href="getKPIDisponibiidadPorFecha">
@@ -532,4 +553,13 @@
       <param name="id_empresa"   sqlType="STRING"/>
       <param name="id_solicitud" sqlType="STRING"/>
    </query>
+   <resource method="GET" path="/ots/sin-cerrar/usuario/{usrId}/empresa/{id_empresa}">
+      <call-query href="otsSinCerrarPorUsuario"><with-param name="usrId" query-param="usrId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/vale" returnRequestStatus="true">
+      <call-query href="setOtVale"><with-param name="otId" query-param="otId"/><with-param name="sapa_id" query-param="sapa_id"/><with-param name="origen" query-param="origen"/><with-param name="usrId" query-param="usrId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/herramienta-usada" returnRequestStatus="true">
+      <call-query href="setOtHerramientaUsada"><with-param name="otId" query-param="otId"/><with-param name="herrId" query-param="herrId"/><with-param name="sapa_id" query-param="sapa_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
