@@ -139,6 +139,8 @@ Entrá a Tools como siempre (vía DNATO), con un usuario de una empresa que teng
 - crear el punto de menú en TEST, como en la sección 5 (pedíselo al PM), o
 - en la consola del navegador, ejecutar `linkTo('traz-comp-bpm/Proceso2')`.
 
+⏱️ **Al medir tiempos:** al entrar, Tools abre sola la bandeja vieja ("Mis Tareas"). PHP atiende **de a un pedido por sesión**, así que si abrís la bandeja 2 mientras la vieja todavía carga, la 2 espera a que termine (en TEST, con VPN, se vio a la 2 tardar 100 s por eso, aunque su consulta tardó 6 s). Esperá a que "Mis Tareas" termine de cargar y recién ahí abrí la bandeja 2 y medí. Lo mismo vale para el usuario especial en producción.
+
 Compará siempre la **bandeja vieja** ("Mis Tareas") con la **bandeja 2**, con el mismo usuario y la misma empresa:
 
 | # | Prueba | Resultado esperado |
@@ -333,6 +335,8 @@ La idea es que en producción la bandeja 2 la vea **un solo usuario**, con los d
 El texto que arma cada `map()` en PHP (por ejemplo `Yudiproctareas::map`, `Almtareas::map` o `Tsttareas::map`) también existe en SQL, en el CTE `tx` de `BandejaDataService.dbs`, con un bloque por modelo. **Si cambia lo que muestra un `map()`, o se agrega a `BPM_PROCESS` un proceso con modelo propio, hay que actualizar ese bloque en el mismo PR.** Si no, la búsqueda de la bandeja 2 no encuentra lo nuevo. El `.dbs` documenta las rarezas de PHP que el SQL copia a propósito para dar los mismos resultados.
 
 ### Antes de producción
+
+- **El SQL sigue la versión de los submódulos de `develop`.** Ejemplo: el `map()` de órdenes de transporte en `traz-tools-resi` dice "Sector de Descarga:" en `develop` y "Deposito:" en el `master` de hoy. La bandeja 2 tiene que llegar a cada ambiente **junto con** los submódulos de `develop`, que es lo que pasa con el flujo normal `develop` → DEMO → `master` → producción. No hay que llevarla sola a un ambiente que tenga submódulos más viejos: la búsqueda daría distinto en esas etiquetas.
 
 - **Formato de fecha de las solicitudes de retiro:** en TEST, el MI serializa `log.solicitudes_retiro.fec_alta` como `YYYY-MM-DDTHH:MI:SS.mmm-03:00`, corrida 3 horas, y el SQL lo replica. Si el MI de producción tiene otra zona horaria, buscar por esa fecha puede dar distinto.
 - **Versión de Bonita:** la consulta lee tablas internas del engine. Sirve para Bonita 7.x (verificado en 7.7.0; las columnas son las mismas hasta 10.1). Desde **Bonita 10.3** desaparece la columna `tenantid` y hay que ajustarla.

@@ -31,7 +31,10 @@
       * DataServices con resultado "objeto": si devuelven mas de una fila PHP recibe un array y no ve los campos;
         por eso esos laterales usan el dato solo si hay exactamente una fila (n = 1).
       * Minusculas solo ASCII (como strtolower de PHP): "REVISION" con acento en mayuscula no matchea "revision".
-      Verificado contra PHP tarea por tarea (414/414 textos identicos en TEST, 2026-10-07).
+      * Entregaordentransportes: replica la version de develop (traz-tools-resi 96092b9): etiqueta "Sector de Descarga",
+        dominio del equipo pesado si lo hay, y "Certifica Vuelco" lee semaresiduosDS2 ordenTransporteInfoEntregaVuelco.
+      El SQL sigue los map() de los submodulos de develop: se despliega junto con ellos (develop -> DEMO -> master -> prod).
+      Verificado contra PHP tarea por tarea con los submodulos de develop (414/414 textos identicos en TEST, 2026-10-08).
    -->
    <query id="getBandejaTareas" useConfig="ToolsDataSource">
       <sql>WITH t AS (
@@ -133,8 +136,8 @@ tx AS (
                 || ' Solicitante: ' || COALESCE(gen.razon_social, '')
            WHEN 'Entregaordentransportes' THEN ' Estado: ' || COALESCE(ot.estado, '')
                 || ' Ord. Transporte: ' || COALESCE(CAST(ot.ortr_id AS varchar), '')
-                || ' Dominio: ' || COALESCE(ot.dominio, '')
-                || ' Deposito: ' || COALESCE(dep.descripcion, '')
+                || ' Dominio: ' || COALESCE(NULLIF(ot.dominiopesado, ''), ot.dominio, '')
+                || ' Sector de Descarga: ' || COALESCE(dep.descripcion, '')
            ELSE '' END,
       'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') AS texto
   FROM tm
@@ -202,11 +205,24 @@ tx AS (
     WHERE tm.model = 'Retirocontenedores' AND st.sotr_id = (SELECT sr.sotr_id FROM log.solicitudes_retiro sr WHERE sr.case_id = tm.case_txt)
       AND st.tist_id = ttipo.tabl_id AND st.depa_id = depa.depa_id AND st.zona_id = zona.zona_id AND st.rubr_id = trub.tabl_id
     LIMIT 1) gen ON tm.model = 'Retirocontenedores' AND gen.n = 1
-  -- Orden de transporte (semaresiduosDS ordenTransporteInfoEntrega + depositosDescargaGet)
+  -- Orden de transporte: "Certifica Vuelco" lee semaresiduosDS2 ordenTransporteInfoEntregaVuelco (con LIMIT 1 y
+  -- dominio del equipo pesado); el resto lee semaresiduosDS ordenTransporteInfoEntrega. Despues, depositosDescargaGet.
   LEFT JOIN LATERAL (
-    SELECT ot1.ortr_id, ot1.estado, e.dominio, count(*) OVER () AS n
+    SELECT ot1.ortr_id, ot1.estado, e.dominio, CAST(NULL AS varchar) AS dominiopesado, count(*) OVER () AS n
     FROM log.ordenes_transporte ot1, core.equipos e, log.choferes ch
-    WHERE tm.model = 'Entregaordentransportes' AND ot1.case_id = tm.case_txt AND ot1.equi_id = e.equi_id AND ot1.chof_id = ch.documento
+    WHERE tm.model = 'Entregaordentransportes' AND COALESCE(tm.display_name, tm.name) &lt;&gt; 'Certifica Vuelco'
+      AND ot1.case_id = tm.case_txt AND ot1.equi_id = e.equi_id AND ot1.chof_id = ch.documento
+    UNION ALL
+    SELECT * FROM (
+      SELECT ot2.ortr_id, ot2.estado, e1.dominio, e2.dominio AS dominiopesado, 1 AS n
+      FROM log.ordenes_transporte ot2
+      JOIN core.equipos e1 ON e1.equi_id = ot2.equi_id
+      JOIN log.choferes ch2 ON ch2.documento = ot2.chof_id
+      LEFT JOIN log.contenedores_entregados ce2 ON ce2.ortr_id = ot2.ortr_id
+      LEFT JOIN core.equipos e2 ON e2.equi_id = ce2.equi_id_pesado
+      WHERE tm.model = 'Entregaordentransportes' AND COALESCE(tm.display_name, tm.name) = 'Certifica Vuelco'
+        AND ot2.case_id = tm.case_txt
+      LIMIT 1) v
     LIMIT 1) ot ON tm.model = 'Entregaordentransportes' AND ot.n = 1
   LEFT JOIN LATERAL (
     SELECT de.descripcion, count(*) OVER () AS n
