@@ -231,6 +231,9 @@ define('REST_ALM', HOST.'/services/ALMDataService');
 define('REST_PRD', HOST.'/services/PRDDataService');
 define('REST_BPM', HOST.'/tools/bpm');
 define('REST_CORE', HOST.'/services/COREDataService');
+// Bandeja de entrada paginada (traz-comp-bpm Procesos::listarPaginaServerSide). Con guarda para poder
+// apuntarla a otro MI desde config/<ENVIRONMENT>/constants.php
+defined('REST_BANDEJA') OR define('REST_BANDEJA', HOST.'/services/BandejaDataService');
 define('REST_FRM', HOST.'/services/FRMDataService');
 define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');

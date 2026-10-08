@@ -1,0 +1,282 @@
+<data disableLegacyBoxcarringMode="true" enableBatchRequests="false" enableBoxcarring="false" name="BandejaDataService" transports="http https local">
+   <description>Bandeja de entrada con paginado y busqueda en la base. Resuelve en una sola query las tareas pendientes de un usuario en Bonita (misma logica que API/bpm/humanTask?f=user_id=X: asignadas a el + candidatas por actor mapping), filtradas por empresa via core.case_empresa y por texto de busqueda, ordenadas, con total y cantidad filtrada. Lee la BD de Bonita en solo lectura por el servidor dblink "bonita_bpm" (ver _backend/database/scripts/versiones/bandeja_bonita_dblink.sql). Ver doc/v3/bandeja-paginado-real.md.</description>
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <!--
+      getBandejaTareas
+      - user_id: id de usuario de Bonita (no el de Tools).
+      - empr_id: empresa activa. Solo se devuelven tareas de casos con fila (case_id, empr_id) en core.case_empresa,
+        igual que bandejaEmpresa() en PHP.
+      - offset / limit: paginado (limit = 0 devuelve todas).
+      - buscar: texto ya en minusculas y sin espacios en los extremos ("" = sin busqueda). Se busca con "contiene" en el
+        mismo texto que armaba PHP en Procesos::listarPaginaServerSide(): nombre de tarea, nombre de proceso, case,
+        descripcion, tagCase y textos de info[] que produce el map() del modelo de cada proceso.
+      - procesos: JSON de BPM_PROCESS armado por PHP {processId: {nombre, model, tst}}. Asi el nombre de cada proceso
+        sigue saliendo solo de constants.php.
+      - Devuelve los campos con los mismos nombres y formatos que API/bpm/humanTask (fechas en hora de Argentina,
+        "" cuando no hay valor, prioridad como texto) para que Procesos::armarTarea() los consuma sin cambios.
+        total = bandeja de la empresa; filtered = coincidencias de la busqueda.
+      - "mis_actores" calcula una sola vez los actores a los que llega el usuario (directo o por membership
+        grupo/rol). Es la misma condicion que searchSHumanTaskInstancePendingOrAssigned del engine, sin la
+        correlacion por tenantid que la hacia recalcular por cada tarea.
+
+      MANTENIMIENTO - el CTE "tx" (texto buscable) DUPLICA en SQL lo que muestra el map() de cada modelo
+      (Yudiproctareas, Proceso_tareas, Sicpoatareas, Almtareas, Tsttareas, Pedidocontenedores, Retirocontenedores,
+      Entregaordentransportes, Gentareas). Si cambia un map() o se agrega un proceso con modelo propio, hay que
+      actualizar su bloque aca en el mismo PR. Replica a proposito rarezas de PHP/MI para dar los mismos resultados:
+      * Tsttareas: el texto "Nro Pedido"/"Nro Lote" sale vacio o solo con el valor (precedencia del ternario en PHP).
+      * YUDI/SEIN/SICPOA: formatFechaPG() sobre 'DD-MM-YYYY' deja las fechas como YYYY/MM/DD.
+      * Retirocontenedores: el MI serializa fec_alta como ISO corrido a -03:00.
+      * DataServices con resultado "objeto": si devuelven mas de una fila PHP recibe un array y no ve los campos;
+        por eso esos laterales usan el dato solo si hay exactamente una fila (n = 1).
+      * Minusculas solo ASCII (como strtolower de PHP): "REVISION" con acento en mayuscula no matchea "revision".
+      Verificado contra PHP tarea por tarea (414/414 textos identicos en TEST, 2026-10-07).
+   -->
+   <query id="getBandejaTareas" useConfig="ToolsDataSource">
+      <sql>WITH t AS (
+  SELECT x.*
+  FROM dblink('bonita_bpm', format($q$
+    WITH mis_actores AS (
+      SELECT am.actorid FROM actormember am
+      WHERE am.tenantid = 1 AND am.userid = %1$s
+      UNION
+      SELECT am.actorid FROM actormember am
+      JOIN user_membership um ON um.tenantid = am.tenantid AND um.userid = %1$s
+       AND ( (am.groupid = um.groupid AND am.roleid = -1)
+          OR (am.roleid = um.roleid AND am.groupid = -1)
+          OR (am.groupid = um.groupid AND am.roleid = um.roleid))
+      WHERE am.tenantid = 1
+    )
+    SELECT fi.id, fi.logicalgroup2, fi.logicalgroup1, fi.name, fi.displayname, fi.statename,
+           fi.assigneeid, fi.claimeddate, fi.reachedstatedate, fi.expectedenddate, fi.priority
+    FROM flownode_instance fi
+    WHERE fi.tenantid = 1 AND fi.kind IN ('user','manual')
+      AND fi.stable AND NOT fi.terminal AND NOT fi.state_executing
+      AND fi.statecategory = 'NORMAL'
+      AND ( fi.assigneeid = %1$s
+         OR (fi.assigneeid = 0 AND EXISTS (
+              SELECT 1 FROM pending_mapping pm
+              WHERE pm.tenantid = 1 AND pm.activityid = fi.id
+                AND (pm.userid = %1$s OR pm.actorid IN (SELECT actorid FROM mis_actores)))))
+  $q$, CAST(:user_id AS bigint)))
+    AS x(task_id bigint, case_id bigint, process_id bigint, name varchar, display_name varchar, state varchar,
+         assigned_id bigint, claimed_date bigint, reached_state_date bigint, due_date bigint, priority smallint)
+  WHERE CAST(x.case_id AS varchar) IN (
+    SELECT CAST(ce.case_id AS varchar) FROM core.case_empresa ce WHERE ce.empr_id = CAST(:empr_id AS integer))
+),
+tm AS (
+  SELECT t.task_id, t.case_id, t.display_name, t.name,
+         COALESCE(p.value -&gt;&gt; 'model', 'Gentareas') AS model,
+         COALESCE(p.value -&gt;&gt; 'nombre', '') AS nombre_proceso,
+         COALESCE(CAST(p.value -&gt;&gt; 'tst' AS boolean), false) AS es_tst,
+         CAST(t.case_id AS varchar) AS case_txt
+  FROM t
+  LEFT JOIN json_each(CAST(:procesos AS json)) p ON p.key = CAST(t.process_id AS varchar)
+),
+tx AS (
+  SELECT tm.task_id,
+    translate(
+      CASE WHEN tm.es_tst THEN COALESCE(tst.nombre, '') ELSE COALESCE(tm.display_name, tm.name, '') END
+      || ' ' || CASE WHEN tm.es_tst THEN 'Tarea Planificada' ELSE tm.nombre_proceso END
+      || ' ' || tm.case_txt
+      || ' ' || CASE tm.model
+           WHEN 'Yudiproctareas' THEN COALESCE(pt.descripcion, 'Sin Descripción')
+           WHEN 'Proceso_tareas' THEN COALESCE(pt.descripcion, 'Sin Descripción')
+           WHEN 'Sicpoatareas'   THEN COALESCE(pt.descripcion, 'Sin Descripción')
+           WHEN 'Almtareas' THEN CASE WHEN alm.pema_id IS NOT NULL
+                                      THEN COALESCE(NULLIF(alm.justificacion, ''), 'Pedido Materiales sin Justificación')
+                                      ELSE 'Sin Descripción' END
+           WHEN 'Tsttareas' THEN COALESCE(tst.descripcion, 'Sin Descripción')
+           WHEN 'Pedidocontenedores' THEN COALESCE(soc.observaciones, 'Sin Descripción')
+           WHEN 'Retirocontenedores' THEN ''
+           WHEN 'Entregaordentransportes' THEN 'Ingreso de contenedores a PTA'
+           ELSE 'Te falto definir el modelo para la tarea pa' END
+      || ' ' || CASE WHEN tm.model = 'Sicpoatareas' THEN 'oculto' ELSE '' END
+      || CASE tm.model
+           WHEN 'Yudiproctareas' THEN ' N° Orden:  ' || COALESCE(CAST(pt.petr_id AS varchar), '')
+                || ' N° Codigo:  ' || COALESCE(pt.cod_proyecto, '')
+                || ' Objetivo:  ' || COALESCE(CAST(pt.objetivo AS varchar), '') || '   ' || COALESCE(pt.unidad_medida, '')
+                || ' Estado: ' || COALESCE(pt.estado, '') || ' '
+                || ' Fecha Inicio: ' || COALESCE(to_char(pt.fec_inicio, 'YYYY/MM/DD'), '')
+                || ' Fecha Entrega: ' || COALESCE(to_char(pt.fec_entrega, 'YYYY/MM/DD'), '')
+           WHEN 'Proceso_tareas' THEN ' N° Orden:  ' || COALESCE(CAST(pt.petr_id AS varchar), '')
+                || ' N° Codigo:  ' || COALESCE(pt.cod_proyecto, '')
+                || ' Objetivo:  ' || COALESCE(CAST(pt.objetivo AS varchar), '') || '   ' || COALESCE(pt.unidad_medida, '')
+                || ' Estado: ' || COALESCE(pt.estado, '') || ' '
+                || ' Fecha Inicio: ' || COALESCE(to_char(pt.fec_inicio, 'YYYY/MM/DD'), '')
+                || ' Fecha Entrega: ' || COALESCE(to_char(pt.fec_entrega, 'YYYY/MM/DD'), '')
+           WHEN 'Sicpoatareas' THEN ' Estado: ' || COALESCE(pt.estado, '') || ' '
+                || ' Fecha Inicio: ' || COALESCE(to_char(pt.fec_inicio, 'YYYY/MM/DD'), '')
+                || ' Dominio: ' || COALESCE(pat.valor, '')
+           WHEN 'Almtareas' THEN CASE WHEN alm.pema_id IS NOT NULL
+                THEN ' N° Pedido: ' || alm.pema_id || ' Lote: ' || COALESCE(alm.lote_id, '')
+                  || ' Estado: ' || COALESCE(alm.estado, '') || ' Fecha: ' || COALESCE(to_char(alm.fecha, 'DD/MM/YYYY'), '')
+                ELSE ' N° Pedido: ' || COALESCE(CAST(np.pema_id AS varchar), '') || ' Estado: ' || COALESCE(np.estado, '')
+                  || ' Fecha: ' || COALESCE(to_char(np.fecha, 'DD/MM/YYYY'), '') || ' '
+                  || ' Justificacion: ' || COALESCE(np.justificacion, '') END
+           WHEN 'Tsttareas' THEN ' Estado: ' || COALESCE(tst.estado, '')
+                || CASE tst.origen
+                     WHEN 'PETR' THEN ' Origen: Pedido de trabajo Id Ped.Trabajo: ' || COALESCE(CAST(tst.orta_id AS varchar), '') || ' '
+                     WHEN 'BATCH' THEN ' Origen: Producción de Lotes Batch:  ' || COALESCE(CAST(tst.orta_id AS varchar), '') || ' ' || COALESCE(lot.lote_id, '')
+                     WHEN 'ETAP' THEN ' Origen: Etapas  '
+                     ELSE ' Origen: ' || COALESCE(tst.origen, '') || ' ID: ' || COALESCE(CAST(tst.orta_id AS varchar), '') || ' Nro de Pedido: ' END
+                || ' Asignado: ' || COALESCE(tst.user_id, '')
+                || ' Fecha: ' || COALESCE(to_char(tst.fecha, 'DD/MM/YYYY'), '')
+           WHEN 'Pedidocontenedores' THEN ' Estado: ' || COALESCE(soc.estado, '')
+                || ' Fecha Solic.: ' || COALESCE(to_char(soc.fec_alta, 'DD-MM-YYYY'), '')
+                || ' Solicitante: ' || COALESCE(soc.razon_social, '')
+           WHEN 'Retirocontenedores' THEN ' Fecha: ' || COALESCE(
+                   to_char(sre.fec_local, 'YYYY-MM-DD"T"HH24') || ':' || to_char(sre.fec_local, 'MI') || ':'
+                   || to_char(sre.fec_local, 'SS.MS') || '-03' || ':' || '00', '')
+                || ' Ord. pedido: ' || COALESCE(CAST(sre.sore_id AS varchar), '')
+                || ' Solicitante: ' || COALESCE(gen.razon_social, '')
+           WHEN 'Entregaordentransportes' THEN ' Estado: ' || COALESCE(ot.estado, '')
+                || ' Ord. Transporte: ' || COALESCE(CAST(ot.ortr_id AS varchar), '')
+                || ' Dominio: ' || COALESCE(ot.dominio, '')
+                || ' Deposito: ' || COALESCE(dep.descripcion, '')
+           ELSE '' END,
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') AS texto
+  FROM tm
+  -- Los DataServices con resultado "objeto" devuelven un array si hay mas de una fila, y PHP no ve los campos:
+  -- por eso esos laterales cuentan sus filas (n) y solo se usan cuando hay exactamente una.
+  -- Pedido de trabajo (YUDI, SEIN, SICPOA): PRODataService getinfopedidotrabajoxcaseid
+  LEFT JOIN LATERAL (
+    SELECT pe.objetivo, pe.cod_proyecto, pe.descripcion, pe.fec_inicio, pe.fec_entrega, pe.info_id,
+           t1.valor AS unidad_medida, t2.descripcion AS estado, pe.petr_id, count(*) OVER () AS n
+    FROM pro.pedidos_trabajo pe, core.tablas t1, core.tablas t2, core.tablas t3
+    WHERE tm.model IN ('Yudiproctareas', 'Proceso_tareas', 'Sicpoatareas')
+      AND pe.case_id = tm.case_txt AND pe.umti_id = t1.tabl_id AND pe.estado = t2.tabl_id
+      AND pe.tipt_id = t3.tabl_id AND pe.eliminado != true
+    LIMIT 1) pt ON tm.model IN ('Yudiproctareas', 'Proceso_tareas', 'Sicpoatareas') AND pt.n = 1
+  -- Patente (SICPOA): FRMDataService getFormulario + getItemsFormulario, ultimo item "dominio"
+  LEFT JOIN LATERAL (
+    SELECT i.valor FROM frm.instancias_formularios i
+    WHERE tm.model = 'Sicpoatareas' AND pt.info_id IS NOT NULL
+      AND i.info_id = pt.info_id AND i.eliminado = false AND i.name = 'dominio'
+      AND EXISTS (SELECT 1 FROM frm.instancias_formularios a JOIN frm.formularios c ON c.form_id = a.form_id
+                  WHERE a.info_id = pt.info_id AND a.eliminado = false)
+    ORDER BY i.orden DESC LIMIT 1) pat ON tm.model = 'Sicpoatareas'
+  -- Pedido de materiales con lote (ALMDataService getinfoPedMatPorCaseId)
+  LEFT JOIN LATERAL (
+    SELECT CAST(pm.pema_id AS varchar) AS pema_id, pm.fecha, pm.justificacion, pm.estado,
+           CAST(lo.lote_id AS varchar) AS lote_id, count(*) OVER () AS n
+    FROM alm.alm_pedidos_materiales pm JOIN prd.lotes lo ON lo.batch_id = pm.batch_id
+    WHERE tm.model = 'Almtareas' AND pm.case_id = CAST(tm.case_id AS integer)
+    LIMIT 1) alm ON tm.model = 'Almtareas' AND alm.n = 1
+  -- Pedido de materiales sin lote (Notapedidos::getXCaseId, primera fila)
+  LEFT JOIN LATERAL (
+    SELECT apm.pema_id, apm.estado, apm.fecha, apm.justificacion
+    FROM alm.alm_pedidos_materiales apm
+    WHERE tm.model = 'Almtareas' AND apm.case_id = CAST(tm.case_id AS integer)
+    LIMIT 1) np ON tm.model = 'Almtareas'
+  -- Tarea planificada (TARDataService getTareaPlanificadaXCaseId, primera fila)
+  LEFT JOIN LATERAL (
+    SELECT tp.nombre, tp.descripcion, tp.estado, tp.user_id, tp.fecha, otp.origen, otp.orta_id
+    FROM tst.tareas_planificadas tp JOIN tst.origen_tarea_planficada otp ON otp.tapl_id = tp.tapl_id
+    WHERE tm.model = 'Tsttareas' AND tp.case_id = tm.case_txt
+    LIMIT 1) tst ON tm.model = 'Tsttareas'
+  -- Lote de la tarea planificada de origen BATCH (PRDLoteDataService getLote2)
+  LEFT JOIN LATERAL (
+    SELECT CAST(lote.lote_id AS varchar) AS lote_id, count(*) OVER () AS n
+    FROM prd.etapas etap, prd.establecimientos esta, prd.recipientes reci, prd.lotes lote, alm.alm_depositos depo
+    WHERE lote.etap_id = etap.etap_id AND lote.reci_id = reci.reci_id AND reci.depo_id = depo.depo_id
+      AND depo.esta_id = esta.esta_id AND tst.origen = 'BATCH' AND lote.batch_id = tst.orta_id
+    LIMIT 1) lot ON tst.origen = 'BATCH' AND lot.n = 1
+  -- Solicitud de contenedores (semaresiduosDS solicitudContenedorGetInfo, ya trae LIMIT 1)
+  LEFT JOIN LATERAL (
+    SELECT sc.estado, sc.observaciones, sc.fec_alta, st.razon_social
+    FROM log.solicitudes_contenedor sc, log.solicitantes_transporte st, log.contenedores_solicitados cs
+    WHERE tm.model = 'Pedidocontenedores' AND sc.sotr_id = st.sotr_id AND sc.soco_id = cs.soco_id AND sc.case_id = tm.case_txt AND sc.eliminado = 0
+    LIMIT 1) soc ON tm.model = 'Pedidocontenedores'
+  -- Solicitud de retiro (semaresiduosDS solicitudRetiroGetPorCaseRetiro + solicitanteTransporteGetPorCaseIdRetiro).
+  -- El MI serializa el timestamp como si fuera UTC, pasado a hora de Argentina con sufijo -03:00
+  LEFT JOIN LATERAL (
+    SELECT sr.sore_id, (sr.fec_alta AT TIME ZONE 'UTC') AT TIME ZONE 'America/Argentina/Buenos_Aires' AS fec_local,
+           count(*) OVER () AS n
+    FROM log.solicitudes_retiro sr WHERE tm.model = 'Retirocontenedores' AND sr.case_id = tm.case_txt
+    LIMIT 1) sre ON tm.model = 'Retirocontenedores' AND sre.n = 1
+  LEFT JOIN LATERAL (
+    SELECT st.razon_social, count(*) OVER () AS n
+    FROM log.solicitantes_transporte st, core.tablas ttipo, core.departamentos depa, core.zonas zona, core.tablas trub
+    WHERE tm.model = 'Retirocontenedores' AND st.sotr_id = (SELECT sr.sotr_id FROM log.solicitudes_retiro sr WHERE sr.case_id = tm.case_txt)
+      AND st.tist_id = ttipo.tabl_id AND st.depa_id = depa.depa_id AND st.zona_id = zona.zona_id AND st.rubr_id = trub.tabl_id
+    LIMIT 1) gen ON tm.model = 'Retirocontenedores' AND gen.n = 1
+  -- Orden de transporte (semaresiduosDS ordenTransporteInfoEntrega + depositosDescargaGet)
+  LEFT JOIN LATERAL (
+    SELECT ot1.ortr_id, ot1.estado, e.dominio, count(*) OVER () AS n
+    FROM log.ordenes_transporte ot1, core.equipos e, log.choferes ch
+    WHERE tm.model = 'Entregaordentransportes' AND ot1.case_id = tm.case_txt AND ot1.equi_id = e.equi_id AND ot1.chof_id = ch.documento
+    LIMIT 1) ot ON tm.model = 'Entregaordentransportes' AND ot.n = 1
+  LEFT JOIN LATERAL (
+    SELECT de.descripcion, count(*) OVER () AS n
+    FROM log.contenedores_entregados ce, alm.alm_depositos de
+    WHERE tm.model = 'Entregaordentransportes' AND ot.ortr_id IS NOT NULL AND ce.ortr_id = ot.ortr_id AND de.depo_id = ce.depo_id AND ce.tiva_id IS NULL AND ce.fec_descarga IS NULL
+    LIMIT 1) dep ON tm.model = 'Entregaordentransportes' AND dep.n = 1
+),
+f AS (
+  SELECT t.* FROM t
+  WHERE CAST(:buscar AS varchar) = ''
+     OR t.task_id IN (SELECT tx.task_id FROM tx WHERE strpos(tx.texto, CAST(:buscar AS varchar)) &gt; 0)
+)
+SELECT
+  f.task_id AS id,
+  f.case_id,
+  f.process_id,
+  f.name,
+  COALESCE(f.display_name, f.name) AS display_name,
+  f.state,
+  CASE WHEN f.assigned_id = 0 THEN '' ELSE CAST(f.assigned_id AS varchar) END AS assigned_id,
+  CASE WHEN f.assigned_id = 0 OR f.claimed_date IS NULL OR f.claimed_date = 0 THEN ''
+       ELSE to_char(to_timestamp(f.claimed_date / 1000.0) AT TIME ZONE 'America/Argentina/Buenos_Aires', 'YYYY-MM-DD HH24') || ':'
+            || to_char(to_timestamp(f.claimed_date / 1000.0) AT TIME ZONE 'America/Argentina/Buenos_Aires', 'MI') || ':'
+            || to_char(to_timestamp(f.claimed_date / 1000.0) AT TIME ZONE 'America/Argentina/Buenos_Aires', 'SS.MS') END AS assigned_date,
+  CASE WHEN f.due_date IS NULL OR f.due_date = 0 THEN ''
+       ELSE to_char(to_timestamp(f.due_date / 1000.0) AT TIME ZONE 'America/Argentina/Buenos_Aires', 'YYYY-MM-DD HH24') || ':'
+            || to_char(to_timestamp(f.due_date / 1000.0) AT TIME ZONE 'America/Argentina/Buenos_Aires', 'MI') || ':'
+            || to_char(to_timestamp(f.due_date / 1000.0) AT TIME ZONE 'America/Argentina/Buenos_Aires', 'SS.MS') END AS due_date,
+  CASE f.priority WHEN 0 THEN 'lowest' WHEN 1 THEN 'under_normal' WHEN 3 THEN 'above_normal' WHEN 4 THEN 'highest' ELSE 'normal' END AS priority,
+  (SELECT count(*) FROM t) AS total,
+  count(*) OVER () AS filtered
+FROM f
+ORDER BY f.reached_state_date DESC, f.task_id DESC
+LIMIT (CASE WHEN CAST(:limit AS integer) &gt; 0 THEN CAST(:limit AS integer) END)
+OFFSET CAST(:offset AS integer)</sql>
+      <result outputType="json">{
+  "tareas": {
+    "tarea": [
+      {
+        "id": "$id",
+        "caseId": "$case_id",
+        "processId": "$process_id",
+        "name": "$name",
+        "displayName": "$display_name",
+        "state": "$state",
+        "assigned_id": "$assigned_id",
+        "assigned_date": "$assigned_date",
+        "dueDate": "$due_date",
+        "priority": "$priority",
+        "total": "$total",
+        "filtered": "$filtered"
+      }
+    ]
+  }
+}</result>
+      <param name="user_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="limit" sqlType="STRING"/>
+      <param name="offset" sqlType="STRING"/>
+      <param name="buscar" sqlType="STRING" defaultValue=""/>
+      <param name="procesos" sqlType="STRING" defaultValue="{}"/>
+   </query>
+   <resource method="GET" path="/bandeja/tareas/usuario/{user_id}/empresa/{empr_id}/offset/{offset}/limit/{limit}">
+      <call-query href="getBandejaTareas">
+         <with-param name="user_id" query-param="user_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="offset" query-param="offset"/>
+         <with-param name="limit" query-param="limit"/>
+         <with-param name="buscar" query-param="buscar"/>
+         <with-param name="procesos" query-param="procesos"/>
+      </call-query>
+   </resource>
+</data>
