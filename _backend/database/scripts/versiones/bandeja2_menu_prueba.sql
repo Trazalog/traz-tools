@@ -2,7 +2,7 @@
 -- Punto de menú "Mis Tareas 2" (bandeja de entrada 2: traz-comp-bpm/Proceso2)
 -- habilitado SOLO para un usuario especial de prueba, dentro de una empresa.
 -- =============================================================================
--- Ver doc/v3/bandeja-paginado-real.md (sección "Punto de menú").
+-- Ver doc/v3/bandeja-paginado-real.md (pasos 1.3 y 2.6).
 --
 -- Cómo funciona el permiso de menú en Tools: el menú sale de seg.menues y un ítem se muestra si existe
 -- una fila en seg.memberships_menues (grupo, rol, modulo, opcion) cuyo grupo+rol el usuario tiene en
