@@ -17,6 +17,8 @@
       - Devuelve los campos con los mismos nombres y formatos que API/bpm/humanTask (fechas en hora de Argentina,
         "" cuando no hay valor, prioridad como texto) para que Procesos::armarTarea() los consuma sin cambios.
         total = bandeja de la empresa; filtered = coincidencias de la busqueda.
+      - Compatible con WSO2 EI 6.x (TEST 10.142.0.13) y MI 4.x: cada parametro se usa UNA sola vez (CTE "p"), sin
+        defaultValue y sin texto entre $q$ (el EI daba NullPointerException con eso).
       - "mis_actores" calcula una sola vez los actores a los que llega el usuario (directo o por membership
         grupo/rol). Es la misma condicion que searchSHumanTaskInstancePendingOrAssigned del engine, sin la
         correlacion por tenantid que la hacia recalcular por cada tarea.
@@ -37,15 +39,24 @@
       Verificado contra PHP tarea por tarea con los submodulos de develop (414/414 textos identicos en TEST, 2026-10-08).
    -->
    <query id="getBandejaTareas" useConfig="ToolsDataSource">
-      <sql>WITH t AS (
+      <sql>WITH p AS (
+  -- Cada parametro se lee UNA sola vez aca (el WSO2 EI 6.x no soporta parametros repetidos)
+  SELECT CAST(:user_id AS bigint) AS uid,
+         CAST(:empr_id AS integer) AS empr,
+         COALESCE(CAST(:buscar AS varchar), '') AS buscar,
+         CAST(:limit AS integer) AS lim,
+         CAST(:offset AS integer) AS desde,
+         CAST(:procesos AS json) AS procesos
+),
+t AS (
   SELECT x.*
-  FROM dblink('bonita_bpm', format($q$
-    WITH mis_actores AS (
+  FROM p, dblink('bonita_bpm', replace(
+'    WITH mis_actores AS (
       SELECT am.actorid FROM actormember am
-      WHERE am.tenantid = 1 AND am.userid = %1$s
+      WHERE am.tenantid = 1 AND am.userid = @uid@
       UNION
       SELECT am.actorid FROM actormember am
-      JOIN user_membership um ON um.tenantid = am.tenantid AND um.userid = %1$s
+      JOIN user_membership um ON um.tenantid = am.tenantid AND um.userid = @uid@
        AND ( (am.groupid = um.groupid AND am.roleid = -1)
           OR (am.roleid = um.roleid AND am.groupid = -1)
           OR (am.groupid = um.groupid AND am.roleid = um.roleid))
@@ -54,19 +65,20 @@
     SELECT fi.id, fi.logicalgroup2, fi.logicalgroup1, fi.name, fi.displayname, fi.statename,
            fi.assigneeid, fi.claimeddate, fi.reachedstatedate, fi.expectedenddate, fi.priority
     FROM flownode_instance fi
-    WHERE fi.tenantid = 1 AND fi.kind IN ('user','manual')
+    WHERE fi.tenantid = 1 AND fi.kind IN (''user'',''manual'')
       AND fi.stable AND NOT fi.terminal AND NOT fi.state_executing
-      AND fi.statecategory = 'NORMAL'
-      AND ( fi.assigneeid = %1$s
+      AND fi.statecategory = ''NORMAL''
+      AND ( fi.assigneeid = @uid@
          OR (fi.assigneeid = 0 AND EXISTS (
               SELECT 1 FROM pending_mapping pm
               WHERE pm.tenantid = 1 AND pm.activityid = fi.id
-                AND (pm.userid = %1$s OR pm.actorid IN (SELECT actorid FROM mis_actores)))))
-  $q$, CAST(:user_id AS bigint)))
+                AND (pm.userid = @uid@ OR pm.actorid IN (SELECT actorid FROM mis_actores)))))
+  ',
+    '@uid@', CAST(p.uid AS varchar)))
     AS x(task_id bigint, case_id bigint, process_id bigint, name varchar, display_name varchar, state varchar,
          assigned_id bigint, claimed_date bigint, reached_state_date bigint, due_date bigint, priority smallint)
   WHERE CAST(x.case_id AS varchar) IN (
-    SELECT CAST(ce.case_id AS varchar) FROM core.case_empresa ce WHERE ce.empr_id = CAST(:empr_id AS integer))
+    SELECT CAST(ce.case_id AS varchar) FROM core.case_empresa ce WHERE ce.empr_id = (SELECT empr FROM p))
 ),
 tm AS (
   SELECT t.task_id, t.case_id, t.display_name, t.name,
@@ -75,7 +87,7 @@ tm AS (
          COALESCE(CAST(p.value -&gt;&gt; 'tst' AS boolean), false) AS es_tst,
          CAST(t.case_id AS varchar) AS case_txt
   FROM t
-  LEFT JOIN json_each(CAST(:procesos AS json)) p ON p.key = CAST(t.process_id AS varchar)
+  LEFT JOIN json_each((SELECT procesos FROM p)) p ON p.key = CAST(t.process_id AS varchar)
 ),
 tx AS (
   SELECT tm.task_id,
@@ -232,8 +244,8 @@ tx AS (
 ),
 f AS (
   SELECT t.* FROM t
-  WHERE CAST(:buscar AS varchar) = ''
-     OR t.task_id IN (SELECT tx.task_id FROM tx WHERE strpos(tx.texto, CAST(:buscar AS varchar)) &gt; 0)
+  WHERE (SELECT buscar FROM p) = ''
+     OR t.task_id IN (SELECT tx.task_id FROM tx WHERE strpos(tx.texto, (SELECT buscar FROM p)) &gt; 0)
 )
 SELECT
   f.task_id AS id,
@@ -256,8 +268,8 @@ SELECT
   count(*) OVER () AS filtered
 FROM f
 ORDER BY f.reached_state_date DESC, f.task_id DESC
-LIMIT (CASE WHEN CAST(:limit AS integer) &gt; 0 THEN CAST(:limit AS integer) END)
-OFFSET CAST(:offset AS integer)</sql>
+LIMIT (SELECT CASE WHEN lim &gt; 0 THEN lim END FROM p)
+OFFSET (SELECT desde FROM p)</sql>
       <result outputType="json">{
   "tareas": {
     "tarea": [
@@ -282,8 +294,8 @@ OFFSET CAST(:offset AS integer)</sql>
       <param name="empr_id" sqlType="STRING"/>
       <param name="limit" sqlType="STRING"/>
       <param name="offset" sqlType="STRING"/>
-      <param name="buscar" sqlType="STRING" defaultValue=""/>
-      <param name="procesos" sqlType="STRING" defaultValue="{}"/>
+      <param name="buscar" sqlType="STRING"/>
+      <param name="procesos" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/bandeja/tareas/usuario/{user_id}/empresa/{empr_id}/offset/{offset}/limit/{limit}">
       <call-query href="getBandejaTareas">
