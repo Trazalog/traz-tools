@@ -17,8 +17,9 @@
       - Devuelve los campos con los mismos nombres y formatos que API/bpm/humanTask (fechas en hora de Argentina,
         "" cuando no hay valor, prioridad como texto) para que Procesos::armarTarea() los consuma sin cambios.
         total = bandeja de la empresa; filtered = coincidencias de la busqueda.
-      - Compatible con WSO2 EI 6.x (TEST 10.142.0.13) y MI 4.x: cada parametro se usa UNA sola vez (CTE "p"), sin
-        defaultValue y sin texto entre $q$ (el EI daba NullPointerException con eso).
+      - Compatible con WSO2 EI 6.5 (TEST 10.142.0.13) y MI 4.x: la SQL empieza con SELECT (si no, el motor la ejecuta
+        como procedimiento almacenado y el EI da NullPointerException en SQLQuery.processStoredProcQuery), cada
+        parametro se usa UNA sola vez (CTE "p"), sin defaultValue y sin texto entre $q$.
       - "mis_actores" calcula una sola vez los actores a los que llega el usuario (directo o por membership
         grupo/rol). Es la misma condicion que searchSHumanTaskInstancePendingOrAssigned del engine, sin la
         correlacion por tenantid que la hacia recalcular por cada tarea.
@@ -39,7 +40,8 @@
       Verificado contra PHP tarea por tarea con los submodulos de develop (414/414 textos identicos en TEST, 2026-10-08).
    -->
    <query id="getBandejaTareas" useConfig="ToolsDataSource">
-      <sql>WITH p AS (
+      <sql>SELECT bandeja.* FROM (
+WITH p AS (
   -- Cada parametro se lee UNA sola vez aca (el WSO2 EI 6.x no soporta parametros repetidos)
   SELECT CAST(:user_id AS bigint) AS uid,
          CAST(:empr_id AS integer) AS empr,
@@ -265,11 +267,14 @@ SELECT
             || to_char(to_timestamp(f.due_date / 1000.0) AT TIME ZONE 'America/Argentina/Buenos_Aires', 'SS.MS') END AS due_date,
   CASE f.priority WHEN 0 THEN 'lowest' WHEN 1 THEN 'under_normal' WHEN 3 THEN 'above_normal' WHEN 4 THEN 'highest' ELSE 'normal' END AS priority,
   (SELECT count(*) FROM t) AS total,
-  count(*) OVER () AS filtered
+  count(*) OVER () AS filtered,
+  row_number() OVER (ORDER BY f.reached_state_date DESC, f.task_id DESC) AS fila
 FROM f
 ORDER BY f.reached_state_date DESC, f.task_id DESC
 LIMIT (SELECT CASE WHEN lim &gt; 0 THEN lim END FROM p)
-OFFSET (SELECT desde FROM p)</sql>
+OFFSET (SELECT desde FROM p)
+) bandeja
+ORDER BY bandeja.fila</sql>
       <result outputType="json">{
   "tareas": {
     "tarea": [
