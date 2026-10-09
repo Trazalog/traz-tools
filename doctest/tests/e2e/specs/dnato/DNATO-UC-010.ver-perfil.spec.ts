@@ -29,6 +29,6 @@ test.describe('@dnato @DNATO-UC-010 Ver el perfil propio', () => {
 
   test('sin sesión, la pantalla de perfil manda al ingreso', async ({ page }) => {
     await page.goto(urlDnato('main/profile'), { waitUntil: 'domcontentloaded' });
-    await expect(new LoginPage(page).empresa).toBeVisible();
+    await expect(new LoginPage(page).email).toBeVisible();
   });
 });
