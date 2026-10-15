@@ -2,9 +2,10 @@
 
 ## Objetivo
 
-Los cinco procedimientos para: desplegar las tools nuevas en el DEMO, verificar que la selección
-multiempresa esté arriba, correr las pruebas automáticas contra lo desplegado, clonar la VM actual
-como nuevo DEMO (`mcp-demo.cloudtrazalog.com`, apagada), y promover la VM actual a producción.
+Los cinco procedimientos para: desplegar las tools nuevas en el DEMO, **llevar la selección
+multiempresa al DEMO** (los dos cambios que la componen, en los dos repos y los dos servidores),
+correr las pruebas automáticas contra lo desplegado, clonar la VM actual como nuevo DEMO
+(`mcp-demo.cloudtrazalog.com`, apagada), y promover la VM actual a producción.
 Está escrito para ejecutarlo de punta a punta, y cada paso dice **dónde** se corre.
 
 **No cubre** la instalación inicial de WSO2 (está en [`deployment-gcp.md`](deployment-gcp.md) §4) ni
@@ -16,7 +17,10 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 |---|---|
 | **Fecha** | 2026-10-15 |
 | **Estado de partida** | `develop` con **24 operaciones** (11 `man_`, 9 `alm_`, 4 `pan_`); el APIM del DEMO tiene las de antes |
-| **VM actual** | `e2-medium`, Rocky Linux 9, `us-east1-b`, sirve `mcp.cloudtrazalog.com` vía Caddy |
+| **Estado objetivo** | **25 operaciones** — las 24 más `core_get_empresa_actual`, que llega con el PR #551 |
+| **VM del MCP** | `e2-medium`, Rocky Linux 9, `us-east1-b`, sirve `mcp.cloudtrazalog.com` vía Caddy |
+| **Servidor de Dnato (DEMO)** | `vm-demo-trazalog` (`10.142.0.11`), Apache, checkout en `/var/www/html/traz-comp-dnato`, sirve `https://demo.cloudtrazalog.com/traz-comp-dnato` |
+| **PRs que hay que mergear antes** | traz-tools **#551** · traz-comp-dnato **#45** (los dos ya abiertos, ver §0) |
 
 ### Leyenda de dónde se ejecuta cada paso
 
@@ -30,34 +34,66 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 
 ---
 
-## ⚠️ Antes de empezar: dos cosas que te van a frenar
+## 0. Antes de empezar
 
-**1. El selector multiempresa del login OAuth NO está en `develop`.**
+### 0.1 Multiempresa son DOS cambios, en DOS repos, y ninguno está en `develop`
 
-Verificado hoy en `traz-comp-dnato`:
+"La selección multiempresa" no es una sola cosa. Son dos piezas que se necesitan mutuamente, y las
+dos estaban **solo en `develop-v3`**. Verificado archivo por archivo:
 
-| | `develop` | `develop-v3` |
-|---|---|---|
-| Selector del **login web** (`views/login_empresa.php`) | ✅ | ✅ |
-| Selector del **login OAuth / MCP** (`views/oauth/login_empresa.php`) | ❌ | ✅ |
+| Pieza | Repo | Qué hace | ¿Estaba en `develop`? | PR que lo trae |
+|---|---|---|---|---|
+| Pantalla de selección en el login OAuth | `traz-comp-dnato` | Que un usuario con varias empresas **pueda** conectar el MCP y elija cuál | ❌ | **#45** |
+| Tool `core_get_empresa_actual` | `traz-tools` | Que el agente pueda **contestar** con qué empresa quedó conectado | ❌ | **#551** |
 
-Si el Dnato del DEMO corre `develop`, un usuario con **más de una empresa no puede conectar el MCP**:
-el login corta con *"Su cuenta tiene múltiples empresas asignadas"*. Es el punto 2 de este runbook y
-hay que resolverlo **antes** de probar (§2).
+Sin la primera, el login corta con *"Su cuenta tiene múltiples empresas asignadas"* y el usuario no
+entra. Sin la segunda, entra y elige, pero **no hay forma de verificar qué eligió** — y por lo tanto
+tampoco de dar por buena la prueba del §3.
 
-**2. El `.car` lleva adentro la IP de la base.**
+El selector del login **web** (`views/login_empresa.php`) sí estaba en las dos ramas desde antes. El
+que faltaba es el del login **OAuth/MCP** (`views/oauth/login_empresa.php`), que es el que usa Claude.
+
+Los dos PRs **ya están abiertos y verificados**; lo único que falta es tu aprobación y el merge:
+
+| PR | Repo | Base | Cómo se verificó |
+|---|---|---|---|
+| [#45](https://github.com/Trazalog/traz-comp-dnato/pull/45) | `traz-comp-dnato` | `develop` | Cherry-pick limpio de `2c45c9ef`; `php -l` OK; sin sintaxis de PHP 7.x; las 4 dependencias del código nuevo verificadas una por una en `develop`; **sin migración de base ni cambio de config** |
+| [#551](https://github.com/Trazalog/traz-tools/pull/551) | `traz-tools` | `develop` | `mvn clean install` OK y el `.car` contiene los dos recursos nuevos; escenario **E7** (contrato OpenAPI ↔ MI) **PASA** con 25 operaciones; el `COREDataService.dbs` **no se toca** (el recurso que consume ya existía, idéntico en las dos ramas) |
+
+> **Por qué #551 no es un cherry-pick.** El cherry-pick directo del commit de `develop-v3` conflictúa
+> en 4 archivos, porque `develop` tiene las 4 tools de Pañol que `develop-v3` no tiene y viceversa.
+> Se portó bloque por bloque: **221 inserciones, 0 borrados**.
+
+### 0.2 El `.car` lleva adentro la IP de la base
 
 No es agnóstico del ambiente: empaqueta los datasources tal como están commiteados, apuntando a
 desarrollo. Hay que revisarlos antes de buildear (§1, paso 2). Es la causa número uno de "desplegué
 y quedó apuntando a la base equivocada".
+
+### 0.3 Una corrección a `deployment-gcp.md` §7.0-bis
+
+Ese documento dice que los commits de emisión de JWT, login OAuth y JWKS están **solo en
+`develop-v3`** de `traz-comp-dnato`. **Ya no es cierto**: `develop` tiene hoy las 9 rutas de
+`oauth/*` (`authorize`, `token`, `jwks.json`, `oauth-authorization-server`, `openid-configuration`,
+`register`, `login`, `login/credentials`, `resume`). La **única** diferencia que quedaba entre las
+dos ramas en el flujo OAuth era `oauth/login/empresa`, que es exactamente lo que trae el PR #45.
+
+Importa para el §2: **el Dnato del DEMO puede estar corriendo `develop` perfectamente** y tener el
+MCP funcionando. No asumas que si funciona el MCP entonces corre `develop-v3`.
 
 ---
 
 ## 1. Desplegar las tools nuevas en el DEMO
 
 Lo que entra: las **4 tools de Herramientas** (`pan_get_herramientas`, `pan_get_herramienta`,
-`pan_get_movimientos`, `pan_get_certificaciones`) más la capa `toolsPANAPI`. El APIM pasa de las
-operaciones que tenga hoy a **24**.
+`pan_get_movimientos`, `pan_get_certificaciones`) más la capa `toolsPANAPI`, y la tool
+`core_get_empresa_actual` del PR #551. El APIM pasa de las operaciones que tenga hoy a **25**.
+
+### Paso 0 — Mergear el PR #551 (🌐 GitHub)
+
+Antes de tocar la VM. Si decidís desplegar sin él, todo el resto de este runbook funciona igual pero
+con **24 operaciones** en lugar de 25, y el §2 paso 4 queda sin forma de verificarse: ajustá los
+números y saltealo.
 
 ### Paso 1 — Traer el código
 
@@ -122,7 +158,7 @@ ssh -L 9443:localhost:9443 <usuario>@<ip-vm>
 Y en el navegador, `https://localhost:9443/publisher` → la API *Trazalog MCP API* →
 **API Definition** → subir `doc/api/trazalog-operaciones.yaml` → **Save**.
 
-Tiene que quedar en **24 operaciones**.
+Tiene que quedar en **25 operaciones**.
 
 ### Paso 5 — Desplegar revisión y recrear el MCP Server
 
@@ -147,49 +183,165 @@ bash scripts/dev/recrear-api-y-mcp.sh --apply
 Al terminar, el script deja instrucciones para el último tramo manual, que no se puede automatizar:
 
 🌐 Publisher → **MCP Servers** → **Create MCP Server** → *Start from Existing API* → elegir
-*Trazalog MCP API* → seleccionar **las 24 operaciones** → Create → Deploy → Publish.
+*Trazalog MCP API* → seleccionar **las 25 operaciones** → Create → Deploy → Publish.
 Después, DevPortal → el MCP Server → **Subscribe to an application**.
 
 ---
 
-## 2. Asegurar que la selección multiempresa esté desplegada
+## 2. Llevar la selección multiempresa al DEMO
 
-### Paso 1 — Ver qué rama corre el Dnato del DEMO
+Son dos despliegues independientes, en dos servidores distintos: la **pantalla** va en el servidor de
+Dnato, la **tool** va en la VM del MCP junto con el resto del `.car` (§1). Este capítulo cubre el de
+Dnato; el otro ya quedó cubierto por el §1.
 
-💻 SSH al servidor de Dnato:
+### Paso 1 — Diagnóstico: ver qué hay hoy en el servidor de Dnato
+
+💻 SSH a `vm-demo-trazalog` (el servidor de Dnato del DEMO, **no** la VM del MCP):
 
 ```bash
 cd /var/www/html/traz-comp-dnato && \
 git rev-parse --abbrev-ref HEAD && \
-ls application/views/oauth/login_empresa.php
+ls -la application/views/oauth/login_empresa.php 2>&1 && \
+grep -c "oauth/login/empresa" application/config/routes.php && \
+git status --short
 ```
 
-- Si el archivo **existe** → el selector OAuth está. Ir al paso 3.
-- Si **no existe** → falta, y hay que resolver el paso 2.
+Qué dice cada línea:
 
-### Paso 2 — Llevar el selector OAuth a `develop`
-
-El selector del login OAuth se mergeó solo a `develop-v3` (PR #36 de `traz-comp-dnato`). Hay dos
-caminos, y **la elección es tuya**:
-
-| | Qué implica |
+| Salida | Significa |
 |---|---|
-| **A. Cherry-pick a `develop`** | Traer solo ese cambio: la vista `views/oauth/login_empresa.php`, el método `empresa()` de `Oauthlogin.php` y la ruta `oauth/login/empresa`. Acotado y reversible |
-| **B. Desplegar `develop-v3` en el Dnato del DEMO** | Trae todo lo de v3 de una. Más simple de ejecutar, pero mete en el DEMO cambios que no están validados en la línea de v2 |
+| la rama (`develop`, `develop-v3`, …) | Sobre qué línea está el DEMO. Si es `develop-v3`, el selector **ya está** y el paso 2 no hace falta: pasá al paso 3 |
+| el archivo de la vista existe o no | Es la pantalla de selección. Si falta, falta el cambio |
+| `1` en el `grep` | La ruta está registrada. Un `0` quiere decir que falta, aunque la vista esté |
+| el `git status` | **Leelo con atención antes de hacer cualquier pull** — ver el aviso de abajo |
 
-Si el DEMO tiene que seguir espejando `develop`, la **A** es la que corresponde. Avisame y la preparo
-como PR.
+> ⚠️ **Si el `git status` muestra archivos modificados, no los descartes a ciegas.**
+>
+> - **`.htaccess` modificado**: es normal y **no se toca**. Ahí viven los `SetEnv` del ambiente
+>   (`DNATO_ISSUER`, `JWT_PRIVATE_KEY_PATH`, …). El archivo está versionado, pero es **idéntico en
+>   `develop` y `develop-v3`** y el PR #45 no lo toca, así que el pull no lo va a pisar.
+> - **`application/controllers/Oauthlogin.php` modificado**: son los parches de compatibilidad PHP
+>   5.6 que en su momento se aplicaron a mano en el servidor y nunca volvieron al repo
+>   (`random_bytes`, dos `??`). **Ya están en el repo**, en las dos ramas — verificado. Comparalos
+>   antes de descartarlos:
+>
+>   ```bash
+>   git diff application/controllers/Oauthlogin.php
+>   ```
+>
+>   Si el diff es solo eso, `git checkout -- application/controllers/Oauthlogin.php` y seguí. Si trae
+>   algo más, **pará y mandámelo** — es un parche de servidor que todavía no está en el repo, y el
+>   pull lo pierde.
 
-### Paso 3 — Verificar en pantalla
+### Paso 2 — Desplegar el selector (solo si falta)
 
-🌐 Con un usuario que tenga **dos o más empresas**, conectar el MCP desde Claude. Después de las
-credenciales tiene que aparecer la pantalla de tarjetas con una empresa por tarjeta.
+**2.a** 🌐 En GitHub: mergear el PR [#45](https://github.com/Trazalog/traz-comp-dnato/pull/45) a
+`develop` de `traz-comp-dnato`.
 
-Y con la conexión hecha, preguntarle a Claude *"¿con qué empresa estoy conectado?"* — la tool
-`core_get_empresa_actual` tiene que responder la que elegiste.
+**2.b** 💻 En `vm-demo-trazalog`, traer el código:
 
-> Si el usuario tiene **una sola** empresa, el selector no aparece a propósito: se resuelve solo. Para
-> probar esto hace falta un usuario con dos.
+```bash
+cd /var/www/html/traz-comp-dnato && \
+git fetch origin && \
+git checkout develop && \
+git pull origin develop
+```
+
+**2.c** 💻 Confirmar que llegaron las tres piezas:
+
+```bash
+ls -la application/views/oauth/login_empresa.php && \
+grep -n "oauth/login/empresa" application/config/routes.php && \
+grep -n "public function empresa()" application/controllers/Oauthlogin.php && \
+php -l application/controllers/Oauthlogin.php
+```
+
+Las cuatro tienen que dar algo: la vista, la ruta, el método, y *"No syntax errors detected"*.
+
+> **Lo que este despliegue NO necesita** — verificado en el PR #45, y vale la pena saberlo para no
+> perder tiempo buscando pasos que no existen:
+>
+> | | Por qué no |
+> |---|---|
+> | `composer install` | El cambio no agrega dependencias; `composer.json` y `composer.lock` son idénticos entre las dos ramas |
+> | Migración de base | No hay tabla ni columna nueva. `seg.memberships_users` y `core.empresas` ya existen |
+> | Tocar `.htaccess` ni `deployment.toml` | Ninguna variable de ambiente nueva |
+> | Claves RS256 nuevas | Las de JWT ya están y no cambian |
+> | Reiniciar Apache | PHP se recarga por request. **Salvo** que ese servidor tenga OPcache con `validate_timestamps=0` — ahí sí: `sudo systemctl reload httpd` |
+>
+> Para saber si estás en ese caso de OPcache, 💻 en `vm-demo-trazalog`:
+>
+> ```bash
+> php -i | grep -E "opcache.enable|validate_timestamps"
+> ```
+>
+> Si `opcache.validate_timestamps` está en `0`, recargá Apache después del pull. Si está en `1` o
+> OPcache no está habilitado, no hace falta.
+
+### Paso 3 — Verificar que la ruta responde, antes de probar con un usuario
+
+💻 Desde `vm-demo-trazalog` mismo:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://demo.cloudtrazalog.com/traz-comp-dnato/oauth/login/empresa
+```
+
+| Código | Qué significa |
+|---|---|
+| **302** | Correcto. Sin sesión OAuth activa, el controller redirige — es exactamente lo que tiene que hacer |
+| **404** | Mirá **cuál** 404: si es el de CodeIgniter (página HTML *"404 Page Not Found"*), falta la ruta → volver al paso 2.c. Si es el de Apache, el problema es el vhost, no este cambio |
+| **500** | Error de PHP. `sudo tail -50 /var/log/httpd/error_log` — y si menciona sintaxis, es compatibilidad 5.6 |
+
+### Paso 4 — Probar con un usuario real de dos empresas
+
+Primero **conseguir el usuario**. 🏠 Desde tu máquina, con VPN, contra la PostgreSQL del DEMO:
+
+```sql
+SELECT LOWER(TRIM(mu.email)) AS email, count(DISTINCT e.empr_id) AS empresas
+  FROM seg.memberships_users mu
+  INNER JOIN core.empresas e
+          ON ((TRIM(e.nombre)      <> '' AND UPPER(TRIM(e.nombre))      = UPPER(TRIM(mu."group")))
+           OR (TRIM(e.descripcion) <> '' AND UPPER(TRIM(e.descripcion)) = UPPER(TRIM(mu."group"))))
+ WHERE TRIM(mu."group") <> ''
+   AND e.eliminado = false
+ GROUP BY 1
+HAVING count(DISTINCT e.empr_id) > 1
+ ORDER BY 2 DESC;
+```
+
+Es la misma consulta que usa `User_model::getEmpresasDeUsuario()`, así que lo que devuelva es
+exactamente lo que el usuario va a ver en pantalla.
+
+> **Ojo con una asimetría del diseño**: la lista que se **muestra** sale de PostgreSQL, pero la que
+> **autoriza** sale de Bonita (`oauth_memberships`). Si esta consulta devuelve dos empresas pero en
+> Bonita el usuario tiene una sola membresía, **va a ver una sola tarjeta**. Eso no es un bug: es la
+> protección de que solo se ofrezca lo que Bonita autoriza.
+
+Después, la prueba en sí. 🌐 Desde Claude, con ese usuario, conectar el conector del MCP:
+
+1. Credenciales → tiene que aparecer **la pantalla de tarjetas**, una por empresa, con logo y nombre.
+2. Elegir una y completar la autorización.
+3. Preguntarle a Claude: *"¿con qué empresa estoy conectado?"* → `core_get_empresa_actual` tiene que
+   responder **la que elegiste**. Este paso necesita el PR #551 desplegado (§1).
+4. Pedirle algo con datos: *"listame los equipos"* → tienen que ser los de **esa** empresa.
+5. Desconectar y volver a conectar eligiendo **la otra** empresa, y repetir 3 y 4. Los datos tienen
+   que cambiar.
+
+El paso 5 es el que realmente prueba multiempresa. Los pasos 1-4 prueban que la pantalla aparece; el
+5 prueba que la elección **se propaga hasta el dato**, que es lo que importa.
+
+> Con un usuario de **una sola** empresa el selector no aparece, a propósito: se resuelve solo y el
+> flujo queda igual que antes. Eso también conviene probarlo, para confirmar que el cambio no rompió
+> el caso común.
+
+### Paso 5 — Si algo falla
+
+| Síntoma | Causa más probable |
+|---|---|
+| *"Su cuenta tiene múltiples empresas asignadas"* | El código viejo sigue activo: el pull no entró, o OPcache lo tiene cacheado (paso 2) |
+| Aparece la pantalla pero **sin tarjetas** | PostgreSQL no devolvió coincidencias para ese email. La consulta del paso 4, con ese email exacto. El código tiene un fallback que arma las tarjetas con los datos de Bonita, así que si no se ve ninguna, tampoco hay membresías |
+| *"La empresa seleccionada no es válida"* | El `empr_id` elegido no está en `oauth_memberships` de la sesión. Es la validación funcionando: revisá las membresías en Bonita |
+| Elige empresa pero los datos son de la otra | Acá sí hay un problema real. Correr el escenario **E15** (§3.2): aísla si el `empr_id` sale del token o quedó fijo |
 
 ---
 
@@ -216,7 +368,8 @@ pasarlo a mano:
 python3 scripts/dev/validar-tools-e2e.py --jwt "$JWT"
 ```
 
-Descubre las tools solas vía `tools/list`, así que las 4 nuevas de Herramientas entran sin tocar el
+Descubre las tools solas vía `tools/list`, así que las 5 nuevas (4 de Herramientas más
+`core_get_empresa_actual`) entran sin tocar el
 script. Verifica, por tool: el status HTTP **en el cable**, que el JSON-RPC sea válido y sin
 `isError`, y que el contenido no venga vacío.
 
@@ -226,8 +379,12 @@ script. Verifica, por tool: el status HTTP **en el cable**, que el JSON-RPC sea 
 
 ### 3.2 Los escenarios encadenados
 
-Prueban que las tools se puedan **encadenar**, que es donde aparecen los huecos. Hoy son **15**,
-incluido el **E16** de Herramientas.
+Prueban que las tools se puedan **encadenar**, que es donde aparecen los huecos. Con el PR #551
+mergeado son **16**: el **E16** de Herramientas y el **E15**, que es el que verifica multiempresa del
+lado del dato — que `core_get_empresa_actual` devuelva la empresa **del token** y no un valor fijo,
+probándolo con dos tokens de empresas distintas.
+
+> Si no mergeaste el #551, son **15** y el E15 no existe.
 
 🏠 Desde tu máquina, con VPN y la base accesible:
 
@@ -236,7 +393,7 @@ cd /mnt/win/dev/git/traz-tools && \
 MI_URL=https://mcp.cloudtrazalog.com python3 scripts/dev/mcp_escenarios.py
 ```
 
-Tiene que dar **15/15**. Y antes de cualquier cosa, el contrato, que no necesita ni MI ni base:
+Tiene que dar **16/16**. Y antes de cualquier cosa, el contrato, que no necesita ni MI ni base:
 
 ```bash
 python3 scripts/dev/mcp_escenarios.py --solo E7
@@ -250,6 +407,8 @@ python3 scripts/dev/mcp_escenarios.py --solo E7
 | `503 identity_missing` | el backend JWT del APIM no llega al MI; revisar `apim.jwt.enable` |
 | `404` en una tool nueva | la operación no entró al MCP Server: volver a §1 paso 5 |
 | La tool responde 200 pero vacía | mirar la IP del datasource en el CAR (§1 paso 2) |
+| `core_get_empresa_actual` da `404` | el PR #551 no está desplegado, o la operación no se seleccionó al recrear el MCP Server (§1 paso 5) |
+| `core_get_empresa_actual` devuelve otra empresa | el `empr_id` no sale del JWT. Correr el **E15**, que lo prueba con dos tokens distintos |
 
 ---
 
@@ -404,14 +563,21 @@ Correr §3 completo contra `mcp.cloudtrazalog.com`, **sin `--escrituras`**.
 ## 6. El orden en que conviene hacerlo
 
 ```
-1. Resolver el selector OAuth multiempresa            (§2 paso 2)   ← bloquea la prueba
-2. Desplegar las tools en el DEMO actual              (§1)
-3. Correr las dos suites                              (§3)
-4. Con todo verde: clonar la VM como mcp-demo         (§4)
-5. Decidir la base de producción                      (§5 paso 1)   ← decisión tuya
-6. Endurecer la VM actual como producción             (§5 paso 4)
+1. Mergear los dos PRs: dnato #45 y tools #551          (§0.1)        ← decisión tuya
+2. Desplegar el selector en vm-demo-trazalog            (§2 pasos 1-3)
+3. Desplegar el .car + la OpenAPI en la VM del MCP      (§1)
+4. Verificar multiempresa con un usuario de 2 empresas  (§2 paso 4)
+5. Correr las dos suites                                (§3)          ← 16/16
+6. Con todo verde: clonar la VM como mcp-demo           (§4)
+7. Decidir la base de producción                        (§5 paso 1)   ← decisión tuya
+8. Endurecer la VM actual como producción               (§5 paso 4)
 ```
 
-Los pasos 1 a 3 se pueden hacer hoy. El 4 depende de que el 3 dé verde —no tiene sentido clonar una
-VM con algo roto adentro— y el 5 es una decisión que conviene tomar antes de clonar, porque define si
-las dos VMs comparten datos.
+**Por qué en ese orden.** El 2 y el 3 son independientes entre sí —servidores distintos— pero el 4
+necesita los dos puestos: la pantalla sale del servidor de Dnato y la respuesta de *"¿con qué empresa
+estoy conectado?"* sale de la VM del MCP. El 5 va después del 4 porque el escenario E15 asume que la
+tool está desplegada.
+
+Los pasos 1 a 5 se pueden hacer hoy. El 6 depende de que el 5 dé verde —no tiene sentido clonar una
+VM con algo roto adentro— y el 7 es una decisión que conviene tomar **antes** de clonar, porque define
+si las dos VMs comparten datos.
