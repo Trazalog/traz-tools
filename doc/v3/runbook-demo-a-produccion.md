@@ -17,7 +17,7 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 | | |
 |---|---|
 | **Fecha** | 2026-10-15 · actualizado 2026-10-19 (§5 con el repunte a producción) |
-| **Base de producción** | **`10.142.0.2`** — decidido el 2026-10-19. El detalle, en §5 |
+| **Bases de producción** | PostgreSQL `10.142.0.2:5434/trazalog_tools` (user `postgres`) · MariaDB `10.142.0.2:3306/asp2tecn` (user `root`) · Bonita `10.142.0.2:8080`. Confirmado por el PM el 2026-10-19 — detalle en §5 |
 | **Estado de partida** | `develop` con **24 operaciones** (11 `man_`, 9 `alm_`, 4 `pan_`); el APIM del DEMO tiene las de antes |
 | **Estado objetivo** | **25 operaciones** — las 24 más `core_get_empresa_actual`, que llega con el PR #551 |
 | **VM del MCP** | `e2-medium`, Rocky Linux 9, `us-east1-b`, sirve `mcp.cloudtrazalog.com` vía Caddy |
@@ -119,6 +119,9 @@ git pull origin develop
 | `artifacts/data-sources/AssetPlannerDataSource.xml` | MySQL `assetv2` | **SÍ** — idem |
 | `resources/conf/tools/bpmconf.xml` → `bpm_url` | Bonita | **SÍ** — idem |
 | `resources/conf/tools/apiconfig.xml` → `api_url`, `dataservices_url` | el MI llamándose a sí mismo | **NO** — `localhost:8290` es correcto en todos los ambientes |
+
+> Acá los valores son los del ambiente que estás desplegando. **Los de producción están en §5 paso
+> 2**, con número de línea, y ahí también está por qué no alcanza con cambiar el host.
 
 ### Paso 3 — Buildear y desplegar el CAR
 
@@ -568,21 +571,45 @@ sudo cp /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIP
 
 ---
 
-### Paso 2 — Conseguir los 5 datos de producción que el repo NO tiene
+### Paso 2 — Los datos de producción (confirmados por el PM, 2026-10-19)
 
-El repo solo tiene valores de desarrollo. Estos cinco hay que confirmarlos **antes** de editar nada:
+**Nada de esto coincide con desarrollo. Ni el puerto, ni el nombre de la base, ni el usuario.**
 
-| # | Dato | Lo que se sabe hoy | Cómo confirmarlo |
+| | PostgreSQL (tools) | MariaDB (Asset Planner) | Bonita |
 |---|---|---|---|
-| 1 | PostgreSQL de tools | `jdbc:postgresql://10.142.0.2:5432/tools` — sale de los DataServices viejos de producción que están en el repo (`application/modules/traz-prod-trazasoft/scripts/Server DS backup/`). **Ojo: la base se llama `tools`, no `tools_prod_t`** | `psql -h 10.142.0.2 -U <usuario> -l` y buscar `tools` en la lista |
-| 2 | Usuario/password de esa PostgreSQL | En desarrollo es `postgres`. En producción **no asumir que es el mismo** | Probar la conexión del punto 1 |
-| 3 | Host de la MySQL `assetv2` de producción | **No está en ningún lado del repo.** Lo más probable es `10.142.0.2:3306`, porque la VM se llama `vm-production-assetplanner-inst1`, pero **hay que confirmarlo** | `mysql -h 10.142.0.2 -u <usuario> -p -e "show databases;"` y buscar `assetv2` |
-| 4 | Usuario/password de esa MySQL | En desarrollo es `rootremote` | Igual que el 3 |
-| 5 | Password de admin de Bonita producción | En desarrollo es `123traza`, commiteada en claro. En producción casi seguro es otra | Preguntarle a quien administra Bonita de producción |
+| **Host** | `10.142.0.2` | `10.142.0.2` | `10.142.0.2` |
+| **Puerto** | **`5434`** ← no es el 5432 | `3306` | `8080` |
+| **Base** | **`trazalog_tools`** | **`asp2tecn`** | — |
+| **Usuario** | `postgres` | **`root`** | `admin` |
+| **Password** | ⬜ falta | ⬜ falta | ⬜ falta |
+| En desarrollo era | `10.142.0.13:5432/tools_prod_t`, user `postgres` | `10.142.0.13:3306/assetv2`, user `rootremote` | `10.142.0.13:8080`, pass `123traza` |
 
-> **Si falta cualquiera de los cinco, pará acá.** Buildear con un dato inventado es peor que no
-> buildear: el MI arranca igual, el datasource falla recién en la primera query y el síntoma es
-> "la tool devuelve vacío", que se confunde con un problema de datos.
+Las **tres passwords** son lo único que falta. Las dos de base, pedilas a quien administre
+`vm-production-assetplanner-inst1`; la de Bonita, a quien administre Bonita de producción.
+
+> ⚠️ **No uses los valores de los DataServices viejos que están en el repo**
+> (`application/modules/traz-prod-trazasoft/scripts/Server DS backup/`). Dicen
+> `jdbc:postgresql://10.142.0.2:5432/tools` — **host correcto, puerto y base equivocados**. Están
+> viejos. Es justo el caso que esta sección avisa: host bien, base mal, y nada falla a la vista.
+
+**Qué deja de funcionar si le errás a cada una** — porque los síntomas son distintos y conviene saber
+cuál mirar:
+
+| Si está mal… | Se caen | Son |
+|---|---|---|
+| PostgreSQL `trazalog_tools` | las **9 `alm_*`**, las **4 `pan_*`** y `core_get_empresa_actual` | `ALMDataService`, `PANDataservice` y el `getEmpresaById` de `COREDataService` usan `ToolsDataSource` |
+| MariaDB `asp2tecn` | las **11 `man_*`** (equipos, OTs, lecturas, preventivos y los 4 KPI) | `MANDataService` y `MANEquiposDataService` usan `AssetPlannerDataSource` |
+| Bonita | `alm_crear_pedido_materiales` y `man_create_ot` | son las dos únicas que instancian proceso |
+
+> ✅ **Lo que ya verifiqué y no te va a dar problema:** que la base MariaDB cambie de nombre
+> (`assetv2` → `asp2tecn`) **no rompe ninguna query**. Revisé los `.dbs` y los APIs del CAR: no hay
+> una sola referencia calificada tipo `assetv2.tabla` — las únicas menciones a `assetv2` son
+> comentarios. Lo mismo con `tools_prod_t`: aparece únicamente en el `<url>` del datasource. Alcanza
+> con cambiar las URLs.
+
+> **Si falta cualquiera de las tres passwords, pará acá.** Buildear con un dato inventado es peor que
+> no buildear: el MI arranca igual, el datasource falla recién en la primera query, y el síntoma es
+> "la tool devuelve vacío" — que se confunde con un problema de datos.
 
 ---
 
@@ -594,7 +621,7 @@ VM del MCP llegue hoy a desarrollo **no implica** que llegue a producción.
 💻 Desde `mcp-trazalog`:
 
 ```bash
-for p in 5432 3306 8080; do \
+for p in 5434 3306 8080; do \
   timeout 5 bash -c "</dev/tcp/10.142.0.2/$p" 2>/dev/null \
   && echo "10.142.0.2:$p ABIERTO" || echo "10.142.0.2:$p CERRADO"; \
 done
@@ -607,7 +634,7 @@ hacen falta.
 ⌨️ Si falta alguno, en **Cloud Shell**:
 
 ```bash
-gcloud compute firewall-rules create allow-bases-desde-mcp --network=default --direction=INGRESS --action=ALLOW --rules=tcp:5432,tcp:3306 --source-tags=mcp-gateway --target-tags=vm-prod --priority=900 --description="PostgreSQL y MySQL de PROD desde mcp-trazalog"
+gcloud compute firewall-rules create allow-bases-desde-mcp --network=default --direction=INGRESS --action=ALLOW --rules=tcp:5434,tcp:3306 --source-tags=mcp-gateway --target-tags=vm-prod --priority=900 --description="PostgreSQL 5434 y MariaDB 3306 de PROD desde mcp-trazalog"
 ```
 
 > **La prioridad `900` no es decorativa.** Con la default (1000) la regla se crea y **no habilita
@@ -638,14 +665,27 @@ Los archivos están bajo
 
 | Archivo | Línea | Valor hoy (desarrollo) | Valor para producción |
 |---|---|---|---|
-| `artifacts/data-sources/ToolsDataSource.xml` | **10** `<url>` | `jdbc:postgresql://10.142.0.13:5432/tools_prod_t` | `jdbc:postgresql://10.142.0.2:5432/tools` |
-| ↑ mismo archivo | **11** `<username>` | `postgres` | el del paso 2 |
-| ↑ mismo archivo | **12** `<password>` | (de desarrollo) | el del paso 2 |
-| `artifacts/data-sources/AssetPlannerDataSource.xml` | **6** `<url>` | `jdbc:mysql://10.142.0.13:3306/assetv2?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8` | **solo cambiar el host**, dejar todos los parámetros `?...` igual |
-| ↑ mismo archivo | **7** `<username>` | `rootremote` | el del paso 2 |
-| ↑ mismo archivo | **8** `<password>` | (de desarrollo) | el del paso 2 |
+| `artifacts/data-sources/ToolsDataSource.xml` | **10** `<url>` | `jdbc:postgresql://10.142.0.13:5432/tools_prod_t` | `jdbc:postgresql://10.142.0.2:5434/trazalog_tools` |
+| ↑ mismo archivo | **11** `<username>` | `postgres` | `postgres` (igual) |
+| ↑ mismo archivo | **12** `<password>` | (de desarrollo) | la password de producción |
+| `artifacts/data-sources/AssetPlannerDataSource.xml` | **6** `<url>` | `jdbc:mysql://10.142.0.13:3306/assetv2?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8` | `jdbc:mysql://10.142.0.2:3306/asp2tecn?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8` |
+| ↑ mismo archivo | **7** `<username>` | `rootremote` | `root` |
+| ↑ mismo archivo | **8** `<password>` | (de desarrollo) | la password de producción |
 | `resources/conf/tools/bpmconf.xml` | **3** `<bpm_url>` | `http://10.142.0.13:8080/bonita` | `http://10.142.0.2:8080/bonita` |
-| ↑ mismo archivo | **5** `<password>` | `123traza` | el del paso 2 (Bonita de producción) |
+| ↑ mismo archivo | **5** `<password>` | `123traza` | la de admin de Bonita producción |
+
+**Los tres cambios que más fácil se pasan por alto**, porque en desarrollo son otra cosa y uno copia
+el patrón de memoria:
+
+| | En desarrollo | En producción |
+|---|---|---|
+| Puerto de PostgreSQL | `5432` (el default) | **`5434`** |
+| Nombre de la base de Asset Planner | `assetv2` | **`asp2tecn`** |
+| Usuario de MariaDB | `rootremote` | **`root`** |
+
+En el de MariaDB cambian **host, base y usuario** — los parámetros `?useSSL=false&...` quedan
+exactamente igual, y el `driverClassName` también (`com.mysql.cj.jdbc.Driver` funciona contra
+MariaDB; es lo que ya se usa hoy).
 
 **Qué NO tocar:**
 
@@ -675,14 +715,27 @@ echo "--- jdbc ---" && grep -rh "jdbc:" /tmp/car-nuevo | sed 's/^[[:space:]]*//'
 echo "--- bonita ---" && grep -rh "bpm_url" /tmp/car-nuevo | sed 's/^[[:space:]]*//'
 ```
 
-**Leé esa salida y comparala contra la tabla del paso 4.** Tienen que aparecer:
+**Leé esa salida.** Tienen que aparecer **exactamente** estas tres, sin una letra de diferencia:
 
-- `jdbc:postgresql://10.142.0.2:5432/tools` ← con la base **`tools`**, no `tools_prod_t`
-- `jdbc:mysql://<host-de-prod>:3306/assetv2?...`
-- `http://10.142.0.2:8080/bonita`
+```
+jdbc:postgresql://10.142.0.2:5434/trazalog_tools
+jdbc:mysql://10.142.0.2:3306/asp2tecn?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8
+http://10.142.0.2:8080/bonita
+```
 
-Si aparece un `10.142.0.13` en cualquiera de las tres, **no sigas**: volvé al paso 4 y revisá que no
-hayas editado la copia huérfana de `registry/conf/`.
+Si querés el chequeo sin leer a ojo, 💻 en la misma VM:
+
+```bash
+grep -rhq "jdbc:postgresql://10.142.0.2:5434/trazalog_tools" /tmp/car-nuevo && \
+grep -rhq "jdbc:mysql://10.142.0.2:3306/asp2tecn" /tmp/car-nuevo && \
+grep -rhq "http://10.142.0.2:8080/bonita" /tmp/car-nuevo && \
+! grep -rhq "10.142.0.13" /tmp/car-nuevo && \
+echo "CAR OK: las tres apuntan a produccion y no quedo nada de desarrollo" || \
+echo "CAR MAL: NO desplegar, volver al paso 4"
+```
+
+Si dice `CAR MAL`, **no sigas**. Lo primero a revisar: que no hayas editado la copia huérfana de
+`registry/conf/` en vez de `conf/tools/`.
 
 ---
 
@@ -744,8 +797,10 @@ Lo que sabemos hoy:
 grep -nE "hostname|'database'|'port'" /var/www/html/traz-comp-dnato/application/config/database.php
 ```
 
-Si eso **no** dice `10.142.0.2` / `tools`, el MCP productivo va a estar emitiendo tokens con
-`empr_id` de otra base.
+Tiene que decir `10.142.0.2`, `5434` y `trazalog_tools` — los mismos tres valores que le pusiste al
+`ToolsDataSource` en el paso 4. Si dice otra cosa, el MCP productivo va a estar emitiendo tokens con
+`empr_id` de otra base, y las tools van a filtrar por un número que en `trazalog_tools` significa
+otra empresa (o ninguna).
 
 **La decisión de arquitectura que falta** (clase 🔴 — workshop, no se resuelve acá):
 
@@ -807,7 +862,7 @@ requiere tocar el APIM ni el DNS: el `.car` es el único artefacto que cambió.
 4. Verificar multiempresa con un usuario de 2 empresas  (§2 paso 4)
 5. Correr las dos suites                                (§3)          ← 16/16
 6. Con todo verde: clonar la VM como mcp-demo           (§4)          ← ANTES del 7
-7. Conseguir los 5 datos de producción                  (§5 paso 2)   ← te puede frenar
+7. Conseguir las 3 passwords de producción              (§5 paso 2)   ← lo único que falta
 8. Repuntar la VM a producción 10.142.0.2               (§5 pasos 3-6)
 9. Resolver Dnato antes de abrir a un usuario           (§5 paso 7)   🔴 workshop
 ```
@@ -821,8 +876,8 @@ requiere tocar el APIM ni el DNS: el `.car` es el único artefacto que cambió.
 - El **6 va antes del 8**, no después: el clon hereda el `.car` con las IPs que tenga la VM en ese
   momento. Clonando antes, el DEMO se queda apuntando a donde ya apuntaba; clonando después, arranca
   contra producción (ver el aviso del §4).
-- El **7 es el que te puede frenar de verdad**: de los 5 datos, el host de la MySQL `assetv2` de
-  producción **no está en el repo** y las credenciales tampoco.
+- El **7** es lo único que falta para arrancar: hosts, puertos, bases y usuarios ya están
+  confirmados (§5 paso 2); faltan las **tres passwords**.
 - El **9 es un bloqueante funcional, no técnico**: después del 8 el MCP ya lee producción, pero
   mientras Dnato resuelva el `empr_id` contra otra base no se le puede dar acceso a un usuario real.
 
