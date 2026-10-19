@@ -9,6 +9,10 @@ correr las pruebas automáticas contra lo desplegado, clonar la VM actual como n
 `10.142.0.2`**.
 Está escrito para ejecutarlo de punta a punta, y cada paso dice **dónde** se corre.
 
+Es **la única guía** que hace falta para los tres cambios — las tools de Herramientas, el login
+multiempresa y el repunte a producción. El §0.4 es el índice de qué se toca en cada repo y en cada
+servidor; si tenés que empezar por algo, empezá por ahí.
+
 **No cubre** la instalación inicial de WSO2 (está en [`deployment-gcp.md`](deployment-gcp.md) §4) ni
 el detalle de cada tool ([`../mcp/escenarios-de-uso-y-regresion.md`](../mcp/escenarios-de-uso-y-regresion.md)).
 Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gcp.md` y
@@ -16,13 +20,13 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 
 | | |
 |---|---|
-| **Fecha** | 2026-10-15 · actualizado 2026-10-19 (§5 con el repunte a producción) |
+| **Fecha** | 2026-10-15 · actualizado 2026-10-19 (§5 con el repunte a producción; estado de los PRs al día) |
 | **Bases de producción** | PostgreSQL `10.142.0.2:5434/trazalog_tools` (user `postgres`) · MariaDB `10.142.0.2:3306/asp2tecn` (user `root`) · Bonita `10.142.0.2:8080`. Confirmado por el PM el 2026-10-19 — detalle en §5 |
 | **Estado de partida** | `develop` con **24 operaciones** (11 `man_`, 9 `alm_`, 4 `pan_`); el APIM del DEMO tiene las de antes |
-| **Estado objetivo** | **25 operaciones** — las 24 más `core_get_empresa_actual`, que llega con el PR #551 |
+| **Estado objetivo** | **25 operaciones** — las 24 más `core_get_empresa_actual`, ya mergeada en `develop` |
 | **VM del MCP** | `e2-medium`, Rocky Linux 9, `us-east1-b`, sirve `mcp.cloudtrazalog.com` vía Caddy |
 | **Servidor de Dnato (DEMO)** | `vm-demo-trazalog` (`10.142.0.11`), Apache, checkout en `/var/www/html/traz-comp-dnato`, sirve `https://demo.cloudtrazalog.com/traz-comp-dnato` |
-| **PRs que hay que mergear antes** | traz-tools **#551** · traz-comp-dnato **#45** (los dos ya abiertos, ver §0) |
+| **Lo único que falta mergear** | traz-comp-dnato **#45** (el selector de empresa). Los de `traz-tools` — **#550** este runbook y **#551** la tool `core_get_empresa_actual` — se mergearon a `develop` el 2026-10-19 |
 
 ### Leyenda de dónde se ejecuta cada paso
 
@@ -38,15 +42,15 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 
 ## 0. Antes de empezar
 
-### 0.1 Multiempresa son DOS cambios, en DOS repos, y ninguno está en `develop`
+### 0.1 Multiempresa son DOS cambios, en DOS repos — y falta mergear uno
 
 "La selección multiempresa" no es una sola cosa. Son dos piezas que se necesitan mutuamente, y las
 dos estaban **solo en `develop-v3`**. Verificado archivo por archivo:
 
-| Pieza | Repo | Qué hace | ¿Estaba en `develop`? | PR que lo trae |
-|---|---|---|---|---|
-| Pantalla de selección en el login OAuth | `traz-comp-dnato` | Que un usuario con varias empresas **pueda** conectar el MCP y elija cuál | ❌ | **#45** |
-| Tool `core_get_empresa_actual` | `traz-tools` | Que el agente pueda **contestar** con qué empresa quedó conectado | ❌ | **#551** |
+| Pieza | Repo | Qué hace | Estado en `develop` |
+|---|---|---|---|
+| Pantalla de selección en el login OAuth | `traz-comp-dnato` | Que un usuario con varias empresas **pueda** conectar el MCP y elija cuál | ❌ falta — **PR #45 abierto** |
+| Tool `core_get_empresa_actual` | `traz-tools` | Que el agente pueda **contestar** con qué empresa quedó conectado | ✅ mergeada el 2026-10-19 (PR #551) |
 
 Sin la primera, el login corta con *"Su cuenta tiene múltiples empresas asignadas"* y el usuario no
 entra. Sin la segunda, entra y elige, pero **no hay forma de verificar qué eligió** — y por lo tanto
@@ -55,12 +59,12 @@ tampoco de dar por buena la prueba del §3.
 El selector del login **web** (`views/login_empresa.php`) sí estaba en las dos ramas desde antes. El
 que faltaba es el del login **OAuth/MCP** (`views/oauth/login_empresa.php`), que es el que usa Claude.
 
-Los dos PRs **ya están abiertos y verificados**; lo único que falta es tu aprobación y el merge:
+Los dos PRs se verificaron igual; **de los dos, el único que queda pendiente de merge es el #45**:
 
-| PR | Repo | Base | Cómo se verificó |
-|---|---|---|---|
-| [#45](https://github.com/Trazalog/traz-comp-dnato/pull/45) | `traz-comp-dnato` | `develop` | Cherry-pick limpio de `2c45c9ef`; `php -l` OK; sin sintaxis de PHP 7.x; las 4 dependencias del código nuevo verificadas una por una en `develop`; **sin migración de base ni cambio de config** |
-| [#551](https://github.com/Trazalog/traz-tools/pull/551) | `traz-tools` | `develop` | `mvn clean install` OK y el `.car` contiene los dos recursos nuevos; escenario **E7** (contrato OpenAPI ↔ MI) **PASA** con 25 operaciones; el `COREDataService.dbs` **no se toca** (el recurso que consume ya existía, idéntico en las dos ramas) |
+| PR | Repo | Base | Estado | Cómo se verificó |
+|---|---|---|---|---|
+| [#45](https://github.com/Trazalog/traz-comp-dnato/pull/45) | `traz-comp-dnato` | `develop` | 🟡 **abierto** | Cherry-pick limpio de `2c45c9ef`; `php -l` OK; sin sintaxis de PHP 7.x; las 4 dependencias del código nuevo verificadas una por una en `develop`; **sin migración de base ni cambio de config** |
+| [#551](https://github.com/Trazalog/traz-tools/pull/551) | `traz-tools` | `develop` | ✅ mergeado | `mvn clean install` OK y el `.car` contiene los dos recursos nuevos; escenario **E7** (contrato OpenAPI ↔ MI) **PASA** con 25 operaciones; el `COREDataService.dbs` **no se toca** (el recurso que consume ya existía, idéntico en las dos ramas) |
 
 > **Por qué #551 no es un cherry-pick.** El cherry-pick directo del commit de `develop-v3` conflictúa
 > en 4 archivos, porque `develop` tiene las 4 tools de Pañol que `develop-v3` no tiene y viceversa.
@@ -83,6 +87,30 @@ dos ramas en el flujo OAuth era `oauth/login/empresa`, que es exactamente lo que
 Importa para el §2: **el Dnato del DEMO puede estar corriendo `develop` perfectamente** y tener el
 MCP funcionando. No asumas que si funciona el MCP entonces corre `develop-v3`.
 
+### 0.4 Mapa: qué se toca, en qué repo y en qué servidor
+
+Los tres cambios que este runbook despliega — las tools de Pañol, el login multiempresa y el repunte
+a producción — toman **dos repos** y **dos servidores**. Esta tabla es el índice: quién toca qué y en
+qué capítulo está el procedimiento.
+
+| Cambio | Repo | Servidor donde se despliega | Qué se edita a mano | Capítulo |
+|---|---|---|---|---|
+| 4 tools de Herramientas (`pan_*`) + capa `toolsPANAPI` | `traz-tools` — ya en `develop` | `mcp-trazalog` (VM del MCP) | nada: viene todo en el `.car` | **§1** |
+| Tool `core_get_empresa_actual` | `traz-tools` — ya en `develop` (PR #551) | `mcp-trazalog`, el **mismo** `.car` | nada | **§1** |
+| Pantalla de selección de empresa en el login OAuth | `traz-comp-dnato` — **PR #45, falta mergear** | `vm-demo-trazalog` (servidor de Dnato) | nada: 3 archivos que llegan con el `git pull` | **§2** |
+| Repunte de las bases a producción | `traz-tools` — **no se commitea** | `mcp-trazalog` | **3 archivos** del proyecto Maven, en el checkout de la VM | **§5** pasos 4-6 |
+| `database.php` de Dnato apuntando a producción | `traz-comp-dnato` — **no se commitea** | `vm-demo-trazalog`, o un Dnato nuevo | **1 archivo**, pero antes hay una decisión de arquitectura | **§5** paso 7 🔴 |
+
+> **¿Hay que tocar Dnato? Sí — dos veces, por motivos distintos, y conviene no confundirlos.**
+>
+> | | Qué es | Cuándo | Riesgo |
+> |---|---|---|---|
+> | **El selector** (§2) | Desplegar código nuevo: 3 archivos que trae el PR #45 | Para que funcione multiempresa en el DEMO | Bajo: aditivo, sin migración ni config nueva |
+> | **El `database.php`** (§5 paso 7) | Cambiar a qué PostgreSQL le pregunta Dnato qué empresas tiene el usuario | Solo al pasar el MCP a producción | 🔴 Alto: define contra qué base se resuelve el `empr_id` del JWT |
+>
+> Lo segundo **no es un paso de despliegue, es una decisión**: el mismo Dnato sirve hoy el login web
+> del DEMO, así que moverlo a producción mueve las dos cosas juntas. Está planteado en el §5 paso 7.
+
 ---
 
 ## 1. Desplegar las tools nuevas en el DEMO
@@ -91,11 +119,13 @@ Lo que entra: las **4 tools de Herramientas** (`pan_get_herramientas`, `pan_get_
 `pan_get_movimientos`, `pan_get_certificaciones`) más la capa `toolsPANAPI`, y la tool
 `core_get_empresa_actual` del PR #551. El APIM pasa de las operaciones que tenga hoy a **25**.
 
-### Paso 0 — Mergear el PR #551 (🌐 GitHub)
+### Paso 0 — Nada que mergear acá
 
-Antes de tocar la VM. Si decidís desplegar sin él, todo el resto de este runbook funciona igual pero
-con **24 operaciones** en lugar de 25, y el §2 paso 4 queda sin forma de verificarse: ajustá los
-números y saltealo.
+El PR #551 (`core_get_empresa_actual`) **ya está en `develop`** desde el 2026-10-19, junto con las 4
+tools de Pañol que ya estaban. O sea: todo lo que necesita este capítulo sale de un `git pull` de
+`develop`, sin ningún merge previo. El PR #45 es de **otro repo** y se usa en el §2, no acá.
+
+El paso 1 trae el código; el chequeo de que llegó está en el paso 2.
 
 ### Paso 1 — Traer el código
 
@@ -856,7 +886,7 @@ requiere tocar el APIM ni el DNS: el `.car` es el único artefacto que cambió.
 ## 6. El orden en que conviene hacerlo
 
 ```
-1. Mergear los dos PRs: dnato #45 y tools #551          (§0.1)        ← decisión tuya
+1. Mergear dnato #45 — los de tools ya están            (§0.1)        ← decisión tuya
 2. Desplegar el selector en vm-demo-trazalog            (§2 pasos 1-3)
 3. Desplegar el .car + la OpenAPI en la VM del MCP      (§1)
 4. Verificar multiempresa con un usuario de 2 empresas  (§2 paso 4)
@@ -869,6 +899,8 @@ requiere tocar el APIM ni el DNS: el `.car` es el único artefacto que cambió.
 
 **Por qué en ese orden.**
 
+- El **1** ya es solo un PR: los de `traz-tools` (#550, #551) se mergearon el 2026-10-19, así que
+  el **3** no espera nada — sale de un `git pull` de `develop`.
 - El **2** y el **3** son independientes entre sí —servidores distintos— pero el **4** necesita los
   dos puestos: la pantalla sale del servidor de Dnato y la respuesta de *"¿con qué empresa estoy
   conectado?"* sale de la VM del MCP.
