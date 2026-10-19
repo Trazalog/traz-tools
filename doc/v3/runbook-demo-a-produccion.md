@@ -20,13 +20,13 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 
 | | |
 |---|---|
-| **Fecha** | 2026-10-15 · actualizado 2026-10-19 (§5 con el repunte a producción; estado de los PRs al día) |
+| **Fecha** | 2026-10-15 · actualizado 2026-10-19 (§5 con el repunte a producción; **todo el código mergeado y tagueado** — lo que queda es desplegar) |
 | **Bases de producción** | PostgreSQL `10.142.0.2:5434/trazalog_tools` (user `postgres`) · MariaDB `10.142.0.2:3306/asp2tecn` (user `root`) · Bonita `10.142.0.2:8080`. Confirmado por el PM el 2026-10-19 — detalle en §5 |
 | **Estado de partida** | `develop` con **24 operaciones** (11 `man_`, 9 `alm_`, 4 `pan_`); el APIM del DEMO tiene las de antes |
 | **Estado objetivo** | **25 operaciones** — las 24 más `core_get_empresa_actual`, ya mergeada en `develop` |
 | **VM del MCP** | `e2-medium`, Rocky Linux 9, `us-east1-b`, sirve `mcp.cloudtrazalog.com` vía Caddy |
 | **Servidores de Dnato** | Son **dos, uno por ambiente, y cada uno se queda donde está**. DEMO: `vm-demo-trazalog` (`10.142.0.11`), checkout en `/var/www/html/traz-comp-dnato`, sirve `https://demo.cloudtrazalog.com/traz-comp-dnato`. Producción: el que sirve `cloudtrazalog.com` — el selector también tiene que llegar ahí (§5 paso 7) |
-| **Lo único que falta mergear** | traz-comp-dnato **#45** (el selector de empresa). Los de `traz-tools` — **#550** este runbook y **#551** la tool `core_get_empresa_actual` — se mergearon a `develop` el 2026-10-19 |
+| **Código** | ✅ **Nada pendiente de merge.** `traz-tools` #550 y #551 → `develop`; `traz-comp-dnato` #45 → `develop` y de ahí al tag **`v2.5.0.11`**, ya en `master`. De acá en adelante todo es **despliegue y config**, no código |
 
 ### Leyenda de dónde se ejecuta cada paso
 
@@ -42,14 +42,14 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 
 ## 0. Antes de empezar
 
-### 0.1 Multiempresa son DOS cambios, en DOS repos — y falta mergear uno
+### 0.1 Multiempresa son DOS cambios, en DOS repos — los dos ya mergeados
 
 "La selección multiempresa" no es una sola cosa. Son dos piezas que se necesitan mutuamente, y las
 dos estaban **solo en `develop-v3`**. Verificado archivo por archivo:
 
 | Pieza | Repo | Qué hace | Estado en `develop` |
 |---|---|---|---|
-| Pantalla de selección en el login OAuth | `traz-comp-dnato` | Que un usuario con varias empresas **pueda** conectar el MCP y elija cuál | ❌ falta — **PR #45 abierto** |
+| Pantalla de selección en el login OAuth | `traz-comp-dnato` | Que un usuario con varias empresas **pueda** conectar el MCP y elija cuál | ✅ mergeada el 2026-10-19 (PR #45) |
 | Tool `core_get_empresa_actual` | `traz-tools` | Que el agente pueda **contestar** con qué empresa quedó conectado | ✅ mergeada el 2026-10-19 (PR #551) |
 
 Sin la primera, el login corta con *"Su cuenta tiene múltiples empresas asignadas"* y el usuario no
@@ -59,11 +59,11 @@ tampoco de dar por buena la prueba del §3.
 El selector del login **web** (`views/login_empresa.php`) sí estaba en las dos ramas desde antes. El
 que faltaba es el del login **OAuth/MCP** (`views/oauth/login_empresa.php`), que es el que usa Claude.
 
-Los dos PRs se verificaron igual; **de los dos, el único que queda pendiente de merge es el #45**:
+Los dos PRs se verificaron igual, y **los dos están mergeados**:
 
 | PR | Repo | Base | Estado | Cómo se verificó |
 |---|---|---|---|---|
-| [#45](https://github.com/Trazalog/traz-comp-dnato/pull/45) | `traz-comp-dnato` | `develop` | 🟡 **abierto** | Cherry-pick limpio de `2c45c9ef`; `php -l` OK; sin sintaxis de PHP 7.x; las 4 dependencias del código nuevo verificadas una por una en `develop`; **sin migración de base ni cambio de config** |
+| [#45](https://github.com/Trazalog/traz-comp-dnato/pull/45) | `traz-comp-dnato` | `develop` | ✅ mergeado | Cherry-pick limpio de `2c45c9ef`; `php -l` OK; sin sintaxis de PHP 7.x; las 4 dependencias del código nuevo verificadas una por una en `develop`; **sin migración de base ni cambio de config** |
 | [#551](https://github.com/Trazalog/traz-tools/pull/551) | `traz-tools` | `develop` | ✅ mergeado | `mvn clean install` OK y el `.car` contiene los dos recursos nuevos; escenario **E7** (contrato OpenAPI ↔ MI) **PASA** con 25 operaciones; el `COREDataService.dbs` **no se toca** (el recurso que consume ya existía, idéntico en las dos ramas) |
 
 > **Por qué #551 no es un cherry-pick.** El cherry-pick directo del commit de `develop-v3` conflictúa
@@ -81,7 +81,7 @@ existe en dos copias con el mismo diff:
 | **Commit original** | **`2c45c9ef`** — ramas `develop-v3` y `feat/oauth-seleccion-empresa` |
 | **Fecha de los dos** | 2026-09-02 |
 | **Tamaño** | 3 archivos, **385 inserciones / 15 borrados** — **idéntico** en las dos copias |
-| **¿Tag?** | **Ninguno.** Ni `2c45c9ef` ni `b5bdf3e3` están en ningún tag del repo |
+| **Tag que lo lleva a producción** | **`v2.5.0.11`** (`b54b41d`, 2026-10-19), ya mergeado en `master`. Lleva **ese commit y nada más**: el diff `v2.5.0.10..v2.5.0.11` son los mismos 3 archivos, 385/15 |
 
 Los tres archivos que toca:
 
@@ -106,10 +106,14 @@ Verificado:
 tagueó sobre `develop` (`055c8ae` = merge del PR #44) y después `master` mergió el tag:
 
 ```
-1. Mergear el PR #45            -> develop            <- habilita el DEMO  (§2)
-2. Taguear develop              -> v2.5.0.11
-3. Mergear el tag en master     -> master             <- habilita produccion (§5 paso 7)
+1. Mergear el PR #45            -> develop            [HECHO 2026-10-19 20:34]
+2. Taguear develop              -> v2.5.0.11          [HECHO b54b41d]
+3. Mergear el tag en master     -> master             [HECHO]
 ```
+
+**Los tres pasos ya estan hechos.** Lo que queda del selector es puramente despliegue: el `git pull`
+en el servidor del DEMO (§2) y el `git checkout` del tag en el de produccion (§5 paso 7.a). Que el
+codigo este en la rama no lo pone en ningun servidor.
 
 > **En producción lo que manda es el tag, no la rama.** El último es **`v2.5.0.10`** (2026-10-03,
 > `055c8ae`, que fue el merge del PR #44 — `fix/reset-password-design`) y **no tiene el selector**.
@@ -169,9 +173,9 @@ qué capítulo está el procedimiento.
 |---|---|---|---|---|
 | 4 tools de Herramientas (`pan_*`) + capa `toolsPANAPI` | `traz-tools` — ya en `develop` | `mcp-trazalog` (VM del MCP) | nada: viene todo en el `.car` | **§1** |
 | Tool `core_get_empresa_actual` | `traz-tools` — ya en `develop` (PR #551) | `mcp-trazalog`, el **mismo** `.car` | nada | **§1** |
-| Pantalla de selección de empresa en el login OAuth | `traz-comp-dnato` — **PR #45, falta mergear** | `vm-demo-trazalog` (servidor de Dnato) | nada: 3 archivos que llegan con el `git pull` | **§2** |
+| Pantalla de selección de empresa en el login OAuth | `traz-comp-dnato` — ya en `develop` (PR #45) | `vm-demo-trazalog` (servidor de Dnato) | nada: 3 archivos que llegan con el `git pull` | **§2** |
 | Repunte de las bases a producción | `traz-tools` — **no se commitea** | `mcp-trazalog` | **3 archivos** del proyecto Maven, en el checkout de la VM | **§5** pasos 4-6 |
-| El selector, otra vez, en el Dnato de **producción** | `traz-comp-dnato` — **falta el tag `v2.5.0.11`** | servidor de Dnato de producción | nada: `git checkout` del tag | **§5** paso 7.a |
+| El selector, otra vez, en el Dnato de **producción** | `traz-comp-dnato` — ya en el tag **`v2.5.0.11`** y en `master` | servidor de Dnato de producción | nada: `git checkout` del tag | **§5** paso 7.a |
 | Cadena de identidad del MCP → Dnato de producción | ninguno: es **config**, no código | `mcp-trazalog` | **2 archivos** de config del APIM (`JAVA_OPTS` y `deployment.toml`) | **§5** paso 7.b |
 
 > **¿Hay que tocar Dnato? Sí: el mismo commit, en dos servidores distintos.**
@@ -905,8 +909,8 @@ archivos de config del APIM.
 
 #### 7.a — Que el selector esté en el Dnato de producción
 
-Necesita un tag que lo contenga, y el último (`v2.5.0.10`) **no lo tiene** — ver §0.1-bis para el
-commit exacto y la secuencia merge → tag → `master`.
+Ya existe el tag que lo contiene: **`v2.5.0.11`**, mergeado en `master` el 2026-10-19 (el anterior,
+`v2.5.0.10`, **no** lo tenía — §0.1-bis). Falta el `git checkout` en el servidor.
 
 💻 SSH al servidor de Dnato de **producción** (el que sirve `cloudtrazalog.com`, **no**
 `vm-demo-trazalog`):
@@ -933,9 +937,14 @@ git fetch origin --tags && \
 git checkout v2.5.0.11
 ```
 
-> **Ese tag todavía no existe.** Hay que crearlo después de mergear el PR #45 a `develop` (§0.1-bis).
-> Si el servidor de producción no sigue tags sino la rama `master`, el equivalente es
-> `git checkout master && git pull origin master` **después** de que el tag se haya mergeado ahí.
+> **El tag ya existe** (`v2.5.0.11`, `b54b41d`, 2026-10-19) y ya está mergeado en `master`. Si ese
+> servidor no sigue tags sino la rama, el equivalente es `git checkout master && git pull origin
+> master`.
+>
+> **Lo que arrastra ese tag, verificado:** el diff `v2.5.0.10..v2.5.0.11` es **exactamente** el
+> commit del selector — los mismos 3 archivos, 385 inserciones / 15 borrados, ningún otro commit
+> funcional. Es el despliegue más chico posible: no toca el login web, ni la registración, ni nada
+> de v2.
 
 #### 7.b — Reapuntar la cadena de identidad del MCP
 
@@ -1049,32 +1058,35 @@ requiere tocar el APIM ni el DNS: el `.car` es el único artefacto que cambió.
 
 ## 6. El orden en que conviene hacerlo
 
+**Todo el código está mergeado y tagueado al 2026-10-19. De acá en adelante es despliegue y config.**
+
 ```
- 1. Mergear dnato #45 -> develop                          (§0.1-bis)     <- decision tuya
- 2. Desplegar el selector en vm-demo-trazalog             (§2 pasos 1-3)
- 3. Desplegar el .car + la OpenAPI en la VM del MCP       (§1)
- 4. Verificar multiempresa con un usuario de 2 empresas   (§2 paso 4)
- 5. Correr las dos suites                                 (§3)           <- 16/16
- 6. Conseguir las 3 passwords de produccion               (§5 paso 2)    <- lo unico que falta
- 7. Repuntar la VM a produccion 10.142.0.2                (§5 pasos 3-6) <- esta VM YA ES produccion
- 8. Taguear develop como v2.5.0.11 y mergearlo a master   (§0.1-bis)
- 9. Selector + cadena de identidad en el Dnato de prod    (§5 paso 7)
-10. Clonar la VM como mcp-demo y DEVOLVERLA a desarrollo  (§4)           <- paso extra obligatorio
+ 1. Mergear dnato #45, taguear v2.5.0.11, a master     (§0.1-bis)     [HECHO]
+ 2. Desplegar el selector en vm-demo-trazalog          (§2 pasos 1-3) <- EMPEZAR ACA
+ 3. Desplegar el .car + la OpenAPI en la VM del MCP    (§1)
+ 4. Verificar multiempresa con un usuario de 2 empresas(§2 paso 4)
+ 5. Correr las dos suites                              (§3)           <- 16/16
+ 6. Conseguir las 3 passwords de produccion            (§5 paso 2)    <- lo unico que bloquea
+ 7. Repuntar la VM a produccion 10.142.0.2             (§5 pasos 3-6) <- esta VM YA ES produccion
+ 8. Selector (checkout del tag) en el Dnato de prod    (§5 paso 7.a)
+ 9. Cadena de identidad del APIM al Dnato de prod      (§5 paso 7.b-c)
+10. Clonar la VM como mcp-demo y DEVOLVERLA a desarrollo (§4)         <- paso extra obligatorio
 ```
 
 **Por qué en ese orden.**
 
-- El **1** es el único merge que queda: los de `traz-tools` (#550, #551) se mergearon el 2026-10-19,
-  así que el **3** no espera nada — sale de un `git pull` de `develop`.
+- El **1 está cerrado**: `traz-tools` #550 y #551 a `develop`, `traz-comp-dnato` #45 a `develop` y de
+  ahí al tag `v2.5.0.11`, ya en `master`. **Que el código esté en la rama no lo pone en ningún
+  servidor** — todo lo que sigue es despliegue.
 - El **2** y el **3** son independientes entre sí —servidores distintos— pero el **4** necesita los
   dos puestos: la pantalla sale del servidor de Dnato y la respuesta de *"¿con qué empresa estoy
   conectado?"* sale de la VM del MCP.
 - El **5** va después del 4 porque el escenario E15 asume que la tool está desplegada.
-- Del **1 al 5 se puede hacer con lo que hay hoy.** El **6** es lo único que frena el resto: hosts,
+- **Del 2 al 5 se puede hacer hoy, sin esperar nada.** El **6** es lo único que frena el resto: hosts,
   puertos, bases y usuarios ya están confirmados (§5 paso 2); faltan las **tres passwords**.
-- El **8 y el 9 van juntos**, y después del 7: una vez que esta VM es producción, los tokens los
-  tiene que emitir el Dnato de producción, y para eso el selector tiene que estar ahí. Si hacés el 7
-  sin el 9, el MCP lee producción pero sigue validando tokens del Dnato del DEMO — anda, pero el
+- El **8 y el 9 van juntos**, y después del 7: una vez que esta VM es producción, los tokens los tiene
+  que emitir el Dnato de producción, y para eso el selector tiene que estar desplegado ahí. Si hacés
+  el 7 sin el 9, el MCP lee producción pero sigue validando tokens del Dnato del DEMO — anda, pero el
   `empr_id` lo resuelve la base equivocada (§5 paso 7.c).
 - El **10 es el último y arrastra trabajo**: el clon hereda el `.car` apuntando a producción, así que
   **hay que devolverlo a desarrollo antes de que lo use alguien** — §5 pasos 4-6 al revés. Mientras
