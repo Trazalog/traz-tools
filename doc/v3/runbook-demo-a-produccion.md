@@ -5,7 +5,8 @@
 Los cinco procedimientos para: desplegar las tools nuevas en el DEMO, **llevar la selección
 multiempresa al DEMO** (los dos cambios que la componen, en los dos repos y los dos servidores),
 correr las pruebas automáticas contra lo desplegado, clonar la VM actual como nuevo DEMO
-(`mcp-demo.cloudtrazalog.com`, apagada), y promover la VM actual a producción.
+(`mcp-demo.cloudtrazalog.com`, apagada), y **redesplegar el MCP apuntando a la base de producción
+`10.142.0.2`**.
 Está escrito para ejecutarlo de punta a punta, y cada paso dice **dónde** se corre.
 
 **No cubre** la instalación inicial de WSO2 (está en [`deployment-gcp.md`](deployment-gcp.md) §4) ni
@@ -15,7 +16,8 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 
 | | |
 |---|---|
-| **Fecha** | 2026-10-15 |
+| **Fecha** | 2026-10-15 · actualizado 2026-10-19 (§5 con el repunte a producción) |
+| **Base de producción** | **`10.142.0.2`** — decidido el 2026-10-19. El detalle, en §5 |
 | **Estado de partida** | `develop` con **24 operaciones** (11 `man_`, 9 `alm_`, 4 `pan_`); el APIM del DEMO tiene las de antes |
 | **Estado objetivo** | **25 operaciones** — las 24 más `core_get_empresa_actual`, que llega con el PR #551 |
 | **VM del MCP** | `e2-medium`, Rocky Linux 9, `us-east1-b`, sirve `mcp.cloudtrazalog.com` vía Caddy |
@@ -418,6 +420,13 @@ La idea: la VM actual se queda con `mcp.cloudtrazalog.com` y pasa a ser **produc
 nuevo toma **`mcp-demo.cloudtrazalog.com`**. Así los conectores ya configurados en Claude siguen
 funcionando sin que nadie los toque.
 
+> ⚠️ **Clonar ANTES de repuntar a producción (§5), no después.** El clon se hace de un snapshot del
+> disco: se lleva el `.car` tal como está, **con las IPs de base que tenga en ese momento**. Si
+> primero repuntás la VM a producción y después clonás, el DEMO nuevo arranca apuntando a
+> **producción** — y las tools que escriben crean pedidos y OTs reales desde lo que creés que es un
+> ambiente de prueba. Clonando primero, el DEMO se queda con las IPs que ya tenía y no hay que
+> deshacer nada.
+
 ### Paso 1 — Snapshot de la VM actual
 
 ⌨️ Cloud Shell:
@@ -512,51 +521,280 @@ gcloud compute instances stop mcp-demo --zone=us-east1-b
 
 ---
 
-## 5. Promover la VM actual a producción
+## 5. Redesplegar el MCP apuntando a producción (`10.142.0.2`)
 
-La VM **no se toca de lugar ni de dominio**: ya es `mcp.cloudtrazalog.com`, y ese pasa a ser el
-dominio productivo. Lo que cambia es a **qué datos** apunta y con qué cuidados se la trata.
+La VM **no se toca de lugar ni de dominio**: ya es `mcp.cloudtrazalog.com` y ese pasa a ser el
+dominio productivo. Lo único que cambia es **a qué datos apunta**, y eso vive adentro del `.car`.
 
-### Paso 1 — Decidir la base de producción
+**Decisión tomada (2026-10-19): producción es `10.142.0.2`.**
 
-**Esta es la decisión que define todo el resto, y es tuya.** Hoy la VM apunta a una IP de base que
-está dentro del `.car`. Las opciones:
+> ⚠️ **Lo que puede salir mal y no se ve.** Un `.car` con la IP equivocada **no falla**: las tools
+> responden `200`, con estructura correcta, y datos del ambiente equivocado. Y al revés: un `bpm_url`
+> equivocado **crea casos reales en Bonita de producción** sin que nada avise. Por eso cada paso de
+> acá tiene su verificación, y la verificación compara **host Y nombre de base** — en un mismo host
+> conviven varias bases con esquema equivalente, así que acertarle al host no alcanza.
 
-| | Implicancia |
+### Mapa de las VMs (de `deployment-gcp.md` §6.1-ter)
+
+| VM | IP interna | Network tags | Qué corre |
+|---|---|---|---|
+| `mcp-trazalog` | `10.142.0.18` | `deny-ingress`, **`mcp-gateway`** | **Esta VM**: MI + APIM de la fachada MCP |
+| `vm-demo-trazalog` | `10.142.0.11` | `deny-ingress`, **`vm-demo`** | Bonita DEMO, **Dnato**, base de test |
+| `vm-production-assetplanner-inst1` | `10.142.0.2` | `deny-ingress`, **`vm-prod`** | Bonita **PRODUCCIÓN** |
+| (base de desarrollo) | `10.142.0.13` | — | PostgreSQL `tools_prod_t`, MySQL `assetv2`, Bonita de DEV |
+
+---
+
+### Paso 1 — Fotografiar a dónde apunta HOY, antes de tocar nada
+
+💻 SSH a `mcp-trazalog`. Esto se hace **primero** y se guarda la salida: es el estado al que vas a
+volver si hay que rollback.
+
+```bash
+cd /tmp && rm -rf car-antes && mkdir car-antes && \
+unzip -qo /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIProject_1.0.0.car -d car-antes && \
+grep -rh "jdbc:" car-antes | sed 's/^[[:space:]]*//' && \
+grep -rh "bpm_url" car-antes | sed 's/^[[:space:]]*//'
+```
+
+Anotá las tres líneas que salen. Son el antes.
+
+💻 Y el backup del `.car` que está corriendo:
+
+```bash
+sudo cp /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIProject_1.0.0.car \
+  ~/ToolsAPIProject_1.0.0.car.antes-de-produccion
+```
+
+---
+
+### Paso 2 — Conseguir los 5 datos de producción que el repo NO tiene
+
+El repo solo tiene valores de desarrollo. Estos cinco hay que confirmarlos **antes** de editar nada:
+
+| # | Dato | Lo que se sabe hoy | Cómo confirmarlo |
+|---|---|---|---|
+| 1 | PostgreSQL de tools | `jdbc:postgresql://10.142.0.2:5432/tools` — sale de los DataServices viejos de producción que están en el repo (`application/modules/traz-prod-trazasoft/scripts/Server DS backup/`). **Ojo: la base se llama `tools`, no `tools_prod_t`** | `psql -h 10.142.0.2 -U <usuario> -l` y buscar `tools` en la lista |
+| 2 | Usuario/password de esa PostgreSQL | En desarrollo es `postgres`. En producción **no asumir que es el mismo** | Probar la conexión del punto 1 |
+| 3 | Host de la MySQL `assetv2` de producción | **No está en ningún lado del repo.** Lo más probable es `10.142.0.2:3306`, porque la VM se llama `vm-production-assetplanner-inst1`, pero **hay que confirmarlo** | `mysql -h 10.142.0.2 -u <usuario> -p -e "show databases;"` y buscar `assetv2` |
+| 4 | Usuario/password de esa MySQL | En desarrollo es `rootremote` | Igual que el 3 |
+| 5 | Password de admin de Bonita producción | En desarrollo es `123traza`, commiteada en claro. En producción casi seguro es otra | Preguntarle a quien administra Bonita de producción |
+
+> **Si falta cualquiera de los cinco, pará acá.** Buildear con un dato inventado es peor que no
+> buildear: el MI arranca igual, el datasource falla recién en la primera query y el síntoma es
+> "la tool devuelve vacío", que se confunde con un problema de datos.
+
+---
+
+### Paso 3 — Probar la conectividad ANTES de buildear
+
+Las tres VMs tienen el tag `deny-ingress`, y en GCP **a igual prioridad el `deny` gana**. Que la
+VM del MCP llegue hoy a desarrollo **no implica** que llegue a producción.
+
+💻 Desde `mcp-trazalog`:
+
+```bash
+for p in 5432 3306 8080; do \
+  timeout 5 bash -c "</dev/tcp/10.142.0.2/$p" 2>/dev/null \
+  && echo "10.142.0.2:$p ABIERTO" || echo "10.142.0.2:$p CERRADO"; \
+done
+```
+
+Los tres tienen que decir `ABIERTO`. El `8080` ya debería estar, por la regla
+`allow-bonita-desde-mcp` (§6.1-ter de `deployment-gcp.md`). Los otros dos **probablemente no**, y
+hacen falta.
+
+⌨️ Si falta alguno, en **Cloud Shell**:
+
+```bash
+gcloud compute firewall-rules create allow-bases-desde-mcp --network=default --direction=INGRESS --action=ALLOW --rules=tcp:5432,tcp:3306 --source-tags=mcp-gateway --target-tags=vm-prod --priority=900 --description="PostgreSQL y MySQL de PROD desde mcp-trazalog"
+```
+
+> **La prioridad `900` no es decorativa.** Con la default (1000) la regla se crea y **no habilita
+> nada**, porque empata con el `deny-ingress` y el deny gana. Si el comando se parte en varias
+> líneas y el `--priority` queda suelto, pasa exactamente eso. Se arregla con:
+>
+> ```bash
+> gcloud compute firewall-rules update allow-bases-desde-mcp --priority=900
+> ```
+
+Después de crear la regla, **volver a correr el `for` de arriba** hasta que los tres digan `ABIERTO`.
+
+---
+
+### Paso 4 — Editar los tres archivos (y solo esos tres)
+
+💻 En `mcp-trazalog`, primero traer el código:
+
+```bash
+cd ~/traz-tools && \
+git fetch origin && \
+git checkout develop && \
+git pull origin develop
+```
+
+Los archivos están bajo
+`~/traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/`:
+
+| Archivo | Línea | Valor hoy (desarrollo) | Valor para producción |
+|---|---|---|---|
+| `artifacts/data-sources/ToolsDataSource.xml` | **10** `<url>` | `jdbc:postgresql://10.142.0.13:5432/tools_prod_t` | `jdbc:postgresql://10.142.0.2:5432/tools` |
+| ↑ mismo archivo | **11** `<username>` | `postgres` | el del paso 2 |
+| ↑ mismo archivo | **12** `<password>` | (de desarrollo) | el del paso 2 |
+| `artifacts/data-sources/AssetPlannerDataSource.xml` | **6** `<url>` | `jdbc:mysql://10.142.0.13:3306/assetv2?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8` | **solo cambiar el host**, dejar todos los parámetros `?...` igual |
+| ↑ mismo archivo | **7** `<username>` | `rootremote` | el del paso 2 |
+| ↑ mismo archivo | **8** `<password>` | (de desarrollo) | el del paso 2 |
+| `resources/conf/tools/bpmconf.xml` | **3** `<bpm_url>` | `http://10.142.0.13:8080/bonita` | `http://10.142.0.2:8080/bonita` |
+| ↑ mismo archivo | **5** `<password>` | `123traza` | el del paso 2 (Bonita de producción) |
+
+**Qué NO tocar:**
+
+| Archivo / línea | Por qué |
 |---|---|
-| **Producción usa la base actual** | No hay que tocar datasources. El DEMO clonado queda apuntando **a la misma base**, así que lo que se pruebe en DEMO escribe en producción — hay que separarlos sí o sí |
-| **Producción estrena base propia** | Hay que cambiar las IPs del `.car` (§1 paso 2), rebuildear y redesplegar, y migrar los datos |
+| `resources/conf/tools/apiconfig.xml` (`api_url`, `dataservices_url`) | Es el MI **llamándose a sí mismo**. `localhost:8290` es correcto en todos los ambientes |
+| `bpmconf.xml` línea 6 (`dataservices_url`) | Igual que arriba: `localhost:8290` está bien |
+| Cualquier cosa bajo `resources/registry/conf/` | **Esa carpeta es huérfana y no entra al `.car`.** Tiene valores distintos y contradictorios con `conf/tools/` — editarla no produce ningún efecto y hace perder una tarde. La que se empaqueta es `conf/tools/`, y lo dice `resources/artifact.xml` |
 
-Mientras las dos VMs apunten a la misma base, el DEMO **no es un ambiente separado**: es una segunda
-puerta a los mismos datos. Las tools de escritura (`alm_crear_pedido_materiales`, `man_create_ot`)
-crean registros reales e instancian procesos en Bonita.
+> 🛑 **No commitear estos cambios.** Son credenciales de producción en texto plano. Quedan como
+> modificación local en la VM, y el `git status` te lo va a recordar en cada pull. Si en algún
+> momento esto se parametriza (perfiles de Maven), deja de ser manual — hoy no lo está, y está
+> anotado como pendiente en `deployment-gcp.md` §6.1-bis.
 
-### Paso 2 — Si cambia la base: rebuildear y redesplegar
+---
 
-💻 En la VM de producción, repetir §1 pasos 2 y 3 con las IPs de producción.
+### Paso 5 — Buildear y verificar el `.car` ANTES de copiarlo
 
-### Paso 3 — Revisar lo que apunta al dominio
+💻 En `mcp-trazalog`:
 
-Como el dominio **no cambia**, esto queda igual y no hay que tocar nada:
+```bash
+cd ~/traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject && \
+mvn clean install && \
+rm -rf /tmp/car-nuevo && mkdir /tmp/car-nuevo && \
+unzip -qo target/ToolsAPIProject_1.0.0.car -d /tmp/car-nuevo && \
+echo "--- jdbc ---" && grep -rh "jdbc:" /tmp/car-nuevo | sed 's/^[[:space:]]*//' && \
+echo "--- bonita ---" && grep -rh "bpm_url" /tmp/car-nuevo | sed 's/^[[:space:]]*//'
+```
 
-- Los conectores ya dados de alta en Claude siguen funcionando.
-- El PRM, el `https_endpoint` y el `JAVA_OPTS` ya dicen `mcp.cloudtrazalog.com`.
-- Los `redirect_uris` de Dnato (`oauth_clients.php`) son de `claude.ai`, no del MCP: no dependen del
-  dominio del servidor.
+**Leé esa salida y comparala contra la tabla del paso 4.** Tienen que aparecer:
 
-### Paso 4 — Lo que sí hay que endurecer al pasar a producción
+- `jdbc:postgresql://10.142.0.2:5432/tools` ← con la base **`tools`**, no `tools_prod_t`
+- `jdbc:mysql://<host-de-prod>:3306/assetv2?...`
+- `http://10.142.0.2:8080/bonita`
+
+Si aparece un `10.142.0.13` en cualquiera de las tres, **no sigas**: volvé al paso 4 y revisá que no
+hayas editado la copia huérfana de `registry/conf/`.
+
+---
+
+### Paso 6 — Desplegar y confirmar contra la base real
+
+💻 En `mcp-trazalog`:
+
+```bash
+cp target/ToolsAPIProject_1.0.0.car /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ && \
+sudo systemctl restart wso2mi
+```
+
+Esperar el deploy y confirmar:
+
+```bash
+sudo journalctl -u wso2mi -n 60 | grep -iE "Successfully Deployed|ERROR|datasource"
+```
+
+No tiene que haber errores de datasource. Después, la prueba que de verdad importa — **que los datos
+sean de producción**:
+
+```bash
+cd ~/traz-tools && \
+python3 scripts/dev/smoke-tools-mi.py --base http://localhost:8290/tools/mcp --empresa <empr_id_mysql_de_prod> --empresa-pg <empr_id_de_prod>
+```
+
+**Sin `--escrituras`.** Nunca con `--escrituras` contra producción.
+
+> **Los dos ids de empresa no son intercambiables**: las tools `man_*` filtran por `empr_id_mysql`
+> (assetv2) y las `alm_*`/`pan_*` por `empr_id` (PostgreSQL). Si un grupo trae datos y el otro viene
+> vacío, es el id — o un datasource que quedó apuntando a otro ambiente.
+>
+> **`smoke-tools-mi.py` tiene la lista de tools hardcodeada y está vieja**: cubre 16 rutas `man_`/
+> `alm_` y **no incluye ninguna `pan_`**. Para ejercitar las de Herramientas hay que usar
+> `validar-tools-e2e.py`, que las descubre solo (§3.1).
+
+---
+
+### Paso 7 — Dnato: el bloqueante de identidad 🔴
+
+**Esto hay que resolverlo antes de abrir producción a un usuario, y no es una decisión técnica
+menor.**
+
+El `empr_id` con el que las tools filtran **no sale del MCP**: sale del JWT que emite Dnato. Si el MI
+apunta a la base de producción pero Dnato resuelve el `empr_id` contra otra base, los números no se
+corresponden y el resultado no es un error visible: es **datos de la empresa equivocada, o vacío**.
+
+Lo que sabemos hoy:
+
+| | |
+|---|---|
+| Dnato corre en | `vm-demo-trazalog` (`10.142.0.11`), servido en `https://demo.cloudtrazalog.com/traz-comp-dnato` |
+| Su `database.php` **en el repo** apunta a | `10.142.0.13:5432/tools_prod_t` — la base de **desarrollo** |
+| Lo que corre en el servidor | **Hay que verificarlo**: `database.php` está versionado pero cada ambiente tiene el suyo modificado localmente |
+
+💻 SSH a `vm-demo-trazalog`:
+
+```bash
+grep -nE "hostname|'database'|'port'" /var/www/html/traz-comp-dnato/application/config/database.php
+```
+
+Si eso **no** dice `10.142.0.2` / `tools`, el MCP productivo va a estar emitiendo tokens con
+`empr_id` de otra base.
+
+**La decisión de arquitectura que falta** (clase 🔴 — workshop, no se resuelve acá):
+
+| Opción | Implicancia |
+|---|---|
+| Apuntar el Dnato existente a producción | Es el mismo Dnato que sirve el login web del DEMO: moverlo mueve las dos cosas a la vez |
+| Levantar un Dnato propio para producción | Ambiente limpio, pero es una instancia más, con su `.htaccess`, sus claves RS256 y su `[[apim.jwt.issuer]]` en el `deployment.toml` del APIM |
+
+Mientras esto no esté resuelto, el MCP **técnicamente** queda apuntando a producción (pasos 1-6),
+pero **no se le puede dar acceso a un usuario real**.
+
+---
+
+### Paso 8 — Lo que no cambia (para no perder tiempo buscándolo)
+
+- **El dominio.** Sigue siendo `mcp.cloudtrazalog.com`, así que los conectores ya dados de alta en
+  Claude siguen funcionando sin tocar nada.
+- **El PRM, el `https_endpoint` y el `JAVA_OPTS`.** Ya dicen `mcp.cloudtrazalog.com`.
+- **Los `redirect_uris` de Dnato** (`oauth_clients.php`) son de `claude.ai`, no del MCP: no dependen
+  del dominio del servidor.
+- **La API y el MCP Server del APIM.** Cambiar de base no cambia el contrato: no hay que volver a
+  subir la OpenAPI ni recrear el MCP Server. Eso solo hace falta cuando cambian las **operaciones**.
+
+---
+
+### Paso 9 — Endurecer
 
 | | Por qué |
 |---|---|
 | Bajar el `api.log` de FULL | En FULL quedan los JWT completos en el log. Está así para que `validar-tools-e2e.py --desde-log` pueda sacarlos |
 | Sacar los wire logs si quedaron | `org.apache.synapse.transport.http.wire` en DEBUG genera muchísimo log y expone headers |
-| No correr `--escrituras` | Crea pedidos y OTs reales, con instancia en Bonita |
-| Backup antes de cada despliegue | `recrear-api-y-mcp.sh` es destructivo sobre la API: hace backups solo, pero conviene snapshot de la VM |
-| Revisar el TTL del token | Son 24 h sin `refresh_token`: en producción el usuario va a tener que reconectar a diario hasta que se implemente (TODO en `jwt.php:69`) |
+| Nunca `--escrituras` | Crea pedidos y OTs reales, con instancia en Bonita de producción |
+| Snapshot de la VM antes de cada despliegue | `recrear-api-y-mcp.sh` es destructivo sobre la API. Hace backups solos, pero el snapshot es el que te salva |
+| Revisar el TTL del token | Son 24 h sin `refresh_token`: el usuario va a tener que reconectar a diario hasta que se implemente (TODO en `jwt.php:69`) |
 
-### Paso 5 — Verificar
+---
 
-Correr §3 completo contra `mcp.cloudtrazalog.com`, **sin `--escrituras`**.
+### Paso 10 — Rollback
+
+Si algo sale mal, volver al `.car` del paso 1. 💻 En `mcp-trazalog`:
+
+```bash
+sudo cp ~/ToolsAPIProject_1.0.0.car.antes-de-produccion \
+  /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIProject_1.0.0.car && \
+sudo systemctl restart wso2mi
+```
+
+Y verificar con el mismo `grep "jdbc:"` del paso 1 que volvió a las IPs de antes. El rollback no
+requiere tocar el APIM ni el DNS: el `.car` es el único artefacto que cambió.
 
 ---
 
@@ -568,16 +806,24 @@ Correr §3 completo contra `mcp.cloudtrazalog.com`, **sin `--escrituras`**.
 3. Desplegar el .car + la OpenAPI en la VM del MCP      (§1)
 4. Verificar multiempresa con un usuario de 2 empresas  (§2 paso 4)
 5. Correr las dos suites                                (§3)          ← 16/16
-6. Con todo verde: clonar la VM como mcp-demo           (§4)
-7. Decidir la base de producción                        (§5 paso 1)   ← decisión tuya
-8. Endurecer la VM actual como producción               (§5 paso 4)
+6. Con todo verde: clonar la VM como mcp-demo           (§4)          ← ANTES del 7
+7. Conseguir los 5 datos de producción                  (§5 paso 2)   ← te puede frenar
+8. Repuntar la VM a producción 10.142.0.2               (§5 pasos 3-6)
+9. Resolver Dnato antes de abrir a un usuario           (§5 paso 7)   🔴 workshop
 ```
 
-**Por qué en ese orden.** El 2 y el 3 son independientes entre sí —servidores distintos— pero el 4
-necesita los dos puestos: la pantalla sale del servidor de Dnato y la respuesta de *"¿con qué empresa
-estoy conectado?"* sale de la VM del MCP. El 5 va después del 4 porque el escenario E15 asume que la
-tool está desplegada.
+**Por qué en ese orden.**
 
-Los pasos 1 a 5 se pueden hacer hoy. El 6 depende de que el 5 dé verde —no tiene sentido clonar una
-VM con algo roto adentro— y el 7 es una decisión que conviene tomar **antes** de clonar, porque define
-si las dos VMs comparten datos.
+- El **2** y el **3** son independientes entre sí —servidores distintos— pero el **4** necesita los
+  dos puestos: la pantalla sale del servidor de Dnato y la respuesta de *"¿con qué empresa estoy
+  conectado?"* sale de la VM del MCP.
+- El **5** va después del 4 porque el escenario E15 asume que la tool está desplegada.
+- El **6 va antes del 8**, no después: el clon hereda el `.car` con las IPs que tenga la VM en ese
+  momento. Clonando antes, el DEMO se queda apuntando a donde ya apuntaba; clonando después, arranca
+  contra producción (ver el aviso del §4).
+- El **7 es el que te puede frenar de verdad**: de los 5 datos, el host de la MySQL `assetv2` de
+  producción **no está en el repo** y las credenciales tampoco.
+- El **9 es un bloqueante funcional, no técnico**: después del 8 el MCP ya lee producción, pero
+  mientras Dnato resuelva el `empr_id` contra otra base no se le puede dar acceso a un usuario real.
+
+Los pasos 1 a 6 se pueden hacer con lo que hay. El 8 depende del 7, y el 9 necesita workshop.
