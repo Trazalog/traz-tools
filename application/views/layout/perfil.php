@@ -9,7 +9,7 @@
 <div class="navbar-header-tzl">
 <ul class="nav navbar-nav">
       <li class="nav-item">
-        <a class="nav-link" href="#" onclick="linkTo('traz-comp-bpm/Proceso')">Mis Tareas <span class="sr-only">(current)</span></a>
+        <a class="nav-link" href="#" onclick="linkTo('traz-comp-bpm/Proceso2')">Mis Tareas <span class="sr-only">(current)</span></a>
       </li>
     </ul>
 </div>
