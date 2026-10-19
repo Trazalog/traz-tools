@@ -112,9 +112,32 @@ tagueó sobre `develop` (`055c8ae` = merge del PR #44) y después `master` mergi
 ```
 
 > **En producción lo que manda es el tag, no la rama.** El último es **`v2.5.0.10`** (2026-10-03,
-> `055c8ae`) y **no tiene el selector**. Mientras no exista un tag que lo contenga, el Dnato de
-> producción no puede mostrar la pantalla de selección, por más que el MCP ya esté apuntando a la
-> base de producción.
+> `055c8ae`, que fue el merge del PR #44 — `fix/reset-password-design`) y **no tiene el selector**.
+> Mientras no exista un tag que lo contenga, el Dnato de producción no puede mostrar la pantalla de
+> selección, por más que el MCP ya esté apuntando a la base de producción.
+>
+> ⚠️ **El selector del login web SÍ está en `v2.5.0.10`, y por eso parece que ya estuviera hecho.**
+> Son dos pantallas distintas y solo una está en producción:
+>
+> | Selector | Archivo | ¿En `v2.5.0.10`? |
+> |---|---|---|
+> | Login **web** (navegador) | `application/views/login_empresa.php` | ✅ **sí** |
+> | Login **OAuth/MCP** (el que usa Claude) | `application/views/oauth/login_empresa.php` | ❌ **no** |
+>
+> O sea: hoy en producción un usuario de varias empresas entra por la web y elige, pero al conectar
+> el MCP toma el otro camino y se come el corte duro de `Oauthlogin.php:140` — *"Su cuenta tiene
+> múltiples empresas asignadas. Contacte al administrador..."*. **Que la web funcione no dice nada
+> sobre el MCP.**
+>
+> Verificado en el tag: `application/views/oauth/` tiene solo `login_error.php` y `login_step1.php`,
+> y `oauth/login/empresa` da **0** ocurrencias en `routes.php`. El único dato que decide es ese `0`:
+>
+> ```bash
+> cd /var/www/html/traz-comp-dnato && \
+> git describe --tags && \
+> grep -c "oauth/login/empresa" application/config/routes.php && \
+> ls application/views/oauth/
+> ```
 
 > **`master` está 1 commit adelante de `develop`** (`50d7b95 Merge tag 'v2.5.0.10'`), y `develop`
 > está enteramente contenido en `master`. No hay divergencia que resolver entre las dos líneas.
