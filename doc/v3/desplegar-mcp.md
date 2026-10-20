@@ -2,9 +2,9 @@
 
 ## Objetivo
 
-Cómo desplegar una actualización del MCP, en **cualquier ambiente**. Es un comando y es el mismo
-siempre: lo único que cambia es a qué ambiente le apuntás. Leelo cuando haya que subir cambios al
-MCP — tools nuevas, queries, dataservices o sequences.
+Cómo desplegar una actualización del MCP. Es **un comando, el mismo en todos los ambientes**: lo que
+cambia de un servidor a otro vive en el `.env` de ese servidor, no en el procedimiento. Leelo cuando
+haya que subir cambios al MCP — tools nuevas, queries, dataservices o sequences.
 
 **No cubre** la instalación inicial de WSO2 ([`deployment-gcp.md`](deployment-gcp.md) §4) ni el
 despliegue del frontend PHP, que va por `deploytools.sh`.
@@ -16,19 +16,15 @@ despliegue del frontend PHP, que va por `deploytools.sh`.
 💻 SSH a la VM del MCP, desde cualquier directorio:
 
 ```bash
-sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/master prod
+sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/master
 ```
 
-| | |
-|---|---|
-| `$1` | la rama o el tag a desplegar — `origin/master`, `origin/develop`, `v2.5.1.17`… |
-| `$2` | el ambiente, que define qué `.env` usa: `deploy/gcp/.env.car.$2` |
+El único argumento es **la rama o el tag** a desplegar: `origin/master`, `origin/develop`,
+`v2.5.1.17`… Si no le pasás nada, usa `origin/master`.
 
-Para el DEMO es el mismo comando con otros dos argumentos:
-
-```bash
-sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/develop demo
-```
+**Es el mismo comando en todos los ambientes, sin variantes.** No hay un argumento de ambiente
+porque no hace falta: lo que diferencia un ambiente de otro —las bases, el Bonita— ya está en
+`deploy/gcp/.env.car` de **ese** servidor. El servidor es el ambiente.
 
 **No hay que editar ningún archivo del repo.** Las IPs y las credenciales salen del `.env` del
 ambiente, y el script las aplica sobre una **copia** del proyecto: el checkout queda limpio
@@ -81,7 +77,14 @@ Si algo falla antes del paso 6, **no se desplegó nada**. Termina en `DESPLIEGUE
 Para probar sin desplegar —arma el `.car` y lo verifica, pero no toca el MI—:
 
 ```bash
-SOLO_BUILD=1 sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/master prod
+SOLO_BUILD=1 sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/master
+```
+
+Y si alguna vez tenés que armar el `.car` para **otro** ambiente desde esta máquina, el segundo
+argumento es la ruta de ese `.env`:
+
+```bash
+SOLO_BUILD=1 sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/develop deploy/gcp/.env.car.demo
 ```
 
 ---
@@ -127,16 +130,24 @@ Tres cosas, una sola vez por ambiente.
 
 ```bash
 cd ~/git/traz-tools && \
-cp deploy/gcp/.env.car.example deploy/gcp/.env.car.prod && \
-chmod 600 deploy/gcp/.env.car.prod
+cp deploy/gcp/.env.car.example deploy/gcp/.env.car && \
+chmod 600 deploy/gcp/.env.car
 ```
 
 El `.example` trae los dos juegos de valores conocidos —desarrollo y producción— con el de desarrollo
-descomentado: dejás el que corresponde y comentás el otro. Está gitignoreado
-(`git check-ignore -v deploy/gcp/.env.car.prod` lo confirma).
+descomentado: dejás el bloque de **este** servidor y comentás el otro. Está gitignoreado
+(`git check-ignore -v deploy/gcp/.env.car` lo confirma).
 
 Las comillas son opcionales: el script lee el `.env` **como datos, no lo ejecuta**, así que una
 password con `"`, `<`, `>`, `&`, `$` o espacios entra tal cual, sin escaparla.
+
+**Por qué el `.env` pide también las credenciales de Bonita.** El MI entra a Bonita para crear
+instancias de proceso, con el usuario de `bpmconf.xml`. De las 25 operaciones MCP **solo dos** lo
+usan: `alm_crear_pedido_materiales` y `man_create_ot`. `bpmconf.xml` es un recurso de registry
+(`/_system/config/tools`), pero a diferencia de v2 —donde `deploytools.sh` saltea el registry y los
+valores se ponen una vez en el servidor— acá **lo escribe el `.car`**: está declarado en
+`resources/artifact.xml` como `type="registry/resource"`, junto con `apiconfig.xml`, los dos `.js` y
+la clave pública de Dnato. Por eso sus tres valores tienen que estar en el `.env`.
 
 > 🔴 **Para producción faltan las tres passwords**: `PG_PASS`, `MY_PASS` y `BPM_PASS`. Las dos de
 > base, pedilas a quien administre `vm-production-assetplanner-inst1`; la de Bonita, a quien
@@ -219,9 +230,9 @@ Después, 💻 en la VM nueva, tres cosas:
    `wso2am`, y el `https_endpoint` del `deployment.toml`. El PRM que consulta Claude no está
    hardcodeado: sale de esa system property, así que no hay que rebuildear nada.
 2. **El issuer y el `.env`**, según "la primera vez que apuntás un ambiente".
-3. 🔴 **Correr el script con el ambiente nuevo** — es lo que la devuelve a su base:
-   `sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/develop demo`. Hasta que el
-   `DESPLIEGUE OK` lo confirme, esa VM **escribe en el ambiente del que se clonó**.
+3. 🔴 **Rehacer el `.env` con los valores de esta VM y correr el script** — es lo que la devuelve a
+   su base. Hasta que el `DESPLIEGUE OK` lo confirme, esa VM **escribe en el ambiente del que se
+   clonó**: el `.car` y el `.env` vienen heredados del snapshot.
 
 Antes de apagarla, 🌐 que Let's Encrypt emita el certificado: Caddy lo pide la primera vez que el
 dominio resuelve y le llega tráfico, así que si se apaga antes, el día que la prendas no vas a tener
