@@ -19,13 +19,18 @@
 #    En la VM del MCP, desde cualquier lado. El script encuentra solo la raiz
 #    del repo a partir de su propia ubicacion:
 #
-#      bash ~/git/traz-tools/scripts/deploy/build-car-env.sh
+#      bash ~/git/traz-tools/scripts/deploy/build-car-env.sh deploy/gcp/.env.car.demo
+#      bash ~/git/traz-tools/scripts/deploy/build-car-env.sh deploy/gcp/.env.car.prod
 #
 #    $1  archivo .env a usar   (default: <repo>/deploy/gcp/.env.car)
 #
+#    Un archivo por ambiente, los dos gitignoreados. Es el MISMO comando para
+#    desplegar en el DEMO, para repuntar a produccion y para devolver un clon
+#    a desarrollo: lo unico que cambia es que .env se le pasa.
+#
 #  QUE NO HACE, A PROPOSITO
 #    · No copia el .car a carbonapps/ ni reinicia el MI. El despliegue lo
-#      hace una persona, mirando la verificacion. Ver el paso 6 del §5 del
+#      hace una persona, mirando la verificacion. Ver el apendice A del
 #      runbook (doc/v3/runbook-demo-a-produccion.md).
 #    · No toca apiconfig.xml ni el dataservices_url de bpmconf: son el MI
 #      llamandose a si mismo (localhost:8290) y valen igual en todo ambiente.
@@ -133,15 +138,16 @@ e = os.environ
 
 def reemplazar(ruta, cambios):
     with open(ruta, encoding="utf-8") as f:
-        texto = original = f.read()
+        texto = f.read()
     for tag, valor in cambios:
         patron = re.compile(r"(<%s>)(.*?)(</%s>)" % (tag, tag), re.S)
         if not patron.search(texto):
             sys.exit("ERROR: no se encontro <%s> en %s" % (tag, os.path.basename(ruta)))
         texto = patron.sub(
             lambda m: m.group(1) + escape(valor) + m.group(3), texto, count=1)
-    if texto == original:
-        sys.exit("ERROR: no cambio nada en %s" % os.path.basename(ruta))
+    # Que el texto no cambie es un resultado valido: pasa cuando el .env dice
+    # lo mismo que el checkout, o sea al buildear para desarrollo. La red de
+    # seguridad es el chequeo de arriba (que el tag exista), no el diff.
     with open(ruta, "w", encoding="utf-8") as f:
         f.write(texto)
     md.parse(ruta)          # si no es XML valido, revienta aca y no se buildea
@@ -264,12 +270,16 @@ chmod 600 "$DESTINO"
 
 echo "=============== CAR OK ==============="
 echo ""
-echo "  Apunta a produccion y no quedo nada del ambiente anterior."
+echo "  Apunta a donde dice el .env, y no quedo nada del ambiente anterior:"
+echo ""
+printf '    PostgreSQL  %s:%s/%s\n' "$PG_HOST" "$PG_PORT" "$PG_DB"
+printf '    MariaDB     %s:%s/%s\n' "$MY_HOST" "$MY_PORT" "$MY_DB"
+printf '    Bonita      %s\n'       "$BPM_URL"
 echo ""
 echo "  Archivo : $DESTINO"
 echo "  Build   : $BUILD   (borralo cuando no lo necesites: lleva el .env expandido)"
 echo ""
-echo "  Para desplegarlo (paso 6 del §5 del runbook):"
+echo "  Para desplegarlo (apendice A.3 del runbook):"
 echo ""
 echo "    sudo cp \"$DESTINO\" \\"
 echo "      /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIProject_1.0.0.car && \\"
