@@ -60,3 +60,8 @@ AGENTS.md
 
 # QR generados al probar vistas públicas — artefactos, no código
 codigosQR/
+
+# Credenciales por ambiente del .car (scripts/deploy/build-car-env.sh)
+deploy/gcp/.env.car
+deploy/gcp/.env.car.*
+!deploy/gcp/.env.car.example
