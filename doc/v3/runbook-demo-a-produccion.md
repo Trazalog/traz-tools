@@ -26,7 +26,45 @@ Es el mapa de ejecución; los documentos canónicos siguen siendo `deployment-gc
 | **Estado objetivo** | **25 operaciones** — las 24 más `core_get_empresa_actual`, ya mergeada en `develop` |
 | **VM del MCP** | `e2-medium`, Rocky Linux 9, `us-east1-b`, sirve `mcp.cloudtrazalog.com` vía Caddy |
 | **Servidores de Dnato** | Son **dos, uno por ambiente, y cada uno se queda donde está**. DEMO: `vm-demo-trazalog` (`10.142.0.11`), checkout en `/var/www/html/traz-comp-dnato`, sirve `https://demo.cloudtrazalog.com/traz-comp-dnato`. Producción: el que sirve `cloudtrazalog.com` — el selector también tiene que llegar ahí (§5 paso 7) |
-| **Código** | ✅ **Nada pendiente de merge.** `traz-tools` #550 y #551 → `develop`; `traz-comp-dnato` #45 → `develop` y de ahí al tag **`v2.5.0.11`**, ya en `master`. De acá en adelante todo es **despliegue y config**, no código |
+| **Credenciales** | Van en `deploy/gcp/.env.car` (gitignoreado) y las aplica `scripts/deploy/build-car-env.sh` sobre una **copia** del proyecto. **No se edita ningún archivo versionado** — §5 pasos 4-5 |
+| **Checkout en las VMs** | `~/git/traz-tools` (no `~/traz-tools`) |
+| **Código** | ⚠️ `traz-comp-dnato` al día hasta `master`. **`traz-tools` todavía no**: `master` tiene 24 de las 25 operaciones — §0.5. Lo que sigue: `traz-tools` #550 y #551 → `develop`; `traz-comp-dnato` #45 → `develop` y de ahí al tag **`v2.5.0.11`**, ya en `master`. De acá en adelante todo es **despliegue y config**, no código |
+
+## Guía rápida — los 9 pasos
+
+Esta es la lista corta. Cada fila linkea al capítulo con el detalle, las verificaciones y qué hacer
+si falla. **No ejecutes desde esta tabla sola**: usála para saber dónde estás.
+
+| # | Dónde | Qué | Detalle | Estado |
+|---|---|---|---|---|
+| 1 | 🌐 GitHub | Mergear `develop` → `master` en **`traz-tools`** | [§0.5](#05-el-estado-de-master-en-traz-tools) | ⬜ **falta** |
+| 2 | 💻 `vm-demo-trazalog` | El selector de empresa en el Dnato del **DEMO** | [§2](#2-llevar-la-selección-multiempresa-al-demo) | ⬜ |
+| 3 | 💻 `mcp-trazalog` | El `.car` + la OpenAPI → **25 operaciones** | [§1](#1-desplegar-las-tools-nuevas-en-el-demo) | ⬜ |
+| 4 | 🌐 navegador | Probar con un usuario de **dos** empresas | [§2 paso 4](#paso-4--probar-con-un-usuario-real-de-dos-empresas) | ⬜ |
+| 5 | 💻 `mcp-trazalog` | Las dos suites automáticas | [§3](#3-ejecutar-las-pruebas-automáticas-contra-lo-desplegado) | ⬜ |
+| 6 | 🏠 vos | Las **3 passwords** de producción | [§5 paso 4](#paso-4--completar-el-env-del-ambiente) | 🔴 **bloquea del 7 al 9** |
+| 7 | 💻 `mcp-trazalog` | Repuntar a producción: `.env.car` + un script | [§5 pasos 4-6](#paso-5--buildear-y-verificar-en-un-comando) | ⬜ |
+| 8 | 💻 `mcp-trazalog` | Cadena de identidad → Dnato de **producción** | [§5 paso 7](#paso-7--dnato-el-de-producción-no-el-del-demo) | ⬜ |
+| 9 | ⌨️ Cloud Shell | Clonar como `mcp-demo` y **devolverlo a desarrollo** | [§4](#4-clonar-la-vm-como-nuevo-demo-apagada) | ⬜ |
+
+**Lo que ya está hecho y no tiene que volver a hacerse:**
+
+| | Cuándo |
+|---|---|
+| ✅ `traz-comp-dnato` #45 mergeado a `develop` | 2026-10-19 |
+| ✅ Tagueado **`v2.5.0.11`** y mergeado a `master` | 2026-10-19 |
+| ✅ **`v2.5.0.11` desplegado en el Dnato de producción** | 2026-10-20 — confirmado por el PM |
+| ✅ `traz-tools` #550 y #551 mergeados a `develop` | 2026-10-19 |
+
+**Las tres cosas que hacen fallar esto en silencio** — sin un solo error en el log:
+
+1. Un `.car` apuntando a la base equivocada. Devuelve `200` con estructura correcta y datos de otro
+   ambiente. Lo cubre la verificación del paso 7 (§5 paso 5).
+2. Un `bpm_url` apuntando al Bonita equivocado. Crea pedidos y OTs **reales** donde no debería.
+3. Dnato resolviendo el `empr_id` contra una base distinta de la que lee el MI. Devuelve datos de
+   otra empresa, o vacío. Lo cubre el §5 paso 7.c.
+
+---
 
 ### Leyenda de dónde se ejecuta cada paso
 
@@ -81,7 +119,7 @@ existe en dos copias con el mismo diff:
 | **Commit original** | **`2c45c9ef`** — ramas `develop-v3` y `feat/oauth-seleccion-empresa` |
 | **Fecha de los dos** | 2026-09-02 |
 | **Tamaño** | 3 archivos, **385 inserciones / 15 borrados** — **idéntico** en las dos copias |
-| **Tag que lo lleva a producción** | **`v2.5.0.11`** (`b54b41d`, 2026-10-19), ya mergeado en `master`. Lleva **ese commit y nada más**: el diff `v2.5.0.10..v2.5.0.11` son los mismos 3 archivos, 385/15 |
+| **Tag que lo lleva a producción** | **`v2.5.0.11`** (`b54b41d`, 2026-10-19), mergeado en `master` y **ya desplegado en el Dnato de producción el 2026-10-20**. Lleva **ese commit y nada más**: el diff `v2.5.0.10..v2.5.0.11` son los mismos 3 archivos, 385/15 |
 
 Los tres archivos que toca:
 
@@ -174,8 +212,8 @@ qué capítulo está el procedimiento.
 | 4 tools de Herramientas (`pan_*`) + capa `toolsPANAPI` | `traz-tools` — ya en `develop` | `mcp-trazalog` (VM del MCP) | nada: viene todo en el `.car` | **§1** |
 | Tool `core_get_empresa_actual` | `traz-tools` — ya en `develop` (PR #551) | `mcp-trazalog`, el **mismo** `.car` | nada | **§1** |
 | Pantalla de selección de empresa en el login OAuth | `traz-comp-dnato` — ya en `develop` (PR #45) | `vm-demo-trazalog` (servidor de Dnato) | nada: 3 archivos que llegan con el `git pull` | **§2** |
-| Repunte de las bases a producción | `traz-tools` — **no se commitea** | `mcp-trazalog` | **3 archivos** del proyecto Maven, en el checkout de la VM | **§5** pasos 4-6 |
-| El selector, otra vez, en el Dnato de **producción** | `traz-comp-dnato` — ya en el tag **`v2.5.0.11`** y en `master` | servidor de Dnato de producción | nada: `git checkout` del tag | **§5** paso 7.a |
+| Repunte de las bases a producción | ninguno: va en `deploy/gcp/.env.car`, **gitignoreado** | `mcp-trazalog` | **1 archivo**, el `.env.car` — las 3 passwords. El `.car` lo arma `build-car-env.sh` sobre una copia | **§5** pasos 4-6 |
+| El selector, otra vez, en el Dnato de **producción** | `traz-comp-dnato` — tag **`v2.5.0.11`** | servidor de Dnato de producción | ✅ **ya desplegado** el 2026-10-20 | **§5** paso 7.a |
 | Cadena de identidad del MCP → Dnato de producción | ninguno: es **config**, no código | `mcp-trazalog` | **2 archivos** de config del APIM (`JAVA_OPTS` y `deployment.toml`) | **§5** paso 7.b |
 
 > **¿Hay que tocar Dnato? Sí: el mismo commit, en dos servidores distintos.**
@@ -193,6 +231,52 @@ qué capítulo está el procedimiento.
 > Lo que **sí** cambia al promover el MCP es a qué Dnato le pide los tokens: son 2 archivos de config
 > del APIM, en la VM del MCP, no en Dnato (§5 paso 7.b). Y queda una verificación silenciosa que no
 > hay que saltear: que ese Dnato y el MI lean **la misma base** (§5 paso 7.c).
+
+### 0.5 El estado de `master` en `traz-tools`
+
+En `traz-comp-dnato` el código llegó a `master` vía el tag `v2.5.0.11` (§0.1-bis). En `traz-tools`
+**todavía no**. Verificado el 2026-10-20 contando los recursos `/mcp/` de `toolsMCPAPI.xml`:
+
+| Rama | Operaciones MCP | Qué tiene |
+|---|---|---|
+| `develop` | **25** | las 11 `man_`, 9 `alm_`, 4 `pan_` y `core_get_empresa_actual` |
+| `master` | **24** | todo lo anterior **menos** `core_get_empresa_actual` |
+
+La diferencia es **una sola operación**: `/mcp/core/empresa`. Lo demás ya está en `master` — las 4
+tools de Herramientas, `toolsPANAPI.xml`, `toolsCOREAPI.xml` y las 48 queries de `PANDataservice.dbs`
+están todas ahí.
+
+> **Por qué importa justo esa.** Es la tool que contesta *"¿con qué empresa estoy conectado?"*. Sin
+> ella el selector del §2 funciona —el usuario entra y elige— pero **no hay forma de verificar qué
+> eligió**, y la prueba del §2 paso 4 queda sin forma de cerrarse.
+
+**Cómo verificarlo vos mismo** (🏠 local o 💻 en la VM, da igual — es solo git):
+
+```bash
+cd ~/git/traz-tools && \
+git fetch origin && \
+F=_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMCPAPI.xml && \
+echo "master  : $(git show origin/master:$F  | grep -c 'uri-template="/mcp/')" && \
+echo "develop : $(git show origin/develop:$F | grep -c 'uri-template="/mcp/')"
+```
+
+**Lo que arrastra el merge `develop` → `master`.** No es solo la tool: `develop` tiene **17 commits**
+que `master` no, y conviene mirarlos antes de aprobar, porque van a producción juntos:
+
+| Commit | Qué es |
+|---|---|
+| `e4a6385e` | **La tool** `core_get_empresa_actual` — lo que buscamos |
+| `dba11e71` | actualización dataservice bandeja |
+| `6247f048` | mejoras UI herramientas |
+| `310242cb` | fix doctest: login de 2 pasos |
+| los otros 13 | documentación (este runbook y sus correcciones) y los merge commits |
+
+Los tres del medio no son míos y no los analicé: **son parte de la decisión de release, no de esta
+tarea.** Si no querés que entren todavía, la alternativa es un cherry-pick de `e4a6385e` solo — pero
+entonces `master` y `develop` siguen divergiendo y el próximo merge arrastra lo mismo.
+
+> **El tag.** `traz-tools` usa su propia serie, `v2.5.1.X` — el último es **`v2.5.1.16`**
+> (2026-10-09), no la serie `v2.5.0.X` de `dnato`. Después del merge correspondería `v2.5.1.17`.
 
 ---
 
@@ -215,7 +299,7 @@ El paso 1 trae el código; el chequeo de que llegó está en el paso 2.
 💻 SSH a la VM:
 
 ```bash
-cd ~/traz-tools && \
+cd ~/git/traz-tools && \
 git fetch origin && \
 git checkout develop && \
 git pull origin develop
@@ -241,7 +325,7 @@ git pull origin develop
 💻 En la VM:
 
 ```bash
-cd ~/traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject && \
+cd ~/git/traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject && \
 mvn clean install && \
 unzip -qo target/ToolsAPIProject_1.0.0.car -d /tmp/car-check && \
 grep -rh "jdbc:" /tmp/car-check | sed 's/^[[:space:]]*//'
@@ -283,7 +367,7 @@ Tiene que quedar en **25 operaciones**.
 💻 En la VM:
 
 ```bash
-cd ~/traz-tools && \
+cd ~/git/traz-tools && \
 bash scripts/dev/recrear-api-y-mcp.sh
 ```
 
@@ -475,7 +559,7 @@ por CLI no sirve, queda con `iss=http://localhost/oauth` y el gateway lo rechaza
 💻 En la VM:
 
 ```bash
-cd ~/traz-tools && \
+cd ~/git/traz-tools && \
 python3 scripts/dev/validar-tools-e2e.py --desde-log
 ```
 
@@ -770,33 +854,57 @@ Después de crear la regla, **volver a correr el `for` de arriba** hasta que los
 
 ---
 
-### Paso 4 — Editar los tres archivos (y solo esos tres)
+### Paso 4 — Completar el `.env` del ambiente
 
-💻 En `mcp-trazalog`, primero traer el código:
+> **Esto cambió el 2026-10-20.** Antes este paso era *"editá a mano tres archivos versionados"*, y
+> dejaba las credenciales de producción en texto plano dentro del checkout, con el `git status`
+> sucio para siempre. Ahora los valores van a un `.env` gitignoreado y el build los aplica sobre una
+> **copia** del proyecto: **el checkout no se toca**. El procedimiento viejo quedaría como respaldo
+> en el apéndice A.
+
+💻 En `mcp-trazalog`, traer el código y preparar el `.env`:
 
 ```bash
-cd ~/traz-tools && \
+cd ~/git/traz-tools && \
 git fetch origin && \
-git checkout develop && \
-git pull origin develop
+git checkout master && \
+git pull origin master && \
+cp deploy/gcp/.env.car.example deploy/gcp/.env.car && \
+chmod 600 deploy/gcp/.env.car
 ```
 
-Los archivos están bajo
-`~/traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/`:
+El `.env.car.example` **ya viene con los valores de producción** — host, puerto, base y usuario de
+las dos bases y de Bonita. Lo único que falta completar son las **tres passwords**:
 
-| Archivo | Línea | Valor hoy (desarrollo) | Valor para producción |
-|---|---|---|---|
-| `artifacts/data-sources/ToolsDataSource.xml` | **10** `<url>` | `jdbc:postgresql://10.142.0.13:5432/tools_prod_t` | `jdbc:postgresql://10.142.0.2:5434/trazalog_tools` |
-| ↑ mismo archivo | **11** `<username>` | `postgres` | `postgres` (igual) |
-| ↑ mismo archivo | **12** `<password>` | (de desarrollo) | la password de producción |
-| `artifacts/data-sources/AssetPlannerDataSource.xml` | **6** `<url>` | `jdbc:mysql://10.142.0.13:3306/assetv2?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8` | `jdbc:mysql://10.142.0.2:3306/asp2tecn?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8` |
-| ↑ mismo archivo | **7** `<username>` | `rootremote` | `root` |
-| ↑ mismo archivo | **8** `<password>` | (de desarrollo) | la password de producción |
-| `resources/conf/tools/bpmconf.xml` | **3** `<bpm_url>` | `http://10.142.0.13:8080/bonita` | `http://10.142.0.2:8080/bonita` |
-| ↑ mismo archivo | **5** `<password>` | `123traza` | la de admin de Bonita producción |
+```bash
+nano deploy/gcp/.env.car
+```
 
-**Los tres cambios que más fácil se pasan por alto**, porque en desarrollo son otra cosa y uno copia
-el patrón de memoria:
+| Variable | Qué es | Estado |
+|---|---|---|
+| `PG_PASS` | PostgreSQL `trazalog_tools` | ⬜ **falta** |
+| `MY_PASS` | MariaDB `asp2tecn` | ⬜ **falta** |
+| `BPM_PASS` | admin de Bonita producción | ⬜ **falta** |
+
+El `chmod 600` no es opcional: el script se niega a correr si el archivo tiene otros permisos,
+porque lleva credenciales en texto plano.
+
+> **Si falta cualquiera de las tres, pará acá.** El script también se niega a buildear con una
+> variable vacía — a propósito. Buildear con un dato inventado es peor que no buildear: el `.car`
+> levanta sin un solo error en el log y las tools devuelven vacío.
+
+**Qué NO hay que configurar, y por qué no aparece en el `.env`:**
+
+| | Por qué |
+|---|---|
+| `apiconfig.xml` (`api_url`, `dataservices_url`) | Es el MI **llamándose a sí mismo**. `localhost:8290` es correcto en todos los ambientes, y el script verifica que siga ahí |
+| `dataservices_url` de `bpmconf.xml` | Igual que arriba |
+| El query string de la URL de MariaDB (`?useSSL=false&...`) | Es igual en todos los ambientes. El script lo **conserva** tal cual del archivo, no lo reescribe |
+| El `driverClassName` de las dos bases | No cambia. `com.mysql.cj.jdbc.Driver` funciona contra MariaDB; es lo que ya se usa |
+| Cualquier cosa bajo `resources/registry/conf/` | **Esa carpeta es huérfana y no entra al `.car`.** Tiene valores contradictorios con `conf/tools/` — editarla no produce ningún efecto y hace perder una tarde |
+
+**Los tres valores que más fácil se pasan por alto**, porque en desarrollo son otra cosa y uno copia
+el patrón de memoria — ya vienen bien en el `.example`, pero convienen saberlos para revisar:
 
 | | En desarrollo | En producción |
 |---|---|---|
@@ -804,68 +912,63 @@ el patrón de memoria:
 | Nombre de la base de Asset Planner | `assetv2` | **`asp2tecn`** |
 | Usuario de MariaDB | `rootremote` | **`root`** |
 
-En el de MariaDB cambian **host, base y usuario** — los parámetros `?useSSL=false&...` quedan
-exactamente igual, y el `driverClassName` también (`com.mysql.cj.jdbc.Driver` funciona contra
-MariaDB; es lo que ya se usa hoy).
-
-**Qué NO tocar:**
-
-| Archivo / línea | Por qué |
-|---|---|
-| `resources/conf/tools/apiconfig.xml` (`api_url`, `dataservices_url`) | Es el MI **llamándose a sí mismo**. `localhost:8290` es correcto en todos los ambientes |
-| `bpmconf.xml` línea 6 (`dataservices_url`) | Igual que arriba: `localhost:8290` está bien |
-| Cualquier cosa bajo `resources/registry/conf/` | **Esa carpeta es huérfana y no entra al `.car`.** Tiene valores distintos y contradictorios con `conf/tools/` — editarla no produce ningún efecto y hace perder una tarde. La que se empaqueta es `conf/tools/`, y lo dice `resources/artifact.xml` |
-
-> 🛑 **No commitear estos cambios.** Son credenciales de producción en texto plano. Quedan como
-> modificación local en la VM, y el `git status` te lo va a recordar en cada pull. Si en algún
-> momento esto se parametriza (perfiles de Maven), deja de ser manual — hoy no lo está, y está
-> anotado como pendiente en `deployment-gcp.md` §6.1-bis.
-
 ---
 
-### Paso 5 — Buildear y verificar el `.car` ANTES de copiarlo
+### Paso 5 — Buildear y verificar, en un comando
 
 💻 En `mcp-trazalog`:
 
 ```bash
-cd ~/traz-tools/_backend/api/ToolsAPIProject/ToolsAPIProject && \
-mvn clean install && \
-rm -rf /tmp/car-nuevo && mkdir /tmp/car-nuevo && \
-unzip -qo target/ToolsAPIProject_1.0.0.car -d /tmp/car-nuevo && \
-echo "--- jdbc ---" && grep -rh "jdbc:" /tmp/car-nuevo | sed 's/^[[:space:]]*//' && \
-echo "--- bonita ---" && grep -rh "bpm_url" /tmp/car-nuevo | sed 's/^[[:space:]]*//'
+bash ~/git/traz-tools/scripts/deploy/build-car-env.sh
 ```
 
-**Leé esa salida.** Tienen que aparecer **exactamente** estas tres, sin una letra de diferencia:
+El script te muestra a dónde va a apuntar el `.car` y **pide confirmación** antes de hacer nada.
+Después, solo:
+
+1. Copia el proyecto Maven a `~/.cache/traz-car-build/<fecha>` — **el checkout queda intacto**.
+2. Reescribe en esa copia el `<url>`, `<username>` y `<password>` de los dos datasources y los tres
+   campos de `bpmconf.xml`. Reemplazo textual quirúrgico: no reformatea el resto del archivo.
+3. Buildea con `mvn clean install`.
+4. Descomprime el `.car` resultante y **verifica** que contenga las tres URLs del `.env`, que siga
+   el `localhost:8290` del MI, y que **no haya quedado ninguna IP del ambiente anterior**.
+5. Deja el `.car` en tu `$HOME` con permisos `600` y te imprime los dos comandos del paso 6.
+
+Termina con `CAR OK` o con `CAR MAL`. **Si dice `CAR MAL`, no sigas** — te dice qué faltó y sale con
+código distinto de cero, sin dejar nada desplegado.
 
 ```
-jdbc:postgresql://10.142.0.2:5434/trazalog_tools
-jdbc:mysql://10.142.0.2:3306/asp2tecn?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8
-http://10.142.0.2:8080/bonita
+=============== CAR OK ===============
+
+  Apunta a produccion y no quedo nada del ambiente anterior.
+
+  Archivo : /home/ruiz_rodolfo/ToolsAPIProject_1.0.0-20261020-143000.car
 ```
 
-Si querés el chequeo sin leer a ojo, 💻 en la misma VM:
+> **Por qué el script no despliega solo.** Copiar el `.car` a `carbonapps/` y reiniciar el MI es el
+> único paso irreversible de todo esto. Lo hace una persona, después de leer el `CAR OK` — no un
+> script que podría estar corriendo con el `.env` equivocado.
 
-```bash
-grep -rhq "jdbc:postgresql://10.142.0.2:5434/trazalog_tools" /tmp/car-nuevo && \
-grep -rhq "jdbc:mysql://10.142.0.2:3306/asp2tecn" /tmp/car-nuevo && \
-grep -rhq "http://10.142.0.2:8080/bonita" /tmp/car-nuevo && \
-! grep -rhq "10.142.0.13" /tmp/car-nuevo && \
-echo "CAR OK: las tres apuntan a produccion y no quedo nada de desarrollo" || \
-echo "CAR MAL: NO desplegar, volver al paso 4"
-```
-
-Si dice `CAR MAL`, **no sigas**. Lo primero a revisar: que no hayas editado la copia huérfana de
-`registry/conf/` en vez de `conf/tools/`.
+> **El `.env` se usa igual para volver atrás.** Para devolver un ambiente a desarrollo —el caso del
+> clon del §4— se completa el `.env.car` con los valores de desarrollo (están al pie del
+> `.example`) y se corre el mismo script. No hay un procedimiento inverso aparte.
 
 ---
 
 ### Paso 6 — Desplegar y confirmar contra la base real
 
-💻 En `mcp-trazalog`:
+El script del paso 5 te imprime estos dos comandos ya con la ruta del `.car` que acaba de generar.
+💻 En `mcp-trazalog`, primero guardar el que está andando:
 
 ```bash
-cp target/ToolsAPIProject_1.0.0.car /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ && \
+sudo cp /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIProject_1.0.0.car \
+  ~/ToolsAPIProject_1.0.0.car.antes-de-produccion
+```
+
+Después desplegar (reemplazando `<CAR>` por la ruta que imprimió el script):
+
+```bash
+sudo cp <CAR> \
+  /opt/wso2/wso2mi-4.5.0/repository/deployment/server/carbonapps/ToolsAPIProject_1.0.0.car && \
 sudo systemctl restart wso2mi
 ```
 
@@ -879,15 +982,15 @@ No tiene que haber errores de datasource. Después, la prueba que de verdad impo
 sean de producción**:
 
 ```bash
-cd ~/traz-tools && \
+cd ~/git/traz-tools && \
 python3 scripts/dev/smoke-tools-mi.py --base http://localhost:8290/tools/mcp --empresa <empr_id_mysql_de_prod> --empresa-pg <empr_id_de_prod>
 ```
 
 **Sin `--escrituras`.** Nunca con `--escrituras` contra producción.
 
 > **Los dos ids de empresa no son intercambiables**: las tools `man_*` filtran por `empr_id_mysql`
-> (assetv2) y las `alm_*`/`pan_*` por `empr_id` (PostgreSQL). Si un grupo trae datos y el otro viene
-> vacío, es el id — o un datasource que quedó apuntando a otro ambiente.
+> (Asset Planner) y las `alm_*`/`pan_*` por `empr_id` (PostgreSQL). Si un grupo trae datos y el otro
+> viene vacío, es el id — o un datasource que quedó apuntando a otro ambiente.
 >
 > **`smoke-tools-mi.py` tiene la lista de tools hardcodeada y está vieja**: cubre 16 rutas `man_`/
 > `alm_` y **no incluye ninguna `pan_`**. Para ejercitar las de Herramientas hay que usar
@@ -909,8 +1012,10 @@ archivos de config del APIM.
 
 #### 7.a — Que el selector esté en el Dnato de producción
 
-Ya existe el tag que lo contiene: **`v2.5.0.11`**, mergeado en `master` el 2026-10-19 (el anterior,
-`v2.5.0.10`, **no** lo tenía — §0.1-bis). Falta el `git checkout` en el servidor.
+✅ **Hecho el 2026-10-20**, confirmado por el PM: el Dnato de producción corre **`v2.5.0.11`**, que
+es el primer tag que contiene el selector (el anterior, `v2.5.0.10`, **no** lo tenía — §0.1-bis).
+
+Si hace falta confirmarlo de nuevo, o verificarlo en otro servidor, el diagnóstico es este.
 
 💻 SSH al servidor de Dnato de **producción** (el que sirve `cloudtrazalog.com`, **no**
 `vm-demo-trazalog`):
@@ -1056,39 +1161,26 @@ requiere tocar el APIM ni el DNS: el `.car` es el único artefacto que cambió.
 
 ---
 
-## 6. El orden en que conviene hacerlo
+## 6. Por qué el orden es ese
 
-**Todo el código está mergeado y tagueado al 2026-10-19. De acá en adelante es despliegue y config.**
+La lista de pasos está en la **Guía rápida**, arriba. Acá queda solo el razonamiento, que es lo que
+no se puede deducir de la tabla:
 
-```
- 1. Mergear dnato #45, taguear v2.5.0.11, a master     (§0.1-bis)     [HECHO]
- 2. Desplegar el selector en vm-demo-trazalog          (§2 pasos 1-3) <- EMPEZAR ACA
- 3. Desplegar el .car + la OpenAPI en la VM del MCP    (§1)
- 4. Verificar multiempresa con un usuario de 2 empresas(§2 paso 4)
- 5. Correr las dos suites                              (§3)           <- 16/16
- 6. Conseguir las 3 passwords de produccion            (§5 paso 2)    <- lo unico que bloquea
- 7. Repuntar la VM a produccion 10.142.0.2             (§5 pasos 3-6) <- esta VM YA ES produccion
- 8. Selector (checkout del tag) en el Dnato de prod    (§5 paso 7.a)
- 9. Cadena de identidad del APIM al Dnato de prod      (§5 paso 7.b-c)
-10. Clonar la VM como mcp-demo y DEVOLVERLA a desarrollo (§4)         <- paso extra obligatorio
-```
-
-**Por qué en ese orden.**
-
-- El **1 está cerrado**: `traz-tools` #550 y #551 a `develop`, `traz-comp-dnato` #45 a `develop` y de
-  ahí al tag `v2.5.0.11`, ya en `master`. **Que el código esté en la rama no lo pone en ningún
-  servidor** — todo lo que sigue es despliegue.
+- El **1** (merge a `master` de `traz-tools`) es lo único que falta del lado del código, y es
+  decisión tuya porque arrastra 3 commits que no son de esta tarea (§0.5).
 - El **2** y el **3** son independientes entre sí —servidores distintos— pero el **4** necesita los
   dos puestos: la pantalla sale del servidor de Dnato y la respuesta de *"¿con qué empresa estoy
   conectado?"* sale de la VM del MCP.
 - El **5** va después del 4 porque el escenario E15 asume que la tool está desplegada.
-- **Del 2 al 5 se puede hacer hoy, sin esperar nada.** El **6** es lo único que frena el resto: hosts,
-  puertos, bases y usuarios ya están confirmados (§5 paso 2); faltan las **tres passwords**.
-- El **8 y el 9 van juntos**, y después del 7: una vez que esta VM es producción, los tokens los tiene
-  que emitir el Dnato de producción, y para eso el selector tiene que estar desplegado ahí. Si hacés
-  el 7 sin el 9, el MCP lee producción pero sigue validando tokens del Dnato del DEMO — anda, pero el
-  `empr_id` lo resuelve la base equivocada (§5 paso 7.c).
-- El **10 es el último y arrastra trabajo**: el clon hereda el `.car` apuntando a producción, así que
-  **hay que devolverlo a desarrollo antes de que lo use alguien** — §5 pasos 4-6 al revés. Mientras
-  eso no esté hecho, ese "DEMO" escribe pedidos y OTs reales. Clonar **antes** del 7 ahorra ese
-  trabajo, pero el orden es decisión tuya y el §4 cubre los dos casos.
+- **Del 2 al 5 se puede hacer hoy mismo.** El **6** —las tres passwords— es lo único que frena el
+  resto: hosts, puertos, bases y usuarios ya están confirmados y ya vienen cargados en el
+  `.env.car.example`.
+- El **8 va después del 7**: una vez que esta VM es producción, los tokens los tiene que emitir el
+  Dnato de producción. Si hacés el 7 sin el 8, el MCP lee producción pero sigue validando tokens del
+  Dnato del DEMO — anda, pero el `empr_id` lo resuelve la base equivocada (§5 paso 7.c). El selector
+  en ese servidor ya está desplegado, así que el 8 es solo config del APIM.
+- El **9 es el último y arrastra trabajo**: el clon hereda el `.car` apuntando a producción, así que
+  **hay que devolverlo a desarrollo antes de que lo use alguien**. Con el `.env.car` eso es correr el
+  mismo script con los valores de desarrollo (están al pie del `.example`), no un procedimiento
+  inverso aparte. Mientras no esté hecho, ese "DEMO" escribe pedidos y OTs reales. Clonar **antes**
+  del 7 ahorra ese trabajo, pero el orden es decisión tuya y el §4 cubre los dos casos.
