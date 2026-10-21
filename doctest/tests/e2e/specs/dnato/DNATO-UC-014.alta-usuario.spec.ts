@@ -63,10 +63,8 @@ test.describe('@dnato @DNATO-UC-014 Dar de alta un usuario de la empresa', () =>
   });
 
   test('el usuario recién creado aparece en la lista para poder asignarle roles', async ({ paginaEmpresa1 }) => {
-    // FALLA CONOCIDA — hallazgo H-032, issue #464: la Lista de Usuarios hace INNER JOIN
-    // contra las membresías, así que un usuario sin roles no aparece… que es justo lo
-    // que la pantalla de alta pide ir a hacer ahí. Callejón sin salida.
-    test.fail();
+    // H-032 (#464), resuelto en traz-comp-dnato v2.5.0.12 (PR #46): la lista muestra
+    // también a los dados de alta para la empresa que todavía no tienen roles.
 
     const datos = nuevo();
     const alta = new AltaUsuarioPage(paginaEmpresa1);

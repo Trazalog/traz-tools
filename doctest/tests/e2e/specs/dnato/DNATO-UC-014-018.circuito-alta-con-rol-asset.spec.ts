@@ -9,9 +9,9 @@
  * Cada tramo es un `test.step` con aserciones `soft`: si un tramo falla, los siguientes
  * corren igual y el reporte dice cuáles fallan y dónde, no solo el primero.
  *
- * - La asignación de rol se hace entrando directo a `main/changeleveluser/<id>`, porque
- *   la Lista de Usuarios no muestra al recién creado (H-032, #464). El id sale del
- *   redirect que hace el alta (`main/users/<id>`).
+ * - La asignación de rol se hace entrando directo a `main/changeleveluser/<id>`, con el
+ *   id que da el redirect del alta (`main/users/<id>`). Hasta dnato v2.5.0.12 era el único
+ *   camino, porque la lista no mostraba al recién creado (H-032, #464).
  * - El correo NO lleva '+': rompe la asignación de roles en Bonita (H-084).
  */
 
@@ -58,10 +58,8 @@ test.describe('@dnato @DNATO-UC-014 @DNATO-UC-018 Circuito: alta de usuario con 
       await lista.buscar(datos.email);
       const visto = (await lista.correos()).includes(datos.email);
       console.log(`[circuito] 2. aparece en la lista sin roles: ${visto}`);
-      // FALLA CONOCIDA — H-032, #464. La aserción vive en DNATO-UC-014 con test.fail();
-      // acá solo se registra, para que el circuito no quede rojo por un bug ya abierto.
-      // Cuando se arregle #464, este tramo pasa a dar `true` y la anotación lo muestra.
-      test.info().annotations.push({ type: 'H-032', description: `usuario sin roles visible en la lista: ${visto}` });
+      // H-032 (#464), resuelto en traz-comp-dnato v2.5.0.12.
+      expect.soft(visto, 'H-032: el usuario sin roles debe aparecer en la lista').toBe(true);
     });
 
     await test.step('3. Asignar el rol Mantenedor desde Asignar Rol', async () => {
