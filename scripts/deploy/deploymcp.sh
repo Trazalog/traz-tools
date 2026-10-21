@@ -21,13 +21,15 @@
 #    En la VM del MCP, desde cualquier directorio. El script encuentra solo la
 #    raiz del repo a partir de su propia ubicacion:
 #
-#      sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/master prod
-#      sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/develop demo
+#      sh ~/git/traz-tools/scripts/deploy/deploymcp.sh origin/master
 #
 #    $1  rama o tag a desplegar   (default: origin/master)
-#    $2  ambiente                 (obligatorio: usa deploy/gcp/.env.car.$2)
+#    $2  .env a usar              (default: deploy/gcp/.env.car)
 #
-#    Es el MISMO comando para todos los ambientes. Lo unico que cambia es $2.
+#    Es el MISMO comando en todos los ambientes, sin variantes: lo que cambia
+#    de un ambiente a otro ya esta adentro del .env de ese servidor. El $2 esta
+#    solo para el caso raro de tener que armar el .car para OTRO ambiente desde
+#    esta maquina — ahi se le pasa la ruta de ese .env.
 #
 #  QUE MUESTRA
 #    En pantalla, solo el avance y el resultado. TODO lo demas —la salida de
@@ -126,12 +128,7 @@ preflight() {
         printf '           Crealo asi:\n'
         printf '             cp %s/deploy/gcp/.env.car.example %s\n' "$REPO" "$ENVFILE"
         printf '             chmod 600 %s\n' "$ENVFILE"
-        printf '           Ambientes que ya tienen .env en este repo:\n'
-        for f in "$REPO"/deploy/gcp/.env.car.*; do
-            [ -f "$f" ] || continue
-            case "$f" in *.example) continue ;; esac
-            printf '             %s\n' "$(basename "$f" | sed 's/^\.env\.car\.//')"
-        done
+        printf '           Y completalo: es a donde va a apuntar el MCP de ESTE servidor.\n'
         return 1
     }
 
@@ -352,7 +349,7 @@ buildear() {
         falla "no se pudieron reescribir los datasources — ver el log"
         return 1
     fi
-    ok "datasources y bpmconf de la copia reescritos con los valores de '$AMBIENTE'"
+    ok "datasources y bpmconf de la copia reescritos con los valores del .env"
 
     printf '     ..   mvn clean install (tarda un rato)\n'
     if ! ( cd "$BUILD/ToolsAPIProject" && mvn clean install ) >> "$LOG" 2>&1; then
@@ -495,37 +492,30 @@ main() {
     PROY="$REPO/$PROY_REL"
 
     TAG="${1:-origin/master}"
-    AMBIENTE="$2"
     STAMP=$(date +%Y%m%d-%H%M%S)
     BUILD="$HOME/.cache/traz-mcp-build/$STAMP"
     LOG="$HOME/deploymcp-$STAMP.log"
-    ENVFILE="$REPO/deploy/gcp/.env.car.$AMBIENTE"
 
-    if [ -z "$AMBIENTE" ]; then
-        echo "uso: sh $0 <rama-o-tag> <ambiente>" >&2
-        echo "" >&2
-        echo "  ejemplo: sh $0 origin/master prod" >&2
-        echo "           sh $0 origin/develop demo" >&2
-        echo "" >&2
-        echo "  el ambiente dice que .env usar: deploy/gcp/.env.car.<ambiente>" >&2
-        echo "  ambientes con .env en este repo:" >&2
-        for f in "$REPO"/deploy/gcp/.env.car.*; do
-            [ -f "$f" ] || continue
-            case "$f" in *.example) continue ;; esac
-            echo "    $(basename "$f" | sed 's/^\.env\.car\.//')" >&2
-        done
-        return 2
+    # Un .env por servidor, no uno por "ambiente": el servidor ES el ambiente.
+    # El $2 se acepta como ruta —tal cual, o relativa a la raiz del repo— para
+    # el caso de armar el .car para otro ambiente desde esta maquina.
+    if [ -z "$2" ]; then
+        ENVFILE="$REPO/deploy/gcp/.env.car"
+    elif [ -f "$2" ]; then
+        ENVFILE="$2"
+    else
+        ENVFILE="$REPO/$2"
     fi
 
     mkdir -p "$(dirname "$LOG")" 2>/dev/null
     {
         echo "==================================================================="
-        echo " DESPLIEGUE MCP $(date '+%Y-%m-%d %H:%M:%S')  ambiente=$AMBIENTE  tag=$TAG"
+        echo " DESPLIEGUE MCP $(date '+%Y-%m-%d %H:%M:%S')  tag=$TAG  env=$ENVFILE"
         echo "==================================================================="
     } >> "$LOG" 2>&1
 
     echo "=============== TRAZALOG · despliegue del MCP ==============="
-    echo "  ambiente : $AMBIENTE   ($ENVFILE)"
+    echo "  .env     : $ENVFILE"
     echo "  rama/tag : $TAG"
     echo ""
 
@@ -558,7 +548,7 @@ main() {
     paso "3/7  respaldando el .car desplegado"
     respaldar_car || { resumen; return 1; }
 
-    paso "4/7  armando el .car para '$AMBIENTE'"
+    paso "4/7  armando el .car"
     buildear || { resumen; return 1; }
 
     paso "5/7  verificando el .car antes de desplegarlo"
@@ -594,7 +584,7 @@ resumen() {
         echo "  DESPLIEGUE CON $ERRORES ERROR(ES) — revisar el log"
     fi
     [ -n "$REVISION" ]  && echo "  revision               : $REVISION ($TAG)"
-    [ -n "$AMBIENTE" ]  && echo "  ambiente               : $AMBIENTE"
+    echo "  .env                   : $ENVFILE"
     [ -n "$OPS_AHORA" ] && echo "  operaciones MCP        : $OPS_AHORA"
     [ -n "$RESPALDO" ]  && echo "  respaldo del anterior  : $RESPALDO"
     echo "  log completo           : $LOG"
