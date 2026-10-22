@@ -67,7 +67,7 @@ Si algo falla antes del paso 6, **no se desplegó nada**. Termina en `DESPLIEGUE
 ----------------------------------------------------
   DESPLIEGUE OK
   revision               : a1b2c3d (origin/master)
-  ambiente               : prod
+  .env                   : /home/ruiz_rodolfo/git/traz-tools/deploy/gcp/.env.car
   operaciones MCP        : 25
   respaldo del anterior  : /home/ruiz_rodolfo/ToolsAPIProject_1.0.0.car.antes-de-20261020-143000
   log completo           : /home/ruiz_rodolfo/deploymcp-20261020-143000.log
