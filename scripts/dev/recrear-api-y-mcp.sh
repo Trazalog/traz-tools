@@ -209,7 +209,10 @@ AHORA, A MANO (es el unico camino que genera los mappings completos):
   Publisher > MCP Servers > Create MCP Server > Start from Existing API
     1. elegir "$API_NAME"
     2. seleccionar TODAS las operaciones   <-- contar que sean $NESPERADAS
-    3. Name/Context/Version a eleccion
+    3. Name/Context/Version: REPETIR los del MCP Server que figura arriba en
+       "estado actual". Si cambian, la URL cambia y hay que reconfigurar el
+       conector de Claude de TODOS los clientes, mas la system property
+       trazalog.mcp.resource.url
     4. Create
     5. Deploy > Deployments > Deploy
     6. Publish > Lifecycle > Publish
