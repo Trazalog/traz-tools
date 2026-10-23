@@ -18,6 +18,7 @@ que es §6.0 y §7 del mismo documento.
 | **Ambientes** | DEV y la VM de GCP (`mcp.cloudtrazalog.com`) — cambian los hosts, no los pasos |
 | **Verificado** | 2026-08-20, agregando 8 tools a un MCP Server de 9 → **17/17 operativas** |
 | **Duración** | ~40 min, la mayor parte esperando arranques y despliegues |
+| **Hace falta** | `apictl` instalado en la VM (sólo para B.2), y acceso al Publisher y al DevPortal por navegador |
 
 ---
 
@@ -54,16 +55,20 @@ Tres reglas que se derivan de esto:
 En tu máquina, en el repo:
 
 ```bash
-# tools implementadas en el MI
-grep -o 'uri-template="/mcp/[^"]*"' \
+# operaciones implementadas en el MI (metodo + ruta)
+grep -oE '<resource methods="[^"]*" uri-template="/mcp/[^"]*"' \
   _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMCPAPI.xml \
-  | sed 's/uri-template="//;s/"//' | sort -u
+  | sed -E 's/.*methods="([^"]*)" uri-template="([^"]*)"/\1 \2/' | sort
 
 # tools declaradas en la OpenAPI
 grep -E '^\s+operationId:' doc/api/trazalog-operaciones.yaml | awk '{print $2}' | sort
 ```
 
 Las dos listas tienen que tener la misma cantidad. **Si no coinciden, parar acá.**
+
+> **Contar rutas no alcanza.** `/mcp/man/ot` tiene `GET` (`man_get_ots`) y `POST` (`man_create_ot`),
+> así que hoy son **24 rutas y 25 operaciones**. Comparando rutas contra `operationId` la cuenta da
+> 24 vs 25 y parece un error que no existe. Por eso la comparación es por método + ruta.
 
 | Qué cambió | Pasos |
 |---|---|
@@ -77,58 +82,43 @@ Las dos listas tienen que tener la misma cantidad. **Si no coinciden, parar acá
 > **Primero el MI, siempre.** Si la tool se publica antes de que el MI tenga la ruta, falla aunque el
 > Publisher esté perfecto.
 
-### A.1 Revisar las IPs antes de buildear
+### A.1 Desplegar el `.car`
 
-SSH a la VM. El `.car` empaqueta la IP del ambiente, y buildear desde un checkout limpio deja el MI
-apuntando a la base equivocada **sin fallar de forma visible** (responde `200` con datos de otro
-ambiente). Detalle en `deployment-gcp.md` §6.1-bis:
+💻 SSH a la VM del MCP. Es **un comando, el mismo en todos los ambientes**:
 
-| Archivo (bajo `src/main/wso2mi/`) | ¿Tocarlo? |
+```bash
+sh ~/git/traz-tools/scripts/deploy/deploymcp.sh <rama-o-tag>
+```
+
+Qué hace cada paso, el `.env`, el rollback y el bootstrap la primera vez están en
+[`../v3/desplegar-mcp.md`](../v3/desplegar-mcp.md) — acá no se repite. Lo que importa para este
+procedimiento es qué cubre y qué no:
+
+| | |
 |---|---|
-| `artifacts/data-sources/ToolsDataSource.xml` | **sí** — IP del ambiente |
-| `artifacts/data-sources/AssetPlannerDataSource.xml` | **sí** — IP del ambiente |
-| `resources/conf/tools/bpmconf.xml` → `bpm_url` | **sí** — IP de Bonita |
-| `resources/conf/tools/apiconfig.xml` | **no** — es el MI llamándose a sí mismo, `localhost` es correcto |
+| Las IPs y credenciales del ambiente | las aplica el script desde `deploy/gcp/.env.car`, **sobre una copia**. No se edita ningún archivo del repo |
+| Verificar el `.car` por dentro antes de desplegarlo | sí — paso 5 del script |
+| Esperar el arranque del MI | sí — paso 6, reintenta hasta 3 min |
+| Avisar si cambió el número de operaciones MCP | sí — es justo lo que dispara los pasos B y C de acá |
+| Probar **cada** ruta nueva contra el MI | **no** — el script curlea una sola ruta, para saber si el MI levantó. Eso es A.2 |
 
-> Editar siempre `resources/conf/tools/`. Existe una copia huérfana en `resources/registry/conf/` que
-> **no se empaqueta** y tiene valores distintos.
+> ⚠️ **Lo que este paso decía antes ya no se hace**: editar a mano `ToolsDataSource.xml`,
+> `AssetPlannerDataSource.xml` y `bpmconf.xml` con la IP del ambiente, y buildear con `mvn clean
+> install` desde el checkout. Era la forma vieja; deja credenciales del ambiente en archivos
+> versionados y es exactamente lo que el script evita.
 
-### A.2 Buildear y desplegar
+### A.2 Probar cada ruta nueva contra el MI, salteando el APIM
 
-```bash
-cd ~/git/traz-tools && git checkout develop-v3 && git pull origin develop-v3
-cd _backend/api/ToolsAPIProject/ToolsAPIProject
-mvn clean install          # ./mvnw no viaja en el clone
-
-# verificar el CAR ANTES de copiarlo
-mkdir -p /tmp/car && unzip -qo target/ToolsAPIProject_1.0.0.car -d /tmp/car
-grep -rho 'uri-template="/mcp/[^"]*"' /tmp/car | sed 's/uri-template="//;s/"//' | sort -u
-grep -rh "jdbc:" /tmp/car | sed 's/^[[:space:]]*//'
-rm -rf /tmp/car
-
-sudo systemctl stop wso2mi
-sudo cp target/ToolsAPIProject_1.0.0.car $MI_HOME/repository/deployment/server/carbonapps/
-sudo systemctl start wso2mi
-```
-
-### A.3 Esperar el arranque
-
-El MI tarda **~40 s**. Antes de eso todo devuelve `101503`, que parece un error de configuración y no
-lo es.
+💻 En la VM, una vez por cada ruta nueva. El `context` de la API es `/tools/mcp`, así que la URL
+repite el `/mcp`:
 
 ```bash
-sudo tail -f $MI_HOME/repository/logs/wso2carbon.log | grep -m1 "started in"
-```
-
-### A.4 Probar el MI directo, salteando el APIM
-
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8290/tools/mcp/mcp/man/kpi/mttr
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8290/tools/mcp/mcp/core/empresa
 # 503 (identity_missing) = CORRECTO: la ruta existe y el MI está sano
-# 404 = la ruta no está en el CAR desplegado -> volver a A.2
+# 404 = la ruta no está en el .car desplegado -> revisar el log del despliegue
 ```
 
-Repetir con cada ruta nueva. **Si el MI no responde, no tiene sentido seguir.**
+**Si el MI no responde, no tiene sentido seguir.**
 
 ---
 
@@ -250,11 +240,9 @@ reconectar el conector.
 ## 6. Checklist
 
 ```
-[ ] OpenAPI e implementación con la misma cantidad de tools (paso 1)
-[ ] IPs del .car revisadas para el ambiente (A.1)
-[ ] mvn clean install en verde y .car verificado por dentro (A.2)
-[ ] MI arrancado ("started in NN seconds") (A.3)
-[ ] curl directo al MI: 503 identity_missing en cada ruta nueva (A.4)
+[ ] OpenAPI e implementacion con la misma cantidad de operaciones, metodo + ruta (paso 1)
+[ ] deploymcp.sh cerro en DESPLIEGUE OK (A.1)
+[ ] curl directo al MI: 503 identity_missing en cada ruta nueva (A.2)
 [ ] OpenAPI actualizada en API definition + Save (B.1)
 [ ] API recreada; revision desplegada con TODOS los recursos (B.2)
 [ ] Enable Subscription Validation sigue desactivado (B.3)
