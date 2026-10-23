@@ -160,7 +160,7 @@ bash scripts/dev/recrear-api-y-mcp.sh --apply
 
 **Es la única forma de que las tools nuevas queden mapeadas.** Agregarle operaciones a una API que ya
 tiene un MCP Server generado no funciona por ningún otro camino
-([`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md) §7).
+([`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md), apéndice).
 
 Destructivo sobre producción: hace backups antes de borrar nada, aborta en cada paso crítico, y no
 recrea el MCP Server (eso va por la UI, que es lo único que genera los mappings).
