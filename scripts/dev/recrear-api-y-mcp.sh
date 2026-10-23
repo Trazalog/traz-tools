@@ -44,6 +44,21 @@ mkdir -p "$BK" || { echo "no se pudo crear el directorio de backups: $BK"; exit 
 
 command -v apictl >/dev/null || { echo "falta apictl"; exit 2; }
 
+# apictl tiene su PROPIO login, independiente del token que este script saca por
+# REST mas abajo: que el REST funcione no implica que apictl pueda exportar. Sin
+# login, apictl pide la password por stdin — y como su salida va piped a tail, el
+# prompt no se ve y el script parece colgado en "=== 1. backups ===". Se chequea
+# antes, con stdin cerrado para que falle en vez de esperar.
+if ! apictl get apis -e "$ENV" --limit 1 < /dev/null >/dev/null 2>&1; then
+  echo "apictl no puede consultar el entorno '$ENV'. Falta registrarlo, falta el"
+  echo "login, o no llega al APIM. Resolvelo con:"
+  echo "    apictl add env $ENV --apim https://$H:9443   # solo la primera vez"
+  echo "    apictl login $ENV -u $U"
+  echo "    apictl get apis -e $ENV --limit 1            # tiene que listar"
+  exit 2
+fi
+
+
 # cuantas operaciones DEBERIA tener: se cuenta de la OpenAPI del repo en vez de
 # dejarlo escrito a mano, que se desactualiza cada vez que se suma una tool.
 OPENAPI="${OPENAPI:-$(dirname "$0")/../../doc/api/trazalog-operaciones.yaml}"
@@ -112,13 +127,13 @@ PLAN
 fi
 
 echo "=== 1. backups ==="
-apictl export api -n "$API_NAME" -v "$API_VER" -e "$ENV" 2>&1 | tail -2
+apictl export api -n "$API_NAME" -v "$API_VER" -e "$ENV" < /dev/null 2>&1 | tail -2
 curl -s -k "$B/mcp-servers" -H "$AUTH" | python3 -c "import sys,json
 for a in json.load(sys.stdin).get('list',[]):
     print(a['name'] + '\t' + a['version'])" > /tmp/mcps.txt
 while IFS=$'\t' read -r n v; do
   [ -z "${n:-}" ] && continue
-  apictl export mcp-server -n "$n" -v "$v" -e "$ENV" 2>&1 | tail -1
+  apictl export mcp-server -n "$n" -v "$v" -e "$ENV" < /dev/null 2>&1 | tail -1
 done < /tmp/mcps.txt
 cp "$HOME/.wso2apictl/exported/apis/$ENV/"*.zip "$BK/" 2>/dev/null
 cp "$HOME/.wso2apictl/exported/mcp-servers/$ENV/"*.zip "$BK/" 2>/dev/null
@@ -132,7 +147,7 @@ echo "=== 2. borrar TODOS los MCP Servers ==="
 while IFS=$'\t' read -r n v; do
   [ -z "${n:-}" ] && continue
   echo "  borrando: $n v$v"
-  apictl delete mcp-server -n "$n" -v "$v" -e "$ENV" 2>&1 | tail -1
+  apictl delete mcp-server -n "$n" -v "$v" -e "$ENV" < /dev/null 2>&1 | tail -1
 done < /tmp/mcps.txt
 sleep 3
 REST=$(curl -s -k "$B/mcp-servers" -H "$AUTH" | python3 -c "import sys,json;print(len(json.load(sys.stdin).get('list',[])))")
@@ -144,7 +159,7 @@ fi
 
 echo
 echo "=== 3. borrar la API ==="
-apictl delete api -n "$API_NAME" -v "$API_VER" -e "$ENV" 2>&1 | tail -3
+apictl delete api -n "$API_NAME" -v "$API_VER" -e "$ENV" < /dev/null 2>&1 | tail -3
 sleep 3
 export API_NAME
 EXISTE=$(curl -s -k "$B/apis" -H "$AUTH" | API_NAME="$API_NAME" python3 -c "import sys,json,os
@@ -159,7 +174,7 @@ echo "  API borrada"
 
 echo
 echo "=== 4. importar la API de cero ==="
-apictl import api -f "$APIZIP" -e "$ENV" --preserve-provider=true --rotate-revision 2>&1 | tee /tmp/imp.log | tail -5
+apictl import api -f "$APIZIP" -e "$ENV" --preserve-provider=true --rotate-revision < /dev/null 2>&1 | tee /tmp/imp.log | tail -5
 if grep -qE "Error importing|Status: [45][0-9][0-9]" /tmp/imp.log; then
   echo "  *** el import fallo. Se aborta. Restaurar con:"
   echo "      apictl import api -f \"$APIZIP\" -e $ENV"
