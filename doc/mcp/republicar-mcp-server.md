@@ -153,7 +153,8 @@ cero → despliega su revisión → verifica el conteo de operaciones.
 > MCP server(s)`. Elegí el momento.
 >
 > El script aborta en cuanto un paso falla, en vez de dejar el estado a medias. Los backups quedan en
-> `/root/mcp-backup-<fecha>` y se vuelve atrás con `apictl import api -f <zip> -e prod`.
+> `~/mcp-backup-<fecha>` —el home del usuario que lo corre, no hace falta ser root— y se vuelve
+> atrás con `apictl import api -f <zip> -e prod`.
 
 Al terminar, **el conteo de operaciones y el de la revisión desplegada tienen que coincidir** con el
 número que el script imprime al arrancar (lo cuenta de la OpenAPI). Si la revisión quedó con menos,

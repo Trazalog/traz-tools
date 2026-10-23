@@ -34,7 +34,13 @@ API_VER="${API_VER:-1.0.0}"
 APPLY="${1:-}"
 H="${APIM_HOST:-localhost}"; U="${APIM_USER:-admin}"; P="${APIM_PASS:-admin}"
 STAMP=$(date +%Y%m%d-%H%M%S)
-BK="/root/mcp-backup-$STAMP"; mkdir -p "$BK"
+# El backup va al home del usuario que corre el script, que es el mismo lugar
+# donde apictl deja los export (~/.wso2apictl/exported). Estaba hardcodeado en
+# /root, asi que solo funcionaba corriendolo como root: con cualquier otro
+# usuario el mkdir falla con "Permission denied", el cp no copia nada y el
+# script aborta mas adelante en el chequeo del backup.
+BK="${MCP_BACKUP_DIR:-$HOME/mcp-backup-$STAMP}"
+mkdir -p "$BK" || { echo "no se pudo crear el directorio de backups: $BK"; exit 2; }
 
 command -v apictl >/dev/null || { echo "falta apictl"; exit 2; }
 

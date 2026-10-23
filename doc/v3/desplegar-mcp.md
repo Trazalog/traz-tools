@@ -128,13 +128,15 @@ El script **vive en el repo**, en el checkout de la propia VM: no se descarga ni
 la primera corrida tiene que estar en el árbol de trabajo, y hoy en `master` todavía no está — llega
 con el release que lleva `develop` a `master`.
 
-💻 En la VM, confirmá dónde está el clone. El setup inicial lo deja en una de estas dos rutas:
+💻 En la VM, confirmá dónde está el clone — **no es la misma ruta en todos los servidores**: en
+producción está en `/trazasystems/traz-tools`, y los docs de setup lo dejan en el home:
 
 ```bash
-ls -d ~/git/traz-tools ~/traz-tools 2>/dev/null
+ls -d /trazasystems/traz-tools ~/git/traz-tools ~/traz-tools 2>/dev/null
 ```
 
-Si no está en ninguna, la VM no tiene checkout. El repo es privado, así que el clone pide
+El script resuelve el repo desde su propia ubicación, así que anda en cualquiera de las tres; lo que
+importa es tipear la ruta correcta en el comando. Si no aparece ninguna, la VM no tiene checkout. El repo es privado, así que el clone pide
 credenciales — el mismo token o deploy key que use el Dnato de ese ambiente:
 
 ```bash
