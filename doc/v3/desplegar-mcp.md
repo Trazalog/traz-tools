@@ -67,7 +67,7 @@ Si algo falla antes del paso 6, **no se desplegó nada**. Termina en `DESPLIEGUE
 ----------------------------------------------------
   DESPLIEGUE OK
   revision               : a1b2c3d (origin/master)
-  ambiente               : prod
+  .env                   : /home/ruiz_rodolfo/git/traz-tools/deploy/gcp/.env.car
   operaciones MCP        : 25
   respaldo del anterior  : /home/ruiz_rodolfo/ToolsAPIProject_1.0.0.car.antes-de-20261020-143000
   log completo           : /home/ruiz_rodolfo/deploymcp-20261020-143000.log
@@ -119,6 +119,47 @@ Si ese aviso no aparece, no hay nada más que hacer. Si aparece, el procedimient
 [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md) — son tres cosas: subir
 `doc/api/trazalog-operaciones.yaml` en el Publisher, correr `scripts/dev/recrear-api-y-mcp.sh
 --apply`, y recrear el MCP Server seleccionando las operaciones.
+
+---
+
+## La primera vez en una VM — que el script esté ahí
+
+El script **vive en el repo**, en el checkout de la propia VM: no se descarga ni se instala. Antes de
+la primera corrida tiene que estar en el árbol de trabajo, y hoy en `master` todavía no está — llega
+con el release que lleva `develop` a `master`.
+
+💻 En la VM, confirmá dónde está el clone. El setup inicial lo deja en una de estas dos rutas:
+
+```bash
+ls -d ~/git/traz-tools ~/traz-tools 2>/dev/null
+```
+
+Si no está en ninguna, la VM no tiene checkout. El repo es privado, así que el clone pide
+credenciales — el mismo token o deploy key que use el Dnato de ese ambiente:
+
+```bash
+mkdir -p ~/git && cd ~/git && \
+git clone --recurse-submodules https://github.com/Trazalog/traz-tools.git
+```
+
+Con el clone ya hecho, una sola vez a mano:
+
+```bash
+cd ~/git/traz-tools && \
+git fetch --all --prune && \
+git reset --hard <el-tag-a-desplegar>
+```
+
+Eso no se repite: el paso 2 de cada despliegue es exactamente ese `reset`, con el tag que le pasás al
+script. Si el tag que querés desplegar todavía no tiene el script, se puede traer solo el archivo sin
+mover la rama —`git checkout origin/develop -- scripts/deploy/deploymcp.sh
+deploy/gcp/.env.car.example`— pero sirve para **una** corrida: el paso 2 resetea y lo borra. La
+corrida en curso no se rompe por eso, porque el script está escrito todo como funciones con la
+llamada al final: el archivo entero queda parseado antes de ejecutarse la primera línea.
+
+`mvn` tiene que estar instalado en la VM. El wrapper `./mvnw` está gitignoreado y no viaja con el
+clone, así que el script usa el Maven del sistema; el paso 1 lo verifica junto con `git`, `unzip` y
+`python3`.
 
 ---
 

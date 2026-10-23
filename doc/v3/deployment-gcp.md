@@ -411,7 +411,7 @@ tools que escriben fallan en el cliente** aunque el backend funcione perfecto.
 | `@discover` | APIM responde `404` no-JSON-RPC al método `server/discover` del protocolo `2026-07-28` |
 | `@toolcall` | reescribe `202 → 200`: el `202` del backend hace que el cliente MCP descarte la respuesta |
 
-Detalle y evidencia en [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md) §7.
+Detalle y evidencia en [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md), apéndice.
 
 > **Al validar el Caddyfile hay que cargar el entorno primero**, porque usa variables que provee
 > systemd (`EnvironmentFile=/etc/caddy/gcp.env`). Sin eso, `caddy validate` falla en la línea del
