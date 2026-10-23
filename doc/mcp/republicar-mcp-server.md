@@ -89,10 +89,24 @@ levantó. Eso es el paso 2.
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8290/tools/mcp/mcp/core/empresa
 ```
 
-| | |
+### ✅ Tiene que dar `503`. Si da `503`, el paso está aprobado — seguí al 3
+
+**El `503` acá no es un error.** Le estás pegando al MI directo, **sin token**, y el `503` lo escribe
+a mano el propio MI: `sequences/EmprIdFromHeader.xml` no puede resolver el `empr_id` del header
+`X-JWT-Assertion`, así que contesta `{"error":"identity_missing"}` con `HTTP_SC 503`. Que llegue esa
+respuesta prueba las dos cosas que este paso quiere probar: **la ruta existe en el `.car` desplegado
+y la sequence de identidad está enganchada**.
+
+Si querés verlo con sus palabras:
+
+```bash
+curl -s http://localhost:8290/tools/mcp/mcp/core/empresa | head -c 300; echo
+```
+
+| Cualquier otra respuesta | Significa |
 |---|---|
-| **503** | ✅ seguir — la ruta existe y el MI está sano (es `identity_missing`) |
 | `404` | la ruta no está en el `.car` desplegado → volver al paso 1 |
+| `200` con datos | la ruta no está pasando por `EmprIdFromHeader` → **parar**, está sirviendo sin autenticar |
 | nada / timeout | el MI no levantó → `sudo journalctl -u wso2mi -n 80` |
 
 **Si el MI no responde, no tiene sentido seguir.**
