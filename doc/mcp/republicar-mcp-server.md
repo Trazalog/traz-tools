@@ -96,7 +96,7 @@ ambiente). Detalle en `deployment-gcp.md` §6.1-bis:
 ### A.2 Buildear y desplegar
 
 ```bash
-cd ~/traz-tools && git checkout develop-v3 && git pull origin develop-v3
+cd ~/git/traz-tools && git checkout develop-v3 && git pull origin develop-v3
 cd _backend/api/ToolsAPIProject/ToolsAPIProject
 mvn clean install          # ./mvnw no viaja en el clone
 

@@ -102,6 +102,11 @@ class MCP:
             raise ToolError(name, status, parsed)
         return parsed
 
+    # ------------------------------------------------------------- identidad
+    def core_get_empresa_actual(self):
+        """La empresa del token. No toma parametros a proposito."""
+        return self._call("GET", "/core/empresa", tool="core_get_empresa_actual")
+
     # ------------------------------------------------------------ mantenimiento
     def man_get_equipos(self):
         return self._call("GET", "/man/equipos", tool="man_get_equipos")
