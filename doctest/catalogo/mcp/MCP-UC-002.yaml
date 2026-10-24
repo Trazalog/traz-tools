@@ -37,4 +37,5 @@ dudas:
   - "El token queda atado a la empresa elegida y para cambiarla hay que reconectar el agente. ¿Se espera que esta tool lo explique cuando el usuario pida cambiar de empresa?"
 notas:
   - "Es la tool que se agregó en el release v2.5.1.17 y motivó el primer despliegue del MCP en producción."
+  - "Ya existe tests/api-mcp/hurl/core_get_empresa_actual.hurl, verde contra el gateway real el 2026-10-24, con el assert de aislamiento: lo que devuelve es la empresa del token. No se enlaza como derivado porque el caso está en borrador (regla R1)."
 derivados: {}

@@ -52,5 +52,5 @@ dudas:
   - "pan_get_herramienta pide un herr_id. ¿De dónde se espera que el agente lo saque — sólo del listado previo, o también por código?"
 notas:
   - "Relevado el 2026-10-24 a partir del primer despliegue del MCP en producción. Ninguna tool MCP tenía caso en el catálogo."
-  - "La suite Hurl que probaría esto es la fase F4 (issue #441): hoy tests/api-mcp/hurl/ sólo tiene un .gitkeep."
+  - "Ya existen los .hurl que cubren estas cuatro tools — pan_get_herramientas, pan_get_herramienta, pan_get_certificaciones y pan_get_movimientos en tests/api-mcp/hurl/, verdes contra el gateway real el 2026-10-24. No se enlazan como derivados porque el caso está en borrador (regla R1): el enlace se agrega cuando el PM lo valide."
 derivados: {}
