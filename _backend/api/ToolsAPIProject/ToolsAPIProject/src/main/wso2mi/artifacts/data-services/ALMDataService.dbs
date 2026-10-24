@@ -38,6 +38,16 @@
       <result outputType="json">{&#xd;  "detalles": {&#xd;    "detalle": [&#xd;        {&#xd;            "depe_id":"$depe_id",&#xd;            "cantidad":"$cantidad",&#xd;            "resto":"$xresto",&#xd;            "arti_id":"$arti_id",&#xd;            "barcode":"$barcode",&#xd;            "descripcion":"$descripcion",&#xd;            "pema_id":"$pema_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="pema_id" sqlType="STRING"/>
    </query>
+   <query id="getEntregasPorPedido" useConfig="ToolsDataSource">
+      <sql>select enma_id, to_char(fecha,'YYYY-MM-DD') as fecha, solicitante, dni, comprobante from alm.alm_entrega_materiales where pema_id = cast(:pema_id as integer) and not eliminado order by enma_id</sql>
+      <result outputType="json">{&#xd;  "entregas": {&#xd;    "entrega": [&#xd;      {&#xd;        "enma_id":"$enma_id",&#xd;        "fecha":"$fecha",&#xd;        "solicitante":"$solicitante",&#xd;        "dni":"$dni",&#xd;        "comprobante":"$comprobante"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="pema_id" sqlType="STRING"/>
+   </query>
+   <query id="getDetalleEntregaPorId" useConfig="ToolsDataSource">
+      <sql>select D.cantidad, D.arti_id, A.barcode, A.descripcion, D.lote_id, coalesce(DEP.descripcion, '') as deposito from alm.alm_deta_entrega_materiales D join alm.alm_articulos A on A.arti_id = D.arti_id left join alm.alm_depositos DEP on DEP.depo_id = D.depo_id where D.enma_id = cast(:enma_id as integer) and not D.eliminado</sql>
+      <result outputType="json">{&#xd;  "detalles": {&#xd;    "detalle": [&#xd;      {&#xd;        "arti_id":"$arti_id",&#xd;        "barcode":"$barcode",&#xd;        "descripcion":"$descripcion",&#xd;        "cantidad":"$cantidad",&#xd;        "lote_id":"$lote_id",&#xd;        "deposito":"$deposito"&#xd;      }&#xd;    ]&#xd;  }&#xd;}</result>
+      <param name="enma_id" sqlType="STRING"/>
+   </query>
    <query id="getPedidoXBatch" useConfig="ToolsDataSource">
       <sql>SELECT *&#xd;FROM alm.alm_pedidos_materiales&#xd;WHERE batch_id = cast(:batch_id as integer)&#xd;and not eliminado</sql>
       <result outputType="json">{&#xd;  "pedidos": {&#xd;    "pedido": [&#xd;        {&#xd;            "pema_id":"$pema_id",&#xd;            "case_id":"$case_id",&#xd;            "estado":"$estado",&#xd;            "batch_id":"$batch_id",&#xd;            "fecha":"$fecha",&#xd;            "justificacion":"$justificacion",&#xd;            "motivo_rechazo":"$motivo_rechazo",&#xd;         }&#xd;    ]&#xd;  }&#xd;}</result>
@@ -1392,4 +1402,10 @@
       <result outputType="json">{&#xd;    "vencimientos": {&#xd;        "lote": [&#xd;            {&#xd;                "lote_id": "$lote_id",&#xd;                "lote": "$lote",&#xd;                "arti_id": "$arti_id",&#xd;                "articulo": "$articulo",&#xd;                "barcode": "$barcode",&#xd;                "tipo_articulo": "$tipo_articulo",&#xd;                "cantidad": "$cantidad",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "depo_id": "$depo_id",&#xd;                "deposito": "$deposito",&#xd;                "fec_vencimiento": "$fec_vencimiento",&#xd;                "dias_restantes": "$dias_restantes",&#xd;                "estado_vencimiento": "$estado_vencimiento"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <resource method="GET" path="/entregas/pedido/{pema_id}">
+      <call-query href="getEntregasPorPedido"><with-param name="pema_id" query-param="pema_id"/></call-query>
+   </resource>
+   <resource method="GET" path="/entregas/detalle/{enma_id}">
+      <call-query href="getDetalleEntregaPorId"><with-param name="enma_id" query-param="enma_id"/></call-query>
+   </resource>
 </data>
