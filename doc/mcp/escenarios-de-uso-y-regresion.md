@@ -11,7 +11,7 @@ Escrito para quien tenga que validar la capa MCP después de un cambio, o entend
 una tool.
 
 **No cubre** el despliegue ni la conexión del conector — eso está en
-[`deployment-gcp.md`](../v3/deployment-gcp.md) y
+[`instalar-ambiente-nuevo.md`](instalar-ambiente-nuevo.md) y
 [`conectar-claude-a-trazalog.md`](../manuales/conectar-claude-a-trazalog.md).
 
 | | |

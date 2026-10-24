@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 #  Repara el apiOperationMapping de las tools del MCP Server usando apictl,
 #  que es un camino distinto al Publisher REST API (el PUT no persiste el
-#  mapping — verificado 2 veces, ver doc/mcp/republicar-mcp-server.md).
+#  mapping — verificado 2 veces, ver doc/mcp/desplegar-version.md).
 #
 #  Por que puede funcionar: el proyecto que exporta apictl incluye el
 #  apiOperationMapping explicito en mcp_server.yaml, y el import lo lee de ahi

@@ -8,7 +8,7 @@ de desarrollo. Escrito para quien tenga que re-verificar esto tras un cambio en 
 diagnosticar por qué una tool devuelve vacío o datos raros.
 
 **No cubre** el despliegue de la fachada MCP ni la configuración de identidad — eso está en
-[`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md) §6 y §7.
+[`doc/mcp/instalar-ambiente-nuevo.md`](instalar-ambiente-nuevo.md), partes C y D.
 
 | | |
 |---|---|
@@ -69,7 +69,7 @@ curl -s http://localhost:8290/tools/alm/stock/<empr_id-con-datos>
   `Successfully Deployed Carbon Application` / `Error occurred while deploying` en el log.
 
 > **Nota sobre credenciales:** los datasources llevan usuario y contraseña en texto plano dentro
-> del artefacto versionado (ya señalado en `deployment-gcp.md` §5). Sacarlos del `.car` — WSO2 MI
+> del artefacto versionado (ya señalado en `soporte-y-diagnostico.md`, pendientes). Sacarlos del `.car` — WSO2 MI
 > soporta `[[datasource]]` en su `deployment.toml`, que además permitiría config por ambiente sin
 > tocar el artefacto — es una mejora pendiente de decisión (🔴).
 
@@ -103,7 +103,7 @@ y pedidos a la vez.
 | 9 | 1 | 1 |
 
 > Ojo: el `id_empresa` de `assetv2` **no** es el `empr_id` de PostgreSQL. La correspondencia la
-> da `core.empresas.empr_id_mysql` (ver `deployment-gcp.md` §7.0-quinquies).
+> da `core.empresas.empr_id_mysql` (ver `instalar-ambiente-nuevo.md` §B.6).
 
 ---
 

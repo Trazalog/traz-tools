@@ -11,7 +11,7 @@
 # ALMDataService, MANDataService, etc.) y quieras probarlo en el MI local.
 #
 # NO cubre el redespliegue de APIs en el APIM (Publisher) — eso es un paso
-# de consola aparte, ver doc/infra/wso2-redeploy-artifacts.md.
+# de consola aparte, ver doc/mcp/desplegar-version.md.
 #
 # PRE: MI_HOME instalado (default ~/.wso2-mi/micro-integrator/wso2mi-4.5.0).
 #      JAVA_HOME con JDK 17 si no se exporta explícito (mismo que usa DEV).

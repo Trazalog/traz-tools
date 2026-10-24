@@ -7,7 +7,7 @@ Guía paso a paso para que el MCP Server de Trazalog aparezca en los directorios
 el PM, para ir preparando los trámites **antes** de que la versión de `develop` pase a producción,
 así el día del cutover se envía y no se empieza. Cubre qué exige cada directorio, qué de eso
 Trazalog ya cumple, qué falta, y los pasos exactos de cada envío. **No cubre** cómo publicar tools
-nuevas en el APIM (eso está en [`republicar-mcp-server.md`](republicar-mcp-server.md)) ni el
+nuevas en el APIM (eso está en [`desplegar-version.md`](desplegar-version.md)) ni el
 despliegue a producción en sí.
 
 | | |

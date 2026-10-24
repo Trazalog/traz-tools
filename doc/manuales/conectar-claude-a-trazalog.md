@@ -11,7 +11,7 @@ Se hace **una sola vez**: una vez conectado, queda disponible en todas sus conve
 
 **No cubre** el uso general de Claude ni la configuración del servidor. Si es técnico de
 Trazalog y necesita desplegar o mantener la integración, vea
-[`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md).
+[`doc/mcp/instalar-ambiente-nuevo.md`](../mcp/instalar-ambiente-nuevo.md).
 
 ---
 

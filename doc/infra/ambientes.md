@@ -4,7 +4,7 @@
 
 Este documento explica los ambientes donde corre el stack WSO2 (APIM + MI) de Trazalog v3, cómo levantar DEV en una máquina local (Rodolfo u otro developer), y cómo se usa TEST hoy (futuro PROD). Está escrito para cualquier developer que necesite decidir "¿dónde pruebo esto?" o "¿necesito ngrok para esto?".
 
-**Qué NO cubre:** la instalación paso a paso de WSO2 (eso está en [`wso2-install.md`](wso2-install.md) para DEV y [`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md) para TEST/PROD), el flujo de testing de tools MCP en sí ([`testing-workflow.md`](testing-workflow.md)), ni la arquitectura de identidad/federación con Dnato ([`doc/identity/oauth-discovery-flow.md`](../identity/oauth-discovery-flow.md), ADR-008/ADR-009). Este doc es el mapa que conecta esos documentos, no un reemplazo.
+**Qué NO cubre:** la instalación paso a paso de WSO2 (eso está en [`wso2-install.md`](wso2-install.md) para DEV y [`doc/mcp/instalar-ambiente-nuevo.md`](../mcp/instalar-ambiente-nuevo.md) para TEST/PROD), el flujo de testing de tools MCP en sí ([`testing-workflow.md`](testing-workflow.md)), ni la arquitectura de identidad/federación con Dnato ([`doc/mcp/instalar-ambiente-nuevo.md`](../mcp/instalar-ambiente-nuevo.md), ADR-008/ADR-009). Este doc es el mapa que conecta esos documentos, no un reemplazo.
 
 ---
 
@@ -76,10 +76,10 @@ Cada developer levanta su propia instancia local (APIM + MI + ngrok) de forma co
 
 ### 3.1 Qué es TEST hoy
 
-VM `e2-medium`, zona `us-east1-b`, Rocky Linux 9, con WSO2 APIM 4.6.0 + MI 4.5.0 instalados **nativamente** (sin contenedores, sin ngrok, sin túneles) — ADR-011, detalle completo en [`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md).
+VM `e2-medium`, zona `us-east1-b`, Rocky Linux 9, con WSO2 APIM 4.6.0 + MI 4.5.0 instalados **nativamente** (sin contenedores, sin ngrok, sin túneles) — ADR-011, detalle completo en [`doc/mcp/instalar-ambiente-nuevo.md`](../mcp/instalar-ambiente-nuevo.md).
 
 - Dominio público: `mcp.cloudtrazalog.com`, TLS automático vía Caddy (Let's Encrypt).
-- Puerto 9443 (carbon/publisher/devportal) **nunca se expone públicamente** — solo alcanzable por túnel SSH o red interna del proyecto GCP (`deployment-gcp.md` §3 y §4 paso 9).
+- Puerto 9443 (carbon/publisher/devportal) **nunca se expone públicamente** — solo alcanzable por túnel SSH o red interna del proyecto GCP (`instalar-ambiente-nuevo.md` §A.3 y §E.1).
 
 **Estado actual:** la VM está instalada y funcionando end-to-end (E7-INFRA-01/02, PR #403/#404), pero todavía no tiene desplegados los artefactos de la fachada MCP unificada (`toolsMCPAPI`, `toolsALMAPI`, etc.) — eso es la Tarea 3.5 (E7-INFRA-05), pendiente de confirmación de Rodolfo sobre si la verificación en DEV de E2-MCP-13 alcanza como prerequisito (ver `doc/v3/STATE.md`).
 
@@ -96,7 +96,7 @@ VM `e2-medium`, zona `us-east1-b`, Rocky Linux 9, con WSO2 APIM 4.6.0 + MI 4.5.0
 
 ### 3.3 Cómo desplegar cambios a TEST
 
-No existe todavía un script equivalente a `scripts/dev/rebuild-and-deploy-mi.sh` (el de DEV) para TEST — hoy el despliegue a la VM GCP es manual, siguiendo `deployment-gcp.md` §4 pasos 6-8. No se armó un script dedicado porque la Tarea 3.5 (primer despliegue real de la fachada MCP a esta VM) todavía no se ejecutó. Si el despliegue a TEST se vuelve frecuente una vez arrancada esa tarea, vale la pena automatizarlo — queda marcado acá para cuando corresponda.
+No existe todavía un script equivalente a `scripts/dev/rebuild-and-deploy-mi.sh` (el de DEV) para TEST — hoy el despliegue a la VM GCP es manual, siguiendo `instalar-ambiente-nuevo.md` §A.4 a §A.6. No se armó un script dedicado porque la Tarea 3.5 (primer despliegue real de la fachada MCP a esta VM) todavía no se ejecutó. Si el despliegue a TEST se vuelve frecuente una vez arrancada esa tarea, vale la pena automatizarlo — queda marcado acá para cuando corresponda.
 
 ### 3.4 PROD (futuro)
 

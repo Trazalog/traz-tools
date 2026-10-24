@@ -152,7 +152,7 @@ El nivel de aislamiento se mantiene con el mecanismo nuevo, evidenciado por:
   (spoofing del header `X-Empr-Id`) es **ignorado**, porque el `empr_id` efectivo proviene
   del `X-JWT-Assertion` firmado por APIM, no de headers del cliente.
 - **E2-MCP-09b — Empresa_Test vs MinTest_SJ** (ver
-  [`doc/mcp/demo-smoke-test.md`](../mcp/demo-smoke-test.md)):
+  [`../mcp/soporte-y-diagnostico.md`](../mcp/soporte-y-diagnostico.md)):
   - `admin@gmail.com` (Empresa_Test, `empr_id=1`) → **4 equipos** (BOMB-001, COMP-001,
     GEN-001, GHOR-001).
   - `admin@mintest-sj.local` (MinTest_SJ, `empr_id=187`) → **3 equipos** (BOMB-SJ-001,
@@ -172,7 +172,7 @@ Ambos conjuntos de pruebas confirman que sustituir `EmprIdInjectorPolicy`/`X-Emp
   hostname verification off). En PROD hay que: validar estrictamente la firma del
   `X-JWT-Assertion` en el MI (clave pública del gateway), JWKS de Dnato por HTTPS con cadena
   válida, rotación de `kid`, y validación de `aud`/`iss`. Ya listado en
-  [`doc/mcp/demo-smoke-test.md`](../mcp/demo-smoke-test.md) §5.
+  [`../mcp/soporte-y-diagnostico.md`](../mcp/soporte-y-diagnostico.md).
 
 ---
 
@@ -182,6 +182,6 @@ Ambos conjuntos de pruebas confirman que sustituir `EmprIdInjectorPolicy`/`X-Emp
   / `X-Empr-Id` que este ADR supersede en ese punto).
 - ADR-008 — Aislamiento multi-tenant por `empr_id` del JWT (decisión trazada vía commits
   `[ADR-008]` y backlog; sin archivo ADR standalone).
-- [`doc/mcp/demo-smoke-test.md`](../mcp/demo-smoke-test.md) — Evidencia E2-MCP-09 / E2-MCP-09b.
+- [`../mcp/soporte-y-diagnostico.md`](../mcp/soporte-y-diagnostico.md) — Evidencia E2-MCP-09 / E2-MCP-09b.
 - `deployment.toml` — bloque `[apim.jwt]` y `[[apim.jwt.issuer.claim_mapping]]`.
 - Artefactos MI: `EmprIdFromHeader.xml` (nuevo), `EmprIdInjector.xml` (deprecado).

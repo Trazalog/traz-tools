@@ -4,7 +4,7 @@
 
 Este documento releva el estado real de la migración de `traz-prod-assetplanner` (app standalone de mantenimiento) al submódulo `traz-tools-man` de traz-tools, reconstruye la mecánica que usó el desarrollador anterior, y define la estrategia, las etapas y el plan de calidad para terminarla. Está escrito para el PM y para quien vaya a ejecutar la migración; se puede leer sin conocer la historia previa del proyecto.
 
-**Qué NO cubre:** el detalle de ejecución del reemplazo de almacenes y herramientas por los módulos de traz-tools (la estrategia está en §5.8, pero cada uno necesita su propio plan de migración de datos), los ABMs de catálogo, reportes/KPIs, y la decisión de qué pasa con Bonita BPM en v3. Tampoco es una guía de instalación de traz-tools ni del stack WSO2 (ver [`doc/infra/ambientes.md`](../infra/ambientes.md) y [`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md)).
+**Qué NO cubre:** el detalle de ejecución del reemplazo de almacenes y herramientas por los módulos de traz-tools (la estrategia está en §5.8, pero cada uno necesita su propio plan de migración de datos), los ABMs de catálogo, reportes/KPIs, y la decisión de qué pasa con Bonita BPM en v3. Tampoco es una guía de instalación de traz-tools ni del stack WSO2 (ver [`doc/infra/ambientes.md`](../infra/ambientes.md) y [`doc/mcp/instalar-ambiente-nuevo.md`](../mcp/instalar-ambiente-nuevo.md)).
 
 ---
 

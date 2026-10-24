@@ -16,7 +16,7 @@ Verificado el 2026-08-20 contra la VM de PROD:
   QUE HACER: correr este script solo para el PASO 1, y despues RECREAR el MCP
   Server desde la API (flujo oficial "Create MCP Server from Existing API").
   Con la revision de la API ya completa, el mapping se arma bien al crearlo.
-  Ver doc/mcp/republicar-mcp-server.md, pasos 4 y 5.
+  Ver doc/mcp/desplegar-version.md, pasos 5 y 6.
 
 Repara el apiOperationMapping de las tools del MCP Server que quedaron en null
 por el bug wso2/api-manager#5106.

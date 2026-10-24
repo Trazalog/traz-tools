@@ -10,7 +10,7 @@
 # la complejidad de esquemas de PostgreSQL en un piloto de 1-2 usuarios.
 # Este script NO toca `[database.*]` en deployment.toml.
 #
-# Fuera de alcance de este script (ver doc/v3/deployment-gcp.md):
+# Fuera de alcance de este script (ver doc/mcp/instalar-ambiente-nuevo.md):
 #   - Configuración de identidad ([apim.jwt], Key Manager federado Dnato,
 #     ADR-008/ADR-009). Es clase 🔴 (identidad/seguridad) — no se toca acá.
 #   - Migración de las DataServices de negocio del MI a PostgreSQL (aparte,
@@ -107,7 +107,7 @@ PYEOF
 log "deployment.toml actualizado: hostname=$MCP_DOMAIN, https_endpoint=https://$MCP_DOMAIN"
 log "  (database.apim_db/shared_db sin tocar — H2 por defecto)"
 log "PENDIENTE fuera de este script (clase 🔴): [apim.jwt] + Key Manager federado Dnato"
-log "  (ADR-008/ADR-009) — ver doc/identity/apim-keymanager-dnato.md antes de dar de alta el primer cliente"
+log "  (ADR-008/ADR-009) — ver doc/mcp/instalar-ambiente-nuevo.md antes de dar de alta el primer cliente"
 
 # ── Heap sizes ─────────────────────────────────────────────────────
 API_SH="$APIM_HOME/bin/api-manager.sh"
@@ -118,7 +118,7 @@ else
   log "AVISO: no se encontraron flags -Xms/-Xmx en api-manager.sh — ajustar heap manualmente"
 fi
 
-# ── JAVA_HOME (JDK 21 requerido por WSO2 4.6.0 — ver doc/v3/deployment-gcp.md §4) ──
+# ── JAVA_HOME (JDK 21 requerido por WSO2 4.6.0 — ver doc/mcp/instalar-ambiente-nuevo.md §A.4) ──
 # systemd no lee /etc/profile.d, así que hace falta resolver JAVA_HOME acá y
 # escribirlo explícitamente en el unit (a diferencia de DEV, que lo setea en
 # el perfil de shell — ver doc/infra/wso2-install.md).
@@ -126,7 +126,7 @@ if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then
   JAVA_HOME_RESOLVED="$JAVA_HOME"
 else
   JAVA_BIN="$(command -v java || true)"
-  [ -n "$JAVA_BIN" ] || die "No se encontró Java. Instalar JDK 21 Temurin primero (doc/v3/deployment-gcp.md §4)."
+  [ -n "$JAVA_BIN" ] || die "No se encontró Java. Instalar JDK 21 Temurin primero (doc/mcp/instalar-ambiente-nuevo.md §A.4)."
   JAVA_BIN="$(readlink -f "$JAVA_BIN")"
   JAVA_HOME_RESOLVED="$(dirname "$(dirname "$JAVA_BIN")")"
 fi
@@ -155,7 +155,7 @@ sed -e "s#{{APIM_HOME}}#$APIM_HOME#g" -e "s#{{WSO2_USER}}#$WSO2_USER#g" \
 systemctl daemon-reload
 systemctl enable wso2am.service
 
-# ── CAR OAuthDiscovery — PRM RFC 9728 (ver deployment-gcp.md §6.2-bis) ──
+# ── CAR OAuthDiscovery — PRM RFC 9728 (ver instalar-ambiente-nuevo.md §C.1) ──
 # Sin este CAR, /.well-known/oauth-protected-resource devuelve 404 y Claude.ai
 # nunca descubre que el Authorization Server es Dnato: cae al fallback
 # host-based y pega contra https://<dominio>/authorize, que no existe.

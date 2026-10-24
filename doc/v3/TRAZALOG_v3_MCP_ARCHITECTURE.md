@@ -7,7 +7,7 @@
 **Estado:** En definición — decisiones consolidadas de sesiones de diseño
 
 **Changelog:**
-- **v1.3 (Mayo 2026):** Se incorpora ADR-008 — APIM valida JWT de Dnato como Key Manager federado. Reemplaza el patrón "JWT passthrough al MI" propuesto en `openapi-publish-procedure.md`. Justificación principal: viabilidad de APIM único compartido entre APIs MCP y legacy sin flags globales que rompan unas u otras.
+- **v1.3 (Mayo 2026):** Se incorpora ADR-008 — APIM valida JWT de Dnato como Key Manager federado. Reemplaza el patrón "JWT passthrough al MI" propuesto en `desplegar-version.md`. Justificación principal: viabilidad de APIM único compartido entre APIs MCP y legacy sin flags globales que rompan unas u otras.
 
 ---
 
@@ -1392,7 +1392,7 @@ Para que esto funcione, **el APIM debe**:
 **Trabajo derivado (impacta al backlog):**
 
 1. **Dnato debe exponer JWKS y firmar con RS256.** Validar el estado actual y, si es necesario, agregar como tarea bloqueante del Sprint 2 antes de E9-IDENT-05.
-2. **El procedimiento `openapi-publish-procedure.md` debe rehacerse.** El procedimiento actual de configuración de las APIs en el APIM (deshabilitar seguridad a nivel de Resource, flag global) se anula. Hay que escribir el nuevo procedimiento basado en Key Manager federado.
+2. **El procedimiento `desplegar-version.md` debe rehacerse.** El procedimiento actual de configuración de las APIs en el APIM (deshabilitar seguridad a nivel de Resource, flag global) se anula. Hay que escribir el nuevo procedimiento basado en Key Manager federado.
 3. **La sequence `JwtValidator.xml` del MI sale del flujo MCP.** Se mantiene en repo pero no se invoca desde las APIs MCP. Documentar explícitamente en el código o como ADR derivado.
 4. **El flag `enable_outbound_auth_header = true` NO se aplica** al `deployment.toml`. Las APIs legacy y MCP coexisten sin tocar config global.
 5. **La inyección del `empr_id` ahora ocurre en una mediación del APIM**, no en el MI. La historia E9-IDENT-05 se reorienta.

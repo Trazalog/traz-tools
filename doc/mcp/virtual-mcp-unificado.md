@@ -15,8 +15,8 @@ para publicarlo (§2), **cómo migrar sin cortar** lo que ya funciona hoy
 
 **No cubre:** cómo compilar/redesplegar `toolsMCPAPI` en el MI si volvés a
 tocar su código — eso es
-[`doc/infra/wso2-redeploy-artifacts.md`](../infra/wso2-redeploy-artifacts.md).
-Tampoco cubre el despliegue a la VM de GCP (`doc/v3/deployment-gcp.md`,
+[`doc/mcp/desplegar-version.md`](desplegar-version.md).
+Tampoco cubre el despliegue a la VM de GCP (`doc/mcp/instalar-ambiente-nuevo.md`,
 Tarea 3.5) — este documento es sobre tu entorno de DEV.
 
 ---
@@ -26,7 +26,7 @@ Tarea 3.5) — este documento es sobre tu entorno de DEV.
 **Estado:** Pendiente configuración en consola WSO2 (pasos manuales de Rodolfo, esta tarea solo prepara los artefactos)
 **Decisión base:** [ADR-013](../adr/ADR-013-unificacion-mcp.md) — un solo Virtual MCP Server con todas las tools, prefijadas por módulo (`man_`, `alm_`)
 
-> ⚠️ **Nota sobre `doc/api/openapi-publish-procedure.md`:** ese documento (Sprint 2) describe la inyección de identidad como un header `X-Empr-Id` seteado por una mediación del APIM. **Eso quedó desactualizado.** El mecanismo vigente (ADR-009, confirmado en `CONTEXT-PACK.md` §3 y en `EmprIdFromHeader.xml`) es distinto: el APIM genera su propio backend JWT (`apim.jwt.enable=true`) y lo manda como header **`X-JWT-Assertion`**; el MI lo decodifica con la sequence `emprIdFromHeader` (ya usada por `toolsMANAPI` y por `toolsMCPAPI`). Los pasos de este documento reflejan el mecanismo vigente — no repliques la mediación de `X-Empr-Id` de `openapi-publish-procedure.md` para esta API nueva.
+> ⚠️ **Nota sobre `doc/mcp/desplegar-version.md`:** ese documento (Sprint 2) describe la inyección de identidad como un header `X-Empr-Id` seteado por una mediación del APIM. **Eso quedó desactualizado.** El mecanismo vigente (ADR-009, confirmado en `CONTEXT-PACK.md` §3 y en `EmprIdFromHeader.xml`) es distinto: el APIM genera su propio backend JWT (`apim.jwt.enable=true`) y lo manda como header **`X-JWT-Assertion`**; el MI lo decodifica con la sequence `emprIdFromHeader` (ya usada por `toolsMANAPI` y por `toolsMCPAPI`). Los pasos de este documento reflejan el mecanismo vigente — no repliques la mediación de `X-Empr-Id` de `desplegar-version.md` para esta API nueva.
 
 ---
 
@@ -52,7 +52,7 @@ Tarea 3.5) — este documento es sobre tu entorno de DEV.
 
 ### 2.1 Prerequisito
 
-El emisor JWT **`trazalog-dnato`** ya configurado en `[[apim.jwt.issuer]]` del `deployment.toml` del APIM — ver `doc/identity/apim-keymanager-dnato.md` §3. **No es un Key Manager registrado en el Admin UI** (APIM 4.6.0 no tiene conector genérico para IdPs custom — la Admin UI/REST API no permite crear uno para Dnato). Es la misma configuración global que ya usan `EquiposAPI-TrazalogMCP`/`OrdenesdeTrabajoAPI-TrazalogMCP`, no hay nada nuevo que crear ni seleccionar por-API en el Publisher para esto.
+El emisor JWT **`trazalog-dnato`** ya configurado en `[[apim.jwt.issuer]]` del `deployment.toml` del APIM — ver `doc/mcp/instalar-ambiente-nuevo.md` §C.3. **No es un Key Manager registrado en el Admin UI** (APIM 4.6.0 no tiene conector genérico para IdPs custom — la Admin UI/REST API no permite crear uno para Dnato). Es la misma configuración global que ya usan `EquiposAPI-TrazalogMCP`/`OrdenesdeTrabajoAPI-TrazalogMCP`, no hay nada nuevo que crear ni seleccionar por-API en el Publisher para esto.
 
 ### 2.2 Importar la spec
 
@@ -85,20 +85,20 @@ En **`Develop`** → **`API Configurations`** → **`Endpoints`**:
 
 > **Corrección 2026-08-08:** la versión anterior de esta sección decía "seleccionar únicamente
 > Dnato como Key Manager, des-seleccionar Resident Key Manager". Eso es **incorrecto** —
-> contradice `doc/identity/apim-keymanager-dnato.md` §3, que documenta explícitamente que Dnato
+> contradice `doc/mcp/instalar-ambiente-nuevo.md` §C.3, que documenta explícitamente que Dnato
 > **no se registra como Key Manager** (no hay conector genérico en APIM 4.6.0 para IdPs custom).
 > No va a aparecer un "Dnato" en el selector de Key Managers del Publisher porque nunca se creó
 > ahí — la validación de Dnato ocurre en una capa distinta (`[[apim.jwt.issuer]]`, ver §2.1).
-> Corregido acá con los pasos reales, verificados en Sprint 2 (`apim-keymanager-dnato.md` §5).
+> Corregido acá con los pasos reales, verificados en Sprint 2 (`instalar-ambiente-nuevo.md`, parte E).
 
 En **`Develop`** → **`API Configurations`** → **`Runtime`** → **`Application Level Security`**:
 
 1. Marcar **`OAuth2`**. Desmarcar Basic Auth y API Key.
 2. **Key Managers:** dejar el selector como está por defecto (típicamente solo `Resident Key Manager` marcado). No hay nada de Dnato para seleccionar acá — no tocar este selector.
-3. **Desactivar `Enable Subscription Validation`**. Este es el paso que realmente habilita el flujo Dnato: sin `azp` (consumerKey) en el JWT, la subscription validation devuelve 403 aunque la firma sea válida — ver `apim-keymanager-dnato.md` §4.1.
+3. **Desactivar `Enable Subscription Validation`**. Este es el paso que realmente habilita el flujo Dnato: sin `azp` (consumerKey) en el JWT, la subscription validation devuelve 403 aunque la firma sea válida — ver `instalar-ambiente-nuevo.md` §E.5.
 4. Confirmar que `apim.jwt.enable=true` está activo en el `deployment.toml` del APIM (configuración global, ya debería estarlo si `trazalog-equipos`/`trazalog-ots` funcionan hoy — no es algo que se configure por API). Si no está activo, es un bloqueante — no seguir sin confirmarlo primero.
 
-No hace falta asociar ninguna mediación/policy de inyección de `empr_id` — a diferencia de lo que describe `openapi-publish-procedure.md` (desactualizado, ver nota al inicio), el backend JWT (`X-JWT-Assertion`) lo genera el APIM automáticamente vía `apim.jwt.enable`, sin policy por API.
+No hace falta asociar ninguna mediación/policy de inyección de `empr_id` — a diferencia de lo que describe `desplegar-version.md` (desactualizado, ver nota al inicio), el backend JWT (`X-JWT-Assertion`) lo genera el APIM automáticamente vía `apim.jwt.enable`, sin policy por API.
 
 ### 2.5 Publicar la API
 
@@ -141,7 +141,7 @@ Igual que en Sprint 2 (`virtual-mcp-equipos.md` §2.7-2.8): **`Deployments`** �
 **Sin este paso, las 9 tools fallan con `900908 Resource forbidden — API Subscription validation failed`**, aunque el JWT sea válido y `apim.jwt.enable` esté bien configurado. Confirmado en el primer smoke test real (§4): `trazalog-equipos`/`trazalog-ots` ya tenían esta suscripción desde Sprint 2 (por eso nunca hizo falta documentarlo), pero el **MCP Server nuevo es un artefacto propio y no hereda las suscripciones de la API fuente ni de ningún otro server**.
 
 1. Ir a `https://localhost:9443/devportal` (o el host correspondiente)
-2. Buscar la aplicación **`TrazalogDnatoMCP`** (la misma que usan `trazalog-equipos`/`trazalog-ots` — ver `apim-keymanager-dnato.md` §4.1, `consumerKey = z_CtMHRzWPSgY8aXWYxFuzsOli4a`)
+2. Buscar la aplicación **`TrazalogDnatoMCP`** (la misma que usan `trazalog-equipos`/`trazalog-ots` — ver `instalar-ambiente-nuevo.md` §E.5, `consumerKey = z_CtMHRzWPSgY8aXWYxFuzsOli4a`)
 3. **`APIs`** (o **`MCP Servers`**, según cómo lo liste el DevPortal) → buscar **`Trazalog MCP Server`** → **`Subscribe`**
 4. Confirmar la suscripción con throttling policy `Unlimited`
 

@@ -175,14 +175,14 @@ gh issue create \
 3. Inyecta el empr_id como header (ej: X-Empr-Id) o parámetro en la llamada downstream
 4. **Caso de seguridad:** si el token es inválido, expirado o sin claim empr_id, el gateway RECHAZA el request (401/403) — no lo deja pasar
 5. Artefactos de mediación versionados en git; pasos de consola documentados
-6. \`doc/identity/gateway-token-validation.md\` con configuración, artefactos, casos de error
+6. \`doc/mcp/soporte-y-diagnostico.md\` con configuración, artefactos, casos de error
 7. **Probado:** un token de empresa A no puede acceder a datos de empresa B
 
 ## DEFINICIÓN DE LISTO
 - [ ] Gateway valida JWT y rechaza tokens inválidos/expirados/sin claim
 - [ ] empr_id extraído del claim e inyectado downstream
 - [ ] Artefactos de mediación en git
-- [ ] doc/identity/gateway-token-validation.md
+- [ ] doc/mcp/soporte-y-diagnostico.md
 - [ ] Prueba de aislamiento A↔B pasada
 - [ ] Commit en develop-v3
 

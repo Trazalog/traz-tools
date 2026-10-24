@@ -31,7 +31,7 @@ Este manual **se comparte con clientes**. Revisar en cada imagen:
       Es un defecto conocido de ese ambiente: `Oauthlogin::_getLogo()` lee el logo de la tabla
       `configuraciones_ui` y devuelve vacío si no lo encuentra. Conviene arreglarlo antes de
       sacar la captura definitiva, o la imagen queda con el logo roto en un doc de cara al
-      cliente. Ver `doc/v3/deployment-gcp.md` §7.0-quinquies.
+      cliente. Ver `doc/mcp/instalar-ambiente-nuevo.md` §B.6.
 
 ## Formato
 

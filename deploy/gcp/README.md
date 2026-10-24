@@ -4,7 +4,7 @@ Scripts de instalación **nativa** (sin Docker) del stack WSO2 en la VM de GCP
 del early adopter minero. Implementa [ADR-011](../../doc/adr/ADR-011-gcp-deployment.md).
 
 Documentación completa (sizing, justificación, checklist para Rodolfo en la
-consola de GCP): [`doc/v3/deployment-gcp.md`](../../doc/v3/deployment-gcp.md).
+consola de GCP): [`doc/mcp/instalar-ambiente-nuevo.md`](../../doc/mcp/instalar-ambiente-nuevo.md).
 
 ## Convención de esta carpeta
 
@@ -16,9 +16,9 @@ otro proveedor o topología, va en `deploy/<nuevo-proveedor>/`, no acá adentro.
 
 ## Orden de ejecución (en la VM GCP, no localmente)
 
-SO objetivo: **Rocky Linux 9** (IDR-001, ver `deployment-gcp.md` §1.1). Antes de
+SO objetivo: **Rocky Linux 9** (IDR-001, ver `instalar-ambiente-nuevo.md` §A.1). Antes de
 correr los scripts, instalar JDK 21 Temurin (ver checklist §4 paso 6 de
-`deployment-gcp.md`) — `install-apim.sh`/`install-mi.sh` lo detectan solo y
+`instalar-ambiente-nuevo.md`) — `install-apim.sh`/`install-mi.sh` lo detectan solo y
 lo dejan seteado en el unit de systemd.
 
 ```bash
@@ -41,4 +41,4 @@ sudo systemctl start wso2mi
 - No migran las DataServices de negocio del MI de MySQL a PostgreSQL — trabajo
   en curso aparte (`doc/identity/dataservices-remediation-phase-a.md`).
 - No crean la VM, la IP estática, el DNS, ni las reglas de firewall — eso lo
-  hace Rodolfo en su consola de GCP (checklist en `deployment-gcp.md`).
+  hace Rodolfo en su consola de GCP (checklist en `instalar-ambiente-nuevo.md`).

@@ -218,7 +218,7 @@ if [ "$FAIL" -eq 0 ]; then
   echo "#  Todo en su lugar."
 else
   echo "#  Hay $FAIL cosas faltando — ver las lineas [FALTA] de arriba."
-  echo "#  Referencia: traz-tools/doc/v3/deployment-gcp.md §7.0-bis y §7.0-quater"
+  echo "#  Referencia: ../../doc/mcp/instalar-ambiente-nuevo.md parte B"
 fi
 echo "############################################################"
 exit $([ "$FAIL" -eq 0 ] && echo 0 || echo 1)

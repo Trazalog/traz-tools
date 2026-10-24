@@ -12,11 +12,11 @@ y la inyección del `empr_id` ocurren ahora en el APIM, no en el MI.
 
 **APIM — nuevo:**
 - Configurar Dnato como Key Manager federado en la consola Admin del APIM (RS256 + JWKS).
-  Procedimiento: [`apim-keymanager-dnato.md`](../identity/apim-keymanager-dnato.md).
+  Procedimiento: [`../mcp/instalar-ambiente-nuevo.md`](../mcp/instalar-ambiente-nuevo.md).
 - Crear la in-sequence `EmprIdInjectorPolicy` (XML en `doc/identity/apim-empr-id-injector-policy.xml`)
   que extrae `empr_id` del JWT validado y lo inyecta como header `X-Empr-Id`.
 - Asociar la policy y el Key Manager Dnato a las APIs Equipos y Ordenes de Trabajo en el Publisher.
-  Procedimiento: [`openapi-publish-procedure.md`](../api/openapi-publish-procedure.md).
+  Procedimiento: [`../mcp/desplegar-version.md`](../mcp/desplegar-version.md).
 
 **MI — modificado:**
 - Crear sequence `EmprIdFromHeader.xml` que lee `X-Empr-Id` del header y setea `jwt_empr_id`
@@ -26,9 +26,9 @@ y la inyección del `empr_id` ocurren ahora en el APIM, no en el MI.
 - Anotar `JwtValidator.xml` como out-of-flow para MCP (se mantiene en repo para referencia).
 
 **Documentación:**
-- [`dnato-jwt-prereqs.md`](../identity/dnato-jwt-prereqs.md) — confirma que Dnato cumple.
+- [`../mcp/instalar-ambiente-nuevo.md`](../mcp/instalar-ambiente-nuevo.md) — confirma que Dnato cumple.
 - [`empr-id-injection.md`](../identity/empr-id-injection.md) — diseño del flujo nuevo.
-- [`gateway-token-validation.md`](../identity/gateway-token-validation.md) — marcado como
+- [`../mcp/soporte-y-diagnostico.md`](../mcp/soporte-y-diagnostico.md) — marcado como
   reemplazado.
 
 ### Qué NO cambia
@@ -56,11 +56,11 @@ Estas tareas son procedimentales — requieren acceso a la consola Admin del API
 confirmación del PM antes de ejecutar en cualquier entorno:
 
 1. **[BLOQUEANTE para demo]** Verificar accesibilidad del JWKS de Dnato desde el host del APIM.
-   Procedimiento: `apim-keymanager-dnato.md §2`.
+   Procedimiento: `../mcp/instalar-ambiente-nuevo.md parte C`.
 2. **[BLOQUEANTE para demo]** Registrar el Key Manager Dnato en la consola Admin.
-   Procedimiento: `apim-keymanager-dnato.md §3`.
+   Procedimiento: `../mcp/instalar-ambiente-nuevo.md parte C`.
 3. **[BLOQUEANTE para demo]** Subir la in-sequence `apim-empr-id-injector-policy.xml` a las APIs
-   Equipos y OTs en el Publisher. Procedimiento: `openapi-publish-procedure.md §3.4`.
+   Equipos y OTs en el Publisher. Procedimiento: `../mcp/desplegar-version.md`, parte 2.
 4. Deploy del CAR actualizado al MI (incluye `EmprIdFromHeader.xml`).
    Ver checklist de blockers: [`blockers-adr-008.md`](blockers-adr-008.md).
 
@@ -69,4 +69,4 @@ confirmación del PM antes de ejecutar en cualquier entorno:
 ## Referencia
 
 - [ADR-008 en TRAZALOG_v3_MCP_ARCHITECTURE.md §14](../v3/TRAZALOG_v3_MCP_ARCHITECTURE.md)
-- Historia original: `doc/identity/gateway-token-validation.md` (referencia histórica)
+- Historia original: `../mcp/soporte-y-diagnostico.md` (referencia histórica)

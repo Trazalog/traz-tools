@@ -10,7 +10,7 @@
 #
 # PRE: deploy/gcp/.env presente, con MCP_DOMAIN y LETSENCRYPT_EMAIL completos.
 #      DNS de MCP_DOMAIN ya apuntando a la IP pública de esta VM (paso manual
-#      de Rodolfo en su consola de GCP — ver doc/v3/deployment-gcp.md).
+#      de Rodolfo en su consola de GCP — ver doc/mcp/instalar-ambiente-nuevo.md).
 #      Firewall del proyecto GCP con 80/443 abiertos y 9443 cerrado al público.
 # USO: sudo ./setup-reverse-proxy.sh
 

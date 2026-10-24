@@ -39,7 +39,7 @@
 #  QUE NO HACE, A PROPOSITO
 #    · No republica la API ni el MCP Server del APIM. Eso solo hace falta
 #      cuando cambia el NUMERO DE OPERACIONES, no en una actualizacion comun.
-#      El script lo detecta y lo avisa al final. Ver doc/mcp/republicar-mcp-server.md
+#      El script lo detecta y lo avisa al final. Ver doc/mcp/desplegar-version.md
 #    · No toca apiconfig.xml ni el dataservices_url de bpmconf: son el MI
 #      llamandose a si mismo (localhost:8290) y valen igual en todo ambiente.
 #    · No toca resources/registry/conf/: esa carpeta es huerfana, no entra al
@@ -597,7 +597,7 @@ resumen() {
         echo "  !! CAMBIO EL NUMERO DE OPERACIONES MCP: $OPS_ANTES -> $OPS_AHORA"
         echo "     Falta el paso del APIM, que no se puede automatizar:"
         echo "     subir la OpenAPI y recrear el MCP Server."
-        echo "     Ver doc/mcp/republicar-mcp-server.md"
+        echo "     Ver doc/mcp/desplegar-version.md"
     fi
 
     if [ "$ERRORES" -ne 0 ] && [ "$DESPLEGADO" = "1" ] && [ -n "$RESPALDO" ]; then

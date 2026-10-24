@@ -174,7 +174,7 @@ Anotá estos cuatro datos antes de empezar:
 | Base de Bonita | **Servidor de Bonita (SSH):** `grep -h "jdbc:" <tomcat>/conf/Catalina/localhost/bonita.xml` | `localhost:6432/bonita` (PostgreSQL 9.4, misma VM) |
 | MI | **Servidor de la app (SSH):** `HOST` en `application/config/constants.php` | `http://10.142.0.13:8280` |
 
-Según `doc/v3/deployment-gcp.md`, Bonita de demo corre en `10.142.0.11` y la de producción en `10.142.0.2`. Hay que confirmar si la base de Tools está en la **misma VM** que la base de Bonita. Si está en otra, el PostgreSQL de Bonita tiene que aceptar conexiones desde el host de la base de Tools: hay que revisar `pg_hba.conf` y `listen_addresses` en la VM de Bonita.
+Según `doc/mcp/instalar-ambiente-nuevo.md`, Bonita de demo corre en `10.142.0.11` y la de producción en `10.142.0.2`. Hay que confirmar si la base de Tools está en la **misma VM** que la base de Bonita. Si está en otra, el PostgreSQL de Bonita tiene que aceptar conexiones desde el host de la base de Tools: hay que revisar `pg_hba.conf` y `listen_addresses` en la VM de Bonita.
 
 ### 4.2. Base de Bonita: usuario de solo lectura (recomendado en demo y producción)
 

@@ -19,9 +19,13 @@
 #  (paso 3 del procedimiento). Corriendo esto sin ese paso previo, la API se
 #  recrea con las operaciones viejas.
 #
-#  Este script es el paso 4 de doc/mcp/republicar-mcp-server.md, que tiene los
-#  8 pasos completos (MI, API, MCP Server, verificacion) y la tabla de sintomas.
+#  Este script es el paso 5 de doc/mcp/desplegar-version.md, que tiene los
+#  9 pasos completos (MI, API, MCP Server, verificacion) y la tabla de sintomas.
 #  Leelo antes; aca no se repite.
+#
+#  ANTES de correrlo hay que DESUSCRIBIR la Application del MCP Server en el
+#  DevPortal (paso 4). Con la suscripcion activa el borrado del MCP Server da
+#  409 "as active subscriptions exist" y esto aborta sin haber borrado nada.
 #
 #  USO:
 #     bash recrear-api-y-mcp.sh              # plan, no toca nada
@@ -118,6 +122,9 @@ echo
 if [ "$APPLY" != "--apply" ]; then
   cat <<PLAN
 PLAN (con --apply se ejecuta):
+  0. A MANO Y ANTES: DevPortal > Applications > la app > Subscriptions >
+     Unsubscribe la del MCP Server. Con la suscripcion activa, el borrado del
+     paso 2 da 409 "as active subscriptions exist" y esto aborta.
   1. exportar backups de la API y de TODOS los MCP Servers
   2. borrar TODOS los MCP Servers
        la API no se puede borrar mientras cualquiera la referencie:
