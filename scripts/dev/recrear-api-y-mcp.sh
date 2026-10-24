@@ -44,6 +44,14 @@ mkdir -p "$BK" || { echo "no se pudo crear el directorio de backups: $BK"; exit 
 
 command -v apictl >/dev/null || { echo "falta apictl"; exit 2; }
 
+# Temporales propios de esta corrida. Estaban en /tmp con nombre fijo: si los
+# dejo otro usuario (p.ej. una corrida anterior como root), la escritura falla
+# con "Permission denied" y el `while read` de abajo sigue leyendo el archivo
+# VIEJO — o sea, un loop de borrado manejado por la lista de otra corrida.
+MCPS=$(mktemp) || { echo "no se pudo crear un archivo temporal"; exit 2; }
+IMPLOG=$(mktemp) || { echo "no se pudo crear un archivo temporal"; exit 2; }
+trap 'rm -f "$MCPS" "$IMPLOG"' EXIT
+
 # apictl tiene su PROPIO login, independiente del token que este script saca por
 # REST mas abajo: que el REST funcione no implica que apictl pueda exportar. Sin
 # login, apictl pide la password por stdin — y como su salida va piped a tail, el
@@ -130,11 +138,11 @@ echo "=== 1. backups ==="
 apictl export api -n "$API_NAME" -v "$API_VER" -e "$ENV" < /dev/null 2>&1 | tail -2
 curl -s -k "$B/mcp-servers" -H "$AUTH" | python3 -c "import sys,json
 for a in json.load(sys.stdin).get('list',[]):
-    print(a['name'] + '\t' + a['version'])" > /tmp/mcps.txt
+    print(a['name'] + '\t' + a['version'])" > "$MCPS"
 while IFS=$'\t' read -r n v; do
   [ -z "${n:-}" ] && continue
   apictl export mcp-server -n "$n" -v "$v" -e "$ENV" < /dev/null 2>&1 | tail -1
-done < /tmp/mcps.txt
+done < "$MCPS"
 cp "$HOME/.wso2apictl/exported/apis/$ENV/"*.zip "$BK/" 2>/dev/null
 cp "$HOME/.wso2apictl/exported/mcp-servers/$ENV/"*.zip "$BK/" 2>/dev/null
 ls -1 "$BK"
@@ -147,8 +155,20 @@ echo "=== 2. borrar TODOS los MCP Servers ==="
 while IFS=$'\t' read -r n v; do
   [ -z "${n:-}" ] && continue
   echo "  borrando: $n v$v"
-  apictl delete mcp-server -n "$n" -v "$v" -e "$ENV" < /dev/null 2>&1 | tail -1
-done < /tmp/mcps.txt
+  SALIDA=$(apictl delete mcp-server -n "$n" -v "$v" -e "$ENV" < /dev/null 2>&1)
+  echo "$SALIDA" | sed 's/^/      /'
+  if printf '%s' "$SALIDA" | grep -qiE 'exit status|error|cannot|conflict'; then
+    cat <<AYUDA
+      *** no se borro '$n' v$v. Las dos causas habituales:
+      - tiene suscripciones activas -> DevPortal > Applications > la app >
+        Subscriptions > quitar la del MCP Server
+      - esta en PUBLISHED -> Publisher > el MCP Server > Lifecycle >
+        Demote to Created
+      Para ver el error completo, a mano y sin pipe:
+          apictl delete mcp-server -n "$n" -v "$v" -e $ENV
+AYUDA
+  fi
+done < "$MCPS"
 sleep 3
 REST=$(curl -s -k "$B/mcp-servers" -H "$AUTH" | python3 -c "import sys,json;print(len(json.load(sys.stdin).get('list',[])))")
 echo "  MCP Servers restantes: $REST"
@@ -174,8 +194,8 @@ echo "  API borrada"
 
 echo
 echo "=== 4. importar la API de cero ==="
-apictl import api -f "$APIZIP" -e "$ENV" --preserve-provider=true --rotate-revision < /dev/null 2>&1 | tee /tmp/imp.log | tail -5
-if grep -qE "Error importing|Status: [45][0-9][0-9]" /tmp/imp.log; then
+apictl import api -f "$APIZIP" -e "$ENV" --preserve-provider=true --rotate-revision < /dev/null 2>&1 | tee "$IMPLOG" | tail -5
+if grep -qE "Error importing|Status: [45][0-9][0-9]" "$IMPLOG"; then
   echo "  *** el import fallo. Se aborta. Restaurar con:"
   echo "      apictl import api -f \"$APIZIP\" -e $ENV"
   exit 2
