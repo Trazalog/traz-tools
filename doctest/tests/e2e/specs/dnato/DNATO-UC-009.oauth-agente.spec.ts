@@ -97,12 +97,20 @@ test.describe('@dnato @DNATO-UC-009 Iniciar sesión desde un agente de IA', () =
   // ---------------------------------------------------------------------------
   // Paso 2 — seleccion de empresa (v0.4)
   //
+  // ⏸️  LOS TRES ESTAN ETIQUETADOS @quarantine Y NO CORREN EN test:all NI test:smoke.
+  //     Escritos y revisados, pero no se pueden ejecutar todavia: hace falta un
+  //     usuario que pertenezca a DOS empresas, y **no esta resuelto como darlo de
+  //     alta desde la aplicacion, sin tocar la base por debajo** (H-086). Cuando
+  //     se sepa, se sacan de cuarentena y se completan las dos variables.
+  //
+  //         npm run test:quarantine -- --grep @DNATO-UC-009
+  //
   // Antes el ingreso OAuth rechazaba a los usuarios con mas de una empresa. Desde
   // traz-comp-dnato#47 muestra las mismas empresas que el ingreso web, porque sale
   // de la misma consulta (getEmpresasDeUsuario).
   // ---------------------------------------------------------------------------
 
-  test('con varias empresas muestra la selección, no un error', async ({ page }) => {
+  test('@quarantine con varias empresas muestra la selección, no un error', async ({ page }) => {
     const cred = credencialesMultiempresa();
     test.skip(!cred, 'Falta DOCTEST_MULTIEMPRESA_USER / _PASS: un usuario que pertenezca a mas de una empresa.');
 
@@ -119,7 +127,7 @@ test.describe('@dnato @DNATO-UC-009 Iniciar sesión desde un agente de IA', () =
     expect(await page.locator('.tz-sel__item form').count()).toBeGreaterThan(1);
   });
 
-  test('elegir una empresa devuelve el control al agente', async ({ page }) => {
+  test('@quarantine elegir una empresa devuelve el control al agente', async ({ page }) => {
     const cred = credencialesMultiempresa();
     test.skip(!cred, 'Falta DOCTEST_MULTIEMPRESA_USER / _PASS: un usuario que pertenezca a mas de una empresa.');
 
@@ -138,7 +146,7 @@ test.describe('@dnato @DNATO-UC-009 Iniciar sesión desde un agente de IA', () =
     expect(vuelta).toContain('state=doctest');
   });
 
-  test('rechaza una empresa que no es del usuario', async ({ page }) => {
+  test('@quarantine rechaza una empresa que no es del usuario', async ({ page }) => {
     const cred = credencialesMultiempresa();
     test.skip(!cred, 'Falta DOCTEST_MULTIEMPRESA_USER / _PASS: un usuario que pertenezca a mas de una empresa.');
 
