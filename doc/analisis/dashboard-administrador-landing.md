@@ -200,6 +200,15 @@ este DataService, nunca a los DataService de negocio.
 
 ## 6-bis. Puesta en marcha del scheduler (cron del SO) — decidido por el PM
 
+> **⚠️ YA DESPLEGADO (2026-10-24, prod y demo). La configuración real difirió de este plan.**
+> La documentación operativa canónica del scheduler tal como quedó corriendo está en
+> [`doc/infra/kpi-cron-refresh.md`](../infra/kpi-cron-refresh.md). Diferencias clave respecto de lo
+> que sigue: corre **como `postgres` por socket local, sin rol `kpi_cron` ni `.pgpass`**; la base es
+> **`trazalog_tools`** (no `tools_prod_t`, que no tiene el esquema `kpi`); la instancia es
+> **PostgreSQL 11.7 en el puerto 5434** con cliente `/usr/pgsql-11/bin/psql` (hay varias instancias
+> en el host). **No sigas los pasos de abajo tal cual en esos servidores** — quedan como el plan
+> original; la referencia operativa es el doc de infra.
+
 > Todo esto se ejecuta **por SSH en el servidor de PostgreSQL** (el host de `tools_prod_t`), NO en
 > tu máquina ni en la consola web. Se hace **una sola vez** por ambiente.
 
@@ -258,5 +267,5 @@ Para una primera carga inmediata (sin esperar al cron), correr a mano: `SELECT k
 | A6 | Módulos fijos MAN/ALM/HER | sector A item 4 |
 | A11 | Dato de Herramientas en Pañol | KPI 3 |
 | A12 | Schema `kpi` para la caché | Fase 2 (implementado) |
-| **A13** | ~~pg_cron~~ **NO disponible en la BD** → cron del SO (rec.) o tarea WSO2 | **Falta elegir/activar (§5.4)** |
+| **A13** | ~~pg_cron~~ **NO disponible en la BD** → cron del SO | **RESUELTO y DESPLEGADO** (prod+demo, 2026-10-24) — ver [`doc/infra/kpi-cron-refresh.md`](../infra/kpi-cron-refresh.md) |
 | A14 | Gráficos con Chart.js | Fase 2 frontend |
