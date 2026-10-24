@@ -1,0 +1,40 @@
+id: MCP-UC-002
+modulo: MCP
+titulo: Saber con qué empresa está trabajando el agente
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: delta-PR#561
+referencias_codigo:
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMCPAPI.xml
+    detalle: "ruta /mcp/core/empresa (GET)"
+  - repo: traz-tools
+    path: doc/api/trazalog-operaciones.yaml
+    detalle: "operationId core_get_empresa_actual"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
+    detalle: "el recurso que resuelve la empresa del token"
+pantallas:
+  - "Conector de Trazalog en un agente de IA (Claude)"
+precondiciones:
+  - El conector está conectado y el usuario inició sesión con una empresa
+flujo_principal:
+  - paso: "Le pregunta al agente con qué empresa está trabajando"
+    resultado: "Devuelve la empresa de la sesión: la que el usuario eligió al conectar"
+flujos_alternativos:
+  - nombre: "Sin autorización"
+    pasos:
+      - paso: "El agente invoca la herramienta sin un token válido"
+        resultado: "El gateway responde 401"
+validaciones:
+  - "Devuelve la empresa del token, no una elegida por parámetro"
+  - "Es la contraparte del selector de empresa del ingreso OAuth (DNATO-UC-009): confirma cuál quedó elegida"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Qué datos de la empresa debería devolver — sólo nombre e id, o también CUIT, logo y domicilio? Hoy devuelve lo que trae la consulta; definir qué es lo útil para el agente."
+  - "El token queda atado a la empresa elegida y para cambiarla hay que reconectar el agente. ¿Se espera que esta tool lo explique cuando el usuario pida cambiar de empresa?"
+notas:
+  - "Es la tool que se agregó en el release v2.5.1.17 y motivó el primer despliegue del MCP en producción."
+derivados: {}

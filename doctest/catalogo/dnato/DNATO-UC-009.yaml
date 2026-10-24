@@ -3,38 +3,46 @@ modulo: DNATO
 titulo: Iniciar sesión desde un agente de IA (OAuth 2.1)
 perfil: Usuario
 estado: validado
-version: "0.3"
-origen: baseline
-fecha_validacion: 2026-08-24
+version: "0.4"
+origen: delta-PR#47
+fecha_validacion: 2026-10-24
 referencias_codigo:
   - repo: traz-comp-dnato
     path: application/controllers/Oauthlogin.php
-    detalle: "index() (44-63) y credentials() (74-155): valida credenciales, resuelve la empresa y emite el code"
+    detalle: "index() muestra el formulario; credentials() valida y resuelve las empresas; empresa() es el paso 2 de selección; _confirmarEmpresa() revalida la elegida"
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "getEmpresasDeUsuario() — la MISMA consulta que usa el login web; gruposSinEmpresa() deja rastro de las membresías que no resuelven"
   - repo: traz-comp-dnato
     path: application/controllers/Oauth.php
     detalle: "authorize(), token(), jwks(), register_client()"
   - repo: traz-comp-dnato
     path: application/config/routes.php
-    detalle: "líneas 60-72: endpoints OAuth 2.1"
+    detalle: "endpoints OAuth 2.1, incluido oauth/login/empresa"
 pantallas:
   - "Pantalla de ingreso del agente (OAuth) — indica qué aplicación pide acceso"
+  - "Pantalla de selección de empresa (OAuth) — sólo si el usuario tiene más de una"
 precondiciones:
   - El cliente OAuth está habilitado en la configuración
-  - El usuario tiene rol asignado en al menos una empresa
+  - El usuario tiene al menos una empresa asignada
 flujo_principal:
   - paso: "El agente lo redirige a la pantalla de ingreso de Trazalog"
     resultado: "Se muestra el formulario de correo y contraseña, indicando qué aplicación pide el acceso"
   - paso: "Ingresa correo y contraseña y confirma"
-    resultado: "Se resuelve su empresa y vuelve al agente ya autorizado"
+    resultado: "Si tiene una sola empresa, vuelve al agente ya autorizado. Si tiene más de una, se le muestran para elegir"
+  - paso: "Elige la empresa con la que quiere trabajar"
+    resultado: "Vuelve al agente ya autorizado, con esa empresa"
 flujos_alternativos:
+  - nombre: "Usuario con más de una empresa"
+    pasos:
+      - paso: "Ingresa con una cuenta que tiene varias empresas asignadas"
+        resultado: "Se muestra una tarjeta por empresa, con su nombre y su logo — las mismas que vería en el ingreso web"
+      - paso: "Elige una"
+        resultado: "Vuelve al agente autorizado con esa empresa. Para cambiarla hay que reconectar el agente"
   - nombre: "Usuario sin empresa asignada"
     pasos:
       - paso: "Ingresa con una cuenta que no tiene ninguna empresa asignada"
         resultado: "Se muestra que no tiene empresa asignada y que contacte al administrador"
-  - nombre: "Usuario con más de una empresa (comportamiento actual)"
-    pasos:
-      - paso: "Ingresa con una cuenta que tiene más de una empresa asignada"
-        resultado: "Se muestra que la configuración no está soportada y que contacte al administrador"
   - nombre: "Credenciales incorrectas"
     pasos:
       - paso: "Ingresa una contraseña equivocada"
@@ -47,16 +55,24 @@ flujos_alternativos:
     pasos:
       - paso: "Confirma las credenciales cuando el pedido del agente ya venció"
         resultado: "Se muestra que la sesión expiró y que inicie el proceso de nuevo desde el agente"
+  - nombre: "Elige una empresa que no es suya"
+    pasos:
+      - paso: "Envía la elección con una empresa que no está entre las suyas"
+        resultado: "Se muestra que la empresa seleccionada no es válida y vuelve a la lista"
 validaciones:
   - "Solo se aceptan clientes registrados, con response_type=code y code_challenge_method=S256"
   - "El formulario valida un token de seguridad propio antes de aceptar las credenciales"
-  - "Hoy la pantalla exige exactamente una empresa por usuario (TAD-IDENT-02)"
+  - "Las empresas que se ofrecen son las mismas que ofrece el ingreso web: salen de getEmpresasDeUsuario()"
+  - "La empresa elegida se revalida contra esa consulta en el momento de confirmar, no contra lo guardado en la sesión"
+  - "Las membresías que no resuelven a ninguna empresa vigente no se ofrecen, y quedan registradas en el log"
 datos_prueba:
   empresa: EMPRESA_TEST_1
+  nota: "El flujo de más de una empresa necesita un usuario que pertenezca a dos. Hoy las fixtures tienen un usuario por empresa."
 dudas: []
 notas:
-  - "⚠️ Cambio previsto en v3 (decisión del PM, 2026-08-19): el ingreso OAuth deja de rechazar a los usuarios con varias empresas — va a mostrar un selector de empresa cuando haya más de una, igual que el login web (ver DNATO-UC-006). Hoy el código corta con error, y la contradicción entre las dos pantallas queda resuelta por esa decisión. Cuando se implemente: bump de `version` y regeneración de derivados en el mismo PR."
-  - "Validado por el PM el 2026-08-24."
+  - "Validado por el PM el 2026-08-24 (v0.3) y el 2026-10-24 (v0.4)."
+  - "v0.4 — se cumplió el cambio que anticipaba la nota de v0.3: el ingreso OAuth dejó de rechazar a los usuarios con varias empresas. La decisión del PM del 2026-10-24 fue además que la lista salga de la MISMA consulta que el login web, y no de las membresías de Bonita como estaba. Antes, un grupo de Bonita sin el prefijo '{empr_id}-' se descartaba en silencio, una empresa sin fila en PostgreSQL se perdía, y con Bonita caído no se podía entrar."
+  - "Contrapartida aceptada por el PM: las dos tools que instancian procesos (man_create_ot, alm_crear_pedido_materiales) pueden fallar si el usuario no es miembro de ese grupo en Bonita. Es preferible a no poder entrar."
 derivados:
   ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s10
   test_e2e: tests/e2e/specs/dnato/DNATO-UC-009.oauth-agente.spec.ts
