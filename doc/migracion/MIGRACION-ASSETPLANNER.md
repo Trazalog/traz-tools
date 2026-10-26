@@ -46,13 +46,17 @@ asset se retira.
 4. **MAN no va a tener acceso directo a base de datos: todo pasa por DataServices** (decisión del
    PM, 2026-10-26). Es el cambio de mayor volumen respecto del plan de agosto (§3.2). Antes de
    escribir código quedan dos decisiones de arquitectura (A2 y A3) y el freeze (P1).
-5. **La migración tiene tres escalones.** (1) Llevar asset a tools como módulo **MAN**, con su
-   bandeja de tareas tal como está (MIG-0 a MIG-6). (2) Llevar esa bandeja a la bandeja de tools
-   (MIG-7). (3) Cambiar cuándo se lanzan en Bonita las OTs preventivas y predictivas, para que no
-   saturen las bandejas con trabajo a futuro (MIG-8).
+5. **La migración tiene cuatro escalones.** (1) Llevar asset a tools como módulo **MAN**, con su
+   bandeja de tareas tal como está (MIG-0 a MIG-6; el Plan de Mantenimiento rehecho es MIG-4).
+   (2) Llevar esa bandeja a la bandeja de tools (MIG-7). (3) Cambiar cuándo se lanzan en Bonita las
+   OTs preventivas y predictivas, para que no saturen las bandejas con trabajo a futuro (MIG-8).
+   (4) Llevar a todo tools el mecanismo de notificaciones de asset, mejorado (MIG-9).
+6. **Ramas:** después de la próxima unificación de `develop` con `develop-v3`, no se vuelven a
+   unificar hasta que la migración esté terminada y probada (§3.6).
 
 En este documento, **MAN** es el nombre de asset ya migrado, es decir, el módulo de mantenimiento de
-tools (`traz-tools-man`).
+tools (`traz-tools-man`). Las bases de asset son **MariaDB** (`assetv2`); cuando en conversaciones o
+documentos viejos aparece "MySQL" para asset, se refiere a esta misma base.
 
 ---
 
@@ -185,6 +189,8 @@ Familia, Sector, Cliente, Proveedor…), Reportes y KoolReport, y "Trazabilidad 
 | **Las OTs preventivas y predictivas se lanzan en Bonita cerca de su fecha**, no al programarlas. Es el tercer escalón, después de la bandeja | PM, 2026-10-26 | MIG-8. MIG-4 conserva el comportamiento de hoy, pero deja separado "programar" de "lanzar" |
 | **PHP de destino: 5.6.** Nada de sintaxis 7.x, y el control es `phpcs` con PHPCompatibility | PM, 2026-10-07 | Gate obligatorio en cada PR. El lint local (7.3/8.3) no lo detecta |
 | **Compatibilidad con v2:** lo que se toca en tools es aditivo y no rompe contratos que v2 consume | PM | Las queries nuevas de los DataServices se agregan, no reemplazan |
+| **Ramas de tools: una última unificación de `develop` con `develop-v3`** cuando termine el frente `asset-order-warehouse-tracking`, y **después ninguna más hasta que la migración esté terminada y probada** | PM, 2026-10-26 | Toda la migración se hace sobre `develop-v3`. Ver §3.6 |
+| **Las notificaciones de asset se llevan a todo tools, mejoradas**, como última etapa | PM, 2026-10-26 | MIG-9 |
 | **El esquema de `assetv2` no cambia**, salvo excepciones registradas acá (la única hasta hoy: `f7-herramientas-usadas.sql`) | PM, 2026-08-12 | Las mejoras de modelo de datos quedan para después del retiro de asset |
 
 ### 3.2 Qué cambia respecto del plan de agosto
@@ -227,10 +233,12 @@ flowchart LR
     M5 --> M6
     M6 --> M7["MIG-7<br/>Bandeja de asset<br/>→ bandeja de tools"]
     M7 --> M8["MIG-8<br/>Lanzamiento de OTs<br/>cerca de la fecha"]
+    M8 --> M9["MIG-9<br/>Notificaciones<br/>para todo tools"]
 ```
 
 **Escalón 1** (MIG-0 a MIG-6): asset pasa a ser MAN y se retira. **Escalón 2** (MIG-7): una sola
-bandeja. **Escalón 3** (MIG-8): OTs a futuro sin caso Bonita. MIG-2, MIG-3 y MIG-5 pueden avanzar en
+bandeja. **Escalón 3** (MIG-8): OTs a futuro sin caso Bonita. **Escalón 4** (MIG-9): notificaciones
+para todo tools. MIG-2, MIG-3 y MIG-5 pueden avanzar en
 paralelo una vez cerrada MIG-1. MIG-4 necesita el núcleo completo y es el camino crítico del
 escalón 1. Cada etapa entra por PRs contra la rama de integración de `traz-tools-man` (MIG-0, punto 1),
 con la plantilla del repo y la etiqueta `[MIG-ASSET-n]`.
@@ -401,9 +409,7 @@ Arranca **apenas termina el corte**. Lo primero es un **estudio**, no código.
 | Filtro por empresa | Tabla `case_empresa` de **MariaDB** (`assetv2`), más `GET /assetbandeja/linea/validar/...` de `COREDataService` | `core.case_empresa` en **PostgreSQL** |
 | Datos de negocio de cada tarea | `orden_trabajo` en MariaDB (`Tareas::getOrdenesPorCaseIds`) | Tablas de tools (`alm.alm_pedidos_materiales`, `core.equipos`, `core.tablas`…) en la misma query |
 | Paginado y búsqueda | En PHP, sobre lo que trajo Bonita | En la base |
-| Estado | En producción | En `develop` de tools (no en `develop-v3`). Convive con "Mis Tareas" hasta pasar a todos. Ver `doc/v3/bandeja-paginado-real.md` en `develop` |
-
-> Nota: asset no tiene nada sobre SQL Server. Su bandeja corre sobre la API de Bonita más MariaDB.
+| Estado | En producción | Hoy solo en `develop` de tools. Llega a `develop-v3` con la unificación de ramas de §3.6. Convive con "Mis Tareas" hasta pasar a todos. Guía: `doc/v3/bandeja-paginado-real.md` |
 
 **El estudio tiene que responder:**
 
@@ -453,6 +459,52 @@ empresa.
 Como MIG-4 ya deja separados "programar" y "lanzar" (ver MIG-4), este escalón agrega el disparador
 y el estado nuevo, sin reescribir el motor.
 
+#### MIG-9 — Escalón 4: notificaciones para todo tools
+
+Es la **última etapa**. Arranca cuando están hechas las cuatro anteriores: MAN migrado, Plan de
+Mantenimiento rehecho, bandeja unificada y lanzamiento de OTs cerca de la fecha. Ese orden importa:
+el lanzamiento diferido de MIG-8 es uno de los eventos que más conviene notificar ("se lanzó tu OT
+de mañana").
+
+**Qué hay hoy en asset** (relevado en septiembre de 2026; el análisis completo está en
+`doc/agente/analisis-alertas-assetplanner.md`, rama `feature/agente-e0-analisis-alertas` de tools):
+
+- Un **pipeline de push** cableado:
+  1. Triggers de MariaDB sobre `orden_trabajo`, `orden_servicio` y `solicitud_reparacion`.
+  2. Cuatro stored procedures que arman el JSON a mano y lo encolan en
+     `synch_notificacion_queue`.
+  3. Una app Siddhi (Streaming Integrator) que lee la cola.
+  4. `FirebaseConnectorAPI` del MI, que envía por FCM.
+- Una **campanita in-app** aparte, que consulta las notificaciones por AJAX periódico.
+- **Está parado:** en DEV hay 434 notificaciones encoladas y 0 procesadas desde 2024. El push nunca
+  se verificó de punta a punta.
+- **Lo que no tiene:** reglas configurables, preferencias por usuario, mail, severidad, ni
+  destinatario por rol. Cada notificación va a un solo `user_id`.
+- **Tools no tiene nada propio:** `traz-comp-notificaciones` es un esqueleto, y la constante `NOTI`
+  no se usa.
+
+**Qué se copia:** el modelo de cola, el conector Firebase, el service worker del push y el patrón de
+la campanita.
+
+**Qué se mejora** (a definir en el diseño):
+
+- Que los eventos salgan de **cualquier módulo de tools** y no solo de mantenimiento: almacén,
+  pañol, bandeja, producción.
+- Que **nazcan en las operaciones del API** y no en triggers de una base. Es coherente con la
+  decisión de DataServices: el API que crea la OT, el pedido o la tarea es el que publica el
+  evento.
+- Destinatarios por rol o por grupo, además de por usuario.
+- Preferencias por usuario (qué recibe y por qué canal) y más canales que el push: mail y quizás
+  WhatsApp, que tools ya tiene como conector.
+- Severidad, agrupación y evitar duplicados.
+- **Corregir antes de reusar:** `MANDataService.getNotificaciones` no filtra por `empr_id` (fuga
+  entre empresas), y la clave privada del service account de Firebase está commiteada en tools (se
+  rota).
+
+**Decisiones que dispara:** el origen de los eventos (API o triggers) y el uso de Streaming
+Integrator o de un proceso más simple son de arquitectura (A4, workshop). Qué eventos se notifican
+y a quién es funcional (P9).
+
 ### 3.4 Pruebas
 
 El oráculo es asset funcionando: mientras dure la migración, **asset y el módulo leen la misma
@@ -493,6 +545,24 @@ de asset mergeados desde la etapa anterior y se busca esa línea. Un PR sin la l
 Esta regla **no** reemplaza el freeze (P1): el freeze limita qué entra a asset, y esta regla asegura
 que lo que entra no se pierda en MAN.
 
+### 3.6 Ramas durante la migración
+
+Definido por el PM el 2026-10-26:
+
+1. Cuando termine el frente **`asset-order-warehouse-tracking`**, se hace **una última unificación**
+   de `develop` con `develop-v3` en tools, con merge commit y nunca squash. Con eso, la bandeja 2 y
+   el resto de lo que hoy está solo en `develop` quedan también en `develop-v3`.
+2. **Después de esa unificación no se vuelven a unificar las ramas** hasta que la migración esté
+   terminada y probada. Esto suspende, para este período, la sync semanal `develop` → `develop-v3`
+   (E7-CICD-06) que describe `CLAUDE.md`.
+3. Toda la migración (MIG-0 en adelante) se hace en `develop-v3` de tools y en la rama de
+   integración de `traz-tools-man`. Mientras tanto, el demo se sigue desplegando desde `develop`.
+
+**Consecuencia:** los arreglos que entren a `develop` de tools durante la migración no llegan solos a
+`develop-v3`. Si un arreglo toca algo que MAN usa (core, DataServices, `traz-comp-almacenes`,
+`traz-comp-pan`, `traz-comp-bpm`), se replica en `develop-v3` con el mismo mecanismo de §3.5. Lo
+demás espera a la unificación final (R12).
+
 ---
 
 ## 4. Decisiones pendientes
@@ -518,6 +588,10 @@ otra cosa antes.
 de tools. Tools ya unificó sus copias (PR #545). Falta declarar que la fuente es la de tools y
 retirar las de asset.
 
+**A4 — Origen de los eventos de notificación (MIG-9).** Las opciones son publicarlos desde las
+operaciones del API (recomendado, coherente con A1) o mantener triggers de base, y usar Streaming
+Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
+
 ### Funcionales y de negocio (las decide el PM)
 
 | # | Decisión | Mi recomendación |
@@ -525,6 +599,7 @@ retirar las de asset.
 | P1 | **Freeze de asset**: desde cuándo solo recibe bugfixes | Desde que se cierren las pruebas de los dos frentes en curso. Cualquier excepción se registra en §3.1 |
 | P2 | **Cuándo se corrigen en asset los bugs heredados** T1 (fuga entre empresas), T2 (SQL injection) y T3 (bucle sin límite), que hoy están en producción. Dónde se replican ya no es una duda: lo resuelve la regla de §3.5 | Corregirlos ya en asset. Dos son de seguridad y no deberían esperar al corte |
 | P7 | **MIG-8**: margen de lanzamiento (cuántos días antes de la fecha se lanza el caso Bonita) y qué se hace con las series ya lanzadas | Margen configurable por empresa. Las series existentes se dejan como están |
+| P9 | **MIG-9**: qué eventos de cada módulo se notifican, a quién y por qué canal | Arrancar con los eventos de la OT que ya notifica asset, más el lanzamiento de MIG-8 |
 | P8 | **Scheduler** para MIG-8, compartido con la Fase 2 del tablero del administrador | Una sola decisión para los dos casos. El cron del sistema operativo ya existe para los KPIs |
 | P3 | **Mapeo de grupos y permisos de asset a roles y menú de tools** | Relevar los grupos reales por empresa antes de diseñar el mapeo |
 | P4 | **Alcance inicial**: ¿entran los 17 ABMs de catálogo, Reportes/KoolReport y "Trazabilidad de componentes" (D9)? | Fuera del primer corte. Los KPIs de mantenimiento ya se exponen por MCP y por el tablero del administrador |
@@ -546,6 +621,7 @@ retirar las de asset.
 | R5 | **Un bugfix de asset no llega a MAN** durante la convivencia | Alta | Alto | Regla de §3.5, con la línea `MAN:` obligatoria en cada PR. Ventana de convivencia corta |
 | R9 | **Volumen de la conversión a DataServices**: 1.718 accesos en models, cada uno con su query nueva en `MANDataService` | Alta | Alto | Conservar las firmas de los models para que los controllers no cambien. Paridad (nivel 1) por endpoint. Empezar por los ABMs chicos |
 | R10 | **Transacciones e ids generados por DataService**: generar una serie de OTs hoy hace muchos inserts encadenados y lee `insert_id()` | Media | Alto | Que lo resuelva ADR-014. La serie se crea como una sola operación del API, no como N llamadas desde PHP |
+| R12 | **`develop` y `develop-v3` vuelven a divergir** durante la migración, porque no se unifican (§3.6) | Alta | Medio | Replicar en `develop-v3` los arreglos de `develop` que toquen lo que MAN usa. Hacer la unificación final apenas se cierren las pruebas |
 | R11 | **Datos de la bandeja desincronizados** entre MariaDB y PostgreSQL (MIG-7) | Media | Medio | Escribir en los dos lados desde la misma operación del API, con una verificación de consistencia periódica |
 | R6 | **Subestimar el calendario** | Media | Alto | MIG-4 como etapa propia, con golden tests antes de reescribir |
 | R7 | **PHP 5.6 en el demo**: la sintaxis 7.x pasa el lint local y revienta en el demo | Alta | Medio | `phpcs` 5.6 bloqueante en el CI |
