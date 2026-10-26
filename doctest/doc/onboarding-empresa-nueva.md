@@ -151,12 +151,27 @@ cierra las tareas Bonita ("Planificar Solicitud").
   inválido y no lista por el INNER JOIN a equipos/sector). Su id se obtiene de `Sservicio/paginado`
   (la fila trae `id_solicitud`, `estado`, `case_id`, e `id_orden` cuando ya hay OT).
 - `id_tarea` **no es obligatorio** para el correctivo básico (confirmado por el PM).
-- **Falta el paso de ANÁLISIS del supervisor.** Tras la solicitud (estado `S`), el proceso Bonita
-  queda en *"Analizar Solicitud"*. `Calendario/guardar_agregar` (planificación) por sí solo **NO
-  genera la OT** (verificado: estado sigue `S`, sin `id_orden`) porque espera el proceso en
-  *"Planificar Solicitud"*. Hay que **reproducir el análisis del supervisor** (cerrar esa tarea
-  Bonita con su opción de aceptación) **antes** de planificar. Ese es el único paso que queda para
-  generar la OT; de ahí `guardar_agregar` la crea y se desbloquean F3/F4/F5/F6.
+- **El paso de ANÁLISIS del supervisor** (compuerta *¿Es Urgente?* del BPM) se cierra con
+  **`Tarea/decidirUrgencia`** (`idTarBonita` + `opcion` → contrato Bonita `esUrgente`). Según la
+  opción, el proceso va a **urgente** (lo planifica el Supervisor) o a **backlog** (lo planifica el
+  Planificador). Luego **`Calendario/guardar_agregar`** crea la OT (**tipo 2** correctivo/urgente,
+  **tipo 4** backlog; MAN-UC-009).
+
+**Mapa de los 3 caminos (BPM "Proceso de Mantenimiento AssetPlanner"), para los 3 doctests de regresión:**
+1. **SS Urgente**: `lanzarProcesoBPM` → `decidirUrgencia`(urgente) → `guardar_agregar`(tipo 2) →
+   asignar responsable (`Tarea/...`) → `Tarea/ejecutarOT`.
+2. **SS Backlog**: `lanzarProcesoBPM` → `decidirUrgencia`(no urgente) → editar backlog →
+   `guardar_agregar`(tipo 4) → asignar → ejecutar.
+3. **OT por planificación** (no es SS): planificación directa del supervisor → `guardar_agregar`.
+
+> ⛔ **Blocker verificado en DEMO (necesita dev/pruebas):** la tarea Bonita *"Análisis de Solicitud de
+> Servicio"* **no aparece en la bandeja** del admin (`Tarea/paginado` → 0), así que no se obtiene el
+> `idTarBonita` para cerrarla. Es un tema de **ruteo/asignación de tareas de Bonita** (qué actor/usuario
+> Bonita recibe la tarea en una empresa nueva, y si hay que reclamarla primero). `getInfoTareaporIdSolicitud`
+> la resuelve internamente (`ObtenerActividades` sobre el caseId) pero no la expone por endpoint. **Este es
+> el único punto que el código solo no alcanza a destrabar** — requiere ver el entorno de desarrollo:
+> por qué la tarea no cae en la bandeja / qué usuario Bonita la toma. Resuelto eso, los 3 doctests se
+> arman con la secuencia de arriba.
 
 ### 7. Informe de Servicio: F3 (texto libre), F4 (entregas), F5 (herramientas usadas)
 _(pendiente — una vez generada la OT: `Ordenservicio/cargarOrden/<ot>/0/0/0` para F3/F5 y
