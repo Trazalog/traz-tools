@@ -133,5 +133,39 @@ Al confirmar, el sistema **inserta la solicitud y lanza el proceso de mantenimie
 > Automatización: `flows/seed-asset.ts → crearSolicitudServicio()`. El avance del proceso hasta la
 > OT se automatiza en la fase siguiente del spec `CICLO-UC-001`.
 
+### 6-bis. Generar la Orden de Trabajo (avanzar el proceso) — MAPA para continuar
+
+La OT se genera cuando el **supervisor planifica** la solicitud. En la UI: **Mantenimiento → Plan de
+Mantenimiento** (`/calendario/indexot`), se toma la solicitud de la bandeja y se la planifica
+(tarea + fecha/hora/recursos). Eso postea a **`Calendario/guardar_agregar`**, que crea la OT y
+cierra las tareas Bonita ("Planificar Solicitud").
+
+**Payload de `guardar_agregar` (correctivo), del código:** `event_tipo=1`, `id_sol=<id solicitud>`,
+`id_tarea=<tarea>`, `ide=<id equipo>`, `tipo=2`, `fecha_progr=dd-mm-yyyy`, `hora_progr=HH:MM`,
+`descripcion`. Internamente: `getInfoTareaporIdSolicitud(id_sol,'correctivo')` → `{taskId,caseId}` →
+`cerrarTarea` → genera la OT.
+
+**Dependencias que faltan sembrar en una empresa nueva (verificado en DEMO):**
+1. **Tareas estándar**: `Sservicio/getTareasStandar` → `[]` (vacío). Hay que crear al menos una tarea
+   (`Tarea/Guardar_Tarea`) para poder planificar el correctivo. _(Falta relevar su payload.)_
+2. **Id de la solicitud**: `lanzarProcesoBPM` no lo devuelve; se obtiene del listado de solicitudes /
+   de la bandeja Bonita. _(Falta ubicar el endpoint exacto que lista solicitudes con su id+caseId.)_
+3. **Orquestación Bonita** (`getToDoList`/`getInfoTareaporIdSolicitud` + `cerrarTarea`): confirmar el
+   nombre/segmentos correctos del endpoint (el probe de `getToDoList` devolvió página de error).
+
+Con eso, `guardar_agregar` genera la OT y se desbloquean F3/F4/F5/F6.
+
 ### 7. Informe de Servicio: F3 (texto libre), F4 (entregas), F5 (herramientas usadas)
-_(pendiente)_
+_(pendiente — una vez generada la OT: `Ordenservicio/cargarOrden/<ot>/0/0/0` para F3/F5 y
+`Calendario/verEjecutarOT/<ot>` para F4; selectores en el spec de la maqueta
+`tests/e2e/07-ciclo-ot-herramientas-entregas.spec.js` de asset)_
+
+---
+
+## Hallazgos para `doc/hallazgos/REGISTRO.md`
+1. **La registración no deja una `unidad_industrial` ni un cliente por defecto** → los equipos no
+   listan (INNER JOIN del paginado) y no se puede pedir un servicio. (§1)
+2. **El código de equipo se valida único GLOBAL**, no por empresa. (§2)
+3. **Una empresa nueva no trae tareas estándar** → no se puede planificar un correctivo sin crear una. (§6-bis)
+4. El comentario de `LoginManPage.ts` sobre #489 está **desactualizado**: el admin de una empresa
+   registrada SÍ entra a AssetPlanner.
