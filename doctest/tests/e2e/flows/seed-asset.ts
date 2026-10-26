@@ -40,6 +40,8 @@ export async function loginAssetAdmin(page: Page, email: string, password: strin
 
 export interface MaestrosEquipo {
   equipoCodigo: string;
+  /** id del equipo (ya listable), para encadenar la solicitud de servicio. */
+  equipoId: string;
   ids: Record<string, string>;
 }
 
@@ -65,7 +67,12 @@ export async function seedEquipo(page: Page, cap: Capturador): Promise<MaestrosE
   const grupo = await post('agregar_grupo', { 'parametros[descripcion]': 'Bombas' });
   // marca usa otra columna (marcadescrip) y exige estado — verificado en view_.php
   const marca = await post('agregar_marca', { 'parametros[marcadescrip]': 'ACME', 'parametros[estado]': 'AC' });
-  console.log(`[ciclo] maestros creados: area=${area} proceso=${proceso} crit=${criticidad} etapa=${etapa} grupo=${grupo} marca=${marca}`);
+  // CLAVE: una empresa nueva NO tiene unidad_industrial ni cliente, y equiposPaginados
+  // los INNER-JOINea. Sin ellos el equipo se guarda pero NO lista (y la solicitud de
+  // servicio no lo encuentra). Por eso se crean y se pasan como `unin` y `cliente`.
+  const unidad = await post('agregar_unidad', { 'parametros[descripcion]': 'Planta Principal' });
+  const cliente = await post('agregar_cliente', { 'parametros[cliRazonSocial]': 'Cliente Interno' });
+  console.log(`[ciclo] maestros: area=${area} proc=${proceso} crit=${criticidad} etapa=${etapa} grupo=${grupo} marca=${marca} unidad=${unidad} cliente=${cliente}`);
 
   // Código único por corrida: el alta rechaza códigos repetidos (incluso de otra empresa).
   const equipoCodigo = `EQ-${Date.now().toString().slice(-7)}`;
@@ -80,14 +87,14 @@ export async function seedEquipo(page: Page, cap: Capturador): Promise<MaestrosE
       criticidad,
       etapa,
       grupo,
-      cliente: '',
-      numse: 'SN-0001',
+      cliente,
+      unin: unidad,
+      numse: `SN-${Date.now().toString().slice(-5)}`,
       fecha_ingreso: '2026-01-10',
       fecha_garantia: '2027-01-10',
       fecha_ultima: '',
       ultima_lectura: '0',
       destec: '',
-      unin: '',
     },
   });
   const resp = (await guardar.text()).trim();
@@ -99,7 +106,20 @@ export async function seedEquipo(page: Page, cap: Capturador): Promise<MaestrosE
   await page.waitForTimeout(4000);
   await cap.shot(page, 'equipos-listado', { fullPage: false });
 
-  return { equipoCodigo, ids: { area, proceso, criticidad, etapa, grupo, marca } };
+  // El equipo ahora lista: obtener su id para encadenar la solicitud de servicio.
+  let equipoId = '';
+  try {
+    const pag = await page.request.post(`${base}/index.php/Equipo/paginado`, {
+      form: { draw: '1', start: '0', length: '50' },
+    });
+    const j = JSON.parse(await pag.text()) as { data?: Array<{ codigo: string; id_equipo: string }> };
+    equipoId = (j.data ?? []).find((r) => r.codigo === equipoCodigo)?.id_equipo ?? '';
+  } catch {
+    /* si no se puede parsear, queda vacío; la solicitud lo reportará */
+  }
+  console.log(`[ciclo] equipo id=${equipoId}`);
+
+  return { equipoCodigo, equipoId, ids: { area, proceso, criticidad, etapa, grupo, marca, unidad, cliente } };
 }
 
 /**

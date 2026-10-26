@@ -59,6 +59,16 @@ sin salir de la pantalla:
 | Etapa | Agregar (etapa) | Descripción (ej. *Operación*) | — |
 | Grupo | Agregar (grupo) | Descripción (ej. *Bombas*) | — |
 | Marca | Agregar (marca) | Descripción de la marca (ej. *ACME*) | tabla `marcasequipos` |
+| **Unidad industrial** | Agregar (unidad) | Nombre (ej. *Planta Principal*) | tabla `unidad_industrial` |
+| **Cliente** | Agregar (cliente) | Razón social (ej. *Cliente Interno*) | tabla `admcustomers` |
+
+> ⚠️ **CRÍTICO — sin Unidad Industrial y Cliente el equipo NO aparece en el listado.** El listado
+> de equipos (`Equipos->equiposPaginados`) hace `INNER JOIN` con `unidad_industrial` y con
+> `admcustomers` (cliente), además de sector/criticidad/área/proceso. Una empresa recién registrada
+> **no tiene ninguna unidad ni cliente** (verificado en DEMO: `getunidad` → "nada"), así que un equipo
+> cargado sin ellos **se guarda pero queda invisible** — y la **Solicitud de Servicio no lo encuentra**.
+> Por eso hay que crear **al menos una unidad industrial y un cliente** antes del primer equipo.
+> _(Es, muy probablemente, una falta de la registración: debería dejar una unidad/establecimiento por defecto. Anotar como hallazgo.)_
 
 Al guardar cada modal, el valor queda **seleccionado** en su combo. Hacé esto una vez; después
 quedan disponibles para todos los equipos. **Marca es opcional** para dar de alta el equipo.
