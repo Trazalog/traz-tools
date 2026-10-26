@@ -164,14 +164,30 @@ cierra las tareas Bonita ("Planificar Solicitud").
    `guardar_agregar`(tipo 4) → asignar → ejecutar.
 3. **OT por planificación** (no es SS): planificación directa del supervisor → `guardar_agregar`.
 
-> ⛔ **Blocker verificado en DEMO (necesita dev/pruebas):** la tarea Bonita *"Análisis de Solicitud de
-> Servicio"* **no aparece en la bandeja** del admin (`Tarea/paginado` → 0), así que no se obtiene el
-> `idTarBonita` para cerrarla. Es un tema de **ruteo/asignación de tareas de Bonita** (qué actor/usuario
-> Bonita recibe la tarea en una empresa nueva, y si hay que reclamarla primero). `getInfoTareaporIdSolicitud`
-> la resuelve internamente (`ObtenerActividades` sobre el caseId) pero no la expone por endpoint. **Este es
-> el único punto que el código solo no alcanza a destrabar** — requiere ver el entorno de desarrollo:
-> por qué la tarea no cae en la bandeja / qué usuario Bonita la toma. Resuelto eso, los 3 doctests se
-> arman con la secuencia de arriba.
+> ✅ **DESTRABADO (verificado en DEMO 2026-10-26).** Las tareas se rutean **por swimlane/rol de Bonita**:
+> el **Supervisor de Mantenimiento** recibe *"Análisis de Solicitud de Servicio"*; el **Planificador**,
+> la planificación. El **admin** (correo de registro) NO tiene esos roles → su bandeja está vacía. En
+> cambio, la registración crea un usuario **`mantenimiento@<dominio>`** que nace con los roles
+> **Supervisor de Mantenimiento + Planificador de Mantenimiento** (ver `traz-comp-dnato`
+> `REGISTRACION_USUARIOS_DEFAULT_JSON`), y con contraseña por defecto **`12345`**
+> (`REGISTRACION_PASSWORD_DEFAULT`). Entrando a AssetPlanner como ese usuario, la tarea aparece en
+> `Tarea/paginado`.
+>
+> **Secuencia que funciona (camino urgente), toda como `mantenimiento@<dominio>` / `12345`:**
+> 1. `Sservicio/lanzarProcesoBPM` (`equipo=<id>`, `falla`) — crea la solicitud, lanza el proceso.
+> 2. `Tarea/paginado` → fila con `name:"Analisis de Solicitud de Servicio"`; su `id` es el `idTarBonita`
+>    (y `caseId` enlaza con la solicitud).
+> 3. `Tarea/tomarTarea` (`idTarBonita`) → reclama la tarea (pasa de `ready` a asignada).
+> 4. `Tarea/decidirUrgencia` (`idTarBonita`, `opcion`) → cierra el análisis (contrato `esUrgente`).
+> 5. `Calendario/guardar_agregar` (`event_tipo=1`, `id_sol`, `ide=<id equipo>`, `tipo=2`,
+>    `fecha_progr=dd-mm-yyyy`, `hora_progr`, `descripcion`, `id_tarea` opcional) → crea la OT.
+>
+> Backlog = `decidirUrgencia` con la opción no-urgente + `guardar_agregar` `tipo=4`.
+>
+> ⚠️ **Hallazgo (bug del código):** en el path correctivo de `guardar_agregar` (Calendario.php ~240)
+> se usa `$idOTnueva` **antes de definirla** (la OT recién se crea en la línea ~344), así que el link
+> `case_id → OT` puede quedar mal y la solicitud mostrar `id_orden` nulo aunque la OT exista. A verificar
+> contra el listado de OT directo.
 
 ### 7. Informe de Servicio: F3 (texto libre), F4 (entregas), F5 (herramientas usadas)
 _(pendiente — una vez generada la OT: `Ordenservicio/cargarOrden/<ot>/0/0/0` para F3/F5 y
