@@ -145,15 +145,18 @@ cierra las tareas Bonita ("Planificar Solicitud").
 `descripcion`. Internamente: `getInfoTareaporIdSolicitud(id_sol,'correctivo')` → `{taskId,caseId}` →
 `cerrarTarea` → genera la OT.
 
-**Dependencias que faltan sembrar en una empresa nueva (verificado en DEMO):**
-1. **Tareas estándar**: `Sservicio/getTareasStandar` → `[]` (vacío). Hay que crear al menos una tarea
-   (`Tarea/Guardar_Tarea`) para poder planificar el correctivo. _(Falta relevar su payload.)_
-2. **Id de la solicitud**: `lanzarProcesoBPM` no lo devuelve; se obtiene del listado de solicitudes /
-   de la bandeja Bonita. _(Falta ubicar el endpoint exacto que lista solicitudes con su id+caseId.)_
-3. **Orquestación Bonita** (`getToDoList`/`getInfoTareaporIdSolicitud` + `cerrarTarea`): confirmar el
-   nombre/segmentos correctos del endpoint (el probe de `getToDoList` devolvió página de error).
-
-Con eso, `guardar_agregar` genera la OT y se desbloquean F3/F4/F5/F6.
+**Estado verificado en DEMO (oct 2026):**
+- La **solicitud se crea bien** mandando `equipo=<ID del equipo>` (NO el código: `setservicios` lee
+  `post('equipo')` primero como id_equipo; si va el código, la solicitud queda ligada a un id_equipo
+  inválido y no lista por el INNER JOIN a equipos/sector). Su id se obtiene de `Sservicio/paginado`
+  (la fila trae `id_solicitud`, `estado`, `case_id`, e `id_orden` cuando ya hay OT).
+- `id_tarea` **no es obligatorio** para el correctivo básico (confirmado por el PM).
+- **Falta el paso de ANÁLISIS del supervisor.** Tras la solicitud (estado `S`), el proceso Bonita
+  queda en *"Analizar Solicitud"*. `Calendario/guardar_agregar` (planificación) por sí solo **NO
+  genera la OT** (verificado: estado sigue `S`, sin `id_orden`) porque espera el proceso en
+  *"Planificar Solicitud"*. Hay que **reproducir el análisis del supervisor** (cerrar esa tarea
+  Bonita con su opción de aceptación) **antes** de planificar. Ese es el único paso que queda para
+  generar la OT; de ahí `guardar_agregar` la crea y se desbloquean F3/F4/F5/F6.
 
 ### 7. Informe de Servicio: F3 (texto libre), F4 (entregas), F5 (herramientas usadas)
 _(pendiente — una vez generada la OT: `Ordenservicio/cargarOrden/<ot>/0/0/0` para F3/F5 y
@@ -166,6 +169,7 @@ _(pendiente — una vez generada la OT: `Ordenservicio/cargarOrden/<ot>/0/0/0` p
 1. **La registración no deja una `unidad_industrial` ni un cliente por defecto** → los equipos no
    listan (INNER JOIN del paginado) y no se puede pedir un servicio. (§1)
 2. **El código de equipo se valida único GLOBAL**, no por empresa. (§2)
-3. **Una empresa nueva no trae tareas estándar** → no se puede planificar un correctivo sin crear una. (§6-bis)
+3. **La solicitud liga mal el equipo si se manda el código en `equipo`**: `setservicios` toma
+   `post('equipo')` como id_equipo, así que hay que mandar el **id**. (§6-bis)
 4. El comentario de `LoginManPage.ts` sobre #489 está **desactualizado**: el admin de una empresa
    registrada SÍ entra a AssetPlanner.

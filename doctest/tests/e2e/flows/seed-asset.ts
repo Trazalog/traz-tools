@@ -163,9 +163,13 @@ export async function crearSolicitudServicio(
   equipoCodigo: string,
 ): Promise<void> {
   const base = requerirUrlDeApp('man');
+  // OJO: setservicios lee `post('equipo')` PRIMERO como id_equipo (y `id_equipo` solo si
+  // `equipo` viene vacío). Hay que mandar el ID del equipo en `equipo`, no el código, o la
+  // solicitud queda ligada a un id_equipo inválido y no lista (INNER JOIN equipos/sector).
   const r = await page.request.post(`${base}/index.php/Sservicio/lanzarProcesoBPM`, {
-    form: { id_equipo: equipoId, equipo: equipoCodigo, falla: 'Ruido anormal y vibración en la bomba' },
+    form: { equipo: equipoId, id_equipo: equipoId, falla: 'Ruido anormal y vibración en la bomba' },
   });
+  void equipoCodigo;
   const t = (await r.text()).trim();
   if (r.status() !== 200 || !/"status"\s*:\s*true|OK/i.test(t)) {
     throw new Error(`lanzarProcesoBPM falló: HTTP ${r.status()} ${t.slice(0, 150)}`);
