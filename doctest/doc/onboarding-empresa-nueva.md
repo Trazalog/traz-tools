@@ -43,10 +43,47 @@ Ciclo:
 <!-- Se completa a medida que se releva/automatiza cada flujo. -->
 
 ### 1. Maestros base para el Equipo
-_(pendiente de relevar — Mantenimiento → Equipos → Agregar: modales inline de área/proceso/criticidad/etapa/grupo/marca)_
+
+**Dónde:** AssetPlanner → menú **Mantenimiento → Equipos** (`/Equipo`) → botón **Agregar**
+(abre el formulario de alta de equipo).
+
+Al abrir el alta, los combos **Área, Proceso, Criticidad, Etapa, Grupo, Marca** están **vacíos**
+(empresa nueva). Cada uno tiene al lado un botón **Agregar** que abre un modal chico para crearlo
+sin salir de la pantalla:
+
+| Combo | Botón | Qué se escribe | Queda en |
+|---|---|---|---|
+| Área | Agregar (área) | Nombre o descripción (ej. *Área Minería*) | tabla `area` |
+| Proceso | Agregar (proceso) | Nombre o descripción (ej. *Molienda*) | tabla `proceso` |
+| Criticidad | Agregar (criticidad) | Descripción (ej. *Alta*) | — |
+| Etapa | Agregar (etapa) | Descripción (ej. *Operación*) | — |
+| Grupo | Agregar (grupo) | Descripción (ej. *Bombas*) | — |
+| Marca | Agregar (marca) | Descripción de la marca (ej. *ACME*) | tabla `marcasequipos` |
+
+Al guardar cada modal, el valor queda **seleccionado** en su combo. Hacé esto una vez; después
+quedan disponibles para todos los equipos. **Marca es opcional** para dar de alta el equipo.
 
 ### 2. Equipo
-_(pendiente)_
+
+**Dónde:** el mismo formulario de **Mantenimiento → Equipos → Agregar**, una vez creados los maestros.
+
+Campos a completar:
+
+| Campo | Ejemplo | Obligatorio |
+|---|---|---|
+| Código | `EQ-001` | sí (identifica el equipo) |
+| Descripción | Bomba centrífuga 100HP | sí |
+| Número de serie | `SN-0001` | — |
+| Ubicación | Planta 1 | — |
+| Fecha de ingreso / garantía | 2026-01-10 / 2027-01-10 | — |
+| Área / Proceso / Criticidad / Etapa / Grupo | los creados en el paso 1 | sí |
+| Marca | la creada en el paso 1 | opcional |
+
+**Guardar.** El sistema confirma *"Guardado exitoso de nuevo equipo"*. Con un equipo ya se puede
+pedir un servicio (paso 6).
+
+> Automatización: `flows/seed-asset.ts → seedEquipo()` crea los maestros y el equipo por los mismos
+> endpoints que usa la UI (`Equipo/agregar_*` y `Equipo/guardar_equipo`).
 
 ### 3. Herramienta (Pañol)
 _(pendiente)_
