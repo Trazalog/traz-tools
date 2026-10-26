@@ -178,16 +178,22 @@ cierra las tareas Bonita ("Planificar Solicitud").
 > 2. `Tarea/paginado` → fila con `name:"Analisis de Solicitud de Servicio"`; su `id` es el `idTarBonita`
 >    (y `caseId` enlaza con la solicitud).
 > 3. `Tarea/tomarTarea` (`idTarBonita`) → reclama la tarea (pasa de `ready` a asignada).
-> 4. `Tarea/decidirUrgencia` (`idTarBonita`, `opcion`) → cierra el análisis (contrato `esUrgente`).
-> 5. `Calendario/guardar_agregar` (`event_tipo=1`, `id_sol`, `ide=<id equipo>`, `tipo=2`,
->    `fecha_progr=dd-mm-yyyy`, `hora_progr`, `descripcion`, `id_tarea` opcional) → crea la OT.
+> 4. `Tarea/decidirUrgencia` (`idTarBonita`, `opcion='true'` para urgente) → cierra el análisis
+>    (contrato `esUrgente`); el proceso avanza a la tarea **"Planificar Solicitud"**.
+> 5. `Tarea/paginado` → fila `name:"Planificar Solicitud"` del mismo `caseId` → `Tarea/tomarTarea`
+>    (**hay que reclamarla igual que el análisis**; sin esto `guardar_agregar` no la cierra).
+> 6. `Calendario/guardar_agregar` (`event_tipo=1`, `id_sol`, `ide=<id equipo>`, `tipo=2`,
+>    `fecha_progr=dd-mm-yyyy`, `hora_progr`, `descripcion`, `id_tarea` opcional) → **crea la OT**.
 >
-> Backlog = `decidirUrgencia` con la opción no-urgente + `guardar_agregar` `tipo=4`.
+> ✅ **Verificado end-to-end en DEMO (2026-10-26):** por este camino la solicitud pasa a estado **`PL`**
+> (Planificada) y queda con su **`id_orden`** (la OT nueva; p. ej. OT #121). De ahí sigue "Asignar
+> Responsable OT" → "Ejecutar OT", donde entran F3 (texto libre), F4 (entregas de almacén) y F5/F6
+> (herramientas/vale de pañol).
 >
-> ⚠️ **Hallazgo (bug del código):** en el path correctivo de `guardar_agregar` (Calendario.php ~240)
-> se usa `$idOTnueva` **antes de definirla** (la OT recién se crea en la línea ~344), así que el link
-> `case_id → OT` puede quedar mal y la solicitud mostrar `id_orden` nulo aunque la OT exista. A verificar
-> contra el listado de OT directo.
+> **Camino backlog** = `decidirUrgencia` con la opción **no-urgente** → el proceso va a "Generar/Editar
+> Backlog" y luego lo planifica el **Planificador** (`mantenimiento@` también lo es) con
+> `guardar_agregar` **`tipo=4`**. **Camino planificación** = OT directa del supervisor desde el Plan
+> de Mantenimiento (no es SS), también vía `guardar_agregar`.
 
 ### 7. Informe de Servicio: F3 (texto libre), F4 (entregas), F5 (herramientas usadas)
 _(pendiente — una vez generada la OT: `Ordenservicio/cargarOrden/<ot>/0/0/0` para F3/F5 y
