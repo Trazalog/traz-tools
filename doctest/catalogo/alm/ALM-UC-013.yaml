@@ -15,9 +15,11 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Stock Valorizado"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene activada la valorización
-  - Los materiales se recibieron cargando su precio
+  - "Sesión iniciada en Tools"
+  - "Hay existencias recibidas **con su precio cargado** (ALM-UC-009): sin precio no hay nada que valorizar"
+  - "La empresa tiene activada la valorización con un registro en `core.tablas` cuyo `tabla` contiene `alm_configs`"
+depende_de:
+  - ALM-UC-009
 flujo_principal:
   - paso: "Entra a Almacenes → Stock Valorizado"
     resultado: "Se muestran los filtros Fecha Desde, Fecha Hasta, Establecimiento, Tipo Depósito y Depósito"

@@ -22,6 +22,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Hay órdenes e informes registrados en el período que se consulta
+depende_de:
+  - MAN-UC-012
 flujo_principal:
   - paso: "Entra a Reportes → Rep Ordenes de trabajo, elige equipo, estado y período, y consulta"
     resultado: "Se listan las órdenes con su descripción, tarea estándar, equipo y fechas de programación y terminación"

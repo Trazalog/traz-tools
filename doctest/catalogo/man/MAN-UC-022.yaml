@@ -18,6 +18,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Existe el equipo
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "En el listado, sobre un equipo activo, elige Inhabilitar"
     resultado: "El equipo pasa a estado inactivo y la columna Estado lo refleja"

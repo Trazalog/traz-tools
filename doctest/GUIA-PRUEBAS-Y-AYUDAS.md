@@ -96,6 +96,41 @@ No uno. La regla que salió de relevar Mantenimiento:
 Los estados se relevan del código, pero **su traducción a lenguaje de usuario se pregunta, no se
 deduce**: un `CE` o un `ASC` en la base no dicen cómo se llaman en pantalla.
 
+### El caso tiene que decir de dónde salen sus datos
+
+Una precondición como *"hay existencias"* o *"existe un pedido"* describe un estado del mundo y no
+dice **quién lo produce**. Con eso, el catálogo termina siendo una colección de pantallas sueltas: al
+escribir la prueba no se sabe qué hay que preparar, y al usar el sistema por primera vez —empresa
+nueva, todo vacío— no se sabe por dónde empezar.
+
+Por eso cada caso declara dos cosas más, y el validador las verifica (regla **R7**):
+
+| Campo | Qué dice |
+|---|---|
+| `produce` | Qué deja el caso en el sistema y otros van a necesitar: *"un artículo"*, *"un pedido en estado Creada"*, *"stock en un depósito"* |
+| `depende_de` | Los **ids de los casos** que producen lo que este caso necesita |
+
+R7 falla si un `depende_de` apunta a un caso que no existe, a uno obsoleto, o a sí mismo. Una cadena
+rota se ve en el CI, no cuando alguien intenta correr la prueba.
+
+**Y la precondición se escribe nombrando al productor.** No *"la empresa tiene artículos cargados"*
+sino *"hay artículos en el maestro para pedir: los carga el Responsable de Almacén con ALM-UC-002.
+Una empresa recién creada no tiene ninguno"*.
+
+De esos dos campos sale el mapa del módulo, que **no se escribe a mano**:
+
+```bash
+npm run flujo -- alm
+```
+
+Deja `doc/<modulo>/flujo-de-datos.md` con la puerta de entrada del módulo, de qué depende para
+arrancar, qué deja cada caso y el grafo completo. Como se genera del catálogo, no se desactualiza.
+
+> Lo que esto destrabó en la práctica: al intentar el primer test de ciclo de vida apareció que la
+> empresa de test **no tenía ni un artículo** (H-068), así que el circuito de Almacenes nunca había
+> sido ejecutable. La precondición lo decía —"la empresa tiene artículos cargados"— pero como no
+> decía quién los carga, nadie lo notó.
+
 ### Cómo se valida un caso
 
 **Dónde:** en una terminal, parado en `traz-tools/doctest/`.

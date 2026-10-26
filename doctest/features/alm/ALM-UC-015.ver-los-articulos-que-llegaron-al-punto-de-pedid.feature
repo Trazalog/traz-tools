@@ -10,7 +10,8 @@ Característica: Ver los artículos que llegaron al punto de pedido
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Hay artículos con punto de pedido cargado
+    Y Hay artículos con punto de pedido cargado: es un campo del alta del artículo (ALM-UC-002)
+    Y Hay existencias para comparar contra ese punto (ALM-UC-009)
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Punto de Pedido

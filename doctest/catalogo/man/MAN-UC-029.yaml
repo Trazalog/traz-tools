@@ -18,6 +18,8 @@ pantallas:
   - "Mis Tareas"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+depende_de:
+  - MAN-UC-007
 flujo_principal:
   - paso: "Alguien reporta una falla y crea la solicitud (MAN-UC-007), o la reporta al cargar una lectura (MAN-UC-024)"
     resultado: "La solicitud queda registrada y esperando análisis"

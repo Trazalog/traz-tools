@@ -16,8 +16,12 @@ referencias_codigo:
 pantallas:
   - "Almacenes → Articulos → Agregar"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene cargadas sus unidades de medida y sus tipos de artículo
+  - "Sesión iniciada en Tools con perfil Responsable de Almacén"
+  - "La empresa tiene sus unidades de medida y tipos de artículo — los crea el alta de la empresa (DNATO-UC-004), no hay que cargarlos"
+produce:
+  - "Un artículo en el maestro de artículos de la empresa, que es lo que todo el resto del módulo necesita para existir"
+depende_de:
+  - DNATO-UC-004
 flujo_principal:
   - paso: "En el listado de artículos hace clic en 'Agregar'"
     resultado: "Se abre el formulario de alta"

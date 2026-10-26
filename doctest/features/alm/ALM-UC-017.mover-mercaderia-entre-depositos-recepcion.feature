@@ -9,8 +9,8 @@ Característica: Mover mercadería entre depósitos — recepción
   Dónde: Almacenes → Movimientos Internos → Nueva Recepción
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y Existe un movimiento de salida pendiente de recibir
+    Dado Sesión iniciada en Tools con perfil Responsable de Almacén
+    Y Existe un movimiento de salida pendiente de recibir, creado con ALM-UC-016
 
   Escenario: Camino principal
     Cuando En Movimientos Internos hace clic en 'Nueva Recepción'

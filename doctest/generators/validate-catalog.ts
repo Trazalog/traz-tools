@@ -19,6 +19,7 @@
  *   R4      coherencia de identidad: id ↔ nombre de archivo ↔ prefijo de módulo ↔ directorio
  *   R5      id duplicado en el catálogo
  *   R6      cambio de flujo/validaciones en un caso `validado` sin bump de `version`
+ *   R7      `depende_de` apunta a un caso que existe y no está obsoleto
  */
 
 import { execFileSync } from 'node:child_process';
@@ -51,6 +52,8 @@ interface Caso {
   fecha_validacion?: string;
   dudas?: string[];
   derivados?: Record<string, string>;
+  produce?: string[];
+  depende_de?: string[];
   flujo_principal?: unknown;
   flujos_alternativos?: unknown;
   validaciones?: unknown;
@@ -193,6 +196,44 @@ function reglasDeEstado(file: string, caso: Caso): Issue[] {
   return issues;
 }
 
+/**
+ * R7 — el flujo de información tiene que cerrar.
+ *
+ * Un caso que necesita un dato declara en `depende_de` quién lo produce. Si apunta a un
+ * caso que no existe, o a uno obsoleto, la cadena está rota: alguien va a leer la
+ * precondición, no va a encontrar de dónde sale el dato, y va a terminar cargándolo a
+ * mano o pidiéndolo. Que sea verificable es lo que evita que el catálogo vuelva a ser
+ * una colección de pantallas sueltas.
+ */
+export function validarDependencias(casos: { id: string; estado: string; depende_de?: string[]; archivo: string }[]): Issue[] {
+  const issues: Issue[] = [];
+  const porId = new Map(casos.map((c) => [c.id, c]));
+
+  for (const caso of casos) {
+    for (const dep of caso.depende_de ?? []) {
+      if (dep === caso.id) {
+        issues.push({ file: caso.archivo, code: 'R7', message: `\`depende_de\` se apunta a sí mismo (${dep})` });
+        continue;
+      }
+      const producido = porId.get(dep);
+      if (!producido) {
+        issues.push({
+          file: caso.archivo,
+          code: 'R7',
+          message: `\`depende_de\` apunta a ${dep}, que no existe en el catálogo`,
+        });
+      } else if (producido.estado === 'obsoleto') {
+        issues.push({
+          file: caso.archivo,
+          code: 'R7',
+          message: `\`depende_de\` apunta a ${dep}, que está obsoleto: ese dato ya no se produce así`,
+        });
+      }
+    }
+  }
+  return issues;
+}
+
 /** R6 — bump de versión obligatorio si cambió el comportamiento de un caso validado. */
 function reglaBumpDeVersion(files: string[], base: string): Issue[] {
   const issues: Issue[] = [];
@@ -243,6 +284,7 @@ function validarArchivos(files: string[], verificarDirectorio: boolean): Issue[]
   const validate = buildValidator();
   const issues: Issue[] = [];
   const vistos = new Map<string, string>();
+  const paraDependencias: { id: string; estado: string; depende_de?: string[]; archivo: string }[] = [];
 
   for (const file of files) {
     let caso: Caso;
@@ -272,9 +314,18 @@ function validarArchivos(files: string[], verificarDirectorio: boolean): Issue[]
         issues.push({ file, code: 'R5', message: `id duplicado: ya lo usa ${rel(previo)}` });
       } else {
         vistos.set(caso.id, file);
+        paraDependencias.push({
+          id: caso.id,
+          estado: String(caso.estado ?? ''),
+          depende_de: Array.isArray(caso.depende_de) ? (caso.depende_de as string[]) : undefined,
+          archivo: file,
+        });
       }
     }
   }
+
+  // R7 necesita el catálogo entero: una dependencia puede apuntar a otro módulo.
+  issues.push(...validarDependencias(paraDependencias));
 
   return issues;
 }

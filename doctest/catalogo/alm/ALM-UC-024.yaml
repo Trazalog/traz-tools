@@ -1,0 +1,37 @@
+id: ALM-UC-024
+modulo: ALM
+titulo: Ver el detalle de un ajuste de stock
+perfil: Responsable de Almacén
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-07
+referencias_codigo:
+  - repo: traz-comp-almacenes
+    path: controllers/Ajustestock.php
+    detalle: "getDetalleAjuste() trae el detalle; getDataAjuste() alimenta la vista"
+  - repo: traz-comp-almacenes
+    path: views/ajustestock/list.php
+    detalle: "el botón Ver Detalle de la columna Acciones"
+pantallas:
+  - "Almacenes → Ajustes de Stock"
+precondiciones:
+  - "Sesión iniciada en Tools"
+  - "Existe al menos un ajuste, registrado con ALM-UC-014"
+depende_de:
+  - ALM-UC-014
+flujo_principal:
+  - paso: "En el listado de ajustes, usa la acción Ver Detalle de una fila"
+    resultado: "Se abre el detalle, que muestra el Id del ajuste, el Tipo de Ajuste y la **Justificación**, y debajo una fila por artículo ajustado con Código, Descripción, Cantidad, Tipo Ajuste y U. Med"
+validaciones:
+  - "El detalle solo debería ser visible para la empresa dueña del ajuste"
+  - "El detalle es de consulta: un ajuste registrado no se edita ni se borra — corregirlo es registrar otro ajuste"
+  - "**La justificación se muestra**: es el campo que explica por qué se ajustó y el que mira quien audita"
+  - "El tipo de ajuste aparece dos veces y son cosas distintas: el de la cabecera y el de **cada línea**, que es el que vale por artículo"
+dudas: []
+derivados:
+  feature: features/alm/ALM-UC-024.ver-el-detalle-de-un-ajuste-de-stock.feature
+notas:
+  - "**Las tres dudas se resolvieron leyendo el código, como pidió el PM.** (1) La justificación sí se muestra: la consulta `getAjustexdeajId` la trae y el modal tiene el campo `#justificacion`. (2) **Quién registró el ajuste NO se muestra**, aunque el dato existe: `getAjustePaginado` devuelve `usuario_app` y nadie lo pinta. Anotado como mejora H-064. (3) El comprobante del ajuste sí se puede imprimir, pero es otra acción del listado — quedó como ALM-UC-025."
+  - "Acción **nueva**, parte de la pantalla de listado que entró en `develop` (v2.4.x). Ver ALM-UC-023."
+  - "El aislamiento entre empresas de ALM está verificado como roto en otras pantallas (issues #478 / #479); acá se declara como validación esperada, no como comportamiento actual."
