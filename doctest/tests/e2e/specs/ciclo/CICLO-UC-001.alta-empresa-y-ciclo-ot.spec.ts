@@ -22,7 +22,7 @@ import { test } from '@playwright/test';
 
 import { crearCapturador } from '../../fixtures/capturas.ts';
 import { registrarEmpresa, type EmpresaRegistrada } from '../../flows/registrar-empresa.ts';
-import { loginAssetAdmin, seedEquipo } from '../../flows/seed-asset.ts';
+import { loginAssetAdmin, seedEquipo, seedHerramienta } from '../../flows/seed-asset.ts';
 
 test.describe('@ciclo @CICLO-UC-001 @alta-empresa Ciclo: alta de empresa + OT con herramientas y pañol', () => {
   // retries 0: cada corrida crea una empresa real; un reintento registraría otra de más.
@@ -58,6 +58,8 @@ test.describe('@ciclo @CICLO-UC-001 @alta-empresa Ciclo: alta de empresa + OT co
       await cap.shot(page, 'asset-landing');
       const eq = await seedEquipo(page, cap);
       console.log(`[ciclo] ✓ equipo sembrado: ${eq.equipoCodigo}`);
+      const herr = await seedHerramienta(page, cap, eq.ids.marca);
+      console.log(`[ciclo] ✓ herramienta sembrada: ${herr}`);
     });
 
     // ── Fase 3: pañol + almacén + ciclo de OT (F3-F6) — en construcción ──

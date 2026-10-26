@@ -101,3 +101,31 @@ export async function seedEquipo(page: Page, cap: Capturador): Promise<MaestrosE
 
   return { equipoCodigo, ids: { area, proceso, criticidad, etapa, grupo, marca } };
 }
+
+/**
+ * Crea una herramienta en Pañol. Reusa una marca (de `marcasequipos`, las mismas del
+ * equipo). El depósito es opcional (una empresa nueva no trae ninguno).
+ * Endpoint: Herramienta/agregar_herramienta — ver controllers/Herramienta.php.
+ */
+export async function seedHerramienta(page: Page, cap: Capturador, marcaId: string): Promise<string> {
+  const base = requerirUrlDeApp('man');
+  const codigo = `HRR-${Date.now().toString().slice(-7)}`;
+  const r = await page.request.post(`${base}/index.php/Herramienta/agregar_herramienta`, {
+    form: {
+      'parametros[herrcodigo]': codigo,
+      'parametros[herrdescrip]': 'Taladro percutor',
+      'parametros[herrmarca]': 'TP-500',
+      'parametros[modid]': marcaId,
+      'parametros[depositoId]': '',
+    },
+  });
+  const t = (await r.text()).trim();
+  if (r.status() !== 200 || t === 'existe' || t === '0') {
+    throw new Error(`agregar_herramienta falló: HTTP ${r.status()} ${t.slice(0, 120)}`);
+  }
+  console.log(`[ciclo] herramienta ${codigo} creada (id ${t})`);
+  await page.goto(`${base}/Herramienta`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(3500);
+  await cap.shot(page, 'herramientas-listado', { fullPage: false });
+  return codigo;
+}

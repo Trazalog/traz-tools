@@ -86,7 +86,20 @@ pedir un servicio (paso 6).
 > endpoints que usa la UI (`Equipo/agregar_*` y `Equipo/guardar_equipo`).
 
 ### 3. Herramienta (Pañol)
-_(pendiente)_
+
+**Dónde:** AssetPlanner → **Pañol → Herramientas** (`/Herramienta`) → botón **Agregar**.
+
+Campos: **Código** (ej. `HRR-001`), **Descripción** (ej. Taladro percutor), **Modelo** (ej. TP-500),
+**Marca** (combo — usa las mismas marcas que el equipo, `marcasequipos`; si está vacío, cargá una) y
+**Depósito** (combo). **Guardar**.
+
+> Notas verificadas en DEMO (2026-10-26) — anotar como hallazgos:
+> - Una empresa recién registrada **no trae ningún depósito/pañol** (`getdeposito` → "nada"). La
+>   herramienta se puede crear igual (depósito opcional), pero para la **salida de herramientas**
+>   (vale, paso 4) conviene tener un depósito. _(Falta relevar dónde se crea el depósito.)_
+> - El **código de equipo** se valida único **global** (no por empresa): usar códigos irrepetibles.
+>
+> Automatización: `flows/seed-asset.ts → seedHerramienta()` (endpoint `Herramienta/agregar_herramienta`).
 
 ### 4. Salida de Herramienta / vale (Pañol) — asocia la OT (F6)
 _(pendiente)_
