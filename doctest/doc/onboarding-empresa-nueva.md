@@ -118,7 +118,20 @@ _(pendiente)_
 _(pendiente)_
 
 ### 6. Solicitud de Servicio → Orden de Trabajo
-_(pendiente)_
+
+**Dónde:** AssetPlanner → **Mantenimiento → Solicitud de Servicio** (`/Sservicio`) → **Nueva solicitud**.
+
+Se elige el **equipo** que falla (tiene que estar listado — ver paso 1-2) y se describe la **falla**.
+Al confirmar, el sistema **inserta la solicitud y lanza el proceso de mantenimiento en Bonita**
+(`Sservicio/lanzarProcesoBPM`). Verificado en DEMO: responde `{"status":true,"msj":"OK"}`.
+
+> La **OT no se genera sola**: la solicitud entra al proceso y lo primero es el **análisis del
+> Supervisor** (Planificar Solicitud → Asignar Recursos y Tareas). Recién ahí se genera la Orden de
+> Trabajo. En la empresa nueva, el usuario que haga de supervisor avanza esos pasos desde su bandeja
+> de tareas. _(La orquestación por código está en el controller `Calendario`.)_
+
+> Automatización: `flows/seed-asset.ts → crearSolicitudServicio()`. El avance del proceso hasta la
+> OT se automatiza en la fase siguiente del spec `CICLO-UC-001`.
 
 ### 7. Informe de Servicio: F3 (texto libre), F4 (entregas), F5 (herramientas usadas)
 _(pendiente)_

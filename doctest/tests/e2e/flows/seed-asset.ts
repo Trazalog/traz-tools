@@ -149,3 +149,29 @@ export async function seedHerramienta(page: Page, cap: Capturador, marcaId: stri
   await cap.shot(page, 'herramientas-listado', { fullPage: false });
   return codigo;
 }
+
+/**
+ * Crea una Solicitud de Servicio para un equipo. Esto INSERTA la solicitud y **lanza el
+ * proceso de mantenimiento en Bonita** (`Sservicio/lanzarProcesoBPM`), que es la puerta de
+ * entrada al circuito correctivo. La OT se genera después, al avanzar el proceso (supervisor:
+ * Planificar Solicitud → Asignar Recursos y Tareas), que lo orquesta el controller Calendario.
+ */
+export async function crearSolicitudServicio(
+  page: Page,
+  cap: Capturador,
+  equipoId: string,
+  equipoCodigo: string,
+): Promise<void> {
+  const base = requerirUrlDeApp('man');
+  const r = await page.request.post(`${base}/index.php/Sservicio/lanzarProcesoBPM`, {
+    form: { id_equipo: equipoId, equipo: equipoCodigo, falla: 'Ruido anormal y vibración en la bomba' },
+  });
+  const t = (await r.text()).trim();
+  if (r.status() !== 200 || !/"status"\s*:\s*true|OK/i.test(t)) {
+    throw new Error(`lanzarProcesoBPM falló: HTTP ${r.status()} ${t.slice(0, 150)}`);
+  }
+  console.log(`[ciclo] solicitud de servicio creada, proceso Bonita lanzado: ${t.slice(0, 80)}`);
+  await page.goto(`${base}/Sservicio`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(4000);
+  await cap.shot(page, 'solicitud-servicio', { fullPage: false });
+}

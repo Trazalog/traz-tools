@@ -22,7 +22,7 @@ import { test } from '@playwright/test';
 
 import { crearCapturador } from '../../fixtures/capturas.ts';
 import { registrarEmpresa, type EmpresaRegistrada } from '../../flows/registrar-empresa.ts';
-import { loginAssetAdmin, seedEquipo, seedHerramienta } from '../../flows/seed-asset.ts';
+import { loginAssetAdmin, seedEquipo, seedHerramienta, crearSolicitudServicio } from '../../flows/seed-asset.ts';
 
 test.describe('@ciclo @CICLO-UC-001 @alta-empresa Ciclo: alta de empresa + OT con herramientas y pañol', () => {
   // retries 0: cada corrida crea una empresa real; un reintento registraría otra de más.
@@ -60,10 +60,12 @@ test.describe('@ciclo @CICLO-UC-001 @alta-empresa Ciclo: alta de empresa + OT co
       console.log(`[ciclo] ✓ equipo sembrado: ${eq.equipoCodigo}`);
       const herr = await seedHerramienta(page, cap, eq.ids.marca);
       console.log(`[ciclo] ✓ herramienta sembrada: ${herr}`);
+      await crearSolicitudServicio(page, cap, eq.equipoId, eq.equipoCodigo);
+      console.log('[ciclo] ✓ solicitud de servicio creada (proceso Bonita lanzado)');
     });
 
-    // ── Fase 3: pañol + almacén + ciclo de OT (F3-F6) — en construcción ──
-    // Próximos pasos: herramienta + salida/vale (F5/F6), artículo+stock (F4),
-    // solicitud de servicio → OT → informe de servicio con F3/F4/F5.
+    // ── Fase 3: generar la OT (avanzar el proceso Bonita) + ciclo F3-F6 — en construcción ──
+    // Próximos pasos: avanzar el proceso (Planificar Solicitud → Asignar Recursos → OT),
+    // salida/vale de herramienta (F5/F6), artículo+stock+entrega (F4), informe con F3/F4/F5.
   });
 });
