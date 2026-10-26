@@ -246,6 +246,7 @@ define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
+define('REST_MAN', HOST.'/services/MANDataService'); // REQ-ASSET-ALM F6
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
 define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');

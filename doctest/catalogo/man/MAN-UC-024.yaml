@@ -15,6 +15,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - El equipo está dado de alta
+produce:
+  - "Una lectura tomada en el equipo y, si algo anda mal, una solicitud de servicio"
+depende_de:
+  - MAN-UC-016
 flujo_principal:
   - paso: "En el listado de equipos elige la acción Mantenimiento Autónomo"
     resultado: "Se abre el formulario para cargar la lectura del equipo"

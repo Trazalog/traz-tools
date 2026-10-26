@@ -10,8 +10,8 @@ Característica: Pedir un servicio cuando algo falla
   Dónde: Mantenimiento → Solicitud de Servicio
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
-    Y El equipo que falla está dado de alta
+    Dado Sesión iniciada en AssetPlanner con perfil Solicitante
+    Y El equipo que falla está dado de alta (MAN-UC-002). **Una empresa recién creada no tiene ninguno**
 
   Escenario: Camino principal
     Cuando Entra a Mantenimiento → Solicitud de Servicio

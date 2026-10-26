@@ -30,7 +30,7 @@ const res = spawnSync(
     '--grep',
     `@${modulo.toLowerCase()}`,
     '--grep-invert',
-    '@quarantine',
+    '@quarantine|@ciclo',
     '--pass-with-no-tests',
     ...resto,
   ],

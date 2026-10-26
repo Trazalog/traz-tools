@@ -10,7 +10,7 @@ Característica: Consultar el detalle de las entregas de un período
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Hay entregas registradas en el período que se consulta
+    Y Hay entregas registradas en el período: las produce ALM-UC-010 (contra pedido) o ALM-UC-011 (directa)
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Entrega Detallada

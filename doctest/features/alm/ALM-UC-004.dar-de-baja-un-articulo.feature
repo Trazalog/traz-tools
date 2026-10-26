@@ -10,7 +10,7 @@ Característica: Dar de baja un artículo
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y Existe un artículo activo en la empresa
+    Y Existe un artículo activo, dado de alta con ALM-UC-002
 
   Escenario: Camino principal
     Cuando En el listado hace clic en la acción de baja de un artículo sin existencias

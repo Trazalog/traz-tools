@@ -16,6 +16,8 @@ pantallas:
   - "Mantenimiento → Plan de Mantenimiento"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+depende_de:
+  - MAN-UC-014
 flujo_principal:
   - paso: "Se define el preventivo con su período, frecuencia y fecha base (MAN-UC-014)"
     resultado: "Queda activo, con sus herramientas e insumos declarados"

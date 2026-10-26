@@ -14,6 +14,8 @@ pantallas:
   - "Mantenimiento → Backlog"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+depende_de:
+  - MAN-UC-015
 flujo_principal:
   - paso: "El backlog nace de dos maneras: se anota a mano (MAN-UC-015), o **lo genera el proceso** cuando el Supervisor decide que una solicitud no es urgente"
     resultado: "Queda a la espera de que el Planificador lo programe"

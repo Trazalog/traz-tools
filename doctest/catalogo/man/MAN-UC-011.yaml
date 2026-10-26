@@ -16,8 +16,13 @@ referencias_codigo:
 pantallas:
   - "Mantenimiento → Ordenes de trabajo → Ejecutar"
 precondiciones:
-  - Sesión iniciada en AssetPlanner
-  - Existe una orden de trabajo programada
+  - "Sesión iniciada en AssetPlanner con perfil Mantenedor"
+  - "Existe una orden de trabajo programada, creada con MAN-UC-009"
+  - "La tarea llegó a su bandeja de entrada (MAN-UC-019)"
+produce:
+  - "La orden de trabajo en curso (`C`) y, si hizo falta material, un pedido al almacén"
+depende_de:
+  - MAN-UC-009
 flujo_principal:
   - paso: "Abre la orden de trabajo y elige ejecutarla"
     resultado: "Se muestra qué hay que hacer, con las herramientas y los insumos que se declararon"
@@ -34,5 +39,5 @@ derivados:
   ayuda: ayudas/src/man/manual_mantenimiento.html#s07
 notas:
   - "Es **el mismo proceso de Bonita que el pedido de materiales de Almacenes en Tools**: se crea el pedido, el almacenero lo aprueba o lo rechaza, y al entregar descuenta el stock. El circuito completo está en el manual de Almacenes."
-  - "**Las herramientas hoy solo se listan** —no se piden ni se entregan—. En v3 eso va a cambiar: se van a asociar a las herramientas de Tools. Por ahora la ayuda explica lo que hay."
+  - "**Herramientas (v3):** además de declararse en la OT (con texto libre para lo que no está en el maestro), las usadas se registran desde los **vales reales del pañol de Tools**. El pañolero puede asociar la OT al entregar la herramienta (según la config `configuraciones_panol`)."
   - "Es el punto donde Mantenimiento se engancha con Almacenes. Del otro lado, el pedido sigue el circuito que documenta el manual de Almacenes: aprobación y entrega, que es lo único que descuenta stock."

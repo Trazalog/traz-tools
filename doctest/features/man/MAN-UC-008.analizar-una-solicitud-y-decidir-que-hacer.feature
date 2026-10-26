@@ -9,8 +9,9 @@ Característica: Analizar una solicitud y decidir qué hacer
   Dónde: Mantenimiento → Solicitud de Servicio · Mis Tareas
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
-    Y Existe una solicitud pendiente de análisis
+    Dado Sesión iniciada en AssetPlanner con perfil Supervisor de Taller
+    Y Existe una solicitud pendiente de análisis, creada con MAN-UC-007
+    Y La tarea llegó a la bandeja de entrada: el proceso de Bonita es el que la pone ahí (MAN-UC-019)
 
   Escenario: Camino principal
     Cuando Abre la solicitud pendiente, desde el listado o desde Mis Tareas

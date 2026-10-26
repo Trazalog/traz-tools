@@ -9,8 +9,8 @@ Característica: Programar una orden de trabajo desde el plan de mantenimiento
   Dónde: Mantenimiento → Plan de Mantenimiento
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
-    Y Hay trabajo pendiente de programar (una solicitud aceptada, un preventivo vencido, un backlog o un predictivo)
+    Dado Sesión iniciada en AssetPlanner con perfil Planificador
+    Y Hay trabajo pendiente de programar. Puede venir de cuatro lados: una solicitud aceptada (MAN-UC-008), un preventivo vencido (MAN-UC-014), un pendiente del backlog (MAN-UC-015) o un predictivo disparado (MAN-UC-018)
 
   Escenario: Camino principal
     Cuando Entra a Mantenimiento → Plan de Mantenimiento

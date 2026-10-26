@@ -10,8 +10,8 @@ Característica: Consultar el stock valorizado
 
   Antecedentes:
     Dado Sesión iniciada en Tools
-    Y La empresa tiene activada la valorización
-    Y Los materiales se recibieron cargando su precio
+    Y Hay existencias recibidas **con su precio cargado** (ALM-UC-009): sin precio no hay nada que valorizar
+    Y La empresa tiene activada la valorización con un registro en `core.tablas` cuyo `tabla` contiene `alm_configs`
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Stock Valorizado
