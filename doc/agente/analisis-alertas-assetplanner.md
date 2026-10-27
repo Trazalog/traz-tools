@@ -1,10 +1,10 @@
-# Análisis del sistema de alertas de AssetPlanner — insumo del Agente Minero (E0)
+# Análisis del sistema de alertas de AssetPlanner — insumo de los agentes de IA (E0)
 
 ## Objetivo
 
-Este documento describe **cómo funciona hoy el mecanismo de notificaciones de AssetPlanner** y evalúa qué de eso sirve para que el Agente Minero notifique sus hallazgos proactivos dentro de Trazalog Tools. Está escrito para Rodolfo (PM/arquitecto) como insumo del **gate 1** del plan del Agente (`doc/v3/PROMPT_CC_AGENTE_MINERO.md`, etapa E0): la decisión de qué se reutiliza y qué se construye se toma sobre esta base, **antes** de escribir una línea del puente de alertas.
+Este documento describe **cómo funciona hoy el mecanismo de notificaciones de AssetPlanner** y evalúa qué de eso sirve para que los agentes de IA notifiquen sus hallazgos proactivos dentro de Trazalog Tools. Está escrito para Rodolfo (PM/arquitecto) como insumo del **gate 1** del plan del Agente (`doc/v3/PROMPT_CC_AGENTES_TRAZALOG.md`, etapa E0): la decisión de qué se reutiliza y qué se construye se toma sobre esta base, **antes** de escribir una línea del puente de alertas.
 
-**Qué NO cubre:** no propone esquema de BD del agente (eso es E1), ni implementa nada. Tampoco cubre el diseño de los monitoreos proactivos en sí (qué se vigila y con qué umbral) — eso es E5 y depende de esta decisión. La arquitectura de referencia del agente está en `doc/v3/AGENTE_MINERO_ARQUITECTURA_TECNICA.md` (ADR-A6 es el que motiva este análisis).
+**Qué NO cubre:** no propone esquema de BD del agente (eso es E1), ni implementa nada. Tampoco cubre el diseño de los monitoreos proactivos en sí (qué se vigila y con qué umbral) — eso es E5 y depende de esta decisión. La arquitectura de referencia del agente está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (ADR-A6 es el que motiva este análisis).
 
 ---
 
@@ -142,7 +142,7 @@ Vale la pena aislarlo porque es lo que más suele darse por sentado al planifica
 - **No hay destinatario por rol ni por grupo.** El modelo es estrictamente 1 notificación → 1 `user_id`.
 - **El único "opt-in" real** es que el usuario acepte el permiso de notificaciones del navegador; ahí se registra su token vía `Notificacion/registraToken`. Si nunca lo aceptó, el SP guarda `registrationToken` vacío y la fila igual se inserta (la campanita la muestra, el push no llega).
 
-Para el Agente Minero esto importa mucho: **"alerta proactiva de MTBF en deterioro" no tiene hoy destinatario natural**. El mecanismo actual sabe notificarle al asignado de una OT; no sabe notificarle "al jefe de mantenimiento de la empresa X". Esa es una de las preguntas del gate (§8).
+Para los agentes de IA esto importa mucho: **"alerta proactiva de MTBF en deterioro" no tiene hoy destinatario natural**. El mecanismo actual sabe notificarle al asignado de una OT; no sabe notificarle "al jefe de mantenimiento de la empresa X". Esa es una de las preguntas del gate (§8).
 
 ---
 

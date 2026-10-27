@@ -1,4 +1,4 @@
-# Agente Minero — el ciclo de mejora
+# Agentes de IA de Trazalog — el ciclo de mejora
 
 ## Objetivo
 

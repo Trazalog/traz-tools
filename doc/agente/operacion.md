@@ -1,8 +1,8 @@
-# Agente Minero — operación
+# Agentes de IA de Trazalog — operación
 
 ## Objetivo
 
-Guía práctica para **levantar, configurar y diagnosticar** el orquestador del Agente Minero. Es lo que hay que leer cuando algo no anda o cuando hay que cambiar una variable. Está escrito para seguirse sin conocer el historial del proyecto: cada paso dice dónde se ejecuta.
+Guía práctica para **levantar, configurar y diagnosticar** el orquestador de los agentes de IA. Es lo que hay que leer cuando algo no anda o cuando hay que cambiar una variable. Está escrito para seguirse sin conocer el historial del proyecto: cada paso dice dónde se ejecuta.
 
 **Qué NO cubre:** no explica cómo está construido por dentro (`doc/agente/arquitectura.md`), ni cómo se instalan los componentes de infraestructura como el Streaming Integrator o el conector Firebase (`doc/agente/instalacion.md`), ni el esquema de base (`db/agente/README.md`).
 

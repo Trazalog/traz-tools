@@ -1,10 +1,10 @@
-# Esquema de base de datos del Agente Minero
+# Esquema de base de datos de los agentes de IA de Trazalog
 
 ## Objetivo
 
-Acá viven **todos los scripts SQL del Agente Minero**, versionados, numerados e idempotentes, cada uno con su rollback. Este README explica en qué orden se aplican, cómo verificar que quedaron bien y qué decisiones de diseño hay detrás. Está escrito para que cualquiera pueda montar el esquema desde cero sin conocer el historial del proyecto.
+Acá viven **todos los scripts SQL de los agentes de IA de Trazalog**, versionados, numerados e idempotentes, cada uno con su rollback. Este README explica en qué orden se aplican, cómo verificar que quedaron bien y qué decisiones de diseño hay detrás. Está escrito para que cualquiera pueda montar el esquema desde cero sin conocer el historial del proyecto.
 
-**Qué NO cubre:** no explica la arquitectura del agente (eso está en `doc/v3/AGENTE_MINERO_ARQUITECTURA_TECNICA.md`) ni cómo instalar los componentes de infraestructura como el Streaming Integrator (eso está en `doc/agente/instalacion.md`).
+**Qué NO cubre:** no explica la arquitectura del agente (eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`) ni cómo instalar los componentes de infraestructura como el Streaming Integrator (eso está en `doc/agente/instalacion.md`).
 
 ---
 
@@ -33,7 +33,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | # | Script | Qué crea |
 |---|---|---|
 | 001 | `001-extensiones.sql` | Extensiones `vector` y `pgcrypto`, esquema `agente`, y los roles `agente_app` / `agente_curador` |
-| 002 | `002-conocimiento-compartido.sql` | `fuente` y `chunk` — la base de conocimiento minero compartida entre clientes |
+| 002 | `002-conocimiento-compartido.sql` | `fuente` y `chunk` — la base de conocimiento de la industria compartida entre clientes |
 | 003 | `003-memoria-cliente.sql` | `memoria`, particionada por `empr_id`, con RLS y la función para dar de alta una empresa |
 | 004 | `004-cola-candidatos.sql` | `candidato` — la cola de conocimiento propuesto que espera curaduría humana |
 | 005 | `005-feedback.sql` | `interaccion` y `feedback` — el registro de cada consulta y su calificación |
@@ -130,7 +130,7 @@ Es idempotente: si la partición ya existe, no hace nada.
 
 ### Por qué el conocimiento compartido es de solo lectura para el agente (ADR-A4)
 
-`chunk` es la base de conocimiento minero curado — el activo del producto. El flujo de consulta **nunca escribe ahí**: el rol `agente_app` tiene `SELECT` y nada más. Lo que el agente aprende de un cliente va a `memoria` (privada de esa empresa) y, si un patrón se repite, se propone en `candidato`. Solo el rol `agente_curador` puede promover un candidato a `chunk`.
+`chunk` es la base de conocimiento de la industria curado — el activo del producto. El flujo de consulta **nunca escribe ahí**: el rol `agente_app` tiene `SELECT` y nada más. Lo que el agente aprende de un cliente va a `memoria` (privada de esa empresa) y, si un patrón se repite, se propone en `candidato`. Solo el rol `agente_curador` puede promover un candidato a `chunk`.
 
 Es una barrera a nivel de permisos de base, no una convención de código: si mañana un bug del orquestador intenta escribir en `chunk`, la base lo rechaza.
 

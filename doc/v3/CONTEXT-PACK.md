@@ -1,6 +1,6 @@
 # CONTEXT-PACK — traz-tools
 
-> Versión -> 1.4, "último ADR: ADR-013", fecha 2026-07-31
+> Versión -> 1.5, "último ADR: ADR-013", "último ADR de agentes: ADR-A11", fecha 2026-10-27
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -11,13 +11,15 @@
 3. **Proceso** → `doc/v3/TRAZALOG_v3_CICD_STRATEGY.md` (sección 5-bis)
 4. **Entorno y git** → `CLAUDE.md` (este mismo repo)
 
-**Chequeo de staleness (hacer antes de cualquier tarea):** corré `ls doc/adr/` y compará contra el "último ADR" del encabezado de este archivo. Si hay un ADR más nuevo que el declarado, reportá la desincronización antes de continuar — no asumas que este resumen está al día.
+**Chequeo de staleness (hacer antes de cualquier tarea):** corré `ls doc/adr/` y compará contra el "último ADR" del encabezado de este archivo. Si hay un ADR más nuevo que el declarado, reportá la desincronización antes de continuar — no asumas que este resumen está al día. **Para tareas `AGENTE-*`:** los ADR de los agentes (serie A) viven dentro de `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`, sección "Decisiones técnicas"; compará el último `ADR-A` de esa sección contra el del encabezado.
 
 ---
 
 ## 1. Qué es este proyecto y su objetivo de negocio
 
 Trazalog es una plataforma SaaS de gestión de operaciones industriales (mantenimiento de activos, almacenes, BPM, producción, residuos) para PyMEs de Cuyo, Argentina. La v3 pivotea hacia el **sector de servicios mineros**, anticipando que Los Azules, Josemaría/Filo del Sol, Veladero y El Pachón entran en construcción ~2027 — ventana de oportunidad para que proveedores locales se profesionalicen antes de que firmas chilenas/peruanas capturen el mercado. Modelo: **freemium (≤5 usuarios) + tiers de capacidad MCP pagos siempre** (Starter/Professional/Enterprise). Toda funcionalidad debe ser coherente con este modelo — una tool que ignore tiers o límites de capacidad contradice el negocio.
+
+**Agentes de IA (rama `develop-v3.5`, decisión del PM 2026-10-27):** sobre la capa MCP se construyen tres agentes con un motor único —**Kuntur** (Coach del administrador), **Quirqui** (Asistente del equipo) y **Faustino** (Entrevistador de expertos)— para **industrias extractivas y de proceso** en general: hoy minería, oil & gas y electricidad. Son de solo lectura y toda cifra que dicen tiene fuente. Ver `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_FUNCIONAL.md`.
 
 ## 2. Decisiones de arquitectura vigentes
 
@@ -34,6 +36,12 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 | **ADR-011** | doc/adr/ADR-011-gcp-deployment.md doc/v3/CONTEXT-PACK.md | **VIGENTE.** VM en GCP con WSO2 nativo (APIM+MI), sin Docker, Dnato existente reutilizado. Registro interno del APIM (`apim_db`/`shared_db`) en **H2 embebida** (no PostgreSQL) — acotado 2026-07-28, ver nota en el ADR. PostgreSQL existente sigue reservado para la futura migración de DataServices de negocio |
 | **ADR-012** | doc/adr/ADR-012-almacenes-aislamiento.md                 | Almacenes reusa patrón de Mantenimiento: empr_id del JWT (ADR-009), crear_pedido_materiales con BPM+rollback estilo create_ot. Solo pedidos, sin operaciones de stock                                                                                                                                              |
 | **ADR-013** | ADR-013-unificacion-mcp.md                               | Unificación MCP: fachada delgada toolsMCPAPI resuelve empr_id y rutea a DataServices existentes. Un solo Virtual MCP Server, tools con prefijo de módulo (man_, alm_)                                                                                                                                              |
+| **ADR-A1…A6** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)       | Agentes: LLM vía OpenRouter (A1); RAG directo, no vía MCP (A2); datos del cliente siempre vía MCP (A3); conocimiento compartido solo con revisión humana (A4); canal MVP embebido en Tools (A5); notificaciones con cola propia + Streaming Integrator + Firebase (A6)                                              |
+| **ADR-A7**  | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Un motor único de agentes con configuraciones (Kuntur, Quirqui, Faustino): quién lo usa, prompt, lista blanca de tools, disparadores, fuentes, identidad                                                                                                                                                           |
+| **ADR-A8**  | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Agentes de solo lectura (ninguna tool de escritura en sus listas); toda cifra sale de una tool de la corrida o de `web_buscar` con URL citada, si no se bloquea la respuesta (R4)                                                                                                                                  |
+| **ADR-A9**  | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | El plan de acción del Coach es un pedido de trabajo del módulo de tareas en estado "propuesta"; los objetivos viven en el motor de KPIs (`kpi.*`)                                                                                                                                                                  |
+| **ADR-A10** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Token de máquina para jobs: Dnato emite JWT por `client_credentials`, un cliente por empresa, con `empr_id`                                                                                                                                                                                                        |
+| **ADR-A11** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Conocimiento multi-vertical: `vertical` (minería, oil & gas, electricidad, general) como metadato del conocimiento, la taxonomía y el perfil de la empresa                                                                                                                                                         |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 
@@ -76,6 +84,7 @@ Claude.ai ──JWT Dnato──> APIM (:8243)
 | Tiers, límites de uso, analytics de tools | `TRAZALOG_v3_PRICING_STRATEGY` en doc/v3/ (verificar path)                                                                    |
 | Priorización de features, próximo cliente | `investigacion-sector-minero-trazalog-v3-2.md`                                                                                |
 | Cualquier cosa en PHP dentro de Dnato     | `traz-comp-dnato/CLAUDE.md` (PHP 5.6 estricto)                                                                                |
+| Agentes de IA (tareas `AGENTE-*`)         | `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (completo) + `PROMPT_CC_AGENTES_TRAZALOG.md` + `doc/agente/arquitectura.md`        |
 
 ## 7. Dónde está cada cosa (mapa de directorios clave)
 
