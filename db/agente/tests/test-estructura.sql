@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..013 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..014 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -338,6 +338,21 @@ SELECT 'agente_app inserta y lee tool_llamada, pero no corrige ni borra',
        'la traza no se altera desde el runtime';
 
 -- ---------------------------------------------------------------------------
+-- 014 - tool web_buscar
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'web_buscar catalogada como lectura de costo externo',
+       EXISTS (SELECT 1 FROM agente.tool
+               WHERE nombre = 'web_buscar' AND clase = 'lectura' AND costo = 'externo'),
+       'sale a buscadores de terceros';
+
+INSERT INTO _resultado
+SELECT 'web_buscar: la tiene Quirqui y no Faustino',
+       EXISTS (SELECT 1 FROM agente.tools_permitidas('quirqui') AS t WHERE t = 'web_buscar')
+       AND NOT EXISTS (SELECT 1 FROM agente.tools_permitidas('faustino') AS t WHERE t = 'web_buscar'),
+       'lista blanca';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -347,7 +362,7 @@ FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
-    '011-agentes', '012-tools', '013-corrida'
+    '011-agentes', '012-tools', '013-corrida', '014-tool-web'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

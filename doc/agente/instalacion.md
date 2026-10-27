@@ -285,6 +285,25 @@ Cualquier cosa que consuma este API **tiene que parsear el cuerpo y buscar `Resu
 
 ---
 
+## 1-ter. SearXNG — la búsqueda en internet de los agentes (AGENTE-M-05)
+
+SearXNG es un metabuscador libre: le pregunta a varios buscadores y devuelve los resultados juntos, sin API key ni costo. Lo usa la tool `web_buscar`. **Es opcional:** sin él, los agentes funcionan igual pero no buscan en internet.
+
+**Dónde se ejecuta:** terminal local (desarrollo) o terminal de la VM del ambiente (demo/producción), parado en la raíz del repo `traz-tools`.
+
+1. Generar un secreto propio del ambiente y ponerlo en el `.env` como `SEARXNG_SECRET` (cualquier texto largo y aleatorio):
+   `python3 -c "import secrets; print(secrets.token_hex(32))"`
+2. Levantarlo:
+   `docker compose -f docker-compose.dev.yml --profile web up -d searxng`
+3. Verificar que devuelve JSON con resultados (si `results` viene vacío, ver el punto 5):
+   `curl -s "http://127.0.0.1:8888/search?q=MTBF&format=json" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['results']))"`
+4. En el `.env` del orquestador: `AGENTE_WEB_URL=http://127.0.0.1:8888` y reiniciar el orquestador. En `/salud` no cambia nada; en la próxima consulta, Quirqui ya recibe la tool.
+5. **Si vuelve sin resultados** y `unresponsive_engines` dice `timeout`: la red tarda más que el timeout. Está subido a 8 s en `agente/searxng/settings.yml` (`outgoing.request_timeout`); con VPN puede hacer falta más.
+
+La configuración está en `agente/searxng/settings.yml`: parte de los valores por defecto, habilita la salida JSON (sin eso responde `403`) y apaga el limitador, porque solo lo consulta el orquestador. La versión de la imagen está fijada en `docker-compose.dev.yml`.
+
+**Verificado en desarrollo el 2026-10-27** con `searxng/searxng:2026.10.11-ad46ebd7d`: 10 resultados para "MTBF mantenimiento" (con el timeout por defecto de 3 s volvía vacío).
+
 ## 2. WSO2 Streaming Integrator — ambiente de demo
 
 ⏳ **Pendiente.** Se documenta cuando se despliegue. Los pasos son los mismos de §1 con tres diferencias a resolver:

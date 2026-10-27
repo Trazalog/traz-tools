@@ -21,6 +21,10 @@ sys.path.insert(0, str(RAIZ))
 os.environ.setdefault("AGENTE_DB_PASSWORD", "test")
 os.environ.setdefault("OPENROUTER_API_KEY", "test-key-no-real")
 os.environ.setdefault("AGENTE_PROMPTS_DIR", str(RAIZ / "prompts"))
+# La suite corre siempre SIN buscador web, para que el resultado no dependa del
+# entorno (con buscador, cada agente recibe una tool mas). El SearXNG real se
+# aparte para el unico test que lo usa: tests/test_web.py::test_busqueda_real.
+os.environ["AGENTE_WEB_URL_REAL"] = os.environ.pop("AGENTE_WEB_URL", "")
 
 from agente.config import Config  # noqa: E402
 from agente.llm import Respuesta  # noqa: E402

@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, guardian, rag
+from . import agentes, guardian, rag, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -162,6 +162,10 @@ class Orquestador:
         del_gateway = await mcp.listar_tools()
         tools = [t for t in del_gateway
                  if t.get("function", {}).get("name") in permitidas]
+        # La busqueda web es una tool del motor, no del gateway: pasa por la
+        # misma lista blanca, y solo se ofrece si hay un buscador configurado.
+        if web.NOMBRE in permitidas and web.habilitada(self.cfg):
+            tools.append(web.DEFINICION)
         res.controles.append({
             "control": "lista_blanca",
             "publicadas": len(del_gateway), "ofrecidas": len(tools),
@@ -248,6 +252,9 @@ class Orquestador:
             return {"role": "tool", "tool_call_id": llamada.get("id", ""),
                     "name": nombre, "content": contenido}
 
+        if nombre == web.NOMBRE:
+            return await self._buscar_web(mcp, llamada, argumentos)
+
         try:
             salida = await mcp.llamar(nombre, argumentos)
             contenido = json.dumps(salida, ensure_ascii=False)[:8000]
@@ -265,6 +272,25 @@ class Orquestador:
             "name": nombre,
             "content": contenido,
         }
+
+    async def _buscar_web(self, mcp: ClienteMCP, llamada: dict, argumentos: dict) -> dict:
+        """Ejecuta web_buscar. La traza va a la misma lista que las tools MCP,
+        para que quede en tool_llamada en el orden en que se llamo."""
+        t0 = time.monotonic()
+        if not web.habilitada(self.cfg):
+            salida, status, error = {"error": "La búsqueda en internet no está habilitada."}, "error", "sin AGENTE_WEB_URL"
+        else:
+            try:
+                salida = await web.buscar(self.cfg, argumentos.get("consulta", ""))
+                status, error = "ok", None
+            except web.WebError as e:
+                salida = {"error": f"No se pudo buscar en internet: {e}"}
+                status, error = "error", str(e)[:300]
+        mcp.llamadas.append(LlamadaTool(
+            web.NOMBRE, argumentos, status, int((time.monotonic() - t0) * 1000), error,
+        ))
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": web.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False)[:8000]}
 
     # ------------------------------------------------------------- registro
     async def _registrar(self, con, consulta: Consulta, res: Resultado) -> None:

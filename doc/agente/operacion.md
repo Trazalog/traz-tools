@@ -64,6 +64,7 @@ La lista completa con explicaciones está en `.env.example`. Estas son las que m
 | `AGENTE_MCP_MODO` | `apim` (real) o `mi` (desarrollo) | **En demo y producción va `apim`**, siempre |
 | `AGENTE_TEMPERATURA` | Cuánta variación en las respuestas | 0.2 por defecto. Para un agente técnico, bajo es mejor |
 | `AGENTE_PROMPTS_DIR` | Carpeta con un prompt por agente | Casi nunca: por defecto es `prompts/` del repo |
+| `AGENTE_WEB_URL` | URL de SearXNG para la tool `web_buscar` | Vacía = sin búsqueda en internet. Para levantarlo, ver `instalacion.md` §1-ter |
 
 ### Los modelos: cuáles funcionan y cuáles cuestan
 
@@ -185,6 +186,8 @@ El JWT que emite Dnato tiene un TTL (`jwt_ttl` en su `config/jwt.php`). Cuando e
 | `relation "agente.agente" does not exist` | No se aplicó `011-agentes.sql` | Aplicarlo con el usuario propietario de la base (ver `db/agente/README.md`) |
 | `409 Kuntur todavía no está disponible` | Kuntur está inactivo hasta la Fase 5 | Es lo esperado. Se activa en `011-agentes.sql` |
 | `function agente.tools_permitidas(text) does not exist` en `interaccion.error` | No se aplicó `012-tools.sql` | Aplicarlo con el usuario propietario. Sin él el agente no responde, a propósito |
+| El agente nunca busca en internet | `AGENTE_WEB_URL` vacía, o falta aplicar `014-tool-web.sql` | Las dos cosas hacen falta: el buscador configurado y la tool catalogada |
+| `web_buscar` vuelve sin resultados | Los buscadores no responden a tiempo | Ver `instalacion.md` §1-ter, punto 5 |
 | Una tool nueva del gateway no la usa ningún agente | No está en el catálogo | Sumarla al seed de `012-tools.sql` con su clase y re-aplicarlo. Si escribe, va como `accion` y no la va a usar nadie |
 | El agente contesta "No tengo datos para responder eso con certeza" | El guardián de cifras (R4) encontró un número sin origen y bloqueó la respuesta | Mirar `incidentes` de esa corrida: `respuesta_bloqueada` tiene lo que iba a decir y `cifras` qué número no tenía fuente. Si es un falso positivo (por ejemplo, "5 puntos" no reconocido como discurso), sumar la palabra a `PALABRAS_DE_DISCURSO` en `agente/guardian.py` |
 | En `tools_llamadas` aparece `"status": "bloqueada"` | El modelo pidió una tool que no tiene permitida (típicamente, crear una OT) | Es lo esperado: no salió al MCP. Si se repite mucho, revisar el prompt |

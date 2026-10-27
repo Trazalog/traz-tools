@@ -1,0 +1,31 @@
+# Configuracion de SearXNG para la tool web_buscar de los agentes (AGENTE-M-05).
+#
+# SearXNG es un metabuscador libre y autoalojado: le pregunta a varios
+# buscadores y devuelve los resultados juntos, sin API key ni costo (ADR-005).
+# Parte de los valores por defecto y solo cambia lo necesario.
+use_default_settings: true
+
+general:
+  instance_name: "Trazalog - busqueda de los agentes"
+
+server:
+  # Se pisa con la variable de entorno SEARXNG_SECRET. El valor de aca es solo
+  # para que arranque en desarrollo.
+  secret_key: "cambiar-por-SEARXNG_SECRET"
+  # Uso interno: lo consulta solo el orquestador, no hay usuarios que limitar.
+  limiter: false
+  image_proxy: false
+
+search:
+  # El orquestador lee JSON; el html queda para probar a mano en el navegador.
+  formats:
+    - html
+    - json
+  safe_search: 1
+  default_lang: "es"
+
+outgoing:
+  # El default (3 s) se queda corto con varias redes de oficina y VPN: los
+  # buscadores no llegan a responder y la busqueda vuelve vacia.
+  request_timeout: 8.0
+  max_request_timeout: 12.0
