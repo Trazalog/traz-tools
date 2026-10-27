@@ -46,6 +46,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 012 | `012-tools.sql` | `tool` — el catálogo de las tools del MCP Gateway con su clase (lectura / generación / acción), y `tools_permitidas(clave)`: lo que cada agente puede usar de verdad (ADR-A8) |
 | 013 | `013-corrida.sql` | Corrida auditable (R8): columnas `agente`, `disparador`, `costo_usd`, `controles`, `incidentes` en `interaccion`; tabla `tool_llamada` con lo que vio el modelo de cada tool; y **RLS** en `interaccion`, `feedback` y `tool_llamada` |
 | 014 | `014-tool-web.sql` | Cataloga `web_buscar` (búsqueda en internet sobre SearXNG): `lectura`, costo `externo`, riesgo `medio` |
+| 015 | `015-fuentes-producto.sql` | Tipos de fuente `ayuda` y `caso_uso`, e índice GIN sobre `chunk.metadata` (encontrar el caso de uso de una pantalla por su controlador) |
 
 Aplicación completa, desde el directorio del repo:
 
@@ -266,7 +267,7 @@ Misma base descartable, con `001..013`:
 
 | Ambiente | Base | Estado |
 |---|---|---|
-| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ✅ `011` aplicado por el PM el 2026-10-27. ⏳ **`012`, `013` y `014` pendientes de aplicar por el PM**, en orden: sin `012` el orquestador no responde (falla cerrado); sin `013` no registra las corridas; sin `014` no busca en internet |
+| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ✅ `011` aplicado por el PM el 2026-10-27. ⏳ **`012` a `015` pendientes de aplicar por el PM**, en orden: sin `012` el orquestador no responde (falla cerrado); sin `013` no registra las corridas; sin `014` no busca en internet; sin `015` no se pueden ingestar las ayudas ni los casos de uso |
 | Demo | a definir | ⏳ pendiente |
 | Producción | a definir | ⏳ pendiente |
 

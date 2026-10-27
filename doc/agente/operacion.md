@@ -132,6 +132,28 @@ Primero conviene ver cómo queda troceado, sin escribir ni gastar tokens:
 .venv-agente/bin/python -m agente.ingesta procedimiento-deposito.md --modulo alm --tipo manual
 ```
 
+### Las ayudas de Tools y el catálogo de casos de uso (AGENTE-M-06)
+
+Son el conocimiento **del producto**: con eso Quirqui explica qué se hace en cada pantalla y cita el link de la ayuda. Se cargan con un solo comando, en la **terminal local**, parado en la raíz del repo y con las credenciales del curador:
+
+```
+.venv-agente/bin/python -m agente.ingesta ayuda/ doctest/catalogo/
+```
+
+- La ingesta las **reconoce sola**: `.html` son ayudas (un fragmento por sección, con su link `ayuda/manual_x.html#sNN`), y `XXX-UC-NNN.yaml` son casos de uso (un fragmento por caso, con su pantalla, sus controladores y el link de su ayuda).
+- **Solo entran los casos `validado`**: los borradores tienen dudas abiertas y los obsoletos ya no describen el sistema.
+- **De la carpeta del catálogo solo se toman los casos de uso.** Los relevamientos y el esquema que conviven ahí son internos (tienen hallazgos y bugs) y no tienen que llegarle a un cliente.
+- **Volver a correrlo reemplaza, no duplica.** Conviene correrlo cada vez que se regenera el sitio de ayudas o se valida un caso nuevo.
+- Con el material de hoy son unos 240 fragmentos. El costo de vectorizarlos es de centavos de dólar.
+
+### Documentos de una empresa
+
+Procedimientos internos, instructivos propios: van a la **memoria privada de esa empresa**, nunca al conocimiento compartido (R7). Hace falta que la empresa tenga su partición de memoria (`SELECT agente.crear_particion_empresa(<empr_id>);`).
+
+```
+.venv-agente/bin/python -m agente.ingesta procedimientos-internos.pdf --empresa 191 --reemplazar
+```
+
 ⚠️ **La ingesta escribe en el conocimiento compartido, así que necesita el rol `agente_curador`.** Con las credenciales del orquestador (`agente_app`) va a fallar con `permission denied for table chunk`, y eso es correcto: por ADR-A4 el runtime no escribe conocimiento compartido. Usá las credenciales del curador para ingestar.
 
 ---

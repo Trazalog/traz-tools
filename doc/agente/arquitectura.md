@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") y AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") y AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -175,6 +175,21 @@ Admite redondeos a los decimales escritos (72 contra 71,83), porcentajes contra 
 
 En `controles` queda `{"control": "R4_cifras", "cifras": N, "sin_fuente": K}` en cada corrida. Los falsos positivos se ajustan mirando los incidentes.
 
+### Lo que el agente sabe del propio Trazalog (AGENTE-M-06)
+
+Además del conocimiento de la industria, la base tiene el **material del producto** (`agente/fuentes.py`):
+
+| Fuente | Cómo se parte | Qué guarda en `chunk.metadata` |
+|---|---|---|
+| Ayudas de Tools (`ayuda/*.html`, el sitio que ve el usuario) | Una pieza por sección; las de más de 1500 caracteres se parten conservando el título del manual y de la sección | `ayuda` (link con ancla), `titulo`, `documento` |
+| Casos de uso validados de DocTest (`doctest/catalogo/**/XXX-UC-NNN.yaml`) | Uno por caso, entero: pantalla, perfil, pasos, alternativas y reglas juntos | `caso_uso`, `pantallas`, `controladores` (repo/path), `perfil`, `ayuda` |
+
+El modelo ve el link de la ayuda y la pantalla de cada fragmento, así puede citarlos ("está en ayuda/manual_almacenes.html#s03"). Los `controladores` son lo que va a usar la AGENTE-AS-01 para ubicar el caso de uso de la pantalla donde está el usuario **por ruta exacta**, no solo por parecido (hay un índice GIN sobre `chunk.metadata` para eso).
+
+Los documentos **de una empresa** van a su memoria privada (`origen = 'ingesta'`), con RLS. Nunca al conocimiento compartido.
+
+**Limitación conocida del guardián de cifras (D-24):** compara valores, no significados. Con mucho conocimiento cargado, un número chico ("7") puede quedar respaldado por coincidencia con un fragmento que no tiene nada que ver. Ver la propuesta en `decisiones-para-revisar.md`.
+
 ### Internet, como último recurso (AGENTE-M-05)
 
 `web_buscar` busca en internet con **SearXNG autoalojado** (`agente/web.py`): un metabuscador libre, sin API key ni costo (ADR-005). Devuelve título, URL y extracto de los primeros resultados.
@@ -298,6 +313,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 |---|---|
 | `tests/test_agentes.py` | La configuración de los agentes: quién puede usar a quién (R1), que el Coach no se pueda confirmar desde un usuario común, que no haya tools de escritura permitidas, que el runtime no pueda editar la configuración, y `/agentes` y `/consulta` con la elección de agente |
 | `tests/test_corrida.py` | La corrida (R8): agente, disparador, costo sumado, controles, una tool bloqueada como incidente, lo que vio el modelo de cada tool, que una corrida que rompe la base igual quede registrada, y que otra empresa no la vea |
+| `tests/test_fuentes.py` | El conocimiento del producto, contra el material real del repo: ayudas por sección con link, casos validados con pantalla y controlador, borradores y obsoletos afuera, ningún documento interno del catálogo, y los documentos de empresa a su memoria (sin duplicar y sin que los vea otra) |
 | `tests/test_guardian.py` | R4: qué se bloquea (cifra inventada, pegada a la unidad, norma inventada, cifra de la web sin URL) y qué pasa (tool, conteo, redondeo, miles, conocimiento, pregunta, web citada, fechas, códigos, discurso); y en el orquestador, que el usuario reciba "no tengo datos" y quede el incidente con la respuesta original |
 | `tests/test_web.py` | `web_buscar`: el cliente contra un SearXNG simulado, que solo se ofrezca con buscador configurado, la cifra citada que pasa y la no citada que se bloquea, que un buscador caído no corte la conversación, y una búsqueda real opcional (con `AGENTE_WEB_URL`) |
 | `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |

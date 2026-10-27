@@ -143,6 +143,18 @@ async def con():
         await c.close()
 
 
+@pytest.fixture(autouse=True)
+def sin_conocimiento(monkeypatch):
+    """Estos tests prueban que cifra tiene origen; no pueden depender de lo que
+    haya ingestado en la base. Con conocimiento cargado, un "7" de cualquier
+    ayuda respaldaria por coincidencia un "7" inventado (limitacion conocida
+    del guardian, D-24)."""
+    async def vacio(*_a, **_k):
+        return []
+    monkeypatch.setattr("agente.orquestador.rag.buscar_conocimiento", vacio)
+    monkeypatch.setattr("agente.orquestador.rag.buscar_memoria", vacio)
+
+
 async def test_el_usuario_recibe_no_tengo_datos_en_vez_del_numero_inventado(con, monkeypatch, llm_falso):
     llm = llm_falso([respuesta_texto("Cada 500 horas de operación.")])
     _parchar(monkeypatch, llm, MCPFalso())

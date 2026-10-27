@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..014 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..015 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -353,6 +353,20 @@ SELECT 'web_buscar: la tiene Quirqui y no Faustino',
        'lista blanca';
 
 -- ---------------------------------------------------------------------------
+-- 015 - fuentes del producto
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'fuente acepta el tipo ' || t,
+       pg_get_constraintdef(c.oid) LIKE '%' || t || '%', 'AGENTE-M-06'
+FROM unnest(ARRAY['ayuda', 'caso_uso']) AS t, pg_constraint c
+WHERE c.conname = 'fuente_tipo_ck';
+
+INSERT INTO _resultado
+SELECT 'indice sobre chunk.metadata (caso de uso por controlador)',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'chunk_metadata_gin_ix'),
+       'AGENTE-AS-01';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -362,7 +376,7 @@ FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
-    '011-agentes', '012-tools', '013-corrida', '014-tool-web'
+    '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

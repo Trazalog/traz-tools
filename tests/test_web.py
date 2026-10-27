@@ -94,6 +94,18 @@ async def con():
         await c.close()
 
 
+@pytest.fixture(autouse=True)
+def sin_conocimiento(monkeypatch):
+    """Estos tests prueban que cifra tiene origen; no pueden depender de lo que
+    haya ingestado en la base. Con conocimiento cargado, un "7" de cualquier
+    ayuda respaldaria por coincidencia un "7" inventado (limitacion conocida
+    del guardian, D-24)."""
+    async def vacio(*_a, **_k):
+        return []
+    monkeypatch.setattr("agente.orquestador.rag.buscar_conocimiento", vacio)
+    monkeypatch.setattr("agente.orquestador.rag.buscar_memoria", vacio)
+
+
 async def _requiere_014(con):
     async with con.cursor() as cur:
         await cur.execute("SELECT 1 FROM agente.tool WHERE nombre = 'web_buscar'")

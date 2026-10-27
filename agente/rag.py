@@ -58,7 +58,7 @@ async def buscar_conocimiento(
     *, tipo_equipo: str | None = None, situacion: str | None = None,
     modulo: str | None = None,
 ) -> list[Fragmento]:
-    """Conocimiento minero compartido, comun a todos los clientes.
+    """Conocimiento compartido (de la industria y del producto), comun a todos los clientes.
 
     Cubre las dos areas del agente: mantenimiento y almacenes. Por defecto NO
     filtra por modulo -- la similitud vectorial ya separa bien, y muchas
@@ -71,7 +71,8 @@ async def buscar_conocimiento(
     """
     sql = """
         SELECT c.chunk_id, c.contenido, c.tipo_equipo, c.situacion, c.confianza,
-               c.modulo, f.tipo AS fuente_tipo, f.nombre AS fuente_nombre,
+               c.modulo, c.metadata AS chunk_meta,
+               f.tipo AS fuente_tipo, f.nombre AS fuente_nombre,
                c.embedding <=> %(emb)s::vector AS distancia
         FROM agente.chunk c
         JOIN agente.fuente f USING (fuente_id)
@@ -98,6 +99,10 @@ async def buscar_conocimiento(
                 "tipo_equipo": f["tipo_equipo"], "situacion": f["situacion"],
                 "modulo": f["modulo"], "confianza": float(f["confianza"]),
                 "fuente": f"{f['fuente_tipo']}: {f['fuente_nombre']}",
+                # Link de la ayuda y pantallas del caso de uso, si los tiene
+                # (AGENTE-M-06): el agente los cita.
+                "ayuda": (f["chunk_meta"] or {}).get("ayuda"),
+                "pantallas": (f["chunk_meta"] or {}).get("pantallas"),
             },
         )
         for f in filas
@@ -187,7 +192,7 @@ def armar_contexto(fragmentos: list[Fragmento]) -> str:
     partes: list[str] = []
 
     if conocimiento:
-        partes.append("## Conocimiento minero — mantenimiento y almacenes (general, no de esta empresa)\n")
+        partes.append("## Conocimiento de la industria y del producto (general, no de esta empresa)\n")
         for f in conocimiento:
             conf = f.metadata.get("confianza")
             etiquetas = [f"fuente: {f.metadata.get('fuente')}"]
@@ -200,6 +205,10 @@ def armar_contexto(fragmentos: list[Fragmento]) -> str:
                 etiquetas.append(f"confianza: {conf:.2f}")
             if f.metadata.get("tipo_equipo"):
                 etiquetas.append(f"equipo: {f.metadata['tipo_equipo']}")
+            if f.metadata.get("pantallas"):
+                etiquetas.append("pantalla: " + "; ".join(f.metadata["pantallas"]))
+            if f.metadata.get("ayuda"):
+                etiquetas.append(f"ayuda: {f.metadata['ayuda']}")
             partes.append(f"[{f.cita}] ({'; '.join(etiquetas)})\n{f.contenido}\n")
 
     if memoria:
