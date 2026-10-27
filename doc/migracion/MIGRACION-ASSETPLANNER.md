@@ -319,7 +319,8 @@ divergieron.
 | Archivo / pantalla | Estado | PRs |
 |---|---|---|
 | Área (`controllers/Area.php`, `models/Areas.php`, `views/area/view_.php`) + `helpers/man_helper.php` | ✅ Portado. Paridad OK (10 de 10, incluido aislamiento) | MAN: `feat/MIG-ASSET-1-area` · tools: queries de `MANDataService` en `feat/MIG-ASSET-1-area` |
-| Proceso, Componente, Parametro, Equipo | Pendientes | — |
+| Proceso (`controllers/Proceso.php`, `models/Procesos.php`, `views/proceso/view_.php`) | ✅ Portado. Paridad OK (10 de 10) | MAN: `feat/MIG-ASSET-1-proceso` · tools: `feat/MIG-ASSET-1-proceso` |
+| Componente, Parametro, Equipo | Pendientes | — |
 
 **Criterio de salida:** con una sesión de tools, el módulo se abre desde el menú, se navegan los ABMs
 y se listan equipos y OTs reales de una empresa de prueba. Nivel 0b en verde y **cero accesos a
@@ -713,7 +714,7 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 | T7 | Dos fuentes para la lectura del contador | `models/Calendarios.php:106` contra `models/Preventivos.php:747` |
 | T8 | La regla de alerta está implementada 4 veces con 3 fórmulas | `controllers/Calendario.php:88-100` y otras |
 | T9 | Clave duplicada en `BPM_PROCESS` (tools) | `application/config/constants.php` de tools |
-| T11 | `Obtener_areas` y `Eliminar_areas` no filtran por empresa: con el id de un área ajena se la ve o se la da de baja. Corregido en MAN (E4); **pendiente en asset** por la regla de §3.5 | `models/Areas.php:21-40` |
+| T11 | `Obtener_*` y `Eliminar_*` de Área y Proceso no filtran por empresa: con el id de un registro ajeno se lo ve o se lo da de baja. Corregido en MAN (E4); **pendiente en asset** por la regla de §3.5 | `models/Areas.php:21-40`, `models/Procesos.php:19-41` |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores
