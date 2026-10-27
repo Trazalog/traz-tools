@@ -168,9 +168,20 @@ Fallas de entorno vistas y no atribuidas al sistema: timeouts esperando el shell
 
 ## 6. Decisiones tomadas durante la prueba (sin el PM, a pedido suyo)
 
+Lo que queda abierto **no tiene vía sin el PM** por reglas del proyecto, no por falta de intento:
+
+| Pendiente | Por qué no lo puede cerrar el agente |
+|---|---|
+| Cargar `PROCESO-STANDAR` (destraba pedidos, hitos, HIP-TAR-01/08, Trabajo Terminado) | No existe API ni pantalla que escriba `pro.procesos` (búsqueda en todo `_backend` y `application`) y la base del DEMO no es alcanzable desde la VPN. Es una escritura de BD: 🔴 en la clasificación de riesgo del `CLAUDE.md` |
+| Destrabar la bandeja (#579, #580) | Requiere corregir `constants.php` del DEMO o el catálogo global `core.tablas` `procesos`: es corregir bugs (el pedido dice que lo hace otro agente) y tocar core productivo (análisis de impacto + aprobación del PM) |
+| Validar el catálogo | Es el gate humano de DocTest: solo el PM pasa un caso a `validado` |
+| Mergear el PR #589 | `CLAUDE.md`: no se mergea sin confirmación explícita del PM |
+
+
 | Decisión | Por qué |
 |---|---|
 | Los menús de TAR se asignaron al rol que el planificador ya tiene ("Responsable de Producción DocTest Empresa SA") desde DNATO → Gestión de Menues, con el administrador de la empresa de test: `tareas_grupo`, `tareas`, `pedidotrabajo`, `planificacion_tareas`, `tareas_std`. Los tests navegan por el menú real; si falta un ítem, caen a `linkTo()` y lo anotan | La asignación del rol "Planificador de Tareas" falla en DNATO (B-11). Es la vía oficial y solo toca la empresa de test. Responde la duda **D-04**: los menús son Tareas → ABM Tareas, Pedidos Trabajo y Planificación Tareas |
+| Se descartó correr el ciclo en otra empresa del DEMO | La otra empresa habilitada para DocTest (Novu, usuario de MAN) tampoco tiene proceso de pedidos, clientes, tipos de trabajo ni menús de TAR (verificado en modo lectura). No se crearon datos en empresas que no son de test |
 | **No** se agregó `TST001` a la Lista de Valores `procesos` para destrabar la bandeja | `getTabla` no filtra empresa: el valor aparecería en el selector de **todas** las empresas del DEMO (B-03) |
 | El ciclo de la tarea se probó sobre un origen sintético (`PETR/987654321`) dentro de la empresa de test | Sin pedidos no hay hitos (B-01); el componente de planificación es el mismo para cualquier origen. Los tests que necesitan el pedido real se saltean con el motivo escrito |
 | No se cargó `pro.procesos` | No hay API ni pantalla, y la base del DEMO no es alcanzable. Queda el SQL listo (`seeds/tar/pro-procesos-empresas-test.sql`) |
