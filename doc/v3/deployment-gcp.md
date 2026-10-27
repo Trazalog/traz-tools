@@ -411,7 +411,7 @@ tools que escriben fallan en el cliente** aunque el backend funcione perfecto.
 | `@discover` | APIM responde `404` no-JSON-RPC al método `server/discover` del protocolo `2026-07-28` |
 | `@toolcall` | reescribe `202 → 200`: el `202` del backend hace que el cliente MCP descarte la respuesta |
 
-Detalle y evidencia en [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md) §7.
+Detalle y evidencia en [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md), apéndice.
 
 > **Al validar el Caddyfile hay que cargar el entorno primero**, porque usa variables que provee
 > systemd (`EnvironmentFile=/etc/caddy/gcp.env`). Sin eso, `caddy validate` falla en la línea del
@@ -502,7 +502,7 @@ sin ese flag se omiten.
 💻 SSH a la VM (mismo acceso que §4 paso 6):
 
 ```bash
-cd ~/traz-tools   # el clone que ya existe en la VM desde el setup inicial (§4 paso 8)
+cd ~/git/traz-tools   # el clone que ya existe en la VM desde el setup inicial (§4 paso 8)
 git checkout develop-v3 && git pull origin develop-v3
 cd _backend/api/ToolsAPIProject/ToolsAPIProject
 mvn clean install   # NO ./mvnw — el wrapper no está commiteado, ver nota en §6.1
@@ -579,7 +579,7 @@ Tiene que devolver un JSON con `authorization_endpoint`, `token_endpoint`, `jwks
 > ⚠️ **El directorio `carbonapps/` NO existe en una instalación limpia del APIM** — es el mecanismo de despliegue de Carbon Applications que sí viene de fábrica en el MI, pero no en el zip del API Manager. **Hay que crearlo**; el APIM lo procesa igual. Verificado en el DEV que funciona (`/mnt/win/dev/wso2am-4.6.0`): ese directorio tiene fecha de creación 2026-06-30 (el día que se resolvió G1), mientras que el resto de `deployment/server/` es de la instalación original. Si el `cp` falla con "No such file or directory", falta el `mkdir -p`, no está mal la ruta.
 
 ```bash
-cd ~/traz-tools/_backend/api/ApimDiscoveryProject
+cd ~/git/traz-tools/_backend/api/ApimDiscoveryProject
 bash build.sh                      # genera build/trazalog-discovery-1.0.0.car
 
 sudo mkdir -p /opt/wso2/wso2am-4.6.0/repository/deployment/server/carbonapps
