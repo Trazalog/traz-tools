@@ -216,6 +216,26 @@ psql -h 127.0.0.1 -U postgres -d agente_minero -x -c "SELECT pregunta, respuesta
 
 `fragmentos_rag` dice qué conocimiento recuperó y `tools_llamadas` qué datos consultó. Con eso se distingue "el conocimiento estaba mal" de "la tool falló" de "el modelo no entendió".
 
+Lo que **vio el modelo** de cada tool, en orden:
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -x -c "SELECT orden, tool, status, left(contenido, 500) AS contenido FROM agente.tool_llamada WHERE interaccion_id = '<id>' ORDER BY orden;"
+```
+
+Las corridas con algo para revisar (tools bloqueadas, cifras sin fuente):
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -c "SELECT fec_alta, empr_id, agente, left(pregunta,50), incidentes FROM agente.interaccion WHERE incidentes <> '[]'::jsonb ORDER BY fec_alta DESC LIMIT 10;"
+```
+
+Y el costo por agente en los últimos 30 días:
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -c "SELECT agente, count(*) AS corridas, sum(costo_usd) AS usd FROM agente.interaccion WHERE fec_alta > now() - interval '30 days' GROUP BY 1;"
+```
+
+> Estas consultas van como `postgres` (el propietario) porque cruzan empresas. Con el usuario del orquestador, por el RLS, no devolverían nada sin fijar antes `agente.empr_id`.
+
 ---
 
 ## ⚠️ Este servicio no va expuesto a internet

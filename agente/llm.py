@@ -33,6 +33,8 @@ class Respuesta:
     modelo: str
     tokens_prompt: int
     tokens_respuesta: int
+    # Costo en dolares segun OpenRouter (usage.cost). None si no lo informo.
+    costo_usd: float | None = None
 
     @property
     def pide_tools(self) -> bool:
@@ -93,6 +95,8 @@ class OpenRouter:
             "messages": mensajes,
             "temperature": self.cfg.temperatura,
             "max_tokens": self.cfg.max_tokens,
+            # Pide que OpenRouter informe el costo de la llamada (R8).
+            "usage": {"include": True},
         }
         if tools:
             cuerpo["tools"] = tools
@@ -112,6 +116,7 @@ class OpenRouter:
             modelo=data.get("model", self.cfg.modelo),
             tokens_prompt=uso.get("prompt_tokens", 0),
             tokens_respuesta=uso.get("completion_tokens", 0),
+            costo_usd=uso.get("cost"),
         )
 
     async def embeddings(self, textos: list[str]) -> list[list[float]]:

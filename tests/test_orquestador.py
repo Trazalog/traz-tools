@@ -210,6 +210,9 @@ async def test_la_interaccion_queda_registrada(con, monkeypatch, llm_falso):
         empr_id=900001, pregunta="pregunta de prueba", autorizacion="Bearer t",
     ))
 
+    # interaccion tiene RLS (013): se lee con el contexto de la empresa, igual
+    # que lo hace el codigo. Sin esto no se ve nada -- que es lo correcto.
+    await rag.fijar_empresa(con, 900001)
     async with con.cursor() as cur:
         await cur.execute(
             "SELECT pregunta, respuesta, modelo, fragmentos_rag, tools_llamadas "

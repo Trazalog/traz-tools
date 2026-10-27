@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") y AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") y AGENTE-M-03 (corrida auditable, sección "Todo queda registrado"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -137,13 +137,29 @@ El contexto de empresa muere con la transacción. Es lo que evita la fuga más d
 
 Cuando una tool MCP falla, el error vuelve al modelo **como contenido del mensaje**, no como excepción. Así el agente puede decir "no pude consultar tus equipos en este momento" en lugar de que el usuario reciba un error técnico. Queda registrado en `tools_llamadas` con `status: "error"`.
 
-### Todo queda registrado, incluidos los errores
+### Todo queda registrado, incluidos los errores (R8, AGENTE-M-03)
 
-Cada consulta escribe una fila en `agente.interaccion` con la pregunta, la respuesta, **qué fragmentos se recuperaron y qué tools se llamaron**. Eso es lo que hace accionable un pulgar abajo: sin esa traza, un "no me sirvió" no dice si el problema fue el conocimiento, los datos o el modelo.
+Cada corrida escribe una fila en `agente.interaccion` con la pregunta, la respuesta, **qué fragmentos se recuperaron y qué tools se llamaron**, y además:
 
-Las interacciones con error también se guardan. Son las más informativas.
+| Columna | Qué guarda |
+|---|---|
+| `agente` | Quién respondió: `quirqui`, `kuntur`… |
+| `disparador` | Qué la puso en marcha: una consulta, un evento operativo, un desvío de KPI… |
+| `costo_usd` | Lo que informó OpenRouter (`usage.cost`), sumado entre las llamadas de la corrida. Vacío si no lo informó: cero diría "fue gratis", y no se sabe |
+| `controles` | Qué controles se aplicaron y con qué resultado (hoy, la lista blanca: cuántas tools publicó el gateway y cuántas se ofrecieron) |
+| `incidentes` | Lo que hay que revisar: tools bloqueadas y, desde M-04, cifras sin fuente. Vacío = corrida limpia |
 
-Si el registro falla, la respuesta igual se entrega: se pierde la traza, no la respuesta.
+Y una fila en `agente.tool_llamada` por cada tool, con **exactamente lo que vio el modelo** (el contenido ya truncado que se le pasó, no la respuesta cruda completa). Es contra eso que el guardián de cifras de R4 compara los números de la respuesta: un número tiene que estar en algo que el modelo efectivamente leyó.
+
+Eso es lo que hace accionable un pulgar abajo: sin esa traza, un "no me sirvió" no dice si el problema fue el conocimiento, los datos o el modelo.
+
+**Las corridas con error también se guardan**, incluso cuando lo que falló fue la base: si la transacción quedó abortada, el orquestador vuelve a una limpia, re-fija la empresa y registra. Son las más informativas.
+
+Si el registro falla igual, la respuesta se entrega: se pierde la traza, no la respuesta (queda en el log).
+
+### `interaccion`, `feedback` y `tool_llamada` tienen RLS
+
+Guardan preguntas y respuestas de cada empresa, con datos que vinieron de sus tools. Desde `013` tienen la misma policy que `memoria`: un `empr_id` solo ve y escribe lo suyo, y sin contexto no se ve nada. Hasta `013` las protegía solo el `WHERE empr_id` del código (hallazgo del 2026-10-27). La vista `v_feedback_negativo` corre con los permisos de quien consulta (`security_invoker`), para que su dueño no se saltee las policies.
 
 ### El orquestador no puede borrar interacciones
 
@@ -253,6 +269,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 | Archivo | Qué cubre |
 |---|---|
 | `tests/test_agentes.py` | La configuración de los agentes: quién puede usar a quién (R1), que el Coach no se pueda confirmar desde un usuario común, que no haya tools de escritura permitidas, que el runtime no pueda editar la configuración, y `/agentes` y `/consulta` con la elección de agente |
+| `tests/test_corrida.py` | La corrida (R8): agente, disparador, costo sumado, controles, una tool bloqueada como incidente, lo que vio el modelo de cada tool, que una corrida que rompe la base igual quede registrada, y que otra empresa no la vea |
 | `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
 | `tests/test_mcp_client.py` | Passthrough del token, que el `empr_id` no viaje, trazabilidad, y el parseo de SSE |

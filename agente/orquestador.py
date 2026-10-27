@@ -46,6 +46,8 @@ class Consulta:
     usr_id: int | None = None
     usuario_nick: str | None = None
     canal: str = "chat_tools"
+    # Que puso en marcha la corrida (R8): una consulta, un evento operativo...
+    disparador: str = "consulta"
     # El agente ya resuelto y con el acceso verificado (agentes.para_consulta).
     # None = el agente por defecto.
     agente: Agente | None = None
@@ -62,6 +64,12 @@ class Resultado:
     tokens_respuesta: int = 0
     latencia_ms: int = 0
     error: str | None = None
+    # R8: que se controlo, que hay que revisar, cuanto costo, y lo que cada tool
+    # le devolvio al modelo (insumo del guardian de cifras, R4).
+    costo_usd: float | None = None
+    controles: list[dict] = field(default_factory=list)
+    incidentes: list[dict] = field(default_factory=list)
+    contenidos_tools: list[str] = field(default_factory=list)
 
 
 class Orquestador:
@@ -97,6 +105,13 @@ class Orquestador:
             res.respuesta = "No pude responder ahora mismo por un problema técnico."
 
         res.latencia_ms = int((time.monotonic() - t0) * 1000)
+
+        # Si lo que fallo fue la base, la transaccion quedo abortada y el
+        # registro tambien fallaria. Justo esas corridas son las que mas
+        # interesa ver: se vuelve a una transaccion limpia, con la empresa.
+        if con.info.transaction_status == psycopg.pq.TransactionStatus.INERROR:
+            await con.rollback()
+            await rag.fijar_empresa(con, consulta.empr_id)
         await self._registrar(con, consulta, res)
         return res
 
@@ -142,14 +157,21 @@ class Orquestador:
         # VE las tools que este agente puede usar. Las de escritura no estan,
         # aunque el gateway las publique.
         permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
-        tools = [t for t in await mcp.listar_tools()
+        del_gateway = await mcp.listar_tools()
+        tools = [t for t in del_gateway
                  if t.get("function", {}).get("name") in permitidas]
+        res.controles.append({
+            "control": "lista_blanca",
+            "publicadas": len(del_gateway), "ofrecidas": len(tools),
+        })
 
         for _ in range(self.cfg.max_iteraciones):
             respuesta = await llm.chat(mensajes, tools=tools)
             res.modelo = respuesta.modelo
             res.tokens_prompt += respuesta.tokens_prompt
             res.tokens_respuesta += respuesta.tokens_respuesta
+            if respuesta.costo_usd is not None:
+                res.costo_usd = (res.costo_usd or 0.0) + float(respuesta.costo_usd)
 
             if not respuesta.pide_tools:
                 res.respuesta = respuesta.texto.strip()
@@ -161,7 +183,14 @@ class Orquestador:
                 "tool_calls": respuesta.tool_calls,
             })
             for llamada in respuesta.tool_calls:
-                mensajes.append(await self._ejecutar(mcp, llamada, permitidas))
+                mensaje = await self._ejecutar(mcp, llamada, permitidas)
+                mensajes.append(mensaje)
+                res.contenidos_tools.append(mensaje["content"])
+                if mcp.llamadas and mcp.llamadas[-1].status == "bloqueada":
+                    res.incidentes.append({
+                        "tipo": "tool_bloqueada", "tool": mensaje["name"],
+                        "detalle": "el modelo pidio una tool fuera de su lista blanca",
+                    })
         else:
             # Se agotaron las iteraciones sin una respuesta final.
             res.respuesta = (
@@ -219,17 +248,42 @@ class Orquestador:
 
     # ------------------------------------------------------------- registro
     async def _registrar(self, con, consulta: Consulta, res: Resultado) -> None:
-        """Guarda la interaccion completa. Es el insumo del ciclo de mejora."""
+        """Guarda la corrida completa (R8). Es el insumo del ciclo de mejora.
+
+        Una fila en interaccion y una en tool_llamada por cada tool, en la misma
+        transaccion: o queda la corrida entera o no queda nada.
+        """
         sql = """
             INSERT INTO agente.interaccion
                 (interaccion_id, empr_id, usr_id, usuario_nick, canal, pregunta,
                  respuesta, fragmentos_rag, tools_llamadas, modelo,
-                 tokens_prompt, tokens_respuesta, latencia_ms, error)
+                 tokens_prompt, tokens_respuesta, latencia_ms, error,
+                 agente, disparador, costo_usd, controles, incidentes)
             VALUES (%(id)s, %(empr_id)s, %(usr_id)s, %(nick)s, %(canal)s, %(pregunta)s,
                     %(respuesta)s, %(frags)s, %(tools)s, %(modelo)s,
-                    %(tp)s, %(tr)s, %(lat)s, %(error)s)
+                    %(tp)s, %(tr)s, %(lat)s, %(error)s,
+                    %(agente)s, %(disparador)s, %(costo)s, %(controles)s, %(incidentes)s)
             ON CONFLICT (interaccion_id) DO NOTHING
         """
+        sql_tool = """
+            INSERT INTO agente.tool_llamada
+                (interaccion_id, empr_id, orden, tool, argumentos, status,
+                 contenido, latencia_ms, error)
+            VALUES (%(id)s, %(empr_id)s, %(orden)s, %(tool)s, %(args)s, %(status)s,
+                    %(contenido)s, %(lat)s, %(error)s)
+        """
+        # Lo que vio el modelo de cada tool, en el mismo orden que las llamadas.
+        # Si la corrida se corto a mitad, puede haber menos contenidos que
+        # llamadas: esas quedan sin contenido.
+        filas_tools = [
+            {"id": res.interaccion_id, "empr_id": consulta.empr_id, "orden": n,
+             "tool": t["tool"],
+             "args": json.dumps(t.get("argumentos") or {}, ensure_ascii=False),
+             "status": t["status"],
+             "contenido": res.contenidos_tools[n - 1] if n <= len(res.contenidos_tools) else None,
+             "lat": t.get("latencia_ms"), "error": t.get("error")}
+            for n, t in enumerate(res.tools_llamadas, start=1)
+        ]
         try:
             async with con.cursor() as cur:
                 await cur.execute(sql, {
@@ -242,9 +296,17 @@ class Orquestador:
                     "modelo": res.modelo, "tp": res.tokens_prompt,
                     "tr": res.tokens_respuesta, "lat": res.latencia_ms,
                     "error": res.error,
+                    "agente": consulta.agente.clave if consulta.agente else None,
+                    "disparador": consulta.disparador,
+                    "costo": res.costo_usd,
+                    "controles": json.dumps(res.controles, ensure_ascii=False),
+                    "incidentes": json.dumps(res.incidentes, ensure_ascii=False),
                 })
+                if filas_tools:
+                    await cur.executemany(sql_tool, filas_tools)
             await con.commit()
-        except psycopg.Error:
+        except psycopg.Error as e:
             # Que falle el registro no puede tumbar una respuesta que ya esta
             # lista. Se pierde la traza de esa interaccion, no la respuesta.
+            log.error("No se pudo registrar la corrida %s: %s", res.interaccion_id, e)
             await con.rollback()

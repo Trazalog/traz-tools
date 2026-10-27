@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..012 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..013 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -302,6 +302,42 @@ SELECT 'agente_app solo lee agente.tool',
        'el catalogo lo edita Trazalog';
 
 -- ---------------------------------------------------------------------------
+-- 013 - corrida auditable (R8) y RLS de interaccion/feedback
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'interaccion tiene la columna ' || c,
+       EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'agente' AND table_name = 'interaccion' AND column_name = c),
+       'R8'
+FROM unnest(ARRAY['agente', 'disparador', 'costo_usd', 'controles', 'incidentes']) AS c;
+
+INSERT INTO _resultado
+SELECT 'tabla agente.tool_llamada existe', to_regclass('agente.tool_llamada') IS NOT NULL,
+       'lo que vio el modelo de cada tool';
+
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' tiene RLS forzado',
+       coalesce((SELECT c.relrowsecurity AND c.relforcerowsecurity
+                 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                 WHERE n.nspname = 'agente' AND c.relname = t), false),
+       'datos de la empresa (013)'
+FROM unnest(ARRAY['interaccion', 'feedback', 'tool_llamada']) AS t;
+
+INSERT INTO _resultado
+SELECT 'v_feedback_negativo corre con los permisos de quien consulta',
+       coalesce((SELECT 'security_invoker=true' = ANY (c.reloptions)
+                 FROM pg_class c WHERE c.oid = 'agente.v_feedback_negativo'::regclass), false),
+       'si no, un dueño superusuario se saltea el RLS';
+
+INSERT INTO _resultado
+SELECT 'agente_app inserta y lee tool_llamada, pero no corrige ni borra',
+       has_table_privilege('agente_app', 'agente.tool_llamada', 'SELECT')
+       AND has_table_privilege('agente_app', 'agente.tool_llamada', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.tool_llamada', 'UPDATE')
+       AND NOT has_table_privilege('agente_app', 'agente.tool_llamada', 'DELETE'),
+       'la traza no se altera desde el runtime';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -311,7 +347,7 @@ FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
-    '011-agentes', '012-tools'
+    '011-agentes', '012-tools', '013-corrida'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
