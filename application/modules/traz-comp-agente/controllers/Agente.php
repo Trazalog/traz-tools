@@ -215,6 +215,20 @@ class Agente extends CI_Controller
         $this->_proxyEntrevista('/entrevista/cerrar?sesion_id=' . $sesion, null);
     }
 
+    /**
+     * Los agentes que este usuario puede usar, con nombre y avatar (AGENTE-ID-05).
+     * El panel pinta nombre y avatar con esto, no con textos fijos: se cambian
+     * en la configuración de los agentes sin tocar la vista.
+     */
+    public function agentes()
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('agentes' => array()));
+            return;
+        }
+        $this->_json($this->Agentes->agentes($this->_token()));
+    }
+
     /** Estado del orquestador, para diagnosticar desde la UI. */
     public function salud()
     {

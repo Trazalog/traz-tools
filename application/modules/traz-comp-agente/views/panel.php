@@ -16,15 +16,15 @@
   y está PENDIENTE DE REVISIÓN LEGAL (AGENTE-LEGAL-01). No cambiarlo sin esa
   revisión.
 -->
-<div id="agp-boton" title="Preguntale a Quirqui">
-  <span class="agp-avatar agp-avatar-grande">Q</span>
-</div>
+<?php $this->load->view(AGE . 'avatar'); ?>
+
+<div id="agp-boton" title="Preguntale a tu asistente"></div>
 
 <div id="agp-panel" aria-hidden="true">
   <div class="agp-cabecera">
-    <span class="agp-avatar">Q</span>
+    <span id="agp-cab-avatar"></span>
     <div class="agp-titulo">
-      <strong>Quirqui</strong>
+      <strong id="agp-nombre">Quirqui</strong>
       <small>tu asistente en Trazalog</small>
     </div>
     <button type="button" class="agp-cerrar" title="Cerrar">&times;</button>
@@ -56,11 +56,7 @@
 
 <style>
 #agp-boton { position: fixed; right: 22px; bottom: 22px; z-index: 1040; cursor: pointer; }
-.agp-avatar { display: inline-flex; align-items: center; justify-content: center;
-              width: 32px; height: 32px; border-radius: 50%; background: #3c8dbc;
-              color: #fff; font-weight: bold; flex-shrink: 0; }
-.agp-avatar-grande { width: 54px; height: 54px; font-size: 22px;
-                     box-shadow: 0 3px 10px rgba(0,0,0,.25); }
+#agp-boton .tzag { box-shadow: 0 3px 10px rgba(0,0,0,.25); border-radius: 50%; }
 #agp-panel { position: fixed; right: 22px; bottom: 88px; width: 360px; max-width: calc(100vw - 32px);
              height: 520px; max-height: calc(100vh - 120px); z-index: 1041; background: #fff;
              border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,.25); display: none;
@@ -118,6 +114,8 @@
         pantallaPropuestas = p;
         $('#agp-propuestas').empty();
         $.post(BASE + 'sugerencias', { pantalla: p }).done(function (r) {
+            // Una propuesta urgente (lote vencido) llama la atención: el avatar pasa a "alerta".
+            if ((r.propuestas || []).some(function (x) { return x.tipo === 'lote_vencido'; })) { estado('alerta'); }
             (r.propuestas || []).forEach(function (x) {
                 var accion = x.accion || {};
                 $('#agp-propuestas').append(
@@ -145,12 +143,28 @@
         $p.slideUp(150, function () { $p.remove(); });
     });
 
-    function abrir()  { $panel.addClass('abierto').attr('aria-hidden', 'false'); $('#agp-pregunta').focus(); cargarPropuestas(); }
-    function cerrar() { $panel.removeClass('abierto').attr('aria-hidden', 'true'); }
+    function abrir()  { $panel.addClass('abierto').attr('aria-hidden', 'false'); $('#agp-pregunta').focus();
+                        estado('saludo'); cargarPropuestas(); }
+    function cerrar() { $panel.removeClass('abierto').attr('aria-hidden', 'true'); estado('despedida'); }
 
     $('#agp-boton').on('click', function () { $panel.hasClass('abierto') ? cerrar() : abrir(); });
     $panel.on('click', '.agp-cerrar', cerrar);
     $('#agp-que-se-mide').on('click', function (e) { e.preventDefault(); $('#agp-detalle-medicion').toggle(); });
+
+    // --- identidad (AGENTE-ID-05): nombre y avatar vienen de la configuración -----
+    // Hasta que llega la respuesta (o si falla) se usa Quirqui, el agente por defecto.
+    var agente = { clave: 'quirqui', nombre: 'Quirqui', avatar: 'quirqui' };
+    function pintarIdentidad(estado) {
+        $('#agp-boton').html(TZAgente.avatar(agente, estado, true)).attr('title', 'Preguntale a ' + agente.nombre);
+        $('#agp-cab-avatar').html(TZAgente.avatar(agente, estado));
+        $('#agp-nombre').text(agente.nombre);
+    }
+    function estado(e) { TZAgente.estado($('#agp-boton .tzag, #agp-cab-avatar .tzag'), e); }
+    pintarIdentidad('saludo');
+    $.get(BASE + 'agentes').done(function (r) {
+        var q = (r.agentes || []).filter(function (a) { return a.rol === 'asistente'; })[0];
+        if (q) { agente = q; pintarIdentidad('saludo'); }
+    });
 
     function pintar(quien, clase, html) {
         $conv.append('<div class="agp-msg ' + clase + '"><div class="agp-quien">' + quien + '</div>' + html + '</div>');
@@ -164,7 +178,7 @@
                     '<button type="button" data-util="1" title="Me sirvió">👍</button> ' +
                     '<button type="button" data-util="0" title="No me sirvió">👎</button></div>';
         }
-        pintar('Quirqui', r.error ? 'agp-agente agp-error' : 'agp-agente', html);
+        pintar(agente.nombre, r.error ? 'agp-agente agp-error' : 'agp-agente', html);
     }
 
     $('#agp-form').on('submit', function (e) {
@@ -174,12 +188,14 @@
         $('#agp-pregunta').val('');
         $('#agp-enviar').prop('disabled', true);
         pintar('Vos', 'agp-usuario', '<div class="agp-texto">' + escapar(texto) + '</div>');
-        pintar('Quirqui', 'agp-agente agp-pensando-wrap', '<div class="agp-texto agp-pensando">Pensando...</div>');
+        pintar(agente.nombre, 'agp-agente agp-pensando-wrap', '<div class="agp-texto agp-pensando">Pensando...</div>');
+        estado('pensando');
 
         $.post(BASE + 'consultar', { pregunta: texto, pantalla: pantallaActual() })
-            .done(function (r) { $('.agp-pensando-wrap').remove(); pintarRespuesta(r); })
+            .done(function (r) { $('.agp-pensando-wrap').remove(); pintarRespuesta(r);
+                                 estado('hablando'); setTimeout(function () { estado('saludo'); }, 2500); })
             .fail(function (xhr) {
-                $('.agp-pensando-wrap').remove();
+                $('.agp-pensando-wrap').remove(); estado('saludo');
                 pintarRespuesta({ error: true, respuesta: xhr.status === 401
                     ? 'Tu sesión venció. Recargá la página para seguir.'
                     : 'No se pudo enviar la consulta. Revisá tu conexión y probá de nuevo.' });

@@ -231,6 +231,12 @@ class Agentes extends CI_Model
     }
 
     /** Estado del orquestador. No necesita token. */
+    public function agentes($jwt)
+    {
+        $rsp = $this->_llamar('GET', '/agentes', null, $jwt, 10);
+        return $rsp['ok'] ? $rsp['data'] : ['agentes' => []];
+    }
+
     public function salud()
     {
         $rsp = $this->_llamar('GET', '/salud', null, null, 10);
