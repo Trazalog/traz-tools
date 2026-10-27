@@ -88,11 +88,11 @@ class Config:
     # --- Loop del agente ----------------------------------------------------
     max_iteraciones: int = field(default_factory=lambda: _env_int("AGENTE_MAX_ITERACIONES", 4))
 
-    # --- Prompt -------------------------------------------------------------
-    prompt_path: Path = field(
-        default_factory=lambda: Path(
-            _env("AGENTE_PROMPT_PATH", str(RAIZ / "prompts" / "agente-minero.md"))
-        )
+    # --- Prompts ------------------------------------------------------------
+    # Carpeta con un archivo por agente (quirqui.md, kuntur.md, faustino.md).
+    # Que archivo usa cada uno lo dice su configuracion en agente.agente.
+    prompts_dir: Path = field(
+        default_factory=lambda: Path(_env("AGENTE_PROMPTS_DIR", str(RAIZ / "prompts")))
     )
 
     @property
@@ -111,8 +111,8 @@ class Config:
             problemas.append("OPENROUTER_API_KEY no esta seteada")
         if self.mcp_modo not in ("apim", "mi"):
             problemas.append(f"AGENTE_MCP_MODO invalido: {self.mcp_modo} (apim | mi)")
-        if not self.prompt_path.exists():
-            problemas.append(f"No existe el prompt de sistema en {self.prompt_path}")
+        if not self.prompts_dir.is_dir():
+            problemas.append(f"No existe la carpeta de prompts {self.prompts_dir}")
         return problemas
 
 

@@ -20,7 +20,7 @@ services:
     working_dir: /app
     env_file: .env
     environment:
-      AGENTE_PROMPT_PATH: /app/prompts/agente-minero.md
+      AGENTE_PROMPTS_DIR: /app/prompts
     ports:
       - "8099:8099"
     volumes:

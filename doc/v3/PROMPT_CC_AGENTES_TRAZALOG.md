@@ -41,7 +41,7 @@ Clase: 🟢 sin efecto en runtime · 🟡 código · 🔴 decisión del PM o arq
 |---|---|---|---|
 | AGENTE-DOC-01 | Anclas renombrados y reescritos (funcional 2.0, técnico 2.0 con ADR-A7–A11, este prompt 2.0) | 🔴 | Opus |
 | AGENTE-DOC-02 | `doc/agente/identidad.md`: ficha de cada personaje, estilo, estados, proceso de generación | 🔴 | Opus |
-| AGENTE-DOC-03 | Lenguaje "multi-vertical" en `doc/agente/` (los nombres técnicos literales —base `agente_minero`, empresa de prueba, `prompts/agente-minero.md`, ítem de menú— cambian en M-01/M-08 junto con el código) | 🟢 | Opus |
+| AGENTE-DOC-03 | Lenguaje "multi-vertical" en `doc/agente/` (los prompts y los textos de UI se renombran en M-01; los nombres de infraestructura —base `agente_minero`, `~/.agente-minero.env`, empresa de prueba, ítem de menú en `seg.menues`— **se mantienen**: renombrarlos rompe entornos armados sin aportar nada al usuario) | 🟢 | Opus |
 | AGENTE-DOC-04 | `README.md` con índice de los docs de agentes; CONTEXT-PACK con la serie ADR-A; `STATE.md` con el frente redefinido | 🟢 | Opus |
 
 **Gate:** el PM aprueba el PR y la ficha de los personajes.

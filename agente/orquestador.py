@@ -26,13 +26,16 @@ import logging
 
 import psycopg
 
-from . import rag
+from . import agentes, rag
+from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
 from .mcp_client import ClienteMCP, MCPError
-from .prompt import cargar as cargar_prompt
 
 log = logging.getLogger("agente.orquestador")
+
+# Quien responde cuando la consulta no dice a que agente va.
+AGENTE_POR_DEFECTO = "quirqui"
 
 
 @dataclass
@@ -43,6 +46,9 @@ class Consulta:
     usr_id: int | None = None
     usuario_nick: str | None = None
     canal: str = "chat_tools"
+    # El agente ya resuelto y con el acceso verificado (agentes.para_consulta).
+    # None = el agente por defecto.
+    agente: Agente | None = None
 
 
 @dataclass
@@ -71,6 +77,9 @@ class Orquestador:
 
         # RLS: sin esto no se ve ni se escribe nada de la empresa.
         await rag.fijar_empresa(con, consulta.empr_id)
+
+        if consulta.agente is None:
+            consulta.agente = await agentes.obtener(con, AGENTE_POR_DEFECTO)
 
         try:
             async with OpenRouter(self.cfg) as llm, ClienteMCP(
@@ -121,7 +130,7 @@ class Orquestador:
         ]
 
         # 3. Conversacion
-        sistema = cargar_prompt(self.cfg.prompt_path)
+        sistema = consulta.agente.sistema(self.cfg.prompts_dir)
         mensajes = [
             {"role": "system", "content": sistema},
             {"role": "system", "content":

@@ -41,6 +41,8 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 007 | `007-notificaciones.sql` | `dispositivo`, `notificacion` y `envio` — el puente de alertas de la Opción C |
 | 008 | `008-destinatarios-alerta.sql` | `destinatario_alerta` — quién recibe cada tipo de alerta, configurable por empresa |
 | 009 | `009-alcance-almacenes.sql` | Tipos de alerta de Almacenes y columna `modulo` en el conocimiento |
+| 010 | `010-seed-taxonomia.sql` | Taxonomía inicial de temas del entrevistador (propuesta para que el PM la corrija) |
+| 011 | `011-agentes.sql` | `agente` — la configuración de Kuntur, Quirqui y Faustino (ADR-A7): quién lo usa, prompt, tools permitidas, disparadores, fuentes y avatar. Global, igual para todos los clientes; el runtime solo la lee |
 
 Aplicación completa, desde el directorio del repo:
 
@@ -162,6 +164,10 @@ Los tipos cubren **las dos áreas del agente**: mantenimiento (`mtbf_deterioro`,
 
 El `rol_destino` de `agente.notificacion` queda como dato informativo (se copia de la etiqueta), no como mecanismo de resolución.
 
+### Por qué la configuración de los agentes no lleva `empr_id` (011)
+
+Los agentes son iguales para todos los clientes (decisión del PM, 2026-10-27): nombre, avatar, prompt y tools los define Trazalog. Por eso `agente.agente` no tiene RLS, y `agente_app` solo tiene `SELECT`: un bug del orquestador no puede, por ejemplo, abrirle el Coach a cualquier usuario. Dos reglas quedan como `CHECK` y no como convención: el Coach exige acceso `admin` (R1) y la autonomía solo puede ser `proponer` (R5). Para cambiar un agente se edita `011-agentes.sql` y se vuelve a aplicar: el seed actualiza por `clave`.
+
 ### El agente cubre Mantenimiento y Almacenes
 
 El esquema de E1 se escribió pensando solo en Mantenimiento — un sesgo que el PM detectó el 2026-09-02. La capa MCP expone las **dos** áreas (11 tools `man_*` y 9 `alm_*`), así que el script `009` amplía el esquema:
@@ -193,6 +199,18 @@ Aplicado y verificado el **2026-09-02** contra **PostgreSQL 16.15 con pgvector 0
 
 O sea que ADR-A4 no es una convención documentada: **se comprobó con el usuario real que el orquestador no puede escribir el conocimiento compartido**.
 
+### Verificación de `011` (2026-10-27, AGENTE-M-01)
+
+Sobre una base **descartable** (contenedor `pgvector/pgvector:0.8.7-pg16`), con `001..011` aplicados desde cero:
+
+| Qué se probó | Resultado |
+|---|---|
+| Aplicar `011` dos veces | ✅ idempotente |
+| `tests/test-estructura.sql` | ✅ **79 de 79** (los controles nuevos: los tres agentes, R1, R5, sin tools de escritura, `agente_app` solo lee) |
+| `tests/test-aislamiento.sql` | ✅ **16 de 16** |
+| Rollback de `011` y re-aplicación | ✅ borra la tabla y su registro; re-aplicado vuelve a dar 79/79 |
+| Conexión como `agente_orq` intentando `UPDATE agente.agente` | ✅ `permission denied` (`tests/test_agentes.py`) |
+
 ### Dos cosas que aparecieron al probar y están corregidas
 
 1. **El índice de deduplicación no podía usar `now()`.** PostgreSQL exige que las funciones del predicado de un índice sean `IMMUTABLE`; la primera versión fallaba con `functions in index predicate must be marked IMMUTABLE`. Se resolvió metiendo la ventana temporal **dentro** de la `dedupe_key`, lo que además la vuelve determinista.
@@ -204,7 +222,7 @@ O sea que ADR-A4 no es una convención documentada: **se comprobó con el usuari
 
 | Ambiente | Base | Estado |
 |---|---|---|
-| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ **Aplicado y verificado el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app` |
+| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ⏳ **`011` pendiente de aplicar por el PM** (hace falta el superusuario): sin él, el orquestador no sabe qué agente es y no responde |
 | Demo | a definir | ⏳ pendiente |
 | Producción | a definir | ⏳ pendiente |
 

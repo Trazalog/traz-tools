@@ -1,7 +1,7 @@
 -- =============================================================================
--- Test de estructura del esquema del Agente Minero
+-- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..007 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..011 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -215,6 +215,44 @@ FROM unnest(ARRAY['stock_critico', 'material_por_vencer', 'pedido_demorado']) AS
 WHERE c.conname = 'destinatario_tipo_ck';
 
 -- ---------------------------------------------------------------------------
+-- 011 - configuracion de los agentes (ADR-A7)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'tabla agente.agente existe',
+       to_regclass('agente.agente') IS NOT NULL, 'configuracion por agente';
+
+INSERT INTO _resultado
+SELECT 'agente ' || c || ' configurado',
+       EXISTS (SELECT 1 FROM agente.agente WHERE clave = c), ''
+FROM unnest(ARRAY['kuntur', 'quirqui', 'faustino']) AS c;
+
+INSERT INTO _resultado
+SELECT 'el coach exige acceso admin (R1)',
+       NOT EXISTS (SELECT 1 FROM agente.agente WHERE rol = 'coach' AND acceso <> 'admin')
+       AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'agente_coach_admin_ck'),
+       'constraint agente_coach_admin_ck';
+
+INSERT INTO _resultado
+SELECT 'autonomia fija en proponer (R5)',
+       EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'agente_autonomia_ck'), '';
+
+INSERT INTO _resultado
+SELECT 'ninguna tool de escritura en las listas (ADR-A8)',
+       NOT EXISTS (
+           SELECT 1 FROM agente.agente, unnest(tools_permitidas) AS t
+           WHERE t IN ('man_create_ot', 'alm_crear_pedido_materiales')
+              OR t LIKE '%crear%' OR t LIKE '%create%' OR t = '*'
+       ), 'las tools permitidas son solo de lectura';
+
+INSERT INTO _resultado
+SELECT 'agente_app solo lee agente.agente',
+       has_table_privilege('agente_app', 'agente.agente', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.agente', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.agente', 'UPDATE')
+       AND NOT has_table_privilege('agente_app', 'agente.agente', 'DELETE'),
+       'la configuracion la edita Trazalog, no el runtime';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -223,14 +261,15 @@ SELECT 'script ' || s || ' registrado en schema_version',
 FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
-    '008-destinatarios-alerta', '009-alcance-almacenes'
+    '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
+    '011-agentes'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
 -- Resultado
 -- ---------------------------------------------------------------------------
 \echo ''
-\echo '=== TEST DE ESTRUCTURA — Agente Minero ==='
+\echo '=== TEST DE ESTRUCTURA — agentes de IA ==='
 SELECT CASE WHEN ok THEN 'OK    ' ELSE 'FALLA ' END || control
        || CASE WHEN detalle <> '' THEN '  [' || detalle || ']' ELSE '' END AS resultado
 FROM _resultado

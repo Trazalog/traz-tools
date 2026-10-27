@@ -1,4 +1,4 @@
-"""Carga del system prompt desde prompts/agente-minero.md.
+"""Carga de los prompts de los agentes (prompts/<agente>.md).
 
 El archivo se relee en cada consulta si cambio en disco, asi se puede ajustar
 el prompt sin reiniciar el servicio. Los comentarios HTML se descartan: estan

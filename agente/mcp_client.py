@@ -125,7 +125,7 @@ class ClienteMCP:
         await self._rpc("initialize", {
             "protocolVersion": PROTOCOL_VERSION,
             "capabilities": {},
-            "clientInfo": {"name": "trazalog-agente-minero", "version": "0.1.0"},
+            "clientInfo": {"name": "trazalog-agentes", "version": "0.2.0"},
         })
 
     # ------------------------------------------------------------------ API

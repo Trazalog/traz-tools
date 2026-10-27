@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <!--
-  Chat del Agente Minero.
+  Chat con Quirqui, el Asistente del equipo.
 
   Esto es un FRAGMENTO, no una pagina: se inyecta en el #content del layout
   Admin, igual que cualquier otro modulo de Tools. Por eso no lleva <html>,
@@ -11,7 +11,7 @@
   <div class="box-header with-border">
     <h3 class="box-title">
       <i class="fa fa-comments-o"></i>
-      Agente Minero
+      Quirqui
       <small style="margin-left:8px">consultá sobre mantenimiento y almacenes</small>
     </h3>
   </div>
