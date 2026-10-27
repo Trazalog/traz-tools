@@ -1,0 +1,45 @@
+id: PAN-UC-003
+modulo: PAN
+titulo: Inhabilitar una herramienta que no está en condiciones de usarse
+perfil: Usuario
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-09-25
+referencias_codigo:
+  - repo: traz-comp-pan
+    path: controllers/Herramienta.php
+    detalle: "validarEstado() y setEstado()"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/.../data-services/PANDataservice.dbs
+    detalle: "validaEstadoHerramienta, setInhabilitacion, herramientasSetEstado"
+pantallas:
+  - "Herramientas → Herramientas → acción Inhabilitar / Habilitar"
+precondiciones:
+  - Existe una herramienta en estado Activa
+flujo_principal:
+  - paso: "Usa la acción Inhabilitar sobre una herramienta Activa"
+    resultado: "Se pide confirmación: '¿Está seguro que desea inhabilitar a la herramienta <código>?'"
+  - paso: "Confirma"
+    resultado: "Se pide una justificación, que es obligatoria"
+  - paso: "Escribe la justificación y guarda"
+    resultado: "La herramienta queda Inhabilitada y no se puede prestar más"
+  - paso: "Usa la acción Habilitar sobre esa herramienta"
+    resultado: "Vuelve a estado Activa"
+flujos_alternativos:
+  - nombre: "La herramienta está entregada"
+    pasos:
+      - paso: "Intenta inhabilitar una herramienta en estado Entregada"
+        resultado: "Se muestra el error 'No puede inhabilitar herramienta — No se puede inhabilitar mientras no vuelva a ser recepcionada' y la operación no se hace"
+validaciones:
+  - "Una herramienta Entregada no se puede inhabilitar: primero tiene que volver al pañol"
+  - "La justificación es obligatoria y queda registrada en la trazabilidad de la herramienta"
+  - "Una herramienta Inhabilitada no puede salir en un vale de entrega"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  precondicion: "una herramienta Activa y otra Entregada"
+dudas: []
+derivados:
+  ayuda: ayudas/src/pan/manual_herramientas.html#s05
+notas:
+  - "Las inhabilitaciones viven en su propia tabla y se mezclan con los vales en la trazabilidad (PAN-UC-006)."
