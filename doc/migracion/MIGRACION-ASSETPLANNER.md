@@ -45,7 +45,7 @@ asset se retira.
    Además asset ganó una capa de integración con tools que hay que traer (§2.3).
 4. **MAN no va a tener acceso directo a base de datos: todo pasa por DataServices** (decisión del
    PM, 2026-10-26). Es el cambio de mayor volumen respecto del plan de agosto (§3.2). A2, A3 y el
-   freeze (P1) se resolvieron el 2026-10-27, y la regla está escrita como ADR-014 (propuesto).
+   freeze (P1) se resolvieron el 2026-10-27, y la regla está escrita como ADR-014 (aceptado).
 5. **La migración tiene cuatro escalones.** (1) Llevar asset a tools como módulo **MAN**, con su
    bandeja de tareas tal como está (MIG-0 a MIG-6; el Plan de Mantenimiento rehecho es MIG-4).
    (2) Llevar esa bandeja a la bandeja de tools (MIG-7). (3) Cambiar cuándo se lanzan en Bonita las
@@ -288,7 +288,7 @@ como está y ADR-014 está aprobado.
 | 3. Ambiente local | Pendiente, **lo arma el PM**: XAMPP + VPN contra `assetv2` de DEV. Sin VPN no se pueden probar con `curl` las queries de `MANDataService` |
 | 4. CI mínimo | ✅ `man-ci.yml` (`traz-tools-man` PR #1), en verde sobre el fork: `php -l` con PHP 5.6, PHPCompatibility 5.6, checklist 0b y gitleaks. El 0b bloquea solo los archivos de `.ci/portados.txt` y del resto informa la cantidad |
 | 5. Credenciales (T5) | Pendiente, 🔴. **La rotación la hace el PM.** Sacarlas del repo toca `database.php` y `constants.php` de tools, que son core: necesita análisis de impacto aprobado |
-| 6. ADR-014 | ✅ Escrito, en estado *Propuesto* hasta que el PM lo apruebe. A2 y A3 resueltas. Falta verificar que el datasource escribe en TEST y PROD |
+| 6. ADR-014 | ✅ Aceptado por el PM el 2026-10-27, con la regla 4 agregada. A2 y A3 resueltas. Falta verificar que el datasource escribe en TEST y PROD |
 | 7. Freeze (P1) | ✅ Decidido: rige cuando cierren las pruebas de los dos frentes |
 | 8. `doc/vision-v3-context.md` | ✅ Corregido |
 
@@ -525,13 +525,15 @@ y a quién es funcional (P9).
 ### 3.4 Pruebas
 
 El oráculo es asset funcionando: mientras dure la migración, **asset y el módulo leen la misma
-base**, así que el mismo input tiene que dar la misma salida.
+base**, así que el mismo input tiene que dar la misma salida. **Definición del PM (2026-10-27): la
+prueba automática central de la migración es la de paridad (nivel 1)**: la misma operación hecha
+desde asset y desde MAN tiene que dar lo mismo. Las demás pruebas la complementan, no la reemplazan.
 
 | Nivel | Qué verifica | Cómo | Cuándo |
 |---|---|---|---|
 | 0 | Sintaxis y **compatibilidad con PHP 5.6** | `php -l` + `phpcs` PHPCompatibility 5.6 | Cada PR, bloqueante |
 | 0b | **Checklist de conversión por archivo**: cero `userdata('user_data')`, **cero `$this->db` y cero `assetDB`** (ningún acceso a base), cero URLs sin `MAN`, toda vista referenciada existe | Script propio (grep) | Cada PR, bloqueante |
-| 1 | **Paridad**: mismo endpoint, misma empresa y mismo usuario en asset y en el módulo, comparando el JSON normalizado | Script propio | Cada PR + nightly |
+| 1 | **Paridad (prueba principal, PM 2026-10-27)**: cada operación migrada se ejecuta **igual en asset y en MAN** (misma empresa, mismo usuario, mismos datos de entrada) y se comparan los resultados. Consultas: se compara la respuesta normalizada. Altas, cambios y bajas: se compara el estado que queda en `assetv2` después de cada una, sobre datos de prueba que se limpian al terminar | Script propio | Cada PR + nightly. **Ninguna operación se da por migrada sin su prueba de paridad en verde** |
 | 2 | Endpoints AJAX del módulo | Hurl | Cada PR |
 | 3 | **Aislamiento multi-tenant**: la empresa A no ve datos de la empresa B (cubre T1) | Patrón de `scripts/dev/verify-mcp-isolation.py` | Cada PR, bloqueante |
 | 4 | **Golden tests del motor** de planificación | PHPUnit | Cada PR de MIG-4 |
@@ -592,7 +594,7 @@ siguen abiertas.
 
 **A1 — Cómo accede a los datos el núcleo. ✅ Resuelta (PM, 2026-10-26):** todo por DataServices y
 ningún acceso directo (§3.1). Escrita como [ADR-014](../adr/ADR-014-man-acceso-datos-dataservices.md),
-con las tres reglas técnicas propuestas, que esperan la aprobación del PM.
+aceptado por el PM el 2026-10-27, que agregó la regla 4 (APIs con componentes nativos de WSO2).
 
 **A2 — Bonita y la creación de OT. ✅ Resuelta (PM, 2026-10-27): igual que hoy** (§3.1, ADR-014).
 El contexto era este: hoy no se puede crear una OT sin Bonita: si `lanzarProceso`
@@ -675,7 +677,7 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 
 ## 6. Próximo paso
 
-1. **El PM** aprueba ADR-014, mergea el CI de `traz-tools-man` (PR #1), arma el ambiente local con la
+1. **El PM** mergea el CI de `traz-tools-man` (PR #1), arma el ambiente local con la
    VPN y rota las credenciales (T5). La regla de doble bugfix (§3.5) ya rige: hay que avisarle a
    quien hoy toca asset.
 2. **Cierre de MIG-0**: protección de `develop-v3` en `traz-tools-man` con los checks del CI como

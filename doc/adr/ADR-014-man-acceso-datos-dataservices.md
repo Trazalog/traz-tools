@@ -1,6 +1,6 @@
 # ADR-014 — MAN accede a `assetv2` solo por DataServices
 
-- **Estado:** Propuesto. La decisión de fondo (A1) la tomó el PM el 2026-10-26. Las tres reglas técnicas de la sección "Decisión" son propuesta de Claude Code y esperan la aprobación del PM en el PR
+- **Estado:** Aceptado (PM, 2026-10-27). La decisión de fondo (A1) la tomó el PM el 2026-10-26; las reglas técnicas las propuso Claude Code y el PM las aprobó el 2026-10-27, agregando la regla 4
 - **Fecha:** 2026-10-27
 - **Contexto de decisión:** Decisión del PM 2026-10-26 (A1 de `doc/migracion/MIGRACION-ASSETPLANNER.md` §4). A2 y A3 los resolvió el PM el 2026-10-27
 - **Relacionado:** ADR-003 (mapeo PHP→WSO2), ADR-009 (identidad `X-JWT-Assertion`), ADR-012 (patrón BPM + rollback de `create_ot`), ADR-013 (fachada MCP)
@@ -42,6 +42,7 @@ editarse y se retiran. Toda query nueva o corregida para MAN entra a tools.
 | 1 | **Ids generados.** Todo insert cuyo id se usa después lo devuelve el DataService en la respuesta. Nada de `insert_id()` | La query del `.dbs` lleva `returnGeneratedKeys="true"` y `keyColumns="<pk>"` y devuelve el id en el JSON, igual que `ALMDataService.setNotaPedido`. El model devuelve ese id donde antes devolvía `insert_id()` |
 | 2 | **Varias escrituras que deben ser atómicas y no dependen entre sí** van en **un solo** `request_box` | El boxcarring (`enableBoxcarring="true"`, ya activo en `MANDataService`) ejecuta las operaciones del box en una sola transacción. En PHP se usa `requestBox()` de `wso2_helper.php`. **No** sirve cuando un paso necesita el id que generó otro: ese caso es la regla 3 |
 | 3 | **Operaciones encadenadas o que tocan varios subsistemas** (crear OT + caso Bonita, pedido + Bonita, generar una serie de OTs) **son un recurso de `toolsMANAPI`**, no una secuencia de llamadas desde PHP | Una sequence del MI que encadena los pasos y, si uno falla, **compensa** lo ya hecho (DELETE), con el mismo patrón que `create_ot` (ADR-012). PHP envía los datos y el API decide qué significan (`CLAUDE.md`). Los pasos de una sequence son transacciones separadas: la atomicidad la da la compensación, no la base |
+| 4 | **Las APIs se construyen con los componentes propios de WSO2** (mediadores nativos: `call`, `payloadFactory`, `property`, `filter`, `switch`, `iterate`/`foreach`, plantillas y sequences reutilizables), **no con código JavaScript** (`script` mediator) | Agregada por el PM el 2026-10-27. El `script` se usa **solo si no queda otra**, y en ese caso el PR explica por qué ningún componente nativo alcanza. Motivo: lo nativo es declarativo, se lee y se mantiene en la misma herramienta, y no esconde lógica de negocio en fragmentos de código |
 
 **Bonita al crear una OT (A2, PM 2026-10-27):** se replica la coreografía de asset tal cual. Si el
 lanzamiento del caso falla, la OT se borra (hoy en `controllers/Calendario.php:354-359` de asset).
