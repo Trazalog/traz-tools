@@ -533,7 +533,7 @@ desde asset y desde MAN tiene que dar lo mismo. Las demás pruebas la complement
 |---|---|---|---|
 | 0 | Sintaxis y **compatibilidad con PHP 5.6** | `php -l` + `phpcs` PHPCompatibility 5.6 | Cada PR, bloqueante |
 | 0b | **Checklist de conversión por archivo**: cero `userdata('user_data')`, **cero `$this->db` y cero `assetDB`** (ningún acceso a base), cero URLs sin `MAN`, toda vista referenciada existe | Script propio (grep) | Cada PR, bloqueante |
-| 1 | **Paridad (prueba principal, PM 2026-10-27)**: cada operación migrada se ejecuta **igual en asset y en MAN** (misma empresa, mismo usuario, mismos datos de entrada) y se comparan los resultados. Consultas: se compara la respuesta normalizada. Altas, cambios y bajas: se compara el estado que queda en `assetv2` después de cada una, sobre datos de prueba que se limpian al terminar | Script propio | Cada PR + nightly. **Ninguna operación se da por migrada sin su prueba de paridad en verde** |
+| 1 | **Paridad (prueba principal, PM 2026-10-27)**: cada operación migrada se ejecuta **igual en asset y en MAN** (misma empresa, mismo usuario, mismos datos de entrada) y se comparan los resultados. Consultas: se compara la respuesta normalizada. Altas, cambios y bajas: se compara el estado que queda en `assetv2` después de cada una, sobre datos de prueba que se limpian al terminar | Script propio, **corre en local con la VPN** (necesita llegar a asset y a `assetv2` de DEV, que GitHub no alcanza) | Antes de abrir cada PR; el resultado va en "Cómo lo verifiqué". **Ninguna operación se da por migrada sin su prueba de paridad en verde** |
 | 2 | Endpoints AJAX del módulo | Hurl | Cada PR |
 | 3 | **Aislamiento multi-tenant**: la empresa A no ve datos de la empresa B (cubre T1) | Patrón de `scripts/dev/verify-mcp-isolation.py` | Cada PR, bloqueante |
 | 4 | **Golden tests del motor** de planificación | PHPUnit | Cada PR de MIG-4 |
@@ -541,6 +541,12 @@ desde asset y desde MAN tiene que dar lo mismo. Las demás pruebas la complement
 
 Cada query nueva de `MANDataService` se prueba con `curl` contra el EI de DEV antes de que el PHP
 la use. Recordar que el script de deploy sube los DataServices pero **no las APIs** de WSO2.
+
+**Dónde corre cada nivel.** En GitHub Actions corren solo los niveles 0 y 0b (`man-ci.yml`), que no
+necesitan ningún ambiente. Los demás necesitan llegar a DEV por la VPN y corren en local. La
+organización está en el plan free de GitHub (PM, 2026-10-27): no se suman corridas programadas
+(nightly) ni jobs nuevos sin consultarlo, y el workflow se mantiene en un solo job, solo en PR y
+con filtro de rutas.
 
 Casos negativos obligatorios en MIG-4: frecuencia 0 no cuelga, `cant_meses` fuera de rango se rechaza,
 un plan por contador sin `lectura_base` da error controlado, y la empresa A pidiendo un plan de la B
