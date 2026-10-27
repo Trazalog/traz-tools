@@ -15,6 +15,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - El equipo tiene parámetros configurados (MAN-UC-016)
+produce:
+  - "Una lectura del parámetro, que es lo que dispara el predictivo cuando cruza un límite"
+depende_de:
+  - MAN-UC-016
 flujo_principal:
   - paso: "Entra a Mantenimiento → Registro de Parametros"
     resultado: "Se listan las lecturas ya cargadas con Equipo, Parámetro, Fecha y Valor"

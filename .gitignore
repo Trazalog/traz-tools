@@ -58,3 +58,17 @@ doc/v3/files.zip
 agente/__pycache__/
 tests/__pycache__/
 .pytest_cache/
+
+# Antigravity agents / skills locales
+.agents/
+
+# Conocimiento local del sistema (no versionar)
+AGENTS.md
+
+# QR generados al probar vistas públicas — artefactos, no código
+codigosQR/
+
+# Credenciales por ambiente del .car (scripts/deploy/deploymcp.sh)
+deploy/gcp/.env.car
+deploy/gcp/.env.car.*
+!deploy/gcp/.env.car.example

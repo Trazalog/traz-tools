@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Herramientas · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!--
+  Generado por doctest/generators/build-ayudas.ts — no editar a mano.
+  Contenido: ayudas/src/pan/manual_herramientas.html
+  Casos de uso que cubre: PAN-UC-001 a PAN-UC-006 (la consulta pública por QR se documenta cuando se defina su alcance)
+  Versión 1.0
+  (Sin fecha de generación a propósito: estampar el día hacía que regenerar el sitio produjera un
+  diff en TODOS los manuales aunque el contenido fuera idéntico, y eso terminaba en conflictos de
+  merge en cada PR. La versión sale del caso de uso, que es lo que de verdad cambia.)
+-->
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">T</div>
+        <span class="brand-name">TRAZA<span>LOG</span> TOOLS</span>
+      </div>
+      <div class="brand-sub">Manual · Herramientas</div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item" href="index.html" style="color:var(--amber);border-left-color:transparent">
+        <span class="nav-num" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span>
+        Volver al inicio
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">En este manual</div>
+      <a class="nav-item" href="#s01"><span class="nav-num">01</span> Cómo funciona el pañol</a>
+      <a class="nav-item" href="#s02"><span class="nav-num">02</span> Cargar una herramienta</a>
+      <a class="nav-item" href="#s03"><span class="nav-num">03</span> Entregar herramientas</a>
+      <a class="nav-item" href="#s04"><span class="nav-num">04</span> Recibir herramientas</a>
+      <a class="nav-item" href="#s05"><span class="nav-num">05</span> Sacar de circulación una herramienta</a>
+      <a class="nav-item" href="#s06"><span class="nav-num">06</span> Certificaciones y vencimientos</a>
+      <a class="nav-item" href="#s07"><span class="nav-num">07</span> La historia de una herramienta</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Otros manuales</div>
+      <a class="nav-item" href="manual_configuracion_inicial.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Configuración inicial</a>
+      <a class="nav-item" href="manual_alta_equipos_componentes.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Alta de equipos</a>
+      <a class="nav-item" href="manual_mantenimiento_correrctivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento correctivo</a>
+      <a class="nav-item" href="manual_mantenimeinto_preventivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento preventivo</a>
+      <a class="nav-item" href="manual_almacen_mantenimiento.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Almacén</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title">Manual de Usuario</span>
+        <span class="topbar-sub">· Herramientas</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a href="index.html" class="btn-home">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver al inicio
+        </a>
+        <span class="doc-code">PAN.001</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <section id="cover" class="section visible">
+        <div class="cover-tag">📋 Instructivo de procedimientos</div>
+        <div class="cover-title">Herramientas</div>
+        <div class="cover-sub">Cómo se cargan las herramientas del pañol, cómo se entregan y se reciben con vale, y cómo se controlan sus certificaciones.</div>
+        <div class="cover-meta">
+          <div class="cover-pill"><strong>PAN.001</strong></div>
+          <div class="cover-pill">Versión <strong>1.0</strong></div>
+          <div class="cover-pill">Módulo <strong>Herramientas</strong></div>
+          <div class="cover-pill"><strong>Trazalog Tools</strong></div>
+        </div>
+      </section>
+
+<section id="s01" class="section">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-meta">
+      <h2>Cómo funciona el pañol</h2>
+      <p>Qué resuelve el módulo y en qué orden conviene usarlo.</p>
+    </div>
+  </div>
+
+  <p>
+    El módulo de <strong>Herramientas</strong> lleva el registro de las herramientas de la empresa:
+    dónde está cada una, quién se la llevó, cuándo volvió y si tiene la certificación al día.
+  </p>
+
+  <p>El circuito es siempre el mismo y tiene tres momentos:</p>
+
+  <ol>
+    <li><strong>Se carga la herramienta una sola vez</strong>, con su código, su tipo y el pañol donde vive. Ahí se imprime su etiqueta con el código QR.</li>
+    <li><strong>Se entrega y se recibe</strong> cada vez que alguien la usa. Cada movimiento genera un vale numerado que se puede imprimir y firmar.</li>
+    <li><strong>Se controla</strong>: el sistema avisa cuándo una certificación está por vencer, y guarda todo lo que le pasó a la herramienta desde que se cargó.</li>
+  </ol>
+
+  <div class="callout">
+    <strong>Antes de empezar</strong> necesitás tener creado al menos un establecimiento con un pañol,
+    y los tipos de herramienta cargados. Si el desplegable de tipos aparece vacío al dar de alta,
+    es que falta ese paso.
+  </div>
+</section>
+
+<section id="s02" class="section">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-meta">
+      <h2>Cargar una herramienta</h2>
+      <p>El alta, los tipos y la etiqueta QR.</p>
+    </div>
+  </div>
+
+  <p>
+    Entrá a <strong>Herramientas</strong> y usá el botón <strong>Agregar</strong>. Todos los campos
+    del formulario son obligatorios.
+  </p>
+
+  <div class="screen-frame">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Alta Herramienta</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Herramientas / Agregar</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Alta Herramienta</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Establecimiento <span class="req">*</span></div><div class="val lista">Galpón</div></div>
+                <div class="screen-campo"><div class="et">Pañol <span class="req">*</span></div><div class="val lista">Pañol 1</div></div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Código <span class="req">*</span></div><div class="val foco">ZJ-218</div></div>
+                <div class="screen-campo"><div class="et">Descripción <span class="req">*</span></div><div class="val">Hidrolavadora</div></div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Modelo <span class="req">*</span></div><div class="val">HRQ194</div></div>
+                <div class="screen-campo"><div class="et">Tipo <span class="req">*</span></div><div class="val">Eléctrica · Precisión · Tungsteno</div></div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Marca <span class="req">*</span></div><div class="val lista">BAHCO</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="screen-footer"><span class="screen-btn">Guardar</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    En <strong>Tipo</strong> podés elegir <strong>más de uno</strong>. Cada tipo se muestra como una
+    etiqueta de color, y volviendo a hacer clic se quita. Una amoladora puede ser a la vez
+    <em>Eléctrica</em> y <em>De corte</em>, y conviene marcar todos los que correspondan: después se
+    puede filtrar el listado por tipo.
+  </p>
+
+  <p>
+    Apenas guardás, la herramienta queda en estado <strong>Activa</strong> y ya podés imprimir su
+    etiqueta con el botón del <strong>código QR</strong>. Esa etiqueta se pega en la herramienta y
+    sirve para consultarla desde el celular sin entrar al sistema.
+  </p>
+
+  <div class="callout">
+    <strong>El QR se puede reimprimir cuando quieras.</strong> Si la etiqueta se despegó o se borró,
+    volvé a usar el mismo botón sobre la herramienta: no hace falta dar de alta nada nuevo.
+  </div>
+</section>
+
+<section id="s03" class="section">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-meta">
+      <h2>Entregar herramientas</h2>
+      <p>El vale de entrega, que es el comprobante de quién se llevó qué.</p>
+    </div>
+  </div>
+
+  <p>
+    Entrá a <strong>Movimientos Herramientas</strong> y usá <strong>Nueva Entrega</strong>. Elegí el
+    establecimiento y el pañol, cargá los datos de quien retira, y agregá las herramientas una por una.
+  </p>
+
+  <div class="screen-frame">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Trazalog Tools · Nueva Entrega</span>
+      </div>
+      <div class="screen-body">
+        <div class="screen-app-bar">
+          <span class="marca">TRAZA<span>LOG</span> TOOLS</span>
+          <span class="ruta">/ Herramientas / Movimientos Herramientas</span>
+        </div>
+        <div style="padding:18px 22px">
+          <div class="screen-panel">
+            <div class="cab">Nueva Entrega</div>
+            <div class="cuerpo">
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr;display:grid">
+                <div class="screen-campo"><div class="et">Establecimiento <span class="req">*</span></div><div class="val lista">Est. San Juan</div></div>
+                <div class="screen-campo"><div class="et">Pañol <span class="req">*</span></div><div class="val lista">Pañol 1</div></div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr 1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Nombre y Apellido <span class="req">*</span></div><div class="val foco">Carlos Villagra</div></div>
+                <div class="screen-campo"><div class="et">DNI <span class="req">*</span></div><div class="val">43777990</div></div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Observaciones</div><div class="val">RM487C se entrega nueva y con estuche</div></div>
+              </div>
+              <div class="screen-campos" style="grid-template-columns:3fr 1fr;display:grid;margin-top:14px">
+                <div class="screen-campo"><div class="et">Herramientas <span class="req">*</span></div><div class="val lista">Seleccione una herramienta…</div></div>
+                <div class="screen-campo"><div class="et">&nbsp;</div><div class="val"><span class="screen-btn">Agregar</span></div></div>
+              </div>
+              <table class="screen-tabla" style="margin-top:14px">
+                <thead><tr><th>Código</th><th>Descripción</th></tr></thead>
+                <tbody>
+                  <tr><td>LLI444</td><td>Llave inglesa Stil 30" Model AB33</td></tr>
+                  <tr><td>RM487C</td><td>Retromartillo Bahco 487C</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="screen-footer"><span class="screen-btn">Guardar</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    Al guardar, la entrega queda registrada con un <strong>número de vale</strong> y las herramientas
+    pasan a estado <strong>Entregada</strong>. Desde el listado podés imprimir ese vale para que lo
+    firme quien se lleva las herramientas.
+  </p>
+
+  <div class="callout">
+    <strong>Una herramienta ya entregada no se puede volver a entregar.</strong> Si no aparece en el
+    selector, fijate en el listado: seguramente figura como <em>Entregada</em> y todavía no fue
+    recibida. Lo mismo pasa con las <em>Inhabilitadas</em>, que no pueden salir del pañol.
+  </div>
+</section>
+
+<section id="s04" class="section">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-meta">
+      <h2>Recibir herramientas</h2>
+      <p>Qué pasa cuando vuelven, y qué hacer si vuelven a medias.</p>
+    </div>
+  </div>
+
+  <p>
+    Se hace igual que la entrega, pero con <strong>Nueva Recepción</strong>. Elegís las herramientas
+    que vuelven y guardás: se genera un vale de entrada y las herramientas quedan otra vez
+    <strong>Activas</strong>, listas para prestarse de nuevo.
+  </p>
+
+  <div class="callout">
+    <strong>No hace falta devolver todo junto.</strong> Si de un vale de cinco herramientas vuelven
+    tres, recibís esas tres y listo: se genera el vale de entrada con lo que volvió. Las otras dos
+    siguen figurando como <em>Entregadas</em> y las recibís más adelante, con otro vale. No hay
+    ningún vale que "cerrar".
+  </div>
+
+  <p>
+    Si la herramienta salió de un pañol y la estás recibiendo en otro, el sistema te avisa antes de
+    guardar:
+  </p>
+
+  <div class="screen-frame">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Confirmación</span>
+      </div>
+      <div class="screen-body">
+        <div style="padding:26px 30px">
+          <div class="screen-hint">
+            Esta herramienta fue Entregada en <strong>Pañol 1</strong>.
+            ¿Está seguro que desea recepcionarla en <strong>Pañol 3</strong>?
+          </div>
+        </div>
+        <div class="screen-footer"><span class="screen-btn">Cancelar</span> <span class="screen-btn">Aceptar</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    No es un error: podés recibirla igual. El aviso está para que no cambies de lugar una herramienta
+    sin darte cuenta, porque a partir de ese momento va a figurar en el pañol nuevo.
+  </p>
+</section>
+
+<section id="s05" class="section">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-meta">
+      <h2>Sacar de circulación una herramienta</h2>
+      <p>Cuándo inhabilitar, y por qué a veces no se puede.</p>
+    </div>
+  </div>
+
+  <p>
+    Cuando una herramienta se rompe o necesita reparación, se <strong>inhabilita</strong> para que
+    nadie se la lleve. El sistema pide una justificación, que queda guardada en el historial.
+  </p>
+
+  <div class="screen-frame">
+    <div class="screen-card">
+      <div class="screen-bar">
+        <div class="screen-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="screen-caption">Inhabilitar</span>
+      </div>
+      <div class="screen-body">
+        <div style="padding:26px 30px">
+          <div class="screen-hint">Para inhabilitar debe ingresar una justificación</div>
+          <div class="screen-campo" style="margin-top:14px">
+            <div class="val foco">La herramienta funciona incorrectamente y puede causar daños físicos y materiales, hay que repararla</div>
+          </div>
+        </div>
+        <div class="screen-footer"><span class="screen-btn">Cancelar</span> <span class="screen-btn">Guardar</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    Cuando vuelva de la reparación, la misma acción la <strong>habilita</strong> de nuevo y queda
+    otra vez Activa.
+  </p>
+
+  <div class="callout">
+    <strong>Si la herramienta está entregada, no vas a poder inhabilitarla.</strong> El sistema te
+    va a decir <em>«No se puede inhabilitar mientras no vuelva a ser recepcionada»</em>. Es a
+    propósito: primero hay que registrar que volvió al pañol, y recién ahí sacarla de circulación.
+    Si la herramienta se rompió en obra, primero hacé la recepción y después inhabilitala.
+  </div>
+</section>
+
+<section id="s06" class="section">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-meta">
+      <h2>Certificaciones y vencimientos</h2>
+      <p>Cómo saber de un vistazo qué herramienta necesita atención.</p>
+    </div>
+  </div>
+
+  <p>
+    A cada herramienta se le pueden cargar sus certificaciones, con la fecha, el vencimiento, la
+    entidad que la emitió y el PDF adjunto. Se hace con el botón del pulgar sobre la herramienta.
+  </p>
+
+  <p>El listado te avisa solo cuando algo está por vencer o ya venció:</p>
+
+  <table class="screen-tabla">
+    <thead><tr><th>Lo que ves</th><th>Qué significa</th><th>Qué hacer</th></tr></thead>
+    <tbody>
+      <tr><td>Un triángulo <strong>naranja</strong></td><td>Tiene una certificación próxima a vencer</td><td>Ir gestionando la renovación</td></tr>
+      <tr><td>Un triángulo <strong>rojo</strong></td><td>Tiene al menos una certificación vencida</td><td>Renovarla cuanto antes</td></tr>
+      <tr><td>Sin triángulo</td><td>Las certificaciones están al día, o no tiene ninguna cargada</td><td>Nada</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Si pasás el mouse por encima del triángulo te dice cuál es el caso, y haciendo clic se abren
+    directamente las certificaciones de esa herramienta. Cuando hay alguna vencida se muestra solo el
+    triángulo rojo, aunque además haya otras por vencer: se avisa siempre de lo más urgente.
+  </p>
+
+  <div class="callout">
+    <strong>Para ver de una sola vez todo lo que necesita atención</strong>, marcá el filtro
+    <em>Cert. por vencer</em> arriba del listado. La grilla queda solo con las herramientas que tienen
+    triángulo naranja o rojo. Es la forma más rápida de preparar el trabajo de la semana.
+  </div>
+
+  <p>
+    Tené en cuenta que un vencimiento <strong>avisa pero no bloquea</strong>: una herramienta con la
+    certificación vencida se puede entregar igual. La decisión de prestarla o no es tuya; el sistema
+    se ocupa de que no se te pase por alto.
+  </p>
+</section>
+
+<section id="s07" class="section">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-meta">
+      <h2>La historia de una herramienta</h2>
+      <p>Todo lo que le pasó, desde que se cargó.</p>
+    </div>
+  </div>
+
+  <p>
+    El botón de información abre el detalle de la herramienta, con tres solapas:
+  </p>
+
+  <ul>
+    <li><strong>Trazabilidad</strong> — cada entrega, recepción, habilitación e inhabilitación, de la más reciente a la más vieja, con el número de vale, quién la tuvo, en qué pañol y la justificación o las observaciones.</li>
+    <li><strong>Certificaciones</strong> — las certificaciones cargadas con su vencimiento y el archivo adjunto.</li>
+    <li><strong>Checklists</strong> — los controles que se le hicieron, con la fecha y el responsable.</li>
+  </ul>
+
+  <p>
+    Todo se puede exportar a Excel o PDF. La exportación sale con los datos de la herramienta
+    —código, descripción, modelo y marca— y la fecha del día, así el archivo se entiende solo cuando
+    lo abrís meses después.
+  </p>
+
+  <div class="callout">
+    <strong>La misma información se puede ver desde el celular</strong>, escaneando la etiqueta QR
+    pegada en la herramienta, sin necesidad de entrar al sistema. Es útil en obra: antes de usar una
+    herramienta se puede verificar si la certificación está al día.
+  </div>
+</section>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script src="manual.js"></script>
+
+</body>
+</html>

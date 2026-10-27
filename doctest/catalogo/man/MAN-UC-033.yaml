@@ -17,6 +17,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Existe al menos un plan preventivo cargado (MAN-UC-014)
+depende_de:
+  - MAN-UC-014
 flujo_principal:
   - paso: "En el listado elige la acción Editar sobre una fila"
     resultado: "Se abren los datos para modificarlos"

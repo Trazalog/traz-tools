@@ -1,0 +1,56 @@
+id: MCP-UC-001
+modulo: MCP
+titulo: Consultar el pañol desde un agente de IA
+perfil: Usuario
+estado: borrador
+version: "0.1"
+origen: delta-PR#560
+referencias_codigo:
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMCPAPI.xml
+    detalle: "rutas /mcp/pan/herramientas, /mcp/pan/herramienta/{herr_id}, /mcp/pan/certificaciones y /mcp/pan/movimientos"
+  - repo: traz-tools
+    path: doc/api/trazalog-operaciones.yaml
+    detalle: "operationId pan_get_herramientas, pan_get_herramienta, pan_get_certificaciones, pan_get_movimientos"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/PANDataservice.dbs
+    detalle: "las queries que resuelven cada una"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/sequences/EmprIdFromHeader.xml
+    detalle: "resuelve el empr_id desde X-JWT-Assertion — ninguna tool lo recibe como parámetro"
+pantallas:
+  - "Conector de Trazalog en un agente de IA (Claude)"
+precondiciones:
+  - El conector está conectado y el usuario inició sesión con una empresa
+  - El rol del usuario tiene acceso al módulo de Herramientas
+flujo_principal:
+  - paso: "Le pide al agente las herramientas del pañol"
+    resultado: "Devuelve las herramientas de su empresa, con código, descripción, tipo, marca, modelo, pañol y estado"
+  - paso: "Le pide el detalle de una de ellas"
+    resultado: "Devuelve los datos de esa herramienta"
+  - paso: "Pregunta por las certificaciones"
+    resultado: "Devuelve las certificaciones con sus vencimientos"
+  - paso: "Pregunta por los movimientos"
+    resultado: "Devuelve las entregas y devoluciones registradas"
+flujos_alternativos:
+  - nombre: "Sin autorización"
+    pasos:
+      - paso: "El agente invoca la herramienta sin un token válido"
+        resultado: "El gateway responde 401 y no llega a la base"
+  - nombre: "Herramienta de otra empresa"
+    pasos:
+      - paso: "Pide el detalle de una herramienta que no es de su empresa"
+        resultado: "No se devuelven datos"
+validaciones:
+  - "Sólo se devuelven herramientas de la empresa del token"
+  - "El empr_id nunca viaja como parámetro: lo resuelve el MI desde X-JWT-Assertion (ADR-009)"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+dudas:
+  - "¿Un caso por tool o uno por pregunta del usuario? Acá se agruparon las cuatro pan_* en un caso porque desde el agente son una sola conversación, pero el catálogo de pantallas usa un caso por acción. Definir el criterio para MCP."
+  - "¿Qué perfiles deberían poder usar estas tools? Hoy el MCP no mira el rol: cualquier usuario con sesión ve todo lo de su empresa. ¿Se espera que respete los menúes por rol, como la pantalla?"
+  - "pan_get_herramienta pide un herr_id. ¿De dónde se espera que el agente lo saque — sólo del listado previo, o también por código?"
+notas:
+  - "Relevado el 2026-10-24 a partir del primer despliegue del MCP en producción. Ninguna tool MCP tenía caso en el catálogo."
+  - "Ya existen los .hurl que cubren estas cuatro tools — pan_get_herramientas, pan_get_herramienta, pan_get_certificaciones y pan_get_movimientos en tests/api-mcp/hurl/, verdes contra el gateway real el 2026-10-24. No se enlazan como derivados porque el caso está en borrador (regla R1): el enlace se agrega cuando el PM lo valide."
+derivados: {}

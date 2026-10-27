@@ -16,6 +16,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Hay informes cargados
+depende_de:
+  - MAN-UC-012
 flujo_principal:
   - paso: "En el listado usa el ícono 'Ver Informe' de una fila"
     resultado: "Se muestra el informe completo: qué se hizo, quiénes trabajaron, cuánto tiempo llevó y qué materiales figuran"

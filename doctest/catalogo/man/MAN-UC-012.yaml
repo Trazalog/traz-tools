@@ -17,6 +17,10 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - La orden de trabajo se ejecutó
+produce:
+  - "El informe de servicio de la orden, que la deja Terminada (`T`)"
+depende_de:
+  - MAN-UC-011
 flujo_principal:
   - paso: "Entra a Mantenimiento → Informe de Servicios"
     resultado: "Se muestra el listado con Nº Informe, Nº OT, Descripción, Tarea, Equipo, fechas y recursos humanos"
@@ -27,10 +31,12 @@ flujo_principal:
   - paso: "Confirma"
     resultado: "El informe queda cargado y a la espera de verificación"
 validaciones:
+  - "Insumos: lo pedido = lo entregado + lo pendiente; las entregas parciales se ven una por una"
+  - "Herramientas usadas: se asocian desde vales del pañol y muestran días de uso; el vale del pañolero no lo quita el mantenedor"
   - "Si el Supervisor rechaza el informe, **vuelve al Mantenedor para corregirlo** y presentarlo de nuevo"
   - "El informe queda asociado a la orden de trabajo"
 dudas:
   - "**Cuáles son las secciones del informe y qué se exige en cada una hay que relevarlo del código del guardado**, no del HTML ni de la base. El manual de ayuda existente habla de *cinco solapas*: falta contrastarlo con `Ordenservicio::setOrdenServ()` y ver qué valida antes de guardar."
 notas:
-  - "**Lo que el informe muestra como \"Insumos Usados\" es en realidad lo PEDIDO**, no lo entregado ni lo consumido. Se documenta así, tal como está. **Mejora anotada (PM, 2026-08-26): en próximas versiones va a mostrar lo entregado, cuando se complete la integración con el Almacenes de Tools —que está en curso.**"
-  - "El informe registra además un vale de salida con las herramientas usadas, pero es referencial: no mueve stock de pañol ni registra devolución."
+  - "**El informe separa lo pedido de lo entregado (F4).** La sección de insumos muestra Pedido / Entregado / Pendiente y, debajo, el **detalle de entregas** del almacén de Tools (comprobante, artículo, lote, depósito y cantidad; el precio no se muestra). Antes mostraba solo lo pedido."
+  - "**Herramientas usadas (F5):** el informe arma la lista desde los vales reales del pañol, con el **tiempo de uso en días** de cada herramienta. El mantenedor busca sus vales por DNI y los asocia; los permisos (def. 8) definen quién puede quitar cada vale según quién lo asoció."
