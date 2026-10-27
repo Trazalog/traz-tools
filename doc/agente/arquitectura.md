@@ -171,6 +171,8 @@ Decisión del PM: si una respuesta trae un número que no tiene origen, **se blo
 | La pregunta del usuario | "tengo 4 técnicos" → "con 4 técnicos…" |
 | La web (`web_buscar`), **solo si la respuesta cita la URL** | "7100 millones (https://…)" |
 
+**Lo que viene del contexto** (conocimiento, memoria, pantalla) respalda un número solo si **comparten alguna palabra de alrededor** (dos antes y tres después, sin las palabras vacías, con plurales y unidades abreviadas normalizados): "cada 250 horas" respalda "250hs", pero un "7" suelto de un calendario no respalda "7 órdenes vencidas" (D-51). Lo de las tools y de la pregunta sigue valiendo por valor.
+
 Admite redondeos a los decimales escritos (72 contra 71,83), porcentajes contra fracciones (72 % contra 0,72) y el separador de miles argentino (1.500 = 1500). **No controla** fechas, horas, códigos de letras y números (COMP-001, OT1234), marcadores de lista ni números chicos de discurso ("3 pasos", "2 opciones"; la lista de palabras es configurable en `PALABRAS_DE_DISCURSO`). Una norma como "ISO 55000" **sí** se controla: inventar una referencia normativa es tan grave como inventar un torque.
 
 En `controles` queda `{"control": "R4_cifras", "cifras": N, "sin_fuente": K}` en cada corrida. Los falsos positivos se ajustan mirando los incidentes.
@@ -188,7 +190,7 @@ El modelo ve el link de la ayuda y la pantalla de cada fragmento, así puede cit
 
 Los documentos **de una empresa** van a su memoria privada (`origen = 'ingesta'`), con RLS. Nunca al conocimiento compartido.
 
-**Limitación conocida del guardián de cifras (D-24):** compara valores, no significados. Con mucho conocimiento cargado, un número chico ("7") puede quedar respaldado por coincidencia con un fragmento que no tiene nada que ver. Ver la propuesta en `decisiones-para-revisar.md`.
+**Limitación del guardián de cifras (D-24) — resuelta (D-51):** con mucho conocimiento cargado, un número chico podía quedar respaldado por coincidencia ("7 órdenes vencidas" contra un "7" de un calendario de ejemplo). Ahora un número del contexto solo respalda si comparte alguna palabra de alrededor (ver "Ninguna cifra sin origen").
 
 ### Una industria, su conocimiento (ADR-A11, AGENTE-M-08)
 

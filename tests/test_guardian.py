@@ -122,6 +122,38 @@ def test_una_tool_web_no_valida_cifras_como_si_fuera_una_tool_de_datos():
     assert not _bloquea("Son 7100.", tools=[_tool("alm_get_stock", {"t": 7100})])
 
 
+# ======================================== numeros del contexto (D-24 / D-51)
+CALENDARIO_DE_AYUDA = ("Ayuda de Trazalog — Planificación\nOT Equipo Tarea Fecha\n"
+                       "3201 BOMB-001 Cambio de sellos Mensual 1\n3\n7\nPv 3206 BOMB-001\n8")
+
+
+def test_un_numero_suelto_del_contexto_no_respalda_un_dato_inventado():
+    """El caso real que aparecio con las ayudas cargadas: un "7" de un
+    calendario de ejemplo respaldaba "tenes 7 ordenes vencidas"."""
+    assert _bloquea("Tenés 7 órdenes vencidas.", contexto=CALENDARIO_DE_AYUDA)
+
+
+@pytest.mark.parametrize("respuesta,contexto", [
+    ("Cambiá el filtro cada 250 horas.", "Cambiar el filtro cada 250 horas de operación."),
+    ("Cambiá el filtro cada 250hs.", "Cambiar el filtro cada 250 horas."),          # unidad abreviada
+    ("El 80 % de las fallas son de rodamientos.", "El 80% de las fallas en bombas son de rodamientos."),
+    ("Revisá las órdenes: son 12 órdenes.", "Hay 12 órdenes abiertas en la planta."),  # plural/singular
+])
+def test_el_mismo_dato_del_contexto_si_respalda(respuesta, contexto):
+    assert not _bloquea(respuesta, contexto=contexto)
+
+
+def test_el_mismo_numero_hablando_de_otra_cosa_no_respalda():
+    assert _bloquea("El 80 % del stock está vencido.",
+                    contexto="El 80% de las fallas en bombas son de rodamientos.")
+
+
+def test_las_tools_y_la_pregunta_siguen_valiendo_por_valor():
+    """Ahi el dato es estructurado o lo dijo el usuario: no se pide entorno."""
+    assert not _bloquea("Tenés 7 órdenes vencidas.", tools=[_tool("man_get_ots", {"vencidas": 7})])
+    assert not _bloquea("Con 7 técnicos alcanza.", pregunta="Somos 7 personas, ¿alcanza?")
+
+
 # ======================================================= en el orquestador
 async def _conectar_o_saltear():
     cfg = Config()

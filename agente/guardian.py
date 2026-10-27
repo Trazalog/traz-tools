@@ -36,12 +36,14 @@ Una norma como "ISO 55000" SI se controla: inventar una referencia normativa
 es tan grave como inventar un torque (prompts/quirqui.md, "Cuando no sabes").
 
 Las decisiones de criterio de este modulo estan en
-doc/agente/decisiones-para-revisar.md (D-15 a D-19).
+doc/agente/decisiones-para-revisar.md (D-15 a D-19, y D-51: los numeros del
+contexto respaldan solo si comparten alguna palabra de alrededor).
 """
 from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 
@@ -210,6 +212,64 @@ def _es_de_discurso(texto: str, m: re.Match) -> bool:
     return bool(siguiente and siguiente.group(1).lower() in PALABRAS_DE_DISCURSO)
 
 
+# ----------------------------------------- numeros del contexto, con su entorno
+# El contexto (conocimiento, memoria, pantalla) es texto libre y largo: un "7"
+# cualquiera aparece en algun lado. Por eso ahi un numero solo respalda a uno
+# de la respuesta si COMPARTEN ALGUNA PALABRA de alrededor: "7 ordenes" no es
+# "7 de abril", y "cada 250 horas" si es "250 horas". Corrige la limitacion
+# D-24. Lo de las tools y de la pregunta sigue valiendo por valor: ahi el dato
+# es estructurado o lo dijo el propio usuario.
+
+_STOP = frozenset("""
+a al ante bajo cada como con contra de del desde donde durante el en entre es esta este
+hasta la las le lo los mas menos o para pero por que se segun si sin sobre son su sus
+tambien tenes tiene tienen un una uno unos unas y ya hay quedan queda total
+""".split())
+_UNIDADES = {"hs": "hora", "h": "hora", "hr": "hora", "hrs": "hora", "hora": "hora",
+             "min": "minuto", "mins": "minuto", "seg": "segundo", "un": "unidad",
+             "u": "unidad", "lt": "litro", "lts": "litro", "l": "litro", "kg": "kilo",
+             "kgs": "kilo", "km": "kilometro", "nm": "nm"}
+_PALABRA = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+")
+ANTES, DESPUES = 2, 3   # cuantas palabras de cada lado forman el entorno
+
+
+def _normal(palabra: str) -> str:
+    p = unicodedata.normalize("NFKD", palabra.lower())
+    p = "".join(c for c in p if not unicodedata.combining(c))
+    if p in _UNIDADES:
+        return _UNIDADES[p]
+    if p.endswith("es") and len(p) > 4:
+        p = p[:-2]
+    elif p.endswith("s") and len(p) > 3:
+        p = p[:-1]
+    return _UNIDADES.get(p, p)
+
+
+def _entorno(texto: str, ini: int, fin: int) -> frozenset[str]:
+    """Las palabras con significado alrededor de un numero (sin las vacias)."""
+    def utiles(trozo):
+        return [n for n in (_normal(w) for w in _PALABRA.findall(trozo)) if n not in _STOP]
+    antes = utiles(texto[max(0, ini - 60):ini])[-ANTES:]
+    despues = utiles(texto[fin:fin + 80])[:DESPUES]
+    return frozenset(antes + despues)
+
+
+def _numeros_con_entorno(texto: str) -> list[tuple[str, frozenset[str]]]:
+    return [(m.group(0), _entorno(texto, m.start(), m.end())) for m in _NUMERO.finditer(texto)]
+
+
+def _origen_en_contexto(token: str, entorno: frozenset[str],
+                        contexto: list[tuple[str, frozenset[str]]]) -> bool:
+    for fuente, entorno_fuente in contexto:
+        if not _tiene_origen(token, _interpretaciones(fuente)):
+            continue
+        # Sin palabras de alrededor en la respuesta ("Son 7.") no hay con que
+        # comparar: vale el valor. Si las hay, tienen que compartir alguna.
+        if not entorno or (entorno & entorno_fuente):
+            return True
+    return False
+
+
 # --------------------------------------------------------------- veredicto
 def revisar(respuesta: str, *, tools: list[tuple[str, str]], contexto: str = "",
             pregunta: str = "") -> Veredicto:
@@ -217,7 +277,8 @@ def revisar(respuesta: str, *, tools: list[tuple[str, str]], contexto: str = "",
 
     tools: [(nombre_de_tool, contenido_que_vio_el_modelo), ...]
     """
-    fuentes = _numeros_en(contexto) | _numeros_en(pregunta)
+    fuentes = _numeros_en(pregunta)
+    del_contexto = _numeros_con_entorno(contexto)
     web_textos: list[str] = []
     for nombre, contenido in tools:
         if not contenido:
@@ -243,6 +304,8 @@ def revisar(respuesta: str, *, tools: list[tuple[str, str]], contexto: str = "",
             continue
         v.cifras.append(token)
         if _tiene_origen(token, fuentes):
+            continue
+        if _origen_en_contexto(token, _entorno(limpio, m.start(), m.end()), del_contexto):
             continue
         if _tiene_origen(token, fuentes_web):
             if not cita_web:
