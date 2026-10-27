@@ -234,6 +234,9 @@ define('REST_ALM', HOST.'/services/ALMDataService');
 define('REST_PRD', HOST.'/services/PRDDataService');
 define('REST_BPM', HOST.'/tools/bpm');
 define('REST_CORE', HOST.'/services/COREDataService');
+// Bandeja de entrada paginada (traz-comp-bpm Procesos::listarPaginaServerSide). Con guarda para poder
+// apuntarla a otro MI desde config/<ENVIRONMENT>/constants.php
+defined('REST_BANDEJA') OR define('REST_BANDEJA', HOST.'/services/BandejaDataService');
 define('REST_FRM', HOST.'/services/FRMDataService');
 define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
 
@@ -279,12 +282,14 @@ if (!defined('AGENTE_DNATO_OAUTH')) {
 define('REST_PRD_ETAPAS', HOST.'/services/PRDEtapaDataService');
 define('REST_LOG', HOST.'/services/LOGDataService');
 define('REST_PRD_NOCON', HOST.'/services/PRDNoConsumiblesDataService');
+define('REST_KPI', HOST.'/services/ToolsKPIDataService');
 define('REST_TST', HOST.'/services/TARDataService');
 define('REST_API_BPM', HOST.'/tools/bpm/proceso/instancia');
 define('REST_TDS', HOST.'/services/TrazabilidadDataService');
 define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
+define('REST_MAN', HOST.'/services/MANDataService'); // REQ-ASSET-ALM F6
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
 define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
@@ -321,3 +326,6 @@ define('EMPRESAS_RESI_ADMIN', json_encode([1]));
 
 // RESIDUOS - IDs para camiones con tolva/contenedor
 define('TIPOS_VEHICULOS_TOLVA', 999);
+
+// PAÑOL - dias aviso vencimiento certificado
+define('dias_vencimiento', 30);

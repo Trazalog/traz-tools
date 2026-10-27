@@ -16,12 +16,12 @@
 #  ORDEN — este script NO actualiza la definicion de la API: la exporta tal
 #  como esta en el APIM y la reimporta. Si sumaste tools, ANTES hay que subir
 #  doc/api/trazalog-operaciones.yaml en Publisher > la API > API definition
-#  (paso B.1 del procedimiento). Corriendo esto sin ese paso previo, la API se
+#  (paso 3 del procedimiento). Corriendo esto sin ese paso previo, la API se
 #  recrea con las operaciones viejas.
 #
-#  Este script es el paso B.2 de doc/mcp/republicar-mcp-server.md, que tiene
-#  el procedimiento completo (MI, API, MCP Server, verificacion) y las trampas
-#  conocidas. Leelo antes; aca no se repite.
+#  Este script es el paso 4 de doc/mcp/republicar-mcp-server.md, que tiene los
+#  8 pasos completos (MI, API, MCP Server, verificacion) y la tabla de sintomas.
+#  Leelo antes; aca no se repite.
 #
 #  USO:
 #     bash recrear-api-y-mcp.sh              # plan, no toca nada

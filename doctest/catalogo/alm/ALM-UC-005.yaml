@@ -3,27 +3,38 @@ modulo: ALM
 titulo: Consultar el stock por establecimiento y depósito
 perfil: Responsable de Almacén
 estado: validado
-version: "1.0"
+version: "1.1"
 origen: baseline
 fecha_validacion: 2026-08-25
 referencias_codigo:
   - repo: traz-comp-almacenes
     path: controllers/Lote.php
-    detalle: "indexStock(), filtrarListadoStock(), Listar_tabla_stock(), getDepositos()"
+    detalle: "indexStock() dibuja la pantalla, filtrarListadoStock() y Listar_tabla_stock() la alimentan, getDataTable() es el server-side de la grilla y getDepositos() limita los depósitos al establecimiento"
   - repo: traz-comp-almacenes
     path: models/Lotes.php
+  - repo: traz-comp-almacenes
+    path: views/stock/list.php
+    detalle: "los filtros"
+  - repo: traz-comp-almacenes
+    path: views/stock/table_list.php
+    detalle: "la grilla y el modal de la acción Info"
 pantallas:
   - "Almacenes → Stock"
 precondiciones:
-  - Sesión iniciada en Tools
-  - La empresa tiene establecimientos y depósitos definidos
+  - "Sesión iniciada en Tools"
+  - "Hay existencias cargadas: entran al sistema por una recepción (ALM-UC-009)"
+  - "La empresa tiene establecimientos y depósitos — los crea el alta de la empresa (DNATO-UC-004)"
+depende_de:
+  - ALM-UC-009
 flujo_principal:
   - paso: "Entra a Almacenes → Stock"
     resultado: "Se muestran los filtros: Establecimiento, Depósito, Tipo de Artículo, Artículo y la opción de incluir artículos con stock en cero"
   - paso: "Elige un establecimiento"
     resultado: "El desplegable de depósitos se limita a los de ese establecimiento"
   - paso: "Hace clic en 'Filtrar'"
-    resultado: "Se listan las existencias que cumplen el filtro"
+    resultado: "Se listan las existencias que cumplen el filtro, con las columnas Acciones, Código, Producto, Tipo de Articulo, N° Lote, Establecimiento, Depósito, Unidad de Medida y Stock"
+  - paso: "Usa el buscador o cambia de página de la grilla"
+    resultado: "La grilla se actualiza. La búsqueda, el orden y el paginado los resuelve el servidor, no el navegador"
   - paso: "Hace clic en 'Limpiar'"
     resultado: "Los filtros vuelven a su valor inicial"
 flujos_alternativos:
@@ -35,7 +46,7 @@ flujos_alternativos:
         resultado: "El listado agrega los artículos cuya existencia es cero"
 validaciones:
   - "La cantidad que muestra esta pantalla es la **existencia física**: lo que hay, sin descontar lo comprometido en pedidos"
-  - "Es una pantalla de consulta: no permite operar sobre el stock"
+  - "Es una pantalla de consulta: no permite operar sobre el stock. La acción **Info** de cada fila abre una ficha del lote; **no modifica nada**"
   - "El stock listado corresponde solo a la empresa de la sesión"
   - "Los depósitos ofrecidos son los del establecimiento elegido"
 dudas: []
@@ -43,4 +54,6 @@ derivados:
   ayuda: ayudas/src/alm/manual_almacenes.html#s09
   feature: features/alm/ALM-UC-005.consultar-el-stock-por-establecimiento-y-deposit.feature
 notas:
+  - "**La pantalla se rehizo en `develop` (v2.4.x)** mientras `develop-v3` estaba congelada: `views/stock/list.php` y `views/stock/table_list.php` son nuevos, y la grilla pasó a paginarse contra el servidor (`Lote/getDataTable`)."
+  - "El modal de la acción Info contiene un formulario de edición (`formEdicion`, campos `_edit`) que **no está conectado a nada**: no tiene botón de envío ni destino, y la única llamada de la vista es la del paginado. Por eso la pantalla sigue siendo de consulta. Anotado como hallazgo H-062."
   - "La existencia **disponible** —física menos lo comprometido— es otra cosa y se usa en el punto de pedido (ALM-UC-015)."

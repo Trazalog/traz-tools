@@ -9,9 +9,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "test:smoke": "node scripts/pw.mjs --grep @smoke --grep-invert \"@quarantine|@alta-empresa\" --pass-with-no-tests",
+    "test:smoke": "node scripts/pw.mjs --grep @smoke --grep-invert \"@quarantine|@alta-empresa|@ciclo\" --pass-with-no-tests",
     "test:module": "node scripts/test-module.mjs",
-    "test:all": "node scripts/pw.mjs --grep-invert \"@quarantine|@alta-empresa\" --pass-with-no-tests",
+    "test:all": "node scripts/pw.mjs --grep-invert \"@quarantine|@alta-empresa|@ciclo\" --pass-with-no-tests",
     "test:alta-empresa": "node scripts/pw.mjs --grep @alta-empresa",
     "test:list": "node scripts/pw.mjs --list --pass-with-no-tests",
     "test:quarantine": "node scripts/pw.mjs --grep @quarantine --pass-with-no-tests",
@@ -26,7 +26,9 @@
     "typecheck": "tsc --noEmit",
     "hurl:install": "bash scripts/install-hurl.sh",
     "verificar:asset": "tsx tests/e2e/seeds/verificar-ingreso-asset.ts",
-    "ayudas:unico": "tsx generators/sitio-en-un-archivo.ts"
+    "ayudas:unico": "tsx generators/sitio-en-un-archivo.ts",
+    "test:ciclo": "node scripts/pw.mjs --grep @ciclo",
+    "flujo": "tsx generators/flujo-de-datos.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

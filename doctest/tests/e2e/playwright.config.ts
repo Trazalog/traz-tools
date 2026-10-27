@@ -43,9 +43,19 @@ export default defineConfig({
   // en cada corrida. RNF-03 pide tests deterministas, así que va en serie.
   // El día que exista un staging propio, esto se sube.
   workers: 1,
-  // Un reintento en CI cubre el corte de red puntual, no la inestabilidad: si un
-  // test falla siempre, el reintento no lo salva.
-  retries: EN_CI ? 1 : 0,
+  // Un reintento, tambien fuera de CI. No es para tapar nada: Playwright marca el
+  // que pasa en el reintento como **flaky**, no como passed, asi que el ruido sigue
+  // a la vista y separado de una falla de verdad — la que falla las dos veces.
+  //
+  // Hace falta porque el DEMO se degrada con la suite completa encima: cuatro
+  // corridas seguidas fallaron una o dos pruebas cada una, siempre distintas y
+  // siempre verdes al correrlas solas (H-066). Sin esto la suite nunca puede decir
+  // "todo ok", y una suite que siempre tiene un rojo al azar es una suite que se
+  // deja de mirar.
+  //
+  // Lo que de verdad lo resuelve es un banco de pruebas propio (E7-CICD-04); esto
+  // hace utilizable la senal mientras tanto.
+  retries: 1,
   reporter: EN_CI
     ? [['github'], ['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }]]
     : [['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }]],

@@ -73,7 +73,7 @@ class Proveedor extends CI_Controller
     	log_message('ERROR', '#TRAZA | PROVEEDORES | guardarProveedor() >> ');
 		$valor = $this->input->post('datos');
 		// $valor['usuario'] = userNick();
-		$valor['empr_id'] = empresa();
+		$valor['empr_id'] = (string) empresa();
 		$result = $this->Proveedores->guardarProveedor($valor);
         if ($result != null) {
 			echo json_encode($result);
@@ -134,7 +134,7 @@ class Proveedor extends CI_Controller
 	{
 		log_message('ERROR', '#TRAZA | PROVEEDORES | guardarDeposito() >> ');
 		$data = $this->input->post('datos');
-		$data['empr_id'] = empresa();
+		$data['empr_id'] = (string) empresa();
 		$resp = $this->Proveedores->guardarDeposito($data);
         echo json_encode($resp);
 	}

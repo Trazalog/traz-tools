@@ -9,8 +9,9 @@ Característica: Ejecutar una orden de trabajo y pedir los materiales
   Dónde: Mantenimiento → Ordenes de trabajo → Ejecutar
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
-    Y Existe una orden de trabajo programada
+    Dado Sesión iniciada en AssetPlanner con perfil Mantenedor
+    Y Existe una orden de trabajo programada, creada con MAN-UC-009
+    Y La tarea llegó a su bandeja de entrada (MAN-UC-019)
 
   Escenario: Camino principal
     Cuando Abre la orden de trabajo y elige ejecutarla

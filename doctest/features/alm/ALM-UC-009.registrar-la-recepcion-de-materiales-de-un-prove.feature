@@ -9,9 +9,9 @@ Característica: Registrar la recepción de materiales de un proveedor
   Dónde: Almacenes → Recepción Materiales · Almacenes → Recepción Materiales → Agregar
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y La empresa tiene proveedores y depósitos cargados
-    Y Los artículos a recibir están dados de alta
+    Dado Sesión iniciada en Tools con perfil Responsable de Almacén
+    Y Los artículos a recibir están dados de alta (ALM-UC-002)
+    Y La empresa tiene proveedores y depósitos — el depósito lo crea el alta de la empresa (DNATO-UC-004)
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Recepción Materiales

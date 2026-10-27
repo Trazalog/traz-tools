@@ -17,6 +17,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - Existe un equipo activo
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "En la columna Acciones del listado elige Eliminar"
     resultado: "El sistema pide confirmación"

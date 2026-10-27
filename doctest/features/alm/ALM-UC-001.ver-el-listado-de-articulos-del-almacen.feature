@@ -11,6 +11,7 @@ Característica: Ver el listado de artículos del almacén
   Antecedentes:
     Dado Sesión iniciada en Tools
     Y El rol tiene asignado el menú de Almacenes
+    Y Hay artículos cargados (los da de alta ALM-UC-002). Sin ellos la grilla aparece vacía, que es un caso válido y está contemplado
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Articulos

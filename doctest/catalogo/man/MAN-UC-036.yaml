@@ -15,6 +15,8 @@ pantallas:
 precondiciones:
   - Sesión iniciada en AssetPlanner
   - El equipo tiene componentes asociados (MAN-UC-006)
+depende_de:
+  - MAN-UC-006
 flujo_principal:
   - paso: "En la tabla de componentes del equipo elige Editar asociación"
     resultado: "Se pueden cambiar el código trazable y el sistema de esa asociación"

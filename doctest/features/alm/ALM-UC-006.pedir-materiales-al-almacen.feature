@@ -9,8 +9,8 @@ Característica: Pedir materiales al almacén
   Dónde: Almacenes → Pedido Materiales · Almacenes → Pedido Materiales → Agregar
 
   Antecedentes:
-    Dado Sesión iniciada en Tools
-    Y La empresa tiene artículos cargados
+    Dado Sesión iniciada en Tools con perfil Solicitante
+    Y Hay artículos en el maestro para pedir: los carga el Responsable de Almacén con ALM-UC-002. **Una empresa recién creada no tiene ninguno**
 
   Escenario: Camino principal
     Cuando Entra a Almacenes → Pedido Materiales

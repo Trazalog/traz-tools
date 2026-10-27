@@ -16,6 +16,10 @@ pantallas:
   - "Mantenimiento → Componentes → Nuevo"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+produce:
+  - "Un componente disponible para asignar a un equipo"
+depende_de:
+  - DNATO-UC-004
 flujo_principal:
   - paso: "Abre el alta de componentes"
     resultado: "Se muestra el formulario"

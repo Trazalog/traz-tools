@@ -17,6 +17,8 @@ pantallas:
   - "Mantenimiento → Equipos"
 precondiciones:
   - Sesión iniciada en AssetPlanner
+depende_de:
+  - MAN-UC-002
 flujo_principal:
   - paso: "Se da de alta el equipo (MAN-UC-002)"
     resultado: "Nace activo y ya puede recibir solicitudes, planes y órdenes de trabajo"

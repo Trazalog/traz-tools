@@ -73,13 +73,22 @@ async function intentarIngreso(nav: Browser, url: string, usuario: string, clave
   return page;
 }
 
+// Un usuario concreto, con su clave. Sirve para sacarse la ambigüedad de encima: los cinco
+// usuarios por defecto se llaman siempre igual (usuario@, almacen@, …) y solo cambia el dominio,
+// así que si dos empresas comparten dominio no hay forma de saber a cuál pertenece el que probaste
+// — y un rechazo puede ser de una empresa vieja, anterior al arreglo. El administrador de una
+// empresa recién creada, en cambio, es inequívoco.
+const usuarioSuelto = argumento('usuario');
+const claveSuelta = argumento('clave') || process.env.DOCTEST_SEED_PASSWORD;
+
 // Es el dominio CORPORATIVO que se cargó en el alta, no el del correo con que se registró: los
 // usuarios por defecto se arman como <alias>@<dominio corporativo>.
 const dominio = argumento('dominio') || process.env.DOCTEST_SEED_DOMINIO;
-if (!dominio) {
+if (!usuarioSuelto && !dominio) {
   console.error(
     'Falta el dominio corporativo de la empresa — es el que se cargó en el alta, no el del correo\n' +
-    'del administrador. Pasalo con  --dominio miempresa.com  o completá DOCTEST_SEED_DOMINIO en .env.',
+    'del administrador. Pasalo con  --dominio miempresa.com  o completá DOCTEST_SEED_DOMINIO en .env.\n' +
+    'O probá un usuario puntual:  --usuario alguien@empresa.com --clave <clave>',
   );
   process.exit(1);
 }
@@ -87,23 +96,33 @@ if (!dominio) {
 // Si falta la URL en el .env, esto falla diciendo exactamente qué variable completar.
 const urlAsset = requerirUrlDeApp('man');
 console.log(`\nVerificando el ingreso a AssetPlanner — issue #489`);
-console.log(`Empresa (dominio): ${dominio}`);
+console.log(usuarioSuelto ? `Usuario:           ${usuarioSuelto}` : `Empresa (dominio): ${dominio}`);
 console.log(`AssetPlanner:      ${urlAsset}\n`);
 
 const nav = await chromium.launch();
 let entro: Page | null = null;
 let quien = '';
 
-for (const [alias, rol] of USUARIOS_POR_DEFECTO) {
-  if (entro) break;
-  const usuario = `${alias}@${dominio}`;
-  entro = await intentarIngreso(nav, urlAsset, usuario, CLAVE_POR_DEFECTO);
-  if (entro) quien = `${usuario} (${rol})`;
+if (usuarioSuelto) {
+  if (!claveSuelta) {
+    console.error('Falta la clave: pasala con --clave o dejá DOCTEST_SEED_PASSWORD en .env.');
+    await nav.close();
+    process.exit(1);
+  }
+  entro = await intentarIngreso(nav, urlAsset, usuarioSuelto, claveSuelta);
+  if (entro) quien = usuarioSuelto;
+} else {
+  for (const [alias, rol] of USUARIOS_POR_DEFECTO) {
+    if (entro) break;
+    const usuario = `${alias}@${dominio}`;
+    entro = await intentarIngreso(nav, urlAsset, usuario, CLAVE_POR_DEFECTO);
+    if (entro) quien = `${usuario} (${rol})`;
+  }
 }
 
 if (!entro) {
   console.log(`
-✘ Ninguno de los usuarios por defecto pudo entrar.
+✘ No pudo entrar.
 
    Si el arreglo del hash ya se desplegó, tené en cuenta que **solo aplica a los usuarios creados
    después**: los que ya existían siguen con la contraseña en texto plano en 'sisusers'. Para
