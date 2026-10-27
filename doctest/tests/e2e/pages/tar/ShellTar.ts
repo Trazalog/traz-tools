@@ -68,7 +68,8 @@ export class ShellTar {
     await this.cerrarModales();
     const ruta = RUTAS_TAR[pantalla];
     const base = ruta.split('?')[0];
-    const item = this.page.locator(`.sidebar-menu a[onclick*="${base}"]`).first();
+    // Sin distinguir mayúsculas: el menú usa `.../tarea` y la ruta del controller es `.../Tarea`.
+    const item = this.page.locator(`.sidebar-menu a[onclick*="${base}" i]`).first();
     if (await item.count()) {
       // El menú puede estar colapsado: el click va igual por el onclick del <a>.
       await item.evaluate((a: HTMLElement) => a.click());
@@ -102,7 +103,7 @@ export class ShellTar {
   async tieneMenu(pantalla: PantallaTar): Promise<boolean> {
     await this.enElShell();
     const base = RUTAS_TAR[pantalla].split('?')[0];
-    return (await this.page.locator(`.sidebar-menu a[onclick*="${base}"]`).count()) > 0;
+    return (await this.page.locator(`.sidebar-menu a[onclick*="${base}" i]`).count()) > 0;
   }
 
   /** Espera a que se vaya el "Cargando ..." global (`wo()`/`wc()`) y los overlays de caja. */

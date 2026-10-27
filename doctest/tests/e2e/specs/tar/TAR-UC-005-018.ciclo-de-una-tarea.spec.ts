@@ -112,15 +112,27 @@ async function tareaRecargada(pl: PlanificacionPage, nombre: string, hito = HITO
 
 test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 @TAR-UC-014 @TAR-UC-016 @TAR-UC-017 @TAR-UC-018 Ciclo de una tarea', () => {
   test('@TAR-menu el planificador ve los menús del módulo de Tareas', async ({ browser }) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-101 #588 (B-11): la asignación del rol Planificador de Tareas falla en DNATO');
     const pl = await planificador(browser);
     try {
       const faltan: string[] = [];
-      for (const p of ['pedidos', 'planificacion', 'tareasEstandar', 'indicadores'] as PantallaTar[]) {
+      // Los menús se asignaron al rol del planificador desde DNATO → Gestión de Menues (decisión del
+      // 2026-10-27, ver doc/specs/TAR-bugs-detectados.md §6). Indicadores no tiene opción de menú
+      // asignable en el módulo TAR: es el hallazgo H-103 y se verifica aparte.
+      for (const p of ['pedidos', 'planificacion', 'tareasEstandar'] as PantallaTar[]) {
         if (!(await pl.tieneMenu(p))) faltan.push(p);
       }
       expect(faltan, `al planificador (${usuarioDeRol('planificador')}) le faltan menús`).toEqual([]);
+    } finally {
+      await pl.page.context().close();
+    }
+  });
+
+  test('@TAR-menu los indicadores de tareas tienen opción de menú', async ({ browser }) => {
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-103: Gestión de Menues no ofrece opción para Indicadores en el módulo TAR');
+    const pl = await planificador(browser);
+    try {
+      expect(await pl.tieneMenu('indicadores')).toBe(true);
     } finally {
       await pl.page.context().close();
     }
@@ -397,7 +409,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     }
   });
 
-  test('TAR-CP-010-01/010-06 planificar mañana 10:00: queda la fecha y la hora, sigue "creada" sin responsable', async ({ browser }) => {
+  test('@quarantine TAR-CP-010-01/010-06 planificar mañana 10:00: queda la fecha y la hora, sigue "creada" sin responsable', async ({ browser }) => {
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -433,6 +445,8 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-010-04 planificar a las 15:00 y después asignar: sigue a las 15:00 (HIP-TAR-18)', async ({ browser }) => {
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-104 #591 (HIP-TAR-18): el calendario muestra a las 03:00 una tarea planificada a las 15:00');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -529,10 +543,19 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-014-05 aislamiento: la empresa 2 no puede eliminar una tarea de la empresa 1 por URL (HIP-TAR-02)', async ({ browser }) => {
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-094 #581 (B-04): deleteTareaPlanificada no filtra empresa');
+    // Usa una tarea propia, creada para esta prueba: es la única escritura cruzada de la suite.
+    const nombre = `Aislamiento ${SUF}`;
     const pl = await planificador(browser);
     let tapl = '';
     try {
-      tapl = String((await tareaRecargada(pl, LIBRE))?.tapl_id ?? '');
+      await enElHito(pl);
+      if (!(await pl.filaTarea(nombre).count())) {
+        await pl.agregarTareaLibre(nombre);
+        await pl.cerrarDialogos();
+      }
+      tapl = String((await tareaRecargada(pl, nombre))?.tapl_id ?? '');
     } finally {
       await pl.page.context().close();
     }
@@ -546,7 +569,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     }
     const pl2 = await planificador(browser);
     try {
-      expect(await tareaRecargada(pl2, LIBRE), 'la empresa 2 eliminó una tarea de la empresa 1').not.toBeNull();
+      expect(await tareaRecargada(pl2, nombre), 'la empresa 2 eliminó una tarea de la empresa 1').not.toBeNull();
     } finally {
       await pl2.page.context().close();
     }

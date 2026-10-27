@@ -277,6 +277,12 @@ export class PlanificacionPage extends ShellTar {
     await this.filaTarea(nombre).locator('.btn-planificar').click();
     await this.irAlMesDe(fecha);
     await this.clickDia(fecha);
+    // Contra el DEMO cargado, el primer clic a veces llega antes de que FullCalendar enganche el
+    // dateClick: se reintenta una vez el clic en el día. No se vuelve a pulsar 📅: `foco()` deja un
+    // fondo encima de la lista y la selección (`selectCalendario`) sigue activa.
+    await this.page.locator('#mdl-hora').waitFor({ state: 'visible', timeout: 5_000 }).catch(async () => {
+      await this.clickDia(fecha);
+    });
     await this.page.locator('#mdl-hora').waitFor({ state: 'visible' });
     await this.page.locator('#mdl-hora #hora').fill(hora);
     // El desplegable del timepicker queda abierto y tapa el botón "Planificar".

@@ -50,7 +50,6 @@ datos_prueba:
   datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
   sufijo: los datos que crean los tests llevan el sufijo de la corrida
 dudas:
-  - "D-04: ¿cuáles son los nombres de menú del módulo? Viven en seg.menues, no en el repo"
   - 'D-06: el toggle "Mostrar Pedidos Terminados", ¿incluye los TRABAJO_TERMINADO o solo los finalizados?'
 derivados: {}
 notas:

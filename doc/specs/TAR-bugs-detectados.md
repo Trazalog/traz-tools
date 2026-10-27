@@ -42,6 +42,7 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 
 #### B-01 · Una empresa nueva no puede crear pedidos de trabajo — H-091 · #578
 - **Qué pasa:** en `DocTest Empresa SA`, "Guardar" en el alta de pedido no crea nada. La empresa no tiene fila en `pro.procesos` (ni `PROCESO-STANDAR`): el formulario no trae `FormId`, el insert falla y la respuesta que llega al navegador **no es la del alta** sino un error de Bonita ("Can't convert non numeric ID to long") de la limpieza (ver B-06).
+- **Causa confirmada en el DDL:** `pro.pedidos_trabajo.estado` es `NOT NULL` y se toma de `pro.procesos.esin_id`; sin proceso va nulo y el INSERT falla. Además, en el DDL del repo la PK de `pro.procesos` es solo `proc_id`, así que dos empresas no podrían tener cada una su `PROCESO-STANDAR` (ver el aviso del SQL de seed).
 - **Por qué importa:** la registración freemium crea empresas sin proceso de pedidos, y no hay pantalla ni API para cargarlo. Todo el módulo (hitos, tareas, bandeja, indicadores) depende de tener pedidos.
 - **Evidencia:** `Pedidotrabajo::guardarPedidoTrabajo()` (`traz-comp-bpm/controllers/Pedidotrabajo.php:193-274`) usa `procesos($proccessname)` y cae en `PRO_STD` sin validar que exista; `PRODataService` no tiene ningún INSERT a `pro.procesos`.
 - **Tests:** `TAR-CP-002-01`, `prepara los datos de la corrida` (ciclo).
@@ -56,6 +57,7 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 #### B-03 · Las tareas estándar no pueden lanzar el proceso de tarea (TST001) — H-093 · #580
 - **Qué pasa:** el selector "Proceso Asociado" del alta de tarea estándar solo ofrece "Reparacion Neumaticos" (con valor vacío) y "Fabricación". No ofrece `TST001`. Una tarea estándar sin proceso, al planificarla y asignarla, **no lanza caso** (`lanzarProceso()` retorna en silencio si `proc_id == ""`) y tampoco llega a la bandeja; el usuario ve "Usuario asignado... correctamente".
 - **Evidencia:** `views/tareas/form.php` (`selectFromCore('proc_id', ..., 'procesos')` lee `core.tablas`), `models/Tareas.php:257-260`.
+- **Causa raíz del selector:** se arma con `selectFromCore('proc_id', ..., 'procesos')` → `COREDataService` `GET /tablas/procesos` (`getTabla`), que **no filtra empresa**: las opciones son globales y no hay forma de ofrecer `TST001` solo a una empresa.
 - **Consecuencia junto con B-02:** en el DEMO **ninguna** tarea puede llegar a una bandeja; los casos TAR-UC-016/017/018 (bandeja, iniciar, finalizar) quedan bloqueados.
 - **Tests:** `TAR-CP-011-01/011-03` (y los de bandeja se saltean con ese motivo).
 
@@ -76,6 +78,11 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 - **Qué pasa:** cuando el insert del pedido falla, `eliminarPedidoTrabajo($petr_id)` ignora el parámetro (lee GET/POST, vacíos), "borra" el pedido vacío y llama a Bonita para eliminar el caso con id vacío. Lo que vuelve al navegador es ese error de Bonita, no el motivo real.
 - **Evidencia:** `Pedidotrabajo.php:255-271` y `352-406`; respuesta capturada: `"Error al invocar al BPM ... Can't convert non numeric ID to long"`.
 - **Tests:** `TAR-CP-002-01`, `TAR-CP-002-07`.
+
+#### B-14 · El calendario muestra a las 03:00 las tareas de las 15:00 (HIP-TAR-18 confirmada) — H-104 · #591
+- **Qué pasa:** una tarea planificada a las 15:00 llega al calendario como `dia_inicio: "2026-10-29T03:00:00"`: toda tarea de la tarde se ve 12 horas antes.
+- **Evidencia:** `TARDataService` formatea `fec_inicio`/`fec_fin` con `to_char(..., 'YYYY-MM-DD+HH12:MI:SS')` sin AM/PM (`getTareasEventos`, `getTareasPlanificadas`, también `getKpiBasico`).
+- **Tests:** `TAR-CP-010-04`.
 
 ### P3
 
@@ -101,6 +108,15 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 - **Evidencia:** `views/tareas/plantillas.php` `actualizarTareasSelect()` trae todas las tareas sin excluir las asociadas.
 - **Tests:** `TAR-CP-021-01`.
 
+#### B-12 · La opción de menú "Pedidos Trabajo" del módulo TAR abre el proceso de un cliente — H-102 · #590
+- **Qué pasa:** en DNATO → Gestión de Menues, la opción `pedidotrabajo` del módulo TAR genera el menú `linkTo("traz-comp-bpm/Pedidotrabajo?proccessname=YUDI-NEUMATICOS")`. Una empresa que la asigna queda trabajando con el proceso de Yudica (`proccessname` queda en sesión y condiciona alta, detalle y cabecera).
+- **Evidencia:** menú del planificador de la empresa 27 después de asignarle las opciones de TAR (2026-10-27). Las opciones `pedidotrabajo_metal` y `pedidotrabajo-prueba` sugieren una opción por cliente.
+- **Tests:** `@TAR-menu el planificador ve los menús del módulo de Tareas` (navega por ese menú).
+
+#### B-13 · Indicadores de tareas no tiene opción de menú asignable — H-103
+- **Qué pasa:** el módulo TAR de Gestión de Menues ofrece `formulas`, `pedidotrabajo*`, `planificacion_tareas*`, `tareas*` y `tareas_std*`, pero ninguna para `traz-comp-tareasestandar/Reportes/indicadores`. La pantalla existe y responde por URL.
+- **Tests:** `@TAR-menu los indicadores de tareas tienen opción de menú` (con `test.fail()`).
+
 ### Fuera de TAR, encontrado de paso
 
 #### B-11 · DNATO: asignar un rol de trabajo a un usuario falla ("Fallo asignación de roles.") — H-101 · #588
@@ -125,16 +141,22 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 | HIP-TAR-10 (paginado) | ✅ **confirmada** — B-07 |
 | HIP-TAR-12/13 (bandeja) | ⏳ no ejecutables: requieren bandeja. HIP-TAR-12 confirmada **en código** (`Tsttareas.php:43`) |
 | HIP-TAR-16 (ids duplicados en plantillas) | ✔️ **descartada**: editar la plantilla precarga su nombre y no toca el formulario de tareas |
-| HIP-TAR-18 (HH12) | ⏳ parcial: el DataService devuelve `HH12` sin AM/PM (visto: `31-12-3000+12:00:00`); el corrimiento al reasignar no se pudo medir sin caso |
+| HIP-TAR-18 (HH12) | ✅ **confirmada** — B-14: el calendario muestra a las 03:00 una tarea de las 15:00. El corrimiento de la hora guardada al reasignar no se pudo medir sin caso |
 | Resto (11, 14, 15, 17, 19-24) | ⏳ no ejecutadas en esta tanda |
 
 ## 5. Observaciones sin confirmar
 
 - **Eliminar una subtarea es intermitente** (`TAR-CP-020-01`, en `@quarantine`): pasó en 2 de 4 corridas; en las otras quedaron las 3 subtareas en la vista. En el código, `eliminarSubtarea()` (`views/tareas/subtareas.php:99-118`) hace `$('tr#' + id).remove()` sobre **toda la página**, y las filas de tareas estándar también usan su id numérico como `id`: si un `suta_id` coincide con un `tare_id`, la fila equivocada sale de la vista. No se pudo atribuir la intermitencia a esa causa: queda a investigar antes de registrarlo como bug.
+- **Una tarea libre de la corrida desaparece del origen** durante la suite completa (pasó en tres corridas, entre `TAR-CP-011-05` y `TAR-CP-014-05`), pero la secuencia reproducida aislada (crear → asignar sin fecha → abrir el modal de usuarios → GET de la empresa 2) no la borra. La única limpieza masiva del código (`delTareasSinOrigen`) solo la llama `Etapa.php` de Producción, que la suite no usa. Sin causa: `TAR-CP-014-05` pasó a usar su propia tarea.
+- **`TAR-CP-010-01` en `@quarantine`**: a veces el clic sobre el día de FullCalendar no dispara `dateClick` y el modal de hora no abre (pasó en una corrida y en el probe aislado, falló en tres). Es del banco de pruebas, no del sistema: la planificación queda cubierta por `TAR-CP-010-04`, que planifica, asigna y lee el evento.
 - **Resultados descartados por inestables**: guardar una tarea estándar sin duración pareció aceptarse en la primera corrida y no se reprodujo en las tres siguientes (`TAR-CP-019-02` pasa). No se reporta.
 - **Hallazgo de código** (sin verificar en pantalla por B-02/B-03): `tarea_generica.php:50-60` muestra "Inicializar tarea" solo si el estado es `creada`; una tarea que llega a la bandeja está en `planificada`, así que el paso de iniciar se saltaría y nunca se registraría el inicio real. Se verifica con `TAR-CP-016-03/017-01` cuando B-02/B-03 estén resueltos.
 
-## 5-bis. Resultado de la corrida final (2026-10-27, 57 tests, ~19 min)
+## 5-bis. Corridas
+
+**Corrida con menús reales y marcas de bugs** (2026-10-27, 23:24, `--grep @tar --grep-invert @quarantine`, ~12 min): 33 resultados esperados (21 pasan + los bugs marcados con `test.fail()` que fallan como se espera), 21 salteados por bloqueo con el motivo escrito y 3 inesperados, ya resueltos: `TAR-CP-010-04` era HIP-TAR-18 (pasó a B-14), `TAR-CP-014-05` pasó a usar su propia tarea (ver §5) y `TAR-CP-010-01` (modal de hora intermitente) tiene reintento del clic.
+
+**Primera corrida completa** (2026-10-27, 22:54, 57 tests, ~19 min), antes de marcar los bugs:
 
 | Resultado | Cantidad | Qué son |
 |---|---|---|
@@ -148,7 +170,8 @@ Fallas de entorno vistas y no atribuidas al sistema: timeouts esperando el shell
 
 | Decisión | Por qué |
 |---|---|
-| Las pantallas se abren con `linkTo()` (lo mismo que hace el menú) y el test `@TAR-menu` marca la falta del menú | La asignación del rol de planificador falla en DNATO (B-11) |
+| Los menús de TAR se asignaron al rol que el planificador ya tiene ("Responsable de Producción DocTest Empresa SA") desde DNATO → Gestión de Menues, con el administrador de la empresa de test: `tareas_grupo`, `tareas`, `pedidotrabajo`, `planificacion_tareas`, `tareas_std`. Los tests navegan por el menú real; si falta un ítem, caen a `linkTo()` y lo anotan | La asignación del rol "Planificador de Tareas" falla en DNATO (B-11). Es la vía oficial y solo toca la empresa de test. Responde la duda **D-04**: los menús son Tareas → ABM Tareas, Pedidos Trabajo y Planificación Tareas |
+| **No** se agregó `TST001` a la Lista de Valores `procesos` para destrabar la bandeja | `getTabla` no filtra empresa: el valor aparecería en el selector de **todas** las empresas del DEMO (B-03) |
 | El ciclo de la tarea se probó sobre un origen sintético (`PETR/987654321`) dentro de la empresa de test | Sin pedidos no hay hitos (B-01); el componente de planificación es el mismo para cualquier origen. Los tests que necesitan el pedido real se saltean con el motivo escrito |
 | No se cargó `pro.procesos` | No hay API ni pantalla, y la base del DEMO no es alcanzable. Queda el SQL listo (`seeds/tar/pro-procesos-empresas-test.sql`) |
 | Datos de prueba solo en las empresas de test, con sufijo de corrida; la única escritura cruzada fue borrar desde la empresa 2 una tarea **de prueba** de la empresa 1 | Era la forma de confirmar HIP-TAR-02 sin tocar datos de otros |

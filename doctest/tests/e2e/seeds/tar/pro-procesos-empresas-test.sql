@@ -11,6 +11,14 @@
 -- Copia todas las columnas tal cual (el DDL vigente no está en el repo, hallazgo B-09 del spec).
 -- Es idempotente: si la empresa ya tiene PROCESO-STANDAR, no hace nada.
 --
+-- ⚠️ Riesgo conocido: en el DDL del repo (_backend/database/scripts/versiones/v1.4/
+-- "tablas pedidos trabajo.sql") la PK de pro.procesos es solo proc_id. Si la base del DEMO
+-- conserva esa PK, el INSERT choca ("duplicate key procesos_pk") y la transacción se deshace
+-- sin dejar nada: en ese caso no hay forma de que dos empresas compartan PROCESO-STANDAR y hay
+-- que decidir otro proc_id por empresa (decisión de arquitectura, no de este seed).
+-- Causa confirmada de la falla del alta: pro.pedidos_trabajo.estado es NOT NULL y sale de
+-- pro.procesos.esin_id.
+--
 -- Dónde se ejecuta: PC con VPN, contra la base de Tools del DEMO (nunca producción).
 --   psql -h <host base DEMO> -U postgres -d <base Tools DEMO> -v ON_ERROR_STOP=1 \
 --     -v modelo=<empr_id de la empresa modelo> -v empresa=27 \
