@@ -4,6 +4,7 @@
  *
  *   - 2 clientes ACTIVOS ("DT Cliente Norte", "DT Cliente Sur")      → ABM Clientes
  *   - la lista de valores `tipos_pedidos_trabajo` con 2 tipos        → ABM Lista de Valores
+ *   - el rol "Planificador de Tareas" para el planificador           → API de DNATO (H-101)
  *
  * Es **idempotente**: si el dato ya está, no lo vuelve a crear (README de seeds, regla 2).
  * Va por la pantalla, con el usuario planificador de TAR, igual que lo haría una persona.
@@ -87,6 +88,64 @@ async function asegurarTipos(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Le asigna al planificador el rol de trabajo "Planificador de Tareas <empresa>" por la API de
+ * DNATO (`main/changeLevelRolUserObject`), con la sesión del administrador de la empresa 1.
+ *
+ * Por qué no por la pantalla: "Cambio de Rol" reenvía **todos** los roles que el usuario ya tiene
+ * junto con el nuevo; `/rol/asignar` rechaza la membresía repetida y se deshace todo ("Fallo
+ * asignación de roles.", H-101 / #588). El endpoint solo agrega roles —nunca quita—, así que
+ * mandar únicamente el que falta es seguro: el usuario conserva los que tenía.
+ */
+async function asegurarRolPlanificador(): Promise<void> {
+  const { LoginPage } = await import('../../pages/dnato/LoginPage.ts');
+  const { urlDnato } = await import('../../config/apps.ts');
+  const { usuarioDeRol } = await import('../../fixtures/roles-tar.ts');
+  const empresa = process.env.DOCTEST_EMPRESA1_NOMBRE ?? '';
+  const email = process.env.DOCTEST_EMPRESA1_USER ?? '';
+  const password = process.env.DOCTEST_EMPRESA1_PASS ?? '';
+  const usuario = usuarioDeRol('planificador');
+  const rol = `Planificador de Tareas ${empresa}`;
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
+  try {
+    const page = await ctx.newPage();
+    const login = new LoginPage(page);
+    await login.abrir(urlDnato('main/login'));
+    await login.ingresar({ email, password, empresa });
+    await page.goto(urlDnato('main/users'), { waitUntil: 'networkidle' });
+    await page.locator('input[type=search]').first().fill(usuario);
+    await page.locator('table').last().locator('tr', { hasText: usuario }).first().locator('a[href*="changeleveluser"]').click();
+    await page.waitForLoadState('networkidle');
+    if ((await page.locator('body').innerText()).includes(rol)) {
+      console.log(`  · rol "${rol}" de ${usuario}: ya lo tiene`);
+      return;
+    }
+    console.log(`  · rol "${rol}" de ${usuario}: ${DRY ? 'se asignaría' : 'se asigna'}`);
+    if (DRY) return;
+    await page.getByText('Agregar Rol', { exact: false }).first().click();
+    const grupo = page.locator('#groups');
+    await grupo.selectOption({ label: empresa });
+    await page.waitForFunction(() => (document.querySelector('#roles') as HTMLSelectElement)?.options.length > 1, undefined, { timeout: 30_000 });
+    const groupId = (await grupo.inputValue()).split('-')[0];
+    const roleId = ((await page.locator('#roles option', { hasText: rol }).first().getAttribute('value')) ?? '').split('-')[0];
+    const r = await ctx.request.post(urlDnato('main/changeLevelRolUserObject'), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      form: {
+        'dataRole[0][email]': usuario,
+        'dataRole[0][group]': empresa,
+        'dataRole[0][role]': rol,
+        'dataRoleBpm[0][group_id]': groupId,
+        'dataRoleBpm[0][role_id]': roleId,
+        email: usuario,
+        level: '2',
+      },
+    });
+    console.log(`    → ${r.status()} ${(await r.text()).slice(0, 120)}`);
+  } finally {
+    await ctx.close();
+  }
+}
+
 const browser = await chromium.launch();
 try {
   const ctx = await contextoDeRol(browser, 'planificador');
@@ -97,6 +156,7 @@ try {
   console.log(`Datos base de TAR${DRY ? ' (dry-run)' : ''}:`);
   await asegurarClientes(page);
   await asegurarTipos(page);
+  await asegurarRolPlanificador();
   console.log('\nListo. Requisito que no cubre este seed: pro.procesos PROCESO-STANDAR de la empresa (lo carga el PM).');
 } finally {
   await browser.close();

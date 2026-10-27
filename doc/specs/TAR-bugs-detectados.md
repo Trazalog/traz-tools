@@ -120,8 +120,10 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 ### Fuera de TAR, encontrado de paso
 
 #### B-11 · DNATO: asignar un rol de trabajo a un usuario falla ("Fallo asignación de roles.") — H-101 · #588
-- **Qué pasa:** como administrador de `DocTest Empresa SA`, en Gestión de Usuarios → Cambio de Rol, agregar "Planificador de Tareas DocTest Empresa SA" a `produccion@` y Guardar responde `400 {"success":false,"message":"Fallo asignación de roles."}` (con y sin perfil elegido). Por eso ningún usuario de test tiene los menús de TAR (`@TAR-menu`).
-- **Evidencia:** `POST traz-comp-dnato//main/changeLevelRolUserObject` → 400. No se investigó la causa (es otro repo).
+- **Qué pasa:** como administrador de `DocTest Empresa SA`, en Gestión de Usuarios → Cambio de Rol, agregar "Planificador de Tareas DocTest Empresa SA" a `produccion@` y Guardar responde `400 {"success":false,"message":"Fallo asignación de roles."}` (con y sin perfil elegido). Era la razón por la que ningún usuario de test tenía los menús de TAR.
+- **Causa encontrada:** la pantalla reenvía en `dataRole[]` **todos** los roles de la tabla, incluidos los que el usuario ya tiene. `Main::changeLevelRolUserObject()` (`traz-comp-dnato/application/controllers/Main.php:947-1022`) llama a `POST /rol/asignar` por cada uno; el primero (ya asignado) falla y se deshace todo. Cualquier usuario que ya tenga un rol no puede recibir otro desde la pantalla.
+- **Rodeo verificado:** la misma API con **solo** el rol nuevo responde `200 "Roles Bpm asignados con exito."`. Así se le asignó "Planificador de Tareas" al planificador de test; quedó en `npm run seed:tar`.
+- **Evidencia:** payload capturado de la pantalla (roles 1303 + 1306 → 400) vs. solo 1306 → 200.
 
 ---
 
@@ -181,6 +183,7 @@ Lo que queda abierto **no tiene vía sin el PM** por reglas del proyecto, no por
 | Decisión | Por qué |
 |---|---|
 | Los menús de TAR se asignaron al rol que el planificador ya tiene ("Responsable de Producción DocTest Empresa SA") desde DNATO → Gestión de Menues, con el administrador de la empresa de test: `tareas_grupo`, `tareas`, `pedidotrabajo`, `planificacion_tareas`, `tareas_std`. Los tests navegan por el menú real; si falta un ítem, caen a `linkTo()` y lo anotan | La asignación del rol "Planificador de Tareas" falla en DNATO (B-11). Es la vía oficial y solo toca la empresa de test. Responde la duda **D-04**: los menús son Tareas → ABM Tareas, Pedidos Trabajo y Planificación Tareas |
+| El rol "Planificador de Tareas" se asignó **por la API de DNATO** mandando solo el rol nuevo (rodeo de #588), y el paso quedó en `npm run seed:tar` | Es la vía que habilitó el PM (APIs para seed y usuarios); el endpoint solo agrega roles, no quita ninguno |
 | No se creó un usuario planificador nuevo | El alta de usuario de DNATO (`main/adduser`) solo pide empresa y perfil (Admin/Author); el rol de trabajo se asigna después con "Cambio de Rol", que es lo que falla (#588). Un usuario nuevo quedaría igual que `produccion@` |
 | Se descartó correr el ciclo en otra empresa del DEMO | La otra empresa habilitada para DocTest (Novu, usuario de MAN) tampoco tiene proceso de pedidos, clientes, tipos de trabajo ni menús de TAR (verificado en modo lectura). No se crearon datos en empresas que no son de test |
 | **No** se agregó `TST001` a la Lista de Valores `procesos` para destrabar la bandeja | `getTabla` no filtra empresa: el valor aparecería en el selector de **todas** las empresas del DEMO (B-03) |
