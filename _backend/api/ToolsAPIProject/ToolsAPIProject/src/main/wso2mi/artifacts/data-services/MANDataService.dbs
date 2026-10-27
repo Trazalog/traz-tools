@@ -654,4 +654,85 @@
    <resource method="PUT" path="/proceso/baja">
       <call-query href="bajaProcesoMan"><with-param name="id_proceso" query-param="id_proceso"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-1 · Parámetros de equipo (setupparam). Reemplaza el acceso directo de models/Parametros.php (ADR-014).
+        Toda query filtra por la empresa del equipo (id de asset). maximo/minimo salen como CHAR para que el texto
+        sea el mismo que devolvía mysqli (10 y no 10.0). -->
+   <query id="getEquiposParamMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_equipo, codigo FROM equipos WHERE estado = 'AC' AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","codigo":"$codigo"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSetupParamsEquipoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT s.id_equipo, s.id_parametro, CAST(s.maximo AS CHAR) AS maximo, CAST(s.minimo AS CHAR) AS minimo, p.paramdescrip, e.descripcion FROM setupparam s JOIN parametros p ON p.paramId = s.id_parametro JOIN equipos e ON e.id_equipo = s.id_equipo WHERE e.id_equipo = :id_equipo AND e.estado = 'AC' AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"parametros":{"parametro":[{"id_equipo":"$id_equipo","id_parametro":"$id_parametro","maximo":"$maximo","minimo":"$minimo","paramdescrip":"$paramdescrip","descripcion":"$descripcion"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSetupParamMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT s.id_equipo, s.id_parametro, CAST(s.maximo AS CHAR) AS maximo, CAST(s.minimo AS CHAR) AS minimo, e.codigo, p.paramdescrip FROM setupparam s JOIN parametros p ON p.paramId = s.id_parametro JOIN equipos e ON e.id_equipo = s.id_equipo WHERE s.id_equipo = :id_equipo AND s.id_parametro = :id_parametro AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"parametros":{"parametro":[{"id_equipo":"$id_equipo","id_parametro":"$id_parametro","maximo":"$maximo","minimo":"$minimo","codigo":"$codigo","paramdescrip":"$paramdescrip"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_parametro" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateSetupParamMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE setupparam s JOIN equipos e ON e.id_equipo = s.id_equipo SET s.maximo = :maximo, s.minimo = :minimo WHERE s.id_equipo = :id_equipo AND s.id_parametro = :id_parametro AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"setupparam":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="maximo" sqlType="STRING"/>
+      <param name="minimo" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_parametro" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="deleteSetupParamMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE s FROM setupparam s JOIN equipos e ON e.id_equipo = s.id_equipo WHERE s.id_equipo = :id_equipo AND s.id_parametro = :id_parametro AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"setupparam":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_parametro" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setSetupParamMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO setupparam (id_equipo, id_parametro, maximo, minimo, id_empresa) SELECT e.id_equipo, :id_parametro, :maximo, :minimo, e.id_empresa FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"setupparam":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_parametro" sqlType="STRING"/>
+      <param name="maximo" sqlType="STRING"/>
+      <param name="minimo" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setParametroMan" keyColumns="paramId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO parametros (paramdescrip, id_empresa, estado) VALUES (:paramdescrip, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"parametro":{"paramId":"$GENERATED_KEY"}}</result>
+      <param name="paramdescrip" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getParametrosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT paramId, paramdescrip, min, estado, id_empresa FROM parametros WHERE id_empresa = :id_empresa AND estado != 'AN'</sql>
+      <result outputType="json">{"parametros":{"parametro":[{"paramId":"$paramId","paramdescrip":"$paramdescrip","min":"$min","estado":"$estado","id_empresa":"$id_empresa"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/parametros/equipos/empresa/{id_empresa}">
+      <call-query href="getEquiposParamMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/parametros/equipo/{id_equipo}/empresa/{id_empresa}">
+      <call-query href="getSetupParamsEquipoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/parametros/equipo/{id_equipo}/parametro/{id_parametro}/empresa/{id_empresa}">
+      <call-query href="getSetupParamMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_parametro" query-param="id_parametro"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/parametros/equipo">
+      <call-query href="updateSetupParamMan"><with-param name="maximo" query-param="maximo"/><with-param name="minimo" query-param="minimo"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_parametro" query-param="id_parametro"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/parametros/equipo/baja">
+      <call-query href="deleteSetupParamMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_parametro" query-param="id_parametro"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/parametros/equipo">
+      <call-query href="setSetupParamMan"><with-param name="id_parametro" query-param="id_parametro"/><with-param name="maximo" query-param="maximo"/><with-param name="minimo" query-param="minimo"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/parametro">
+      <call-query href="setParametroMan"><with-param name="paramdescrip" query-param="paramdescrip"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/parametros/empresa/{id_empresa}">
+      <call-query href="getParametrosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
