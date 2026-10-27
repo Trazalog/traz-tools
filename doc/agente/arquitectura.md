@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog") y AGENTE-M-08 (multi-vertical, sección "Una industria, su conocimiento"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog") AGENTE-M-08 (multi-vertical, sección "Una industria, su conocimiento") y AGENTE-AS-01 (panel de Quirqui, sección "Quirqui sabe dónde estás"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -219,6 +219,34 @@ Guardan preguntas y respuestas de cada empresa, con datos que vinieron de sus to
 
 ---
 
+## Quirqui sabe dónde estás (AGENTE-AS-01)
+
+El chat deja de ser solo una página: **Quirqui está en un panel en todas las pantallas de Tools** (`views/panel.php`, incluido desde `layout/Admin.php`). Con cada pregunta, el panel manda **la ruta de la pantalla actual** (la variable global `site` que mantiene `linkTo()` en `lib/props/navegacion.js`).
+
+```mermaid
+sequenceDiagram
+    participant P as Panel (navegador)
+    participant T as Agente.php
+    participant O as Orquestador
+    participant B as agente.chunk (casos de uso)
+    P->>T: pregunta + pantalla = site
+    T->>O: /consulta {pregunta, pantalla}
+    O->>O: valida la ruta (forma de URL y nada más)
+    O->>B: casos de uso cuyo controlador es esa pantalla
+    B-->>O: ALM-UC-001 (pasos, reglas, link de ayuda)
+    O->>O: mensaje de sistema "el usuario está en ..."
+```
+
+`agente/pantalla.py` traduce la ruta al controlador (`traz-comp-almacenes/Articulo` → `traz-comp-almacenes/controllers/Articulo.php`) y busca los casos de uso **por controlador exacto**, sin importar mayúsculas, en el conocimiento del producto (AGENTE-M-06). Le da al modelo hasta 3, con sus pasos y el link de la ayuda. Si no hay ninguno, el modelo sabe que no sabe qué se hace ahí. Queda en `controles` (`{"control": "pantalla", "ruta": ..., "casos": [...]}`), y el texto también cuenta como fuente para el guardián de cifras.
+
+**La ruta viene del navegador y termina en un mensaje de sistema:** se valida dos veces (patrón en la API, que da 422, y otra vez en el orquestador). Texto libre ahí sería una forma de darle instrucciones al modelo.
+
+**Quién ve el panel:** solo quien tiene en su menú el ítem del agente. Los agentes son una suscripción; mostrarlo a todos es una decisión comercial.
+
+**El aviso de medición** (D9 del plan) está fijo en el panel. Su texto está **pendiente de revisión legal** (AGENTE-LEGAL-01).
+
+**Cobertura hoy:** pantallas de Almacenes (26 casos) y Pañol (6). Los casos de Mantenimiento están relevados sobre AssetPlanner y los de Dnato sobre su propia app, que no son pantallas de Tools: se cubren cuando Mantenimiento migre a `traz-tools-man`.
+
 ## El chat dentro de Trazalog Tools (E3)
 
 Módulo `application/modules/traz-comp-agente/`, con el patrón habitual de Tools:
@@ -326,6 +354,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 | `tests/test_guardian.py` | R4: qué se bloquea (cifra inventada, pegada a la unidad, norma inventada, cifra de la web sin URL) y qué pasa (tool, conteo, redondeo, miles, conocimiento, pregunta, web citada, fechas, códigos, discurso); y en el orquestador, que el usuario reciba "no tengo datos" y quede el incidente con la respuesta original |
 | `tests/test_vertical.py` | Multi-vertical, con SQL real: oil & gas no recibe lo de minería pero sí lo general, sin industria declarada recibe todo, y el modelo ve la etiqueta. Siembra como administrador (opcional, `AGENTE_TEST_DB_ADMIN_DSN`) en una transacción que se deshace |
 | `tests/test_web.py` | `web_buscar`: el cliente contra un SearXNG simulado, que solo se ofrezca con buscador configurado, la cifra citada que pasa y la no citada que se bloquea, que un buscador caído no corte la conversación, y una búsqueda real opcional (con `AGENTE_WEB_URL`) |
+| `tests/test_pantalla.py` | AS-01: la ruta de Tools al controlador, que lo que no es una ruta no pase (inyección, `..`, URLs), los casos de uso de la pantalla por controlador, que el modelo los reciba y quede el control, y el 422 de la API |
 | `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
 | `tests/test_mcp_client.py` | Passthrough del token, que el `empr_id` no viaje, trazabilidad, y el parseo de SSE |

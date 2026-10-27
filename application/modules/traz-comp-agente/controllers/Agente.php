@@ -92,8 +92,13 @@ class Agente extends CI_Controller
             return;
         }
 
-        log_message('DEBUG', '#TRAZA | AGENTE | Agente | consultar() >> ' . substr($pregunta, 0, 80));
-        $this->_json($this->Agentes->consultar($this->_token(), $pregunta));
+        // La pantalla de Tools donde está el usuario (AGENTE-AS-01). La manda
+        // el panel; el chat de página no. El orquestador la valida.
+        $pantalla = trim((string) $this->input->post('pantalla'));
+
+        log_message('DEBUG', '#TRAZA | AGENTE | Agente | consultar() >> ' . substr($pregunta, 0, 80)
+            . ($pantalla !== '' ? ' | pantalla: ' . substr($pantalla, 0, 120) : ''));
+        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla));
     }
 
     public function feedback()

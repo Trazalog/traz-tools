@@ -102,6 +102,12 @@ class ConsultaIn(BaseModel):
     pregunta: str = Field(min_length=1, max_length=4000)
     canal: str = "chat_tools"
     agente: str = Field(default=AGENTE_POR_DEFECTO, pattern=r"^[a-z][a-z0-9_]{1,30}$")
+    # La pantalla de Tools donde esta el usuario (AGENTE-AS-01).
+    # Forma de URL de CodeIgniter y nada mas: termina dentro de un mensaje de
+    # sistema, asi que no puede traer texto libre.
+    pantalla: str | None = Field(
+        default=None, max_length=300,
+        pattern=r"^/?[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-.%=]*)*(?:\?[A-Za-z0-9_\-.%=&]*)?$")
 
 
 class ConsultaOut(BaseModel):
@@ -215,6 +221,7 @@ async def consulta(
         empr_id=ident.empr_id, pregunta=entrada.pregunta,
         autorizacion=ident.autorizacion, usr_id=ident.usr_id,
         usuario_nick=ident.nick, canal=entrada.canal, agente=agente,
+        pantalla=entrada.pantalla,
     ))
     return ConsultaOut(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,

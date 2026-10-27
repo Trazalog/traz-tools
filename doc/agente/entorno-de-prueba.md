@@ -99,6 +99,23 @@ psql -h 127.0.0.1 -U postgres -d agente_minero -c "SELECT fec_alta, empr_id, lef
 
 ---
 
+## Probar el panel de Quirqui (AGENTE-AS-01)
+
+El panel es el botón redondo "Q" abajo a la derecha, en **todas** las pantallas de Tools. **Esta prueba está pendiente**: al construirlo no había VPN a DEV y la copia v3.5 de Tools respondía 500, así que solo se verificó que la vista renderiza y que el JS es válido.
+
+**Dónde:** navegador, con el orquestador levantado (`./agente/dev.sh` en la terminal local) y los scripts `011` a `016` aplicados.
+
+1. Entrar a Tools por `traz-comp.local` con el usuario de prueba (el que tiene el menú del agente).
+2. **Ver el botón "Q" abajo a la derecha.** Si no aparece: el usuario no tiene el ítem del agente en su menú (es a propósito, ver abajo).
+3. Ir a **Almacenes → Artículos** y abrir el panel. Tiene que verse el aviso amarillo "Lo que hables con Quirqui se usa para medir indicadores…"; "¿Qué se mide?" despliega el detalle.
+4. Preguntar **"¿Qué hago en esta pantalla?"**. La respuesta tiene que hablar de la grilla de artículos (caso ALM-UC-001) y puede citar `ayuda/manual_almacenes.html#s03`. Requiere haber ingestado las ayudas y el catálogo (`operacion.md` → "Las ayudas de Tools y el catálogo").
+5. Verificar en la base que la corrida registró la pantalla:
+   `psql -h 127.0.0.1 -U postgres -d agente_minero -c "SELECT fec_alta, controles FROM agente.interaccion ORDER BY fec_alta DESC LIMIT 1;"`
+   Tiene que aparecer `{"control": "pantalla", "ruta": "traz-comp-almacenes/...", "casos": ["ALM-UC-..."]}`.
+6. Cambiar de pantalla sin recargar y volver a preguntar: la ruta del control tiene que ser la nueva.
+
+**Quién ve el panel:** solo los usuarios que tienen en su menú el ítem del agente (`traz-comp-agente/agente`, en `seg.menues`). Mostrárselo a todos es una decisión comercial pendiente.
+
 ## Lo que ya está verificado
 
 Circuito completo, el 2026-09-02, con este usuario:

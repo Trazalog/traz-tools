@@ -136,12 +136,16 @@ class Agentes extends CI_Model
      * Devuelve el cuerpo del orquestador tal cual, que incluye el
      * interaccion_id necesario para calificar la respuesta despues.
      */
-    public function consultar($jwt, $pregunta)
+    public function consultar($jwt, $pregunta, $pantalla = '')
     {
-        $rsp = $this->_llamar('POST', '/consulta', [
+        $cuerpo = [
             'pregunta' => $pregunta,
             'canal'    => 'chat_tools',
-        ], $jwt, self::TIMEOUT_CONSULTA);
+        ];
+        if ($pantalla !== '') {
+            $cuerpo['pantalla'] = $pantalla;
+        }
+        $rsp = $this->_llamar('POST', '/consulta', $cuerpo, $jwt, self::TIMEOUT_CONSULTA);
 
         if (!$rsp['ok']) {
             log_message('ERROR', '#TRAZA | AGENTE | Agentes | consultar() >> ' . $rsp['error']);

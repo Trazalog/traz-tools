@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, guardian, rag, web
+from . import agentes, guardian, pantalla, rag, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -48,6 +48,9 @@ class Consulta:
     canal: str = "chat_tools"
     # Que puso en marcha la corrida (R8): una consulta, un evento operativo...
     disparador: str = "consulta"
+    # La pantalla de Tools donde esta el usuario (AGENTE-AS-01), ej.
+    # "traz-comp-almacenes/Articulo". None = no se sabe (el chat de pagina).
+    pantalla: str | None = None
     # El agente ya resuelto y con el acceso verificado (agentes.para_consulta).
     # None = el agente por defecto.
     agente: Agente | None = None
@@ -156,8 +159,18 @@ class Orquestador:
             {"role": "system", "content": sistema},
             {"role": "system", "content":
                 "Contexto recuperado para esta consulta:\n\n" + contexto},
-            {"role": "user", "content": consulta.pregunta},
         ]
+        # Donde esta parado el usuario (AGENTE-AS-01): los casos de uso de esa
+        # pantalla, encontrados por su controlador. Tambien cuentan como fuente
+        # para el guardian de cifras.
+        if consulta.pantalla and pantalla.ruta_valida(consulta.pantalla):
+            casos = await pantalla.casos_de(con, consulta.pantalla)
+            texto_pantalla = pantalla.contexto(consulta.pantalla, casos)
+            mensajes.append({"role": "system", "content": texto_pantalla})
+            contexto += "\n\n" + texto_pantalla
+            res.controles.append({"control": "pantalla", "ruta": consulta.pantalla,
+                                  "casos": [c.caso_uso for c in casos]})
+        mensajes.append({"role": "user", "content": consulta.pregunta})
         # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
         # VE las tools que este agente puede usar. Las de escritura no estan,
         # aunque el gateway las publique.

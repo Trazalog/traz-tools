@@ -535,6 +535,13 @@ function wc() {
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
 <script type="module" src="<?php echo base_url();?>lib/props/firebase_config.js"></script>
+<?php
+// Panel de Quirqui (AGENTE-AS-01): solo si el usuario tiene el agente en su
+// menú. Mostrarlo a todos es una decisión comercial, no de este layout.
+if (defined('AGE') && isset($menu) && strpos((string) $menu, AGE . 'agente') !== false) {
+    $this->load->view(AGE . 'panel');
+}
+?>
 </body>
 
 </html>
