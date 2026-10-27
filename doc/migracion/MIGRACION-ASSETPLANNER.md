@@ -320,7 +320,8 @@ divergieron.
 |---|---|---|
 | Área (`controllers/Area.php`, `models/Areas.php`, `views/area/view_.php`) + `helpers/man_helper.php` | ✅ Portado. Paridad OK (10 de 10, incluido aislamiento) | MAN: `feat/MIG-ASSET-1-area` · tools: queries de `MANDataService` en `feat/MIG-ASSET-1-area` |
 | Proceso (`controllers/Proceso.php`, `models/Procesos.php`, `views/proceso/view_.php`) | ✅ Portado. Paridad OK (10 de 10) | MAN: `feat/MIG-ASSET-1-proceso` · tools: `feat/MIG-ASSET-1-proceso` |
-| Componente, Parametro, Equipo | Pendientes | — |
+| Parametro (`controllers/Parametro.php`, `models/Parametros.php`, `views/parametro/list.php`) | ✅ Portado. Paridad OK (18 de 18) | MAN: `feat/MIG-ASSET-1-parametro` · tools: `feat/MIG-ASSET-1-parametro` |
+| Componente, Equipo | Pendientes | — |
 
 **Criterio de salida:** con una sesión de tools, el módulo se abre desde el menú, se navegan los ABMs
 y se listan equipos y OTs reales de una empresa de prueba. Nivel 0b en verde y **cero accesos a
@@ -633,6 +634,9 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E4 | 2026-10-27 | **Toda query de MAN filtra por empresa, también las de "ver uno", modificar y dar de baja**, aunque en asset no filtren. Ante un registro de otra empresa, MAN responde vacío o no modifica nada | ADR-014. En asset, `Obtener_areas` y `Eliminar_areas` no filtran por empresa (anotado en §5.2 como T11). La paridad se exige dentro de la misma empresa; fuera de ella la diferencia es buscada y la prueba la verifica |
 | E5 | 2026-10-27 | **PRs**: los de `traz-tools-man` los fusiono yo cuando el CI pasa y la paridad da OK. Los de `traz-tools` que tocan DataServices **quedan para el PM**, con análisis de impacto, porque son core (`CLAUDE.md`) | El repo del módulo no se despliega en ningún lado hasta el corte. Los DataServices sí son compartidos con v2 y MCP |
 | E6 | 2026-10-27 | **Carpeta de trabajo aparte para tools** (`git worktree` en `/mnt/win/dev/git/traz-v3/traz-tools-mig`) | Otra sesión trabaja en `/mnt/win/dev/git/traz-v3/traz-tools`; así no se le cambia la rama. El servidor web sigue sirviendo la carpeta original, y el MI local se compila desde la carpeta aparte |
+| E8 | 2026-10-27 | **Base de cada archivo**: se parte del fork de Rogelio, salvo que le falten funciones que una vista usa; en ese caso se porta el archivo completo desde el asset actual. Se compara con un listado de métodos reales (sin contar los comentados) | En Parametro parecía que faltaban 10 funciones y eran todas código comentado: las reales coincidían |
+| E9 | 2026-10-27 | **No se portan acciones muertas**: las que ninguna vista ni controller de asset llama, y menos si llaman a métodos inexistentes. Se listan en el PR | Parametro: `baja_parametro`, `bajaparametro`, `geteditar`, `agregar_componente`, `agregarcomponente` (las dos primeras llaman a `delete_parametro`/`delete_p`, que no existen) |
+| E10 | 2026-10-27 | **Solicitudes de cambios de tools sin apilar**: cada una contra `develop-v3` | #575 quedó fusionada sobre la rama de #574 y no llegó a `develop-v3`; se corrigió con #576 |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---
@@ -706,7 +710,7 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 | # | Hallazgo | Evidencia (asset) |
 |---|---|---|
 | T1 🔴 | Fuga entre empresas: un `OR` sin paréntesis anula el filtro por empresa | `models/Equipos.php:830-832` |
-| T2 🔴 | ~15 queries armadas concatenando `$_POST` o la URI | `models/Calendarios.php:124-147, 599-631, 651-698`; `models/Preventivos.php:559-593, 797-814`; `models/Parametros.php:30-88` |
+| T2 🔴 | ~15 queries armadas concatenando `$_POST` o la URI. En MAN desaparecen al pasar a DataServices (ya resuelto en Parametros) | `models/Calendarios.php:124-147, 599-631, 651-698`; `models/Preventivos.php:559-593, 797-814`; `models/Parametros.php:30-88` |
 | T3 🔴 | `setOTenSerie()`: un `while` sin límite ni transacción. Con frecuencia 0 crea OTs y procesos Bonita hasta el timeout | `controllers/Calendario.php:523-556` |
 | T4 | Fechas `'0000-00-00 00:00:00'` fijas, que bloquean el upgrade del motor | `controllers/Calendario.php:161,171,176` |
 | T5 🔴 | Credenciales en claro en el repo, y un JWT completo en tools | `application/config/database.php` de asset y de tools (en tools, `:99-105`); el JWT está en `application/config/constants.php:247` de tools. Se rotan, no alcanza con moverlas |
