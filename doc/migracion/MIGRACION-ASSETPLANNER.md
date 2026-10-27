@@ -14,7 +14,7 @@ ni la migración de PHP 5.6 a 8.3 (análisis aparte, rama `docs/analisis-migraci
 
 | | |
 |---|---|
-| **Fecha** | 2026-10-26 |
+| **Fecha** | 2026-10-26 · última actualización 2026-10-27 (MIG-0 en curso, A2/A3/P1 resueltas) |
 | **Mediciones contra** | asset `origin/develop` `bf01518` (2026-10-26) · tools `origin/develop-v3` `9556284c` (2026-10-24) · `traz-tools-man` rama `rnsanchez` `343dbb0` (2024-09-09, congelada) |
 | **Clase de riesgo de este documento** | 🟢 — análisis y plan, no toca runtime ni datos |
 | **Etiqueta para commits y PRs de la migración** | `[MIG-ASSET-<etapa>]`, ej. `[MIG-ASSET-1]` (ver §3.3) |
@@ -44,8 +44,8 @@ asset se retira.
    cambiaron 19 en asset desde el corte (eran 15 en agosto), con unas 2.300 líneas de diferencia real.
    Además asset ganó una capa de integración con tools que hay que traer (§2.3).
 4. **MAN no va a tener acceso directo a base de datos: todo pasa por DataServices** (decisión del
-   PM, 2026-10-26). Es el cambio de mayor volumen respecto del plan de agosto (§3.2). Antes de
-   escribir código quedan dos decisiones de arquitectura (A2 y A3) y el freeze (P1).
+   PM, 2026-10-26). Es el cambio de mayor volumen respecto del plan de agosto (§3.2). A2, A3 y el
+   freeze (P1) se resolvieron el 2026-10-27, y la regla está escrita como ADR-014 (propuesto).
 5. **La migración tiene cuatro escalones.** (1) Llevar asset a tools como módulo **MAN**, con su
    bandeja de tareas tal como está (MIG-0 a MIG-6; el Plan de Mantenimiento rehecho es MIG-4).
    (2) Llevar esa bandeja a la bandeja de tools (MIG-7). (3) Cambiar cuándo se lanzan en Bonita las
@@ -69,7 +69,8 @@ documentos viejos aparece "MySQL" para asset, se refiere a esta misma base.
 | `traz-prod-assetplanner` `master` | Lo que corre en producción (tags `v2.9.x`) | `7d8ca44`, 2026-04-17 |
 | `traz-prod-assetplanner` `develop-v3` / `develop` | Producción + la integración con tools (REQ-ASSET-ALM y Pedido y pañol). El demo se despliega desde `develop` | `develop` contiene todo `develop-v3` |
 | `traz-tools-man` `rnsanchez` | **El trabajo portado en 2024.** 43 archivos `.php`, 36.122 líneas. 3 commits "backup", sin PRs | Congelada desde 2024-09-09 |
-| `traz-tools-man` `main` | Un README y `controllers/Sservicio.php` | `02cca43` |
+| `traz-tools-man` `develop-v3` | **Rama de integración de la migración** (MIG-0), creada el 2026-10-27 desde `rnsanchez` (`343dbb0`). Todo entra por PR, con el CI `man-ci.yml` | Desde 2026-10-27 |
+| `traz-tools-man` `main` · `develop` / `master` | `main`: `controllers/Sservicio.php` y un README (`6bb0900`, 2024-07-11). `develop` y `master`: solo el README (`02cca43`) | Sin uso |
 | `traz-tools` (`develop` y `develop-v3`) | Puntero del submódulo en `02cca43` (el README). Ya tiene `define('MAN', 'traz-tools-man/')` y la conexión `$db['asset_db']` a MariaDB `assetv2`, que agregó Rogelio | Sin cambios desde 2024 en ese punto |
 
 ### 2.2 El fork de 2024: qué sirve y por qué no arranca
@@ -191,6 +192,9 @@ Familia, Sector, Cliente, Proveedor…), Reportes y KoolReport, y "Trazabilidad 
 | **Compatibilidad con v2:** lo que se toca en tools es aditivo y no rompe contratos que v2 consume | PM | Las queries nuevas de los DataServices se agregan, no reemplazan |
 | **Ramas de tools: una última unificación de `develop` con `develop-v3`** cuando termine el frente `asset-order-warehouse-tracking`, y **después ninguna más hasta que la migración esté terminada y probada** | PM, 2026-10-26 | Toda la migración se hace sobre `develop-v3`. Ver §3.6 |
 | **Las notificaciones de asset se llevan a todo tools, mejoradas**, como última etapa | PM, 2026-10-26 | MIG-9 |
+| **Bonita al crear una OT: se replica la coreografía de asset** (si el lanzamiento falla, la OT se borra), y los nombres de actividad quedan como están (A2) | PM, 2026-10-27 | MIG-4 no cambia ese comportamiento. El cambio de fondo es MIG-8. En ADR-014 |
+| **La fuente única de los artefactos WSO2 de mantenimiento es la de tools** (`toolsMANAPI`, `MANDataService`, `COREDataService`, `ALMDataService`). Las copias de asset se retiran (A3) | PM, 2026-10-27 | Toda query nueva o corregida para MAN entra a `_backend/api/ToolsAPIProject/` de tools. En ADR-014 |
+| **Freeze de asset (P1): rige cuando cierren las pruebas** de REQ-ASSET-ALM y de Pedido y pañol | PM, 2026-10-27 | Hasta entonces asset puede recibir cambios funcionales de esos dos frentes. Se vuelve a medir §2.3 al arrancar MIG-2 (R1) |
 | **El esquema de `assetv2` no cambia**, salvo excepciones registradas acá (la única hasta hoy: `f7-herramientas-usadas.sql`) | PM, 2026-08-12 | Las mejoras de modelo de datos quedan para después del retiro de asset |
 
 ### 3.2 Qué cambia respecto del plan de agosto
@@ -274,6 +278,19 @@ Sin esto no se puede verificar nada de lo que sigue.
 
 **Criterio de salida:** el submódulo apunta a la rama nueva, el CI corre en verde sobre el fork tal
 como está y ADR-014 está aprobado.
+
+**Estado al 2026-10-27:**
+
+| Punto | Estado |
+|---|---|
+| 1. Rama de integración | ✅ `develop-v3` creada en `traz-tools-man` desde `rnsanchez`. La protección de rama se activa al mergear el CI, con sus 4 checks como requeridos |
+| 2. Puntero del submódulo | Pendiente. PR propio en tools, después de mergear el CI |
+| 3. Ambiente local | Pendiente, **lo arma el PM**: XAMPP + VPN contra `assetv2` de DEV. Sin VPN no se pueden probar con `curl` las queries de `MANDataService` |
+| 4. CI mínimo | ✅ `man-ci.yml` (`traz-tools-man` PR #1), en verde sobre el fork: `php -l` con PHP 5.6, PHPCompatibility 5.6, checklist 0b y gitleaks. El 0b bloquea solo los archivos de `.ci/portados.txt` y del resto informa la cantidad |
+| 5. Credenciales (T5) | Pendiente, 🔴. **La rotación la hace el PM.** Sacarlas del repo toca `database.php` y `constants.php` de tools, que son core: necesita análisis de impacto aprobado |
+| 6. ADR-014 | ✅ Escrito, en estado *Propuesto* hasta que el PM lo apruebe. A2 y A3 resueltas. Falta verificar que el datasource escribe en TEST y PROD |
+| 7. Freeze (P1) | ✅ Decidido: rige cuando cierren las pruebas de los dos frentes |
+| 8. `doc/vision-v3-context.md` | ✅ Corregido |
 
 #### MIG-1 — Saneamiento: que arranque lo que ya está
 
@@ -574,15 +591,17 @@ siguen abiertas.
 ### Arquitectura 🔴 (workshop: no las decide quien ejecuta)
 
 **A1 — Cómo accede a los datos el núcleo. ✅ Resuelta (PM, 2026-10-26):** todo por DataServices y
-ningún acceso directo (§3.1). Falta escribirla como ADR-014 (MIG-0, punto 6), con las tres reglas
-técnicas que se listan ahí.
+ningún acceso directo (§3.1). Escrita como [ADR-014](../adr/ADR-014-man-acceso-datos-dataservices.md),
+con las tres reglas técnicas propuestas, que esperan la aprobación del PM.
 
-**A2 — Bonita y la creación de OT.** Hoy no se puede crear una OT sin Bonita: si `lanzarProceso`
+**A2 — Bonita y la creación de OT. ✅ Resuelta (PM, 2026-10-27): igual que hoy** (§3.1, ADR-014).
+El contexto era este: hoy no se puede crear una OT sin Bonita: si `lanzarProceso`
 falla, la OT se borra (`controllers/Calendario.php:354-359`). Hay 9 nombres de actividad escritos a
 mano en el código. La reimplementación de MIG-4 replica esa coreografía exacta, salvo que se decida
 otra cosa antes.
 
-**A3 — Fuente única de los artefactos WSO2 de mantenimiento.** Asset mantiene copias propias
+**A3 — Fuente única de los artefactos WSO2 de mantenimiento. ✅ Resuelta (PM, 2026-10-27): la de
+tools** (§3.1, ADR-014). Falta retirar las copias de asset. El contexto era este: asset mantiene copias propias
 (`_backend/api/toolsMANAPI.xml`, `_backend/api/dataservice/MANDataService.xml`,
 `_backend/api/dataservice/ASP/COREDataService.xml`, `api/asp_ALMDataService.xml`) distintas de las
 de tools. Tools ya unificó sus copias (PR #545). Falta declarar que la fuente es la de tools y
@@ -596,7 +615,7 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 
 | # | Decisión | Mi recomendación |
 |---|---|---|
-| P1 | **Freeze de asset**: desde cuándo solo recibe bugfixes | Desde que se cierren las pruebas de los dos frentes en curso. Cualquier excepción se registra en §3.1 |
+| ~~P1~~ | ✅ **Resuelta (PM, 2026-10-27):** el freeze rige cuando cierren las pruebas de los dos frentes (§3.1). Falta registrar acá la fecha en que efectivamente cierren | — |
 | P2 | **Cuándo se corrigen en asset los bugs heredados** T1 (fuga entre empresas), T2 (SQL injection) y T3 (bucle sin límite), que hoy están en producción. Dónde se replican ya no es una duda: lo resuelve la regla de §3.5 | Corregirlos ya en asset. Dos son de seguridad y no deberían esperar al corte |
 | P7 | **MIG-8**: margen de lanzamiento (cuántos días antes de la fecha se lanza el caso Bonita) y qué se hace con las series ya lanzadas | Margen configurable por empresa. Las series existentes se dejan como están |
 | P9 | **MIG-9**: qué eventos de cada módulo se notifican, a quién y por qué canal | Arrancar con los eventos de la OT que ya notifica asset, más el lanzamiento de MIG-8 |
@@ -650,18 +669,21 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 | D-2 | Correr el checklist de setup (`traz-prod-assetplanner/doc/v3/setup-cliente-alm-pan.md`) para el primer cliente real. Caleras San Juan tiene 32 artículos y 2 herramientas que se cargan a mano (D8) | Pantallas de tools + REST a DEV/PROD |
 | D-3 | El model de pedidos de `traz-comp-almacenes` (`Ordeninsumos.php`, 63 consultas) pega SQL directo a PostgreSQL | Repo `traz-comp-almacenes` |
 | D-4 | `getArticulos2` quedó sin resource que la invoque, y hay 3 queries de `ALMDataService` con el join a `alm_lotes` por revisar | `ALMDataService.dbs` |
-| D-5 | Corregir `doc/vision-v3-context.md` (~línea 112), que dice que la migración está pausada | Este repo (MIG-0, punto 8) |
+| ~~D-5~~ | ✅ Corregido el 2026-10-27: `doc/vision-v3-context.md` ya no dice que la migración está pausada | — |
 
 ---
 
 ## 6. Próximo paso
 
-1. **El PM decide P1** (desde cuándo rige el freeze) y agenda el **workshop de A2 y A3**. La
-   regla de doble bugfix (§3.5) ya rige: hay que avisarle a quien hoy toca asset.
-2. **MIG-0**: escribir ADR-014 (DataServices), crear la rama `develop-v3` en `traz-tools-man`,
-   montar el CI mínimo y el ambiente local con VPN, y recién después mover el puntero del submódulo.
+1. **El PM** aprueba ADR-014, mergea el CI de `traz-tools-man` (PR #1), arma el ambiente local con la
+   VPN y rota las credenciales (T5). La regla de doble bugfix (§3.5) ya rige: hay que avisarle a
+   quien hoy toca asset.
+2. **Cierre de MIG-0**: protección de `develop-v3` en `traz-tools-man` con los checks del CI como
+   requeridos, puntero del submódulo de tools a `develop-v3`, y verificación del datasource en TEST y PROD.
 3. **MIG-1** arranca por los ABMs chicos (Area, Proceso, Componente, Parametro), para asentar el
-   patrón de model → `MANDataService`. Un archivo completo por PR, con el checklist 0b en cero.
+   patrón de model → `MANDataService`. Un archivo completo por PR, con el checklist 0b en cero y el
+   archivo agregado a `.ci/portados.txt`. La primera query sirve también para comprobar
+   `returnGeneratedKeys` sobre MariaDB (pregunta abierta de ADR-014).
 
 ---
 
