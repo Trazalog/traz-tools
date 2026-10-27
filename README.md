@@ -12,6 +12,7 @@ Tres agentes sobre un motor único: **Kuntur** (Coach del administrador), **Quir
 | [`doc/v3/PROMPT_CC_AGENTES_TRAZALOG.md`](doc/v3/PROMPT_CC_AGENTES_TRAZALOG.md) | Plan de trabajo por fases y tareas |
 | [`doc/agente/arquitectura.md`](doc/agente/arquitectura.md) | Cómo quedó implementado el motor |
 | [`doc/agente/identidad.md`](doc/agente/identidad.md) | Los personajes: ficha, estilo, estados y cómo se generan los avatares |
+| [`doc/agente/decisiones-para-revisar.md`](doc/agente/decisiones-para-revisar.md) | Decisiones que tomó Claude Code solo, para que el PM las revise |
 | [`doc/agente/instalacion.md`](doc/agente/instalacion.md) | Instalación por ambiente |
 | [`doc/agente/operacion.md`](doc/agente/operacion.md) | Variables, jobs y diagnóstico |
 | [`doc/agente/entorno-de-prueba.md`](doc/agente/entorno-de-prueba.md) | Cómo probarlo en local |

@@ -222,7 +222,8 @@ def _contenido_mcp(result: dict) -> Any:
 # Subconjunto de las tools reales, con las rutas REST del MI. Cubre las DOS
 # areas del agente: mantenimiento (man_) y almacenes (alm_). Solo lectura: el
 # modo dev no expone escritura para no crear OTs ni pedidos sin querer mientras
-# se prueba -- en modo apim si estan disponibles, porque las declara el gateway.
+# se prueba. En modo apim el gateway publica tambien las de escritura, pero el
+# orquestador las filtra con la lista blanca del agente (ADR-A8, 012-tools.sql).
 _RUTAS_DEV = {
     # Mantenimiento
     "man_get_equipos": "/man/equipos",

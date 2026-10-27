@@ -184,6 +184,9 @@ El JWT que emite Dnato tiene un TTL (`jwt_ttl` en su `config/jwt.php`). Cuando e
 | `/salud` dice `config_incompleta` | Falta una variable | Mirá `problemas_config`, que las nombra |
 | `relation "agente.agente" does not exist` | No se aplicó `011-agentes.sql` | Aplicarlo con el usuario propietario de la base (ver `db/agente/README.md`) |
 | `409 Kuntur todavía no está disponible` | Kuntur está inactivo hasta la Fase 5 | Es lo esperado. Se activa en `011-agentes.sql` |
+| `function agente.tools_permitidas(text) does not exist` en `interaccion.error` | No se aplicó `012-tools.sql` | Aplicarlo con el usuario propietario. Sin él el agente no responde, a propósito |
+| Una tool nueva del gateway no la usa ningún agente | No está en el catálogo | Sumarla al seed de `012-tools.sql` con su clase y re-aplicarlo. Si escribe, va como `accion` y no la va a usar nadie |
+| En `tools_llamadas` aparece `"status": "bloqueada"` | El modelo pidió una tool que no tiene permitida (típicamente, crear una OT) | Es lo esperado: no salió al MCP. Si se repite mucho, revisar el prompt |
 | `401` en toda consulta | Falta el header `Authorization: Bearer` | El frontend tiene que reenviar el token de la sesión |
 | `403 El token no trae empr_id` | El JWT no tiene el claim | Es un problema de Dnato/APIM, no del agente. Ver ADR-009 |
 | Respuestas "problema técnico" siempre | OpenRouter rechaza la key o el modelo no existe | `./agente/dev.sh smoke`. El error real queda en `agente.interaccion.error` |

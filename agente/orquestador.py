@@ -30,7 +30,7 @@ from . import agentes, rag
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
-from .mcp_client import ClienteMCP, MCPError
+from .mcp_client import ClienteMCP, LlamadaTool, MCPError
 
 log = logging.getLogger("agente.orquestador")
 
@@ -138,7 +138,12 @@ class Orquestador:
                 + rag.armar_contexto(fragmentos)},
             {"role": "user", "content": consulta.pregunta},
         ]
-        tools = await mcp.listar_tools()
+        # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
+        # VE las tools que este agente puede usar. Las de escritura no estan,
+        # aunque el gateway las publique.
+        permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
+        tools = [t for t in await mcp.listar_tools()
+                 if t.get("function", {}).get("name") in permitidas]
 
         for _ in range(self.cfg.max_iteraciones):
             respuesta = await llm.chat(mensajes, tools=tools)
@@ -156,7 +161,7 @@ class Orquestador:
                 "tool_calls": respuesta.tool_calls,
             })
             for llamada in respuesta.tool_calls:
-                mensajes.append(await self._ejecutar(mcp, llamada))
+                mensajes.append(await self._ejecutar(mcp, llamada, permitidas))
         else:
             # Se agotaron las iteraciones sin una respuesta final.
             res.respuesta = (
@@ -168,7 +173,8 @@ class Orquestador:
         res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
         return res
 
-    async def _ejecutar(self, mcp: ClienteMCP, llamada: dict) -> dict:
+    async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
+                        permitidas: frozenset[str]) -> dict:
         """Ejecuta una tool y arma el mensaje de vuelta para el modelo."""
         fn = llamada.get("function", {})
         nombre = fn.get("name", "")
@@ -176,6 +182,22 @@ class Orquestador:
             argumentos = json.loads(fn.get("arguments") or "{}")
         except (json.JSONDecodeError, ValueError):
             argumentos = {}
+
+        # Segunda barrera: el modelo puede pedir una tool que no se le ofrecio
+        # (porque la invento, o porque la conoce de otra conversacion). No sale
+        # al MCP: se registra como bloqueada y vuelve al modelo como error.
+        if nombre not in permitidas:
+            log.warning("Tool fuera de la lista blanca bloqueada: %s", nombre)
+            mcp.llamadas.append(LlamadaTool(
+                nombre, argumentos, "bloqueada", 0, "fuera de la lista blanca del agente",
+            ))
+            contenido = json.dumps(
+                {"error": f"La herramienta {nombre} no está disponible. "
+                          "Solo podés consultar datos, no modificarlos."},
+                ensure_ascii=False,
+            )
+            return {"role": "tool", "tool_call_id": llamada.get("id", ""),
+                    "name": nombre, "content": contenido}
 
         try:
             salida = await mcp.llamar(nombre, argumentos)

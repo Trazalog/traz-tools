@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..011 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..012 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -253,6 +253,55 @@ SELECT 'agente_app solo lee agente.agente',
        'la configuracion la edita Trazalog, no el runtime';
 
 -- ---------------------------------------------------------------------------
+-- 012 - catalogo de tools y lista blanca efectiva (ADR-A8)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'tabla agente.tool existe', to_regclass('agente.tool') IS NOT NULL, 'catalogo de tools';
+
+INSERT INTO _resultado
+SELECT 'funcion agente.tools_permitidas existe',
+       to_regprocedure('agente.tools_permitidas(text)') IS NOT NULL, '';
+
+INSERT INTO _resultado
+SELECT 'la tool ' || n || ' esta catalogada como accion',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = n AND clase = 'accion'), 'escribe en el sistema'
+FROM unnest(ARRAY['man_create_ot', 'alm_crear_pedido_materiales']) AS n;
+
+INSERT INTO _resultado
+SELECT 'ningun agente alcanza una tool de accion (ADR-A8)',
+       NOT EXISTS (
+           SELECT 1
+           FROM agente.agente a
+           CROSS JOIN LATERAL agente.tools_permitidas(a.clave) AS p(nombre)
+           JOIN agente.tool t ON t.nombre = p.nombre
+           WHERE t.clase = 'accion'
+       ), 'aunque un patron como man_* las cubriera';
+
+INSERT INTO _resultado
+SELECT 'un patron amplio (man_*) no alcanza las de accion',
+       NOT EXISTS (
+           SELECT 1 FROM agente.tools_por_patrones(ARRAY['man_*', 'alm_*', '*']) AS p(nombre)
+           JOIN agente.tool t ON t.nombre = p.nombre WHERE t.clase = 'accion'
+       )
+       AND EXISTS (SELECT 1 FROM agente.tools_por_patrones(ARRAY['man_*']) AS p(nombre)
+                   WHERE p.nombre = 'man_get_equipos'),
+       'el filtro de clase vale aunque el patron sea demasiado amplio';
+
+INSERT INTO _resultado
+SELECT 'el _ de un patron no es comodin',
+       NOT ('manXgetXequipos' LIKE replace(replace('man_get_*', '_', '\_'), '*', '%'))
+       AND ('man_get_equipos' LIKE replace(replace('man_get_*', '_', '\_'), '*', '%')),
+       'man_get_* no deja pasar manXgetX...';
+
+INSERT INTO _resultado
+SELECT 'agente_app solo lee agente.tool',
+       has_table_privilege('agente_app', 'agente.tool', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.tool', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.tool', 'UPDATE')
+       AND NOT has_table_privilege('agente_app', 'agente.tool', 'DELETE'),
+       'el catalogo lo edita Trazalog';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -262,7 +311,7 @@ FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
-    '011-agentes'
+    '011-agentes', '012-tools'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

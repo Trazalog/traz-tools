@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") y AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -94,7 +94,16 @@ Tres decisiones:
 - **`/agentes` expone solo lo que la interfaz muestra** (clave, nombre, rol, avatar). Nunca el prompt ni las tools.
 - **El runtime no puede editar la configuración**: `agente_app` solo tiene `SELECT`. El Coach exige acceso `admin` y la autonomía solo puede ser `proponer`, las dos como `CHECK` de la base.
 
-La lista de tools permitidas ya está en la configuración, pero **todavía no se aplica**: eso es AGENTE-M-02. Hasta entonces, en modo `apim` el agente recibe todas las tools que declara el gateway, incluidas las de escritura.
+## Los agentes dicen cómo, no hacen (AGENTE-M-02)
+
+El gateway publica 25 tools, y dos escriben: `man_create_ot` y `alm_crear_pedido_materiales`. Ningún agente las puede usar (ADR-A8). Una tool es usable solo si **está en el catálogo `agente.tool`, no es de clase `accion` y entra en un patrón de la configuración del agente**. Lo resuelve la base con `agente.tools_permitidas(clave)`, que es la única fuente.
+
+Dos barreras en el orquestador:
+
+1. **El modelo solo ve las tools permitidas.** Las demás ni aparecen en la lista que se le manda.
+2. **Si igual pide otra**, porque inventa el nombre o la conoce de otra conversación, **no sale al MCP**: queda en `tools_llamadas` con `status: "bloqueada"` y le vuelve al modelo como error ("solo podés consultar datos, no modificarlos"), así puede explicarle al usuario cómo hacerlo.
+
+**Falla cerrado.** Una tool nueva del gateway no la ve nadie hasta que se catalogue. Si no se puede resolver la lista blanca (por ejemplo, porque falta `012`), el agente no responde, en vez de seguir con todas las tools del gateway.
 
 ## Decisiones que vale la pena conocer
 
@@ -244,6 +253,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 | Archivo | Qué cubre |
 |---|---|
 | `tests/test_agentes.py` | La configuración de los agentes: quién puede usar a quién (R1), que el Coach no se pueda confirmar desde un usuario común, que no haya tools de escritura permitidas, que el runtime no pueda editar la configuración, y `/agentes` y `/consulta` con la elección de agente |
+| `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
 | `tests/test_mcp_client.py` | Passthrough del token, que el `empr_id` no viaje, trazabilidad, y el parseo de SSE |
 | `tests/test_orquestador.py` | El loop completo con OpenRouter mockeado: sin tools, con tools, tool que falla, LLM que falla, tope de iteraciones, registro |
