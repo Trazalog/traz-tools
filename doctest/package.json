@@ -17,6 +17,7 @@
     "test:quarantine": "node scripts/pw.mjs --grep @quarantine --pass-with-no-tests",
     "test:report": "playwright show-report tests/e2e/.playwright-report",
     "seed:empresa": "tsx tests/e2e/seeds/crear-empresa-test.ts",
+    "seed:tar": "tsx tests/e2e/seeds/tar/preparar-datos-tar.ts",
     "validate:catalog": "tsx generators/validate-catalog.ts",
     "validate:catalog:selftest": "tsx generators/validate-catalog.ts --selftest",
     "hoja:validacion": "tsx generators/hoja-validacion.ts",

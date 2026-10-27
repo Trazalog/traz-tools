@@ -1,0 +1,58 @@
+id: TAR-UC-006
+modulo: TAR
+titulo: Crear un hito
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-bpm
+    path: controllers/Pedidotrabajo.php
+    detalle: hitos($petrId)
+  - repo: traz-comp-bpm
+    path: models/Pedidotrabajos.php
+    detalle: guardarHito(), mapHito()
+  - repo: traz-comp-bpm
+    path: views/pedidos_trabajo/form_hito.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/TARDataService.dbs
+    detalle: POST /hitos
+pantallas:
+  - Planificación de Trabajos → pedido → Nuevo Hito
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Un pedido de la empresa
+depende_de:
+  - TAR-UC-002
+flujo_principal:
+  - paso: Elige un pedido
+    resultado: La columna Hitos muestra los suyos
+  - paso: Pulsa "Nuevo Hito"
+    resultado: Se abre el formulario con código (4 a 10), descripción, fecha de inicio, documento, encargado, objetivo, unidad de tiempo y ubicación
+  - paso: Completa y guarda
+    resultado: El hito aparece en la lista del pedido
+flujos_alternativos:
+  - nombre: Falta un obligatorio
+    pasos:
+      - paso: Guarda sin código o con un código de 3 caracteres
+        resultado: No se guarda
+  - nombre: Sin adjunto
+    pasos:
+      - paso: Guarda sin documento
+        resultado: Se guarda sin error
+validaciones:
+  - El hito queda colgado del pedido elegido
+  - El documento se guarda íntegro con su nombre
+  - Solo se pueden crear hitos en pedidos de la propia empresa
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-10: ¿el código de hito es único dentro del pedido? Hoy no se valida"
+  - 'D-11: el "Encargado" del hito, ¿tiene algún efecto? Guarda el id de usuario y las tareas guardan el usernick'
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-006-01 a 006-08"
+  - "Hipótesis: HIP-TAR-02, HIP-TAR-15"

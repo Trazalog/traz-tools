@@ -68,6 +68,7 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 | `npm run generators:dry-run` | Corrida en seco de los generadores (lo mismo que corre el CI) |
 | `npm run typecheck` | `tsc --noEmit` sobre generators y tests |
 | `npm run hurl:install` | Instala Hurl sin sudo |
+| `npm run seed:tar` | Carga en la empresa de test 1 los datos base de TAR que el módulo no crea (2 clientes y la lista `tipos_pedidos_trabajo`), por la pantalla e idempotente. `-- --dry-run` muestra qué haría |
 | `npm run seed:empresa` | **Crea una empresa de test desde cero**, recorriendo el registro real de punta a punta: se crea una casilla descartable, se registra, **lee el mail de activación solo** y da de alta la empresa con sus 16 roles, establecimiento, depósito y 5 usuarios. `-- --dry-run` muestra los datos sin tocar nada; `-- --headed` deja mirarlo. Escribe datos reales: se corre pocas veces |
 
 ### Entornos
@@ -117,3 +118,4 @@ Todo entra por feature branch + PR (metodología git del `CLAUDE.md`). Nunca com
 | F3 | ALM — almacenes y pedido de materiales | #440 | pendiente |
 | F4 | MCP — suite Hurl de contrato y aislamiento | #441 | pendiente |
 | F5 | Integración CI/CD, hook pre-push, `test-gap`, generators restantes | #442 | pendiente |
+| TAR | Tareas — pedidos de trabajo, hitos y tareas planificadas | — | 22 casos en `borrador`, suite de 4 specs y bugs en `doc/specs/TAR-bugs-detectados.md` |

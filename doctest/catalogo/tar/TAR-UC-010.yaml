@@ -1,0 +1,52 @@
+id: TAR-UC-010
+modulo: TAR
+titulo: Planificar fecha y hora de una tarea
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/planificacion_calendario.php
+    detalle: clickCalendario()
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/planificacion/mdl_hora.php
+    detalle: planificarTarea()
+  - repo: traz-comp-tareasestandar
+    path: models/Tareas.php
+    detalle: map()
+pantallas:
+  - Planificación de Trabajos → hito → Calendario → 📅
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Una tarea agregada al hito
+depende_de:
+  - TAR-UC-009
+flujo_principal:
+  - paso: Pulsa 📅 en la tarea
+    resultado: El foco va al calendario
+  - paso: Hace clic en un día de hoy en adelante
+    resultado: Se pide la hora, entre 10:00 y 18:00
+  - paso: Elige la hora y pulsa "Planificar"
+    resultado: La tarea muestra la fecha y aparece en el calendario de la hora de inicio a inicio + duración
+flujos_alternativos:
+  - nombre: Día pasado
+    pasos:
+      - paso: Hace clic en un día anterior a hoy
+        resultado: Ve "No se puede seleccionar fechas anteriores a la actual!"
+validaciones:
+  - Fin = inicio + duración estándar
+  - La hora elegida se conserva al volver a guardar la tarea
+  - Si ya tiene responsable, planificar lanza el caso (TAR-UC-011)
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-14: ¿la jornada fija 10:00-18:00 sirve para operaciones con turnos?"
+  - "D-20: ¿se puede planificar para hoy a una hora ya pasada?"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-010-01 a 010-07"
+  - "Hipótesis: HIP-TAR-18, HIP-TAR-19, HIP-TAR-21"
