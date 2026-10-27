@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, rag
+from . import agentes, guardian, rag
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -70,6 +70,8 @@ class Resultado:
     controles: list[dict] = field(default_factory=list)
     incidentes: list[dict] = field(default_factory=list)
     contenidos_tools: list[str] = field(default_factory=list)
+    # (tool, contenido) en el orden en que se ejecutaron: lo que lee el guardian.
+    tools_vistas: list[tuple[str, str]] = field(default_factory=list)
 
 
 class Orquestador:
@@ -146,11 +148,11 @@ class Orquestador:
 
         # 3. Conversacion
         sistema = consulta.agente.sistema(self.cfg.prompts_dir)
+        contexto = rag.armar_contexto(fragmentos)
         mensajes = [
             {"role": "system", "content": sistema},
             {"role": "system", "content":
-                "Contexto recuperado para esta consulta:\n\n"
-                + rag.armar_contexto(fragmentos)},
+                "Contexto recuperado para esta consulta:\n\n" + contexto},
             {"role": "user", "content": consulta.pregunta},
         ]
         # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
@@ -175,6 +177,7 @@ class Orquestador:
 
             if not respuesta.pide_tools:
                 res.respuesta = respuesta.texto.strip()
+                self._guardian(consulta, res, contexto)
                 break
 
             # 4. El modelo pidio datos: se los buscamos y volvemos a preguntar.
@@ -186,6 +189,7 @@ class Orquestador:
                 mensaje = await self._ejecutar(mcp, llamada, permitidas)
                 mensajes.append(mensaje)
                 res.contenidos_tools.append(mensaje["content"])
+                res.tools_vistas.append((mensaje["name"], mensaje["content"]))
                 if mcp.llamadas and mcp.llamadas[-1].status == "bloqueada":
                     res.incidentes.append({
                         "tipo": "tool_bloqueada", "tool": mensaje["name"],
@@ -201,6 +205,22 @@ class Orquestador:
 
         res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
         return res
+
+    def _guardian(self, consulta: Consulta, res: Resultado, contexto: str) -> None:
+        """R4: toda cifra de la respuesta tiene que tener origen, o se bloquea.
+
+        Se compara contra lo que el modelo LEYO en esta corrida: el contenido de
+        cada tool tal como se le paso, el contexto de conocimiento y memoria, y
+        la pregunta. Ver agente/guardian.py.
+        """
+        veredicto = guardian.revisar(res.respuesta, tools=res.tools_vistas, contexto=contexto,
+                                     pregunta=consulta.pregunta)
+        res.controles.append(veredicto.control())
+        if veredicto.bloquear:
+            log.warning("R4: respuesta bloqueada por cifras sin fuente: %s",
+                        veredicto.sin_fuente + veredicto.web_sin_cita)
+            res.incidentes.append(veredicto.incidente(res.respuesta))
+            res.respuesta = guardian.MENSAJE_BLOQUEO
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
                         permitidas: frozenset[str]) -> dict:

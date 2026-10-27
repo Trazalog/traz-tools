@@ -83,7 +83,8 @@ async def test_queda_el_agente_el_disparador_y_el_control_de_lista_blanca(con, m
     fila = await _corrida(con, res.interaccion_id)
     assert fila["agente"] == "quirqui"
     assert fila["disparador"] == "consulta"
-    assert fila["controles"] == [{"control": "lista_blanca", "publicadas": 1, "ofrecidas": 1}]
+    assert {"control": "lista_blanca", "publicadas": 1, "ofrecidas": 1} in fila["controles"]
+    assert {"control": "R4_cifras", "cifras": 0, "sin_fuente": 0} in fila["controles"]
     assert fila["incidentes"] == []
 
 

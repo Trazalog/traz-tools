@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") y AGENTE-M-03 (corrida auditable, sección "Todo queda registrado"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") y AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -157,6 +157,24 @@ Eso es lo que hace accionable un pulgar abajo: sin esa traza, un "no me sirvió"
 
 Si el registro falla igual, la respuesta se entrega: se pierde la traza, no la respuesta (queda en el log).
 
+### Ninguna cifra sin origen (R4, AGENTE-M-04)
+
+Decisión del PM: si una respuesta trae un número que no tiene origen, **se bloquea**. El usuario recibe "No tengo datos para responder eso con certeza…" y la corrida queda con un incidente `cifra_sin_fuente` que guarda la respuesta original para revisarla. Lo hace `agente/guardian.py`, sobre la respuesta final del modelo (no sobre los mensajes fijos de error).
+
+**Qué cuenta como origen**, comparado siempre contra lo que el modelo **leyó** en esa corrida:
+
+| Origen | Ejemplo |
+|---|---|
+| Lo que devolvió una tool (el contenido exacto que se le pasó al modelo) | `alm_get_stock` devolvió `12` → "quedan 12" |
+| La cantidad de elementos de una lista que devolvió una tool | tres equipos en la lista → "tenés 3 equipos" |
+| El contexto de conocimiento y memoria recuperado | el manual dice 250 horas → "cada 250 horas" |
+| La pregunta del usuario | "tengo 4 técnicos" → "con 4 técnicos…" |
+| La web (`web_buscar`), **solo si la respuesta cita la URL** | "7100 millones (https://…)" |
+
+Admite redondeos a los decimales escritos (72 contra 71,83), porcentajes contra fracciones (72 % contra 0,72) y el separador de miles argentino (1.500 = 1500). **No controla** fechas, horas, códigos de letras y números (COMP-001, OT1234), marcadores de lista ni números chicos de discurso ("3 pasos", "2 opciones"; la lista de palabras es configurable en `PALABRAS_DE_DISCURSO`). Una norma como "ISO 55000" **sí** se controla: inventar una referencia normativa es tan grave como inventar un torque.
+
+En `controles` queda `{"control": "R4_cifras", "cifras": N, "sin_fuente": K}` en cada corrida. Los falsos positivos se ajustan mirando los incidentes.
+
 ### `interaccion`, `feedback` y `tool_llamada` tienen RLS
 
 Guardan preguntas y respuestas de cada empresa, con datos que vinieron de sus tools. Desde `013` tienen la misma policy que `memoria`: un `empr_id` solo ve y escribe lo suyo, y sin contexto no se ve nada. Hasta `013` las protegía solo el `WHERE empr_id` del código (hallazgo del 2026-10-27). La vista `v_feedback_negativo` corre con los permisos de quien consulta (`security_invoker`), para que su dueño no se saltee las policies.
@@ -270,6 +288,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 |---|---|
 | `tests/test_agentes.py` | La configuración de los agentes: quién puede usar a quién (R1), que el Coach no se pueda confirmar desde un usuario común, que no haya tools de escritura permitidas, que el runtime no pueda editar la configuración, y `/agentes` y `/consulta` con la elección de agente |
 | `tests/test_corrida.py` | La corrida (R8): agente, disparador, costo sumado, controles, una tool bloqueada como incidente, lo que vio el modelo de cada tool, que una corrida que rompe la base igual quede registrada, y que otra empresa no la vea |
+| `tests/test_guardian.py` | R4: qué se bloquea (cifra inventada, pegada a la unidad, norma inventada, cifra de la web sin URL) y qué pasa (tool, conteo, redondeo, miles, conocimiento, pregunta, web citada, fechas, códigos, discurso); y en el orquestador, que el usuario reciba "no tengo datos" y quede el incidente con la respuesta original |
 | `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
 | `tests/test_mcp_client.py` | Passthrough del token, que el `empr_id` no viaje, trazabilidad, y el parseo de SSE |

@@ -186,6 +186,7 @@ El JWT que emite Dnato tiene un TTL (`jwt_ttl` en su `config/jwt.php`). Cuando e
 | `409 Kuntur todavía no está disponible` | Kuntur está inactivo hasta la Fase 5 | Es lo esperado. Se activa en `011-agentes.sql` |
 | `function agente.tools_permitidas(text) does not exist` en `interaccion.error` | No se aplicó `012-tools.sql` | Aplicarlo con el usuario propietario. Sin él el agente no responde, a propósito |
 | Una tool nueva del gateway no la usa ningún agente | No está en el catálogo | Sumarla al seed de `012-tools.sql` con su clase y re-aplicarlo. Si escribe, va como `accion` y no la va a usar nadie |
+| El agente contesta "No tengo datos para responder eso con certeza" | El guardián de cifras (R4) encontró un número sin origen y bloqueó la respuesta | Mirar `incidentes` de esa corrida: `respuesta_bloqueada` tiene lo que iba a decir y `cifras` qué número no tenía fuente. Si es un falso positivo (por ejemplo, "5 puntos" no reconocido como discurso), sumar la palabra a `PALABRAS_DE_DISCURSO` en `agente/guardian.py` |
 | En `tools_llamadas` aparece `"status": "bloqueada"` | El modelo pidió una tool que no tiene permitida (típicamente, crear una OT) | Es lo esperado: no salió al MCP. Si se repite mucho, revisar el prompt |
 | `401` en toda consulta | Falta el header `Authorization: Bearer` | El frontend tiene que reenviar el token de la sesión |
 | `403 El token no trae empr_id` | El JWT no tiene el claim | Es un problema de Dnato/APIM, no del agente. Ver ADR-009 |
