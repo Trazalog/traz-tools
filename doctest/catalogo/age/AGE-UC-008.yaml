@@ -1,0 +1,29 @@
+id: AGE-UC-008
+modulo: AGE
+titulo: El Coach no está disponible para quien no es administrador
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: agente/agentes.py
+    detalle: "Acceso por rol de Dnato; el acceso se verifica antes que si está activo"
+  - repo: traz-tools
+    path: db/agente/011-agentes.sql
+pantallas:
+  - "Cualquier pantalla de Tools"
+precondiciones:
+  - "Sesión iniciada en Tools con un usuario que no es administrador"
+flujo_principal:
+  - paso: "Busca al Coach entre los agentes disponibles"
+    resultado: "Solo aparece Quirqui; el Coach no figura"
+flujos_alternativos:
+  - nombre: "Intenta llamar al Coach directamente"
+    pasos:
+      - paso: "Pide una consulta al Coach sin ser administrador"
+        resultado: "Recibe la misma respuesta que si el Coach no existiera"
+validaciones:
+  - "Un usuario que no es administrador no puede ver ni usar al Coach por ninguna vía, ni confirmar que existe"
+dudas:
+  - "Hoy 'administrador' es el nivel 1 de Dnato, que no es por empresa. ¿Se acepta así hasta tener administradores por empresa?"

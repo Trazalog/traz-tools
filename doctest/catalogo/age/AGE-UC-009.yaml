@@ -1,0 +1,24 @@
+id: AGE-UC-009
+modulo: AGE
+titulo: Saber qué se mide de lo que hablo con Quirqui
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: application/modules/traz-comp-agente/views/panel.php
+    detalle: "Aviso de medición permanente (#agp-aviso)"
+pantallas:
+  - "Cualquier pantalla de Tools → botón Q"
+precondiciones:
+  - "Sesión iniciada en Tools, con el agente habilitado en el menú"
+flujo_principal:
+  - paso: "Abre el panel de Quirqui"
+    resultado: "Ve el aviso de que lo que habla con Quirqui se usa para medir indicadores de la empresa"
+  - paso: "Elige '¿Qué se mide?'"
+    resultado: "Se despliega qué se registra y que el administrador no ve las conversaciones"
+validaciones:
+  - "El aviso está siempre visible mientras el panel está abierto"
+dudas:
+  - "El texto del aviso está pendiente de revisión legal (AGENTE-LEGAL-01). Este caso no se valida hasta tener el texto definitivo."

@@ -1,0 +1,44 @@
+id: AGE-UC-001
+modulo: AGE
+titulo: Preguntarle a Quirqui qué se hace en la pantalla donde estoy
+perfil: Responsable de Almacén
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: application/modules/traz-comp-agente/views/panel.php
+    detalle: "Panel en todas las pantallas; manda la ruta actual (site de navegacion.js)"
+  - repo: traz-tools
+    path: agente/pantalla.py
+    detalle: "Ruta -> controlador -> casos de uso de esa pantalla"
+pantallas:
+  - "Cualquier pantalla de Tools → botón Q (abajo a la derecha)"
+precondiciones:
+  - "Sesión iniciada en Tools"
+  - "El usuario tiene en su menú el ítem del agente (los agentes son una suscripción)"
+  - "Las ayudas y el catálogo están cargados en el conocimiento del agente"
+flujo_principal:
+  - paso: "Entra a Almacenes → Articulos"
+    resultado: "Ve el botón Q abajo a la derecha"
+  - paso: "Abre el panel de Quirqui"
+    resultado: "Se abre el panel con el aviso de medición arriba y un campo para escribir"
+  - paso: "Pregunta qué tiene que hacer en esa pantalla"
+    resultado: "Quirqui explica para qué sirve el listado de artículos y sugiere el siguiente paso, citando la ayuda del manual de Almacenes"
+flujos_alternativos:
+  - nombre: "La pantalla no tiene casos de uso registrados"
+    pasos:
+      - paso: "Pregunta qué hacer en una pantalla que el catálogo no describe"
+        resultado: "Quirqui dice que no tiene registrado qué se hace ahí y ofrece lo que sí sabe"
+  - nombre: "El usuario cambia de pantalla con el panel abierto"
+    pasos:
+      - paso: "Navega a otra pantalla y vuelve a preguntar"
+        resultado: "La respuesta habla de la pantalla nueva"
+validaciones:
+  - "Quirqui solo describe la pantalla con lo que dice el catálogo validado; no inventa pasos"
+  - "La ruta de la pantalla no puede usarse para darle instrucciones al agente"
+dudas:
+  - "¿El panel tiene que abrirse solo la primera vez que el usuario entra a una pantalla, o solo cuando lo abre él?"
+  - "Las pantallas de Mantenimiento (AssetPlanner) todavía no están en Tools: ¿se acepta que ahí Quirqui no sepa qué se hace hasta la migración?"
+notas:
+  - "Construido en AGENTE-AS-01. Sin probar todavía en la app real (ver doc/agente/entorno-de-prueba.md)."

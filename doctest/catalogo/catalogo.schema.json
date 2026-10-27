@@ -21,7 +21,7 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^(DNATO|MAN|ALM|MCP|PAN|PRD|TAR)-UC-[0-9]{3}$",
+      "pattern": "^(DNATO|MAN|ALM|MCP|PAN|PRD|TAR|AGE)-UC-[0-9]{3}$",
       "description": "Identificador único: <MOD>-UC-<NNN>. Debe coincidir con el nombre del archivo."
     },
     "modulo": {
@@ -33,7 +33,8 @@
         "MCP",
         "PAN",
         "PRD",
-        "TAR"
+        "TAR",
+        "AGE"
       ],
       "description": "Módulo funcional. Debe coincidir con el prefijo del id y con el directorio que contiene el archivo."
     },

@@ -27,7 +27,7 @@ El nombre del archivo **es** el id del caso. El directorio **es** el módulo en 
 
 | Campo | Obligatorio | Qué es |
 |---|---|---|
-| `id` | sí | `<MOD>-UC-<NNN>`. Módulos: `DNATO`, `MAN`, `ALM`, `MCP`, `PAN`, `PRD`, `TAR` |
+| `id` | sí | `<MOD>-UC-<NNN>`. Módulos: `DNATO`, `MAN`, `ALM`, `MCP`, `PAN`, `PRD`, `TAR`, `AGE` (los agentes de IA: Kuntur, Quirqui, Faustino — ⏳ propuesto en AGENTE-DT-01) |
 | `modulo` | sí | Mismo prefijo que el id |
 | `titulo` | sí | Título funcional, en lenguaje de usuario |
 | `perfil` | sí | Perfil funcional que ejecuta el flujo. **Vocabulario fijo** (ver abajo) |

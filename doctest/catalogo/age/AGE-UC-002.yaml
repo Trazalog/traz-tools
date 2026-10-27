@@ -1,0 +1,33 @@
+id: AGE-UC-002
+modulo: AGE
+titulo: Consultar los datos de mi empresa y recibir una respuesta respaldada
+perfil: Responsable de Almacén
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: agente/orquestador.py
+    detalle: "Loop: conocimiento + tools de lectura + guardián de cifras"
+  - repo: traz-tools
+    path: application/modules/traz-comp-agente/controllers/Agente.php
+pantallas:
+  - "Cualquier pantalla de Tools → botón Q"
+precondiciones:
+  - "Sesión iniciada en Tools, con el agente habilitado en el menú"
+  - "La empresa tiene artículos con stock cargado"
+flujo_principal:
+  - paso: "Abre el panel de Quirqui y pregunta si hay stock de un artículo"
+    resultado: "Quirqui consulta el stock de la empresa y responde con la cantidad que devolvió el sistema"
+  - paso: "Pregunta qué conviene hacer si el stock está bajo el punto de pedido"
+    resultado: "Quirqui explica cómo pedir la reposición y en qué pantalla se hace, sin hacerlo él"
+flujos_alternativos:
+  - nombre: "El sistema no responde"
+    pasos:
+      - paso: "Pregunta por el stock cuando la consulta de datos falla"
+        resultado: "Quirqui dice que no pudo consultar el dato en este momento, sin inventar una cantidad"
+validaciones:
+  - "Los datos son siempre de la empresa del usuario; nunca de otra"
+  - "Toda cantidad de la respuesta sale de lo que devolvió el sistema en esa consulta"
+dudas:
+  - "¿Quirqui tiene que mostrar de qué consulta salió cada dato (por ejemplo, 'según el stock de hoy') o alcanza con que la respuesta sea correcta?"
