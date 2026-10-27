@@ -293,12 +293,16 @@ async def admin_feedback(
 @app.get("/entrevista/agenda")
 async def entrevista_agenda(
     modulo: str | None = None,
+    vertical: str | None = None,
     limite: int = 15,
     _: Identidad = Depends(identidad),
     con: psycopg.AsyncConnection = Depends(conexion),
 ) -> dict:
     """Los temas pendientes, del más al menos prioritario."""
-    temas = await entrevistador.agenda(con, limite=min(limite, 50), modulo=modulo)
+    if vertical is not None and vertical not in rag.VERTICALES:
+        raise HTTPException(400, f"vertical invalida: {vertical}")
+    temas = await entrevistador.agenda(con, limite=min(limite, 50), modulo=modulo,
+                                       vertical=vertical)
     return {"temas": [
         {"tema_id": t.tema_id, "nombre": t.nombre, "descripcion": t.descripcion,
          "modulo": t.modulo, "prioridad": t.prioridad,

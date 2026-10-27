@@ -53,10 +53,26 @@ async def fijar_empresa(con: psycopg.AsyncConnection, empr_id: int) -> None:
         await cur.execute("SELECT set_config('agente.empr_id', %s, true)", (str(empr_id),))
 
 
+# Industrias del conocimiento (ADR-A11). 'general' aplica a todas.
+VERTICALES = ("mineria", "oil_gas", "electricidad", "general")
+_NOMBRE_VERTICAL = {"mineria": "minería", "oil_gas": "oil & gas", "electricidad": "electricidad"}
+
+
+async def vertical_de(con: psycopg.AsyncConnection, empr_id: int) -> str | None:
+    """La industria declarada de la empresa, o None si no la declaro.
+
+    Necesita el contexto de empresa fijado (perfil_empresa tiene RLS).
+    """
+    async with con.cursor() as cur:
+        await cur.execute("SELECT vertical FROM agente.perfil_empresa WHERE empr_id = %s", (empr_id,))
+        fila = await cur.fetchone()
+    return fila["vertical"] if fila else None
+
+
 async def buscar_conocimiento(
     con: psycopg.AsyncConnection, cfg: Config, embedding: list[float],
     *, tipo_equipo: str | None = None, situacion: str | None = None,
-    modulo: str | None = None,
+    modulo: str | None = None, vertical: str | None = None,
 ) -> list[Fragmento]:
     """Conocimiento compartido (de la industria y del producto), comun a todos los clientes.
 
@@ -68,10 +84,14 @@ async def buscar_conocimiento(
 
     Cuando se filtra, el conocimiento 'general' (seguridad, normativa
     transversal) se recupera igual: aplica a las dos areas.
+
+    Con vertical (ADR-A11), solo trae lo de esa industria y lo 'general': una
+    empresa de oil & gas no recibe lo que es solo de mineria. Sin vertical
+    (la empresa no la declaro), trae todo, etiquetado.
     """
     sql = """
         SELECT c.chunk_id, c.contenido, c.tipo_equipo, c.situacion, c.confianza,
-               c.modulo, c.metadata AS chunk_meta,
+               c.modulo, c.vertical, c.metadata AS chunk_meta,
                f.tipo AS fuente_tipo, f.nombre AS fuente_nombre,
                c.embedding <=> %(emb)s::vector AS distancia
         FROM agente.chunk c
@@ -81,13 +101,15 @@ async def buscar_conocimiento(
           AND (%(tipo_equipo)s::text IS NULL OR c.tipo_equipo = %(tipo_equipo)s)
           AND (%(situacion)s::text  IS NULL OR c.situacion  = %(situacion)s)
           AND (%(modulo)s::text     IS NULL OR c.modulo IN (%(modulo)s, 'general'))
+          AND (%(vertical)s::text   IS NULL OR c.vertical IN (%(vertical)s, 'general'))
         ORDER BY c.embedding <=> %(emb)s::vector
         LIMIT %(k)s
     """
     async with con.cursor() as cur:
         await cur.execute(sql, {
             "emb": _a_vector(embedding), "tipo_equipo": tipo_equipo,
-            "situacion": situacion, "modulo": modulo, "k": cfg.rag_top_k,
+            "situacion": situacion, "modulo": modulo, "vertical": vertical,
+            "k": cfg.rag_top_k,
         })
         filas = await cur.fetchall()
 
@@ -98,6 +120,7 @@ async def buscar_conocimiento(
             metadata={
                 "tipo_equipo": f["tipo_equipo"], "situacion": f["situacion"],
                 "modulo": f["modulo"], "confianza": float(f["confianza"]),
+                "vertical": f["vertical"],
                 "fuente": f"{f['fuente_tipo']}: {f['fuente_nombre']}",
                 # Link de la ayuda y pantallas del caso de uso, si los tiene
                 # (AGENTE-M-06): el agente los cita.
@@ -205,6 +228,8 @@ def armar_contexto(fragmentos: list[Fragmento]) -> str:
                 etiquetas.append(f"confianza: {conf:.2f}")
             if f.metadata.get("tipo_equipo"):
                 etiquetas.append(f"equipo: {f.metadata['tipo_equipo']}")
+            if f.metadata.get("vertical") in _NOMBRE_VERTICAL:
+                etiquetas.append(f"industria: {_NOMBRE_VERTICAL[f.metadata['vertical']]}")
             if f.metadata.get("pantallas"):
                 etiquetas.append("pantalla: " + "; ".join(f.metadata["pantallas"]))
             if f.metadata.get("ayuda"):

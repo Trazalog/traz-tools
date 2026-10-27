@@ -146,6 +146,24 @@ Son el conocimiento **del producto**: con eso Quirqui explica qué se hace en ca
 - **Volver a correrlo reemplaza, no duplica.** Conviene correrlo cada vez que se regenera el sitio de ayudas o se valida un caso nuevo.
 - Con el material de hoy son unos 240 fragmentos. El costo de vectorizarlos es de centavos de dólar.
 
+### La industria de cada empresa (ADR-A11)
+
+El conocimiento está marcado por industria: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Una empresa con la industria declarada recibe lo de su industria y lo general; **sin declarar, recibe todo**, etiquetado. Hoy la industria la carga Trazalog; más adelante la va a completar la entrevista de Kuntur.
+
+Se declara en la **terminal local** (o en la del servidor de la base), con el propietario de la base o el curador:
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -c "SET agente.empr_id = '191'; INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (191, 'mineria') ON CONFLICT (empr_id) DO UPDATE SET vertical = EXCLUDED.vertical, fec_mod = now();"
+```
+
+Al ingestar material de una sola industria, indicarla con `--vertical` (por defecto `general`):
+
+```
+.venv-agente/bin/python -m agente.ingesta manual-bomba-transferencia.pdf --modulo man --vertical oil_gas
+```
+
+Las ayudas y los casos de uso son siempre `general`.
+
 ### Documentos de una empresa
 
 Procedimientos internos, instructivos propios: van a la **memoria privada de esa empresa**, nunca al conocimiento compartido (R7). Hace falta que la empresa tenga su partición de memoria (`SELECT agente.crear_particion_empresa(<empr_id>);`).

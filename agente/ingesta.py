@@ -129,6 +129,7 @@ async def ingestar(
     cfg: Config, archivos: list[Path], *, tipo_fuente: str, tipo_equipo: str | None,
     situacion: str | None, modulo: str, confianza: float, dry_run: bool,
     empresa: int | None = None, reemplazar: bool = False, llm=None,
+    vertical: str = "general",
 ) -> int:
     """Vectoriza y guarda. Con empresa, en su memoria privada; si no, en el
     conocimiento compartido."""
@@ -147,9 +148,12 @@ async def ingestar(
                 if empresa is not None:
                     total += await _a_memoria(con, llm, archivo, piezas, empresa, reemplaza)
                 else:
+                    # Las ayudas y los casos de uso son del producto: aplican a
+                    # todas las industrias, se indique lo que se indique.
                     total += await _a_conocimiento(
                         con, llm, archivo, piezas, tipo=tipo, tipo_equipo=tipo_equipo,
-                        situacion=situacion, confianza=confianza, reemplaza=reemplaza)
+                        situacion=situacion, confianza=confianza, reemplaza=reemplaza,
+                        vertical="general" if tipo in TIPOS_QUE_REEMPLAZAN else vertical)
     finally:
         await con.close()
     return total
@@ -163,7 +167,8 @@ async def _vectores(llm, piezas: list[Pieza]):
 
 
 async def _a_conocimiento(con, llm, archivo: Path, piezas: list[Pieza], *, tipo: str,
-                          tipo_equipo, situacion, confianza: float, reemplaza: bool) -> int:
+                          tipo_equipo, situacion, confianza: float, reemplaza: bool,
+                          vertical: str = "general") -> int:
     async with con.cursor() as cur:
         await cur.execute(
             """
@@ -186,11 +191,12 @@ async def _a_conocimiento(con, llm, archivo: Path, piezas: list[Pieza], *, tipo:
                     """
                     INSERT INTO agente.chunk
                         (fuente_id, contenido, embedding, tipo_equipo, situacion,
-                         modulo, confianza, metadata)
-                    VALUES (%s, %s, %s::vector, %s, %s, %s, %s, %s)
+                         modulo, confianza, metadata, vertical)
+                    VALUES (%s, %s, %s::vector, %s, %s, %s, %s, %s, %s)
                     """,
                     (fuente_id, p.texto, _a_vector(vector), tipo_equipo, situacion,
-                     p.modulo, confianza, json.dumps(p.metadata, ensure_ascii=False)),
+                     p.modulo, confianza, json.dumps(p.metadata, ensure_ascii=False),
+                     vertical),
                 )
         n += len(lote)
         print(f"   {n}/{len(piezas)}")
@@ -273,6 +279,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="Situacion operativa (mantenimiento, falla, seguridad...)")
     ap.add_argument("--confianza", type=float, default=0.8,
                     help="Confianza 0..1 del material (default: 0.8)")
+    ap.add_argument("--vertical", default="general",
+                    choices=["mineria", "oil_gas", "electricidad", "general"],
+                    help="Industria a la que aplica el material (ADR-A11). 'general' = a "
+                         "todas. Las ayudas y los casos de uso son siempre 'general'")
     ap.add_argument("--empresa", type=int, default=None,
                     help="empr_id: los documentos van a la memoria PRIVADA de esa empresa, "
                          "no al conocimiento compartido")
@@ -311,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         cfg, archivos, tipo_fuente=args.tipo, tipo_equipo=args.tipo_equipo,
         situacion=args.situacion, modulo=args.modulo, confianza=args.confianza,
         dry_run=False, empresa=args.empresa, reemplazar=args.reemplazar,
+        vertical=args.vertical,
     ))
     print(f"\nListo: {total} fragmentos ingestados desde {len(archivos)} archivo(s).")
     return 0

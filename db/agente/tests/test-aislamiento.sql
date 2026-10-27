@@ -103,6 +103,14 @@ VALUES ('00000000-0000-0000-0000-00000000000b', :EMPRESA_B, 1, 'alm_get_stock', 
 INSERT INTO agente.feedback (interaccion_id, util, comentario, usr_id)
 VALUES ('00000000-0000-0000-0000-00000000000b', false, 'QUEJA PRIVADA DE B', 1);
 
+-- Perfil de empresa (016): la industria de cada una.
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (:EMPRESA_A, 'mineria')
+ON CONFLICT (empr_id) DO UPDATE SET vertical = 'mineria';
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (:EMPRESA_B, 'oil_gas')
+ON CONFLICT (empr_id) DO UPDATE SET vertical = 'oil_gas';
+
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
 
@@ -185,6 +193,12 @@ SELECT 'v_feedback_negativo: con contexto A, no muestra el de B aunque no se fil
        NOT EXISTS (SELECT 1 FROM agente.v_feedback_negativo WHERE empr_id = 900002),
        'la vista corre con los permisos de quien consulta (security_invoker)';
 
+INSERT INTO _resultado
+SELECT 'perfil_empresa: con contexto A, el perfil de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.perfil_empresa WHERE empr_id = 900002)
+       AND EXISTS (SELECT 1 FROM agente.perfil_empresa WHERE empr_id = 900001),
+       '016';
+
 -- ---------------------------------------------------------------------------
 -- CONTROL 2 — Simetrico: con el contexto de B, A es invisible
 -- ---------------------------------------------------------------------------
@@ -221,6 +235,10 @@ INSERT INTO _resultado
 SELECT 'destinatario_alerta: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
        NOT EXISTS (SELECT 1 FROM agente.destinatario_alerta),
        'no debe devolver todo';
+
+INSERT INTO _resultado
+SELECT 'perfil_empresa: sin contexto no se ve ningun perfil (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.perfil_empresa), '016';
 
 INSERT INTO _resultado
 SELECT 'interaccion, tool_llamada y feedback: sin contexto no se ve ninguna fila (falla cerrado)',

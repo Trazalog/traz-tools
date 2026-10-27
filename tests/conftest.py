@@ -36,6 +36,28 @@ def cfg() -> Config:
 
 
 @pytest.fixture
+async def con_admin():
+    """Conexion de ADMINISTRACION, para sembrar datos que el runtime no puede
+    escribir (por ejemplo, conocimiento compartido de varias industrias).
+
+    Opcional: solo si AGENTE_TEST_DB_ADMIN_DSN esta configurada (en desarrollo,
+    contra una base descartable). Todo corre en una transaccion que se deshace
+    al final: no deja nada en la base.
+    """
+    dsn = os.environ.get("AGENTE_TEST_DB_ADMIN_DSN")
+    if not dsn:
+        pytest.skip("Sin AGENTE_TEST_DB_ADMIN_DSN: se saltean los tests que siembran como administrador")
+    import psycopg
+    from psycopg.rows import dict_row
+    c = await psycopg.AsyncConnection.connect(dsn, row_factory=dict_row)
+    try:
+        yield c
+    finally:
+        await c.rollback()
+        await c.close()
+
+
+@pytest.fixture
 def vector():
     """Un embedding cualquiera de la dimension correcta."""
     def _hacer(pos: int = 0, dim: int = 1024) -> list[float]:

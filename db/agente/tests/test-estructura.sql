@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..015 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..016 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -367,6 +367,26 @@ SELECT 'indice sobre chunk.metadata (caso de uso por controlador)',
        'AGENTE-AS-01';
 
 -- ---------------------------------------------------------------------------
+-- 016 - multi-vertical (ADR-A11)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' tiene columna vertical con CHECK',
+       EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'agente' AND table_name = t AND column_name = 'vertical')
+       AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = t || '_vertical_ck'),
+       'mineria / oil_gas / electricidad / general'
+FROM unnest(ARRAY['chunk', 'tema']) AS t;
+
+INSERT INTO _resultado
+SELECT 'perfil_empresa con RLS forzado y solo lectura para el runtime',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.perfil_empresa')), false)
+       AND has_table_privilege('agente_app', 'agente.perfil_empresa', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.perfil_empresa', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.perfil_empresa', 'UPDATE'),
+       'la industria la carga Trazalog (y despues Kuntur)';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -376,7 +396,8 @@ FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
-    '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto'
+    '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
+    '016-vertical'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

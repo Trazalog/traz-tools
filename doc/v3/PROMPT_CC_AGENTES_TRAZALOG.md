@@ -57,7 +57,7 @@ Clase: 🟢 sin efecto en runtime · 🟡 código · 🔴 decisión del PM o arq
 | AGENTE-M-05 | Tool `web_buscar` sobre SearXNG autoalojado (en `docker-compose.dev.yml`), devuelve título + URL + extracto; el prompt obliga a citar | M-02 | 🟡 | Opus |
 | AGENTE-M-06 | Base de conocimiento ampliada: ingestar `ayuda/*.html` y `doctest/catalogo/**/*.yaml` (con metadato de pantalla/ruta) y documentos de la empresa | — | 🟡 | Opus |
 | AGENTE-M-07 | **Gate 2 (PM):** los 6 bloques de `prompts/quirqui.md` y la taxonomía de Faustino reorganizada por vertical | PM | 🔴 | — |
-| AGENTE-M-08 | Multi-vertical (ADR-A11): `vertical` en `chunk`, `fuente`, `tema`, `hecho`, `perfil_empresa`; la búsqueda filtra por la vertical de la empresa + `general`; ingesta y entrevistador piden la vertical. Test: una empresa de oil & gas no recibe lo marcado solo `mineria` | M-06 | 🟡 | Opus |
+| AGENTE-M-08 | Multi-vertical (ADR-A11): `vertical` en `chunk`, `tema` y `perfil_empresa` (el hecho la hereda del tema, ver D-32); la búsqueda filtra por la vertical de la empresa + `general`; ingesta y entrevistador piden la vertical. Test: una empresa de oil & gas no recibe lo marcado solo `mineria` | M-06 | 🟡 | Opus |
 
 ### Fase 2 — Quirqui, el Asistente
 

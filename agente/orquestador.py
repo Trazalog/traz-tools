@@ -130,10 +130,13 @@ class Orquestador:
         # Queda registrado en la interaccion para que se vea por que esa
         # respuesta no tuvo fragmentos.
         fragmentos = []
+        # ADR-A11: el conocimiento de la industria de la empresa, mas lo general.
+        vertical = await rag.vertical_de(con, consulta.empr_id)
+        res.controles.append({"control": "vertical", "vertical": vertical or "sin_declarar"})
         try:
             vector = (await llm.embeddings([consulta.pregunta]))[0]
             fragmentos = (
-                await rag.buscar_conocimiento(con, self.cfg, vector)
+                await rag.buscar_conocimiento(con, self.cfg, vector, vertical=vertical)
                 + await rag.buscar_memoria(con, self.cfg, consulta.empr_id, vector)
             )
             fragmentos.sort(key=lambda f: f.distancia)

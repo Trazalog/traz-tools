@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") y AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog") y AGENTE-M-08 (multi-vertical, sección "Una industria, su conocimiento"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -190,6 +190,15 @@ Los documentos **de una empresa** van a su memoria privada (`origen = 'ingesta'`
 
 **Limitación conocida del guardián de cifras (D-24):** compara valores, no significados. Con mucho conocimiento cargado, un número chico ("7") puede quedar respaldado por coincidencia con un fragmento que no tiene nada que ver. Ver la propuesta en `decisiones-para-revisar.md`.
 
+### Una industria, su conocimiento (ADR-A11, AGENTE-M-08)
+
+El producto sirve para industrias extractivas y de proceso: hoy minería, oil & gas y electricidad. El motor y los agentes son los mismos; cambia el conocimiento.
+
+- `chunk.vertical` y `tema.vertical`: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Por defecto, `general`.
+- `agente.perfil_empresa`: la industria de cada empresa, con RLS. El runtime solo la lee.
+- **Con industria declarada**, la empresa recibe lo de su industria y lo general: una de oil & gas no recibe lo que es solo de minería. **Sin declarar**, recibe todo, y el modelo ve de qué industria es cada fragmento ("industria: minería"). Queda en `controles` de cada corrida (`{"control": "vertical", ...}`).
+- **Faustino**: la agenda se puede filtrar por industria (`/entrevista/agenda?vertical=oil_gas`), y un hecho promovido a conocimiento **hereda la industria del tema** de la entrevista.
+
 ### Internet, como último recurso (AGENTE-M-05)
 
 `web_buscar` busca en internet con **SearXNG autoalojado** (`agente/web.py`): un metabuscador libre, sin API key ni costo (ADR-005). Devuelve título, URL y extracto de los primeros resultados.
@@ -315,6 +324,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 | `tests/test_corrida.py` | La corrida (R8): agente, disparador, costo sumado, controles, una tool bloqueada como incidente, lo que vio el modelo de cada tool, que una corrida que rompe la base igual quede registrada, y que otra empresa no la vea |
 | `tests/test_fuentes.py` | El conocimiento del producto, contra el material real del repo: ayudas por sección con link, casos validados con pantalla y controlador, borradores y obsoletos afuera, ningún documento interno del catálogo, y los documentos de empresa a su memoria (sin duplicar y sin que los vea otra) |
 | `tests/test_guardian.py` | R4: qué se bloquea (cifra inventada, pegada a la unidad, norma inventada, cifra de la web sin URL) y qué pasa (tool, conteo, redondeo, miles, conocimiento, pregunta, web citada, fechas, códigos, discurso); y en el orquestador, que el usuario reciba "no tengo datos" y quede el incidente con la respuesta original |
+| `tests/test_vertical.py` | Multi-vertical, con SQL real: oil & gas no recibe lo de minería pero sí lo general, sin industria declarada recibe todo, y el modelo ve la etiqueta. Siembra como administrador (opcional, `AGENTE_TEST_DB_ADMIN_DSN`) en una transacción que se deshace |
 | `tests/test_web.py` | `web_buscar`: el cliente contra un SearXNG simulado, que solo se ofrezca con buscador configurado, la cifra citada que pasa y la no citada que se bloquea, que un buscador caído no corte la conversación, y una búsqueda real opcional (con `AGENTE_WEB_URL`) |
 | `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
