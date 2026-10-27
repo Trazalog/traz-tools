@@ -608,4 +608,50 @@
    <resource method="PUT" path="/area/baja">
       <call-query href="bajaAreaMan"><with-param name="id_area" query-param="id_area"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-1 · Proceso (ABM). Reemplaza el acceso directo de models/Procesos.php (ADR-014). Toda query filtra por id_empresa (id de asset). -->
+   <query id="getProcesosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_proceso, descripcion, id_empresa, estado FROM proceso WHERE estado = 'AC' AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"procesos":{"proceso":[{"id_proceso":"$id_proceso","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getProcesoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_proceso, descripcion, id_empresa, estado FROM proceso WHERE id_proceso = :id_proceso AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"procesos":{"proceso":[{"id_proceso":"$id_proceso","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_proceso" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setProcesoMan" keyColumns="id_proceso" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO proceso (descripcion, id_empresa, estado) VALUES (:descripcion, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"proceso":{"id_proceso":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateProcesoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE proceso SET descripcion = :descripcion WHERE id_proceso = :id_proceso AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"proceso":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_proceso" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaProcesoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE proceso SET estado = 'AN' WHERE id_proceso = :id_proceso AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"proceso":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_proceso" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/procesos/empresa/{id_empresa}">
+      <call-query href="getProcesosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/proceso/{id_proceso}/empresa/{id_empresa}">
+      <call-query href="getProcesoMan"><with-param name="id_proceso" query-param="id_proceso"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/proceso">
+      <call-query href="setProcesoMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/proceso">
+      <call-query href="updateProcesoMan"><with-param name="id_proceso" query-param="id_proceso"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/proceso/baja">
+      <call-query href="bajaProcesoMan"><with-param name="id_proceso" query-param="id_proceso"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
