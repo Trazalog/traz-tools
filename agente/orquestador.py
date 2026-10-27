@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, guardian, pantalla, rag, web
+from . import agentes, guardian, pantalla, rag, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -307,6 +307,98 @@ class Orquestador:
         ))
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": web.NOMBRE,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    # ------------------------------------------------------- siguiente paso
+    async def sugerir(self, con: psycopg.AsyncConnection, consulta: Consulta) -> list[dict]:
+        """Hasta N propuestas de siguiente paso para la pantalla (AGENTE-AS-02).
+
+        Reglas sobre las tools de esa pantalla (agente/sugerencias.py), con el
+        token del usuario y por la lista blanca de su agente. No usa el modelo.
+        La corrida queda registrada como cualquier otra (R8), con disparador
+        'apertura_pantalla'.
+        """
+        from datetime import date
+
+        t0 = time.monotonic()
+        res = Resultado(interaccion_id=str(uuid.uuid4()), respuesta="")
+        consulta.disparador = "apertura_pantalla"
+        await rag.fijar_empresa(con, consulta.empr_id)
+        if consulta.agente is None:
+            consulta.agente = await agentes.obtener(con, AGENTE_POR_DEFECTO)
+
+        propuestas: list[dict] = []
+        modulo = sugerencias.modulo_de(consulta.pantalla)
+        tools = sugerencias.REGLAS_POR_MODULO.get(modulo or "", ())
+        try:
+            permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
+            usar = [t for t in tools if t in permitidas]
+            res.controles.append({"control": "lista_blanca", "publicadas": len(tools),
+                                  "ofrecidas": len(usar)})
+            cands: list[sugerencias.Candidata] = []
+            async with ClienteMCP(self.cfg, consulta.autorizacion) as mcp:
+                for tool in usar:
+                    try:
+                        data = await mcp.llamar(tool, {})
+                    except MCPError as e:
+                        log.warning("Sugerencias: %s fallo: %s", tool, e)
+                        continue
+                    res.tools_vistas.append((tool, json.dumps(data, ensure_ascii=False)[:8000]))
+                    res.contenidos_tools.append(res.tools_vistas[-1][1])
+                    cands += sugerencias.candidatas(
+                        tool, data, hoy=date.today(),
+                        dias_certificacion=self.cfg.sugerencia_dias_certificacion)
+                res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
+            cands.sort(key=lambda c: c.prioridad)
+            propuestas = await self._guardar_propuestas(con, consulta, cands)
+            res.respuesta = " · ".join(p["titulo"] for p in propuestas) or "(sin propuestas)"
+        except Exception as e:  # noqa: BLE001 - se registra y se devuelve vacio
+            res.error = f"{type(e).__name__}: {e}"
+            res.respuesta = "(sin propuestas: error)"
+            propuestas = []
+
+        res.latencia_ms = int((time.monotonic() - t0) * 1000)
+        if con.info.transaction_status == psycopg.pq.TransactionStatus.INERROR:
+            await con.rollback()
+            await rag.fijar_empresa(con, consulta.empr_id)
+        await self._registrar(con, consulta, res)
+        return propuestas
+
+    async def _guardar_propuestas(self, con, consulta: Consulta,
+                                  cands: list) -> list[dict]:
+        """Guarda las propuestas nuevas y devuelve las que hay que mostrar.
+
+        No repite lo que el usuario descarto hace menos de N dias, y reusa la
+        pendiente si ya se habia propuesto lo mismo.
+        """
+        usuario = consulta.usuario_nick or str(consulta.usr_id or "")
+        salida: list[dict] = []
+        async with con.cursor() as cur:
+            for c in cands:
+                if len(salida) >= self.cfg.sugerencias_max:
+                    break
+                await cur.execute(
+                    """
+                    SELECT 1 FROM agente.propuesta
+                    WHERE empr_id = %s AND usuario = %s AND clave = %s
+                      AND estado = 'descartada'
+                      AND fec_respuesta > now() - make_interval(days => %s)
+                    """, (consulta.empr_id, usuario, c.clave, self.cfg.sugerencia_silencio_dias))
+                if await cur.fetchone():
+                    continue
+                await cur.execute(
+                    """
+                    INSERT INTO agente.propuesta
+                        (empr_id, usuario, clave, tipo, pantalla, titulo, detalle, accion)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (empr_id, usuario, clave) WHERE estado = 'pendiente'
+                    DO UPDATE SET titulo = EXCLUDED.titulo, detalle = EXCLUDED.detalle,
+                                  accion = EXCLUDED.accion, pantalla = EXCLUDED.pantalla
+                    RETURNING propuesta_id, tipo, titulo, detalle, accion
+                    """,
+                    (consulta.empr_id, usuario, c.clave, c.tipo, consulta.pantalla, c.titulo,
+                     c.detalle, json.dumps(c.accion, ensure_ascii=False)))
+                salida.append(dict(await cur.fetchone()))
+        return salida
 
     # ------------------------------------------------------------- registro
     async def _registrar(self, con, consulta: Consulta, res: Resultado) -> None:

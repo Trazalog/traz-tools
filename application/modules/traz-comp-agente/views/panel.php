@@ -40,6 +40,8 @@
     </div>
   </div>
 
+  <div id="agp-propuestas"></div>
+
   <div id="agp-conversacion">
     <div class="agp-bienvenida">
       Preguntame qué se hace en esta pantalla, o lo que necesites de mantenimiento y almacenes.
@@ -79,6 +81,14 @@
 .agp-quien { font-size: 11px; color: #999; margin-bottom: 2px; }
 .agp-error .agp-texto { color: #dd4b39; }
 .agp-pensando { color: #aaa; font-style: italic; }
+#agp-propuestas { padding: 6px 12px 0; }
+.agp-prop { border: 1px solid #e5e5e5; border-left: 3px solid #f39c12; border-radius: 3px;
+            padding: 6px 8px; margin-bottom: 6px; font-size: 12px; }
+.agp-prop.lote_vencido { border-left-color: #dd4b39; }
+.agp-prop strong { display: block; }
+.agp-prop .agp-prop-acciones { margin-top: 4px; }
+.agp-prop .agp-prop-acciones a { margin-right: 10px; cursor: pointer; }
+.agp-prop .agp-como { display: none; margin-top: 4px; color: #555; }
 .agp-feedback { margin-top: 4px; }
 .agp-feedback button { border: 1px solid #ddd; background: #fff; border-radius: 3px;
                        padding: 0 7px; cursor: pointer; }
@@ -99,7 +109,43 @@
     // La pantalla donde está el usuario: la última que cargó linkTo().
     function pantallaActual() { return (typeof site === 'string' && site) ? site : ''; }
 
-    function abrir()  { $panel.addClass('abierto').attr('aria-hidden', 'false'); $('#agp-pregunta').focus(); }
+    // --- siguiente paso (AGENTE-AS-02) -----------------------------------
+    // Se piden al abrir el panel, y otra vez si el usuario cambió de pantalla.
+    var pantallaPropuestas = null;
+    function cargarPropuestas() {
+        var p = pantallaActual();
+        if (!p || p === pantallaPropuestas) { return; }
+        pantallaPropuestas = p;
+        $('#agp-propuestas').empty();
+        $.post(BASE + 'sugerencias', { pantalla: p }).done(function (r) {
+            (r.propuestas || []).forEach(function (x) {
+                var accion = x.accion || {};
+                $('#agp-propuestas').append(
+                    '<div class="agp-prop ' + escapar(x.tipo) + '" data-id="' + escapar(x.propuesta_id) + '">' +
+                      '<strong>' + escapar(x.titulo) + '</strong>' + escapar(x.detalle) +
+                      '<div class="agp-prop-acciones"><a class="agp-ver">Ver cómo</a><a class="agp-descartar">Descartar</a></div>' +
+                      '<div class="agp-como">' + escapar(accion.texto) +
+                        (accion.ayuda ? ' <a href="<?= base_url() ?>' + escapar(accion.ayuda) + '" target="_blank">Ayuda</a>' : '') +
+                      '</div>' +
+                    '</div>');
+            });
+        });
+    }
+    function responderPropuesta($p, estado) {
+        $.post(BASE + 'sugerencia_respuesta', { propuesta_id: $p.data('id'), estado: estado });
+    }
+    $('#agp-propuestas').on('click', '.agp-ver', function () {
+        var $p = $(this).closest('.agp-prop');
+        $p.find('.agp-como').show(); $(this).remove();
+        responderPropuesta($p, 'aceptada');
+    });
+    $('#agp-propuestas').on('click', '.agp-descartar', function () {
+        var $p = $(this).closest('.agp-prop');
+        responderPropuesta($p, 'descartada');
+        $p.slideUp(150, function () { $p.remove(); });
+    });
+
+    function abrir()  { $panel.addClass('abierto').attr('aria-hidden', 'false'); $('#agp-pregunta').focus(); cargarPropuestas(); }
     function cerrar() { $panel.removeClass('abierto').attr('aria-hidden', 'true'); }
 
     $('#agp-boton').on('click', function () { $panel.hasClass('abierto') ? cerrar() : abrir(); });

@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog") AGENTE-M-08 (multi-vertical, sección "Una industria, su conocimiento") y AGENTE-AS-01 (panel de Quirqui, sección "Quirqui sabe dónde estás"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog") AGENTE-M-08 (multi-vertical, sección "Una industria, su conocimiento") AGENTE-AS-01 (panel de Quirqui, sección "Quirqui sabe dónde estás") y AGENTE-AS-02 (siguiente paso, sección "Quirqui propone sin que le pidan"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -247,6 +247,21 @@ sequenceDiagram
 
 **Cobertura hoy:** pantallas de Almacenes (26 casos) y Pañol (6). Los casos de Mantenimiento están relevados sobre AssetPlanner y los de Dnato sobre su propia app, que no son pantallas de Tools: se cubren cuando Mantenimiento migre a `traz-tools-man`.
 
+## Quirqui propone sin que le pidan (AGENTE-AS-02)
+
+Al abrir el panel en una pantalla, Quirqui propone hasta 3 cosas para hacer ahí (`POST /sugerencias`). Las arma `agente/sugerencias.py` con **reglas sobre lo que devuelven las tools, no con el modelo**: es inmediato, no gasta tokens y cada cifra sale de una tool (R4 por construcción).
+
+| Pantalla | Qué revisa | Propone |
+|---|---|---|
+| Almacenes (`traz-comp-almacenes/...`) | `alm_get_vencimientos`, `alm_get_stock` | Lotes **vencidos** y **críticos** (el gateway marca crítico a menos de 10 días); artículos activos con **stock menor al punto de pedido** |
+| Pañol (`traz-comp-pan/...`) | `pan_get_certificaciones` | Certificaciones de herramientas **vencidas o que vencen en 30 días o menos** |
+
+Lo más urgente va primero (vencido, crítico, stock, certificación). Cada propuesta trae el **cómo** y el link de la ayuda, no ejecuta nada (ADR-A8). El usuario la **ve** (`aceptada`) o la **descarta**: una descartada no se le repite por 7 días, y no se le esconde a otro usuario. Volver a abrir el panel no duplica la pendiente. Todo queda en `agente.propuesta` (RLS), y cada armado es una corrida con disparador `apertura_pantalla` (R8).
+
+Umbrales y máximos son **valores por defecto configurables** (`AGENTE_SUGERENCIAS_MAX`, `AGENTE_SUGERENCIA_SILENCIO_DIAS`, `AGENTE_SUGERENCIA_DIAS_CERTIFICACION`): el PM no los definió.
+
+**Limitación:** ninguna tool dice hoy qué tarea es de cada usuario, así que las propuestas son sobre el estado de la empresa en esa pantalla. "Tus tareas atrasadas" llega con las tools del módulo de tareas (TAR-API).
+
 ## El chat dentro de Trazalog Tools (E3)
 
 Módulo `application/modules/traz-comp-agente/`, con el patrón habitual de Tools:
@@ -355,6 +370,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 | `tests/test_vertical.py` | Multi-vertical, con SQL real: oil & gas no recibe lo de minería pero sí lo general, sin industria declarada recibe todo, y el modelo ve la etiqueta. Siembra como administrador (opcional, `AGENTE_TEST_DB_ADMIN_DSN`) en una transacción que se deshace |
 | `tests/test_web.py` | `web_buscar`: el cliente contra un SearXNG simulado, que solo se ofrezca con buscador configurado, la cifra citada que pasa y la no citada que se bloquea, que un buscador caído no corte la conversación, y una búsqueda real opcional (con `AGENTE_WEB_URL`) |
 | `tests/test_pantalla.py` | AS-01: la ruta de Tools al controlador, que lo que no es una ruta no pase (inyección, `..`, URLs), los casos de uso de la pantalla por controlador, que el modelo los reciba y quede el control, y el 422 de la API |
+| `tests/test_sugerencias.py` | AS-02: cada regla con sus bordes (inactivos, punto de pedido cero, un elemento suelto, datos raros), lo más urgente primero, que no use el modelo, el máximo, que lo descartado no vuelva pero a otro usuario sí, que no duplique, la corrida registrada, y que nadie responda la propuesta de otro |
 | `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
 | `tests/test_mcp_client.py` | Passthrough del token, que el `empr_id` no viaje, trazabilidad, y el parseo de SSE |

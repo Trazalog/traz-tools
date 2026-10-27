@@ -57,9 +57,12 @@ CASO = ("Caso de uso ALM-UC-001 — Ver el listado de artículos del almacén\n"
 
 async def _sembrar_caso(con):
     async with con.cursor() as cur:
+        # Idempotente: el orquestador hace commit al registrar la corrida, asi
+        # que lo sembrado puede quedar de una corrida anterior.
         await cur.execute("INSERT INTO agente.fuente (tipo, nombre) VALUES ('caso_uso', 'ALM-UC-001-prueba.yaml') "
-                          "RETURNING fuente_id")
+                          "ON CONFLICT (tipo, nombre) DO UPDATE SET uri = EXCLUDED.uri RETURNING fuente_id")
         fuente = (await cur.fetchone())["fuente_id"]
+        await cur.execute("DELETE FROM agente.chunk WHERE fuente_id = %s", (fuente,))
         await cur.execute(
             "INSERT INTO agente.chunk (fuente_id, contenido, modulo, metadata) VALUES (%s, %s, 'alm', %s)",
             (fuente, CASO, json.dumps({

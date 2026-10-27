@@ -111,6 +111,14 @@ SET LOCAL agente.empr_id = :'EMPRESA_B';
 INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (:EMPRESA_B, 'oil_gas')
 ON CONFLICT (empr_id) DO UPDATE SET vertical = 'oil_gas';
 
+-- Propuestas de siguiente paso (017).
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
+VALUES (:EMPRESA_A, 'ana', 'stock_bajo:1', 'stock_bajo', 'Reponer filtro de A', 'stock de A');
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
+VALUES (:EMPRESA_B, 'beto', 'stock_bajo:1', 'stock_bajo', 'Reponer filtro de B', 'stock de B');
+
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
 
@@ -194,6 +202,12 @@ SELECT 'v_feedback_negativo: con contexto A, no muestra el de B aunque no se fil
        'la vista corre con los permisos de quien consulta (security_invoker)';
 
 INSERT INTO _resultado
+SELECT 'propuesta: con contexto A, las de B son invisibles',
+       NOT EXISTS (SELECT 1 FROM agente.propuesta WHERE titulo LIKE '%de B')
+       AND EXISTS (SELECT 1 FROM agente.propuesta WHERE titulo LIKE '%de A'),
+       '017';
+
+INSERT INTO _resultado
 SELECT 'perfil_empresa: con contexto A, el perfil de B es invisible',
        NOT EXISTS (SELECT 1 FROM agente.perfil_empresa WHERE empr_id = 900002)
        AND EXISTS (SELECT 1 FROM agente.perfil_empresa WHERE empr_id = 900001),
@@ -235,6 +249,10 @@ INSERT INTO _resultado
 SELECT 'destinatario_alerta: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
        NOT EXISTS (SELECT 1 FROM agente.destinatario_alerta),
        'no debe devolver todo';
+
+INSERT INTO _resultado
+SELECT 'propuesta: sin contexto no se ve ninguna (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.propuesta), '017';
 
 INSERT INTO _resultado
 SELECT 'perfil_empresa: sin contexto no se ve ningun perfil (falla cerrado)',

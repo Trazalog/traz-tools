@@ -48,6 +48,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 014 | `014-tool-web.sql` | Cataloga `web_buscar` (búsqueda en internet sobre SearXNG): `lectura`, costo `externo`, riesgo `medio` |
 | 015 | `015-fuentes-producto.sql` | Tipos de fuente `ayuda` y `caso_uso`, e índice GIN sobre `chunk.metadata` (encontrar el caso de uso de una pantalla por su controlador) |
 | 016 | `016-vertical.sql` | Multi-vertical (ADR-A11): `vertical` en `chunk` y `tema`, y la tabla `perfil_empresa` con la industria de cada empresa (RLS, el runtime solo lee) |
+| 017 | `017-propuestas.sql` | `propuesta` — el siguiente paso que Quirqui le propuso a cada usuario y qué hizo con él (vista o descartada), con RLS (AGENTE-AS-02) |
 
 Aplicación completa, desde el directorio del repo:
 
@@ -268,7 +269,7 @@ Misma base descartable, con `001..013`:
 
 | Ambiente | Base | Estado |
 |---|---|---|
-| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ✅ `011` aplicado por el PM el 2026-10-27. ⏳ **`012` a `016` pendientes de aplicar por el PM**, en orden: sin `012` el orquestador no responde (falla cerrado); sin `013` no registra las corridas; sin `014` no busca en internet; sin `015` no se pueden ingestar las ayudas ni los casos de uso; sin `016` el orquestador no responde (lee la industria de la empresa) |
+| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ✅ `011` aplicado por el PM el 2026-10-27. ⏳ **`012` a `017` pendientes de aplicar por el PM**, en orden: sin `012` el orquestador no responde (falla cerrado); sin `013` no registra las corridas; sin `014` no busca en internet; sin `015` no se pueden ingestar las ayudas ni los casos de uso; sin `016` el orquestador no responde (lee la industria de la empresa); sin `017` el panel no propone el siguiente paso |
 | Demo | a definir | ⏳ pendiente |
 | Producción | a definir | ⏳ pendiente |
 

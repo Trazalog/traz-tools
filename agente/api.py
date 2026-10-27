@@ -4,6 +4,8 @@ Endpoints:
     GET  /salud            estado del servicio, config y bloques de los prompts sin definir
     GET  /agentes          los agentes que el usuario puede usar, con nombre y avatar
     POST /consulta         la consulta del usuario -> respuesta del agente elegido
+    POST /sugerencias      el siguiente paso que Quirqui propone en una pantalla
+    POST /sugerencias/respuesta  el usuario ve o descarta una propuesta
     POST /feedback         calificacion de una respuesta (pulgar arriba/abajo)
     GET  /admin/feedback   feedback negativo agrupado, para el ciclo de mejora
 
@@ -120,6 +122,17 @@ class ConsultaOut(BaseModel):
     latencia_ms: int
 
 
+class SugerenciasIn(BaseModel):
+    pantalla: str = Field(
+        max_length=300,
+        pattern=r"^/?[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-.%=]*)*(?:\?[A-Za-z0-9_\-.%=&]*)?$")
+
+
+class RespuestaPropuestaIn(BaseModel):
+    propuesta_id: int
+    estado: str = Field(pattern=r"^(aceptada|descartada)$")
+
+
 class FeedbackIn(BaseModel):
     interaccion_id: str
     util: bool
@@ -228,6 +241,49 @@ async def consulta(
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms,
     )
+
+
+@app.post("/sugerencias")
+async def sugerir(
+    entrada: SugerenciasIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El siguiente paso en la pantalla, para Quirqui (AGENTE-AS-02)."""
+    try:
+        agente = await agentes.para_consulta(con, AGENTE_POR_DEFECTO, ident.rol)
+    except (agentes.AgenteDesconocido, agentes.AccesoDenegado, agentes.AgenteNoDisponible):
+        return {"propuestas": []}
+    propuestas = await orquestador.sugerir(con, Consulta(
+        empr_id=ident.empr_id, pregunta=f"(siguiente paso en {entrada.pantalla})",
+        autorizacion=ident.autorizacion, usr_id=ident.usr_id, usuario_nick=ident.nick,
+        agente=agente, pantalla=entrada.pantalla,
+    ))
+    return {"propuestas": propuestas}
+
+
+@app.post("/sugerencias/respuesta")
+async def responder_propuesta(
+    entrada: RespuestaPropuestaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El usuario la vio (aceptada) o la descarto. Solo las suyas: el RLS
+    corta por empresa y el WHERE por usuario."""
+    await rag.fijar_empresa(con, ident.empr_id)
+    usuario = ident.nick or str(ident.usr_id or "")
+    async with con.cursor() as cur:
+        await cur.execute(
+            """
+            UPDATE agente.propuesta SET estado = %s, fec_respuesta = now()
+            WHERE propuesta_id = %s AND usuario = %s AND estado = 'pendiente'
+            RETURNING propuesta_id, estado, accion
+            """, (entrada.estado, entrada.propuesta_id, usuario))
+        fila = await cur.fetchone()
+    await con.commit()
+    if not fila:
+        raise HTTPException(404, "No existe esa propuesta pendiente para este usuario")
+    return dict(fila)
 
 
 @app.post("/feedback")

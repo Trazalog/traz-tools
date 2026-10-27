@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..016 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..017 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -387,6 +387,22 @@ SELECT 'perfil_empresa con RLS forzado y solo lectura para el runtime',
        'la industria la carga Trazalog (y despues Kuntur)';
 
 -- ---------------------------------------------------------------------------
+-- 017 - propuestas de siguiente paso
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'propuesta con RLS forzado; el runtime no la borra',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.propuesta')), false)
+       AND has_table_privilege('agente_app', 'agente.propuesta', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.propuesta', 'DELETE'),
+       'AGENTE-AS-02';
+
+INSERT INTO _resultado
+SELECT 'una sola propuesta pendiente por usuario y cosa',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'propuesta_pendiente_uk'),
+       'volver a abrir el panel no duplica';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -397,7 +413,7 @@ FROM unnest(ARRAY[
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
-    '016-vertical'
+    '016-vertical', '017-propuestas'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

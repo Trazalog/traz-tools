@@ -42,7 +42,9 @@ async def con_admin():
 
     Opcional: solo si AGENTE_TEST_DB_ADMIN_DSN esta configurada (en desarrollo,
     contra una base descartable). Todo corre en una transaccion que se deshace
-    al final: no deja nada en la base.
+    al final. OJO: si el codigo bajo prueba hace commit (el orquestador lo hace
+    al registrar la corrida), lo sembrado hasta ahi queda: la siembra tiene que
+    ser idempotente.
     """
     dsn = os.environ.get("AGENTE_TEST_DB_ADMIN_DSN")
     if not dsn:

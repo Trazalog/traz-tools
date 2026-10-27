@@ -113,6 +113,7 @@ El panel es el botón redondo "Q" abajo a la derecha, en **todas** las pantallas
    `psql -h 127.0.0.1 -U postgres -d agente_minero -c "SELECT fec_alta, controles FROM agente.interaccion ORDER BY fec_alta DESC LIMIT 1;"`
    Tiene que aparecer `{"control": "pantalla", "ruta": "traz-comp-almacenes/...", "casos": ["ALM-UC-..."]}`.
 6. Cambiar de pantalla sin recargar y volver a preguntar: la ruta del control tiene que ser la nueva.
+7. **Siguiente paso (AGENTE-AS-02):** en Almacenes, al abrir el panel tienen que aparecer arriba hasta 3 propuestas (lotes vencidos o críticos, artículos bajo el punto de pedido) si la empresa los tiene. "Ver cómo" muestra qué hacer y el link a la ayuda; "Descartar" la saca y no vuelve por 7 días. Requiere `017` aplicado.
 
 **Quién ve el panel:** solo los usuarios que tienen en su menú el ítem del agente (`traz-comp-agente/agente`, en `seg.menues`). Mostrárselo a todos es una decisión comercial pendiente.
 

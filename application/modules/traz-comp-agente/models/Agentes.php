@@ -158,6 +158,24 @@ class Agentes extends CI_Model
         return $rsp['data'];
     }
 
+    /** Siguiente paso en la pantalla (AGENTE-AS-02). Si el agente no responde, nada. */
+    public function sugerencias($jwt, $pantalla)
+    {
+        $rsp = $this->_llamar('POST', '/sugerencias', ['pantalla' => $pantalla], $jwt, 20);
+        if (!$rsp['ok']) {
+            log_message('ERROR', '#TRAZA | AGENTE | Agentes | sugerencias() >> ' . $rsp['error']);
+            return ['propuestas' => []];
+        }
+        return $rsp['data'];
+    }
+
+    public function responderSugerencia($jwt, $propuestaId, $estado)
+    {
+        $rsp = $this->_llamar('POST', '/sugerencias/respuesta',
+            ['propuesta_id' => $propuestaId, 'estado' => $estado], $jwt, 10);
+        return $rsp['ok'] ? $rsp['data'] : ['error' => 'no_disponible'];
+    }
+
     public function feedback($jwt, $interaccionId, $util, $comentario = null, $motivo = null)
     {
         $cuerpo = ['interaccion_id' => $interaccionId, 'util' => (bool) $util];

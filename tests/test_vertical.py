@@ -26,8 +26,9 @@ async def _sembrar(con):
     async with con.cursor() as cur:
         await cur.execute(
             "INSERT INTO agente.fuente (tipo, nombre) VALUES ('documento', 'prueba-vertical') "
-            "RETURNING fuente_id")
+            "ON CONFLICT (tipo, nombre) DO UPDATE SET uri = EXCLUDED.uri RETURNING fuente_id")
         fuente = (await cur.fetchone())["fuente_id"]
+        await cur.execute("DELETE FROM agente.chunk WHERE fuente_id = %s", (fuente,))
         for vertical, texto in [("mineria", "SOLO MINERIA: muelas de la chancadora"),
                                 ("oil_gas", "SOLO OIL: sellos de la bomba de transferencia"),
                                 ("electricidad", "SOLO ELECTRICIDAD: termografia del tablero"),

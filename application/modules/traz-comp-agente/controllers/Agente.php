@@ -101,6 +101,29 @@ class Agente extends CI_Controller
         $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla));
     }
 
+    /** Siguiente paso en la pantalla (AGENTE-AS-02). Lo pide el panel al abrirse. */
+    public function sugerencias()
+    {
+        $pantalla = trim((string) $this->input->post('pantalla'));
+        if ($pantalla === '' || !$this->_asegurarToken()) {
+            $this->_json(array('propuestas' => array()));
+            return;
+        }
+        $this->_json($this->Agentes->sugerencias($this->_token(), $pantalla));
+    }
+
+    /** El usuario vio (aceptada) o descartó una propuesta. */
+    public function sugerencia_respuesta()
+    {
+        $estado = (string) $this->input->post('estado');
+        if (!in_array($estado, array('aceptada', 'descartada'), true) || !$this->_asegurarToken()) {
+            $this->_json(array('error' => 'estado inválido'), 400);
+            return;
+        }
+        $this->_json($this->Agentes->responderSugerencia(
+            $this->_token(), (int) $this->input->post('propuesta_id'), $estado));
+    }
+
     public function feedback()
     {
         $interaccion = (string) $this->input->post('interaccion_id');

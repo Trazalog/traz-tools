@@ -65,6 +65,7 @@ La lista completa con explicaciones está en `.env.example`. Estas son las que m
 | `AGENTE_TEMPERATURA` | Cuánta variación en las respuestas | 0.2 por defecto. Para un agente técnico, bajo es mejor |
 | `AGENTE_PROMPTS_DIR` | Carpeta con un prompt por agente | Casi nunca: por defecto es `prompts/` del repo |
 | `AGENTE_WEB_URL` | URL de SearXNG para la tool `web_buscar` | Vacía = sin búsqueda en internet. Para levantarlo, ver `instalacion.md` §1-ter |
+| `AGENTE_SUGERENCIAS_MAX` · `AGENTE_SUGERENCIA_SILENCIO_DIAS` · `AGENTE_SUGERENCIA_DIAS_CERTIFICACION` | El siguiente paso de Quirqui: cuántas propuestas (3), cuántos días no repetir una descartada (7), con cuánta anticipación avisar una certificación (30) | Valores por defecto: ajustarlos con lo que digan los usuarios |
 
 ### Los modelos: cuáles funcionan y cuáles cuestan
 
