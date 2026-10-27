@@ -562,4 +562,50 @@
    <resource method="POST" path="/ot/herramienta-usada" returnRequestStatus="true">
       <call-query href="setOtHerramientaUsada"><with-param name="otId" query-param="otId"/><with-param name="herrId" query-param="herrId"/><with-param name="sapa_id" query-param="sapa_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-1 · Área (ABM). Reemplaza el acceso directo de models/Areas.php (ADR-014). Toda query filtra por id_empresa (id de asset). -->
+   <query id="getAreasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_area, descripcion, id_empresa, estado FROM area WHERE estado = 'AC' AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"areas":{"area":[{"id_area":"$id_area","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAreaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_area, descripcion, id_empresa, estado FROM area WHERE id_area = :id_area AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"areas":{"area":[{"id_area":"$id_area","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_area" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAreaMan" keyColumns="id_area" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO area (descripcion, id_empresa, estado) VALUES (:descripcion, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"area":{"id_area":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAreaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE area SET descripcion = :descripcion WHERE id_area = :id_area AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"area":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_area" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAreaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE area SET estado = 'AN' WHERE id_area = :id_area AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"area":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_area" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/areas/empresa/{id_empresa}">
+      <call-query href="getAreasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/area/{id_area}/empresa/{id_empresa}">
+      <call-query href="getAreaMan"><with-param name="id_area" query-param="id_area"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/area">
+      <call-query href="setAreaMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/area">
+      <call-query href="updateAreaMan"><with-param name="id_area" query-param="id_area"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/area/baja">
+      <call-query href="bajaAreaMan"><with-param name="id_area" query-param="id_area"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>

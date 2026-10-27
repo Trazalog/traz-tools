@@ -314,6 +314,13 @@ divergieron:
 patrón de conversión a DataService con poco riesgo; después Equipo, el más grande de los que no
 divergieron.
 
+**Estado al 2026-10-27:**
+
+| Archivo / pantalla | Estado | PRs |
+|---|---|---|
+| Área (`controllers/Area.php`, `models/Areas.php`, `views/area/view_.php`) + `helpers/man_helper.php` | ✅ Portado. Paridad OK (10 de 10, incluido aislamiento) | MAN: `feat/MIG-ASSET-1-area` · tools: queries de `MANDataService` en `feat/MIG-ASSET-1-area` |
+| Proceso, Componente, Parametro, Equipo | Pendientes | — |
+
 **Criterio de salida:** con una sesión de tools, el módulo se abre desde el menú, se navegan los ABMs
 y se listan equipos y OTs reales de una empresa de prueba. Nivel 0b en verde y **cero accesos a
 base de datos** en los archivos portados.
@@ -588,6 +595,45 @@ Definido por el PM el 2026-10-26:
 `traz-comp-pan`, `traz-comp-bpm`), se replica en `develop-v3` con el mismo mecanismo de §3.5. Lo
 demás espera a la unificación final (R12).
 
+### 3.7 Ambiente de pruebas local
+
+Montado el 2026-10-27. Todo corre en la máquina del PM, con la **VPN** levantada:
+
+| Pieza | Dónde | Nota |
+|---|---|---|
+| Bases | Servidor de **desarrollo** `vm-development-2020-02-26` (`10.142.0.13`): MariaDB `assetv2` (asset) y PostgreSQL `tools_prod_t` (tools y DNATO) | Verificado con `@@hostname`. Pese al nombre, `tools_prod_t` es la base de desarrollo; la de producción es `trazalog_tools` en `10.142.0.2` |
+| WSO2 MI | Local, `~/.wso2-mi/micro-integrator/wso2mi-4.5.0`, puerto `8290` | Sus datasources apuntan a las bases de desarrollo. Ahí se despliegan las queries nuevas de `MANDataService` antes de subirlas |
+| Servidor web | XAMPP local (PHP 7.3), `http://traz-comp.local/` → `/mnt/win/dev/git` | Se arranca con `sudo /opt/lampp/lampp startapache` en una terminal local |
+| asset | `http://traz-comp.local/traz-prod-assetplanner/` | Sin cambios |
+| tools con MAN | `http://traz-comp.local/traz-v3/traz-tools/` | Cambios **locales, no versionados**, marcados `LOCAL-MIG-ASSET (no commitear)`: `application/config/constants.php` de tools (`DNATO` → `traz-comp.local`, `HOST` → MI local) y de `traz-comp-dnato` (`DE`, `DS`, `DNATO` → `traz-comp.local` y la copia de la migración) |
+
+**Usuario de prueba** (creado en desarrollo el 2026-10-27): `mig.man.a@trazalog.test`, empresa
+*Empresa_Test* (tools `empr_id` 1 = asset `id_empresa` 1). Existe en los tres lugares que pide el
+login: `seg.users` + `seg.memberships_users` (roles Mantenedor, Planificador Mantenimiento,
+Supervisor Taller y Solicitante), Bonita (grupo `1-Empresa_Test`, mismos roles, nombre de usuario =
+correo) y asset (`sisusers` 213, `usuarioasempresa` con el grupo Administrador 85). La contraseña está
+en `doctest/.env` (`DOCTEST_LOCAL_MAN_USER` / `DOCTEST_LOCAL_MAN_PASS`), que no se versiona. Para
+borrarlo: filas de esas tablas con ese correo, y el usuario de Bonita.
+
+**Prueba de paridad:** `traz-tools-man/tests/paridad/paridad.py` (ver su encabezado). Inicia sesión
+en asset y en tools con el mismo usuario, hace cada operación en los dos, compara respuestas y filas
+de la base, prueba el aislamiento entre empresas y borra los datos de prueba (prefijo `MIG paridad`).
+
+### 3.8 Registro de decisiones de ejecución
+
+Decisiones técnicas tomadas durante la ejecución, por mandato del PM del 2026-10-27 ("migrar lo más
+posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualquiera se puede revisar.
+
+| # | Fecha | Decisión | Motivo |
+|---|---|---|---|
+| E1 | 2026-10-27 | **Traducción de empresa tools → asset**: `man_empresa()` (`helpers/man_helper.php` de MAN) pide `core.empresas.empr_id_mysql` a `COREDataService` (`GET /empresa/{empr_id}`) una vez por sesión y lo guarda en la sesión. Sin vínculo, la pantalla muestra un error y no datos vacíos | Las dos bases numeran las empresas distinto (ej. MinTest_SJ es 187 en tools y 17 en asset). El vínculo ya existe y lo usa la integración de almacén y pañol |
+| E2 | 2026-10-27 | **Ids generados con MariaDB**: la query lleva `returnGeneratedKeys="true"` y el resultado se lee como `$GENERATED_KEY`, no con el nombre de la columna | Resuelve la pregunta abierta de ADR-014. Probado con `setAreaMan` |
+| E3 | 2026-10-27 | **Permisos hasta MIG-5**: cada pantalla recibe las acciones en la URL, como en asset (`index/Add-Edit-Del`). Sin parámetro, queda de solo lectura | Conservador: no se dan permisos que no se pidieron. El mapeo real es MIG-5 (P3) |
+| E4 | 2026-10-27 | **Toda query de MAN filtra por empresa, también las de "ver uno", modificar y dar de baja**, aunque en asset no filtren. Ante un registro de otra empresa, MAN responde vacío o no modifica nada | ADR-014. En asset, `Obtener_areas` y `Eliminar_areas` no filtran por empresa (anotado en §5.2 como T11). La paridad se exige dentro de la misma empresa; fuera de ella la diferencia es buscada y la prueba la verifica |
+| E5 | 2026-10-27 | **PRs**: los de `traz-tools-man` los fusiono yo cuando el CI pasa y la paridad da OK. Los de `traz-tools` que tocan DataServices **quedan para el PM**, con análisis de impacto, porque son core (`CLAUDE.md`) | El repo del módulo no se despliega en ningún lado hasta el corte. Los DataServices sí son compartidos con v2 y MCP |
+| E6 | 2026-10-27 | **Carpeta de trabajo aparte para tools** (`git worktree` en `/mnt/win/dev/git/traz-v3/traz-tools-mig`) | Otra sesión trabaja en `/mnt/win/dev/git/traz-v3/traz-tools`; así no se le cambia la rama. El servidor web sigue sirviendo la carpeta original, y el MI local se compila desde la carpeta aparte |
+| E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
+
 ---
 
 ## 4. Decisiones pendientes
@@ -667,6 +713,7 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 | T7 | Dos fuentes para la lectura del contador | `models/Calendarios.php:106` contra `models/Preventivos.php:747` |
 | T8 | La regla de alerta está implementada 4 veces con 3 fórmulas | `controllers/Calendario.php:88-100` y otras |
 | T9 | Clave duplicada en `BPM_PROCESS` (tools) | `application/config/constants.php` de tools |
+| T11 | `Obtener_areas` y `Eliminar_areas` no filtran por empresa: con el id de un área ajena se la ve o se la da de baja. Corregido en MAN (E4); **pendiente en asset** por la regla de §3.5 | `models/Areas.php:21-40` |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores

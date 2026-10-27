@@ -39,8 +39,9 @@ die() { echo "[ERROR] $*" >&2; exit 1; }
 export JAVA_HOME
 
 # ── Paso 1: compilar (Maven) ──────────────────────────────────────
-log "Compilando ToolsAPIProject (./mvnw clean install)..."
-( cd "$PROJECT_DIR" && ./mvnw -q clean install )
+MVN=./mvnw; [ -x "$PROJECT_DIR/mvnw" ] || MVN=mvn
+log "Compilando ToolsAPIProject ($MVN clean install)..."
+( cd "$PROJECT_DIR" && $MVN -q clean install )
 [ -f "$CAR" ] || die "El build terminó pero no se encontró el .car en $CAR — revisar el log de Maven"
 log "Build OK: $CAR"
 
