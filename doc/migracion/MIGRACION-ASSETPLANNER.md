@@ -284,9 +284,9 @@ como está y ADR-014 está aprobado.
 | Punto | Estado |
 |---|---|
 | 1. Rama de integración | ✅ `develop-v3` creada en `traz-tools-man` desde `rnsanchez`, **protegida**: PR obligatorio, check `man-ci` requerido, también para administradores, sin force push ni borrado |
-| 2. Puntero del submódulo | Pendiente. PR propio en tools, después de mergear el CI |
+| 2. Puntero del submódulo | ✅ En PR (tools #570): de `02cca43` a `a845dfd`, la punta de `develop-v3` de `traz-tools-man` |
 | 3. Ambiente local | Pendiente, **lo arma el PM**: XAMPP + VPN contra `assetv2` de DEV. Sin VPN no se pueden probar con `curl` las queries de `MANDataService` |
-| 4. CI mínimo | ✅ `man-ci.yml` (`traz-tools-man` PR #1, fusionado; ajuste de consumo en PR #2: un solo job, solo en PR, ~20 s), en verde sobre el fork: `php -l` con PHP 5.6, PHPCompatibility 5.6, checklist 0b y gitleaks. El 0b bloquea solo los archivos de `.ci/portados.txt` y del resto informa la cantidad |
+| 4. CI mínimo | ✅ `man-ci.yml` (`traz-tools-man` PR #1 y PR #2, fusionados; el #2 ajusta el consumo: un solo job, solo en PR, ~20 s), en verde sobre el fork: `php -l` con PHP 5.6, PHPCompatibility 5.6, checklist 0b y gitleaks. El 0b bloquea solo los archivos de `.ci/portados.txt` y del resto informa la cantidad |
 | 5. Credenciales (T5) | Pendiente, 🔴. **La rotación la hace el PM.** Sacarlas del repo toca `database.php` y `constants.php` de tools, que son core: necesita análisis de impacto aprobado |
 | 6. ADR-014 | ✅ Aceptado por el PM el 2026-10-27, con la regla 4 agregada. A2 y A3 resueltas. Falta verificar que el datasource escribe en TEST y PROD |
 | 7. Freeze (P1) | ✅ Decidido: rige cuando cierren las pruebas de los dos frentes |
@@ -686,7 +686,7 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 1. **El PM** mergea el CI de `traz-tools-man` (PR #1), arma el ambiente local con la
    VPN y rota las credenciales (T5). La regla de doble bugfix (§3.5) ya rige: hay que avisarle a
    quien hoy toca asset.
-2. **Cierre de MIG-0**: puntero del submódulo de tools a `develop-v3`, y verificación del datasource en TEST y PROD.
+2. **Cierre de MIG-0**: fusionar el puntero del submódulo (tools #570) y verificar del datasource en TEST y PROD.
 3. **MIG-1** arranca por los ABMs chicos (Area, Proceso, Componente, Parametro), para asentar el
    patrón de model → `MANDataService`. Un archivo completo por PR, con el checklist 0b en cero y el
    archivo agregado a `.ci/portados.txt`. La primera query sirve también para comprobar
