@@ -1,10 +1,12 @@
-# Agente Minero — cómo quedó implementado
+# Agentes de IA de Trazalog — cómo quedó implementado
 
 ## Objetivo
 
-Este documento describe **cómo está construido el Agente Minero en el código**, pieza por pieza: qué hace cada módulo, cómo se conectan y por qué se resolvió así. Es para quien va a tocar el código o necesita entender qué pasa cuando alguien hace una pregunta.
+Este documento describe **cómo está construido el motor de los agentes de IA en el código**, pieza por pieza: qué hace cada módulo, cómo se conectan y por qué se resolvió así. Es para quien va a tocar el código o necesita entender qué pasa cuando alguien hace una pregunta.
 
-**Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTE_MINERO_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A6—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
+**Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
+
+> **Estado de transición (2026-10-27).** Este documento describe lo construido en E0–E4: **un** agente con un solo prompt. El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador, que es lo que acá se llama "entrevistador")— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). Los nombres técnicos que todavía dicen "minero" (la base `agente_minero`, `prompts/agente-minero.md`, el ítem de menú "Agente Minero", la empresa de prueba) se renombran junto con el código en AGENTE-M-01 y M-08.
 
 ---
 

@@ -1,4 +1,4 @@
-# Agente Minero — cómo probarlo en el entorno local
+# Agentes de IA de Trazalog — cómo probarlos en el entorno local
 
 ## Objetivo
 
