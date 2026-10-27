@@ -1,5 +1,7 @@
 # Migración de AssetPlanner a traz-tools (módulo `traz-tools-man`)
 
+> **ARCHIVADO el 2026-10-26.** Reemplazado por [`../MIGRACION-ASSETPLANNER.md`](../MIGRACION-ASSETPLANNER.md), que es el único documento vigente de la migración. Se conserva como referencia de detalle; si algo de acá lo contradice, vale aquel.
+
 ## Objetivo
 
 Este documento releva el estado real de la migración de `traz-prod-assetplanner` (app standalone de mantenimiento) al submódulo `traz-tools-man` de traz-tools, reconstruye la mecánica que usó el desarrollador anterior, y define la estrategia, las etapas y el plan de calidad para terminarla. Está escrito para el PM y para quien vaya a ejecutar la migración; se puede leer sin conocer la historia previa del proyecto.
