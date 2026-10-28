@@ -67,16 +67,16 @@ flowchart LR
     PHP --> API
     AG --> API
     BPM --> API
-    PUENTE -->|notif.publicar()| PG
-    API --> PG[(PostgreSQL trazalog_tools<br/>esquema notif)]
-    PG -->|notif.tomar_envios()| TR[Siddhi: transporte]
+    PUENTE -->|ntf.publicar()| PG
+    API --> PG[(PostgreSQL trazalog_tools<br/>esquema ntf)]
+    PG -->|ntf.tomar_envios()| TR[Siddhi: transporte]
     TR --> FC[FirebaseConnectorAPI<br/>corregido]
     FC --> FCM[Firebase]
     PG -->|GET /avisos/mios| CAMP[campanita de Tools<br/>en el layout]
     MDB[(MariaDB<br/>synch_notificacion_queue<br/>sin objetos nuevos)] -->|por queue_id| PUENTE
 ```
 
-## 5. PostgreSQL: el esquema `notif` (en la base de Tools)
+## 5. PostgreSQL: el esquema `ntf` (en la base de Tools)
 
 Va en `trazalog_tools`, la base de Tools, para que cualquier módulo y los DataServices lo alcancen. **Producción es PostgreSQL 11.7**: nada de lo de abajo usa funciones de versiones posteriores. Sigue el patrón de Tools: se accede **solo por DataServices**, con el `empr_id` del JWT (ADR-009), no por RLS.
 
@@ -84,26 +84,26 @@ Va en `trazalog_tools`, la base de Tools, para que cualquier módulo y los DataS
 
 | Tabla | Qué guarda | Columnas principales |
 |---|---|---|
-| `notif.aviso` | Un aviso, una vez | `aviso_id`, `empr_id`, `origen` (`man`, `alm`, `pan`, `agente`, `bpm`, `asset`…), `tipo`, `titulo`, `cuerpo`, `severidad` (`info`/`aviso`/`critica`), `enlace`, `entidad_tipo`, `entidad_id`, `dedupe_key`, `emisor` (`quirqui`, `kuntur`, módulo), `fec_alta`, `vence_en` |
-| `notif.destino` | A quién le llega, y si lo leyó (la campanita) | `aviso_id`, `empr_id`, `usuario`, `leido`, `fec_lectura` |
-| `notif.suscripcion` | Quién recibe cada tipo de aviso cuando el emisor no dice a quién | `empr_id`, `tipo` (o `*`), `usuario`, `activo` |
-| `notif.dispositivo` | Los navegadores y celulares de cada usuario | `dispositivo_id`, `empr_id`, `usuario`, `token` (único), `plataforma`, `activo`, `fec_alta`, `fec_ultimo_uso` |
-| `notif.envio` | Un push por dispositivo | `envio_id`, `aviso_id`, `dispositivo_id` (o `token_directo` para lo que viene del puente), `estado`, `intentos`, `proximo_intento`, `ultimo_error`, `fec_alta`, `fec_tomado`, `fec_envio` |
+| `ntf.aviso` | Un aviso, una vez | `aviso_id`, `empr_id`, `origen` (`man`, `alm`, `pan`, `agente`, `bpm`, `asset`…), `tipo`, `titulo`, `cuerpo`, `severidad` (`info`/`aviso`/`critica`), `enlace`, `entidad_tipo`, `entidad_id`, `dedupe_key`, `emisor` (`quirqui`, `kuntur`, módulo), `fec_alta`, `vence_en` |
+| `ntf.destino` | A quién le llega, y si lo leyó (la campanita) | `aviso_id`, `empr_id`, `usuario`, `leido`, `fec_lectura` |
+| `ntf.suscripcion` | Quién recibe cada tipo de aviso cuando el emisor no dice a quién | `empr_id`, `tipo` (o `*`), `usuario`, `activo` |
+| `ntf.dispositivo` | Los navegadores y celulares de cada usuario | `dispositivo_id`, `empr_id`, `usuario`, `token` (único), `plataforma`, `activo`, `fec_alta`, `fec_ultimo_uso` |
+| `ntf.envio` | Un push por dispositivo | `envio_id`, `aviso_id`, `dispositivo_id` (o `token_directo` para lo que viene del puente), `estado`, `intentos`, `proximo_intento`, `ultimo_error`, `fec_alta`, `fec_tomado`, `fec_envio` |
 
 **El usuario se identifica por su nick de Dnato** (`sub` del JWT): es lo que Tools tiene en sesión y lo que traen los tokens. Los avisos que vienen de AssetPlanner, cuyo usuario no tiene correspondencia con Dnato, usan `asset:<user_id>` y llevan el token del dispositivo en `envio.token_directo`.
 
 Estados de `envio`: `pendiente` → `enviando` → `enviado` | `fallido` | `descartado` (token que ya no existe en Firebase).
 
-### 5.2 `notif.publicar(...)` — la única forma de crear un aviso
+### 5.2 `ntf.publicar(...)` — la única forma de crear un aviso
 
 Una función SQL que, **en una sola transacción**: inserta el aviso (y si la `dedupe_key` ya existe, no hace nada y devuelve el existente), resuelve los destinatarios (los que manda el emisor, o los de `suscripcion` para ese tipo), crea un `destino` por destinatario y un `envio` por cada dispositivo activo de cada uno. La llaman el DataService del API y el puente. Así el "aviso sin envíos" o los "envíos sin aviso" no pueden pasar.
 
-### 5.3 `notif.tomar_envios(lote)` — sin duplicados
+### 5.3 `ntf.tomar_envios(lote)` — sin duplicados
 
 ```sql
-UPDATE notif.envio SET estado = 'enviando', fec_tomado = now(), intentos = intentos + 1
+UPDATE ntf.envio SET estado = 'enviando', fec_tomado = now(), intentos = intentos + 1
 WHERE envio_id IN (
-    SELECT envio_id FROM notif.envio
+    SELECT envio_id FROM ntf.envio
     WHERE estado = 'pendiente' AND proximo_intento <= now()
     ORDER BY envio_id LIMIT lote
     FOR UPDATE SKIP LOCKED)
@@ -112,7 +112,7 @@ RETURNING envio_id, <token>, <payload armado desde el aviso>;
 
 Lo tomado ya no está `pendiente`: **no se puede mandar dos veces**, aunque haya dos transportes corriendo (`SKIP LOCKED`). Lo que quedó `enviando` más de 10 minutos (el transporte se cayó a mitad) vuelve a `pendiente`. Un `fallido` reintenta con espera creciente (1, 5 y 30 minutos) hasta 3 veces.
 
-### 5.4 `notif.depurar()` — la cola no crece sin límite
+### 5.4 `ntf.depurar()` — la cola no crece sin límite
 
 Una vez por día: borra los envíos terminados de más de 30 días, los avisos vencidos y los leídos de más de 90 días (con sus destinos y envíos). Los plazos son valores por defecto configurables.
 
@@ -122,7 +122,7 @@ Recursos nuevos, con el `empr_id` del JWT (nunca como parámetro):
 
 | Recurso | Quién lo usa | Qué hace |
 |---|---|---|
-| `POST /avisos` | Módulos PHP, agentes (con su token de máquina), Bonita | `notif.publicar()` |
+| `POST /avisos` | Módulos PHP, agentes (con su token de máquina), Bonita | `ntf.publicar()` |
 | `GET /avisos/mios` | La campanita | Los avisos del usuario del token, sin leer primero |
 | `POST /avisos/{id}/leido` | La campanita | Solo los propios |
 | `POST /dispositivos` · `DELETE /dispositivos/{token}` | `firebase_config.js` | Registra o da de baja el navegador del usuario |
@@ -131,8 +131,8 @@ Recursos nuevos, con el `empr_id` del JWT (nunca como parámetro):
 
 ## 7. El transporte y el conector
 
-- **`Siddhi AvisosPush` (PostgreSQL):** cada 15 segundos llama a `notif.tomar_envios(50)` por un **datasource** del `deployment.yaml` del SI (sin credenciales en el `.siddhi`), postea al conector y marca `enviado` / `fallido` / `descartado` según la respuesta, tomando el `envio_id` del pedido original (`trp:`). Una vez por día llama a `notif.depurar()`. El borrador `_backend/siddhi/AgenteAvisosPush.siddhi` es el punto de partida, con lo que se aprendió el 2026-10-28.
-- **`Siddhi PuenteAsset` (MariaDB → PostgreSQL), mientras exista AssetPlanner:** lee `synch_notificacion_queue` por `queue_id` (no por `fec_alta`), llama a `notif.publicar()` con `origen = 'asset'` y el token del `data_json` como `token_directo`, y marca `procesado = 1` en MariaDB (la columna que ya existe). Una vez por día borra de MariaDB lo procesado de más de 30 días. **No crea ningún objeto en MariaDB.** Reemplaza a `NotificacionesAssetSynch`: queda **un solo emisor de push**.
+- **`Siddhi AvisosPush` (PostgreSQL):** cada 15 segundos llama a `ntf.tomar_envios(50)` por un **datasource** del `deployment.yaml` del SI (sin credenciales en el `.siddhi`), postea al conector y marca `enviado` / `fallido` / `descartado` según la respuesta, tomando el `envio_id` del pedido original (`trp:`). Una vez por día llama a `ntf.depurar()`. El borrador `_backend/siddhi/AgenteAvisosPush.siddhi` es el punto de partida, con lo que se aprendió el 2026-10-28.
+- **`Siddhi PuenteAsset` (MariaDB → PostgreSQL), mientras exista AssetPlanner:** lee `synch_notificacion_queue` por `queue_id` (no por `fec_alta`), llama a `ntf.publicar()` con `origen = 'asset'` y el token del `data_json` como `token_directo`, y marca `procesado = 1` en MariaDB (la columna que ya existe). Una vez por día borra de MariaDB lo procesado de más de 30 días. **No crea ningún objeto en MariaDB.** Reemplaza a `NotificacionesAssetSynch`: queda **un solo emisor de push**.
 - **`FirebaseConnectorAPI` (core):** el `faultSequence` tiene que devolver **5xx** si Firebase falla, y **410** si el token ya no existe (para marcarlo `descartado` y desactivar el dispositivo). Hoy devuelve 2xx siempre.
 
 La campanita de AssetPlanner sigue leyendo MariaDB hasta que Mantenimiento migre: durante ese período, un aviso de AssetPlanner se marca leído por separado en cada aplicación. Es aceptable porque es temporal y no duplica push.
@@ -143,11 +143,11 @@ Lo de `develop-v3.5` (esquema `agente`) **se reemplaza por esto**:
 
 | Hoy (agente) | Pasa a |
 |---|---|
-| `agente.notificacion`, `agente.envio`, `agente.dispositivo` | `notif.aviso`, `notif.destino`, `notif.envio`, `notif.dispositivo` |
-| `agente.destinatario_alerta` | `notif.suscripcion` |
+| `agente.notificacion`, `agente.envio`, `agente.dispositivo` | `ntf.aviso`, `ntf.destino`, `ntf.envio`, `ntf.dispositivo` |
+| `agente.destinatario_alerta` | `ntf.suscripcion` |
 | El monitoreo escribe en la base del agente | Publica por `POST /avisos` con su token de máquina |
 | `GET /notificaciones` del orquestador | `GET /avisos/mios` del API de Tools |
-| Borrador `AgenteAvisosPush.siddhi` | `AvisosPush` sobre `notif` |
+| Borrador `AgenteAvisosPush.siddhi` | `AvisosPush` sobre `ntf` |
 
 El agente sigue usando **solo PostgreSQL**: su base para lo suyo (conocimiento, corridas) y el API de Tools —que escribe en el PostgreSQL de Tools— para los avisos. Las tablas de avisos del esquema `agente` se retiran cuando esto esté en marcha.
 
@@ -160,18 +160,18 @@ El agente sigue usando **solo PostgreSQL**: su base para lo suyo (conocimiento, 
 | Campanita de AssetPlanner (`MANDataService.getNotificaciones`) | Lee MariaDB | **Nada** hasta la migración |
 | `FirebaseConnectorAPI` | 2xx siempre | Devuelve el error real. Consumidores verificados el 2026-10-28: la app Siddhi de AssetPlanner (que se reemplaza) y **un push de prueba que los `firebase_config.js` de Tools y de AssetPlanner mandan desde el navegador a `http://localhost:8290/tools/firebase/send` en cada carga de página**. Desde el navegador de un usuario real, `localhost` es su propia máquina: falla en silencio y no hace nada. Se elimina al pasar a registrar el token (sección 6) |
 | Layout de Tools (`firebase_config.js`) | Pide permiso y descarta el token | Registra el token; suma la campanita |
-| Base `trazalog_tools` | — | Esquema nuevo `notif`. **No toca ninguna tabla existente** |
+| Base `trazalog_tools` | — | Esquema nuevo `ntf`. **No toca ninguna tabla existente** |
 
 ## 10. Cómo se prueba (antes de desplegar nada)
 
-1. Esquema `notif` en un **PostgreSQL 11** descartable: publicar, deduplicar, tomar sin duplicados (dos tomas simultáneas no comparten envíos), reintentos, recuperación de `enviando` colgados, depuración.
+1. Esquema `ntf` en un **PostgreSQL 11** descartable: publicar, deduplicar, tomar sin duplicados (dos tomas simultáneas no comparten envíos), reintentos, recuperación de `enviando` colgados, depuración.
 2. Transporte y puente en el **SI local** con un conector falso, como el 2026-10-28: cada envío se manda **una sola vez** y queda `enviado` con fecha; un 5xx queda `fallido` y reintenta; un 410 queda `descartado`.
 3. Puente con una MariaDB descartable con la estructura real de `synch_notificacion_queue`: lo procesado queda `procesado = 1` y llega una sola vez a PostgreSQL.
 4. Recién después, en DEV con VPN, y un único despliegue.
 
 ## 11. Lo que necesito que decidas
 
-1. **¿Aprobás el diseño?** En particular: el esquema `notif` en la base de Tools, y que el puente reemplace a `NotificacionesAssetSynch` en producción.
+1. **¿Aprobás el diseño?** En particular: el esquema `ntf` en la base de Tools, y que el puente reemplace a `NotificacionesAssetSynch` en producción.
 2. **Plazos de retención:** 30 días para envíos terminados y para lo procesado en MariaDB; 90 días para avisos leídos.
 3. **Corregir el `FirebaseConnectorAPI`** (core) como parte de este cambio.
 4. **Rotar la contraseña de root** que está en el `.siddhi` de producción de `traz-int`.
