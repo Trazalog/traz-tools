@@ -735,4 +735,160 @@
    <resource method="GET" path="/parametros/empresa/{id_empresa}">
       <call-query href="getParametrosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-1 · Componentes (catálogo y asignación a equipos). Reemplaza el acceso directo de models/Componentes.php
+        (ADR-014). Toda query queda limitada a la empresa (id de asset). Las columnas salen como CHAR para que el texto sea el
+        mismo que devolvía mysqli (fechas y decimales). -->
+   <query id="getComponentesAbmMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT c.id_componente, c.descripcion, c.informacion, c.marcaid, c.pdf, m.marcadescrip FROM componentes c JOIN marcasequipos m ON c.marcaid = m.marcaid WHERE c.id_empresa = :id_empresa AND c.estado = 'AC' AND m.estado = 'AC'</sql>
+      <result outputType="json">{"componentes":{"componente":[{"id_componente":"$id_componente","descripcion":"$descripcion","informacion":"$informacion","marcaid":"$marcaid","pdf":"$pdf","marcadescrip":"$marcadescrip"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getComponentesEquiposMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, e.codigo, e.descripcion, c.id_componente, c.descripcion AS descomp, c.pdf, s.descripcion AS sistema, ce.idcomponenteequipo, ce.estado, ce.codigo AS codcomponente FROM equipos e JOIN componenteequipo ce ON ce.id_equipo = e.id_equipo JOIN componentes c ON c.id_componente = ce.id_componente JOIN sistema s ON ce.sistemaid = s.sistemaid WHERE c.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componentes":{"componente":[{"id_equipo":"$id_equipo","codigo":"$codigo","descripcion":"$descripcion","id_componente":"$id_componente","descomp":"$descomp","pdf":"$pdf","sistema":"$sistema","idcomponenteequipo":"$idcomponenteequipo","estado":"$estado","codcomponente":"$codcomponente"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getEquiposCompMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(`id_equipo` AS CHAR) AS id_equipo, CAST(`descripcion` AS CHAR) AS descripcion, CAST(`fecha_ingreso` AS CHAR) AS fecha_ingreso, CAST(`fecha_baja` AS CHAR) AS fecha_baja, CAST(`fecha_garantia` AS CHAR) AS fecha_garantia, CAST(`marca` AS CHAR) AS marca, CAST(`codigo` AS CHAR) AS codigo, CAST(`ubicacion` AS CHAR) AS ubicacion, CAST(`id_empresa` AS CHAR) AS id_empresa, CAST(`id_sector` AS CHAR) AS id_sector, CAST(`id_hubicacion` AS CHAR) AS id_hubicacion, CAST(`id_grupo` AS CHAR) AS id_grupo, CAST(`id_customer` AS CHAR) AS id_customer, CAST(`id_criticidad` AS CHAR) AS id_criticidad, CAST(`estado` AS CHAR) AS estado, CAST(`fecha_ultimalectura` AS CHAR) AS fecha_ultimalectura, CAST(`ultima_lectura` AS CHAR) AS ultima_lectura, CAST(`tipo_horas` AS CHAR) AS tipo_horas, CAST(`id-centrodecosto` AS CHAR) AS id_centrodecosto, CAST(`valor_reposicion` AS CHAR) AS valor_reposicion, CAST(`fecha_reposicion` AS CHAR) AS fecha_reposicion, CAST(`id_proveedor` AS CHAR) AS id_proveedor, CAST(`valor` AS CHAR) AS valor, CAST(`comprobante` AS CHAR) AS comprobante, CAST(`descrip_tecnica` AS CHAR) AS descrip_tecnica, CAST(`id_unidad` AS CHAR) AS id_unidad, CAST(`id_area` AS CHAR) AS id_area, CAST(`id_proceso` AS CHAR) AS id_proceso, CAST(`numero_serie` AS CHAR) AS numero_serie, CAST(`adjunto` AS CHAR) AS adjunto, CAST(`meta_disponibilidad` AS CHAR) AS meta_disponibilidad FROM equipos WHERE estado != 'AN' AND id_empresa = :id_empresa ORDER BY id_equipo ASC</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","descripcion":"$descripcion","fecha_ingreso":"$fecha_ingreso","fecha_baja":"$fecha_baja","fecha_garantia":"$fecha_garantia","marca":"$marca","codigo":"$codigo","ubicacion":"$ubicacion","id_empresa":"$id_empresa","id_sector":"$id_sector","id_hubicacion":"$id_hubicacion","id_grupo":"$id_grupo","id_customer":"$id_customer","id_criticidad":"$id_criticidad","estado":"$estado","fecha_ultimalectura":"$fecha_ultimalectura","ultima_lectura":"$ultima_lectura","tipo_horas":"$tipo_horas","id-centrodecosto":"$id_centrodecosto","valor_reposicion":"$valor_reposicion","fecha_reposicion":"$fecha_reposicion","id_proveedor":"$id_proveedor","valor":"$valor","comprobante":"$comprobante","descrip_tecnica":"$descrip_tecnica","id_unidad":"$id_unidad","id_area":"$id_area","id_proceso":"$id_proceso","numero_serie":"$numero_serie","adjunto":"$adjunto","meta_disponibilidad":"$meta_disponibilidad"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getEquipoDescripcionMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT descripcion FROM equipos WHERE id_equipo = :id_equipo AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"descripcion":"$descripcion"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getMarcasCompMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT marcaid, marcadescrip, estado, id_empresa FROM marcasequipos WHERE id_empresa = :id_empresa AND estado != 'AN' ORDER BY marcadescrip</sql>
+      <result outputType="json">{"marcas":{"marca":[{"marcaid":"$marcaid","marcadescrip":"$marcadescrip","estado":"$estado","id_empresa":"$id_empresa"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getComponentesAutocompletarMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CONCAT(c.descripcion, ' - ', m.marcadescrip, ' - ', c.informacion) AS label, c.id_componente AS value FROM componentes c JOIN marcasequipos m ON c.marcaid = m.marcaid WHERE c.id_empresa = :id_empresa AND c.estado != 'AN' ORDER BY label ASC</sql>
+      <result outputType="json">{"componentes":{"componente":[{"label":"$label","value":"$value"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSistemasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT sistemaid, descripcion, estado, id_empresa FROM sistema WHERE id_empresa = :id_empresa AND estado = 'AC' ORDER BY descripcion</sql>
+      <result outputType="json">{"sistemas":{"sistema":[{"sistemaid":"$sistemaid","descripcion":"$descripcion","estado":"$estado","id_empresa":"$id_empresa"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setComponenteMan" keyColumns="id_componente" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO componentes (id_equipo, descripcion, informacion, fechahora, marcaid, estado, pdf, id_empresa) VALUES (-1, :descripcion, :informacion, NOW(), :marcaid, :estado, '', :id_empresa)</sql>
+      <result outputType="json">{"componente":{"id_componente":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="informacion" sqlType="STRING"/>
+      <param name="marcaid" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setComponenteEquipoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO componenteequipo (id_equipo, id_componente, codigo, estado, sistemaid, id_empresa) SELECT e.id_equipo, :id_componente, :codigo, 'AC', COALESCE(NULLIF(:sistemaid, ''), 0), e.id_empresa FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componenteequipo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_componente" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="sistemaid" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getComponentesDeEquipoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, e.descripcion, m.marcadescrip, c.descripcion AS dee11, c.informacion, ce.id_componente FROM equipos e LEFT JOIN componenteequipo ce ON ce.id_equipo = e.id_equipo AND ce.estado = 'AC' LEFT JOIN componentes c ON c.id_componente = ce.id_componente LEFT JOIN marcasequipos m ON c.marcaid = m.marcaid WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa ORDER BY dee11</sql>
+      <result outputType="json">{"componentes":{"componente":[{"id_equipo":"$id_equipo","descripcion":"$descripcion","marcadescrip":"$marcadescrip","dee11":"$dee11","informacion":"$informacion","id_componente":"$id_componente"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateComponentePdfMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE componentes SET pdf = :pdf WHERE id_componente = :id_componente AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componente":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="pdf" sqlType="STRING"/>
+      <param name="id_componente" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaComponenteEquipoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE componenteequipo ce JOIN equipos e ON e.id_equipo = ce.id_equipo SET ce.estado = 'AN' WHERE ce.id_componente = :id_componente AND ce.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componenteequipo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_componente" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getComponenteEquipoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ce.idcomponenteequipo, ce.id_equipo, ce.id_componente, ce.codigo, e.codigo AS codigoEq, e.descripcion FROM componenteequipo ce JOIN equipos e ON ce.id_equipo = e.id_equipo WHERE ce.estado = 'AC' AND ce.id_empresa = :id_empresa AND ce.idcomponenteequipo = :idcomponenteequipo</sql>
+      <result outputType="json">{"componentes":{"componente":[{"idcomponenteequipo":"$idcomponenteequipo","id_equipo":"$id_equipo","id_componente":"$id_componente","codigo":"$codigo","codigoEq":"$codigoEq","descripcion":"$descripcion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="idcomponenteequipo" sqlType="STRING"/>
+   </query>
+   <query id="updateComponenteEquipoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE componenteequipo ce JOIN equipos e ON e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa SET ce.id_equipo = e.id_equipo, ce.id_componente = :id_componente, ce.codigo = :codigo WHERE ce.idcomponenteequipo = :idcomponenteequipo AND ce.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componenteequipo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_componente" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="idcomponenteequipo" sqlType="STRING"/>
+   </query>
+   <query id="bajaComponenteMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE componentes SET estado = 'AN' WHERE id_componente = :id_componente AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componente":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_componente" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateComponenteMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE componentes SET descripcion = :descripcion, informacion = :informacion, marcaid = :marcaid, pdf = COALESCE(NULLIF(:pdf, ''), pdf) WHERE id_componente = :id_componente AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componente":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="informacion" sqlType="STRING"/>
+      <param name="marcaid" sqlType="STRING"/>
+      <param name="pdf" sqlType="STRING"/>
+      <param name="id_componente" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/componentes/abm/empresa/{id_empresa}">
+      <call-query href="getComponentesAbmMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componentes/equipos/empresa/{id_empresa}">
+      <call-query href="getComponentesEquiposMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componentes/equipos-empresa/{id_empresa}">
+      <call-query href="getEquiposCompMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componentes/equipo/{id_equipo}/descripcion/empresa/{id_empresa}">
+      <call-query href="getEquipoDescripcionMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componentes/marcas/empresa/{id_empresa}">
+      <call-query href="getMarcasCompMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componentes/autocompletar/empresa/{id_empresa}">
+      <call-query href="getComponentesAutocompletarMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componentes/sistemas/empresa/{id_empresa}">
+      <call-query href="getSistemasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/componente">
+      <call-query href="setComponenteMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="informacion" query-param="informacion"/><with-param name="marcaid" query-param="marcaid"/><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/componente/equipo">
+      <call-query href="setComponenteEquipoMan"><with-param name="id_componente" query-param="id_componente"/><with-param name="codigo" query-param="codigo"/><with-param name="sistemaid" query-param="sistemaid"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componentes/equipo/{id_equipo}/empresa/{id_empresa}">
+      <call-query href="getComponentesDeEquipoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/componente/pdf">
+      <call-query href="updateComponentePdfMan"><with-param name="pdf" query-param="pdf"/><with-param name="id_componente" query-param="id_componente"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/componente/equipo/baja">
+      <call-query href="bajaComponenteEquipoMan"><with-param name="id_componente" query-param="id_componente"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/componente/equipo/{idcomponenteequipo}/empresa/{id_empresa}">
+      <call-query href="getComponenteEquipoMan"><with-param name="idcomponenteequipo" query-param="idcomponenteequipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/componente/equipo">
+      <call-query href="updateComponenteEquipoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_componente" query-param="id_componente"/><with-param name="codigo" query-param="codigo"/><with-param name="idcomponenteequipo" query-param="idcomponenteequipo"/></call-query>
+   </resource>
+   <resource method="PUT" path="/componente/baja">
+      <call-query href="bajaComponenteMan"><with-param name="id_componente" query-param="id_componente"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/componente">
+      <call-query href="updateComponenteMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="informacion" query-param="informacion"/><with-param name="marcaid" query-param="marcaid"/><with-param name="pdf" query-param="pdf"/><with-param name="id_componente" query-param="id_componente"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>

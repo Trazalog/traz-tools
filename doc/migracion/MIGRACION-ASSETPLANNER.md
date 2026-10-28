@@ -321,7 +321,8 @@ divergieron.
 | Área (`controllers/Area.php`, `models/Areas.php`, `views/area/view_.php`) + `helpers/man_helper.php` | ✅ Portado. Paridad OK (10 de 10, incluido aislamiento) | MAN: `feat/MIG-ASSET-1-area` · tools: queries de `MANDataService` en `feat/MIG-ASSET-1-area` |
 | Proceso (`controllers/Proceso.php`, `models/Procesos.php`, `views/proceso/view_.php`) | ✅ Portado. Paridad OK (10 de 10) | MAN: `feat/MIG-ASSET-1-proceso` · tools: `feat/MIG-ASSET-1-proceso` |
 | Parametro (`controllers/Parametro.php`, `models/Parametros.php`, `views/parametro/list.php`) | ✅ Portado. Paridad OK (18 de 18) | MAN: `feat/MIG-ASSET-1-parametro` · tools: `feat/MIG-ASSET-1-parametro` |
-| Componente, Equipo | Pendientes | — |
+| Componente (`controllers/Componente.php`, `models/Componentes.php`, `views/componente/{list,listabm,view_}.php`) | ✅ Portado. Paridad OK (27 de 27) | MAN: `feat/MIG-ASSET-1-componente` · tools: `feat/MIG-ASSET-1-componente` |
+| Equipo | Pendiente | — |
 
 **Criterio de salida:** con una sesión de tools, el módulo se abre desde el menú, se navegan los ABMs
 y se listan equipos y OTs reales de una empresa de prueba. Nivel 0b en verde y **cero accesos a
@@ -605,7 +606,7 @@ Montado el 2026-10-27. Todo corre en la máquina del PM, con la **VPN** levantad
 |---|---|---|
 | Bases | Servidor de **desarrollo** `vm-development-2020-02-26` (`10.142.0.13`): MariaDB `assetv2` (asset) y PostgreSQL `tools_prod_t` (tools y DNATO) | Verificado con `@@hostname`. Pese al nombre, `tools_prod_t` es la base de desarrollo; la de producción es `trazalog_tools` en `10.142.0.2` |
 | WSO2 MI | Local, `~/.wso2-mi/micro-integrator/wso2mi-4.5.0`, puerto `8290` | Sus datasources apuntan a las bases de desarrollo. Ahí se despliegan las queries nuevas de `MANDataService` antes de subirlas |
-| Servidor web | XAMPP local (PHP 7.3), `http://traz-comp.local/` → `/mnt/win/dev/git` | Se arranca con `sudo /opt/lampp/lampp startapache` en una terminal local |
+| Servidor web | XAMPP local (PHP 7.3), `http://traz-comp.local/` → `/mnt/win/dev/git` | Se arranca con `sudo /opt/lampp/lampp startapache` en una terminal local. Corre como `daemon`: para subir archivos, `assets/files/equipos` de asset necesita permiso de escritura (`chmod 777`, solo en local) |
 | asset | `http://traz-comp.local/traz-prod-assetplanner/` | Sin cambios |
 | tools con MAN | `http://traz-comp.local/traz-v3/traz-tools/` | Cambios **locales, no versionados**, marcados `LOCAL-MIG-ASSET (no commitear)`: `application/config/constants.php` de tools (`DNATO` → `traz-comp.local`, `HOST` → MI local) y de `traz-comp-dnato` (`DE`, `DS`, `DNATO` → `traz-comp.local` y la copia de la migración) |
 
@@ -637,6 +638,9 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E8 | 2026-10-27 | **Base de cada archivo**: se parte del fork de Rogelio, salvo que le falten funciones que una vista usa; en ese caso se porta el archivo completo desde el asset actual. Se compara con un listado de métodos reales (sin contar los comentados) | En Parametro parecía que faltaban 10 funciones y eran todas código comentado: las reales coincidían |
 | E9 | 2026-10-27 | **No se portan acciones muertas**: las que ninguna vista ni controller de asset llama, y menos si llaman a métodos inexistentes. Se listan en el PR | Parametro: `baja_parametro`, `bajaparametro`, `geteditar`, `agregar_componente`, `agregarcomponente` (las dos primeras llaman a `delete_parametro`/`delete_p`, que no existen) |
 | E10 | 2026-10-27 | **Solicitudes de cambios de tools sin apilar**: cada una contra `develop-v3` | #575 quedó fusionada sobre la rama de #574 y no llegó a `develop-v3`; se corrigió con #576 |
+| E11 | 2026-10-27 | **Archivos en la carpeta de asset**: MAN guarda y lee PDF, adjuntos e imágenes en la misma carpeta que asset (`man_asset_path()` / `man_asset_url()` del helper de MAN; por defecto `../tools/traz-prod-assetplanner/` respecto de tools, configurable con `MAN_ASSET_PATH` / `MAN_ASSET_URL`). Cuando asset se retire, la carpeta se mueve a tools | En demo y producción asset y tools comparten Apache. Con una sola carpeta las dos aplicaciones ven lo mismo y volver una empresa a asset no pierde archivos |
+| E12 | 2026-10-27 | **Donde asset falla siempre, MAN hace lo que la vista espera**, y se anota en el PR | `Componentes::getequipo` de asset nunca funcionó |
+| E13 | 2026-10-27 | **Valores implícitos explícitos**: la conexión JDBC de WSO2 a MariaDB es estricta (el servidor no). En cada INSERT se pasan los valores que MariaDB completaba sola (`''`, `0`). No se toca el datasource | Afectaba `componentes.pdf` y `componenteequipo.sistemaid`. Cambiar el datasource afectaría a todas las queries de mantenimiento, incluidas las de MCP |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---
