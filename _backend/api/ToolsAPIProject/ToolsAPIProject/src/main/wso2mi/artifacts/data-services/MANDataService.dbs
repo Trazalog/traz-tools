@@ -1263,6 +1263,223 @@
    <resource method="POST" path="/equipos/cliente">
       <call-query href="setClienteEqMan"><with-param name="cliName" query-param="cliName"/><with-param name="cliLastName" query-param="cliLastName"/><with-param name="cliDni" query-param="cliDni"/><with-param name="cliAddress" query-param="cliAddress"/><with-param name="cliPhone" query-param="cliPhone"/><with-param name="cliEmail" query-param="cliEmail"/><with-param name="cliRazonSocial" query-param="cliRazonSocial"/><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-2o · Órdenes de trabajo, lectura (listado, ver, origen, catálogos). Reemplaza el acceso directo de models/Otrabajos.php
+        (ADR-014). Toda query queda limitada a la empresa (id de asset); asset no filtraba getpencil, getOrigenOt ni las vistas. -->
+   <query id="getOtListadoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden AS id_orden, ot.id_tarea AS id_tarea, ot.nro AS nro, CAST(ot.fecha AS CHAR) AS fecha, CAST(ot.fecha_program AS CHAR) AS fecha_program, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_entrega AS CHAR) AS fecha_entrega, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, CAST(ot.fecha_aviso AS CHAR) AS fecha_aviso, CAST(ot.fecha_entregada AS CHAR) AS fecha_entregada, ot.descripcion AS descripcion, ot.cliId AS cliId, ot.estado AS estado, ot.id_usuario AS id_usuario, ot.id_usuario_a AS id_usuario_a, ot.id_usuario_e AS id_usuario_e, ot.id_sucursal AS id_sucursal, ot.id_proveedor AS id_proveedor, ot.id_solicitud AS id_solicitud, ot.tipo AS tipo, ot.id_equipo AS id_equipo, CAST(ot.duracion AS CHAR) AS duracion, ot.id_tareapadre AS id_tareapadre, ot.id_empresa AS id_empresa, CAST(ot.lectura_programada AS CHAR) AS lectura_programada, CAST(ot.lectura_ejecutada AS CHAR) AS lectura_ejecutada, ot.case_id AS case_id, ot.latitud AS latitud, ot.longitud AS longitud, ot.justificacion AS justificacion, CAST(ot.f_asignacion AS CHAR) AS f_asignacion, ot.id_usuario_eliminada AS id_usuario_eliminada, CAST(ot.fecha_eliminada AS CHAR) AS fecha_eliminada, ot.motivo_eliminada AS motivo_eliminada, t.descripcion AS tareaSTD, tt.descripcion AS tipoDescrip, u1.usrName AS nombre, su.usrName, su.usrLastName, e.codigo, 0 AS grpId, cl.cliRazonSocial AS nomCli, os.id_orden AS ordenservicioId FROM orden_trabajo ot JOIN tbl_tipoordentrabajo tt ON tt.tipo_orden = ot.tipo JOIN sisusers su ON su.usrId = ot.id_usuario LEFT JOIN sisusers u1 ON ot.id_usuario_a = u1.usrId JOIN equipos e ON e.id_equipo = ot.id_equipo JOIN admcustomers cl ON cl.cliId = e.id_customer LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea LEFT JOIN orden_servicio os ON ot.id_orden = os.id_ot WHERE e.estado != 'AN' AND ot.id_empresa = :id_empresa AND (IFNULL(:solo_tipo1, '') = '' OR ot.tipo = 1) AND (IFNULL(:fec_desde, '') = '' OR (IFNULL(:fec_hasta, '') != '' AND DATE(ot.fecha_program) &gt;= :fec_desde AND DATE(ot.fecha_program) &lt;= :fec_hasta) OR (IFNULL(:fec_hasta, '') = '' AND DATE(ot.fecha_program) = :fec_desde)) AND (IFNULL(:estado, '') = '' OR ot.estado = :estado) AND (IFNULL(:equipo, '') = '' OR e.id_equipo = :equipo) ORDER BY ot.id_orden</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","id_tarea":"$id_tarea","nro":"$nro","fecha":"$fecha","fecha_program":"$fecha_program","fecha_inicio":"$fecha_inicio","fecha_entrega":"$fecha_entrega","fecha_terminada":"$fecha_terminada","fecha_aviso":"$fecha_aviso","fecha_entregada":"$fecha_entregada","descripcion":"$descripcion","cliId":"$cliId","estado":"$estado","id_usuario":"$id_usuario","id_usuario_a":"$id_usuario_a","id_usuario_e":"$id_usuario_e","id_sucursal":"$id_sucursal","id_proveedor":"$id_proveedor","id_solicitud":"$id_solicitud","tipo":"$tipo","id_equipo":"$id_equipo","duracion":"$duracion","id_tareapadre":"$id_tareapadre","id_empresa":"$id_empresa","lectura_programada":"$lectura_programada","lectura_ejecutada":"$lectura_ejecutada","case_id":"$case_id","latitud":"$latitud","longitud":"$longitud","justificacion":"$justificacion","f_asignacion":"$f_asignacion","id_usuario_eliminada":"$id_usuario_eliminada","fecha_eliminada":"$fecha_eliminada","motivo_eliminada":"$motivo_eliminada","tareaSTD":"$tareaSTD","tipoDescrip":"$tipoDescrip","nombre":"$nombre","usrName":"$usrName","usrLastName":"$usrLastName","codigo":"$codigo","grpId":"$grpId","nomCli":"$nomCli","ordenservicioId":"$ordenservicioId"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="solo_tipo1" sqlType="STRING"/>
+      <param name="fec_desde" sqlType="STRING"/>
+      <param name="fec_hasta" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="equipo" sqlType="STRING"/>
+   </query>
+   <query id="getProveedoresOtMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT provnombre, provid FROM abmproveedores WHERE estado = 'AC' AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"proveedores":{"proveedor":[{"provnombre":"$provnombre","provid":"$provid"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSucursalesMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_sucursal, dire, telefono, zonas, id_localidad, descripc, estado, id_empresa FROM sucursal WHERE id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sucursales":{"sucursal":[{"id_sucursal":"$id_sucursal","dire":"$dire","telefono":"$telefono","zonas":"$zonas","id_localidad":"$id_localidad","descripc":"$descripc","estado":"$estado","id_empresa":"$id_empresa"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getEquiposNoAnuladosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, e.descripcion, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, CAST(e.fecha_baja AS CHAR) AS fecha_baja, CAST(e.fecha_garantia AS CHAR) AS fecha_garantia, e.marca, e.codigo, e.ubicacion, e.id_empresa, e.id_sector, CAST(e.id_hubicacion AS CHAR) AS id_hubicacion, e.id_grupo, e.id_customer, e.id_criticidad, e.estado, CAST(e.fecha_ultimalectura AS CHAR) AS fecha_ultimalectura, CAST(e.ultima_lectura AS CHAR) AS ultima_lectura, e.tipo_horas, CAST(e.`id-centrodecosto` AS CHAR) AS idcentrodecosto, CAST(e.valor_reposicion AS CHAR) AS valor_reposicion, CAST(e.fecha_reposicion AS CHAR) AS fecha_reposicion, CAST(e.id_proveedor AS CHAR) AS id_proveedor, CAST(e.valor AS CHAR) AS valor, e.comprobante, e.descrip_tecnica, e.id_unidad, e.id_area, e.id_proceso, e.numero_serie, e.adjunto, e.meta_disponibilidad FROM equipos e WHERE e.id_empresa = :id_empresa AND e.estado != 'AN' ORDER BY e.id_equipo</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","descripcion":"$descripcion","fecha_ingreso":"$fecha_ingreso","fecha_baja":"$fecha_baja","fecha_garantia":"$fecha_garantia","marca":"$marca","codigo":"$codigo","ubicacion":"$ubicacion","id_empresa":"$id_empresa","id_sector":"$id_sector","id_hubicacion":"$id_hubicacion","id_grupo":"$id_grupo","id_customer":"$id_customer","id_criticidad":"$id_criticidad","estado":"$estado","fecha_ultimalectura":"$fecha_ultimalectura","ultima_lectura":"$ultima_lectura","tipo_horas":"$tipo_horas","id-centrodecosto":"$idcentrodecosto","valor_reposicion":"$valor_reposicion","fecha_reposicion":"$fecha_reposicion","id_proveedor":"$id_proveedor","valor":"$valor","comprobante":"$comprobante","descrip_tecnica":"$descrip_tecnica","id_unidad":"$id_unidad","id_area":"$id_area","id_proceso":"$id_proceso","numero_serie":"$numero_serie","adjunto":"$adjunto","meta_disponibilidad":"$meta_disponibilidad"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInfoEquipoNuevaOtMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, e.descripcion, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, CAST(e.fecha_baja AS CHAR) AS fecha_baja, CAST(e.fecha_garantia AS CHAR) AS fecha_garantia, e.marca, e.codigo, e.ubicacion, e.id_empresa, e.id_sector, CAST(e.id_hubicacion AS CHAR) AS id_hubicacion, e.id_grupo, e.id_customer, e.id_criticidad, e.estado, CAST(e.fecha_ultimalectura AS CHAR) AS fecha_ultimalectura, CAST(e.ultima_lectura AS CHAR) AS ultima_lectura, e.tipo_horas, CAST(e.`id-centrodecosto` AS CHAR) AS idcentrodecosto, CAST(e.valor_reposicion AS CHAR) AS valor_reposicion, CAST(e.fecha_reposicion AS CHAR) AS fecha_reposicion, CAST(e.id_proveedor AS CHAR) AS id_proveedor, CAST(e.valor AS CHAR) AS valor, e.comprobante, e.descrip_tecnica, e.id_unidad, e.id_area, e.id_proceso, e.numero_serie, e.adjunto, e.meta_disponibilidad, m.marcadescrip, cl.cliRazonSocial AS nomCli FROM equipos e JOIN marcasequipos m ON m.marcaid = e.marca JOIN admcustomers cl ON cl.cliId = e.id_customer WHERE e.id_empresa = :id_empresa AND e.id_equipo = :id_equipo</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","descripcion":"$descripcion","fecha_ingreso":"$fecha_ingreso","fecha_baja":"$fecha_baja","fecha_garantia":"$fecha_garantia","marca":"$marca","codigo":"$codigo","ubicacion":"$ubicacion","id_empresa":"$id_empresa","id_sector":"$id_sector","id_hubicacion":"$id_hubicacion","id_grupo":"$id_grupo","id_customer":"$id_customer","id_criticidad":"$id_criticidad","estado":"$estado","fecha_ultimalectura":"$fecha_ultimalectura","ultima_lectura":"$ultima_lectura","tipo_horas":"$tipo_horas","id-centrodecosto":"$idcentrodecosto","valor_reposicion":"$valor_reposicion","fecha_reposicion":"$fecha_reposicion","id_proveedor":"$id_proveedor","valor":"$valor","comprobante":"$comprobante","descrip_tecnica":"$descrip_tecnica","id_unidad":"$id_unidad","id_area":"$id_area","id_proceso":"$id_proceso","numero_serie":"$numero_serie","adjunto":"$adjunto","meta_disponibilidad":"$meta_disponibilidad","marcadescrip":"$marcadescrip","nomCli":"$nomCli"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtEditarMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, ot.id_tarea, ot.nro, CAST(ot.fecha_program AS CHAR) AS fecha_program, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, ot.descripcion AS tareadescrip, ot.estado, ot.id_usuario, ot.id_usuario_a, ot.id_sucursal, cl.cliRazonSocial AS nomCli, s.descripc, p.provnombre, p.provid, e.id_equipo, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.ubicacion, e.descripcion AS equipodescrip, e.codigo, m.marcadescrip AS marca FROM orden_trabajo ot JOIN equipos e ON e.id_equipo = ot.id_equipo LEFT JOIN sucursal s ON s.id_sucursal = ot.id_sucursal JOIN marcasequipos m ON e.marca = m.marcaid LEFT JOIN abmproveedores p ON p.provid = ot.id_proveedor JOIN admcustomers cl ON cl.cliId = e.id_customer WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","id_tarea":"$id_tarea","nro":"$nro","fecha_program":"$fecha_program","fecha_inicio":"$fecha_inicio","fecha_terminada":"$fecha_terminada","tareadescrip":"$tareadescrip","estado":"$estado","id_usuario":"$id_usuario","id_usuario_a":"$id_usuario_a","id_sucursal":"$id_sucursal","nomCli":"$nomCli","descripc":"$descripc","provnombre":"$provnombre","provid":"$provid","id_equipo":"$id_equipo","fecha_ingreso":"$fecha_ingreso","ubicacion":"$ubicacion","equipodescrip":"$equipodescrip","codigo":"$codigo","marca":"$marca"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtHerramientasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(h.cantidad AS CHAR) AS cantidad, h.herrId, h.descripcion_libre FROM tbl_otherramientas h JOIN orden_trabajo ot ON ot.id_orden = h.otId WHERE h.otId = :id_orden AND ot.id_empresa = :id_empresa ORDER BY h.id</sql>
+      <result outputType="json">{"herramientas":{"herramienta":[{"cantidad":"$cantidad","herrId":"$herrId","descripcion_libre":"$descripcion_libre"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtInsumosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT i.id, CAST(i.cantidad AS CHAR) AS cantidad, i.artId FROM tbl_otinsumos i JOIN orden_trabajo ot ON ot.id_orden = i.otId WHERE i.otId = :id_orden AND ot.id_empresa = :id_empresa ORDER BY i.id</sql>
+      <result outputType="json">{"insumos":{"insumo":[{"id":"$id","cantidad":"$cantidad","artId":"$artId"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtAdjuntosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT a.id, a.otId, a.ot_adjunto FROM tbl_otadjuntos a JOIN orden_trabajo ot ON ot.id_orden = a.otId WHERE a.otId = :id_orden AND ot.id_empresa = :id_empresa ORDER BY a.id</sql>
+      <result outputType="json">{"adjuntos":{"adjunto":[{"id":"$id","otId":"$otId","ot_adjunto":"$ot_adjunto"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtAsignaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, ot.nro, ot.id_usuario, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_entrega AS CHAR) AS fecha_entrega, ot.descripcion, e.id_equipo, e.codigo, e.descripcion AS equipoDescrip FROM orden_trabajo ot JOIN equipos e ON e.id_equipo = ot.id_equipo WHERE ot.id_empresa = :id_empresa AND ot.id_orden = :id_orden</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","nro":"$nro","id_usuario":"$id_usuario","fecha_inicio":"$fecha_inicio","fecha_entrega":"$fecha_entrega","descripcion":"$descripcion","id_equipo":"$id_equipo","codigo":"$codigo","equipoDescrip":"$equipoDescrip"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getUsuariosEmpresaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT u.usrId, u.usrName, u.usrLastName FROM sisusers u JOIN usuarioasempresa ue ON ue.usrId = u.usrId WHERE ue.empresaid = :id_empresa</sql>
+      <result outputType="json">{"usuarios":{"usuario":[{"usrId":"$usrId","usrName":"$usrName","usrLastName":"$usrLastName"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getClientesEstadoCMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT cliId, cliName, cliLastName, cliDni, CAST(cliDateOfBirth AS CHAR) AS cliDateOfBirth, cliNroCustomer, cliAddress, cliPhone, cliMovil, cliEmail, cliImagePath, zonaId, cliDay, cliColor, estado, id_empresa, cliRazonSocial, plant_id FROM admcustomers WHERE id_empresa = :id_empresa AND estado = 'C'</sql>
+      <result outputType="json">{"clientes":{"cliente":[{"cliId":"$cliId","cliName":"$cliName","cliLastName":"$cliLastName","cliDni":"$cliDni","cliDateOfBirth":"$cliDateOfBirth","cliNroCustomer":"$cliNroCustomer","cliAddress":"$cliAddress","cliPhone":"$cliPhone","cliMovil":"$cliMovil","cliEmail":"$cliEmail","cliImagePath":"$cliImagePath","zonaId":"$zonaId","cliDay":"$cliDay","cliColor":"$cliColor","estado":"$estado","id_empresa":"$id_empresa","cliRazonSocial":"$cliRazonSocial","plant_id":"$plant_id"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtOrigenMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT tipo, id_solicitud FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"tipo":"$tipo","id_solicitud":"$id_solicitud"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaSolicitudMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, ot.nro, ot.descripcion AS descripcionFalla, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_program AS CHAR) AS fecha_program, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, ot.estado, su.usrName, su.usrLastName, ot.tipo, ot.id_solicitud, s.id_sucursal, s.descripc, cl.cliRazonSocial AS nomCli, p.provid, p.provnombre, e.codigo, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.ubicacion, e.descripcion AS descripcionEquipo, m.marcadescrip AS marca, gr.descripcion AS grupodescrip, gr.id_grupo FROM orden_trabajo ot LEFT JOIN sisusers su ON ot.id_usuario_a = su.usrId LEFT JOIN sucursal s ON ot.id_sucursal = s.id_sucursal LEFT JOIN abmproveedores p ON ot.id_proveedor = p.provid JOIN equipos e ON e.id_equipo = ot.id_equipo JOIN marcasequipos m ON m.marcaid = e.marca JOIN admcustomers cl ON cl.cliId = e.id_customer JOIN grupo gr ON gr.id_grupo = e.id_grupo WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","nro":"$nro","descripcionFalla":"$descripcionFalla","fecha_inicio":"$fecha_inicio","fecha_program":"$fecha_program","fecha_terminada":"$fecha_terminada","estado":"$estado","usrName":"$usrName","usrLastName":"$usrLastName","tipo":"$tipo","id_solicitud":"$id_solicitud","id_sucursal":"$id_sucursal","descripc":"$descripc","nomCli":"$nomCli","provid":"$provid","provnombre":"$provnombre","codigo":"$codigo","fecha_ingreso":"$fecha_ingreso","ubicacion":"$ubicacion","descripcionEquipo":"$descripcionEquipo","marca":"$marca","grupodescrip":"$grupodescrip","id_grupo":"$id_grupo"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaInfoSolicitudMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT se.descripcion AS sector, sr.solicitante, CAST(sr.f_sugerido AS CHAR) AS fechaSugerida, CAST(sr.hora_sug AS CHAR) AS horarioSugerido, sr.causa AS falla FROM solicitud_reparacion sr JOIN equipos e ON sr.id_equipo = e.id_equipo JOIN sector se ON e.id_sector = se.id_sector WHERE sr.id_solicitud = :id_solicitud AND sr.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"sector":"$sector","solicitante":"$solicitante","fechaSugerida":"$fechaSugerida","horarioSugerido":"$horarioSugerido","falla":"$falla"}]}}</result>
+      <param name="id_solicitud" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaPreventivoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, ot.nro, ot.descripcion AS descripcionFalla, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, CAST(ot.fecha_program AS CHAR) AS fecha_program, ot.estado, su.usrName, su.usrLastName, ot.tipo, ot.id_solicitud, cl.cliRazonSocial AS nomCli, s.id_sucursal, s.descripc, e.codigo, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.ubicacion, e.descripcion AS descripcionEquipo, m.marcadescrip AS marca FROM orden_trabajo ot LEFT JOIN sisusers su ON ot.id_usuario_a = su.usrId LEFT JOIN sucursal s ON ot.id_sucursal = s.id_sucursal LEFT JOIN abmproveedores p ON ot.id_proveedor = p.provid JOIN equipos e ON e.id_equipo = ot.id_equipo JOIN marcasequipos m ON m.marcaid = e.marca JOIN admcustomers cl ON cl.cliId = e.id_customer WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","nro":"$nro","descripcionFalla":"$descripcionFalla","fecha_inicio":"$fecha_inicio","fecha_terminada":"$fecha_terminada","fecha_program":"$fecha_program","estado":"$estado","usrName":"$usrName","usrLastName":"$usrLastName","tipo":"$tipo","id_solicitud":"$id_solicitud","nomCli":"$nomCli","id_sucursal":"$id_sucursal","descripc":"$descripc","codigo":"$codigo","fecha_ingreso":"$fecha_ingreso","ubicacion":"$ubicacion","descripcionEquipo":"$descripcionEquipo","marca":"$marca"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaTareaPreventivoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.prevId, CAST(p.ultimo AS CHAR) AS ultimo, CAST(p.cantidad AS CHAR) AS frecuencia, CAST(p.lectura_base AS CHAR) AS lectura_base, CAST(p.critico1 AS CHAR) AS alerta, CAST(p.prev_duracion AS CHAR) AS prev_duracion, CAST(p.prev_canth AS CHAR) AS prev_canth, p.prev_adjunto, t.descripcion AS tareadescrip, ut.unidaddescrip AS perido, co.descripcion AS descripComponente FROM preventivo p JOIN tareas t ON t.id_tarea = p.id_tarea JOIN unidad_tiempo ut ON ut.id_unidad = p.id_unidad JOIN componentes co ON co.id_componente = p.id_componente WHERE p.prevId = :prevId AND p.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivos":{"preventivo":[{"prevId":"$prevId","ultimo":"$ultimo","frecuencia":"$frecuencia","lectura_base":"$lectura_base","alerta":"$alerta","prev_duracion":"$prev_duracion","prev_canth":"$prev_canth","prev_adjunto":"$prev_adjunto","tareadescrip":"$tareadescrip","perido":"$perido","descripComponente":"$descripComponente"}]}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaBacklogMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, ot.nro, ot.estado, ot.descripcion AS descripcionFalla, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_program AS CHAR) AS fecha_program, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, su.usrName, su.usrLastName, ot.tipo, ot.id_solicitud, s.id_sucursal, s.descripc, p.provid, p.provnombre, e.codigo, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, m.marcadescrip AS marca, e.ubicacion, e.descripcion AS descripcionEquipo FROM orden_trabajo ot LEFT JOIN sisusers su ON ot.id_usuario_a = su.usrId LEFT JOIN sucursal s ON ot.id_sucursal = s.id_sucursal LEFT JOIN abmproveedores p ON ot.id_proveedor = p.provid JOIN equipos e ON e.id_equipo = ot.id_equipo JOIN marcasequipos m ON m.marcaid = e.marca WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","nro":"$nro","estado":"$estado","descripcionFalla":"$descripcionFalla","fecha_inicio":"$fecha_inicio","fecha_program":"$fecha_program","fecha_terminada":"$fecha_terminada","usrName":"$usrName","usrLastName":"$usrLastName","tipo":"$tipo","id_solicitud":"$id_solicitud","id_sucursal":"$id_sucursal","descripc":"$descripc","provid":"$provid","provnombre":"$provnombre","codigo":"$codigo","fecha_ingreso":"$fecha_ingreso","marca":"$marca","ubicacion":"$ubicacion","descripcionEquipo":"$descripcionEquipo"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaTareaBacklogMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(b.fecha AS CHAR) AS fecha, b.id_tarea, b.back_duracion, b.tarea_opcional, b.idcomponenteequipo, t.descripcion AS tareadescrip FROM tbl_back b LEFT JOIN tareas t ON b.id_tarea = t.id_tarea WHERE b.backId = :backId AND b.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlogs":{"backlog":[{"fecha":"$fecha","id_tarea":"$id_tarea","back_duracion":"$back_duracion","tarea_opcional":"$tarea_opcional","idcomponenteequipo":"$idcomponenteequipo","tareadescrip":"$tareadescrip"}]}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaComponenteMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ce.codigo AS codigoComponente, co.descripcion AS descripComponente, si.descripcion AS descripSistema FROM componenteequipo ce JOIN componentes co ON co.id_componente = ce.id_componente JOIN sistema si ON si.sistemaid = ce.sistemaid WHERE ce.idcomponenteequipo = :idce AND ce.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"componentes":{"componente":[{"codigoComponente":"$codigoComponente","descripComponente":"$descripComponente","descripSistema":"$descripSistema"}]}}</result>
+      <param name="idce" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaPredictivoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, ot.descripcion AS descripcionFalla, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, CAST(ot.fecha_program AS CHAR) AS fecha_program, ot.tipo, ot.id_solicitud, ot.estado, su.usrName, su.usrLastName, e.codigo, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.ubicacion, e.descripcion AS descripcionEquipo, m.marcadescrip AS marca, s.id_sucursal, s.descripc, p.provid, p.provnombre FROM orden_trabajo ot LEFT JOIN sisusers su ON ot.id_usuario_a = su.usrId LEFT JOIN sucursal s ON ot.id_sucursal = s.id_sucursal LEFT JOIN abmproveedores p ON ot.id_proveedor = p.provid JOIN equipos e ON e.id_equipo = ot.id_equipo JOIN marcasequipos m ON m.marcaid = e.marca WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","descripcionFalla":"$descripcionFalla","fecha_inicio":"$fecha_inicio","fecha_terminada":"$fecha_terminada","fecha_program":"$fecha_program","tipo":"$tipo","id_solicitud":"$id_solicitud","estado":"$estado","usrName":"$usrName","usrLastName":"$usrLastName","codigo":"$codigo","fecha_ingreso":"$fecha_ingreso","ubicacion":"$ubicacion","descripcionEquipo":"$descripcionEquipo","marca":"$marca","id_sucursal":"$id_sucursal","descripc":"$descripc","provid":"$provid","provnombre":"$provnombre"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtVistaTareaPredictivoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT t.descripcion AS tareadescrip, CAST(p.fecha AS CHAR) AS fecha, p.periodo, p.cantidad AS frecuencia, p.pred_duracion AS duracion, ut.unidaddescrip, p.pred_canth AS cantOperarios, CAST(p.horash AS CHAR) AS horash FROM predictivo p JOIN tareas t ON t.id_tarea = p.tarea_descrip JOIN unidad_tiempo ut ON ut.id_unidad = p.id_unidad WHERE p.predId = :predId AND p.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivos":{"predictivo":[{"tareadescrip":"$tareadescrip","fecha":"$fecha","periodo":"$periodo","frecuencia":"$frecuencia","duracion":"$duracion","unidaddescrip":"$unidaddescrip","cantOperarios":"$cantOperarios","horash":"$horash"}]}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getClienteMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT cl.cliId, cl.cliName, cl.cliLastName, cl.cliDni, CAST(cl.cliDateOfBirth AS CHAR) AS cliDateOfBirth, cl.cliNroCustomer, cl.cliAddress, cl.cliPhone, cl.cliMovil, cl.cliEmail, cl.cliImagePath, cl.zonaId, cl.cliDay, cl.cliColor, cl.estado, cl.id_empresa, cl.cliRazonSocial, cl.plant_id FROM admcustomers cl WHERE cl.cliId = :cliId AND cl.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"clientes":{"cliente":[{"cliId":"$cliId","cliName":"$cliName","cliLastName":"$cliLastName","cliDni":"$cliDni","cliDateOfBirth":"$cliDateOfBirth","cliNroCustomer":"$cliNroCustomer","cliAddress":"$cliAddress","cliPhone":"$cliPhone","cliMovil":"$cliMovil","cliEmail":"$cliEmail","cliImagePath":"$cliImagePath","zonaId":"$zonaId","cliDay":"$cliDay","cliColor":"$cliColor","estado":"$estado","id_empresa":"$id_empresa","cliRazonSocial":"$cliRazonSocial","plant_id":"$plant_id"}]}}</result>
+      <param name="cliId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtConClienteMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden AS id_orden, ot.id_tarea AS id_tarea, ot.nro AS nro, CAST(ot.fecha AS CHAR) AS fecha, CAST(ot.fecha_program AS CHAR) AS fecha_program, CAST(ot.fecha_inicio AS CHAR) AS fecha_inicio, CAST(ot.fecha_entrega AS CHAR) AS fecha_entrega, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, CAST(ot.fecha_aviso AS CHAR) AS fecha_aviso, CAST(ot.fecha_entregada AS CHAR) AS fecha_entregada, ot.descripcion AS descripcion, ot.cliId AS cliId, ot.id_usuario AS id_usuario, ot.id_usuario_a AS id_usuario_a, ot.id_usuario_e AS id_usuario_e, ot.id_sucursal AS id_sucursal, ot.id_proveedor AS id_proveedor, ot.id_solicitud AS id_solicitud, ot.tipo AS tipo, ot.id_equipo AS id_equipo, CAST(ot.duracion AS CHAR) AS duracion, ot.id_tareapadre AS id_tareapadre, CAST(ot.lectura_programada AS CHAR) AS lectura_programada, CAST(ot.lectura_ejecutada AS CHAR) AS lectura_ejecutada, ot.case_id AS case_id, ot.latitud AS latitud, ot.longitud AS longitud, ot.justificacion AS justificacion, CAST(ot.f_asignacion AS CHAR) AS f_asignacion, ot.id_usuario_eliminada AS id_usuario_eliminada, CAST(ot.fecha_eliminada AS CHAR) AS fecha_eliminada, ot.motivo_eliminada AS motivo_eliminada, cl.cliId AS cliId2, cl.cliName, cl.cliLastName, cl.cliDni, CAST(cl.cliDateOfBirth AS CHAR) AS cliDateOfBirth, cl.cliNroCustomer, cl.cliAddress, cl.cliPhone, cl.cliMovil, cl.cliEmail, cl.cliImagePath, cl.zonaId, cl.cliDay, cl.cliColor, cl.estado, cl.id_empresa, cl.cliRazonSocial, cl.plant_id FROM orden_trabajo ot JOIN admcustomers cl ON cl.cliId = ot.cliId WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","id_tarea":"$id_tarea","nro":"$nro","fecha":"$fecha","fecha_program":"$fecha_program","fecha_inicio":"$fecha_inicio","fecha_entrega":"$fecha_entrega","fecha_terminada":"$fecha_terminada","fecha_aviso":"$fecha_aviso","fecha_entregada":"$fecha_entregada","descripcion":"$descripcion","cliId":"$cliId","id_usuario":"$id_usuario","id_usuario_a":"$id_usuario_a","id_usuario_e":"$id_usuario_e","id_sucursal":"$id_sucursal","id_proveedor":"$id_proveedor","id_solicitud":"$id_solicitud","tipo":"$tipo","id_equipo":"$id_equipo","duracion":"$duracion","id_tareapadre":"$id_tareapadre","lectura_programada":"$lectura_programada","lectura_ejecutada":"$lectura_ejecutada","case_id":"$case_id","latitud":"$latitud","longitud":"$longitud","justificacion":"$justificacion","f_asignacion":"$f_asignacion","id_usuario_eliminada":"$id_usuario_eliminada","fecha_eliminada":"$fecha_eliminada","motivo_eliminada":"$motivo_eliminada","cliId2":"$cliId2","cliName":"$cliName","cliLastName":"$cliLastName","cliDni":"$cliDni","cliDateOfBirth":"$cliDateOfBirth","cliNroCustomer":"$cliNroCustomer","cliAddress":"$cliAddress","cliPhone":"$cliPhone","cliMovil":"$cliMovil","cliEmail":"$cliEmail","cliImagePath":"$cliImagePath","zonaId":"$zonaId","cliDay":"$cliDay","cliColor":"$cliColor","estado":"$estado","id_empresa":"$id_empresa","cliRazonSocial":"$cliRazonSocial","plant_id":"$plant_id"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/ots/listado/empresa/{id_empresa}">
+      <call-query href="getOtListadoMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="solo_tipo1" query-param="solo_tipo1"/><with-param name="fec_desde" query-param="fec_desde"/><with-param name="fec_hasta" query-param="fec_hasta"/><with-param name="estado" query-param="estado"/><with-param name="equipo" query-param="equipo"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/proveedores/empresa/{id_empresa}">
+      <call-query href="getProveedoresOtMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/sucursales/empresa/{id_empresa}">
+      <call-query href="getSucursalesMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/equipos/no-anulados/empresa/{id_empresa}">
+      <call-query href="getEquiposNoAnuladosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/equipo/{id_equipo}/info/empresa/{id_empresa}">
+      <call-query href="getInfoEquipoNuevaOtMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/editar/empresa/{id_empresa}">
+      <call-query href="getOtEditarMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/herramientas/empresa/{id_empresa}">
+      <call-query href="getOtHerramientasMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/insumos/empresa/{id_empresa}">
+      <call-query href="getOtInsumosMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/adjuntos/empresa/{id_empresa}">
+      <call-query href="getOtAdjuntosMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/asigna/empresa/{id_empresa}">
+      <call-query href="getOtAsignaMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/usuarios/empresa/{id_empresa}">
+      <call-query href="getUsuariosEmpresaMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/clientes/empresa/{id_empresa}">
+      <call-query href="getClientesEstadoCMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/origen/empresa/{id_empresa}">
+      <call-query href="getOtOrigenMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/vista/solicitud/empresa/{id_empresa}">
+      <call-query href="getOtVistaSolicitudMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/vista/solicitud/{id_solicitud}/empresa/{id_empresa}">
+      <call-query href="getOtVistaInfoSolicitudMan"><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/vista/preventivo/empresa/{id_empresa}">
+      <call-query href="getOtVistaPreventivoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/vista/preventivo/{prevId}/empresa/{id_empresa}">
+      <call-query href="getOtVistaTareaPreventivoMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/vista/backlog/empresa/{id_empresa}">
+      <call-query href="getOtVistaBacklogMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/vista/backlog/{backId}/empresa/{id_empresa}">
+      <call-query href="getOtVistaTareaBacklogMan"><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/vista/componente-equipo/{idce}/empresa/{id_empresa}">
+      <call-query href="getOtVistaComponenteMan"><with-param name="idce" query-param="idce"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/vista/predictivo/empresa/{id_empresa}">
+      <call-query href="getOtVistaPredictivoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/vista/predictivo/{predId}/empresa/{id_empresa}">
+      <call-query href="getOtVistaTareaPredictivoMan"><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ots/cliente/{cliId}/empresa/{id_empresa}">
+      <call-query href="getClienteMan"><with-param name="cliId" query-param="cliId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/cliente/empresa/{id_empresa}">
+      <call-query href="getOtConClienteMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
    <!-- MIG-ASSET-2s · Solicitudes de servicio. Reemplaza el acceso directo de models/Sservicios.php (ADR-014). Toda query queda
         limitada a la empresa (id de asset); asset no filtraba getSSs, getEquipSectores ni get_SolicTerminadas. Crear y eliminar
         solicitudes (con su caso de Bonita) las usa toolsMANAPI: POST /tools/man/solicitud y /tools/man/solicitud/eliminar (E22, E23). -->
