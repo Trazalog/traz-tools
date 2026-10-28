@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MIG-ASSET-2 · Alta encadenada de MAN: cabecera + herramientas + insumos (ADR-014, regla 3).
+     La usan los recursos POST /man/preventivo, /man/predictivo y /man/backlog de toolsMANAPI.
+
+     Entrada (payload): {"cabecera":{...params de POST /<entidad> de MANDataService, con id_empresa...},
+                         "herramientas":[{"herrId","cantidad"}], "insumos":[{"artId","cantidad"}]}
+     Pasos: 1) POST /<entidad> devuelve el id nuevo ({"alta":{"id":N}}; vacío si el equipo no es de la empresa).
+            2) Lote de herramientas y 3) lote de insumos, cada uno en una transacción (_batch_req), con el id agregado
+               a cada elemento. 4) Si 2 o 3 fallan, compensa con un request_box que borra detalle y cabecera.
+     Salida: {"status":true,"id":"N"} o, si falla, HTTP 500 con {"status":false,"msj":...}. No usa toolsFault:
+     termina en <send/> y, llamado desde el flujo de entrada, reenvía el mensaje en vez de responder.
+     Solo mediadores nativos (regla 4). -->
+<template name="manAltaConDetalleTemplate" xmlns="http://ws.apache.org/ns/synapse">
+   <parameter name="entidad"/>
+   <parameter name="pk"/>
+   <sequence>
+      <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"
+                xmlns:ns="http://org.apache.synapse/xsd"/>
+      <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url" xmlns:ns="http://org.apache.synapse/xsd"/>
+      <variable name="entidad" type="STRING" expression="${params.functionParams.entidad}"/>
+      <variable name="pk" type="STRING" expression="${params.functionParams.pk}"/>
+      <variable name="cabecera" type="JSON" expression="${payload.cabecera}"/>
+      <variable name="herramientas" type="JSON" expression="${payload.herramientas}"/>
+      <variable name="insumos" type="JSON" expression="${payload.insumos}"/>
+      <variable name="id_empresa" type="STRING" expression="${payload.cabecera.id_empresa}"/>
+      <property name="man_entidad" expression="$func:entidad"/>
+      <property name="messageType" value="application/json" scope="axis2"/>
+      <header name="Accept" scope="transport" value="application/json"/>
+      <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+
+      <!-- 1) Cabecera -->
+      <payloadFactory media-type="json" template-type="default">
+         <format>{"_post_${vars.entidad}": ${vars.cabecera}}</format>
+      </payloadFactory>
+      <property name="uri.var.ds_url" expression="concat($ctx:dataservices_url, '/MANDataService/', $ctx:man_entidad)"/>
+      <call>
+         <endpoint>
+            <http method="POST" uri-template="{uri.var.ds_url}"/>
+         </endpoint>
+      </call>
+      <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+         <then/>
+         <else>
+            <variable name="msj" type="STRING" value="MAN alta con detalle - falló la cabecera"/>
+            <payloadFactory media-type="json" template-type="default">
+               <format>{"status":false,"msj":"${vars.msj}"}</format>
+            </payloadFactory>
+            <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+            <respond/>
+         </else>
+      </filter>
+      <variable name="id" type="STRING" expression="${payload.alta.id}"/>
+      <property name="man_id" expression="json-eval($.alta.id)"/>
+      <filter source="get-property('man_id')" regex="[0-9]+">
+         <then/>
+         <else>
+            <variable name="msj" type="STRING" value="MAN alta con detalle - la cabecera no se creó"/>
+            <payloadFactory media-type="json" template-type="default">
+               <format>{"status":false,"msj":"${vars.msj}"}</format>
+            </payloadFactory>
+            <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+            <respond/>
+         </else>
+      </filter>
+      <property name="man_falla" value="no"/>
+
+      <!-- 2) Herramientas -->
+      <filter xpath="${length(vars.herramientas) > 0}">
+         <then>
+            <payloadFactory media-type="json" template-type="default">
+               <format>{"lista": ${vars.herramientas}}</format>
+            </payloadFactory>
+            <foreach collection="${payload.lista}" parallel-execution="false" update-original="true">
+               <sequence>
+                  <payloadFactory media-type="json" template-type="default">
+                     <format>{"${vars.pk}":"${vars.id}","herrId":"${payload.herrId}","cantidad":"${payload.cantidad}","id_empresa":"${vars.id_empresa}"}</format>
+                  </payloadFactory>
+               </sequence>
+            </foreach>
+            <payloadFactory media-type="json" template-type="default">
+               <format>{"_post_${vars.entidad}_herramienta_batch_req":{"_post_${vars.entidad}_herramienta": ${payload.lista}}}</format>
+            </payloadFactory>
+            <property name="uri.var.ds_url" expression="concat($ctx:dataservices_url, '/MANDataService/', $ctx:man_entidad, '/herramienta_batch_req')"/>
+            <call>
+               <endpoint>
+                  <http method="POST" uri-template="{uri.var.ds_url}"/>
+               </endpoint>
+            </call>
+            <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+               <then/>
+               <else>
+                  <property name="man_falla" value="herramientas"/>
+               </else>
+            </filter>
+         </then>
+         <else/>
+      </filter>
+
+      <!-- 3) Insumos -->
+      <filter source="get-property('man_falla')" regex="no">
+         <then>
+            <filter xpath="${length(vars.insumos) > 0}">
+               <then>
+                  <payloadFactory media-type="json" template-type="default">
+                     <format>{"lista": ${vars.insumos}}</format>
+                  </payloadFactory>
+                  <foreach collection="${payload.lista}" parallel-execution="false" update-original="true">
+                     <sequence>
+                        <payloadFactory media-type="json" template-type="default">
+                           <format>{"${vars.pk}":"${vars.id}","artId":"${payload.artId}","cantidad":"${payload.cantidad}","id_empresa":"${vars.id_empresa}"}</format>
+                        </payloadFactory>
+                     </sequence>
+                  </foreach>
+                  <payloadFactory media-type="json" template-type="default">
+                     <format>{"_post_${vars.entidad}_insumo_batch_req":{"_post_${vars.entidad}_insumo": ${payload.lista}}}</format>
+                  </payloadFactory>
+                  <property name="uri.var.ds_url" expression="concat($ctx:dataservices_url, '/MANDataService/', $ctx:man_entidad, '/insumo_batch_req')"/>
+                  <call>
+                     <endpoint>
+                        <http method="POST" uri-template="{uri.var.ds_url}"/>
+                     </endpoint>
+                  </call>
+                  <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                     <then/>
+                     <else>
+                        <property name="man_falla" value="insumos"/>
+                     </else>
+                  </filter>
+               </then>
+               <else/>
+            </filter>
+         </then>
+         <else/>
+      </filter>
+
+      <!-- 4) Compensación: si falló un lote, se borra lo creado -->
+      <filter source="get-property('man_falla')" regex="no">
+         <then/>
+         <else>
+            <payloadFactory media-type="json" template-type="default">
+               <format>{"request_box":{"_put_${vars.entidad}_herramientas_borrar":{"${vars.pk}":"${vars.id}","id_empresa":"${vars.id_empresa}"},"_put_${vars.entidad}_insumos_borrar":{"${vars.pk}":"${vars.id}","id_empresa":"${vars.id_empresa}"},"_put_${vars.entidad}_borrar":{"${vars.pk}":"${vars.id}","id_empresa":"${vars.id_empresa}"}}}</format>
+            </payloadFactory>
+            <property name="uri.var.ds_url" expression="concat($ctx:dataservices_url, '/MANDataService/request_box')"/>
+            <call>
+               <endpoint>
+                  <http method="POST" uri-template="{uri.var.ds_url}"/>
+               </endpoint>
+            </call>
+            <variable name="msj" type="STRING" value="MAN alta con detalle - falló un lote de detalle; se borró la cabecera"/>
+            <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+               <then/>
+               <else>
+                  <!-- La compensación falló: queda una cabecera sin detalle completo que hay que borrar a mano. -->
+                  <log category="ERROR" level="custom">
+                     <property name="text" value="#TRAZA | toolsMANAPI | manAltaConDetalle | falló la compensación"/>
+                     <property name="entidad" expression="$ctx:man_entidad"/>
+                     <property name="id" expression="$ctx:man_id"/>
+                  </log>
+                  <variable name="msj" type="STRING" value="MAN alta con detalle - falló un lote de detalle y también la compensación; quedó una cabecera incompleta (ver log)"/>
+               </else>
+            </filter>
+            <payloadFactory media-type="json" template-type="default">
+               <format>{"status":false,"msj":"${vars.msj}"}</format>
+            </payloadFactory>
+            <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+            <respond/>
+         </else>
+      </filter>
+
+      <payloadFactory media-type="json" template-type="default">
+         <format>{"status":true,"id":"${vars.id}"}</format>
+      </payloadFactory>
+      <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+   </sequence>
+</template>
