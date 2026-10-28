@@ -335,7 +335,9 @@ base de datos** en los archivos portados.
 | Archivo / pantalla | Estado |
 |---|---|
 | Capa de integración, lectura (`helpers/man_tools_helper.php`: catálogos de artículos y herramientas, configuración por empresa) | ✅ Portada. Las escrituras (vales, entregas, devoluciones) van con las pantallas que las usan |
-| Preventivo, Predictivo, Backlog (controllers, models y vistas `list`/`view_`) | ✅ Portados desde el asset actual. Paridad OK (54 de 54, incluido aislamiento). Alta con detalle por `toolsMANAPI` (E20) |
+| Preventivo, Predictivo, Backlog (controllers, models y vistas `list`/`view_`) | ✅ Portados desde el asset actual. Paridad OK (56 de 56, incluido aislamiento). Alta con detalle por `toolsMANAPI` (E20) |
+| Solicitudes de servicio (`controllers/Sservicio.php`, `models/Sservicios.php`, vistas `list_bpm`, `view_`, `list_term`) | ✅ Portadas salvo lanzar y eliminar casos de Bonita, que esperan A5. Paridad OK (27 de 27) |
+| Órdenes de trabajo, Informes de servicio, Calendario, Bandeja | ⏸ Esperan A5: usan Bonita en casi todas sus acciones (Órdenes de trabajo, hasta en el listado) |
 
 1. **Los 19 archivos de §2.3**: se portan de nuevo desde el asset actual con la misma mecánica, en
    orden de volumen (`Ordenservicios`, `Ordenservicio`, `list_bpm`, `view_presta_presta_conf_modal`…).
@@ -655,6 +657,7 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E18 | 2026-10-28 | **`Preventivo/getdatos` lee el pañol de tools**: devuelve la herramienta desde el catálogo de tools (`tools_herramientas_full()`) | Desde F4 los ids de herramienta son de tools, pero asset la sigue buscando en su tabla vieja `herramientas` (T16) |
 | E19 | 2026-10-28 | **La edición de backlog desde la bandeja va con la bandeja (MIG-3)**: el tipo `editNuevo` de `Backlog/editar_backlog` cierra una tarea de Bonita y edita el backlog; en MAN responde que todavía no está disponible | Toca Bonita: es la regla 3 del ADR-014 y su vista (`nuevo_edicion_view_`) la carga `Tarea` |
 | E20 | 2026-10-28 | **Cabecera con detalle (Preventivo, Predictivo, Backlog)**: el alta va por `toolsMANAPI` (`POST /tools/man/<entidad>`, plantilla `manAltaConDetalleTemplate`): cabecera, lote de herramientas, lote de insumos y, si un lote falla, compensación que borra todo. En la edición, cabecera y borrado del detalle van en un `request_box` y cada lista nueva en un pedido por lotes (`_batch_req`) | `request_box` no admite repetir una operación, así que una lista no entra en un solo box. El pedido por lotes es atómico, pero solo existe para consultas sin resultado. Lo que pasa entre el box y los lotes de la edición no es atómico, igual que en asset |
+| E21 | 2026-10-28 | **Vistas que el fork reescribió y asset cambió después: se parte del asset actual** y se aplica la conversión del módulo. Es el caso de `Sservicios/list_bpm` (el fork la arma con `$list`; asset hoy usa paginado del lado del servidor). Donde la fusión de tres vías no tiene conflictos, se usa la fusión | La fusión de `list_bpm` daba 6 conflictos sobre 798 líneas reescritas, y la versión del fork no tiene el paginado que usa asset hoy |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---
@@ -779,6 +782,7 @@ DEV (T21).
 | T24 | La edición de equipo de MAN graba todas las columnas: una clave que no llega queda en NULL (asset solo actualizaba las que llegaban). La vista manda todas; el riesgo es otro canal (MCP) que llame al mismo endpoint | `models/Equipos.php` (`update_editar`) de MAN |
 | T25 | Los recursos `POST /tools/man/{preventivo,predictivo,backlog}` de `toolsMANAPI` toman `id_empresa` del cuerpo, como `MANDataService`. **No deben publicarse por APIM/MCP** así: para MCP tienen que leer la empresa del JWT (`emprIdFromHeader`, ADR-009) | `apis/toolsMANAPI.xml` |
 | T26 | Con el driver MySQL de `AssetPlannerDataSource`, `returnUpdatedRowCount` no devuelve la cantidad de filas (`{"preventivo":{}}`): no sirve para saber si un UPDATE alcanzó algo. Donde importa, MAN verifica la pertenencia antes con una consulta | `MANDataService.dbs` (todas las `*Man` con `UPDATED_ROW_COUNT`) |
+| T27 | `get_SolicTerminadas`, `getSSs` y `getEquipSectores` no filtran por empresa: la pantalla de solicitudes terminadas muestra las de todas las empresas. Corregido en MAN | `models/Sservicios.php` |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores

@@ -1263,6 +1263,113 @@
    <resource method="POST" path="/equipos/cliente">
       <call-query href="setClienteEqMan"><with-param name="cliName" query-param="cliName"/><with-param name="cliLastName" query-param="cliLastName"/><with-param name="cliDni" query-param="cliDni"/><with-param name="cliAddress" query-param="cliAddress"/><with-param name="cliPhone" query-param="cliPhone"/><with-param name="cliEmail" query-param="cliEmail"/><with-param name="cliRazonSocial" query-param="cliRazonSocial"/><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-2s · Solicitudes de servicio. Reemplaza el acceso directo de models/Sservicios.php (ADR-014). Toda query queda
+        limitada a la empresa (id de asset); asset no filtraba getSSs, getEquipSectores ni get_SolicTerminadas. Lanzar y eliminar
+        casos de Bonita esperan la decisión A5. -->
+   <query id="getSolicitudesMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT sr.id_solicitud AS id_solicitud, sr.numero AS numero, sr.id_tipo AS id_tipo, sr.nivel AS nivel, sr.solicitante AS solicitante, CAST(sr.f_solicitado AS CHAR) AS f_solicitado, CAST(sr.f_sugerido AS CHAR) AS f_sugerido, CAST(sr.hora_sug AS CHAR) AS hora_sug, sr.id_equipo AS id_equipo, sr.correctivo AS correctivo, sr.causa AS causa, sr.observaciones AS observaciones, sr.estado AS estado, sr.usrId AS usrId, CAST(sr.fecha_conformidad AS CHAR) AS fecha_conformidad, sr.observ_conformidad AS observ_conformidad, CAST(sr.foto1 AS CHAR) AS foto1, CAST(sr.foto2 AS CHAR) AS foto2, CAST(sr.foto3 AS CHAR) AS foto3, sr.foto AS foto, sr.id_empresa AS id_empresa, COALESCE(ot.case_id, sr.case_id) AS case_id, sr.urgente AS urgente, sr.sol_adjunto AS sol_adjunto, sr.id_usuario_eliminada AS id_usuario_eliminada, CAST(sr.fecha_eliminada AS CHAR) AS fecha_eliminada, sr.motivo_eliminada AS motivo_eliminada, e.codigo AS equipo, s.descripcion AS sector, g.descripcion AS grupo, e.ubicacion, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, CAST(ot.fecha_inicio AS CHAR) AS f_inicio, ot.descripcion, CAST(ot.f_asignacion AS CHAR) AS f_asignacion, ot.id_orden, ot.id_usuario_a, u.usrName AS mantenedor FROM solicitud_reparacion sr INNER JOIN equipos e ON sr.id_equipo = e.id_equipo INNER JOIN sector s ON e.id_sector = s.id_sector LEFT JOIN grupo g ON e.id_grupo = g.id_grupo LEFT JOIN (SELECT case_id, MAX(id_orden) AS max_id FROM orden_trabajo GROUP BY case_id) ot_max ON sr.case_id = ot_max.case_id LEFT JOIN orden_trabajo ot ON ot_max.max_id = ot.id_orden LEFT JOIN sisusers u ON ot.id_usuario_a = u.usrId WHERE sr.id_empresa = :id_empresa AND (:conformes = 'true' OR sr.estado != 'CN') AND (IFNULL(:buscar, '') = '' OR LOWER(sr.id_solicitud) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(sr.solicitante) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(e.codigo) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(s.descripcion) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(g.descripcion) LIKE CONCAT('%', LOWER(:buscar), '%')) ORDER BY sr.id_solicitud</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"id_solicitud":"$id_solicitud","numero":"$numero","id_tipo":"$id_tipo","nivel":"$nivel","solicitante":"$solicitante","f_solicitado":"$f_solicitado","f_sugerido":"$f_sugerido","hora_sug":"$hora_sug","id_equipo":"$id_equipo","correctivo":"$correctivo","causa":"$causa","observaciones":"$observaciones","estado":"$estado","usrId":"$usrId","fecha_conformidad":"$fecha_conformidad","observ_conformidad":"$observ_conformidad","foto1":"$foto1","foto2":"$foto2","foto3":"$foto3","foto":"$foto","id_empresa":"$id_empresa","case_id":"$case_id","urgente":"$urgente","sol_adjunto":"$sol_adjunto","id_usuario_eliminada":"$id_usuario_eliminada","fecha_eliminada":"$fecha_eliminada","motivo_eliminada":"$motivo_eliminada","equipo":"$equipo","sector":"$sector","grupo":"$grupo","ubicacion":"$ubicacion","fecha_terminada":"$fecha_terminada","f_inicio":"$f_inicio","descripcion":"$descripcion","f_asignacion":"$f_asignacion","id_orden":"$id_orden","id_usuario_a":"$id_usuario_a","mantenedor":"$mantenedor"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="conformes" sqlType="STRING"/>
+      <param name="buscar" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudesCantMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT COUNT(*) AS cant FROM solicitud_reparacion sr WHERE sr.id_empresa = :id_empresa AND (:conformes = 'true' OR sr.estado != 'CN') AND (IFNULL(:buscar, '') = '' OR EXISTS (SELECT 1 FROM equipos e INNER JOIN sector s ON e.id_sector = s.id_sector LEFT JOIN grupo g ON e.id_grupo = g.id_grupo WHERE e.id_equipo = sr.id_equipo AND (IFNULL(:buscar, '') = '' OR LOWER(sr.id_solicitud) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(sr.solicitante) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(e.codigo) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(s.descripcion) LIKE CONCAT('%', LOWER(:buscar), '%') OR LOWER(g.descripcion) LIKE CONCAT('%', LOWER(:buscar), '%'))))</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"cant":"$cant"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="conformes" sqlType="STRING"/>
+      <param name="buscar" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT sr.id_solicitud AS id_solicitud, sr.numero AS numero, sr.id_tipo AS id_tipo, sr.nivel AS nivel, sr.solicitante AS solicitante, CAST(sr.f_solicitado AS CHAR) AS f_solicitado, CAST(sr.f_sugerido AS CHAR) AS f_sugerido, CAST(sr.hora_sug AS CHAR) AS hora_sug, sr.id_equipo AS id_equipo, sr.correctivo AS correctivo, sr.causa AS causa, sr.observaciones AS observaciones, sr.estado AS estado, sr.usrId AS usrId, CAST(sr.fecha_conformidad AS CHAR) AS fecha_conformidad, sr.observ_conformidad AS observ_conformidad, CAST(sr.foto1 AS CHAR) AS foto1, CAST(sr.foto2 AS CHAR) AS foto2, CAST(sr.foto3 AS CHAR) AS foto3, sr.foto AS foto, sr.id_empresa AS id_empresa, sr.case_id AS case_id, sr.urgente AS urgente, sr.sol_adjunto AS sol_adjunto, sr.id_usuario_eliminada AS id_usuario_eliminada, CAST(sr.fecha_eliminada AS CHAR) AS fecha_eliminada, sr.motivo_eliminada AS motivo_eliminada, CONCAT(u.usrName, ' ', u.usrLastName) AS nombre_usuario FROM solicitud_reparacion sr LEFT JOIN sisusers u ON sr.id_usuario_eliminada = u.usrId WHERE sr.id_solicitud = :id_solicitud AND sr.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"id_solicitud":"$id_solicitud","numero":"$numero","id_tipo":"$id_tipo","nivel":"$nivel","solicitante":"$solicitante","f_solicitado":"$f_solicitado","f_sugerido":"$f_sugerido","hora_sug":"$hora_sug","id_equipo":"$id_equipo","correctivo":"$correctivo","causa":"$causa","observaciones":"$observaciones","estado":"$estado","usrId":"$usrId","fecha_conformidad":"$fecha_conformidad","observ_conformidad":"$observ_conformidad","foto1":"$foto1","foto2":"$foto2","foto3":"$foto3","foto":"$foto","id_empresa":"$id_empresa","case_id":"$case_id","urgente":"$urgente","sol_adjunto":"$sol_adjunto","id_usuario_eliminada":"$id_usuario_eliminada","fecha_eliminada":"$fecha_eliminada","motivo_eliminada":"$motivo_eliminada","nombre_usuario":"$nombre_usuario"}]}}</result>
+      <param name="id_solicitud" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudEquipoSectorMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT A.codigo AS equipo, A.descripcion AS descripcion, B.descripcion AS sector, A.id_area AS area, A.id_proceso AS proceso FROM equipos A JOIN sector B ON B.id_sector = A.id_sector WHERE A.id_equipo = :id_equipo AND A.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"equipo":"$equipo","descripcion":"$descripcion","sector":"$sector","area":"$area","proceso":"$proceso"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSectoresSolicMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_sector AS id_Sector, descripcion FROM sector WHERE id_empresa = :id_empresa AND estado != 'AN'</sql>
+      <result outputType="json">{"sectores":{"sector":[{"id_Sector":"$id_Sector","descripcion":"$descripcion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getEquiposSectorSolicMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_equipo, codigo FROM equipos WHERE estado = 'AC' AND id_sector = :id_sector AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","codigo":"$codigo"}]}}</result>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudImpMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT sr.solicitante, CAST(sr.f_solicitado AS CHAR) AS f_solicitado, CAST(sr.f_sugerido AS CHAR) AS f_sugerido, CAST(sr.hora_sug AS CHAR) AS hora_sug, sr.causa, e.codigo, e.ubicacion, e.id_sector, e.id_grupo, g.descripcion AS degr, s.descripcion AS sec FROM solicitud_reparacion sr JOIN equipos e ON e.id_equipo = sr.id_equipo JOIN grupo g ON g.id_grupo = e.id_grupo JOIN sector s ON s.id_sector = e.id_sector WHERE sr.id_solicitud = :id_solicitud AND sr.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"solicitante":"$solicitante","f_solicitado":"$f_solicitado","f_sugerido":"$f_sugerido","hora_sug":"$hora_sug","causa":"$causa","codigo":"$codigo","ubicacion":"$ubicacion","id_sector":"$id_sector","id_grupo":"$id_grupo","degr":"$degr","sec":"$sec"}]}}</result>
+      <param name="id_solicitud" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getSolicitudesTerminadasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT sr.id_solicitud AS id_solicitud, sr.numero AS numero, sr.id_tipo AS id_tipo, sr.nivel AS nivel, sr.solicitante AS solicitante, CAST(sr.f_solicitado AS CHAR) AS f_solicitado, CAST(sr.f_sugerido AS CHAR) AS f_sugerido, CAST(sr.hora_sug AS CHAR) AS hora_sug, sr.id_equipo AS id_equipo, sr.correctivo AS correctivo, sr.causa AS causa, sr.observaciones AS observaciones, sr.estado AS estado, sr.usrId AS usrId, CAST(sr.fecha_conformidad AS CHAR) AS fecha_conformidad, sr.observ_conformidad AS observ_conformidad, CAST(sr.foto1 AS CHAR) AS foto1, CAST(sr.foto2 AS CHAR) AS foto2, CAST(sr.foto3 AS CHAR) AS foto3, sr.foto AS foto, sr.id_empresa AS id_empresa, sr.case_id AS case_id, sr.urgente AS urgente, sr.sol_adjunto AS sol_adjunto, sr.id_usuario_eliminada AS id_usuario_eliminada, CAST(sr.fecha_eliminada AS CHAR) AS fecha_eliminada, sr.motivo_eliminada AS motivo_eliminada, e.descripcion AS equipo, s.descripcion AS sector, g.descripcion AS grupo, e.ubicacion FROM solicitud_reparacion sr JOIN equipos e ON sr.id_equipo = e.id_equipo JOIN sector s ON e.id_sector = s.id_sector JOIN grupo g ON e.id_grupo = g.id_grupo WHERE sr.estado = 'T' AND sr.id_empresa = :id_empresa ORDER BY sr.id_solicitud DESC</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"id_solicitud":"$id_solicitud","numero":"$numero","id_tipo":"$id_tipo","nivel":"$nivel","solicitante":"$solicitante","f_solicitado":"$f_solicitado","f_sugerido":"$f_sugerido","hora_sug":"$hora_sug","id_equipo":"$id_equipo","correctivo":"$correctivo","causa":"$causa","observaciones":"$observaciones","estado":"$estado","usrId":"$usrId","fecha_conformidad":"$fecha_conformidad","observ_conformidad":"$observ_conformidad","foto1":"$foto1","foto2":"$foto2","foto3":"$foto3","foto":"$foto","id_empresa":"$id_empresa","case_id":"$case_id","urgente":"$urgente","sol_adjunto":"$sol_adjunto","id_usuario_eliminada":"$id_usuario_eliminada","fecha_eliminada":"$fecha_eliminada","motivo_eliminada":"$motivo_eliminada","equipo":"$equipo","sector":"$sector","grupo":"$grupo","ubicacion":"$ubicacion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getUsuarioEnGruposMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT u.usrId FROM sisusers u JOIN usuarioasempresa ue ON ue.usrId = u.usrId JOIN sisgroups gr ON gr.grpId = ue.grpId WHERE ue.empresaid = :id_empresa AND ue.estado = 'AC' AND u.usrId = :usrId AND (gr.grpName = :filtro1 OR gr.grpName = :filtro2)</sql>
+      <result outputType="json">{"usuarios":{"usuario":[{"usrId":"$usrId"}]}}</result>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="filtro1" sqlType="STRING"/>
+      <param name="filtro2" sqlType="STRING"/>
+   </query>
+   <query id="updateSolicitudEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE solicitud_reparacion SET estado = :estado WHERE id_solicitud = :id_solicitud AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"solicitud":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="id_solicitud" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateSolicitudConformidadMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE solicitud_reparacion SET fecha_conformidad = :fecha_conformidad, observ_conformidad = LEFT(:observ_conformidad, 255), estado = 'T' WHERE id_solicitud = :id_solicitud AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"solicitud":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="fecha_conformidad" sqlType="STRING"/>
+      <param name="observ_conformidad" sqlType="STRING"/>
+      <param name="id_solicitud" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/solicitudes/empresa/{id_empresa}">
+      <call-query href="getSolicitudesMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="conformes" query-param="conformes"/><with-param name="buscar" query-param="buscar"/></call-query>
+   </resource>
+   <resource method="GET" path="/solicitudes/cantidad/empresa/{id_empresa}">
+      <call-query href="getSolicitudesCantMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="conformes" query-param="conformes"/><with-param name="buscar" query-param="buscar"/></call-query>
+   </resource>
+   <resource method="GET" path="/solicitud/{id_solicitud}/datos/empresa/{id_empresa}">
+      <call-query href="getSolicitudMan"><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/solicitudes/equipo/{id_equipo}/sector/empresa/{id_empresa}">
+      <call-query href="getSolicitudEquipoSectorMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/solicitudes/sectores/empresa/{id_empresa}">
+      <call-query href="getSectoresSolicMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/solicitudes/sector/{id_sector}/equipos/empresa/{id_empresa}">
+      <call-query href="getEquiposSectorSolicMan"><with-param name="id_sector" query-param="id_sector"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/solicitud/{id_solicitud}/impresion/empresa/{id_empresa}">
+      <call-query href="getSolicitudImpMan"><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/solicitudes/terminadas/empresa/{id_empresa}">
+      <call-query href="getSolicitudesTerminadasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/usuario/{usrId}/grupos/empresa/{id_empresa}">
+      <call-query href="getUsuarioEnGruposMan"><with-param name="usrId" query-param="usrId"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="filtro1" query-param="filtro1"/><with-param name="filtro2" query-param="filtro2"/></call-query>
+   </resource>
+   <resource method="PUT" path="/solicitud/estado">
+      <call-query href="updateSolicitudEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/solicitud/conformidad">
+      <call-query href="updateSolicitudConformidadMan"><with-param name="fecha_conformidad" query-param="fecha_conformidad"/><with-param name="observ_conformidad" query-param="observ_conformidad"/><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
    <!-- MIG-ASSET-2 · Preventivo, Predictivo y Backlog (ABM con herramientas e insumos). Reemplaza el acceso directo de
         models/Preventivos.php, Predictivos.php y Backlogs.php (ADR-014). Toda query queda limitada a la empresa (id de asset).
         Las inserciones de detalle no tienen resultado para que el DataService habilite el pedido por lotes (_batch_req):
