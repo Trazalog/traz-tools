@@ -322,7 +322,7 @@ divergieron.
 | Proceso (`controllers/Proceso.php`, `models/Procesos.php`, `views/proceso/view_.php`) | ✅ Portado. Paridad OK (10 de 10) | MAN: `feat/MIG-ASSET-1-proceso` · tools: `feat/MIG-ASSET-1-proceso` |
 | Parametro (`controllers/Parametro.php`, `models/Parametros.php`, `views/parametro/list.php`) | ✅ Portado. Paridad OK (18 de 18) | MAN: `feat/MIG-ASSET-1-parametro` · tools: `feat/MIG-ASSET-1-parametro` |
 | Componente (`controllers/Componente.php`, `models/Componentes.php`, `views/componente/{list,listabm,view_}.php`) | ✅ Portado. Paridad OK (27 de 27) | MAN: `feat/MIG-ASSET-1-componente` · tools: `feat/MIG-ASSET-1-componente` |
-| Equipo | Pendiente | — |
+| Equipo (`controllers/Equipo.php`, `models/Equipos.php`, `views/Equipo/{list,view_}.php`) | ✅ Portado. Paridad OK (66 de 66, incluido aislamiento). Suite completa: 131 de 131 | MAN y tools: `feat/MIG-ASSET-1-equipo` (commits locales; un solo PR al final del tramo) |
 
 **Criterio de salida:** con una sesión de tools, el módulo se abre desde el menú, se navegan los ABMs
 y se listan equipos y OTs reales de una empresa de prueba. Nivel 0b en verde y **cero accesos a
@@ -641,6 +641,10 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E11 | 2026-10-27 | **Archivos en la carpeta de asset**: MAN guarda y lee PDF, adjuntos e imágenes en la misma carpeta que asset (`man_asset_path()` / `man_asset_url()` del helper de MAN; por defecto `../tools/traz-prod-assetplanner/` respecto de tools, configurable con `MAN_ASSET_PATH` / `MAN_ASSET_URL`). Cuando asset se retire, la carpeta se mueve a tools | En demo y producción asset y tools comparten Apache. Con una sola carpeta las dos aplicaciones ven lo mismo y volver una empresa a asset no pierde archivos |
 | E12 | 2026-10-27 | **Donde asset falla siempre, MAN hace lo que la vista espera**, y se anota en el PR | `Componentes::getequipo` de asset nunca funcionó |
 | E13 | 2026-10-27 | **Valores implícitos explícitos**: la conexión JDBC de WSO2 a MariaDB es estricta (el servidor no). En cada INSERT se pasan los valores que MariaDB completaba sola (`''`, `0`). No se toca el datasource | Afectaba `componentes.pdf` y `componenteequipo.sistemaid`. Cambiar el datasource afectaría a todas las queries de mantenimiento, incluidas las de MCP |
+| E14 | 2026-10-28 | **Mantenimiento autónomo apagado en MAN** hasta portarlo con su motor: en las lecturas no se muestran el campo Falla ni el formulario dinámico (en asset solo aparecen para la empresa `EMPRESAS_FORM`), y si llega una falla el controller la rechaza sin guardar. Los datos (`historial_lecturas.info_id`) no se tocan | El formulario dinámico usa el motor de formularios de asset, que guarda en `assetv2` (`frm_*`), no el de tools (PostgreSQL). La falla crea una solicitud y lanza Bonita: es la regla 3 del ADR-014 y va con Solicitudes en MIG-2. **Ninguna empresa con mantenimiento autónomo pasa a MAN hasta portarlo** |
+| E15 | 2026-10-28 | **Usuario de asset por correo, provisorio hasta MIG-5**: donde asset guarda `usrId` (lecturas), MAN busca el `sisusers` cuyo `usrNick` es el correo de la sesión de tools, dentro de la empresa (`man_usuario()`). Sin vínculo graba 0 y lo deja en el log | Hoy los dos padrones se vinculan así (H-085). MIG-5 fija la clave definitiva |
+| E16 | 2026-10-28 | **La lectura no marca preventivos hasta MIG-4**: MAN guarda la lectura y el estado del equipo, sin la parte de preventivos de `setLecturas` | Esa consulta tiene T1 y lee preventivos de otras empresas; en la práctica marca casi al azar. La regla del contador se define una sola vez en MIG-4 (T7, T8) |
+| E17 | 2026-10-28 | **Sin `request_box` donde participa `historial_lecturas`**: los cambios de estado con su lectura se escriben en secuencia, en el orden de asset, y la pertenencia a la empresa se verifica antes con una consulta | `historial_lecturas` es MyISAM: no se puede deshacer (tampoco en asset con `trans_start`). Además su trigger `actualizaLectura` actualiza `equipos`, así que el INSERT no puede leer `equipos` (error 1442) |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---
@@ -723,6 +727,10 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 | T8 | La regla de alerta está implementada 4 veces con 3 fórmulas | `controllers/Calendario.php:88-100` y otras |
 | T9 | Clave duplicada en `BPM_PROCESS` (tools) | `application/config/constants.php` de tools |
 | T11 | `Obtener_*` y `Eliminar_*` de Área y Proceso no filtran por empresa: con el id de un registro ajeno se lo ve o se lo da de baja. Corregido en MAN (E4); **pendiente en asset** por la regla de §3.5 | `models/Areas.php:21-40`, `models/Procesos.php:19-41` |
+| T12 | `setLecturas`: además de T1, `$resultado = + lectura_base` asigna en vez de sumar, y si el equipo no tiene preventivo el UPDATE sale con `prevId` vacío (error de SQL, la lectura ya quedó grabada) | `models/Equipos.php:803-882` |
+| T13 | Alta de equipo y "agregar adjunto" con varios archivos: la librería de subida se carga una sola vez y todos toman el nombre del primero, así que desde el segundo el nombre en disco no coincide con el de la base. Corregido en MAN | `controllers/Equipo.php:496-619, 965-1019` |
+| T14 | La unicidad del código de equipo es global (todas las empresas) y por SQL concatenado. MAN conserva la regla global y la pasa a parámetro | `models/Equipos.php:426-436` |
+| T15 | `historial_lecturas` es MyISAM: las lecturas no participan de ninguna transacción | `assetv2` |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores
