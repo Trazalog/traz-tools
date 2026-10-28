@@ -167,6 +167,8 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 
 ## 5-bis. Corridas
 
+**Corrida final** (2026-10-28 00:16, `--grep @tar --grep-invert @quarantine`, 57 tests, ~16 min): **40 esperados** (pasan o fallan como bug marcado con `test.fail()`), **16 salteados** por bloqueo con el motivo escrito (los que necesitan un pedido real: B-01) y **1 inesperado**, ya corregido: `TAR-CP-018-01` agotaba el tiempo en vez de fallar (ahora falla rápido si el detalle llega vacío). Los tests del ciclo dependen del orden: `TAR-CP-011-01` necesita que antes corra la planificación de `TAR-CP-010-04`.
+
 **Corrida con menús reales y marcas de bugs** (2026-10-27, 23:24, `--grep @tar --grep-invert @quarantine`, ~12 min): 33 resultados esperados (21 pasan + los bugs marcados con `test.fail()` que fallan como se espera), 21 salteados por bloqueo con el motivo escrito y 3 inesperados, ya resueltos: `TAR-CP-010-04` era HIP-TAR-18 (pasó a B-14), `TAR-CP-014-05` pasó a usar su propia tarea (ver §5) y `TAR-CP-010-01` (modal de hora intermitente) tiene reintento del clic.
 
 **Primera corrida completa** (2026-10-27, 22:54, 57 tests, ~19 min), antes de marcar los bugs:

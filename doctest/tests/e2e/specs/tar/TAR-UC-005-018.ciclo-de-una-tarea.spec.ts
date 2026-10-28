@@ -723,6 +723,8 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     try {
       await b.abrirBandeja(testInfo);
       await b.abrirTarea(caso);
+      // Falla rápido si el detalle llega vacío (H-105) en vez de agotar el tiempo del test.
+      await expect(b.subtareas, 'el detalle de la tarea no trae subtareas').toHaveCount(2, { timeout: 15_000 });
       await b.tildarSubtareas();
       await b.pulsarHecho();
       expect((await b.dialogo(60_000)).texto).toMatch(/Se finaliz[oó] la tarea correctamente/i);
