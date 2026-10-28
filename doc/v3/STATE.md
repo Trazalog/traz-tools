@@ -110,42 +110,26 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 **Lo único que espera decisión del PM en DNATO** (no bloquea ALM): los 2 casos en borrador — DNATO-UC-020 (usuario externo) y DNATO-UC-024 (ABM de menúes). El triaje de hallazgos ya está hecho: 25 de los 35 tienen issue, y los 10 restantes tienen decisión escrita en su fila.
 
 
-**Agentes de IA (rama `develop-v3.5`) — frente redefinido el 2026-10-27.** E0–E4 están mergeados (PRs #498–#504) y son la
-base del motor. El plan nuevo está en `doc/v3/PROMPT_CC_AGENTES_TRAZALOG.md`. Orden:
+**Agentes de IA (rama `develop-v3.5`) — al 2026-10-28 08:10.**
 
-1. **Fase D:** ✅ mergeada (PR #571). Falta la aprobación de la **ficha de los personajes** (`doc/agente/identidad.md`) y los
-   colores de la marca.
-2. **Fase 1 — motor:** configuración por agente (M-01, **en PR #572**, `011` ya aplicado en la base local), lista blanca de
-   tools (M-02, **en PR #573**, apilado sobre M-01), corrida auditable (M-03, **rama apilada, PR pendiente** por el tope
-   de 2 PRs), guardián de cifras (M-04, **rama apilada, PR pendiente**), `web_buscar` con SearXNG (M-05, **rama apilada, PR pendiente**), conocimiento ampliado (M-06, **rama apilada, PR pendiente**) y multi-vertical (M-08, **rama apilada, PR pendiente**). **Fase 1 completa salvo M-07 (gate del PM).**
-   **Para aplicar `012` y `013` en la base local, en ese orden** (terminal local, parado en el repo, con el usuario
-   propietario de la base), uno por línea:
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/012-tools.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/013-corrida.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/014-tool-web.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/015-fuentes-producto.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/016-vertical.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/017-propuestas.sql`
-   Sin `012` el orquestador local no responde (falla cerrado); sin `013` no registra las corridas; sin `014` no busca
-   en internet. Para la búsqueda, además, levantar SearXNG (`doc/agente/instalacion.md` §1-ter).
-3. **Fase 2 — Quirqui** (AS-01 y AS-02 **ramas apiladas, PR pendiente**; AS-03 bloqueada por DNATO-TOKEN, AS-04 por TAR y KPI; **prueba manual del panel pendiente**, ver `entorno-de-prueba.md`) y, en paralelo, **Fase 3 — avatares** (esta última con Sonnet).
-4. **Fase 4 — prerrequisitos de Kuntur:** los análisis de impacto de DNATO-TOKEN y del motor de KPIs están escritos y **esperan tu aprobación** (`doc/agente/analisis-impacto-*.md`). TAR lo llevan ustedes.
-5. **Fase 5 — Kuntur**, cuando estén los prerrequisitos de la Fase 4.
+**Integrado:** M-01 y M-02 (#572, #573).
+**Para revisar y mergear:** **#597** — M-03 a M-08, AS-01, AS-02, análisis de la Fase 4, catálogo DocTest, avatar y la corrección del guardián (un solo PR, un commit por tarea).
+**En curso, sin PR:** rama `feat/AGENTE-fase2-avisos` (sobre #597) — credenciales de máquina, monitoreo, campanita, encolado de push, filtro de industria en Faustino y el contrato Kuntur ↔ Quirqui. Cierra con la app Siddhi y ahí va su PR.
 
-**Derivaciones a otros frentes (prerrequisitos de Kuntur y de los avisos):**
-- **DNATO-TOKEN** (`traz-comp-dnato`): `client_credentials` con un cliente por empresa (ADR-A10). Bloquea los avisos
-  proactivos (AS-03) y los jobs de medición.
-- **TAR** (módulo de tareas): estabilizar (aislamiento, plan vs real, DDL), API de negocio + tools `tar_get_*`, estado
-  "propuesta". Spec: `doc/specs/TAR-spec-modulo-tareas.md` del checkout de deploy.
-- **KPI** (motor `kpi.*`): `kpi.historico`, `kpi.objetivos` + `kpi.desvios()`, tools `kpi_get_*`, definiciones por vertical
-  (doc de KPIs del PM, en aprobación).
+**Para que la base local quede al día** (terminal local, parado en el repo, con el usuario propietario), aplicar en orden lo que vaya entrando a `develop-v3.5`, del `012` al `019`:
+`for f in db/agente/01[2-9]-*.sql; do case $f in *rollback*) ;; *) psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f $f || break;; esac; done`
 
-**Lo que espera decisión del PM:**
-1. **Gate 2 (AGENTE-M-07):** los 6 bloques del prompt de Quirqui y la taxonomía de Faustino por vertical.
-2. **Dónde vive la base del agente** en demo/producción: el Postgres de DEV es 11.18 sin pgvector.
-3. Antes de los avisos (AS-03): corregir el `faultSequence` vacío del `FirebaseConnectorAPI` y rotar la clave de Firebase
-   commiteada (ver Bloqueos).
-4. **Revisión legal** (AGENTE-LEGAL-01), al final: aviso de medición y derechos sobre los avatares.
+**Lo que espera decisión del PM, por lo que destraba:**
+1. **Aprobar los análisis de impacto** (`doc/agente/analisis-impacto-token-maquina.md` y `analisis-impacto-kpi-objetivos.md`). Destraban los tokens de máquina reales (sin eso el monitoreo no corre), las tools de KPI, el job de mediciones y Kuntur.
+2. **Revisar `doc/agente/decisiones-para-revisar.md`** (D-01 a D-66).
+3. **Gate 2 (M-07):** los 6 bloques del prompt de Quirqui y la taxonomía de Faustino por industria.
+4. **Ficha de personajes y colores de la marca:** destraba la generación de los avatares (ID-03).
+5. **Validar los 9 casos de uso** (`doctest/catalogo/age/`): destraba ayudas y tests derivados (DT-02).
+6. **Dónde vive la base del agente** en demo y producción (el Postgres de DEV es 11 sin pgvector).
+7. **Antes de los push reales:** corregir el `faultSequence` vacío del `FirebaseConnectorAPI` y rotar la clave de Firebase commiteada (ambos core).
+8. **Revisión legal** del aviso de medición y de los avatares, antes de un cliente real.
+
+**Lo próximo que hace Claude Code sin esperar:** la app Siddhi del envío push (con el SI local) y, cuando se aprueben los análisis, DNATO-TOKEN y el motor de KPIs.
 
 ### Decisiones recientes (últimas 5)
 
