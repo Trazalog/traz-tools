@@ -129,7 +129,7 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 7. **Antes de los push reales:** corregir el `faultSequence` vacío del `FirebaseConnectorAPI` y rotar la clave de Firebase commiteada (ambos core).
 8. **Revisión legal** del aviso de medición y de los avatares, antes de un cliente real.
 
-**Lo próximo que hace Claude Code sin esperar:** la app Siddhi del envío push (con el SI local) y, cuando se aprueben los análisis, DNATO-TOKEN y el motor de KPIs.
+**Lo próximo que hace Claude Code sin esperar:** terminar la app Siddhi del envío push (`_backend/siddhi/AgenteAvisosPush.siddhi`, **borrador**: probada contra el SI local, manda y marca, pero reenvía los pendientes mientras no los marca; falta el estado `enviando`, D-68) y cerrar la fase con su PR. Cuando se aprueben los análisis: DNATO-TOKEN y el motor de KPIs.
 
 ### Decisiones recientes (últimas 5)
 

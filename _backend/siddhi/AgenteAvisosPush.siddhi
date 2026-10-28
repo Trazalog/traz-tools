@@ -1,0 +1,78 @@
+@App:name('AgenteAvisosPush')
+@App:description('Envio push de los avisos de los agentes (AGENTE-AS-03, Opcion C de E0): toma la cola agente.envio, llama al FirebaseConnectorAPI y marca el resultado.')
+
+-- =========================================================================
+-- BORRADOR - NO DESPLEGAR TODAVIA (probado el 2026-10-28 contra el SI 4.4.0
+-- local, una base descartable y un conector falso):
+--   ✅ despliega; lee la cola; llama al conector con el payload correcto
+--      (titulo firmado por el agente, icono del avatar, enlace a la ayuda);
+--      con respuesta 200 marca 'enviado' con su fecha.
+--   ❌ marca pocos por vuelta (3 de 33 en dos minutos) y, mientras tanto,
+--      REENVIA TODOS LOS PENDIENTES CADA 30 SEGUNDOS: push duplicados.
+--   Correccion pendiente: marcar el envio como 'enviando' ANTES de mandarlo
+--   (y recien despues 'enviado' o 'fallido'), para que nunca se tome dos
+--   veces; agregar ese estado al CHECK de agente.envio. Ver D-68.
+--   Aprendido: el codigo de estado se matchea con '2..' (con '2\\d+' no
+--   matchea), y la respuesta se mapea como 'text': el mapeador json ignora
+--   los atributos que vienen solo del transporte (trp:).
+-- =========================================================================
+--
+-- Como funciona:
+--   cada 30 segundos lee los envios pendientes de agente.envio (la cola que
+--   llena agente/monitoreo.py), le pide al FirebaseConnectorAPI del MI que los
+--   mande, y marca cada uno como 'enviado' o 'fallido'.
+--
+-- Credenciales: NUNCA en este archivo. Salen de variables de entorno del
+-- proceso del Streaming Integrator:
+--   AGENTE_SI_DB_URL       jdbc:postgresql://<host>:<puerto>/<base>?currentSchema=agente&stringtype=unspecified
+--   AGENTE_SI_DB_USER      un usuario con el rol agente_envio y NINGUN otro (020-cola-envio.sql)
+--   AGENTE_SI_DB_PASSWORD
+--   AGENTE_FIREBASE_URL    el recurso de envio del FirebaseConnectorAPI en el MI
+--
+-- OJO (bloqueo conocido, ver STATE.md): el FirebaseConnectorAPI tiene el
+-- faultSequence vacio y responde 2xx aunque el envio falle, asi que hoy esta
+-- app marcaria 'enviado' algo que no llego. Corregirlo (core) antes de usarla
+-- en serio.
+
+define trigger CadaTreintaSegundos at every 30 sec;
+
+@store(type = 'rdbms', jdbc.url = '${AGENTE_SI_DB_URL}', username = '${AGENTE_SI_DB_USER}',
+       password = '${AGENTE_SI_DB_PASSWORD}', jdbc.driver.name = 'org.postgresql.Driver',
+       table.name = 'envio')
+@primaryKey('envio_id')
+define table Envio (envio_id long, token string, payload string, estado string, intentos int,
+                    ultimo_error string, fec_envio string);
+
+@sink(type = 'http-call', publisher.url = '${AGENTE_FIREBASE_URL}', method = 'POST',
+      sink.id = 'firebase', headers = "'Content-Type:application/json'",
+      @map(type = 'json', @payload("""{"token":"{{token}}","mensaje":{{payload}}}""")))
+define stream AEnviar (envio_id long, token string, payload string);
+
+@source(type = 'http-call-response', sink.id = 'firebase', http.status.code = '2..',
+        @map(type = 'text', fail.on.missing.attribute = 'false', regex.A = '(.*)',
+             @attributes(envio_id = 'trp:envio_id', respuesta = 'A[1]')))
+define stream Enviado (envio_id long, respuesta string);
+
+@source(type = 'http-call-response', sink.id = 'firebase', http.status.code = '[45]..',
+        @map(type = 'text', fail.on.missing.attribute = 'false', regex.A = '(.*)',
+             @attributes(envio_id = 'trp:envio_id', respuesta = 'A[1]')))
+define stream Fallido (envio_id long, respuesta string);
+
+-- De a 50 por vuelta, para no saturar el conector si la cola se llena.
+@info(name = 'tomar-pendientes')
+from CadaTreintaSegundos join Envio on Envio.estado == 'pendiente'
+select Envio.envio_id as envio_id, Envio.token as token, Envio.payload as payload
+limit 50
+insert into AEnviar;
+
+@info(name = 'marcar-enviado')
+from Enviado
+select envio_id, 'enviado' as estado, time:currentTimestamp() as fec_envio
+update Envio set Envio.estado = estado, Envio.fec_envio = fec_envio
+    on Envio.envio_id == envio_id;
+
+@info(name = 'marcar-fallido')
+from Fallido
+select envio_id, 'fallido' as estado, 'el conector respondio error' as ultimo_error
+update Envio set Envio.estado = estado, Envio.ultimo_error = ultimo_error
+    on Envio.envio_id == envio_id;
