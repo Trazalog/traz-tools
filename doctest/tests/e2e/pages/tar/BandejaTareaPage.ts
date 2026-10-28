@@ -35,8 +35,19 @@ export class BandejaTareaPage extends ShellTar {
     await this.esperarCarga(90_000);
   }
 
-  item(nombreTarea: string): Locator {
-    return this.page.locator('table#tareas tbody tr.item').filter({ hasText: nombreTarea });
+  /**
+   * Fila de una tarea, por su número de caso o por su nombre. Se busca por caso porque hoy la
+   * bandeja no muestra el nombre de la tarea planificada (H-105): la fila dice solo
+   * "Tarea Planificada | case: <n>".
+   */
+  item(casoONombre: string): Locator {
+    if (/^\d+$/.test(casoONombre)) return this.page.locator(`table#tareas tbody tr.item[data-caseid="${casoONombre}"]`);
+    return this.page.locator('table#tareas tbody tr.item').filter({ hasText: casoONombre });
+  }
+
+  /** Texto completo de la fila de una tarea, como lo ve el responsable. */
+  async textoFila(casoONombre: string): Promise<string> {
+    return ((await this.item(casoONombre).first().innerText()) ?? '').replace(/\s+/g, ' ').trim();
   }
 
   async buscar(texto: string): Promise<void> {
@@ -49,8 +60,8 @@ export class BandejaTareaPage extends ShellTar {
     return (await this.item(nombreTarea).first().locator('p.label').allInnerTexts()).map((t) => t.trim());
   }
 
-  async abrirTarea(nombreTarea: string): Promise<void> {
-    const taskId = await this.item(nombreTarea).first().getAttribute('id');
+  async abrirTarea(casoONombre: string): Promise<void> {
+    const taskId = await this.item(casoONombre).first().getAttribute('id');
     await this.page.evaluate((id) => (window as unknown as { linkTo: (x: string) => void }).linkTo(`traz-comp-bpm/Proceso/detalleTarea/${id}`), taskId);
     await this.page.locator('#view, #btnHecho').first().waitFor({ timeout: 90_000 });
     await this.esperarCarga(90_000);

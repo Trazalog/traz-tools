@@ -94,7 +94,7 @@ async function enElHito(pl: PlanificacionPage, hito = HITO): Promise<void> {
  * Los casos de bandeja necesitan que la tarea tenga caso de Bonita. Si no lo tiene (hoy en el DEMO
  * ninguna tarea lo consigue: TAR-CP-009-10 y TAR-CP-011-01), se saltean diciendo por qué.
  */
-async function requiereCaso(browser: Browser, nombre: string): Promise<void> {
+async function requiereCaso(browser: Browser, nombre: string): Promise<string> {
   const pl = await planificador(browser);
   let caso = '';
   try {
@@ -103,6 +103,7 @@ async function requiereCaso(browser: Browser, nombre: string): Promise<void> {
     await pl.page.context().close();
   }
   test.skip(!/^\d+$/.test(caso), `bloqueado: "${nombre}" no tiene caso de Bonita, no puede llegar a ninguna bandeja (TAR-CP-011-01)`);
+  return caso;
 }
 
 async function tareaRecargada(pl: PlanificacionPage, nombre: string, hito = HITO): Promise<TareaPlanificada | null> {
@@ -145,7 +146,10 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     try {
       await tst.abrir('tareasEstandar', testInfo);
       if (!(await tst.filaTarea(STD_INSP).count())) {
-        await tst.crearTareaOk({ nombre: STD_INSP, descripcion: 'Inspección (DocTest)', duracion: '02:00' });
+        // Por la API con proceso TST001: el formulario no lo ofrece (H-093) y sin proceso ninguna
+        // tarea llega a la bandeja. Decisión documentada en doc/specs/TAR-bugs-detectados.md §6.
+        await tst.crearTareaPorApi({ nombre: STD_INSP, descripcion: 'Inspección (DocTest)', duracion: '02:00' }, 'TST001');
+        await tst.abrir('tareasEstandar', testInfo);
         await tst.abrirSubtareas(STD_INSP);
         for (const n of ['Aislar', 'Revisar']) {
           await tst.agregarSubtarea(`${n} ${SUF}`);
@@ -154,7 +158,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
         }
         await tst.cerrarSubtareas();
       }
-      if (!(await tst.filaTarea(STD_LIMP).count())) await tst.crearTareaOk({ nombre: STD_LIMP, descripcion: 'Limpieza (DocTest)', duracion: '01:00' });
+      if (!(await tst.filaTarea(STD_LIMP).count())) await tst.crearTareaPorApi({ nombre: STD_LIMP, descripcion: 'Limpieza (DocTest)', duracion: '01:00' }, 'TST001');
       await tst.abrir('tareasEstandar', testInfo);
       await tst.irAPlantillas();
       if (!(await tst.filaPlantilla(PLANTILLA).count())) {
@@ -425,8 +429,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-011-01/011-03 asignar responsable a una tarea planificada: lanza el caso', async ({ browser }) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-093 #580 (B-03): la tarea estándar no puede tener proceso TST001 y no lanza caso');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -576,7 +578,9 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-016-01/016-02 el responsable ve la tarea en su bandeja con el pedido correcto (HIP-TAR-12)', async ({ browser }, testInfo) => {
-    await requiereCaso(browser, STD_INSP);
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-105 #593 (B-15): la bandeja muestra la tarea vacía (consulta por case_id sin cast)');
+    const caso = await requiereCaso(browser, STD_INSP);
     const pl = await planificador(browser);
     let petr = '';
     try {
@@ -588,9 +592,12 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     try {
       await b.abrirBandeja(testInfo);
-      await expect(b.item(STD_INSP), 'la tarea asignada no está en la bandeja del responsable').toHaveCount(1, { timeout: 60_000 });
-      const etiquetas = await b.etiquetas(STD_INSP);
-      testInfo.annotations.push({ type: 'etiquetas', description: etiquetas.join(' · ') });
+      await expect(b.item(caso), 'la tarea asignada no está en la bandeja del responsable').toHaveCount(1, { timeout: 60_000 });
+      const etiquetas = await b.etiquetas(caso);
+      const fila = await b.textoFila(caso);
+      testInfo.annotations.push({ type: 'fila', description: fila });
+      expect.soft(fila, 'la bandeja no muestra el nombre de la tarea').toContain(STD_INSP);
+      expect.soft(fila, 'la bandeja no muestra el estado').toMatch(/Estado: \S+/);
       expect.soft(etiquetas.join(' · ')).toContain('Origen: Pedido de trabajo');
       expect.soft(etiquetas, 'falta "Nro Pedido: <código>" con su etiqueta').toContain(`Nro Pedido: ${PEDIDO}`);
       if (petr) expect(etiquetas, `"Id Ped.Trabajo" no es el número del pedido (${petr})`).toContain(`Id Ped.Trabajo: ${petr}`);
@@ -603,14 +610,24 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'empresa2'));
     try {
       await b.abrirBandeja(testInfo);
-      await expect(b.item(STD_INSP)).toHaveCount(0);
+      const pl = await planificador(browser);
+      let caso = '';
+      try {
+        caso = String((await tareaRecargada(pl, STD_INSP))?.case_id ?? '');
+      } finally {
+        await pl.page.context().close();
+      }
+      test.skip(!caso, 'la tarea no tiene caso');
+      await expect(b.item(caso)).toHaveCount(0);
     } finally {
       await b.page.context().close();
     }
   });
 
   test('TAR-CP-011-04 reasignar: pasa a la bandeja del nuevo responsable, sale de la del anterior y no crea otro caso', async ({ browser }, testInfo) => {
-    await requiereCaso(browser, STD_LIMP);
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior');
+    const caso = await requiereCaso(browser, STD_LIMP);
     const pl = await planificador(browser);
     let casoAntes = '';
     let casoDespues = '';
@@ -629,8 +646,8 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
       await b2.abrirBandeja(testInfo);
       await b1.abrirBandeja(testInfo);
       expect.soft(casoDespues, 'la reasignación cambió el caso').toBe(casoAntes);
-      await expect.soft(b1.item(STD_LIMP), 'la tarea sigue en la bandeja del responsable anterior').toHaveCount(0);
-      await expect(b2.item(STD_LIMP), 'la tarea no llegó a la bandeja del nuevo responsable').toHaveCount(1);
+      await expect.soft(b1.item(caso), 'la tarea sigue en la bandeja del responsable anterior').toHaveCount(0);
+      await expect(b2.item(caso), 'la tarea no llegó a la bandeja del nuevo responsable').toHaveCount(1);
     } finally {
       await b1.page.context().close();
       await b2.page.context().close();
@@ -638,12 +655,14 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-016-03/017-01/017-02 tomar e iniciar: pide "Inicializar tarea" y registra la hora real del clic (HIP-TAR-04, HIP-TAR-13)', async ({ browser }, testInfo) => {
-    await requiereCaso(browser, STD_INSP);
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-105 #593 (B-15): el detalle de la tarea abre vacío');
+    const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let clic = new Date();
     try {
       await b.abrirBandeja(testInfo);
-      await b.abrirTarea(STD_INSP);
+      await b.abrirTarea(caso);
       const cabecera = await b.cabecera();
       testInfo.annotations.push({ type: 'cabecera', description: cabecera.slice(0, 400) });
       expect.soft(cabecera, 'la cabecera de la tarea no muestra el pedido de trabajo').toContain(PEDIDO);
@@ -672,11 +691,13 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-018-02 finalizar con una subtarea sin tildar: "No se marcaron como finalizadas todas las subtareas!"', async ({ browser }, testInfo) => {
-    await requiereCaso(browser, STD_INSP);
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-105 #593 (B-15): el detalle no trae subtareas');
+    const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     try {
       await b.abrirBandeja(testInfo);
-      await b.abrirTarea(STD_INSP);
+      await b.abrirTarea(caso);
       await expect(b.subtareas).toHaveCount(2);
       await b.tildarSubtareas(1);
       await b.pulsarHecho();
@@ -688,7 +709,9 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-018-01/018-03 finalizar: sale de la bandeja y queda "finalizada" con la hora real de fin (HIP-TAR-05)', async ({ browser }, testInfo) => {
-    await requiereCaso(browser, STD_INSP);
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-105 #593 (B-15): el detalle no trae subtareas ni formulario');
+    const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let planificada: TareaPlanificada | null = null;
     const pl0 = await planificador(browser);
@@ -699,13 +722,13 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     }
     try {
       await b.abrirBandeja(testInfo);
-      await b.abrirTarea(STD_INSP);
+      await b.abrirTarea(caso);
       await b.tildarSubtareas();
       await b.pulsarHecho();
       expect((await b.dialogo(60_000)).texto).toMatch(/Se finaliz[oó] la tarea correctamente/i);
       await b.aceptarDialogo();
       await b.abrirBandeja(testInfo);
-      await expect(b.item(STD_INSP)).toHaveCount(0, { timeout: 60_000 });
+      await expect(b.item(caso)).toHaveCount(0, { timeout: 60_000 });
     } finally {
       await b.page.context().close();
     }

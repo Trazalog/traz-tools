@@ -42,6 +42,13 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
     expect(datos?.duracion).toBe('02:00');
   });
 
+  test('TAR-CP-019-07 "Proceso Asociado" ofrece el proceso de tarea planificada TST001 (H-093)', async ({}, testInfo) => {
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    test.fail(true, 'H-093 #580 (B-03): el selector solo ofrece Reparacion Neumaticos y Fabricación');
+    await tst.abrir('tareasEstandar', testInfo);
+    expect(await tst.procesosOfrecidos()).toContain('TST001');
+  });
+
   test('TAR-CP-019-02 sin nombre o sin duración: avisa que faltan obligatorios y no guarda', async ({}, testInfo) => {
     for (const [caso, datos] of [
       ['sin nombre', { nombre: '', duracion: '01:00' }],

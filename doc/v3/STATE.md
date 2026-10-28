@@ -14,7 +14,7 @@
 
 **Sprint actual:** Sprint 3 — Activación early adopter minero
 **Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
-**Última actualización:** 2026-10-27 por Claude Code (DOCTEST-TAR — catálogo TAR en borrador (22 casos), suite Playwright de TAR y corrida contra el DEMO: 12 bugs de TAR + 2 de DNATO/menús confirmados en vivo, priorizados en `doc/specs/TAR-bugs-detectados.md`, H-091 a H-104, issues #578-#591; menús de TAR asignados a la empresa de test desde Gestión de Menues)
+**Última actualización:** 2026-10-27 por Claude Code (DOCTEST-TAR — catálogo TAR en borrador (22 casos), suite Playwright de TAR y corrida contra el DEMO: 12 bugs de TAR + 2 de DNATO/menús confirmados en vivo, priorizados en `doc/specs/TAR-bugs-detectados.md`, H-091 a H-106, issues #578-#594; ciclo de bandeja destrabado con tareas TST001 por API; menús de TAR asignados a la empresa de test desde Gestión de Menues)
 **Última actualización:** 2026-10-27 por Claude Code (MIG-ASSET-0 — rama de integración y CI de `traz-tools-man`, ADR-014 aceptado, A2/A3/P1 resueltas)
 **Última actualización:** 2026-10-24 por Claude Code (DocTest — DNATO-UC-009 v0.4 con el paso de seleccion de empresa; MCP-UC-001/002 en borrador; la suite Hurl de MCP sigue pendiente, es F4/#441)
 **Última actualización:** 2026-10-20 por Claude Code (DEPLOY-MCP — `scripts/deploy/deploymcp.sh <rama-o-tag>`: un comando, sin parámetro de ambiente; doc único `doc/v3/desplegar-mcp.md`; falta el merge `develop`→`master` de traz-tools y las 3 passwords de producción)

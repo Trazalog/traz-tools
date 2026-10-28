@@ -67,7 +67,18 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 - **Tests:** `TAR-CP-X-01`, `TAR-CP-014-05`.
 - **Bloqueante para exponer TAR por MCP** (brecha B-07 del spec).
 
+#### B-15 · La tarea planificada llega vacía a la bandeja y no se puede ejecutar — H-105 · #593
+- **Qué pasa:** una tarea con proceso TST001 lanza su caso y queda `planificada`, pero en la bandeja del responsable se ve `Tarea Planificada | case: 71020 Sin Descripción Estado: Origen: ID: Nro de Pedido: Asignado: Fecha:`. Al abrirla no hay cabecera, subtareas ni formulario: solo "Tomar tarea / Cerrar / Hecho". No se puede ejecutar ni finalizar con el checklist.
+- **Causa probable:** `Tsttareas::map()`, `desplegarCabecera()` y `desplegarVista()` leen con `Tareas::obtenerXCaseId()` → `TARDataService` `getTareaPlanificadaXCaseId`: `WHERE tp.case_id = :case_id` con el parámetro `STRING` y sin cast contra una columna entera (las demás queries castean). No se pudo ver el error del DataService del DEMO.
+- **Tests:** `TAR-CP-016-01/016-02`, `TAR-CP-016-03/017-01/017-02`, `TAR-CP-018-02`, `TAR-CP-018-01/018-03`.
+- **Bloquea** verificar HIP-TAR-04, 05, 12 y 13 en pantalla.
+
 ### P2
+
+#### B-16 · Reasignar no saca la tarea de la bandeja del responsable anterior — H-106 · #594
+- **Qué pasa:** después de reasignar una tarea con caso, sigue en la bandeja del responsable original (caso 71021).
+- **Evidencia:** `Tareas::guardarPlanificada()` reasigna con `ObtenerActividades` + `setUsuario`; ver HIP-TAR-06.
+- **Tests:** `TAR-CP-011-04`.
 
 #### B-05 · Editar una tarea estándar falla siempre que no tenga formulario y receta — H-095 · #582
 - **Qué pasa:** "Guardar" en la edición devuelve "Algo salio mal". El backend responde `DATABASE_ERR`: `updateTarea` hace `CAST(:form_id as integer)` y `CAST(:rece_id as integer)` con texto vacío.
@@ -136,12 +147,12 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 | HIP-TAR-03 (KPI) | ⏳ no ejecutable: requiere tareas finalizadas (B-02/B-03) |
 | HIP-TAR-04 (hora real de inicio) | ⏳ no ejecutable: requiere bandeja. Confirmada **en código** (`notificacion_estandar.php:97-99`, `HH:MM` = mes) |
 | HIP-TAR-05 (fecha real de fin) | ⏳ no ejecutable: requiere bandeja |
-| HIP-TAR-06 (reasigna siempre) | ✔️ descartada en lo observable: asignar sin fecha no rompe la respuesta (`TAR-CP-011-05` pasa) |
+| HIP-TAR-06 (reasigna siempre) | parcial: asignar sin fecha no rompe la respuesta (`TAR-CP-011-05` pasa), pero reasignar con caso no saca la tarea de la bandeja anterior (B-16) |
 | HIP-TAR-07 (rollback del alta) | ✅ **confirmada** — B-06 |
 | HIP-TAR-08 (eliminar pedido deja tareas) | ⏳ no ejecutable: requiere pedidos |
 | HIP-TAR-09 (alta sin feedback) | ⏳ no ejecutable hasta B-01 (hoy el alta falla antes) |
 | HIP-TAR-10 (paginado) | ✅ **confirmada** — B-07 |
-| HIP-TAR-12/13 (bandeja) | ⏳ no ejecutables: requieren bandeja. HIP-TAR-12 confirmada **en código** (`Tsttareas.php:43`) |
+| HIP-TAR-12/13 (bandeja) | ⏳ la bandeja ya se alcanza (tareas TST001 por API), pero la tarjeta y la cabecera llegan vacías por B-15, que tapa a estas dos. HIP-TAR-12 confirmada **en código** (`Tsttareas.php:43`) |
 | HIP-TAR-16 (ids duplicados en plantillas) | ✔️ **descartada**: editar la plantilla precarga su nombre y no toca el formulario de tareas |
 | HIP-TAR-18 (HH12) | ✅ **confirmada** — B-14: el calendario muestra a las 03:00 una tarea de las 15:00. El corrimiento de la hora guardada al reasignar no se pudo medir sin caso |
 | Resto (11, 14, 15, 17, 19-24) | ⏳ no ejecutadas en esta tanda |
@@ -175,7 +186,7 @@ Lo que queda abierto **no tiene vía sin el PM** por reglas del proyecto, no por
 | Pendiente | Por qué no lo puede cerrar el agente |
 |---|---|
 | Cargar `PROCESO-STANDAR` (destraba pedidos, hitos, HIP-TAR-01/08, Trabajo Terminado) | No existe API ni pantalla que escriba `pro.procesos` (búsqueda en todo `_backend` y `application`) y la base del DEMO no es alcanzable desde la VPN. Es una escritura de BD: 🔴 en la clasificación de riesgo del `CLAUDE.md` |
-| Destrabar la bandeja (#579, #580) | Requiere corregir `constants.php` del DEMO o el catálogo global `core.tablas` `procesos`: es corregir bugs (el pedido dice que lo hace otro agente) y tocar core productivo (análisis de impacto + aprobación del PM) |
+| Corregir #579, #580, #593 (las tareas libres y la vista de la bandeja) | Requiere corregir `constants.php` del DEMO o el catálogo global `core.tablas` `procesos`: es corregir bugs (el pedido dice que lo hace otro agente) y tocar core productivo (análisis de impacto + aprobación del PM) |
 | Validar el catálogo | Es el gate humano de DocTest: solo el PM pasa un caso a `validado` |
 | Mergear el PR #589 | `CLAUDE.md`: no se mergea sin confirmación explícita del PM |
 
@@ -185,6 +196,8 @@ Lo que queda abierto **no tiene vía sin el PM** por reglas del proyecto, no por
 | Los menús de TAR se asignaron al rol que el planificador ya tiene ("Responsable de Producción DocTest Empresa SA") desde DNATO → Gestión de Menues, con el administrador de la empresa de test: `tareas_grupo`, `tareas`, `pedidotrabajo`, `planificacion_tareas`, `tareas_std`. Los tests navegan por el menú real; si falta un ítem, caen a `linkTo()` y lo anotan | La asignación del rol "Planificador de Tareas" falla en DNATO (B-11). Es la vía oficial y solo toca la empresa de test. Responde la duda **D-04**: los menús son Tareas → ABM Tareas, Pedidos Trabajo y Planificación Tareas |
 | El rol "Planificador de Tareas" se asignó **por la API de DNATO** mandando solo el rol nuevo (rodeo de #588), y el paso quedó en `npm run seed:tar` | Es la vía que habilitó el PM (APIs para seed y usuarios); el endpoint solo agrega roles, no quita ninguno |
 | No se creó un usuario planificador nuevo | El alta de usuario de DNATO (`main/adduser`) solo pide empresa y perfil (Admin/Author); el rol de trabajo se asigna después con "Cambio de Rol", que es lo que falla (#588). Un usuario nuevo quedaría igual que `produccion@` |
+| Las tareas estándar del ciclo se crean **por la API de la aplicación** (`Tarea/guardar`) con `proc_id=TST001`, solo para la empresa de test | El selector no lo ofrece (B-03) y sin proceso nada llega a la bandeja. El alta de empresa ya mapea el actor de "TST001 - Tarea Planificada" al grupo de cada empresa (`toolsCOREAPI.xml:398-401`), así que el proceso existe. Con esto se destrabó el ciclo de bandeja y aparecieron B-15 y B-16. B-03 sigue cubierto por `TAR-CP-019-07` |
+| Si el clic en un día no dispara el `dateClick` de FullCalendar, el page object llama al mismo manejador de la vista (`clickCalendario(info)`) | Falla de banco de pruebas intermitente; es lo que FullCalendar invoca |
 | Se descartó correr el ciclo en otra empresa del DEMO | La otra empresa habilitada para DocTest (Novu, usuario de MAN) tampoco tiene proceso de pedidos, clientes, tipos de trabajo ni menús de TAR (verificado en modo lectura). No se crearon datos en empresas que no son de test |
 | **No** se agregó `TST001` a la Lista de Valores `procesos` para destrabar la bandeja | `getTabla` no filtra empresa: el valor aparecería en el selector de **todas** las empresas del DEMO (B-03) |
 | El ciclo de la tarea se probó sobre un origen sintético (`PETR/987654321`) dentro de la empresa de test | Sin pedidos no hay hitos (B-01); el componente de planificación es el mismo para cualquier origen. Los tests que necesitan el pedido real se saltean con el motivo escrito |

@@ -12,6 +12,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import { requerirUrlDeApp } from '../../config/apps.ts';
 import { ShellTar } from './ShellTar.ts';
 
 export interface DatosTareaEstandar {
@@ -81,6 +82,31 @@ export class TareasEstandarPage extends ShellTar {
     await this.esperarCarga();
     await this.cerrarDialogos();
     await expect(this.filaTarea(datos.nombre)).toHaveCount(1, { timeout: 30_000 });
+  }
+
+  /**
+   * Alta de tarea estándar por la API de la aplicación (el mismo `Tarea/guardar` que usa el
+   * formulario), con un proceso asociado que el formulario no ofrece. Existe porque el selector
+   * "Proceso Asociado" no lista `TST001` (H-093): sin esto ninguna tarea llega a la bandeja.
+   */
+  async crearTareaPorApi(datos: DatosTareaEstandar, procId: string): Promise<string> {
+    const base = requerirUrlDeApp('tools').replace(/\/$/, '');
+    const r = await this.page.context().request.post(`${base}/index.php/traz-comp-tareasestandar/Tarea/guardar`, {
+      form: {
+        'data[nombre]': datos.nombre,
+        'data[descripcion]': datos.descripcion ?? '',
+        'data[duracion]': datos.duracion,
+        'data[form_id]': '',
+        'data[rece_id]': '',
+        'data[proc_id]': procId,
+      },
+    });
+    return r.text();
+  }
+
+  /** Valores que ofrece el selector "Proceso Asociado" del alta. */
+  async procesosOfrecidos(): Promise<string[]> {
+    return this.page.locator('#frm-tarea [name="proc_id"] option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value).filter(Boolean));
   }
 
   async editarTarea(nombreActual: string, cambios: Partial<DatosTareaEstandar>): Promise<void> {

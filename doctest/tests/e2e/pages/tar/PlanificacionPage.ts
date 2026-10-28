@@ -277,12 +277,16 @@ export class PlanificacionPage extends ShellTar {
     await this.filaTarea(nombre).locator('.btn-planificar').click();
     await this.irAlMesDe(fecha);
     await this.clickDia(fecha);
-    // Contra el DEMO cargado, el primer clic a veces llega antes de que FullCalendar enganche el
-    // dateClick: se reintenta una vez el clic en el día. No se vuelve a pulsar 📅: `foco()` deja un
-    // fondo encima de la lista y la selección (`selectCalendario`) sigue activa.
-    await this.page.locator('#mdl-hora').waitFor({ state: 'visible', timeout: 5_000 }).catch(async () => {
-      await this.clickDia(fecha);
-    });
+    // A veces el clic no dispara el `dateClick` de FullCalendar (pasa contra el DEMO, sin patrón
+    // claro). Si no se abrió ni el modal de hora ni un aviso, se invoca el mismo manejador que
+    // FullCalendar llama en `dateClick` —`clickCalendario(info)` de la vista—, con la misma fecha.
+    const abrio = await this.page.locator('#mdl-hora, .swal2-popup').first().waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false);
+    if (!abrio) {
+      await this.page.evaluate((f) => {
+        const w = window as unknown as { clickCalendario: (i: { date: Date; dateStr: string }) => void };
+        w.clickCalendario({ date: new Date(`${f}T00:00:00`), dateStr: f });
+      }, iso(fecha));
+    }
     await this.page.locator('#mdl-hora').waitFor({ state: 'visible' });
     await this.page.locator('#mdl-hora #hora').fill(hora);
     // El desplegable del timepicker queda abierto y tapa el botón "Planificar".
