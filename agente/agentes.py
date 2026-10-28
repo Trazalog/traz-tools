@@ -70,7 +70,11 @@ class Agente:
         return False
 
     def tool_permitida(self, nombre: str) -> bool:
-        """Si el nombre de tool entra en alguno de los patrones permitidos."""
+        """Si el nombre de tool entra en alguno de los patrones permitidos.
+
+        Solo el patron: no mira el catalogo ni la clase. Para decidir si un
+        agente puede llamar una tool se usa tools_permitidas(), que si los mira.
+        """
         return any(fnmatchcase(nombre, patron) for patron in self.tools_permitidas)
 
     # ------------------------------------------------------------- prompt
@@ -121,6 +125,22 @@ async def obtener(con: psycopg.AsyncConnection, clave: str, *,
     if solo_activos and not agente.activo:
         raise AgenteNoDisponible(f"{agente.nombre} todavía no está disponible")
     return agente
+
+
+async def tools_permitidas(con: psycopg.AsyncConnection, clave: str) -> frozenset[str]:
+    """Las tools que el agente puede usar DE VERDAD (ADR-A8, AGENTE-M-02).
+
+    Las resuelve la base (agente.tools_permitidas): catalogadas en agente.tool,
+    que no sean de clase 'accion', y dentro de los patrones del agente. Es la
+    unica fuente: tool_permitida() de arriba solo mira el patron y no sabe nada
+    del catalogo, asi que NO alcanza para decidir.
+
+    Si la funcion no existe (falta 012), revienta: el agente no responde, en
+    vez de responder con todas las tools del gateway.
+    """
+    async with con.cursor() as cur:
+        await cur.execute("SELECT agente.tools_permitidas(%s) AS nombre", (clave,))
+        return frozenset(f["nombre"] for f in await cur.fetchall())
 
 
 async def listar(con: psycopg.AsyncConnection) -> list[Agente]:

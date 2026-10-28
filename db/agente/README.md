@@ -43,6 +43,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 009 | `009-alcance-almacenes.sql` | Tipos de alerta de Almacenes y columna `modulo` en el conocimiento |
 | 010 | `010-seed-taxonomia.sql` | Taxonomía inicial de temas del entrevistador (propuesta para que el PM la corrija) |
 | 011 | `011-agentes.sql` | `agente` — la configuración de Kuntur, Quirqui y Faustino (ADR-A7): quién lo usa, prompt, tools permitidas, disparadores, fuentes y avatar. Global, igual para todos los clientes; el runtime solo la lee |
+| 012 | `012-tools.sql` | `tool` — el catálogo de las tools del MCP Gateway con su clase (lectura / generación / acción), y `tools_permitidas(clave)`: lo que cada agente puede usar de verdad (ADR-A8) |
 
 Aplicación completa, desde el directorio del repo:
 
@@ -168,6 +169,17 @@ El `rol_destino` de `agente.notificacion` queda como dato informativo (se copia 
 
 Los agentes son iguales para todos los clientes (decisión del PM, 2026-10-27): nombre, avatar, prompt y tools los define Trazalog. Por eso `agente.agente` no tiene RLS, y `agente_app` solo tiene `SELECT`: un bug del orquestador no puede, por ejemplo, abrirle el Coach a cualquier usuario. Dos reglas quedan como `CHECK` y no como convención: el Coach exige acceso `admin` (R1) y la autonomía solo puede ser `proponer` (R5). Para cambiar un agente se edita `011-agentes.sql` y se vuelve a aplicar: el seed actualiza por `clave`.
 
+### Por qué hay un catálogo de tools y no alcanza con los patrones (012)
+
+Los patrones de `agente.tools_permitidas` (`man_get_*`) dicen qué *familias* de tools quiere cada agente, pero no saben si una tool escribe. Por eso una tool es usable solo si **está catalogada en `agente.tool`, no es de clase `accion` y entra en un patrón**. Dos consecuencias buscadas:
+
+- **Falla cerrado:** una tool nueva del gateway no la ve ningún agente hasta que alguien la catalogue y decida su clase, aunque entre en `man_get_*`.
+- **Un patrón demasiado amplio no abre la escritura:** `man_*` o `*` siguen dejando afuera `man_create_ot` y `alm_crear_pedido_materiales`. Hay un test que lo verifica con esos patrones.
+
+En los patrones, el `_` se escapa antes de pasarlo a `LIKE`, donde es comodín: sin eso, `man_get_*` dejaría pasar `manXgetXalgo`. `tests/test_tools.py` compara además el catálogo contra el contrato del gateway (`doc/api/trazalog-operaciones.yaml`): toda operación publicada tiene que estar catalogada y toda la que no es `GET` tiene que ser `accion`.
+
+**Para agregar una tool nueva:** sumarla al seed de `012-tools.sql` con su clase y volver a aplicarlo.
+
 ### El agente cubre Mantenimiento y Almacenes
 
 El esquema de E1 se escribió pensando solo en Mantenimiento — un sesgo que el PM detectó el 2026-09-02. La capa MCP expone las **dos** áreas (11 tools `man_*` y 9 `alm_*`), así que el script `009` amplía el esquema:
@@ -211,6 +223,18 @@ Sobre una base **descartable** (contenedor `pgvector/pgvector:0.8.7-pg16`), con 
 | Rollback de `011` y re-aplicación | ✅ borra la tabla y su registro; re-aplicado vuelve a dar 79/79 |
 | Conexión como `agente_orq` intentando `UPDATE agente.agente` | ✅ `permission denied` (`tests/test_agentes.py`) |
 
+### Verificación de `012` (2026-10-27, AGENTE-M-02)
+
+Misma base descartable, con `001..012`:
+
+| Qué se probó | Resultado |
+|---|---|
+| Aplicar `012` dos veces | ✅ idempotente |
+| `tests/test-estructura.sql` | ✅ **88 de 88** (catálogo, las dos de escritura como `accion`, ningún agente alcanza una de acción, un patrón amplio tampoco, el `_` no es comodín, `agente_app` solo lee) |
+| `tests/test-aislamiento.sql` | ✅ **16 de 16** |
+| Rollback de `012` y re-aplicación | ✅ borra tabla, funciones y registro; sin `012` el orquestador no llega al modelo (falla cerrado) |
+| **Mutación:** sacar el filtro de clase de la función | ✅ lo detectan 4 tests de pytest y el test de estructura |
+
 ### Dos cosas que aparecieron al probar y están corregidas
 
 1. **El índice de deduplicación no podía usar `now()`.** PostgreSQL exige que las funciones del predicado de un índice sean `IMMUTABLE`; la primera versión fallaba con `functions in index predicate must be marked IMMUTABLE`. Se resolvió metiendo la ventana temporal **dentro** de la `dedupe_key`, lo que además la vuelve determinista.
@@ -222,7 +246,7 @@ Sobre una base **descartable** (contenedor `pgvector/pgvector:0.8.7-pg16`), con 
 
 | Ambiente | Base | Estado |
 |---|---|---|
-| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ⏳ **`011` pendiente de aplicar por el PM** (hace falta el superusuario): sin él, el orquestador no sabe qué agente es y no responde |
+| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ✅ `011` aplicado por el PM el 2026-10-27. ⏳ **`012` pendiente de aplicar por el PM**: sin él, el orquestador no responde (falla cerrado) |
 | Demo | a definir | ⏳ pendiente |
 | Producción | a definir | ⏳ pendiente |
 
