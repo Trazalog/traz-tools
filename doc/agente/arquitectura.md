@@ -264,6 +264,13 @@ Umbrales y máximos son **valores por defecto configurables** (`AGENTE_SUGERENCI
 
 **Limitación:** ninguna tool dice hoy qué tarea es de cada usuario, así que las propuestas son sobre el estado de la empresa en esa pantalla. "Tus tareas atrasadas" llega con las tools del módulo de tareas (TAR-API).
 
+## Avisos proactivos (AGENTE-AS-03, en curso)
+
+- **Token de máquina** (`agente/credenciales.py`): por empresa, con el secreto cifrado en `agente.credencial_empresa` y la clave en el entorno. Pide el JWT a Dnato por `client_credentials` y lo guarda hasta un minuto antes de vencer. **La emisión en Dnato espera la aprobación** de `analisis-impacto-token-maquina.md`.
+- **Monitoreo** (`agente/monitoreo.py`, por cron): con ese token, revisa lo mismo que el siguiente paso del panel y encola avisos en `agente.notificacion` para los destinatarios configurados. Sin destinatarios, silencio; una vez por día por destinatario.
+- **Campanita**: `GET /notificaciones` (los del usuario por nick o `usr_id`; los de rol `admin`, solo para administradores) y `POST /notificaciones/leida`. En Tools, un contador en el botón del panel de Quirqui y la lista de avisos sin leer.
+- **Falta:** el envío push (cola `agente.envio` → app Siddhi → `FirebaseConnectorAPI`).
+
 ## El chat dentro de Trazalog Tools (E3)
 
 Módulo `application/modules/traz-comp-agente/`, con el patrón habitual de Tools:

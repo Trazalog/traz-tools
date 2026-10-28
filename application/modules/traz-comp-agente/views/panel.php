@@ -18,7 +18,7 @@
 -->
 <?php $this->load->view(AGE . 'avatar'); ?>
 
-<div id="agp-boton" title="Preguntale a tu asistente"></div>
+<div id="agp-boton" title="Preguntale a tu asistente"><span id="agp-boton-avatar"></span><span id="agp-contador"></span></div>
 
 <div id="agp-panel" aria-hidden="true">
   <div class="agp-cabecera">
@@ -40,6 +40,7 @@
     </div>
   </div>
 
+  <div id="agp-avisos"></div>
   <div id="agp-propuestas"></div>
 
   <div id="agp-conversacion">
@@ -77,6 +78,15 @@
 .agp-quien { font-size: 11px; color: #999; margin-bottom: 2px; }
 .agp-error .agp-texto { color: #dd4b39; }
 .agp-pensando { color: #aaa; font-style: italic; }
+#agp-contador { position: absolute; top: -4px; right: -4px; z-index: 1; min-width: 18px; height: 18px;
+                padding: 0 5px; border-radius: 9px; background: #dd4b39; color: #fff; font-size: 11px;
+                line-height: 18px; text-align: center; display: none; }
+#agp-avisos { padding: 6px 12px 0; }
+.agp-aviso-item { border: 1px solid #e5e5e5; border-left: 3px solid #3c8dbc; border-radius: 3px;
+                  padding: 6px 8px; margin-bottom: 6px; font-size: 12px; cursor: pointer; }
+.agp-aviso-item.critica { border-left-color: #dd4b39; }
+.agp-aviso-item.leido { opacity: .55; }
+.agp-aviso-item strong { display: block; }
 #agp-propuestas { padding: 6px 12px 0; }
 .agp-prop { border: 1px solid #e5e5e5; border-left: 3px solid #f39c12; border-radius: 3px;
             padding: 6px 8px; margin-bottom: 6px; font-size: 12px; }
@@ -143,8 +153,33 @@
         $p.slideUp(150, function () { $p.remove(); });
     });
 
+    // --- avisos: la campanita (AGENTE-AS-03) ---------------------------------
+    // El contador sobre el botón se actualiza al cargar la página y cada 5 minutos.
+    function cargarAvisos() {
+        $.get(BASE + 'notificaciones').done(function (r) {
+            var n = r.sin_leer || 0;
+            $('#agp-contador').text(n > 9 ? '9+' : n).toggle(n > 0);
+            if (n > 0 && !$panel.hasClass('abierto')) { estado('alerta'); }
+            var $l = $('#agp-avisos').empty();
+            (r.notificaciones || []).filter(function (x) { return !x.leido; }).slice(0, 5).forEach(function (x) {
+                $l.append('<div class="agp-aviso-item ' + escapar(x.severidad) + '" data-id="' + escapar(x.notificacion_id) + '">' +
+                          '<strong>' + escapar(x.titulo) + '</strong>' + escapar(x.cuerpo) +
+                          (x.enlace ? ' <a href="<?= base_url() ?>' + escapar(x.enlace) + '" target="_blank">Ayuda</a>' : '') +
+                          '</div>');
+            });
+        });
+    }
+    $('#agp-avisos').on('click', '.agp-aviso-item', function () {
+        var $a = $(this);
+        if ($a.hasClass('leido')) { return; }
+        $a.addClass('leido');
+        $.post(BASE + 'notificacion_leida', { notificacion_id: $a.data('id') }).always(cargarAvisos);
+    });
+    cargarAvisos();
+    setInterval(cargarAvisos, 5 * 60 * 1000);
+
     function abrir()  { $panel.addClass('abierto').attr('aria-hidden', 'false'); $('#agp-pregunta').focus();
-                        estado('saludo'); cargarPropuestas(); }
+                        estado('saludo'); cargarPropuestas(); cargarAvisos(); }
     function cerrar() { $panel.removeClass('abierto').attr('aria-hidden', 'true'); estado('despedida'); }
 
     $('#agp-boton').on('click', function () { $panel.hasClass('abierto') ? cerrar() : abrir(); });
@@ -155,7 +190,9 @@
     // Hasta que llega la respuesta (o si falla) se usa Quirqui, el agente por defecto.
     var agente = { clave: 'quirqui', nombre: 'Quirqui', avatar: 'quirqui' };
     function pintarIdentidad(estado) {
-        $('#agp-boton').html(TZAgente.avatar(agente, estado, true)).attr('title', 'Preguntale a ' + agente.nombre);
+        // En su propio contenedor: el botón también tiene el contador de avisos.
+        $('#agp-boton-avatar').html(TZAgente.avatar(agente, estado, true));
+        $('#agp-boton').attr('title', 'Preguntale a ' + agente.nombre);
         $('#agp-cab-avatar').html(TZAgente.avatar(agente, estado));
         $('#agp-nombre').text(agente.nombre);
     }

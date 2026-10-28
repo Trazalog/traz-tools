@@ -229,6 +229,25 @@ class Agente extends CI_Controller
         $this->_json($this->Agentes->agentes($this->_token()));
     }
 
+    /** Los avisos del usuario: la campanita (AGENTE-AS-03). */
+    public function notificaciones()
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('notificaciones' => array(), 'sin_leer' => 0));
+            return;
+        }
+        $this->_json($this->Agentes->notificaciones($this->_token()));
+    }
+
+    public function notificacion_leida()
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('error' => 'sin_autorizacion'), 401);
+            return;
+        }
+        $this->_json($this->Agentes->notificacionLeida($this->_token(), (int) $this->input->post('notificacion_id')));
+    }
+
     /** Estado del orquestador, para diagnosticar desde la UI. */
     public function salud()
     {

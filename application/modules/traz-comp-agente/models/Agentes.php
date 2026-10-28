@@ -231,6 +231,18 @@ class Agentes extends CI_Model
     }
 
     /** Estado del orquestador. No necesita token. */
+    public function notificaciones($jwt)
+    {
+        $rsp = $this->_llamar('GET', '/notificaciones', null, $jwt, 10);
+        return $rsp['ok'] ? $rsp['data'] : ['notificaciones' => [], 'sin_leer' => 0];
+    }
+
+    public function notificacionLeida($jwt, $id)
+    {
+        $rsp = $this->_llamar('POST', '/notificaciones/leida', ['notificacion_id' => $id], $jwt, 10);
+        return $rsp['ok'] ? $rsp['data'] : ['error' => 'no_disponible'];
+    }
+
     public function agentes($jwt)
     {
         $rsp = $this->_llamar('GET', '/agentes', null, $jwt, 10);
