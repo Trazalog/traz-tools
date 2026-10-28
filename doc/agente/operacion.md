@@ -148,6 +148,26 @@ Son el conocimiento **del producto**: con eso Quirqui explica qué se hace en ca
 - **Volver a correrlo reemplaza, no duplica.** Conviene correrlo cada vez que se regenera el sitio de ayudas o se valida un caso nuevo.
 - Con el material de hoy son unos 240 fragmentos. El costo de vectorizarlos es de centavos de dólar.
 
+### Avisos proactivos: el monitoreo operativo (AGENTE-AS-03)
+
+Un job revisa cada empresa con credencial de máquina (lotes vencidos o críticos, stock bajo el punto de pedido, certificaciones por vencer) y encola avisos en `agente.notificacion` para los **destinatarios configurados** de cada tipo. Sin destinatarios para un tipo, no avisa a nadie. El mismo aviso no se repite en el día.
+
+**Requisitos:** `018` aplicado; `AGENTE_DNATO_TOKEN_URL` y `AGENTE_CLAVE_CREDENCIALES` en el entorno; la credencial de cada empresa cargada (`python -m agente.credenciales alta --empresa <id> --client-id <id>`, pide el secreto por teclado); y los destinatarios en `agente.destinatario_alerta`. **Hoy Dnato todavía no emite tokens de máquina** (espera la aprobación del análisis de impacto): hasta entonces el job termina con `"error"` en cada empresa, sin hacer nada.
+
+Correrlo a mano (**terminal del servidor del orquestador**, parado en el repo):
+
+```
+.venv-agente/bin/python -m agente.monitoreo
+```
+
+Programado (crontab del usuario del orquestador, una vez por hora en horario laboral):
+
+```
+0 7-19 * * 1-6 cd /ruta/a/traz-tools && .venv-agente/bin/python -m agente.monitoreo >> /var/log/agente-monitoreo.log 2>&1
+```
+
+Cada empresa queda como una corrida (`disparador = 'evento_operativo'`, canal `scheduler`), con el resumen en `controles`.
+
 ### La industria de cada empresa (ADR-A11)
 
 El conocimiento está marcado por industria: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Una empresa con la industria declarada recibe lo de su industria y lo general; **sin declarar, recibe todo**, etiquetado. Hoy la industria la carga Trazalog; más adelante la va a completar la entrevista de Kuntur.
