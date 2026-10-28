@@ -1434,7 +1434,7 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="setOtHerramientaMan" useConfig="AssetPlannerDataSource">
-      <sql>INSERT INTO tbl_otherramientas (otId, herrId, cantidad, id_empresa, descripcion_libre) SELECT ot.id_orden, :herrId, :cantidad, ot.id_empresa, :descripcion_libre FROM orden_trabajo ot WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <sql>INSERT INTO tbl_otherramientas (otId, herrId, cantidad, id_empresa, descripcion_libre) SELECT ot.id_orden, :herrId, :cantidad, ot.id_empresa, NULLIF(:descripcion_libre, '') FROM orden_trabajo ot WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
       <param name="id_orden" sqlType="STRING"/>
       <param name="herrId" sqlType="STRING"/>
       <param name="cantidad" sqlType="STRING"/>
@@ -1508,6 +1508,46 @@
       <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
       <param name="fecha" sqlType="STRING"/>
       <param name="id_listarea" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtMan" keyColumns="id_orden" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO orden_trabajo (id_tarea, fecha, fecha_program, fecha_inicio, fecha_entrega, fecha_terminada, fecha_aviso, fecha_entregada, descripcion, estado, id_usuario, id_usuario_e, id_sucursal, id_proveedor, id_solicitud, tipo, id_equipo, id_empresa) SELECT :id_tarea, '0000-00-00', :fecha_program, CAST('0000-00-00' AS DATETIME), :fecha_entrega, CAST('0000-00-00' AS DATETIME), CAST('0000-00-00' AS DATETIME), CAST('0000-00-00' AS DATETIME), IFNULL((SELECT t.descripcion FROM tareas t WHERE t.id_tarea = :id_tarea AND :id_tarea != 0 LIMIT 1), :descripcion), 'PL', :id_usuario, 0, :id_sucursal, :id_proveedor, 0, 1, e.id_equipo, e.id_empresa FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
+      <param name="id_tarea" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="fecha_program" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="fecha_entrega" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="descripcion" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_usuario" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_sucursal" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_proveedor" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtCaseIdMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET case_id = :case_id WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarOtMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtAsignarMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET fecha_entrega = :fecha_entrega, estado = 'As', id_usuario_a = :id_usuario_a WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="fecha_entrega" sqlType="STRING"/>
+      <param name="id_usuario_a" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getUsuarioNickMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT u.usrNick FROM sisusers u JOIN usuarioasempresa ue ON ue.usrId = u.usrId WHERE u.usrId = :usrId AND ue.empresaid = :id_empresa LIMIT 1</sql>
+      <result outputType="json">{"usuarios":{"usuario":[{"usrNick":"$usrNick"}]}}</result>
+      <param name="usrId" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <resource method="GET" path="/ots/listado/empresa/{id_empresa}">
@@ -1623,6 +1663,21 @@
    </resource>
    <resource method="PUT" path="/ot/tarea/fecha">
       <call-query href="updateOtTareaFechaMan"><with-param name="fecha" query-param="fecha"/><with-param name="id_listarea" query-param="id_listarea"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot">
+      <call-query href="setOtMan"><with-param name="id_tarea" query-param="id_tarea"/><with-param name="fecha_program" query-param="fecha_program"/><with-param name="fecha_entrega" query-param="fecha_entrega"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_usuario" query-param="id_usuario"/><with-param name="id_sucursal" query-param="id_sucursal"/><with-param name="id_proveedor" query-param="id_proveedor"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/caseid">
+      <call-query href="updateOtCaseIdMan"><with-param name="case_id" query-param="case_id"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/borrar">
+      <call-query href="borrarOtMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/asignar">
+      <call-query href="updateOtAsignarMan"><with-param name="fecha_entrega" query-param="fecha_entrega"/><with-param name="id_usuario_a" query-param="id_usuario_a"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/usuario/{usrId}/nick/empresa/{id_empresa}">
+      <call-query href="getUsuarioNickMan"><with-param name="usrId" query-param="usrId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <!-- MIG-ASSET-2s · Solicitudes de servicio. Reemplaza el acceso directo de models/Sservicios.php (ADR-014). Toda query queda
         limitada a la empresa (id de asset); asset no filtraba getSSs, getEquipSectores ni get_SolicTerminadas. Crear y eliminar
