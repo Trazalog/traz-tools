@@ -3,8 +3,8 @@
 Un job (cron) que recorre las empresas con credencial de maquina y, para cada
 una, revisa lo mismo que el siguiente paso del panel (agente/sugerencias.py):
 lotes vencidos o criticos, stock bajo el punto de pedido, certificaciones de
-herramientas por vencer. Lo que encuentra lo encola en agente.notificacion
-para los destinatarios configurados de ese tipo de aviso.
+herramientas por vencer. Lo que encuentra lo publica en los avisos de Tools
+(ADR-015: POST /avisos de toolsNTFAPI, agente/avisos.py).
 
     python -m agente.monitoreo                 todas las empresas con credencial
     python -m agente.monitoreo --empresa 191   una sola
@@ -13,17 +13,19 @@ Reglas:
 
   * Usa el token de maquina de la empresa (agente/credenciales.py) y pasa por
     la lista blanca de Quirqui, como cualquier consulta.
-  * Sin destinatarios configurados para un tipo de aviso, NO se avisa (silencio
-    en vez de aviso al azar, decision de E1). Queda en la corrida.
+  * A quien le llega lo decide Tools con las suscripciones del tipo de aviso
+    (ntf.suscripcion). Sin suscriptos, el aviso no le llega a nadie (silencio
+    en vez de aviso al azar, decision de E1).
   * No repite: la dedupe_key lleva el dia, asi que el mismo hallazgo se avisa
-    una vez por dia y por destinatario aunque el cron corra cada hora.
+    una vez por dia aunque el cron corra cada hora.
+  * Sin AGENTE_AVISOS_URL no se publica nada: los hallazgos quedan en la
+    corrida.
   * Cada empresa es una corrida registrada (R8), con disparador
     'evento_operativo' y canal 'scheduler'.
 
-Por cada aviso nuevo se encola un envio push (agente.envio) por dispositivo
-activo del destinatario, firmado por el agente y con su avatar como icono. El
-envio real lo hace la app Siddhi (cola -> FirebaseConnectorAPI), que todavia
-no esta.
+El aviso va firmado por el agente (emisor): el push sale con su nombre en el
+titulo y su avatar como icono (Siddhi AvisosPush). Ya no hay cola propia en el
+esquema agente.
 """
 from __future__ import annotations
 
@@ -35,14 +37,14 @@ import time
 import uuid
 from datetime import date
 
-from . import agentes, credenciales, rag, sugerencias
+from . import agentes, avisos, credenciales, rag, sugerencias
 from .config import Config, cargar
 from .mcp_client import ClienteMCP, MCPError
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador, Resultado
 
 log = logging.getLogger("agente.monitoreo")
 
-# Tipo de hallazgo (sugerencias.py) -> tipo de aviso y severidad (007/018).
+# Tipo de hallazgo (sugerencias.py) -> tipo de aviso de ntf y severidad.
 AVISO = {
     "lote_vencido": ("material_por_vencer", "critica"),
     "lote_critico": ("material_por_vencer", "aviso"),
@@ -53,7 +55,7 @@ AVISO = {
 
 async def monitorear_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
                              *, hoy: date | None = None) -> dict:
-    """Revisa una empresa y encola los avisos. Devuelve un resumen."""
+    """Revisa una empresa y publica los avisos. Devuelve un resumen."""
     hoy = hoy or date.today()
     t0 = time.monotonic()
     agente = await agentes.obtener(con, AGENTE_POR_DEFECTO)
@@ -62,7 +64,7 @@ async def monitorear_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
                         disparador="evento_operativo", agente=agente,
                         usuario_nick="agente:monitoreo")
     res = Resultado(interaccion_id=str(uuid.uuid4()), respuesta="")
-    resumen = {"empr_id": empr_id, "hallazgos": 0, "avisos": 0, "sin_destinatario": 0, "envios": 0}
+    resumen = {"empr_id": empr_id, "hallazgos": 0, "avisos": 0, "sin_publicar": 0}
     await rag.fijar_empresa(con, empr_id)
 
     try:
@@ -82,37 +84,24 @@ async def monitorear_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
             res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
         resumen["hallazgos"] = len(cands)
 
-        async with con.cursor() as cur:
-            for c in cands:
-                tipo, severidad = AVISO.get(c.tipo, ("hallazgo", "info"))
-                await cur.execute("SELECT usr_id, usuario FROM agente.destinatarios(%s, %s)",
-                                  (empr_id, tipo))
-                destinos = await cur.fetchall()
-                if not destinos:
-                    resumen["sin_destinatario"] += 1
-                    continue
-                for d in destinos:
-                    quien = d["usuario"] or str(d["usr_id"])
-                    await cur.execute(
-                        """
-                        INSERT INTO agente.notificacion
-                            (empr_id, usr_id, usuario, tipo, titulo, cuerpo, severidad,
-                             entidad_tipo, entidad_id, enlace, dedupe_key)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (empr_id, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
-                        RETURNING notificacion_id
-                        """,
-                        (empr_id, d["usr_id"], d["usuario"], tipo, c.titulo, c.detalle, severidad,
-                         c.tipo, c.clave.split(":", 1)[-1], c.accion.get("ayuda"),
-                         f"{c.clave}:{quien}:{hoy.isoformat()}"))
-                    nueva = await cur.fetchone()
-                    if not nueva:
-                        continue   # ya se aviso hoy
-                    resumen["avisos"] += 1
-                    resumen["envios"] += await _encolar_push(
-                        cur, nueva["notificacion_id"], empr_id, d, c, agente, cfg)
-        res.respuesta = (f"{resumen['hallazgos']} hallazgo(s), {resumen['avisos']} aviso(s) nuevo(s), "
-                         f"{resumen['sin_destinatario']} sin destinatario")
+        for c in cands:
+            if not avisos.habilitado(cfg):
+                resumen["sin_publicar"] += 1
+                continue
+            tipo, severidad = AVISO.get(c.tipo, ("hallazgo", "info"))
+            aviso = avisos.Aviso(
+                tipo=tipo, titulo=c.titulo, cuerpo=c.detalle, severidad=severidad,
+                enlace=c.accion.get("ayuda"), entidad_tipo=c.tipo,
+                entidad_id=c.clave.split(":", 1)[-1], emisor=agente.nombre,
+                dedupe_key=f"{c.clave}:{hoy.isoformat()}")
+            try:
+                await avisos.publicar(cfg, autorizacion, aviso)
+                resumen["avisos"] += 1
+            except avisos.AvisoError as e:
+                log.warning("Monitoreo %s: no se publico %s: %s", empr_id, c.clave, e)
+                resumen["sin_publicar"] += 1
+        res.respuesta = (f"{resumen['hallazgos']} hallazgo(s), {resumen['avisos']} aviso(s) publicado(s), "
+                         f"{resumen['sin_publicar']} sin publicar")
         res.controles.append({"control": "monitoreo", **resumen})
     except Exception as e:  # noqa: BLE001 - se registra y se sigue con la proxima empresa
         res.error = f"{type(e).__name__}: {e}"
@@ -124,40 +113,6 @@ async def monitorear_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
     await Orquestador(cfg)._registrar(con, consulta, res)
     resumen["error"] = res.error
     return resumen
-
-
-async def _encolar_push(cur, notificacion_id: int, empr_id: int, destino: dict,
-                        c: "sugerencias.Candidata", agente, cfg: Config) -> int:
-    """Una fila en agente.envio por cada dispositivo activo del destinatario.
-
-    El envio real lo hace la app Siddhi (cola -> FirebaseConnectorAPI). El
-    push va firmado por el agente: su nombre en el titulo y su avatar como
-    icono (AGENTE-ID-06). Sin dispositivos registrados, el aviso queda solo en
-    la campanita.
-    """
-    await cur.execute(
-        """
-        SELECT dispositivo_id, token FROM agente.dispositivo
-        WHERE empr_id = %s AND activo
-          AND (usuario = %s OR (usr_id IS NOT NULL AND usr_id = %s))
-        """, (empr_id, destino["usuario"], destino["usr_id"]))
-    dispositivos = await cur.fetchall()
-    for disp in dispositivos:
-        payload = {
-            "notification": {
-                "title": f"{agente.nombre}: {c.titulo}",
-                "body": c.detalle,
-                "icon": f"assets/agentes/{agente.avatar}/icono.png",
-            },
-            "data": {"notificacion_id": str(notificacion_id), "tipo": c.tipo,
-                     "enlace": c.accion.get("ayuda") or ""},
-        }
-        await cur.execute(
-            "INSERT INTO agente.envio (notificacion_id, dispositivo_id, token, payload) "
-            "VALUES (%s, %s, %s, %s)",
-            (notificacion_id, disp["dispositivo_id"], disp["token"],
-             json.dumps(payload, ensure_ascii=False)))
-    return len(dispositivos)
 
 
 async def correr(cfg: Config, *, empresa: int | None = None) -> list[dict]:

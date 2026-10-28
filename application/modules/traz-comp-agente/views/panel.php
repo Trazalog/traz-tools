@@ -153,18 +153,26 @@
         $p.slideUp(150, function () { $p.remove(); });
     });
 
-    // --- avisos: la campanita (AGENTE-AS-03) ---------------------------------
-    // El contador sobre el botón se actualiza al cargar la página y cada 5 minutos.
+    // --- avisos firmados por los agentes (ADR-015) -----------------------------
+    // Salen de la campanita de Tools (index.php/Avisos, misma sesion): aca se
+    // muestran solo los que firma un agente, con su contador sobre el boton.
+    var AVISOS = '<?= base_url() ?>index.php/Avisos/';
+    var FIRMAN = { quirqui: 1, kuntur: 1, faustino: 1 };
     function cargarAvisos() {
-        $.get(BASE + 'notificaciones').done(function (r) {
-            var n = r.sin_leer || 0;
+        $.getJSON(AVISOS + 'mios').done(function (r) {
+            var propios = (r.avisos || []).filter(function (x) {
+                return !x.leido && FIRMAN[String(x.emisor || '').toLowerCase()];
+            });
+            var n = propios.length;
             $('#agp-contador').text(n > 9 ? '9+' : n).toggle(n > 0);
             if (n > 0 && !$panel.hasClass('abierto')) { estado('alerta'); }
             var $l = $('#agp-avisos').empty();
-            (r.notificaciones || []).filter(function (x) { return !x.leido; }).slice(0, 5).forEach(function (x) {
-                $l.append('<div class="agp-aviso-item ' + escapar(x.severidad) + '" data-id="' + escapar(x.notificacion_id) + '">' +
+            propios.slice(0, 5).forEach(function (x) {
+                var enlace = String(x.enlace || '');
+                var ok = /^[A-Za-z0-9_\-\/.]+$/.test(enlace);
+                $l.append('<div class="agp-aviso-item ' + escapar(x.severidad) + '" data-id="' + escapar(x.aviso_id) + '">' +
                           '<strong>' + escapar(x.titulo) + '</strong>' + escapar(x.cuerpo) +
-                          (x.enlace ? ' <a href="<?= base_url() ?>' + escapar(x.enlace) + '" target="_blank">Ayuda</a>' : '') +
+                          (ok ? ' <a href="<?= base_url() ?>' + escapar(enlace) + '" target="_blank">Ayuda</a>' : '') +
                           '</div>');
             });
         });
@@ -173,7 +181,10 @@
         var $a = $(this);
         if ($a.hasClass('leido')) { return; }
         $a.addClass('leido');
-        $.post(BASE + 'notificacion_leida', { notificacion_id: $a.data('id') }).always(cargarAvisos);
+        $.post(AVISOS + 'leido/' + parseInt($a.data('id'), 10)).always(function () {
+            cargarAvisos();
+            if (window.TZAvisos) { window.TZAvisos.refrescar(); }
+        });
     });
     cargarAvisos();
     setInterval(cargarAvisos, 5 * 60 * 1000);

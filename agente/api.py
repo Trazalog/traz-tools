@@ -6,10 +6,11 @@ Endpoints:
     POST /consulta         la consulta del usuario -> respuesta del agente elegido
     POST /sugerencias      el siguiente paso que Quirqui propone en una pantalla
     POST /sugerencias/respuesta  el usuario ve o descarta una propuesta
-    GET  /notificaciones   los avisos del usuario (la campanita)
-    POST /notificaciones/leida  marcar un aviso como leido
     POST /feedback         calificacion de una respuesta (pulgar arriba/abajo)
     GET  /admin/feedback   feedback negativo agrupado, para el ciclo de mejora
+
+Los avisos (la campanita y el push) ya no estan aca: son los de Tools
+(ADR-015, esquema ntf); el monitoreo publica con agente/avisos.py.
 
 El empr_id NO es un parametro de entrada: se deriva del JWT que manda el
 frontend. Aceptarlo por body seria darle a cualquiera la llave de los datos de
@@ -133,10 +134,6 @@ class SugerenciasIn(BaseModel):
 class RespuestaPropuestaIn(BaseModel):
     propuesta_id: int
     estado: str = Field(pattern=r"^(aceptada|descartada)$")
-
-
-class LeidaIn(BaseModel):
-    notificacion_id: int
 
 
 class FeedbackIn(BaseModel):
@@ -290,60 +287,6 @@ async def responder_propuesta(
     if not fila:
         raise HTTPException(404, "No existe esa propuesta pendiente para este usuario")
     return dict(fila)
-
-
-def _usuario(ident: Identidad) -> str:
-    return ident.nick or str(ident.usr_id or "")
-
-
-@app.get("/notificaciones")
-async def notificaciones(
-    ident: Identidad = Depends(identidad),
-    con: psycopg.AsyncConnection = Depends(conexion),
-    limite: int = 20,
-) -> dict:
-    """Los avisos del usuario (AGENTE-AS-03): los suyos por nick o por usr_id,
-    y los dirigidos a 'admin' si es administrador. Nunca los de otro usuario
-    de la misma empresa, y nunca los de otra empresa (RLS)."""
-    await rag.fijar_empresa(con, ident.empr_id)
-    es_admin = str(ident.rol or "") == agentes.ROL_ADMIN_DNATO
-    sql = """
-        SELECT notificacion_id, tipo, titulo, cuerpo, severidad, enlace, leido,
-               to_char(fec_alta, 'YYYY-MM-DD HH24:MI') AS fecha
-        FROM agente.notificacion
-        WHERE (usuario = %(usuario)s OR usr_id = %(usr_id)s
-               OR (rol_destino = 'admin' AND %(admin)s))
-          AND (vence_en IS NULL OR vence_en > now())
-        ORDER BY leido, fec_alta DESC
-        LIMIT %(limite)s
-    """
-    async with con.cursor() as cur:
-        await cur.execute(sql, {"usuario": _usuario(ident), "usr_id": ident.usr_id,
-                                "admin": es_admin, "limite": min(max(limite, 1), 100)})
-        filas = [dict(f) for f in await cur.fetchall()]
-    return {"notificaciones": filas, "sin_leer": sum(1 for f in filas if not f["leido"])}
-
-
-@app.post("/notificaciones/leida")
-async def notificacion_leida(
-    entrada: LeidaIn,
-    ident: Identidad = Depends(identidad),
-    con: psycopg.AsyncConnection = Depends(conexion),
-) -> dict:
-    await rag.fijar_empresa(con, ident.empr_id)
-    async with con.cursor() as cur:
-        await cur.execute(
-            """
-            UPDATE agente.notificacion SET leido = true, fec_lectura = now()
-            WHERE notificacion_id = %s AND NOT leido
-              AND (usuario = %s OR usr_id = %s)
-            RETURNING notificacion_id
-            """, (entrada.notificacion_id, _usuario(ident), ident.usr_id))
-        fila = await cur.fetchone()
-    await con.commit()
-    if not fila:
-        raise HTTPException(404, "No existe ese aviso sin leer para este usuario")
-    return {"notificacion_id": fila["notificacion_id"], "leido": True}
 
 
 @app.post("/feedback")

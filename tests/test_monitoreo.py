@@ -1,36 +1,47 @@
 """Monitoreo operativo: avisos proactivos (AGENTE-AS-03), con MCP simulado.
 
-Siembra destinatarios como administrador (con_admin): el runtime no puede
-configurar quien recibe los avisos de otra empresa, y esta bien.
+Desde ADR-015 el monitoreo no escribe avisos en la base del agente: los
+publica en Tools (POST /avisos de toolsNTFAPI). Aca el API de avisos se
+simula; que ntf no duplique ni cruce empresas lo prueban tests/test_ntf.py.
 """
 from __future__ import annotations
 
-import uuid
+import dataclasses
 from datetime import date
 
-from agente import monitoreo
+import httpx
+import pytest
+
+from agente import avisos, monitoreo
 from agente.config import Config
 from test_orquestador import MCPFalso, _parchar
 from test_sugerencias import CERTS, LOTES, STOCK
 
 EMPRESA = 900001
 HOY = date(2026, 10, 27)
+URL = "https://apim.prueba/tools/ntf/1.0/avisos"
 
 
-async def _destinatario(con, tipo: str, usuario: str):
-    async with con.cursor() as cur:
-        await cur.execute("SET LOCAL agente.empr_id = '900001'")
-        await cur.execute("DELETE FROM agente.destinatario_alerta WHERE empr_id = %s", (EMPRESA,))
-        await cur.execute("INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usuario, etiqueta) "
-                          "VALUES (%s, %s, %s, 'prueba')", (EMPRESA, tipo, usuario))
+class APIAvisosFalso:
+    """Hace de toolsNTFAPI: guarda lo publicado y, como ntf, devuelve el mismo
+    aviso_id para la misma dedupe_key."""
 
+    def __init__(self, status: int = 200):
+        self.status = status
+        self.pedidos: list[tuple[str, dict]] = []
+        self.por_clave: dict[str, int] = {}
 
-async def _avisos(con, usuario: str) -> list[dict]:
-    async with con.cursor() as cur:
-        await cur.execute("SET LOCAL agente.empr_id = '900001'")
-        await cur.execute("SELECT tipo, severidad, titulo FROM agente.notificacion "
-                          "WHERE usuario = %s ORDER BY notificacion_id", (usuario,))
-        return await cur.fetchall()
+    def transporte(self) -> httpx.MockTransport:
+        def manejar(req: httpx.Request) -> httpx.Response:
+            import json
+            cuerpo = json.loads(req.content)
+            self.pedidos.append((req.headers.get("Authorization"), cuerpo))
+            if self.status != 200:
+                return httpx.Response(self.status, json={"error": "x"})
+            clave = cuerpo.get("dedupe_key") or str(len(self.pedidos))
+            aviso_id = self.por_clave.setdefault(clave, len(self.por_clave) + 1)
+            return httpx.Response(200, json={"respuesta": {"aviso_id": str(aviso_id)}})
+        return httpx.MockTransport(manejar)
 
 
 def _mcp(monkeypatch, llm_falso):
@@ -41,43 +52,70 @@ def _mcp(monkeypatch, llm_falso):
     return mcp
 
 
-async def test_avisa_a_los_destinatarios_del_tipo(con_admin, monkeypatch, llm_falso):
-    usuario = f"jefe-deposito-{uuid.uuid4().hex[:6]}"
-    await _destinatario(con_admin, "material_por_vencer", usuario)
+def _api(monkeypatch, status: int = 200) -> APIAvisosFalso:
+    api = APIAvisosFalso(status)
+    original = avisos.publicar
+
+    async def publicar(cfg, autorizacion, aviso, *, cliente=None):
+        async with httpx.AsyncClient(transport=api.transporte()) as c:
+            return await original(cfg, autorizacion, aviso, cliente=c)
+
+    monkeypatch.setattr("agente.monitoreo.avisos.publicar", publicar)
+    return api
+
+
+def _cfg() -> Config:
+    return dataclasses.replace(Config(), avisos_url=URL)
+
+
+async def test_publica_los_hallazgos_firmados_por_el_agente(con_admin, monkeypatch, llm_falso):
     _mcp(monkeypatch, llm_falso)
+    api = _api(monkeypatch)
 
-    r = await monitoreo.monitorear_empresa(con_admin, Config(), EMPRESA, "Bearer maquina", hoy=HOY)
+    r = await monitoreo.monitorear_empresa(con_admin, _cfg(), EMPRESA, "Bearer maquina", hoy=HOY)
 
-    avisos = await _avisos(con_admin, usuario)
-    assert [a["severidad"] for a in avisos] == ["critica", "aviso"], "lote vencido y lote crítico"
-    assert {a["tipo"] for a in avisos} == {"material_por_vencer"}
-    assert r["sin_destinatario"] > 0, "stock y certificaciones no tienen destinatario: silencio"
+    assert r["avisos"] == r["hallazgos"] == len(api.pedidos) > 0
+    auth, primero = api.pedidos[0]
+    assert auth == "Bearer maquina", "con el token de maquina de la empresa"
+    assert "empr_id" not in primero, "la empresa la pone el API a partir del token"
+    assert primero["origen"] == "agente" and primero["emisor"] == "Quirqui"
+    assert "destinatarios" not in primero, "a quien le llega lo deciden las suscripciones de ntf"
+    severidades = {p["tipo"]: p["severidad"] for _, p in api.pedidos if p["entidad_tipo"] == "lote_vencido"}
+    assert severidades == {"material_por_vencer": "critica"}
 
 
-async def test_no_repite_el_mismo_aviso_el_mismo_dia(con_admin, monkeypatch, llm_falso):
-    usuario = f"jefe-{uuid.uuid4().hex[:6]}"
-    await _destinatario(con_admin, "*", usuario)
+async def test_la_clave_lleva_el_dia_para_no_repetir(con_admin, monkeypatch, llm_falso):
     _mcp(monkeypatch, llm_falso)
+    api = _api(monkeypatch)
 
-    primero = await monitoreo.monitorear_empresa(con_admin, Config(), EMPRESA, "Bearer m", hoy=HOY)
-    segundo = await monitoreo.monitorear_empresa(con_admin, Config(), EMPRESA, "Bearer m", hoy=HOY)
+    await monitoreo.monitorear_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
+    await monitoreo.monitorear_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
 
-    assert primero["avisos"] > 0 and segundo["avisos"] == 0
-    assert len(await _avisos(con_admin, usuario)) == primero["avisos"]
+    claves = [p["dedupe_key"] for _, p in api.pedidos]
+    assert all(c.endswith(":2026-10-27") for c in claves)
+    assert len(set(claves)) == len(claves) // 2, "la segunda corrida repite las mismas claves: ntf no duplica"
 
 
-async def test_sin_destinatarios_no_avisa_a_nadie(con_admin, monkeypatch, llm_falso):
-    async with con_admin.cursor() as cur:
-        await cur.execute("SET LOCAL agente.empr_id = '900001'")
-        await cur.execute("DELETE FROM agente.destinatario_alerta WHERE empr_id = %s", (EMPRESA,))
+async def test_sin_url_de_avisos_no_publica_y_queda_en_la_corrida(con_admin, monkeypatch, llm_falso):
     _mcp(monkeypatch, llm_falso)
+    api = _api(monkeypatch)
     r = await monitoreo.monitorear_empresa(con_admin, Config(), EMPRESA, "Bearer m", hoy=HOY)
-    assert r["avisos"] == 0 and r["sin_destinatario"] == r["hallazgos"] > 0
+    assert api.pedidos == []
+    assert r["avisos"] == 0 and r["sin_publicar"] == r["hallazgos"] > 0
+
+
+async def test_si_el_api_rechaza_se_cuenta_y_sigue(con_admin, monkeypatch, llm_falso):
+    _mcp(monkeypatch, llm_falso)
+    _api(monkeypatch, status=503)
+    r = await monitoreo.monitorear_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
+    assert r["error"] is None, "un aviso rechazado no corta el monitoreo"
+    assert r["avisos"] == 0 and r["sin_publicar"] == r["hallazgos"] > 0
 
 
 async def test_usa_solo_tools_de_lectura_de_la_lista_blanca(con_admin, monkeypatch, llm_falso):
     mcp = _mcp(monkeypatch, llm_falso)
-    await monitoreo.monitorear_empresa(con_admin, Config(), EMPRESA, "Bearer m", hoy=HOY)
+    _api(monkeypatch)
+    await monitoreo.monitorear_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
     assert {ll.tool for ll in mcp.llamadas} == {"alm_get_stock", "alm_get_vencimientos",
                                                  "pan_get_certificaciones"}
 
@@ -103,25 +141,15 @@ async def test_una_empresa_sin_credencial_no_frena_a_las_demas(con_admin, monkey
     assert r[1]["empr_id"] == EMPRESA and r[1]["error"] is None
 
 
-async def test_encola_un_push_por_dispositivo_con_el_avatar_del_agente(con_admin, monkeypatch, llm_falso):
-    usuario = f"jefe-push-{uuid.uuid4().hex[:6]}"
-    await _destinatario(con_admin, "material_por_vencer", usuario)
-    async with con_admin.cursor() as cur:
-        await cur.execute("SET LOCAL agente.empr_id = '900001'")
-        for t in ("tok-celular", "tok-tablet"):
-            await cur.execute("INSERT INTO agente.dispositivo (empr_id, usuario, token) VALUES (%s, %s, %s)",
-                              (EMPRESA, usuario, f"{t}-{usuario}"))
-    _mcp(monkeypatch, llm_falso)
+# ---------------------------------------------------------------- agente/avisos.py
+async def test_publicar_sin_url_falla_claro():
+    with pytest.raises(avisos.AvisoError, match="AGENTE_AVISOS_URL"):
+        await avisos.publicar(Config(), "Bearer m", avisos.Aviso(tipo="x1", titulo="t"))
 
-    r = await monitoreo.monitorear_empresa(con_admin, Config(), EMPRESA, "Bearer m", hoy=HOY)
 
-    assert r["envios"] == 2 * r["avisos"] == 4, "2 avisos (lote vencido y crítico) x 2 dispositivos"
-    async with con_admin.cursor() as cur:
-        await cur.execute("SET LOCAL agente.empr_id = '900001'")
-        await cur.execute("SELECT e.estado, e.payload FROM agente.envio e JOIN agente.notificacion n "
-                          "USING (notificacion_id) WHERE n.usuario = %s", (usuario,))
-        envios = await cur.fetchall()
-    assert {e["estado"] for e in envios} == {"pendiente"}
-    p = envios[0]["payload"]
-    assert p["notification"]["title"].startswith("Quirqui: ")
-    assert p["notification"]["icon"] == "assets/agentes/quirqui/icono.png"
+async def test_publicar_respuesta_rara_es_error():
+    def manejar(_req):
+        return httpx.Response(200, json={"otra": "cosa"})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(manejar)) as c:
+        with pytest.raises(avisos.AvisoError, match="inesperada"):
+            await avisos.publicar(_cfg(), "Bearer m", avisos.Aviso(tipo="x1", titulo="t"), cliente=c)

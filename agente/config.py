@@ -81,6 +81,11 @@ class Config:
     web_resultados: int = field(default_factory=lambda: _env_int("AGENTE_WEB_RESULTADOS", 5))
     web_timeout: int = field(default_factory=lambda: _env_int("AGENTE_WEB_TIMEOUT", 20))
 
+    # --- Avisos (ADR-015) ----------------------------------------------------
+    # POST /avisos de toolsNTFAPI en el gateway. Vacia = los avisos no se
+    # publican (el monitoreo los deja en la corrida).
+    avisos_url: str = field(default_factory=lambda: _env("AGENTE_AVISOS_URL", ""))
+
     # --- Token de maquina (ADR-A10, AGENTE-AS-03) ----------------------------
     # Endpoint de token de Dnato (client_credentials). Vacio = los jobs no
     # pueden pedir tokens y no corren.
