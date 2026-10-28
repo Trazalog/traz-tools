@@ -4,6 +4,7 @@
  *
  *   - 2 clientes ACTIVOS ("DT Cliente Norte", "DT Cliente Sur")      → ABM Clientes
  *   - la lista de valores `tipos_pedidos_trabajo` con 2 tipos        → ABM Lista de Valores
+ *   - el proceso `TST001` en la lista `procesos` (H-093, decisión D-08) → ABM Lista de Valores
  *   - el rol "Planificador de Tareas" para el planificador           → API de DNATO (H-101)
  *
  * Es **idempotente**: si el dato ya está, no lo vuelve a crear (README de seeds, regla 2).
@@ -30,7 +31,7 @@ cargarEnv({ path: resolve(HERE, '..', '..', '..', '..', '.env'), quiet: true });
 const { contextoDeRol } = await import('../../fixtures/roles-tar.ts');
 const { requerirUrlDeApp } = await import('../../config/apps.ts');
 
-const { CLIENTES_TAR, LISTA_TIPOS, TIPOS_TAR } = await import('./datos-tar.ts');
+const { CLIENTES_TAR, LISTA_PROCESOS, LISTA_TIPOS, PROCESO_TAREAS, TIPOS_TAR } = await import('./datos-tar.ts');
 
 const DRY = process.argv.includes('--dry-run');
 
@@ -59,30 +60,38 @@ async function asegurarClientes(page: Page): Promise<void> {
   }
 }
 
-async function asegurarTipos(page: Page): Promise<void> {
+/**
+ * Asegura una lista de valores de la empresa con sus valores, por el ABM Lista de Valores.
+ * Se busca por valor (no por descripción) para que la corrida sea idempotente.
+ */
+async function asegurarLista(page: Page, lista: string, valores: ReadonlyArray<{ valor: string; descripcion: string }>): Promise<void> {
   await irA(page, 'core/Valor');
   const select = page.locator('#selectTabla');
   await select.waitFor();
   const listas = await select.locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
-  if (!listas.includes(LISTA_TIPOS)) {
-    console.log(`  · lista "${LISTA_TIPOS}": ${DRY ? 'se crearía' : 'se crea'}`);
+  let opcion = listas.find((v) => v === lista || v.endsWith(`-${lista}`));
+  if (!opcion) {
+    console.log(`  · lista "${lista}": ${DRY ? 'se crearía' : 'se crea'}`);
     if (DRY) return;
     await page.locator('#botonAgregar').click();
-    await page.locator('#nombreLista').fill(LISTA_TIPOS);
+    await page.locator('#nombreLista').fill(lista);
     await page.locator('button[onclick*="agregarLista"]').click();
+    await page.locator('#waiting').waitFor({ state: 'hidden', timeout: 60_000 });
+    const nuevas = await select.locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
+    opcion = nuevas.find((v) => v === lista || v.endsWith(`-${lista}`)) ?? lista;
   } else {
-    console.log(`  · lista "${LISTA_TIPOS}": ya existe`);
+    console.log(`  · lista "${lista}": ya existe`);
   }
-  await select.selectOption(LISTA_TIPOS);
+  await select.selectOption(opcion);
   await page.locator('#waiting').waitFor({ state: 'hidden', timeout: 60_000 });
   const tabla = page.locator('#tabla_valores');
-  for (const tipo of TIPOS_TAR) {
-    const existe = (await tabla.locator('tbody tr', { hasText: tipo }).count()) > 0;
-    console.log(`  · tipo de trabajo "${tipo}": ${existe ? 'ya existe' : DRY ? 'se crearía' : 'se crea'}`);
+  for (const { valor, descripcion } of valores) {
+    const existe = (await tabla.locator('tbody tr', { hasText: valor }).count()) > 0;
+    console.log(`  · "${lista}" → "${valor}": ${existe ? 'ya existe' : DRY ? 'se crearía' : 'se crea'}`);
     if (existe || DRY) continue;
     await page.locator('#agregarValor').click();
-    await page.locator('#descripcion').fill(tipo);
-    await page.locator('#valor').fill(tipo);
+    await page.locator('#descripcion').fill(descripcion);
+    await page.locator('#valor').fill(valor);
     await page.locator('#btnsave_edit[onclick*="guardarValor"]').click();
     await page.locator('#waiting').waitFor({ state: 'hidden', timeout: 60_000 });
   }
@@ -155,7 +164,8 @@ try {
   await page.waitForFunction(() => typeof (window as unknown as { linkTo?: unknown }).linkTo === 'function', undefined, { timeout: 60_000 });
   console.log(`Datos base de TAR${DRY ? ' (dry-run)' : ''}:`);
   await asegurarClientes(page);
-  await asegurarTipos(page);
+  await asegurarLista(page, LISTA_TIPOS, TIPOS_TAR.map((t) => ({ valor: t, descripcion: t })));
+  await asegurarLista(page, LISTA_PROCESOS, [PROCESO_TAREAS]);
   await asegurarRolPlanificador();
   console.log('\nListo. Requisito que no cubre este seed: pro.procesos PROCESO-STANDAR de la empresa (lo carga el PM).');
 } finally {
