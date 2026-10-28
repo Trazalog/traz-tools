@@ -5,15 +5,22 @@
 -- Mientras exista AssetPlanner. Cuando Mantenimiento migre a traz-tools-man,
 -- se borra esta app y MariaDB queda fuera de los avisos.
 --
---   cada 15 s   lee de MariaDB hasta 100 filas con procesado = 0, por queue_id
---               (no por fec_alta: dos avisos del mismo segundo no se pierden).
+--   cada 15 s   lee de MariaDB hasta 100 filas con procesado = 0 de las
+--               ultimas 24 horas, por queue_id (no por fec_alta: dos avisos
+--               del mismo segundo no se pierden). Las 24 horas son a
+--               proposito: el Siddhi anterior NUNCA marco procesado (en DEV,
+--               434 de 434 filas en 0), y sin ese limite el primer dia se
+--               mandaria todo el historial como push. Lo mas viejo queda como
+--               esta (en 0): AssetPlanner no usa esa columna para nada mas.
 --   por fila    ntf.publicar_asset(queue_id, empr_id, user_id, data_json):
 --               traduce el mensaje, resuelve la empresa de Tools y encola el
 --               push al token que trae el data_json. Idempotente por queue_id:
 --               si esta app se cae antes de marcar, la proxima vuelta no
 --               duplica nada.
 --   despues     marca procesado = 1 en MariaDB (la columna que ya existe).
---   cada dia    borra de MariaDB lo procesado de mas de 30 dias, a las 04:30.
+--   cada dia    borra de MariaDB lo procesado Y LEIDO de mas de 30 dias, a
+--               las 04:30. Lo no leido no se toca: la campanita de
+--               AssetPlanner lo sigue mostrando.
 --
 --   El push lo manda AvisosPush, como cualquier otro aviso: queda UN solo
 --   emisor de push. En MariaDB no se crea ningun objeto.
@@ -44,6 +51,7 @@ from CadaQuinceSegundos#rdbms:query('ASSET_DB',
               coalesce(data_json, '') as data_json
        from synch_notificacion_queue
        where procesado = 0
+         and fec_alta >= now() - interval 1 day
        order by queue_id
        limit 100""")
 select queue_id, empr_id, user_id, data_json
@@ -65,6 +73,6 @@ insert into Publicado;
 
 @info(name = 'depurar-mariadb')
 from Diario#rdbms:cud('ASSET_DB',
-    'delete from synch_notificacion_queue where procesado = 1 and fec_alta < now() - interval 30 day')
+    'delete from synch_notificacion_queue where procesado = 1 and leido = 1 and fec_alta < now() - interval 30 day')
 select numRecords as borradas
 insert into Depurado;
