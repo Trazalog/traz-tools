@@ -1268,5 +1268,147 @@
          <respond/>
       </faultSequence>
    </resource>
+   <!-- MIG-ASSET-2 · Verificar un informe de servicio de MAN (A5): busca en el caso la tarea "Verifica Informe de Servicio" que el
+        usuario puede tomar (en Bonita por su userName, el correo), se la asigna y la cierra con informeServicioOk; después registra la
+        lectura de cierre del equipo (horómetro final del informe) y deja el informe y la OT cerrados (CE). Si el caso no tiene esa tarea
+        para el usuario, igual cierra los estados, como asset (sin lectura). Una tarea cerrada en Bonita no se puede reabrir: si después
+        falla la base, se informa el error. El caso sale de la OT, buscada dentro de la empresa (asset usaba el que mandaba el
+        navegador, T34). Entrada: {"id_ot","usrNick","usrId","id_empresa","session"}.
+        Salida {"status":true,"bpm":"si"|"no"} o {"status":false,"msj"}. -->
+   <resource methods="POST" uri-template="/informe/verificar">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_bpm" value="no"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_ot_caso":{"id_orden":"${vars.datos.id_ot}","id_empresa":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/ot/caso')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_ot" expression="json-eval($.ots.ot[0].id_orden)"/>
+         <property name="man_case" expression="json-eval($.ots.ot[0].case_id)"/>
+         <filter source="get-property('man_ot')" regex="[0-9]+">
+            <then/>
+            <else>
+            <variable name="msj" type="STRING" value="La OT no es de la empresa"/>
+            <payloadFactory media-type="json" template-type="default">
+               <format>{"status":false,"msj":"${vars.msj}"}</format>
+            </payloadFactory>
+            <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+            <respond/>
+            </else>
+         </filter>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then>
+               <property name="man_recurso" expression="concat('/API/identity/user?p=0&amp;c=1&amp;f=userName%3D', $ctx:man_nick)"/>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                  <with-param name="session" value="{$ctx:man_session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="man_session" expression="json-eval($.session)"/>
+               <property name="man_uid" expression="json-eval($.payload[0].id)"/>
+               <filter source="get-property('man_uid')" regex="[0-9]+">
+                  <then/>
+                  <else>
+                  <variable name="msj" type="STRING" value="El usuario no tiene usuario en Bonita"/>
+                  <payloadFactory media-type="json" template-type="default">
+                     <format>{"status":false,"msj":"${vars.msj}"}</format>
+                  </payloadFactory>
+                  <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+                  <respond/>
+                  </else>
+               </filter>
+               <property name="man_recurso" expression="concat('/API/bpm/humanTask?p=0&amp;c=1&amp;f=caseId%3D', $ctx:man_case, '&amp;f=name%3DVerifica%20Informe%20de%20Servicio&amp;f=user_id%3D', $ctx:man_uid)"/>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                  <with-param name="session" value="{$ctx:man_session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="man_session" expression="json-eval($.session)"/>
+               <property name="man_tarea" expression="json-eval($.payload[0].id)"/>
+               <filter source="get-property('man_tarea')" regex="[0-9]+">
+                  <then>
+                     <property name="man_recurso" expression="concat('/API/bpm/humanTask/', $ctx:man_tarea)"/>
+                     <property name="man_payload_bpm" expression="concat('{&quot;assigned_id&quot;:&quot;', $ctx:man_uid, '&quot;}')"/>
+                     <call-template target="bpmAPICallTemplate">
+                        <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                        <with-param name="session" value="{$ctx:man_session}"/>
+                        <with-param name="method" value="PUT"/>
+                        <with-param name="payload" value="{$ctx:man_payload_bpm}"/>
+                     </call-template>
+                     <property name="man_session" expression="json-eval($.session)"/>
+                     <property name="man_recurso" expression="concat('/API/bpm/userTask/', $ctx:man_tarea, '/execution')"/>
+                     <property name="man_payload_bpm" expression="'{&quot;informeServicioOk&quot;:true}'"/>
+                     <call-template target="bpmAPICallTemplate">
+                        <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                        <with-param name="session" value="{$ctx:man_session}"/>
+                        <with-param name="method" value="POST"/>
+                        <with-param name="payload" value="{$ctx:man_payload_bpm}"/>
+                     </call-template>
+                     <property name="man_session" expression="json-eval($.session)"/>
+                     <property name="man_bpm" value="si"/>
+                  </then>
+                  <else/>
+               </filter>
+            </then>
+            <else/>
+         </filter>
+         <filter source="get-property('man_bpm')" regex="si">
+            <then>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"request_box":{"_post_informe_lectura":{"usrId":"${vars.datos.usrId}","id_ot":"${vars.datos.id_ot}","id_empresa":"${vars.datos.id_empresa}"},"_put_informe_estado":{"estado":"CE","id_ot":"${vars.datos.id_ot}","id_empresa":"${vars.datos.id_empresa}"},"_put_ot_estado":{"estado":"CE","id_orden":"${vars.datos.id_ot}","id_empresa":"${vars.datos.id_empresa}"}}}</format>
+               </payloadFactory>
+            </then>
+            <else>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"request_box":{"_put_informe_estado":{"estado":"CE","id_ot":"${vars.datos.id_ot}","id_empresa":"${vars.datos.id_empresa}"},"_put_ot_estado":{"estado":"CE","id_orden":"${vars.datos.id_ot}","id_empresa":"${vars.datos.id_empresa}"}}}</format>
+               </payloadFactory>
+            </else>
+         </filter>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/request_box')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <variable name="msj" type="STRING" value="Error al cerrar el informe y la OT en la base"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <payloadFactory media-type="json">
+            <format>{"status":true,"bpm":"$1"}</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('man_bpm')"/>
+            </args>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/informe/verificar"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
 </api>
                         

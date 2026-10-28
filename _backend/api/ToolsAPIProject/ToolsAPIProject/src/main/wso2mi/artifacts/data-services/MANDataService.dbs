@@ -1263,6 +1263,125 @@
    <resource method="POST" path="/equipos/cliente">
       <call-query href="setClienteEqMan"><with-param name="cliName" query-param="cliName"/><with-param name="cliLastName" query-param="cliLastName"/><with-param name="cliDni" query-param="cliDni"/><with-param name="cliAddress" query-param="cliAddress"/><with-param name="cliPhone" query-param="cliPhone"/><with-param name="cliEmail" query-param="cliEmail"/><with-param name="cliRazonSocial" query-param="cliRazonSocial"/><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-2i · Informes de servicio (listado, ver informe, verificación). Reemplaza el acceso directo de models/Ordenservicios.php
+        (ADR-014). Toda query queda limitada a la empresa (id de asset); asset no filtraba getorden, getEquipos ni el detalle del informe. -->
+   <query id="getInformesListadoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT os.id_orden, os.estado, os.comprobante, CAST(os.fecha AS CHAR) AS fecha, os.id_ot, CAST(os.fechahorainicio AS CHAR) AS fechahorainicio, CAST(os.fechahorafin AS CHAR) AS fechahorafin, ot.descripcion AS descripcion_ot, ot.case_id, e.codigo AS equipo, e.id_equipo, t.descripcion AS tarea, (SELECT GROUP_CONCAT(CONCAT(su.usrName, ' ', su.usrLastName) SEPARATOR ', ') FROM asignausuario au JOIN sisusers su ON au.usrId = su.usrId WHERE au.id_orden = os.id_orden) AS recursos_humanos FROM orden_servicio os JOIN orden_trabajo ot ON os.id_ot = ot.id_orden LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea JOIN equipos e ON ot.id_equipo = e.id_equipo WHERE os.id_empresa = :id_empresa ORDER BY os.id_orden DESC</sql>
+      <result outputType="json">{"informes":{"informe":[{"id_orden":"$id_orden","estado":"$estado","comprobante":"$comprobante","fecha":"$fecha","id_ot":"$id_ot","fechahorainicio":"$fechahorainicio","fechahorafin":"$fechahorafin","descripcion_ot":"$descripcion_ot","case_id":"$case_id","equipo":"$equipo","id_equipo":"$id_equipo","tarea":"$tarea","recursos_humanos":"$recursos_humanos"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeOtMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, t.id_tarea, ot.descripcion, t.descripcion AS tareadescrip, su.usrId, CONCAT(su.usrLastName, ', ', su.usrName) AS responsable FROM orden_trabajo ot LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea JOIN sisusers su ON su.usrId = ot.id_usuario_a WHERE ot.id_orden = :id_ot AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","id_tarea":"$id_tarea","descripcion":"$descripcion","tareadescrip":"$tareadescrip","usrId":"$usrId","responsable":"$responsable"}]}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeEquipoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.codigo AS nomb_equipo, e.descripcion AS desc_equipo, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, CAST(e.fecha_baja AS CHAR) AS fecha_baja, CAST(e.fecha_garantia AS CHAR) AS fecha_garantia, e.estado, e.marca, g.descripcion AS grupo_desc, s.descripcion AS sector, e.ubicacion FROM equipos e LEFT JOIN grupo g ON e.id_grupo = g.id_grupo JOIN sector s ON e.id_sector = s.id_sector WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"nomb_equipo":"$nomb_equipo","desc_equipo":"$desc_equipo","fecha_ingreso":"$fecha_ingreso","fecha_baja":"$fecha_baja","fecha_garantia":"$fecha_garantia","estado":"$estado","marca":"$marca","grupo_desc":"$grupo_desc","sector":"$sector","ubicacion":"$ubicacion"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeLecturasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(horometroinicio AS CHAR) AS horometroinicio, CAST(horometrofin AS CHAR) AS horometrofin, CAST(fechahorainicio AS CHAR) AS fechahorainicio, CAST(fechahorafin AS CHAR) AS fechahorafin FROM orden_servicio WHERE id_ot = :id_ot AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"lecturas":{"lectura":[{"horometroinicio":"$horometroinicio","horometrofin":"$horometrofin","fechahorainicio":"$fechahorainicio","fechahorafin":"$fechahorafin"}]}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtFechasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(fecha_inicio AS CHAR) AS fecha_inicio, CAST(fecha_terminada AS CHAR) AS fecha_terminada FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"fecha_inicio":"$fecha_inicio","fecha_terminada":"$fecha_terminada"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeTareasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT d.id_tarea FROM orden_servicio os JOIN deta_ordenservicio d ON d.id_ordenservicio = os.id_orden WHERE os.id_ot = :id_ot AND os.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"tareas":{"tarea":[{"id_tarea":"$id_tarea"}]}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeHerramientasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT h.herrcodigo, h.herrmarca, h.herrdescrip FROM orden_servicio os JOIN tbl_valesalida v ON os.valesid = v.valesid JOIN tbl_detavalesalida d ON d.valesid = v.valesid JOIN herramientas h ON d.herrId = h.herrId WHERE os.id_ot = :id_ot AND os.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"herramientas":{"herramienta":[{"herrcodigo":"$herrcodigo","herrmarca":"$herrmarca","herrdescrip":"$herrdescrip"}]}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeOperariosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT su.usrName, su.usrLastName FROM asignausuario au JOIN sisusers su ON au.usrId = su.usrId JOIN orden_servicio os ON os.id_orden = au.id_orden WHERE os.id_ot = :id_ot AND os.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"operarios":{"operario":[{"usrName":"$usrName","usrLastName":"$usrLastName"}]}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeEvidenciasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT a.id_adjunto, CAST(a.valor_base64 AS CHAR) AS valor_base64, a.nombre FROM orden_servicio_adjuntos a WHERE a.id_orden = (SELECT MAX(os.id_orden) FROM orden_servicio os WHERE os.id_ot = :id_ot AND os.id_empresa = :id_empresa) ORDER BY a.id_adjunto</sql>
+      <result outputType="json">{"evidencias":{"evidencia":[{"id_adjunto":"$id_adjunto","valor_base64":"$valor_base64","nombre":"$nombre"}]}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtHerramientasUsadasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT u.herrId, u.sapa_id, u.activa, v.origen FROM tbl_otherramientasusadas u LEFT JOIN tbl_otvales v ON v.sapa_id = u.sapa_id AND v.id_empresa = u.id_empresa WHERE u.otId = :id_orden AND u.id_empresa = :id_empresa ORDER BY u.otherrusada_id</sql>
+      <result outputType="json">{"herramientas":{"herramienta":[{"herrId":"$herrId","sapa_id":"$sapa_id","activa":"$activa","origen":"$origen"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtCasoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_orden, case_id FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","case_id":"$case_id"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setInformeLecturaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO historial_lecturas (id_equipo, lectura, fecha, usrId, observacion, operario_nom, turno, estado) SELECT ot.id_equipo, IFNULL(os.horometrofin, 0), NOW(), :usrId, CONCAT('Verificación Masiva Informe Servicio | OT: ', ot.id_orden), '-', '-', 'AC' FROM orden_servicio os JOIN orden_trabajo ot ON ot.id_orden = os.id_ot WHERE os.id_ot = :id_ot AND ot.id_empresa = :id_empresa ORDER BY os.id_orden LIMIT 1</sql>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateInformeEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_servicio SET estado = :estado WHERE id_ot = :id_ot AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"informe":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/informes/empresa/{id_empresa}">
+      <call-query href="getInformesListadoMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/ot/{id_ot}/empresa/{id_empresa}">
+      <call-query href="getInformeOtMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/equipo/{id_equipo}/empresa/{id_empresa}">
+      <call-query href="getInformeEquipoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/ot/{id_ot}/lecturas/empresa/{id_empresa}">
+      <call-query href="getInformeLecturasMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/fechas/empresa/{id_empresa}">
+      <call-query href="getOtFechasMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/ot/{id_ot}/tareas/empresa/{id_empresa}">
+      <call-query href="getInformeTareasMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/ot/{id_ot}/herramientas/empresa/{id_empresa}">
+      <call-query href="getInformeHerramientasMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/ot/{id_ot}/operarios/empresa/{id_empresa}">
+      <call-query href="getInformeOperariosMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/ot/{id_ot}/evidencias/empresa/{id_empresa}">
+      <call-query href="getInformeEvidenciasMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/herramientas-usadas/empresa/{id_empresa}">
+      <call-query href="getOtHerramientasUsadasMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/caso">
+      <call-query href="getOtCasoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/informe/lectura">
+      <call-query href="setInformeLecturaMan"><with-param name="usrId" query-param="usrId"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/informe/estado">
+      <call-query href="updateInformeEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
    <!-- MIG-ASSET-2o · Órdenes de trabajo, lectura (listado, ver, origen, catálogos). Reemplaza el acceso directo de models/Otrabajos.php
         (ADR-014). Toda query queda limitada a la empresa (id de asset); asset no filtraba getpencil, getOrigenOt ni las vistas. -->
    <query id="getOtListadoMan" useConfig="AssetPlannerDataSource">
