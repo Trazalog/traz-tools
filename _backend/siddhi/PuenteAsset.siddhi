@@ -1,0 +1,70 @@
+@App:name('PuenteAsset')
+@App:description('Puente de AssetPlanner a los avisos de Tools (ADR-015): vuelca synch_notificacion_queue (MariaDB) en ntf (PostgreSQL). Reemplaza a NotificacionesAssetSynch.')
+
+-- =========================================================================
+-- Mientras exista AssetPlanner. Cuando Mantenimiento migre a traz-tools-man,
+-- se borra esta app y MariaDB queda fuera de los avisos.
+--
+--   cada 15 s   lee de MariaDB hasta 100 filas con procesado = 0, por queue_id
+--               (no por fec_alta: dos avisos del mismo segundo no se pierden).
+--   por fila    ntf.publicar_asset(queue_id, empr_id, user_id, data_json):
+--               traduce el mensaje, resuelve la empresa de Tools y encola el
+--               push al token que trae el data_json. Idempotente por queue_id:
+--               si esta app se cae antes de marcar, la proxima vuelta no
+--               duplica nada.
+--   despues     marca procesado = 1 en MariaDB (la columna que ya existe).
+--   cada dia    borra de MariaDB lo procesado de mas de 30 dias, a las 04:30.
+--
+--   El push lo manda AvisosPush, como cualquier otro aviso: queda UN solo
+--   emisor de push. En MariaDB no se crea ningun objeto.
+--
+-- Credenciales: NUNCA en este archivo. Datasources del deployment.yaml del SI:
+--   ASSET_DB   la base de AssetPlanner; usuario con SELECT, UPDATE y DELETE
+--              sobre synch_notificacion_queue y nada mas.
+--   NTF_DB     el mismo de AvisosPush (rol ntf_transporte: solo puede
+--              ejecutar ntf.publicar_asset, no publicar con cualquier origen).
+-- Requiere en el deployment.yaml del SI, para rdbms:cud:
+--   siddhi: extensions: - extension: {name: cud, namespace: rdbms,
+--                                     properties: {perform.CUD.operations: true}}
+-- =========================================================================
+
+define trigger CadaQuinceSegundos at every 15 sec;
+define trigger Diario at '0 30 4 * * ?';
+
+@sink(type = 'log', prefix = 'PuenteAsset')
+define stream Publicado (queue_id long, aviso_id long, marcadas int);
+
+@sink(type = 'log', prefix = 'PuenteAsset depuracion')
+define stream Depurado (borradas int);
+
+@info(name = 'leer-cola')
+from CadaQuinceSegundos#rdbms:query('ASSET_DB',
+    'queue_id long, empr_id int, user_id int, data_json string',
+    """select queue_id, coalesce(empr_id, 0) as empr_id, coalesce(user_id, 0) as user_id,
+              coalesce(data_json, '') as data_json
+       from synch_notificacion_queue
+       where procesado = 0
+       order by queue_id
+       limit 100""")
+select queue_id, empr_id, user_id, data_json
+insert into Pendiente;
+
+@info(name = 'publicar')
+from Pendiente#rdbms:query('NTF_DB', 'aviso_id long',
+    'select ntf.publicar_asset(?, ?, ?, ?) as aviso_id', queue_id, empr_id, user_id, data_json)
+select queue_id, aviso_id
+insert into EnNtf;
+
+-- Solo se marca lo que llego a PostgreSQL: si publicar fallo, la fila sigue
+-- en 0 y se reintenta en la proxima vuelta.
+@info(name = 'marcar-procesado')
+from EnNtf[not(aviso_id is null)]#rdbms:cud('ASSET_DB',
+    'update synch_notificacion_queue set procesado = 1 where queue_id = ? and procesado = 0', queue_id)
+select queue_id, aviso_id, numRecords as marcadas
+insert into Publicado;
+
+@info(name = 'depurar-mariadb')
+from Diario#rdbms:cud('ASSET_DB',
+    'delete from synch_notificacion_queue where procesado = 1 and fec_alta < now() - interval 30 day')
+select numRecords as borradas
+insert into Depurado;

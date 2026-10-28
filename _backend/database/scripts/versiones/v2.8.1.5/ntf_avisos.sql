@@ -192,7 +192,8 @@ $$;
 -- -----------------------------------------------------------------------------
 -- Lo tomado pasa a 'enviando' en la misma sentencia (FOR UPDATE SKIP LOCKED):
 -- aunque corran dos transportes, ninguno toma lo del otro. Lo que quedo
--- 'enviando' mas de 10 minutos (el transporte se cayo a mitad) vuelve a la cola.
+-- 'enviando' mas de 10 minutos (el transporte o el conector se cayeron a mitad)
+-- vuelve a la cola.
 CREATE OR REPLACE FUNCTION ntf.tomar_envios(p_lote integer DEFAULT 50)
 RETURNS TABLE (envio_id bigint, token text, titulo text, cuerpo text, enlace text,
                emisor text, severidad text, tipo text, aviso_id bigint)
@@ -201,7 +202,11 @@ SECURITY DEFINER
 SET search_path = ntf, pg_temp
 AS $$
 BEGIN
-    UPDATE ntf.envio e SET estado = 'pendiente'
+    -- Sin respuesta del conector (MI caido): vuelve a la cola, hasta 12 veces
+    -- (unas 2 horas); despues queda 'fallido'. La campanita lo tiene igual.
+    UPDATE ntf.envio e
+    SET estado       = CASE WHEN e.intentos >= 12 THEN 'fallido' ELSE 'pendiente' END,
+        ultimo_error = 'sin respuesta del conector'
     WHERE e.estado = 'enviando' AND e.fec_tomado < now() - interval '10 minutes';
 
     RETURN QUERY

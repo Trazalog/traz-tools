@@ -375,3 +375,14 @@ async def test_publicar_asset_traduce_la_empresa_de_assetplanner(db, empresa):
                         empresa * 10 + 3, mysql, _DATA_JSON_ASSET % empresa))["id"]
     a = await _uno(db, "SELECT empr_id FROM ntf.aviso WHERE aviso_id = %s", aviso)
     assert a["empr_id"] == empresa
+
+
+async def test_sin_respuesta_del_conector_se_rinde_a_las_12_vueltas(db, empresa):
+    """Si el MI nunca contesta, el envio no da vueltas para siempre: a las 12 recuperaciones queda fallido."""
+    await _dispositivo(db, empresa, "ana", f"tok-sinresp-{empresa}")
+    aviso = await _publicar(db, empresa, destinatarios=["ana"])
+    await _exec(db, "UPDATE ntf.envio SET estado = 'enviando', intentos = 12, "
+                    "fec_tomado = now() - interval '11 minutes' WHERE aviso_id = %s", aviso)
+    await _tomar_de(db, empresa)
+    e = await _uno(db, "SELECT estado, ultimo_error FROM ntf.envio WHERE aviso_id = %s", aviso)
+    assert e == {"estado": "fallido", "ultimo_error": "sin respuesta del conector"}
