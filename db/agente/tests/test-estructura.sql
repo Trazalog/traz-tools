@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..012 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..017 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -302,6 +302,107 @@ SELECT 'agente_app solo lee agente.tool',
        'el catalogo lo edita Trazalog';
 
 -- ---------------------------------------------------------------------------
+-- 013 - corrida auditable (R8) y RLS de interaccion/feedback
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'interaccion tiene la columna ' || c,
+       EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'agente' AND table_name = 'interaccion' AND column_name = c),
+       'R8'
+FROM unnest(ARRAY['agente', 'disparador', 'costo_usd', 'controles', 'incidentes']) AS c;
+
+INSERT INTO _resultado
+SELECT 'tabla agente.tool_llamada existe', to_regclass('agente.tool_llamada') IS NOT NULL,
+       'lo que vio el modelo de cada tool';
+
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' tiene RLS forzado',
+       coalesce((SELECT c.relrowsecurity AND c.relforcerowsecurity
+                 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                 WHERE n.nspname = 'agente' AND c.relname = t), false),
+       'datos de la empresa (013)'
+FROM unnest(ARRAY['interaccion', 'feedback', 'tool_llamada']) AS t;
+
+INSERT INTO _resultado
+SELECT 'v_feedback_negativo corre con los permisos de quien consulta',
+       coalesce((SELECT 'security_invoker=true' = ANY (c.reloptions)
+                 FROM pg_class c WHERE c.oid = 'agente.v_feedback_negativo'::regclass), false),
+       'si no, un dueño superusuario se saltea el RLS';
+
+INSERT INTO _resultado
+SELECT 'agente_app inserta y lee tool_llamada, pero no corrige ni borra',
+       has_table_privilege('agente_app', 'agente.tool_llamada', 'SELECT')
+       AND has_table_privilege('agente_app', 'agente.tool_llamada', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.tool_llamada', 'UPDATE')
+       AND NOT has_table_privilege('agente_app', 'agente.tool_llamada', 'DELETE'),
+       'la traza no se altera desde el runtime';
+
+-- ---------------------------------------------------------------------------
+-- 014 - tool web_buscar
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'web_buscar catalogada como lectura de costo externo',
+       EXISTS (SELECT 1 FROM agente.tool
+               WHERE nombre = 'web_buscar' AND clase = 'lectura' AND costo = 'externo'),
+       'sale a buscadores de terceros';
+
+INSERT INTO _resultado
+SELECT 'web_buscar: la tiene Quirqui y no Faustino',
+       EXISTS (SELECT 1 FROM agente.tools_permitidas('quirqui') AS t WHERE t = 'web_buscar')
+       AND NOT EXISTS (SELECT 1 FROM agente.tools_permitidas('faustino') AS t WHERE t = 'web_buscar'),
+       'lista blanca';
+
+-- ---------------------------------------------------------------------------
+-- 015 - fuentes del producto
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'fuente acepta el tipo ' || t,
+       pg_get_constraintdef(c.oid) LIKE '%' || t || '%', 'AGENTE-M-06'
+FROM unnest(ARRAY['ayuda', 'caso_uso']) AS t, pg_constraint c
+WHERE c.conname = 'fuente_tipo_ck';
+
+INSERT INTO _resultado
+SELECT 'indice sobre chunk.metadata (caso de uso por controlador)',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'chunk_metadata_gin_ix'),
+       'AGENTE-AS-01';
+
+-- ---------------------------------------------------------------------------
+-- 016 - multi-vertical (ADR-A11)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' tiene columna vertical con CHECK',
+       EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'agente' AND table_name = t AND column_name = 'vertical')
+       AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = t || '_vertical_ck'),
+       'mineria / oil_gas / electricidad / general'
+FROM unnest(ARRAY['chunk', 'tema']) AS t;
+
+INSERT INTO _resultado
+SELECT 'perfil_empresa con RLS forzado y solo lectura para el runtime',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.perfil_empresa')), false)
+       AND has_table_privilege('agente_app', 'agente.perfil_empresa', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.perfil_empresa', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.perfil_empresa', 'UPDATE'),
+       'la industria la carga Trazalog (y despues Kuntur)';
+
+-- ---------------------------------------------------------------------------
+-- 017 - propuestas de siguiente paso
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'propuesta con RLS forzado; el runtime no la borra',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.propuesta')), false)
+       AND has_table_privilege('agente_app', 'agente.propuesta', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.propuesta', 'DELETE'),
+       'AGENTE-AS-02';
+
+INSERT INTO _resultado
+SELECT 'una sola propuesta pendiente por usuario y cosa',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'propuesta_pendiente_uk'),
+       'volver a abrir el panel no duplica';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -311,7 +412,8 @@ FROM unnest(ARRAY[
     '001-extensiones', '002-conocimiento-compartido', '003-memoria-cliente',
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
-    '011-agentes', '012-tools'
+    '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
+    '016-vertical', '017-propuestas'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

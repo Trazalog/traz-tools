@@ -4,6 +4,8 @@ Endpoints:
     GET  /salud            estado del servicio, config y bloques de los prompts sin definir
     GET  /agentes          los agentes que el usuario puede usar, con nombre y avatar
     POST /consulta         la consulta del usuario -> respuesta del agente elegido
+    POST /sugerencias      el siguiente paso que Quirqui propone en una pantalla
+    POST /sugerencias/respuesta  el usuario ve o descarta una propuesta
     POST /feedback         calificacion de una respuesta (pulgar arriba/abajo)
     GET  /admin/feedback   feedback negativo agrupado, para el ciclo de mejora
 
@@ -102,6 +104,12 @@ class ConsultaIn(BaseModel):
     pregunta: str = Field(min_length=1, max_length=4000)
     canal: str = "chat_tools"
     agente: str = Field(default=AGENTE_POR_DEFECTO, pattern=r"^[a-z][a-z0-9_]{1,30}$")
+    # La pantalla de Tools donde esta el usuario (AGENTE-AS-01).
+    # Forma de URL de CodeIgniter y nada mas: termina dentro de un mensaje de
+    # sistema, asi que no puede traer texto libre.
+    pantalla: str | None = Field(
+        default=None, max_length=300,
+        pattern=r"^/?[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-.%=]*)*(?:\?[A-Za-z0-9_\-.%=&]*)?$")
 
 
 class ConsultaOut(BaseModel):
@@ -112,6 +120,17 @@ class ConsultaOut(BaseModel):
     tools_llamadas: list[dict]
     modelo: str
     latencia_ms: int
+
+
+class SugerenciasIn(BaseModel):
+    pantalla: str = Field(
+        max_length=300,
+        pattern=r"^/?[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-.%=]*)*(?:\?[A-Za-z0-9_\-.%=&]*)?$")
+
+
+class RespuestaPropuestaIn(BaseModel):
+    propuesta_id: int
+    estado: str = Field(pattern=r"^(aceptada|descartada)$")
 
 
 class FeedbackIn(BaseModel):
@@ -215,12 +234,56 @@ async def consulta(
         empr_id=ident.empr_id, pregunta=entrada.pregunta,
         autorizacion=ident.autorizacion, usr_id=ident.usr_id,
         usuario_nick=ident.nick, canal=entrada.canal, agente=agente,
+        pantalla=entrada.pantalla,
     ))
     return ConsultaOut(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms,
     )
+
+
+@app.post("/sugerencias")
+async def sugerir(
+    entrada: SugerenciasIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El siguiente paso en la pantalla, para Quirqui (AGENTE-AS-02)."""
+    try:
+        agente = await agentes.para_consulta(con, AGENTE_POR_DEFECTO, ident.rol)
+    except (agentes.AgenteDesconocido, agentes.AccesoDenegado, agentes.AgenteNoDisponible):
+        return {"propuestas": []}
+    propuestas = await orquestador.sugerir(con, Consulta(
+        empr_id=ident.empr_id, pregunta=f"(siguiente paso en {entrada.pantalla})",
+        autorizacion=ident.autorizacion, usr_id=ident.usr_id, usuario_nick=ident.nick,
+        agente=agente, pantalla=entrada.pantalla,
+    ))
+    return {"propuestas": propuestas}
+
+
+@app.post("/sugerencias/respuesta")
+async def responder_propuesta(
+    entrada: RespuestaPropuestaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El usuario la vio (aceptada) o la descarto. Solo las suyas: el RLS
+    corta por empresa y el WHERE por usuario."""
+    await rag.fijar_empresa(con, ident.empr_id)
+    usuario = ident.nick or str(ident.usr_id or "")
+    async with con.cursor() as cur:
+        await cur.execute(
+            """
+            UPDATE agente.propuesta SET estado = %s, fec_respuesta = now()
+            WHERE propuesta_id = %s AND usuario = %s AND estado = 'pendiente'
+            RETURNING propuesta_id, estado, accion
+            """, (entrada.estado, entrada.propuesta_id, usuario))
+        fila = await cur.fetchone()
+    await con.commit()
+    if not fila:
+        raise HTTPException(404, "No existe esa propuesta pendiente para este usuario")
+    return dict(fila)
 
 
 @app.post("/feedback")
@@ -293,12 +356,16 @@ async def admin_feedback(
 @app.get("/entrevista/agenda")
 async def entrevista_agenda(
     modulo: str | None = None,
+    vertical: str | None = None,
     limite: int = 15,
     _: Identidad = Depends(identidad),
     con: psycopg.AsyncConnection = Depends(conexion),
 ) -> dict:
     """Los temas pendientes, del más al menos prioritario."""
-    temas = await entrevistador.agenda(con, limite=min(limite, 50), modulo=modulo)
+    if vertical is not None and vertical not in rag.VERTICALES:
+        raise HTTPException(400, f"vertical invalida: {vertical}")
+    temas = await entrevistador.agenda(con, limite=min(limite, 50), modulo=modulo,
+                                       vertical=vertical)
     return {"temas": [
         {"tema_id": t.tema_id, "nombre": t.nombre, "descripcion": t.descripcion,
          "modulo": t.modulo, "prioridad": t.prioridad,

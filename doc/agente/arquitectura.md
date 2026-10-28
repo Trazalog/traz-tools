@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") y AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes") AGENTE-M-02 (lista blanca de tools, sección "Los agentes dicen cómo, no hacen") AGENTE-M-03 (corrida auditable, sección "Todo queda registrado") AGENTE-M-04 (guardián de cifras, sección "Ninguna cifra sin origen") AGENTE-M-05 (búsqueda en internet, sección "Internet, como último recurso") AGENTE-M-06 (conocimiento del producto, sección "Lo que el agente sabe del propio Trazalog") AGENTE-M-08 (multi-vertical, sección "Una industria, su conocimiento") AGENTE-AS-01 (panel de Quirqui, sección "Quirqui sabe dónde estás") y AGENTE-AS-02 (siguiente paso, sección "Quirqui propone sin que le pidan"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -137,19 +137,132 @@ El contexto de empresa muere con la transacción. Es lo que evita la fuga más d
 
 Cuando una tool MCP falla, el error vuelve al modelo **como contenido del mensaje**, no como excepción. Así el agente puede decir "no pude consultar tus equipos en este momento" en lugar de que el usuario reciba un error técnico. Queda registrado en `tools_llamadas` con `status: "error"`.
 
-### Todo queda registrado, incluidos los errores
+### Todo queda registrado, incluidos los errores (R8, AGENTE-M-03)
 
-Cada consulta escribe una fila en `agente.interaccion` con la pregunta, la respuesta, **qué fragmentos se recuperaron y qué tools se llamaron**. Eso es lo que hace accionable un pulgar abajo: sin esa traza, un "no me sirvió" no dice si el problema fue el conocimiento, los datos o el modelo.
+Cada corrida escribe una fila en `agente.interaccion` con la pregunta, la respuesta, **qué fragmentos se recuperaron y qué tools se llamaron**, y además:
 
-Las interacciones con error también se guardan. Son las más informativas.
+| Columna | Qué guarda |
+|---|---|
+| `agente` | Quién respondió: `quirqui`, `kuntur`… |
+| `disparador` | Qué la puso en marcha: una consulta, un evento operativo, un desvío de KPI… |
+| `costo_usd` | Lo que informó OpenRouter (`usage.cost`), sumado entre las llamadas de la corrida. Vacío si no lo informó: cero diría "fue gratis", y no se sabe |
+| `controles` | Qué controles se aplicaron y con qué resultado (hoy, la lista blanca: cuántas tools publicó el gateway y cuántas se ofrecieron) |
+| `incidentes` | Lo que hay que revisar: tools bloqueadas y, desde M-04, cifras sin fuente. Vacío = corrida limpia |
 
-Si el registro falla, la respuesta igual se entrega: se pierde la traza, no la respuesta.
+Y una fila en `agente.tool_llamada` por cada tool, con **exactamente lo que vio el modelo** (el contenido ya truncado que se le pasó, no la respuesta cruda completa). Es contra eso que el guardián de cifras de R4 compara los números de la respuesta: un número tiene que estar en algo que el modelo efectivamente leyó.
+
+Eso es lo que hace accionable un pulgar abajo: sin esa traza, un "no me sirvió" no dice si el problema fue el conocimiento, los datos o el modelo.
+
+**Las corridas con error también se guardan**, incluso cuando lo que falló fue la base: si la transacción quedó abortada, el orquestador vuelve a una limpia, re-fija la empresa y registra. Son las más informativas.
+
+Si el registro falla igual, la respuesta se entrega: se pierde la traza, no la respuesta (queda en el log).
+
+### Ninguna cifra sin origen (R4, AGENTE-M-04)
+
+Decisión del PM: si una respuesta trae un número que no tiene origen, **se bloquea**. El usuario recibe "No tengo datos para responder eso con certeza…" y la corrida queda con un incidente `cifra_sin_fuente` que guarda la respuesta original para revisarla. Lo hace `agente/guardian.py`, sobre la respuesta final del modelo (no sobre los mensajes fijos de error).
+
+**Qué cuenta como origen**, comparado siempre contra lo que el modelo **leyó** en esa corrida:
+
+| Origen | Ejemplo |
+|---|---|
+| Lo que devolvió una tool (el contenido exacto que se le pasó al modelo) | `alm_get_stock` devolvió `12` → "quedan 12" |
+| La cantidad de elementos de una lista que devolvió una tool | tres equipos en la lista → "tenés 3 equipos" |
+| El contexto de conocimiento y memoria recuperado | el manual dice 250 horas → "cada 250 horas" |
+| La pregunta del usuario | "tengo 4 técnicos" → "con 4 técnicos…" |
+| La web (`web_buscar`), **solo si la respuesta cita la URL** | "7100 millones (https://…)" |
+
+**Lo que viene del contexto** (conocimiento, memoria, pantalla) respalda un número solo si **comparten alguna palabra de alrededor** (dos antes y tres después, sin las palabras vacías, con plurales y unidades abreviadas normalizados): "cada 250 horas" respalda "250hs", pero un "7" suelto de un calendario no respalda "7 órdenes vencidas" (D-51). Lo de las tools y de la pregunta sigue valiendo por valor.
+
+Admite redondeos a los decimales escritos (72 contra 71,83), porcentajes contra fracciones (72 % contra 0,72) y el separador de miles argentino (1.500 = 1500). **No controla** fechas, horas, códigos de letras y números (COMP-001, OT1234), marcadores de lista ni números chicos de discurso ("3 pasos", "2 opciones"; la lista de palabras es configurable en `PALABRAS_DE_DISCURSO`). Una norma como "ISO 55000" **sí** se controla: inventar una referencia normativa es tan grave como inventar un torque.
+
+En `controles` queda `{"control": "R4_cifras", "cifras": N, "sin_fuente": K}` en cada corrida. Los falsos positivos se ajustan mirando los incidentes.
+
+### Lo que el agente sabe del propio Trazalog (AGENTE-M-06)
+
+Además del conocimiento de la industria, la base tiene el **material del producto** (`agente/fuentes.py`):
+
+| Fuente | Cómo se parte | Qué guarda en `chunk.metadata` |
+|---|---|---|
+| Ayudas de Tools (`ayuda/*.html`, el sitio que ve el usuario) | Una pieza por sección; las de más de 1500 caracteres se parten conservando el título del manual y de la sección | `ayuda` (link con ancla), `titulo`, `documento` |
+| Casos de uso validados de DocTest (`doctest/catalogo/**/XXX-UC-NNN.yaml`) | Uno por caso, entero: pantalla, perfil, pasos, alternativas y reglas juntos | `caso_uso`, `pantallas`, `controladores` (repo/path), `perfil`, `ayuda` |
+
+El modelo ve el link de la ayuda y la pantalla de cada fragmento, así puede citarlos ("está en ayuda/manual_almacenes.html#s03"). Los `controladores` son lo que va a usar la AGENTE-AS-01 para ubicar el caso de uso de la pantalla donde está el usuario **por ruta exacta**, no solo por parecido (hay un índice GIN sobre `chunk.metadata` para eso).
+
+Los documentos **de una empresa** van a su memoria privada (`origen = 'ingesta'`), con RLS. Nunca al conocimiento compartido.
+
+**Limitación del guardián de cifras (D-24) — resuelta (D-51):** con mucho conocimiento cargado, un número chico podía quedar respaldado por coincidencia ("7 órdenes vencidas" contra un "7" de un calendario de ejemplo). Ahora un número del contexto solo respalda si comparte alguna palabra de alrededor (ver "Ninguna cifra sin origen").
+
+### Una industria, su conocimiento (ADR-A11, AGENTE-M-08)
+
+El producto sirve para industrias extractivas y de proceso: hoy minería, oil & gas y electricidad. El motor y los agentes son los mismos; cambia el conocimiento.
+
+- `chunk.vertical` y `tema.vertical`: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Por defecto, `general`.
+- `agente.perfil_empresa`: la industria de cada empresa, con RLS. El runtime solo la lee.
+- **Con industria declarada**, la empresa recibe lo de su industria y lo general: una de oil & gas no recibe lo que es solo de minería. **Sin declarar**, recibe todo, y el modelo ve de qué industria es cada fragmento ("industria: minería"). Queda en `controles` de cada corrida (`{"control": "vertical", ...}`).
+- **Faustino**: la agenda se puede filtrar por industria (`/entrevista/agenda?vertical=oil_gas`), y un hecho promovido a conocimiento **hereda la industria del tema** de la entrevista.
+
+### Internet, como último recurso (AGENTE-M-05)
+
+`web_buscar` busca en internet con **SearXNG autoalojado** (`agente/web.py`): un metabuscador libre, sin API key ni costo (ADR-005). Devuelve título, URL y extracto de los primeros resultados.
+
+- **No pasa por el MCP Gateway** —no son datos del cliente—, pero **sí por la lista blanca**: está catalogada en `agente.tool` (script `014`, clase `lectura`, costo `externo`, riesgo `medio`). La tiene Quirqui; Faustino no.
+- **Solo se ofrece si hay un SearXNG configurado** (`AGENTE_WEB_URL`). Sin él la búsqueda queda apagada, sin error.
+- **Toda cifra que salga de la web va con su URL**, o el guardián de cifras la bloquea (R4).
+- **La consulta sale a buscadores externos**, así que no puede llevar datos de la empresa. Lo dicen el prompt y la descripción de la tool, que es lo que el modelo lee al decidir usarla. No hay un filtro automático de la consulta (ver D-21 en `decisiones-para-revisar.md`).
+- Si el buscador falla, el agente sigue: el error le vuelve al modelo como contenido y la llamada queda con `status: "error"`.
+
+### `interaccion`, `feedback` y `tool_llamada` tienen RLS
+
+Guardan preguntas y respuestas de cada empresa, con datos que vinieron de sus tools. Desde `013` tienen la misma policy que `memoria`: un `empr_id` solo ve y escribe lo suyo, y sin contexto no se ve nada. Hasta `013` las protegía solo el `WHERE empr_id` del código (hallazgo del 2026-10-27). La vista `v_feedback_negativo` corre con los permisos de quien consulta (`security_invoker`), para que su dueño no se saltee las policies.
 
 ### El orquestador no puede borrar interacciones
 
 `agente_app` tiene `SELECT`/`INSERT`/`UPDATE` sobre `interaccion`, pero no `DELETE`. El historial es la evidencia de qué dijo el agente y el insumo del ciclo de mejora; un bug del runtime no tiene que poder borrarlo. Hay un test que lo verifica.
 
 ---
+
+## Quirqui sabe dónde estás (AGENTE-AS-01)
+
+El chat deja de ser solo una página: **Quirqui está en un panel en todas las pantallas de Tools** (`views/panel.php`, incluido desde `layout/Admin.php`). Con cada pregunta, el panel manda **la ruta de la pantalla actual** (la variable global `site` que mantiene `linkTo()` en `lib/props/navegacion.js`).
+
+```mermaid
+sequenceDiagram
+    participant P as Panel (navegador)
+    participant T as Agente.php
+    participant O as Orquestador
+    participant B as agente.chunk (casos de uso)
+    P->>T: pregunta + pantalla = site
+    T->>O: /consulta {pregunta, pantalla}
+    O->>O: valida la ruta (forma de URL y nada más)
+    O->>B: casos de uso cuyo controlador es esa pantalla
+    B-->>O: ALM-UC-001 (pasos, reglas, link de ayuda)
+    O->>O: mensaje de sistema "el usuario está en ..."
+```
+
+`agente/pantalla.py` traduce la ruta al controlador (`traz-comp-almacenes/Articulo` → `traz-comp-almacenes/controllers/Articulo.php`) y busca los casos de uso **por controlador exacto**, sin importar mayúsculas, en el conocimiento del producto (AGENTE-M-06). Le da al modelo hasta 3, con sus pasos y el link de la ayuda. Si no hay ninguno, el modelo sabe que no sabe qué se hace ahí. Queda en `controles` (`{"control": "pantalla", "ruta": ..., "casos": [...]}`), y el texto también cuenta como fuente para el guardián de cifras.
+
+**La ruta viene del navegador y termina en un mensaje de sistema:** se valida dos veces (patrón en la API, que da 422, y otra vez en el orquestador). Texto libre ahí sería una forma de darle instrucciones al modelo.
+
+**Quién ve el panel:** solo quien tiene en su menú el ítem del agente. Los agentes son una suscripción; mostrarlo a todos es una decisión comercial.
+
+**El aviso de medición** (D9 del plan) está fijo en el panel. Su texto está **pendiente de revisión legal** (AGENTE-LEGAL-01).
+
+**Cobertura hoy:** pantallas de Almacenes (26 casos) y Pañol (6). Los casos de Mantenimiento están relevados sobre AssetPlanner y los de Dnato sobre su propia app, que no son pantallas de Tools: se cubren cuando Mantenimiento migre a `traz-tools-man`.
+
+## Quirqui propone sin que le pidan (AGENTE-AS-02)
+
+Al abrir el panel en una pantalla, Quirqui propone hasta 3 cosas para hacer ahí (`POST /sugerencias`). Las arma `agente/sugerencias.py` con **reglas sobre lo que devuelven las tools, no con el modelo**: es inmediato, no gasta tokens y cada cifra sale de una tool (R4 por construcción).
+
+| Pantalla | Qué revisa | Propone |
+|---|---|---|
+| Almacenes (`traz-comp-almacenes/...`) | `alm_get_vencimientos`, `alm_get_stock` | Lotes **vencidos** y **críticos** (el gateway marca crítico a menos de 10 días); artículos activos con **stock menor al punto de pedido** |
+| Pañol (`traz-comp-pan/...`) | `pan_get_certificaciones` | Certificaciones de herramientas **vencidas o que vencen en 30 días o menos** |
+
+Lo más urgente va primero (vencido, crítico, stock, certificación). Cada propuesta trae el **cómo** y el link de la ayuda, no ejecuta nada (ADR-A8). El usuario la **ve** (`aceptada`) o la **descarta**: una descartada no se le repite por 7 días, y no se le esconde a otro usuario. Volver a abrir el panel no duplica la pendiente. Todo queda en `agente.propuesta` (RLS), y cada armado es una corrida con disparador `apertura_pantalla` (R8).
+
+Umbrales y máximos son **valores por defecto configurables** (`AGENTE_SUGERENCIAS_MAX`, `AGENTE_SUGERENCIA_SILENCIO_DIAS`, `AGENTE_SUGERENCIA_DIAS_CERTIFICACION`): el PM no los definió.
+
+**Limitación:** ninguna tool dice hoy qué tarea es de cada usuario, así que las propuestas son sobre el estado de la empresa en esa pantalla. "Tus tareas atrasadas" llega con las tools del módulo de tareas (TAR-API).
 
 ## El chat dentro de Trazalog Tools (E3)
 
@@ -253,6 +366,13 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 | Archivo | Qué cubre |
 |---|---|
 | `tests/test_agentes.py` | La configuración de los agentes: quién puede usar a quién (R1), que el Coach no se pueda confirmar desde un usuario común, que no haya tools de escritura permitidas, que el runtime no pueda editar la configuración, y `/agentes` y `/consulta` con la elección de agente |
+| `tests/test_corrida.py` | La corrida (R8): agente, disparador, costo sumado, controles, una tool bloqueada como incidente, lo que vio el modelo de cada tool, que una corrida que rompe la base igual quede registrada, y que otra empresa no la vea |
+| `tests/test_fuentes.py` | El conocimiento del producto, contra el material real del repo: ayudas por sección con link, casos validados con pantalla y controlador, borradores y obsoletos afuera, ningún documento interno del catálogo, y los documentos de empresa a su memoria (sin duplicar y sin que los vea otra) |
+| `tests/test_guardian.py` | R4: qué se bloquea (cifra inventada, pegada a la unidad, norma inventada, cifra de la web sin URL) y qué pasa (tool, conteo, redondeo, miles, conocimiento, pregunta, web citada, fechas, códigos, discurso); y en el orquestador, que el usuario reciba "no tengo datos" y quede el incidente con la respuesta original |
+| `tests/test_vertical.py` | Multi-vertical, con SQL real: oil & gas no recibe lo de minería pero sí lo general, sin industria declarada recibe todo, y el modelo ve la etiqueta. Siembra como administrador (opcional, `AGENTE_TEST_DB_ADMIN_DSN`) en una transacción que se deshace |
+| `tests/test_web.py` | `web_buscar`: el cliente contra un SearXNG simulado, que solo se ofrezca con buscador configurado, la cifra citada que pasa y la no citada que se bloquea, que un buscador caído no corte la conversación, y una búsqueda real opcional (con `AGENTE_WEB_URL`) |
+| `tests/test_pantalla.py` | AS-01: la ruta de Tools al controlador, que lo que no es una ruta no pase (inyección, `..`, URLs), los casos de uso de la pantalla por controlador, que el modelo los reciba y quede el control, y el 422 de la API |
+| `tests/test_sugerencias.py` | AS-02: cada regla con sus bordes (inactivos, punto de pedido cero, un elemento suelto, datos raros), lo más urgente primero, que no use el modelo, el máximo, que lo descartado no vuelva pero a otro usuario sí, que no duplique, la corrida registrada, y que nadie responda la propuesta de otro |
 | `tests/test_tools.py` | La lista blanca: que el catálogo cubra todo el contrato del gateway y que lo que no es `GET` sea `accion`; que un patrón amplio no alcance las de escritura; que el modelo solo vea las permitidas; que una de escritura pedida igual no salga al MCP; y que sin catálogo no responda |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
 | `tests/test_mcp_client.py` | Passthrough del token, que el `empr_id` no viaje, trazabilidad, y el parseo de SSE |

@@ -64,6 +64,8 @@ La lista completa con explicaciones está en `.env.example`. Estas son las que m
 | `AGENTE_MCP_MODO` | `apim` (real) o `mi` (desarrollo) | **En demo y producción va `apim`**, siempre |
 | `AGENTE_TEMPERATURA` | Cuánta variación en las respuestas | 0.2 por defecto. Para un agente técnico, bajo es mejor |
 | `AGENTE_PROMPTS_DIR` | Carpeta con un prompt por agente | Casi nunca: por defecto es `prompts/` del repo |
+| `AGENTE_WEB_URL` | URL de SearXNG para la tool `web_buscar` | Vacía = sin búsqueda en internet. Para levantarlo, ver `instalacion.md` §1-ter |
+| `AGENTE_SUGERENCIAS_MAX` · `AGENTE_SUGERENCIA_SILENCIO_DIAS` · `AGENTE_SUGERENCIA_DIAS_CERTIFICACION` | El siguiente paso de Quirqui: cuántas propuestas (3), cuántos días no repetir una descartada (7), con cuánta anticipación avisar una certificación (30) | Valores por defecto: ajustarlos con lo que digan los usuarios |
 
 ### Los modelos: cuáles funcionan y cuáles cuestan
 
@@ -131,6 +133,46 @@ Primero conviene ver cómo queda troceado, sin escribir ni gastar tokens:
 .venv-agente/bin/python -m agente.ingesta procedimiento-deposito.md --modulo alm --tipo manual
 ```
 
+### Las ayudas de Tools y el catálogo de casos de uso (AGENTE-M-06)
+
+Son el conocimiento **del producto**: con eso Quirqui explica qué se hace en cada pantalla y cita el link de la ayuda. Se cargan con un solo comando, en la **terminal local**, parado en la raíz del repo y con las credenciales del curador:
+
+```
+.venv-agente/bin/python -m agente.ingesta ayuda/ doctest/catalogo/
+```
+
+- La ingesta las **reconoce sola**: `.html` son ayudas (un fragmento por sección, con su link `ayuda/manual_x.html#sNN`), y `XXX-UC-NNN.yaml` son casos de uso (un fragmento por caso, con su pantalla, sus controladores y el link de su ayuda).
+- **Solo entran los casos `validado`**: los borradores tienen dudas abiertas y los obsoletos ya no describen el sistema.
+- **De la carpeta del catálogo solo se toman los casos de uso.** Los relevamientos y el esquema que conviven ahí son internos (tienen hallazgos y bugs) y no tienen que llegarle a un cliente.
+- **Volver a correrlo reemplaza, no duplica.** Conviene correrlo cada vez que se regenera el sitio de ayudas o se valida un caso nuevo.
+- Con el material de hoy son unos 240 fragmentos. El costo de vectorizarlos es de centavos de dólar.
+
+### La industria de cada empresa (ADR-A11)
+
+El conocimiento está marcado por industria: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Una empresa con la industria declarada recibe lo de su industria y lo general; **sin declarar, recibe todo**, etiquetado. Hoy la industria la carga Trazalog; más adelante la va a completar la entrevista de Kuntur.
+
+Se declara en la **terminal local** (o en la del servidor de la base), con el propietario de la base o el curador:
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -c "SET agente.empr_id = '191'; INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (191, 'mineria') ON CONFLICT (empr_id) DO UPDATE SET vertical = EXCLUDED.vertical, fec_mod = now();"
+```
+
+Al ingestar material de una sola industria, indicarla con `--vertical` (por defecto `general`):
+
+```
+.venv-agente/bin/python -m agente.ingesta manual-bomba-transferencia.pdf --modulo man --vertical oil_gas
+```
+
+Las ayudas y los casos de uso son siempre `general`.
+
+### Documentos de una empresa
+
+Procedimientos internos, instructivos propios: van a la **memoria privada de esa empresa**, nunca al conocimiento compartido (R7). Hace falta que la empresa tenga su partición de memoria (`SELECT agente.crear_particion_empresa(<empr_id>);`).
+
+```
+.venv-agente/bin/python -m agente.ingesta procedimientos-internos.pdf --empresa 191 --reemplazar
+```
+
 ⚠️ **La ingesta escribe en el conocimiento compartido, así que necesita el rol `agente_curador`.** Con las credenciales del orquestador (`agente_app`) va a fallar con `permission denied for table chunk`, y eso es correcto: por ADR-A4 el runtime no escribe conocimiento compartido. Usá las credenciales del curador para ingestar.
 
 ---
@@ -185,7 +227,10 @@ El JWT que emite Dnato tiene un TTL (`jwt_ttl` en su `config/jwt.php`). Cuando e
 | `relation "agente.agente" does not exist` | No se aplicó `011-agentes.sql` | Aplicarlo con el usuario propietario de la base (ver `db/agente/README.md`) |
 | `409 Kuntur todavía no está disponible` | Kuntur está inactivo hasta la Fase 5 | Es lo esperado. Se activa en `011-agentes.sql` |
 | `function agente.tools_permitidas(text) does not exist` en `interaccion.error` | No se aplicó `012-tools.sql` | Aplicarlo con el usuario propietario. Sin él el agente no responde, a propósito |
+| El agente nunca busca en internet | `AGENTE_WEB_URL` vacía, o falta aplicar `014-tool-web.sql` | Las dos cosas hacen falta: el buscador configurado y la tool catalogada |
+| `web_buscar` vuelve sin resultados | Los buscadores no responden a tiempo | Ver `instalacion.md` §1-ter, punto 5 |
 | Una tool nueva del gateway no la usa ningún agente | No está en el catálogo | Sumarla al seed de `012-tools.sql` con su clase y re-aplicarlo. Si escribe, va como `accion` y no la va a usar nadie |
+| El agente contesta "No tengo datos para responder eso con certeza" | El guardián de cifras (R4) encontró un número sin origen y bloqueó la respuesta | Mirar `incidentes` de esa corrida: `respuesta_bloqueada` tiene lo que iba a decir y `cifras` qué número no tenía fuente. Si es un falso positivo (por ejemplo, "5 puntos" no reconocido como discurso), sumar la palabra a `PALABRAS_DE_DISCURSO` en `agente/guardian.py` |
 | En `tools_llamadas` aparece `"status": "bloqueada"` | El modelo pidió una tool que no tiene permitida (típicamente, crear una OT) | Es lo esperado: no salió al MCP. Si se repite mucho, revisar el prompt |
 | `401` en toda consulta | Falta el header `Authorization: Bearer` | El frontend tiene que reenviar el token de la sesión |
 | `403 El token no trae empr_id` | El JWT no tiene el claim | Es un problema de Dnato/APIM, no del agente. Ver ADR-009 |
@@ -215,6 +260,26 @@ psql -h 127.0.0.1 -U postgres -d agente_minero -x -c "SELECT pregunta, respuesta
 ```
 
 `fragmentos_rag` dice qué conocimiento recuperó y `tools_llamadas` qué datos consultó. Con eso se distingue "el conocimiento estaba mal" de "la tool falló" de "el modelo no entendió".
+
+Lo que **vio el modelo** de cada tool, en orden:
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -x -c "SELECT orden, tool, status, left(contenido, 500) AS contenido FROM agente.tool_llamada WHERE interaccion_id = '<id>' ORDER BY orden;"
+```
+
+Las corridas con algo para revisar (tools bloqueadas, cifras sin fuente):
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -c "SELECT fec_alta, empr_id, agente, left(pregunta,50), incidentes FROM agente.interaccion WHERE incidentes <> '[]'::jsonb ORDER BY fec_alta DESC LIMIT 10;"
+```
+
+Y el costo por agente en los últimos 30 días:
+
+```
+psql -h 127.0.0.1 -U postgres -d agente_minero -c "SELECT agente, count(*) AS corridas, sum(costo_usd) AS usd FROM agente.interaccion WHERE fec_alta > now() - interval '30 days' GROUP BY 1;"
+```
+
+> Estas consultas van como `postgres` (el propietario) porque cruzan empresas. Con el usuario del orquestador, por el RLS, no devolverían nada sin fijar antes `agente.empr_id`.
 
 ---
 

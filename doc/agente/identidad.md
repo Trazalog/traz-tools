@@ -101,6 +101,20 @@ Reglas del proceso:
 |---|---|---|---|---|---|---|
 | *(se completa en AGENTE-ID-03)* | | | | | | |
 
+## El componente (AGENTE-ID-05, hecho)
+
+`application/modules/traz-comp-agente/views/avatar.php` define una sola vez el objeto global `TZAgente`:
+
+| Función | Qué hace |
+|---|---|
+| `TZAgente.avatar(agente, estado, grande)` | Devuelve el HTML del avatar. `agente` es lo que devuelve `GET /agentes` (`clave`, `nombre`, `avatar`) |
+| `TZAgente.estado(elemento, estado)` | Cambia el estado de un avatar ya pintado y recarga la imagen de ese estado |
+
+- **Sin imágenes funciona igual**: busca `assets/agentes/<avatar>/<estado>.webp` y, si no existe, muestra un círculo con la inicial y un color por agente (provisorios hasta tener los colores de la marca: `quirqui` azul, `kuntur` gris oscuro, `faustino` marrón). Cuando se generen las imágenes (AGENTE-ID-03), alcanza con dejar los archivos en esa carpeta: **no hay que tocar código**.
+- **El panel de Quirqui lo usa** y toma nombre y avatar de la configuración de los agentes (`GET /agentes`), no de textos fijos. Estados en uso: `saludo` al abrir, `pensando` mientras espera, `hablando` unos segundos al responder, `alerta` si hay una propuesta urgente (lote vencido) y `despedida` al cerrar. `escuchando` todavía no se usa.
+- **Animación por CSS** (respirar, balanceo, latido de alerta); quien tiene activada la preferencia de menos movimiento del sistema no la recibe.
+- La clave y el nombre se sanean antes de llegar al HTML y a la URL.
+
 ## Animación (tarea AGENTE-ID-04)
 
 Se anima con **CSS sobre las imágenes fijas** (parpadeo, respiración, leve balanceo, transición entre estados): pesa casi nada, anda en cualquier celular y no depende de video. El loop de video del paso 5 es opcional y solo para el reposo en el panel.

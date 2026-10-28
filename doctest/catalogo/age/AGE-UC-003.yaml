@@ -1,0 +1,39 @@
+id: AGE-UC-003
+modulo: AGE
+titulo: Ver o descartar el siguiente paso que propone Quirqui
+perfil: Responsable de Almacén
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: agente/sugerencias.py
+    detalle: "Reglas: lotes vencidos o críticos, stock bajo el punto de pedido, certificaciones por vencer"
+  - repo: traz-tools
+    path: application/modules/traz-comp-agente/views/panel.php
+pantallas:
+  - "Almacenes → cualquier pantalla → botón Q"
+  - "Herramientas → cualquier pantalla → botón Q"
+precondiciones:
+  - "Sesión iniciada en Tools, con el agente habilitado en el menú"
+  - "La empresa tiene un lote vencido o un artículo bajo su punto de pedido"
+flujo_principal:
+  - paso: "Abre el panel de Quirqui en una pantalla de Almacenes"
+    resultado: "Arriba aparecen hasta tres propuestas, la más urgente primero"
+  - paso: "Elige 'Ver cómo' en una propuesta"
+    resultado: "Se muestra qué hacer y un enlace a la ayuda"
+flujos_alternativos:
+  - nombre: "El usuario descarta una propuesta"
+    pasos:
+      - paso: "Elige 'Descartar'"
+        resultado: "La propuesta desaparece y no se le vuelve a mostrar por siete días"
+  - nombre: "No hay nada para proponer"
+    pasos:
+      - paso: "Abre el panel en una empresa sin vencimientos ni faltantes"
+        resultado: "No aparece ninguna propuesta"
+validaciones:
+  - "Lo que descarta un usuario se le sigue mostrando a los demás"
+  - "Quirqui no hace nada por su cuenta: la propuesta dice cómo hacerlo"
+dudas:
+  - "Umbrales por defecto: certificaciones a 30 días, no repetir una descartada por 7 días, máximo 3 propuestas. ¿Son los correctos?"
+  - "Hoy las propuestas son sobre la empresa, no sobre el trabajo de cada usuario (eso llega con el módulo de tareas). ¿Se acepta así la primera versión?"

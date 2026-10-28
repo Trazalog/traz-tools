@@ -1,0 +1,25 @@
+id: AGE-UC-007
+modulo: AGE
+titulo: Calificar una respuesta de Quirqui
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: application/modules/traz-comp-agente/views/panel.php
+  - repo: traz-tools
+    path: agente/api.py
+    detalle: "POST /feedback"
+pantallas:
+  - "Cualquier pantalla de Tools → botón Q"
+precondiciones:
+  - "Sesión iniciada en Tools, con el agente habilitado en el menú"
+  - "Quirqui respondió una pregunta"
+flujo_principal:
+  - paso: "Marca con el pulgar arriba o abajo una respuesta"
+    resultado: "La calificación queda registrada"
+validaciones:
+  - "Un usuario no puede calificar la respuesta de otra empresa"
+dudas:
+  - "En el panel no se pide comentario cuando la calificación es negativa (en el chat de página sí). ¿Hay que pedirlo también en el panel?"

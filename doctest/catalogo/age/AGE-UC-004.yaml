@@ -1,0 +1,25 @@
+id: AGE-UC-004
+modulo: AGE
+titulo: Pedirle a Quirqui que cree algo y recibir cómo hacerlo
+perfil: Mantenedor
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: db/agente/012-tools.sql
+    detalle: "Catálogo: las tools que escriben son de clase acción y ningún agente las alcanza"
+  - repo: traz-tools
+    path: agente/orquestador.py
+    detalle: "Una tool fuera de la lista blanca no sale al sistema"
+pantallas:
+  - "Cualquier pantalla de Tools → botón Q"
+precondiciones:
+  - "Sesión iniciada en Tools, con el agente habilitado en el menú"
+flujo_principal:
+  - paso: "Le pide a Quirqui que cree una orden de trabajo para un equipo"
+    resultado: "Quirqui explica cómo crearla y en qué pantalla, pero no la crea"
+validaciones:
+  - "Ningún agente crea órdenes, pedidos ni ningún otro registro"
+dudas:
+  - "¿Quirqui tiene que ofrecer el enlace directo a la pantalla de alta, o alcanza con nombrarla?"

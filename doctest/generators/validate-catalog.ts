@@ -36,7 +36,7 @@ const DOCTEST_ROOT = resolve(HERE, '..');
 const CATALOG_DIR = join(DOCTEST_ROOT, 'catalogo');
 const SCHEMA_PATH = join(CATALOG_DIR, 'catalogo.schema.json');
 
-const MODULOS = ['DNATO', 'MAN', 'ALM', 'MCP', 'PAN', 'PRD', 'TAR'] as const;
+const MODULOS = ['DNATO', 'MAN', 'ALM', 'MCP', 'PAN', 'PRD', 'TAR', 'AGE'] as const;
 
 interface Issue {
   file: string;

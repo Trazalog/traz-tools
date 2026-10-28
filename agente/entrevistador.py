@@ -53,8 +53,12 @@ class Tema:
 
 # ---------------------------------------------------------------- la agenda
 async def agenda(con: psycopg.AsyncConnection, *, limite: int = 15,
-                 modulo: str | None = None) -> list[Tema]:
-    """Los temas pendientes, del más al menos prioritario."""
+                 modulo: str | None = None, vertical: str | None = None) -> list[Tema]:
+    """Los temas pendientes, del más al menos prioritario.
+
+    Con vertical (ADR-A11), los de esa industria y los generales: a un experto
+    de oil & gas no se le pregunta por chancadoras.
+    """
     sql = """
         SELECT tema_id, nombre, descripcion, modulo, tipo_equipo, situacion,
                prioridad, origen_prioridad
@@ -62,11 +66,12 @@ async def agenda(con: psycopg.AsyncConnection, *, limite: int = 15,
         WHERE estado = 'pendiente'
           AND prioridad > 0
           AND (%(modulo)s::text IS NULL OR modulo IN (%(modulo)s, 'general'))
+          AND (%(vertical)s::text IS NULL OR vertical IN (%(vertical)s, 'general'))
         ORDER BY prioridad DESC, nombre
         LIMIT %(limite)s
     """
     async with con.cursor() as cur:
-        await cur.execute(sql, {"modulo": modulo, "limite": limite})
+        await cur.execute(sql, {"modulo": modulo, "vertical": vertical, "limite": limite})
         filas = await cur.fetchall()
     return [
         Tema(f["tema_id"], f["nombre"], f["descripcion"], f["modulo"],
@@ -404,10 +409,13 @@ async def promover(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
         await cur.execute(
             """
             SELECT h.contenido, h.tipo_equipo, h.situacion, h.modulo, h.confianza,
-                   h.estado_validacion, e.nombre AS experto
+                   h.estado_validacion, e.nombre AS experto,
+                   coalesce(t.vertical, 'general') AS vertical
             FROM agente.hecho h
             JOIN agente.sesion_entrevista s USING (sesion_id)
             JOIN agente.experto e ON e.experto_id = s.experto_id
+            -- El conocimiento hereda la industria del tema de la entrevista.
+            LEFT JOIN agente.tema t ON t.tema_id = s.tema_id
             WHERE h.hecho_id = %s
             """, (hecho_id,),
         )
@@ -444,14 +452,15 @@ async def promover(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
             """
             INSERT INTO agente.chunk
                 (fuente_id, contenido, embedding, tipo_equipo, situacion, modulo,
-                 confianza, metadata)
-            VALUES (%s, %s, %s::vector, %s, %s, %s, %s, %s::jsonb)
+                 confianza, metadata, vertical)
+            VALUES (%s, %s, %s::vector, %s, %s, %s, %s, %s::jsonb, %s)
             RETURNING chunk_id
             """,
             (fuente_id, h["contenido"], _a_vector(vector), h["tipo_equipo"],
              h["situacion"], h["modulo"], confianza,
              json.dumps({"hecho_id": hecho_id, "curador": curador,
-                         "estado_validacion": h["estado_validacion"]})),
+                         "estado_validacion": h["estado_validacion"]}),
+             h["vertical"]),
         )
         chunk_id = (await cur.fetchone())["chunk_id"]
 

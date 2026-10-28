@@ -92,8 +92,36 @@ class Agente extends CI_Controller
             return;
         }
 
-        log_message('DEBUG', '#TRAZA | AGENTE | Agente | consultar() >> ' . substr($pregunta, 0, 80));
-        $this->_json($this->Agentes->consultar($this->_token(), $pregunta));
+        // La pantalla de Tools donde está el usuario (AGENTE-AS-01). La manda
+        // el panel; el chat de página no. El orquestador la valida.
+        $pantalla = trim((string) $this->input->post('pantalla'));
+
+        log_message('DEBUG', '#TRAZA | AGENTE | Agente | consultar() >> ' . substr($pregunta, 0, 80)
+            . ($pantalla !== '' ? ' | pantalla: ' . substr($pantalla, 0, 120) : ''));
+        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla));
+    }
+
+    /** Siguiente paso en la pantalla (AGENTE-AS-02). Lo pide el panel al abrirse. */
+    public function sugerencias()
+    {
+        $pantalla = trim((string) $this->input->post('pantalla'));
+        if ($pantalla === '' || !$this->_asegurarToken()) {
+            $this->_json(array('propuestas' => array()));
+            return;
+        }
+        $this->_json($this->Agentes->sugerencias($this->_token(), $pantalla));
+    }
+
+    /** El usuario vio (aceptada) o descartó una propuesta. */
+    public function sugerencia_respuesta()
+    {
+        $estado = (string) $this->input->post('estado');
+        if (!in_array($estado, array('aceptada', 'descartada'), true) || !$this->_asegurarToken()) {
+            $this->_json(array('error' => 'estado inválido'), 400);
+            return;
+        }
+        $this->_json($this->Agentes->responderSugerencia(
+            $this->_token(), (int) $this->input->post('propuesta_id'), $estado));
     }
 
     public function feedback()
@@ -185,6 +213,20 @@ class Agente extends CI_Controller
     {
         $sesion = urlencode((string) $this->input->post('sesion_id'));
         $this->_proxyEntrevista('/entrevista/cerrar?sesion_id=' . $sesion, null);
+    }
+
+    /**
+     * Los agentes que este usuario puede usar, con nombre y avatar (AGENTE-ID-05).
+     * El panel pinta nombre y avatar con esto, no con textos fijos: se cambian
+     * en la configuración de los agentes sin tocar la vista.
+     */
+    public function agentes()
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('agentes' => array()));
+            return;
+        }
+        $this->_json($this->Agentes->agentes($this->_token()));
     }
 
     /** Estado del orquestador, para diagnosticar desde la UI. */

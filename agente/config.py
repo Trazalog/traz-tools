@@ -75,6 +75,22 @@ class Config:
     )
     mcp_timeout: int = field(default_factory=lambda: _env_int("AGENTE_MCP_TIMEOUT", 60))
 
+    # --- Busqueda web (tool web_buscar, AGENTE-M-05) ------------------------
+    # URL de SearXNG. Vacia = busqueda apagada: la tool no se ofrece.
+    web_url: str = field(default_factory=lambda: _env("AGENTE_WEB_URL", ""))
+    web_resultados: int = field(default_factory=lambda: _env_int("AGENTE_WEB_RESULTADOS", 5))
+    web_timeout: int = field(default_factory=lambda: _env_int("AGENTE_WEB_TIMEOUT", 20))
+
+    # --- Siguiente paso (AGENTE-AS-02) ---------------------------------------
+    # Valores por defecto configurables: el PM no los definio.
+    sugerencias_max: int = field(default_factory=lambda: _env_int("AGENTE_SUGERENCIAS_MAX", 3))
+    # Una propuesta descartada no se repite por estos dias.
+    sugerencia_silencio_dias: int = field(
+        default_factory=lambda: _env_int("AGENTE_SUGERENCIA_SILENCIO_DIAS", 7))
+    # Avisar certificaciones de herramientas que vencen en estos dias o menos.
+    sugerencia_dias_certificacion: int = field(
+        default_factory=lambda: _env_int("AGENTE_SUGERENCIA_DIAS_CERTIFICACION", 30))
+
     # --- RAG ----------------------------------------------------------------
     rag_top_k: int = field(default_factory=lambda: _env_int("AGENTE_RAG_TOP_K", 6))
     rag_top_k_memoria: int = field(default_factory=lambda: _env_int("AGENTE_RAG_TOP_K_MEMORIA", 4))

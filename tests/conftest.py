@@ -21,6 +21,10 @@ sys.path.insert(0, str(RAIZ))
 os.environ.setdefault("AGENTE_DB_PASSWORD", "test")
 os.environ.setdefault("OPENROUTER_API_KEY", "test-key-no-real")
 os.environ.setdefault("AGENTE_PROMPTS_DIR", str(RAIZ / "prompts"))
+# La suite corre siempre SIN buscador web, para que el resultado no dependa del
+# entorno (con buscador, cada agente recibe una tool mas). El SearXNG real se
+# aparte para el unico test que lo usa: tests/test_web.py::test_busqueda_real.
+os.environ["AGENTE_WEB_URL_REAL"] = os.environ.pop("AGENTE_WEB_URL", "")
 
 from agente.config import Config  # noqa: E402
 from agente.llm import Respuesta  # noqa: E402
@@ -29,6 +33,30 @@ from agente.llm import Respuesta  # noqa: E402
 @pytest.fixture
 def cfg() -> Config:
     return Config()
+
+
+@pytest.fixture
+async def con_admin():
+    """Conexion de ADMINISTRACION, para sembrar datos que el runtime no puede
+    escribir (por ejemplo, conocimiento compartido de varias industrias).
+
+    Opcional: solo si AGENTE_TEST_DB_ADMIN_DSN esta configurada (en desarrollo,
+    contra una base descartable). Todo corre en una transaccion que se deshace
+    al final. OJO: si el codigo bajo prueba hace commit (el orquestador lo hace
+    al registrar la corrida), lo sembrado hasta ahi queda: la siembra tiene que
+    ser idempotente.
+    """
+    dsn = os.environ.get("AGENTE_TEST_DB_ADMIN_DSN")
+    if not dsn:
+        pytest.skip("Sin AGENTE_TEST_DB_ADMIN_DSN: se saltean los tests que siembran como administrador")
+    import psycopg
+    from psycopg.rows import dict_row
+    c = await psycopg.AsyncConnection.connect(dsn, row_factory=dict_row)
+    try:
+        yield c
+    finally:
+        await c.rollback()
+        await c.close()
 
 
 @pytest.fixture

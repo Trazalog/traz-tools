@@ -136,12 +136,16 @@ class Agentes extends CI_Model
      * Devuelve el cuerpo del orquestador tal cual, que incluye el
      * interaccion_id necesario para calificar la respuesta despues.
      */
-    public function consultar($jwt, $pregunta)
+    public function consultar($jwt, $pregunta, $pantalla = '')
     {
-        $rsp = $this->_llamar('POST', '/consulta', [
+        $cuerpo = [
             'pregunta' => $pregunta,
             'canal'    => 'chat_tools',
-        ], $jwt, self::TIMEOUT_CONSULTA);
+        ];
+        if ($pantalla !== '') {
+            $cuerpo['pantalla'] = $pantalla;
+        }
+        $rsp = $this->_llamar('POST', '/consulta', $cuerpo, $jwt, self::TIMEOUT_CONSULTA);
 
         if (!$rsp['ok']) {
             log_message('ERROR', '#TRAZA | AGENTE | Agentes | consultar() >> ' . $rsp['error']);
@@ -152,6 +156,24 @@ class Agentes extends CI_Model
             ];
         }
         return $rsp['data'];
+    }
+
+    /** Siguiente paso en la pantalla (AGENTE-AS-02). Si el agente no responde, nada. */
+    public function sugerencias($jwt, $pantalla)
+    {
+        $rsp = $this->_llamar('POST', '/sugerencias', ['pantalla' => $pantalla], $jwt, 20);
+        if (!$rsp['ok']) {
+            log_message('ERROR', '#TRAZA | AGENTE | Agentes | sugerencias() >> ' . $rsp['error']);
+            return ['propuestas' => []];
+        }
+        return $rsp['data'];
+    }
+
+    public function responderSugerencia($jwt, $propuestaId, $estado)
+    {
+        $rsp = $this->_llamar('POST', '/sugerencias/respuesta',
+            ['propuesta_id' => $propuestaId, 'estado' => $estado], $jwt, 10);
+        return $rsp['ok'] ? $rsp['data'] : ['error' => 'no_disponible'];
     }
 
     public function feedback($jwt, $interaccionId, $util, $comentario = null, $motivo = null)
@@ -209,6 +231,12 @@ class Agentes extends CI_Model
     }
 
     /** Estado del orquestador. No necesita token. */
+    public function agentes($jwt)
+    {
+        $rsp = $this->_llamar('GET', '/agentes', null, $jwt, 10);
+        return $rsp['ok'] ? $rsp['data'] : ['agentes' => []];
+    }
+
     public function salud()
     {
         $rsp = $this->_llamar('GET', '/salud', null, null, 10);

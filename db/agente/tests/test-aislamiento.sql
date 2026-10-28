@@ -1,8 +1,9 @@
 -- =============================================================================
 -- Test de aislamiento multi-tenant — el que no puede fallar nunca
 -- =============================================================================
--- Verifica que una empresa NO puede leer ni escribir la memoria ni las
--- notificaciones de otra, ni siquiera con un SELECT sin WHERE.
+-- Verifica que una empresa NO puede leer ni escribir la memoria, las
+-- notificaciones, las corridas del agente (interaccion, tool_llamada) ni el
+-- feedback de otra, ni siquiera con un SELECT sin WHERE.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-aislamiento.sql
 --
@@ -83,6 +84,41 @@ VALUES (:EMPRESA_B, 'mtbf_deterioro', 22, 'Jefe de mantenimiento de B');
 INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
 VALUES (:EMPRESA_B, 'material_por_vencer', 23, 'Encargado de deposito de B');
 
+-- Corridas del agente (013): una interaccion por empresa, con su tool y un
+-- feedback negativo. Es lo mas sensible: la pregunta, la respuesta y lo que
+-- devolvieron las tools con datos del cliente.
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.interaccion (interaccion_id, empr_id, pregunta, respuesta)
+VALUES ('00000000-0000-0000-0000-00000000000a', :EMPRESA_A, 'pregunta privada de A', 'RESPUESTA PRIVADA DE A');
+INSERT INTO agente.tool_llamada (interaccion_id, empr_id, orden, tool, status, contenido)
+VALUES ('00000000-0000-0000-0000-00000000000a', :EMPRESA_A, 1, 'alm_get_stock', 'ok', 'STOCK PRIVADO DE A');
+INSERT INTO agente.feedback (interaccion_id, util, comentario, usr_id)
+VALUES ('00000000-0000-0000-0000-00000000000a', false, 'QUEJA PRIVADA DE A', 1);
+
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.interaccion (interaccion_id, empr_id, pregunta, respuesta)
+VALUES ('00000000-0000-0000-0000-00000000000b', :EMPRESA_B, 'pregunta privada de B', 'RESPUESTA PRIVADA DE B');
+INSERT INTO agente.tool_llamada (interaccion_id, empr_id, orden, tool, status, contenido)
+VALUES ('00000000-0000-0000-0000-00000000000b', :EMPRESA_B, 1, 'alm_get_stock', 'ok', 'STOCK PRIVADO DE B');
+INSERT INTO agente.feedback (interaccion_id, util, comentario, usr_id)
+VALUES ('00000000-0000-0000-0000-00000000000b', false, 'QUEJA PRIVADA DE B', 1);
+
+-- Perfil de empresa (016): la industria de cada una.
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (:EMPRESA_A, 'mineria')
+ON CONFLICT (empr_id) DO UPDATE SET vertical = 'mineria';
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (:EMPRESA_B, 'oil_gas')
+ON CONFLICT (empr_id) DO UPDATE SET vertical = 'oil_gas';
+
+-- Propuestas de siguiente paso (017).
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
+VALUES (:EMPRESA_A, 'ana', 'stock_bajo:1', 'stock_bajo', 'Reponer filtro de A', 'stock de A');
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
+VALUES (:EMPRESA_B, 'beto', 'stock_bajo:1', 'stock_bajo', 'Reponer filtro de B', 'stock de B');
+
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
 
@@ -143,6 +179,40 @@ SELECT 'destinatarios_de(): con contexto A, devuelve al destinatario de A',
        EXISTS (SELECT 1 FROM agente.destinatarios_de(900001, 'mtbf_deterioro') WHERE usr_id = 11),
        'la funcion sigue sirviendo dentro de la empresa';
 
+INSERT INTO _resultado
+SELECT 'interaccion: con contexto A, las de B son invisibles',
+       NOT EXISTS (SELECT 1 FROM agente.interaccion WHERE respuesta LIKE '%DE B')
+       AND EXISTS (SELECT 1 FROM agente.interaccion WHERE respuesta LIKE '%DE A'),
+       'preguntas y respuestas de otra empresa (013)';
+
+INSERT INTO _resultado
+SELECT 'tool_llamada: con contexto A, lo que devolvieron las tools de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.tool_llamada WHERE contenido LIKE '%DE B'),
+       'datos del cliente que vio el modelo (013)';
+
+INSERT INTO _resultado
+SELECT 'feedback: con contexto A, el feedback de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.feedback WHERE comentario LIKE '%DE B')
+       AND EXISTS (SELECT 1 FROM agente.feedback WHERE comentario LIKE '%DE A'),
+       '013';
+
+INSERT INTO _resultado
+SELECT 'v_feedback_negativo: con contexto A, no muestra el de B aunque no se filtre',
+       NOT EXISTS (SELECT 1 FROM agente.v_feedback_negativo WHERE empr_id = 900002),
+       'la vista corre con los permisos de quien consulta (security_invoker)';
+
+INSERT INTO _resultado
+SELECT 'propuesta: con contexto A, las de B son invisibles',
+       NOT EXISTS (SELECT 1 FROM agente.propuesta WHERE titulo LIKE '%de B')
+       AND EXISTS (SELECT 1 FROM agente.propuesta WHERE titulo LIKE '%de A'),
+       '017';
+
+INSERT INTO _resultado
+SELECT 'perfil_empresa: con contexto A, el perfil de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.perfil_empresa WHERE empr_id = 900002)
+       AND EXISTS (SELECT 1 FROM agente.perfil_empresa WHERE empr_id = 900001),
+       '016';
+
 -- ---------------------------------------------------------------------------
 -- CONTROL 2 — Simetrico: con el contexto de B, A es invisible
 -- ---------------------------------------------------------------------------
@@ -180,6 +250,21 @@ SELECT 'destinatario_alerta: sin contexto de empresa no se ve ninguna fila (fall
        NOT EXISTS (SELECT 1 FROM agente.destinatario_alerta),
        'no debe devolver todo';
 
+INSERT INTO _resultado
+SELECT 'propuesta: sin contexto no se ve ninguna (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.propuesta), '017';
+
+INSERT INTO _resultado
+SELECT 'perfil_empresa: sin contexto no se ve ningun perfil (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.perfil_empresa), '016';
+
+INSERT INTO _resultado
+SELECT 'interaccion, tool_llamada y feedback: sin contexto no se ve ninguna fila (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.interaccion)
+       AND NOT EXISTS (SELECT 1 FROM agente.tool_llamada)
+       AND NOT EXISTS (SELECT 1 FROM agente.feedback),
+       'no debe devolver todo';
+
 -- ---------------------------------------------------------------------------
 -- CONTROL 4 — Con el contexto de A no se puede ESCRIBIR como B
 -- ---------------------------------------------------------------------------
@@ -198,6 +283,37 @@ BEGIN
 
     INSERT INTO _resultado
     VALUES ('memoria: con contexto A no se puede insertar como B', v_rechazado, 'WITH CHECK de la policy');
+END
+$$;
+
+DO $$
+DECLARE
+    v_rechazado boolean := false;
+BEGIN
+    BEGIN
+        INSERT INTO agente.interaccion (empr_id, pregunta) VALUES (900002, 'INTENTO CRUZADO');
+    EXCEPTION WHEN insufficient_privilege THEN
+        v_rechazado := true;
+    END;
+    INSERT INTO _resultado
+    VALUES ('interaccion: con contexto A no se puede registrar una corrida como B', v_rechazado, 'WITH CHECK');
+END
+$$;
+
+-- Calificar la interaccion de otra empresa: la subconsulta de la policy no la
+-- ve, asi que el INSERT se rechaza.
+DO $$
+DECLARE
+    v_rechazado boolean := false;
+BEGIN
+    BEGIN
+        INSERT INTO agente.feedback (interaccion_id, util, usr_id)
+        VALUES ('00000000-0000-0000-0000-00000000000b', true, 99);
+    EXCEPTION WHEN insufficient_privilege THEN
+        v_rechazado := true;
+    END;
+    INSERT INTO _resultado
+    VALUES ('feedback: con contexto A no se puede calificar una interaccion de B', v_rechazado, 'WITH CHECK');
 END
 $$;
 
@@ -244,7 +360,7 @@ SELECT 'chunk: el conocimiento compartido no tiene RLS (es comun a todos)',
 RESET ROLE;
 
 \echo ''
-\echo '=== TEST DE AISLAMIENTO MULTI-TENANT — Agente Minero ==='
+\echo '=== TEST DE AISLAMIENTO MULTI-TENANT — agentes de IA ==='
 SELECT CASE WHEN ok THEN 'OK    ' ELSE 'FALLA ' END || control
        || CASE WHEN detalle <> '' THEN '  [' || detalle || ']' ELSE '' END AS resultado
 FROM _resultado

@@ -85,7 +85,9 @@ TOOL_EQUIPOS = {
 @pytest.mark.asyncio
 async def test_responde_sin_llamar_tools(con, monkeypatch, llm_falso):
     """Una pregunta de conocimiento general no necesita datos del cliente."""
-    llm = llm_falso([respuesta_texto("Cada 500 horas de operación.")])
+    # Sin cifras: desde R4 (AGENTE-M-04), un numero sin fuente se bloquea. Ese
+    # caso esta en tests/test_guardian.py.
+    llm = llm_falso([respuesta_texto("Según el desgaste que veas en la inspección.")])
     mcp = MCPFalso(tools=[TOOL_EQUIPOS])
     _parchar(monkeypatch, llm, mcp)
 
@@ -94,7 +96,7 @@ async def test_responde_sin_llamar_tools(con, monkeypatch, llm_falso):
         autorizacion="Bearer t",
     ))
 
-    assert res.respuesta == "Cada 500 horas de operación."
+    assert res.respuesta == "Según el desgaste que veas en la inspección."
     assert res.tools_llamadas == []
     assert res.error is None
     assert llm.textos_vectorizados == ["¿Cada cuánto se cambian las muelas?"]
@@ -210,6 +212,9 @@ async def test_la_interaccion_queda_registrada(con, monkeypatch, llm_falso):
         empr_id=900001, pregunta="pregunta de prueba", autorizacion="Bearer t",
     ))
 
+    # interaccion tiene RLS (013): se lee con el contexto de la empresa, igual
+    # que lo hace el codigo. Sin esto no se ve nada -- que es lo correcto.
+    await rag.fijar_empresa(con, 900001)
     async with con.cursor() as cur:
         await cur.execute(
             "SELECT pregunta, respuesta, modelo, fragmentos_rag, tools_llamadas "

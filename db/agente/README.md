@@ -44,6 +44,11 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 010 | `010-seed-taxonomia.sql` | Taxonomía inicial de temas del entrevistador (propuesta para que el PM la corrija) |
 | 011 | `011-agentes.sql` | `agente` — la configuración de Kuntur, Quirqui y Faustino (ADR-A7): quién lo usa, prompt, tools permitidas, disparadores, fuentes y avatar. Global, igual para todos los clientes; el runtime solo la lee |
 | 012 | `012-tools.sql` | `tool` — el catálogo de las tools del MCP Gateway con su clase (lectura / generación / acción), y `tools_permitidas(clave)`: lo que cada agente puede usar de verdad (ADR-A8) |
+| 013 | `013-corrida.sql` | Corrida auditable (R8): columnas `agente`, `disparador`, `costo_usd`, `controles`, `incidentes` en `interaccion`; tabla `tool_llamada` con lo que vio el modelo de cada tool; y **RLS** en `interaccion`, `feedback` y `tool_llamada` |
+| 014 | `014-tool-web.sql` | Cataloga `web_buscar` (búsqueda en internet sobre SearXNG): `lectura`, costo `externo`, riesgo `medio` |
+| 015 | `015-fuentes-producto.sql` | Tipos de fuente `ayuda` y `caso_uso`, e índice GIN sobre `chunk.metadata` (encontrar el caso de uso de una pantalla por su controlador) |
+| 016 | `016-vertical.sql` | Multi-vertical (ADR-A11): `vertical` en `chunk` y `tema`, y la tabla `perfil_empresa` con la industria de cada empresa (RLS, el runtime solo lee) |
+| 017 | `017-propuestas.sql` | `propuesta` — el siguiente paso que Quirqui le propuso a cada usuario y qué hizo con él (vista o descartada), con RLS (AGENTE-AS-02) |
 
 Aplicación completa, desde el directorio del repo:
 
@@ -180,6 +185,12 @@ En los patrones, el `_` se escapa antes de pasarlo a `LIKE`, donde es comodín: 
 
 **Para agregar una tool nueva:** sumarla al seed de `012-tools.sql` con su clase y volver a aplicarlo.
 
+### Por qué `interaccion` y `feedback` pasaron a tener RLS (013)
+
+Hallazgo del 2026-10-27: desde `005` no tenían RLS, aunque guardan las preguntas y respuestas de cada empresa con datos de sus tools. Las protegía solo el `WHERE empr_id` del código. `013` les aplica la misma policy que a `memoria`, y `tool_llamada` nace con ella. `feedback` no tiene `empr_id`: su policy pasa por la de `interaccion` (una empresa no ve ni califica la interacción de otra). La vista `v_feedback_negativo` pasa a `security_invoker`, porque una vista corre con los permisos de su dueño y, si el dueño es superusuario, se saltea el RLS.
+
+**Consecuencia operativa:** para leer estas tablas con el usuario del orquestador hay que fijar antes `agente.empr_id`. Las consultas de triage que cruzan empresas van con el propietario de la base.
+
 ### El agente cubre Mantenimiento y Almacenes
 
 El esquema de E1 se escribió pensando solo en Mantenimiento — un sesgo que el PM detectó el 2026-09-02. La capa MCP expone las **dos** áreas (11 tools `man_*` y 9 `alm_*`), así que el script `009` amplía el esquema:
@@ -235,6 +246,18 @@ Misma base descartable, con `001..012`:
 | Rollback de `012` y re-aplicación | ✅ borra tabla, funciones y registro; sin `012` el orquestador no llega al modelo (falla cerrado) |
 | **Mutación:** sacar el filtro de clase de la función | ✅ lo detectan 4 tests de pytest y el test de estructura |
 
+### Verificación de `013` (2026-10-27, AGENTE-M-03)
+
+Misma base descartable, con `001..013`:
+
+| Qué se probó | Resultado |
+|---|---|
+| Aplicar `013` dos veces | ✅ idempotente |
+| `tests/test-estructura.sql` | ✅ **100 de 100** (columnas de la corrida, `tool_llamada`, RLS forzado en las tres tablas, la vista con `security_invoker`, `agente_app` no corrige ni borra `tool_llamada`) |
+| `tests/test-aislamiento.sql` | ✅ **23 de 23** — 7 controles nuevos sobre `interaccion`, `tool_llamada`, `feedback` y la vista |
+| **Mutación:** desactivar el RLS de `interaccion` | ✅ el test de aislamiento marca 4 fallas |
+| Rollback de `013` y re-aplicación | ✅ saca columnas, tabla y RLS; re-aplicado vuelve a 23/23 |
+
 ### Dos cosas que aparecieron al probar y están corregidas
 
 1. **El índice de deduplicación no podía usar `now()`.** PostgreSQL exige que las funciones del predicado de un índice sean `IMMUTABLE`; la primera versión fallaba con `functions in index predicate must be marked IMMUTABLE`. Se resolvió metiendo la ventana temporal **dentro** de la `dedupe_key`, lo que además la vuelve determinista.
@@ -246,7 +269,7 @@ Misma base descartable, con `001..012`:
 
 | Ambiente | Base | Estado |
 |---|---|---|
-| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ✅ `011` aplicado por el PM el 2026-10-27. ⏳ **`012` pendiente de aplicar por el PM**: sin él, el orquestador no responde (falla cerrado) |
+| **Desarrollo** | `agente_minero` en el PostgreSQL 16.15 local (`127.0.0.1:5432`) | ✅ `001..010` **aplicados y verificados el 2026-09-02.** Usuario `agente_orq` creado con el rol `agente_app`. ✅ `011` aplicado por el PM el 2026-10-27. ⏳ **`012` a `017` pendientes de aplicar por el PM**, en orden: sin `012` el orquestador no responde (falla cerrado); sin `013` no registra las corridas; sin `014` no busca en internet; sin `015` no se pueden ingestar las ayudas ni los casos de uso; sin `016` el orquestador no responde (lee la industria de la empresa); sin `017` el panel no propone el siguiente paso |
 | Demo | a definir | ⏳ pendiente |
 | Producción | a definir | ⏳ pendiente |
 

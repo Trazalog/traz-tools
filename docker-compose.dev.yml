@@ -1,5 +1,5 @@
 # =============================================================================
-# Entorno de desarrollo del Agente Minero
+# Entorno de desarrollo de los agentes de IA de Trazalog
 # =============================================================================
 # Levanta el orquestador y, opcionalmente, un PostgreSQL con pgvector propio.
 #
@@ -10,6 +10,13 @@
 # descartable dentro de Docker, levantá también el perfil "db":
 #
 #   docker compose -f docker-compose.dev.yml --profile db up
+#
+# La búsqueda en internet (tool web_buscar) usa SearXNG, en el perfil "web":
+#
+#   docker compose -f docker-compose.dev.yml --profile web up searxng
+#
+# y en el .env: AGENTE_WEB_URL=http://127.0.0.1:8888 (o http://searxng:8080 si
+# el orquestador también corre en Docker).
 #
 # Requiere un archivo .env en la raíz (copiar de .env.example).
 # =============================================================================
@@ -31,6 +38,18 @@ services:
     command: >
       sh -c "pip install --quiet --no-cache-dir -r agente/requirements.txt &&
              uvicorn agente.api:app --host 0.0.0.0 --port 8099 --reload"
+
+  # Metabuscador para la tool web_buscar (AGENTE-M-05). Libre, sin API key.
+  # Versión fijada: subirla a propósito, no por arrastre.
+  searxng:
+    profiles: ["web"]
+    image: searxng/searxng:2026.10.11-ad46ebd7d
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-cambiar-en-cada-ambiente}
+    ports:
+      - "127.0.0.1:8888:8080"
+    volumes:
+      - ./agente/searxng/settings.yml:/etc/searxng/settings.yml:ro
 
   # Base descartable, solo si no querés usar la del host.
   db:

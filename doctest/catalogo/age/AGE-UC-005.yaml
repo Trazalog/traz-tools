@@ -1,0 +1,22 @@
+id: AGE-UC-005
+modulo: AGE
+titulo: Una cifra sin respaldo no le llega al usuario
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: agente/guardian.py
+    detalle: "Guardián de cifras (R4)"
+pantallas:
+  - "Cualquier pantalla de Tools → botón Q"
+precondiciones:
+  - "Sesión iniciada en Tools, con el agente habilitado en el menú"
+flujo_principal:
+  - paso: "Pregunta algo cuya respuesta necesita un número que el sistema no tiene"
+    resultado: "Quirqui responde que no tiene datos para responder eso con certeza, en lugar de dar un número inventado"
+validaciones:
+  - "Todo número de una respuesta sale de los datos del sistema, del conocimiento registrado, de la pregunta del usuario o de una fuente de internet citada"
+dudas:
+  - "El mensaje cuando se bloquea dice 'No tengo datos para responder eso con certeza. Puedo consultar los datos de tu empresa o buscar una fuente si me decís qué necesitás exactamente.' ¿Es el tono correcto?"

@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, rag
+from . import agentes, guardian, pantalla, rag, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -46,6 +46,11 @@ class Consulta:
     usr_id: int | None = None
     usuario_nick: str | None = None
     canal: str = "chat_tools"
+    # Que puso en marcha la corrida (R8): una consulta, un evento operativo...
+    disparador: str = "consulta"
+    # La pantalla de Tools donde esta el usuario (AGENTE-AS-01), ej.
+    # "traz-comp-almacenes/Articulo". None = no se sabe (el chat de pagina).
+    pantalla: str | None = None
     # El agente ya resuelto y con el acceso verificado (agentes.para_consulta).
     # None = el agente por defecto.
     agente: Agente | None = None
@@ -62,6 +67,14 @@ class Resultado:
     tokens_respuesta: int = 0
     latencia_ms: int = 0
     error: str | None = None
+    # R8: que se controlo, que hay que revisar, cuanto costo, y lo que cada tool
+    # le devolvio al modelo (insumo del guardian de cifras, R4).
+    costo_usd: float | None = None
+    controles: list[dict] = field(default_factory=list)
+    incidentes: list[dict] = field(default_factory=list)
+    contenidos_tools: list[str] = field(default_factory=list)
+    # (tool, contenido) en el orden en que se ejecutaron: lo que lee el guardian.
+    tools_vistas: list[tuple[str, str]] = field(default_factory=list)
 
 
 class Orquestador:
@@ -97,6 +110,13 @@ class Orquestador:
             res.respuesta = "No pude responder ahora mismo por un problema técnico."
 
         res.latencia_ms = int((time.monotonic() - t0) * 1000)
+
+        # Si lo que fallo fue la base, la transaccion quedo abortada y el
+        # registro tambien fallaria. Justo esas corridas son las que mas
+        # interesa ver: se vuelve a una transaccion limpia, con la empresa.
+        if con.info.transaction_status == psycopg.pq.TransactionStatus.INERROR:
+            await con.rollback()
+            await rag.fijar_empresa(con, consulta.empr_id)
         await self._registrar(con, consulta, res)
         return res
 
@@ -113,10 +133,13 @@ class Orquestador:
         # Queda registrado en la interaccion para que se vea por que esa
         # respuesta no tuvo fragmentos.
         fragmentos = []
+        # ADR-A11: el conocimiento de la industria de la empresa, mas lo general.
+        vertical = await rag.vertical_de(con, consulta.empr_id)
+        res.controles.append({"control": "vertical", "vertical": vertical or "sin_declarar"})
         try:
             vector = (await llm.embeddings([consulta.pregunta]))[0]
             fragmentos = (
-                await rag.buscar_conocimiento(con, self.cfg, vector)
+                await rag.buscar_conocimiento(con, self.cfg, vector, vertical=vertical)
                 + await rag.buscar_memoria(con, self.cfg, consulta.empr_id, vector)
             )
             fragmentos.sort(key=lambda f: f.distancia)
@@ -131,28 +154,50 @@ class Orquestador:
 
         # 3. Conversacion
         sistema = consulta.agente.sistema(self.cfg.prompts_dir)
+        contexto = rag.armar_contexto(fragmentos)
         mensajes = [
             {"role": "system", "content": sistema},
             {"role": "system", "content":
-                "Contexto recuperado para esta consulta:\n\n"
-                + rag.armar_contexto(fragmentos)},
-            {"role": "user", "content": consulta.pregunta},
+                "Contexto recuperado para esta consulta:\n\n" + contexto},
         ]
+        # Donde esta parado el usuario (AGENTE-AS-01): los casos de uso de esa
+        # pantalla, encontrados por su controlador. Tambien cuentan como fuente
+        # para el guardian de cifras.
+        if consulta.pantalla and pantalla.ruta_valida(consulta.pantalla):
+            casos = await pantalla.casos_de(con, consulta.pantalla)
+            texto_pantalla = pantalla.contexto(consulta.pantalla, casos)
+            mensajes.append({"role": "system", "content": texto_pantalla})
+            contexto += "\n\n" + texto_pantalla
+            res.controles.append({"control": "pantalla", "ruta": consulta.pantalla,
+                                  "casos": [c.caso_uso for c in casos]})
+        mensajes.append({"role": "user", "content": consulta.pregunta})
         # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
         # VE las tools que este agente puede usar. Las de escritura no estan,
         # aunque el gateway las publique.
         permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
-        tools = [t for t in await mcp.listar_tools()
+        del_gateway = await mcp.listar_tools()
+        tools = [t for t in del_gateway
                  if t.get("function", {}).get("name") in permitidas]
+        # La busqueda web es una tool del motor, no del gateway: pasa por la
+        # misma lista blanca, y solo se ofrece si hay un buscador configurado.
+        if web.NOMBRE in permitidas and web.habilitada(self.cfg):
+            tools.append(web.DEFINICION)
+        res.controles.append({
+            "control": "lista_blanca",
+            "publicadas": len(del_gateway), "ofrecidas": len(tools),
+        })
 
         for _ in range(self.cfg.max_iteraciones):
             respuesta = await llm.chat(mensajes, tools=tools)
             res.modelo = respuesta.modelo
             res.tokens_prompt += respuesta.tokens_prompt
             res.tokens_respuesta += respuesta.tokens_respuesta
+            if respuesta.costo_usd is not None:
+                res.costo_usd = (res.costo_usd or 0.0) + float(respuesta.costo_usd)
 
             if not respuesta.pide_tools:
                 res.respuesta = respuesta.texto.strip()
+                self._guardian(consulta, res, contexto)
                 break
 
             # 4. El modelo pidio datos: se los buscamos y volvemos a preguntar.
@@ -161,7 +206,15 @@ class Orquestador:
                 "tool_calls": respuesta.tool_calls,
             })
             for llamada in respuesta.tool_calls:
-                mensajes.append(await self._ejecutar(mcp, llamada, permitidas))
+                mensaje = await self._ejecutar(mcp, llamada, permitidas)
+                mensajes.append(mensaje)
+                res.contenidos_tools.append(mensaje["content"])
+                res.tools_vistas.append((mensaje["name"], mensaje["content"]))
+                if mcp.llamadas and mcp.llamadas[-1].status == "bloqueada":
+                    res.incidentes.append({
+                        "tipo": "tool_bloqueada", "tool": mensaje["name"],
+                        "detalle": "el modelo pidio una tool fuera de su lista blanca",
+                    })
         else:
             # Se agotaron las iteraciones sin una respuesta final.
             res.respuesta = (
@@ -172,6 +225,22 @@ class Orquestador:
 
         res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
         return res
+
+    def _guardian(self, consulta: Consulta, res: Resultado, contexto: str) -> None:
+        """R4: toda cifra de la respuesta tiene que tener origen, o se bloquea.
+
+        Se compara contra lo que el modelo LEYO en esta corrida: el contenido de
+        cada tool tal como se le paso, el contexto de conocimiento y memoria, y
+        la pregunta. Ver agente/guardian.py.
+        """
+        veredicto = guardian.revisar(res.respuesta, tools=res.tools_vistas, contexto=contexto,
+                                     pregunta=consulta.pregunta)
+        res.controles.append(veredicto.control())
+        if veredicto.bloquear:
+            log.warning("R4: respuesta bloqueada por cifras sin fuente: %s",
+                        veredicto.sin_fuente + veredicto.web_sin_cita)
+            res.incidentes.append(veredicto.incidente(res.respuesta))
+            res.respuesta = guardian.MENSAJE_BLOQUEO
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
                         permitidas: frozenset[str]) -> dict:
@@ -199,6 +268,9 @@ class Orquestador:
             return {"role": "tool", "tool_call_id": llamada.get("id", ""),
                     "name": nombre, "content": contenido}
 
+        if nombre == web.NOMBRE:
+            return await self._buscar_web(mcp, llamada, argumentos)
+
         try:
             salida = await mcp.llamar(nombre, argumentos)
             contenido = json.dumps(salida, ensure_ascii=False)[:8000]
@@ -217,19 +289,155 @@ class Orquestador:
             "content": contenido,
         }
 
+    async def _buscar_web(self, mcp: ClienteMCP, llamada: dict, argumentos: dict) -> dict:
+        """Ejecuta web_buscar. La traza va a la misma lista que las tools MCP,
+        para que quede en tool_llamada en el orden en que se llamo."""
+        t0 = time.monotonic()
+        if not web.habilitada(self.cfg):
+            salida, status, error = {"error": "La búsqueda en internet no está habilitada."}, "error", "sin AGENTE_WEB_URL"
+        else:
+            try:
+                salida = await web.buscar(self.cfg, argumentos.get("consulta", ""))
+                status, error = "ok", None
+            except web.WebError as e:
+                salida = {"error": f"No se pudo buscar en internet: {e}"}
+                status, error = "error", str(e)[:300]
+        mcp.llamadas.append(LlamadaTool(
+            web.NOMBRE, argumentos, status, int((time.monotonic() - t0) * 1000), error,
+        ))
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": web.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    # ------------------------------------------------------- siguiente paso
+    async def sugerir(self, con: psycopg.AsyncConnection, consulta: Consulta) -> list[dict]:
+        """Hasta N propuestas de siguiente paso para la pantalla (AGENTE-AS-02).
+
+        Reglas sobre las tools de esa pantalla (agente/sugerencias.py), con el
+        token del usuario y por la lista blanca de su agente. No usa el modelo.
+        La corrida queda registrada como cualquier otra (R8), con disparador
+        'apertura_pantalla'.
+        """
+        from datetime import date
+
+        t0 = time.monotonic()
+        res = Resultado(interaccion_id=str(uuid.uuid4()), respuesta="")
+        consulta.disparador = "apertura_pantalla"
+        await rag.fijar_empresa(con, consulta.empr_id)
+        if consulta.agente is None:
+            consulta.agente = await agentes.obtener(con, AGENTE_POR_DEFECTO)
+
+        propuestas: list[dict] = []
+        modulo = sugerencias.modulo_de(consulta.pantalla)
+        tools = sugerencias.REGLAS_POR_MODULO.get(modulo or "", ())
+        try:
+            permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
+            usar = [t for t in tools if t in permitidas]
+            res.controles.append({"control": "lista_blanca", "publicadas": len(tools),
+                                  "ofrecidas": len(usar)})
+            cands: list[sugerencias.Candidata] = []
+            async with ClienteMCP(self.cfg, consulta.autorizacion) as mcp:
+                for tool in usar:
+                    try:
+                        data = await mcp.llamar(tool, {})
+                    except MCPError as e:
+                        log.warning("Sugerencias: %s fallo: %s", tool, e)
+                        continue
+                    res.tools_vistas.append((tool, json.dumps(data, ensure_ascii=False)[:8000]))
+                    res.contenidos_tools.append(res.tools_vistas[-1][1])
+                    cands += sugerencias.candidatas(
+                        tool, data, hoy=date.today(),
+                        dias_certificacion=self.cfg.sugerencia_dias_certificacion)
+                res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
+            cands.sort(key=lambda c: c.prioridad)
+            propuestas = await self._guardar_propuestas(con, consulta, cands)
+            res.respuesta = " · ".join(p["titulo"] for p in propuestas) or "(sin propuestas)"
+        except Exception as e:  # noqa: BLE001 - se registra y se devuelve vacio
+            res.error = f"{type(e).__name__}: {e}"
+            res.respuesta = "(sin propuestas: error)"
+            propuestas = []
+
+        res.latencia_ms = int((time.monotonic() - t0) * 1000)
+        if con.info.transaction_status == psycopg.pq.TransactionStatus.INERROR:
+            await con.rollback()
+            await rag.fijar_empresa(con, consulta.empr_id)
+        await self._registrar(con, consulta, res)
+        return propuestas
+
+    async def _guardar_propuestas(self, con, consulta: Consulta,
+                                  cands: list) -> list[dict]:
+        """Guarda las propuestas nuevas y devuelve las que hay que mostrar.
+
+        No repite lo que el usuario descarto hace menos de N dias, y reusa la
+        pendiente si ya se habia propuesto lo mismo.
+        """
+        usuario = consulta.usuario_nick or str(consulta.usr_id or "")
+        salida: list[dict] = []
+        async with con.cursor() as cur:
+            for c in cands:
+                if len(salida) >= self.cfg.sugerencias_max:
+                    break
+                await cur.execute(
+                    """
+                    SELECT 1 FROM agente.propuesta
+                    WHERE empr_id = %s AND usuario = %s AND clave = %s
+                      AND estado = 'descartada'
+                      AND fec_respuesta > now() - make_interval(days => %s)
+                    """, (consulta.empr_id, usuario, c.clave, self.cfg.sugerencia_silencio_dias))
+                if await cur.fetchone():
+                    continue
+                await cur.execute(
+                    """
+                    INSERT INTO agente.propuesta
+                        (empr_id, usuario, clave, tipo, pantalla, titulo, detalle, accion)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (empr_id, usuario, clave) WHERE estado = 'pendiente'
+                    DO UPDATE SET titulo = EXCLUDED.titulo, detalle = EXCLUDED.detalle,
+                                  accion = EXCLUDED.accion, pantalla = EXCLUDED.pantalla
+                    RETURNING propuesta_id, tipo, titulo, detalle, accion
+                    """,
+                    (consulta.empr_id, usuario, c.clave, c.tipo, consulta.pantalla, c.titulo,
+                     c.detalle, json.dumps(c.accion, ensure_ascii=False)))
+                salida.append(dict(await cur.fetchone()))
+        return salida
+
     # ------------------------------------------------------------- registro
     async def _registrar(self, con, consulta: Consulta, res: Resultado) -> None:
-        """Guarda la interaccion completa. Es el insumo del ciclo de mejora."""
+        """Guarda la corrida completa (R8). Es el insumo del ciclo de mejora.
+
+        Una fila en interaccion y una en tool_llamada por cada tool, en la misma
+        transaccion: o queda la corrida entera o no queda nada.
+        """
         sql = """
             INSERT INTO agente.interaccion
                 (interaccion_id, empr_id, usr_id, usuario_nick, canal, pregunta,
                  respuesta, fragmentos_rag, tools_llamadas, modelo,
-                 tokens_prompt, tokens_respuesta, latencia_ms, error)
+                 tokens_prompt, tokens_respuesta, latencia_ms, error,
+                 agente, disparador, costo_usd, controles, incidentes)
             VALUES (%(id)s, %(empr_id)s, %(usr_id)s, %(nick)s, %(canal)s, %(pregunta)s,
                     %(respuesta)s, %(frags)s, %(tools)s, %(modelo)s,
-                    %(tp)s, %(tr)s, %(lat)s, %(error)s)
+                    %(tp)s, %(tr)s, %(lat)s, %(error)s,
+                    %(agente)s, %(disparador)s, %(costo)s, %(controles)s, %(incidentes)s)
             ON CONFLICT (interaccion_id) DO NOTHING
         """
+        sql_tool = """
+            INSERT INTO agente.tool_llamada
+                (interaccion_id, empr_id, orden, tool, argumentos, status,
+                 contenido, latencia_ms, error)
+            VALUES (%(id)s, %(empr_id)s, %(orden)s, %(tool)s, %(args)s, %(status)s,
+                    %(contenido)s, %(lat)s, %(error)s)
+        """
+        # Lo que vio el modelo de cada tool, en el mismo orden que las llamadas.
+        # Si la corrida se corto a mitad, puede haber menos contenidos que
+        # llamadas: esas quedan sin contenido.
+        filas_tools = [
+            {"id": res.interaccion_id, "empr_id": consulta.empr_id, "orden": n,
+             "tool": t["tool"],
+             "args": json.dumps(t.get("argumentos") or {}, ensure_ascii=False),
+             "status": t["status"],
+             "contenido": res.contenidos_tools[n - 1] if n <= len(res.contenidos_tools) else None,
+             "lat": t.get("latencia_ms"), "error": t.get("error")}
+            for n, t in enumerate(res.tools_llamadas, start=1)
+        ]
         try:
             async with con.cursor() as cur:
                 await cur.execute(sql, {
@@ -242,9 +450,17 @@ class Orquestador:
                     "modelo": res.modelo, "tp": res.tokens_prompt,
                     "tr": res.tokens_respuesta, "lat": res.latencia_ms,
                     "error": res.error,
+                    "agente": consulta.agente.clave if consulta.agente else None,
+                    "disparador": consulta.disparador,
+                    "costo": res.costo_usd,
+                    "controles": json.dumps(res.controles, ensure_ascii=False),
+                    "incidentes": json.dumps(res.incidentes, ensure_ascii=False),
                 })
+                if filas_tools:
+                    await cur.executemany(sql_tool, filas_tools)
             await con.commit()
-        except psycopg.Error:
+        except psycopg.Error as e:
             # Que falle el registro no puede tumbar una respuesta que ya esta
             # lista. Se pierde la traza de esa interaccion, no la respuesta.
+            log.error("No se pudo registrar la corrida %s: %s", res.interaccion_id, e)
             await con.rollback()

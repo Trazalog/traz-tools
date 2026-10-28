@@ -1,0 +1,24 @@
+id: AGE-UC-006
+modulo: AGE
+titulo: Buscar información pública con la fuente citada
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: agente/web.py
+    detalle: "Tool web_buscar sobre SearXNG"
+pantallas:
+  - "Cualquier pantalla de Tools → botón Q"
+precondiciones:
+  - "Sesión iniciada en Tools, con el agente habilitado en el menú"
+  - "La búsqueda en internet está habilitada en el ambiente"
+flujo_principal:
+  - paso: "Pregunta por un dato público que el conocimiento registrado no tiene, como una norma"
+    resultado: "Quirqui busca en internet y responde citando la dirección de la fuente"
+validaciones:
+  - "Si la respuesta usa un número de internet, lleva la dirección de la fuente"
+  - "La búsqueda nunca incluye datos de la empresa"
+dudas:
+  - "¿Quirqui tiene que avisar que la información viene de internet y no del conocimiento validado por expertos?"
