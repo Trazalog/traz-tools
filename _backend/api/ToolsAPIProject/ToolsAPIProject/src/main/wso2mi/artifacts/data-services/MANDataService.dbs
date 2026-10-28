@@ -1002,7 +1002,7 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="setEquipoMan" keyColumns="id_equipo" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
-      <sql>INSERT INTO equipos (descripcion, fecha_ingreso, fecha_baja, fecha_garantia, marca, codigo, ubicacion, id_empresa, id_sector, id_hubicacion, id_grupo, id_customer, id_criticidad, estado, fecha_ultimalectura, ultima_lectura, tipo_horas, `id-centrodecosto`, valor_reposicion, fecha_reposicion, id_proveedor, valor, comprobante, descrip_tecnica, id_unidad, id_area, id_proceso, numero_serie) VALUES (LEFT(:descripcion, 255), :fecha_ingreso, '0000-00-00', :fecha_garantia, LEFT(:marca, 255), LEFT(:codigo, 255), '', :id_empresa, :id_sector, :id_hubicacion, :id_grupo, :id_customer, :id_criticidad, 'AL', :fecha_ultimalectura, :ultima_lectura, '', 0, 0, '0000-00-00', 0, 0, '', :descrip_tecnica, :id_unidad, :id_area, :id_proceso, LEFT(:numero_serie, 255))</sql>
+      <sql>INSERT INTO equipos (descripcion, fecha_ingreso, fecha_baja, fecha_garantia, marca, codigo, ubicacion, id_empresa, id_sector, id_hubicacion, id_grupo, id_customer, id_criticidad, estado, fecha_ultimalectura, ultima_lectura, tipo_horas, `id-centrodecosto`, valor_reposicion, fecha_reposicion, id_proveedor, valor, comprobante, descrip_tecnica, id_unidad, id_area, id_proceso, numero_serie) SELECT LEFT(:descripcion, 255), :fecha_ingreso, '0000-00-00', :fecha_garantia, LEFT(:marca, 255), LEFT(:codigo, 255), '', :id_empresa, :id_sector, :id_hubicacion, :id_grupo, :id_customer, :id_criticidad, 'AL', :fecha_ultimalectura, :ultima_lectura, '', 0, 0, '0000-00-00', 0, 0, '', :descrip_tecnica, :id_unidad, :id_area, :id_proceso, LEFT(:numero_serie, 255) FROM DUAL WHERE (IFNULL(:id_sector, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM sector x WHERE x.id_sector = :id_sector AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_grupo, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM grupo x WHERE x.id_grupo = :id_grupo AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_criticidad, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM criticidad x WHERE x.id_criti = :id_criticidad AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_area, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM area x WHERE x.id_area = :id_area AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_proceso, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM proceso x WHERE x.id_proceso = :id_proceso AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_customer, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM admcustomers x WHERE x.cliId = :id_customer AND x.id_empresa = :id_empresa)) AND (IFNULL(:marca, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM marcasequipos x WHERE x.marcaid = :marca AND x.id_empresa = :id_empresa))</sql>
       <result outputType="json">{"equipo":{"id_equipo":"$GENERATED_KEY"}}</result>
       <param name="descripcion" sqlType="STRING"/>
       <param name="fecha_ingreso" sqlType="STRING"/>
@@ -1024,7 +1024,7 @@
       <param name="numero_serie" sqlType="STRING"/>
    </query>
    <query id="updateEquipoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE equipos SET descripcion = LEFT(:descripcion, 255), fecha_ingreso = :fecha_ingreso, fecha_garantia = :fecha_garantia, marca = LEFT(:marca, 255), codigo = LEFT(:codigo, 255), ubicacion = LEFT(:ubicacion, 100), id_sector = :id_sector, id_grupo = :id_grupo, id_area = :id_area, id_proceso = :id_proceso, id_criticidad = :id_criticidad, id_customer = :id_customer, numero_serie = LEFT(:numero_serie, 255), estado = LEFT(:estado, 2), fecha_ultimalectura = :fecha_ultimalectura, ultima_lectura = :ultima_lectura, descrip_tecnica = :descrip_tecnica WHERE id_equipo = :id_equipo AND id_empresa = :id_empresa</sql>
+      <sql>UPDATE equipos SET descripcion = LEFT(:descripcion, 255), fecha_ingreso = :fecha_ingreso, fecha_garantia = :fecha_garantia, marca = LEFT(:marca, 255), codigo = LEFT(:codigo, 255), ubicacion = LEFT(:ubicacion, 100), id_sector = :id_sector, id_grupo = :id_grupo, id_area = :id_area, id_proceso = :id_proceso, id_criticidad = :id_criticidad, id_customer = :id_customer, numero_serie = LEFT(:numero_serie, 255), estado = LEFT(:estado, 2), fecha_ultimalectura = :fecha_ultimalectura, ultima_lectura = :ultima_lectura, descrip_tecnica = :descrip_tecnica WHERE id_equipo = :id_equipo AND id_empresa = :id_empresa AND (IFNULL(:id_sector, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM sector x WHERE x.id_sector = :id_sector AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_grupo, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM grupo x WHERE x.id_grupo = :id_grupo AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_criticidad, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM criticidad x WHERE x.id_criti = :id_criticidad AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_area, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM area x WHERE x.id_area = :id_area AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_proceso, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM proceso x WHERE x.id_proceso = :id_proceso AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_customer, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM admcustomers x WHERE x.cliId = :id_customer AND x.id_empresa = :id_empresa)) AND (IFNULL(:marca, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM marcasequipos x WHERE x.marcaid = :marca AND x.id_empresa = :id_empresa))</sql>
       <result outputType="json">{"equipo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
       <param name="descripcion" sqlType="STRING"/>
       <param name="fecha_ingreso" sqlType="STRING"/>
@@ -1266,7 +1266,8 @@
    <!-- MIG-ASSET-2 · Preventivo, Predictivo y Backlog (ABM con herramientas e insumos). Reemplaza el acceso directo de
         models/Preventivos.php, Predictivos.php y Backlogs.php (ADR-014). Toda query queda limitada a la empresa (id de asset).
         Las inserciones de detalle no tienen resultado para que el DataService habilite el pedido por lotes (_batch_req):
-        request_box no admite repetir una operación. El alta encadenada (cabecera + detalle) es un recurso de toolsMANAPI. -->
+        request_box no admite repetir una operación. El alta encadenada (cabecera + detalle) es un recurso de toolsMANAPI.
+        Los ids de catálogo (tarea, componente) se aceptan vacíos o 0, como en asset, o si son de la empresa (T22). -->
    <query id="getUnidadesTiempoMan" useConfig="AssetPlannerDataSource">
       <sql>SELECT id_unidad, unidaddescrip FROM unidad_tiempo</sql>
       <result outputType="json">{"unidades":{"unidad":[{"id_unidad":"$id_unidad","unidaddescrip":"$unidaddescrip"}]}}</result>
@@ -1448,7 +1449,7 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="setPreventivoMan" keyColumns="prevId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
-      <sql>INSERT INTO preventivo (id_equipo, id_tarea, perido, cantidad, ultimo, id_componente, critico1, horash, estadoprev, prev_duracion, id_unidad, prev_canth, id_empresa, lectura_base) SELECT e.id_equipo, :id_tarea, LEFT(:perido, 50), :cantidad, :ultimo, :id_componente, :critico1, :horash, 'C', :prev_duracion, :id_unidad, :prev_canth, e.id_empresa, :lectura_base FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <sql>INSERT INTO preventivo (id_equipo, id_tarea, perido, cantidad, ultimo, id_componente, critico1, horash, estadoprev, prev_duracion, id_unidad, prev_canth, id_empresa, lectura_base) SELECT e.id_equipo, :id_tarea, LEFT(:perido, 50), :cantidad, :ultimo, :id_componente, :critico1, :horash, 'C', :prev_duracion, :id_unidad, :prev_canth, e.id_empresa, :lectura_base FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa AND (IFNULL(:id_tarea, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM tareas x WHERE x.id_tarea = :id_tarea AND x.id_empresa = e.id_empresa)) AND (IFNULL(:id_componente, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM componentes x WHERE x.id_componente = :id_componente AND x.id_empresa = e.id_empresa))</sql>
       <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
       <param name="id_equipo" sqlType="STRING"/>
       <param name="id_tarea" sqlType="STRING" defaultValue="#{NULL}"/>
@@ -1465,7 +1466,7 @@
       <param name="lectura_base" sqlType="STRING" defaultValue="#{NULL}"/>
    </query>
    <query id="updatePreventivoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE preventivo p JOIN equipos e ON e.id_equipo = :id_equipo AND e.id_empresa = p.id_empresa SET p.id_equipo = e.id_equipo, p.id_tarea = :id_tarea, p.perido = LEFT(:perido, 50), p.cantidad = :cantidad, p.ultimo = :ultimo, p.id_componente = :id_componente, p.horash = :horash, p.estadoprev = 'C', p.prev_duracion = :prev_duracion, p.id_unidad = :id_unidad, p.prev_canth = :prev_canth WHERE p.prevId = :prevId AND p.id_empresa = :id_empresa</sql>
+      <sql>UPDATE preventivo p JOIN equipos e ON e.id_equipo = :id_equipo AND e.id_empresa = p.id_empresa SET p.id_equipo = e.id_equipo, p.id_tarea = :id_tarea, p.perido = LEFT(:perido, 50), p.cantidad = :cantidad, p.ultimo = :ultimo, p.id_componente = :id_componente, p.horash = :horash, p.estadoprev = 'C', p.prev_duracion = :prev_duracion, p.id_unidad = :id_unidad, p.prev_canth = :prev_canth WHERE p.prevId = :prevId AND p.id_empresa = :id_empresa AND (IFNULL(:id_tarea, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM tareas x WHERE x.id_tarea = :id_tarea AND x.id_empresa = :id_empresa)) AND (IFNULL(:id_componente, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM componentes x WHERE x.id_componente = :id_componente AND x.id_empresa = :id_empresa))</sql>
       <result outputType="json">{"preventivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
       <param name="prevId" sqlType="STRING"/>
       <param name="id_equipo" sqlType="STRING"/>
@@ -1513,7 +1514,7 @@
       <param name="predId" sqlType="STRING"/>
    </query>
    <query id="setPredictivoMan" keyColumns="predId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
-      <sql>INSERT INTO predictivo (id_equipo, tarea_descrip, fecha, periodo, cantidad, horash, estado, pred_duracion, pred_canth, id_empresa, id_unidad) SELECT e.id_equipo, :tarea_descrip, :fecha, LEFT(:periodo, 50), :cantidad, :horash, 'C', :pred_duracion, :pred_canth, e.id_empresa, :id_unidad FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <sql>INSERT INTO predictivo (id_equipo, tarea_descrip, fecha, periodo, cantidad, horash, estado, pred_duracion, pred_canth, id_empresa, id_unidad) SELECT e.id_equipo, :tarea_descrip, :fecha, LEFT(:periodo, 50), :cantidad, :horash, 'C', :pred_duracion, :pred_canth, e.id_empresa, :id_unidad FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa AND (IFNULL(:tarea_descrip, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM tareas x WHERE x.id_tarea = :tarea_descrip AND x.id_empresa = e.id_empresa))</sql>
       <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
       <param name="id_equipo" sqlType="STRING"/>
       <param name="tarea_descrip" sqlType="STRING" defaultValue="#{NULL}"/>
@@ -1527,7 +1528,7 @@
       <param name="id_unidad" sqlType="STRING" defaultValue="#{NULL}"/>
    </query>
    <query id="updatePredictivoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE predictivo SET tarea_descrip = :tarea_descrip, fecha = :fecha, periodo = LEFT(:periodo, 50), cantidad = :cantidad, horash = :horash, estado = 'C', pred_duracion = :pred_duracion, id_unidad = :id_unidad, pred_canth = :pred_canth WHERE predId = :predId AND id_empresa = :id_empresa</sql>
+      <sql>UPDATE predictivo SET tarea_descrip = :tarea_descrip, fecha = :fecha, periodo = LEFT(:periodo, 50), cantidad = :cantidad, horash = :horash, estado = 'C', pred_duracion = :pred_duracion, id_unidad = :id_unidad, pred_canth = :pred_canth WHERE predId = :predId AND id_empresa = :id_empresa AND (IFNULL(:tarea_descrip, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM tareas x WHERE x.id_tarea = :tarea_descrip AND x.id_empresa = :id_empresa))</sql>
       <result outputType="json">{"predictivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
       <param name="predId" sqlType="STRING"/>
       <param name="tarea_descrip" sqlType="STRING"/>
@@ -1579,7 +1580,7 @@
       <param name="id_equipo" sqlType="STRING"/>
    </query>
    <query id="setBacklogMan" keyColumns="backId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
-      <sql>INSERT INTO tbl_back (id_equipo, id_tarea, fecha, horash, estado, back_duracion, id_unidad, back_canth, id_empresa, idcomponenteequipo, tarea_opcional) SELECT e.id_equipo, :id_tarea, :fecha, :horash, 'C', :back_duracion, :id_unidad, :back_canth, e.id_empresa, :idcomponenteequipo, LEFT(:tarea_opcional, 500) FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <sql>INSERT INTO tbl_back (id_equipo, id_tarea, fecha, horash, estado, back_duracion, id_unidad, back_canth, id_empresa, idcomponenteequipo, tarea_opcional) SELECT e.id_equipo, :id_tarea, :fecha, :horash, 'C', :back_duracion, :id_unidad, :back_canth, e.id_empresa, :idcomponenteequipo, LEFT(:tarea_opcional, 500) FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa AND (IFNULL(:id_tarea, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM tareas x WHERE x.id_tarea = :id_tarea AND x.id_empresa = e.id_empresa)) AND (IFNULL(:idcomponenteequipo, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM componenteequipo x WHERE x.idcomponenteequipo = :idcomponenteequipo AND x.id_empresa = e.id_empresa))</sql>
       <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
       <param name="id_equipo" sqlType="STRING"/>
       <param name="id_tarea" sqlType="STRING" defaultValue="#{NULL}"/>
@@ -1593,7 +1594,7 @@
       <param name="tarea_opcional" sqlType="STRING" defaultValue="#{NULL}"/>
    </query>
    <query id="updateBacklogMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE tbl_back SET id_tarea = :id_tarea, fecha = :fecha, horash = :horash, back_duracion = :back_duracion, back_canth = :back_canth, id_unidad = :id_unidad, tarea_opcional = LEFT(:tarea_opcional, 500) WHERE backId = :backId AND id_empresa = :id_empresa</sql>
+      <sql>UPDATE tbl_back SET id_tarea = :id_tarea, fecha = :fecha, horash = :horash, back_duracion = :back_duracion, back_canth = :back_canth, id_unidad = :id_unidad, tarea_opcional = LEFT(:tarea_opcional, 500) WHERE backId = :backId AND id_empresa = :id_empresa AND (IFNULL(:id_tarea, '0') IN ('', '0') OR EXISTS (SELECT 1 FROM tareas x WHERE x.id_tarea = :id_tarea AND x.id_empresa = :id_empresa))</sql>
       <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
       <param name="backId" sqlType="STRING"/>
       <param name="id_tarea" sqlType="STRING"/>
