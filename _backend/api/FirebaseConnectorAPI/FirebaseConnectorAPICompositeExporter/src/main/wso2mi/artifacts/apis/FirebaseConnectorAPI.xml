@@ -75,9 +75,61 @@
             <log level="custom">
                 <property name="paso 4" value="Envio la notifacion"/>
             </log>
+            <!-- ADR-015: el conector NO falla cuando Firebase rechaza el envio:
+                 devuelve 200 con el rechazo en $.Result.Error (verificado el
+                 2026-09-02 con un token invalido). Quien llama (AvisosPush)
+                 decide por el codigo HTTP, asi que aca se traduce:
+                   sin Result.Error           -> se responde tal cual (2xx)
+                   token que ya no sirve      -> 410 (el dispositivo se da de baja)
+                   cualquier otro rechazo     -> 502 (se reintenta) -->
+            <property name="fcm_error" expression="json-eval($.Result.Error)" scope="default" type="STRING"/>
+            <filter xpath="fn:string-length(normalize-space(get-property('fcm_error'))) &gt; 0">
+                <then>
+                    <filter source="get-property('fcm_error')"
+                            regex="(?s).*(not a valid FCM registration token|Requested entity was not found|UNREGISTERED|registration-token-not-registered|SenderId mismatch|SENDER_ID_MISMATCH).*">
+                        <then>
+                            <property name="HTTP_SC" value="410" scope="axis2" type="STRING"/>
+                        </then>
+                        <else>
+                            <property name="HTTP_SC" value="502" scope="axis2" type="STRING"/>
+                        </else>
+                    </filter>
+                    <log level="custom">
+                        <property name="paso 5" value="Firebase rechazo el envio"/>
+                        <property name="http_sc" expression="get-property('axis2', 'HTTP_SC')"/>
+                        <property name="error" expression="get-property('fcm_error')"/>
+                    </log>
+                    <payloadFactory media-type="json">
+                        <format>{"error":"firebase","detalle":"$1"}</format>
+                        <args>
+                            <arg evaluator="xml" expression="get-property('fcm_error')"/>
+                        </args>
+                    </payloadFactory>
+                    <property name="messageType" value="application/json" scope="axis2" type="STRING"/>
+                </then>
+            </filter>
             <respond/>
         </inSequence>
         <outSequence/>
-        <faultSequence/>
+        <!-- Cualquier excepcion (credenciales, red, conector) sale como 500 con
+             el motivo, nunca como 2xx: antes el faultSequence vacio dejaba al
+             que llama creyendo que el envio habia salido. -->
+        <faultSequence>
+            <log level="custom">
+                <property name="paso error" value="Fallo el envio a Firebase"/>
+                <property name="error_code" expression="get-property('ERROR_CODE')"/>
+                <property name="error_message" expression="get-property('ERROR_MESSAGE')"/>
+            </log>
+            <payloadFactory media-type="json">
+                <format>{"error":"conector","codigo":"$1","detalle":"$2"}</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('ERROR_CODE')"/>
+                    <arg evaluator="xml" expression="get-property('ERROR_MESSAGE')"/>
+                </args>
+            </payloadFactory>
+            <property name="messageType" value="application/json" scope="axis2" type="STRING"/>
+            <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+            <respond/>
+        </faultSequence>
     </resource>
 </api>
