@@ -688,6 +688,33 @@ retirar las de asset.
 operaciones del API (recomendado, coherente con A1) o mantener triggers de base, y usar Streaming
 Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 
+**A5 — Quién lanza los casos de Bonita desde MAN. 🔴 Pendiente (planteada 2026-10-28).** Bloquea
+todo lo que falta portar: Solicitudes (`lanzarProcesoBPM`, `eliminar_solicitud`), Órdenes de trabajo,
+Informes de servicio, Calendario (MIG-4) y Bandeja (MIG-3). El choque es entre dos decisiones ya
+tomadas:
+
+- **A2 ("igual que hoy")**: asset lanza el caso **como el usuario logueado**: inicia sesión en Bonita
+  con su contraseña guardada en la sesión (`libraries/BPM.php:112-134` de asset). Además registra el
+  caso en `case_empresa` de `assetv2`, que es de donde lee su bandeja.
+- **ADR-014, regla 3**: las operaciones que tocan varios subsistemas son un recurso de `toolsMANAPI`,
+  con compensación. El MI se conecta a Bonita **como administrador** (`bpmAPICallTemplate`), como en
+  `create_ot`.
+
+Si el caso lo inicia el administrador y no el usuario, cambia el iniciador del caso, que Bonita puede
+usar para asignar tareas al Solicitante. Además, la librería de Bonita de tools registra el caso en su
+propia `case_empresa` (PostgreSQL), no en la de `assetv2`, y la bandeja de asset no lo vería.
+
+Opciones:
+
+| | Cómo | A favor | En contra |
+|---|---|---|---|
+| **C (recomendada)** | Recurso de `toolsMANAPI` que lanza como administrador **en nombre del usuario** (`POST API/bpm/process/{id}/instantiation?user={id de Bonita}`; Bonita de DEV es 7.7.0, que lo admite), registra `case_empresa` en `assetv2` por `MANDataService` y compensa si algo falla | Cumple A2 (el iniciador es el usuario) y la regla 3. No viajan contraseñas al MI. Queda disponible para MCP | Hay que probar en DEV que el proceso "Proceso de Mantenimiento AssetPlanner" (`8664799170016058315`) se comporta igual iniciado así |
+| A | Desde PHP con la librería de Bonita de tools, como el usuario, igual que asset; `case_empresa` en `assetv2` por `MANDataService` | Copia exacta de asset | Deja lógica de varios subsistemas en PHP (contradice la regla 3), sin compensación y fuera del alcance de MCP |
+| B | Recurso de `toolsMANAPI` como administrador, sin "en nombre de" | El más simple | Cambia el iniciador del caso: puede romper la asignación de tareas |
+
+Nota: `create_ot` (MCP) lanza "Proceso de Mantenimiento AssetPlanner SIM", que no existe en la Bonita de
+DEV (T21).
+
 ### Funcionales y de negocio (las decide el PM)
 
 | # | Decisión | Mi recomendación |
@@ -746,6 +773,7 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 | T18 | `toolsFault` termina con `<send/>`: llamado desde el flujo de entrada de un recurso, reenvía el mensaje en vez de responder y el cliente queda esperando. Lo usan `create_ot` y otros recursos de `toolsMANAPI` | `sequences/toolsFaultSequence.xml` (tools) |
 | T19 | `ASP_0100` no está definida: PHP la toma como texto y antepone un aviso que rompe el JSON de la respuesta | `controllers/Backlog.php:303`, `controllers/Sservicio.php:182,190` |
 | T20 🔴 | Las vistas de Backlog y Predictivo borran el adjunto con `Preventivo/eliminarAdjunto` y su propio id: se borra el adjunto del **preventivo** con ese número, de cualquier empresa. Corregido en MAN | `views/backlog/list.php`, `views/predictivo/list.php`, `models/Preventivos.php` (`eliminarAdjunto`) |
+| T21 | `create_ot` (MCP) lanza el proceso "Proceso de Mantenimiento AssetPlanner SIM", que no existe en la Bonita de DEV; el de asset es "Proceso de Mantenimiento AssetPlanner" (`8664799170016058315`) | `apis/toolsMANAPI.xml` (`POST /mcp/ot`) |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores
