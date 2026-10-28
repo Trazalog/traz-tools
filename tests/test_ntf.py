@@ -41,6 +41,11 @@ async def _uno(db, sql, *args):
         return await cur.fetchone()
 
 
+async def _exec(db, sql, *args):
+    async with db.cursor() as cur:
+        await cur.execute(sql, args)
+
+
 async def _todos(db, sql, *args):
     async with db.cursor() as cur:
         await cur.execute(sql, args)
@@ -246,3 +251,127 @@ async def test_el_rol_del_transporte_no_ve_las_tablas(db):
                        "'ntf.publicar(integer,text,text,text,text,text[],text,text,text,text,text,text,timestamptz,text)', "
                        "'EXECUTE') v")
     assert r["v"] is False, "el transporte no publica avisos"
+    r = await _uno(db, "SELECT has_function_privilege('ntf_transporte', "
+                       "'ntf.publicar_asset(bigint,integer,integer,text)', 'EXECUTE') v")
+    assert r["v"] is True, "el puente de AssetPlanner publica solo por publicar_asset"
+    for f in ("ntf.mis_avisos(integer,text,integer)", "ntf.marcar_leido(integer,text,bigint)",
+              "ntf.registrar_dispositivo(integer,text,text,text)"):
+        r = await _uno(db, "SELECT has_function_privilege('ntf_transporte', %s, 'EXECUTE') v", f)
+        assert r["v"] is False, f
+
+
+# ================================================================ campanita (API)
+async def test_mis_avisos_trae_solo_los_propios_y_los_no_leidos_primero(db, empresa):
+    viejo = await _publicar(db, empresa, destinatarios=["ana"], titulo="Viejo")
+    await _uno(db, "SELECT ntf.marcar_leido(%s, 'ana', %s)", empresa, viejo)
+    nuevo = await _publicar(db, empresa, destinatarios=["ana"], titulo="Nuevo")
+    await _publicar(db, empresa, destinatarios=["beto"], titulo="De beto")
+    await _publicar(db, empresa + 1, destinatarios=["ana"], titulo="Otra empresa")
+
+    avisos = await _todos(db, "SELECT * FROM ntf.mis_avisos(%s, 'ana')", empresa)
+    assert [a["aviso_id"] for a in avisos] == [nuevo, viejo]
+    assert [a["leido"] for a in avisos] == [False, True]
+    assert (await _uno(db, "SELECT ntf.no_leidos(%s, 'ana') n", empresa))["n"] == 1
+
+
+async def test_marcar_leido_no_toca_avisos_ajenos(db, empresa):
+    de_beto = await _publicar(db, empresa, destinatarios=["beto"])
+    n = (await _uno(db, "SELECT ntf.marcar_leido(%s, 'ana', %s) n", empresa, de_beto))["n"]
+    assert n == 0
+    n = (await _uno(db, "SELECT ntf.marcar_leido(%s + 1, 'beto', %s) n", empresa, de_beto))["n"]
+    assert n == 0, "con el usuario correcto pero otra empresa tampoco"
+    assert (await _uno(db, "SELECT ntf.no_leidos(%s, 'beto') n", empresa))["n"] == 1
+
+
+async def test_marcar_leido_sin_id_marca_todos_los_propios(db, empresa):
+    for _ in range(3):
+        await _publicar(db, empresa, destinatarios=["ana", "beto"])
+    n = (await _uno(db, "SELECT ntf.marcar_leido(%s, 'ana') n", empresa))["n"]
+    assert n == 3
+    assert (await _uno(db, "SELECT ntf.no_leidos(%s, 'beto') n", empresa))["n"] == 3
+
+
+async def test_un_aviso_vencido_no_aparece(db, empresa):
+    await _uno(db, "SELECT ntf.publicar(p_empr_id => %s, p_origen => 'alm', p_tipo => 'oferta', p_titulo => 'Ya fue', "
+                   "p_destinatarios => ARRAY['ana'], p_vence_en => now() - interval '1 minute')", empresa)
+    assert await _todos(db, "SELECT * FROM ntf.mis_avisos(%s, 'ana')", empresa) == []
+
+
+# ================================================================ dispositivos (API)
+async def test_registrar_dispositivo_y_recibir_el_proximo_aviso(db, empresa):
+    token = f"fcm-token-largo-de-prueba-{empresa}"
+    d1 = (await _uno(db, "SELECT ntf.registrar_dispositivo(%s, 'ana', %s) id", empresa, token))["id"]
+    d2 = (await _uno(db, "SELECT ntf.registrar_dispositivo(%s, 'ana', %s) id", empresa, token))["id"]
+    assert d1 == d2, "registrar dos veces el mismo navegador no duplica"
+    aviso = await _publicar(db, empresa, destinatarios=["ana"])
+    envios = await _todos(db, "SELECT dispositivo_id FROM ntf.envio WHERE aviso_id = %s", aviso)
+    assert [e["dispositivo_id"] for e in envios] == [d1]
+
+
+async def test_el_mismo_navegador_con_otro_usuario_pasa_al_nuevo(db, empresa):
+    token = f"fcm-token-compartido-{empresa}"
+    await _uno(db, "SELECT ntf.registrar_dispositivo(%s, 'ana', %s)", empresa, token)
+    await _uno(db, "SELECT ntf.registrar_dispositivo(%s, 'beto', %s)", empresa, token)
+    aviso = await _publicar(db, empresa, destinatarios=["ana"])
+    assert await _todos(db, "SELECT 1 FROM ntf.envio WHERE aviso_id = %s", aviso) == [], \
+        "a ana ya no le llega al navegador que ahora usa beto"
+
+
+async def test_baja_dispositivo_solo_el_propio(db, empresa):
+    token = f"fcm-token-para-baja-{empresa}"
+    await _uno(db, "SELECT ntf.registrar_dispositivo(%s, 'ana', %s)", empresa, token)
+    assert (await _uno(db, "SELECT ntf.baja_dispositivo(%s, 'beto', %s) n", empresa, token))["n"] == 0
+    assert (await _uno(db, "SELECT ntf.baja_dispositivo(%s, 'ana', %s) n", empresa, token))["n"] == 1
+    aviso = await _publicar(db, empresa, destinatarios=["ana"])
+    assert await _todos(db, "SELECT 1 FROM ntf.envio WHERE aviso_id = %s", aviso) == []
+
+
+async def test_registrar_rechaza_un_token_vacio(db, empresa):
+    with pytest.raises(psycopg.errors.RaiseException):
+        await _uno(db, "SELECT ntf.registrar_dispositivo(%s, 'ana', '  ')", empresa)
+
+
+# ================================================================ puente de AssetPlanner
+_DATA_JSON_ASSET = ('{"registrationToken":"tok-asset-%s","notificationTitle":"Nueva Orden de Trabajo asignada",'
+                    '"webPushNotificationBody":"Por favor revise su bandeja.","webPushNotificationIcon":"x.png"}')
+
+
+async def test_publicar_asset_traduce_la_fila_de_la_cola(db, empresa):
+    queue_id = empresa * 10
+    aviso = (await _uno(db, "SELECT ntf.publicar_asset(%s, 7, 42, %s) id",
+                        queue_id, _DATA_JSON_ASSET % empresa))["id"]
+    a = await _uno(db, "SELECT origen, titulo, cuerpo, emisor, dedupe_key FROM ntf.aviso WHERE aviso_id = %s", aviso)
+    assert a == {"origen": "asset", "titulo": "Nueva Orden de Trabajo asignada",
+                 "cuerpo": "Por favor revise su bandeja.", "emisor": "AssetPlanner",
+                 "dedupe_key": f"asset:{queue_id}"}
+    envios = await _todos(db, "SELECT token_directo FROM ntf.envio WHERE aviso_id = %s", aviso)
+    assert [e["token_directo"] for e in envios] == [f"tok-asset-{empresa}"]
+    destinos = await _todos(db, "SELECT usuario FROM ntf.destino WHERE aviso_id = %s", aviso)
+    assert [d["usuario"] for d in destinos] == ["asset:42"]
+
+
+async def test_publicar_asset_dos_veces_la_misma_fila_no_duplica(db, empresa):
+    queue_id = empresa * 10 + 1
+    a1 = (await _uno(db, "SELECT ntf.publicar_asset(%s, 7, 42, %s) id", queue_id, _DATA_JSON_ASSET % empresa))["id"]
+    a2 = (await _uno(db, "SELECT ntf.publicar_asset(%s, 7, 42, %s) id", queue_id, _DATA_JSON_ASSET % empresa))["id"]
+    assert a1 == a2
+    assert len(await _todos(db, "SELECT 1 FROM ntf.envio WHERE aviso_id = %s", a1)) == 1
+
+
+async def test_publicar_asset_aguanta_un_json_roto_y_sin_token(db, empresa):
+    aviso = (await _uno(db, "SELECT ntf.publicar_asset(%s, 7, 42, 'esto no es json') id", empresa * 10 + 2))["id"]
+    a = await _uno(db, "SELECT titulo FROM ntf.aviso WHERE aviso_id = %s", aviso)
+    assert a["titulo"] == "Aviso de AssetPlanner"
+    assert await _todos(db, "SELECT 1 FROM ntf.envio WHERE aviso_id = %s", aviso) == [], "sin token no hay push"
+
+
+async def test_publicar_asset_traduce_la_empresa_de_assetplanner(db, empresa):
+    """empr_id de AssetPlanner = core.empresas.empr_id_mysql (en la base de prueba se crea la tabla minima)."""
+    await _exec(db, "CREATE SCHEMA IF NOT EXISTS core")
+    await _exec(db, "CREATE TABLE IF NOT EXISTS core.empresas (empr_id integer, empr_id_mysql integer)")
+    mysql = empresa + 5_000_000
+    await _exec(db, "INSERT INTO core.empresas (empr_id, empr_id_mysql) VALUES (%s, %s)", empresa, mysql)
+    aviso = (await _uno(db, "SELECT ntf.publicar_asset(%s, %s, 42, %s) id",
+                        empresa * 10 + 3, mysql, _DATA_JSON_ASSET % empresa))["id"]
+    a = await _uno(db, "SELECT empr_id FROM ntf.aviso WHERE aviso_id = %s", aviso)
+    assert a["empr_id"] == empresa

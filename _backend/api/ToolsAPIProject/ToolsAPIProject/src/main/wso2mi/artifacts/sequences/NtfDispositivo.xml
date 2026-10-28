@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ntfDispositivo — alta y baja del navegador/celular del usuario del JWT
+  (toolsNTFAPI, ADR-015). Entrada: ntf_operacion (alta|baja), ntf_token,
+  ntf_plataforma. La baja solo afecta un token del propio usuario.
+-->
+<sequence name="ntfDispositivo" xmlns="http://ws.apache.org/ns/synapse">
+    <sequence key="emprIdFromHeader"/>
+    <sequence key="usuarioFromHeader"/>
+    <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+    <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+    <script language="js"><![CDATA[
+        function s(v) { return (v === null || v === undefined) ? "" : ("" + v); }
+        var token = s(mc.getProperty("ntf_token")).trim();
+        try { token = "" + Packages.java.net.URLDecoder.decode(token, "UTF-8"); } catch (e) { }
+        mc.setProperty("ntf_token_invalido", token.length < 20 ? "si" : "");
+        var alta = s(mc.getProperty("ntf_operacion")) === "alta";
+        mc.setProperty("ntf_metodo_ruta", alta ? "/NTFDataService/dispositivo" : "/NTFDataService/dispositivo/baja");
+        var datos = {
+            "empr_id": s(mc.getProperty("jwt_empr_id")),
+            "usuario": s(mc.getProperty("jwt_usuario")),
+            "token":   token
+        };
+        if (alta) {
+            datos.plataforma = s(mc.getProperty("ntf_plataforma"));
+            mc.setPayloadJSON({"_post_dispositivo": datos});
+        } else {
+            mc.setPayloadJSON({"_put_dispositivo_baja": datos});
+        }
+    ]]></script>
+    <filter xpath="get-property('ntf_token_invalido') = 'si'">
+        <then>
+            <payloadFactory media-type="json">
+                <format>{"error":"token_invalido"}</format>
+                <args/>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property name="HTTP_SC" scope="axis2" type="STRING" value="400"/>
+            <respond/>
+        </then>
+    </filter>
+
+    <header name="Accept" scope="transport" value="application/json"/>
+    <property name="messageType" value="application/json" scope="axis2"/>
+    <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+    <property name="uri.var.ntf_url" expression="fn:concat($ctx:dataservices_url, get-property('ntf_metodo_ruta'))"/>
+    <filter xpath="get-property('ntf_operacion') = 'alta'">
+        <then>
+            <call>
+                <endpoint><http method="POST" uri-template="{uri.var.ntf_url}"/></endpoint>
+            </call>
+        </then>
+        <else>
+            <call>
+                <endpoint><http method="PUT" uri-template="{uri.var.ntf_url}"/></endpoint>
+            </call>
+        </else>
+    </filter>
+    <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+        <then>
+            <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+            <respond/>
+        </then>
+        <else>
+            <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+            <property name="TOOLS_ERROR" value="ntfDispositivo - NTFDataService error" type="STRING"/>
+            <sequence key="toolsFault"/>
+        </else>
+    </filter>
+</sequence>

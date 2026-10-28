@@ -19,6 +19,10 @@
 --                       la misma sentencia: nunca se manda dos veces
 --   ntf.marcar_envio()  el transporte informa el resultado (con reintentos)
 --   ntf.depurar()       la cola no crece sin limite
+--   ntf.mis_avisos(), ntf.no_leidos(), ntf.marcar_leido(),
+--   ntf.registrar_dispositivo(), ntf.baja_dispositivo()
+--                       lo que expone el API (campanita y dispositivos)
+--   ntf.publicar_asset() lo que llama el puente de AssetPlanner
 --
 -- El usuario es el NICK de Dnato (el `sub` del JWT). Los avisos que vienen de
 -- AssetPlanner, cuyo usuario no tiene correspondencia con Dnato, usan
@@ -312,6 +316,174 @@ END
 $$;
 
 -- -----------------------------------------------------------------------------
+-- Las operaciones del API (las llama NTFDataService con el empr_id y el
+-- usuario que resolvio el API; nunca los elige el navegador)
+-- -----------------------------------------------------------------------------
+
+-- La campanita: los avisos del usuario, los no leidos primero.
+CREATE OR REPLACE FUNCTION ntf.mis_avisos(p_empr_id integer, p_usuario text,
+                                          p_limite integer DEFAULT 30)
+RETURNS TABLE (aviso_id bigint, origen text, tipo text, titulo text, cuerpo text,
+               severidad text, enlace text, emisor text, leido boolean, fec_alta text)
+LANGUAGE sql
+STABLE
+SET search_path = ntf, pg_temp
+AS $$
+    SELECT a.aviso_id, a.origen, a.tipo, a.titulo, a.cuerpo, a.severidad, a.enlace,
+           a.emisor, d.leido, to_char(a.fec_alta, 'YYYY-MM-DD HH24:MI')
+    FROM ntf.destino d
+    JOIN ntf.aviso a ON a.aviso_id = d.aviso_id
+    WHERE d.empr_id = p_empr_id AND d.usuario = p_usuario
+      AND a.empr_id = p_empr_id
+      AND (a.vence_en IS NULL OR a.vence_en > now())
+    ORDER BY d.leido, a.fec_alta DESC, a.aviso_id DESC
+    LIMIT least(greatest(coalesce(p_limite, 30), 1), 200);
+$$;
+
+-- El numero de la campanita.
+CREATE OR REPLACE FUNCTION ntf.no_leidos(p_empr_id integer, p_usuario text)
+RETURNS integer
+LANGUAGE sql
+STABLE
+SET search_path = ntf, pg_temp
+AS $$
+    SELECT count(*)::integer
+    FROM ntf.destino d
+    JOIN ntf.aviso a ON a.aviso_id = d.aviso_id
+    WHERE d.empr_id = p_empr_id AND d.usuario = p_usuario AND NOT d.leido
+      AND (a.vence_en IS NULL OR a.vence_en > now());
+$$;
+
+-- Marca leido un aviso propio (o todos, con p_aviso_id NULL). Devuelve cuantos
+-- cambio: 0 si el aviso no es del usuario o de la empresa.
+CREATE OR REPLACE FUNCTION ntf.marcar_leido(p_empr_id integer, p_usuario text,
+                                            p_aviso_id bigint DEFAULT NULL)
+RETURNS integer
+LANGUAGE plpgsql
+SET search_path = ntf, pg_temp
+AS $$
+DECLARE
+    n integer;
+BEGIN
+    UPDATE ntf.destino d SET leido = true, fec_lectura = now()
+    WHERE d.empr_id = p_empr_id AND d.usuario = p_usuario AND NOT d.leido
+      AND (p_aviso_id IS NULL OR d.aviso_id = p_aviso_id);
+    GET DIAGNOSTICS n = ROW_COUNT;
+    RETURN n;
+END
+$$;
+
+-- Registra el navegador o celular del usuario. El token de Firebase es unico:
+-- si ya estaba (otro usuario en el mismo navegador, otra empresa), pasa al
+-- usuario actual y se reactiva.
+CREATE OR REPLACE FUNCTION ntf.registrar_dispositivo(p_empr_id integer, p_usuario text,
+                                                     p_token text,
+                                                     p_plataforma text DEFAULT 'web')
+RETURNS bigint
+LANGUAGE plpgsql
+SET search_path = ntf, pg_temp
+AS $$
+DECLARE
+    v_id bigint;
+BEGIN
+    IF p_token IS NULL OR length(btrim(p_token)) < 20 THEN
+        RAISE EXCEPTION 'token de dispositivo invalido';
+    END IF;
+    IF p_usuario IS NULL OR btrim(p_usuario) = '' THEN
+        RAISE EXCEPTION 'usuario vacio';
+    END IF;
+    INSERT INTO ntf.dispositivo (empr_id, usuario, token, plataforma)
+    VALUES (p_empr_id, p_usuario, btrim(p_token), coalesce(nullif(p_plataforma, ''), 'web'))
+    ON CONFLICT (token) DO UPDATE
+        SET empr_id = excluded.empr_id, usuario = excluded.usuario,
+            plataforma = excluded.plataforma, activo = true
+    RETURNING dispositivo_id INTO v_id;
+    RETURN v_id;
+END
+$$;
+
+-- Da de baja un dispositivo propio (el usuario cerro sesion o revoco el
+-- permiso). Devuelve 0 si el token no es suyo.
+CREATE OR REPLACE FUNCTION ntf.baja_dispositivo(p_empr_id integer, p_usuario text,
+                                                p_token text)
+RETURNS integer
+LANGUAGE plpgsql
+SET search_path = ntf, pg_temp
+AS $$
+DECLARE
+    n integer;
+BEGIN
+    UPDATE ntf.dispositivo SET activo = false
+    WHERE token = btrim(p_token) AND empr_id = p_empr_id AND usuario = p_usuario AND activo;
+    GET DIAGNOSTICS n = ROW_COUNT;
+    RETURN n;
+END
+$$;
+
+-- -----------------------------------------------------------------------------
+-- ntf.publicar_asset: lo que llama el puente de AssetPlanner (Siddhi)
+-- -----------------------------------------------------------------------------
+-- Recibe la fila de assetv2.synch_notificacion_queue tal como esta y la
+-- traduce. Idempotente por queue_id (dedupe_key 'asset:<queue_id>'): si el
+-- puente se cae entre publicar y marcar procesado, la proxima vuelta no
+-- duplica nada. El data_json es el mensaje plano que arman los SP de
+-- AssetPlanner (registrationToken, notificationTitle, webPushNotificationBody,
+-- ...). La empresa se traduce con core.empresas.empr_id_mysql; si no hay
+-- correspondencia queda 0 (el push sale igual: va al token del data_json).
+CREATE OR REPLACE FUNCTION ntf.publicar_asset(p_queue_id bigint, p_empr_mysql integer,
+                                              p_user_id integer, p_data_json text)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ntf, pg_temp
+AS $$
+DECLARE
+    v_msg     jsonb;
+    v_empr    integer;
+    v_titulo  text;
+    v_cuerpo  text;
+    v_token   text;
+BEGIN
+    BEGIN
+        v_msg := p_data_json::jsonb;
+    EXCEPTION WHEN others THEN
+        v_msg := '{}'::jsonb;
+    END;
+    IF jsonb_typeof(v_msg) <> 'object' THEN
+        v_msg := '{}'::jsonb;
+    END IF;
+    -- Por si algun SP lo manda envuelto como lo espera el conector.
+    IF v_msg ? 'xformValues' AND jsonb_typeof(v_msg -> 'xformValues') = 'object' THEN
+        v_msg := v_msg -> 'xformValues';
+    END IF;
+
+    v_titulo := coalesce(nullif(btrim(v_msg ->> 'notificationTitle'), ''),
+                         nullif(btrim(v_msg ->> 'webPushNotificationTitle'), ''),
+                         'Aviso de AssetPlanner');
+    v_cuerpo := coalesce(nullif(v_msg ->> 'webPushNotificationBody', ''),
+                         nullif(v_msg ->> 'notificationBody', ''),
+                         nullif(v_msg ->> 'androidNotificationBody', ''), '');
+    v_token  := nullif(btrim(coalesce(v_msg ->> 'registrationToken', v_msg ->> 'token', '')), '');
+
+    IF to_regclass('core.empresas') IS NOT NULL THEN
+        EXECUTE 'SELECT empr_id FROM core.empresas WHERE empr_id_mysql = $1 LIMIT 1'
+            INTO v_empr USING p_empr_mysql;
+    END IF;
+
+    RETURN ntf.publicar(
+        p_empr_id       => coalesce(v_empr, 0),
+        p_origen        => 'asset',
+        p_tipo          => 'asset_notificacion',
+        p_titulo        => v_titulo,
+        p_cuerpo        => v_cuerpo,
+        p_destinatarios => ARRAY['asset:' || coalesce(p_user_id::text, '0')],
+        p_emisor        => 'AssetPlanner',
+        p_dedupe_key    => 'asset:' || p_queue_id,
+        p_token_directo => v_token);
+END
+$$;
+
+-- -----------------------------------------------------------------------------
 -- El rol del transporte: solo las funciones, nunca las tablas
 -- -----------------------------------------------------------------------------
 DO $$
@@ -330,6 +502,19 @@ REVOKE ALL ON FUNCTION ntf.publicar(integer, text, text, text, text, text[], tex
 REVOKE ALL ON FUNCTION ntf.tomar_envios(integer) FROM PUBLIC;
 REVOKE ALL ON FUNCTION ntf.marcar_envio(bigint, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION ntf.depurar(integer, integer) FROM PUBLIC;
+REVOKE ALL ON FUNCTION ntf.publicar_asset(bigint, integer, integer, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION ntf.mis_avisos(integer, text, integer) FROM PUBLIC;
+REVOKE ALL ON FUNCTION ntf.no_leidos(integer, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION ntf.marcar_leido(integer, text, bigint) FROM PUBLIC;
+REVOKE ALL ON FUNCTION ntf.registrar_dispositivo(integer, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION ntf.baja_dispositivo(integer, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION ntf.tomar_envios(integer) TO ntf_transporte;
 GRANT EXECUTE ON FUNCTION ntf.marcar_envio(bigint, text, text) TO ntf_transporte;
 GRANT EXECUTE ON FUNCTION ntf.depurar(integer, integer) TO ntf_transporte;
+-- El puente de AssetPlanner corre en el mismo SI: solo puede publicar avisos
+-- de origen 'asset', nunca llamar a ntf.publicar() con cualquier origen.
+GRANT EXECUTE ON FUNCTION ntf.publicar_asset(bigint, integer, integer, text) TO ntf_transporte;
+
+-- El usuario de login del SI se agrega al rol a mano (no se versionan
+-- usuarios ni contrasenias):
+--   CREATE ROLE si_avisos LOGIN PASSWORD '...' IN ROLE ntf_transporte;
