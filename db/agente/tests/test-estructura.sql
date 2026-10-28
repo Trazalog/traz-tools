@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..018 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..019 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -434,6 +434,31 @@ SELECT 'notificacion acepta certificacion_por_vencer',
 FROM pg_constraint c WHERE c.conname = 'notificacion_tipo_ck';
 
 -- ---------------------------------------------------------------------------
+-- 019 - contrato Kuntur <-> Quirqui
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' con RLS forzado; el runtime no la borra',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.' || t)), false)
+       AND NOT has_table_privilege('agente_app', 'agente.' || t, 'DELETE'),
+       'AS-04'
+FROM unnest(ARRAY['medicion_pedida', 'medicion_resultado', 'avance_plan']) AS t;
+
+-- R3 por construccion: en el contrato no puede viajar lo que se converso.
+-- Los unicos text permitidos son identificadores o estados con CHECK.
+INSERT INTO _resultado
+SELECT 'R3: el contrato no tiene texto libre (solo ' || coalesce(string_agg(c.table_name || '.' || c.column_name, ', '), 'nada') || ')',
+       coalesce(bool_and(c.table_name || '.' || c.column_name = ANY (ARRAY[
+           'medicion_pedida.indicador', 'medicion_pedida.alcance', 'medicion_pedida.alcance_id',
+           'medicion_pedida.frecuencia', 'medicion_pedida.estado', 'medicion_pedida.pedida_por',
+           'medicion_resultado.tool',
+           'avance_plan.estado', 'avance_plan.responsable', 'avance_plan.resultado'])), true),
+       'un campo text nuevo en estas tablas exige revisar R3'
+FROM information_schema.columns c
+WHERE c.table_schema = 'agente' AND c.data_type = 'text'
+  AND c.table_name IN ('medicion_pedida', 'medicion_resultado', 'avance_plan');
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -444,7 +469,7 @@ FROM unnest(ARRAY[
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
-    '016-vertical', '017-propuestas', '018-avisos'
+    '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
