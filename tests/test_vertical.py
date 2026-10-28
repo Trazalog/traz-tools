@@ -105,8 +105,11 @@ async def test_la_agenda_de_faustino_filtra_por_industria(con_admin):
     async with con_admin.cursor() as cur:
         for nombre, vertical in (("Tema prueba oil", "oil_gas"), ("Tema prueba mina", "mineria")):
             await cur.execute(
-                "INSERT INTO agente.tema (nombre, modulo, prioridad, vertical) VALUES (%s, 'man', 99, %s) "
-                "ON CONFLICT DO NOTHING", (nombre, vertical))
+                # Otros tests del entrevistador recalculan prioridades y estados:
+                # se fuerzan, para no depender del orden en que corren.
+                "INSERT INTO agente.tema (nombre, modulo, prioridad, vertical) VALUES (%s, 'man', 999, %s) "
+                "ON CONFLICT (nombre) DO UPDATE SET prioridad = 999, estado = 'pendiente', "
+                "vertical = EXCLUDED.vertical", (nombre, vertical))
     await con_admin.commit()
 
     async with AsyncClient(transport=ASGITransport(app=mod.app), base_url="http://t") as api:
