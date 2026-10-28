@@ -114,10 +114,10 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 
 **Integrado:** M-01 y M-02 (#572, #573).
 **Para revisar y mergear:** **#597** — M-03 a M-08, AS-01, AS-02, análisis de la Fase 4, catálogo DocTest, avatar y la corrección del guardián (un solo PR, un commit por tarea).
-**En curso, sin PR:** rama `feat/AGENTE-fase2-avisos` (sobre #597) — credenciales de máquina, monitoreo, campanita, encolado de push, filtro de industria en Faustino y el contrato Kuntur ↔ Quirqui. Cierra con la app Siddhi y ahí va su PR.
+**En curso, sin PR:** rama `feat/AGENTE-fase2-avisos` (sobre #597) — credenciales de máquina, monitoreo, campanita, encolado de push, filtro de industria en Faustino, el contrato Kuntur ↔ Quirqui y **un hallazgo de seguridad corregido** (`020`: `dispositivo` y `envio` no tenían RLS; el orquestador ya no puede leer la cola de push). Cierra con la app Siddhi y ahí va su PR.
 
-**Para que la base local quede al día** (terminal local, parado en el repo, con el usuario propietario), aplicar en orden lo que vaya entrando a `develop-v3.5`, del `012` al `019`:
-`for f in db/agente/01[2-9]-*.sql; do case $f in *rollback*) ;; *) psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f $f || break;; esac; done`
+**Para que la base local quede al día** (terminal local, parado en el repo, con el usuario propietario), aplicar en orden lo que vaya entrando a `develop-v3.5`, del `012` al `020`:
+`for f in db/agente/01[2-9]-*.sql db/agente/020-*.sql; do case $f in *rollback*) ;; *) psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f $f || break;; esac; done`
 
 **Lo que espera decisión del PM, por lo que destraba:**
 1. **Aprobar los análisis de impacto** (`doc/agente/analisis-impacto-token-maquina.md` y `analisis-impacto-kpi-objetivos.md`). Destraban los tokens de máquina reales (sin eso el monitoreo no corre), las tools de KPI, el job de mediciones y Kuntur.

@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..019 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..020 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -459,6 +459,31 @@ WHERE c.table_schema = 'agente' AND c.data_type = 'text'
   AND c.table_name IN ('medicion_pedida', 'medicion_resultado', 'avance_plan');
 
 -- ---------------------------------------------------------------------------
+-- 020 - cola de envio
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'dispositivo con RLS forzado (tokens de push de cada empresa)',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = 'agente.dispositivo'::regclass), false), '020';
+
+INSERT INTO _resultado
+SELECT 'el orquestador encola pero no lee la cola de envio',
+       has_table_privilege('agente_app', 'agente.envio', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.envio', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.envio', 'UPDATE'),
+       'la cola es global: la lee solo el transporte';
+
+INSERT INTO _resultado
+SELECT 'el transporte (agente_envio) solo lee y marca el resultado',
+       has_table_privilege('agente_envio', 'agente.envio', 'SELECT')
+       AND has_column_privilege('agente_envio', 'agente.envio', 'estado', 'UPDATE')
+       AND NOT has_column_privilege('agente_envio', 'agente.envio', 'payload', 'UPDATE')
+       AND NOT has_table_privilege('agente_envio', 'agente.envio', 'INSERT')
+       AND NOT has_table_privilege('agente_envio', 'agente.envio', 'DELETE')
+       AND NOT has_table_privilege('agente_envio', 'agente.notificacion', 'SELECT'),
+       '020';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -469,7 +494,8 @@ FROM unnest(ARRAY[
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
-    '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach'
+    '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
+    '020-cola-envio'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
