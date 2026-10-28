@@ -1506,6 +1506,12 @@
       <param name="id_equipo" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
+   <query id="getPredictivoDeEmpresaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT predId FROM predictivo WHERE predId = :predId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivos":{"predictivo":[{"predId":"$predId"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="predId" sqlType="STRING"/>
+   </query>
    <query id="setPredictivoMan" keyColumns="predId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
       <sql>INSERT INTO predictivo (id_equipo, tarea_descrip, fecha, periodo, cantidad, horash, estado, pred_duracion, pred_canth, id_empresa, id_unidad) SELECT e.id_equipo, :tarea_descrip, :fecha, LEFT(:periodo, 50), :cantidad, :horash, 'C', :pred_duracion, :pred_canth, e.id_empresa, :id_unidad FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
       <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
@@ -1720,6 +1726,9 @@
    </resource>
    <resource method="GET" path="/predictivo/{predId}/equipo/{id_equipo}/empresa/{id_empresa}">
       <call-query href="getPredictivoMan"><with-param name="predId" query-param="predId"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/predictivos/de-empresa/{id_empresa}/predictivo/{predId}">
+      <call-query href="getPredictivoDeEmpresaMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="predId" query-param="predId"/></call-query>
    </resource>
    <resource method="POST" path="/predictivo">
       <call-query href="setPredictivoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="tarea_descrip" query-param="tarea_descrip"/><with-param name="fecha" query-param="fecha"/><with-param name="periodo" query-param="periodo"/><with-param name="cantidad" query-param="cantidad"/><with-param name="horash" query-param="horash"/><with-param name="pred_duracion" query-param="pred_duracion"/><with-param name="pred_canth" query-param="pred_canth"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_unidad" query-param="id_unidad"/></call-query>
