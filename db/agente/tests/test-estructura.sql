@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..017 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..018 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -403,6 +403,37 @@ SELECT 'una sola propuesta pendiente por usuario y cosa',
        'volver a abrir el panel no duplica';
 
 -- ---------------------------------------------------------------------------
+-- 018 - avisos proactivos
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'credencial_empresa con RLS forzado; el runtime no la escribe',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.credencial_empresa')), false)
+       AND has_table_privilege('agente_app', 'agente.credencial_empresa', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.credencial_empresa', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.credencial_empresa', 'DELETE'),
+       'ADR-A10';
+
+INSERT INTO _resultado
+SELECT 'el secreto se guarda cifrado (bytea)',
+       EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'agente'
+               AND table_name = 'credencial_empresa' AND column_name = 'secreto_cifrado'
+               AND data_type = 'bytea'),
+       'pgp_sym_encrypt';
+
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' identifica al usuario por nick',
+       EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'agente' AND table_name = t AND column_name = 'usuario'),
+       'el JWT de Dnato no trae usr_id'
+FROM unnest(ARRAY['notificacion', 'destinatario_alerta', 'dispositivo']) AS t;
+
+INSERT INTO _resultado
+SELECT 'notificacion acepta certificacion_por_vencer',
+       pg_get_constraintdef(c.oid) LIKE '%certificacion_por_vencer%', 'Pañol'
+FROM pg_constraint c WHERE c.conname = 'notificacion_tipo_ck';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -413,7 +444,7 @@ FROM unnest(ARRAY[
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
-    '016-vertical', '017-propuestas'
+    '016-vertical', '017-propuestas', '018-avisos'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------
