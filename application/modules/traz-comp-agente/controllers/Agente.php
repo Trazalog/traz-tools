@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
- * Chat del Agente Minero dentro de Trazalog Tools.
+ * Chat con los agentes de IA dentro de Trazalog Tools (hoy Quirqui, el Asistente).
  *
  * COMO SE INTEGRA (igual que el resto de los modulos)
  *

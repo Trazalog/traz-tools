@@ -22,7 +22,7 @@ fi
 # Variables: primero .env del repo, despues ~/.agente-minero.env si existe.
 [ -f .env ] && { set -a; . ./.env; set +a; }
 [ -f "$HOME/.agente-minero.env" ] && { set -a; . "$HOME/.agente-minero.env"; set +a; }
-export AGENTE_PROMPT_PATH="${AGENTE_PROMPT_PATH:-$PWD/prompts/agente-minero.md}"
+export AGENTE_PROMPTS_DIR="${AGENTE_PROMPTS_DIR:-$PWD/prompts}"
 
 case "${1:-run}" in
     test)  exec "$VENV/bin/python" -m pytest tests/ -q ;;

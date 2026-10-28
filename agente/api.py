@@ -1,8 +1,9 @@
 """API HTTP del orquestador (FastAPI).
 
 Endpoints:
-    GET  /salud            estado del servicio, config y bloques del prompt sin definir
-    POST /consulta         la consulta del usuario -> respuesta del agente
+    GET  /salud            estado del servicio, config y bloques de los prompts sin definir
+    GET  /agentes          los agentes que el usuario puede usar, con nombre y avatar
+    POST /consulta         la consulta del usuario -> respuesta del agente elegido
     POST /feedback         calificacion de una respuesta (pulgar arriba/abajo)
     GET  /admin/feedback   feedback negativo agrupado, para el ciclo de mejora
 
@@ -21,17 +22,17 @@ import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import entrevistador, rag
+from . import agentes, entrevistador, rag
 from .config import Config, cargar
 from .llm import OpenRouter
-from .orquestador import Consulta, Orquestador
+from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
 from .prompt import cargar as cargar_prompt
 from .prompt import pendientes as prompt_pendientes
 
 log = logging.getLogger("agente")
 
 cfg: Config = cargar()
-app = FastAPI(title="Agente Minero Trazalog", version="0.1.0")
+app = FastAPI(title="Agentes de IA de Trazalog", version="0.2.0")
 orquestador = Orquestador(cfg)
 
 
@@ -60,6 +61,8 @@ class Identidad(BaseModel):
     empr_id: int
     usr_id: int | None = None
     nick: str | None = None
+    # Nivel de Dnato, tal cual viene en el claim "role" ("1" = administrador).
+    rol: str | None = None
     autorizacion: str
 
 
@@ -81,6 +84,7 @@ async def identidad(authorization: str = Header(default="")) -> Identidad:
         empr_id=empr_id,
         usr_id=int(usr) if str(usr or "").isdigit() else None,
         nick=claims.get("preferred_username") or claims.get("sub"),
+        rol=str(claims["role"]) if claims.get("role") not in (None, "") else None,
         autorizacion=authorization,
     )
 
@@ -97,10 +101,12 @@ async def conexion():
 class ConsultaIn(BaseModel):
     pregunta: str = Field(min_length=1, max_length=4000)
     canal: str = "chat_tools"
+    agente: str = Field(default=AGENTE_POR_DEFECTO, pattern=r"^[a-z][a-z0-9_]{1,30}$")
 
 
 class ConsultaOut(BaseModel):
     interaccion_id: str
+    agente: str
     respuesta: str
     fragmentos: list[dict]
     tools_llamadas: list[dict]
@@ -149,9 +155,13 @@ class ExpertoIn(BaseModel):
 @app.get("/salud")
 async def salud() -> dict:
     problemas = cfg.validar()
-    sin_definir: list[str] = []
-    if cfg.prompt_path.exists():
-        sin_definir = prompt_pendientes(cargar_prompt(cfg.prompt_path))
+    # Por archivo de prompt: {"quirqui.md": ["(A) Cómo te presentás", ...]}.
+    sin_definir: dict[str, list[str]] = {}
+    if cfg.prompts_dir.is_dir():
+        for archivo in sorted(cfg.prompts_dir.glob("*.md")):
+            pend = prompt_pendientes(cargar_prompt(archivo))
+            if pend:
+                sin_definir[archivo.name] = pend
     return {
         "estado": "ok" if not problemas else "config_incompleta",
         "modelo": cfg.modelo,
@@ -164,19 +174,50 @@ async def salud() -> dict:
     }
 
 
+def _agente_publico(a: agentes.Agente) -> dict:
+    """Lo que la interfaz necesita para mostrar a un agente. Nada de su prompt."""
+    return {"clave": a.clave, "nombre": a.nombre, "rol": a.rol, "avatar": a.avatar}
+
+
+@app.get("/agentes")
+async def listar_agentes(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """Los agentes conversacionales que ESTE usuario puede usar.
+
+    Un empleado no recibe a Kuntur en esta lista: para el, el Coach no existe
+    (R1). Faustino tampoco aparece: se usa desde la pantalla de entrevistas.
+    """
+    return {"agentes": [
+        _agente_publico(a) for a in await agentes.listar(con)
+        if a.activo and a.rol != "entrevistador" and a.puede_usarlo(ident.rol)
+    ]}
+
+
 @app.post("/consulta", response_model=ConsultaOut)
 async def consulta(
     entrada: ConsultaIn,
     ident: Identidad = Depends(identidad),
     con: psycopg.AsyncConnection = Depends(conexion),
 ) -> ConsultaOut:
+    # Se resuelve y se verifica el acceso ANTES de gastar un token. Un agente
+    # inexistente y uno al que el usuario no accede responden lo mismo (404):
+    # que un empleado no pueda ni confirmar que el Coach existe (R1).
+    try:
+        agente = await agentes.para_consulta(con, entrada.agente, ident.rol)
+    except (agentes.AgenteDesconocido, agentes.AccesoDenegado) as e:
+        raise HTTPException(404, "No existe ese agente") from e
+    except agentes.AgenteNoDisponible as e:
+        raise HTTPException(409, str(e)) from e
+
     res = await orquestador.responder(con, Consulta(
         empr_id=ident.empr_id, pregunta=entrada.pregunta,
         autorizacion=ident.autorizacion, usr_id=ident.usr_id,
-        usuario_nick=ident.nick, canal=entrada.canal,
+        usuario_nick=ident.nick, canal=entrada.canal, agente=agente,
     ))
     return ConsultaOut(
-        interaccion_id=res.interaccion_id, respuesta=res.respuesta,
+        interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms,
     )

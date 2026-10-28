@@ -6,11 +6,11 @@ from pathlib import Path
 from agente.prompt import cargar, limpiar, pendientes
 
 RAIZ = Path(__file__).resolve().parent.parent
-PROMPT = RAIZ / "prompts" / "agente-minero.md"
+PROMPT = RAIZ / "prompts" / "quirqui.md"
 
 
 def test_el_prompt_existe():
-    assert PROMPT.exists(), "Falta prompts/agente-minero.md"
+    assert PROMPT.exists(), "Falta prompts/quirqui.md"
 
 
 def test_los_comentarios_no_le_llegan_al_modelo():
@@ -28,7 +28,7 @@ def test_los_comentarios_no_le_llegan_al_modelo():
 
 def test_el_contenido_real_sobrevive_a_la_limpieza():
     limpio = cargar(PROMPT)
-    assert "Agente Minero" in limpio
+    assert "Quirqui" in limpio
     assert "Cuando no sabés" in limpio
     assert "Seguridad" in limpio
     # La regla que ordena las tres fuentes es el corazon del prompt.

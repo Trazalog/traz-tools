@@ -20,7 +20,7 @@ sys.path.insert(0, str(RAIZ))
 # importar nada del paquete.
 os.environ.setdefault("AGENTE_DB_PASSWORD", "test")
 os.environ.setdefault("OPENROUTER_API_KEY", "test-key-no-real")
-os.environ.setdefault("AGENTE_PROMPT_PATH", str(RAIZ / "prompts" / "agente-minero.md"))
+os.environ.setdefault("AGENTE_PROMPTS_DIR", str(RAIZ / "prompts"))
 
 from agente.config import Config  # noqa: E402
 from agente.llm import Respuesta  # noqa: E402

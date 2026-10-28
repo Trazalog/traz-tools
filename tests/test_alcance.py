@@ -17,7 +17,7 @@ from agente.mcp_client import _RUTAS_DEV, _TOOLS_DEV
 from agente.prompt import cargar
 
 RAIZ = Path(__file__).resolve().parent.parent
-PROMPT = RAIZ / "prompts" / "agente-minero.md"
+PROMPT = RAIZ / "prompts" / "quirqui.md"
 
 
 def test_el_prompt_nombra_las_dos_areas():

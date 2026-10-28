@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
- * Puente entre Tools y el orquestador del Agente Minero.
+ * Puente entre Tools y el orquestador de los agentes de IA (Kuntur, Quirqui, Faustino).
  *
  * Todo lo que sale de aca lleva el JWT del usuario en el header Authorization.
  * El orquestador deriva el empr_id de ese token: no se manda por separado, ni

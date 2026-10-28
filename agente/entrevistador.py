@@ -16,19 +16,18 @@ Dos reglas que atraviesan todo el módulo:
     aparte y explícito.
   * El agente no completa lo que el experto no dijo. Si un hecho queda a
     medias, queda a medias -- inventar un procedimiento en una base de
-    conocimiento minera puede terminar lastimando a alguien.
+    conocimiento de la industria puede terminar lastimando a alguien.
 """
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import psycopg
 
+from . import agentes
 from .config import Config
 from .llm import LLMError, OpenRouter
-from .prompt import cargar as cargar_prompt
 from .rag import _a_vector
 
 # Cuántos intercambios antes de sugerir cerrar. No es un tope duro: el agente
@@ -36,8 +35,8 @@ from .rag import _a_vector
 INTERCAMBIOS_SUGERIDOS = 6
 
 
-def _prompt_path(cfg: Config) -> Path:
-    return cfg.prompt_path.parent / "entrevistador.md"
+# La configuracion del entrevistador en agente.agente (ADR-A7).
+CLAVE_AGENTE = "faustino"
 
 
 @dataclass
@@ -148,7 +147,7 @@ async def iniciar(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
         if not experto:
             raise ValueError(f"No existe el experto {experto_id}")
 
-    pregunta = await _generar(cfg, llm, [
+    pregunta = await _generar(con, cfg, llm, [
         {"role": "user", "content":
             f"Vas a entrevistar a {experto['nombre']}"
             + (f", especialista en {experto['especialidad']}" if experto.get("especialidad") else "")
@@ -191,7 +190,7 @@ async def responder(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
         if intercambios >= INTERCAMBIOS_SUGERIDOS else ""
     )
 
-    siguiente = await _generar(cfg, llm, [
+    siguiente = await _generar(con, cfg, llm, [
         {"role": "user", "content":
             f"Tema de la entrevista: {sesion['tema_nombre']}.\n\n"
             "Conversación hasta ahora:\n\n" + _formatear(transcripcion)
@@ -223,7 +222,7 @@ async def estructurar(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter
     if not any(m["rol"] == "experto" for m in transcripcion):
         raise ValueError("La sesión no tiene ninguna respuesta del experto")
 
-    crudo = await _generar(cfg, llm, [
+    crudo = await _generar(con, cfg, llm, [
         {"role": "user", "content":
             f"Tema: {sesion['tema_nombre']}.\n\n"
             "Esta es la entrevista completa:\n\n" + _formatear(transcripcion)
@@ -499,8 +498,10 @@ async def _guardar_transcripcion(con, sesion_id, transcripcion, estado=None) -> 
     await con.commit()
 
 
-async def _generar(cfg: Config, llm: OpenRouter, mensajes: list[dict]) -> str:
-    sistema = cargar_prompt(_prompt_path(cfg))
+async def _generar(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
+                   mensajes: list[dict]) -> str:
+    faustino = await agentes.obtener(con, CLAVE_AGENTE)
+    sistema = faustino.sistema(cfg.prompts_dir)
     rsp = await llm.chat([{"role": "system", "content": sistema}] + mensajes)
     if not rsp.texto.strip():
         raise LLMError("El entrevistador no devolvió texto")

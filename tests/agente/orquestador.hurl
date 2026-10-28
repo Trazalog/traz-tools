@@ -1,5 +1,5 @@
 # =============================================================================
-# Tests de integracion del orquestador del Agente Minero
+# Tests de integracion del orquestador de los agentes de IA (Kuntur, Quirqui, Faustino)
 # =============================================================================
 # Verifican el contrato HTTP que consume el chat de Tools: identidad, formato de
 # respuesta y aislamiento. No dependen de OpenRouter -- las consultas pueden
@@ -60,6 +60,32 @@ Content-Type: application/json
 HTTP 422
 
 
+# --- Los agentes que el usuario puede usar (ADR-A7) -------------------------
+# Quirqui esta para todos. Faustino nunca aparece: se usa desde la pantalla de
+# entrevistas. Kuntur solo le aparece a un admin, y hoy esta inactivo, asi que
+# no le aparece a nadie. Lo que se expone es lo que la UI necesita mostrar:
+# nunca el prompt ni las tools.
+GET {{base}}/agentes
+Authorization: Bearer {{jwt}}
+HTTP 200
+[Asserts]
+jsonpath "$.agentes[?(@.clave == 'quirqui')].nombre" == "Quirqui"
+jsonpath "$.agentes[?(@.clave == 'faustino')]" not exists
+jsonpath "$.agentes[?(@.clave == 'kuntur')]" not exists
+jsonpath "$.agentes[0].prompt" not exists
+jsonpath "$.agentes[0].tools_permitidas" not exists
+
+
+# --- Un agente que no existe -------------------------------------------------
+# Mismo 404 que recibe un empleado que pide al Coach: no se puede distinguir
+# "no existe" de "no es para vos" (R1).
+POST {{base}}/consulta
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+{ "pregunta": "hola", "agente": "nadie" }
+HTTP 404
+
+
 # --- El contrato de una consulta -------------------------------------------
 # Puede fallar el LLM y el status sigue siendo 200: el usuario recibe un
 # mensaje entendible en vez de un error tecnico. Lo que se verifica aca es la
@@ -71,6 +97,8 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.interaccion_id" matches /^[0-9a-f-]{36}$/
+# Sin "agente" en el body responde Quirqui, el Asistente (ADR-A7).
+jsonpath "$.agente" == "quirqui"
 jsonpath "$.respuesta" isString
 jsonpath "$.respuesta" not == ""
 jsonpath "$.fragmentos" isCollection

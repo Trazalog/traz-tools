@@ -63,6 +63,7 @@ La lista completa con explicaciones está en `.env.example`. Estas son las que m
 | `AGENTE_MAX_ITERACIONES` | Cuántas veces puede pedir datos antes de responder | Subila si ves respuestas cortadas por el tope; bajala si hay consultas que tardan mucho |
 | `AGENTE_MCP_MODO` | `apim` (real) o `mi` (desarrollo) | **En demo y producción va `apim`**, siempre |
 | `AGENTE_TEMPERATURA` | Cuánta variación en las respuestas | 0.2 por defecto. Para un agente técnico, bajo es mejor |
+| `AGENTE_PROMPTS_DIR` | Carpeta con un prompt por agente | Casi nunca: por defecto es `prompts/` del repo |
 
 ### Los modelos: cuáles funcionan y cuáles cuestan
 
@@ -87,13 +88,20 @@ El orquestador falla temprano y con un mensaje claro si detecta el desajuste, en
 
 ---
 
-## Editar el prompt del agente
+## Los agentes y sus prompts
 
-`prompts/agente-minero.md` es lo que el agente lee antes de cada conversación. **Se recarga sin reiniciar**: editás, guardás, y la próxima consulta ya usa la versión nueva.
+El motor es uno solo y responde como **Quirqui** (Asistente), **Kuntur** (Coach) o **Faustino** (Entrevistador) según la configuración de la tabla `agente.agente` (script `db/agente/011-agentes.sql`). Esa configuración es **igual para todos los clientes** y el orquestador solo la lee.
 
-Los comentarios HTML del archivo no le llegan al modelo: están ahí para explicarle cosas a quien edita.
+| Qué querés cambiar | Dónde |
+|---|---|
+| Nombre, personalidad, quién lo puede usar, tools permitidas, si está activo | `db/agente/011-agentes.sql`, y volver a aplicarlo (actualiza por `clave`). Se ve en la próxima consulta, sin reiniciar |
+| Las instrucciones de cada agente | `prompts/quirqui.md`, `prompts/kuntur.md`, `prompts/faustino.md`. **Se recargan sin reiniciar** |
 
-Mientras queden bloques con los textos de ejemplo, `/salud` los lista en `prompt_bloques_sin_definir`. **Antes de exponer el agente a un cliente, esa lista tiene que estar vacía.**
+El nombre y la personalidad **no** están en los archivos de prompt: el orquestador los antepone desde la configuración, así se pueden cambiar sin tocar las instrucciones. Los comentarios HTML de los prompts no le llegan al modelo: están ahí para quien edita.
+
+Mientras queden bloques con los textos de ejemplo, `/salud` los lista en `prompt_bloques_sin_definir`, **agrupados por archivo**. **Antes de exponer un agente a un cliente, su lista tiene que estar vacía.**
+
+**Quién ve a quién.** `GET /agentes` devuelve los agentes que el usuario puede usar. Kuntur exige el nivel de administrador de Dnato (claim `role` = `1`); a cualquier otro usuario no le aparece, y si lo pide en `/consulta` recibe el mismo `404` que con un agente inexistente. Faustino no responde por `/consulta`: se usa desde la pantalla de entrevistas.
 
 ---
 
@@ -174,6 +182,8 @@ El JWT que emite Dnato tiene un TTL (`jwt_ttl` en su `config/jwt.php`). Cuando e
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
 | `/salud` dice `config_incompleta` | Falta una variable | Mirá `problemas_config`, que las nombra |
+| `relation "agente.agente" does not exist` | No se aplicó `011-agentes.sql` | Aplicarlo con el usuario propietario de la base (ver `db/agente/README.md`) |
+| `409 Kuntur todavía no está disponible` | Kuntur está inactivo hasta la Fase 5 | Es lo esperado. Se activa en `011-agentes.sql` |
 | `401` en toda consulta | Falta el header `Authorization: Bearer` | El frontend tiene que reenviar el token de la sesión |
 | `403 El token no trae empr_id` | El JWT no tiene el claim | Es un problema de Dnato/APIM, no del agente. Ver ADR-009 |
 | Respuestas "problema técnico" siempre | OpenRouter rechaza la key o el modelo no existe | `./agente/dev.sh smoke`. El error real queda en `agente.interaccion.error` |

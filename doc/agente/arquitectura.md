@@ -6,7 +6,7 @@ Este documento describe **cómo está construido el motor de los agentes de IA e
 
 **Qué NO cubre:** no es el diseño conceptual —eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` con los ADR-A1 a A11—, ni cómo instalarlo (`doc/agente/instalacion.md`), ni cómo operarlo día a día (`doc/agente/operacion.md`).
 
-> **Estado de transición (2026-10-27).** Este documento describe lo construido en E0–E4: **un** agente con un solo prompt. El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador, que es lo que acá se llama "entrevistador")— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). Los nombres técnicos que todavía dicen "minero" (la base `agente_minero`, `prompts/agente-minero.md`, el ítem de menú "Agente Minero", la empresa de prueba) se renombran junto con el código en AGENTE-M-01 y M-08.
+> **Estado de transición.** El diseño vigente son **tres agentes sobre este mismo motor** —Kuntur (Coach), Quirqui (Asistente) y Faustino (Entrevistador)— y un conocimiento multi-vertical (ADR-A7 a A11). Este documento se actualiza a medida que se implementan las tareas de [`PROMPT_CC_AGENTES_TRAZALOG.md`](../v3/PROMPT_CC_AGENTES_TRAZALOG.md). **Hecho:** AGENTE-M-01 (configuración por agente, sección "Un motor, tres agentes"). Los nombres de infraestructura que todavía dicen "minero" —la base `agente_minero`, `~/.agente-minero.env`, la empresa de prueba y el ítem de menú en `seg.menues`— se mantienen: cambiarlos rompe entornos ya armados sin aportar nada al usuario.
 
 ---
 
@@ -67,7 +67,8 @@ Cada pieza de conocimiento lleva su `modulo` (`man`, `alm` o `general`). El `gen
 | Archivo | Qué hace |
 |---|---|
 | `agente/config.py` | Toda la configuración, por variables de entorno. Ningún modelo ni URL hardcodeado. `validar()` devuelve la lista de problemas, que `/salud` expone |
-| `agente/prompt.py` | Carga `prompts/agente-minero.md`, saca los comentarios HTML y detecta los bloques que el PM todavía no definió. Relee si el archivo cambió: se puede ajustar el prompt sin reiniciar |
+| `agente/agentes.py` | La configuración de cada agente (`agente.agente`): quién lo puede usar, su identidad, su prompt y sus tools permitidas. `para_consulta()` es la única puerta desde `/consulta` |
+| `agente/prompt.py` | Carga los prompts de `prompts/<agente>.md`, saca los comentarios HTML y detecta los bloques que el PM todavía no definió. Relee si el archivo cambió: se puede ajustar el prompt sin reiniciar |
 | `agente/llm.py` | Cliente de OpenRouter (ADR-A1). Chat con tool-calling y embeddings. Valida que la dimensión del embedding coincida con la del esquema |
 | `agente/rag.py` | Acceso a pgvector: conocimiento compartido, memoria por empresa, y el armado del bloque de contexto que ve el modelo |
 | `agente/mcp_client.py` | Cliente MCP (ADR-A3). Passthrough del Bearer, dos modos (`apim` / `mi`), y traza de cada llamada |
@@ -76,6 +77,24 @@ Cada pieza de conocimiento lleva su `modulo` (`man`, `alm` o `general`). El `gen
 | `agente/ingesta.py` | CLI de ingesta documental: PDF/MD/TXT → chunks → embeddings → `agente.chunk` |
 
 ---
+
+## Un motor, tres agentes (AGENTE-M-01)
+
+Kuntur, Quirqui y Faustino no son tres servicios: son tres filas de `agente.agente` (ADR-A7). El orquestador arma el mensaje de sistema con **la identidad de la configuración** ("Te llamás Quirqui. …") seguida de **las instrucciones del archivo** `prompts/<agente>.md`. Así el nombre se cambia sin tocar las instrucciones.
+
+| Agente | Acceso | Prompt | Estado |
+|---|---|---|---|
+| Quirqui (asistente) | Todo usuario | `prompts/quirqui.md` | Activo; es el que responde si `/consulta` no dice otro |
+| Kuntur (coach) | Solo `role = 1` de Dnato (administrador) | `prompts/kuntur.md` (esqueleto) | **Inactivo** hasta la Fase 5 |
+| Faustino (entrevistador) | Expertos y curadores, por menú | `prompts/faustino.md` | Activo, solo por `/entrevista/*` |
+
+Tres decisiones:
+
+- **El acceso se verifica antes que si el agente está activo.** Si fuera al revés, un empleado que pidiera a Kuntur recibiría "todavía no está disponible" y sabría que existe. Hoy recibe el mismo `404` que con un agente inexistente (R1). Hay un test que lo verifica, y se comprobó que falla si se invierte el orden.
+- **`/agentes` expone solo lo que la interfaz muestra** (clave, nombre, rol, avatar). Nunca el prompt ni las tools.
+- **El runtime no puede editar la configuración**: `agente_app` solo tiene `SELECT`. El Coach exige acceso `admin` y la autonomía solo puede ser `proponer`, las dos como `CHECK` de la base.
+
+La lista de tools permitidas ya está en la configuración, pero **todavía no se aplica**: eso es AGENTE-M-02. Hasta entonces, en modo `apim` el agente recibe todas las tools que declara el gateway, incluidas las de escritura.
 
 ## Decisiones que vale la pena conocer
 
@@ -224,6 +243,7 @@ El modo `mi` existe para poder trabajar sin un APIM levantado, reusando el patr�
 
 | Archivo | Qué cubre |
 |---|---|
+| `tests/test_agentes.py` | La configuración de los agentes: quién puede usar a quién (R1), que el Coach no se pueda confirmar desde un usuario común, que no haya tools de escritura permitidas, que el runtime no pueda editar la configuración, y `/agentes` y `/consulta` con la elección de agente |
 | `tests/test_prompt.py` | Que los comentarios no le lleguen al modelo, que el contenido sobreviva, y que los bloques sin definir se detecten |
 | `tests/test_mcp_client.py` | Passthrough del token, que el `empr_id` no viaje, trazabilidad, y el parseo de SSE |
 | `tests/test_orquestador.py` | El loop completo con OpenRouter mockeado: sin tools, con tools, tool que falla, LLM que falla, tope de iteraciones, registro |
