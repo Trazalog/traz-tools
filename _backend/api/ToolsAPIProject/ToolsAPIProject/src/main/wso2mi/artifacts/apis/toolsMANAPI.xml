@@ -731,5 +731,212 @@
          <respond/>
       </faultSequence>
    </resource>
+   <!-- MIG-ASSET-2 · Crear una solicitud de servicio de MAN con su caso de Bonita (A5, E22, E23).
+        Entrada: {"solicitud":{params de POST /solicitud de MANDataService, con id_empresa de asset}, "session":"bpm_token o vacío",
+                  "emprId":"empr_id de tools"}
+        Pasos: 1) alta de la solicitud (vacía si el equipo no es de la empresa); 2) caso por toolsbpmAPI (POST /tools/bpm/proceso/instancia,
+        que además registra case_empresa en tools); 3) case_id en la solicitud y case_empresa en assetv2, en un request_box.
+        Compensa: si falla 2, borra la solicitud; si falla 3, borra el caso y la solicitud.
+        Salida: {"status":true,"id":N,"caseId":N,"session":"..."} o HTTP 500 {"status":false,"msj":...}. -->
+   <resource methods="POST" uri-template="/solicitud">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="api_url" expression="$ctx:apiconf//api_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <variable name="solicitud" type="JSON" expression="${payload.solicitud}"/>
+         <variable name="id_empresa" type="STRING" expression="${payload.solicitud.id_empresa}"/>
+         <variable name="session" type="STRING" expression="${payload.session}"/>
+         <variable name="emprId" type="STRING" expression="${payload.emprId}"/>
+         <!-- 1) Solicitud -->
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_solicitud": ${vars.solicitud}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/solicitud')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_id" expression="json-eval($.alta.id)"/>
+         <filter source="get-property('man_id')" regex="[0-9]+">
+            <then/>
+            <else>
+               <variable name="msj" type="STRING" value="MAN solicitud - no se creó (el equipo no es de la empresa o falló el alta)"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="id" type="STRING" expression="${payload.alta.id}"/>
+         <!-- 2) Caso de Bonita por toolsbpmAPI -->
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"nombre_proceso":"Proceso de Mantenimiento AssetPlanner","payload":{"idSolicitudServicio":${vars.id},"idOT":0},"session":"${vars.session}","emprId":"${vars.emprId}"}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:api_url, '/bpm/proceso/instancia')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_case" expression="json-eval($.payload.caseId)"/>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then/>
+            <else>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"_put_solicitud_borrar":{"id_solicitud":"${vars.id}","id_empresa":"${vars.id_empresa}"}}</format>
+               </payloadFactory>
+               <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/solicitud/borrar')"/>
+               <call>
+                  <endpoint>
+                     <http method="PUT" uri-template="{uri.var.man_url}"/>
+                  </endpoint>
+               </call>
+               <variable name="msj" type="STRING" value="MAN solicitud - no se pudo lanzar el proceso de Bonita; se borró la solicitud"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="caseId" type="STRING" expression="${payload.payload.caseId}"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <!-- 3) case_id en la solicitud y case_empresa en assetv2 -->
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"request_box":{"_put_solicitud_caseid":{"case_id":"${vars.caseId}","id_solicitud":"${vars.id}","id_empresa":"${vars.id_empresa}"},"_post_solicitud_caseempresa":{"case_id":"${vars.caseId}","id_empresa":"${vars.id_empresa}"}}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/request_box')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"caseid":"${vars.caseId}","session":"${vars.session}"}</format>
+               </payloadFactory>
+               <property name="uri.var.man_url" expression="concat($ctx:api_url, '/bpm/proceso/instancia')"/>
+               <call>
+                  <endpoint>
+                     <http method="DELETE" uri-template="{uri.var.man_url}"/>
+                  </endpoint>
+               </call>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"_put_solicitud_borrar":{"id_solicitud":"${vars.id}","id_empresa":"${vars.id_empresa}"}}</format>
+               </payloadFactory>
+               <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/solicitud/borrar')"/>
+               <call>
+                  <endpoint>
+                     <http method="PUT" uri-template="{uri.var.man_url}"/>
+                  </endpoint>
+               </call>
+               <variable name="msj" type="STRING" value="MAN solicitud - no se pudo registrar el caso; se borraron el caso y la solicitud"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <payloadFactory media-type="json">
+            <format>{"status":true,"id":"$1","caseId":"$2","session":"$3"}</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('man_id')"/>
+               <arg evaluator="xml" expression="get-property('man_case')"/>
+               <arg evaluator="xml" expression="get-property('man_session')"/>
+            </args>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/solicitud"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+   <!-- MIG-ASSET-2 · Eliminar una solicitud de MAN: marca solicitud y OT como eliminadas (request_box) y borra el caso por toolsbpmAPI
+        (DELETE /tools/bpm/proceso/instancia), en el mismo orden que asset. Si falla el borrado del caso, la marca queda (como en asset).
+        Entrada: {"id_solicitud","id_empresa","usrId","fecha","motivo","case_id","session"}. Salida: {"status":bool,"caso":"si|no|sin caso"}. -->
+   <resource methods="POST" uri-template="/solicitud/eliminar">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="api_url" expression="$ctx:apiconf//api_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <variable name="caseId" type="STRING" expression="${payload.case_id}"/>
+         <property name="man_case" expression="json-eval($.case_id)"/>
+         <variable name="session" type="STRING" expression="${payload.session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"request_box":{"_put_solicitud_eliminada":{"usrId":"${payload.usrId}","fecha":"${payload.fecha}","motivo":"${payload.motivo}","id_solicitud":"${payload.id_solicitud}","id_empresa":"${payload.id_empresa}"},"_put_solicitud_ot_eliminada":{"usrId":"${payload.usrId}","fecha":"${payload.fecha}","motivo":"${payload.motivo}","id_solicitud":"${payload.id_solicitud}","id_empresa":"${payload.id_empresa}"}}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/request_box')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <variable name="msj" type="STRING" value="MAN solicitud - no se pudo marcar como eliminada"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <property name="man_caso" value="sin caso"/>
+         <filter source="get-property('man_case')" regex="[1-9][0-9]*">
+            <then>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"caseid":"${vars.caseId}","session":"${vars.session}"}</format>
+               </payloadFactory>
+               <property name="uri.var.man_url" expression="concat($ctx:api_url, '/bpm/proceso/instancia')"/>
+               <call>
+                  <endpoint>
+                     <http method="DELETE" uri-template="{uri.var.man_url}"/>
+                  </endpoint>
+               </call>
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then>
+                     <property name="man_caso" value="si"/>
+                  </then>
+                  <else>
+                     <property name="man_caso" value="no"/>
+                  </else>
+               </filter>
+            </then>
+            <else/>
+         </filter>
+         <payloadFactory media-type="json">
+            <format>{"status":true,"caso":"$1"}</format>
+            <args>
+               <arg evaluator="xml" expression="get-property('man_caso')"/>
+            </args>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/solicitud/eliminar"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
 </api>
                         

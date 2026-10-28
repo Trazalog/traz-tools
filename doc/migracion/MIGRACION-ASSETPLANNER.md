@@ -337,8 +337,8 @@ base de datos** en los archivos portados.
 |---|---|
 | Capa de integración, lectura (`helpers/man_tools_helper.php`: catálogos de artículos y herramientas, configuración por empresa) | ✅ Portada. Las escrituras (vales, entregas, devoluciones) van con las pantallas que las usan |
 | Preventivo, Predictivo, Backlog (controllers, models y vistas `list`/`view_`) | ✅ Portados desde el asset actual. Paridad OK (56 de 56, incluido aislamiento). Alta con detalle por `toolsMANAPI` (E20) |
-| Solicitudes de servicio (`controllers/Sservicio.php`, `models/Sservicios.php`, vistas `list_bpm`, `view_`, `list_term`) | ✅ Portadas salvo lanzar y eliminar casos de Bonita, que esperan A5. Paridad OK (27 de 27) |
-| Órdenes de trabajo, Informes de servicio, Calendario, Bandeja | ⏸ Esperan A5: usan Bonita en casi todas sus acciones (Órdenes de trabajo, hasta en el listado) |
+| Solicitudes de servicio (`controllers/Sservicio.php`, `models/Sservicios.php`, vistas `list_bpm`, `view_`, `list_term`) | ✅ Portadas completas. Crear y eliminar con su caso de Bonita por `toolsMANAPI` + `toolsbpmAPI` (A5, E22, E23), verificado en DEV: la primera tarea le llega al usuario de prueba aunque el caso lo inicie admin. Paridad OK (30 de 30, con la prueba de Bonita) |
+| Órdenes de trabajo, Informes de servicio, Calendario, Bandeja | Pendientes. Con A5 resuelta, el patrón de Bonita es el de Solicitudes (E22) |
 
 1. **Los 19 archivos de §2.3**: se portan de nuevo desde el asset actual con la misma mecánica, en
    orden de volumen (`Ordenservicios`, `Ordenservicio`, `list_bpm`, `view_presta_presta_conf_modal`…).
@@ -659,6 +659,8 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E19 | 2026-10-28 | **La edición de backlog desde la bandeja va con la bandeja (MIG-3)**: el tipo `editNuevo` de `Backlog/editar_backlog` cierra una tarea de Bonita y edita el backlog; en MAN responde que todavía no está disponible | Toca Bonita: es la regla 3 del ADR-014 y su vista (`nuevo_edicion_view_`) la carga `Tarea` |
 | E20 | 2026-10-28 | **Cabecera con detalle (Preventivo, Predictivo, Backlog)**: el alta va por `toolsMANAPI` (`POST /tools/man/<entidad>`, plantilla `manAltaConDetalleTemplate`): cabecera, lote de herramientas, lote de insumos y, si un lote falla, compensación que borra todo. En la edición, cabecera y borrado del detalle van en un `request_box` y cada lista nueva en un pedido por lotes (`_batch_req`) | `request_box` no admite repetir una operación, así que una lista no entra en un solo box. El pedido por lotes es atómico, pero solo existe para consultas sin resultado. Lo que pasa entre el box y los lotes de la edición no es atómico, igual que en asset |
 | E21 | 2026-10-28 | **Vistas que el fork reescribió y asset cambió después: se parte del asset actual** y se aplica la conversión del módulo. Es el caso de `Sservicios/list_bpm` (el fork la arma con `$list`; asset hoy usa paginado del lado del servidor). Donde la fusión de tres vías no tiene conflictos, se usa la fusión | La fusión de `list_bpm` daba 6 conflictos sobre 798 líneas reescritas, y la versión del fork no tiene el paginado que usa asset hoy |
+| E22 | 2026-10-28 | **Casos de Bonita desde MAN por `toolsbpmAPI` (A5)**: crear una solicitud es el recurso `POST /tools/man/solicitud` de `toolsMANAPI`: alta de la solicitud, `POST /tools/bpm/proceso/instancia` con el proceso "Proceso de Mantenimiento AssetPlanner" y la sesión `bpm_token` (vacía = la API entra como administrador), `case_id` en la solicitud y compensación (borra el caso y la solicitud) si algo falla. Eliminarla es `POST /tools/man/solicitud/eliminar`: marca solicitud y OT y borra el caso con `DELETE /tools/bpm/proceso/instancia` | Decisión del PM sobre A5. Es el mismo camino que ya usa tools (`traz-comp-tareasestandar`). **Diferencia con asset:** el caso lo inicia el usuario de la sesión de la API (en la práctica, el administrador), no el usuario logueado; se verifica en DEV que la primera tarea le llegue a quien corresponde |
+| E23 | 2026-10-28 | **`case_empresa` en los dos lados mientras convivan**: `toolsbpmAPI` lo registra en tools (`COREDataService /empresa/proceso`, con el `empr_id` de tools) y MAN además en `assetv2` (con el id de asset), en la misma operación | La bandeja de asset lee `case_empresa` de `assetv2`: sin esa fila, una empresa que vuelve a asset no vería los casos lanzados desde MAN (el corte tiene que poder revertirse, §3.2). Se unifica en MIG-7 |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---
@@ -692,7 +694,13 @@ retirar las de asset.
 operaciones del API (recomendado, coherente con A1) o mantener triggers de base, y usar Streaming
 Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 
-**A5 — Quién lanza los casos de Bonita desde MAN. 🔴 Pendiente (planteada 2026-10-28).** Bloquea
+**A5 — Quién lanza los casos de Bonita desde MAN. ✅ Resuelta (PM, 2026-10-28): a través de `toolsbpmAPI`**, que usa la
+plantilla `bpmAPICallTemplate`. Palabras del PM: "la forma de interactuar con bonita deberia ser a traves del api toolsBPMAPI.xml,
+que usa el template BPM tambien". Cómo se aplica (E22, E23 en §3.8): las operaciones de MAN que lanzan o borran casos son recursos
+de `toolsMANAPI` que llaman a `POST`/`DELETE /tools/bpm/proceso/instancia`, con la sesión `bpm_token` como hace
+`traz-comp-tareasestandar`. Lo que sigue es el planteo original.
+
+Planteo original (2026-10-28): Bloquea
 todo lo que falta portar: Solicitudes (`lanzarProcesoBPM`, `eliminar_solicitud`), Órdenes de trabajo,
 Informes de servicio, Calendario (MIG-4) y Bandeja (MIG-3). El choque es entre dos decisiones ya
 tomadas:
@@ -784,6 +792,7 @@ DEV (T21).
 | T25 | Los recursos `POST /tools/man/{preventivo,predictivo,backlog}` de `toolsMANAPI` toman `id_empresa` del cuerpo, como `MANDataService`. **No deben publicarse por APIM/MCP** así: para MCP tienen que leer la empresa del JWT (`emprIdFromHeader`, ADR-009) | `apis/toolsMANAPI.xml` |
 | T26 | Con el driver MySQL de `AssetPlannerDataSource`, `returnUpdatedRowCount` no devuelve la cantidad de filas (`{"preventivo":{}}`): no sirve para saber si un UPDATE alcanzó algo. Donde importa, MAN verifica la pertenencia antes con una consulta | `MANDataService.dbs` (todas las `*Man` con `UPDATED_ROW_COUNT`) |
 | T27 | `get_SolicTerminadas`, `getSSs` y `getEquipSectores` no filtran por empresa: la pantalla de solicitudes terminadas muestra las de todas las empresas. Corregido en MAN y en asset (rama `fix/MIG-doble-bugfix-fugas-empresa`) | `models/Sservicios.php` |
+| T28 | Asset lanza los casos de Bonita como el usuario logueado, con la contraseña de Bonita común (`userPass()`). Si la del usuario no es esa, el alta de la solicitud falla y asset la borra (pasa en DEV con el usuario de prueba). Además, `POST /solicitudServicio` de `toolsMANAPI` (app móvil) busca la solicitud recién creada como "la última del equipo", sin filtro de empresa y con JavaScript; MAN usa su propio recurso (E22) y los dos convergen más adelante | `libraries/BPM.php:112-134` de asset; `apis/toolsMANAPI.xml` |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores
