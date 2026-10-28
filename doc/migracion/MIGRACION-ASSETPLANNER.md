@@ -97,8 +97,9 @@ archivo quedó del todo convertido. Recontado hoy sobre `343dbb0`:
 | Callbacks `.success()`/`.error()` de jQuery 2, que en jQuery 3 tiran `TypeError` | 11 | Pantallas rotas |
 | Autocompletes de jQuery UI rotos porque el host carga jQuery UI **dos veces** (`application/views/layout/general_scripts.php:5` y `:115`, la segunda la trae jHTree) | 48 | Acá se detuvo Rogelio |
 
-La doble carga de jQuery UI **sigue igual hoy** en el host. La corrección de raíz es quitar una de
-las dos cargas, no parchear los 48 sitios.
+La doble carga de jQuery UI **sigue igual hoy** en el host. **Actualización 2026-10-28:** con las vistas ya convertidas,
+los autocompletar de MAN funcionan igual con y sin la segunda carga (prueba en navegador sin pantalla). El análisis
+de impacto y la recomendación de no tocar el layout por ahora están en [analisis-impacto-jquery-ui.md](analisis-impacto-jquery-ui.md).
 
 ### 2.3 Divergencia: lo que cambió en asset desde el corte
 
@@ -306,7 +307,7 @@ divergieron:
 | Unificar `Equipo/` y `equipo/` | 2 sitios |
 | URLs → constante `MAN` | 92 sitios |
 | `.success()`/`.error()` → `.done()`/`.fail()` | 11 sitios |
-| **Quitar la doble carga de jQuery UI** del host y validar los autocompletes. Toca `general_scripts.php` de tools, que es core: necesita análisis de impacto aprobado | 1 archivo + 48 sitios |
+| **Quitar la doble carga de jQuery UI** del host y validar los autocompletes. Toca `general_scripts.php` de tools, que es core: necesita análisis de impacto aprobado. **Análisis escrito (2026-10-28): recomienda no tocarlo**, ver [analisis-impacto-jquery-ui.md](analisis-impacto-jquery-ui.md) | 1 archivo + 48 sitios |
 | Quitar `dump`/`var_dump`/`print_r`/`last_query` y el `$empId = 6` fijo (`models/Preventivos.php:109`) | ~11 sitios |
 | Pasar los 6 `<section class="content">` restantes a `box` | 6 vistas |
 
