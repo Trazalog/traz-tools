@@ -201,9 +201,10 @@ class Agentes extends CI_Model
     }
 
     // --------------------------------------------------------- entrevistador
-    public function agenda($jwt)
+    public function agenda($jwt, $vertical = '')
     {
-        $rsp = $this->_llamar('GET', '/entrevista/agenda', null, $jwt);
+        $ruta = '/entrevista/agenda' . ($vertical !== '' ? '?vertical=' . rawurlencode($vertical) : '');
+        $rsp = $this->_llamar('GET', $ruta, null, $jwt);
         return $rsp['ok'] ? $rsp['data'] : array('temas' => array(), 'error' => $rsp['error']);
     }
 

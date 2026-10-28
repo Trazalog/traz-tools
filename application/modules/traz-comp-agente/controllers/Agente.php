@@ -162,7 +162,12 @@ class Agente extends CI_Controller
             $this->_json(array('error' => 'sin_autorizacion', 'temas' => array()));
             return;
         }
-        $this->_json($this->Agentes->agenda($this->_token()));
+        // Industria de la agenda (ADR-A11). Solo los valores conocidos: el resto, sin filtro.
+        $vertical = (string) $this->input->get('vertical');
+        if (!in_array($vertical, array('mineria', 'oil_gas', 'electricidad', 'general'), true)) {
+            $vertical = '';
+        }
+        $this->_json($this->Agentes->agenda($this->_token(), $vertical));
     }
 
     public function expertos()
