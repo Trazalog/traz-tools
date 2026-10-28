@@ -21,7 +21,9 @@ Este documento es el **instructivo paso a paso para instalar y dejar operativos 
 
 ## 1. WSO2 Streaming Integrator — ambiente de desarrollo
 
-El SI es el transporte entre la cola de notificaciones del agente y el conector Firebase del MI (Opción C del análisis de E0). Todos los comandos de esta sección se ejecutan en **la terminal local de la máquina de desarrollo** (Ubuntu 24.04).
+> **Desde ADR-015 (2026-10-28)** el agente ya no tiene cola propia: publica en los avisos de Tools (`ntf`) y el transporte es `_backend/siddhi/AvisosPush.siddhi`. Cómo se configuran los datasources y las apps del SI para eso: [`doc/notificaciones/instalacion-avisos.md`](../notificaciones/instalacion-avisos.md). Lo que sigue (instalar el SI) sigue valiendo.
+
+El SI es el transporte entre la cola de avisos y el conector Firebase del MI (Opción C del análisis de E0). Todos los comandos de esta sección se ejecutan en **la terminal local de la máquina de desarrollo** (Ubuntu 24.04).
 
 ### 1.1 Requisitos previos
 

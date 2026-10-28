@@ -150,9 +150,15 @@ Son el conocimiento **del producto**: con eso Quirqui explica qué se hace en ca
 
 ### Avisos proactivos: el monitoreo operativo (AGENTE-AS-03)
 
-Un job revisa cada empresa con credencial de máquina (lotes vencidos o críticos, stock bajo el punto de pedido, certificaciones por vencer) y encola avisos en `agente.notificacion` para los **destinatarios configurados** de cada tipo. Sin destinatarios para un tipo, no avisa a nadie. El mismo aviso no se repite en el día.
+Un job revisa cada empresa con credencial de máquina (lotes vencidos o críticos, stock bajo el punto de pedido, certificaciones por vencer) y **publica los avisos en Tools** (ADR-015: `POST /avisos` de `toolsNTFAPI`, firmados por Quirqui). Les llegan a los **suscriptos** a cada tipo de aviso (`ntf.suscripcion` en la base de Tools); sin suscriptos, no le llega a nadie. El mismo aviso no se repite en el día. La campanita y el push son los de Tools (ver [`doc/notificaciones/instalacion-avisos.md`](../notificaciones/instalacion-avisos.md)).
 
-**Requisitos:** `018` aplicado; `AGENTE_DNATO_TOKEN_URL` y `AGENTE_CLAVE_CREDENCIALES` en el entorno; la credencial de cada empresa cargada (`python -m agente.credenciales alta --empresa <id> --client-id <id>`, pide el secreto por teclado); y los destinatarios en `agente.destinatario_alerta`. **Hoy Dnato todavía no emite tokens de máquina** (espera la aprobación del análisis de impacto): hasta entonces el job termina con `"error"` en cada empresa, sin hacer nada.
+**Requisitos:** `018` aplicado; `AGENTE_DNATO_TOKEN_URL` y `AGENTE_CLAVE_CREDENCIALES` en el entorno; la credencial de cada empresa cargada (`python -m agente.credenciales alta --empresa <id> --client-id <id>`, pide el secreto por teclado); `AGENTE_AVISOS_URL` (el `POST /avisos` de `toolsNTFAPI` en el gateway; vacía, no se publica nada y los hallazgos quedan en la corrida); y los suscriptos en `ntf.suscripcion` de la base de Tools. Por ejemplo, en la **terminal con `psql` a la base de Tools**:
+
+```
+psql -h <host-base> -U <usuario-dueño> -d trazalog_tools -c "INSERT INTO ntf.suscripcion (empr_id, tipo, usuario) VALUES (191, 'material_por_vencer', 'jefe.deposito')"
+```
+
+Los tipos que publica el monitoreo: `material_por_vencer`, `stock_critico`, `certificacion_por_vencer` (`*` = todos). **Hoy Dnato todavía no emite tokens de máquina** (espera la aprobación del análisis de impacto): hasta entonces el job termina con `"error"` en cada empresa, sin hacer nada.
 
 Correrlo a mano (**terminal del servidor del orquestador**, parado en el repo):
 

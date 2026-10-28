@@ -27,4 +27,5 @@ Tres agentes sobre un motor único: **Kuntur** (Coach del administrador), **Quir
 
 | Documento | Para qué |
 |---|---|
-| [`doc/notificaciones/diseno-avisos-tools.md`](doc/notificaciones/diseno-avisos-tools.md) | Diseño del mecanismo único de avisos de todo el sistema (para aprobar) |
+| [`doc/notificaciones/diseno-avisos-tools.md`](doc/notificaciones/diseno-avisos-tools.md) | Diseño del mecanismo único de avisos de todo el sistema (aprobado, ADR-015) |
+| [`doc/notificaciones/instalacion-avisos.md`](doc/notificaciones/instalacion-avisos.md) | Cómo se instala y se verifica: base, MI, SI, Tools y agentes |

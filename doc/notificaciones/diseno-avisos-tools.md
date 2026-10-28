@@ -4,7 +4,7 @@
 
 Qué es: el diseño y el análisis de impacto del **mecanismo de avisos de todo Trazalog** —la campanita y las notificaciones push—, que reemplaza a los dos que hay hoy (el de AssetPlanner sobre MariaDB y el del agente sobre PostgreSQL). Para quién: el PM, que lo aprueba antes de que se escriba código (toca el core); y quien lo implemente. Cuándo leerlo: antes de tocar cualquier cosa de notificaciones, en cualquier módulo. Qué NO cubre: qué avisos genera cada módulo (eso lo decide cada uno) ni el contenido de los avisos de los agentes ([`doc/agente/arquitectura.md`](../agente/arquitectura.md)).
 
-**Estado:** propuesta para aprobación del PM (2026-10-28). **No se modificó nada del core.**
+**Estado:** aprobado por el PM e implementado el 2026-10-28 (ADR-015), en la rama `feat/NTF-avisos-tools`. Cómo se instala: [`instalacion-avisos.md`](instalacion-avisos.md). Lo que cambió respecto de este diseño al construirlo está en las decisiones D-71 a D-85 de [`decisiones-para-revisar.md`](../agente/decisiones-para-revisar.md): sobre todo, el puente solo publica lo de las últimas 24 horas y la depuración de MariaDB borra solo lo leído.
 **Pedido del PM:** "traer el mecanismo de AssetPlanner como el mecanismo de Tools, mejorado; colas en MariaDB y en PostgreSQL; que los agentes usen solo PostgreSQL; minimizar objetos nuevos en MariaDB, que a futuro se quiere eliminar".
 
 ---
@@ -131,7 +131,7 @@ Recursos nuevos, con el `empr_id` del JWT (nunca como parámetro):
 
 ## 7. El transporte y el conector
 
-- **`Siddhi AvisosPush` (PostgreSQL):** cada 15 segundos llama a `ntf.tomar_envios(50)` por un **datasource** del `deployment.yaml` del SI (sin credenciales en el `.siddhi`), postea al conector y marca `enviado` / `fallido` / `descartado` según la respuesta, tomando el `envio_id` del pedido original (`trp:`). Una vez por día llama a `ntf.depurar()`. El borrador `_backend/siddhi/AgenteAvisosPush.siddhi` es el punto de partida, con lo que se aprendió el 2026-10-28.
+- **`Siddhi AvisosPush` (PostgreSQL):** cada 15 segundos llama a `ntf.tomar_envios(50)` por un **datasource** del `deployment.yaml` del SI (sin credenciales en el `.siddhi`), postea al conector y marca `enviado` / `fallido` / `descartado` según la respuesta, tomando el `envio_id` del pedido original (`trp:`). Una vez por día llama a `ntf.depurar()`. Implementado en `_backend/siddhi/AvisosPush.siddhi` (manda de a un envío por vez: ver D-74).
 - **`Siddhi PuenteAsset` (MariaDB → PostgreSQL), mientras exista AssetPlanner:** lee `synch_notificacion_queue` por `queue_id` (no por `fec_alta`), llama a `ntf.publicar()` con `origen = 'asset'` y el token del `data_json` como `token_directo`, y marca `procesado = 1` en MariaDB (la columna que ya existe). Una vez por día borra de MariaDB lo procesado de más de 30 días. **No crea ningún objeto en MariaDB.** Reemplaza a `NotificacionesAssetSynch`: queda **un solo emisor de push**.
 - **`FirebaseConnectorAPI` (core):** el `faultSequence` tiene que devolver **5xx** si Firebase falla, y **410** si el token ya no existe (para marcarlo `descartado` y desactivar el dispositivo). Hoy devuelve 2xx siempre.
 
