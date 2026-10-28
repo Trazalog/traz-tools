@@ -20,8 +20,10 @@ Reglas:
   * Cada empresa es una corrida registrada (R8), con disparador
     'evento_operativo' y canal 'scheduler'.
 
-El envio push (cola agente.envio -> Siddhi -> Firebase) y la campanita en el
-panel son la segunda parte de AS-03.
+Por cada aviso nuevo se encola un envio push (agente.envio) por dispositivo
+activo del destinatario, firmado por el agente y con su avatar como icono. El
+envio real lo hace la app Siddhi (cola -> FirebaseConnectorAPI), que todavia
+no esta.
 """
 from __future__ import annotations
 
@@ -60,7 +62,7 @@ async def monitorear_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
                         disparador="evento_operativo", agente=agente,
                         usuario_nick="agente:monitoreo")
     res = Resultado(interaccion_id=str(uuid.uuid4()), respuesta="")
-    resumen = {"empr_id": empr_id, "hallazgos": 0, "avisos": 0, "sin_destinatario": 0}
+    resumen = {"empr_id": empr_id, "hallazgos": 0, "avisos": 0, "sin_destinatario": 0, "envios": 0}
     await rag.fijar_empresa(con, empr_id)
 
     try:
@@ -98,11 +100,17 @@ async def monitorear_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
                              entidad_tipo, entidad_id, enlace, dedupe_key)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (empr_id, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
+                        RETURNING notificacion_id
                         """,
                         (empr_id, d["usr_id"], d["usuario"], tipo, c.titulo, c.detalle, severidad,
                          c.tipo, c.clave.split(":", 1)[-1], c.accion.get("ayuda"),
                          f"{c.clave}:{quien}:{hoy.isoformat()}"))
-                    resumen["avisos"] += cur.rowcount
+                    nueva = await cur.fetchone()
+                    if not nueva:
+                        continue   # ya se aviso hoy
+                    resumen["avisos"] += 1
+                    resumen["envios"] += await _encolar_push(
+                        cur, nueva["notificacion_id"], empr_id, d, c, agente, cfg)
         res.respuesta = (f"{resumen['hallazgos']} hallazgo(s), {resumen['avisos']} aviso(s) nuevo(s), "
                          f"{resumen['sin_destinatario']} sin destinatario")
         res.controles.append({"control": "monitoreo", **resumen})
@@ -116,6 +124,40 @@ async def monitorear_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
     await Orquestador(cfg)._registrar(con, consulta, res)
     resumen["error"] = res.error
     return resumen
+
+
+async def _encolar_push(cur, notificacion_id: int, empr_id: int, destino: dict,
+                        c: "sugerencias.Candidata", agente, cfg: Config) -> int:
+    """Una fila en agente.envio por cada dispositivo activo del destinatario.
+
+    El envio real lo hace la app Siddhi (cola -> FirebaseConnectorAPI). El
+    push va firmado por el agente: su nombre en el titulo y su avatar como
+    icono (AGENTE-ID-06). Sin dispositivos registrados, el aviso queda solo en
+    la campanita.
+    """
+    await cur.execute(
+        """
+        SELECT dispositivo_id, token FROM agente.dispositivo
+        WHERE empr_id = %s AND activo
+          AND (usuario = %s OR (usr_id IS NOT NULL AND usr_id = %s))
+        """, (empr_id, destino["usuario"], destino["usr_id"]))
+    dispositivos = await cur.fetchall()
+    for disp in dispositivos:
+        payload = {
+            "notification": {
+                "title": f"{agente.nombre}: {c.titulo}",
+                "body": c.detalle,
+                "icon": f"assets/agentes/{agente.avatar}/icono.png",
+            },
+            "data": {"notificacion_id": str(notificacion_id), "tipo": c.tipo,
+                     "enlace": c.accion.get("ayuda") or ""},
+        }
+        await cur.execute(
+            "INSERT INTO agente.envio (notificacion_id, dispositivo_id, token, payload) "
+            "VALUES (%s, %s, %s, %s)",
+            (notificacion_id, disp["dispositivo_id"], disp["token"],
+             json.dumps(payload, ensure_ascii=False)))
+    return len(dispositivos)
 
 
 async def correr(cfg: Config, *, empresa: int | None = None) -> list[dict]:

@@ -101,3 +101,27 @@ async def test_una_empresa_sin_credencial_no_frena_a_las_demas(con_admin, monkey
 
     assert r[0] == {"empr_id": 900002, "error": "La empresa 900002 no tiene credencial de maquina activa"}
     assert r[1]["empr_id"] == EMPRESA and r[1]["error"] is None
+
+
+async def test_encola_un_push_por_dispositivo_con_el_avatar_del_agente(con_admin, monkeypatch, llm_falso):
+    usuario = f"jefe-push-{uuid.uuid4().hex[:6]}"
+    await _destinatario(con_admin, "material_por_vencer", usuario)
+    async with con_admin.cursor() as cur:
+        await cur.execute("SET LOCAL agente.empr_id = '900001'")
+        for t in ("tok-celular", "tok-tablet"):
+            await cur.execute("INSERT INTO agente.dispositivo (empr_id, usuario, token) VALUES (%s, %s, %s)",
+                              (EMPRESA, usuario, f"{t}-{usuario}"))
+    _mcp(monkeypatch, llm_falso)
+
+    r = await monitoreo.monitorear_empresa(con_admin, Config(), EMPRESA, "Bearer m", hoy=HOY)
+
+    assert r["envios"] == 2 * r["avisos"] == 4, "2 avisos (lote vencido y crítico) x 2 dispositivos"
+    async with con_admin.cursor() as cur:
+        await cur.execute("SET LOCAL agente.empr_id = '900001'")
+        await cur.execute("SELECT e.estado, e.payload FROM agente.envio e JOIN agente.notificacion n "
+                          "USING (notificacion_id) WHERE n.usuario = %s", (usuario,))
+        envios = await cur.fetchall()
+    assert {e["estado"] for e in envios} == {"pendiente"}
+    p = envios[0]["payload"]
+    assert p["notification"]["title"].startswith("Quirqui: ")
+    assert p["notification"]["icon"] == "assets/agentes/quirqui/icono.png"
