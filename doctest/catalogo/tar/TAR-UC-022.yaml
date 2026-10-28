@@ -1,0 +1,45 @@
+id: TAR-UC-022
+modulo: TAR
+titulo: Consultar indicadores de tareas
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: controllers/Reportes.php
+    detalle: obtenerFiltros(), indicadores()
+  - repo: traz-comp-tareasestandar
+    path: reports/Indicadores.view.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/TARDataService.dbs
+    detalle: getKpiBasico
+pantallas:
+  - Indicadores de tareas
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Tareas planificadas, iniciadas y finalizadas en el período
+depende_de:
+  - TAR-UC-018
+flujo_principal:
+  - paso: Elige fecha desde y hasta y, opcionalmente, tipo de trabajo, estado y usuario
+    resultado: Los filtros quedan cargados
+  - paso: Pulsa "Filtrar"
+    resultado: Ve los totales de tareas planificadas y finalizadas, un gráfico por usuario y una tabla con fecha, tipo de trabajo, pedido, hito, asignado, fecha de asignación y estado
+  - paso: Exporta
+    resultado: Sale el listado
+validaciones:
+  - Solo tareas de pedidos de trabajo de la empresa
+  - '"Finalizadas" cuenta solo las tareas finalizadas'
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-02: ¿quién consulta los indicadores, Supervisor o Planificador?"
+  - 'D-19: ¿qué debe medir el "Indicador de Eficiencia"? Hoy son dos conteos'
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-022-01 a 022-05"
+  - "Hipótesis: HIP-TAR-03, HIP-TAR-18"

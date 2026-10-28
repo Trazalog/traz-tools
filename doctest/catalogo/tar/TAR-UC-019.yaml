@@ -1,0 +1,53 @@
+id: TAR-UC-019
+modulo: TAR
+titulo: Administrar tareas estándar
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: controllers/Tarea.php
+    detalle: index(), guardar(), eliminar()
+  - repo: traz-comp-tareasestandar
+    path: models/Tareas.php
+    detalle: guardar(), editar(), eliminar()
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/dash.php
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/form.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/TARDataService.dbs
+    detalle: POST/PUT/DELETE /tareas
+pantallas:
+  - Tareas estándar → Tareas
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+flujo_principal:
+  - paso: Pulsa "Agregar", completa nombre, descripción, duración HH:MM, formulario, receta y proceso, y guarda
+    resultado: La tarea aparece en la lista y en la planificación
+  - paso: Pulsa "Editar", cambia datos y guarda
+    resultado: Ve "Se editó la tarea estandar exitosamente!" y la lista muestra los cambios
+  - paso: Pulsa "Eliminar" y confirma
+    resultado: La tarea sale de la lista y del selector de plantillas
+flujos_alternativos:
+  - nombre: Faltan obligatorios
+    pasos:
+      - paso: Guarda sin nombre o sin duración
+        resultado: Ve "Falta completar campos obligatorios" y no se guarda
+validaciones:
+  - Las tareas son de la empresa
+  - Editar una tarea estándar no cambia las ya planificadas (se copian)
+  - La duración es una duración HH:MM válida
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-03: ¿quién administra el catálogo de tareas estándar y plantillas?"
+  - "D-21: ¿cuál es el rango válido de la duración estándar?"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-019-01 a 019-06"
+  - "Hipótesis: HIP-TAR-02"
