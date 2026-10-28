@@ -330,6 +330,13 @@ base de datos** en los archivos portados.
 
 #### MIG-2 — Re-portar lo divergido y la capa de integración
 
+**Estado al 2026-10-28:**
+
+| Archivo / pantalla | Estado |
+|---|---|
+| Capa de integración, lectura (`helpers/man_tools_helper.php`: catálogos de artículos y herramientas, configuración por empresa) | ✅ Portada. Las escrituras (vales, entregas, devoluciones) van con las pantallas que las usan |
+| Preventivo, Predictivo, Backlog (controllers, models y vistas `list`/`view_`) | ✅ Portados desde el asset actual. Paridad OK (54 de 54, incluido aislamiento). Alta con detalle por `toolsMANAPI` (E20) |
+
 1. **Los 19 archivos de §2.3**: se portan de nuevo desde el asset actual con la misma mecánica, en
    orden de volumen (`Ordenservicios`, `Ordenservicio`, `list_bpm`, `view_presta_presta_conf_modal`…).
    Al terminar cada archivo, el checklist 0b tiene que dar cero.
@@ -645,6 +652,9 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E15 | 2026-10-28 | **Usuario de asset por correo, provisorio hasta MIG-5**: donde asset guarda `usrId` (lecturas), MAN busca el `sisusers` cuyo `usrNick` es el correo de la sesión de tools, dentro de la empresa (`man_usuario()`). Sin vínculo graba 0 y lo deja en el log | Hoy los dos padrones se vinculan así (H-085). MIG-5 fija la clave definitiva |
 | E16 | 2026-10-28 | **La lectura no marca preventivos hasta MIG-4**: MAN guarda la lectura y el estado del equipo, sin la parte de preventivos de `setLecturas` | Esa consulta tiene T1 y lee preventivos de otras empresas; en la práctica marca casi al azar. La regla del contador se define una sola vez en MIG-4 (T7, T8) |
 | E17 | 2026-10-28 | **Sin `request_box` donde participa `historial_lecturas`**: los cambios de estado con su lectura se escriben en secuencia, en el orden de asset, y la pertenencia a la empresa se verifica antes con una consulta | `historial_lecturas` es MyISAM: no se puede deshacer (tampoco en asset con `trans_start`). Además su trigger `actualizaLectura` actualiza `equipos`, así que el INSERT no puede leer `equipos` (error 1442) |
+| E18 | 2026-10-28 | **`Preventivo/getdatos` lee el pañol de tools**: devuelve la herramienta desde el catálogo de tools (`tools_herramientas_full()`) | Desde F4 los ids de herramienta son de tools, pero asset la sigue buscando en su tabla vieja `herramientas` (T16) |
+| E19 | 2026-10-28 | **La edición de backlog desde la bandeja va con la bandeja (MIG-3)**: el tipo `editNuevo` de `Backlog/editar_backlog` cierra una tarea de Bonita y edita el backlog; en MAN responde que todavía no está disponible | Toca Bonita: es la regla 3 del ADR-014 y su vista (`nuevo_edicion_view_`) la carga `Tarea` |
+| E20 | 2026-10-28 | **Cabecera con detalle (Preventivo, Predictivo, Backlog)**: el alta va por `toolsMANAPI` (`POST /tools/man/<entidad>`, plantilla `manAltaConDetalleTemplate`): cabecera, lote de herramientas, lote de insumos y, si un lote falla, compensación que borra todo. En la edición, cabecera y borrado del detalle van en un `request_box` y cada lista nueva en un pedido por lotes (`_batch_req`) | `request_box` no admite repetir una operación, así que una lista no entra en un solo box. El pedido por lotes es atómico, pero solo existe para consultas sin resultado. Lo que pasa entre el box y los lotes de la edición no es atómico, igual que en asset |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---
@@ -731,6 +741,11 @@ Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
 | T13 | Alta de equipo y "agregar adjunto" con varios archivos: la librería de subida se carga una sola vez y todos toman el nombre del primero, así que desde el segundo el nombre en disco no coincide con el de la base. Corregido en MAN | `controllers/Equipo.php:496-619, 965-1019` |
 | T14 | La unicidad del código de equipo es global (todas las empresas) y por SQL concatenado. MAN conserva la regla global y la pasa a parámetro | `models/Equipos.php:426-436` |
 | T15 | `historial_lecturas` es MyISAM: las lecturas no participan de ninguna transacción | `assetv2` |
+| T16 | `Preventivo/getdatos` busca en la tabla vieja `herramientas` un id que desde F4 es del pañol de tools: devuelve otra herramienta o nada | `models/Preventivos.php` (`getdatos`) |
+| T17 | `bpmAPICallTemplate` escribe en el log del MI el usuario y la contraseña de Bonita | `_backend/.../templates/bpmAPICallTemplate.xml` (tools) |
+| T18 | `toolsFault` termina con `<send/>`: llamado desde el flujo de entrada de un recurso, reenvía el mensaje en vez de responder y el cliente queda esperando. Lo usan `create_ot` y otros recursos de `toolsMANAPI` | `sequences/toolsFaultSequence.xml` (tools) |
+| T19 | `ASP_0100` no está definida: PHP la toma como texto y antepone un aviso que rompe el JSON de la respuesta | `controllers/Backlog.php:303`, `controllers/Sservicio.php:182,190` |
+| T20 🔴 | Las vistas de Backlog y Predictivo borran el adjunto con `Preventivo/eliminarAdjunto` y su propio id: se borra el adjunto del **preventivo** con ese número, de cualquier empresa. Corregido en MAN | `views/backlog/list.php`, `views/predictivo/list.php`, `models/Preventivos.php` (`eliminarAdjunto`) |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores

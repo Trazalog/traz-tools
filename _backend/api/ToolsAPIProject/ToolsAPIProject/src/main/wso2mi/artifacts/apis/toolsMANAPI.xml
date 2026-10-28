@@ -680,5 +680,56 @@
          <sequence key="toolsFault"/>
       </faultSequence>
    </resource>
+   <!-- MIG-ASSET-2 · Altas encadenadas de MAN (ADR-014, regla 3): cabecera + herramientas + insumos, con compensación.
+        URL: /tools/man/<entidad>. Las llama el módulo traz-tools-man con el id_empresa de asset de la sesión dentro de "cabecera".
+        Ver templates/manAltaConDetalleTemplate.xml. -->
+   <resource methods="POST" uri-template="/preventivo">
+      <inSequence>
+         <call-template target="manAltaConDetalleTemplate">
+            <with-param name="entidad" value="preventivo"/>
+            <with-param name="pk" value="prevId"/>
+         </call-template>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/preventivo"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/predictivo">
+      <inSequence>
+         <call-template target="manAltaConDetalleTemplate">
+            <with-param name="entidad" value="predictivo"/>
+            <with-param name="pk" value="predId"/>
+         </call-template>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/predictivo"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/backlog">
+      <inSequence>
+         <call-template target="manAltaConDetalleTemplate">
+            <with-param name="entidad" value="backlog"/>
+            <with-param name="pk" value="backId"/>
+         </call-template>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/backlog"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
 </api>
                         

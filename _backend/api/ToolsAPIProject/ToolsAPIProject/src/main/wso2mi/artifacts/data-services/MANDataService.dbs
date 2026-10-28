@@ -1263,4 +1263,498 @@
    <resource method="POST" path="/equipos/cliente">
       <call-query href="setClienteEqMan"><with-param name="cliName" query-param="cliName"/><with-param name="cliLastName" query-param="cliLastName"/><with-param name="cliDni" query-param="cliDni"/><with-param name="cliAddress" query-param="cliAddress"/><with-param name="cliPhone" query-param="cliPhone"/><with-param name="cliEmail" query-param="cliEmail"/><with-param name="cliRazonSocial" query-param="cliRazonSocial"/><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-2 · Preventivo, Predictivo y Backlog (ABM con herramientas e insumos). Reemplaza el acceso directo de
+        models/Preventivos.php, Predictivos.php y Backlogs.php (ADR-014). Toda query queda limitada a la empresa (id de asset).
+        Las inserciones de detalle no tienen resultado para que el DataService habilite el pedido por lotes (_batch_req):
+        request_box no admite repetir una operación. El alta encadenada (cabecera + detalle) es un recurso de toolsMANAPI. -->
+   <query id="getUnidadesTiempoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_unidad, unidaddescrip FROM unidad_tiempo</sql>
+      <result outputType="json">{"unidades":{"unidad":[{"id_unidad":"$id_unidad","unidaddescrip":"$unidaddescrip"}]}}</result>
+   </query>
+   <query id="getTareasActivasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_tarea AS value, descripcion AS label FROM tareas WHERE id_empresa = :id_empresa AND estado = 'AC' AND (IFNULL(:patron, '') = '' OR LOWER(descripcion) LIKE CONCAT('%', LOWER(:patron), '%')) ORDER BY label ASC</sql>
+      <result outputType="json">{"tareas":{"tarea":[{"value":"$value","label":"$label"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="patron" sqlType="STRING"/>
+   </query>
+   <query id="getTareasEmpresaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_tarea, descripcion, estado, id_empresa, form_asoc, visible FROM tareas WHERE id_empresa = :id_empresa</sql>
+      <result outputType="json">{"tareas":{"tarea":[{"id_tarea":"$id_tarea","descripcion":"$descripcion","estado":"$estado","id_empresa":"$id_empresa","form_asoc":"$form_asoc","visible":"$visible"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getEquiposNoInMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, e.descripcion, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, CAST(e.fecha_baja AS CHAR) AS fecha_baja, CAST(e.fecha_garantia AS CHAR) AS fecha_garantia, e.marca, e.codigo, e.ubicacion, e.id_empresa, e.id_sector, CAST(e.id_hubicacion AS CHAR) AS id_hubicacion, e.id_grupo, e.id_customer, e.id_criticidad, e.estado, CAST(e.fecha_ultimalectura AS CHAR) AS fecha_ultimalectura, CAST(e.ultima_lectura AS CHAR) AS ultima_lectura, e.tipo_horas, CAST(e.`id-centrodecosto` AS CHAR) AS idcentrodecosto, CAST(e.valor_reposicion AS CHAR) AS valor_reposicion, CAST(e.fecha_reposicion AS CHAR) AS fecha_reposicion, CAST(e.id_proveedor AS CHAR) AS id_proveedor, CAST(e.valor AS CHAR) AS valor, e.comprobante, e.descrip_tecnica, e.id_unidad, e.id_area, e.id_proceso, e.numero_serie, e.adjunto, e.meta_disponibilidad FROM equipos e WHERE e.estado != 'IN' AND e.id_empresa = :id_empresa ORDER BY e.id_equipo</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","descripcion":"$descripcion","fecha_ingreso":"$fecha_ingreso","fecha_baja":"$fecha_baja","fecha_garantia":"$fecha_garantia","marca":"$marca","codigo":"$codigo","ubicacion":"$ubicacion","id_empresa":"$id_empresa","id_sector":"$id_sector","id_hubicacion":"$id_hubicacion","id_grupo":"$id_grupo","id_customer":"$id_customer","id_criticidad":"$id_criticidad","estado":"$estado","fecha_ultimalectura":"$fecha_ultimalectura","ultima_lectura":"$ultima_lectura","tipo_horas":"$tipo_horas","id-centrodecosto":"$idcentrodecosto","valor_reposicion":"$valor_reposicion","fecha_reposicion":"$fecha_reposicion","id_proveedor":"$id_proveedor","valor":"$valor","comprobante":"$comprobante","descrip_tecnica":"$descrip_tecnica","id_unidad":"$id_unidad","id_area":"$id_area","id_proceso":"$id_proceso","numero_serie":"$numero_serie","adjunto":"$adjunto","meta_disponibilidad":"$meta_disponibilidad"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getEquipoMarcaLeftMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.id_equipo, e.descripcion, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, CAST(e.fecha_baja AS CHAR) AS fecha_baja, CAST(e.fecha_garantia AS CHAR) AS fecha_garantia, e.marca, e.codigo, e.ubicacion, e.id_empresa, e.id_sector, CAST(e.id_hubicacion AS CHAR) AS id_hubicacion, e.id_grupo, e.id_customer, e.id_criticidad, e.estado, CAST(e.fecha_ultimalectura AS CHAR) AS fecha_ultimalectura, CAST(e.ultima_lectura AS CHAR) AS ultima_lectura, e.tipo_horas, CAST(e.`id-centrodecosto` AS CHAR) AS idcentrodecosto, CAST(e.valor_reposicion AS CHAR) AS valor_reposicion, CAST(e.fecha_reposicion AS CHAR) AS fecha_reposicion, CAST(e.id_proveedor AS CHAR) AS id_proveedor, CAST(e.valor AS CHAR) AS valor, e.comprobante, e.descrip_tecnica, e.id_unidad, e.id_area, e.id_proceso, e.numero_serie, e.adjunto, e.meta_disponibilidad, m.marcaid, m.marcadescrip, m.estado AS marca_estado, m.id_empresa AS marca_empresa FROM equipos e LEFT JOIN marcasequipos m ON e.marca = m.marcaid WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","descripcion":"$descripcion","fecha_ingreso":"$fecha_ingreso","fecha_baja":"$fecha_baja","fecha_garantia":"$fecha_garantia","marca":"$marca","codigo":"$codigo","ubicacion":"$ubicacion","id_empresa":"$id_empresa","id_sector":"$id_sector","id_hubicacion":"$id_hubicacion","id_grupo":"$id_grupo","id_customer":"$id_customer","id_criticidad":"$id_criticidad","estado":"$estado","fecha_ultimalectura":"$fecha_ultimalectura","ultima_lectura":"$ultima_lectura","tipo_horas":"$tipo_horas","id-centrodecosto":"$idcentrodecosto","valor_reposicion":"$valor_reposicion","fecha_reposicion":"$fecha_reposicion","id_proveedor":"$id_proveedor","valor":"$valor","comprobante":"$comprobante","descrip_tecnica":"$descrip_tecnica","id_unidad":"$id_unidad","id_area":"$id_area","id_proceso":"$id_proceso","numero_serie":"$numero_serie","adjunto":"$adjunto","meta_disponibilidad":"$meta_disponibilidad","marcaid":"$marcaid","marcadescrip":"$marcadescrip","marca_estado":"$marca_estado","marca_empresa":"$marca_empresa"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getEquiposActivosCodigoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_equipo, codigo FROM equipos WHERE estado != 'AN' AND id_empresa = :id_empresa ORDER BY id_equipo</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","codigo":"$codigo"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPreventivoHerramientasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(h.cantidad AS CHAR) AS cantidad, h.herrId FROM tbl_preventivoherramientas h JOIN preventivo c ON c.prevId = h.prevId WHERE h.prevId = :prevId AND c.id_empresa = :id_empresa ORDER BY h.id</sql>
+      <result outputType="json">{"herramientas":{"herramienta":[{"cantidad":"$cantidad","herrId":"$herrId"}]}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPreventivoInsumosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT i.id, CAST(i.cantidad AS CHAR) AS cantidad, i.artId FROM tbl_preventivoinsumos i JOIN preventivo c ON c.prevId = i.prevId WHERE i.prevId = :prevId AND c.id_empresa = :id_empresa ORDER BY i.id</sql>
+      <result outputType="json">{"insumos":{"insumo":[{"id":"$id","cantidad":"$cantidad","artId":"$artId"}]}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setPreventivoHerramientaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_preventivoherramientas (prevId, herrId, cantidad, id_empresa) SELECT c.prevId, :herrId, :cantidad, c.id_empresa FROM preventivo c WHERE c.prevId = :prevId AND c.id_empresa = :id_empresa</sql>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="herrId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setPreventivoInsumoMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_preventivoinsumos (prevId, artId, cantidad, id_empresa) SELECT c.prevId, :artId, :cantidad, c.id_empresa FROM preventivo c WHERE c.prevId = :prevId AND c.id_empresa = :id_empresa</sql>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="artId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarPreventivoHerramientasMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE h FROM tbl_preventivoherramientas h JOIN preventivo c ON c.prevId = h.prevId WHERE h.prevId = :prevId AND c.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarPreventivoInsumosMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE i FROM tbl_preventivoinsumos i JOIN preventivo c ON c.prevId = i.prevId WHERE i.prevId = :prevId AND c.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarPreventivoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM preventivo WHERE prevId = :prevId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPredictivoHerramientasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(h.cantidad AS CHAR) AS cantidad, h.herrId FROM tbl_predictivoherramientas h JOIN predictivo c ON c.predId = h.predId WHERE h.predId = :predId AND c.id_empresa = :id_empresa ORDER BY h.id</sql>
+      <result outputType="json">{"herramientas":{"herramienta":[{"cantidad":"$cantidad","herrId":"$herrId"}]}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPredictivoInsumosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT i.id, CAST(i.cantidad AS CHAR) AS cantidad, i.artId FROM tbl_predictivoinsumos i JOIN predictivo c ON c.predId = i.predId WHERE i.predId = :predId AND c.id_empresa = :id_empresa ORDER BY i.id</sql>
+      <result outputType="json">{"insumos":{"insumo":[{"id":"$id","cantidad":"$cantidad","artId":"$artId"}]}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setPredictivoHerramientaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_predictivoherramientas (predId, herrId, cantidad, id_empresa) SELECT c.predId, :herrId, :cantidad, c.id_empresa FROM predictivo c WHERE c.predId = :predId AND c.id_empresa = :id_empresa</sql>
+      <param name="predId" sqlType="STRING"/>
+      <param name="herrId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setPredictivoInsumoMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_predictivoinsumos (predId, artId, cantidad, id_empresa) SELECT c.predId, :artId, :cantidad, c.id_empresa FROM predictivo c WHERE c.predId = :predId AND c.id_empresa = :id_empresa</sql>
+      <param name="predId" sqlType="STRING"/>
+      <param name="artId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarPredictivoHerramientasMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE h FROM tbl_predictivoherramientas h JOIN predictivo c ON c.predId = h.predId WHERE h.predId = :predId AND c.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarPredictivoInsumosMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE i FROM tbl_predictivoinsumos i JOIN predictivo c ON c.predId = i.predId WHERE i.predId = :predId AND c.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarPredictivoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM predictivo WHERE predId = :predId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getBacklogHerramientasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(h.cantidad AS CHAR) AS cantidad, h.herrId FROM tbl_backlogherramientas h JOIN tbl_back c ON c.backId = h.backId WHERE h.backId = :backId AND c.id_empresa = :id_empresa ORDER BY h.id</sql>
+      <result outputType="json">{"herramientas":{"herramienta":[{"cantidad":"$cantidad","herrId":"$herrId"}]}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getBacklogInsumosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT i.id, CAST(i.cantidad AS CHAR) AS cantidad, i.artId FROM tbl_backloginsumos i JOIN tbl_back c ON c.backId = i.backId WHERE i.backId = :backId AND c.id_empresa = :id_empresa ORDER BY i.id</sql>
+      <result outputType="json">{"insumos":{"insumo":[{"id":"$id","cantidad":"$cantidad","artId":"$artId"}]}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setBacklogHerramientaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_backlogherramientas (backId, herrId, cantidad, id_empresa) SELECT c.backId, :herrId, :cantidad, c.id_empresa FROM tbl_back c WHERE c.backId = :backId AND c.id_empresa = :id_empresa</sql>
+      <param name="backId" sqlType="STRING"/>
+      <param name="herrId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setBacklogInsumoMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_backloginsumos (backId, artId, cantidad, id_empresa) SELECT c.backId, :artId, :cantidad, c.id_empresa FROM tbl_back c WHERE c.backId = :backId AND c.id_empresa = :id_empresa</sql>
+      <param name="backId" sqlType="STRING"/>
+      <param name="artId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarBacklogHerramientasMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE h FROM tbl_backlogherramientas h JOIN tbl_back c ON c.backId = h.backId WHERE h.backId = :backId AND c.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarBacklogInsumosMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE i FROM tbl_backloginsumos i JOIN tbl_back c ON c.backId = i.backId WHERE i.backId = :backId AND c.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarBacklogMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM tbl_back WHERE backId = :backId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPreventivosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.prevId, p.id_equipo, t.descripcion AS deta, e.descripcion AS des, g.descripcion AS des1, c.descripcion, pe.descripcion AS periodoDesc, CAST(p.cantidad AS CHAR) AS cantidad, CAST(p.ultimo AS CHAR) AS ultimo, p.horash, p.prev_adjunto, p.estadoprev AS estado FROM preventivo p JOIN equipos e ON e.id_equipo = p.id_equipo JOIN grupo g ON e.id_grupo = g.id_grupo JOIN tareas t ON t.id_tarea = p.id_tarea JOIN componentes c ON c.id_componente = p.id_componente JOIN periodo pe ON pe.idperiodo = p.perido WHERE p.estadoprev != 'AN' AND p.id_empresa = :id_empresa ORDER BY p.prevId DESC</sql>
+      <result outputType="json">{"preventivos":{"preventivo":[{"prevId":"$prevId","id_equipo":"$id_equipo","deta":"$deta","des":"$des","des1":"$des1","descripcion":"$descripcion","periodoDesc":"$periodoDesc","cantidad":"$cantidad","ultimo":"$ultimo","horash":"$horash","prev_adjunto":"$prev_adjunto","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPreventivoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.prevId, p.perido, CAST(p.cantidad AS CHAR) AS cantidad, CAST(p.ultimo AS CHAR) AS ultimo, CAST(p.critico1 AS CHAR) AS critico1, p.estadoprev, p.horash, CAST(p.prev_duracion AS CHAR) AS prev_duracion, CAST(p.prev_canth AS CHAR) AS prev_canth, p.prev_adjunto, p.id_unidad, e.id_equipo, e.codigo, e.marca, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.descripcion, e.ubicacion, c.id_componente, c.descripcion AS comp, t.id_tarea, t.descripcion AS descripta FROM preventivo p JOIN equipos e ON e.id_equipo = p.id_equipo JOIN tareas t ON t.id_tarea = p.id_tarea JOIN componentes c ON c.id_componente = p.id_componente WHERE p.prevId = :prevId AND p.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivos":{"preventivo":[{"prevId":"$prevId","perido":"$perido","cantidad":"$cantidad","ultimo":"$ultimo","critico1":"$critico1","estadoprev":"$estadoprev","horash":"$horash","prev_duracion":"$prev_duracion","prev_canth":"$prev_canth","prev_adjunto":"$prev_adjunto","id_unidad":"$id_unidad","id_equipo":"$id_equipo","codigo":"$codigo","marca":"$marca","fecha_ingreso":"$fecha_ingreso","descripcion":"$descripcion","ubicacion":"$ubicacion","id_componente":"$id_componente","comp":"$comp","id_tarea":"$id_tarea","descripta":"$descripta"}]}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getComponentesPrevMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT DISTINCT c.id_componente, c.descripcion FROM componentes c JOIN componenteequipo ce ON ce.id_componente = c.id_componente JOIN marcasequipos m ON c.marcaid = m.marcaid JOIN equipos e ON e.id_equipo = ce.id_equipo WHERE ce.id_equipo = :id_equipo AND e.id_empresa = :id_empresa AND c.estado = 'AC' AND m.estado = 'AC' ORDER BY c.descripcion ASC</sql>
+      <result outputType="json">{"componentes":{"componente":[{"id_componente":"$id_componente","descripcion":"$descripcion"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setPreventivoMan" keyColumns="prevId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO preventivo (id_equipo, id_tarea, perido, cantidad, ultimo, id_componente, critico1, horash, estadoprev, prev_duracion, id_unidad, prev_canth, id_empresa, lectura_base) SELECT e.id_equipo, :id_tarea, LEFT(:perido, 50), :cantidad, :ultimo, :id_componente, :critico1, :horash, 'C', :prev_duracion, :id_unidad, :prev_canth, e.id_empresa, :lectura_base FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_tarea" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="perido" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="cantidad" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="ultimo" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_componente" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="critico1" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="horash" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="prev_duracion" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_unidad" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="prev_canth" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="lectura_base" sqlType="STRING" defaultValue="#{NULL}"/>
+   </query>
+   <query id="updatePreventivoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE preventivo p JOIN equipos e ON e.id_equipo = :id_equipo AND e.id_empresa = p.id_empresa SET p.id_equipo = e.id_equipo, p.id_tarea = :id_tarea, p.perido = LEFT(:perido, 50), p.cantidad = :cantidad, p.ultimo = :ultimo, p.id_componente = :id_componente, p.horash = :horash, p.estadoprev = 'C', p.prev_duracion = :prev_duracion, p.id_unidad = :id_unidad, p.prev_canth = :prev_canth WHERE p.prevId = :prevId AND p.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_tarea" sqlType="STRING"/>
+      <param name="perido" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="ultimo" sqlType="STRING"/>
+      <param name="id_componente" sqlType="STRING"/>
+      <param name="horash" sqlType="STRING"/>
+      <param name="prev_duracion" sqlType="STRING"/>
+      <param name="id_unidad" sqlType="STRING"/>
+      <param name="prev_canth" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updatePreventivoEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE preventivo SET estadoprev = :estadoprev WHERE prevId = :prevId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estadoprev" sqlType="STRING"/>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updatePreventivoAdjuntoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE preventivo SET prev_adjunto = :prev_adjunto WHERE prevId = :prevId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"preventivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="prev_adjunto" sqlType="STRING"/>
+      <param name="prevId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPredictivosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.predId, p.id_equipo, p.tarea_descrip, CAST(p.fecha AS CHAR) AS fecha, p.cantidad, p.estado, CAST(p.horash AS CHAR) AS horash, p.pred_adjunto, e.descripcion AS des, e.marca, e.codigo, e.ubicacion, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, t.descripcion AS de1, pe.descripcion AS periodo FROM predictivo p JOIN equipos e ON e.id_equipo = p.id_equipo JOIN tareas t ON t.id_tarea = p.tarea_descrip JOIN periodo pe ON pe.idperiodo = p.periodo WHERE p.estado != 'AN' AND p.id_empresa = :id_empresa ORDER BY p.predId</sql>
+      <result outputType="json">{"predictivos":{"predictivo":[{"predId":"$predId","id_equipo":"$id_equipo","tarea_descrip":"$tarea_descrip","fecha":"$fecha","cantidad":"$cantidad","estado":"$estado","horash":"$horash","pred_adjunto":"$pred_adjunto","des":"$des","marca":"$marca","codigo":"$codigo","ubicacion":"$ubicacion","fecha_ingreso":"$fecha_ingreso","de1":"$de1","periodo":"$periodo"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPredictivoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.id_equipo, p.predId, CAST(p.fecha AS CHAR) AS fecha, p.estado AS es, p.cantidad, p.periodo, p.pred_duracion AS duracion, p.id_unidad AS unidtiempo, p.pred_canth AS operarios, CAST(p.horash AS CHAR) AS hh, p.pred_adjunto, e.codigo, e.ubicacion, e.marca, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.descripcion, t.id_tarea, t.descripcion AS tarea_descrip FROM predictivo p JOIN equipos e ON e.id_equipo = p.id_equipo JOIN tareas t ON t.id_tarea = p.tarea_descrip WHERE p.predId = :predId AND p.id_equipo = :id_equipo AND p.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivos":{"predictivo":[{"id_equipo":"$id_equipo","predId":"$predId","fecha":"$fecha","es":"$es","cantidad":"$cantidad","periodo":"$periodo","duracion":"$duracion","unidtiempo":"$unidtiempo","operarios":"$operarios","hh":"$hh","pred_adjunto":"$pred_adjunto","codigo":"$codigo","ubicacion":"$ubicacion","marca":"$marca","fecha_ingreso":"$fecha_ingreso","descripcion":"$descripcion","id_tarea":"$id_tarea","tarea_descrip":"$tarea_descrip"}]}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setPredictivoMan" keyColumns="predId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO predictivo (id_equipo, tarea_descrip, fecha, periodo, cantidad, horash, estado, pred_duracion, pred_canth, id_empresa, id_unidad) SELECT e.id_equipo, :tarea_descrip, :fecha, LEFT(:periodo, 50), :cantidad, :horash, 'C', :pred_duracion, :pred_canth, e.id_empresa, :id_unidad FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="tarea_descrip" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="fecha" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="periodo" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="cantidad" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="horash" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="pred_duracion" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="pred_canth" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_unidad" sqlType="STRING" defaultValue="#{NULL}"/>
+   </query>
+   <query id="updatePredictivoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE predictivo SET tarea_descrip = :tarea_descrip, fecha = :fecha, periodo = LEFT(:periodo, 50), cantidad = :cantidad, horash = :horash, estado = 'C', pred_duracion = :pred_duracion, id_unidad = :id_unidad, pred_canth = :pred_canth WHERE predId = :predId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="predId" sqlType="STRING"/>
+      <param name="tarea_descrip" sqlType="STRING"/>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="periodo" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="horash" sqlType="STRING"/>
+      <param name="pred_duracion" sqlType="STRING"/>
+      <param name="id_unidad" sqlType="STRING"/>
+      <param name="pred_canth" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updatePredictivoEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE predictivo SET estado = :estado WHERE predId = :predId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updatePredictivoAdjuntoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE predictivo SET pred_adjunto = :pred_adjunto WHERE predId = :predId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"predictivo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="pred_adjunto" sqlType="STRING"/>
+      <param name="predId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getBacklogsMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT b.backId, b.id_equipo, b.id_tarea, CAST(b.fecha AS CHAR) AS fecha, CAST(b.horash AS CHAR) AS horash, b.estado, b.back_duracion, b.id_unidad, b.back_canth, b.id_empresa, b.idcomponenteequipo, b.back_adjunto, b.sore_id, b.tarea_opcional, e.descripcion AS des, e.marca, e.codigo, t.descripcion AS de1, c.descripcion AS componente, s.descripcion AS sistema FROM tbl_back b JOIN equipos e ON e.id_equipo = b.id_equipo LEFT JOIN tareas t ON t.id_tarea = b.id_tarea LEFT JOIN componenteequipo ce ON ce.idcomponenteequipo = b.idcomponenteequipo LEFT JOIN componentes c ON c.id_componente = ce.id_componente LEFT JOIN sistema s ON s.sistemaid = ce.sistemaid WHERE b.id_empresa = :id_empresa AND b.estado != 'B' ORDER BY b.backId</sql>
+      <result outputType="json">{"backlogs":{"backlog":[{"backId":"$backId","id_equipo":"$id_equipo","id_tarea":"$id_tarea","fecha":"$fecha","horash":"$horash","estado":"$estado","back_duracion":"$back_duracion","id_unidad":"$id_unidad","back_canth":"$back_canth","id_empresa":"$id_empresa","idcomponenteequipo":"$idcomponenteequipo","back_adjunto":"$back_adjunto","sore_id":"$sore_id","tarea_opcional":"$tarea_opcional","des":"$des","marca":"$marca","codigo":"$codigo","de1":"$de1","componente":"$componente","sistema":"$sistema"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getBacklogMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT b.backId, b.id_equipo, b.id_tarea, CAST(b.fecha AS CHAR) AS fecha, CAST(b.horash AS CHAR) AS horash, b.estado, b.back_duracion, b.id_unidad, b.back_canth, b.id_empresa, b.idcomponenteequipo, b.back_adjunto, b.sore_id, b.tarea_opcional, t.descripcion AS tareadescrip FROM tbl_back b LEFT JOIN tareas t ON t.id_tarea = b.id_tarea WHERE b.backId = :backId AND b.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlogs":{"backlog":[{"backId":"$backId","id_equipo":"$id_equipo","id_tarea":"$id_tarea","fecha":"$fecha","horash":"$horash","estado":"$estado","back_duracion":"$back_duracion","id_unidad":"$id_unidad","back_canth":"$back_canth","id_empresa":"$id_empresa","idcomponenteequipo":"$idcomponenteequipo","back_adjunto":"$back_adjunto","sore_id":"$sore_id","tarea_opcional":"$tarea_opcional","tareadescrip":"$tareadescrip"}]}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getBacklogEquipoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.descripcion AS des, e.codigo, e.ubicacion, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, m.marcadescrip AS marca, ce.codigo AS codcompeq, c.descripcion AS componente, s.descripcion AS sistema FROM tbl_back b JOIN equipos e ON e.id_equipo = b.id_equipo JOIN marcasequipos m ON e.marca = m.marcaid LEFT JOIN componenteequipo ce ON ce.idcomponenteequipo = b.idcomponenteequipo LEFT JOIN componentes c ON c.id_componente = ce.id_componente LEFT JOIN sistema s ON s.sistemaid = ce.sistemaid WHERE b.backId = :backId AND b.id_equipo = :id_equipo AND b.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"des":"$des","codigo":"$codigo","ubicacion":"$ubicacion","fecha_ingreso":"$fecha_ingreso","marca":"$marca","codcompeq":"$codcompeq","componente":"$componente","sistema":"$sistema"}]}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getComponentesBacklogMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ce.idcomponenteequipo AS idce, ce.codigo, c.descripcion, s.descripcion AS sistema FROM componenteequipo ce JOIN componentes c ON c.id_componente = ce.id_componente JOIN sistema s ON s.sistemaid = ce.sistemaid WHERE (IFNULL(:id_equipo, '') = '' OR ce.id_equipo = :id_equipo) AND ce.id_empresa = :id_empresa AND ce.estado != 'AN' ORDER BY ce.codigo</sql>
+      <result outputType="json">{"componentes":{"componente":[{"idce":"$idce","codigo":"$codigo","descripcion":"$descripcion","sistema":"$sistema"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+   </query>
+   <query id="setBacklogMan" keyColumns="backId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_back (id_equipo, id_tarea, fecha, horash, estado, back_duracion, id_unidad, back_canth, id_empresa, idcomponenteequipo, tarea_opcional) SELECT e.id_equipo, :id_tarea, :fecha, :horash, 'C', :back_duracion, :id_unidad, :back_canth, e.id_empresa, :idcomponenteequipo, LEFT(:tarea_opcional, 500) FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_tarea" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="fecha" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="horash" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="back_duracion" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_unidad" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="back_canth" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="idcomponenteequipo" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="tarea_opcional" sqlType="STRING" defaultValue="#{NULL}"/>
+   </query>
+   <query id="updateBacklogMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_back SET id_tarea = :id_tarea, fecha = :fecha, horash = :horash, back_duracion = :back_duracion, back_canth = :back_canth, id_unidad = :id_unidad, tarea_opcional = LEFT(:tarea_opcional, 500) WHERE backId = :backId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_tarea" sqlType="STRING"/>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="horash" sqlType="STRING"/>
+      <param name="back_duracion" sqlType="STRING"/>
+      <param name="back_canth" sqlType="STRING"/>
+      <param name="id_unidad" sqlType="STRING"/>
+      <param name="tarea_opcional" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateBacklogEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_back SET estado = :estado WHERE backId = :backId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateBacklogAdjuntoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_back SET back_adjunto = :back_adjunto WHERE backId = :backId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="back_adjunto" sqlType="STRING"/>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/unidades-tiempo">
+      <call-query href="getUnidadesTiempoMan"></call-query>
+   </resource>
+   <resource method="GET" path="/tareas/activas/empresa/{id_empresa}">
+      <call-query href="getTareasActivasMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="patron" query-param="patron"/></call-query>
+   </resource>
+   <resource method="GET" path="/tareas/empresa/{id_empresa}">
+      <call-query href="getTareasEmpresaMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/equipos/no-inhabilitados/empresa/{id_empresa}">
+      <call-query href="getEquiposNoInMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/equipo/{id_equipo}/con-marca/empresa/{id_empresa}">
+      <call-query href="getEquipoMarcaLeftMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/equipos/no-anulados/codigos/empresa/{id_empresa}">
+      <call-query href="getEquiposActivosCodigoMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/preventivo/{prevId}/herramientas/empresa/{id_empresa}">
+      <call-query href="getPreventivoHerramientasMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/preventivo/{prevId}/insumos/empresa/{id_empresa}">
+      <call-query href="getPreventivoInsumosMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/preventivo/herramienta">
+      <call-query href="setPreventivoHerramientaMan"><with-param name="prevId" query-param="prevId"/><with-param name="herrId" query-param="herrId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/preventivo/insumo">
+      <call-query href="setPreventivoInsumoMan"><with-param name="prevId" query-param="prevId"/><with-param name="artId" query-param="artId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/preventivo/herramientas/borrar">
+      <call-query href="borrarPreventivoHerramientasMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/preventivo/insumos/borrar">
+      <call-query href="borrarPreventivoInsumosMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/preventivo/borrar">
+      <call-query href="borrarPreventivoMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/predictivo/{predId}/herramientas/empresa/{id_empresa}">
+      <call-query href="getPredictivoHerramientasMan"><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/predictivo/{predId}/insumos/empresa/{id_empresa}">
+      <call-query href="getPredictivoInsumosMan"><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/predictivo/herramienta">
+      <call-query href="setPredictivoHerramientaMan"><with-param name="predId" query-param="predId"/><with-param name="herrId" query-param="herrId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/predictivo/insumo">
+      <call-query href="setPredictivoInsumoMan"><with-param name="predId" query-param="predId"/><with-param name="artId" query-param="artId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/predictivo/herramientas/borrar">
+      <call-query href="borrarPredictivoHerramientasMan"><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/predictivo/insumos/borrar">
+      <call-query href="borrarPredictivoInsumosMan"><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/predictivo/borrar">
+      <call-query href="borrarPredictivoMan"><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/backlog/{backId}/herramientas/empresa/{id_empresa}">
+      <call-query href="getBacklogHerramientasMan"><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/backlog/{backId}/insumos/empresa/{id_empresa}">
+      <call-query href="getBacklogInsumosMan"><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/backlog/herramienta">
+      <call-query href="setBacklogHerramientaMan"><with-param name="backId" query-param="backId"/><with-param name="herrId" query-param="herrId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/backlog/insumo">
+      <call-query href="setBacklogInsumoMan"><with-param name="backId" query-param="backId"/><with-param name="artId" query-param="artId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog/herramientas/borrar">
+      <call-query href="borrarBacklogHerramientasMan"><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog/insumos/borrar">
+      <call-query href="borrarBacklogInsumosMan"><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog/borrar">
+      <call-query href="borrarBacklogMan"><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/preventivos/empresa/{id_empresa}">
+      <call-query href="getPreventivosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/preventivo/{prevId}/datos/empresa/{id_empresa}">
+      <call-query href="getPreventivoMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/preventivos/componentes/equipo/{id_equipo}/empresa/{id_empresa}">
+      <call-query href="getComponentesPrevMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/preventivo">
+      <call-query href="setPreventivoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_tarea" query-param="id_tarea"/><with-param name="perido" query-param="perido"/><with-param name="cantidad" query-param="cantidad"/><with-param name="ultimo" query-param="ultimo"/><with-param name="id_componente" query-param="id_componente"/><with-param name="critico1" query-param="critico1"/><with-param name="horash" query-param="horash"/><with-param name="prev_duracion" query-param="prev_duracion"/><with-param name="id_unidad" query-param="id_unidad"/><with-param name="prev_canth" query-param="prev_canth"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="lectura_base" query-param="lectura_base"/></call-query>
+   </resource>
+   <resource method="PUT" path="/preventivo">
+      <call-query href="updatePreventivoMan"><with-param name="prevId" query-param="prevId"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_tarea" query-param="id_tarea"/><with-param name="perido" query-param="perido"/><with-param name="cantidad" query-param="cantidad"/><with-param name="ultimo" query-param="ultimo"/><with-param name="id_componente" query-param="id_componente"/><with-param name="horash" query-param="horash"/><with-param name="prev_duracion" query-param="prev_duracion"/><with-param name="id_unidad" query-param="id_unidad"/><with-param name="prev_canth" query-param="prev_canth"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/preventivo/estado">
+      <call-query href="updatePreventivoEstadoMan"><with-param name="estadoprev" query-param="estadoprev"/><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/preventivo/adjunto">
+      <call-query href="updatePreventivoAdjuntoMan"><with-param name="prev_adjunto" query-param="prev_adjunto"/><with-param name="prevId" query-param="prevId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/predictivos/empresa/{id_empresa}">
+      <call-query href="getPredictivosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/predictivo/{predId}/equipo/{id_equipo}/empresa/{id_empresa}">
+      <call-query href="getPredictivoMan"><with-param name="predId" query-param="predId"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/predictivo">
+      <call-query href="setPredictivoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="tarea_descrip" query-param="tarea_descrip"/><with-param name="fecha" query-param="fecha"/><with-param name="periodo" query-param="periodo"/><with-param name="cantidad" query-param="cantidad"/><with-param name="horash" query-param="horash"/><with-param name="pred_duracion" query-param="pred_duracion"/><with-param name="pred_canth" query-param="pred_canth"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_unidad" query-param="id_unidad"/></call-query>
+   </resource>
+   <resource method="PUT" path="/predictivo">
+      <call-query href="updatePredictivoMan"><with-param name="predId" query-param="predId"/><with-param name="tarea_descrip" query-param="tarea_descrip"/><with-param name="fecha" query-param="fecha"/><with-param name="periodo" query-param="periodo"/><with-param name="cantidad" query-param="cantidad"/><with-param name="horash" query-param="horash"/><with-param name="pred_duracion" query-param="pred_duracion"/><with-param name="id_unidad" query-param="id_unidad"/><with-param name="pred_canth" query-param="pred_canth"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/predictivo/estado">
+      <call-query href="updatePredictivoEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/predictivo/adjunto">
+      <call-query href="updatePredictivoAdjuntoMan"><with-param name="pred_adjunto" query-param="pred_adjunto"/><with-param name="predId" query-param="predId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/backlogs/empresa/{id_empresa}">
+      <call-query href="getBacklogsMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/backlog/{backId}/datos/empresa/{id_empresa}">
+      <call-query href="getBacklogMan"><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/backlog/{backId}/equipo/{id_equipo}/empresa/{id_empresa}">
+      <call-query href="getBacklogEquipoMan"><with-param name="backId" query-param="backId"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/backlogs/componentes/empresa/{id_empresa}">
+      <call-query href="getComponentesBacklogMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_equipo" query-param="id_equipo"/></call-query>
+   </resource>
+   <resource method="POST" path="/backlog">
+      <call-query href="setBacklogMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_tarea" query-param="id_tarea"/><with-param name="fecha" query-param="fecha"/><with-param name="horash" query-param="horash"/><with-param name="back_duracion" query-param="back_duracion"/><with-param name="id_unidad" query-param="id_unidad"/><with-param name="back_canth" query-param="back_canth"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="idcomponenteequipo" query-param="idcomponenteequipo"/><with-param name="tarea_opcional" query-param="tarea_opcional"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog">
+      <call-query href="updateBacklogMan"><with-param name="backId" query-param="backId"/><with-param name="id_tarea" query-param="id_tarea"/><with-param name="fecha" query-param="fecha"/><with-param name="horash" query-param="horash"/><with-param name="back_duracion" query-param="back_duracion"/><with-param name="back_canth" query-param="back_canth"/><with-param name="id_unidad" query-param="id_unidad"/><with-param name="tarea_opcional" query-param="tarea_opcional"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog/estado">
+      <call-query href="updateBacklogEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog/adjunto">
+      <call-query href="updateBacklogAdjuntoMan"><with-param name="back_adjunto" query-param="back_adjunto"/><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
