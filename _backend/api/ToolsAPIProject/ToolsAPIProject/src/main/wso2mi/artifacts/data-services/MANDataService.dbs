@@ -1408,6 +1408,108 @@
       <param name="id_orden" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
+   <query id="updateOtEditarMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo ot JOIN equipos e ON e.id_equipo = :id_equipo AND e.id_empresa = ot.id_empresa SET ot.fecha_program = :fecha_program, ot.fecha_entrega = :fecha_entrega, ot.id_tarea = :id_tarea, ot.descripcion = :descripcion, ot.id_sucursal = :id_sucursal, ot.id_proveedor = :id_proveedor, ot.id_equipo = e.id_equipo WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="fecha_program" sqlType="STRING"/>
+      <param name="fecha_entrega" sqlType="STRING"/>
+      <param name="id_tarea" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_sucursal" sqlType="STRING"/>
+      <param name="id_proveedor" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarOtHerramientasMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE h FROM tbl_otherramientas h JOIN orden_trabajo ot ON ot.id_orden = h.otId WHERE h.otId = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarOtInsumosMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE i FROM tbl_otinsumos i JOIN orden_trabajo ot ON ot.id_orden = i.otId WHERE i.otId = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtHerramientaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_otherramientas (otId, herrId, cantidad, id_empresa, descripcion_libre) SELECT ot.id_orden, :herrId, :cantidad, ot.id_empresa, :descripcion_libre FROM orden_trabajo ot WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="herrId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="descripcion_libre" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtInsumoMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_otinsumos (otId, artId, cantidad, id_empresa) SELECT ot.id_orden, :artId, :cantidad, ot.id_empresa FROM orden_trabajo ot WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="artId" sqlType="STRING"/>
+      <param name="cantidad" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtAdjuntoMan" keyColumns="id" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_otadjuntos (otId, ot_adjunto) SELECT ot.id_orden, LEFT(:ot_adjunto, 255) FROM orden_trabajo ot WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
+      <param name="ot_adjunto" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_orden" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarOtAdjuntoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE a FROM tbl_otadjuntos a JOIN orden_trabajo ot ON ot.id_orden = a.otId WHERE a.id = :id AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET estado = :estado WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtFinalizarMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET estado = 'T', fecha_terminada = :fecha WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtTareasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT lt.id_listarea, lt.id_orden, lt.tareadescrip, lt.id_usuario, CAST(lt.fecha AS CHAR) AS fecha, lt.estado, lt.info_id, lt.id_subtarea, u.usrId, u.usrName, u.usrLastName FROM tbl_listarea lt JOIN orden_trabajo ot ON ot.id_orden = lt.id_orden LEFT JOIN sisusers u ON u.usrId = lt.id_usuario WHERE lt.id_orden = :id_orden AND ot.id_empresa = :id_empresa ORDER BY lt.id_listarea</sql>
+      <result outputType="json">{"tareas":{"tarea":[{"id_listarea":"$id_listarea","id_orden":"$id_orden","tareadescrip":"$tareadescrip","id_usuario":"$id_usuario","fecha":"$fecha","estado":"$estado","info_id":"$info_id","id_subtarea":"$id_subtarea","usrId":"$usrId","usrName":"$usrName","usrLastName":"$usrLastName"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtTareaMan" keyColumns="id_listarea" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tbl_listarea (id_orden, tareadescrip, estado) SELECT ot.id_orden, LEFT(:tareadescrip, 5000), LEFT(:estado, 5) FROM orden_trabajo ot WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"alta":{"id":"$GENERATED_KEY"}}</result>
+      <param name="id_orden" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="tareadescrip" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="estado" sqlType="STRING" defaultValue="#{NULL}"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtTareaEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_listarea lt JOIN orden_trabajo ot ON ot.id_orden = lt.id_orden SET lt.estado = :estado WHERE lt.id_listarea = :id_listarea AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="id_listarea" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtTareaUsuarioMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_listarea lt JOIN orden_trabajo ot ON ot.id_orden = lt.id_orden SET lt.id_usuario = :id_usuario WHERE lt.id_listarea = :id_listarea AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_usuario" sqlType="STRING"/>
+      <param name="id_listarea" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtTareaFechaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_listarea lt JOIN orden_trabajo ot ON ot.id_orden = lt.id_orden SET lt.fecha = :fecha WHERE lt.id_listarea = :id_listarea AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="id_listarea" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/ots/listado/empresa/{id_empresa}">
       <call-query href="getOtListadoMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="solo_tipo1" query-param="solo_tipo1"/><with-param name="fec_desde" query-param="fec_desde"/><with-param name="fec_hasta" query-param="fec_hasta"/><with-param name="estado" query-param="estado"/><with-param name="equipo" query-param="equipo"/></call-query>
    </resource>
@@ -1479,6 +1581,48 @@
    </resource>
    <resource method="GET" path="/ot/{id_orden}/cliente/empresa/{id_empresa}">
       <call-query href="getOtConClienteMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/editar">
+      <call-query href="updateOtEditarMan"><with-param name="fecha_program" query-param="fecha_program"/><with-param name="fecha_entrega" query-param="fecha_entrega"/><with-param name="id_tarea" query-param="id_tarea"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_sucursal" query-param="id_sucursal"/><with-param name="id_proveedor" query-param="id_proveedor"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/herramientas/borrar">
+      <call-query href="borrarOtHerramientasMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/insumos/borrar">
+      <call-query href="borrarOtInsumosMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/herramienta">
+      <call-query href="setOtHerramientaMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="herrId" query-param="herrId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="descripcion_libre" query-param="descripcion_libre"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/insumo">
+      <call-query href="setOtInsumoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="artId" query-param="artId"/><with-param name="cantidad" query-param="cantidad"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/adjunto">
+      <call-query href="setOtAdjuntoMan"><with-param name="ot_adjunto" query-param="ot_adjunto"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/adjunto/borrar">
+      <call-query href="borrarOtAdjuntoMan"><with-param name="id" query-param="id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/estado">
+      <call-query href="updateOtEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/finalizar">
+      <call-query href="updateOtFinalizarMan"><with-param name="fecha" query-param="fecha"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/tareas/empresa/{id_empresa}">
+      <call-query href="getOtTareasMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/tarea">
+      <call-query href="setOtTareaMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="tareadescrip" query-param="tareadescrip"/><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/tarea/estado">
+      <call-query href="updateOtTareaEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_listarea" query-param="id_listarea"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/tarea/usuario">
+      <call-query href="updateOtTareaUsuarioMan"><with-param name="id_usuario" query-param="id_usuario"/><with-param name="id_listarea" query-param="id_listarea"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/tarea/fecha">
+      <call-query href="updateOtTareaFechaMan"><with-param name="fecha" query-param="fecha"/><with-param name="id_listarea" query-param="id_listarea"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <!-- MIG-ASSET-2s · Solicitudes de servicio. Reemplaza el acceso directo de models/Sservicios.php (ADR-014). Toda query queda
         limitada a la empresa (id de asset); asset no filtraba getSSs, getEquipSectores ni get_SolicTerminadas. Crear y eliminar
