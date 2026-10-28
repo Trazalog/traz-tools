@@ -37,47 +37,25 @@
 			</a>
 		</li>
 		<!-- User Account: style can be found in dropdown.less -->
-		<!-- Bloque PRUEBA -->
-		<li class="dropdown notifications-menu">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+		<!-- Campanita de avisos (ADR-015), para todos los usuarios. La llena
+		     lib/props/avisos.js desde index.php/Avisos. Hasta la v3.5 aca habia
+		     una maqueta con 10 notificaciones de ejemplo fijas. -->
+		<li class="dropdown notifications-menu" id="tz-avisos-menu">
+			<a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Avisos">
 				<i class="fa fa-bell-o"></i>
-				<span class="label label-success">10</span>
+				<span class="label label-warning" id="tz-avisos-numero" style="display:none"></span>
 			</a>
 			<ul class="dropdown-menu">
-				<li class="header">You have 10 notifications</li>
+				<li class="header" id="tz-avisos-titulo">No tenés avisos nuevos</li>
 				<li>
-					<ul class="menu">
-						<li>
-							<a href="#">
-							<i class="fa fa-users text-aqua"></i> 5 new members joined today
-							</a>
-						</li>
-						<li>
-						<a href="#">
-							<i class="fa fa-warning text-yellow"></i> Very long description here that may not fit into the page and may cause design problems
-							</a>
-						</li>
-						<li>
-						<a href="#">
-							<i class="fa fa-users text-red"></i> 5 new members joined
-						</a>
-						</li>
-						<li>
-							<a href="#">
-								<i class="fa fa-shopping-cart text-green"></i> 25 sales made
-							</a>
-						</li>
-						<li>
-							<a href="#">
-								<i class="fa fa-user text-red"></i> You changed your username
-							</a>
-						</li>
-					</ul>
+					<ul class="menu" id="tz-avisos-lista"></ul>
 				</li>
-				<li class="footer"><a href="#">View all</a></li>
+				<li class="footer">
+					<a href="#" id="tz-avisos-push" style="display:none"></a>
+					<a href="#" id="tz-avisos-todos">Marcar todos como leídos</a>
+				</li>
 			</ul>
 		</li>
-		<!-- BLOQUE PRUEBA -->
 		<li class="dropdown user user-menu">
 			<a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 				<?php 
@@ -130,6 +108,8 @@
 	.notFA {margin-left: 27px;}
 	.navbar-nav>.user-menu>.dropdown-menu>.user-body {padding: 15px 0;}
 	.navbar-nav>.user-menu>.dropdown-menu>.user-footer {padding: 10px 20px;}
+	#tz-avisos-lista .tz-aviso {white-space: normal;}
+	#tz-avisos-lista .tz-aviso-leido .tz-aviso {opacity: .6;}
 </style>
 
 
