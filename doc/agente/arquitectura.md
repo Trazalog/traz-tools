@@ -264,12 +264,12 @@ Umbrales y máximos son **valores por defecto configurables** (`AGENTE_SUGERENCI
 
 **Limitación:** ninguna tool dice hoy qué tarea es de cada usuario, así que las propuestas son sobre el estado de la empresa en esa pantalla. "Tus tareas atrasadas" llega con las tools del módulo de tareas (TAR-API).
 
-## Avisos proactivos (AGENTE-AS-03, en curso)
+## Avisos proactivos (AGENTE-AS-03)
 
 - **Token de máquina** (`agente/credenciales.py`): por empresa, con el secreto cifrado en `agente.credencial_empresa` y la clave en el entorno. Pide el JWT a Dnato por `client_credentials` y lo guarda hasta un minuto antes de vencer. **La emisión en Dnato espera la aprobación** de `analisis-impacto-token-maquina.md`.
-- **Monitoreo** (`agente/monitoreo.py`, por cron): con ese token, revisa lo mismo que el siguiente paso del panel y encola avisos en `agente.notificacion` para los destinatarios configurados. Sin destinatarios, silencio; una vez por día por destinatario.
-- **Campanita**: `GET /notificaciones` (los del usuario por nick o `usr_id`; los de rol `admin`, solo para administradores) y `POST /notificaciones/leida`. En Tools, un contador en el botón del panel de Quirqui y la lista de avisos sin leer.
-- **Push:** por cada aviso nuevo, una fila en `agente.envio` por dispositivo activo del destinatario, firmada por el agente y con su avatar como ícono (D-63). **Falta** la app Siddhi que toma esa cola y llama al `FirebaseConnectorAPI`.
+- **Monitoreo** (`agente/monitoreo.py`, por cron): con ese token, revisa lo mismo que el siguiente paso del panel y **publica** cada hallazgo en el mecanismo de avisos de Tools (`POST /avisos` de `toolsNTFAPI`, esquema `ntf`, ADR-015) con `agente/avisos.py`. A quién le llega lo deciden las suscripciones de `ntf`; la clave de deduplicación lleva el día, así que un hallazgo se avisa una vez por día.
+- **Campanita y push**: son los de Tools, para todos los avisos del sistema (ver `doc/notificaciones/diseno-avisos-tools.md`). El aviso va firmado por el agente (`emisor`) y la campanita lo muestra con su nombre.
+- El agente **no tiene cola propia**: la que crearon `007`, `008`, `018` y `020` (`notificacion`, `envio`, `dispositivo`, `destinatario_alerta`) se borró en `021`.
 
 ## El chat dentro de Trazalog Tools (E3)
 
