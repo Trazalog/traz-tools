@@ -151,7 +151,7 @@ las vistas) **no cambiaron**: el fork vale tal cual, una vez saneado.
 | `controllers/Tarea.php` y las 17 vistas de `views/tareas/` | 1.231 + ~7.000 líneas | El hueco más grande y el más vivo: bandeja de Bonita, informe de servicio, conformidad |
 | El calendario (`views/calendar/`, motor `Calendario::guardar_agregar()`) | — | Se reimplementa, no se porta (MIG-4) |
 | Vistas de `otrabajos/`, `equipo/`, `Sservicios/`, `ordenservicios/` | ~12.600 líneas | |
-| `backlog/nuevo_edicion_view_.php`, `Lectura`/`Lecturas`, `Ficha`/`Fichas`, `componente/listabm`, vistas de area y proceso | ~2.500 líneas | `Lecturas` alimenta los planes por contador y hace falta antes de MIG-4 |
+| `backlog/nuevo_edicion_view_.php`, `Lectura`/`Lecturas`, `Ficha`/`Fichas`, `componente/listabm`, vistas de area y proceso | ~2.500 líneas | Corrección (2026-10-29): `Lectura`/`Lecturas` es la carga de lecturas de **parámetros** (`parametroequipo`), no la del contador. La lectura del contador (`historial_lecturas`) ya está en Equipo. Portada en MIG-3 (E29) |
 | La capa de integración de §2.3 | ~1.200 líneas + 2 scripts | Ver MIG-2 |
 
 **Lo que no se porta, porque tools ya lo tiene:**
@@ -340,6 +340,7 @@ base de datos** en los archivos portados.
 | Solicitudes de servicio (`controllers/Sservicio.php`, `models/Sservicios.php`, vistas `list_bpm`, `view_`, `list_term`) | ✅ Portadas completas. Crear y eliminar con su caso de Bonita por `toolsMANAPI` + `toolsbpmAPI` (A5, E22, E23), verificado en DEV: la primera tarea le llega al usuario de prueba aunque el caso lo inicie admin. Paridad OK (30 de 30, con la prueba de Bonita) |
 | Órdenes de trabajo (`controllers/Otrabajo.php`, `models/Otrabajos.php`, vistas de `otrabajos/`) | ✅ Portadas desde el asset actual (E21). Alta con su caso de Bonita (`POST /tools/man/ot`) y asignación de responsable (`POST /tools/man/ot/asignar`) por `toolsMANAPI`, verificadas en DEV con caso real (E26, E27). Paridad OK: lectura 78 de 78, escrituras 24 de 24, Bonita 9 de 9. Lo de calendario y bandeja (`updateResponsable`, `EjecutarOT`, `reasignaOt`…) va con MIG-3/MIG-4 |
 | Informes de servicio (`controllers/Ordenservicio.php`, `models/Ordenservicios.php`, vistas `ordenservicios/list` y `tareas/view_presta_presta_conf_modal`) | ✅ Portados desde el asset actual (E21): pantalla de informes, ver informe y verificar en bloque por `toolsMANAPI` (E28). Paridad contra asset OK (2026-10-29): pantalla `informe` (listado, ver informe, pedidos, entregas, herramientas usadas y aislamiento entre empresas) y `informe_bonita` (verificar con caso real en la Bonita de DEV, por asset y por MAN, y rechazo de otra empresa). La columna `activa` de herramientas usadas es `tinyint(1)` y el servicio de datos la entregaba como booleano: se convierte a número en la consulta. Cargar, editar y guardar el informe y los vales de pañol van con la bandeja (MIG-3) |
+| Lecturas de parámetros (`controllers/Lectura.php`, `models/Lecturas.php`, vista `lectura/lect`) | ✅ Portadas desde el asset actual (E29). Paridad OK (2026-10-29): pantalla, listas, alta, lecturas del día, baja y aislamiento entre empresas |
 | Calendario, Bandeja | Pendientes. El patrón de Bonita es el de Solicitudes, OT e Informes (E22, E26, E28) |
 
 1. **Los 19 archivos de §2.3**: se portan de nuevo desde el asset actual con la misma mecánica, en
@@ -369,7 +370,7 @@ En orden de dependencia:
    segunda entrada de menú dentro de MAN. Su mecánica de hoy se describe en MIG-7. Sus lecturas de
    MariaDB (`case_empresa` y `getOrdenesPorCaseIds` en `models/Tareas.php`) también pasan a
    `MANDataService`.
-2. `Lectura`/`Lecturas`, que hace falta para MIG-4.
+2. `Lectura`/`Lecturas` ✅ (2026-10-29, E29): es la carga de lecturas de parámetros, no la del contador.
 3. Las vistas de `otrabajos/`, `equipo/`, `Sservicios/` y `ordenservicios/` que faltan.
 4. `Ficha`/`Fichas`, `componente/listabm`, area y proceso.
 
@@ -668,6 +669,7 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E26 | 2026-10-28 | **Alta de OT por `toolsMANAPI` `POST /tools/man/ot`**: OT (solo si el equipo es de la empresa), caso con `toolsbpmAPI` (`idSolicitudServicio` 0, `idOT`), `case_id` y `case_empresa` en `assetv2` (E23), lotes de herramientas (con texto libre) e insumos. Si un paso falla, borra lo creado y el caso. La descripción de la tarea estándar la toma la query. MAN responde `true` si se creó | Regla 3 del ADR-014 y A5. Asset siempre respondía `false` y, si Bonita fallaba, borraba la OT pero seguía (T31) |
 | E27 | 2026-10-28 | **Asignar OT por `toolsMANAPI` `POST /tools/man/ot/asignar`**: cierra la tarea actual, busca "Ejecutar OT" en el caso, busca en Bonita al usuario por su correo (`usrNick` de asset = `userName` de Bonita) y le asigna la tarea; recién ahí graba la OT como asignada. Todo con `bpmAPICallTemplate` | A5. Asset le pasaba a Bonita el número de usuario de asset (T30). Verificado en DEV: Bonita no deja cerrar una tarea que nadie tomó; en uso real el modal se abre desde la bandeja, que la toma antes (MIG-4) |
 | E28 | 2026-10-28 | **Informes de servicio: se porta la pantalla de informes y la ventana de ver informe; verificar en bloque va por `toolsMANAPI` `POST /tools/man/informe/verificar`**. El recurso toma el caso de la OT de la empresa (no el del navegador), busca en el caso la tarea "Verifica Informe de Servicio" que el usuario puede tomar, se la asigna y la cierra con `informeServicioOk`; después graba la lectura de cierre y deja informe y OT en `CE`. Si el caso no tiene esa tarea para el usuario, cierra igual los estados, como asset. Cargar, editar y guardar el informe y los vales de pañol se hacen desde la bandeja y van con ella (MIG-3) | A5 y regla 3 del ADR-014. Una tarea cerrada en Bonita no se puede reabrir: si después falla la base, el recurso informa el error. Corrige T32, T33 y T34 |
+| E29 | 2026-10-29 | **Lecturas de parámetros portadas con datos por `MANDataService` (bloque `MIG-ASSET-3l`), limitadas a la empresa**. No se porta `lectura_List` (la vista no la usa y traía las lecturas de todas las empresas). Sin equipos con parámetros, `getEquipo` responde lista vacía: asset respondía `null` con un aviso de PHP, que rompe el autocompletar | ADR-014. Corrige T35 |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---
@@ -808,6 +810,7 @@ No se corrigen en asset (P2). La lista en lenguaje simple, agrupada por gravedad
 | T32 | "Verificar" informes busca la tarea de Bonita entre las 10 primeras de la bandeja del usuario. Si no está ahí, igual cierra el informe y la OT en la base y deja la tarea abierta en Bonita | `controllers/Ordenservicio.php` (`cierreMasivoVerificaInforme`), `libraries/BPM.php` (`getTodoList`, `c=10`) de asset |
 | T33 | Al abrir un informe desde la pantalla de informes, asset toma la columna "Fecha" como id del equipo: la ventana muestra los datos del equipo vacíos | `views/ordenservicios/list.php` (`find("td").eq(6)`) de asset |
 | T34 🔴 | "Verificar" informes usa el caso y la OT que manda el navegador, sin mirar la empresa: cualquier usuario puede cerrar el informe y la OT de otra empresa (y la tarea de Bonita, si su usuario es candidato) | `controllers/Ordenservicio.php` (`cierreMasivoVerificaInforme`), `models/Tareas.php` (`cambiarEstado`) de asset |
+| T35 🔴 | Lecturas de parámetros: las lecturas de un día, el alta y la baja no miran la empresa. Con el id de una lectura ajena se la borra, y se puede grabar sobre un equipo de otra empresa | `models/Lecturas.php` (`getLecturasCargadas`, `guardar_lectura`, `deleteLectura`) de asset |
 | T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
 
 ### 5.3 Deuda abierta de los frentes anteriores

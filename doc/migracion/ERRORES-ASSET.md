@@ -34,6 +34,7 @@ con el mismo número.
 | T27 | La pantalla de solicitudes terminadas muestra las de todas las empresas | Corregido |
 | T29 | El detalle de las órdenes de trabajo muestra clientes y equipos de otras empresas cuando los datos quedaron cruzados | Corregido (MAN filtra todo por empresa) |
 | T34 | El botón "Verificar" de informes cierra el informe y la orden de trabajo que mande el navegador, sin mirar la empresa: un usuario puede cerrar los de otra empresa | Corregido |
+| T35 | En la carga de lecturas de parámetros se puede borrar la lectura de otra empresa con su número, y grabar lecturas sobre equipos de otra empresa | Corregido |
 
 ## Errores que pierden o desordenan datos 🟠
 

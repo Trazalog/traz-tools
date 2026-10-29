@@ -1263,6 +1263,54 @@
    <resource method="POST" path="/equipos/cliente">
       <call-query href="setClienteEqMan"><with-param name="cliName" query-param="cliName"/><with-param name="cliLastName" query-param="cliLastName"/><with-param name="cliDni" query-param="cliDni"/><with-param name="cliAddress" query-param="cliAddress"/><with-param name="cliPhone" query-param="cliPhone"/><with-param name="cliEmail" query-param="cliEmail"/><with-param name="cliRazonSocial" query-param="cliRazonSocial"/><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-3l · Lecturas de parámetros (parametroequipo). Reemplaza el acceso directo de models/Lecturas.php
+        (ADR-014). Toda query queda limitada a la empresa (id de asset); asset no filtraba la lista, el alta ni la baja. -->
+   <query id="getLecturaParamEquiposMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT DISTINCT e.id_equipo AS id, e.descripcion AS label FROM setupparam s JOIN equipos e ON e.id_equipo = s.id_equipo WHERE e.id_empresa = :id_empresa AND e.estado = 'AC'</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id":"$id","label":"$label"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getLecturaParamParametrosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT DISTINCT p.paramId AS id, p.paramdescrip AS param FROM setupparam s JOIN parametros p ON p.paramId = s.id_parametro JOIN equipos e ON e.id_equipo = s.id_equipo WHERE s.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"parametros":{"parametro":[{"param":"$param","id":"$id"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getLecturasParamCargadasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT pe.id, pe.valor, p.paramdescrip FROM parametroequipo pe JOIN parametros p ON p.paramId = pe.paramId WHERE pe.id_equipo = :id_equipo AND DATE(pe.fechahora) = :fecha AND pe.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"lecturas":{"lectura":[{"id":"$id","valor":"$valor","paramdescrip":"$paramdescrip"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setLecturaParamMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO parametroequipo (paramId, id_equipo, valor, fechahora, id_empresa) SELECT :paramId, e.id_equipo, :valor, :fechahora, e.id_empresa FROM equipos e WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <param name="paramId" sqlType="STRING"/>
+      <param name="valor" sqlType="STRING"/>
+      <param name="fechahora" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="deleteLecturaParamMan" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM parametroequipo WHERE id = :id AND id_empresa = :id_empresa</sql>
+      <param name="id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/lecturas-param/equipos/empresa/{id_empresa}">
+      <call-query href="getLecturaParamEquiposMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/lecturas-param/equipo/{id_equipo}/parametros/empresa/{id_empresa}">
+      <call-query href="getLecturaParamParametrosMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/lecturas-param/equipo/{id_equipo}/fecha/{fecha}/empresa/{id_empresa}">
+      <call-query href="getLecturasParamCargadasMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="fecha" query-param="fecha"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/lecturas-param">
+      <call-query href="setLecturaParamMan"><with-param name="paramId" query-param="paramId"/><with-param name="valor" query-param="valor"/><with-param name="fechahora" query-param="fechahora"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/lecturas-param/baja">
+      <call-query href="deleteLecturaParamMan"><with-param name="id" query-param="id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
    <!-- MIG-ASSET-2i · Informes de servicio (listado, ver informe, verificación). Reemplaza el acceso directo de models/Ordenservicios.php
         (ADR-014). Toda query queda limitada a la empresa (id de asset); asset no filtraba getorden, getEquipos ni el detalle del informe. -->
    <query id="getInformesListadoMan" useConfig="AssetPlannerDataSource">
