@@ -193,6 +193,8 @@
       </div>
     <?php endforeach; ?>
   </div>
+
+  <?php $this->load->view('dashboard/objetivos'); ?>
   </div><!-- /#tz-kpis-wrap -->
 
 </div>
