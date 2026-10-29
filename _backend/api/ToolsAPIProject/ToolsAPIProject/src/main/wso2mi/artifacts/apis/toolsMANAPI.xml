@@ -1410,5 +1410,78 @@
          <respond/>
       </faultSequence>
    </resource>
+   <!-- MIG-ASSET-3b · Una página de la bandeja del usuario. Pide a Bonita las tareas del usuario (por su correo, como userName) y a
+        MANDataService los datos de asset de esos casos, solo de la empresa. Quien llama arma la lista (asset repetía el pedido por página
+        hasta juntar las filas que necesitaba, sacando las de otras empresas). Entrada: {"usrNick","id_empresa","p","c","session"}.
+        Salida {"status":true,"tareas":[...Bonita...],"casos":{...asset...},"cantidad":"n","session":"..."} o {"status":false,"msj"}.
+        "cantidad" es cuántas tareas devolvió Bonita (menos que "c" quiere decir que no hay más páginas). -->
+   <resource methods="POST" uri-template="/bandeja/pagina">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_p" expression="json-eval($.p)"/>
+         <property name="man_c" expression="json-eval($.c)"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <property name="man_recurso" expression="concat('/API/identity/user?p=0&amp;c=1&amp;f=userName%3D', $ctx:man_nick)"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_uid" expression="json-eval($.payload[0].id)"/>
+         <filter source="get-property('man_uid')" regex="[0-9]+">
+            <then/>
+            <else>
+               <variable name="msj" type="STRING" value="El usuario no tiene usuario en Bonita"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <property name="man_recurso" expression="concat('/API/bpm/humanTask?p=', $ctx:man_p, '&amp;c=', $ctx:man_c, '&amp;f=user_id%3D', $ctx:man_uid, '&amp;o=reachedStateDate%20DESC')"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <variable name="tareas" type="JSON" expression="${payload.payload}"/>
+         <property name="man_cantidad" expression="json-eval($.payload.length())"/>
+         <property name="man_ids_crudo" expression="json-eval($.payload[*].caseId)"/>
+         <variable name="ids" type="STRING" expression="${replace(replace(replace(properties.synapse.man_ids_crudo, '[', ''), ']', ''), '&quot;', '')}"/>
+         <variable name="cantidad" type="STRING" expression="${properties.synapse.man_cantidad}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_bandeja_casos":{"ids":"${vars.ids}","id_empresa":"${vars.datos.id_empresa}","ids2":"${vars.ids}","id_empresa2":"${vars.datos.id_empresa}","ids3":"${vars.ids}","id_empresa3":"${vars.datos.id_empresa}","ids4":"${vars.ids}","id_empresa4":"${vars.datos.id_empresa}","ids5":"${vars.ids}","id_empresa5":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/bandeja/casos')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <variable name="casos" type="JSON" expression="${payload.casos}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":true,"tareas":${vars.tareas},"casos":${vars.casos},"cantidad":"${vars.cantidad}","session":"${vars.sesion}"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/bandeja/pagina"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
 </api>
                         
