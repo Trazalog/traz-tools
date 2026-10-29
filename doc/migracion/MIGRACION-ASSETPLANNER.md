@@ -739,7 +739,7 @@ DEV (T21).
 | # | Decisión | Mi recomendación |
 |---|---|---|
 | ~~P1~~ | ✅ **Resuelta (PM, 2026-10-27):** el freeze rige cuando cierren las pruebas de los dos frentes (§3.1). Falta registrar acá la fecha en que efectivamente cierren | — |
-| ~~P2~~ | ✅ **Resuelta (PM, 2026-10-29): en asset no se corrige nada**, porque asset se va a apagar. Los errores se compilan en [`ERRORES-ASSET.md`](ERRORES-ASSET.md) y se corrigen solo en MAN. Vale también para T34 | — |
+| ~~P2~~ | ✅ **Resuelta (PM, 2026-10-29): en asset no se corrige nada**, porque asset se va a apagar. Los errores se compilan en [`ERRORES-ASSET.md`](ERRORES-ASSET.md) y se corrigen solo en MAN. Vale también para T34. Si al terminar la migración no hay fecha de salida de la versión nueva, se corrigen sobre el asset actual los graves (🔴), con análisis de impacto (ver `ERRORES-ASSET.md`) | — |
 | P7 | **MIG-8**: margen de lanzamiento (cuántos días antes de la fecha se lanza el caso Bonita) y qué se hace con las series ya lanzadas | Margen configurable por empresa. Las series existentes se dejan como están |
 | P9 | **MIG-9**: qué eventos de cada módulo se notifican, a quién y por qué canal | Arrancar con los eventos de la OT que ya notifica asset, más el lanzamiento de MIG-8 |
 | P8 | **Scheduler** para MIG-8, compartido con la Fase 2 del tablero del administrador | Una sola decisión para los dos casos. El cron del sistema operativo ya existe para los KPIs |

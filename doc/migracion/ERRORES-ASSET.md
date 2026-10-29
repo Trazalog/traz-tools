@@ -64,6 +64,17 @@ con el mismo número.
 
 ## Correcciones ya hechas en asset antes de esta decisión
 
-T11, T20 y T27 se habían corregido también en asset, en la rama `fix/MIG-doble-bugfix-fugas-empresa`
-del repositorio de asset (`/mnt/win/dev/git/traz-prod-assetplanner`). Esa rama **no se subió ni se
-fusionó**: con la decisión del 2026-10-29 queda a criterio del PM si se descarta.
+T11, T20 y T27 se corrigieron también en asset con el
+[PR #339](https://github.com/Trazalog/traz-prod-assetplanner/pull/339), fusionado en la rama
+`develop-v3` del repositorio de asset antes de la decisión del 2026-10-29. Esa rama **no está en
+producción**: producción corre `master`, que no tiene la corrección. No se revierte: no afecta a
+producción, y revertirla costaría otro PR sin beneficio. No se hacen más correcciones en asset.
+
+## Si la versión nueva no sale a tiempo
+
+Decisión del PM del 2026-10-29: si al terminar la migración no hay fecha de salida para tools v3 y
+asset tiene que seguir en uso, se corrigen sobre el asset actual los errores graves (los 🔴 de este
+documento), empezando por T34, T2 y T1. Para eso, el detalle técnico de cada uno está en
+[`MIGRACION-ASSETPLANNER.md` §5.2](MIGRACION-ASSETPLANNER.md#52-bugs-heredados-de-asset-están-hoy-en-producción),
+y la corrección hecha en MAN sirve de referencia. Esa corrección toca producción, así que antes pasa
+por el análisis de impacto que aprueba el PM (regla del `CLAUDE.md` de tools).
