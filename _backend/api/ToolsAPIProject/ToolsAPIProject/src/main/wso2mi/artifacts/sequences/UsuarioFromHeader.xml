@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UsuarioFromHeader — deriva el usuario (nick de Dnato) del backend JWT que firma
+  e inyecta el APIM. Complementa a emprIdFromHeader (ADR-008/ADR-009) sin tocarla:
+  se invoca DESPUÉS de ella, que ya cortó si no hay identidad.
+
+  Fuente: X-JWT-Assertion (lo firma el APIM, el cliente no lo puede falsificar a
+  través del gateway). Claim `sub` = usernick que emite Dnato; si el APIM lo
+  reemplazó, se usa el claim enduser de WSO2. Se le saca el sufijo de tenant
+  (`@carbon.super`). Para un token de máquina (client_credentials, ADR-A10) el
+  `sub` es el cliente de la empresa: sirve para publicar, no tiene campanita.
+
+  Setea:
+    jwt_usuario       nick tal cual (para el cuerpo de los POST)
+    jwt_usuario_url   nick codificado para ir en un path de URL
+  Fail-closed: si no se resuelve, responde 503 y no sigue.
+
+  Primer uso: toolsNTFAPI (avisos, ADR-015).
+-->
+<sequence name="usuarioFromHeader" xmlns="http://ws.apache.org/ns/synapse">
+
+    <property name="x_jwt_assertion_usr"
+              expression="$trp:X-JWT-Assertion"
+              scope="default" type="STRING"/>
+
+    <!-- Rhino/Nashorn/Graal-safe: Packages.java.* y split(".") literal, como
+         emprIdFromHeader. -->
+    <script language="js"><![CDATA[
+        mc.setProperty("jwt_usuario", "");
+        mc.setProperty("jwt_usuario_url", "");
+        try {
+            var assertion = mc.getProperty("x_jwt_assertion_usr");
+            if (assertion) {
+                var parts = ("" + assertion).split(".");
+                if (parts.length === 3) {
+                    var bytes   = Packages.java.util.Base64.getUrlDecoder().decode(parts[1]);
+                    var payload = JSON.parse("" + new Packages.java.lang.String(bytes, "UTF-8"));
+                    var u = payload.sub || payload["http://wso2.org/claims/enduser"] || "";
+                    u = ("" + u).replace(/@carbon\.super$/, "");
+                    if (u.length > 0) {
+                        mc.setProperty("jwt_usuario", u);
+                        mc.setProperty("jwt_usuario_url",
+                            "" + Packages.java.net.URLEncoder.encode(u, "UTF-8").replace(/\+/g, "%20"));
+                    }
+                }
+            }
+        } catch (e) {
+            mc.setProperty("dbg_err_usr", "" + e);
+        }
+    ]]></script>
+
+    <filter xpath="get-property('jwt_usuario') = '' or not(boolean(get-property('jwt_usuario')))">
+        <then>
+            <log level="custom" category="WARN">
+                <property name="text" value="#TRAZA | MI | UsuarioFromHeader | usuario NO resuelto desde X-JWT-Assertion (claim sub)"/>
+                <property name="path" expression="get-property('REST_FULL_REQUEST_PATH')"/>
+                <property name="err"  expression="get-property('dbg_err_usr')"/>
+            </log>
+            <payloadFactory media-type="json">
+                <format>{"error":"identity_missing","message":"usuario no resuelto desde X-JWT-Assertion. Verificar que el APIM genere backend JWT con el claim sub."}</format>
+                <args/>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="503"/>
+            <respond/>
+        </then>
+    </filter>
+
+</sequence>

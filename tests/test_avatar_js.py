@@ -78,3 +78,11 @@ def test_el_panel_no_tiene_el_nombre_fijo_en_los_textos_dinamicos(tmp_path):
     js = _renderizar("panel", tmp_path)[1].read_text(encoding="utf-8")
     assert "pintar('Quirqui'" not in js
     assert "agente.nombre" in js
+
+
+def test_pintar_la_identidad_no_borra_el_contador_de_avisos(tmp_path):
+    """El avatar va en su propio contenedor: si se pintara sobre todo el
+    boton, el contador de la campanita desapareceria al cargar la identidad."""
+    js = _renderizar("panel", tmp_path)[1].read_text(encoding="utf-8")
+    assert "$('#agp-boton').html(" not in js
+    assert "$('#agp-boton-avatar').html(" in js

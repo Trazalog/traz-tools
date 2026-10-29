@@ -534,6 +534,9 @@ function wc() {
 
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
+<!-- Avisos (ADR-015): la campanita y el push web del navegador. -->
+<script>window.TZ_BASE_URL = <?php echo json_encode(base_url()); ?>;</script>
+<script src="<?php echo base_url();?>lib/props/avisos.js"></script>
 <script type="module" src="<?php echo base_url();?>lib/props/firebase_config.js"></script>
 <?php
 // Panel de Quirqui (AGENTE-AS-01): solo si el usuario tiene el agente en su

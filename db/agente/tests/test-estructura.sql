@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..017 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..020 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -403,6 +403,87 @@ SELECT 'una sola propuesta pendiente por usuario y cosa',
        'volver a abrir el panel no duplica';
 
 -- ---------------------------------------------------------------------------
+-- 018 - avisos proactivos
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'credencial_empresa con RLS forzado; el runtime no la escribe',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.credencial_empresa')), false)
+       AND has_table_privilege('agente_app', 'agente.credencial_empresa', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.credencial_empresa', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.credencial_empresa', 'DELETE'),
+       'ADR-A10';
+
+INSERT INTO _resultado
+SELECT 'el secreto se guarda cifrado (bytea)',
+       EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'agente'
+               AND table_name = 'credencial_empresa' AND column_name = 'secreto_cifrado'
+               AND data_type = 'bytea'),
+       'pgp_sym_encrypt';
+
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' identifica al usuario por nick',
+       EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'agente' AND table_name = t AND column_name = 'usuario'),
+       'el JWT de Dnato no trae usr_id'
+FROM unnest(ARRAY['notificacion', 'destinatario_alerta', 'dispositivo']) AS t;
+
+INSERT INTO _resultado
+SELECT 'notificacion acepta certificacion_por_vencer',
+       pg_get_constraintdef(c.oid) LIKE '%certificacion_por_vencer%', 'Pañol'
+FROM pg_constraint c WHERE c.conname = 'notificacion_tipo_ck';
+
+-- ---------------------------------------------------------------------------
+-- 019 - contrato Kuntur <-> Quirqui
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'agente.' || t || ' con RLS forzado; el runtime no la borra',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.' || t)), false)
+       AND NOT has_table_privilege('agente_app', 'agente.' || t, 'DELETE'),
+       'AS-04'
+FROM unnest(ARRAY['medicion_pedida', 'medicion_resultado', 'avance_plan']) AS t;
+
+-- R3 por construccion: en el contrato no puede viajar lo que se converso.
+-- Los unicos text permitidos son identificadores o estados con CHECK.
+INSERT INTO _resultado
+SELECT 'R3: el contrato no tiene texto libre (solo ' || coalesce(string_agg(c.table_name || '.' || c.column_name, ', '), 'nada') || ')',
+       coalesce(bool_and(c.table_name || '.' || c.column_name = ANY (ARRAY[
+           'medicion_pedida.indicador', 'medicion_pedida.alcance', 'medicion_pedida.alcance_id',
+           'medicion_pedida.frecuencia', 'medicion_pedida.estado', 'medicion_pedida.pedida_por',
+           'medicion_resultado.tool',
+           'avance_plan.estado', 'avance_plan.responsable', 'avance_plan.resultado'])), true),
+       'un campo text nuevo en estas tablas exige revisar R3'
+FROM information_schema.columns c
+WHERE c.table_schema = 'agente' AND c.data_type = 'text'
+  AND c.table_name IN ('medicion_pedida', 'medicion_resultado', 'avance_plan');
+
+-- ---------------------------------------------------------------------------
+-- 020 - cola de envio
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'dispositivo con RLS forzado (tokens de push de cada empresa)',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = 'agente.dispositivo'::regclass), false), '020';
+
+INSERT INTO _resultado
+SELECT 'el orquestador encola pero no lee la cola de envio',
+       has_table_privilege('agente_app', 'agente.envio', 'INSERT')
+       AND NOT has_table_privilege('agente_app', 'agente.envio', 'SELECT')
+       AND NOT has_table_privilege('agente_app', 'agente.envio', 'UPDATE'),
+       'la cola es global: la lee solo el transporte';
+
+INSERT INTO _resultado
+SELECT 'el transporte (agente_envio) solo lee y marca el resultado',
+       has_table_privilege('agente_envio', 'agente.envio', 'SELECT')
+       AND has_column_privilege('agente_envio', 'agente.envio', 'estado', 'UPDATE')
+       AND NOT has_column_privilege('agente_envio', 'agente.envio', 'payload', 'UPDATE')
+       AND NOT has_table_privilege('agente_envio', 'agente.envio', 'INSERT')
+       AND NOT has_table_privilege('agente_envio', 'agente.envio', 'DELETE')
+       AND NOT has_table_privilege('agente_envio', 'agente.notificacion', 'SELECT'),
+       '020';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -413,7 +494,8 @@ FROM unnest(ARRAY[
     '004-cola-candidatos', '005-feedback', '006-entrevistador', '007-notificaciones',
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
-    '016-vertical', '017-propuestas'
+    '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
+    '020-cola-envio'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

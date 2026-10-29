@@ -1,0 +1,113 @@
+@App:name('AvisosPush')
+@App:description('Transporte unico de push de Tools (ADR-015): toma envios de ntf, llama al FirebaseConnectorAPI y marca el resultado.')
+
+-- =========================================================================
+-- Como funciona (detalle en doc/notificaciones/diseno-avisos-tools.md):
+--
+--   cada 15 s   ntf.tomar_envios(50) toma un lote y lo deja 'enviando' en la
+--               misma sentencia (FOR UPDATE SKIP LOCKED): nunca se toma dos
+--               veces, aunque corran dos SI.
+--   por envio   POST al FirebaseConnectorAPI con el mensaje {"xformValues":...}
+--               armado en SQL (json_build_object: un titulo con comillas no
+--               rompe el JSON).
+--   respuesta   2xx -> 'enviado' | 410 -> 'descartado' (el token ya no existe,
+--               se desactiva el dispositivo) | otro 4xx/5xx -> 'fallido'
+--               (ntf.marcar_envio reintenta a 1, 5 y 30 min). El envio_id sale
+--               del pedido original (trp:envio_id), no de la respuesta.
+--   si el MI no contesta, el envio queda 'enviando' y tomar_envios lo
+--               devuelve a la cola a los 10 minutos.
+--   cada dia    ntf.depurar(30, 90) a las 04:00.
+--
+-- Credenciales: NUNCA en este archivo. La base es el datasource NTF_DB del
+-- deployment.yaml del SI, con un usuario que tiene SOLO el rol ntf_transporte
+-- (no ve las tablas, solo ejecuta las funciones del transporte).
+-- Variables de entorno del proceso del SI:
+--   NTF_FIREBASE_URL   el recurso de envio del FirebaseConnectorAPI
+--                      (ej. http://localhost:8290/tools/firebase/send)
+--   NTF_ICONOS_URL     base publica de los iconos (avatar del agente que firma,
+--                      o el de Trazalog), sin barra final
+--
+-- Lo aprendido probando (2026-10-28, SI 4.4.0, siddhi-io-http 2.3.7):
+--   * el codigo de estado se matchea con '2..' (con '2\d+' no matchea);
+--   * la respuesta se mapea como 'text': el mapeador json ignora los
+--     atributos que vienen solo del pedido (trp:);
+--   * si varios envios llegan al sink en el MISMO lote de eventos, todas las
+--     respuestas salen con el trp:envio_id de uno solo (aun con blocking.io).
+--     Por eso AEnviar es @async con batch.size.max = 1 y blocking.io = true:
+--     un envio por vez, cada respuesta con su envio_id. Sin eso, 49 de cada 50
+--     quedaban 'enviando' hasta la recuperacion de los 10 minutos.
+-- =========================================================================
+
+define trigger CadaQuinceSegundos at every 15 sec;
+define trigger Diario at '0 0 4 * * ?';
+
+@sink(type = 'http-call', publisher.url = '${NTF_FIREBASE_URL}', method = 'POST',
+      sink.id = 'fcm', headers = "'Content-Type:application/json'", blocking.io = 'true',
+      @map(type = 'text', @payload("{{payload}}")))
+@async(buffer.size = '256', workers = '1', batch.size.max = '1')
+define stream AEnviar (envio_id long, payload string);
+
+@source(type = 'http-call-response', sink.id = 'fcm', http.status.code = '2..',
+        @map(type = 'text', fail.on.missing.attribute = 'false', regex.A = '(?s)(.*)',
+             @attributes(envio_id = 'trp:envio_id', respuesta = 'A[1]')))
+define stream Enviado (envio_id long, respuesta string);
+
+@source(type = 'http-call-response', sink.id = 'fcm', http.status.code = '410',
+        @map(type = 'text', fail.on.missing.attribute = 'false', regex.A = '(?s)(.*)',
+             @attributes(envio_id = 'trp:envio_id', respuesta = 'A[1]')))
+define stream Descartado (envio_id long, respuesta string);
+
+@source(type = 'http-call-response', sink.id = 'fcm', http.status.code = '5..|40.|41[1-9]|4[2-9].',
+        @map(type = 'text', fail.on.missing.attribute = 'false', regex.A = '(?s)(.*)',
+             @attributes(envio_id = 'trp:envio_id', respuesta = 'A[1]')))
+define stream Fallido (envio_id long, respuesta string);
+
+@sink(type = 'log', prefix = 'AvisosPush')
+define stream Resultado (envio_id long, resultado string);
+
+@sink(type = 'log', prefix = 'AvisosPush depuracion')
+define stream Depurado (borrados int);
+
+-- Un agente firma el titulo y pone su avatar; el resto sale con el de Trazalog.
+@info(name = 'tomar')
+from CadaQuinceSegundos#rdbms:query('NTF_DB', 'envio_id long, payload string',
+    """select t.envio_id,
+              json_build_object('xformValues', json_build_object(
+                  'registrationToken', t.token,
+                  'notificationTitle', x.titulo,
+                  'notificationBody', t.cuerpo,
+                  'webPushNotificationTitle', x.titulo,
+                  'webPushNotificationBody', t.cuerpo,
+                  'webPushNotificationIcon', ? || '/' || x.icono || '.png',
+                  'webPushNotificationDirection', 'AUTO'))::text as payload
+       from ntf.tomar_envios(?) t,
+            lateral (select case when lower(coalesce(t.emisor, '')) in ('quirqui', 'kuntur', 'faustino')
+                                 then initcap(t.emisor) || ': ' || t.titulo else t.titulo end as titulo,
+                            case when lower(coalesce(t.emisor, '')) in ('quirqui', 'kuntur', 'faustino')
+                                 then lower(t.emisor) else 'trazalog' end as icono) x""",
+    '${NTF_ICONOS_URL}', 50)
+select envio_id, payload
+insert into AEnviar;
+
+@info(name = 'marcar-enviado')
+from Enviado#rdbms:query('NTF_DB', 'resultado string',
+    'select ntf.marcar_envio(?, ?, ?) as resultado', envio_id, 'enviado', '')
+select envio_id, resultado
+insert into Resultado;
+
+@info(name = 'marcar-descartado')
+from Descartado#rdbms:query('NTF_DB', 'resultado string',
+    'select ntf.marcar_envio(?, ?, ?) as resultado', envio_id, 'descartado', respuesta)
+select envio_id, resultado
+insert into Resultado;
+
+@info(name = 'marcar-fallido')
+from Fallido#rdbms:query('NTF_DB', 'resultado string',
+    'select ntf.marcar_envio(?, ?, ?) as resultado', envio_id, 'fallido', respuesta)
+select envio_id, resultado
+insert into Resultado;
+
+@info(name = 'depurar')
+from Diario#rdbms:query('NTF_DB', 'borrados int', 'select ntf.depurar(30, 90) as borrados')
+select borrados
+insert into Depurado;

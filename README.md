@@ -22,3 +22,10 @@ Tres agentes sobre un motor único: **Kuntur** (Coach del administrador), **Quir
 | [`doc/agente/entrevistador.md`](doc/agente/entrevistador.md) | El entrevistador de expertos (Faustino) |
 | [`doc/agente/analisis-alertas-assetplanner.md`](doc/agente/analisis-alertas-assetplanner.md) | Análisis de las alertas de AssetPlanner (E0) |
 | [`db/agente/README.md`](db/agente/README.md) | Esquema de base de datos |
+
+## Avisos de Tools (campanita y push)
+
+| Documento | Para qué |
+|---|---|
+| [`doc/notificaciones/diseno-avisos-tools.md`](doc/notificaciones/diseno-avisos-tools.md) | Diseño del mecanismo único de avisos de todo el sistema (aprobado, ADR-015) |
+| [`doc/notificaciones/instalacion-avisos.md`](doc/notificaciones/instalacion-avisos.md) | Cómo se instala y se verifica: base, MI, SI, Tools y agentes |

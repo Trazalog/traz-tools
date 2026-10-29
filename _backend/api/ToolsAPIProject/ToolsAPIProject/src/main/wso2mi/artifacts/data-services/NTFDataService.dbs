@@ -1,0 +1,152 @@
+<data enableBatchRequests="false" enableBoxcarring="false" name="NTFDataService" transports="http https local">
+   <!-- ══════════════════════════════════════════════════════════════
+        Avisos de Tools: campanita y push (ADR-015, esquema ntf).
+
+        Este DataService NO toca las tablas: llama a las funciones de ntf
+        (_backend/database/scripts/versiones/v2.8.1.5/ntf_avisos.sql), que
+        son las que garantizan que un aviso se crea una sola vez, con sus
+        destinos y sus envíos, y que cada usuario solo ve y marca lo suyo.
+
+        empr_id y usuario los pone SIEMPRE quien llama del lado servidor:
+          - el PHP de Tools, desde la sesión (como el resto de los DataServices);
+          - toolsNTFAPI, desde el JWT (ADR-009), para los agentes y Bonita.
+        Nunca vienen del navegador.
+
+        usuario = nick de Dnato (el `sub` del JWT, `usernick` de la sesión).
+   -->
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+
+   <!-- Publica un aviso. destinatarios: nicks separados por coma; vacío = los
+        suscriptos al tipo (ntf.suscripcion). dedupe_key: si ya existe en la
+        empresa, devuelve el aviso existente sin crear nada. -->
+   <query id="publicarAviso" useConfig="ToolsDataSource">
+      <sql>select ntf.publicar(
+   p_empr_id       => cast(:empr_id as integer),
+   p_origen        => :origen,
+   p_tipo          => :tipo,
+   p_titulo        => :titulo,
+   p_cuerpo        => coalesce(:cuerpo, ''),
+   p_destinatarios => string_to_array(nullif(btrim(coalesce(:destinatarios, '')), ''), ','),
+   p_severidad     => coalesce(nullif(:severidad, ''), 'info'),
+   p_enlace        => nullif(:enlace, ''),
+   p_entidad_tipo  => nullif(:entidad_tipo, ''),
+   p_entidad_id    => nullif(:entidad_id, ''),
+   p_emisor        => nullif(:emisor, ''),
+   p_dedupe_key    => nullif(:dedupe_key, '')) as aviso_id</sql>
+      <result outputType="json">{"respuesta":{"aviso_id":"$aviso_id"}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="origen" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="titulo" sqlType="STRING"/>
+      <param name="cuerpo" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="destinatarios" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="severidad" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="enlace" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="entidad_tipo" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="entidad_id" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="emisor" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="dedupe_key" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+   </query>
+
+   <!-- La campanita: los avisos del usuario, los no leídos primero (máx. 30). -->
+   <query id="getMisAvisos" useConfig="ToolsDataSource">
+      <sql>select aviso_id, origen, tipo, titulo, cuerpo, severidad, coalesce(enlace, '') as enlace,
+       coalesce(emisor, '') as emisor, case when leido then 'true' else 'false' end as leido, fec_alta
+from ntf.mis_avisos(cast(:empr_id as integer), :usuario, 30)</sql>
+      <result outputType="json">{"avisos":{"aviso":[{"aviso_id":"$aviso_id","origen":"$origen","tipo":"$tipo","titulo":"$titulo","cuerpo":"$cuerpo","severidad":"$severidad","enlace":"$enlace","emisor":"$emisor","leido":"$leido","fec_alta":"$fec_alta"}]}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+   </query>
+
+   <!-- El número de la campanita. -->
+   <query id="getNoLeidos" useConfig="ToolsDataSource">
+      <sql>select ntf.no_leidos(cast(:empr_id as integer), :usuario) as cantidad</sql>
+      <result outputType="json">{"no_leidos":{"cantidad":"$cantidad"}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+   </query>
+
+   <!-- Marca leído un aviso propio; aviso_id vacío = todos los propios.
+        Devuelve cuántos cambió (0 si el aviso no es del usuario). -->
+   <query id="marcarLeido" useConfig="ToolsDataSource">
+      <sql>select ntf.marcar_leido(cast(:empr_id as integer), :usuario,
+       cast(nullif(:aviso_id, '') as bigint)) as marcados</sql>
+      <result outputType="json">{"respuesta":{"marcados":"$marcados"}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+      <param name="aviso_id" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+   </query>
+
+   <!-- Registra el navegador/celular del usuario (token de Firebase). -->
+   <query id="registrarDispositivo" useConfig="ToolsDataSource">
+      <sql>select ntf.registrar_dispositivo(cast(:empr_id as integer), :usuario, :token,
+       coalesce(nullif(:plataforma, ''), 'web')) as dispositivo_id</sql>
+      <result outputType="json">{"respuesta":{"dispositivo_id":"$dispositivo_id"}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+      <param name="token" sqlType="STRING"/>
+      <param name="plataforma" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+   </query>
+
+   <!-- Da de baja un dispositivo propio (cierre de sesión, permiso revocado). -->
+   <query id="bajaDispositivo" useConfig="ToolsDataSource">
+      <sql>select ntf.baja_dispositivo(cast(:empr_id as integer), :usuario, :token) as bajas</sql>
+      <result outputType="json">{"respuesta":{"bajas":"$bajas"}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+      <param name="token" sqlType="STRING"/>
+   </query>
+
+   <resource method="POST" path="/aviso">
+      <call-query href="publicarAviso">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="origen" query-param="origen"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="titulo" query-param="titulo"/>
+         <with-param name="cuerpo" query-param="cuerpo"/>
+         <with-param name="destinatarios" query-param="destinatarios"/>
+         <with-param name="severidad" query-param="severidad"/>
+         <with-param name="enlace" query-param="enlace"/>
+         <with-param name="entidad_tipo" query-param="entidad_tipo"/>
+         <with-param name="entidad_id" query-param="entidad_id"/>
+         <with-param name="emisor" query-param="emisor"/>
+         <with-param name="dedupe_key" query-param="dedupe_key"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/avisos/emprid/{empr_id}/nick/{usuario}">
+      <call-query href="getMisAvisos">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario" query-param="usuario"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/avisos/noleidos/emprid/{empr_id}/nick/{usuario}">
+      <call-query href="getNoLeidos">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario" query-param="usuario"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/aviso/leido">
+      <call-query href="marcarLeido">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario" query-param="usuario"/>
+         <with-param name="aviso_id" query-param="aviso_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/dispositivo">
+      <call-query href="registrarDispositivo">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario" query-param="usuario"/>
+         <with-param name="token" query-param="token"/>
+         <with-param name="plataforma" query-param="plataforma"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/dispositivo/baja">
+      <call-query href="bajaDispositivo">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="usuario" query-param="usuario"/>
+         <with-param name="token" query-param="token"/>
+      </call-query>
+   </resource>
+</data>

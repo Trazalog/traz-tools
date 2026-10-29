@@ -18,7 +18,7 @@
 -->
 <?php $this->load->view(AGE . 'avatar'); ?>
 
-<div id="agp-boton" title="Preguntale a tu asistente"></div>
+<div id="agp-boton" title="Preguntale a tu asistente"><span id="agp-boton-avatar"></span><span id="agp-contador"></span></div>
 
 <div id="agp-panel" aria-hidden="true">
   <div class="agp-cabecera">
@@ -40,6 +40,7 @@
     </div>
   </div>
 
+  <div id="agp-avisos"></div>
   <div id="agp-propuestas"></div>
 
   <div id="agp-conversacion">
@@ -77,6 +78,15 @@
 .agp-quien { font-size: 11px; color: #999; margin-bottom: 2px; }
 .agp-error .agp-texto { color: #dd4b39; }
 .agp-pensando { color: #aaa; font-style: italic; }
+#agp-contador { position: absolute; top: -4px; right: -4px; z-index: 1; min-width: 18px; height: 18px;
+                padding: 0 5px; border-radius: 9px; background: #dd4b39; color: #fff; font-size: 11px;
+                line-height: 18px; text-align: center; display: none; }
+#agp-avisos { padding: 6px 12px 0; }
+.agp-aviso-item { border: 1px solid #e5e5e5; border-left: 3px solid #3c8dbc; border-radius: 3px;
+                  padding: 6px 8px; margin-bottom: 6px; font-size: 12px; cursor: pointer; }
+.agp-aviso-item.critica { border-left-color: #dd4b39; }
+.agp-aviso-item.leido { opacity: .55; }
+.agp-aviso-item strong { display: block; }
 #agp-propuestas { padding: 6px 12px 0; }
 .agp-prop { border: 1px solid #e5e5e5; border-left: 3px solid #f39c12; border-radius: 3px;
             padding: 6px 8px; margin-bottom: 6px; font-size: 12px; }
@@ -143,8 +153,44 @@
         $p.slideUp(150, function () { $p.remove(); });
     });
 
+    // --- avisos firmados por los agentes (ADR-015) -----------------------------
+    // Salen de la campanita de Tools (index.php/Avisos, misma sesion): aca se
+    // muestran solo los que firma un agente, con su contador sobre el boton.
+    var AVISOS = '<?= base_url() ?>index.php/Avisos/';
+    var FIRMAN = { quirqui: 1, kuntur: 1, faustino: 1 };
+    function cargarAvisos() {
+        $.getJSON(AVISOS + 'mios').done(function (r) {
+            var propios = (r.avisos || []).filter(function (x) {
+                return !x.leido && FIRMAN[String(x.emisor || '').toLowerCase()];
+            });
+            var n = propios.length;
+            $('#agp-contador').text(n > 9 ? '9+' : n).toggle(n > 0);
+            if (n > 0 && !$panel.hasClass('abierto')) { estado('alerta'); }
+            var $l = $('#agp-avisos').empty();
+            propios.slice(0, 5).forEach(function (x) {
+                var enlace = String(x.enlace || '');
+                var ok = /^[A-Za-z0-9_\-\/.]+$/.test(enlace);
+                $l.append('<div class="agp-aviso-item ' + escapar(x.severidad) + '" data-id="' + escapar(x.aviso_id) + '">' +
+                          '<strong>' + escapar(x.titulo) + '</strong>' + escapar(x.cuerpo) +
+                          (ok ? ' <a href="<?= base_url() ?>' + escapar(enlace) + '" target="_blank">Ayuda</a>' : '') +
+                          '</div>');
+            });
+        });
+    }
+    $('#agp-avisos').on('click', '.agp-aviso-item', function () {
+        var $a = $(this);
+        if ($a.hasClass('leido')) { return; }
+        $a.addClass('leido');
+        $.post(AVISOS + 'leido/' + parseInt($a.data('id'), 10)).always(function () {
+            cargarAvisos();
+            if (window.TZAvisos) { window.TZAvisos.refrescar(); }
+        });
+    });
+    cargarAvisos();
+    setInterval(cargarAvisos, 5 * 60 * 1000);
+
     function abrir()  { $panel.addClass('abierto').attr('aria-hidden', 'false'); $('#agp-pregunta').focus();
-                        estado('saludo'); cargarPropuestas(); }
+                        estado('saludo'); cargarPropuestas(); cargarAvisos(); }
     function cerrar() { $panel.removeClass('abierto').attr('aria-hidden', 'true'); estado('despedida'); }
 
     $('#agp-boton').on('click', function () { $panel.hasClass('abierto') ? cerrar() : abrir(); });
@@ -155,7 +201,9 @@
     // Hasta que llega la respuesta (o si falla) se usa Quirqui, el agente por defecto.
     var agente = { clave: 'quirqui', nombre: 'Quirqui', avatar: 'quirqui' };
     function pintarIdentidad(estado) {
-        $('#agp-boton').html(TZAgente.avatar(agente, estado, true)).attr('title', 'Preguntale a ' + agente.nombre);
+        // En su propio contenedor: el botón también tiene el contador de avisos.
+        $('#agp-boton-avatar').html(TZAgente.avatar(agente, estado, true));
+        $('#agp-boton').attr('title', 'Preguntale a ' + agente.nombre);
         $('#agp-cab-avatar').html(TZAgente.avatar(agente, estado));
         $('#agp-nombre').text(agente.nombre);
     }

@@ -14,6 +14,10 @@
 
 **Sprint actual:** Sprint 3 — Activación early adopter minero
 **Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
+**Última actualización:** 2026-10-28 por Claude Code (**avisos de Tools implementados** —esquema `ntf`, API, transporte y puente Siddhi, conector de Firebase corregido, campanita en Tools, agente publicando por el API—; un PR con las fases 2 y NTF)
+**Última actualización:** 2026-10-28 por Claude Code (diseño del **mecanismo de avisos de Tools** —PostgreSQL canónico, MariaDB solo como entrada sin objetos nuevos, publicación por el API— para aprobación; reemplaza la cola propia del agente)
+**Última actualización:** 2026-10-28 08:09 por Claude Code (avisos proactivos: credenciales, monitoreo, campanita y encolado de push; filtro de industria en Faustino; contrato Kuntur ↔ Quirqui en la base. Rama `feat/AGENTE-fase2-avisos`, sin PR todavía: la fase cierra con la app Siddhi)
+**Última actualización:** 2026-10-28 por Claude Code (AGENTE-AS-03, primera parte — credenciales de máquina cifradas y cliente del token, probado contra un Dnato simulado; falta el job de monitoreo y la campanita)
 **Última actualización:** 2026-10-27 por Claude Code (corrección del guardián de cifras —D-24 resuelta— y contratos HTTP nuevos en el Hurl; rama apilada)
 **Última actualización:** 2026-10-27 por Claude Code con Sonnet (AGENTE-ID-05 — componente de avatar con estados, funciona sin imágenes; rama apilada). Lo que queda de la Fase 3 espera la ficha de personajes y los colores de la marca
 **Última actualización:** 2026-10-27 por Claude Code (AGENTE-DT-01 — 9 casos de uso de los agentes en borrador, módulo `AGE` propuesto; **gate DocTest del PM antes de derivar**. Lo que sigue es Sonnet o espera decisiones del PM)
@@ -41,6 +45,10 @@
 
 | ID | Descripción | Clase | Estado | Rama / PR |
 |---|---|---|---|---|
+| NOTIF-DISENO | Mecanismo de avisos de todo Trazalog (campanita y push), a partir del de AssetPlanner, mejorado | 🔴 | **Diseño escrito, espera aprobación del PM** (`doc/notificaciones/diseno-avisos-tools.md`). PostgreSQL de Tools como cola canónica (esquema `ntf`: aviso, destino, suscripción, dispositivo, envío; `publicar()`, `tomar_envios()` sin duplicados, `depurar()`), MariaDB solo como entrada por un puente Siddhi **sin objetos nuevos**, publicación por una operación del API, un solo emisor de push y la campanita en el layout de Tools. **Causa encontrada** de que AssetPlanner nunca marque enviado (mapeo de la respuesta en su `.siddhi`) y otras siete fallas con su corrección. **Credenciales de root de producción en claro** en el `.siddhi` de `traz-int`: rotar. Reemplaza las tablas de avisos del esquema `agente` | `feat/AGENTE-fase2-avisos` |
+| NTF | Mecanismo único de avisos de Tools implementado (ADR-015) | 🟡/🔴 | **En PR, espera revisión del PM.** Esquema `ntf` (10 funciones, 29 tests en PostgreSQL 11); `NTFDataService` + `toolsNTFAPI` (empresa y usuario del JWT); `AvisosPush` y `PuenteAsset` probados en el SI local (sin duplicados, idempotente, recuperación con el MI caído); **`FirebaseConnectorAPI` devuelve el error real** (410/502/500; core, aprobado); campanita real en el layout de Tools (reemplaza una maqueta que hoy está en producción) y registro del navegador para push; el monitoreo del agente publica por el API. Procedimiento: `doc/notificaciones/instalacion-avisos.md`. Decisiones D-71 a D-85. **No probado** contra DEV ni Firebase real (sin VPN) | `feat/NTF-avisos-tools` |
+| AGENTE-AS-04 | Contrato Kuntur ↔ Quirqui: mediciones pedidas, resultados y avances de plan | 🟡 | **Esquema hecho; el job espera prerrequisitos.** `019-contrato-coach.sql`: `medicion_pedida`, `medicion_resultado`, `avance_plan`, con RLS y **sin texto libre (R3 por construcción)**; un control del test de estructura falla si alguien agrega un campo de texto. Estructura **126/126**, aislamiento **28/28**. El job necesita las tools de KPI y de tareas (análisis de impacto pendientes). Decisiones D-65 y D-66 | `feat/AGENTE-fase2-avisos` |
+| AGENTE-AS-03 | Avisos proactivos de Quirqui: token de máquina, monitoreo programado, campanita y envío | 🟡 | **En curso (rama `feat/AGENTE-fase2-avisos`).** Hecho: `018-avisos.sql` (credenciales de máquina con el secreto **cifrado** y la clave fuera de la base; usuario por **nick** en notificaciones, destinatarios y dispositivos porque el JWT de Dnato no trae `usr_id`; tipo `certificacion_por_vencer`) y `agente/credenciales.py` (pide el token a Dnato por `client_credentials`, cache hasta un minuto antes de vencer, CLI de alta/baja con el secreto por teclado). Probado contra un **Dnato simulado**: la emisión real espera la aprobación del análisis de impacto. Estructura **121/121**, aislamiento **27/27**, pytest **224 en verde**. Además, el **job de monitoreo** (`agente/monitoreo.py`): recorre las empresas con credencial, reutiliza las reglas del siguiente paso y encola avisos para los destinatarios configurados (sin destinatarios, silencio; una vez por día por destinatario); pytest **229 en verde**, repetible. Y la **campanita**: `GET /notificaciones` y `/notificaciones/leida` (cada usuario ve solo los suyos; los de rol `admin`, solo un administrador), contador en el botón del panel y lista de avisos sin leer; pytest **233 en verde**. Y el **encolado de los push** (una fila en `agente.envio` por dispositivo del destinatario, firmada por el agente y con su avatar como ícono: cierra la parte push de ID-06); pytest **234 en verde**. **Falta:** la app Siddhi que toma la cola y llama al `FirebaseConnectorAPI` (antes hay que corregir su `faultSequence` vacío, que es core). Decisiones D-53 a D-63 | `feat/AGENTE-fase2-avisos` (sobre #597) |
 | AGENTE-M-04b / AS-05 | Corrección del guardián de cifras (D-24) y tests de integración de los endpoints nuevos | 🟡 | **Completada, rama pusheada; PR pendiente.** El guardián ya no acepta un número del contexto por coincidencia: tiene que compartir alguna palabra de alrededor (D-51). Verificado **con las 239 piezas reales de ayuda y casos de uso cargadas**: el caso que fallaba ("7 órdenes vencidas" contra un "7" de un calendario de la ayuda) ahora se bloquea, y "cada 250 horas" sigue respaldando "250hs". Mutación detectada. Hurl `orquestador.hurl`: **18/18** con `/sugerencias`, pantalla en `/consulta` y los 422 de rutas inválidas. pytest **209 en verde** | `fix/AGENTE-M-04-guardian-contexto` (apilada sobre ID-05) |
 | AGENTE-ID-05 | Componente de avatar de los agentes, con estados | 🟡 | **Completada, rama pusheada; PR pendiente.** `views/avatar.php` define `TZAgente.avatar/estado`: usa `assets/agentes/<clave>/<estado>.webp` y, si no existe, un círculo con la inicial (D-47); animación por CSS que respeta la preferencia de menos movimiento. El panel de Quirqui lo usa y toma nombre y avatar de `GET /agentes` (D-49), con estados saludo / pensando / hablando / alerta / despedida. **Verificado:** pytest **208 en verde** (5 tests nuevos del componente, ejecutados en Node sobre la vista renderizada); mutación de la sanitización detectada; PHP y JS válidos. **Sin probar en la app real**, como AS-01. Decisiones D-47 a D-50. **Cubiertas de paso:** ID-04 (la animación por CSS está en este componente; el loop de video con Wan 2.2 era opcional y queda para cuando haya imágenes) e ID-07 (la configuración de nombre y avatar es la de M-01: la editamos nosotros en `011-agentes.sql`, igual para todos los clientes). **Pendiente de Fase 3:** ID-03 (generar las imágenes: necesita tu OK a la ficha de personajes y los colores) e ID-06 (avatar en las notificaciones: depende de AS-03, que espera DNATO-TOKEN) | `feat/AGENTE-ID-05-componente-avatar` (apilada sobre DT-01) |
 | AGENTE-DT-01 | Catálogo DocTest de los agentes (lo construido) | 🔴 | **Completada, rama pusheada; espera el gate del PM antes de derivar.** 9 casos `AGE-UC-001..009` en `borrador`, cada uno con sus dudas: qué se hace en la pantalla, datos propios respaldados, siguiente paso, "explica cómo, no hace", cifra sin respaldo bloqueada, búsqueda con fuente, calificar, Coach invisible para no administradores, aviso de medición. Módulo `AGE` propuesto en esquema, validador y `SCHEMA.md` (D-45). Kuntur y Faustino no se catalogaron todavía (D-46). `npm run validate:catalog`: **108 casos, 0 problemas** | `docs/AGENTE-DT-01-catalogo` (apilada sobre F4) |
@@ -106,42 +114,33 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 **Lo único que espera decisión del PM en DNATO** (no bloquea ALM): los 2 casos en borrador — DNATO-UC-020 (usuario externo) y DNATO-UC-024 (ABM de menúes). El triaje de hallazgos ya está hecho: 25 de los 35 tienen issue, y los 10 restantes tienen decisión escrita en su fila.
 
 
-**Agentes de IA (rama `develop-v3.5`) — frente redefinido el 2026-10-27.** E0–E4 están mergeados (PRs #498–#504) y son la
-base del motor. El plan nuevo está en `doc/v3/PROMPT_CC_AGENTES_TRAZALOG.md`. Orden:
+**Agentes de IA (rama `develop-v3.5`) — al 2026-10-28 08:10.**
 
-1. **Fase D:** ✅ mergeada (PR #571). Falta la aprobación de la **ficha de los personajes** (`doc/agente/identidad.md`) y los
-   colores de la marca.
-2. **Fase 1 — motor:** configuración por agente (M-01, **en PR #572**, `011` ya aplicado en la base local), lista blanca de
-   tools (M-02, **en PR #573**, apilado sobre M-01), corrida auditable (M-03, **rama apilada, PR pendiente** por el tope
-   de 2 PRs), guardián de cifras (M-04, **rama apilada, PR pendiente**), `web_buscar` con SearXNG (M-05, **rama apilada, PR pendiente**), conocimiento ampliado (M-06, **rama apilada, PR pendiente**) y multi-vertical (M-08, **rama apilada, PR pendiente**). **Fase 1 completa salvo M-07 (gate del PM).**
-   **Para aplicar `012` y `013` en la base local, en ese orden** (terminal local, parado en el repo, con el usuario
-   propietario de la base), uno por línea:
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/012-tools.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/013-corrida.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/014-tool-web.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/015-fuentes-producto.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/016-vertical.sql`
-   `psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f db/agente/017-propuestas.sql`
-   Sin `012` el orquestador local no responde (falla cerrado); sin `013` no registra las corridas; sin `014` no busca
-   en internet. Para la búsqueda, además, levantar SearXNG (`doc/agente/instalacion.md` §1-ter).
-3. **Fase 2 — Quirqui** (AS-01 y AS-02 **ramas apiladas, PR pendiente**; AS-03 bloqueada por DNATO-TOKEN, AS-04 por TAR y KPI; **prueba manual del panel pendiente**, ver `entorno-de-prueba.md`) y, en paralelo, **Fase 3 — avatares** (esta última con Sonnet).
-4. **Fase 4 — prerrequisitos de Kuntur:** los análisis de impacto de DNATO-TOKEN y del motor de KPIs están escritos y **esperan tu aprobación** (`doc/agente/analisis-impacto-*.md`). TAR lo llevan ustedes.
-5. **Fase 5 — Kuntur**, cuando estén los prerrequisitos de la Fase 4.
+**Integrado:** M-01 y M-02 (#572, #573).
+**Para revisar y mergear:** **#597** — M-03 a M-08, AS-01, AS-02, análisis de la Fase 4, catálogo DocTest, avatar y la corrección del guardián (un solo PR, un commit por tarea).
+**Para revisar, en un solo PR apilado sobre #597:** rama `feat/NTF-avisos-tools` — la fase 2 de avisos del agente (credenciales de máquina, monitoreo, filtro de industria en Faustino, contrato Kuntur ↔ Quirqui, `020` con RLS en la cola) **y el mecanismo único de avisos de Tools** (ADR-015, `ntf`). Las tablas de avisos del esquema `agente` quedan sin uso (D-84: el `DROP` lo decidís vos).
 
-**Derivaciones a otros frentes (prerrequisitos de Kuntur y de los avisos):**
-- **DNATO-TOKEN** (`traz-comp-dnato`): `client_credentials` con un cliente por empresa (ADR-A10). Bloquea los avisos
-  proactivos (AS-03) y los jobs de medición.
-- **TAR** (módulo de tareas): estabilizar (aislamiento, plan vs real, DDL), API de negocio + tools `tar_get_*`, estado
-  "propuesta". Spec: `doc/specs/TAR-spec-modulo-tareas.md` del checkout de deploy.
-- **KPI** (motor `kpi.*`): `kpi.historico`, `kpi.objetivos` + `kpi.desvios()`, tools `kpi_get_*`, definiciones por vertical
-  (doc de KPIs del PM, en aprobación).
+**Avisos de Tools — antes de desplegar en cualquier ambiente:**
+1. Rotar las credenciales expuestas (D-83 y tabla de riesgos): cuenta de servicio de Firebase del conector, clave privada VAPID, server key legacy de FCM, root de la base en el `.siddhi` de `traz-int`.
+2. Seguir `doc/notificaciones/instalacion-avisos.md` en orden; el paso 5.4 (sacar `NotificacionesAssetSynch` y poner el puente) va en el mismo momento.
+3. Probar en DEV con un token real de Firebase (yo no usé la cuenta de producción).
 
-**Lo que espera decisión del PM:**
-1. **Gate 2 (AGENTE-M-07):** los 6 bloques del prompt de Quirqui y la taxonomía de Faustino por vertical.
-2. **Dónde vive la base del agente** en demo/producción: el Postgres de DEV es 11.18 sin pgvector.
-3. Antes de los avisos (AS-03): corregir el `faultSequence` vacío del `FirebaseConnectorAPI` y rotar la clave de Firebase
-   commiteada (ver Bloqueos).
-4. **Revisión legal** (AGENTE-LEGAL-01), al final: aviso de medición y derechos sobre los avatares.
+**Para que la base local quede al día** (terminal local, parado en el repo, con el usuario propietario), aplicar en orden lo que vaya entrando a `develop-v3.5`, del `012` al `020`:
+`for f in db/agente/01[2-9]-*.sql db/agente/020-*.sql; do case $f in *rollback*) ;; *) psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f $f || break;; esac; done`
+
+**Lo que espera decisión del PM, por lo que destraba:**
+1. **Aprobar los análisis de impacto** (`doc/agente/analisis-impacto-token-maquina.md` y `analisis-impacto-kpi-objetivos.md`). Destraban los tokens de máquina reales (sin eso el monitoreo no corre), las tools de KPI, el job de mediciones y Kuntur.
+2. **Revisar `doc/agente/decisiones-para-revisar.md`** (D-01 a D-66).
+3. **Gate 2 (M-07):** los 6 bloques del prompt de Quirqui y la taxonomía de Faustino por industria.
+4. **Ficha de personajes y colores de la marca:** destraba la generación de los avatares (ID-03).
+5. **Validar los 9 casos de uso** (`doctest/catalogo/age/`): destraba ayudas y tests derivados (DT-02).
+6. **Dónde vive la base del agente** en demo y producción (el Postgres de DEV es 11 sin pgvector).
+7. **Antes de los push reales:** corregir el `faultSequence` vacío del `FirebaseConnectorAPI` y rotar la clave de Firebase commiteada (ambos core).
+8. **Revisión legal** del aviso de medición y de los avatares, antes de un cliente real.
+
+**Pendiente de aprobación, nuevo:** el diseño del mecanismo de avisos de Tools (`doc/notificaciones/diseno-avisos-tools.md`). Mientras no se apruebe, la parte de avisos del agente queda congelada: lo que se construya va sobre `ntf`, no sobre el esquema `agente`.
+
+**Lo próximo que hace Claude Code sin esperar:** terminar la app Siddhi del envío push (`_backend/siddhi/AgenteAvisosPush.siddhi`, **borrador**: probada contra el SI local, manda y marca, pero reenvía los pendientes mientras no los marca; falta el estado `enviando`, D-68) y cerrar la fase con su PR. Cuando se aprueben los análisis: DNATO-TOKEN y el motor de KPIs.
 
 ### Decisiones recientes (últimas 5)
 

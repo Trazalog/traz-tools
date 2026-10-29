@@ -49,6 +49,9 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 015 | `015-fuentes-producto.sql` | Tipos de fuente `ayuda` y `caso_uso`, e índice GIN sobre `chunk.metadata` (encontrar el caso de uso de una pantalla por su controlador) |
 | 016 | `016-vertical.sql` | Multi-vertical (ADR-A11): `vertical` en `chunk` y `tema`, y la tabla `perfil_empresa` con la industria de cada empresa (RLS, el runtime solo lee) |
 | 017 | `017-propuestas.sql` | `propuesta` — el siguiente paso que Quirqui le propuso a cada usuario y qué hizo con él (vista o descartada), con RLS (AGENTE-AS-02) |
+| 018 | `018-avisos.sql` | Avisos proactivos (AS-03): `credencial_empresa` (cliente de máquina de cada empresa, secreto **cifrado** con pgcrypto, la clave fuera de la base), `empresas_con_credencial()`, el usuario por **nick** en notificaciones, destinatarios y dispositivos, y el tipo `certificacion_por_vencer`. **Re-aplicar `008` o `009` sueltos después de `018` saca el tipo nuevo: volver a aplicar `018`** |
+| 019 | `019-contrato-coach.sql` | Contrato Kuntur ↔ Quirqui (AS-04): `medicion_pedida`, `medicion_resultado`, `avance_plan`, con RLS. **R3 por construcción:** sin texto libre donde pueda viajar lo conversado (un control del test de estructura lo vigila). Solo el esquema: el job espera las tools de KPI y de tareas |
+| 020 | `020-cola-envio.sql` | **Hallazgo de seguridad:** `dispositivo` (tokens de push) y `envio` no tenían RLS desde `007`. `dispositivo` pasa a tener RLS por empresa; `envio` es la cola global del transporte, así que el orquestador **solo inserta** y un rol nuevo, `agente_envio`, es el único que la lee y marca el resultado (el usuario del Streaming Integrator tiene que tener ese rol y ningún otro) |
 
 Aplicación completa, desde el directorio del repo:
 

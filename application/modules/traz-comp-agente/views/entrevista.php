@@ -24,6 +24,18 @@
       <select id="ag-experto" class="form-control"></select>
     </div>
 
+    <!-- La agenda por industria (ADR-A11): a un experto de oil & gas no se le
+         pregunta por chancadoras. "Todas" no filtra. -->
+    <div class="form-group" style="max-width:420px">
+      <label for="ag-vertical">Industria</label>
+      <select id="ag-vertical" class="form-control">
+        <option value="">Todas</option>
+        <option value="mineria">Minería</option>
+        <option value="oil_gas">Oil &amp; gas</option>
+        <option value="electricidad">Electricidad</option>
+      </select>
+    </div>
+
     <p class="ag-ayuda">
       Los temas están ordenados por lo que más falta hoy: pesa la taxonomía,
       pero sobre todo <strong>qué equipos generan más órdenes de trabajo</strong>
@@ -112,7 +124,7 @@
     }
 
     function cargarTemas() {
-        $.get(BASE + 'agenda', function (r) {
+        $.get(BASE + 'agenda', { vertical: $('#ag-vertical').val() }, function (r) {
             var $t = $('#ag-temas').empty();
             (r.temas || []).forEach(function (t) {
                 var area = { man: 'Mantenimiento', alm: 'Almacenes', general: 'General' }[t.modulo] || t.modulo;
@@ -125,6 +137,8 @@
             });
         });
     }
+
+    $('#ag-vertical').on('change', cargarTemas);
 
     $('#ag-temas').on('click', '.ag-tema', function () {
         var tema = $(this).data('tema');

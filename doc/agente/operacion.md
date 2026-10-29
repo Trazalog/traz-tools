@@ -65,6 +65,7 @@ La lista completa con explicaciones está en `.env.example`. Estas son las que m
 | `AGENTE_TEMPERATURA` | Cuánta variación en las respuestas | 0.2 por defecto. Para un agente técnico, bajo es mejor |
 | `AGENTE_PROMPTS_DIR` | Carpeta con un prompt por agente | Casi nunca: por defecto es `prompts/` del repo |
 | `AGENTE_WEB_URL` | URL de SearXNG para la tool `web_buscar` | Vacía = sin búsqueda en internet. Para levantarlo, ver `instalacion.md` §1-ter |
+| `AGENTE_DNATO_TOKEN_URL` · `AGENTE_CLAVE_CREDENCIALES` | Token de máquina de los jobs (ADR-A10): el endpoint de Dnato y la clave con que se cifran los secretos | Sin las dos, los jobs no corren. **La clave no se cambia** sin volver a cargar las credenciales: con otra clave no se pueden descifrar |
 | `AGENTE_SUGERENCIAS_MAX` · `AGENTE_SUGERENCIA_SILENCIO_DIAS` · `AGENTE_SUGERENCIA_DIAS_CERTIFICACION` | El siguiente paso de Quirqui: cuántas propuestas (3), cuántos días no repetir una descartada (7), con cuánta anticipación avisar una certificación (30) | Valores por defecto: ajustarlos con lo que digan los usuarios |
 
 ### Los modelos: cuáles funcionan y cuáles cuestan
@@ -146,6 +147,32 @@ Son el conocimiento **del producto**: con eso Quirqui explica qué se hace en ca
 - **De la carpeta del catálogo solo se toman los casos de uso.** Los relevamientos y el esquema que conviven ahí son internos (tienen hallazgos y bugs) y no tienen que llegarle a un cliente.
 - **Volver a correrlo reemplaza, no duplica.** Conviene correrlo cada vez que se regenera el sitio de ayudas o se valida un caso nuevo.
 - Con el material de hoy son unos 240 fragmentos. El costo de vectorizarlos es de centavos de dólar.
+
+### Avisos proactivos: el monitoreo operativo (AGENTE-AS-03)
+
+Un job revisa cada empresa con credencial de máquina (lotes vencidos o críticos, stock bajo el punto de pedido, certificaciones por vencer) y **publica los avisos en Tools** (ADR-015: `POST /avisos` de `toolsNTFAPI`, firmados por Quirqui). Les llegan a los **suscriptos** a cada tipo de aviso (`ntf.suscripcion` en la base de Tools); sin suscriptos, no le llega a nadie. El mismo aviso no se repite en el día. La campanita y el push son los de Tools (ver [`doc/notificaciones/instalacion-avisos.md`](../notificaciones/instalacion-avisos.md)).
+
+**Requisitos:** `018` aplicado; `AGENTE_DNATO_TOKEN_URL` y `AGENTE_CLAVE_CREDENCIALES` en el entorno; la credencial de cada empresa cargada (`python -m agente.credenciales alta --empresa <id> --client-id <id>`, pide el secreto por teclado); `AGENTE_AVISOS_URL` (el `POST /avisos` de `toolsNTFAPI` en el gateway; vacía, no se publica nada y los hallazgos quedan en la corrida); y los suscriptos en `ntf.suscripcion` de la base de Tools. Por ejemplo, en la **terminal con `psql` a la base de Tools**:
+
+```
+psql -h <host-base> -U <usuario-dueño> -d trazalog_tools -c "INSERT INTO ntf.suscripcion (empr_id, tipo, usuario) VALUES (191, 'material_por_vencer', 'jefe.deposito')"
+```
+
+Los tipos que publica el monitoreo: `material_por_vencer`, `stock_critico`, `certificacion_por_vencer` (`*` = todos). **Hoy Dnato todavía no emite tokens de máquina** (espera la aprobación del análisis de impacto): hasta entonces el job termina con `"error"` en cada empresa, sin hacer nada.
+
+Correrlo a mano (**terminal del servidor del orquestador**, parado en el repo):
+
+```
+.venv-agente/bin/python -m agente.monitoreo
+```
+
+Programado (crontab del usuario del orquestador, una vez por hora en horario laboral):
+
+```
+0 7-19 * * 1-6 cd /ruta/a/traz-tools && .venv-agente/bin/python -m agente.monitoreo >> /var/log/agente-monitoreo.log 2>&1
+```
+
+Cada empresa queda como una corrida (`disparador = 'evento_operativo'`, canal `scheduler`), con el resumen en `controles`.
 
 ### La industria de cada empresa (ADR-A11)
 

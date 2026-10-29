@@ -89,3 +89,32 @@ def test_las_verticales_del_codigo_son_las_de_la_base():
     sql = open("db/agente/016-vertical.sql", encoding="utf-8").read()
     for v in rag.VERTICALES:
         assert f"'{v}'" in sql
+
+
+async def test_la_agenda_de_faustino_filtra_por_industria(con_admin):
+    """/entrevista/agenda?vertical=...: una industria inventada es 400; una
+    valida trae lo de esa industria y lo general, nunca lo de otra."""
+    import base64, json as _json
+    from httpx import ASGITransport, AsyncClient
+    import agente.api as mod
+
+    def jwt():
+        b = lambda d: base64.urlsafe_b64encode(_json.dumps(d).encode()).decode().rstrip("=")
+        return f"Bearer {b({'alg': 'none'})}.{b({'empr_id': 1, 'sub': 'experto'})}.x"
+
+    async with con_admin.cursor() as cur:
+        for nombre, vertical in (("Tema prueba oil", "oil_gas"), ("Tema prueba mina", "mineria")):
+            await cur.execute(
+                # Otros tests del entrevistador recalculan prioridades y estados:
+                # se fuerzan, para no depender del orden en que corren.
+                "INSERT INTO agente.tema (nombre, modulo, prioridad, vertical) VALUES (%s, 'man', 999, %s) "
+                "ON CONFLICT (nombre) DO UPDATE SET prioridad = 999, estado = 'pendiente', "
+                "vertical = EXCLUDED.vertical", (nombre, vertical))
+    await con_admin.commit()
+
+    async with AsyncClient(transport=ASGITransport(app=mod.app), base_url="http://t") as api:
+        h = {"Authorization": jwt()}
+        assert (await api.get("/entrevista/agenda?vertical=petroquimica", headers=h)).status_code == 400
+        r = await api.get("/entrevista/agenda?vertical=oil_gas&limite=50", headers=h)
+    nombres = {t["nombre"] for t in r.json()["temas"]}
+    assert "Tema prueba oil" in nombres and "Tema prueba mina" not in nombres

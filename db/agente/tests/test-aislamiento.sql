@@ -119,6 +119,20 @@ SET LOCAL agente.empr_id = :'EMPRESA_B';
 INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
 VALUES (:EMPRESA_B, 'beto', 'stock_bajo:1', 'stock_bajo', 'Reponer filtro de B', 'stock de B');
 
+-- Contrato Kuntur <-> Quirqui (019).
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.medicion_pedida (empr_id, indicador, alcance, frecuencia, hasta)
+VALUES (:EMPRESA_A, 'medicion_de_a', 'actividad', 'semanal', current_date + 30);
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.medicion_pedida (empr_id, indicador, alcance, alcance_id, frecuencia, hasta)
+VALUES (:EMPRESA_B, 'medicion_de_b', 'persona', 'tecnico-b', 'semanal', current_date + 30);
+
+-- Dispositivos de push (020).
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.dispositivo (empr_id, usuario, token) VALUES (:EMPRESA_A, 'ana', 'TOKEN-PUSH-DE-A');
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.dispositivo (empr_id, usuario, token) VALUES (:EMPRESA_B, 'beto', 'TOKEN-PUSH-DE-B');
+
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
 
@@ -200,6 +214,18 @@ INSERT INTO _resultado
 SELECT 'v_feedback_negativo: con contexto A, no muestra el de B aunque no se filtre',
        NOT EXISTS (SELECT 1 FROM agente.v_feedback_negativo WHERE empr_id = 900002),
        'la vista corre con los permisos de quien consulta (security_invoker)';
+
+INSERT INTO _resultado
+SELECT 'medicion_pedida: con contexto A, las de B (incluida la de una persona) son invisibles',
+       NOT EXISTS (SELECT 1 FROM agente.medicion_pedida WHERE indicador = 'medicion_de_b')
+       AND EXISTS (SELECT 1 FROM agente.medicion_pedida WHERE indicador = 'medicion_de_a'),
+       '019';
+
+INSERT INTO _resultado
+SELECT 'dispositivo: con contexto A, los tokens de push de B son invisibles',
+       NOT EXISTS (SELECT 1 FROM agente.dispositivo WHERE token = 'TOKEN-PUSH-DE-B')
+       AND EXISTS (SELECT 1 FROM agente.dispositivo WHERE token = 'TOKEN-PUSH-DE-A'),
+       '020';
 
 INSERT INTO _resultado
 SELECT 'propuesta: con contexto A, las de B son invisibles',

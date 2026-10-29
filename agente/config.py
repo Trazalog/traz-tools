@@ -81,6 +81,19 @@ class Config:
     web_resultados: int = field(default_factory=lambda: _env_int("AGENTE_WEB_RESULTADOS", 5))
     web_timeout: int = field(default_factory=lambda: _env_int("AGENTE_WEB_TIMEOUT", 20))
 
+    # --- Avisos (ADR-015) ----------------------------------------------------
+    # POST /avisos de toolsNTFAPI en el gateway. Vacia = los avisos no se
+    # publican (el monitoreo los deja en la corrida).
+    avisos_url: str = field(default_factory=lambda: _env("AGENTE_AVISOS_URL", ""))
+
+    # --- Token de maquina (ADR-A10, AGENTE-AS-03) ----------------------------
+    # Endpoint de token de Dnato (client_credentials). Vacio = los jobs no
+    # pueden pedir tokens y no corren.
+    dnato_token_url: str = field(default_factory=lambda: _env("AGENTE_DNATO_TOKEN_URL", ""))
+    # Clave con la que se cifran los secretos de agente.credencial_empresa. NO
+    # va en la base: sin ella, lo que hay en la tabla no sirve.
+    clave_credenciales: str = field(default_factory=lambda: _env("AGENTE_CLAVE_CREDENCIALES", ""))
+
     # --- Siguiente paso (AGENTE-AS-02) ---------------------------------------
     # Valores por defecto configurables: el PM no los definio.
     sugerencias_max: int = field(default_factory=lambda: _env_int("AGENTE_SUGERENCIAS_MAX", 3))

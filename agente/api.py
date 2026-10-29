@@ -9,6 +9,9 @@ Endpoints:
     POST /feedback         calificacion de una respuesta (pulgar arriba/abajo)
     GET  /admin/feedback   feedback negativo agrupado, para el ciclo de mejora
 
+Los avisos (la campanita y el push) ya no estan aca: son los de Tools
+(ADR-015, esquema ntf); el monitoreo publica con agente/avisos.py.
+
 El empr_id NO es un parametro de entrada: se deriva del JWT que manda el
 frontend. Aceptarlo por body seria darle a cualquiera la llave de los datos de
 cualquier empresa.
