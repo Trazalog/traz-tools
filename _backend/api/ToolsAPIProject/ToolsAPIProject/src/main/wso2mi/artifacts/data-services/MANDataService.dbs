@@ -1319,7 +1319,7 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="getOtHerramientasUsadasMan" useConfig="AssetPlannerDataSource">
-      <sql>SELECT u.herrId, u.sapa_id, u.activa, v.origen FROM tbl_otherramientasusadas u LEFT JOIN tbl_otvales v ON v.sapa_id = u.sapa_id AND v.id_empresa = u.id_empresa WHERE u.otId = :id_orden AND u.id_empresa = :id_empresa ORDER BY u.otherrusada_id</sql>
+      <sql>SELECT u.herrId, u.sapa_id, CAST(u.activa AS UNSIGNED) AS activa, v.origen FROM tbl_otherramientasusadas u LEFT JOIN tbl_otvales v ON v.sapa_id = u.sapa_id AND v.id_empresa = u.id_empresa WHERE u.otId = :id_orden AND u.id_empresa = :id_empresa ORDER BY u.otherrusada_id</sql>
       <result outputType="json">{"herramientas":{"herramienta":[{"herrId":"$herrId","sapa_id":"$sapa_id","activa":"$activa","origen":"$origen"}]}}</result>
       <param name="id_orden" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
