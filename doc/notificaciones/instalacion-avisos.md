@@ -199,9 +199,46 @@ Verificar con un usuario cualquiera: aparece la campanita; al abrirla dice "No t
 
 ## 7. Agentes
 
+### 7.1 Variable del orquestador
+
 **Dónde:** el entorno del orquestador (`.env` o el servicio que lo arranca).
 
-`AGENTE_AVISOS_URL` = el recurso `POST /avisos` de `toolsNTFAPI` en el gateway (paso 3). Vacía, el monitoreo no publica y deja los hallazgos en la corrida. Para que un aviso de un tipo le llegue a alguien, ese usuario tiene que estar suscripto (`ntf.suscripcion`, por ahora con un `INSERT` a mano, ver D-84).
+`AGENTE_AVISOS_URL` = el recurso `POST /avisos` de `toolsNTFAPI` en el gateway (paso 3). Vacía, el monitoreo no publica y deja los hallazgos en la corrida.
+
+### 7.2 Quién recibe los avisos de los agentes
+
+**Dónde:** terminal con `psql` a la base de Tools.
+
+Un aviso de un tipo le llega solo a los usuarios suscriptos a ese tipo (o a `'*'`). Por ahora se cargan a mano:
+
+```bash
+psql -h <host-base> -U <usuario-dueño> -d trazalog_tools \
+  -c "insert into ntf.suscripcion (empr_id, tipo, usuario) values (<empr_id>, '<tipo o *>', '<nick>') on conflict do nothing"
+```
+
+Los tipos que publica Quirqui hoy (`AVISO` en `agente/monitoreo.py`): `stock_critico`, `material_por_vencer`, `certificacion_por_vencer` y, para cualquier otro hallazgo, `hallazgo`.
+
+### 7.3 Borrar la cola vieja del agente
+
+**Dónde:** terminal con `psql` a la base **del agente** (la de pgvector, no la de Tools), parado en la raíz del repo `traz-tools`.
+
+Solo si esa base tiene aplicados los scripts `007`…`020`. `021` borra `agente.notificacion`, `agente.envio`, `agente.dispositivo` y `agente.destinatario_alerta`, que desde ADR-015 no usa nada. **Lo que tengan se pierde**: si en `destinatario_alerta` hay destinatarios que interese conservar, cargarlos antes como suscripciones (7.2). Para verlos:
+
+```bash
+psql -h <host-agente> -U <usuario-dueño> -d <base-agente> \
+  -c "select empr_id, tipo_alerta, usuario, usr_id from agente.destinatario_alerta where activo"
+```
+
+Después:
+
+```bash
+psql -h <host-agente> -U <usuario-dueño> -d <base-agente> -v ON_ERROR_STOP=1 \
+  -f db/agente/021-drop-avisos-agente.sql
+psql -h <host-agente> -U <usuario-dueño> -d <base-agente> -v ON_ERROR_STOP=1 \
+  -f db/agente/tests/test-estructura.sql
+```
+
+El test tiene que terminar con `fallaron = 0`. Si el script avisa que `agente_envio` no se pudo borrar, es porque ese rol sigue asignado a algún usuario de otra base: borrarlo a mano cuando ya no haga falta.
 
 ---
 

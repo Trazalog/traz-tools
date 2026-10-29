@@ -52,12 +52,15 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 018 | `018-avisos.sql` | Avisos proactivos (AS-03): `credencial_empresa` (cliente de máquina de cada empresa, secreto **cifrado** con pgcrypto, la clave fuera de la base), `empresas_con_credencial()`, el usuario por **nick** en notificaciones, destinatarios y dispositivos, y el tipo `certificacion_por_vencer`. **Re-aplicar `008` o `009` sueltos después de `018` saca el tipo nuevo: volver a aplicar `018`** |
 | 019 | `019-contrato-coach.sql` | Contrato Kuntur ↔ Quirqui (AS-04): `medicion_pedida`, `medicion_resultado`, `avance_plan`, con RLS. **R3 por construcción:** sin texto libre donde pueda viajar lo conversado (un control del test de estructura lo vigila). Solo el esquema: el job espera las tools de KPI y de tareas |
 | 020 | `020-cola-envio.sql` | **Hallazgo de seguridad:** `dispositivo` (tokens de push) y `envio` no tenían RLS desde `007`. `dispositivo` pasa a tener RLS por empresa; `envio` es la cola global del transporte, así que el orquestador **solo inserta** y un rol nuevo, `agente_envio`, es el único que la lee y marca el resultado (el usuario del Streaming Integrator tiene que tener ese rol y ningún otro) |
+| 021 | `021-drop-avisos-agente.sql` | Borra la cola de avisos propia del agente (`notificacion`, `envio`, `dispositivo`, `destinatario_alerta`, sus funciones y el rol `agente_envio`): desde ADR-015 los agentes publican en `ntf` de Tools. **Destructivo**: lo que haya en esas tablas se pierde. `credencial_empresa` (018) queda. El rollback las recrea vacías |
 
 Aplicación completa, desde el directorio del repo:
 
 ```
-for f in db/agente/0*.sql; do echo "--- $f"; psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f "$f" || break; done
+for f in $(ls db/agente/0*.sql | grep -v rollback); do echo "--- $f"; psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f "$f" || break; done
 ```
+
+**Ojo con el `grep -v rollback`:** sin él, el patrón `0*.sql` también toma los `*.rollback.sql`, y como cada rollback se ordena antes que su script, sobre una base con datos borraría la memoria, las corridas y el conocimiento antes de recrear las tablas vacías.
 
 ### Verificación
 
@@ -158,20 +161,9 @@ Además, `envio.envio_id` es la columna de polling del CDC: monótona creciente,
 
 En AssetPlanner el flag es binario (`procesado` 0/1) y el Siddhi lo pone en 1 con cualquier respuesta 2xx. Como el conector Firebase **devuelve 202 aunque el envío falle** (hallazgo verificado, R4 del análisis de E0), un fallo se registra como éxito y la notificación se pierde en silencio. Por eso `envio.estado` tiene cuatro valores (`pendiente`, `enviado`, `fallido`, `descartado`), lleva `intentos` y `ultimo_error`, y `fec_envio` se escribe de verdad — a diferencia del `fec_realizado` de AssetPlanner, que está declarado y nunca se usa.
 
-### Por qué los destinatarios se configuran en el agente y no se heredan
+### Destinatarios de los avisos (008, borrado en 021)
 
-Decisión del PM del 2026-09-02, después de mirar qué roles existen realmente:
-
-- **Dnato**, que es la identidad de Tools, tiene solo `admin` y `user`, y sin empresa. Le llegaría todo al administrador sin importar si es quien decide sobre mantenimiento.
-- **AssetPlanner** (`assetv2.sisgroups`) sí tiene roles ricos y por empresa — Administrador, Mantenedor, Planificador, Supervisor de Taller —, pero tiene login propio sin Dnato: no existe un mapeo usuario de Tools ↔ usuario de AssetPlanner, y su esquema está congelado y va a migrar a `traz-tools-man`.
-
-Así que `agente.destinatario_alerta` guarda, por empresa y tipo de alerta, qué usuarios de Tools la reciben, con una `etiqueta` legible ("Jefe de mantenimiento") que sirve para auditar por qué le llegó. La carga inicial de cada cliente se puede sembrar mirando sus roles de AssetPlanner, pero eso es un dato, no una dependencia.
-
-Los tipos cubren **las dos áreas del agente**: mantenimiento (`mtbf_deterioro`, `ot_critica_atrasada`) y almacenes (`stock_critico`, `material_por_vencer`, `pedido_demorado`), más los transversales. Quien recibe un aviso de MTBF en deterioro no es necesariamente quien tiene que enterarse de que un material está por vencer.
-
-`agente.destinatarios_de(empr_id, tipo)` resuelve la lista, sumando los configurados con `'*'`. Si no hay nadie configurado devuelve vacío: el hallazgo **se registra igual** en la memoria del cliente, pero no se notifica — silencio, en vez de un aviso a alguien al azar.
-
-El `rol_destino` de `agente.notificacion` queda como dato informativo (se copia de la etiqueta), no como mecanismo de resolución.
+`008` guardaba en `agente.destinatario_alerta` quién recibía cada tipo de aviso, por empresa (decisión del PM del 2026-09-02: Dnato solo tiene `admin` y `user`, sin empresa, y los roles ricos de AssetPlanner no están mapeados a usuarios de Tools). Desde ADR-015 eso lo resuelve `ntf.suscripcion`, con el mismo criterio: si nadie está suscripto a un tipo, el aviso no le llega a nadie en vez de llegarle a alguien al azar. `021` borró la tabla.
 
 ### Por qué la configuración de los agentes no lleva `empr_id` (011)
 

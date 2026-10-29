@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..020 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..021 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -45,7 +45,7 @@ SELECT 'rol ' || r,
 FROM unnest(ARRAY['agente_app', 'agente_curador']) AS r;
 
 -- ---------------------------------------------------------------------------
--- Tablas de 002 a 007
+-- Tablas de 002 a 006
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
 SELECT 'tabla agente.' || t,
@@ -56,8 +56,7 @@ SELECT 'tabla agente.' || t,
 FROM unnest(ARRAY[
     'schema_version', 'fuente', 'chunk', 'memoria', 'candidato',
     'interaccion', 'feedback', 'tema', 'experto', 'sesion_entrevista',
-    'hecho', 'validacion_cruzada', 'dispositivo', 'notificacion', 'envio',
-    'destinatario_alerta'
+    'hecho', 'validacion_cruzada'
 ]) AS t;
 
 -- ---------------------------------------------------------------------------
@@ -81,8 +80,7 @@ SELECT 'funcion agente.' || f,
            WHERE n.nspname = 'agente' AND p.proname = f
        ), ''
 FROM unnest(ARRAY[
-    'crear_particion_empresa', 'expandir_envios', 'tg_set_fec_mod', 'tg_validacion_no_autovalida',
-    'destinatarios_de'
+    'crear_particion_empresa', 'tg_set_fec_mod', 'tg_validacion_no_autovalida'
 ]) AS f;
 
 -- ---------------------------------------------------------------------------
@@ -131,7 +129,7 @@ SELECT 'RLS activo en agente.' || t,
            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
            WHERE n.nspname = 'agente' AND c.relname = t
        ), false), 'aislamiento multi-tenant'
-FROM unnest(ARRAY['memoria', 'notificacion', 'destinatario_alerta']) AS t;
+FROM unnest(ARRAY['memoria']) AS t;
 
 INSERT INTO _resultado
 SELECT 'policy de aislamiento en agente.' || t,
@@ -139,7 +137,7 @@ SELECT 'policy de aislamiento en agente.' || t,
            SELECT 1 FROM pg_policies
            WHERE schemaname = 'agente' AND tablename = t
        ), ''
-FROM unnest(ARRAY['memoria', 'notificacion', 'destinatario_alerta']) AS t;
+FROM unnest(ARRAY['memoria']) AS t;
 
 -- ---------------------------------------------------------------------------
 -- ADR-A4: agente_app NO puede escribir el conocimiento compartido
@@ -177,17 +175,6 @@ SELECT 'indice HNSW en agente.' || t,
 FROM unnest(ARRAY['chunk', 'candidato', 'hecho']) AS t;
 
 -- ---------------------------------------------------------------------------
--- Deduplicacion de notificaciones
--- ---------------------------------------------------------------------------
-INSERT INTO _resultado
-SELECT 'indice unico de dedupe en agente.notificacion',
-       EXISTS (
-           SELECT 1 FROM pg_indexes
-           WHERE schemaname = 'agente' AND tablename = 'notificacion'
-             AND indexname = 'notificacion_dedupe_uk'
-       ), 'evita repetir el mismo hallazgo en cada corrida';
-
--- ---------------------------------------------------------------------------
 -- Alcance: el agente cubre mantenimiento Y almacenes (009)
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -197,22 +184,6 @@ SELECT 'agente.' || t || ' tiene columna modulo',
            WHERE table_schema = 'agente' AND table_name = t AND column_name = 'modulo'
        ), 'mantenimiento / almacenes / general'
 FROM unnest(ARRAY['chunk', 'candidato', 'hecho', 'tema']) AS t;
-
-INSERT INTO _resultado
-SELECT 'notificacion acepta el tipo de alerta ' || tipo,
-       pg_get_constraintdef(c.oid) LIKE '%' || tipo || '%',
-       'alertas de almacenes'
-FROM unnest(ARRAY['stock_critico', 'material_por_vencer', 'pedido_demorado']) AS tipo,
-     pg_constraint c
-WHERE c.conname = 'notificacion_tipo_ck';
-
-INSERT INTO _resultado
-SELECT 'destinatario_alerta acepta el tipo ' || tipo,
-       pg_get_constraintdef(c.oid) LIKE '%' || tipo || '%',
-       'destinatarios de alertas de almacenes'
-FROM unnest(ARRAY['stock_critico', 'material_por_vencer', 'pedido_demorado']) AS tipo,
-     pg_constraint c
-WHERE c.conname = 'destinatario_tipo_ck';
 
 -- ---------------------------------------------------------------------------
 -- 011 - configuracion de los agentes (ADR-A7)
@@ -421,18 +392,6 @@ SELECT 'el secreto se guarda cifrado (bytea)',
                AND data_type = 'bytea'),
        'pgp_sym_encrypt';
 
-INSERT INTO _resultado
-SELECT 'agente.' || t || ' identifica al usuario por nick',
-       EXISTS (SELECT 1 FROM information_schema.columns
-               WHERE table_schema = 'agente' AND table_name = t AND column_name = 'usuario'),
-       'el JWT de Dnato no trae usr_id'
-FROM unnest(ARRAY['notificacion', 'destinatario_alerta', 'dispositivo']) AS t;
-
-INSERT INTO _resultado
-SELECT 'notificacion acepta certificacion_por_vencer',
-       pg_get_constraintdef(c.oid) LIKE '%certificacion_por_vencer%', 'Pañol'
-FROM pg_constraint c WHERE c.conname = 'notificacion_tipo_ck';
-
 -- ---------------------------------------------------------------------------
 -- 019 - contrato Kuntur <-> Quirqui
 -- ---------------------------------------------------------------------------
@@ -459,29 +418,22 @@ WHERE c.table_schema = 'agente' AND c.data_type = 'text'
   AND c.table_name IN ('medicion_pedida', 'medicion_resultado', 'avance_plan');
 
 -- ---------------------------------------------------------------------------
--- 020 - cola de envio
+-- 021 - los avisos del agente van por ntf (ADR-015): la cola propia no existe
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
-SELECT 'dispositivo con RLS forzado (tokens de push de cada empresa)',
-       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
-                 WHERE oid = 'agente.dispositivo'::regclass), false), '020';
+SELECT 'agente.' || t || ' ya no existe',
+       to_regclass('agente.' || t) IS NULL, 'ADR-015: los avisos van por ntf'
+FROM unnest(ARRAY['notificacion', 'envio', 'dispositivo', 'destinatario_alerta']) AS t;
 
 INSERT INTO _resultado
-SELECT 'el orquestador encola pero no lee la cola de envio',
-       has_table_privilege('agente_app', 'agente.envio', 'INSERT')
-       AND NOT has_table_privilege('agente_app', 'agente.envio', 'SELECT')
-       AND NOT has_table_privilege('agente_app', 'agente.envio', 'UPDATE'),
-       'la cola es global: la lee solo el transporte';
+SELECT 'el rol agente_envio ya no tiene acceso al esquema',
+       NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'agente_envio')
+       OR NOT has_schema_privilege('agente_envio', 'agente', 'USAGE'),
+       '021';
 
 INSERT INTO _resultado
-SELECT 'el transporte (agente_envio) solo lee y marca el resultado',
-       has_table_privilege('agente_envio', 'agente.envio', 'SELECT')
-       AND has_column_privilege('agente_envio', 'agente.envio', 'estado', 'UPDATE')
-       AND NOT has_column_privilege('agente_envio', 'agente.envio', 'payload', 'UPDATE')
-       AND NOT has_table_privilege('agente_envio', 'agente.envio', 'INSERT')
-       AND NOT has_table_privilege('agente_envio', 'agente.envio', 'DELETE')
-       AND NOT has_table_privilege('agente_envio', 'agente.notificacion', 'SELECT'),
-       '020';
+SELECT 'credencial_empresa sigue (la usa el monitoreo)',
+       to_regclass('agente.credencial_empresa') IS NOT NULL, '018 no se borra';
 
 -- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
@@ -495,7 +447,7 @@ FROM unnest(ARRAY[
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
-    '020-cola-envio'
+    '020-cola-envio', '021-drop-avisos-agente'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

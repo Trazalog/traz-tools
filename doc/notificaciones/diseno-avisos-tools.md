@@ -149,7 +149,7 @@ Lo de `develop-v3.5` (esquema `agente`) **se reemplaza por esto**:
 | `GET /notificaciones` del orquestador | `GET /avisos/mios` del API de Tools |
 | Borrador `AgenteAvisosPush.siddhi` | `AvisosPush` sobre `ntf` |
 
-El agente sigue usando **solo PostgreSQL**: su base para lo suyo (conocimiento, corridas) y el API de Tools —que escribe en el PostgreSQL de Tools— para los avisos. Las tablas de avisos del esquema `agente` se retiran cuando esto esté en marcha.
+El agente sigue usando **solo PostgreSQL**: su base para lo suyo (conocimiento, corridas) y el API de Tools —que escribe en el PostgreSQL de Tools— para los avisos. Las tablas de avisos del esquema `agente` se borraron con `db/agente/021-drop-avisos-agente.sql` (D-84).
 
 ## 9. Qué lo consume hoy y qué le pasa (análisis de impacto)
 

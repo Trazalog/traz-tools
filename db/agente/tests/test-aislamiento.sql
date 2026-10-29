@@ -2,7 +2,7 @@
 -- Test de aislamiento multi-tenant — el que no puede fallar nunca
 -- =============================================================================
 -- Verifica que una empresa NO puede leer ni escribir la memoria, las
--- notificaciones, las corridas del agente (interaccion, tool_llamada) ni el
+-- corridas del agente (interaccion, tool_llamada) ni el
 -- feedback de otra, ni siquiera con un SELECT sin WHERE.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-aislamiento.sql
@@ -39,7 +39,7 @@ BEGIN;
 -- ---------------------------------------------------------------------------
 -- El test corre como un rol con los mismos permisos que el orquestador. El
 -- propietario del esquema se saltea RLS salvo que la tabla tenga FORCE, que es
--- por lo que 003 y 007 lo activan. Igual se verifica explicitamente.
+-- por lo que 003 lo activa. Igual se verifica explicitamente.
 -- ---------------------------------------------------------------------------
 DO $$
 BEGIN
@@ -62,27 +62,9 @@ SET LOCAL agente.empr_id = :'EMPRESA_A';
 INSERT INTO agente.memoria (empr_id, contenido, origen)
 VALUES (:EMPRESA_A, 'SECRETO DE LA EMPRESA A: la chancadora 7 falla los martes', 'consulta');
 
-INSERT INTO agente.notificacion (empr_id, usr_id, tipo, titulo, cuerpo)
-VALUES (:EMPRESA_A, 1, 'hallazgo', 'Alerta privada de A', 'cuerpo A');
-
-INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
-VALUES (:EMPRESA_A, 'mtbf_deterioro', 11, 'Jefe de mantenimiento de A');
-
 SET LOCAL agente.empr_id = :'EMPRESA_B';
 INSERT INTO agente.memoria (empr_id, contenido, origen)
 VALUES (:EMPRESA_B, 'SECRETO DE LA EMPRESA B: el molino 3 consume de mas', 'consulta');
-
-INSERT INTO agente.notificacion (empr_id, usr_id, tipo, titulo, cuerpo)
-VALUES (:EMPRESA_B, 1, 'hallazgo', 'Alerta privada de B', 'cuerpo B');
-
-INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
-VALUES (:EMPRESA_B, 'mtbf_deterioro', 22, 'Jefe de mantenimiento de B');
-
--- Un destinatario de una alerta de ALMACENES: el agente cubre las dos areas,
--- y quien recibe un aviso de MTBF no es necesariamente quien tiene que
--- enterarse de un vencimiento de material.
-INSERT INTO agente.destinatario_alerta (empr_id, tipo_alerta, usr_id, etiqueta)
-VALUES (:EMPRESA_B, 'material_por_vencer', 23, 'Encargado de deposito de B');
 
 -- Corridas del agente (013): una interaccion por empresa, con su tool y un
 -- feedback negativo. Es lo mas sensible: la pregunta, la respuesta y lo que
@@ -127,12 +109,6 @@ SET LOCAL agente.empr_id = :'EMPRESA_B';
 INSERT INTO agente.medicion_pedida (empr_id, indicador, alcance, alcance_id, frecuencia, hasta)
 VALUES (:EMPRESA_B, 'medicion_de_b', 'persona', 'tecnico-b', 'semanal', current_date + 30);
 
--- Dispositivos de push (020).
-SET LOCAL agente.empr_id = :'EMPRESA_A';
-INSERT INTO agente.dispositivo (empr_id, usuario, token) VALUES (:EMPRESA_A, 'ana', 'TOKEN-PUSH-DE-A');
-SET LOCAL agente.empr_id = :'EMPRESA_B';
-INSERT INTO agente.dispositivo (empr_id, usuario, token) VALUES (:EMPRESA_B, 'beto', 'TOKEN-PUSH-DE-B');
-
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
 
@@ -171,29 +147,6 @@ SELECT 'memoria: con contexto A, el contenido de B es invisible',
        'fuga de datos entre clientes';
 
 INSERT INTO _resultado
-SELECT 'notificacion: con contexto A, las de B son invisibles',
-       NOT EXISTS (SELECT 1 FROM agente.notificacion WHERE titulo LIKE '%de B'),
-       'RLS';
-
-INSERT INTO _resultado
-SELECT 'destinatario_alerta: con contexto A, los de B son invisibles',
-       NOT EXISTS (SELECT 1 FROM agente.destinatario_alerta WHERE usr_id = 22),
-       'configuracion de alertas de otra empresa';
-
--- La resolucion de destinatarios tampoco puede cruzar empresas: preguntar por
--- la empresa B desde el contexto de A no debe devolver a su jefe de
--- mantenimiento.
-INSERT INTO _resultado
-SELECT 'destinatarios_de(): con contexto A, preguntar por B no devuelve nada',
-       NOT EXISTS (SELECT 1 FROM agente.destinatarios_de(900002, 'mtbf_deterioro')),
-       'resolucion de destinatarios aislada';
-
-INSERT INTO _resultado
-SELECT 'destinatarios_de(): con contexto A, devuelve al destinatario de A',
-       EXISTS (SELECT 1 FROM agente.destinatarios_de(900001, 'mtbf_deterioro') WHERE usr_id = 11),
-       'la funcion sigue sirviendo dentro de la empresa';
-
-INSERT INTO _resultado
 SELECT 'interaccion: con contexto A, las de B son invisibles',
        NOT EXISTS (SELECT 1 FROM agente.interaccion WHERE respuesta LIKE '%DE B')
        AND EXISTS (SELECT 1 FROM agente.interaccion WHERE respuesta LIKE '%DE A'),
@@ -220,12 +173,6 @@ SELECT 'medicion_pedida: con contexto A, las de B (incluida la de una persona) s
        NOT EXISTS (SELECT 1 FROM agente.medicion_pedida WHERE indicador = 'medicion_de_b')
        AND EXISTS (SELECT 1 FROM agente.medicion_pedida WHERE indicador = 'medicion_de_a'),
        '019';
-
-INSERT INTO _resultado
-SELECT 'dispositivo: con contexto A, los tokens de push de B son invisibles',
-       NOT EXISTS (SELECT 1 FROM agente.dispositivo WHERE token = 'TOKEN-PUSH-DE-B')
-       AND EXISTS (SELECT 1 FROM agente.dispositivo WHERE token = 'TOKEN-PUSH-DE-A'),
-       '020';
 
 INSERT INTO _resultado
 SELECT 'propuesta: con contexto A, las de B son invisibles',
@@ -264,16 +211,6 @@ SET LOCAL agente.empr_id = '';
 INSERT INTO _resultado
 SELECT 'memoria: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
        NOT EXISTS (SELECT 1 FROM agente.memoria),
-       'no debe devolver todo';
-
-INSERT INTO _resultado
-SELECT 'notificacion: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
-       NOT EXISTS (SELECT 1 FROM agente.notificacion),
-       'no debe devolver todo';
-
-INSERT INTO _resultado
-SELECT 'destinatario_alerta: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
-       NOT EXISTS (SELECT 1 FROM agente.destinatario_alerta),
        'no debe devolver todo';
 
 INSERT INTO _resultado

@@ -32,7 +32,7 @@ graph TD
     MCP --> DS[DataServices<br/>MAN · ALM · PAN · TAR · KPI]
     DS --> KPI[(📊 Motor KPI<br/>kpi.* + cron)]
     DS --> TAR[(✅ Módulo de tareas<br/>pedidos · hitos · tareas)]
-    ORQ -->|encola| COLA[(🔔 agente.notificacion)]
+    ORQ -->|POST /avisos| COLA[(🔔 avisos de Tools<br/>esquema ntf, ADR-015)]
     COLA --> SI[WSO2 Streaming Integrator<br/>app Siddhi]
     SI --> FCM[FirebaseConnectorAPI<br/>push]
     COLA --> CAMP[Campanita en Tools]
@@ -120,7 +120,7 @@ Todo como scripts versionados en `db/agente/` (numerados, idempotentes, con roll
 - **Módulo de tareas (TAR)** — Pedidos de Trabajo → Hitos → Tareas, con bandeja en Bonita. Necesita, antes de que Kuntur lo use: aislamiento por empresa completo, fechas plan y real separadas, una API de negocio (`toolsTARAPI`) y tools de lectura `tar_get_*`, y el estado "propuesta". Ver la especificación del módulo TAR.
 - **Dnato** — emite el JWT de usuario (OAuth PKCE, como hoy) y **el JWT de máquina por `client_credentials`** (ADR-A10).
 - **Catálogo DocTest** — cada caso de uso declara su pantalla, flujo y validaciones; se ingesta como conocimiento para que Quirqui sepa qué se hace en cada pantalla.
-- **Alertas** — cola `agente.notificacion` → app Siddhi → `FirebaseConnectorAPI`, y campanita en Tools (decisión de E0, Opción C). Cada notificación lleva el agente emisor y su avatar.
+- **Alertas** — el agente publica en el mecanismo único de avisos de Tools (`POST /avisos` de `toolsNTFAPI`, esquema `ntf`, ADR-015) → app Siddhi `AvisosPush` → `FirebaseConnectorAPI`, y la campanita de Tools. Sigue la Opción C de E0 (cola en PostgreSQL), pero la cola es la de Tools: la propia del agente (`agente.notificacion`) se borró en `021`. Cada aviso lleva el agente emisor.
 
 ---
 
