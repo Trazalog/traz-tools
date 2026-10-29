@@ -739,7 +739,7 @@ DEV (T21).
 | # | Decisión | Mi recomendación |
 |---|---|---|
 | ~~P1~~ | ✅ **Resuelta (PM, 2026-10-27):** el freeze rige cuando cierren las pruebas de los dos frentes (§3.1). Falta registrar acá la fecha en que efectivamente cierren | — |
-| P2 | **Cuándo se corrigen en asset los bugs heredados** T1 (fuga entre empresas), T2 (SQL injection) y T3 (bucle sin límite), que hoy están en producción. Dónde se replican ya no es una duda: lo resuelve la regla de §3.5 | Corregirlos ya en asset. Dos son de seguridad y no deberían esperar al corte |
+| ~~P2~~ | ✅ **Resuelta (PM, 2026-10-29): en asset no se corrige nada**, porque asset se va a apagar. Los errores se compilan en [`ERRORES-ASSET.md`](ERRORES-ASSET.md) y se corrigen solo en MAN. Vale también para T34 | — |
 | P7 | **MIG-8**: margen de lanzamiento (cuántos días antes de la fecha se lanza el caso Bonita) y qué se hace con las series ya lanzadas | Margen configurable por empresa. Las series existentes se dejan como están |
 | P9 | **MIG-9**: qué eventos de cada módulo se notifican, a quién y por qué canal | Arrancar con los eventos de la OT que ya notifica asset, más el lanzamiento de MIG-8 |
 | P8 | **Scheduler** para MIG-8, compartido con la Fase 2 del tablero del administrador | Una sola decisión para los dos casos. El cron del sistema operativo ya existe para los KPIs |
@@ -770,6 +770,8 @@ DEV (T21).
 | R8 | **Tocar core de tools** (`general_scripts.php`, menú, sesión) | Media | Alto | Cada cambio de core con análisis de impacto aprobado, según `CLAUDE.md` |
 
 ### 5.2 Bugs heredados de asset (están hoy en producción)
+
+No se corrigen en asset (P2). La lista en lenguaje simple, agrupada por gravedad y con su estado en MAN, está en [`ERRORES-ASSET.md`](ERRORES-ASSET.md).
 
 | # | Hallazgo | Evidencia (asset) |
 |---|---|---|
