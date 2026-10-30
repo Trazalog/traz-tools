@@ -82,9 +82,15 @@ def _aplicar(con):
     con.execute(CAMBIO.read_text())
 
 
+def _hoy(con) -> date:
+    """La fecha de la BASE: con el servidor en UTC, de noche ya es mañana y
+    date.today() de la maquina no coincide con current_date."""
+    return con.execute("SELECT current_date AS hoy").fetchone()["hoy"]
+
+
 def _objetivo(con, empr, kpi, op, meta, hasta=None, desde=None, usuario="admin", propuesto="usuario"):
     return con.execute("SELECT kpi.objetivo_guardar(%s, %s, 'tools', %s, %s, %s, %s, 'Jefe', %s, %s) AS id",
-                       (empr, kpi, op, meta, desde, hasta or date.today() + timedelta(days=60),
+                       (empr, kpi, op, meta, desde, hasta or _hoy(con) + timedelta(days=60),
                         propuesto, usuario)).fetchone()["id"]
 
 
@@ -108,7 +114,7 @@ def test_una_fila_por_kpi_empresa_y_dia(db):
                        (A,)).fetchall()
     assert [(f["nombre"], f["valor"]) for f in filas] == [("atraso", 4), ("cumplimiento", 82)], \
         "la segunda corrida del dia pisa el valor, no suma filas"
-    assert all(f["fecha"] == date.today() for f in filas)
+    assert all(f["fecha"] == _hoy(db) for f in filas)
 
 
 def test_si_la_historia_falla_el_tablero_se_publica_igual(db):
@@ -125,8 +131,8 @@ def test_si_la_historia_falla_el_tablero_se_publica_igual(db):
 
 def test_se_retienen_dos_anos(db):
     _aplicar(db)
-    viejo = date.today() - timedelta(days=731)
-    limite = date.today() - timedelta(days=730)
+    viejo = _hoy(db) - timedelta(days=731)
+    limite = _hoy(db) - timedelta(days=730)
     db.execute("INSERT INTO kpi.historico VALUES ('cumplimiento', %s, %s, 1, NULL, now()), "
                "('cumplimiento', %s, %s, 2, NULL, now())", (A, viejo, A, limite))
     _datos(db, cumplimiento_A=80)
@@ -151,7 +157,7 @@ def test_la_tendencia_compara_con_hace_30_dias(db):
     _datos(db, cumplimiento_A=72)
     _correr(db)
     db.execute("INSERT INTO kpi.historico VALUES ('cumplimiento', %s, %s, 80, NULL, now())",
-               (A, date.today() - timedelta(days=35)))
+               (A, _hoy(db) - timedelta(days=35)))
     _objetivo(db, A, "cumplimiento", ">=", 85)
     d = db.execute("SELECT * FROM kpi.desvios(%s)", (A,)).fetchone()
     assert (d["valor_hace_30"], d["tendencia"]) == (80, "empeora")
@@ -189,7 +195,7 @@ def test_cancelar_solo_en_la_propia_empresa(db):
 
 def test_un_vigente_con_plazo_vencido_se_informa_como_vencido(db):
     _aplicar(db)
-    ayer = date.today() - timedelta(days=1)
+    ayer = _hoy(db) - timedelta(days=1)
     db.execute("INSERT INTO kpi.objetivos (empr_id, kpi, operador, meta, desde, hasta, usuario_alta) "
                "VALUES (%s, 'cumplimiento', '>=', 85, %s, %s, 'admin')", (A, ayer - timedelta(days=30), ayer))
     assert db.execute("SELECT * FROM kpi.objetivos_de(%s)", (A,)).fetchall() == []
