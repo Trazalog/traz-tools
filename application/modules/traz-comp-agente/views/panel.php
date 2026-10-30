@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <!--
-  Panel de Quirqui, el Asistente (AGENTE-AS-01).
+  Panel de Quirqui, el Asistente (AGENTE-AS-01), y de Kuntur, el Coach.
 
   Va en el layout (layout/Admin.php), no en el #content: acompaña al usuario
   en TODAS las pantallas de Tools. Con cada pregunta manda la ruta de la
@@ -11,6 +11,11 @@
   Quién lo ve: el layout lo incluye solo si el usuario tiene en su menú el ítem
   del agente (seg.menues). Mostrarlo a todos es una decisión comercial — los
   agentes son una suscripción — y no se toma acá.
+
+  KUNTUR (AGENTE-CO-01, CO-03): si la lista de agentes (que filtra la API por
+  rol, R1) trae al Coach, aparecen dos pestañas. Kuntur propone metas como
+  tarjetas; "Cargar meta" la graba el administrador con su sesión en
+  index.php/Objetivos/guardar, que vuelve a verificar que es administrador.
 
   AVISO DE MEDICIÓN: el texto de #agp-aviso es el que pidió el PM (D9 del plan)
   y está PENDIENTE DE REVISIÓN LEGAL (AGENTE-LEGAL-01). No cambiarlo sin esa
@@ -25,11 +30,15 @@
     <span id="agp-cab-avatar"></span>
     <div class="agp-titulo">
       <strong id="agp-nombre">Quirqui</strong>
-      <small>tu asistente en Trazalog</small>
+      <small id="agp-rol">tu asistente en Trazalog</small>
     </div>
     <button type="button" class="agp-cerrar" title="Cerrar">&times;</button>
   </div>
+  <div id="agp-pestanias" hidden></div>
 
+  <div id="agp-aviso-coach" hidden>
+    Kuntur te acompaña como administrador: solo lo ves vos. Te propone metas; las cargás vos.
+  </div>
   <div id="agp-aviso">
     Lo que hables con Quirqui se usa para medir indicadores de tu empresa.
     <a href="#" id="agp-que-se-mide">¿Qué se mide?</a>
@@ -44,8 +53,11 @@
   <div id="agp-propuestas"></div>
 
   <div id="agp-conversacion">
-    <div class="agp-bienvenida">
+    <div class="agp-bienvenida" data-agente="asistente">
       Preguntame qué se hace en esta pantalla, o lo que necesites de mantenimiento y almacenes.
+    </div>
+    <div class="agp-bienvenida" data-agente="coach" hidden>
+      Contame qué querés mejorar. Miro tus indicadores y te propongo metas: las cargás vos.
     </div>
   </div>
 
@@ -95,6 +107,21 @@
 .agp-prop .agp-prop-acciones { margin-top: 4px; }
 .agp-prop .agp-prop-acciones a { margin-right: 10px; cursor: pointer; }
 .agp-prop .agp-como { display: none; margin-top: 4px; color: #555; }
+#agp-pestanias { display: flex; border-bottom: 1px solid #e5e5e5; }
+#agp-pestanias[hidden] { display: none; }
+#agp-pestanias button { flex: 1; border: 0; background: #fff; padding: 6px; font-size: 12px; cursor: pointer;
+                        border-bottom: 2px solid transparent; color: #777; }
+#agp-pestanias button.activa { border-bottom-color: #3c8dbc; color: #333; font-weight: 600; }
+#agp-aviso-coach { font-size: 11px; color: #777; padding: 6px 12px; background: #f4f7fb;
+                   border-bottom: 1px solid #dde6f0; }
+.agp-cambio { text-align: center; color: #aaa; font-size: 11px; margin: 10px 0; }
+.agp-meta { border: 1px solid #d6e4f0; border-left: 3px solid #3c8dbc; border-radius: 3px;
+            padding: 6px 8px; margin-top: 6px; font-size: 12px; background: #fafcfe; }
+.agp-meta strong { display: block; }
+.agp-meta .agp-meta-motivo { color: #555; margin-top: 2px; }
+.agp-meta .agp-meta-acciones { margin-top: 5px; }
+.agp-meta .agp-meta-acciones a { margin-right: 10px; cursor: pointer; }
+.agp-meta .agp-meta-msg { margin-top: 4px; }
 .agp-feedback { margin-top: 4px; }
 .agp-feedback button { border: 1px solid #ddd; background: #fff; border-radius: 3px;
                        padding: 0 7px; cursor: pointer; }
@@ -206,21 +233,88 @@
         $('#agp-boton').attr('title', 'Preguntale a ' + agente.nombre);
         $('#agp-cab-avatar').html(TZAgente.avatar(agente, estado));
         $('#agp-nombre').text(agente.nombre);
+        $('#agp-rol').text(agente.rol === 'coach' ? 'tu coach como administrador' : 'tu asistente en Trazalog');
     }
     function estado(e) { TZAgente.estado($('#agp-boton .tzag, #agp-cab-avatar .tzag'), e); }
     pintarIdentidad('saludo');
+
+    // Con Kuntur en la lista (solo administradores, R1), dos pestañas.
+    var disponibles = [];
+    function elegir(clave) {
+        var a = disponibles.filter(function (x) { return x.clave === clave; })[0];
+        if (!a || a.clave === agente.clave) { return; }
+        agente = a;
+        pintarIdentidad('saludo');
+        var coach = agente.rol === 'coach';
+        $('#agp-pestanias button').removeClass('activa').filter('[data-clave="' + agente.clave + '"]').addClass('activa');
+        $('#agp-aviso').toggle(!coach);
+        $('#agp-aviso-coach').prop('hidden', !coach);
+        $('.agp-bienvenida').each(function () { $(this).prop('hidden', $(this).data('agente') !== agente.rol); });
+        $('#agp-propuestas').toggle(!coach);
+        if ($conv.find('.agp-msg').length) {
+            $conv.append('<div class="agp-cambio">Ahora hablás con ' + escapar(agente.nombre) + '</div>'); alFinal();
+        }
+    }
     $.get(BASE + 'agentes').done(function (r) {
-        var q = (r.agentes || []).filter(function (a) { return a.rol === 'asistente'; })[0];
+        disponibles = r.agentes || [];
+        var q = disponibles.filter(function (a) { return a.rol === 'asistente'; })[0];
+        var k = disponibles.filter(function (a) { return a.rol === 'coach'; })[0];
         if (q) { agente = q; pintarIdentidad('saludo'); }
+        if (q && k) {
+            $('#agp-pestanias').prop('hidden', false).html(
+                '<button type="button" class="activa" data-clave="' + escapar(q.clave) + '">' + escapar(q.nombre) + '</button>' +
+                '<button type="button" data-clave="' + escapar(k.clave) + '">' + escapar(k.nombre) + '</button>');
+        }
     });
+    $('#agp-pestanias').on('click', 'button', function () { elegir(String($(this).data('clave'))); });
 
     function pintar(quien, clase, html) {
         $conv.append('<div class="agp-msg ' + clase + '"><div class="agp-quien">' + quien + '</div>' + html + '</div>');
         alFinal();
     }
 
+    // --- metas que propone Kuntur (AGENTE-CO-03) --------------------------------
+    // No están grabadas: "Cargar meta" la graba el administrador, con su sesión.
+    var OBJETIVOS = '<?= base_url() ?>index.php/Objetivos/';
+    function numero(v) { var n = parseFloat(v); return isNaN(n) ? escapar(v) : n.toLocaleString('es-AR', { maximumFractionDigits: 2 }); }
+    function fecha(iso) { var p = String(iso || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : escapar(iso); }
+    // Las propuestas quedan acá, no en un atributo: escapar() no escapa comillas.
+    var metasPropuestas = [];
+    function tarjetaMeta(m) {
+        metasPropuestas.push(m);
+        return '<div class="agp-meta" data-i="' + (metasPropuestas.length - 1) + '">' +
+               '<strong>Meta propuesta: ' + escapar(m.titulo) + ' ' + (m.operador === '>=' ? '≥' : '≤') + ' ' +
+               numero(m.meta) + ' para el ' + fecha(m.hasta) + '</strong>' +
+               (m.responsable ? 'Responsable: ' + escapar(m.responsable) : '') +
+               '<div class="agp-meta-motivo">' + escapar(m.motivo) + '</div>' +
+               '<div class="agp-meta-acciones"><a class="agp-meta-cargar">Cargar meta</a><a class="agp-meta-no">Ahora no</a></div>' +
+               '<div class="agp-meta-msg" hidden></div></div>';
+    }
+    $conv.on('click', '.agp-meta-cargar', function () {
+        var $t = $(this).closest('.agp-meta'), m = metasPropuestas[$t.data('i')], $msg = $t.find('.agp-meta-msg');
+        $t.find('.agp-meta-acciones').hide();
+        $.post(OBJETIVOS + 'guardar', { kpi: m.kpi, operador: m.operador, meta: m.meta, hasta: m.hasta,
+                                        responsable: m.responsable || '', propuesto_por: 'kuntur' })
+            .done(function () {
+                $msg.prop('hidden', false).attr('class', 'agp-meta-msg text-success').text('Meta cargada. La ves en el Tablero, en Metas.');
+                if (window.TZMetas) { window.TZMetas.recargar(); }
+            })
+            .fail(function (xhr) {
+                var r = xhr && xhr.responseJSON;
+                $msg.prop('hidden', false).attr('class', 'agp-meta-msg text-danger')
+                    .text(r && r.error === 'solo_administrador' ? 'Solo el administrador de la empresa carga metas.'
+                          : (r && r.error) || 'No se pudo cargar la meta.');
+                $t.find('.agp-meta-acciones').show();
+            });
+    });
+    $conv.on('click', '.agp-meta-no', function () {
+        var $t = $(this).closest('.agp-meta');
+        $t.slideUp(150, function () { $t.remove(); });
+    });
+
     function pintarRespuesta(r) {
         var html = '<div class="agp-texto">' + escapar(r.respuesta) + '</div>';
+        (r.propuestas_meta || []).forEach(function (m) { html += tarjetaMeta(m); });
         if (!r.error && r.interaccion_id) {
             html += '<div class="agp-feedback" data-interaccion="' + escapar(r.interaccion_id) + '">' +
                     '<button type="button" data-util="1" title="Me sirvió">👍</button> ' +
@@ -239,7 +333,7 @@
         pintar(agente.nombre, 'agp-agente agp-pensando-wrap', '<div class="agp-texto agp-pensando">Pensando...</div>');
         estado('pensando');
 
-        $.post(BASE + 'consultar', { pregunta: texto, pantalla: pantallaActual() })
+        $.post(BASE + 'consultar', { pregunta: texto, pantalla: pantallaActual(), agente: agente.clave })
             .done(function (r) { $('.agp-pensando-wrap').remove(); pintarRespuesta(r);
                                  estado('hablando'); setTimeout(function () { estado('saludo'); }, 2500); })
             .fail(function (xhr) {

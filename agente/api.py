@@ -123,6 +123,9 @@ class ConsultaOut(BaseModel):
     tools_llamadas: list[dict]
     modelo: str
     latencia_ms: int
+    # Metas que propuso Kuntur (AGENTE-CO-03): el panel las muestra como tarjeta
+    # y el administrador decide si las carga. Vacio para los demas agentes.
+    propuestas_meta: list[dict] = []
 
 
 class SugerenciasIn(BaseModel):
@@ -242,7 +245,7 @@ async def consulta(
     return ConsultaOut(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
-        modelo=res.modelo, latencia_ms=res.latencia_ms,
+        modelo=res.modelo, latencia_ms=res.latencia_ms, propuestas_meta=res.propuestas_meta,
     )
 
 

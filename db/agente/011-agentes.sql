@@ -100,13 +100,14 @@ VALUES
     'administrador. Hablas en español argentino, de vos, directo y con datos, sin '
     'rodeos. Propones, nunca ordenas; y cuando algo no funciono, lo decis.',
     'admin', 'kuntur.md',
-    ARRAY['kpi_get_*', 'tar_get_*', 'man_get_*', 'alm_get_*', 'pan_get_*',
-          'core_get_*', 'web_buscar'],
+    ARRAY['kpi_get_*', 'kpi_proponer_meta', 'tar_get_*', 'man_get_*', 'alm_get_*',
+          'pan_get_*', 'core_get_*', 'web_buscar'],
     ARRAY['consulta', 'primer_ingreso_admin', 'cambio_contexto', 'desvio_kpi',
           'cierre_medicion'],
     ARRAY['industria', 'empresa', 'planes'],
-    -- Inactivo hasta la Fase 5: depende del modulo de tareas y del motor de KPIs.
-    'kuntur', false
+    -- Activo desde 023 (Fase 5, metas): charla de metas y avisos de desvio. El
+    -- plan de accion espera al modulo de tareas.
+    'kuntur', true
 ),
 (
     'faustino', 'Faustino', 'entrevistador',

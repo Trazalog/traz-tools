@@ -130,9 +130,10 @@ async def test_estan_los_tres_agentes(con):
     assert {"kuntur", "quirqui", "faustino"} <= claves
 
 
-async def test_kuntur_es_coach_solo_para_admin_e_inactivo(con):
+async def test_kuntur_es_coach_solo_para_admin_y_activo(con):
+    """Activo desde 023 (metas); el acceso sigue siendo solo de administradores (R1)."""
     k = await agentes.obtener(con, "kuntur", solo_activos=False)
-    assert (k.rol, k.acceso, k.activo) == ("coach", "admin", False)
+    assert (k.rol, k.acceso, k.activo) == ("coach", "admin", True)
 
 
 async def test_el_prompt_de_cada_agente_existe_en_disco(con):
@@ -147,17 +148,28 @@ async def test_ningun_agente_tiene_tools_de_escritura(con):
             assert not a.tool_permitida(tool), f"{a.clave} tiene permitida {tool}"
 
 
-async def test_un_empleado_no_puede_confirmar_que_el_coach_existe(con):
-    """R1. Kuntur esta inactivo, pero a un empleado eso no se le dice: para el,
-    es igual que un agente que no existe. Si recibiera "todavia no esta
-    disponible", sabria que el Coach existe."""
+async def test_un_empleado_no_puede_usar_al_coach(con):
+    """R1: para un empleado, Kuntur es igual que un agente que no existe."""
     with pytest.raises(agentes.AccesoDenegado):
         await agentes.para_consulta(con, "kuntur", "4")
+    with pytest.raises(agentes.AccesoDenegado):
+        await agentes.para_consulta(con, "kuntur", None)
 
 
-async def test_al_admin_si_se_le_dice_que_el_coach_no_esta_disponible(con):
+async def test_el_admin_usa_al_coach(con):
+    k = await agentes.para_consulta(con, "kuntur", "1")
+    assert k.clave == "kuntur"
+
+
+async def test_un_empleado_no_sabe_si_el_coach_esta_inactivo(con_admin):
+    """R1 tambien con Kuntur apagado: al empleado no se le dice "todavia no esta
+    disponible" (sabria que existe); al administrador, si."""
+    async with con_admin.cursor() as cur:
+        await cur.execute("UPDATE agente.agente SET activo = false WHERE clave = 'kuntur'")
+    with pytest.raises(agentes.AccesoDenegado):
+        await agentes.para_consulta(con_admin, "kuntur", "4")
     with pytest.raises(agentes.AgenteNoDisponible):
-        await agentes.para_consulta(con, "kuntur", "1")
+        await agentes.para_consulta(con_admin, "kuntur", "1")
 
 
 async def test_faustino_no_responde_consultas(con):
