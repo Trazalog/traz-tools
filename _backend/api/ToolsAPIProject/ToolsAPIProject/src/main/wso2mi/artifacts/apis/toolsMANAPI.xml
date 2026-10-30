@@ -2454,4 +2454,361 @@
          <respond/>
       </faultSequence>
    </resource>
+   <!-- MIG-ASSET-3d · Detalle de la tarea de la Bandeja. Cada recurso valida que el caso de la tarea sea de la empresa y lee o escribe
+        en Bonita con la sesión del usuario (asset usaba el usuario administrador sin mirar la empresa). Entrada común:
+        {"usrNick","id_empresa","session","id_tarea"}; comentar agrega {"contenido"}. Salida {"status":true,"session",...} o {"status":false,"msj"}. -->
+   <resource methods="POST" uri-template="/bandeja/tarea/detalle">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_tarea" expression="json-eval($.id_tarea)"/>
+         <property name="man_opcion" expression="json-eval($.opcion)"/>
+         <property name="man_accion" expression="json-eval($.accion)"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/humanTask/', $ctx:man_tarea)"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="tarea" type="JSON" expression="${payload.payload}"/>
+         <property name="man_case" expression="json-eval($.payload.caseId)"/>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="No se encontró la tarea"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="caso" type="STRING" expression="${properties.synapse.man_case}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_bandeja_tarea_caso":{"case_id":"${vars.caso}","id_empresa":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/bandeja/tarea/caso')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_caso_ok" expression="json-eval($.tareas.tarea[0].case_id)"/>
+         <property name="man_ot" expression="json-eval($.tareas.tarea[0].id_orden)"/>
+         <property name="man_tipo" expression="json-eval($.tareas.tarea[0].tipo)"/>
+         <property name="man_sol" expression="json-eval($.tareas.tarea[0].id_solicitud)"/>
+         <property name="man_ss" expression="json-eval($.tareas.tarea[0].ss)"/>
+         <filter source="get-property('man_caso_ok')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no es de la empresa"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="ot" type="STRING" expression="${properties.synapse.man_ot}"/>
+         <variable name="sol" type="STRING" expression="${properties.synapse.man_sol}"/>
+         <variable name="ss" type="STRING" expression="${properties.synapse.man_ss}"/>
+         <property name="man_sore" expression="json-eval($.tareas.tarea[0].sore_id)"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":true,"session":"${vars.sesion}","tarea":${vars.tarea},"caso":"${vars.caso}","id_ot":"${vars.ot}","tipo":"${vars.tipo}","id_solicitud":"${vars.sol}","id_ss":"${vars.ss}","sore_id":"${properties.synapse.man_sore}"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/bandeja/tarea/detalle"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/bandeja/tarea/linea">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_tarea" expression="json-eval($.id_tarea)"/>
+         <property name="man_opcion" expression="json-eval($.opcion)"/>
+         <property name="man_accion" expression="json-eval($.accion)"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/humanTask/', $ctx:man_tarea)"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_case" expression="json-eval($.payload.caseId)"/>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="No se encontró la tarea"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="caso" type="STRING" expression="${properties.synapse.man_case}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_bandeja_tarea_caso":{"case_id":"${vars.caso}","id_empresa":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/bandeja/tarea/caso')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_caso_ok" expression="json-eval($.tareas.tarea[0].case_id)"/>
+         <property name="man_ot" expression="json-eval($.tareas.tarea[0].id_orden)"/>
+         <property name="man_tipo" expression="json-eval($.tareas.tarea[0].tipo)"/>
+         <property name="man_sol" expression="json-eval($.tareas.tarea[0].id_solicitud)"/>
+         <property name="man_ss" expression="json-eval($.tareas.tarea[0].ss)"/>
+         <filter source="get-property('man_caso_ok')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no es de la empresa"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="ot" type="STRING" expression="${properties.synapse.man_ot}"/>
+         <variable name="sol" type="STRING" expression="${properties.synapse.man_sol}"/>
+         <variable name="ss" type="STRING" expression="${properties.synapse.man_ss}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/activity?p=0&amp;c=200&amp;f=rootCaseId%3D', $ctx:man_case, '&amp;d=assigned_id')"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="activas" type="JSON" expression="${payload.payload}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/archivedActivity?p=0&amp;c=200&amp;f=rootCaseId%3D', $ctx:man_case, '&amp;d=assigned_id')"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="archivadas" type="JSON" expression="${payload.payload}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":true,"session":"${vars.sesion}","activas":${vars.activas},"archivadas":${vars.archivadas}}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/bandeja/tarea/linea"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/bandeja/tarea/comentarios">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_tarea" expression="json-eval($.id_tarea)"/>
+         <property name="man_opcion" expression="json-eval($.opcion)"/>
+         <property name="man_accion" expression="json-eval($.accion)"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/humanTask/', $ctx:man_tarea)"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_case" expression="json-eval($.payload.caseId)"/>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="No se encontró la tarea"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="caso" type="STRING" expression="${properties.synapse.man_case}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_bandeja_tarea_caso":{"case_id":"${vars.caso}","id_empresa":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/bandeja/tarea/caso')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_caso_ok" expression="json-eval($.tareas.tarea[0].case_id)"/>
+         <property name="man_ot" expression="json-eval($.tareas.tarea[0].id_orden)"/>
+         <property name="man_tipo" expression="json-eval($.tareas.tarea[0].tipo)"/>
+         <property name="man_sol" expression="json-eval($.tareas.tarea[0].id_solicitud)"/>
+         <property name="man_ss" expression="json-eval($.tareas.tarea[0].ss)"/>
+         <filter source="get-property('man_caso_ok')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no es de la empresa"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="ot" type="STRING" expression="${properties.synapse.man_ot}"/>
+         <variable name="sol" type="STRING" expression="${properties.synapse.man_sol}"/>
+         <variable name="ss" type="STRING" expression="${properties.synapse.man_ss}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/comment?f=processInstanceId%3D', $ctx:man_case, '&amp;o=postDate%20DESC&amp;p=0&amp;c=200&amp;d=userId')"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="comentarios" type="JSON" expression="${payload.payload}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":true,"session":"${vars.sesion}","comentarios":${vars.comentarios}}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/bandeja/tarea/comentarios"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+   <resource methods="POST" uri-template="/bandeja/tarea/comentar">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_tarea" expression="json-eval($.id_tarea)"/>
+         <property name="man_opcion" expression="json-eval($.opcion)"/>
+         <property name="man_accion" expression="json-eval($.accion)"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/humanTask/', $ctx:man_tarea)"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_case" expression="json-eval($.payload.caseId)"/>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="No se encontró la tarea"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="caso" type="STRING" expression="${properties.synapse.man_case}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_bandeja_tarea_caso":{"case_id":"${vars.caso}","id_empresa":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/bandeja/tarea/caso')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_caso_ok" expression="json-eval($.tareas.tarea[0].case_id)"/>
+         <property name="man_ot" expression="json-eval($.tareas.tarea[0].id_orden)"/>
+         <property name="man_tipo" expression="json-eval($.tareas.tarea[0].tipo)"/>
+         <property name="man_sol" expression="json-eval($.tareas.tarea[0].id_solicitud)"/>
+         <property name="man_ss" expression="json-eval($.tareas.tarea[0].ss)"/>
+         <filter source="get-property('man_caso_ok')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no es de la empresa"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="ot" type="STRING" expression="${properties.synapse.man_ot}"/>
+         <variable name="sol" type="STRING" expression="${properties.synapse.man_sol}"/>
+         <variable name="ss" type="STRING" expression="${properties.synapse.man_ss}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"processInstanceId":"${vars.caso}","content":"${vars.datos.contenido}"}</format>
+         </payloadFactory>
+         <property name="man_payload_bpm" expression="json-eval($)"/>
+         <property name="man_recurso" value="/API/bpm/comment"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:man_payload_bpm}"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":true,"session":"${vars.sesion}","msj":"OK"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/bandeja/tarea/comentar"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
 </api>

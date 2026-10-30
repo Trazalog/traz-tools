@@ -2659,4 +2659,51 @@
    <resource method="POST" path="/informe/lectura/bandeja">
       <call-query href="setInformeLecturaBandejaMan"><with-param name="estado" query-param="estado"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-3d · Detalle de la tarea de la Bandeja: cabecera (equipo, solicitud, OT) y subtareas de la OT.
+        Reemplaza las consultas directas de cabecera_helper y de models/Tareas.php (ADR-014); todo limitado a la empresa. -->
+   <query id="getTareaCabeceraEquipoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.descripcion AS descripcionEquipo, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.codigo, e.ubicacion, e.estado, c.cliRazonSocial AS cliente, m.marcadescrip AS marca FROM equipos e LEFT JOIN marcasequipos m ON m.marcaid = e.marca LEFT JOIN admcustomers c ON c.cliId = e.id_customer WHERE e.id_equipo = :id_equipo AND e.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"descripcionEquipo":"$descripcionEquipo","fecha_ingreso":"$fecha_ingreso","codigo":"$codigo","ubicacion":"$ubicacion","estado":"$estado","cliente":"$cliente","marca":"$marca"}]}}</result>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getTareaCabeceraSolicitudMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT s.id_solicitud, s.id_equipo, s.solicitante, s.causa, CAST(s.f_solicitado AS CHAR) AS f_solicitado, e.codigo AS equipo, se.descripcion AS descripcionSector, g.descripcion AS descripcionGrupo FROM solicitud_reparacion s LEFT JOIN equipos e ON e.id_equipo = s.id_equipo LEFT JOIN sector se ON se.id_sector = e.id_sector LEFT JOIN grupo g ON g.id_grupo = e.id_grupo WHERE s.id_solicitud = :id_solicitud AND s.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"id_solicitud":"$id_solicitud","id_equipo":"$id_equipo","solicitante":"$solicitante","causa":"$causa","f_solicitado":"$f_solicitado","equipo":"$equipo","descripcionSector":"$descripcionSector","descripcionGrupo":"$descripcionGrupo"}]}}</result>
+      <param name="id_solicitud" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getTareaCabeceraOtMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT t.descripcion AS tareaDescrip, o.descripcion AS otDescrip, CAST(o.fecha_program AS CHAR) AS fecha, o.id_orden, o.duracion, c.cliRazonSocial AS cliente, o.estado, o.id_equipo, o.justificacion, (SELECT COUNT(*) FROM orden_servicio os WHERE os.id_ot = o.id_orden AND os.id_empresa = o.id_empresa) AS tiene_informe FROM orden_trabajo o LEFT JOIN tareas t ON t.id_tarea = o.id_tarea LEFT JOIN equipos e ON e.id_equipo = o.id_equipo LEFT JOIN admcustomers c ON c.cliId = e.id_customer WHERE o.id_orden = :id_orden AND o.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"tareaDescrip":"$tareaDescrip","otDescrip":"$otDescrip","fecha":"$fecha","id_orden":"$id_orden","duracion":"$duracion","cliente":"$cliente","estado":"$estado","id_equipo":"$id_equipo","justificacion":"$justificacion","tiene_informe":"$tiene_informe"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getTareaSubtareasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT l.id_listarea, l.id_orden, l.estado, l.id_subtarea, s.tareadescrip AS subtareadescrip, s.duracion_prog, s.form_asoc FROM tbl_listarea l JOIN orden_trabajo o ON o.id_orden = l.id_orden AND o.id_empresa = :id_empresa LEFT JOIN asp_subtareas s ON s.id_subtarea = l.id_subtarea WHERE l.id_orden = :id_orden</sql>
+      <result outputType="json">{"subtareas":{"subtarea":[{"id_listarea":"$id_listarea","id_orden":"$id_orden","estado":"$estado","id_subtarea":"$id_subtarea","subtareadescrip":"$subtareadescrip","duracion_prog":"$duracion_prog","form_asoc":"$form_asoc"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+   </query>
+   <query id="getOtProcedimientoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.prev_adjunto FROM orden_trabajo o LEFT JOIN preventivo p ON o.tipo = '3' AND p.prevId = o.id_solicitud AND p.id_empresa = o.id_empresa WHERE o.id_orden = :id_orden AND o.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"prev_adjunto":"$prev_adjunto"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/tarea/cabecera/equipo/{id_equipo}/empresa/{id_empresa}">
+      <call-query href="getTareaCabeceraEquipoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/tarea/cabecera/solicitud/{id_solicitud}/empresa/{id_empresa}">
+      <call-query href="getTareaCabeceraSolicitudMan"><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/tarea/cabecera/ot/{id_orden}/empresa/{id_empresa}">
+      <call-query href="getTareaCabeceraOtMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/tarea/subtareas/ot/{id_orden}/empresa/{id_empresa}">
+      <call-query href="getTareaSubtareasMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_orden" query-param="id_orden"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/procedimiento/empresa/{id_empresa}">
+      <call-query href="getOtProcedimientoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
