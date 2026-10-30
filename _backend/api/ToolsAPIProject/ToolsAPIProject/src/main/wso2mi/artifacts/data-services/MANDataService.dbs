@@ -2822,4 +2822,129 @@
    <resource method="POST" path="/informe/evidencia">
       <call-query href="setInformeEvidenciaMan"><with-param name="valor_base64" query-param="valor_base64"/><with-param name="nombre" query-param="nombre"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-4c · Calendario (Plan de Mantenimiento): períodos, órdenes del calendario, opciones del filtro, tablas de lo que falta
+        programar y cambios de fecha y duración. Reemplaza el acceso directo de models/Calendarios.php (ADR-014). Toda query queda limitada a
+        la empresa (id de asset); asset no filtraba por empresa los cambios de fecha y duración (T47). -->
+   <query id="getPeriodosEmpresaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT idperiodo, descripcion FROM periodo WHERE id_empresa = :id_empresa AND estado = 'AC' ORDER BY descripcion</sql>
+      <result outputType="json">{"periodos":{"periodo":[{"idperiodo":"$idperiodo","descripcion":"$descripcion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getCalendarioOtMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT OT.id_orden, OT.nro, CAST(OT.fecha_program AS CHAR) AS fecha_program, OT.tipo, OT.descripcion, CAST(OT.duracion AS CHAR) AS duracion, OT.id_usuario_a, EQ.codigo, A.descripcion AS area, G.descripcion AS grupo, S.descripcion AS sector, TOT.descripcion AS origen FROM orden_trabajo OT LEFT JOIN equipos EQ ON EQ.id_equipo = OT.id_equipo LEFT JOIN area A ON A.id_area = EQ.id_area LEFT JOIN grupo G ON G.id_grupo = EQ.id_grupo LEFT JOIN sector S ON S.id_sector = EQ.id_sector LEFT JOIN tbl_tipoordentrabajo TOT ON TOT.tipo_orden = OT.tipo WHERE OT.id_empresa = :id_empresa AND OT.estado != 'T' AND OT.estado != 'AN' AND OT.fecha_program &gt;= :desde AND OT.fecha_program &lt; :hasta ORDER BY OT.id_orden</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","nro":"$nro","fecha_program":"$fecha_program","tipo":"$tipo","descripcion":"$descripcion","duracion":"$duracion","id_usuario_a":"$id_usuario_a","codigo":"$codigo","area":"$area","grupo":"$grupo","sector":"$sector","origen":"$origen"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="desde" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
+   </query>
+   <query id="getCalendarioFiltroEquiposMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT codigo AS descripcion FROM equipos WHERE id_empresa = :id_empresa</sql>
+      <result outputType="json">{"opciones":{"opcion":[{"descripcion":"$descripcion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getCalendarioFiltroAreasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT descripcion AS descripcion FROM area WHERE id_empresa = :id_empresa</sql>
+      <result outputType="json">{"opciones":{"opcion":[{"descripcion":"$descripcion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getCalendarioFiltroGruposMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT descripcion AS descripcion FROM grupo WHERE id_empresa = :id_empresa</sql>
+      <result outputType="json">{"opciones":{"opcion":[{"descripcion":"$descripcion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getCalendarioFiltroSectoresMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT descripcion AS descripcion FROM sector WHERE id_empresa = :id_empresa</sql>
+      <result outputType="json">{"opciones":{"opcion":[{"descripcion":"$descripcion"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getCalendarioFiltroOrigenesMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT descripcion FROM tbl_tipoordentrabajo</sql>
+      <result outputType="json">{"opciones":{"opcion":[{"descripcion":"$descripcion"}]}}</result>
+   </query>
+   <query id="getPlanPreventivosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT x.prevId, x.id_tarea, x.perido, x.cantidad, CAST(x.ultimo AS CHAR) AS ultimo, x.id_equipo, x.codigo, x.descripcion, CAST(x.prox AS CHAR) AS prox, x.desc_periodo FROM (SELECT p.prevId, p.id_tarea, p.perido, p.cantidad, p.ultimo, p.id_equipo, e.codigo, t.descripcion, pe.descripcion AS desc_periodo, CASE pe.descripcion WHEN 'Semanal' THEN DATE_ADD(p.ultimo, INTERVAL 7 * p.cantidad DAY) WHEN 'Mensual' THEN DATE_ADD(p.ultimo, INTERVAL p.cantidad MONTH) WHEN 'Semestral' THEN DATE_ADD(p.ultimo, INTERVAL 6 * p.cantidad MONTH) WHEN 'Anual' THEN DATE_ADD(p.ultimo, INTERVAL p.cantidad YEAR) ELSE DATE_ADD(p.ultimo, INTERVAL p.cantidad DAY) END AS prox FROM preventivo p JOIN equipos e ON p.id_equipo = e.id_equipo JOIN tareas t ON p.id_tarea = t.id_tarea JOIN periodo pe ON p.perido = pe.idperiodo WHERE p.estadoprev = 'C' AND p.id_empresa = :id_empresa AND pe.descripcion NOT IN ('Ciclos', 'Horas') AND pe.descripcion NOT LIKE 'Kil%metros') x WHERE :ym IN (DATE_FORMAT(x.prox, '%Y-%m'), DATE_FORMAT(x.ultimo, '%Y-%m')) ORDER BY x.prevId</sql>
+      <result outputType="json">{"preventivos":{"preventivo":[{"prevId":"$prevId","id_tarea":"$id_tarea","perido":"$perido","cantidad":"$cantidad","ultimo":"$ultimo","id_equipo":"$id_equipo","codigo":"$codigo","descripcion":"$descripcion","prox":"$prox","desc_periodo":"$desc_periodo"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="ym" sqlType="STRING"/>
+   </query>
+   <query id="getPlanPreventivosContadorMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.prevId, p.id_tarea, p.perido, p.cantidad, CAST(p.ultimo AS CHAR) AS ultimo, p.id_equipo, CAST(p.critico1 AS CHAR) AS critico1, CAST(p.lectura_base AS CHAR) AS lectura_base, e.codigo, CAST(e.ultima_lectura AS CHAR) AS ultima_lectura, t.descripcion, pe.descripcion AS desc_periodo, CAST(DATE_ADD(p.ultimo, INTERVAL p.cantidad DAY) AS CHAR) AS prox, CAST(p.lectura_base + p.cantidad AS CHAR) AS proximoServicio, IF(e.ultima_lectura &gt;= p.lectura_base + p.cantidad, 'R', 'A') AS alerta FROM preventivo p JOIN equipos e ON p.id_equipo = e.id_equipo JOIN tareas t ON p.id_tarea = t.id_tarea JOIN periodo pe ON p.perido = pe.idperiodo WHERE p.id_empresa = :id_empresa AND (p.estadoprev = 'C' OR p.estadoprev = 'M') AND (pe.descripcion IN ('Ciclos', 'Horas') OR pe.descripcion LIKE 'Kil%metros') AND e.ultima_lectura &gt;= p.lectura_base + p.critico1 ORDER BY p.prevId</sql>
+      <result outputType="json">{"preventivos":{"preventivo":[{"prevId":"$prevId","id_tarea":"$id_tarea","perido":"$perido","cantidad":"$cantidad","ultimo":"$ultimo","id_equipo":"$id_equipo","critico1":"$critico1","lectura_base":"$lectura_base","codigo":"$codigo","ultima_lectura":"$ultima_lectura","descripcion":"$descripcion","desc_periodo":"$desc_periodo","prox":"$prox","proximoServicio":"$proximoServicio","alerta":"$alerta"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPlanBacklogsMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT b.backId, b.sore_id, b.estado, CAST(b.fecha AS CHAR) AS fecha, b.id_tarea, b.id_equipo, b.back_duracion, b.tarea_opcional, e.descripcion, e.codigo, t.descripcion AS tarea FROM tbl_back b JOIN equipos e ON e.id_equipo = b.id_equipo LEFT JOIN tareas t ON t.id_tarea = b.id_tarea WHERE b.id_empresa = :id_empresa AND DATE_FORMAT(b.fecha, '%Y-%m') = :ym AND (b.estado = 'C' OR b.estado = 'S') ORDER BY b.backId</sql>
+      <result outputType="json">{"backlogs":{"backlog":[{"backId":"$backId","sore_id":"$sore_id","estado":"$estado","fecha":"$fecha","id_tarea":"$id_tarea","id_equipo":"$id_equipo","back_duracion":"$back_duracion","tarea_opcional":"$tarea_opcional","descripcion":"$descripcion","codigo":"$codigo","tarea":"$tarea"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="ym" sqlType="STRING"/>
+   </query>
+   <query id="getPlanPredictivosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT p.predId, p.tarea_descrip, p.periodo, pe.descripcion AS desc_periodo, p.cantidad, CAST(p.fecha AS CHAR) AS fecha, CAST(p.horash AS CHAR) AS horash, p.id_equipo, e.codigo, t.descripcion, s.descripcion AS sector FROM predictivo p JOIN equipos e ON p.id_equipo = e.id_equipo JOIN tareas t ON p.tarea_descrip = t.id_tarea JOIN sector s ON s.id_sector = e.id_sector LEFT JOIN periodo pe ON pe.idperiodo = p.periodo WHERE p.id_empresa = :id_empresa AND DATE_FORMAT(p.fecha, '%Y-%m') = :ym AND p.estado = 'C' ORDER BY p.predId</sql>
+      <result outputType="json">{"predictivos":{"predictivo":[{"predId":"$predId","tarea_descrip":"$tarea_descrip","periodo":"$periodo","desc_periodo":"$desc_periodo","cantidad":"$cantidad","fecha":"$fecha","horash":"$horash","id_equipo":"$id_equipo","codigo":"$codigo","descripcion":"$descripcion","sector":"$sector"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="ym" sqlType="STRING"/>
+   </query>
+   <query id="getPlanCorrectivosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT sr.case_id, sr.id_solicitud, sr.numero, sr.id_tipo, sr.nivel, sr.solicitante, CAST(sr.f_solicitado AS CHAR) AS f_solicitado, CAST(sr.f_sugerido AS CHAR) AS f_sugerido, sr.hora_sug, sr.estado, sr.correctivo, sr.causa, e.descripcion, e.codigo, e.id_equipo, s.descripcion AS sector FROM solicitud_reparacion sr JOIN equipos e ON e.id_equipo = sr.id_equipo JOIN sector s ON s.id_sector = e.id_sector WHERE sr.id_empresa = :id_empresa AND sr.estado = 'S' AND sr.urgente != 0 AND DATE_FORMAT(sr.f_solicitado, '%Y-%m') = :ym AND FIND_IN_SET(sr.case_id, REPLACE(REPLACE(REPLACE(REPLACE(:ids, '[', ''), ']', ''), CHAR(34), ''), ' ', ''))</sql>
+      <result outputType="json">{"solicitudes":{"solicitud":[{"case_id":"$case_id","id_solicitud":"$id_solicitud","numero":"$numero","id_tipo":"$id_tipo","nivel":"$nivel","solicitante":"$solicitante","f_solicitado":"$f_solicitado","f_sugerido":"$f_sugerido","hora_sug":"$hora_sug","estado":"$estado","correctivo":"$correctivo","causa":"$causa","descripcion":"$descripcion","codigo":"$codigo","id_equipo":"$id_equipo","sector":"$sector"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="ym" sqlType="STRING"/>
+      <param name="ids" sqlType="STRING"/>
+   </query>
+   <query id="updateCalendarioOtFechaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET fecha_program = :fecha_program WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="fecha_program" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateCalendarioOtDuracionMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET duracion = IFNULL(duracion, 0) + :minutos WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="minutos" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/periodos/empresa/{id_empresa}">
+      <call-query href="getPeriodosEmpresaMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/calendario/ot/empresa/{id_empresa}/desde/{desde}/hasta/{hasta}">
+      <call-query href="getCalendarioOtMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="desde" query-param="desde"/><with-param name="hasta" query-param="hasta"/></call-query>
+   </resource>
+   <resource method="GET" path="/calendario/filtro/equipos/empresa/{id_empresa}">
+      <call-query href="getCalendarioFiltroEquiposMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/calendario/filtro/areas/empresa/{id_empresa}">
+      <call-query href="getCalendarioFiltroAreasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/calendario/filtro/grupos/empresa/{id_empresa}">
+      <call-query href="getCalendarioFiltroGruposMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/calendario/filtro/sectores/empresa/{id_empresa}">
+      <call-query href="getCalendarioFiltroSectoresMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/calendario/filtro/origenes">
+      <call-query href="getCalendarioFiltroOrigenesMan"></call-query>
+   </resource>
+   <resource method="GET" path="/plan/preventivos/empresa/{id_empresa}/mes/{ym}">
+      <call-query href="getPlanPreventivosMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="ym" query-param="ym"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/preventivos-contador/empresa/{id_empresa}">
+      <call-query href="getPlanPreventivosContadorMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/backlogs/empresa/{id_empresa}/mes/{ym}">
+      <call-query href="getPlanBacklogsMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="ym" query-param="ym"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/predictivos/empresa/{id_empresa}/mes/{ym}">
+      <call-query href="getPlanPredictivosMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="ym" query-param="ym"/></call-query>
+   </resource>
+   <resource method="POST" path="/plan/correctivos">
+      <call-query href="getPlanCorrectivosMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="ym" query-param="ym"/><with-param name="ids" query-param="ids"/></call-query>
+   </resource>
+   <resource method="PUT" path="/calendario/ot/fecha">
+      <call-query href="updateCalendarioOtFechaMan"><with-param name="fecha_program" query-param="fecha_program"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/calendario/ot/duracion">
+      <call-query href="updateCalendarioOtDuracionMan"><with-param name="minutos" query-param="minutos"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
