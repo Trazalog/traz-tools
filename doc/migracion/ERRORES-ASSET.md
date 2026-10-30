@@ -39,6 +39,7 @@ con el mismo número.
 | T39 | La pantalla de una tarea y sus comentarios se abren con el usuario administrador de Bonita y el número de tarea que manda el navegador, sin mirar la empresa: cualquiera puede ver los datos del equipo y la orden de otra empresa y escribir comentarios en sus casos | Corregido: el caso de la tarea tiene que ser de la empresa |
 | T46 | La ventana de la orden del Calendario (ver y asignar responsable) muestra cualquier orden por su número, de cualquier empresa | Corregido: solo órdenes de la empresa; si no es suya, "La orden no existe" |
 | T47 | Mover una orden en el calendario, estirarla y cambiar su responsable aceptan el número de cualquier orden (y cualquier usuario), de cualquier empresa | Corregido: se mira antes que la orden y el usuario sean de la empresa (prueba de aislamiento) |
+| T64 | "Administrar Órdenes" arma el SQL pegando lo que manda el navegador y entrega, o cambia la fecha de, cualquier orden de cualquier empresa; al reprogramar guarda la fecha vacía por una variable que no existe | Corregido al portarla (2026-10-30): consultas por MANDataService, solo órdenes de la empresa y la fecha elegida |
 
 ## Errores que pierden o desordenan datos 🟠
 

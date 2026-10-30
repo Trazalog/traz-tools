@@ -3234,4 +3234,32 @@
    <resource method="PUT" path="/plan/ot/responsable">
       <call-query href="updatePlanOtResponsableMan"><with-param name="id_usuario_a" query-param="id_usuario_a"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_usuario_a2" query-param="id_usuario_a2"/><with-param name="id_empresa2" query-param="id_empresa2"/></call-query>
    </resource>
+   <!-- MIG-ASSET-4e · Administrar Órdenes (entregar y reprogramar órdenes terminadas). Reemplaza models/Envios.php (ADR-014), que armaba el
+        SQL pegando lo que mandaba el navegador (T2) y tocaba órdenes de cualquier empresa. -->
+   <query id="getEnviosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_orden, nro, CAST(fecha_inicio AS CHAR) AS fecha_inicio, CAST(fecha_entrega AS CHAR) AS fecha_entrega, CAST(fecha_terminada AS CHAR) AS fecha_terminada, CAST(fecha_aviso AS CHAR) AS fecha_aviso, descripcion, estado FROM orden_trabajo WHERE id_empresa = :id_empresa AND estado IN ('T', 'TE') ORDER BY id_orden</sql>
+      <result outputType="json">{"ordenes":{"orden":[{"id_orden":"$id_orden","nro":"$nro","fecha_inicio":"$fecha_inicio","fecha_entrega":"$fecha_entrega","fecha_terminada":"$fecha_terminada","fecha_aviso":"$fecha_aviso","descripcion":"$descripcion","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateEnvioEntregaMan" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET estado = 'E', fecha_entregada = :fecha WHERE id_orden = :id_orden AND id_empresa = :id_empresa AND estado IN ('T', 'TE')</sql>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateEnvioFechaMan" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET estado = 'AS', fecha_entrega = :fecha WHERE id_orden = :id_orden AND id_empresa = :id_empresa AND estado = 'TE'</sql>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/envios/empresa/{id_empresa}">
+      <call-query href="getEnviosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/envio/entrega">
+      <call-query href="updateEnvioEntregaMan"><with-param name="fecha" query-param="fecha"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/envio/fecha">
+      <call-query href="updateEnvioFechaMan"><with-param name="fecha" query-param="fecha"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
