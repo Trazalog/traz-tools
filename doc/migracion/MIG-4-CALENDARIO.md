@@ -19,6 +19,24 @@ lanzamiento diferido de casos (MIG-8) ni la unificación de bandejas (MIG-7): ve
   E1–E34 de [MIGRACION-ASSETPLANNER.md](MIGRACION-ASSETPLANNER.md) §3.8, PHP 5.6, y "lo de almacenes y
   pañol no se migra" (E34).
 
+## Estado de la implementación (2026-10-30)
+
+Implementado según esta especificación, con estas diferencias (todas decididas y documentadas en
+[MIGRACION-ASSETPLANNER.md](MIGRACION-ASSETPLANNER.md) §3.8, E35 a E48):
+
+| Especificación | Cómo quedó |
+|---|---|
+| E42: ampliar `/ot/asignar` | Tres recursos nuevos: `/plan/ot/tarea`, `/plan/asignar` y `/plan/reasignar`. `/ot/asignar` no se toca |
+| Secuencia `manLanzarOT` | El bloque de Bonita es una fase separada dentro del recurso `/plan/programar` (no un archivo aparte) |
+| `getPlanFechasMan` calcula las fechas y el motor las pide | La misma fórmula está en la consulta que crea las órdenes y en `POST /plan/fechas`, que usa la prueba de fechas. El recurso no pasa fechas por el API |
+| `id_tarea_bonita` del correctivo | No se usa: el motor busca "Planificar Solicitud" por nombre en el caso de la solicitud |
+| Recurso `/plan/correctivos` en `toolsMANAPI` | Es una consulta de `MANDataService` (`POST /plan/correctivos`) y PHP pide las tareas del usuario con la bandeja (`Tareas::todas`) |
+| Mover y estirar comprueban la empresa en la consulta | La base no informa cuántas filas tocó un UPDATE (E47): se comprueba antes con una consulta |
+| `foreach` con `call` dentro: a probar | Probado, funciona (E46) |
+| Comparación de escrituras contra asset | No se hace (asset no puede lanzar casos con el usuario de prueba, T28): `e2e_calendario.py` comprueba las filas que arma `guardar_agregar` de asset |
+| Excel e imprimir | Excel carga SheetJS de su sitio la primera vez (como asset); imprimir usa la impresión del navegador sobre el calendario |
+
+
 ---
 
 ## 1. Qué hay hoy en asset
@@ -392,8 +410,8 @@ como días): esa serie se rechaza con "Los planes por contador se programan de a
 | Fechas (golden) | Que la serie de MAN coincida con la de asset | Script `tests/paridad/golden_fechas.py` del módulo: para una matriz de período (Diario, Semanal, Mensual, Semestral, Anual) × cantidad (1, 2, 3, 4) × fecha de inicio (31-ene, 28-feb de año bisiesto y no, 15-jun, 31-dic, a las 00:00 y 17:30) × meses (1, 3, 12, 36), corre las funciones de asset copiadas **textuales** (`getDiasDuracion` y el `while` de `setOTenSerie`) con `php` de la línea de comandos, y compara con lo que devuelve `getPlanFechasMan` en el MI local. Opción A: iguales en todo. Opción B: iguales en Diario y Semanal; Mensual, Semestral y Anual contra la lista escrita a mano |
 | Paridad de lectura | Mismos datos que asset | `paridad.py calendario`: con el usuario de prueba (empresa 1), compara `getcalendarot` (JSON normalizado, rango del mes) y las filas de las 5 tablas (datos, no HTML) de asset y de MAN para el mes actual y dos más; `getperiodo` con POST vacío y con datos; `verEjecutarOT` de una OT de la empresa (datos de la pestaña Detalle) |
 | Paridad de escritura | Mismo estado en `assetv2` | Se crean con el alta de MAN un preventivo, un predictivo y un backlog de prueba en la empresa 1. Se programa cada uno en asset y en MAN (única y serie de 2 meses) y se comparan las OTs (todas las columnas salvo `id_orden`, `fecha`, `case_id`), herramientas, insumos, adjunto, estados del plan y `ultimo`. Al terminar se borran OTs, casos de Bonita creados por la prueba (solo esos), filas de `case_empresa` en `assetv2` y en PostgreSQL, y los planes de prueba |
-| Bonita | La coreografía | Con `MAN_PARIDAD_BONITA=1`: correctivo urgente (crear solicitud urgente por MAN, decidir urgencia en la bandeja, planificar en el calendario: la tarea siguiente del caso tiene que ser "Asignar Recursos y Tareas Urgente"); backlog con solicitud ("Planificar Backlog" se cierra); preventivo (caso nuevo con `idOT`); después, "Asignar OT" desde la ventana y comprobar que "Ejecutar OT" quedó al responsable |
-| Casos negativos (obligatorios, §3.4 del plan) | Guardas | Frecuencia 0 → error inmediato y nada escrito; `cant_meses` 0, 37, `abc` → rechazo; plan por contador sin `lectura_base` → error controlado; serie de plan por contador → rechazo; empresa A programando, moviendo, estirando o abriendo la ventana de una OT o plan de la empresa B → rechazo sin cambios; Bonita caída (URL inválida en una copia del recurso en el MI local) → no queda ninguna OT ni cambio de estado |
+| Bonita | La coreografía | `tests/paridad/e2e_calendario.py` (la Bonita de desarrollo y el MI local): correctivo urgente (crear solicitud urgente por MAN, decidir urgencia en la bandeja, planificar en el calendario: la tarea siguiente del caso tiene que ser "Asignar Recursos y Tareas Urgente"); backlog con solicitud ("Planificar Backlog" se cierra); preventivo (caso nuevo con `idOT`); después, "Asignar OT" desde la ventana y comprobar que "Ejecutar OT" quedó al responsable |
+| Casos negativos (obligatorios, §3.4 del plan) | Guardas | Frecuencia 0 → error inmediato y nada escrito; `cant_meses` 0, 37, `abc` → rechazo; plan por contador sin `lectura_base` → error controlado; serie de plan por contador → rechazo; empresa A programando, moviendo, estirando o abriendo la ventana de una OT o plan de la empresa B → rechazo sin cambios; falla a mitad de una serie (se registra de antemano el número del próximo caso: el segundo caso no puede registrarse) → no queda ninguna OT, ni caso, ni cambio de estado |
 | En el navegador | Que se vea igual | Lo hace el PM (no puedo escribir la contraseña en `traz-comp.local`): checklist de §2 al lado de asset, mismo mes y misma empresa |
 
 ---
