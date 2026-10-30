@@ -2811,4 +2811,236 @@
          <respond/>
       </faultSequence>
    </resource>
+   <!-- MIG-ASSET-3i · Informe de servicio desde la Bandeja. POST /bandeja/tarea/informe {"usrNick","id_empresa","session","id_tarea",
+        "id_solicitudreparacion","fecha_inicio","fecha_fin","horometro_inicio","horometro_fin","tareas":[{"tarea"}],"operarios":[{"usrId"}],
+        "evidencias":[{"valor_base64","nombre"}]}. Valida que el caso sea de la empresa, borra el informe anterior de la OT y escribe el nuevo
+        (el equipo sale de la OT), y después cierra la tarea en Bonita. Sin herramientas ni insumos. -->
+   <resource methods="POST" uri-template="/bandeja/tarea/informe">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_tarea" expression="json-eval($.id_tarea)"/>
+         <property name="man_opcion" expression="json-eval($.opcion)"/>
+         <property name="man_accion" expression="json-eval($.accion)"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <variable name="tareas" type="JSON" expression="${vars.datos.tareas}"/>
+         <variable name="operarios" type="JSON" expression="${vars.datos.operarios}"/>
+         <variable name="evidencias" type="JSON" expression="${vars.datos.evidencias}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/humanTask/', $ctx:man_tarea)"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_case" expression="json-eval($.payload.caseId)"/>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="No se encontró la tarea"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="caso" type="STRING" expression="${properties.synapse.man_case}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_bandeja_tarea_caso":{"case_id":"${vars.caso}","id_empresa":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/bandeja/tarea/caso')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_caso_ok" expression="json-eval($.tareas.tarea[0].case_id)"/>
+         <property name="man_ot" expression="json-eval($.tareas.tarea[0].id_orden)"/>
+         <property name="man_tipo" expression="json-eval($.tareas.tarea[0].tipo)"/>
+         <property name="man_sol" expression="json-eval($.tareas.tarea[0].id_solicitud)"/>
+         <property name="man_ss" expression="json-eval($.tareas.tarea[0].ss)"/>
+         <filter source="get-property('man_caso_ok')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no es de la empresa"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="ot" type="STRING" expression="${properties.synapse.man_ot}"/>
+         <variable name="sol" type="STRING" expression="${properties.synapse.man_sol}"/>
+         <variable name="ss" type="STRING" expression="${properties.synapse.man_ss}"/>
+         <filter source="get-property('man_ot')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no tiene orden de trabajo"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"request_box":{"_put_informe_adjuntos_borrar":{"id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"},"_put_informe_detalle_borrar":{"id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"},"_put_informe_operarios_borrar":{"id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"},"_put_informe_borrar":{"id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"},"_post_informe_alta":{"id_solicitudreparacion":"${vars.datos.id_solicitudreparacion}","fecha_inicio":"${vars.datos.fecha_inicio}","fecha_fin":"${vars.datos.fecha_fin}","horometro_inicio":"${vars.datos.horometro_inicio}","horometro_fin":"${vars.datos.horometro_fin}","id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"}}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/request_box')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <variable name="msj" type="STRING" value="Error al guardar el informe en la base"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <filter xpath="${length(vars.tareas) > 0}">
+            <then>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"lista": ${vars.tareas}}</format>
+               </payloadFactory>
+               <foreach collection="${payload.lista}" parallel-execution="false" update-original="true">
+                  <sequence>
+                     <payloadFactory media-type="json" template-type="default">
+                        <format>{"tarea":"${payload.tarea}","id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"}</format>
+                     </payloadFactory>
+                  </sequence>
+               </foreach>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"_post_informe_tarea_batch_req":{"_post_informe_tarea": ${payload.lista}}}</format>
+               </payloadFactory>
+               <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/informe/tarea_batch_req')"/>
+               <call>
+                  <endpoint>
+                     <http method="POST" uri-template="{uri.var.man_url}"/>
+                  </endpoint>
+               </call>
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then/>
+                  <else>
+                     <variable name="msj" type="STRING" value="Error al guardar el informe (tarea); volvé a guardar"/>
+                     <payloadFactory media-type="json" template-type="default">
+                        <format>{"status":false,"msj":"${vars.msj}"}</format>
+                     </payloadFactory>
+                     <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+                     <respond/>
+                  </else>
+               </filter>
+            </then>
+            <else/>
+         </filter>
+         <filter xpath="${length(vars.operarios) > 0}">
+            <then>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"lista": ${vars.operarios}}</format>
+               </payloadFactory>
+               <foreach collection="${payload.lista}" parallel-execution="false" update-original="true">
+                  <sequence>
+                     <payloadFactory media-type="json" template-type="default">
+                        <format>{"usrId":"${payload.usrId}","id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"}</format>
+                     </payloadFactory>
+                  </sequence>
+               </foreach>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"_post_informe_operario_batch_req":{"_post_informe_operario": ${payload.lista}}}</format>
+               </payloadFactory>
+               <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/informe/operario_batch_req')"/>
+               <call>
+                  <endpoint>
+                     <http method="POST" uri-template="{uri.var.man_url}"/>
+                  </endpoint>
+               </call>
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then/>
+                  <else>
+                     <variable name="msj" type="STRING" value="Error al guardar el informe (operario); volvé a guardar"/>
+                     <payloadFactory media-type="json" template-type="default">
+                        <format>{"status":false,"msj":"${vars.msj}"}</format>
+                     </payloadFactory>
+                     <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+                     <respond/>
+                  </else>
+               </filter>
+            </then>
+            <else/>
+         </filter>
+         <filter xpath="${length(vars.evidencias) > 0}">
+            <then>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"lista": ${vars.evidencias}}</format>
+               </payloadFactory>
+               <foreach collection="${payload.lista}" parallel-execution="false" update-original="true">
+                  <sequence>
+                     <payloadFactory media-type="json" template-type="default">
+                        <format>{"valor_base64":"${payload.valor_base64}","nombre":"${payload.nombre}","id_ot":"${vars.ot}","id_empresa":"${vars.datos.id_empresa}"}</format>
+                     </payloadFactory>
+                  </sequence>
+               </foreach>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"_post_informe_evidencia_batch_req":{"_post_informe_evidencia": ${payload.lista}}}</format>
+               </payloadFactory>
+               <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/informe/evidencia_batch_req')"/>
+               <call>
+                  <endpoint>
+                     <http method="POST" uri-template="{uri.var.man_url}"/>
+                  </endpoint>
+               </call>
+               <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+                  <then/>
+                  <else>
+                     <variable name="msj" type="STRING" value="Error al guardar el informe (evidencia); volvé a guardar"/>
+                     <payloadFactory media-type="json" template-type="default">
+                        <format>{"status":false,"msj":"${vars.msj}"}</format>
+                     </payloadFactory>
+                     <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+                     <respond/>
+                  </else>
+               </filter>
+            </then>
+            <else/>
+         </filter>
+         <property name="man_recurso" expression="concat('/API/bpm/userTask/', $ctx:man_tarea, '/execution')"/>
+         <property name="man_payload_bpm" expression="'{}'"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:man_payload_bpm}"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":true,"session":"${vars.sesion}"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/bandeja/tarea/informe"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
 </api>

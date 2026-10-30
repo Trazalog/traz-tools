@@ -2706,4 +2706,100 @@
    <resource method="GET" path="/ot/{id_orden}/procedimiento/empresa/{id_empresa}">
       <call-query href="getOtProcedimientoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-3i · Informe de servicio desde la Bandeja: operarios, borrado del informe anterior y alta (informe, tareas, operarios y
+        evidencias). Sin herramientas ni insumos (pañol y almacenes no se migran). Todo limitado a la empresa. -->
+   <query id="getInformeOperariosListaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT DISTINCT CONCAT(u.usrname, ', ', u.usrLastName) AS label, u.usrId AS value FROM sisusers u JOIN usuarioasempresa ue ON ue.usrId = u.usrId WHERE ue.empresaid = :id_empresa AND ue.estado = 'AC'</sql>
+      <result outputType="json">{"operarios":{"operario":[{"label":"$label","value":"$value"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getInformeRrhhOtMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT DISTINCT CONCAT(u.usrLastName, ', ', u.usrName) AS label, l.id_usuario AS value FROM tbl_listarea l JOIN sisusers u ON u.usrId = l.id_usuario JOIN orden_trabajo o ON o.id_orden = l.id_orden AND o.id_empresa = :id_empresa WHERE l.id_orden = :id_orden</sql>
+      <result outputType="json">{"recursos":{"recurso":[{"label":"$label","value":"$value"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+   </query>
+   <query id="deleteInformeAdjuntosMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM orden_servicio_adjuntos WHERE id_orden IN (SELECT id_orden FROM orden_servicio WHERE id_ot = :id_ot AND id_empresa = :id_empresa)</sql>
+      <result outputType="json">{"informe":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="deleteInformeDetalleMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM deta_ordenservicio WHERE id_ordenservicio IN (SELECT id_orden FROM orden_servicio WHERE id_ot = :id_ot AND id_empresa = :id_empresa)</sql>
+      <result outputType="json">{"informe":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="deleteInformeOperariosMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM asignausuario WHERE id_orden IN (SELECT id_orden FROM orden_servicio WHERE id_ot = :id_ot AND id_empresa = :id_empresa)</sql>
+      <result outputType="json">{"informe":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="deleteInformeMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM orden_servicio WHERE id_ot = :id_ot AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"informe":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setInformeMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO orden_servicio (lectura, fecha, comprobante, id_equipo, id_contratista, id_solicitudreparacion, valesid, estado, id_ordenherraminetas, id_orden_insumo, id_ot, id_empresa, fechahorainicio, fechahorafin, horometroinicio, horometrofin) SELECT 0, CURDATE(), '', o.id_equipo, 0, :id_solicitudreparacion, 0, 'C', 0, 0, o.id_orden, o.id_empresa, :fecha_inicio, :fecha_fin, :horometro_inicio, :horometro_fin FROM orden_trabajo o WHERE o.id_orden = :id_ot AND o.id_empresa = :id_empresa</sql>
+      <param name="id_solicitudreparacion" sqlType="STRING"/>
+      <param name="fecha_inicio" sqlType="STRING"/>
+      <param name="fecha_fin" sqlType="STRING"/>
+      <param name="horometro_inicio" sqlType="STRING"/>
+      <param name="horometro_fin" sqlType="STRING"/>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setInformeTareaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO deta_ordenservicio (id_ordenservicio, id_tarea, tiempo, observacion, monto, id_componente) SELECT os.id_orden, :tarea, '', NULL, 0, 0 FROM orden_servicio os WHERE os.id_ot = :id_ot AND os.id_empresa = :id_empresa ORDER BY os.id_orden DESC LIMIT 1</sql>
+      <param name="tarea" sqlType="STRING"/>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setInformeOperarioMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO asignausuario (usrId, id_orden, fechahora) SELECT ue.usrId, os.id_orden, NOW() FROM orden_servicio os JOIN usuarioasempresa ue ON ue.usrId = :usrId AND ue.empresaid = os.id_empresa WHERE os.id_ot = :id_ot AND os.id_empresa = :id_empresa ORDER BY os.id_orden DESC LIMIT 1</sql>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setInformeEvidenciaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO orden_servicio_adjuntos (id_orden, valor_base64, nombre) SELECT os.id_orden, :valor_base64, LEFT(:nombre, 100) FROM orden_servicio os WHERE os.id_ot = :id_ot AND os.id_empresa = :id_empresa ORDER BY os.id_orden DESC LIMIT 1</sql>
+      <param name="valor_base64" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/informe/operarios/empresa/{id_empresa}">
+      <call-query href="getInformeOperariosListaMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/informe/ot/{id_orden}/rrhh/empresa/{id_empresa}">
+      <call-query href="getInformeRrhhOtMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_orden" query-param="id_orden"/></call-query>
+   </resource>
+   <resource method="PUT" path="/informe/adjuntos/borrar">
+      <call-query href="deleteInformeAdjuntosMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/informe/detalle/borrar">
+      <call-query href="deleteInformeDetalleMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/informe/operarios/borrar">
+      <call-query href="deleteInformeOperariosMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/informe/borrar">
+      <call-query href="deleteInformeMan"><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/informe/alta">
+      <call-query href="setInformeMan"><with-param name="id_solicitudreparacion" query-param="id_solicitudreparacion"/><with-param name="fecha_inicio" query-param="fecha_inicio"/><with-param name="fecha_fin" query-param="fecha_fin"/><with-param name="horometro_inicio" query-param="horometro_inicio"/><with-param name="horometro_fin" query-param="horometro_fin"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/informe/tarea">
+      <call-query href="setInformeTareaMan"><with-param name="tarea" query-param="tarea"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/informe/operario">
+      <call-query href="setInformeOperarioMan"><with-param name="usrId" query-param="usrId"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/informe/evidencia">
+      <call-query href="setInformeEvidenciaMan"><with-param name="valor_base64" query-param="valor_base64"/><with-param name="nombre" query-param="nombre"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
