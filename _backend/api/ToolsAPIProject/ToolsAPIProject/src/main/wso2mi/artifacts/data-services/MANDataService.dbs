@@ -3052,7 +3052,8 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="updatePlanPreventivoEstadoMan" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE preventivo SET estadoprev = 'PL', ultimo = IF(CAST(:meses AS SIGNED) &gt; 0, DATE(DATE_ADD(CAST(:fecha AS DATETIME), INTERVAL CAST(:meses2 AS SIGNED) MONTH)), ultimo) WHERE prevId = CAST(:id_origen AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND :tipo = '3'</sql>
+      <sql>UPDATE preventivo SET estadoprev = :estado, ultimo = IF(CAST(:meses AS SIGNED) &gt; 0, DATE(DATE_ADD(CAST(:fecha AS DATETIME), INTERVAL CAST(:meses2 AS SIGNED) MONTH)), ultimo) WHERE prevId = CAST(:id_origen AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND :tipo = '3'</sql>
+      <param name="estado" sqlType="STRING"/>
       <param name="meses" sqlType="STRING"/>
       <param name="fecha" sqlType="STRING"/>
       <param name="meses2" sqlType="STRING"/>
@@ -3061,19 +3062,22 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="updatePlanPredictivoEstadoMan" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE predictivo SET estado = 'PL' WHERE predId = CAST(:id_origen AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND :tipo = '5'</sql>
+      <sql>UPDATE predictivo SET estado = :estado WHERE predId = CAST(:id_origen AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND :tipo = '5'</sql>
+      <param name="estado" sqlType="STRING"/>
       <param name="id_origen" sqlType="STRING"/>
       <param name="tipo" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="updatePlanBacklogEstadoMan" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE tbl_back SET estado = 'PL' WHERE backId = CAST(:id_origen AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND :tipo = '4'</sql>
+      <sql>UPDATE tbl_back SET estado = :estado WHERE backId = CAST(:id_origen AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND :tipo = '4'</sql>
+      <param name="estado" sqlType="STRING"/>
       <param name="id_origen" sqlType="STRING"/>
       <param name="tipo" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="updatePlanSolicitudEstadoMan" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE solicitud_reparacion SET estado = 'PL' WHERE id_solicitud = CAST(:id_solicitud AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND CAST(:id_solicitud2 AS SIGNED) &gt; 0</sql>
+      <sql>UPDATE solicitud_reparacion SET estado = :estado WHERE id_solicitud = CAST(:id_solicitud AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND CAST(:id_solicitud2 AS SIGNED) &gt; 0</sql>
+      <param name="estado" sqlType="STRING"/>
       <param name="id_solicitud" sqlType="STRING"/>
       <param name="id_solicitud2" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
@@ -3103,6 +3107,54 @@
       <sql>DELETE FROM orden_trabajo WHERE nro = :token AND id_empresa = CAST(:id_empresa AS SIGNED)</sql>
       <param name="token" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPlanOtDetalleMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT ot.id_orden, ot.id_tarea, ot.descripcion, ot.tipo, ot.id_solicitud, CAST(ot.fecha_program AS CHAR) AS fecha_program, IFNULL(ot.case_id, 0) AS case_id, ot.estado, IFNULL((SELECT b.sore_id FROM tbl_back b WHERE ot.tipo = '4' AND b.backId = ot.id_solicitud AND b.id_empresa = ot.id_empresa), 0) AS sore_id, e.codigo, e.descripcion AS descripcionEquipo, CASE WHEN ot.id_tarea = 0 THEN 'sin tarea estandar' ELSE IFNULL(tstd.descripcion, '') END AS descTareaStandar, IFNULL(su.usrId, '') AS usrId, IFNULL(su.usrLastName, '') AS usrLastName, IFNULL(su.usrName, '') AS usrName, tipoOT.descripcion AS descrpcionSolicitud FROM orden_trabajo ot LEFT JOIN tareas tstd ON ot.id_tarea = tstd.id_tarea JOIN equipos e ON ot.id_equipo = e.id_equipo LEFT JOIN sisusers su ON ot.id_usuario_a = su.usrId JOIN tbl_tipoordentrabajo tipoOT ON ot.tipo = tipoOT.tipo_orden WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","id_tarea":"$id_tarea","descripcion":"$descripcion","tipo":"$tipo","id_solicitud":"$id_solicitud","fecha_program":"$fecha_program","case_id":"$case_id","estado":"$estado","sore_id":"$sore_id","codigo":"$codigo","descripcionEquipo":"$descripcionEquipo","descTareaStandar":"$descTareaStandar","usrId":"$usrId","usrLastName":"$usrLastName","usrName":"$usrName","descrpcionSolicitud":"$descrpcionSolicitud"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPlanOtOrigenMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(p.prev_duracion AS CHAR) AS duracionTarea, u.unidaddescrip, CAST(p.cantidad AS CHAR) AS frecuencia, IFNULL(pe.descripcion, '') AS especieFrecuencia FROM preventivo p LEFT JOIN unidad_tiempo u ON u.id_unidad = p.id_unidad LEFT JOIN periodo pe ON pe.idperiodo = p.perido WHERE :tipo = '3' AND p.prevId = CAST(:id AS SIGNED) AND p.id_empresa = CAST(:id_empresa AS SIGNED) UNION ALL SELECT CAST(b.back_duracion AS CHAR), u.unidaddescrip, NULL, NULL FROM tbl_back b LEFT JOIN unidad_tiempo u ON u.id_unidad = b.id_unidad WHERE :tipo2 = '4' AND b.backId = CAST(:id2 AS SIGNED) AND b.id_empresa = CAST(:id_empresa2 AS SIGNED) UNION ALL SELECT CAST(p.pred_duracion AS CHAR), u.unidaddescrip, CAST(p.cantidad AS CHAR), NULL FROM predictivo p LEFT JOIN unidad_tiempo u ON u.id_unidad = p.id_unidad WHERE :tipo3 = '5' AND p.predId = CAST(:id3 AS SIGNED) AND p.id_empresa = CAST(:id_empresa3 AS SIGNED)</sql>
+      <result outputType="json">{"origen":{"fila":[{"duracionTarea":"$duracionTarea","unidaddescrip":"$unidaddescrip","frecuencia":"$frecuencia","especieFrecuencia":"$especieFrecuencia"}]}}</result>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="tipo2" sqlType="STRING"/>
+      <param name="id2" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+      <param name="tipo3" sqlType="STRING"/>
+      <param name="id3" sqlType="STRING"/>
+      <param name="id_empresa3" sqlType="STRING"/>
+   </query>
+   <query id="getPlanOtComponenteMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT c.descripcion AS descCompo, '' AS codCompo FROM preventivo p JOIN componentes c ON c.id_componente = p.id_componente WHERE :tipo = '3' AND p.prevId = CAST(:id AS SIGNED) AND p.id_empresa = CAST(:id_empresa AS SIGNED) UNION ALL SELECT c.descripcion, IFNULL(ce.codigo, '') FROM tbl_back b JOIN componenteequipo ce ON ce.idcomponenteequipo = b.idcomponenteequipo JOIN componentes c ON c.id_componente = ce.id_componente WHERE :tipo2 = '4' AND b.backId = CAST(:id2 AS SIGNED) AND b.id_empresa = CAST(:id_empresa2 AS SIGNED)</sql>
+      <result outputType="json">{"componente":{"fila":[{"descCompo":"$descCompo","codCompo":"$codCompo"}]}}</result>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="tipo2" sqlType="STRING"/>
+      <param name="id2" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+   </query>
+   <query id="updatePlanOtAsignarMan" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET estado = 'AS', id_tarea = CAST(:id_tarea AS SIGNED), descripcion = IF(:tarea_opcional != '', :tarea_opcional, descripcion), id_usuario_a = CAST(:usrId AS SIGNED), latitud = NULLIF(:latitud, ''), longitud = NULLIF(:longitud, '') WHERE id_orden = CAST(:id_orden AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED)</sql>
+      <param name="id_tarea" sqlType="STRING"/>
+      <param name="tarea_opcional" sqlType="STRING"/>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="latitud" sqlType="STRING"/>
+      <param name="longitud" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updatePlanOtResponsableMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET id_usuario_a = CAST(:id_usuario_a AS SIGNED) WHERE id_orden = CAST(:id_orden AS SIGNED) AND id_empresa = CAST(:id_empresa AS SIGNED) AND EXISTS (SELECT 1 FROM usuarioasempresa ue WHERE ue.usrId = CAST(:id_usuario_a2 AS SIGNED) AND ue.empresaid = CAST(:id_empresa2 AS SIGNED))</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_usuario_a" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_usuario_a2" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
    </query>
    <resource method="POST" path="/plan/fechas">
       <call-query href="getPlanFechasMan"><with-param name="fecha" query-param="fecha"/><with-param name="periodo" query-param="periodo"/><with-param name="cantidad" query-param="cantidad"/><with-param name="meses" query-param="meses"/><with-param name="maximo" query-param="maximo"/></call-query>
@@ -3141,16 +3193,16 @@
       <call-query href="updatePlanOtsCasoMan"><with-param name="case_id" query-param="case_id"/><with-param name="token" query-param="token"/><with-param name="case_id2" query-param="case_id2"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="PUT" path="/plan/estado/preventivo">
-      <call-query href="updatePlanPreventivoEstadoMan"><with-param name="meses" query-param="meses"/><with-param name="fecha" query-param="fecha"/><with-param name="meses2" query-param="meses2"/><with-param name="id_origen" query-param="id_origen"/><with-param name="tipo" query-param="tipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+      <call-query href="updatePlanPreventivoEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="meses" query-param="meses"/><with-param name="fecha" query-param="fecha"/><with-param name="meses2" query-param="meses2"/><with-param name="id_origen" query-param="id_origen"/><with-param name="tipo" query-param="tipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="PUT" path="/plan/estado/predictivo">
-      <call-query href="updatePlanPredictivoEstadoMan"><with-param name="id_origen" query-param="id_origen"/><with-param name="tipo" query-param="tipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+      <call-query href="updatePlanPredictivoEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_origen" query-param="id_origen"/><with-param name="tipo" query-param="tipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="PUT" path="/plan/estado/backlog">
-      <call-query href="updatePlanBacklogEstadoMan"><with-param name="id_origen" query-param="id_origen"/><with-param name="tipo" query-param="tipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+      <call-query href="updatePlanBacklogEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_origen" query-param="id_origen"/><with-param name="tipo" query-param="tipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="PUT" path="/plan/estado/solicitud">
-      <call-query href="updatePlanSolicitudEstadoMan"><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_solicitud2" query-param="id_solicitud2"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+      <call-query href="updatePlanSolicitudEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_solicitud" query-param="id_solicitud"/><with-param name="id_solicitud2" query-param="id_solicitud2"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="PUT" path="/plan/ots/borrar/casos">
       <call-query href="deletePlanCasosEmpresaMan"><with-param name="token" query-param="token"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_empresa2" query-param="id_empresa2"/></call-query>
@@ -3166,5 +3218,20 @@
    </resource>
    <resource method="PUT" path="/plan/ots/borrar">
       <call-query href="deletePlanOtsMan"><with-param name="token" query-param="token"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/ot/{id_orden}/empresa/{id_empresa}">
+      <call-query href="getPlanOtDetalleMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/plan/ot/origen">
+      <call-query href="getPlanOtOrigenMan"><with-param name="tipo" query-param="tipo"/><with-param name="id" query-param="id"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="tipo2" query-param="tipo2"/><with-param name="id2" query-param="id2"/><with-param name="id_empresa2" query-param="id_empresa2"/><with-param name="tipo3" query-param="tipo3"/><with-param name="id3" query-param="id3"/><with-param name="id_empresa3" query-param="id_empresa3"/></call-query>
+   </resource>
+   <resource method="POST" path="/plan/ot/componente">
+      <call-query href="getPlanOtComponenteMan"><with-param name="tipo" query-param="tipo"/><with-param name="id" query-param="id"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="tipo2" query-param="tipo2"/><with-param name="id2" query-param="id2"/><with-param name="id_empresa2" query-param="id_empresa2"/></call-query>
+   </resource>
+   <resource method="PUT" path="/plan/ot/asignar">
+      <call-query href="updatePlanOtAsignarMan"><with-param name="id_tarea" query-param="id_tarea"/><with-param name="tarea_opcional" query-param="tarea_opcional"/><with-param name="usrId" query-param="usrId"/><with-param name="latitud" query-param="latitud"/><with-param name="longitud" query-param="longitud"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/plan/ot/responsable">
+      <call-query href="updatePlanOtResponsableMan"><with-param name="id_usuario_a" query-param="id_usuario_a"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_usuario_a2" query-param="id_usuario_a2"/><with-param name="id_empresa2" query-param="id_empresa2"/></call-query>
    </resource>
 </data>
