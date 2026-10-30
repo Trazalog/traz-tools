@@ -2811,6 +2811,107 @@
          <respond/>
       </faultSequence>
    </resource>
+   <resource methods="POST" uri-template="/bandeja/tarea/cerrar-backlog">
+      <inSequence>
+         <property name="apiconf" expression="get-property('registry','conf:tools/apiconfig.xml')" scope="default" type="OM"/>
+         <property name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <property name="man_nick" expression="json-eval($.usrNick)"/>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <property name="man_tarea" expression="json-eval($.id_tarea)"/>
+         <property name="man_opcion" expression="json-eval($.opcion)"/>
+         <property name="man_accion" expression="json-eval($.accion)"/>
+         <variable name="datos" type="JSON" expression="${payload}"/>
+         <property name="man_recurso" expression="concat('/API/bpm/humanTask/', $ctx:man_tarea)"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="GET"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="tarea" type="JSON" expression="${payload.payload}"/>
+         <property name="man_case" expression="json-eval($.payload.caseId)"/>
+         <filter source="get-property('man_case')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="No se encontró la tarea"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="caso" type="STRING" expression="${properties.synapse.man_case}"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"_post_bandeja_tarea_caso":{"case_id":"${vars.caso}","id_empresa":"${vars.datos.id_empresa}"}}</format>
+         </payloadFactory>
+         <property name="uri.var.man_url" expression="concat($ctx:dataservices_url, '/MANDataService/bandeja/tarea/caso')"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.man_url}"/>
+            </endpoint>
+         </call>
+         <property name="man_caso_ok" expression="json-eval($.tareas.tarea[0].case_id)"/>
+         <property name="man_ot" expression="json-eval($.tareas.tarea[0].id_orden)"/>
+         <property name="man_tipo" expression="json-eval($.tareas.tarea[0].tipo)"/>
+         <property name="man_sol" expression="json-eval($.tareas.tarea[0].id_solicitud)"/>
+         <property name="man_ss" expression="json-eval($.tareas.tarea[0].ss)"/>
+         <filter source="get-property('man_caso_ok')" regex="[0-9]+">
+            <then>
+            </then>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no es de la empresa"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <variable name="ot" type="STRING" expression="${properties.synapse.man_ot}"/>
+         <variable name="sol" type="STRING" expression="${properties.synapse.man_sol}"/>
+         <variable name="ss" type="STRING" expression="${properties.synapse.man_ss}"/>
+         <variable name="tname" type="STRING" expression="${vars.tarea.name}"/>
+         <filter xpath="${vars.tname == 'Editar Backlog'}">
+            <then/>
+            <else>
+               <variable name="msj" type="STRING" value="La tarea no es Editar Backlog"/>
+               <payloadFactory media-type="json" template-type="default">
+                  <format>{"status":false,"msj":"${vars.msj}"}</format>
+               </payloadFactory>
+               <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+               <respond/>
+            </else>
+         </filter>
+         <property name="man_recurso" expression="concat('/API/bpm/userTask/', $ctx:man_tarea, '/execution')"/>
+         <property name="man_payload_bpm" expression="'{}'"/>
+         <call-template target="bpmAPICallTemplate">
+            <with-param name="recurso" value="{$ctx:man_recurso}"/>
+            <with-param name="session" value="{$ctx:man_session}"/>
+            <with-param name="method" value="POST"/>
+            <with-param name="payload" value="{$ctx:man_payload_bpm}"/>
+         </call-template>
+         <property name="man_session" expression="json-eval($.session)"/>
+         <variable name="sesion" type="STRING" expression="${properties.synapse.man_session}"/>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":true,"session":"${vars.sesion}"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <payloadFactory media-type="json" template-type="default">
+            <format>{"status":false,"msj":"Error general en POST /tools/man/bandeja/tarea/cerrar-backlog"}</format>
+         </payloadFactory>
+         <property name="HTTP_SC" value="500" scope="axis2" type="STRING"/>
+         <respond/>
+      </faultSequence>
+   </resource>
    <!-- MIG-ASSET-3i · Informe de servicio desde la Bandeja. POST /bandeja/tarea/informe {"usrNick","id_empresa","session","id_tarea",
         "id_solicitudreparacion","fecha_inicio","fecha_fin","horometro_inicio","horometro_fin","tareas":[{"tarea"}],"operarios":[{"usrId"}],
         "evidencias":[{"valor_base64","nombre"}]}. Valida que el caso sea de la empresa, borra el informe anterior de la OT y escribe el nuevo

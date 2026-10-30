@@ -10,7 +10,7 @@ anotado acá y se resuelve en el módulo de mantenimiento de tools (MAN). El det
 [`MIGRACION-ASSETPLANNER.md` §5.2](MIGRACION-ASSETPLANNER.md#52-bugs-heredados-de-asset-están-hoy-en-producción),
 con el mismo número.
 
-- Última actualización: 2026-10-29
+- Última actualización: 2026-10-30
 - Alcance: solo errores de asset. Los de tools y del integrador (T5 en tools, T9, T17, T18, T21, T25, T26)
   se corrigen en tools y están únicamente en el plan.
 
@@ -36,6 +36,7 @@ con el mismo número.
 | T34 | El botón "Verificar" de informes cierra el informe y la orden de trabajo que mande el navegador, sin mirar la empresa: un usuario puede cerrar los de otra empresa | Corregido |
 | T35 | En la carga de lecturas de parámetros se puede borrar la lectura de otra empresa con su número, y grabar lecturas sobre equipos de otra empresa | Corregido |
 | T36 | Las acciones de la bandeja (tomar, soltar, decidir urgencia, ejecutar la orden, verificar el informe, prestar conformidad) usan el usuario administrador de Bonita y los números de tarea, orden y solicitud que manda el navegador, sin mirar la empresa ni el usuario: cualquiera puede cerrar o reasignar tareas y cambiar estados de otra empresa | Corregido: el caso de la tarea tiene que ser de la empresa y la orden y su origen salen de ese caso |
+| T39 | La pantalla de una tarea y sus comentarios se abren con el usuario administrador de Bonita y el número de tarea que manda el navegador, sin mirar la empresa: cualquiera puede ver los datos del equipo y la orden de otra empresa y escribir comentarios en sus casos | Corregido: el caso de la tarea tiene que ser de la empresa |
 
 ## Errores que pierden o desordenan datos 🟠
 
@@ -54,6 +55,9 @@ con el mismo número.
 | T31 | El alta de una orden de trabajo responde siempre "error", y si Bonita falla borra la orden pero sigue grabando su detalle | Corregido |
 | T37 | Verificar informe y prestar conformidad responden "OK" aunque Bonita no haya cerrado la tarea (usan una variable que no existe), y el estado del backlog se cambia antes de cerrar la tarea: si Bonita falla queda cambiado igual | Corregido: primero se cierra la tarea y recién después se cambian los estados; si falla, se informa el error |
 | T38 | Al rechazar una conformidad ("no conforme"), la solicitud y la orden pasan al estado "Solicitado" porque se compara un texto "false" como si fuera verdadero; y el inicio de una orden de tipo 1 o 10 intenta cambiar un predictivo con el número de la orden | La conformidad rechazada se conserva igual (es lo que espera el proceso de Bonita); en el inicio, el tipo 1 y 10 no toca ningún predictivo hoy porque no existen esos números |
+| T40 | Si el usuario no puede leer la tarea en Bonita, la pantalla de la tarea muestra los datos de la primera orden sin caso (la consulta busca "caso vacío") en vez de avisar el error | Corregido: se avisa que no se pudo abrir la tarea |
+| T41 | Al editar el informe de servicio se borran las evidencias (fotos y archivos) porque la pantalla de edición no las muestra; además la condición `if ($funcion = 'editar')` siempre es verdadera (borra siempre el informe anterior) y al borrar solo se limpia el detalle del primer informe de la orden, dejando filas huérfanas si hubiera varios | Corregido: el informe se reemplaza completo, conservando las evidencias, y se borra todo lo que cuelga de la orden |
+| T42 | En Editar Backlog, si el guardado falla la pantalla vuelve igual a la lista, sin avisar; y la pantalla no traía el componente del backlog (los campos de componente salen vacíos) | Corregido: avisa el error y trae el componente |
 | T32 | "Verificar" informes busca la tarea solo entre las 10 primeras de la bandeja: si no está ahí, cierra el informe en la base y deja la tarea abierta en Bonita | Corregido |
 
 ## Errores que molestan pero no dañan datos ⚪
@@ -65,6 +69,9 @@ con el mismo número.
 | T14 | El código de equipo no se puede repetir entre empresas distintas (dos clientes no pueden tener un "BOMBA-01") | Se mantiene la regla, ahora configurable |
 | T19 | Un mensaje de error no definido rompe la respuesta de Backlog y Solicitudes cuando algo falla | Corregido |
 | T33 | Al abrir un informe desde la lista, los datos del equipo aparecen vacíos | Corregido |
+| T43 | Los textos de Bonita (comentarios, nombre y descripción de la tarea) y de la base se muestran sin escapar en la pantalla de tarea y en la línea de tiempo: quien escriba código en un comentario lo hace correr en el navegador de los demás | Corregido en lo portado |
+| T44 | Cambiar el estado de una subtarea de la orden acepta el número de cualquier subtarea, de cualquier empresa | Corregido: la subtarea tiene que ser de la orden del caso de la tarea |
+| T45 | El "procedimiento" de una orden (archivo del preventivo) se busca uniendo por número sin mirar el tipo de la orden: una orden de otro tipo puede mostrar el archivo de un preventivo con el mismo número | Corregido: solo órdenes de preventivo |
 
 ## Correcciones ya hechas en asset antes de esta decisión
 

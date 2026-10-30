@@ -2691,6 +2691,20 @@
       <param name="id_orden" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
+   <query id="getBacklogSolicitudEditarMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT b.backId, b.id_equipo, b.id_tarea, CAST(b.fecha AS CHAR) AS fecha, CAST(b.horash AS CHAR) AS horash, b.estado, b.back_duracion, b.id_unidad, b.back_canth, b.idcomponenteequipo, b.back_adjunto, b.sore_id, b.tarea_opcional, e.codigo, e.descripcion, CAST(e.fecha_ingreso AS CHAR) AS fecha_ingreso, e.ubicacion, m.marcadescrip AS marca, ce.codigo AS componentecodigo, c.descripcion AS componentedescrip, s.descripcion AS sistemadescrip FROM tbl_back b JOIN equipos e ON e.id_equipo = b.id_equipo LEFT JOIN marcasequipos m ON m.marcaid = e.marca LEFT JOIN componenteequipo ce ON ce.idcomponenteequipo = b.idcomponenteequipo LEFT JOIN componentes c ON c.id_componente = ce.id_componente LEFT JOIN sistema s ON s.sistemaid = ce.sistemaid WHERE b.sore_id = :sore_id AND b.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlogs":{"backlog":[{"backId":"$backId","id_equipo":"$id_equipo","id_tarea":"$id_tarea","fecha":"$fecha","horash":"$horash","estado":"$estado","back_duracion":"$back_duracion","id_unidad":"$id_unidad","back_canth":"$back_canth","idcomponenteequipo":"$idcomponenteequipo","back_adjunto":"$back_adjunto","sore_id":"$sore_id","tarea_opcional":"$tarea_opcional","codigo":"$codigo","descripcion":"$descripcion","fecha_ingreso":"$fecha_ingreso","ubicacion":"$ubicacion","marca":"$marca","componentecodigo":"$componentecodigo","componentedescrip":"$componentedescrip","sistemadescrip":"$sistemadescrip"}]}}</result>
+      <param name="sore_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateBacklogReenviarMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_back SET estado = 'S', idcomponenteequipo = IF(:idcomponenteequipo = '0', idcomponenteequipo, :idcomponenteequipo2) WHERE backId = :backId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"backlog":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="idcomponenteequipo" sqlType="STRING"/>
+      <param name="idcomponenteequipo2" sqlType="STRING"/>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/tarea/cabecera/equipo/{id_equipo}/empresa/{id_empresa}">
       <call-query href="getTareaCabeceraEquipoMan"><with-param name="id_equipo" query-param="id_equipo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
@@ -2705,6 +2719,12 @@
    </resource>
    <resource method="GET" path="/ot/{id_orden}/procedimiento/empresa/{id_empresa}">
       <call-query href="getOtProcedimientoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/backlog/solicitud/{sore_id}/editar/empresa/{id_empresa}">
+      <call-query href="getBacklogSolicitudEditarMan"><with-param name="sore_id" query-param="sore_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog/reenviar">
+      <call-query href="updateBacklogReenviarMan"><with-param name="idcomponenteequipo" query-param="idcomponenteequipo"/><with-param name="idcomponenteequipo2" query-param="idcomponenteequipo2"/><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <!-- MIG-ASSET-3i · Informe de servicio desde la Bandeja: operarios, borrado del informe anterior y alta (informe, tareas, operarios y
         evidencias). Sin herramientas ni insumos (pañol y almacenes no se migran). Todo limitado a la empresa. -->
