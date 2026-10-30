@@ -93,57 +93,71 @@ tiempo del caso.
 
 ---
 
-## 3. La propuesta
+## 3. Cómo se cierra una tarea en la bandeja de tools (el mecanismo, estudiado a fondo)
 
-**Una sola bandeja: la de tools.** El proceso de Mantenimiento se registra en ella con su propio modelo, y la "Bandeja de Tareas" de MAN
-se retira del menú cuando lo nuevo esté verificado.
+El detalle se arma en `Proceso::detalleTarea` y se muestra en la plantilla `notificacion_estandar.php`:
 
-### 3.1 Qué se agrega
+1. **Arriba:** la cabecera (`desplegarCabecera`).
+2. **Pestañas:** Acciones, Comentarios, Trazabilidad e Información. Comentarios, línea de tiempo e información **ya los da la plantilla**
+   para cualquier proceso, con los datos de Bonita (es lo mismo que yo había hecho aparte para MAN).
+3. **Pestaña Acciones:** botones **Tomar tarea / Soltar tarea** (genéricos: asignan la tarea en Bonita al usuario), la **pantalla de trabajo**
+   (`desplegarVista`) metida en una caja que queda **bloqueada con un velo hasta que se toma la tarea**, y abajo **Cerrar** (cierra el
+   panel) y **Hecho**.
+4. **El botón "Hecho" no cierra nada por sí mismo: llama a la función `cerrarTarea()` que defina la pantalla de trabajo.** Esa función
+   decide adónde mandar los datos. Los procesos de pedidos de materiales mandan a `Proceso/cerrarTarea` (que usa `getContrato` y cierra en
+   Bonita), pero nada obliga a eso: la pantalla puede mandar a sus propios recursos.
 
-1. **Registro:** los tres números del proceso (normal, DEMO y PERU) en `BPM_PROCESS`, color verde, módulo `MAN`, modelo `Mantareas`. De
-   paso se corrige el nombre de la entrada de pedidos extraordinarios.
+**Conclusión: no hace falta tocar el módulo central de la bandeja.** Alcanza con registrar el proceso en `BPM_PROCESS` (en `constants.php`,
+como indicó el PM) y escribir el modelo del proceso en el módulo MAN. Mi propuesta anterior de agregar un gancho `cerrar` a
+`Proceso::cerrarTarea` era innecesaria.
+
+## 4. La propuesta (corregida)
+
+**Una sola bandeja: la de tools.** El proceso de Mantenimiento (**solo el normal**, `8664799170016058315`; DEMO y PERU no van) se registra
+y se le agrega su modelo. Hoy las tareas ya aparecen en la bandeja de tools, pero **el panel del costado sale vacío** porque el proceso no
+está registrado y cae en `Gentareas`, que no devuelve pantalla.
+
+### 4.1 Qué se agrega
+
+1. **Registro** (`application/config/constants.php`, `BPM_PROCESS`): el proceso de Mantenimiento con su nombre, color verde, módulo `MAN` y
+   modelo `Mantareas`. Es el único cambio fuera de MAN y es configuración. Como `constants.php` figura como núcleo en `CLAUDE.md`, va en el
+   pedido de integración con este análisis de impacto: **qué cambia** una entrada más en un arreglo; **qué lo consume** la bandeja de tools
+   (nombre y color del proceso y qué modelo atiende cada tarea) y la búsqueda de la base de la bandeja; **qué se rompe** nada de lo que ya
+   está registrado; **por qué hoy no está** la constante `BPM_PROCESS_ID_MANTENIMIENTO` existe pero nadie la registró. Dato aparte: la
+   entrada que dice "Proc. Mantenimiento" lleva en realidad el número de Pedidos extraordinarios; no se toca.
 2. **Modelo `Mantareas` (módulo MAN)** con los ganchos de §1.3:
-   - **`map` — las pastillas** (todas con los mismos datos y colores que la bandeja vieja):
+   - **`map` — las pastillas.** Mismos datos y colores que la bandeja vieja de asset:
 
      | Pastilla | Color |
      |---|---|
-     | Tipo de orden ("Urgente", "Backlog", "Preventivo", "Predictivo", "Orden", "Correctivo prog.") | el color del tipo, el mismo del Calendario (rojo, naranja, turquesa, verde, azul, fucsia; `estilo` para el turquesa y el fucsia) |
+     | Tipo de orden (Urgente, Backlog, Preventivo, Predictivo, Orden, Correctivo prog.) | el color del tipo, el mismo del Calendario (`estilo` para los que no tienen clase: turquesa y fucsia) |
      | Solicitud N° | celeste |
      | Orden N° | azul |
      | Equipo (código) | gris |
      | Sector y cliente | gris |
-     | Responsable (nombre) | verde si tiene, gris "Sin asignar" si no |
-     | Estado de la orden (Planificada, Asignada, En curso, Terminada…) | amarillo mientras está pendiente, verde cuando terminó |
+     | Responsable (nombre, o "Sin asignar") | verde / gris |
+     | Estado de la orden (Planificada, Asignada, En curso, Terminada…) | amarillo mientras está pendiente, verde si terminó |
 
-     La descripción es la de la orden (o la causa de la solicitud). Los datos salen de una sola consulta por página a `MANDataService`
-     (la misma idea de E30).
-   - **`desplegarCabecera`** — la franja de equipo, solicitud y orden que ya construí para el detalle (E32).
-   - **`desplegarVista`** — las diez pantallas por nombre de tarea que ya están hechas y probadas (E32, E33).
-   - **`getContrato`** — el contrato de cierre de cada tarea.
-3. **Un gancho nuevo, `cerrar`, en `Proceso::cerrarTarea`.** Las tareas de Mantenimiento no se cierran solo en Bonita: además escriben en
-   la base (estados de la orden y del plan, informe, etc.), y eso lo hacen los recursos de `toolsMANAPI` ya hechos (E31), que operan sobre
-   Bonita y la base juntos y deshacen si algo falla. Se propone que, si el modelo del proceso define `cerrar($tarea, $form)`, el controller
-   lo use en vez del cierre genérico. Es un cambio **chico y compatible** (los demás procesos no lo definen y siguen igual), pero toca el
-   módulo central `traz-comp-bpm`: por la regla de `CLAUDE.md` necesita un análisis de impacto que apruebe el PM.
+     La descripción es la de la orden o la causa de la solicitud. Los datos salen de `MANDataService`, una consulta por tarea de la página (10).
+   - **`desplegarCabecera`**: la franja de equipo, solicitud y orden (E32).
+   - **`desplegarVista`**: **las mismas pantallas de la bandeja de MAN, adaptadas a la bandeja de tools** (ver 4.2).
+   - **`getContrato`**: vacío (el cierre no pasa por ahí).
+3. **Adaptar las diez pantallas** (Análisis, Planificar Solicitud/Backlog, Asignar Responsable, Ejecutar OT, Confecciona informe,
+   Verifica informe, Presta conformidad, Editar Backlog y las de espera) al panel del costado.
 
-### 3.2 Qué cambia para el usuario de Mantenimiento
+### 4.2 Cómo se adapta cada pantalla al panel
 
-- La lista pasa a ser de tarjetas (en vez de tabla con columnas) y las pastillas reemplazan a las columnas.
-- Las tareas de Mantenimiento conviven con las de los otros procesos del usuario (pedidos de materiales, producción…): una sola bandeja.
-- El detalle se abre al costado. Las pantallas grandes (informe de servicio, ejecutar orden) se pueden abrir a pantalla completa.
-- Se conservan: búsqueda por descripción, equipo, solicitud y orden; botón Actualizar; el color por tipo de orden; "Sin asignar".
+- Se muestran **solo el formulario o la acción** de la tarea: la cabecera, los comentarios y la línea de tiempo los pone la plantilla.
+- Las pantallas **quedan bloqueadas hasta que se toma la tarea**, como ya hace la plantilla.
+- Lo que antes era un botón propio de cierre ("Aceptar", "Confirmar"…) pasa a ser la función **`cerrarTarea()`** que llama el botón **Hecho**:
+  valida, manda a los mismos recursos de `toolsMANAPI` de hoy (E31 a E33), y al terminar cierra el panel y refresca la lista.
+- Las pantallas que hoy navegan con `linkTo` a otras pantallas (por ejemplo, ir al Calendario a planificar, o a la lista de órdenes a asignar)
+  se resuelven así: **Planificar** abre el Calendario (otra pantalla de MAN) y **Asignar** muestra el formulario de responsable y tarea en el panel.
+- Las pantallas anchas (informe de servicio, ejecutar orden) usan el ancho completo del panel; si no alcanza, el panel se puede ampliar.
 
-### 3.3 Cómo se hace y se prueba
+### 4.3 Qué hay que verificar
 
-1. Registrar el proceso con un `Mantareas` mínimo (solo pastillas) y mirar la bandeja en el navegador.
-2. Conectar el detalle (cabecera y las diez pantallas) y el gancho `cerrar`.
-3. Prueba punta a punta con casos reales en Bonita de desarrollo, como las de `e2e_bandeja_*`, pero entrando por la bandeja de tools.
-4. Las dos bandejas conviven un tiempo (como `Proceso` y `Proceso2`) hasta que el equipo confirme; después se retira la de MAN del menú.
-5. Por qué no hay paridad automática con la vista nueva: cambia el formato (tarjetas), así que se compara contra los mismos datos de la
-   bandeja de MAN (que ya tiene paridad con asset).
-
-### 3.4 Lo que hay que decidir
-
-1. **¿Se aprueba tocar `traz-comp-bpm` con el gancho `cerrar`?** (alternativa: que las pantallas de Mantenimiento llamen directo a sus
-   recursos y el cierre genérico quede sin usar para este proceso; funciona, pero deja dos caminos de cierre distintos.)
-2. **¿Detalle al costado o pantalla completa?** Propuesta: al costado, con botón para ampliar.
+1. Registrar el proceso con un `Mantareas` mínimo (pastillas) y **mirar la bandeja en el navegador**.
+2. Pantalla por pantalla, con un caso real en cada tarea, entrando por la bandeja de tools: tomar, hacer, **Hecho**, y ver que la tarea siguiente
+   aparece y que la base queda como en asset.
+3. Las dos bandejas conviven hasta que el equipo confirme; después se saca "Bandeja de Tareas" del menú de MAN.
