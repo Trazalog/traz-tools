@@ -29,6 +29,83 @@
       <param name="nombre" sqlType="STRING"/>
       <param name="empr_id" sqlType="STRING"/>
    </query>
+   <!-- ===== Historia, objetivos y desvios (v2.8.1.6, KPI-HIST/KPI-OBJ, ADR-A9) =====
+        Analisis de impacto aprobado: doc/agente/analisis-impacto-kpi-objetivos.md.
+        Lo de arriba (getKPI, getKPIsXEmpresa, getManKPI) no cambia. -->
+
+   <!-- Serie diaria de un KPI. desde/hasta opcionales (YYYY-MM-DD): por defecto, los ultimos 90 dias. -->
+   <query id="getKPIHistorico" useConfig="ToolsDataSource">
+      <sql>select to_char(h.fecha,'YYYY-MM-DD') as fecha, h.valor, h.valor_json::text as valor_json
+ from kpi.historico h
+ where h.nombre = :nombre and h.empr_id = cast(:empr_id as integer)
+   and h.fecha &gt;= coalesce(cast(nullif(:desde,'') as date), current_date - 90)
+   and h.fecha &lt;= coalesce(cast(nullif(:hasta,'') as date), current_date)
+ order by h.fecha</sql>
+      <result outputType="json">{"historico":{"punto":[{"fecha":"$fecha","valor":"$valor","valor_json":"$valor_json"}]}}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="desde" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="hasta" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+   </query>
+
+   <!-- Objetivos de la empresa con su valor actual. todos=true incluye cancelados y vencidos. -->
+   <query id="getObjetivos" useConfig="ToolsDataSource">
+      <sql>select o.objetivo_id, o.kpi, o.descripcion, o.fuente, o.operador, o.meta,
+       to_char(o.desde,'YYYY-MM-DD') as desde, to_char(o.hasta,'YYYY-MM-DD') as hasta,
+       o.responsable, o.petr_id, o.estado, o.propuesto_por, o.usuario_alta,
+       to_char(o.fec_alta,'YYYY-MM-DD HH24:MI') as fec_alta, o.valor_actual,
+       to_char(o.calculado_en,'YYYY-MM-DD HH24:MI') as calculado_en, o.cumple
+ from kpi.objetivos_de(cast(:empr_id as integer), coalesce(:todos,'') &lt;&gt; 'true') o</sql>
+      <result outputType="json">{"objetivos":{"objetivo":[{"objetivo_id":"$objetivo_id","kpi":"$kpi","descripcion":"$descripcion","fuente":"$fuente","operador":"$operador","meta":"$meta","desde":"$desde","hasta":"$hasta","responsable":"$responsable","petr_id":"$petr_id","estado":"$estado","propuesto_por":"$propuesto_por","usuario_alta":"$usuario_alta","fec_alta":"$fec_alta","valor_actual":"$valor_actual","calculado_en":"$calculado_en","cumple":"$cumple"}]}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="todos" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+   </query>
+
+   <!-- Objetivos vigentes de fuente tools que hoy no se cumplen, con la tendencia a 30 dias. -->
+   <query id="getDesvios" useConfig="ToolsDataSource">
+      <sql>select d.objetivo_id, d.kpi, d.operador, d.meta, to_char(d.hasta,'YYYY-MM-DD') as hasta,
+       d.responsable, d.valor_actual, to_char(d.calculado_en,'YYYY-MM-DD HH24:MI') as calculado_en,
+       d.valor_hace_30, to_char(d.fecha_hace_30,'YYYY-MM-DD') as fecha_hace_30, d.tendencia
+ from kpi.desvios(cast(:empr_id as integer)) d</sql>
+      <result outputType="json">{"desvios":{"desvio":[{"objetivo_id":"$objetivo_id","kpi":"$kpi","operador":"$operador","meta":"$meta","hasta":"$hasta","responsable":"$responsable","valor_actual":"$valor_actual","calculado_en":"$calculado_en","valor_hace_30":"$valor_hace_30","fecha_hace_30":"$fecha_hace_30","tendencia":"$tendencia"}]}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+
+   <!-- Alta de un objetivo. La llama Tools cuando el ADMINISTRADOR lo confirma (ADR-A8): los
+        agentes no la usan. propuesto_por = kuntur si viene de una propuesta del Coach. -->
+   <query id="guardarObjetivo" useConfig="ToolsDataSource">
+      <sql>select kpi.objetivo_guardar(
+   p_empr_id       => cast(:empr_id as integer),
+   p_kpi           => :kpi,
+   p_fuente        => coalesce(nullif(:fuente,''), 'tools'),
+   p_operador      => :operador,
+   p_meta          => cast(:meta as numeric),
+   p_desde         => cast(nullif(:desde,'') as date),
+   p_hasta         => cast(:hasta as date),
+   p_responsable   => nullif(:responsable,''),
+   p_propuesto_por => nullif(:propuesto_por,''),
+   p_usuario       => :usuario) as objetivo_id</sql>
+      <result outputType="json">{"respuesta":{"objetivo_id":"$objetivo_id"}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="kpi" sqlType="STRING"/>
+      <param name="fuente" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="operador" sqlType="STRING"/>
+      <param name="meta" sqlType="STRING"/>
+      <param name="desde" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
+      <param name="responsable" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="propuesto_por" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+   </query>
+
+   <query id="cancelarObjetivo" useConfig="ToolsDataSource">
+      <sql>select kpi.objetivo_cancelar(cast(:empr_id as integer), cast(:objetivo_id as integer), :usuario) as cancelados</sql>
+      <result outputType="json">{"respuesta":{"cancelados":"$cancelados"}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="objetivo_id" sqlType="STRING"/>
+      <param name="usuario" sqlType="STRING"/>
+   </query>
+
    <resource method="GET" path="/man/{nombre}/emprid/{empr_id}">
       <call-query href="getManKPI">
          <with-param name="nombre" query-param="nombre"/>
@@ -44,6 +121,46 @@
    <resource method="GET" path="/kpis/emprid/{empr_id}">
       <call-query href="getKPIsXEmpresa">
          <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/historico/{nombre}/emprid/{empr_id}">
+      <call-query href="getKPIHistorico">
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="desde" query-param="desde"/>
+         <with-param name="hasta" query-param="hasta"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/objetivos/emprid/{empr_id}">
+      <call-query href="getObjetivos">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="todos" query-param="todos"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/desvios/emprid/{empr_id}">
+      <call-query href="getDesvios">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/objetivo">
+      <call-query href="guardarObjetivo">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="kpi" query-param="kpi"/>
+         <with-param name="fuente" query-param="fuente"/>
+         <with-param name="operador" query-param="operador"/>
+         <with-param name="meta" query-param="meta"/>
+         <with-param name="desde" query-param="desde"/>
+         <with-param name="hasta" query-param="hasta"/>
+         <with-param name="responsable" query-param="responsable"/>
+         <with-param name="propuesto_por" query-param="propuesto_por"/>
+         <with-param name="usuario" query-param="usuario"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/objetivo/cancelar">
+      <call-query href="cancelarObjetivo">
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="objetivo_id" query-param="objetivo_id"/>
+         <with-param name="usuario" query-param="usuario"/>
       </call-query>
    </resource>
 </data>

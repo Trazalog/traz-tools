@@ -15,6 +15,10 @@
     MI (8290) no sea alcanzable directamente por clientes.
 
   Setea jwt_empr_id (nombre heredado) para compatibilidad con toolsMANAPI.xml.
+
+  jwt_token_tipo (ADR-A10): "maquina" si el token lo emitio Dnato por
+  client_credentials para un agente; vacio para los de usuario. Lo usa
+  rechazarTokenMaquina en los recursos que escriben.
 -->
 <sequence name="emprIdFromHeader" xmlns="http://ws.apache.org/ns/synapse">
 
@@ -27,6 +31,7 @@
     <script language="js"><![CDATA[
         mc.setProperty("jwt_empr_id", "");
         mc.setProperty("jwt_mysql_empresa_id", "");
+        mc.setProperty("jwt_token_tipo", "");
         try {
             var assertion = mc.getProperty("x_jwt_assertion");
             if (assertion) {
@@ -39,6 +44,9 @@
                     }
                     if (payload.empr_id_mysql || payload.empr_id_mysql === 0) {
                         mc.setProperty("jwt_mysql_empresa_id", "" + payload.empr_id_mysql);
+                    }
+                    if (payload.token_tipo) {
+                        mc.setProperty("jwt_token_tipo", "" + payload.token_tipo);
                     }
                 }
             }
