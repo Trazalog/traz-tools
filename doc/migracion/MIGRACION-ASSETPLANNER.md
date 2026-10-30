@@ -381,6 +381,8 @@ que cubren ese ciclo pasan.
 
 #### MIG-4 — Plan de Mantenimiento: reimplementación (camino crítico)
 
+**Especificación detallada (2026-10-30):** [MIG-4-CALENDARIO.md](MIG-4-CALENDARIO.md). Donde difiera de lo que sigue, vale la especificación.
+
 **Es crucial.** La pantalla actual no se puede llevar a tools: su FullCalendar no funciona sobre el
 jQuery del host, y sin esta pantalla no se generan OTs preventivas ni predictivas, así que no hay
 corte posible. Es el único bloque que se reescribe en vez de portarse. `Calendario::guardar_agregar()` (268 líneas)
