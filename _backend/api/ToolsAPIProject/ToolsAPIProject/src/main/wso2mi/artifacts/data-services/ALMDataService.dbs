@@ -674,6 +674,20 @@
       <param name="estado" sqlType="STRING"/>
       <param name="pema_id" sqlType="STRING"/>
    </query>
+   <query id="getTransportistasMovimientoInterno" useConfig="ToolsDataSource">
+      <sql>SELECT    trami_id,    transportista,    fec_alta,    to_char(fec_alta, 'DD/MM/YYYY HH24:MI') AS fec_alta_txt,    user_app,    moin_id FROM alm.transportistas_movimientos_internos WHERE moin_id = CAST(:moin_id AS integer) ORDER BY trami_id ASC</sql>
+      <result outputType="json">{     "transportistasMovimientosInternos": {       "transportistaMovimientoInterno": [         {           "trami_id": "$trami_id",           "transportista": "$transportista",           "fec_alta": "$fec_alta",           "fec_alta_txt": "$fec_alta_txt",           "user_app": "$user_app",           "moin_id": "$moin_id"         }       ]     }   }</result>
+      <param name="moin_id" sqlType="STRING"/>
+   </query>
+   <query id="setTransportistaMovimientoInterno" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.transportistas_movimientos_internos (transportista, fec_alta, user_app, moin_id) VALUES (:transportista, CURRENT_TIMESTAMP, :user_app, CAST(:moin_id AS integer))</sql>
+      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
+         <element column="1" name="ID" xsdType="integer"/>
+      </result>
+      <param name="transportista" sqlType="STRING"/>
+      <param name="user_app" sqlType="STRING"/>
+      <param name="moin_id" sqlType="STRING"/>
+   </query>
    <resource method="GET" path="/articulos/{empr_id}">
       <call-query href="getArticulos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -1374,6 +1388,18 @@
          <with-param name="offset" query-param="offset"/>
          <with-param name="order_column" query-param="order_column"/>
          <with-param name="order_dir" query-param="order_dir"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/movimientoInterno/transportistas/moin/{moin_id}">
+      <call-query href="getTransportistasMovimientoInterno">
+         <with-param name="moin_id" query-param="moin_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/movimientoInterno/transportista">
+      <call-query href="setTransportistaMovimientoInterno">
+         <with-param name="transportista" query-param="transportista"/>
+         <with-param name="user_app" query-param="user_app"/>
+         <with-param name="moin_id" query-param="moin_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/mcp/stock/{empr_id}">
