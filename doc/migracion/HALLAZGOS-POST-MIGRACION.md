@@ -34,4 +34,6 @@ de [MIGRACION-ASSETPLANNER.md](MIGRACION-ASSETPLANNER.md) §3.8.
 | H19 | Empresa del PM sin vincular | "Ruiz Technologies Inc." no está vinculada con los datos de Mantenimiento (`core.empresas.empr_id_mysql` vacío), por eso el PM entra con el usuario de prueba. Vincularla toca una tabla central y necesita su aprobación | ⏳ |
 | H20 | Datos de ejemplo en la empresa de prueba | Se cargaron datos de ejemplo (planes, órdenes de octubre y noviembre de 2026, informes, lecturas y tres solicitudes con caso de Bonita) para poder mirar las pantallas. Se borran con `seed_demo_man.py --borrar` y `seed_demo_bonita.py --borrar` | ⏳ |
 | H21 | "Administrar Órdenes" no estaba en el plan | La pantalla de entregar y reprogramar órdenes terminadas (`Envio`) no figuraba en el inventario de la migración; se portó el 2026-10-30. Revisar si hay otras pantallas de asset fuera del inventario | ⏳ |
+| H22 | ABM de Tareas estándar mal descartado | Se había dejado afuera por creer que ninguna pantalla lo usaba; el menú de asset lo tiene activo (`Tarea/index2`). Se porta con los demás ABMs | ⏳ |
+| H23 | "trazabilidad Activos" del menú de asset | Está activa pero su dirección es un texto suelto (`fa fa-calendar`), así que no abre nada en asset. Confirmar si alguien la usa o es un resto | ⏳ |
 
