@@ -95,10 +95,16 @@ class Agente extends CI_Controller
         // La pantalla de Tools donde está el usuario (AGENTE-AS-01). La manda
         // el panel; el chat de página no. El orquestador la valida.
         $pantalla = trim((string) $this->input->post('pantalla'));
+        // A qué agente va (Quirqui o Kuntur). Si el usuario no puede usarlo, la
+        // API responde como si no existiera (R1): acá solo se valida la forma.
+        $agente = (string) $this->input->post('agente');
+        if (!preg_match('/^[a-z][a-z0-9_]{1,30}$/', $agente)) {
+            $agente = '';
+        }
 
         log_message('DEBUG', '#TRAZA | AGENTE | Agente | consultar() >> ' . substr($pregunta, 0, 80)
             . ($pantalla !== '' ? ' | pantalla: ' . substr($pantalla, 0, 120) : ''));
-        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla));
+        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla, $agente));
     }
 
     /** Siguiente paso en la pantalla (AGENTE-AS-02). Lo pide el panel al abrirse. */

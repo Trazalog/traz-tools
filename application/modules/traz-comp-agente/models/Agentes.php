@@ -136,7 +136,7 @@ class Agentes extends CI_Model
      * Devuelve el cuerpo del orquestador tal cual, que incluye el
      * interaccion_id necesario para calificar la respuesta despues.
      */
-    public function consultar($jwt, $pregunta, $pantalla = '')
+    public function consultar($jwt, $pregunta, $pantalla = '', $agente = '')
     {
         $cuerpo = [
             'pregunta' => $pregunta,
@@ -144,6 +144,9 @@ class Agentes extends CI_Model
         ];
         if ($pantalla !== '') {
             $cuerpo['pantalla'] = $pantalla;
+        }
+        if ($agente !== '') {
+            $cuerpo['agente'] = $agente;
         }
         $rsp = $this->_llamar('POST', '/consulta', $cuerpo, $jwt, self::TIMEOUT_CONSULTA);
 
