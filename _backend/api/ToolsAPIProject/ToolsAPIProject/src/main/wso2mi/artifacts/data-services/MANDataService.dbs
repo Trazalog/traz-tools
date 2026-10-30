@@ -2559,4 +2559,104 @@
    <resource method="PUT" path="/backlog/adjunto">
       <call-query href="updateBacklogAdjuntoMan"><with-param name="back_adjunto" query-param="back_adjunto"/><with-param name="backId" query-param="backId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-3t · Acciones de la tarea de la Bandeja (tomar, soltar, urgencia, inicio, ejecutar, verificar informe y conformidad).
+        Las usa toolsMANAPI /bandeja/tarea/* y /bandeja/ot/inicio. Todo queda limitado a la empresa (id de asset); asset confiaba
+        en los números que mandaba el navegador y acá se sacan del caso de la tarea. -->
+   <query id="getBandejaTareaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT cx.case_id, o.id_orden, o.tipo, o.id_solicitud, b.sore_id, s.id_solicitud AS ss, CAST(o.fecha_inicio AS CHAR) AS fecha_inicio FROM case_empresa cx LEFT JOIN orden_trabajo o ON o.case_id = cx.case_id AND o.id_empresa = cx.empr_id LEFT JOIN tbl_back b ON o.tipo = '4' AND b.backId = o.id_solicitud AND b.id_empresa = cx.empr_id LEFT JOIN solicitud_reparacion s ON s.case_id = cx.case_id AND s.id_empresa = cx.empr_id WHERE cx.case_id = :case_id AND cx.empr_id = :id_empresa LIMIT 1</sql>
+      <result outputType="json">{"tareas":{"tarea":[{"case_id":"$case_id","id_orden":"$id_orden","tipo":"$tipo","id_solicitud":"$id_solicitud","sore_id":"$sore_id","ss":"$ss","fecha_inicio":"$fecha_inicio"}]}}</result>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtInicioMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(fecha_inicio AS CHAR) AS fecha_inicio FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"fecha_inicio":"$fecha_inicio"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtInicioMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET fecha_inicio = :fecha, latitud = :latitud, longitud = :longitud, estado = 'C' WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="latitud" sqlType="STRING"/>
+      <param name="longitud" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateBacklogSolicitudEstadoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE solicitud_reparacion SET estado = :estado WHERE id_empresa = :id_empresa AND id_solicitud = (SELECT sore_id FROM tbl_back WHERE backId = :backId AND id_empresa = :id_empresa2)</sql>
+      <result outputType="json">{"solicitud":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="estado" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="backId" sqlType="STRING"/>
+      <param name="id_empresa2" sqlType="STRING"/>
+   </query>
+   <query id="updateOtResponsableMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET id_usuario_a = :id_usuario_a WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_usuario_a" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateOtJustificacionMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET justificacion = LEFT(:justificacion, 100) WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="justificacion" sqlType="STRING"/>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtResponsableNickMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT u.usrNick FROM orden_trabajo o JOIN sisusers u ON u.usrId = o.id_usuario_a WHERE o.id_orden = :id_orden AND o.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"usrNick":"$usrNick"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtOrigenPostMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT tipo, id_solicitud FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"tipo":"$tipo","id_solicitud":"$id_solicitud"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getOtEquipoEstadoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT e.estado FROM orden_trabajo ot JOIN equipos e ON e.id_equipo = ot.id_equipo WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
+      <result outputType="json">{"ots":{"ot":[{"estado":"$estado"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setInformeLecturaBandejaMan" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO historial_lecturas (id_equipo, lectura, fecha, usrId, observacion, operario_nom, turno, estado) SELECT ot.id_equipo, IFNULL(os.horometrofin, 0), IFNULL(os.fechahorafin, NOW()), ot.id_usuario_a, CONCAT('Descripcion: ', IF(t.id_tarea IS NULL, ot.descripcion, t.descripcion), ' | OT: ', ot.id_orden), CONCAT(u.usrLastName, ', ', u.usrName), '-', :estado FROM orden_trabajo ot JOIN sisusers u ON u.usrId = ot.id_usuario_a LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea LEFT JOIN orden_servicio os ON os.id_ot = ot.id_orden WHERE ot.id_orden = :id_ot AND ot.id_empresa = :id_empresa ORDER BY os.id_orden LIMIT 1</sql>
+      <param name="estado" sqlType="STRING"/>
+      <param name="id_ot" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="POST" path="/bandeja/tarea/caso">
+      <call-query href="getBandejaTareaMan"><with-param name="case_id" query-param="case_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/{id_orden}/inicio/empresa/{id_empresa}">
+      <call-query href="getOtInicioMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/inicio">
+      <call-query href="updateOtInicioMan"><with-param name="fecha" query-param="fecha"/><with-param name="latitud" query-param="latitud"/><with-param name="longitud" query-param="longitud"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/backlog/solicitud/estado">
+      <call-query href="updateBacklogSolicitudEstadoMan"><with-param name="estado" query-param="estado"/><with-param name="id_empresa" query-param="id_empresa"/><with-param name="backId" query-param="backId"/><with-param name="id_empresa2" query-param="id_empresa2"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/responsable">
+      <call-query href="updateOtResponsableMan"><with-param name="id_usuario_a" query-param="id_usuario_a"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/justificacion">
+      <call-query href="updateOtJustificacionMan"><with-param name="justificacion" query-param="justificacion"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/responsable/nick">
+      <call-query href="getOtResponsableNickMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/origen">
+      <call-query href="getOtOrigenPostMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/ot/equipo/estado">
+      <call-query href="getOtEquipoEstadoMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/informe/lectura/bandeja">
+      <call-query href="setInformeLecturaBandejaMan"><with-param name="estado" query-param="estado"/><with-param name="id_ot" query-param="id_ot"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>

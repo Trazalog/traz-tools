@@ -35,6 +35,7 @@ con el mismo número.
 | T29 | El detalle de las órdenes de trabajo muestra clientes y equipos de otras empresas cuando los datos quedaron cruzados | Corregido (MAN filtra todo por empresa) |
 | T34 | El botón "Verificar" de informes cierra el informe y la orden de trabajo que mande el navegador, sin mirar la empresa: un usuario puede cerrar los de otra empresa | Corregido |
 | T35 | En la carga de lecturas de parámetros se puede borrar la lectura de otra empresa con su número, y grabar lecturas sobre equipos de otra empresa | Corregido |
+| T36 | Las acciones de la bandeja (tomar, soltar, decidir urgencia, ejecutar la orden, verificar el informe, prestar conformidad) usan el usuario administrador de Bonita y los números de tarea, orden y solicitud que manda el navegador, sin mirar la empresa ni el usuario: cualquiera puede cerrar o reasignar tareas y cambiar estados de otra empresa | Corregido: el caso de la tarea tiene que ser de la empresa y la orden y su origen salen de ese caso |
 
 ## Errores que pierden o desordenan datos 🟠
 
@@ -51,6 +52,8 @@ con el mismo número.
 | T28 | El alta de una solicitud lanza el caso de Bonita con una contraseña común; si el usuario tiene otra, la solicitud falla y se borra | Corregido |
 | T30 | Al asignar una orden de trabajo, la tarea de Bonita queda asignada a otra persona, o falla, porque se usa el número de usuario de asset en lugar del de Bonita | Corregido |
 | T31 | El alta de una orden de trabajo responde siempre "error", y si Bonita falla borra la orden pero sigue grabando su detalle | Corregido |
+| T37 | Verificar informe y prestar conformidad responden "OK" aunque Bonita no haya cerrado la tarea (usan una variable que no existe), y el estado del backlog se cambia antes de cerrar la tarea: si Bonita falla queda cambiado igual | Corregido: primero se cierra la tarea y recién después se cambian los estados; si falla, se informa el error |
+| T38 | Al rechazar una conformidad ("no conforme"), la solicitud y la orden pasan al estado "Solicitado" porque se compara un texto "false" como si fuera verdadero; y el inicio de una orden de tipo 1 o 10 intenta cambiar un predictivo con el número de la orden | La conformidad rechazada se conserva igual (es lo que espera el proceso de Bonita); en el inicio, el tipo 1 y 10 no toca ningún predictivo hoy porque no existen esos números |
 | T32 | "Verificar" informes busca la tarea solo entre las 10 primeras de la bandeja: si no está ahí, cierra el informe en la base y deja la tarea abierta en Bonita | Corregido |
 
 ## Errores que molestan pero no dañan datos ⚪
