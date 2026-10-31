@@ -3262,4 +3262,14 @@
    <resource method="PUT" path="/envio/fecha">
       <call-query href="updateEnvioFechaMan"><with-param name="fecha" query-param="fecha"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-7b · Pastillas de la bandeja de tools para las tareas de Mantenimiento (modelo Mantareas). Solo casos de la empresa. -->
+   <query id="getBandejaTareaInfoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT sr.id_solicitud AS ss, sr.estado AS ss_estado, sr.causa AS causa, ot.id_orden AS ot, ot.tipo AS tip_ta, ot.estado AS ot_estado, IFNULL(ot.descripcion, sr.causa) AS descr, e.id_equipo AS id_equipo, e.codigo AS equipo, cl.cliRazonSocial AS cliente, se.descripcion AS sector, CONCAT(u.usrName, ', ', u.usrLastName) AS responsable FROM case_empresa ce LEFT JOIN solicitud_reparacion sr ON sr.case_id = ce.case_id LEFT JOIN orden_trabajo ot ON ot.case_id = ce.case_id LEFT JOIN equipos e ON e.id_equipo = IFNULL(ot.id_equipo, sr.id_equipo) LEFT JOIN admcustomers cl ON cl.cliId = e.id_customer LEFT JOIN sector se ON se.id_sector = e.id_sector LEFT JOIN sisusers u ON u.usrId = ot.id_usuario_a WHERE ce.case_id = :case_id AND ce.empr_id = :id_empresa LIMIT 1</sql>
+      <result outputType="json">{"casos":{"caso":[{"ss":"$ss","ss_estado":"$ss_estado","causa":"$causa","ot":"$ot","tip_ta":"$tip_ta","ot_estado":"$ot_estado","descr":"$descr","id_equipo":"$id_equipo","equipo":"$equipo","cliente":"$cliente","sector":"$sector","responsable":"$responsable"}]}}</result>
+      <param name="case_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/bandeja/tarea-info/caso/{case_id}/empresa/{id_empresa}">
+      <call-query href="getBandejaTareaInfoMan"><with-param name="case_id" query-param="case_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
