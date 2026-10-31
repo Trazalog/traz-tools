@@ -3040,7 +3040,7 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="updatePlanOtsConfirmarMan" useConfig="AssetPlannerDataSource">
-      <sql>UPDATE orden_trabajo SET nro = '1' WHERE nro = :token AND id_empresa = :id_empresa</sql>
+      <sql>UPDATE orden_trabajo SET nro = '1', case_id = IF(case_id IS NULL AND tipo IN ('3', '5'), 0, case_id) WHERE nro = :token AND id_empresa = :id_empresa</sql>
       <param name="token" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
@@ -3107,6 +3107,30 @@
       <sql>DELETE FROM orden_trabajo WHERE nro = :token AND id_empresa = CAST(:id_empresa AS SIGNED)</sql>
       <param name="token" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <!-- MIG-8 · lanzamiento diferido. "Programada sin lanzar" = estado PL, tipo 3 o 5 y case_id = 0 (las ordenes viejas sin caso tienen NULL y no se tocan). -->
+   <query id="getPlanOtsTokenMargenMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_orden, CAST(fecha_program AS CHAR) AS fecha_program, IFNULL(case_id, 0) AS case_id, IF(fecha_program &lt;= DATE_ADD(NOW(), INTERVAL CAST(:dias AS SIGNED) DAY), '1', '0') AS lanzar FROM orden_trabajo WHERE nro = :token AND id_empresa = :id_empresa ORDER BY fecha_program, id_orden</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","fecha_program":"$fecha_program","case_id":"$case_id","lanzar":"$lanzar"}]}}</result>
+      <param name="dias" sqlType="STRING"/>
+      <param name="token" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPlanOtsSinLanzarMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_orden, CAST(fecha_program AS CHAR) AS fecha_program FROM orden_trabajo WHERE id_empresa = :id_empresa AND case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5') AND fecha_program &lt;= DATE_ADD(NOW(), INTERVAL CAST(:dias AS SIGNED) DAY) ORDER BY fecha_program, id_orden LIMIT 200</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","fecha_program":"$fecha_program"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="dias" sqlType="STRING"/>
+   </query>
+   <query id="getPlanOtSinLanzarMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT id_orden, tipo FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa AND case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5')</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","tipo":"$tipo"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getPlanEmpresasSinLanzarMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT DISTINCT CAST(id_empresa AS CHAR) AS id_empresa FROM orden_trabajo WHERE case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5') ORDER BY id_empresa</sql>
+      <result outputType="json">{"empresas":{"empresa":[{"id_empresa":"$id_empresa"}]}}</result>
    </query>
    <query id="getPlanOtDetalleMan" useConfig="AssetPlannerDataSource">
       <sql>SELECT ot.id_orden, ot.id_tarea, ot.descripcion, ot.tipo, ot.id_solicitud, CAST(ot.fecha_program AS CHAR) AS fecha_program, IFNULL(ot.case_id, 0) AS case_id, ot.estado, IFNULL((SELECT b.sore_id FROM tbl_back b WHERE ot.tipo = '4' AND b.backId = ot.id_solicitud AND b.id_empresa = ot.id_empresa), 0) AS sore_id, e.codigo, e.descripcion AS descripcionEquipo, CASE WHEN ot.id_tarea = 0 THEN 'sin tarea estandar' ELSE IFNULL(tstd.descripcion, '') END AS descTareaStandar, IFNULL(su.usrId, '') AS usrId, IFNULL(su.usrLastName, '') AS usrLastName, IFNULL(su.usrName, '') AS usrName, tipoOT.descripcion AS descrpcionSolicitud FROM orden_trabajo ot LEFT JOIN tareas tstd ON ot.id_tarea = tstd.id_tarea JOIN equipos e ON ot.id_equipo = e.id_equipo LEFT JOIN sisusers su ON ot.id_usuario_a = su.usrId JOIN tbl_tipoordentrabajo tipoOT ON ot.tipo = tipoOT.tipo_orden WHERE ot.id_orden = :id_orden AND ot.id_empresa = :id_empresa</sql>
@@ -3185,6 +3209,18 @@
    </resource>
    <resource method="GET" path="/plan/ots/token/{token}/empresa/{id_empresa}">
       <call-query href="getPlanOtsTokenMan"><with-param name="token" query-param="token"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/ots/token/{token}/empresa/{id_empresa}/margen/{dias}">
+      <call-query href="getPlanOtsTokenMargenMan"><with-param name="dias" query-param="dias"/><with-param name="token" query-param="token"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/ots/sin-lanzar/empresa/{id_empresa}/margen/{dias}">
+      <call-query href="getPlanOtsSinLanzarMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="dias" query-param="dias"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/ot/{id_orden}/sin-lanzar/empresa/{id_empresa}">
+      <call-query href="getPlanOtSinLanzarMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/plan/empresas-sin-lanzar">
+      <call-query href="getPlanEmpresasSinLanzarMan"/>
    </resource>
    <resource method="PUT" path="/plan/ots/confirmar">
       <call-query href="updatePlanOtsConfirmarMan"><with-param name="token" query-param="token"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>

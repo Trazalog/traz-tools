@@ -468,6 +468,8 @@ implementación y el retiro de la bandeja de asset del menú de MAN.
 
 #### MIG-8 — Escalón 3: lanzar las OTs preventivas y predictivas cerca de su fecha
 
+**Estado (2026-10-31): implementado y probado en desarrollo la parte de OTs** (programar con margen, `POST /tools/man/plan/lanzar`, `POST /tools/man/plan/lanzar-pendientes`, botón "Lanzar" en Órdenes de Trabajo, corrida `Lanzamiento/ejecutar` para el cron: [`doc/infra/man-lanzamiento-cron.md`](../infra/man-lanzamiento-cron.md)). Decisiones: E58 y E59. **Pendiente:** el botón "Lanzar" en Solicitud de Servicio, instalar el cron en prod/demo y revisar qué muestran el calendario, los KPIs y las tools MCP con órdenes sin lanzar.
+
 **El problema de hoy:** al programar un preventivo o un predictivo, `Calendario::guardar_agregar()`
 crea **todas** las OTs de la serie y lanza un caso Bonita por cada una en ese mismo momento. Las
 bandejas de los mantenedores se llenan de tareas para dentro de meses, que tapan el trabajo del día.
@@ -698,6 +700,8 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E55 | 2026-10-30 | **Notificaciones al final** y con el método que unifique el agente de v3.5 | PM |
 | E56 | 2026-10-31 | **ABMs de catálogo** (Grupo, Sector, Contratista, Parámetros, Familia, Marca, Clientes, Criticidad, Sucursales, Sistemas, Tareas estándar): un bloque generado de `MANDataService` (rutas `/abm/...`, lista, obtener, alta, modificación y baja con `id_empresa` siempre de la sesión). **Tareas estándar** va en su propio controller `Tareaestandar` (no en `Tarea`, que es la bandeja) y crea las tareas visibles (T69). **El desplegable de formularios de Grupo** usa los formularios de tools (`FRMDataService`) | Agente (autonomía) |
 | E57 | 2026-10-31 | **Unidad de medida no se porta**: el ABM de asset usa la lista de valores del almacén (`ALM`, `Lovs`), así que cae en "almacén y pañol no se migra". Las unidades se administran en `traz-comp-almacenes`. El PM la había listado entre los ABMs: confirmar | Agente; **a confirmar con el PM** |
+| E58 | 2026-10-31 | **MIG-8, decisiones del PM**: (1) el lanzamiento automático lo dispara el **cron del sistema operativo**, el mismo mecanismo de los KPIs; (2) el margen es configurable en la lista de valores `core.tablas`, tabla `configuraciones`, y si no hay valor se usan 7 días (`MAN_DIAS_LANZAMIENTO` en `constants.php`); (3) si el lanzamiento falla, la orden queda *programada sin lanzar* y se reintenta en la corrida siguiente; (4) las series ya lanzadas se dejan como están | PM |
+| E59 | 2026-10-31 | **"Programada sin lanzar" = estado `PL`, tipo 3 o 5 y `case_id = 0`**, sin columna nueva (evita migrar la base). Las órdenes viejas sin caso tienen `case_id` NULL y el lanzamiento no las toca. El margen por empresa se guarda en el `valor` de la fila (`man_dias_lanzamiento_<empr_id>`) porque la clave de `core.tablas` es tabla + valor. Sin sesión de Bonita la corrida entra con el usuario de servicio de `bpmconf` | Decisión técnica propia, anotada para revisión |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---

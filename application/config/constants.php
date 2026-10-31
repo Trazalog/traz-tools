@@ -248,6 +248,9 @@ define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_MAN', HOST.'/services/MANDataService'); // REQ-ASSET-ALM F6
+// MIG-8: días de anticipación con que se lanza el caso de Bonita de una OT preventiva o predictiva. Se usa solo si core.tablas
+// (tabla 'configuraciones', valor 'man_dias_lanzamiento') no tiene un valor válido; ver man_dias_lanzamiento() del módulo MAN
+define('MAN_DIAS_LANZAMIENTO', 7);
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
 define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
