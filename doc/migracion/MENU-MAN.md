@@ -34,6 +34,13 @@ cubre los permisos finos por pantalla (agregar, editar, borrar): eso es MIG-5 (v
 | `plan_mantenimiento` | Plan de Mantenimiento | `traz-tools-man/Calendario/indexot/Add-Edit-Del` |
 | `registro_parametros` | Registro de Parametros | `traz-tools-man/Lectura/index/Add-Edit-Del` |
 | `administrar_ordenes` | Administrar Ordenes | `traz-tools-man/Envio/index/Add-Edit-Del` |
+| `abm_man` | ABM de Mantenimiento (padre, nuevo 2026-10-31) | — |
+| `abm_area`, `abm_proceso` | Área, Procesos | `traz-tools-man/Area/index/Add-Edit-Del`, `.../Proceso/...` |
+| `abm_grupo`, `abm_sector`, `abm_contratista` | Grupo, Sector, Contratista | `traz-tools-man/Grupo/index/Add-Edit-Del`, `.../Sector/...`, `.../Contratista/...` |
+| `abm_tarea_estandar` | Tareas estándar | `traz-tools-man/Tareaestandar/index/Add-Edit-Del` |
+| `abm_parametros`, `abm_familia`, `abm_marca` | Parámetros, Familia, Marca | `traz-tools-man/Altparametro/...`, `.../Family/...`, `.../Marca/...` |
+| `abm_clientes`, `abm_criticidad` | Clientes, Criticidad | `traz-tools-man/Cliente/...`, `.../Criticidad/...` |
+| `abm_sucursales`, `abm_sistemas` | Sucursales, Sistemas | `traz-tools-man/Sucursal/...`, `.../SistemaABM/...` |
 
 ## Lo que se cargó en desarrollo (2026-10-30)
 
@@ -53,3 +60,9 @@ empresa (`core.empresas.empr_id_mysql`). Esa vinculación toca una tabla central
 Para ver las pantallas con contenido hay dos scripts en `application/modules/traz-tools-man/tests/` (repositorio del módulo):
 `seed_demo_man.py` (equipos con cliente, planes, órdenes, informes y lecturas, todo en la empresa 1 de `assetv2`) y
 `seed_demo_bonita.py` (tres solicitudes con su caso real de Bonita). Los dos se borran con `--borrar`.
+
+## ABMs (2026-10-31)
+
+Se cargó el submenú "ABM de Mantenimiento" (13 opciones hijas de `abm_man`, más el padre) en `seg.menues` y `seg.memberships_menues`
+(grupo `Empresa_Test`, rol vacío, `usuario_app` = `migracion-man`), con el mismo procedimiento de arriba. Se ejecutó desde una terminal
+con `psql` contra la base de tools de desarrollo.

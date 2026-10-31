@@ -91,6 +91,11 @@ con el mismo número.
 | T61 | Los errores al programar se pierden en la consola del navegador y la ventana se cierra igual | Corregido: se muestra el mensaje y la ventana queda abierta |
 | T62 | La cantidad de meses de una serie se habilita al tocar el tipo de evento, aunque se vuelva a "Único" | Corregido: solo con "Mensual" |
 | T63 | Planes y órdenes de la base de desarrollo cargados con el equipo de otra empresa (130 de 134 preventivos, 922 de 966 órdenes) | MAN los rechaza al programar; ver HALLAZGOS-POST-MIGRACION H7 |
+| T65 | En Clientes, el botón de editar pide el cliente al servidor y el servidor no contesta nada (falta el `echo`) | Corregido: MAN devuelve el cliente |
+| T66 | En Clientes, al editar no se guarda el apellido (el campo no se manda ni se actualiza) | Replicado tal cual: el apellido solo se carga en el alta |
+| T67 | Sucursales y Sistemas: la edición no contesta nada (`return true` en lugar de responder) | Corregido: MAN responde verdadero o falso según se guardó |
+| T68 | Los ABMs de catálogo (Grupo, Sector, Contratista, Parámetros, Familia, Marca, Criticidad) toman del navegador el `id_empresa` del alta y no filtran por empresa al buscar, modificar o dar de baja por número | Corregido: MAN usa siempre la empresa de la sesión, en todas las consultas |
+| T69 | Una tarea estándar creada desde su ABM queda con `visible` en 0 (la base no estricta pone 0) y por eso no aparece al pedir un servicio | Corregido: MAN la crea visible (E56) |
 
 ## Correcciones ya hechas en asset antes de esta decisión
 

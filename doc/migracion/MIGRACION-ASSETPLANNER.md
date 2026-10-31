@@ -696,6 +696,8 @@ posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualqui
 | E53 | 2026-10-30 | **No hay corte por empresa ni trabajo de usuarios y permisos en desarrollo**: DNATO ya sincroniza usuarios y empresas | PM |
 | E54 | 2026-10-30 | **Lanzar casos también desde Solicitud de Servicio y desde Órdenes de Trabajo** (MIG-8), no solo desde el Calendario | PM, según el diagrama del proceso de Bonita |
 | E55 | 2026-10-30 | **Notificaciones al final** y con el método que unifique el agente de v3.5 | PM |
+| E56 | 2026-10-31 | **ABMs de catálogo** (Grupo, Sector, Contratista, Parámetros, Familia, Marca, Clientes, Criticidad, Sucursales, Sistemas, Tareas estándar): un bloque generado de `MANDataService` (rutas `/abm/...`, lista, obtener, alta, modificación y baja con `id_empresa` siempre de la sesión). **Tareas estándar** va en su propio controller `Tareaestandar` (no en `Tarea`, que es la bandeja) y crea las tareas visibles (T69). **El desplegable de formularios de Grupo** usa los formularios de tools (`FRMDataService`) | Agente (autonomía) |
+| E57 | 2026-10-31 | **Unidad de medida no se porta**: el ABM de asset usa la lista de valores del almacén (`ALM`, `Lovs`), así que cae en "almacén y pañol no se migra". Las unidades se administran en `traz-comp-almacenes`. El PM la había listado entre los ABMs: confirmar | Agente; **a confirmar con el PM** |
 | E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
 
 ---

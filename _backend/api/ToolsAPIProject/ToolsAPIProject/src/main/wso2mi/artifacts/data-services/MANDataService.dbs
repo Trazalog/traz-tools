@@ -3272,4 +3272,535 @@
    <resource method="GET" path="/bandeja/tarea-info/caso/{case_id}/empresa/{id_empresa}">
       <call-query href="getBandejaTareaInfoMan"><with-param name="case_id" query-param="case_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
+   <!-- MIG-ASSET-5a · ABM de catálogo (Grupo, Sector, Contratista, Parámetro, Familia, Marca, Cliente, Criticidad, Sucursal, Sistema). Reemplazan el acceso directo de los models de asset (ADR-014). Toda query filtra por id_empresa (id de asset). -->
+   <query id="getAbmGruposMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_grupo AS CHAR) AS id_grupo, descripcion, CAST(form_id AS CHAR) AS form_id, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM grupo WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY id_grupo</sql>
+      <result outputType="json">{"grupos":{"grupo":[{"id_grupo":"$id_grupo","descripcion":"$descripcion","form_id":"$form_id","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmGrupoMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_grupo AS CHAR) AS id_grupo, descripcion, CAST(form_id AS CHAR) AS form_id, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM grupo WHERE id_grupo = :id_grupo AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"grupos":{"grupo":[{"id_grupo":"$id_grupo","descripcion":"$descripcion","form_id":"$form_id","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_grupo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmGrupoMan" keyColumns="id_grupo" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO grupo (descripcion, form_id, id_empresa, estado) VALUES (:descripcion, NULLIF(:form_id, ''), :id_empresa, 'AC')</sql>
+      <result outputType="json">{"grupo":{"id_grupo":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="form_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmGrupoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE grupo SET descripcion = :descripcion, form_id = NULLIF(:form_id, '') WHERE id_grupo = :id_grupo AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"grupo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_grupo" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="form_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmGrupoMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE grupo SET estado = 'AN' WHERE id_grupo = :id_grupo AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"grupo":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_grupo" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/grupos/empresa/{id_empresa}">
+      <call-query href="getAbmGruposMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/grupo/{id_grupo}/empresa/{id_empresa}">
+      <call-query href="getAbmGrupoMan"><with-param name="id_grupo" query-param="id_grupo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/grupo">
+      <call-query href="setAbmGrupoMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="form_id" query-param="form_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/grupo">
+      <call-query href="updateAbmGrupoMan"><with-param name="id_grupo" query-param="id_grupo"/><with-param name="descripcion" query-param="descripcion"/><with-param name="form_id" query-param="form_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/grupo/baja">
+      <call-query href="bajaAbmGrupoMan"><with-param name="id_grupo" query-param="id_grupo"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmSectorsMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_sector AS CHAR) AS id_sector, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM sector WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY id_sector</sql>
+      <result outputType="json">{"sectores":{"sector":[{"id_sector":"$id_sector","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmSectorMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_sector AS CHAR) AS id_sector, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM sector WHERE id_sector = :id_sector AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sectores":{"sector":[{"id_sector":"$id_sector","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmSectorMan" keyColumns="id_sector" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO sector (descripcion, id_empresa, estado) VALUES (:descripcion, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"sector":{"id_sector":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmSectorMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE sector SET descripcion = :descripcion WHERE id_sector = :id_sector AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sector":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmSectorMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE sector SET estado = 'AN' WHERE id_sector = :id_sector AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sector":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/sectores/empresa/{id_empresa}">
+      <call-query href="getAbmSectorsMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/sector/{id_sector}/empresa/{id_empresa}">
+      <call-query href="getAbmSectorMan"><with-param name="id_sector" query-param="id_sector"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/sector">
+      <call-query href="setAbmSectorMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/sector">
+      <call-query href="updateAbmSectorMan"><with-param name="id_sector" query-param="id_sector"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/sector/baja">
+      <call-query href="bajaAbmSectorMan"><with-param name="id_sector" query-param="id_sector"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmContratistasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_contratista AS CHAR) AS id_contratista, nombre, contradireccion, contramail, contramail1, contracelular1, contracelular2, contratelefono, contracontacto, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM contratistas WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY id_contratista</sql>
+      <result outputType="json">{"contratistas":{"contratista":[{"id_contratista":"$id_contratista","nombre":"$nombre","contradireccion":"$contradireccion","contramail":"$contramail","contramail1":"$contramail1","contracelular1":"$contracelular1","contracelular2":"$contracelular2","contratelefono":"$contratelefono","contracontacto":"$contracontacto","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmContratistaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_contratista AS CHAR) AS id_contratista, nombre, contradireccion, contramail, contramail1, contracelular1, contracelular2, contratelefono, contracontacto, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM contratistas WHERE id_contratista = :id_contratista AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"contratistas":{"contratista":[{"id_contratista":"$id_contratista","nombre":"$nombre","contradireccion":"$contradireccion","contramail":"$contramail","contramail1":"$contramail1","contracelular1":"$contracelular1","contracelular2":"$contracelular2","contratelefono":"$contratelefono","contracontacto":"$contracontacto","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_contratista" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmContratistaMan" keyColumns="id_contratista" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO contratistas (nombre, contradireccion, contramail, contramail1, contracelular1, contracelular2, contratelefono, contracontacto, id_empresa, estado) VALUES (:nombre, :contradireccion, :contramail, :contramail1, :contracelular1, :contracelular2, :contratelefono, :contracontacto, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"contratista":{"id_contratista":"$GENERATED_KEY"}}</result>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="contradireccion" sqlType="STRING"/>
+      <param name="contramail" sqlType="STRING"/>
+      <param name="contramail1" sqlType="STRING"/>
+      <param name="contracelular1" sqlType="STRING"/>
+      <param name="contracelular2" sqlType="STRING"/>
+      <param name="contratelefono" sqlType="STRING"/>
+      <param name="contracontacto" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmContratistaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE contratistas SET nombre = :nombre, contradireccion = :contradireccion, contramail = :contramail, contramail1 = :contramail1, contracelular1 = :contracelular1, contracelular2 = :contracelular2, contratelefono = :contratelefono, contracontacto = :contracontacto WHERE id_contratista = :id_contratista AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"contratista":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_contratista" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param name="contradireccion" sqlType="STRING"/>
+      <param name="contramail" sqlType="STRING"/>
+      <param name="contramail1" sqlType="STRING"/>
+      <param name="contracelular1" sqlType="STRING"/>
+      <param name="contracelular2" sqlType="STRING"/>
+      <param name="contratelefono" sqlType="STRING"/>
+      <param name="contracontacto" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmContratistaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE contratistas SET estado = 'AN' WHERE id_contratista = :id_contratista AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"contratista":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_contratista" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/contratistas/empresa/{id_empresa}">
+      <call-query href="getAbmContratistasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/contratista/{id_contratista}/empresa/{id_empresa}">
+      <call-query href="getAbmContratistaMan"><with-param name="id_contratista" query-param="id_contratista"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/contratista">
+      <call-query href="setAbmContratistaMan"><with-param name="nombre" query-param="nombre"/><with-param name="contradireccion" query-param="contradireccion"/><with-param name="contramail" query-param="contramail"/><with-param name="contramail1" query-param="contramail1"/><with-param name="contracelular1" query-param="contracelular1"/><with-param name="contracelular2" query-param="contracelular2"/><with-param name="contratelefono" query-param="contratelefono"/><with-param name="contracontacto" query-param="contracontacto"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/contratista">
+      <call-query href="updateAbmContratistaMan"><with-param name="id_contratista" query-param="id_contratista"/><with-param name="nombre" query-param="nombre"/><with-param name="contradireccion" query-param="contradireccion"/><with-param name="contramail" query-param="contramail"/><with-param name="contramail1" query-param="contramail1"/><with-param name="contracelular1" query-param="contracelular1"/><with-param name="contracelular2" query-param="contracelular2"/><with-param name="contratelefono" query-param="contratelefono"/><with-param name="contracontacto" query-param="contracontacto"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/contratista/baja">
+      <call-query href="bajaAbmContratistaMan"><with-param name="id_contratista" query-param="id_contratista"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmAltparametrosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(paramId AS CHAR) AS paramId, paramdescrip, min, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM parametros WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY paramId</sql>
+      <result outputType="json">{"altparametros":{"altparametro":[{"paramId":"$paramId","paramdescrip":"$paramdescrip","min":"$min","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmAltparametroMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(paramId AS CHAR) AS paramId, paramdescrip, min, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM parametros WHERE paramId = :paramId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"altparametros":{"altparametro":[{"paramId":"$paramId","paramdescrip":"$paramdescrip","min":"$min","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="paramId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmAltparametroMan" keyColumns="paramId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO parametros (paramdescrip, min, id_empresa, estado) VALUES (:paramdescrip, :min, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"altparametro":{"paramId":"$GENERATED_KEY"}}</result>
+      <param name="paramdescrip" sqlType="STRING"/>
+      <param name="min" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmAltparametroMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE parametros SET paramdescrip = :paramdescrip, min = :min WHERE paramId = :paramId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"altparametro":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="paramId" sqlType="STRING"/>
+      <param name="paramdescrip" sqlType="STRING"/>
+      <param name="min" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmAltparametroMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE parametros SET estado = 'AN' WHERE paramId = :paramId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"altparametro":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="paramId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/altparametros/empresa/{id_empresa}">
+      <call-query href="getAbmAltparametrosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/altparametro/{paramId}/empresa/{id_empresa}">
+      <call-query href="getAbmAltparametroMan"><with-param name="paramId" query-param="paramId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/altparametro">
+      <call-query href="setAbmAltparametroMan"><with-param name="paramdescrip" query-param="paramdescrip"/><with-param name="min" query-param="min"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/altparametro">
+      <call-query href="updateAbmAltparametroMan"><with-param name="paramId" query-param="paramId"/><with-param name="paramdescrip" query-param="paramdescrip"/><with-param name="min" query-param="min"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/altparametro/baja">
+      <call-query href="bajaAbmAltparametroMan"><with-param name="paramId" query-param="paramId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmFamilysMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(famId AS CHAR) AS famId, famName, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM conffamily WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY famId</sql>
+      <result outputType="json">{"familys":{"family":[{"famId":"$famId","famName":"$famName","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmFamilyMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(famId AS CHAR) AS famId, famName, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM conffamily WHERE famId = :famId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"familys":{"family":[{"famId":"$famId","famName":"$famName","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="famId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmFamilyMan" keyColumns="famId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO conffamily (famName, id_empresa, estado) VALUES (:famName, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"family":{"famId":"$GENERATED_KEY"}}</result>
+      <param name="famName" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmFamilyMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE conffamily SET famName = :famName WHERE famId = :famId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"family":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="famId" sqlType="STRING"/>
+      <param name="famName" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmFamilyMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE conffamily SET estado = 'AN' WHERE famId = :famId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"family":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="famId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/familys/empresa/{id_empresa}">
+      <call-query href="getAbmFamilysMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/family/{famId}/empresa/{id_empresa}">
+      <call-query href="getAbmFamilyMan"><with-param name="famId" query-param="famId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/family">
+      <call-query href="setAbmFamilyMan"><with-param name="famName" query-param="famName"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/family">
+      <call-query href="updateAbmFamilyMan"><with-param name="famId" query-param="famId"/><with-param name="famName" query-param="famName"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/family/baja">
+      <call-query href="bajaAbmFamilyMan"><with-param name="famId" query-param="famId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmMarcasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(marcaid AS CHAR) AS marcaid, marcadescrip, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM marcasequipos WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY marcaid</sql>
+      <result outputType="json">{"marcas":{"marca":[{"marcaid":"$marcaid","marcadescrip":"$marcadescrip","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmMarcaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(marcaid AS CHAR) AS marcaid, marcadescrip, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM marcasequipos WHERE marcaid = :marcaid AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"marcas":{"marca":[{"marcaid":"$marcaid","marcadescrip":"$marcadescrip","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="marcaid" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmMarcaMan" keyColumns="marcaid" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO marcasequipos (marcadescrip, id_empresa, estado) VALUES (:marcadescrip, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"marca":{"marcaid":"$GENERATED_KEY"}}</result>
+      <param name="marcadescrip" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmMarcaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE marcasequipos SET marcadescrip = :marcadescrip WHERE marcaid = :marcaid AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"marca":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="marcaid" sqlType="STRING"/>
+      <param name="marcadescrip" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmMarcaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE marcasequipos SET estado = 'AN' WHERE marcaid = :marcaid AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"marca":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="marcaid" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/marcas/empresa/{id_empresa}">
+      <call-query href="getAbmMarcasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/marca/{marcaid}/empresa/{id_empresa}">
+      <call-query href="getAbmMarcaMan"><with-param name="marcaid" query-param="marcaid"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/marca">
+      <call-query href="setAbmMarcaMan"><with-param name="marcadescrip" query-param="marcadescrip"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/marca">
+      <call-query href="updateAbmMarcaMan"><with-param name="marcaid" query-param="marcaid"/><with-param name="marcadescrip" query-param="marcadescrip"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/marca/baja">
+      <call-query href="bajaAbmMarcaMan"><with-param name="marcaid" query-param="marcaid"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmClientesMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(cliId AS CHAR) AS cliId, cliName, cliLastName, cliDni, cliAddress, cliPhone, cliEmail, cliRazonSocial, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM admcustomers WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY cliId</sql>
+      <result outputType="json">{"clientes":{"cliente":[{"cliId":"$cliId","cliName":"$cliName","cliLastName":"$cliLastName","cliDni":"$cliDni","cliAddress":"$cliAddress","cliPhone":"$cliPhone","cliEmail":"$cliEmail","cliRazonSocial":"$cliRazonSocial","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmClienteMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(cliId AS CHAR) AS cliId, cliName, cliLastName, cliDni, cliAddress, cliPhone, cliEmail, cliRazonSocial, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM admcustomers WHERE cliId = :cliId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"clientes":{"cliente":[{"cliId":"$cliId","cliName":"$cliName","cliLastName":"$cliLastName","cliDni":"$cliDni","cliAddress":"$cliAddress","cliPhone":"$cliPhone","cliEmail":"$cliEmail","cliRazonSocial":"$cliRazonSocial","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="cliId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmClienteMan" keyColumns="cliId" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO admcustomers (cliName, cliLastName, cliDni, cliAddress, cliPhone, cliEmail, cliRazonSocial, id_empresa, estado) VALUES (:cliName, :cliLastName, :cliDni, :cliAddress, :cliPhone, :cliEmail, :cliRazonSocial, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"cliente":{"cliId":"$GENERATED_KEY"}}</result>
+      <param name="cliName" sqlType="STRING"/>
+      <param name="cliLastName" sqlType="STRING"/>
+      <param name="cliDni" sqlType="STRING"/>
+      <param name="cliAddress" sqlType="STRING"/>
+      <param name="cliPhone" sqlType="STRING"/>
+      <param name="cliEmail" sqlType="STRING"/>
+      <param name="cliRazonSocial" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmClienteMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE admcustomers SET cliName = :cliName, cliDni = :cliDni, cliAddress = :cliAddress, cliPhone = :cliPhone, cliEmail = :cliEmail, cliRazonSocial = :cliRazonSocial WHERE cliId = :cliId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"cliente":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="cliId" sqlType="STRING"/>
+      <param name="cliName" sqlType="STRING"/>
+      <param name="cliDni" sqlType="STRING"/>
+      <param name="cliAddress" sqlType="STRING"/>
+      <param name="cliPhone" sqlType="STRING"/>
+      <param name="cliEmail" sqlType="STRING"/>
+      <param name="cliRazonSocial" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmClienteMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE admcustomers SET estado = 'AN' WHERE cliId = :cliId AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"cliente":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="cliId" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/clientes/empresa/{id_empresa}">
+      <call-query href="getAbmClientesMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/cliente/{cliId}/empresa/{id_empresa}">
+      <call-query href="getAbmClienteMan"><with-param name="cliId" query-param="cliId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/cliente">
+      <call-query href="setAbmClienteMan"><with-param name="cliName" query-param="cliName"/><with-param name="cliLastName" query-param="cliLastName"/><with-param name="cliDni" query-param="cliDni"/><with-param name="cliAddress" query-param="cliAddress"/><with-param name="cliPhone" query-param="cliPhone"/><with-param name="cliEmail" query-param="cliEmail"/><with-param name="cliRazonSocial" query-param="cliRazonSocial"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/cliente">
+      <call-query href="updateAbmClienteMan"><with-param name="cliId" query-param="cliId"/><with-param name="cliName" query-param="cliName"/><with-param name="cliDni" query-param="cliDni"/><with-param name="cliAddress" query-param="cliAddress"/><with-param name="cliPhone" query-param="cliPhone"/><with-param name="cliEmail" query-param="cliEmail"/><with-param name="cliRazonSocial" query-param="cliRazonSocial"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/cliente/baja">
+      <call-query href="bajaAbmClienteMan"><with-param name="cliId" query-param="cliId"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmCriticidadsMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_criti AS CHAR) AS id_criti, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM criticidad WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY id_criti</sql>
+      <result outputType="json">{"criticidades":{"criticidad":[{"id_criti":"$id_criti","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmCriticidadMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_criti AS CHAR) AS id_criti, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM criticidad WHERE id_criti = :id_criti AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"criticidades":{"criticidad":[{"id_criti":"$id_criti","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_criti" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmCriticidadMan" keyColumns="id_criti" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO criticidad (descripcion, id_empresa, estado) VALUES (:descripcion, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"criticidad":{"id_criti":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmCriticidadMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE criticidad SET descripcion = :descripcion WHERE id_criti = :id_criti AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"criticidad":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_criti" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmCriticidadMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE criticidad SET estado = 'AN' WHERE id_criti = :id_criti AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"criticidad":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_criti" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/criticidades/empresa/{id_empresa}">
+      <call-query href="getAbmCriticidadsMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/criticidad/{id_criti}/empresa/{id_empresa}">
+      <call-query href="getAbmCriticidadMan"><with-param name="id_criti" query-param="id_criti"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/criticidad">
+      <call-query href="setAbmCriticidadMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/criticidad">
+      <call-query href="updateAbmCriticidadMan"><with-param name="id_criti" query-param="id_criti"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/criticidad/baja">
+      <call-query href="bajaAbmCriticidadMan"><with-param name="id_criti" query-param="id_criti"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmSucursalsMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_sucursal AS CHAR) AS id_sucursal, descripc, dire, zonas, telefono, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM sucursal WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY id_sucursal</sql>
+      <result outputType="json">{"sucursales":{"sucursal":[{"id_sucursal":"$id_sucursal","descripc":"$descripc","dire":"$dire","zonas":"$zonas","telefono":"$telefono","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmSucursalMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_sucursal AS CHAR) AS id_sucursal, descripc, dire, zonas, telefono, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM sucursal WHERE id_sucursal = :id_sucursal AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sucursales":{"sucursal":[{"id_sucursal":"$id_sucursal","descripc":"$descripc","dire":"$dire","zonas":"$zonas","telefono":"$telefono","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_sucursal" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmSucursalMan" keyColumns="id_sucursal" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO sucursal (descripc, dire, zonas, telefono, id_localidad, id_empresa, estado) VALUES (:descripc, :dire, :zonas, :telefono, '0', :id_empresa, 'AC')</sql>
+      <result outputType="json">{"sucursal":{"id_sucursal":"$GENERATED_KEY"}}</result>
+      <param name="descripc" sqlType="STRING"/>
+      <param name="dire" sqlType="STRING"/>
+      <param name="zonas" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmSucursalMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE sucursal SET descripc = :descripc, dire = :dire, zonas = :zonas, telefono = :telefono WHERE id_sucursal = :id_sucursal AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sucursal":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_sucursal" sqlType="STRING"/>
+      <param name="descripc" sqlType="STRING"/>
+      <param name="dire" sqlType="STRING"/>
+      <param name="zonas" sqlType="STRING"/>
+      <param name="telefono" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmSucursalMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE sucursal SET estado = 'AN' WHERE id_sucursal = :id_sucursal AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sucursal":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_sucursal" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/sucursales/empresa/{id_empresa}">
+      <call-query href="getAbmSucursalsMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/sucursal/{id_sucursal}/empresa/{id_empresa}">
+      <call-query href="getAbmSucursalMan"><with-param name="id_sucursal" query-param="id_sucursal"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/sucursal">
+      <call-query href="setAbmSucursalMan"><with-param name="descripc" query-param="descripc"/><with-param name="dire" query-param="dire"/><with-param name="zonas" query-param="zonas"/><with-param name="telefono" query-param="telefono"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/sucursal">
+      <call-query href="updateAbmSucursalMan"><with-param name="id_sucursal" query-param="id_sucursal"/><with-param name="descripc" query-param="descripc"/><with-param name="dire" query-param="dire"/><with-param name="zonas" query-param="zonas"/><with-param name="telefono" query-param="telefono"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/sucursal/baja">
+      <call-query href="bajaAbmSucursalMan"><with-param name="id_sucursal" query-param="id_sucursal"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmTareasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_tarea AS CHAR) AS id_tarea, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado, form_asoc, visible FROM tareas WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY id_tarea</sql>
+      <result outputType="json">{"tareas":{"tarea":[{"id_tarea":"$id_tarea","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado","form_asoc":"$form_asoc","visible":"$visible"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmTareaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(id_tarea AS CHAR) AS id_tarea, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado, form_asoc, visible FROM tareas WHERE id_tarea = :id_tarea AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"tareas":{"tarea":[{"id_tarea":"$id_tarea","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado","form_asoc":"$form_asoc","visible":"$visible"}]}}</result>
+      <param name="id_tarea" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmTareaMan" keyColumns="id_tarea" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO tareas (descripcion, visible, id_empresa, estado) VALUES (:descripcion, '1', :id_empresa, 'AC')</sql>
+      <result outputType="json">{"tarea":{"id_tarea":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmTareaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tareas SET descripcion = :descripcion WHERE id_tarea = :id_tarea AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"tarea":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_tarea" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmTareaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tareas SET estado = 'AN' WHERE id_tarea = :id_tarea AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"tarea":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="id_tarea" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/tareas/empresa/{id_empresa}">
+      <call-query href="getAbmTareasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/tarea/{id_tarea}/empresa/{id_empresa}">
+      <call-query href="getAbmTareaMan"><with-param name="id_tarea" query-param="id_tarea"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/tarea">
+      <call-query href="setAbmTareaMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/tarea">
+      <call-query href="updateAbmTareaMan"><with-param name="id_tarea" query-param="id_tarea"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/tarea/baja">
+      <call-query href="bajaAbmTareaMan"><with-param name="id_tarea" query-param="id_tarea"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <query id="getAbmSistemasMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(sistemaid AS CHAR) AS sistemaid, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM sistema WHERE estado = 'AC' AND id_empresa = :id_empresa ORDER BY sistemaid</sql>
+      <result outputType="json">{"sistemas":{"sistema":[{"sistemaid":"$sistemaid","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getAbmSistemaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(sistemaid AS CHAR) AS sistemaid, descripcion, CAST(id_empresa AS CHAR) AS id_empresa, estado FROM sistema WHERE sistemaid = :sistemaid AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sistemas":{"sistema":[{"sistemaid":"$sistemaid","descripcion":"$descripcion","id_empresa":"$id_empresa","estado":"$estado"}]}}</result>
+      <param name="sistemaid" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setAbmSistemaMan" keyColumns="sistemaid" returnGeneratedKeys="true" useConfig="AssetPlannerDataSource">
+      <sql>INSERT INTO sistema (descripcion, id_empresa, estado) VALUES (:descripcion, :id_empresa, 'AC')</sql>
+      <result outputType="json">{"sistema":{"sistemaid":"$GENERATED_KEY"}}</result>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updateAbmSistemaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE sistema SET descripcion = :descripcion WHERE sistemaid = :sistemaid AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sistema":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="sistemaid" sqlType="STRING"/>
+      <param name="descripcion" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="bajaAbmSistemaMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE sistema SET estado = 'AN' WHERE sistemaid = :sistemaid AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"sistema":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="sistemaid" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/abm/sistemas/empresa/{id_empresa}">
+      <call-query href="getAbmSistemasMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/abm/sistema/{sistemaid}/empresa/{id_empresa}">
+      <call-query href="getAbmSistemaMan"><with-param name="sistemaid" query-param="sistemaid"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="POST" path="/abm/sistema">
+      <call-query href="setAbmSistemaMan"><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/sistema">
+      <call-query href="updateAbmSistemaMan"><with-param name="sistemaid" query-param="sistemaid"/><with-param name="descripcion" query-param="descripcion"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/abm/sistema/baja">
+      <call-query href="bajaAbmSistemaMan"><with-param name="sistemaid" query-param="sistemaid"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
 </data>
