@@ -22,8 +22,10 @@ Estado: implementado y probado en desarrollo (2026-10-31); **no instalado** en p
 3. Una orden que falla (por ejemplo, Bonita caído) queda sin lanzar y se reintenta en la corrida siguiente.
 4. El botón **Lanzar** de la lista de Órdenes de Trabajo hace lo mismo para una sola orden, cuando se quiere adelantar.
 
-Sin sesión de Bonita (la corrida automática no tiene usuario) `bpmAPICallTemplate` entra con el usuario de servicio de `bpmconf.xml`;
-el caso queda iniciado por ese usuario.
+El caso se inicia siempre **en nombre del usuario que programó la orden** (`orden_trabajo.id_usuario`, su correo `sisusers.usrNick` es el
+nombre de usuario en Bonita), tanto desde el botón como desde la corrida automática: el usuario de servicio de `bpmconf.xml` entra a
+Bonita y pide la instancia con `?user=<id del usuario en Bonita>`. Si ese usuario no existe en Bonita la orden no se lanza, queda sin
+lanzar y el error aparece en el resultado de la corrida.
 
 ## Margen de días
 

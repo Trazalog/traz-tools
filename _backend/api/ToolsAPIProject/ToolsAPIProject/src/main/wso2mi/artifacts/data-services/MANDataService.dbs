@@ -2831,8 +2831,8 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="getCalendarioOtMan" useConfig="AssetPlannerDataSource">
-      <sql>SELECT OT.id_orden, OT.nro, CAST(OT.fecha_program AS CHAR) AS fecha_program, OT.tipo, OT.descripcion, CAST(OT.duracion AS CHAR) AS duracion, OT.id_usuario_a, EQ.codigo, A.descripcion AS area, G.descripcion AS grupo, S.descripcion AS sector, TOT.descripcion AS origen FROM orden_trabajo OT LEFT JOIN equipos EQ ON EQ.id_equipo = OT.id_equipo LEFT JOIN area A ON A.id_area = EQ.id_area LEFT JOIN grupo G ON G.id_grupo = EQ.id_grupo LEFT JOIN sector S ON S.id_sector = EQ.id_sector LEFT JOIN tbl_tipoordentrabajo TOT ON TOT.tipo_orden = OT.tipo WHERE OT.id_empresa = :id_empresa AND OT.estado != 'T' AND OT.estado != 'AN' AND OT.fecha_program &gt;= :desde AND OT.fecha_program &lt; :hasta ORDER BY OT.id_orden</sql>
-      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","nro":"$nro","fecha_program":"$fecha_program","tipo":"$tipo","descripcion":"$descripcion","duracion":"$duracion","id_usuario_a":"$id_usuario_a","codigo":"$codigo","area":"$area","grupo":"$grupo","sector":"$sector","origen":"$origen"}]}}</result>
+      <sql>SELECT OT.id_orden, OT.nro, CAST(OT.fecha_program AS CHAR) AS fecha_program, OT.tipo, OT.descripcion, CAST(OT.duracion AS CHAR) AS duracion, OT.id_usuario_a, OT.estado, CAST(OT.case_id AS CHAR) AS case_id, EQ.codigo, A.descripcion AS area, G.descripcion AS grupo, S.descripcion AS sector, TOT.descripcion AS origen FROM orden_trabajo OT LEFT JOIN equipos EQ ON EQ.id_equipo = OT.id_equipo LEFT JOIN area A ON A.id_area = EQ.id_area LEFT JOIN grupo G ON G.id_grupo = EQ.id_grupo LEFT JOIN sector S ON S.id_sector = EQ.id_sector LEFT JOIN tbl_tipoordentrabajo TOT ON TOT.tipo_orden = OT.tipo WHERE OT.id_empresa = :id_empresa AND OT.estado != 'T' AND OT.estado != 'AN' AND OT.fecha_program &gt;= :desde AND OT.fecha_program &lt; :hasta ORDER BY OT.id_orden</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","nro":"$nro","fecha_program":"$fecha_program","tipo":"$tipo","descripcion":"$descripcion","duracion":"$duracion","id_usuario_a":"$id_usuario_a","estado":"$estado","case_id":"$case_id","codigo":"$codigo","area":"$area","grupo":"$grupo","sector":"$sector","origen":"$origen"}]}}</result>
       <param name="id_empresa" sqlType="STRING"/>
       <param name="desde" sqlType="STRING"/>
       <param name="hasta" sqlType="STRING"/>
@@ -3123,8 +3123,17 @@
       <param name="dias" sqlType="STRING"/>
    </query>
    <query id="getPlanOtSinLanzarMan" useConfig="AssetPlannerDataSource">
-      <sql>SELECT id_orden, tipo FROM orden_trabajo WHERE id_orden = :id_orden AND id_empresa = :id_empresa AND case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5')</sql>
-      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","tipo":"$tipo"}]}}</result>
+      <sql>SELECT o.id_orden, o.tipo, IFNULL(u.usrNick, '') AS usr_nick FROM orden_trabajo o LEFT JOIN sisusers u ON u.usrId = o.id_usuario WHERE o.id_orden = :id_orden AND o.id_empresa = :id_empresa AND o.case_id = 0 AND o.estado = 'PL' AND o.tipo IN ('3', '5')</sql>
+      <result outputType="json">{"ots":{"ot":[{"id_orden":"$id_orden","tipo":"$tipo","usr_nick":"$usr_nick"}]}}</result>
+      <param name="id_orden" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="updatePlanOtAnularMan" returnUpdatedRowCount="true" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE orden_trabajo SET estado = 'AN', id_usuario_eliminada = :usrId, fecha_eliminada = :fecha, motivo_eliminada = LEFT(:motivo, 100) WHERE id_orden = :id_orden AND id_empresa = :id_empresa AND case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5')</sql>
+      <result outputType="json">{"ot":{"filas":"$UPDATED_ROW_COUNT"}}</result>
+      <param name="usrId" sqlType="STRING"/>
+      <param name="fecha" sqlType="STRING"/>
+      <param name="motivo" sqlType="STRING"/>
       <param name="id_orden" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
@@ -3218,6 +3227,9 @@
    </resource>
    <resource method="GET" path="/plan/ot/{id_orden}/sin-lanzar/empresa/{id_empresa}">
       <call-query href="getPlanOtSinLanzarMan"><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/plan/ot/anular">
+      <call-query href="updatePlanOtAnularMan"><with-param name="usrId" query-param="usrId"/><with-param name="fecha" query-param="fecha"/><with-param name="motivo" query-param="motivo"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="GET" path="/plan/empresas-sin-lanzar">
       <call-query href="getPlanEmpresasSinLanzarMan"/>
