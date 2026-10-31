@@ -175,7 +175,7 @@ real de asset (`sismenu`, entradas activas):
   Servicio, Parametrizar Predictivo, Órdenes de Trabajo, Plan de Mantenimiento, Informe de Servicios, Administrar Órdenes, y "Mis Tareas"
   (la bandeja, ver [PROPUESTA-BANDEJA.md](PROPUESTA-BANDEJA.md)). Dudoso: la entrada "trazabilidad Activos" está activa pero su
   dirección es un texto suelto (`fa fa-calendar`): no abre nada en asset.
-- **Menú ABM** — hechos: Área, Procesos, Componentes. **Faltan 12:** Grupo, Sector, Contratista, Tareas estándar (`Tarea/index2`),
+- **Menú ABM** — hechos: Área, Procesos, Componentes y (2026-10-31, MIG-5a, con paridad contra asset) Grupo, Sector, Contratista, Tareas estándar, Parámetros, Familia, Marca, Clientes, Criticidad, Sucursales y Sistemas. **Falta:** Unidad de medida (no se porta, E57: es del almacén). Detalle de lo que se pedía: **Faltaban 12:** Grupo, Sector, Contratista, Tareas estándar (`Tarea/index2`),
   Parámetros (`Altparametro`), Familia (`Family`), Marca, Clientes (`Cliente`), Criticidad, Unidad de medida, Sucursales y Sistemas
   (`SistemaABM`). "ABM modelos" no tiene dirección. Inactivos en asset y ligados a almacén y pañol (no se portan): Depósito, Proveedor,
   Plantilla de insumos.
