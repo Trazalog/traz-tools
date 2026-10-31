@@ -6,7 +6,7 @@ Explica cómo funciona hoy la bandeja de tareas de tools (la de `traz-comp-bpm`)
 Mantenimiento, y propone cómo unir las dos en una sola. Está escrita para el PM, que decide la propuesta, y para quien la implemente.
 No cubre el lanzamiento de órdenes (MIG-8) ni las notificaciones (MIG-9); ver [MIGRACION-ASSETPLANNER.md](MIGRACION-ASSETPLANNER.md).
 
-Estado: **propuesta, sin implementar** (2026-10-30). El proceso de Bonita de referencia es el diagrama "Proceso de Mantenimiento
+Estado: **implementada y probada en local** (2026-10-31). Probadas por el panel de la bandeja de tools: Análisis, Ejecutar OT, Confecciona informe, Verifica informe, Presta conformidad, Editar Backlog y Planificar Solicitud (abre el Calendario). **Sin probar todavía:** Asignar Recursos y Tareas, Esperando cambio de estado y Planificar Backlog (no había casos en esa etapa). El panel sirve en las dos bandejas de tools: "Mis Tareas" (tabla fija, `Proceso`, se recarga entera) y `Proceso2` (tabla de servidor, solo recarga datos).
 AssetPlanner" que compartió el PM (`~/Descargas/Proceso de Mantenimiento AssetPlanner-1.0 (1).gif`).
 
 ---

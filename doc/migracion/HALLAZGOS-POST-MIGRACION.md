@@ -36,4 +36,6 @@ de [MIGRACION-ASSETPLANNER.md](MIGRACION-ASSETPLANNER.md) §3.8.
 | H21 | "Administrar Órdenes" no estaba en el plan | La pantalla de entregar y reprogramar órdenes terminadas (`Envio`) no figuraba en el inventario de la migración; se portó el 2026-10-30. Revisar si hay otras pantallas de asset fuera del inventario | ⏳ |
 | H22 | ABM de Tareas estándar mal descartado | Se había dejado afuera por creer que ninguna pantalla lo usaba; el menú de asset lo tiene activo (`Tarea/index2`). Se porta con los demás ABMs | ⏳ |
 | H23 | "trazabilidad Activos" del menú de asset | Está activa pero su dirección es un texto suelto (`fa fa-calendar`), así que no abre nada en asset. Confirmar si alguien la usa o es un resto | ⏳ |
-
+| H24 | Casos viejos sin datos en la bandeja | Los casos 30001–30008 y 29006–29007 muestran "Sin datos de Mantenimiento para este caso" en la bandeja de tools: no tienen solicitud ni orden en las tablas de MAN. Revisar si se limpian o se dejan | ⏳ |
+| H25 | Sesión vencida mostraba una dirección suelta | `validarInactividad()` (`sesion_helper.php`) escribía la dirección de `Login/log_out` en pantalla en vez de redirigir. Existía igual en `master`. Corregido en la migración: navegación directa redirige, Ajax conserva el comportamiento. Revisar si el mismo defecto está en los submódulos que tienen su propia copia del helper | ⏳ |
+| H26 | Bandejas con distinto modo de recarga | "Mis Tareas" (`Proceso`) es una tabla fija y `Proceso2` una tabla de servidor; el panel de MAN distingue las dos. Si se unifican, simplificar `cargarVista` | ⏳ |
