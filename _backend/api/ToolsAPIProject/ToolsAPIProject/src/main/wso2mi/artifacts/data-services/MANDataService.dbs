@@ -3200,6 +3200,33 @@
       <result outputType="json">{"estados":{"estado":[{"estadoid":"$estadoid","descripcion":"$descripcion","estado":"$estado"}]}}</result>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
+   <!-- E65 · Vales de pañol asociados a la OT (F5 de REQ-ASSET-ALM de asset): a qué OT está asociado un vale, quitarlo y tildar "se usó". -->
+   <query id="getOtValeEmpresaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(otId AS CHAR) AS otId, origen FROM tbl_otvales WHERE sapa_id = :sapa_id AND id_empresa = :id_empresa</sql>
+      <result outputType="json">{"vales":{"vale":[{"otId":"$otId","origen":"$origen"}]}}</result>
+      <param name="sapa_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarOtValeHerramientasMan" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM tbl_otherramientasusadas WHERE otId = :otId AND sapa_id = :sapa_id AND id_empresa = :id_empresa</sql>
+      <param name="otId" sqlType="STRING"/>
+      <param name="sapa_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="borrarOtValeMan" useConfig="AssetPlannerDataSource">
+      <sql>DELETE FROM tbl_otvales WHERE otId = :otId AND sapa_id = :sapa_id AND id_empresa = :id_empresa</sql>
+      <param name="otId" sqlType="STRING"/>
+      <param name="sapa_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="setOtHerramientaUsadaActivaMan" useConfig="AssetPlannerDataSource">
+      <sql>UPDATE tbl_otherramientasusadas SET activa = :activa WHERE otId = :otId AND herrId = :herrId AND sapa_id = :sapa_id AND id_empresa = :id_empresa</sql>
+      <param name="activa" sqlType="STRING"/>
+      <param name="otId" sqlType="STRING"/>
+      <param name="herrId" sqlType="STRING"/>
+      <param name="sapa_id" sqlType="STRING"/>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
    <query id="getPlanEmpresasSinLanzarMan" useConfig="AssetPlannerDataSource">
       <sql>SELECT DISTINCT CAST(id_empresa AS CHAR) AS id_empresa FROM orden_trabajo WHERE case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5') ORDER BY id_empresa</sql>
       <result outputType="json">{"empresas":{"empresa":[{"id_empresa":"$id_empresa"}]}}</result>
@@ -3317,6 +3344,18 @@
    </resource>
    <resource method="GET" path="/rep/ordenes/estados/empresa/{id_empresa}">
       <call-query href="getRepOrdenesEstadosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/ot/vale/{sapa_id}/empresa/{id_empresa}">
+      <call-query href="getOtValeEmpresaMan"><with-param name="sapa_id" query-param="sapa_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/vale/herramientas/borrar">
+      <call-query href="borrarOtValeHerramientasMan"><with-param name="otId" query-param="otId"/><with-param name="sapa_id" query-param="sapa_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/vale/borrar">
+      <call-query href="borrarOtValeMan"><with-param name="otId" query-param="otId"/><with-param name="sapa_id" query-param="sapa_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="PUT" path="/ot/herramienta-usada/activa">
+      <call-query href="setOtHerramientaUsadaActivaMan"><with-param name="activa" query-param="activa"/><with-param name="otId" query-param="otId"/><with-param name="herrId" query-param="herrId"/><with-param name="sapa_id" query-param="sapa_id"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="GET" path="/plan/empresas-sin-lanzar">
       <call-query href="getPlanEmpresasSinLanzarMan"/>
