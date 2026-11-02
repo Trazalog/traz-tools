@@ -46,12 +46,54 @@ cp .env.example .env              # y completar las credenciales; .env NO se com
 
 > Las URLs ya vienen en `.env.example`. Lo que falta completar son las **credenciales de las empresas de test**, que provee Rodolfo. Los casos que dependen de un mail (activación, recuperación de contraseña) **no** necesitan credenciales de correo: el test se crea una casilla descartable y la lee por API. Nunca se hardcodean ni se inventan: si falta una, el test falla con un mensaje que dice exactamente qué variable falta.
 
+## El comando único: `npm run doctest`
+
+Es lo único que hace falta recordar. **Dónde se ejecuta:** en una terminal, parado en
+`traz-tools/doctest/` — o se le pide a Claude Code ("corré doctest regresión en demo").
+
+| Cuándo | Comando | Qué corre |
+|---|---|---|
+| Terminaste un cambio: **antes de commit y push** | `npm run doctest` | **Lo nuevo** de tu rama + el **set de regresión**, contra las empresas del perfil del ambiente. Si da verde, commiteás y seguís |
+| **Antes de desplegar** una versión | `npm run doctest -- regresion --entorno demo --base v2.5.1.13` | Lo mismo, pero "lo nuevo" se calcula contra el tag de la versión que está desplegada |
+| Ambiente nuevo, o las empresas de test quedaron viejas | `npm run doctest -- casi-full` | Crea **dos empresas desde cero** por la registración real, las deja en el perfil del ambiente y corre el set de regresión |
+| La prueba completa | `npm run doctest -- full` | Como `casi-full`, y además **le carga datos** a la empresa 1 y corre **todo**: regresión + circuitos largos (`@ciclo`) |
+| Solo lo que cambió | `npm run doctest -- nuevos` | Lo nuevo de tu rama, nada más |
+
+Opciones: `--entorno <local|demo|staging-v3>` (si no, el `DOCTEST_ENV` del `.env`), `--base <rama o
+tag>` (default `origin/develop`), `--sin-perfil` (usa las credenciales del `.env`) y `--plan` (muestra
+qué correría, sin ejecutar nada).
+
+**Qué es cada cosa:**
+
+- **Lo nuevo:** las pruebas que cambiaron en tu rama respecto de `--base` — los `.spec.ts` tocados y
+  las pruebas que declaran (`derivados.test_e2e`) los casos `.yaml` tocados —, incluido lo que todavía
+  no commiteaste. Corre primero; si falla, no sigue con la regresión.
+- **Set de regresión:** toda la suite estable. Queda afuera solo lo inestable (`@quarantine`), lo que
+  crea empresas (`@alta-empresa`, `@preparar-entorno`) y los circuitos largos (`@ciclo`). Las pruebas
+  marcadas con `test.fail()` **quedan adentro**: son las que avisan cuando se arregla un bug conocido.
+- **Perfil del ambiente:** `entornos/<entorno>.json`, con qué empresas se prueba en ese ambiente. Lo
+  escriben `casi-full` y `full` al crear las empresas, y desde ahí `regresion` las usa solo. **Tiene
+  contraseñas y no se versiona**; la forma está en [`entornos/ejemplo.json`](entornos/ejemplo.json). Si
+  un ambiente no tiene perfil, se usan las variables del `.env` como siempre.
+
+**Qué carga hoy `full`** (spec `specs/entorno/PREPARAR-entorno.spec.ts`, que reusa
+`flows/registrar-empresa.ts` y `flows/seed-asset.ts`): en AssetPlanner, los maestros que una empresa
+nueva no trae (área, proceso, criticidad, etapa, grupo, marca, unidad industrial, cliente), un equipo y
+una herramienta. **Todavía no carga** artículos ni stock de almacén. La guía para hacerlo a mano está en
+la rama `feature/doctest-ciclo-ot-capturas` (`doctest/doc/onboarding-empresa-nueva.md`).
+
+> ⚠️ **`casi-full` y `full` crean datos reales**: dos empresas por corrida, que quedan en el ambiente.
+> Necesitan `DOCTEST_MAIL_IMAP_*` (leen el mail de activación de una casilla Gmail) y toman la
+> contraseña de los usuarios de rol (`usuario@`, `almacen@`…) de `DOCTEST_PASSWORD_ROLES`, o `12345`,
+> que es la de DEMO. Contra producción no corren: lo impide `config/apps.ts`.
+
 ## Comandos
 
 **Dónde se ejecutan:** en una terminal, parado en `doctest/`.
 
 | Comando | Qué hace |
 |---|---|
+| `npm run doctest -- <modo>` | El comando único (sección anterior): `regresion`, `nuevos`, `casi-full`, `full` |
 | `npm run test:smoke` | Suite `@smoke` (< 2 min). **Es la que corrés antes de cada push** |
 | `npm run test:module -- man` | Suite completa de un módulo (`dnato`, `man`, `alm`, `mcp`, `pan`, `prd`, `tar`) |
 | `npm run test:all` | Suite E2E completa, sin lo que esté en cuarentena |
