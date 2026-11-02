@@ -198,6 +198,7 @@ class Dashs extends CI_Model {
         'valor'        => $valor,
         'valor_json'   => array(
           'disponibilidad' => ($valor !== null ? (float) $valor : 0),
+          'valor'          => ($valor !== null ? (float) $valor : 0),
           'periodo'        => ($meses > 0 ? 'Prom. '.$meses.' meses' : 'Sin datos'),
         ),
         'calculado_en' => null,
