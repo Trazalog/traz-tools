@@ -6,6 +6,9 @@ tests/e2e/.playwright-report/
 tests/e2e/.test-results/
 tests/e2e/.auth/
 
+# Capturas a pedido (flag --capturas) — evidencia de corridas, no se versiona
+.capturas/
+
 # Variables de entorno locales — la plantilla versionada es .env.example
 .env
 .env.local
