@@ -151,7 +151,8 @@ a punto del [README](README.md#puesta-a-punto-una-sola-vez) (`npm install`, el n
 
 | Comando | Qué corre | Cuánto tarda |
 |---|---|---|
-| `npm run test:smoke` | los 11 flujos críticos. **Es el que se corre antes de cada push** | ~1,5 min |
+| **`npm run doctest`** | **lo nuevo de tu rama + el set de regresión**, con las empresas del perfil del ambiente. **Es el que se corre antes de cada commit/push y antes de desplegar** (modos `casi-full` y `full` en el [README](README.md#el-comando-único-npm-run-doctest)) | lo nuevo + ~8 min |
+| `npm run test:smoke` | los 11 flujos críticos: el chequeo más rápido | ~1,5 min |
 | `npm run test:all` | los 71 tests, sin lo que esté en cuarentena | ~8 min |
 | `npm run test:module -- dnato` | un módulo entero | según el módulo |
 | `npm run test:list` | lista qué tests hay, sin ejecutarlos | segundos |
@@ -336,7 +337,10 @@ que necesita, entra con usuarios que ya existen.
 Dos formas de conseguirlos:
 
 - **La rápida:** dos empresas que ya estén en el dump de tu base local. Solo completás las variables.
-- **La completa:** `npm run seed:empresa` recorre el registro real —empresa, 16 roles,
+- **La más simple:** `npm run doctest -- casi-full` crea dos empresas desde cero por la registración
+  real y las deja anotadas en `entornos/<entorno>.json`; desde ahí `npm run doctest` las usa solo, sin
+  tocar el `.env`. Necesita `DOCTEST_MAIL_IMAP_*` (lee el mail de activación de una casilla Gmail).
+- **La de antes:** `npm run seed:empresa` recorre el registro real —empresa, 16 roles,
   establecimiento, depósito y 5 usuarios— contra lo que diga `DOCTEST_ENV`. Con `DOCTEST_ENV=local`
   lo hace en tu máquina, pero **necesita que tu local pueda mandar el mail de activación**. Si no
   puede, quedate con la forma rápida.
@@ -410,7 +414,7 @@ imposible revisar un PR.
 ```bash
 npm run validate:catalog
 npm run typecheck
-npm run test:smoke
+npm run doctest
 ```
 
 Las dos primeras son las que corre `doctest-validate.yml` en todo PR que toque `doctest/`. **La
@@ -750,7 +754,7 @@ El Doc 2 dibuja el circuito completo, con cosas que todavía no existen. Para no
 | Entorno de las pruebas | staging-v3 | **el DEMO de v2** |
 | Ejecutar la suite | en CI, en cada PR | **a mano, antes de pushear** |
 | Evidencia de la corrida | artifact del run | **local y efímera** (§1.3) |
-| Regresión completa | cron semanal | **a demanda** |
+| Regresión completa | cron semanal | **a demanda, con `npm run doctest`** |
 | Feedback de testers | issues `test-gap` | ✅ igual, ya funciona |
 | Gate del PM | validación caso por caso | ✅ igual, ya funciona |
 
@@ -817,6 +821,8 @@ Es parte de **F5** y no existe todavía. Hasta entonces, el comando de arriba es
 
 | Qué falta | Quién lo destraba | Nota |
 |---|---|---|
+| **Que `full` cargue datos de almacén** (artículos, stock) | pendiente | Hoy carga maestros, equipo y herramienta de AssetPlanner. La guía manual de la carga está en la rama `feature/doctest-ciclo-ot-capturas` |
+| **Correr la suite contra un Apache local** | pendiente | El ambiente `local` está soportado pero nunca se ejecutó de punta a punta |
 | **El delta automático** — que el CI proponga solo los casos nuevos ante un PR que toque código funcional | F5 | Hoy el disparador es el comando `/doctest` (§3). El diseño está en el Doc 1 como "Etapa 2" |
 | **Que cada pantalla abra su propia sección de ayuda** | pendiente de hacer | El ícono de la barra abre la portada. El mapeo vista → sección ya está en el catálogo (§2.4); falta generarlo y usarlo |
 | **Ejecutar la suite en CI** (`doctest-e2e.yml`) y guardar la evidencia como artifact | F5 | Necesita un entorno donde correr y sus credenciales como secrets. Hasta que exista staging-v3, correría contra DEMO |

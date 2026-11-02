@@ -1,5 +1,5 @@
 # Dependencias y artefactos de ejecución de DocTest
-node_modules/
+node_modules
 
 # Reportes y resultados de Playwright (se publican como artifact de CI, no se versionan)
 tests/e2e/.playwright-report/
@@ -12,6 +12,11 @@ tests/e2e/.auth/
 # Variables de entorno locales — la plantilla versionada es .env.example
 .env
 .env.local
+
+# Perfil de cada ambiente (con qué empresas probar): lo escribe `npm run doctest -- casi-full|full`
+# y tiene contraseñas, así que no se versiona. La plantilla versionada es entornos/ejemplo.json.
+entornos/*.json
+!entornos/ejemplo.json
 tests/api-mcp/env/*.env
 !tests/api-mcp/env/*.env.example
 
