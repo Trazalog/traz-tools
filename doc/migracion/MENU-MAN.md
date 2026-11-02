@@ -34,6 +34,7 @@ cubre los permisos finos por pantalla (agregar, editar, borrar): eso es MIG-5 (v
 | `plan_mantenimiento` | Plan de Mantenimiento | `traz-tools-man/Calendario/indexot/Add-Edit-Del` |
 | `registro_parametros` | Registro de Parametros | `traz-tools-man/Lectura/index/Add-Edit-Del` |
 | `administrar_ordenes` | Administrar Ordenes | `traz-tools-man/Envio/index/Add-Edit-Del` |
+| `rep_equipo` | Rep Equipo (reporte de disponibilidad de equipos, nuevo 2026-11-02) | `traz-tools-man/Kpi/index/Add-Edit-Del` |
 | `abm_man` | ABM de Mantenimiento (padre, nuevo 2026-10-31) | — |
 | `abm_area`, `abm_proceso` | Área, Procesos | `traz-tools-man/Area/index/Add-Edit-Del`, `.../Proceso/...` |
 | `abm_grupo`, `abm_sector`, `abm_contratista` | Grupo, Sector, Contratista | `traz-tools-man/Grupo/index/Add-Edit-Del`, `.../Sector/...`, `.../Contratista/...` |

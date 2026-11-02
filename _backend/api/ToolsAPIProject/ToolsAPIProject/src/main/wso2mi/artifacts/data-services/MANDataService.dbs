@@ -3137,6 +3137,24 @@
       <param name="id_orden" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
+   <!-- MIG-REP-1 · Reporte de Disponibilidad de Equipos (Rep Equipo de asset, Kpi/index). Lista de equipos como Equipos::equipos_List de asset
+        (mismos INNER JOIN: un equipo sin sector, criticidad, etc. no sale), equipos y historial para el cálculo de Kpi::dspRangoFecha.
+        Todas filtran por id_empresa (id de asset). -->
+   <query id="getRepEquiposListaMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(e.id_equipo AS CHAR) AS id_equipo, e.codigo, e.descripcion AS deeq, e.estado AS estadoEquipo, CAST(e.meta_disponibilidad AS CHAR) AS meta_disp, a.descripcion AS dear, s.descripcion AS desec, c.descripcion AS decri, p.descripcion AS depro FROM equipos e JOIN sector s ON s.id_sector = e.id_sector JOIN empresas em ON em.id_empresa = e.id_empresa JOIN unidad_industrial u ON u.id_unidad = e.id_unidad JOIN criticidad c ON c.id_criti = e.id_criticidad JOIN area a ON a.id_area = e.id_area JOIN grupo g ON g.id_grupo = e.id_grupo JOIN proceso p ON p.id_proceso = e.id_proceso JOIN admcustomers cu ON cu.cliId = e.id_customer WHERE e.estado != 'AN' AND e.id_empresa = :id_empresa ORDER BY e.id_equipo</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo","codigo":"$codigo","deeq":"$deeq","estadoEquipo":"$estadoEquipo","meta_disp":"$meta_disp","dear":"$dear","desec":"$desec","decri":"$decri","depro":"$depro"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getRepEquiposDispMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(e.id_equipo AS CHAR) AS id_equipo FROM equipos e WHERE e.estado != 'AL' AND e.id_empresa = :id_empresa ORDER BY e.id_equipo</sql>
+      <result outputType="json">{"equipos":{"equipo":[{"id_equipo":"$id_equipo"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
+   <query id="getRepHistorialMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(h.id_equipo AS CHAR) AS id_equipo, CAST(h.fecha AS CHAR) AS fecha, h.estado, CAST(IFNULL(h.obs, 0) AS CHAR) AS obs FROM historial_lecturas h JOIN equipos e ON e.id_equipo = h.id_equipo WHERE e.estado != 'AL' AND e.id_empresa = :id_empresa ORDER BY h.id_equipo, h.fecha, h.id_lectura</sql>
+      <result outputType="json">{"historial":{"fila":[{"id_equipo":"$id_equipo","fecha":"$fecha","estado":"$estado","obs":"$obs"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
    <query id="getPlanEmpresasSinLanzarMan" useConfig="AssetPlannerDataSource">
       <sql>SELECT DISTINCT CAST(id_empresa AS CHAR) AS id_empresa FROM orden_trabajo WHERE case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5') ORDER BY id_empresa</sql>
       <result outputType="json">{"empresas":{"empresa":[{"id_empresa":"$id_empresa"}]}}</result>
@@ -3230,6 +3248,15 @@
    </resource>
    <resource method="PUT" path="/plan/ot/anular">
       <call-query href="updatePlanOtAnularMan"><with-param name="usrId" query-param="usrId"/><with-param name="fecha" query-param="fecha"/><with-param name="motivo" query-param="motivo"/><with-param name="id_orden" query-param="id_orden"/><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/equipos/lista/empresa/{id_empresa}">
+      <call-query href="getRepEquiposListaMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/equipos/disponibles/empresa/{id_empresa}">
+      <call-query href="getRepEquiposDispMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/equipos/historial/empresa/{id_empresa}">
+      <call-query href="getRepHistorialMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="GET" path="/plan/empresas-sin-lanzar">
       <call-query href="getPlanEmpresasSinLanzarMan"/>
