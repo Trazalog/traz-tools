@@ -3184,6 +3184,22 @@
       <param name="desde" sqlType="STRING"/>
       <param name="hasta" sqlType="STRING"/>
    </query>
+   <!-- MIG-REP-3 · Rep Ordenes de trabajo (Reporteorden/getDatosReporte de asset): mismo SELECT y mismos JOIN (incluido el de tbl_estado, que tiene dos filas con estado RE y por eso repite las ordenes RE).
+        Filtros opcionales: id_equipo = 0, estado = 0 y desde/hasta = 0 (sin fechas; se aplican si vienen las dos) = sin filtro. -->
+   <query id="getRepOrdenesMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(ot.id_orden AS CHAR) AS id_orden, ot.descripcion AS descripcionOT, t.descripcion AS `desc`, e.codigo AS codigoEquipo, e.descripcion AS descripcionEquipo, CAST(ot.fecha AS CHAR) AS fecha, CAST(ot.fecha_program AS CHAR) AS fecha_program, CAST(ot.fecha_terminada AS CHAR) AS fecha_terminada, CAST(ot.fecha_entregada AS CHAR) AS fecha_entregada, CONCAT(us.usrName, ' ', us.usrLastName) AS nombre_usuario, tt.descripcion AS origenOT, te.descripcion AS estado FROM orden_trabajo ot LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea JOIN equipos e ON e.id_equipo = ot.id_equipo JOIN tbl_tipoordentrabajo tt ON tt.tipo_orden = ot.tipo JOIN tbl_estado te ON te.estado = ot.estado LEFT JOIN sisusers us ON ot.id_usuario_a = us.usrId WHERE ot.id_empresa = :id_empresa AND (:id_equipo = '0' OR ot.id_equipo = :id_equipo) AND (:estado = '0' OR ot.estado = :estado) AND (:desde = '0' OR :hasta = '0' OR (ot.fecha &gt;= :desde AND ot.fecha &lt;= :hasta))</sql>
+      <result outputType="json">{"ordenes":{"orden":[{"id_orden":"$id_orden","descripcionOT":"$descripcionOT","desc":"$desc","codigoEquipo":"$codigoEquipo","descripcionEquipo":"$descripcionEquipo","fecha":"$fecha","fecha_program":"$fecha_program","fecha_terminada":"$fecha_terminada","fecha_entregada":"$fecha_entregada","nombre_usuario":"$nombre_usuario","origenOT":"$origenOT","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="estado" sqlType="STRING"/>
+      <param name="desde" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
+   </query>
+   <query id="getRepOrdenesEstadosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT te.estadoid, te.descripcion, ot.estado FROM orden_trabajo ot JOIN tbl_estado te ON te.estado = ot.estado WHERE ot.id_empresa = :id_empresa GROUP BY ot.estado ORDER BY te.descripcion ASC</sql>
+      <result outputType="json">{"estados":{"estado":[{"estadoid":"$estadoid","descripcion":"$descripcion","estado":"$estado"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+   </query>
    <query id="getPlanEmpresasSinLanzarMan" useConfig="AssetPlannerDataSource">
       <sql>SELECT DISTINCT CAST(id_empresa AS CHAR) AS id_empresa FROM orden_trabajo WHERE case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5') ORDER BY id_empresa</sql>
       <result outputType="json">{"empresas":{"empresa":[{"id_empresa":"$id_empresa"}]}}</result>
@@ -3295,6 +3311,12 @@
    </resource>
    <resource method="GET" path="/rep/informes/backlog/empresa/{id_empresa}/sector/{id_sector}/equipo/{id_equipo}/desde/{desde}/hasta/{hasta}">
       <call-query href="getRepInformesBacklogMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_sector" query-param="id_sector"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="desde" query-param="desde"/><with-param name="hasta" query-param="hasta"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/ordenes/empresa/{id_empresa}/equipo/{id_equipo}/estado/{estado}/desde/{desde}/hasta/{hasta}">
+      <call-query href="getRepOrdenesMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="estado" query-param="estado"/><with-param name="desde" query-param="desde"/><with-param name="hasta" query-param="hasta"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/ordenes/estados/empresa/{id_empresa}">
+      <call-query href="getRepOrdenesEstadosMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
    </resource>
    <resource method="GET" path="/plan/empresas-sin-lanzar">
       <call-query href="getPlanEmpresasSinLanzarMan"/>
