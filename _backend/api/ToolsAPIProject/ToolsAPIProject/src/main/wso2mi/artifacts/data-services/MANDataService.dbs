@@ -3155,6 +3155,35 @@
       <result outputType="json">{"historial":{"fila":[{"id_equipo":"$id_equipo","fecha":"$fecha","estado":"$estado","obs":"$obs"}]}}</result>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
+   <!-- MIG-REP-2 · Rep Informe de Servicios (Reporte/getReporte de asset): tres consultas con las del model Reportes de asset (solicitudes, preventivos y backlog),
+        con los mismos JOIN y el mismo GROUP BY. Filtros opcionales con 0 = sin filtro (id_sector, id_equipo) y desde/hasta = 0 = sin fechas (se aplican si vienen las dos). -->
+   <query id="getRepInformesSolicitudesMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(sr.id_solicitud AS CHAR) AS id, 'Solicitud' AS origen, CAST(sr.f_solicitado AS CHAR) AS f_solicitado, CAST(sr.id_equipo AS CHAR) AS id_equipo, sr.estado AS estado, CAST(MAX(os.fechahorainicio) AS CHAR) AS fecha_inicio, CAST(MAX(os.fechahorafin) AS CHAR) AS fecha_terminada, CAST(ot.id_usuario_a AS CHAR) AS id_usuario_a, e.codigo AS equipo, s.descripcion AS sector, g.descripcion AS grupo, e.ubicacion, CAST(ot.id_orden AS CHAR) AS id_orden, us.usrName AS asignado, CAST(COUNT(DISTINCT au.usrId) AS CHAR) AS cantidad_personas, t.descripcion AS tarea FROM solicitud_reparacion sr JOIN equipos e ON sr.id_equipo = e.id_equipo JOIN sector s ON e.id_sector = s.id_sector JOIN grupo g ON e.id_grupo = g.id_grupo LEFT JOIN orden_trabajo ot ON ot.id_solicitud = sr.id_solicitud LEFT JOIN sisusers us ON us.usrId = ot.id_usuario_a LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea LEFT JOIN tbl_tipoordentrabajo tt ON tt.descripcion = 'Solicitud de servicio' AND tt.id = ot.tipo LEFT JOIN orden_servicio os ON os.id_ot = ot.id_orden LEFT JOIN asignausuario au ON au.id_orden = os.id_orden WHERE ot.tipo = tt.id AND sr.id_empresa = :id_empresa AND (:id_sector = '0' OR s.id_sector = :id_sector) AND (:id_equipo = '0' OR e.id_equipo = :id_equipo) AND (:desde = '0' OR :hasta = '0' OR (sr.f_solicitado &gt;= :desde AND sr.f_solicitado &lt;= :hasta)) GROUP BY sr.id_solicitud</sql>
+      <result outputType="json">{"informes":{"informe":[{"id":"$id","origen":"$origen","f_solicitado":"$f_solicitado","id_equipo":"$id_equipo","estado":"$estado","fecha_inicio":"$fecha_inicio","fecha_terminada":"$fecha_terminada","id_usuario_a":"$id_usuario_a","equipo":"$equipo","sector":"$sector","grupo":"$grupo","ubicacion":"$ubicacion","id_orden":"$id_orden","asignado":"$asignado","cantidad_personas":"$cantidad_personas","tarea":"$tarea"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="desde" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
+   </query>
+   <query id="getRepInformesPreventivosMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(p.prevId AS CHAR) AS id, 'Preventivo' AS origen, CAST(ot.fecha AS CHAR) AS f_solicitado, CAST(p.id_equipo AS CHAR) AS id_equipo, ot.estado AS estado, CAST(MAX(os.fechahorainicio) AS CHAR) AS fecha_inicio, CAST(MAX(os.fechahorafin) AS CHAR) AS fecha_terminada, CAST(ot.id_usuario_a AS CHAR) AS id_usuario_a, e.codigo AS equipo, s.descripcion AS sector, g.descripcion AS grupo, e.ubicacion, CAST(ot.id_orden AS CHAR) AS id_orden, us.usrName AS asignado, CAST(COUNT(DISTINCT au.usrId) AS CHAR) AS cantidad_personas, t.descripcion AS tarea FROM preventivo p JOIN equipos e ON p.id_equipo = e.id_equipo JOIN sector s ON e.id_sector = s.id_sector JOIN grupo g ON e.id_grupo = g.id_grupo LEFT JOIN orden_trabajo ot ON ot.id_solicitud = p.prevId LEFT JOIN sisusers us ON us.usrId = ot.id_usuario_a LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea LEFT JOIN tbl_tipoordentrabajo tt ON tt.descripcion = 'Preventivo' AND tt.id = ot.tipo LEFT JOIN orden_servicio os ON os.id_ot = ot.id_orden LEFT JOIN asignausuario au ON au.id_orden = os.id_orden WHERE ot.tipo = tt.id AND p.id_empresa = :id_empresa AND (:id_sector = '0' OR s.id_sector = :id_sector) AND (:id_equipo = '0' OR e.id_equipo = :id_equipo) AND (:desde = '0' OR :hasta = '0' OR (p.ultimo &gt;= :desde AND p.ultimo &lt;= :hasta)) GROUP BY p.prevId</sql>
+      <result outputType="json">{"informes":{"informe":[{"id":"$id","origen":"$origen","f_solicitado":"$f_solicitado","id_equipo":"$id_equipo","estado":"$estado","fecha_inicio":"$fecha_inicio","fecha_terminada":"$fecha_terminada","id_usuario_a":"$id_usuario_a","equipo":"$equipo","sector":"$sector","grupo":"$grupo","ubicacion":"$ubicacion","id_orden":"$id_orden","asignado":"$asignado","cantidad_personas":"$cantidad_personas","tarea":"$tarea"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="desde" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
+   </query>
+   <query id="getRepInformesBacklogMan" useConfig="AssetPlannerDataSource">
+      <sql>SELECT CAST(tb.backId AS CHAR) AS id, 'Backlog' AS origen, CAST(tb.fecha AS CHAR) AS f_solicitado, CAST(tb.id_equipo AS CHAR) AS id_equipo, ot.estado AS estado, CAST(MAX(os.fechahorainicio) AS CHAR) AS fecha_inicio, CAST(MAX(os.fechahorafin) AS CHAR) AS fecha_terminada, CAST(ot.id_usuario_a AS CHAR) AS id_usuario_a, e.codigo AS equipo, s.descripcion AS sector, g.descripcion AS grupo, e.ubicacion, CAST(ot.id_orden AS CHAR) AS id_orden, us.usrName AS asignado, CAST(COUNT(DISTINCT au.usrId) AS CHAR) AS cantidad_personas, t.descripcion AS tarea FROM tbl_back tb JOIN equipos e ON tb.id_equipo = e.id_equipo JOIN sector s ON e.id_sector = s.id_sector JOIN grupo g ON e.id_grupo = g.id_grupo LEFT JOIN orden_trabajo ot ON ot.id_solicitud = tb.backId LEFT JOIN sisusers us ON us.usrId = ot.id_usuario_a LEFT JOIN tareas t ON t.id_tarea = ot.id_tarea LEFT JOIN tbl_tipoordentrabajo tt ON tt.descripcion = 'Backlog' AND tt.id = ot.tipo LEFT JOIN orden_servicio os ON os.id_ot = ot.id_orden LEFT JOIN asignausuario au ON au.id_orden = os.id_orden WHERE ot.tipo = tt.id AND tb.id_empresa = :id_empresa AND (:id_sector = '0' OR s.id_sector = :id_sector) AND (:id_equipo = '0' OR e.id_equipo = :id_equipo) AND (:desde = '0' OR :hasta = '0' OR (tb.fecha &gt;= :desde AND tb.fecha &lt;= :hasta)) GROUP BY tb.backId</sql>
+      <result outputType="json">{"informes":{"informe":[{"id":"$id","origen":"$origen","f_solicitado":"$f_solicitado","id_equipo":"$id_equipo","estado":"$estado","fecha_inicio":"$fecha_inicio","fecha_terminada":"$fecha_terminada","id_usuario_a":"$id_usuario_a","equipo":"$equipo","sector":"$sector","grupo":"$grupo","ubicacion":"$ubicacion","id_orden":"$id_orden","asignado":"$asignado","cantidad_personas":"$cantidad_personas","tarea":"$tarea"}]}}</result>
+      <param name="id_empresa" sqlType="STRING"/>
+      <param name="id_sector" sqlType="STRING"/>
+      <param name="id_equipo" sqlType="STRING"/>
+      <param name="desde" sqlType="STRING"/>
+      <param name="hasta" sqlType="STRING"/>
+   </query>
    <query id="getPlanEmpresasSinLanzarMan" useConfig="AssetPlannerDataSource">
       <sql>SELECT DISTINCT CAST(id_empresa AS CHAR) AS id_empresa FROM orden_trabajo WHERE case_id = 0 AND estado = 'PL' AND tipo IN ('3', '5') ORDER BY id_empresa</sql>
       <result outputType="json">{"empresas":{"empresa":[{"id_empresa":"$id_empresa"}]}}</result>
@@ -3257,6 +3286,15 @@
    </resource>
    <resource method="GET" path="/rep/equipos/historial/empresa/{id_empresa}">
       <call-query href="getRepHistorialMan"><with-param name="id_empresa" query-param="id_empresa"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/informes/solicitudes/empresa/{id_empresa}/sector/{id_sector}/equipo/{id_equipo}/desde/{desde}/hasta/{hasta}">
+      <call-query href="getRepInformesSolicitudesMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_sector" query-param="id_sector"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="desde" query-param="desde"/><with-param name="hasta" query-param="hasta"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/informes/preventivos/empresa/{id_empresa}/sector/{id_sector}/equipo/{id_equipo}/desde/{desde}/hasta/{hasta}">
+      <call-query href="getRepInformesPreventivosMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_sector" query-param="id_sector"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="desde" query-param="desde"/><with-param name="hasta" query-param="hasta"/></call-query>
+   </resource>
+   <resource method="GET" path="/rep/informes/backlog/empresa/{id_empresa}/sector/{id_sector}/equipo/{id_equipo}/desde/{desde}/hasta/{hasta}">
+      <call-query href="getRepInformesBacklogMan"><with-param name="id_empresa" query-param="id_empresa"/><with-param name="id_sector" query-param="id_sector"/><with-param name="id_equipo" query-param="id_equipo"/><with-param name="desde" query-param="desde"/><with-param name="hasta" query-param="hasta"/></call-query>
    </resource>
    <resource method="GET" path="/plan/empresas-sin-lanzar">
       <call-query href="getPlanEmpresasSinLanzarMan"/>
