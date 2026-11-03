@@ -14,6 +14,9 @@ ni la metodología de ramas y PR (está en el `CLAUDE.md` del repo).
 > copiar y pegar** al agente (sección 6.3) — el de Rodolfo para armar los casos de uso, el de Pablo para
 > escribir la prueba ejecutable y el de Pablo para proponer un caso que falta. La sección 6.2 ahora deja
 > que DeepSeek redacte el borrador del caso faltante; la validación sigue siendo de Rodolfo.
+> Se aclara **contra qué ambiente y con qué empresa** corre DocTest (sección 6.0): Pablo contra su
+> máquina, la empresa la deja anotada `casi-full` la primera vez. La corrida en el ambiente pasa a ser
+> **después** de desplegar, y si da rojo se vuelve a la versión anterior (sección 9.3).
 >
 > **Cambios en 1.2:** se ajustó todo lo de DocTest a lo que existe hoy en el repo (la 1.1 describía el
 > diseño, no lo construido). DocTest se reduce a **un comando**, `npm run doctest`. Se corrigieron el
@@ -63,7 +66,7 @@ flowchart TD
   J --> K{10. Rodolfo revisa}
   K -->|devuelve| F
   K -->|aprueba| L[11. Merge]
-  L --> M["12. Antes de desplegar:<br/>npm run doctest contra el ambiente"]
+  L --> M["12. Se despliega y DESPUÉS:<br/>npm run doctest contra el ambiente<br/>(rojo → volver a la versión anterior)"]
   style A fill:#e8d5f5
   style C fill:#d5e8f5
   style F fill:#d5e8f5
@@ -198,14 +201,54 @@ entendió algo distinto?
 
 | Cuándo | Comando | Qué hace |
 |---|---|---|
-| Terminaste una tarea, **antes de commit y push** | `npm run doctest` | Corre **lo nuevo** de tu rama (las pruebas que agregaste o tocaste, y las de los casos que cambiaron) y después el **set de regresión** (todas las pruebas estables). Si da verde, commiteás y seguís con la próxima tarea |
-| **Antes de desplegar** una versión | `npm run doctest -- regresion --entorno demo --base <tag desplegado>` | Lo mismo, contra el ambiente, con "lo nuevo" calculado desde la versión que está desplegada |
-| Ambiente nuevo o empresas de test viejas | `npm run doctest -- casi-full` | Crea dos empresas desde cero y las deja configuradas para ese ambiente; después corre la regresión |
-| Prueba completa | `npm run doctest -- full` | Además carga datos y corre también los circuitos largos |
+| **Pablo**, terminó una tarea, **antes de commit y push** | `npm run doctest -- --entorno local` | Corre **lo nuevo** de su rama (las pruebas que agregó o tocó, y las de los casos que cambiaron) y después el **set de regresión** (todas las pruebas estables), **contra el sistema levantado en su máquina**. Si da verde, commitea y sigue con la próxima tarea |
+| **Rodolfo**, **después de desplegar** una versión | `npm run doctest -- regresion --entorno demo --base <tag de la versión anterior>` | Lo mismo, contra el ambiente donde se desplegó. "Lo nuevo" es lo que trajo esta versión respecto de la anterior. **Si da rojo, se vuelve a la versión anterior** (sección 9.3) |
+| La primera vez en un ambiente, o empresas de test viejas | `npm run doctest -- casi-full --entorno <ambiente>` | Crea dos empresas desde cero en ese ambiente y las deja anotadas para las próximas corridas; después corre la regresión |
+| Prueba completa | `npm run doctest -- full --entorno <ambiente>` | Además carga datos y corre también los circuitos largos |
 
-No hay que configurar con qué empresa se prueba: `casi-full` y `full` la dejan anotada por ambiente
-(`doctest/entornos/<ambiente>.json`), y `npm run doctest` la usa sola. Si un ambiente no tiene ese
-archivo, toma las credenciales del `.env`.
+### 6.0 Contra qué ambiente y con qué empresa
+
+**El ambiente es donde está corriendo el código que se quiere probar.** Por eso cambia según quién
+corre DocTest y cuándo:
+
+| Quién y cuándo | Ambiente | Por qué ahí |
+|---|---|---|
+| Pablo, antes de commit y push | `local`: el sistema levantado en **su** máquina, con su rama | Su código todavía no está desplegado en ningún lado. Si lo corre contra DEMO, prueba la versión vieja: lo nuevo falla siempre y la regresión no dice nada de su cambio |
+| Rodolfo, después de desplegar | `demo` (más adelante, `staging-v3` y producción) | Ahí quedó la versión nueva |
+
+**Dónde se configura el ambiente** — en el archivo `traz-tools/doctest/.env` de cada uno (no se sube al
+repo; se crea copiando `.env.example`):
+
+- `DOCTEST_ENV=local` en el de Pablo, `DOCTEST_ENV=demo` en el de Rodolfo. Es el ambiente que se usa
+  cuando el comando no lleva `--entorno`; poner `--entorno` explícito lo pisa.
+- Las direcciones de cada sistema en ese ambiente. Para `local`, Pablo completa
+  `DOCTEST_LOCAL_URL_TOOLS`, `DOCTEST_LOCAL_URL_MAN` y `DOCTEST_LOCAL_URL_DNATO` con las de su máquina.
+  Las de DEMO ya vienen completas.
+
+**Dónde se configura la empresa** — no se configura a mano. La primera vez en cada ambiente se corre
+`casi-full`:
+
+```mermaid
+flowchart LR
+  A["1ª vez en el ambiente:<br/>npm run doctest -- casi-full --entorno local"] --> B["Registra 2 empresas<br/>por el alta real"]
+  B --> C["Las anota en<br/>doctest/entornos/local.json"]
+  C --> D["De ahí en más:<br/>npm run doctest -- --entorno local<br/>usa esas empresas solo"]
+```
+
+- El archivo `doctest/entornos/<ambiente>.json` guarda las empresas y sus usuarios. Es **uno por
+  ambiente y por máquina**: el `local.json` de Pablo es suyo, y el `demo.json` de Rodolfo es de él. Tiene
+  contraseñas, así que no se sube al repo.
+- Se vuelve a correr `casi-full` solo si las empresas quedaron inservibles (alguien las borró, se
+  restauró la base, etc.). Cada corrida crea dos empresas nuevas y reemplaza las anotadas.
+- Si un ambiente no tiene ese archivo, DocTest toma las empresas que estén en el `.env`
+  (`DOCTEST_EMPRESA1_*`, `DOCTEST_EMPRESA2_*`).
+
+> ⚠️ **Pendiente de verificar — la máquina local:** DocTest todavía **no se corrió nunca** contra una
+> máquina local (hasta noviembre 2026 solo contra DEMO). Lo que hay que comprobar la primera vez que
+> Pablo lo haga: que su máquina tenga levantados los tres sistemas (Tools, AssetPlanner y Dnato), que el
+> alta de empresa funcione completa (incluido el mail de activación) y contra qué base de datos apunta
+> su sistema local. Si apunta a una base compartida, las empresas que crea `casi-full` aparecen también
+> ahí. Hasta que esa primera corrida salga bien, este flujo es **el diseño, no algo probado**.
 
 > **Alternativa sin terminal:** pedírselo a Claude Code en una sesión parada en `traz-tools/` ("corré
 > doctest regresión en demo"). Es como lo usa Rodolfo hoy.
@@ -420,11 +463,20 @@ submódulos. Cuando existan, se suman a esta tabla.
 - [ ] **Hace lo que dice el requerimiento:** Rodolfo recorre en DEMO el flujo principal de cada caso.
 - [ ] **El código es entendible** en una lectura.
 
-### 9.3 Antes de desplegar
+### 9.3 Después de desplegar
 
-Antes de desplegar una versión a un ambiente se corre
-`npm run doctest -- regresion --entorno <ambiente> --base <tag de la versión desplegada>`. Si da rojo,
-no se despliega.
+Lo hace Rodolfo (o Claude Code a pedido suyo), en su máquina, **apenas termina el despliegue**:
+
+1. Pararse en la versión que se acaba de desplegar: `git fetch --tags && git checkout <tag nuevo>`.
+2. Correr, en `traz-tools/doctest/`:
+   `npm run doctest -- regresion --entorno <ambiente> --base <tag de la versión anterior>`.
+   "Lo nuevo" son las pruebas de lo que trajo esta versión; la regresión comprueba que lo de antes siga
+   andando.
+3. **Si da verde:** la versión queda. **Si da rojo:** se vuelve a desplegar la versión anterior y el
+   error se trata como un bug de la versión nueva.
+
+> **Pendiente:** que esto corra solo al terminar cada despliegue, y que vuelva atrás sin intervención.
+> Hoy es manual.
 
 ---
 
