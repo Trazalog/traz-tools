@@ -23,23 +23,30 @@ Cada requerimiento es un archivo `REQ-###-nombre-corto.md` en esta carpeta, más
 
 | REQ | Qué | Origen | Estado |
 |---|---|---|---|
-| [REQ-001](REQ-001-dnato-e0-seguridad.md) | DNATO v3 — Base de seguridad (E0 recortado: correctivos C-2, C-4, C-6, C-8 + análisis de impacto en Tools) | Especificación DNATO v3 0.5.2 | Borrador |
+| [REQ-001](REQ-001-administracion-analisis.md) | Módulo Administración — análisis inicial: qué se reutiliza de DNATO, impacto en el agente (MCP) y en Tools, cómo se arma el módulo. Sin código | Replanteo de Rodolfo sobre la especificación DNATO v3 0.5.2 | Borrador |
 
-## DNATO v3: de la especificación a los requerimientos
+## Módulo Administración (DNATO v3): de la especificación a los requerimientos
 
-La especificación (`doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`) divide la construcción en 13 entregas.
-Cada entrega se convierte en uno o más requerimientos **cuando le toca**, no todas de una: así cada uno
-se arma con lo que se aprendió en el anterior. Lo que sigue es la propuesta de orden; los números de
-REQ se asignan al escribirlos.
+La especificación DNATO v3 (`doc/v3/dnato/`) proponía construir sobre el DNATO actual. Rodolfo la
+replanteó (2026-11-03): se arma un **módulo nuevo dentro de Tools** que usa las mismas tablas (más lo
+que haga falta agregar), copia la registración tal cual, tiene pantallas hechas de cero con datos por
+DataServices, y deja a DNATO, si conviene, solo para lo que necesita el agente. Las cuatro reglas
+completas están en [REQ-001](REQ-001-administracion-analisis.md).
 
-| Entrega | Qué | Requerimiento | Bloqueada por |
-|---|---|---|---|
-| E0 (parte 1) | Seguridad: control central, CSRF, pertenencia, criterio membresía → empresa | REQ-001 | — |
-| E0 (parte 2) | Layout del Portal y de la Consola, servicio "Contexto", capa de servicios, datos base de prueba | pendiente | REQ-001 |
-| E0 (parte 3) | Definición única de administrador y súper usuario (C-5) | pendiente | Workshop 🔴 (ADR-016) |
-| E1 | Atributos y entidades nuevas, auditoría, variables con historial, migraciones M-1, M-2, M-5 a M-7 | pendiente | E0; respuestas de `01` §10 |
-| E2 a E12 | Catálogo y planes, funcionalidades, usuarios y roles, Consola, menús, plan y pedidos, cuota MCP, visibilidad, auditoría, cargas masivas, formularios, migración | pendiente | E1 |
+De la especificación se usa el **qué** (requisitos, casos de prueba, maquetas, reglas de negocio); el
+**cómo** sale del análisis de REQ-001. Cada requerimiento se escribe **cuando le toca**, con lo
+aprendido en el anterior. Orden propuesto (los números se confirman al escribirlos):
 
-Fuera de DNATO, y no asignado a Pablo todavía: los correctivos de identidad C-1 y C-3 (workshop 🔴),
-los secretos del repo (C-7, infra) y las derivaciones en Tools que salgan del análisis de impacto
-(tarea 0 de REQ-001).
+| REQ | Qué | Bloqueado por |
+|---|---|---|
+| REQ-001 | Análisis inicial | Dudas de Rodolfo |
+| REQ-002 | Esqueleto del módulo: dentro de Tools, con sesión, permiso por pantalla, protección contra envíos falsificados y empresa tomada de la sesión desde el primer día | REQ-001 aprobado |
+| REQ-003 | Registración copiada tal cual; las pruebas DNATO-UC-001 a 005 pasan contra la copia | REQ-002 |
+| REQ-004 en adelante | Pantallas nuevas, siguiendo las entregas E1 a E12 de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md` (planes, usuarios y roles, menús, cuota del agente, cargas masivas, formularios) | REQ-002 y el orden que proponga REQ-001 |
+
+Fuera de esta lista, y no asignado a Pablo: lo de identidad que necesita reunión de arquitectura
+(cambio de empresa en Tools C-1, dirección de retorno de OAuth C-3, definición única de administrador
+C-5) y los secretos del repositorio de DNATO (C-7, infraestructura).
+
+Los casos DNATO-UC-001 a 028 del catálogo describen **cómo funciona DNATO hoy** (se relevaron en
+agosto de 2026 para las pruebas de regresión de producción). No son el diseño del módulo nuevo.
