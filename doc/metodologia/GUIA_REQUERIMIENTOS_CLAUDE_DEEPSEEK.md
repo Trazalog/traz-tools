@@ -9,7 +9,12 @@ de qué toca hacer. **No** cubre el detalle técnico de DocTest (está en
 [`doctest/README.md`](../../doctest/README.md) y [`doctest/GUIA-PRUEBAS-Y-AYUDAS.md`](../../doctest/GUIA-PRUEBAS-Y-AYUDAS.md))
 ni la metodología de ramas y PR (está en el `CLAUDE.md` del repo).
 
-> Versión 1.2 · noviembre 2026 · Trazalog v2.5 / v3
+> Versión 1.3 · noviembre 2026 · Trazalog v2.5 / v3
+> **Cambios en 1.3:** nadie escribe casos ni pruebas a mano: se agregan los **pedidos listos para
+> copiar y pegar** al agente (sección 6.3) — el de Rodolfo para armar los casos de uso, el de Pablo para
+> escribir la prueba ejecutable y el de Pablo para proponer un caso que falta. La sección 6.2 ahora deja
+> que DeepSeek redacte el borrador del caso faltante; la validación sigue siendo de Rodolfo.
+>
 > **Cambios en 1.2:** se ajustó todo lo de DocTest a lo que existe hoy en el repo (la 1.1 describía el
 > diseño, no lo construido). DocTest se reduce a **un comando**, `npm run doctest`. Se corrigieron el
 > ejemplo de caso de uso (no pasaba el validador), los roles, el ambiente de pruebas (DEMO, no
@@ -156,7 +161,8 @@ tiene cómo probarse, DeepSeek no tiene forma de saber si la programó bien.
 ### 4.3 Cómo lo arma Rodolfo con Claude
 
 1. Rodolfo conversa con Claude hasta tener claro el requerimiento.
-2. Claude redacta el `REQ-###.md` y los YAML del catálogo, y corre `npm run validate:catalog`.
+2. Claude redacta el `REQ-###.md` y los YAML del catálogo, y corre `npm run validate:catalog`. Rodolfo no
+   los escribe a mano: usa el **pedido A** de la sección 6.3.
 3. Rodolfo los lee una vez haciendo de cuenta que es Pablo y no conoce el contexto. Para leer los casos
    cómodo: `npm run hoja:validacion -- man` arma una hoja en prosa con un control para marcar cada caso.
 4. Rodolfo sube todo en una rama `feature/req-###` y abre un pull request a `develop`.
@@ -206,9 +212,10 @@ archivo, toma las credenciales del `.env`.
 
 ### 6.1 Cómo escribe Pablo la prueba de una tarea
 
-No hay un generador de esqueletos: la prueba se escribe **copiando una existente del mismo módulo**
-(`doctest/tests/e2e/specs/<modulo>/`) y adaptándola. Para que DeepSeek Flash la escriba bien, Pablo le
-pasa **cuatro cosas** y nada más:
+La prueba la escribe **DeepSeek Flash, no Pablo a mano**, con el **pedido B** de la sección 6.3. No hay
+un generador de esqueletos: el agente la escribe **copiando una existente del mismo módulo**
+(`doctest/tests/e2e/specs/<modulo>/`) y adaptándola. Para que la escriba bien, necesita **cuatro cosas**
+y nada más (el pedido B ya se las indica):
 
 1. El YAML del caso de uso.
 2. Una prueba existente del mismo módulo, como modelo.
@@ -232,10 +239,121 @@ y el manual. Los `.feature` no se editan a mano.
 ### 6.2 Pedidos nuevos o cambios que aparecen mientras se programa
 
 Si al programar Pablo descubre que falta un caso o que uno estaba mal:
-- **No** lo inventa ni lo arregla por su cuenta.
-- Abre un issue con la plantilla **"Falta probar algo (test-gap)"** describiendo qué falta.
-- Rodolfo lo resuelve con Claude (`/doctest <qué cambió>` en Claude Code) y lo pasa a `validado`.
-- Recién ahí Pablo escribe la prueba y sigue.
+- **Puede pedirle a DeepSeek que redacte el caso**, con el **pedido C** de la sección 6.3. DeepSeek lo
+  deja en `estado: borrador`, con sus dudas, en la rama de Pablo. **No** lo valida ni escribe la prueba
+  todavía: el validador rechaza cualquier prueba colgada de un borrador.
+- Pablo commitea el borrador y abre un issue con la plantilla **"Falta probar algo (test-gap)"**, con el
+  link al archivo.
+- Rodolfo lo revisa con Claude (`/doctest <qué cambió>` en Claude Code), contesta las dudas y lo pasa a
+  `validado` en la misma rama.
+- Recién ahí Pablo pide la prueba (pedido B) y sigue.
+
+```mermaid
+flowchart LR
+  P["Pablo encuentra<br/>un caso que falta"] --> C["DeepSeek redacta<br/>el borrador (pedido C)"]
+  C --> I["Pablo commitea<br/>y abre el issue test-gap"]
+  I --> R["Rodolfo + Claude<br/>responden dudas y validan"]
+  R --> B["DeepSeek escribe<br/>la prueba (pedido B)"]
+```
+
+### 6.3 Los pedidos al agente, listos para copiar
+
+Ni Rodolfo ni Pablo escriben casos de uso ni pruebas a mano: se los piden a un agente. Estos son los
+tres pedidos. Se copian tal cual, se reemplaza lo que está entre `<...>` y se pegan.
+
+**Qué tiene que poder hacer el agente:** leer el repo y correr comandos en una terminal parada en
+`traz-tools/doctest/`. Claude Code ya lo hace. Para DeepSeek, Pablo tiene que usarlo desde una
+herramienta que le dé ese acceso (un agente de programación abierto en la carpeta del repo). Si lo usa
+desde un chat sin acceso al repo, tiene que pegarle él los archivos que el pedido nombra y correr él los
+comandos que el pedido manda correr, devolviéndole la salida.
+
+| Pedido | Quién | Con qué | Cuándo |
+|---|---|---|---|
+| **A** — armar los casos de uso | Rodolfo | Claude Code, en `traz-tools/` | Antes de pasarle el requerimiento a Pablo (sección 4.3) |
+| **B** — escribir la prueba ejecutable | Pablo | DeepSeek Flash, en `traz-tools/` | En cada tarea del plan, junto con el código (sección 7) |
+| **C** — proponer un caso que falta | Pablo | DeepSeek Pro, en `traz-tools/` | Cuando al programar aparece algo que ningún caso cubre (sección 6.2) |
+
+#### Pedido A — Rodolfo arma los casos de uso (Claude Code)
+
+Se pega en una sesión de Claude Code abierta en `traz-tools/`, en la rama `feature/req-###`.
+
+```text
+Armá los casos de uso del catálogo DocTest para el requerimiento <requerimientos/REQ-###-nombre.md>.
+
+Antes de escribir, leé:
+- doctest/catalogo/SCHEMA.md (esquema y vocabulario de perfiles),
+- los YAML que ya existen en doctest/catalogo/<modulo>/, para no duplicar casos ni numeración,
+- la sección 4.2 de doc/metodologia/GUIA_REQUERIMIENTOS_CLAUDE_DEEPSEEK.md (ejemplo que pasa el validador).
+
+Reglas:
+- Un YAML por caso de uso, en doctest/catalogo/<modulo>/, con el próximo id libre (<MOD>-UC-###).
+- estado: borrador, derivados: {}, y al menos una duda real en "dudas".
+- referencias_codigo apunta al archivo del requerimiento (todavía no hay código).
+- Cada regla de "validaciones" tiene su flujo alternativo que la prueba.
+- Pasos y resultados en lenguaje de usuario, con los nombres de botones y menús que ve en pantalla.
+- No inventes reglas de negocio: si algo no está en el requerimiento, va a "dudas".
+
+Al terminar, corré npm run validate:catalog en doctest/ hasta que dé 0 problemas, armá la hoja de
+lectura con npm run hoja:validacion -- <modulo>, y pasame la lista de casos con sus dudas para que
+yo las conteste. No los pases a validado: eso lo hago yo.
+```
+
+Cuando Rodolfo contesta las dudas, le pide a Claude: *"pasá a validado los casos <ids> con fecha de
+hoy y dudas vacías, y corré el validador"*.
+
+#### Pedido B — Pablo pide la prueba ejecutable de una tarea (DeepSeek Flash)
+
+Se pega una vez por tarea del plan, después de que el código de la tarea existe (o junto con él).
+
+```text
+Escribí la prueba automática DocTest de esta tarea: <tarea N del requerimientos/REQ-###-nombre.plan.md>.
+Cubre el caso de uso <doctest/catalogo/<modulo>/<MOD-UC-###>.yaml>, que ya está validado. No lo
+modifiques salvo los dos campos que se indican abajo.
+
+Leé antes:
+- el YAML del caso,
+- una prueba existente del mismo módulo como modelo: <doctest/tests/e2e/specs/<modulo>/<archivo>.spec.ts>,
+- los page objects de doctest/tests/e2e/pages/<modulo>/ que usan esas pantallas,
+- las vistas que tocó esta tarea, para sacar los data-testid.
+
+Reglas:
+- Un escenario por cada flujo del YAML: el principal y cada alternativo.
+- El título de la prueba lleva @<MOD-UC-###> y @<modulo>; si es un flujo crítico, también @smoke.
+- Los selectores van en los page objects (creá el que falte en pages/<modulo>/), nunca sueltos en la
+  prueba. Usá data-testid; si la vista no lo tiene, agregalo en la vista.
+- Nada de waitForTimeout: usá las esperas automáticas de Playwright.
+- Los datos que crees llevan el prefijo de datos_prueba del YAML más un sello de tiempo.
+- No uses credenciales escritas en el código: salen de las fixtures que ya existen.
+- En el YAML, solo agregá la ruta de la prueba en derivados.test_e2e y los archivos que tocó la tarea en
+  referencias_codigo.
+
+Al terminar, en doctest/ corré, en este orden: npm run typecheck, npm run validate:catalog y
+npm run doctest. Si algo falla, corregí y volvé a correr; si después de dos intentos sigue fallando,
+pará y mostrame el error completo sin tocar nada más. No hagas commit.
+```
+
+#### Pedido C — Pablo propone un caso que falta (DeepSeek Pro)
+
+```text
+Programando la tarea <N> del <requerimientos/REQ-###-nombre.plan.md> apareció algo que ningún caso de
+uso del catálogo DocTest cubre: <qué pasa, en una o dos frases, desde el lado del usuario>.
+
+Redactá la propuesta de caso de uso. Leé antes doctest/catalogo/SCHEMA.md, los YAML de
+doctest/catalogo/<modulo>/ (para no duplicar y tomar el próximo id libre) y la sección 4.2 de
+doc/metodologia/GUIA_REQUERIMIENTOS_CLAUDE_DEEPSEEK.md.
+
+Reglas:
+- Si es un caso nuevo, un YAML nuevo. Si en realidad es un flujo que le falta a un caso existente, NO
+  toques ese YAML (ya tiene pruebas colgadas y pasarlo a borrador rompe el validador): escribime el
+  flujo propuesto (pasos, resultados y dudas) en texto, para pegarlo en el issue test-gap.
+- estado: borrador, derivados: {}, y en "dudas" todo lo que estés suponiendo. Mejor una duda de más
+  que una regla inventada.
+- origen: feedback-issue#<número del issue test-gap, si ya existe>.
+- No escribas la prueba ni toques código: eso va después de que Rodolfo lo valide.
+
+Al terminar, corré npm run validate:catalog en doctest/ hasta que dé 0 problemas y mostrame el YAML y
+la lista de dudas.
+```
 
 ---
 
