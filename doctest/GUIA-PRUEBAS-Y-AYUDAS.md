@@ -151,7 +151,7 @@ a punto del [README](README.md#puesta-a-punto-una-sola-vez) (`npm install`, el n
 
 | Comando | Qué corre | Cuánto tarda |
 |---|---|---|
-| **`npm run doctest`** | **lo nuevo de tu rama + el set de regresión**, con las empresas del perfil del ambiente. **Es el que se corre antes de cada commit/push y antes de desplegar** (modos `casi-full` y `full` en el [README](README.md#el-comando-único-npm-run-doctest)) | lo nuevo + ~8 min |
+| **`npm run doctest`** | **lo nuevo de tu rama + el set de regresión**, con las empresas del perfil del ambiente. **Es el que se corre antes de cada commit/push (contra tu máquina, `--entorno local`) y después de desplegar (contra el ambiente)** (modos `casi-full` y `full` en el [README](README.md#el-comando-único-npm-run-doctest)) | lo nuevo + ~8 min |
 | `npm run test:smoke` | los 11 flujos críticos: el chequeo más rápido | ~1,5 min |
 | `npm run test:all` | los 71 tests, sin lo que esté en cuarentena | ~8 min |
 | `npm run test:module -- dnato` | un módulo entero | según el módulo |

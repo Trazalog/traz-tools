@@ -5,7 +5,7 @@
  * Modos:
  *   regresion  (el de todos los días) lo NUEVO de tu rama + el SET DE REGRESIÓN, contra
  *              las empresas del perfil del ambiente. Es el que se corre antes de cada
- *              commit/push y antes de desplegar.
+ *              commit/push (contra tu máquina) y después de desplegar (contra el ambiente).
  *   nuevos     solo lo nuevo de tu rama.
  *   casi-full  crea dos empresas desde cero, las deja en el perfil del ambiente y corre
  *              el set de regresión contra ellas.
@@ -16,7 +16,7 @@
  * Opciones:
  *   --entorno <local|demo|staging-v3>  contra qué ambiente (si no, DOCTEST_ENV del .env)
  *   --base <rama o tag>                contra qué se calcula "lo nuevo" (default: origin/develop).
- *                                      Antes de desplegar, el tag de la versión desplegada.
+ *                                      Después de desplegar, el tag de la versión ANTERIOR.
  *   --sin-perfil                       ignora entornos/<entorno>.json y usa las credenciales del .env
  *   --plan                             muestra qué correría y sale, sin ejecutar nada
  *
