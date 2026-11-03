@@ -53,8 +53,8 @@ Es lo único que hace falta recordar. **Dónde se ejecuta:** en una terminal, pa
 
 | Cuándo | Comando | Qué corre |
 |---|---|---|
-| Terminaste un cambio: **antes de commit y push** | `npm run doctest` | **Lo nuevo** de tu rama + el **set de regresión**, contra las empresas del perfil del ambiente. Si da verde, commiteás y seguís |
-| **Antes de desplegar** una versión | `npm run doctest -- regresion --entorno demo --base v2.5.1.13` | Lo mismo, pero "lo nuevo" se calcula contra el tag de la versión que está desplegada |
+| Terminaste un cambio: **antes de commit y push** | `npm run doctest -- --entorno local` | **Lo nuevo** de tu rama + el **set de regresión**, contra tu máquina (tu código todavía no está desplegado) y las empresas del perfil del ambiente. Si da verde, commiteás y seguís |
+| **Después de desplegar** una versión | `npm run doctest -- regresion --entorno demo --base v2.5.1.13` | Lo mismo, contra el ambiente; `--base` es el tag de la versión **anterior**, así "lo nuevo" es lo que trajo esta. Si da rojo, se vuelve a la versión anterior |
 | Ambiente nuevo, o las empresas de test quedaron viejas | `npm run doctest -- casi-full` | Crea **dos empresas desde cero** por la registración real, las deja en el perfil del ambiente y corre el set de regresión |
 | La prueba completa | `npm run doctest -- full` | Como `casi-full`, y además **le carga datos** a la empresa 1 y corre **todo**: regresión + circuitos largos (`@ciclo`) |
 | Solo lo que cambió | `npm run doctest -- nuevos` | Lo nuevo de tu rama, nada más |
