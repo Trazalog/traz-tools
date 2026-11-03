@@ -23,14 +23,14 @@ Cada requerimiento es un archivo `REQ-###-nombre-corto.md` en esta carpeta, más
 
 | REQ | Qué | Origen | Estado |
 |---|---|---|---|
-| [REQ-001](REQ-001-administracion-analisis.md) | Módulo Administración — análisis inicial: qué se reutiliza de DNATO, impacto en el agente (MCP) y en Tools, cómo se arma el módulo. Sin código | Replanteo de Rodolfo sobre la especificación DNATO v3 0.5.2 | Borrador |
+| [REQ-001](REQ-001-administracion-analisis.md) | Módulo Administración — análisis inicial: qué se reutiliza de DNATO, impacto en el agente (MCP) y en Tools, cómo se arma el módulo. Sin código | Replanteo de Rodolfo sobre la especificación DNATO v3 0.5.2 | Listo para Pablo |
 
 ## Módulo Administración (DNATO v3): de la especificación a los requerimientos
 
 La especificación DNATO v3 (`doc/v3/dnato/`) proponía construir sobre el DNATO actual. Rodolfo la
-replanteó (2026-11-03): se arma un **módulo nuevo dentro de Tools** que usa las mismas tablas (más lo
-que haga falta agregar), copia la registración tal cual, tiene pantallas hechas de cero con datos por
-DataServices, y deja a DNATO, si conviene, solo para lo que necesita el agente. Las cuatro reglas
+replanteó (2026-11-03): se arma un **módulo nuevo dentro de Tools**, `traz-comp-adm`, que usa las mismas tablas (más lo
+que haga falta agregar), copia la registración y el ingreso tal cual, tiene pantallas hechas de cero con datos por
+DataServices, y deja a DNATO funcionando en paralelo y para lo que necesita el agente. Las cuatro reglas
 completas están en [REQ-001](REQ-001-administracion-analisis.md).
 
 De la especificación se usa el **qué** (requisitos, casos de prueba, maquetas, reglas de negocio); el
@@ -39,10 +39,13 @@ aprendido en el anterior. Orden propuesto (los números se confirman al escribir
 
 | REQ | Qué | Bloqueado por |
 |---|---|---|
-| REQ-001 | Análisis inicial | Dudas de Rodolfo |
-| REQ-002 | Esqueleto del módulo: dentro de Tools, con sesión, permiso por pantalla, protección contra envíos falsificados y empresa tomada de la sesión desde el primer día | REQ-001 aprobado |
-| REQ-003 | Registración copiada tal cual; las pruebas DNATO-UC-001 a 005 pasan contra la copia | REQ-002 |
+| REQ-001 | Análisis inicial | — |
+| REQ-002 | Esqueleto del módulo `traz-comp-adm` (Rodolfo crea antes el repositorio): dentro de Tools, con sesión, permiso por pantalla, protección contra envíos falsificados y empresa tomada de la sesión desde el primer día | REQ-001 aprobado |
+| REQ-003 | Registración e ingreso copiados tal cual, en paralelo con DNATO; las pruebas DNATO-UC-001 a 008 pasan contra la copia | REQ-002 |
 | REQ-004 en adelante | Pantallas nuevas, siguiendo las entregas E1 a E12 de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md` (planes, usuarios y roles, menús, cuota del agente, cargas masivas, formularios) | REQ-002 y el orden que proponga REQ-001 |
+
+**Objetivo futuro**, sin fecha: cuando el módulo ande bien, redirigir las direcciones de DNATO al
+módulo, migrar también la identidad del agente y **apagar DNATO**.
 
 Fuera de esta lista, y no asignado a Pablo: lo de identidad que necesita reunión de arquitectura
 (cambio de empresa en Tools C-1, dirección de retorno de OAuth C-3, definición única de administrador
