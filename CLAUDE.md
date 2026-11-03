@@ -162,6 +162,10 @@ Estas ramas están protegidas y todo cambio DEBE entrar por Pull Request.
   `grep -rn "^<<<<<<<\|^=======\|^>>>>>>>" .`
 - Verificar que no se commitean secretos (claves privadas, tokens, .env)
 
+### Las mismas reglas para otros agentes
+`AGENTS.md` (raíz del repo) repite estas reglas de Git y pull requests para agentes que no leen este
+archivo (DeepSeek u otros). **Si cambiás una regla acá, cambiala también en `AGENTS.md`, en el mismo PR.**
+
 ### Si un push a rama de integración es rechazado (protected branch)
 NO intentar forzar ni desactivar la protección. Es el comportamiento correcto.
 Mover los commits a una rama feature y abrir PR.

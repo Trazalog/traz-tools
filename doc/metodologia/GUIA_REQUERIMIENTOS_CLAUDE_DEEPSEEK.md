@@ -10,7 +10,10 @@ técnico de DocTest (está en [`doctest/README.md`](../../doctest/README.md) y
 [`doctest/GUIA-PRUEBAS-Y-AYUDAS.md`](../../doctest/GUIA-PRUEBAS-Y-AYUDAS.md)) ni la metodología de ramas
 y PR (está en el `CLAUDE.md` del repo).
 
-> Versión 1.4 · noviembre 2026 · Trazalog v2.5 / v3
+> Versión 1.5 · noviembre 2026 · Trazalog v2.5 / v3
+> **Cambios en 1.5:** DeepSeek sigue las mismas reglas de ramas y pull requests que Claude Code, a
+> través del archivo `AGENTS.md` de la raíz del repo (sección 2.16).
+>
 > **Cambios en 1.4:** dónde deja Pablo el plan y cómo lo aprueba Rodolfo: pull request en borrador y
 > comentario "✅ Plan aprobado" (sección 2.4). El documento se parte en dos: **Parte 1, ayuda memoria** del día a día, y
 > **Parte 2, el detalle**. El despliegue a DEMO y la verificación posterior los hace **Pablo**; Rodolfo
@@ -107,6 +110,8 @@ flowchart TD
 
 ## 1.5 Checklist de Pablo
 
+- [ ] **Una sola vez:** configurar DeepSeek para que siga las reglas del repo (`AGENTS.md`,
+      sección 2.16).
 - [ ] **Arranca un requerimiento:** plan con DeepSeek Pro → rama `feature/req-###` → pull request en
       borrador con solo el plan → esperar el comentario **`✅ Plan aprobado`** de Rodolfo (sección 2.4).
 - [ ] **Por cada tarea:** DeepSeek Flash programa la tarea y su prueba (pedido B) → DocTest en su
@@ -629,3 +634,33 @@ Al cierre de cada requerimiento, Pablo anota en el `.plan.md`:
 | Despliegues que hubo que volver atrás | Si pasa, la prueba en la máquina de Pablo no está cubriendo lo que importa |
 
 Después de tres o cuatro requerimientos se revisa esta guía con esos números a la vista.
+
+## 2.16 Configurar DeepSeek con las reglas del repo (una sola vez)
+
+Claude Code lee solo el `CLAUDE.md` del repo, y por eso respeta las reglas de ramas, commits y pull
+requests. DeepSeek no lo lee. Para que siga **las mismas reglas**, el repo tiene un archivo hecho para
+cualquier agente: **`AGENTS.md`**, en la raíz de `traz-tools/`. Tiene, en corto: nunca commitear directo
+a `develop` ni a las otras ramas de integración, formato de commit, pull request en borrador con el
+plan, formato de la descripción, nunca unir sin aprobación de Rodolfo, DocTest antes de cada commit, qué
+partes del sistema no se tocan sin aprobación, PHP 5.6 y cuándo parar a preguntar.
+
+**Cómo se lo da Pablo a DeepSeek**, según desde dónde lo use:
+
+| Pablo usa DeepSeek desde… | Qué hace, una vez |
+|---|---|
+| Un agente de programación abierto en la carpeta del repo | Muchos leen `AGENTS.md` solos al arrancar. Si el suyo no, lo agrega en la configuración del agente como archivo de reglas o instrucciones permanentes (cada herramienta lo llama distinto: "rules", "instructions", "conventions") |
+| Un chat sin acceso al repo | Pega el contenido de `AGENTS.md` al principio de **cada** conversación nueva, antes del pedido |
+
+**Cómo comprueba que lo tomó** — le pregunta, en una conversación nueva:
+
+```text
+Antes de empezar: ¿a qué rama hacés commit, con qué formato, cuándo podés unir un pull request y qué
+tenés que correr antes de cada commit?
+```
+
+La respuesta correcta: rama `feature/req-###` (nunca `develop`), formato `tipo(scope): descripción [ID]`,
+nunca unir sin aprobación de Rodolfo, y `npm run doctest -- --entorno local` antes de cada commit. Si
+contesta otra cosa, no leyó `AGENTS.md`.
+
+> **Si cambia una regla:** se cambia en `CLAUDE.md` y en `AGENTS.md` en el mismo pull request. Si se
+> contradicen, manda `CLAUDE.md`.
