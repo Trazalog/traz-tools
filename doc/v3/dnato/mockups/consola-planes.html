@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Consola · Planes (matriz)</title>
+<!--
+  MAQUETA DNATO v3 — Consola · Planes (matriz)
+  Casos de uso: CU-10, CU-11
+  Requerimientos: RF-10 a RF-15
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-10, CU-11" data-rf="RF-10 a RF-15" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Consola</span></div>
+    <div class="owner"><span class="logo" style="background:var(--dark)">T</span><div><b>Consola Trazalog</b><div class="muted" style="font-size:11.5px">solo súper usuarios</div></div></div>
+    <nav class="nav"><div class="group">Consola Trazalog</div>
+<a href="consola-empresas.html" class=""><span class="ico">🏢</span>Empresas</a>
+<a href="consola-registros.html" class=""><span class="ico">📬</span>Registros<span class="badge red" style="margin-left:auto">2</span></a>
+<a href="consola-planes.html" class=" active"><span class="ico">📦</span>Planes</a>
+<a href="consola-catalogo.html" class=""><span class="ico">🧩</span>Catálogo y menú global</a>
+<a href="consola-formularios.html" class=""><span class="ico">📝</span>Formularios globales</a>
+<a href="consola-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="consola-auditoria.html" class=""><span class="ico">📜</span>Auditoría y uso</a>
+<a href="consola-config.html" class=""><span class="ico">⚙️</span>Variables de sistema</a></nav>
+    <div class="foot">Rodolfo Ruiz · súper usuario</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Consola</b> › Planes</div>
+    <div class="spacer"></div>
+    <a class="btn sm" href="inicio-admin.html">🏢 Mi empresa</a><div class="user"><span class="av">RT</span><span class="muted" style="font-size:12.5px">root@trazalog</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Planes</h1><div class="sub">Qué trae cada plan, cuántos usuarios permite y cuántas consultas de IA. Cada casilla se guarda sola. Cada empresa elige después, dentro de su plan, qué activa.</div></div><div class="actions"><button class="btn primary">＋ Nuevo plan</button></div></div>
+<div class="card"><div class="matrix"><table>
+<tr><th rowspan="2" style="text-align:left">Plan</th><th rowspan="2">Gratuito /<br>de prueba</th><th rowspan="2">Tope<br>usuarios</th><th rowspan="2">Cuota IA · período · renovación</th><th class="mod" colspan="5">MAN</th><th class="mod" colspan="2">ALM</th><th class="mod" colspan="2">PAN</th><th class="mod" colspan="1">BPM</th><th class="mod" colspan="1">PRD</th><th class="mod" colspan="4">MCP</th><th rowspan="2"></th></tr>
+<tr><th class="col">Equipos</th><th class="col">Alta de equipo</th><th class="col">Órdenes de trabajo</th><th class="col">Indicadores</th><th class="col">Preventivos ⏳</th><th class="col">Stock</th><th class="col">Ajustes de stock</th><th class="col">Herramientas</th><th class="col">Préstamos</th><th class="col">Procesos</th><th class="col">Producción</th><th class="col">Consultar equipos</th><th class="col">Consultar OT</th><th class="col">Crear OT</th><th class="col">Mover stock</th></tr>
+<tr><td class="plan">🥉 Free<div class="muted" style="font-weight:400;font-size:11px">orden 1</div></td><td class="cfg" style="text-align:center"><span class="badge green">Sí</span><div class="muted" style="font-size:11px">sin vencimiento</div></td><td class="cfg"><input class="input" value="5"></td><td class="cfg"><input class="input" value="30"> <select class="select" style="padding:4px 24px 4px 6px"><option selected>semana</option><option>mes</option></select> <select class="select" style="padding:4px 24px 4px 6px"><option>lunes</option></select></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check"></span></td><td><button class="btn sm icon">✎</button> <button class="btn sm icon">⧉</button> <button class="btn sm icon" title="Dar de baja">🗑</button></td></tr><tr><td class="plan">🧪 Prueba Business<div class="muted" style="font-weight:400;font-size:11px">orden 2</div></td><td class="cfg" style="text-align:center"><span class="badge green">Sí</span><div class="muted" style="font-size:11px">vence a los 30 días</div></td><td class="cfg"><input class="input" value="40"></td><td class="cfg"><input class="input" value="4000"> <select class="select" style="padding:4px 24px 4px 6px"><option>semana</option><option selected>mes</option></select> <select class="select" style="padding:4px 24px 4px 6px"><option>día 1</option></select></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><button class="btn sm icon">✎</button> <button class="btn sm icon">⧉</button> <button class="btn sm icon" title="Dar de baja">🗑</button></td></tr><tr><td class="plan">🥈 Team<div class="muted" style="font-weight:400;font-size:11px">orden 3</div></td><td class="cfg" style="text-align:center"><span class="muted">No</span></td><td class="cfg"><input class="input" value="15"></td><td class="cfg"><input class="input" value="1000"> <select class="select" style="padding:4px 24px 4px 6px"><option>semana</option><option selected>mes</option></select> <select class="select" style="padding:4px 24px 4px 6px"><option>día 1</option></select></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><button class="btn sm icon">✎</button> <button class="btn sm icon">⧉</button> <button class="btn sm icon" title="Dar de baja">🗑</button></td></tr><tr><td class="plan">🥇 Business<div class="muted" style="font-weight:400;font-size:11px">orden 4</div></td><td class="cfg" style="text-align:center"><span class="muted">No</span></td><td class="cfg"><input class="input" value="40"></td><td class="cfg"><input class="input" value="4000"> <select class="select" style="padding:4px 24px 4px 6px"><option>semana</option><option selected>mes</option></select> <select class="select" style="padding:4px 24px 4px 6px"><option>día 1</option></select></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><button class="btn sm icon">✎</button> <button class="btn sm icon">⧉</button> <button class="btn sm icon" title="Dar de baja">🗑</button></td></tr><tr><td class="plan">💠 Enterprise<div class="muted" style="font-weight:400;font-size:11px">orden 5</div></td><td class="cfg" style="text-align:center"><span class="muted">No</span></td><td class="cfg"><input class="input" value="∞"></td><td class="cfg"><input class="input" value="∞"> <select class="select" style="padding:4px 24px 4px 6px"><option>semana</option><option selected>mes</option></select> <select class="select" style="padding:4px 24px 4px 6px"><option>día 1</option></select></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check"></span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><span class="check on">✓</span></td><td><button class="btn sm icon">✎</button> <button class="btn sm icon">⧉</button> <button class="btn sm icon" title="Dar de baja">🗑</button></td></tr>
+</table></div>
+<div class="tbl-foot" style="display:block">Columna "Preventivos ⏳": funcionalidad sin publicar, se ve atenuada hasta que la publiques en el <a href="consola-catalogo.html">Catálogo</a>. · Plan base: <b>Free</b> = el freemium del registro (5 usuarios · Mantenimiento, Almacenes y Herramientas · 30 consultas de IA por semana), preseleccionado al registrarse. Un plan gratuito / de prueba se usa <b>una sola vez</b> por empresa; al vencer, la empresa queda con todo "fuera de plan" hasta pasar a un plan no gratuito.</div></div>
+<div class="alert warn mt"><span>⚠️</span><div><div class="t">Este cambio restringe el plan Free: afecta a 1 empresa (MinTest_SJ)</div>"Órdenes de trabajo" dejará de verse en esa empresa (sus datos se conservan). Al confirmar se avisa por correo a sus administradores. ¿Continuar?</div><div class="actions"><button class="btn sm">Cancelar</button><button class="btn sm primary">Confirmar y avisar</button></div></div>
+<div class="card mt"><div class="card-h"><h3>Nuevo plan / editar plan</h3><span class="muted">campos de RF-10</span></div><div class="card-b form-grid">
+  <div class="field"><label>Código</label><input class="input" value="prueba_business"></div>
+  <div class="field"><label>Nombre</label><input class="input" value="Prueba Business"></div>
+  <div class="field"><label>Ícono</label><input class="input" value="🧪"></div>
+  <div class="field"><label>Orden</label><input class="input" value="3"></div>
+  <div class="field"><label>Tope de usuarios</label><div class="row"><input class="input" value="40" style="width:100px"><label class="row" style="gap:6px"><span class="check"></span>Ilimitado</label></div></div>
+  <div class="field"><label>Cuota de IA</label><div class="row"><input class="input" value="4000" style="width:100px"><select class="select"><option>por mes</option><option>por semana</option></select><select class="select"><option>día 1</option></select><label class="row" style="gap:6px"><span class="check"></span>Ilimitado</label></div></div>
+  <div class="field"><label>Precio</label><input class="input" value="Consultar"><span class="help">Texto libre o "Consultar"</span></div>
+  <div class="field"><label>Plan base</label><div class="row"><span class="switch"></span><span class="muted">hoy es Free</span></div></div>
+  <div class="field full" style="border-top:1px solid var(--gray-4);padding-top:12px"><div class="row"><span class="switch on"></span><b>Gratuito / de prueba</b><span class="muted">· no requiere aprobación al registrarse</span></div></div>
+  <div class="field"><label>Vencimiento</label><div class="row"><select class="select"><option>Sin vencimiento</option><option selected>Vence a los…</option></select><input class="input" value="30" style="width:80px"><select class="select"><option selected>días</option><option>semanas</option><option>meses</option></select></div><span class="help">Al vencer, el sistema se cierra para la empresa (todo "fuera de plan") hasta que pase a un plan no gratuito. Un gratuito se usa una sola vez. Freemium hoy: gratuito, sin vencimiento.</span></div>
+  <div class="full"><button class="btn primary">Guardar</button> <button class="btn">Cancelar</button></div>
+</div></div>
+<div class="toast">Guardado ✓</div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> las columnas son las opciones publicadas de seg.menues (puntos de menú) agrupadas por módulo, más las tools MCP. La columna 'Gratuito / de prueba' muestra la marca y su vencimiento (CP-17). 'Dar de baja' se bloquea si hay empresas suscriptas (CP-11). Restringir un plan con suscriptores avisa cuántas empresas afecta y manda correo (CP-16). Vencido = sistema cerrado hasta pasar a un plan no gratuito (CP-19); gratuito una sola vez (CP-19b).</div>
+</body>
+</html>

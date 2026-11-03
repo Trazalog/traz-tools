@@ -1,0 +1,55 @@
+id: DNATO-UC-031
+modulo: DNATO
+titulo: Las acciones no se pueden ejecutar desde otro sitio ni con un simple enlace
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-001-dnato-e0-seguridad.md
+    detalle: "Reglas R-4 y R-5. Se completa con los archivos reales al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "§9 correctivo C-4 y RNF-16; caso de prueba CP-112 en 03_CASOS_DE_PRUEBA.md"
+  - repo: traz-comp-dnato
+    path: application/config/config.php
+    detalle: "csrf_protection = FALSE (493)"
+  - repo: traz-comp-dnato
+    path: application/views/usersList.php
+    detalle: "El ícono de eliminar usuario es un enlace GET a main/deleteuser/{id}/{empresa} (35)"
+pantallas:
+  - "Gestión de Usuarios → Lista de Usuarios → Eliminar Usuario"
+  - "Empresas → Borrar empresa"
+precondiciones:
+  - Sesión iniciada con perfil Administrador en la empresa de test
+  - La empresa tiene un usuario de prueba creado para el caso
+flujo_principal:
+  - paso: "Toca 'Eliminar Usuario' en la fila del usuario de prueba"
+    resultado: "Se pide confirmación antes de hacer nada"
+  - paso: "Confirma"
+    resultado: "El usuario deja de aparecer en la lista"
+flujos_alternativos:
+  - nombre: "Abrir la dirección de borrado en el navegador"
+    pasos:
+      - paso: "Copia la dirección de borrado de un usuario y la abre en una pestaña nueva"
+        resultado: "No se borra nada: el usuario sigue en la lista"
+  - nombre: "Envío falsificado desde otra página"
+    pasos:
+      - paso: "Con la sesión abierta, otra página manda un formulario a DNATO (por ejemplo, para cambiar el rol de un usuario)"
+        resultado: "El envío es rechazado y no cambia nada"
+  - nombre: "Página abierta hace mucho"
+    pasos:
+      - paso: "Deja un formulario de DNATO abierto hasta que vence su protección y lo envía"
+        resultado: "Ve 'La página estaba abierta hace mucho. Recargala y probá de nuevo' y no se guarda nada"
+  - nombre: "El agente sigue pudiendo pedir su acceso"
+    pasos:
+      - paso: "El agente de IA pide su acceso por OAuth como hoy"
+        resultado: "Lo obtiene igual que antes"
+validaciones:
+  - "Todo formulario y todo pedido que cambia datos lleva la protección contra envíos falsificados, salvo oauth/token y oauth/register"
+  - "Ninguna dirección que se abre con un enlace (GET) cambia datos"
+dudas:
+  - "El mensaje 'La página estaba abierta hace mucho. Recargala y probá de nuevo' es una propuesta: ¿te sirve ese texto?"
+  - "Borrar un usuario y borrar una empresa pasan a pedir confirmación: ¿la confirmación es solo un 'Sí, eliminar' o se pide escribir algo (por ejemplo el nombre de la empresa) para las empresas?"
+derivados: {}

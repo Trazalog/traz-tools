@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Usuarios de la empresa</title>
+<!--
+  MAQUETA DNATO v3 — Usuarios de la empresa
+  Casos de uso: CU-35, CU-36, CU-37, CU-38, CU-39
+  Requerimientos: RF-70 a RF-76
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-35, CU-36, CU-37, CU-38, CU-39" data-rf="RF-70 a RF-76" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=" active"><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=""><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=""><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=""><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=""><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=""><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=""><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=""><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Usuarios</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Usuarios</h1><div class="sub"><b>5 de 5 lugares usados</b> en el plan 🥉 Free · los invitados ocupan lugar, los baneados también, los dados de baja no.</div></div>
+<div class="actions"><button class="btn" disabled>✉️ Invitar</button></div></div>
+
+<div class="alert danger mb"><span>🚫</span><div><div class="t">Llegaste al tope de 5 usuarios del plan Free</div>Para invitar a alguien más, dá de baja a un usuario o pedí un cambio de plan.</div><div class="actions"><a class="btn sm primary" href="empresa-plan.html">Pedir cambio de plan</a></div></div>
+
+<div class="card">
+<div class="toolbar"><div class="search">🔍 Buscar por nombre o correo</div><select class="select"><option>Todos los roles</option><option>Administrador</option><option>Supervisor</option><option>Mantenedor</option></select><select class="select"><option>Todos los estados</option><option>Activo</option><option>Invitado</option><option>Baneado</option></select></div>
+<table class="tbl">
+<tr><th>Usuario</th><th>Rol</th><th>Menú</th><th>Estado</th><th>Último acceso</th><th class="num">IA esta semana</th><th></th></tr>
+<tr><td><b>Ana Pérez</b><div class="muted">ana@mintest.com.ar · vos</div></td><td>Administrador</td><td>Predeterminado</td><td><span class="badge green">Activo</span></td><td>hoy 11:20</td><td class="num">0</td><td><div class="row-actions"><span class="muted" style="font-size:12px">sos vos</span></div></td></tr>
+<tr><td><b>Bruno Díaz</b><div class="muted">bruno@mintest.com.ar</div></td><td><select class="select" style="padding:3px 24px 3px 8px"><option selected>Supervisor</option><option>Planificador</option><option>Mantenedor</option><option>Solicitante</option></select></td><td><select class="select" style="padding:3px 24px 3px 8px"><option>— por rol —</option></select></td><td><span class="badge green">Activo</span></td><td>hoy 10:42</td><td class="num">5</td><td><div class="row-actions"><button class="btn sm">Banear</button><button class="btn sm ghost">Baja</button></div></td></tr>
+<tr><td><b>Carla Ruiz</b><div class="muted">carla@mintest.com.ar</div></td><td>Mantenedor</td><td>Solo equipos</td><td><span class="badge green">Activo</span></td><td>ayer</td><td class="num">2</td><td><div class="row-actions"><button class="btn sm">Banear</button><button class="btn sm ghost">Baja</button></div></td></tr>
+<tr class="off"><td><b>Darío Gómez</b><div class="muted">dario@mintest.com.ar</div></td><td>Mantenedor</td><td>Operación</td><td><span class="badge amber">Invitado · vence 31/10</span></td><td>—</td><td class="num">0</td><td><div class="row-actions"><button class="btn sm">Reenviar invitación</button><button class="btn sm ghost">Baja</button></div></td></tr>
+<tr class="off"><td><b>Elena Soto</b><div class="muted">elena@mintest.com.ar</div></td><td>Mantenedor</td><td>Operación</td><td><span class="badge red">Baneado · 20/10</span></td><td>19/10</td><td class="num">0</td><td><div class="row-actions"><button class="btn sm primary">Reactivar</button><button class="btn sm ghost">Baja</button></div></td></tr>
+</table>
+<div class="tbl-foot">5 lugares usados: 3 activos · 1 invitado · 1 baneado (los baneados ocupan lugar; los dados de baja no) <div class="pages"><span class="cur">1</span></div></div>
+</div>
+
+<div class="modal-back"><div class="modal">
+  <div class="m-h">Banear a Bruno Díaz</div>
+  <div class="m-b stack">
+    <p>Bruno no va a poder entrar a MinTest_SJ, ni desde la web ni desde la IA, hasta que lo reactives. Conserva su lugar en el plan y sigue pudiendo usar otras empresas donde esté activo.</p>
+    <div class="field"><label>Motivo (opcional)</label><textarea class="input" placeholder="Queda en la auditoría"></textarea></div>
+  </div>
+  <div class="m-f"><button class="btn">Cancelar</button><button class="btn primary">Banear</button></div>
+</div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> reemplaza a main/users, changelevel y banuser. Estado con tope alcanzado (CP-71) y modal de baneo (CP-73). Con lugares libres, 'Invitar' abre el formulario: correo, nombre, rol (los roles Bonita de la empresa), menú opcional, o 'Crear con contraseña inicial' (CU-39). La fila propia no ofrece Banear ni Baja (CP-74).</div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+id: DNATO-UC-032
+modulo: DNATO
+titulo: Un administrador solo puede operar sobre los usuarios de su empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-001-dnato-e0-seguridad.md
+    detalle: "Regla R-6. Se completa con los archivos reales al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "§9 correctivo C-6 y RNF-02; caso de prueba CP-111 en 03_CASOS_DE_PRUEBA.md"
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "getUserInfo (187), deleteUser (922), updateUserban (772) y updateUserLevel (758) no filtran por empresa"
+  - repo: traz-comp-dnato
+    path: application/controllers/Main.php
+    detalle: "changeleveluser($id) (334) y deleteuser($id,$busines) (693) toman el id de la dirección"
+pantallas:
+  - "Gestión de Usuarios → Lista de Usuarios → Asignar Rol"
+  - "Gestión de Usuarios → Lista de Usuarios → Eliminar Usuario"
+  - "Gestión de Usuarios → Habilitar / Inhabilitar"
+precondiciones:
+  - Existen dos empresas de test, cada una con su administrador y al menos un usuario propio
+  - Sesión iniciada con el administrador de la primera empresa
+flujo_principal:
+  - paso: "Abre 'Asignar Rol' de un usuario de su empresa"
+    resultado: "Ve los datos del usuario y puede cambiarle el rol, como hoy"
+flujos_alternativos:
+  - nombre: "Usuario de otra empresa por dirección"
+    pasos:
+      - paso: "Cambia en la dirección el número de usuario por el de un usuario de la otra empresa"
+        resultado: "Ve 'Ese usuario no existe en tu empresa' y no se muestra ningún dato de ese usuario"
+  - nombre: "Borrar o inhabilitar un usuario de otra empresa"
+    pasos:
+      - paso: "Intenta eliminar o inhabilitar a un usuario de la otra empresa armando el pedido a mano"
+        resultado: "El pedido es rechazado y el usuario de la otra empresa sigue igual"
+  - nombre: "Empresa enviada desde el navegador"
+    pasos:
+      - paso: "Envía un pedido de administración con el número o el nombre de la otra empresa"
+        resultado: "Se usa siempre la empresa de su sesión: la otra empresa no se toca"
+validaciones:
+  - "Toda operación sobre un usuario verifica que tenga membresía en la empresa activa de la sesión"
+  - "La empresa siempre sale de la sesión, nunca de un dato que manda el navegador"
+  - "El rechazo no revela si el usuario existe en otra empresa"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+  empresa_ajena: EMPRESA_TEST_2
+dudas:
+  - "Un usuario que es miembro de las dos empresas: ¿el administrador de la primera puede editar sus datos personales (nombre, contraseña), que son compartidos, o solo su rol en la propia empresa? Se propone: solo el rol y la baja en su empresa."
+  - "Hoy el superusuario aparece en la lista de todas las empresas (hallazgo H-003, aceptado). ¿Un administrador de empresa puede cambiarle el rol o borrarlo de su empresa? Se propone que no."
+derivados: {}

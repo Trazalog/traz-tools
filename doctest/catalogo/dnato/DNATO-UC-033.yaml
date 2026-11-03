@@ -1,0 +1,49 @@
+id: DNATO-UC-033
+modulo: DNATO
+titulo: Cada usuario queda vinculado a la misma empresa en DNATO y en Tools
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-001-dnato-e0-seguridad.md
+    detalle: "Regla R-7. Se completa con los archivos reales al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§3 regla R8; correctivo C-8 en 01 §9; relevamiento §2.2"
+  - repo: traz-comp-dnato
+    path: application/models/User_model.php
+    detalle: "getEmpresasDeUsuario (341) y getEmprIdByGroup (291) comparan contra nombre o descripcion de core.empresas"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/COREDataService.dbs
+    detalle: "getUsersXGroup y getEsAdminXEmailEmpresa comparan solo contra descripcion"
+  - repo: traz-comp-dnato
+    path: scripts/sql/verificar-membresias-vs-empresas.sql
+    detalle: "Mide cuántas membresías no resuelven a una empresa con cada criterio"
+pantallas:
+  - "Ingreso → Elegir empresa"
+  - "Gestión de Usuarios → Lista de Usuarios"
+  - "Tools → tablero de inicio"
+precondiciones:
+  - Existe la empresa de test con su administrador y un usuario con rol en esa empresa
+flujo_principal:
+  - paso: "El usuario inicia sesión"
+    resultado: "En 'Elegir empresa' le aparece la empresa de test (o entra directo si es la única)"
+  - paso: "El administrador abre la lista de usuarios"
+    resultado: "El usuario aparece en la lista de la empresa de test"
+  - paso: "El administrador entra a Tools"
+    resultado: "Tools lo reconoce como administrador de esa misma empresa"
+flujos_alternativos:
+  - nombre: "Empresa cuyo nombre y descripción son distintos"
+    pasos:
+      - paso: "Un usuario de una empresa cuyo nombre y descripción difieren inicia sesión, aparece en la lista y entra a Tools"
+        resultado: "Las tres cosas lo vinculan a la misma empresa"
+validaciones:
+  - "DNATO y los DataServices resuelven la empresa de una membresía con un único criterio, documentado"
+  - "Ningún usuario que hoy resuelve a una empresa queda sin empresa después del cambio, salvo los que el PM acepte en el plan"
+dudas:
+  - "¿Cuál es el criterio único? Opciones: (a) comparar solo contra el nombre de la empresa; (b) solo contra la descripción; (c) guardar el número de empresa en la membresía al crearla y completar las existentes una vez (recomendación de la especificación). La (c) agrega una columna a seg.memberships_users: es migración de base y necesita tu aprobación del análisis de impacto."
+  - "Antes de decidir, Pablo corre el script de verificación en DEMO y pone en el plan cuántos usuarios quedarían sin empresa con cada criterio. ¿Se corre también contra una copia de PROD?"
+  - "getEsAdminXEmailEmpresa lo usa Tools para decidir si alguien es administrador: cambiar su criterio cambia quién ve el tablero del administrador. ¿Se acepta en esta entrega o se deja para cuando se unifique la definición de administrador (ADR-016)?"
+derivados: {}

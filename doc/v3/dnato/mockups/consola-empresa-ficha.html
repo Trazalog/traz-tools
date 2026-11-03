@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Consola · Ficha de empresa</title>
+<!--
+  MAQUETA DNATO v3 — Consola · Ficha de empresa
+  Casos de uso: CU-14, CU-16, CU-21
+  Requerimientos: RF-25, RF-27, RF-85
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-14, CU-16, CU-21" data-rf="RF-25, RF-27, RF-85" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Consola</span></div>
+    <div class="owner"><span class="logo" style="background:var(--dark)">T</span><div><b>Consola Trazalog</b><div class="muted" style="font-size:11.5px">solo súper usuarios</div></div></div>
+    <nav class="nav"><div class="group">Consola Trazalog</div>
+<a href="consola-empresas.html" class=" active"><span class="ico">🏢</span>Empresas</a>
+<a href="consola-registros.html" class=""><span class="ico">📬</span>Registros<span class="badge red" style="margin-left:auto">2</span></a>
+<a href="consola-planes.html" class=""><span class="ico">📦</span>Planes</a>
+<a href="consola-catalogo.html" class=""><span class="ico">🧩</span>Catálogo y menú global</a>
+<a href="consola-formularios.html" class=""><span class="ico">📝</span>Formularios globales</a>
+<a href="consola-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="consola-auditoria.html" class=""><span class="ico">📜</span>Auditoría y uso</a>
+<a href="consola-config.html" class=""><span class="ico">⚙️</span>Variables de sistema</a></nav>
+    <div class="foot">Rodolfo Ruiz · súper usuario</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Consola</b> › Empresas › MinTest_SJ</div>
+    <div class="spacer"></div>
+    <a class="btn sm" href="inicio-admin.html">🏢 Mi empresa</a><div class="user"><span class="av">RT</span><span class="muted" style="font-size:12.5px">root@trazalog</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div class="row" style="gap:14px"><span class="logo lg">M</span><div><h1>MinTest_SJ</h1><div class="sub">Proveedor minero · demo · moneda ARS · idioma es · alta 3/2026 · contacto ana@mintest.com.ar · <span class="badge green">Activa</span></div></div></div><div class="actions"><button class="btn">✎ Editar</button><button class="btn">Cambiar plan</button><button class="btn">Extender vencimiento</button><a class="btn" href="consola-usuarios.html">👥 Usuarios</a><button class="btn danger">Suspender</button></div></div>
+<div class="tabs"><a class="active" href="#">Resumen</a><a href="consola-usuarios.html">Miembros (5)</a><a href="#">Menús (3)</a><a href="#">Formularios (2)</a><a href="#">Uso de IA</a><a href="#">Actividad</a></div>
+<div class="card mb"><div class="card-h"><h3>Editar empresa</h3><span class="muted">se abre con "✎ Editar"</span></div><div class="card-b form-grid">
+  <div class="field"><label>Logo</label><div class="row"><span class="logo lg">M</span><button class="btn sm">📁 Subir logo</button><button class="btn sm ghost">Quitar</button></div><span class="help">Sin logo se muestra la inicial. Se ve en el Portal, en Tools y en esta Consola.</span></div>
+  <div class="field"><label>Nombre</label><input class="input" value="MinTest_SJ"></div>
+  <div class="field"><label>Descripción para soporte</label><input class="input" value="Proveedor minero · demo"></div>
+  <div class="field"><label>Contacto del administrador</label><input class="input" value="ana@mintest.com.ar"></div>
+  <div class="field"><label>Moneda</label><select class="select"><option>ARS</option><option>USD</option></select></div>
+  <div class="field"><label>Idioma</label><select class="select"><option>Español</option></select></div>
+  <div class="full"><button class="btn primary">Guardar</button> <button class="btn">Cancelar</button></div>
+</div></div>
+<div class="grid g4 mb">
+  <div class="card kpi"><div class="l">Plan</div><div class="v">🥉 Free</div><div class="d muted">gratuito · sin vencimiento · desde 3/2026</div></div>
+  <div class="card kpi"><div class="l">Usuarios</div><div class="v">5 / 5</div><div class="d"><span class="badge amber">tope alcanzado</span></div></div>
+  <div class="card kpi"><div class="l">IA este período</div><div class="v">21 / 30</div><div class="d muted">renueva lunes 2/11 · 0 bonificadas</div></div>
+  <div class="card kpi"><div class="l">Pedido pendiente</div><div class="v" style="font-size:16px">Ninguno</div><div class="d muted">último: — </div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><div class="card-h"><h3>Otorgar consultas de IA extra</h3><span class="muted">se suman al período en curso</span></div><div class="card-b"><div class="form-grid"><div class="field"><label>Cantidad</label><input class="input" value="5"></div><div class="field"><label>Motivo</label><input class="input" placeholder="Demo comercial"></div><div class="full"><button class="btn primary">Bonificar</button> <span class="muted">Queda en la auditoría y se avisa por correo al administrador.</span></div></div></div></div>
+  <div class="card"><div class="card-h"><h3>Uso de IA · últimos 6 períodos</h3></div><div class="card-b"><div class="bars"><div style="height:30%"><span>28/9</span></div><div style="height:90%"><span>5/10</span></div><div style="height:60%"><span>12/10</span></div><div style="height:100%" class="hl"><span>19/10</span></div><div style="height:70%"><span>26/10</span></div></div><div class="bars-x"></div></div></div>
+</div>
+<div class="card mt"><div class="card-h"><h3>Historial de planes y auditoría reciente</h3><span class="muted">el historial de planes se deriva de la auditoría</span></div><table class="tbl"><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Detalle</th></tr>
+<tr><td>3/2026</td><td>migración</td><td>empresa.cambiar_plan</td><td>Completo → Free (origen migración)</td></tr>
+<tr><td>28/10 17:40</td><td>root@trazalog</td><td>plan.funcionalidad.quitar</td><td>Free − Órdenes de trabajo (1 empresa afectada)</td></tr>
+<tr><td>24/10 11:05</td><td>ana@</td><td>miembro.invitar</td><td>dario@ · Mantenedor · menú Operación</td></tr>
+<tr><td>20/10 16:30</td><td>ana@</td><td>miembro.banear</td><td>elena@ · "licencia"</td></tr>
+</table></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> la edición de datos y logo (RF-25) no existe hoy (A-13); el logo es image/imagepath de core.empresas. 'Miembros' abre Usuarios de la plataforma filtrado. 'Bonificar' es CU-21. 'Suspender' es CU-16.</div>
+</body>
+</html>

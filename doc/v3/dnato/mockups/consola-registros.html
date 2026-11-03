@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Consola · Registros</title>
+<!--
+  MAQUETA DNATO v3 — Consola · Registros
+  Casos de uso: CU-23
+  Requerimientos: RF-08, RF-29, RF-31
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-23" data-rf="RF-08, RF-29, RF-31" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Consola</span></div>
+    <div class="owner"><span class="logo" style="background:var(--dark)">T</span><div><b>Consola Trazalog</b><div class="muted" style="font-size:11.5px">solo súper usuarios</div></div></div>
+    <nav class="nav"><div class="group">Consola Trazalog</div>
+<a href="consola-empresas.html" class=""><span class="ico">🏢</span>Empresas</a>
+<a href="consola-registros.html" class=" active"><span class="ico">📬</span>Registros<span class="badge red" style="margin-left:auto">2</span></a>
+<a href="consola-planes.html" class=""><span class="ico">📦</span>Planes</a>
+<a href="consola-catalogo.html" class=""><span class="ico">🧩</span>Catálogo y menú global</a>
+<a href="consola-formularios.html" class=""><span class="ico">📝</span>Formularios globales</a>
+<a href="consola-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="consola-auditoria.html" class=""><span class="ico">📜</span>Auditoría y uso</a>
+<a href="consola-config.html" class=""><span class="ico">⚙️</span>Variables de sistema</a></nav>
+    <div class="foot">Rodolfo Ruiz · súper usuario</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Consola</b> › Registros</div>
+    <div class="spacer"></div>
+    <a class="btn sm" href="inicio-admin.html">🏢 Mi empresa</a><div class="user"><span class="av">RT</span><span class="muted" style="font-size:12.5px">root@trazalog</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Registros</h1><div class="sub">Altas de empresa y pedidos de plan: qué pasó, qué plan, si requiere aprobación y cómo se avisó a infra.</div></div><div class="actions"><button class="btn">⬇ Exportar</button></div></div>
+<div class="grid g4 mb">
+  <div class="card kpi"><div class="l">Pendientes de aprobación</div><div class="v" style="color:var(--red)">2</div><div class="d muted">1 registro · 1 pedido</div></div>
+  <div class="card kpi"><div class="l">Altas este mes</div><div class="v">4</div><div class="d muted">3 por registro · 1 desde la Consola</div></div>
+  <div class="card kpi"><div class="l">Notificaciones a infra</div><div class="v">11</div><div class="d"><span class="badge green">10 ok</span> <span class="badge red">1 fallida</span></div></div>
+  <div class="card kpi"><div class="l">Canales</div><div class="v" style="font-size:16px">Telegram · Correo</div><div class="d muted">sistema de notificaciones de infra</div></div>
+</div>
+<div class="card"><div class="toolbar"><div class="chips"><span class="chip on">Pendientes (2)</span><span class="chip">Todos</span><span class="chip">Altas</span><span class="chip">Pedidos de plan</span><span class="chip">Suspensiones</span></div><input class="input" type="date" value="2026-10-01"><input class="input" type="date" value="2026-10-29"></div>
+<table class="tbl"><tr><th>Fecha</th><th>Evento</th><th>Empresa</th><th>Administrador</th><th>Plan</th><th>Estado</th><th>Notificación</th><th></th></tr>
+<tr><td class="mono">29/10 16:40</td><td>🆕 Alta por registro</td><td><div class="row"><span class="logo sm" style="background:var(--gray-2)">M</span>Matheu</div></td><td>fede@matheu.com.ar</td><td>Pedido: 🥈 Team<div class="muted">opera en Free mientras tanto</div></td><td><span class="badge amber">Pendiente de aprobación</span></td><td><span class="badge green">Telegram ✓</span> <span class="badge green">Correo ✓</span></td><td><div class="row-actions"><button class="btn sm primary">Aprobar</button><button class="btn sm danger">Rechazar</button></div></td></tr>
+<tr><td class="mono">29/10 09:12</td><td>📨 Pedido de plan</td><td><div class="row"><span class="logo sm" style="background:#fff;border:1px solid var(--gray-3);color:var(--dark)">🛞</span>Yudica</div></td><td>eva@yudica</td><td>🥇 Business → 💠 Enterprise<div class="muted">"Cerramos minera nueva"</div></td><td><span class="badge amber">Pendiente</span></td><td><span class="badge green">Telegram ✓</span> <span class="badge red">Correo ✗ reintento 2/3</span></td><td><div class="row-actions"><button class="btn sm primary">Aprobar</button><button class="btn sm danger">Rechazar</button></div></td></tr>
+<tr class="off"><td class="mono">27/10 11:00</td><td>🆕 Alta por registro</td><td>Nueva SA</td><td>laura@nuevasa.com</td><td>🥉 Free (gratuito)</td><td><span class="badge green">Activa · sin aprobación</span></td><td><span class="badge green">Telegram ✓</span> <span class="badge green">Correo ✓</span></td><td></td></tr>
+<tr class="off"><td class="mono">20/10 15:30</td><td>🆕 Alta desde la Consola</td><td>Empresa Test</td><td>eva@test.com</td><td>🧪 Prueba Business (vence 31/10)</td><td><span class="badge green">Activa</span></td><td><span class="badge green">Telegram ✓</span> <span class="badge green">Correo ✓</span></td><td></td></tr>
+<tr class="off"><td class="mono">15/10 08:00</td><td>⛔ Suspensión</td><td>Tierras de Capayán</td><td>—</td><td>🥈 Team</td><td><span class="badge red">Suspendida</span></td><td><span class="badge green">Telegram ✓</span></td><td></td></tr>
+</table><div class="tbl-foot">Cada fila nace de un evento de DNATO; el envío lo hace el sistema de notificaciones de infra (servicio "Notificar a infra"); si falla, se reintenta y el alta no se bloquea. <div class="pages"><span class="cur">1</span></div></div></div>
+<div class="modal-back"><div class="modal" style="width:560px"><div class="m-h">Aprobar plan Team · Matheu</div><div class="m-b stack"><div class="grid g2"><div><div class="muted">Registrada</div>29/10 por fede@matheu.com.ar</div><div><div class="muted">Plan pedido</div><b>🥈 Team</b> · 15 usuarios · 1.000 IA/mes · USD 79/mes</div></div><p class="muted">Al aprobar, Matheu pasa a Team y el administrador recibe correo. El cobro se maneja aparte.</p><div class="field"><label>Motivo (opcional)</label><textarea class="input"></textarea></div></div><div class="m-f"><button class="btn">Cerrar</button><button class="btn danger">Rechazar</button><button class="btn primary">Aprobar</button></div></div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> reporte nuevo (RF-29). Los eventos salen de DNATO; el envío por Telegram y correo lo hace el sistema de notificaciones de infra a través del servicio 'Notificar a infra' (02 §4), contrato a definir con el especialista. Un plan no gratuito elegido en el registro deja la empresa operando en Free hasta que se apruebe acá.</div>
+</body>
+</html>
