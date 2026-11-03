@@ -45,30 +45,31 @@ pruebas a mano: se le piden a un agente con los pedidos A, B y C (sección 2.8).
 
 ```mermaid
 flowchart TD
-  A["1. Rodolfo + Claude<br/>requerimiento + casos (pedido A)"] --> B["2. Rodolfo valida los casos<br/>y los sube a develop"]
-  B --> C["3. Pablo + DeepSeek Pro<br/>plan de tareas"]
-  C --> D{"4. Rodolfo<br/>revisa el plan"}
+  A["1 Rodolfo arma los casos"] --> B["2 Rodolfo los valida"]
+  B --> C["3 Pablo arma el plan"]
+  C --> D{"4 Rodolfo revisa"}
   D -->|dudas| A
-  D -->|ok| F["5. Pablo + DeepSeek Flash<br/>UNA tarea + su prueba (pedido B)"]
-  F --> G["6. Pablo: DocTest<br/>en su máquina"]
+  D -->|ok| F["5 Pablo programa una tarea"]
+  F --> G["6 DocTest local"]
   G -->|rojo| F
-  G -->|verde| H["7. commit + push"]
-  H --> I{"¿Quedan<br/>tareas?"}
+  G -->|verde| H["7 commit y push"]
+  H --> I{"¿Quedan tareas?"}
   I -->|sí| F
-  I -->|no| J["8. Pablo abre<br/>el pull request"]
-  J --> K{"9. Rodolfo<br/>revisa"}
+  I -->|no| J["8 Pablo abre el PR"]
+  J --> K{"9 Rodolfo revisa"}
   K -->|devuelve| F
-  K -->|aprueba| L["10. Merge y Pablo<br/>despliega a DEMO"]
-  L --> M["11. Pablo: DocTest<br/>contra DEMO"]
-  M -->|rojo| N["Pablo vuelve a la<br/>versión anterior y avisa"]
-  M -->|verde| O["✅ Listo"]
-  style A fill:#e8d5f5
-  style B fill:#e8d5f5
-  style D fill:#fff3c4
-  style K fill:#fff3c4
-  style G fill:#d4edda
-  style M fill:#d4edda
-  style N fill:#f8d7da
+  K -->|aprueba| L["10 Pablo despliega"]
+  L --> M["11 DocTest en DEMO"]
+  M -->|rojo| N["Volver atrás y avisar"]
+  M -->|verde| O["Listo"]
+  classDef rodolfo fill:#e8d5f5,stroke:#7b4fa0,color:#1a1a1a
+  classDef decision fill:#fff3c4,stroke:#a08a2a,color:#1a1a1a
+  classDef prueba fill:#d4edda,stroke:#3c8a50,color:#1a1a1a
+  classDef error fill:#f8d7da,stroke:#a03c46,color:#1a1a1a
+  class A,B rodolfo
+  class D,K,I decision
+  class G,M,O prueba
+  class N error
 ```
 
 ## 1.3 DocTest: qué correr y cuándo
@@ -295,10 +296,10 @@ En el archivo `traz-tools/doctest/.env` de cada uno (no se sube al repo; se crea
 **No se configura a mano.** La primera vez en cada ambiente se corre `casi-full`:
 
 ```mermaid
-flowchart LR
-  A["1ª vez en el ambiente:<br/>casi-full --entorno local"] --> B["Registra 2 empresas<br/>por el alta real"]
-  B --> C["Las anota en<br/>doctest/entornos/local.json"]
-  C --> D["De ahí en más:<br/>npm run doctest -- --entorno local<br/>usa esas empresas solo"]
+flowchart TD
+  A["1ª vez: casi-full"] --> B["Crea 2 empresas"]
+  B --> C["Las anota en entornos/local.json"]
+  C --> D["Las demás corridas las usan"]
 ```
 
 - El archivo `doctest/entornos/<ambiente>.json` guarda las empresas y sus usuarios. Es **uno por
@@ -355,11 +356,11 @@ Si al programar Pablo descubre que falta un caso o que uno estaba mal:
 - Recién ahí Pablo pide la prueba (pedido B) y sigue.
 
 ```mermaid
-flowchart LR
-  P["Pablo encuentra<br/>un caso que falta"] --> C["DeepSeek redacta<br/>el borrador (pedido C)"]
-  C --> I["Pablo commitea<br/>y abre el aviso test-gap"]
-  I --> R["Rodolfo + Claude<br/>responden dudas y validan"]
-  R --> B["DeepSeek escribe<br/>la prueba (pedido B)"]
+flowchart TD
+  P["Pablo: falta un caso"] --> C["DeepSeek: borrador, pedido C"]
+  C --> I["Pablo: commit y aviso test-gap"]
+  I --> R["Rodolfo: contesta y valida"]
+  R --> B["DeepSeek: la prueba, pedido B"]
 ```
 
 ## 2.8 Los pedidos al agente, listos para copiar
