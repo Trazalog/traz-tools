@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Tools: barra superior y tablero del administrador</title>
+<!--
+  MAQUETA DNATO v3 — Tools: barra superior y tablero del administrador
+  Casos de uso: CU-03, CU-30
+  Requerimientos: RF-45, RF-46, RF-47, RF-02
+  Dónde se construye: traz-tools (derivación)
+  Layout: tools ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-03, CU-30" data-rf="RF-45, RF-46, RF-47, RF-02" data-donde="traz-tools (derivación)" data-layout="tools">
+<div class="shell tools">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Tools</span></div>
+    <nav class="nav"><div class="group">Mantenimiento</div>
+<a href="#" class=""><span class="ico">🛠️</span>Equipos</a>
+<a href="#" class=""><span class="ico">📋</span>Órdenes de trabajo</a>
+<a href="#" class=""><span class="ico">📈</span>Indicadores</a>
+<div class="group">Almacenes</div>
+<a href="#" class=""><span class="ico">📦</span>Stock</a>
+<a href="vista-esfumada.html" class="other"><span class="ico">🔁</span>Ajustes de stock<span class="plan-ico" title="Incluido en el plan Team">🥈</span></a>
+<div class="group">Procesos</div>
+<a href="vista-esfumada.html" class="other"><span class="ico">🔀</span>Procesos<span class="plan-ico" title="Incluido en el plan Business">🥇</span></a>
+<div class="group">Producción</div>
+<a href="vista-esfumada.html" class="other"><span class="ico">🏭</span>Producción<span class="plan-ico" title="Incluido en el plan Business">🥇</span></a>
+<div class="hint">menú resuelto · lo dibuja traz-tools · lo de otro plan queda en su lugar, sombreado</div></nav>
+    <div class="foot">Bruno Díaz · Supervisor</div>
+  </aside>
+  <header class="topbar">
+    <div class="crumbs">Tools › Tablero</div>
+    <div class="spacer"></div>
+    <div class="empresa-sel"><span class="av">MT</span>MinTest_SJ <span class="badge" title="Plan Free">🥉 Free</span><span class="caret">▾</span></div>
+    <div class="user"><span class="av">BR</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Cómo se llega al Portal de la empresa desde Tools</h1><div class="sub">Propuesta para la barra superior de traz-tools. Hoy: ícono de perfil → menú → botón "Usuarios".</div></div></div>
+<div class="card mb"><div class="card-h"><h3>Barra superior de Tools · usuario administrador</h3></div><div class="card-b">
+  <div style="border:1px solid var(--gray-3);border-radius:8px;overflow:hidden">
+    <div style="height:56px;background:#fff;border-bottom:1px solid var(--gray-3);display:flex;align-items:center;gap:14px;padding:0 18px">
+      <span style="font-weight:600">☰</span><span class="muted">Tablero</span>
+      <span style="flex:1"></span>
+      <span class="quota-pill" title="Solo administradores">🤖 21/30 <span class="bar"><i style="width:70%"></i></span></span>
+      <a class="btn" href="inicio-admin.html" style="border-color:var(--red);color:var(--red)">🏢 Mi empresa</a>
+      <div class="empresa-sel"><span class="av">MT</span>MinTest_SJ 🥉<span class="caret">▾</span></div>
+      <div class="user"><span class="av">AN</span><span class="caret" style="color:var(--gray-2)">▾</span></div>
+    </div>
+    <div style="display:flex;gap:16px;padding:14px 18px;background:var(--gray-5)">
+      <div class="card" style="width:230px"><div class="card-b stack" style="gap:6px;font-size:13px"><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">Menú del perfil</div><a href="perfil.html">👤 Mi perfil</a><a href="#">🔄 Cambiar de empresa</a><a href="#">🚪 Salir</a></div></div>
+      <div class="card" style="width:300px"><div class="card-b stack" style="gap:6px;font-size:13px"><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">Selector de empresa</div><div>✔ MinTest_SJ · Administradora</div><div class="muted">Empresa Test · Supervisora</div></div></div>
+      <div class="stack" style="font-size:13px;flex:1">
+        <div>🏢 <b>Mi empresa</b>: botón propio, visible solo si sos administrador de la empresa activa. Abre el Portal en la misma pestaña, con "← Ir a Tools" para volver.</div>
+        <div>👤 El menú del perfil deja de tener "Usuarios": queda Mi perfil, Cambiar de empresa y Salir.</div>
+        <div>🤖 El indicador de cuota se muestra solo a administradores y lleva a Uso de IA.</div>
+        <div>🔑 Si sos súper usuario, aparece además "🔑 Consola".</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+<div class="card mb"><div class="card-h"><h3>Tablero de Tools · lo que suma para el administrador (T-1)</h3><span class="muted">el tablero de KPIs actual no cambia; se agrega esta tarjeta arriba, solo para administradores</span></div><div class="card-b">
+  <div class="card" style="max-width:860px;border-left:4px solid var(--red)"><div class="card-b" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:16px;align-items:center">
+    <div><div class="muted" style="font-size:12px">Plan</div><b>🥉 Free</b><div class="muted" style="font-size:12px">gratuito · sin vencimiento</div></div>
+    <div><div class="muted" style="font-size:12px">Lugares</div><b>5 de 5</b><div class="progress" style="margin-top:4px"><i class="full" style="width:100%"></i></div></div>
+    <div><div class="muted" style="font-size:12px">Consultas de IA · semana</div><b>21 de 30</b><div class="progress" style="margin-top:4px"><i style="width:70%"></i></div></div>
+    <a class="btn sm" href="inicio-admin.html">🏢 Mi empresa →</a>
+    <div style="grid-column:1 / -1" class="alert warn"><span>⚠️</span><div>Llegaste al tope de usuarios · 1 invitación sin aceptar</div></div>
+  </div></div>
+  <p class="muted mt" style="font-size:12.5px">Variantes: "Tu período de prueba termina el 31/10" (ámbar) · "Tu período de prueba terminó: elegí un plan" (rojo, con botón a Plan) · "Pediste pasar a Team: en revisión". Datos del servicio "Contexto". Debajo siguen los KPIs de operación de hoy.</p>
+</div></div>
+<div class="card"><div class="card-h"><h3>Barra superior · usuario sin rol de administrador</h3></div><div class="card-b">
+  <div style="height:56px;background:#fff;border:1px solid var(--gray-3);border-radius:8px;display:flex;align-items:center;gap:14px;padding:0 18px">
+    <span style="font-weight:600">☰</span><span class="muted">Tablero</span><span style="flex:1"></span>
+    <div class="empresa-sel"><span class="av">MT</span>MinTest_SJ 🥉<span class="caret">▾</span></div>
+    <div class="user"><span class="av">BR</span><span class="caret" style="color:var(--gray-2)">▾</span></div>
+  </div>
+  <p class="muted mt" style="font-size:13px">Sin botón "Mi empresa" ni indicador de cuota. El menú del perfil: Mi perfil, Cambiar de empresa, Salir.</p>
+</div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> lo dibuja traz-tools (derivación, puntos T-1 y T-3 del análisis de impacto de 02 §9b) con el servicio 'Contexto' de DNATO (es_admin, es_super, plan, lugares, cuota, avisos). El Portal de la empresa vive aparte del menú operativo para no saturarlo y poder crecer con diseño propio.</div>
+</body>
+</html>

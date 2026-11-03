@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Cargas masivas</title>
+<!--
+  MAQUETA DNATO v3 — Cargas masivas
+  Casos de uso: CU-43
+  Requerimientos: RF-110, RF-72
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-43" data-rf="RF-110, RF-72" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=""><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=""><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=""><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=""><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=""><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=" active"><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=""><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Cargas masivas</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Cargas masivas</h1><div class="sub">Cargá artículos, herramientas, lotes, etapas o solicitantes desde una planilla. Mismo circuito de hoy, con historial.</div></div></div>
+<div class="grid g-2-1">
+  <div class="card"><div class="card-h"><h3>Nueva carga</h3></div><div class="card-b stack">
+    <div class="field"><label>Entidad</label><select class="select"><option>Artículos (PostgreSQL)</option><option>Herramientas</option><option>Stock / lotes</option><option>Etapas de artículos</option><option>Solicitantes de transporte</option><option>Mantenimiento · Equipos (AssetPlanner)</option></select><span class="help">Las entidades salen del catálogo <span class="mono">sta.entidades_negocio</span>; el procedimiento nunca viene del navegador.</span></div>
+    <div class="row"><a class="btn" href="#">⬇ Descargar plantilla</a><span class="muted">artículos.xlsx</span></div>
+    <div class="field"><label>Archivo</label><div class="input" style="border-style:dashed;text-align:center;padding:22px;color:var(--gray)">Arrastrá el .xlsx o hacé clic para elegirlo</div></div>
+    <div class="alert info"><span>ℹ️</span><div>Si la planilla crea usuarios, se respeta el tope de tu plan (5 de 5 hoy): los que no entren quedan rechazados en el resultado.</div></div>
+    <button class="btn primary" style="align-self:flex-start">Procesar carga</button>
+  </div></div>
+  <div class="card"><div class="card-h"><h3>Historial de cargas</h3></div><table class="tbl"><tr><th>Fecha</th><th>Quién</th><th>Entidad</th><th class="num">Ok</th><th class="num">Error</th></tr>
+  <tr><td>28/10 16:02</td><td>ana@</td><td>Artículos</td><td class="num">120</td><td class="num">3</td></tr>
+  <tr><td>15/10 10:40</td><td>ana@</td><td>Usuarios</td><td class="num">2</td><td class="num">2 <span class="muted">tope</span></td></tr>
+  <tr><td>2/10 09:11</td><td>ana@</td><td>Herramientas</td><td class="num">40</td><td class="num">0</td></tr>
+  </table><div class="tbl-foot">Hoy el resultado se pierde al cerrar la sesión; en v3 queda guardado (RF-110).</div></div>
+</div>
+<div class="card mt"><div class="card-h"><h3>Resultado · Artículos · 28/10 16:02</h3><span class="badge amber">120 ok · 3 con error</span><div class="actions"><button class="btn sm">⬇ CSV</button></div></div>
+<table class="tbl"><tr><th>Fila</th><th>Nivel</th><th>Mensaje</th></tr>
+<tr><td>14</td><td><span class="badge red">error</span></td><td>Unidad de medida "KGS" no existe: usá una del catálogo (KG, L, UN…)</td></tr>
+<tr><td>57</td><td><span class="badge red">error</span></td><td>Código repetido "ART-0099"</td></tr>
+<tr><td>88</td><td><span class="badge red">error</span></td><td>Familia "Lubricantes 2" no existe</td></tr>
+</table></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> flujo existente (A-21, UC-026/027) integrado en la nueva UI. Lo nuevo: validación del procedimiento contra el catálogo (S11), tope de usuarios y historial persistente de cargas. La carga parcial por fila se mantiene.</div>
+</body>
+</html>

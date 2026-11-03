@@ -1,0 +1,33 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>DNATO v3 · Registro · Elegí tu plan</title>
+<!-- MAQUETA DNATO v3 — Paso nuevo del autorregistro: elegir plan (default Freemium). CU-53. RF-07. Dónde: DNATO (se inserta en el flujo existente Register::crearEmpresa → guardarEmpresa; el resto del registro no se toca). -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="dnato.css"></head>
+<body data-cu="CU-53" data-rf="RF-07" data-donde="DNATO" data-layout="registro">
+<main class="main" style="max-width:1080px;margin:0 auto">
+<div class="page-head"><div><div class="muted" style="font-size:12.5px">Registro · paso 3 de 4 · <b>Tu plan</b></div><h1>Elegí cómo arrancar</h1><div class="sub">Podés empezar gratis y cambiar de plan cuando quieras desde Mi empresa. Los planes pagos los activa Trazalog; el cobro se maneja aparte.</div></div></div>
+<div class="grid g4">
+  <div class="card" style="border:2px solid var(--red)"><div class="card-b stack">
+    <div class="row"><span style="font-size:26px">🥉</span><div><b>Freemium</b><div class="muted" style="font-size:12px">Recomendado para empezar</div></div><span class="badge dark" style="margin-left:auto">Gratis</span></div>
+    <div style="font-size:13px" class="stack"><div>👥 Hasta <b>5 usuarios</b></div><div>🛠️ Mantenimiento</div><div>📦 Almacenes</div><div>🔧 Herramientas</div><div>🤖 <b>30</b> consultas de IA por semana</div></div>
+    <button class="btn primary" style="justify-content:center">✔ Seguir con Freemium</button>
+  </div></div>
+  <div class="card"><div class="card-b stack">
+    <div class="row"><span style="font-size:26px">🥈</span><div><b>Team</b><div class="muted" style="font-size:12px">USD 79 / mes</div></div></div>
+    <div style="font-size:13px" class="stack"><div>👥 Hasta <b>15 usuarios</b></div><div>Todo Freemium</div><div>🔁 Ajustes de stock</div><div>🤖 <b>1.000</b> consultas de IA por mes · crear OT por IA</div></div>
+    <button class="btn" style="justify-content:center">Pedir Team</button>
+  </div></div>
+  <div class="card"><div class="card-b stack">
+    <div class="row"><span style="font-size:26px">🥇</span><div><b>Business</b><div class="muted" style="font-size:12px">USD 179 / mes</div></div></div>
+    <div style="font-size:13px" class="stack"><div>👥 Hasta <b>40 usuarios</b></div><div>Todo Team</div><div>🔀 Procesos · 🏭 Producción</div><div>🤖 <b>4.000</b> consultas de IA por mes</div></div>
+    <button class="btn" style="justify-content:center">Pedir Business</button>
+  </div></div>
+  <div class="card"><div class="card-b stack">
+    <div class="row"><span style="font-size:26px">💠</span><div><b>Enterprise</b><div class="muted" style="font-size:12px">Consultar</div></div></div>
+    <div style="font-size:13px" class="stack"><div>👥 Sin límite</div><div>Todo Business</div><div>🏢 Varias empresas</div><div>🤖 Sin límite</div></div>
+    <button class="btn" style="justify-content:center">Consultar</button>
+  </div></div>
+</div>
+<div class="alert info mt"><span>ℹ️</span><div>Los planes <b>gratuitos o de prueba</b> se activan al instante y se pueden usar una sola vez; si tienen vencimiento, al terminar vas a tener que elegir un plan para seguir. Si elegís otro plan, tu empresa arranca en <b>Freemium</b> mientras Trazalog lo aprueba; te avisamos por correo. No pedimos datos de pago.</div></div>
+<div class="row mt" style="justify-content:space-between"><a class="btn ghost" href="#">← Volver</a><span class="muted" style="font-size:12.5px">Paso siguiente: datos de la empresa</span></div>
+</main>
+<div class="spec-note"><b>Nota de maqueta:</b> paso que se agrega al autorregistro existente (Register::crearEmpresa), sin tocar los otros pasos. Default: Freemium. Un plan gratuito / de prueba se activa solo (con vencimiento si lo tiene); otro plan deja la empresa en Freemium con estado "pendiente de aprobación" hasta que el súper usuario lo apruebe en Consola → Registros (CU-23). Cada alta notifica a infra (RF-08).</div>
+</body></html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Formularios de la empresa</title>
+<!--
+  MAQUETA DNATO v3 — Formularios de la empresa
+  Casos de uso: CU-70, CU-72, CU-74
+  Requerimientos: RF-120, RF-125, RF-126, RF-128, RF-130
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-70, CU-72, CU-74" data-rf="RF-120, RF-125, RF-126, RF-128, RF-130" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=""><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=""><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=" active"><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=""><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=""><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=""><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=""><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Formularios</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Formularios</h1><div class="sub">Los formularios dinámicos que usan las pantallas de Tools (entregas, pañol, checklists…). Los tuyos los editás acá; los globales los mantiene Trazalog y podés usarlos tal cual o copiarlos.</div></div>
+<div class="actions"><a class="btn primary" href="empresa-formulario-editor.html">＋ Nuevo formulario</a></div></div>
+<div class="tabs"><a class="active" href="#">Formularios</a><a href="#usos">Dónde se usan</a></div>
+
+<div class="card mb"><div class="card-h"><h3>Mis formularios</h3><span class="muted">propios de MinTest_SJ</span></div>
+<table class="tbl"><tr><th>Formulario</th><th>Estado</th><th class="num">Campos</th><th>Dónde se usa</th><th class="num">Respuestas</th><th></th></tr>
+<tr><td><b>Entrega de materiales MinTest</b><div class="muted">copiado de "Entrega de materiales" (global)</div></td><td><span class="badge green">Publicado</span></td><td class="num">5</td><td>📦 Entrega de materiales</td><td class="num">12</td><td><div class="row-actions"><a class="btn sm" href="empresa-formulario-editor.html">Editar</a><button class="btn sm">Vista previa</button><button class="btn sm ghost">Duplicar</button><button class="btn sm ghost">Inactivar</button></div></td></tr>
+<tr><td><b>Inspección de equipo</b><div class="muted">creado el 28/10</div></td><td><span class="badge amber">Borrador</span></td><td class="num">9</td><td class="muted">—</td><td class="num">0</td><td><div class="row-actions"><a class="btn sm" href="empresa-formulario-editor.html">Editar</a><button class="btn sm">Vista previa</button><button class="btn sm ghost">Duplicar</button><button class="btn sm primary">Publicar</button></div></td></tr>
+</table></div>
+
+<div class="card"><div class="card-h"><h3>Globales disponibles</h3><span class="muted">los mantiene Trazalog · se usan tal cual o como base de una copia propia</span></div>
+<table class="tbl"><tr><th>Formulario</th><th class="num">Campos</th><th>Lo usás en</th><th></th></tr>
+<tr><td>🌐 <b>Entrega de materiales</b><div class="muted">solicitante, DNI, comprobante, obra, observaciones</div></td><td class="num">5</td><td class="muted">— (usás tu copia)</td><td><div class="row-actions"><button class="btn sm">Vista previa</button><button class="btn sm">⧉ Usar como base</button></div></td></tr>
+<tr><td>🌐 <b>Salida de pañol</b></td><td class="num">4</td><td>🔧 Salida de pañol · 🔧 Recepción de pañol</td><td><div class="row-actions"><button class="btn sm">Vista previa</button><button class="btn sm">⧉ Usar como base</button></div></td></tr>
+</table></div>
+
+<a id="usos"></a>
+<div class="card mt"><div class="card-h"><h3>Dónde se usan</h3><span class="muted">Qué formulario muestra cada pantalla de Tools en tu empresa.</span><div class="actions"><button class="btn primary sm">Guardar</button></div></div>
+<table class="tbl"><tr><th>Pantalla</th><th>Módulo</th><th>Formulario que se muestra</th><th></th></tr>
+<tr><td>📦 Entrega de materiales (directa y por pedido)</td><td>Almacenes</td><td><select class="select"><option selected>Entrega de materiales MinTest (propio)</option><option>🌐 Entrega de materiales (global)</option><option>Ninguno</option></select></td><td></td></tr>
+<tr><td>🔧 Salida de pañol</td><td>Herramientas</td><td><select class="select"><option selected>🌐 Salida de pañol (global)</option><option>Ninguno</option></select></td><td></td></tr>
+<tr><td>🔧 Recepción de pañol</td><td>Herramientas</td><td><select class="select"><option selected>🌐 Salida de pañol (global)</option><option>Ninguno</option></select></td><td class="muted">hoy usa la misma clave que salida</td></tr>
+<tr><td>✅ Checklist de herramienta</td><td>Herramientas</td><td><select class="select"><option selected>Ninguno</option><option>Inspección de equipo (propio · borrador, publicalo primero)</option></select></td><td><span class="badge amber">la pantalla no mostrará formulario</span></td></tr>
+</table>
+<div class="card-b" style="border-top:1px solid var(--gray-4)"><h4 style="margin-bottom:8px">Elegidos en su propio ABM (solo lectura)</h4>
+<table class="tbl"><tr><th>Dónde</th><th>Formulario</th><th></th></tr>
+<tr><td>🔀 Proceso "Pedido de trabajo" · tarea principal</td><td>Pedido de trabajo estándar</td><td><a href="#">Ir a Procesos →</a></td></tr>
+<tr><td>📋 Tarea estándar "Inspección diaria"</td><td>Inspección de equipo (borrador)</td><td><a href="#">Ir a Tareas estándar →</a></td></tr>
+<tr><td>🏭 Etapa "Molienda"</td><td>—</td><td><a href="#">Ir a Etapas →</a></td></tr></table></div></div>
+
+<div class="modal-back"><div class="modal"><div class="m-h">Inactivar "Entrega de materiales MinTest"</div><div class="m-b stack"><p>Está en uso en <b>Entrega de materiales</b>: esa pantalla quedará sin formulario hasta que elijas otro en "Dónde se usan". Las 12 respuestas cargadas se siguen viendo.</p></div><div class="m-f"><button class="btn">Cancelar</button><button class="btn primary">Inactivar</button></div></div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> sobre frm.formularios (empr_id nulo = global) y la configuración por empresa configuraciones/formulario_<punto> en core.tablas (mecanismo A del relevamiento). 'Usar como base' copia cabecera, ítems y listas de opciones (CP-125). Procesos, tareas y etapas se siguen eligiendo en su ABM (mecanismos C/D).</div>
+</body>
+</html>
