@@ -11,11 +11,14 @@ técnico de DocTest (está en [`doctest/README.md`](../../doctest/README.md) y
 y PR (está en el `CLAUDE.md` del repo).
 
 > Versión 1.4 · noviembre 2026 · Trazalog v2.5 / v3
-> **Cambios en 1.4:** DeepSeek sigue las mismas reglas de ramas y pull requests que Claude Code, a
-> través del archivo `doc/metodologia/REGLAS-PARA-AGENTES.md` (sección 2.16). dónde deja Pablo el plan y cómo lo aprueba Rodolfo: pull request en borrador y
-> comentario "✅ Plan aprobado" (sección 2.4). El documento se parte en dos: **Parte 1, ayuda memoria** del día a día, y
-> **Parte 2, el detalle**. El despliegue a DEMO y la verificación posterior los hace **Pablo**; Rodolfo
-> aprueba el pull request. Se agrega la primera vez de Pablo (`casi-full`) a la tabla de DocTest.
+> **Cambios en 1.4:**
+> - El documento se parte en dos: **Parte 1, ayuda memoria** del día a día, y **Parte 2, el detalle**.
+> - Dónde deja Pablo el plan y cómo lo aprueba Rodolfo: pull request en borrador y comentario
+>   "✅ Plan aprobado" (sección 2.4).
+> - El despliegue a DEMO y la verificación posterior los hace **Pablo**; Rodolfo aprueba el pull
+>   request. Se agrega la primera vez de Pablo (`casi-full`) a la tabla de DocTest (sección 1.3).
+> - DeepSeek sigue las mismas reglas de ramas y pull requests que Claude Code, a través de
+>   `doc/metodologia/REGLAS-PARA-AGENTES.md` (sección 2.16).
 >
 > **Cambios en 1.3:** se agregan los pedidos listos para copiar y pegar al agente (sección 2.8). DeepSeek
 > puede redactar el borrador de un caso que falta; la validación sigue siendo de Rodolfo. Se aclara
