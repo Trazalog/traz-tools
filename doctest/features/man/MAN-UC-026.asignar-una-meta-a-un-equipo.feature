@@ -1,5 +1,5 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/man/MAN-UC-026.yaml (versión 0.1, validado 2026-08-26).
+# Fuente: catalogo/man/MAN-UC-026.yaml (versión 1.0, validado 2026-11-03).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 
 @man @MAN-UC-026
@@ -9,7 +9,8 @@ Característica: Asignar una meta a un equipo
   Dónde: Mantenimiento → Equipos → Asignar Meta
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
+    Dado Sesión iniciada en Tools (ingreso de DNATO)
+    Y La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
 
   Escenario: Camino principal
     Cuando En el listado de equipos elige la acción Asignar Meta
@@ -23,6 +24,5 @@ Característica: Asignar una meta a un equipo
 
   # Reglas que este caso verifica:
   #   - Es la **meta de disponibilidad** del equipo, en porcentaje
-  #   - Es opcional: un equipo puede no tener ninguna
   #   - La meta es **opcional**: un equipo puede no tener ninguna
   #   - El valor va de 1 a 100

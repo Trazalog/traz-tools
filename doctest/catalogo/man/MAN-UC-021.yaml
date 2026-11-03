@@ -1,23 +1,38 @@
 id: MAN-UC-021
 modulo: MAN
-titulo: Administrar el envío de órdenes
+titulo: Entregar órdenes terminadas y reprogramar las parciales
 perfil: Planificador
-estado: obsoleto
-version: "1.0"
+estado: validado
+version: "2.0"
 origen: baseline
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Envio.php
-  - repo: traz-prod-assetplanner
-    path: application/models/Administraciones.php
+  - repo: traz-tools-man
+    path: controllers/Envio.php
+    detalle: index() lista; entrega() entrega una orden terminada; ModificarFecha() reprograma una terminada parcialmente
+  - repo: traz-tools-man
+    path: models/Envios.php
+  - repo: traz-tools-man
+    path: views/envio/list.php
 pantallas:
-  - "Mantenimiento → Administrar Ordenes"
+  - Mantenimiento → Administrar Ordenes
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Planificador
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - Hay órdenes terminadas o terminadas parcialmente
 flujo_principal:
-  - paso: "Entra a Mantenimiento → Administrar Ordenes"
-    resultado: "Se lista con ID, Número, Fecha Inicio, Fecha Entrega, Fecha Terminada, Fecha Aviso, Detalle y Estado"
+  - paso: Entra a Mantenimiento → Administrar Ordenes
+    resultado: Se listan las órdenes con ID, Número, Fecha Inicio, Fecha Entrega, Fecha Terminada, Fecha Aviso, Detalle y Estado
+  - paso: Sobre una orden terminada elige entregarla
+    resultado: La orden queda entregada, con su fecha de entrega
+flujos_alternativos:
+  - nombre: Reprogramar una orden terminada parcialmente
+    pasos:
+      - paso: Sobre una orden `TE` cambia la fecha
+        resultado: La orden queda reprogramada para la fecha nueva
+validaciones:
+  - Solo opera sobre órdenes de la empresa de la sesión
 dudas: []
 notas:
-  - "**Declarada obsoleta por el PM (2026-08-26).** Se conserva por historia y no genera derivados."
-  - "Es la única pantalla del menú de Mantenimiento que no se pudo interpretar ni desde el código ni desde los manuales existentes."
+  - El PM la había declarado obsoleta el 2026-08-26 sobre asset. En la revisión de pantallas de la migración se decidió portarla (E49, corrige T64), así que vuelve a estar vigente.
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

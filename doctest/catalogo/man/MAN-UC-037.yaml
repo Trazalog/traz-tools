@@ -2,32 +2,40 @@ id: MAN-UC-037
 modulo: MAN
 titulo: Ver el detalle de un informe de servicio
 perfil: Supervisor
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/views/ordenservicio/
-    detalle: "el ícono 'Ver Informe' de cada fila y el checkbox de selección múltiple"
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Ordenservicio.php
+  - repo: traz-tools-man
+    path: views/ordenservicios/list.php
+    detalle: el ícono 'Ver Informe', las casillas de cada fila y 'Seleccionar todos'
+  - repo: traz-tools-man
+    path: controllers/Ordenservicio.php
+    detalle: verInforme(); cierreMasivoVerificaInforme() verifica en bloque
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: POST /tools/man/informe/verificar (E28)
 pantallas:
-  - "Mantenimiento → Informe de Servicios"
+  - Mantenimiento → Informe de Servicios
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - Hay informes cargados
 depende_de:
   - MAN-UC-012
 flujo_principal:
-  - paso: "En el listado usa el ícono 'Ver Informe' de una fila"
+  - paso: En el listado usa el ícono 'Ver Informe' de una fila
     resultado: "Se muestra el informe completo: qué se hizo, quiénes trabajaron, cuánto tiempo llevó y qué materiales figuran"
 flujos_alternativos:
-  - nombre: "Trabajar sobre varios informes"
+  - nombre: Verificar varios informes juntos
     pasos:
-      - paso: "Marca los casilleros de varias filas"
-        resultado: "Quedan seleccionadas para operar sobre todas juntas"
+      - paso: Marca las casillas de varias filas (o "Seleccionar todos") y verifica
+        resultado: 'Cada informe seleccionado queda verificado: se cierra su tarea "Verifica Informe de Servicio" en Bonita y el informe y la orden pasan a `CE`'
 validaciones:
-  - "El listado se puede filtrar por estado"
-  - "El listado se puede filtrar por estado"
-dudas:
-  - "**Falta confirmar para qué sirve el casillero de selección múltiple** de cada fila: no se encontró qué acción opera sobre varios informes a la vez. Se ve en pantalla, así que es rápido de confirmar cuando se escriban los tests."
+  - El listado se puede filtrar por estado
+  - La verificación en bloque toma el caso de cada orden de la empresa, no el que manda la pantalla (E28)
+dudas: []
+notas:
+  - "Sale de borrador: la casilla de cada fila es para **verificar en bloque** (`cierreMasivoVerificaInforme()`, decisión E28 de la migración)."
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

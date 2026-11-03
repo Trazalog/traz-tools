@@ -1,45 +1,106 @@
 /**
- * Sesión de AssetPlanner para los tests de Mantenimiento.
+ * Sesión para los tests de Mantenimiento (MAN) **dentro de Tools**.
  *
- * Es una fixture aparte de la de Tools a propósito: **MAN tiene su propio ingreso y su propio
- * padrón de usuarios**, así que la sesión de Tools no sirve acá (ver `pages/man/LoginManPage.ts`).
+ * Desde la migración de AssetPlanner a tools (submódulo `traz-tools-man`, 2026-11), Mantenimiento
+ * ya no tiene ingreso propio: se entra por DNATO como al resto de Tools y las pantallas se abren
+ * desde el menú "Mantenimiento". El ingreso viejo de asset (`pages/man/LoginManPage.ts`) queda solo
+ * para las pruebas que todavía verifican asset (DNATO-UC-014-018).
  *
- * Como en el resto de DocTest, las credenciales **nunca se hardcodean**: si falta una, el test
- * falla diciendo exactamente qué variable completar.
+ * El usuario tiene que ser de una empresa **vinculada con Mantenimiento**
+ * (`core.empresas.empr_id_mysql`) y tener el menú MAN. Una empresa recién registrada por el modo
+ * casi-full/full no lo está (la vinculación toca `core` y la aprueba el PM), así que el usuario de
+ * MAN se configura por ambiente y **no** lo pisa el perfil:
+ *
+ *   DOCTEST_<AMBIENTE>_MAN_USER / _PASS / _EMPRESA   (AMBIENTE = LOCAL | DEMO | STAGING)
+ *
+ * y, si no están, DOCTEST_MAN_USER / _PASS / _EMPRESA. Las credenciales nunca se hardcodean.
+ *
+ * El ingreso se hace una vez por worker y la sesión se reutiliza con `storageState`.
  */
 
-import { test as base, type Page } from '@playwright/test';
+import { test as base, type Browser, type Page } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { requerirUrlDeApp } from '../config/apps.ts';
-import { LoginManPage, type CredencialesMan } from '../pages/man/LoginManPage.ts';
+import { entornoActual, requerirUrlDeApp } from '../config/apps.ts';
+import { LoginPage } from '../pages/dnato/LoginPage.ts';
 
-export function credencialesMan(): CredencialesMan {
-  const usuario = process.env.DOCTEST_MAN_USER;
-  const password = process.env.DOCTEST_MAN_PASS;
-  if (!usuario || !password) {
-    throw new Error(
-      'Faltan las credenciales de AssetPlanner. Completá DOCTEST_MAN_USER y DOCTEST_MAN_PASS en\n' +
-        'doctest/.env — son las de un usuario de Mantenimiento, que NO son las de Tools: la app\n' +
-        'tiene su propio padrón (ver issue #489).',
-    );
-  }
-  return { usuario, password };
+const HERE = dirname(fileURLToPath(import.meta.url));
+const DIR_SESIONES = resolve(HERE, '..', '.auth');
+
+export interface CredencialesManTools {
+  usuario: string;
+  password: string;
+  /** Nombre de la empresa en la tarjeta del paso 2 del ingreso (si el usuario tiene más de una). */
+  empresa?: string;
 }
 
-export const test = base.extend<{ paginaMan: Page }>({
-  paginaMan: async ({ browser }, usar) => {
-    const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
-    const page = await contexto.newPage();
-    const login = new LoginManPage(page);
-    await login.abrir(requerirUrlDeApp('man'));
-    await login.ingresar(credencialesMan());
-    if (await login.sigueEnElIngreso()) {
+const PREFIJO: Record<string, string> = { local: 'LOCAL', demo: 'DEMO', 'staging-v3': 'STAGING' };
+
+function leer(sufijo: string): string | undefined {
+  const propio = process.env[`DOCTEST_${PREFIJO[entornoActual()]}_MAN_${sufijo}`]?.trim();
+  return propio || process.env[`DOCTEST_MAN_${sufijo}`]?.trim() || undefined;
+}
+
+export function credencialesMan(): CredencialesManTools {
+  const usuario = leer('USER');
+  const password = leer('PASS');
+  if (!usuario || !password) {
+    const p = PREFIJO[entornoActual()];
+    throw new Error(
+      `Faltan las credenciales de Mantenimiento. Completá DOCTEST_${p}_MAN_USER y DOCTEST_${p}_MAN_PASS\n` +
+        'en doctest/.env: un usuario de Tools de una empresa vinculada con Mantenimiento y con el menú MAN.',
+    );
+  }
+  return { usuario, password, empresa: leer('EMPRESA') };
+}
+
+async function ingresar(browser: Browser): Promise<string> {
+  const datos = credencialesMan();
+  const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
+  const page = await contexto.newPage();
+  page.setDefaultNavigationTimeout(120_000);
+  const login = new LoginPage(page);
+  await login.abrir(requerirUrlDeApp('dnato'));
+  await login.completar({ email: datos.usuario, password: datos.password, empresa: datos.empresa ?? '' });
+  await login.enviar();
+  if (await login.enSeleccionDeEmpresa()) {
+    const ofrecidas = await login.empresasDisponibles();
+    const elegida = datos.empresa ?? (ofrecidas.length === 1 ? ofrecidas[0] : undefined);
+    if (!elegida) {
+      await contexto.close();
       throw new Error(
-        'No se pudo ingresar a AssetPlanner con las credenciales de DOCTEST_MAN_USER.\n' +
-          'Si el usuario se creó por la registración, es esperable: la contraseña se guarda sin\n' +
-          'hashear y asset la compara contra MD5 (issue #489).',
+        `El usuario de Mantenimiento tiene varias empresas (${ofrecidas.join(', ')}): ` +
+          `indicá cuál en DOCTEST_${PREFIJO[entornoActual()]}_MAN_EMPRESA.`,
       );
     }
+    await login.elegirEmpresa(elegida);
+  }
+  const error = await login.mensajeDeError();
+  if (error || !(await login.sesionIniciada())) {
+    await contexto.close();
+    throw new Error(`No se pudo ingresar a Tools con el usuario de Mantenimiento: ${error ?? 'sigue en el ingreso'}`);
+  }
+  mkdirSync(DIR_SESIONES, { recursive: true });
+  const destino = join(DIR_SESIONES, `man-${entornoActual()}.json`);
+  await contexto.storageState({ path: destino });
+  await contexto.close();
+  return destino;
+}
+
+export const test = base.extend<{ paginaMan: Page }, { sesionMan: string }>({
+  sesionMan: [
+    async ({ browser }, usar) => {
+      await usar(await ingresar(browser));
+    },
+    { scope: 'worker' },
+  ],
+  paginaMan: async ({ browser, sesionMan }, usar) => {
+    const contexto = await browser.newContext({ ignoreHTTPSErrors: true, storageState: sesionMan });
+    const page = await contexto.newPage();
+    // Las pantallas de asset usan alert()/confirm() nativos: un diálogo sin atender traba la página.
+    page.on('dialog', (d) => void d.accept().catch(() => {}));
     await usar(page);
     await contexto.close();
   },

@@ -1,5 +1,5 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/man/MAN-UC-028.yaml (versión 0.1, validado 2026-08-26).
+# Fuente: catalogo/man/MAN-UC-028.yaml (versión 1.0, validado 2026-11-03).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 
 @man @MAN-UC-028
@@ -9,7 +9,8 @@ Característica: El ciclo de vida de un equipo
   Dónde: Mantenimiento → Equipos
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
+    Dado Sesión iniciada en Tools (ingreso de DNATO)
+    Y La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
 
   Escenario: Camino principal
     Cuando Se da de alta el equipo (MAN-UC-002)
@@ -23,6 +24,5 @@ Característica: El ciclo de vida de un equipo
 
   # Reglas que este caso verifica:
   #   - El equipo tiene **tres** estados: `AC` activo, `IN` inhabilitado y `AN` dado de baja
-  #   - Ninguna de las dos acciones borra el registro: el historial del equipo se conserva siempre
-  #   - En la base el equipo tiene dos estados: `AC` (activo) y `AN`
-  #   - La única transición que el usuario controla a mano es habilitar / inhabilitar
+  #   - Ninguna acción borra el registro: el historial del equipo se conserva siempre
+  #   - La única transición que el usuario controla a mano es habilitar / inhabilitar / eliminar

@@ -1,5 +1,5 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/man/MAN-UC-031.yaml (versión 1.0, validado 2026-08-26).
+# Fuente: catalogo/man/MAN-UC-031.yaml (versión 2.0, validado 2026-11-03).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 
 @man @MAN-UC-031
@@ -9,7 +9,8 @@ Característica: El ciclo de vida de un backlog
   Dónde: Mantenimiento → Backlog
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
+    Dado Sesión iniciada en Tools (ingreso de DNATO)
+    Y La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
 
   Escenario: Camino principal
     Cuando El backlog nace de dos maneras: se anota a mano (MAN-UC-015), o **lo genera el proceso** cuando el Supervisor decide que una solicitud no es urgente

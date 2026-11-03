@@ -1,20 +1,21 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/man/MAN-UC-008.yaml (versión 1.0, validado 2026-08-26).
+# Fuente: catalogo/man/MAN-UC-008.yaml (versión 2.0, validado 2026-11-03).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 
 @man @MAN-UC-008
 Característica: Analizar una solicitud y decidir qué hacer
 
   Quién lo hace: Supervisor
-  Dónde: Mantenimiento → Solicitud de Servicio · Mis Tareas
+  Dónde: Mis Tareas (bandeja de tools, panel de Mantenimiento) · Mantenimiento → Bandeja de Tareas
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner con perfil Supervisor de Taller
+    Dado Sesión iniciada en Tools (ingreso de DNATO) con perfil Supervisor de Taller
+    Y La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
     Y Existe una solicitud pendiente de análisis, creada con MAN-UC-007
     Y La tarea llegó a la bandeja de entrada: el proceso de Bonita es el que la pone ahí (MAN-UC-019)
 
   Escenario: Camino principal
-    Cuando Abre la solicitud pendiente, desde el listado o desde Mis Tareas
+    Cuando Abre la tarea de análisis desde su bandeja (Mis Tareas, o Mantenimiento → Bandeja de Tareas)
     Entonces Se muestra qué equipo es, qué reportó el solicitante y los archivos que adjuntó
     Y cuando Decide si el trabajo es urgente
     Entonces De esa única decisión sale todo lo demás
@@ -26,3 +27,4 @@ Característica: Analizar una solicitud y decidir qué hacer
   # Reglas que este caso verifica:
   #   - **La urgencia es la única decisión de este paso, y define quién sigue**: si es urgente, el Supervisor planifica y asigna; si no, pasa al Planificador por la vía del backlog
   #   - Una solicitud rechazada no genera orden de trabajo
+  #   - El sistema toma la solicitud y la orden del caso de Bonita, no de lo que manda la pantalla, y verifica que el caso sea de la empresa (E31)

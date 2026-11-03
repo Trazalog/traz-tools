@@ -3,35 +3,40 @@ modulo: MAN
 titulo: Editar o quitar la asociación de un componente
 perfil: Supervisor
 estado: validado
-version: "0.1"
+version: "1.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/views/componente/list.php
-    detalle: "las acciones 'Editar asociación' y 'Eliminar asociación'"
+  - repo: traz-tools-man
+    path: views/componente/list.php
+    detalle: las acciones 'Editar asociación' y 'Eliminar asociación'
+  - repo: traz-tools-man
+    path: controllers/Componente.php
+    detalle: editarCompEq(), baja_comp()
 pantallas:
-  - "Mantenimiento → Componentes"
+  - Mantenimiento → Componentes
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - El equipo tiene componentes asociados (MAN-UC-006)
 depende_de:
   - MAN-UC-006
 flujo_principal:
-  - paso: "En la tabla de componentes del equipo elige Editar asociación"
-    resultado: "Se pueden cambiar el código trazable y el sistema de esa asociación"
-  - paso: "Guarda"
-    resultado: "La asociación queda actualizada"
+  - paso: En la tabla de componentes del equipo elige Editar asociación
+    resultado: Se pueden cambiar el código trazable y el sistema de esa asociación
+  - paso: Guarda
+    resultado: La asociación queda actualizada
 flujos_alternativos:
-  - nombre: "Quitar el componente del equipo"
+  - nombre: Quitar el componente del equipo
     pasos:
-      - paso: "Elige Eliminar asociación"
-        resultado: "El componente deja de estar asociado a ese equipo, pero sigue existiendo en el catálogo"
+      - paso: Elige Eliminar asociación
+        resultado: El componente deja de estar asociado a ese equipo, pero sigue existiendo en el catálogo
 validaciones:
   - "Quitar la asociación no borra el componente del catálogo: sigue disponible para otros equipos"
-  - "Quitar la asociación no borra el componente del catálogo"
+  - Quitar la asociación no borra el componente del catálogo
 dudas: []
 derivados:
   ayuda: ayudas/src/man/manual_mantenimiento.html#s03
 notas:
-  - "El **código trazable** identifica a la pieza física puesta en ese equipo. Cambiarlo es la forma de registrar que se reemplazó la pieza por otra."
+  - El **código trazable** identifica a la pieza física puesta en ese equipo. Cambiarlo es la forma de registrar que se reemplazó la pieza por otra.
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

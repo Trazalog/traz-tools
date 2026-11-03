@@ -107,6 +107,7 @@
             "enum": [
               "traz-tools",
               "traz-prod-assetplanner",
+              "traz-tools-man",
               "traz-comp-dnato",
               "traz-comp-almacenes",
               "traz-comp-pan",

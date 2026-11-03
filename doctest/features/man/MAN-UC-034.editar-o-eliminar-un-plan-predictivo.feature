@@ -1,5 +1,5 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/man/MAN-UC-034.yaml (versión 0.1, validado 2026-08-26).
+# Fuente: catalogo/man/MAN-UC-034.yaml (versión 1.0, validado 2026-11-03).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 
 @man @MAN-UC-034
@@ -9,7 +9,8 @@ Característica: Editar o eliminar un plan predictivo
   Dónde: Mantenimiento → Predictivo
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
+    Dado Sesión iniciada en Tools (ingreso de DNATO)
+    Y La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
     Y Existe al menos un plan predictivo cargado (MAN-UC-018)
 
   Escenario: Camino principal
