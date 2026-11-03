@@ -11,7 +11,8 @@ técnico de DocTest (está en [`doctest/README.md`](../../doctest/README.md) y
 y PR (está en el `CLAUDE.md` del repo).
 
 > Versión 1.4 · noviembre 2026 · Trazalog v2.5 / v3
-> **Cambios en 1.4:** el documento se parte en dos: **Parte 1, ayuda memoria** del día a día, y
+> **Cambios en 1.4:** dónde deja Pablo el plan y cómo lo aprueba Rodolfo: pull request en borrador y
+> comentario "✅ Plan aprobado" (sección 2.4). El documento se parte en dos: **Parte 1, ayuda memoria** del día a día, y
 > **Parte 2, el detalle**. El despliegue a DEMO y la verificación posterior los hace **Pablo**; Rodolfo
 > aprueba el pull request. Se agrega la primera vez de Pablo (`casi-full`) a la tabla de DocTest.
 >
@@ -47,7 +48,7 @@ pruebas a mano: se le piden a un agente con los pedidos A, B y C (sección 2.8).
 flowchart TD
   A["1 Rodolfo arma los casos"] --> B["2 Rodolfo los valida"]
   B --> C["3 Pablo arma el plan"]
-  C --> D{"4 Rodolfo revisa"}
+  C --> D{"4 Rodolfo revisa el plan"}
   D -->|dudas| A
   D -->|ok| F["5 Pablo programa una tarea"]
   F --> G["6 DocTest local"]
@@ -55,8 +56,8 @@ flowchart TD
   G -->|verde| H["7 commit y push"]
   H --> I{"¿Quedan tareas?"}
   I -->|sí| F
-  I -->|no| J["8 Pablo abre el PR"]
-  J --> K{"9 Rodolfo revisa"}
+  I -->|no| J["8 Pablo pasa el PR a listo"]
+  J --> K{"9 Rodolfo revisa el PR"}
   K -->|devuelve| F
   K -->|aprueba| L["10 Pablo despliega"]
   L --> M["11 DocTest en DEMO"]
@@ -97,20 +98,23 @@ flowchart TD
 
 - [ ] **Requerimiento nuevo:** pedido A a Claude → contestar las dudas → validar los casos → subirlos
       a `develop`. Antes de pasárselo a Pablo, la lista de control de la sección 2.14.
-- [ ] **Llega el plan de Pablo:** ¿tareas chicas? ¿cubren todos los casos? (sección 2.4)
+- [ ] **Llega el plan de Pablo** (pull request en borrador en GitHub): comentarios sobre los renglones
+      si hay algo para cambiar, o un comentario **`✅ Plan aprobado`** si está bien. No el botón
+      "Approve" (sección 2.4).
 - [ ] **Llega un aviso "falta probar algo" (test-gap):** revisar el borrador con Claude, contestar las
       dudas y validarlo en la rama de Pablo (sección 2.7).
 - [ ] **Llega el pull request:** verificar lo de la sección 2.11 y aprobar o devolver.
 
 ## 1.5 Checklist de Pablo
 
-- [ ] **Arranca un requerimiento:** plan con DeepSeek Pro, Rodolfo lo revisa (sección 2.4).
+- [ ] **Arranca un requerimiento:** plan con DeepSeek Pro → rama `feature/req-###` → pull request en
+      borrador con solo el plan → esperar el comentario **`✅ Plan aprobado`** de Rodolfo (sección 2.4).
 - [ ] **Por cada tarea:** DeepSeek Flash programa la tarea y su prueba (pedido B) → DocTest en su
       máquina → verde: commit y push (sección 2.9).
 - [ ] **Falta un caso o uno está mal:** pedido C → commitea el borrador → aviso test-gap a Rodolfo. No
       escribe la prueba hasta que Rodolfo lo valide (sección 2.7).
-- [ ] **Terminó todas las tareas:** pull request con los resultados reales de DocTest pegados
-      (sección 2.10).
+- [ ] **Terminó todas las tareas:** completa la descripción del mismo pull request con los resultados
+      reales de DocTest y lo pasa a "Ready for review" (sección 2.10).
 - [ ] **Rodolfo aprobó:** despliega a DEMO → DocTest contra DEMO → rojo: vuelve a la versión anterior
       y avisa (sección 2.12).
 - [ ] **Algo falla dos veces:** escalar (sección 2.13).
@@ -246,9 +250,45 @@ Pablo le da a DeepSeek Pro el `REQ-###.md` y los YAML del catálogo, y le pide u
 - ✅ Hay una tarea explícita para **agregar los `data-testid`** en las vistas.
 - ❌ Ninguna tarea dice "implementar el módulo completo". Si aparece, se parte.
 
-El plan se guarda al lado del requerimiento, en `requerimientos/REQ-###-nombre-corto.plan.md`. Rodolfo
-lo revisa antes de que Pablo programe: ¿las tareas son chicas? ¿cubren todos los casos? ¿DeepSeek
-entendió algo distinto?
+### Dónde lo deja Pablo
+
+En GitHub, como **el primer paso del mismo pull request** que después va a llevar el código:
+
+1. En su máquina, en `traz-tools/`: crea la rama `feature/req-###` desde `develop` y guarda el plan
+   en `requerimientos/REQ-###-nombre-corto.plan.md`, al lado del requerimiento.
+2. Commit y push de **solo el plan**.
+3. Abre el pull request a `develop` **como borrador** ("Create draft pull request" en GitHub), con el
+   título `REQ-###: <nombre>` y en la descripción: *"Plan para revisar: requerimientos/REQ-###-….plan.md"*.
+   Un pull request en borrador no se puede unir a `develop` por error.
+
+### Cómo lo revisa y aprueba Rodolfo
+
+En GitHub, en ese pull request, pestaña **"Files changed"**:
+
+- **Si hay algo para cambiar:** deja comentarios sobre los renglones del plan (botón **+** al lado de
+  cada línea). Pablo lo corrige con DeepSeek Pro, hace push en la misma rama y le avisa.
+- **Si está bien:** deja un comentario en la pestaña "Conversation" que diga **`✅ Plan aprobado`**.
+  Ese comentario es la aprobación: queda con fecha y nombre, y Pablo no programa sin él.
+
+> **Por qué un comentario y no el botón "Approve" de GitHub:** el botón aprueba el pull request entero.
+> Si Rodolfo lo usara para el plan, el pull request quedaría aprobado aunque todavía no tenga código.
+> "Approve" se reserva para el final (sección 2.11).
+
+Qué mira Rodolfo: ¿las tareas son chicas? ¿cubren todos los casos? ¿DeepSeek entendió algo distinto?
+
+Con el plan aprobado, Pablo programa **en la misma rama**: cada tarea es un commit más en ese pull
+request (sección 2.9). Al terminar todas, lo pasa de borrador a listo (sección 2.10).
+
+```mermaid
+flowchart TD
+  A["Pablo: rama y plan"] --> B["Pablo: PR en borrador"]
+  B --> C{"Rodolfo revisa el plan"}
+  C -->|comentarios| D["Pablo corrige"]
+  D --> C
+  C -->|Plan aprobado| E["Pablo programa las tareas"]
+  E --> F["Pablo: PR listo"]
+  F --> G{"Rodolfo: Approve"}
+```
 
 ## 2.5 DocTest: ambientes, empresas y configuración
 
@@ -480,7 +520,10 @@ pedido sin caso de uso asociado.
 
 ## 2.10 El pull request de Pablo
 
-Una rama `feature/req-###` por requerimiento, pull request a `develop`. La descripción tiene siempre:
+Es **el mismo pull request** que Pablo abrió en borrador con el plan (sección 2.4): una rama
+`feature/req-###` por requerimiento, a `develop`. Al terminar todas las tareas, Pablo completa la
+descripción y lo pasa a listo para revisar (botón **"Ready for review"** en GitHub). La descripción
+tiene siempre:
 
 ```
 ## Qué cambia
