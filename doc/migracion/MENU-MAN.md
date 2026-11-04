@@ -69,3 +69,32 @@ Para ver las pantallas con contenido hay dos scripts en `application/modules/tra
 Se cargó el submenú "ABM de Mantenimiento" (13 opciones hijas de `abm_man`, más el padre) en `seg.menues` y `seg.memberships_menues`
 (grupo `Empresa_Test`, rol vacío, `usuario_app` = `migracion-man`), con el mismo procedimiento de arriba. Se ejecutó desde una terminal
 con `psql` contra la base de tools de desarrollo.
+
+## Empresas nuevas (2026-11-04)
+
+Desde esta fecha, en la base de **desarrollo**, una empresa nueva recibe el menú sola: lo carga `core.configuracion_inicial_empresa_trg`
+al crearse la empresa, en un bloque propio. Si en un ambiente faltan las opciones MAN, el error no afecta al resto de los menús.
+
+Regla del menú: si un rol tiene la opción padre y ninguna hija, ve todas las hijas. Si tiene alguna hija, ve solo esas.
+
+| Rol que crea la registración | Grupo equivalente en asset | Qué ve |
+|---|---|---|
+| Administrador | Admin | Todo: filas `mantenimiento` y `abm_man` |
+| Supervisor de Mantenimiento, Planificador de Mantenimiento | Supervisor de Taller | 23 opciones, las de asset más la bandeja y `rep_equipo`. No ven Predictivo, Parametrizar Predictivo, Registro de Parametros ni Administrar Ordenes |
+| Solicitante de Mantenimiento | Solicitante | `bandeja`, `equipos`, `solicitud_servicio`, `informe_servicios`, `preventivo`, `backlog` |
+| Responsables de Almacén y de Pañol, Solicitante de Almacén | Solicitante | No reciben menú MAN: en asset van a ese grupo solo para no entrar a un menú vacío |
+
+Atención: hasta MIG-5 los permisos van fijos en la URL del menú, así que un Solicitante puede editar lo que en asset solo podía mirar.
+
+**Para repetirlo en TEST o PRODUCCIÓN**, desde una terminal con `psql` conectada a la base de tools de ese ambiente, después de cargar
+las opciones MAN en `seg.menues`:
+
+```bash
+psql -f _backend/database/scripts/versiones/v2.8.1.5/configuracion_inicial_empresa_trg_func.sql
+```
+
+El script parte de la función de **desarrollo**: antes de correrlo, comparala con la de ese ambiente. Solo alcanza a las empresas que se
+creen después. Las que ya existen se cargan aparte, como en el punto 1 de arriba.
+
+La unidad industrial por defecto es otro cambio, en la base de Mantenimiento (`assetv2`): ver H49 en
+[HALLAZGOS-POST-MIGRACION.md](HALLAZGOS-POST-MIGRACION.md) y `development/sql/asset-empresa-trigger.sql`.

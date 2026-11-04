@@ -179,6 +179,11 @@ AFTER INSERT ON `empresas`
 FOR EACH ROW
 BEGIN
     CALL sp_create_empresa_groups_and_actions(NEW.id_empresa);
+    -- Unidad industrial por defecto: el alta de equipos manda el numero de empresa como unidad
+    -- (Equipo/view_.php, campo unin) y los listados cruzan con unidad_industrial por ese numero.
+    -- Sin esta fila el equipo se guarda pero no aparece. IGNORE: si el numero ya esta usado, no frena el alta.
+    INSERT IGNORE INTO unidad_industrial (id_unidad, descripcion, id_empresa)
+    VALUES (NEW.id_empresa, 'Unidad principal', NEW.id_empresa);
 END$$
 
 DELIMITER ;
