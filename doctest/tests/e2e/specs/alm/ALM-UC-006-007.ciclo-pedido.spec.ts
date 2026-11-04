@@ -32,6 +32,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { AlmacenesPage } from '../../pages/alm/AlmacenesPage.ts';
+import { elegirEstablecimiento } from '../../pages/alm/FlujoAlmacen.ts';
 import { sesionDeRol } from '../../fixtures/roles-alm.ts';
 
 /** Marca única para reconocer el pedido que crea esta corrida y no confundirlo con otro. */
@@ -70,7 +71,7 @@ async function crearPedido(page: Page, justificacion: string): Promise<void> {
   await page.waitForTimeout(2000);
 
   // El pedido va dirigido a un depósito concreto: es un paso del caso, no un detalle.
-  await page.locator('#establecimiento').selectOption({ index: 1 });
+  await elegirEstablecimiento(page);
   await page.waitForTimeout(1500);
   await page.locator('#deposito').selectOption({ index: 0 });
 

@@ -9,8 +9,8 @@
  *   nuevos     solo lo nuevo de tu rama.
  *   casi-full  crea dos empresas desde cero, las deja en el perfil del ambiente y corre
  *              el set de regresión contra ellas.
- *   full       crea dos empresas, le carga datos a la primera (AssetPlanner: maestros,
- *              equipo, herramienta), las deja en el perfil y corre TODO: regresión +
+ *   full       crea dos empresas, le carga datos a la primera (Mantenimiento: equipo, stock,
+ *              herramienta, plan y una orden), las deja en el perfil y corre TODO: regresión +
  *              circuitos largos (@ciclo).
  *
  * Opciones:

@@ -4,11 +4,11 @@
  * No es un caso de uso del catálogo: es la preparación que corren los modos `casi-full` y
  * `full` de `npm run doctest`. Registra DOS empresas nuevas por la registración real
  * (los casos de aislamiento necesitan una segunda empresa), y en modo `full` le carga a la
- * primera los datos de AssetPlanner que una empresa recién registrada no trae (maestros,
- * equipo, herramienta). Al terminar escribe `doctest/entornos/<entorno>.json`, el perfil
+ * primera los datos de Mantenimiento que una empresa recién registrada no trae (equipo, stock,
+ * herramienta, plan y una orden con pedido, entrega y vale). Al terminar escribe `doctest/entornos/<entorno>.json`, el perfil
  * que el modo `regresion` usa después para saber con qué empresas probar.
  *
- * Reusa los flujos de `flows/registrar-empresa.ts` y `flows/seed-asset.ts`.
+ * Reusa los flujos de `flows/registrar-empresa.ts` y `flows/seed-man.ts`.
  *
  * ⚠️ Crea datos reales en el ambiente (dos empresas por corrida). Nunca producción: lo
  * impide `config/apps.ts`. Necesita `DOCTEST_MAIL_IMAP_*` para leer el mail de activación.
@@ -21,7 +21,9 @@ import { test } from '@playwright/test';
 import { entornoActual, escribirPerfil, type PerfilEntorno } from '../../config/perfil-entorno.ts';
 import { crearCapturador } from '../../fixtures/capturas.ts';
 import { registrarEmpresa } from '../../flows/registrar-empresa.ts';
-import { loginAssetAdmin, seedEquipo, seedHerramienta } from '../../flows/seed-asset.ts';
+import { sembrarMan } from '../../flows/seed-man.ts';
+import { sesionTools } from '../../fixtures/roles-alm.ts';
+import { ShellMan } from '../../pages/man/ShellMan.ts';
 
 /**
  * Contraseña con la que nacen los 5 usuarios de rol del alta (usuario@, almacen@, …).
@@ -67,8 +69,7 @@ test.describe('@preparar-entorno Preparar el ambiente: empresas de test desde ce
         dominio: empresa2.dominio,
         admin: { usuario: empresa2.admin.email, clave: empresa2.admin.password },
       },
-      // El administrador entra a AssetPlanner y ve Mantenimiento, Pañol y Almacenes
-      // (verificado en DEMO, ver flows/seed-asset.ts).
+      // El administrador entra a Tools y tiene el menú de Mantenimiento (lo carga el alta de la empresa).
       man: { usuario: empresa1.admin.email, clave: empresa1.admin.password },
       alm: {
         solicitante: { usuario: empresa1.usuariosRol.usuario, clave: CLAVE_ROLES },
@@ -77,12 +78,16 @@ test.describe('@preparar-entorno Preparar el ambiente: empresas de test desde ce
     };
 
     if (sembrar) {
-      await test.step('3. Cargar datos de AssetPlanner en la empresa 1', async () => {
-        await loginAssetAdmin(page, empresa1.admin.email, empresa1.admin.password);
-        const equipo = await seedEquipo(page, cap);
-        const herramienta = await seedHerramienta(page, cap, equipo.ids.marca);
-        perfil.sembrado = { equipoCodigo: equipo.equipoCodigo, herramientaCodigo: herramienta };
-        console.log(`[preparar] ✓ datos cargados: equipo ${equipo.equipoCodigo}, herramienta ${herramienta}`);
+      await test.step('3. Cargar datos de Mantenimiento en la empresa 1', async () => {
+        const admin = await sesionTools(browser, empresa1.admin.email, empresa1.admin.password, empresa1.razonSocial);
+        const almacen = await sesionTools(browser, empresa1.usuariosRol.almacen, CLAVE_ROLES, empresa1.razonSocial);
+        try {
+          perfil.sembrado = await sembrarMan(new ShellMan(admin), almacen, empresa1.razonSocial);
+        } finally {
+          await admin.context().close();
+          await almacen.context().close();
+        }
+        console.log(`[preparar] ✓ datos cargados: ${JSON.stringify(perfil.sembrado)}`);
       });
     }
 
