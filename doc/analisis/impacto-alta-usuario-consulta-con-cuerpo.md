@@ -6,7 +6,7 @@ Análisis de impacto, para que el PM apruebe o rechace un cambio de dos líneas 
 antes de tocar `POST /tools/core/usuario`. No cubre el menú de Mantenimiento en empresas nuevas (H46) ni el
 comportamiento del integrador del servidor de desarrollo.
 
-**Estado:** esperando aprobación del PM. No se modificó nada.
+**Estado:** aprobado por el PM el 2026-11-04, a condición de no romper en EI 6. Aplicado y probado en local con MI 4.5. Sin probar en EI 6: no hay uno disponible.
 
 ## El problema
 
@@ -55,16 +55,33 @@ como cierto. Comparación de esos tags contra lo desplegado en local (2026-11-04
 - En `toolsCOREAPI.xml`, las otras dos consultas GET que siguen a un POST (líneas 933-939 y 1120-1126) ya usan
   `NO_ENTITY_BODY`. Ese código también está en el tag de producción y corre en EI 6.
 
-## El cambio propuesto
+## Corrección de la causa
 
-En `_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml`, el mismo patrón
-de la línea 933, alrededor del `call` de las líneas 465-469:
+La causa no es el cuerpo sino el encabezado `Content-Type: application/json`. Pruebas directas al servicio de datos local:
+
+| Pedido | Resultado |
+|---|---|
+| Con cuerpo, sin `Content-Type` | 200 |
+| Sin cuerpo, con `Content-Type` | Sin respuesta |
+
+Ya estaba documentado en `sequences/toolsAssetUserEmpresa.xml` (verificado el 2026-09-11): con ese encabezado, el
+servicio de datos busca los parámetros en un JSON y no en la dirección.
+
+## El cambio aplicado
+
+En `toolsCOREAPI.xml`, alrededor del `call` de `check_duplicado_url`, el mismo bloque de `toolsAssetUserEmpresa.xml`:
 
 ```xml
+<header name="Content-Type" scope="transport" action="remove"/>
+<property name="HTTP_METHOD" value="GET" scope="axis2" type="STRING"/>
 <property name="NO_ENTITY_BODY" value="true" scope="axis2" type="BOOLEAN"/>
 <call> ... GET {uri.var.check_duplicado_url} ... </call>
 <property name="NO_ENTITY_BODY" action="remove" scope="axis2"/>
 ```
+
+**Por qué no debería romper en EI 6:** ese bloque está en el tag `v2.5.1.16`, y `toolsAssetUserEmpresa` corre desde
+`POST /rol/asignar`, que el alta de empresa llama con `empr_id` y `role_base`. Según el PM, esa alta funciona en
+producción.
 
 ## Qué lo consume
 
@@ -82,9 +99,7 @@ cuerpo: ninguno lee el cuerpo original.
 - **Correo repetido:** en ambientes donde la consulta fallaba, ahora se ve el error correcto. Hay que probarlo.
 - **Puede haber otra falla después:** este arreglo destraba el primer error, no garantiza que el alta termine.
 
-## Cómo se prueba
+## Resultado de las pruebas
 
-1. Local, con VPN: compilar y desplegar en el integrador local.
-2. Alta de empresa completa con `@preparar-entorno`: empresa vinculada y los cinco usuarios creados.
-3. Alta de usuario desde la pantalla, con un correo nuevo y con uno repetido.
-4. Recién entonces, modo full de DocTest.
+Local, MI 4.5, 2026-11-04: `@preparar-entorno` pasó y creó las empresas 197 y 198, vinculadas con Mantenimiento (26 y
+27), sin errores en el registro del integrador. `POST /usuario` con un correo repetido devuelve "El usuario ya existe".
