@@ -70,7 +70,16 @@ test.describe('@preparar-entorno Preparar el ambiente: empresas de test desde ce
         admin: { usuario: empresa2.admin.email, clave: empresa2.admin.password },
       },
       // El administrador entra a Tools y tiene el menú de Mantenimiento (lo carga el alta de la empresa).
-      man: { usuario: empresa1.admin.email, clave: empresa1.admin.password },
+      man: {
+        usuario: empresa1.admin.email,
+        clave: empresa1.admin.password,
+        supervisor: { usuario: empresa1.usuariosRol.mantenimiento, clave: CLAVE_ROLES },
+      },
+      tar: {
+        planificador: { usuario: empresa1.usuariosRol.produccion, clave: CLAVE_ROLES },
+        responsable1: { usuario: empresa1.usuariosRol.mantenimiento, clave: CLAVE_ROLES },
+        responsable2: { usuario: empresa1.usuariosRol.panol, clave: CLAVE_ROLES },
+      },
       alm: {
         solicitante: { usuario: empresa1.usuariosRol.usuario, clave: CLAVE_ROLES },
         almacen: { usuario: empresa1.usuariosRol.almacen, clave: CLAVE_ROLES },

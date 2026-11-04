@@ -98,7 +98,9 @@ async function iniciarSesion(browser: Browser, rol: RolTar, destino: string): Pr
 
 /** Path de la sesión guardada de un rol; la crea (o la renueva si está por vencer). */
 export async function sesionTar(browser: Browser, rol: RolTar): Promise<string> {
-  const destino = join(DIR_SESIONES, `tar-${rol}.json`);
+  // Por empresa: una sesión guardada de otra corrida sería de una empresa que ya no es la del perfil.
+  const empresa = (process.env[VARIABLES[rol].empresa] ?? '').replace(/\W+/g, '-');
+  const destino = join(DIR_SESIONES, `tar-${rol}-${empresa}.json`);
   const vigente = existsSync(destino) && Date.now() - statSync(destino).mtimeMs < VIDA_SESION_MS;
   if (!vigente) await iniciarSesion(browser, rol, destino);
   return destino;

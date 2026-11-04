@@ -188,6 +188,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
    * Verificado en vivo el 2026-09-12.
    */
   test('el Responsable aprueba el pedido y pasa a Entrega pendiente', async ({ browser }) => {
+    test.setTimeout(240_000);
     const rep = await sesionDeRol(browser, 'almacen');
     try {
       await abrirBandeja(rep);

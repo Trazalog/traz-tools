@@ -52,8 +52,21 @@ export function credencialesMan(): CredencialesManTools {
   return { usuario, password, empresa: leer('EMPRESA') };
 }
 
-async function ingresar(browser: Browser): Promise<string> {
-  const datos = credencialesMan();
+/** El Supervisor de Mantenimiento: recibe "Analisis de Solicitud" y "Verifica Informe" en su bandeja. */
+export function credencialesSupervisor(): CredencialesManTools {
+  const usuario = leer('SUPERVISOR_USER');
+  const password = leer('SUPERVISOR_PASS');
+  if (!usuario || !password) {
+    const p = PREFIJO[entornoActual()];
+    throw new Error(
+      `Falta el Supervisor de Mantenimiento. Completá DOCTEST_${p}_MAN_SUPERVISOR_USER y _PASS en doctest/.env,\n` +
+        'o corré `npm run doctest -- casi-full|full`, que lo anota en el perfil (mantenimiento@ de la empresa 1).',
+    );
+  }
+  return { usuario, password, empresa: leer('EMPRESA') };
+}
+
+async function ingresar(browser: Browser, datos: CredencialesManTools, archivo: string): Promise<string> {
   const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await contexto.newPage();
   page.setDefaultNavigationTimeout(120_000);
@@ -79,26 +92,39 @@ async function ingresar(browser: Browser): Promise<string> {
     throw new Error(`No se pudo ingresar a Tools con el usuario de Mantenimiento: ${error ?? 'sigue en el ingreso'}`);
   }
   mkdirSync(DIR_SESIONES, { recursive: true });
-  const destino = join(DIR_SESIONES, `man-${entornoActual()}.json`);
+  const destino = join(DIR_SESIONES, `${archivo}-${entornoActual()}.json`);
   await contexto.storageState({ path: destino });
   await contexto.close();
   return destino;
 }
 
-export const test = base.extend<{ paginaMan: Page }, { sesionMan: string }>({
+async function abrirPagina(browser: Browser, sesion: string, usar: (p: Page) => Promise<void>): Promise<void> {
+  const contexto = await browser.newContext({ ignoreHTTPSErrors: true, storageState: sesion });
+  const page = await contexto.newPage();
+  // Las pantallas de asset usan alert()/confirm() nativos: un diálogo sin atender traba la página.
+  page.on('dialog', (d) => void d.accept().catch(() => {}));
+  await usar(page);
+  await contexto.close();
+}
+
+export const test = base.extend<{ paginaMan: Page; paginaSupervisor: Page }, { sesionMan: string; sesionSupervisor: string }>({
   sesionMan: [
     async ({ browser }, usar) => {
-      await usar(await ingresar(browser));
+      await usar(await ingresar(browser, credencialesMan(), 'man'));
+    },
+    { scope: 'worker' },
+  ],
+  sesionSupervisor: [
+    async ({ browser }, usar) => {
+      await usar(await ingresar(browser, credencialesSupervisor(), 'man-supervisor'));
     },
     { scope: 'worker' },
   ],
   paginaMan: async ({ browser, sesionMan }, usar) => {
-    const contexto = await browser.newContext({ ignoreHTTPSErrors: true, storageState: sesionMan });
-    const page = await contexto.newPage();
-    // Las pantallas de asset usan alert()/confirm() nativos: un diálogo sin atender traba la página.
-    page.on('dialog', (d) => void d.accept().catch(() => {}));
-    await usar(page);
-    await contexto.close();
+    await abrirPagina(browser, sesionMan, usar);
+  },
+  paginaSupervisor: async ({ browser, sesionSupervisor }, usar) => {
+    await abrirPagina(browser, sesionSupervisor, usar);
   },
 });
 

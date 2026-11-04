@@ -202,20 +202,14 @@ test.describe.serial('@alm @ciclo @ALM-UC-002 @ALM-UC-006 @ALM-UC-007 El ciclo d
    * alineada a BPM_USER_PASS) y verificado en vivo el 2026-09-12. Ya no lleva `test.fail()`.
    */
   test('el pedido arranca su proceso de aprobación', async ({ browser }) => {
+    test.setTimeout(240_000);
     const page = await sesionDeRol(browser, 'solicitante');
     try {
-      let procesoOk: boolean | null = null;
-      page.on('response', async (r) => {
-        if (!/pedidoNormal/.test(r.url())) return;
-        try {
-          procesoOk = JSON.parse(await r.text())?.status === true;
-        } catch {
-          procesoOk = false;
-        }
-      });
-
+      // Se espera la respuesta y no un tiempo fijo: lanzar el proceso en Bonita puede demorar.
+      const lanzado = page.waitForResponse(/pedidoNormal/, { timeout: 150_000 });
       await crearPedido(page, `${MARCA} · proceso`);
-      expect(procesoOk, 'el proceso de aprobación tiene que quedar lanzado').toBe(true);
+      const respuesta = (await (await lanzado).json()) as { status?: boolean; msj?: string };
+      expect(respuesta.status, `el proceso de aprobación tiene que quedar lanzado: ${respuesta.msj ?? ''}`).toBe(true);
     } finally {
       await page.context().close();
     }

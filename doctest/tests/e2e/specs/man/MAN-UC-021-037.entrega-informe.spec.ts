@@ -71,7 +71,7 @@ test.describe('@man @MAN-UC-037 Detalle de un informe', () => {
     expect(r.msj).toMatch(/No se seleccionaron/);
   });
 
-  test('@ciclo el informe se ve completo y la verificación en bloque cierra la orden', async ({ paginaMan }) => {
+  test('@ciclo el informe se ve completo y la verificación en bloque cierra la orden', async ({ paginaMan, paginaSupervisor }) => {
     test.skip(!RESPONSABLE, 'Falta DOCTEST_<AMBIENTE>_MAN_RESPONSABLE');
     test.setTimeout(15 * 60_000);
     const man = new ShellMan(paginaMan);
@@ -80,7 +80,10 @@ test.describe('@man @MAN-UC-037 Detalle de un informe', () => {
     const informe = String(await man.pedir(`traz-tools-man/Ordenservicio/verInforme/${orden.id_orden}/${equipo.id}`));
     expect(informe, 'el informe muestra qué se hizo').toContain('Revisión hecha por la prueba DocTest');
 
-    const r = (await man.pedir('traz-tools-man/Ordenservicio/cierreMasivoVerificaInforme', {
+    // Verifica el Supervisor: la tarea "Verifica Informe" es suya; con otro usuario cierra sin tocar Bonita (OK_NO_BPM).
+    const supervisor = new ShellMan(paginaSupervisor);
+    await supervisor.enElShell();
+    const r = (await supervisor.pedir('traz-tools-man/Ordenservicio/cierreMasivoVerificaInforme', {
       selected: [{ id_orden: orden.id_orden, id_ot: orden.id_orden }],
     })) as Array<{ status: string; msj?: string }>;
     expect(r[0]?.status, r[0]?.msj).toBe('OK');

@@ -5,6 +5,7 @@
  * Circuitos largos (@ciclo): crean casos reales de Bonita y solo corren en el modo full. Cada prueba
  * crea su equipo y su solicitud. La urgencia es la única decisión del análisis y define el camino:
  * urgente → Planificar Solicitud; no urgente → Editar Backlog → Planificar Backlog.
+ * Quien pide y programa es el administrador; las tareas de Bonita le llegan al Supervisor (actor "Supervisor Taller").
  */
 
 import { test, expect } from '../../fixtures/auth-man.ts';
@@ -35,16 +36,18 @@ async function analizar(man: ShellMan, caso: string, falla: string, urgente: boo
 test.describe('@man @ciclo @MAN-UC-008 @MAN-UC-029 @MAN-UC-031 Solicitud y backlog', () => {
   test.setTimeout(15 * 60_000);
 
-  test('urgente: la planifica el supervisor y la solicitud queda ligada a su orden', async ({ paginaMan }) => {
+  test('urgente: la planifica el supervisor y la solicitud queda ligada a su orden', async ({ paginaMan, paginaSupervisor }) => {
     const man = new ShellMan(paginaMan);
+    const supervisor = new ShellMan(paginaSupervisor);
     await man.enElShell();
+    await supervisor.enElShell();
     const equipo = await crearEquipo(man);
     const falla = `Falla urgente DocTest ${sufijo()}`;
     const solicitud = await crearSolicitud(man, equipo, falla);
     expect(solicitud.estado, 'nace solicitada').toBe('S');
 
-    await analizar(man, solicitud.case_id, falla, true);
-    await buscarTareaDelCaso(man, solicitud.case_id, /Planificar Solicitud/i);
+    await analizar(supervisor, solicitud.case_id, falla, true);
+    await buscarTareaDelCaso(supervisor, solicitud.case_id, /Planificar Solicitud/i);
     expect((await buscarSolicitud(man, equipo, falla))?.urgente, 'queda marcada urgente').toBeTruthy();
 
     const orden = await programarOrden(man, Number(solicitud.id_solicitud), 1, 2);
@@ -52,17 +55,19 @@ test.describe('@man @ciclo @MAN-UC-008 @MAN-UC-029 @MAN-UC-031 Solicitud y backl
     expect(despues?.id_orden, 'el listado muestra el Nº de OT').toBe(orden.id_orden);
   });
 
-  test('no urgente: se convierte en backlog y al programarlo queda planificado', async ({ paginaMan }) => {
+  test('no urgente: se convierte en backlog y al programarlo queda planificado', async ({ paginaMan, paginaSupervisor }) => {
     const man = new ShellMan(paginaMan);
+    const supervisor = new ShellMan(paginaSupervisor);
     await man.enElShell();
+    await supervisor.enElShell();
     const equipo = await crearEquipo(man);
     const falla = `Falla no urgente DocTest ${sufijo()}`;
     const solicitud = await crearSolicitud(man, equipo, falla);
     const antes = new Set(await idsDeListado(man, LISTADOS.backlog));
 
-    await analizar(man, solicitud.case_id, falla, false);
-    const idTarea = await abrirTareaDelCaso(man, solicitud.case_id, /Editar Backlog/i);
-    const r = (await man.pedir('traz-tools-man/Backlog/editar_backlog', {
+    await analizar(supervisor, solicitud.case_id, falla, false);
+    const idTarea = await abrirTareaDelCaso(supervisor, solicitud.case_id, /Editar Backlog/i);
+    const r = (await supervisor.pedir('traz-tools-man/Backlog/editar_backlog', {
       tipo: 'editNuevo', idTarBonita: idTarea, tarea: await crearTarea(man), fecha: isoDia(new Date()), hshombre: 1, duracion: 60,
       id_unidad: await unidadTiempo(man), back_canth: 1, tareaOpcional: '', idcomponenteequipo: '',
     })) as { status: boolean; msj?: string };
@@ -72,7 +77,7 @@ test.describe('@man @ciclo @MAN-UC-008 @MAN-UC-029 @MAN-UC-031 Solicitud y backl
     const backlog = (await idsDeListado(man, LISTADOS.backlog)).filter((x) => !antes.has(x)).sort((a, b) => b - a)[0];
     expect(backlog, 'el proceso generó el backlog').toBeGreaterThan(0);
 
-    await buscarTareaDelCaso(man, solicitud.case_id, /Planificar Backlog/i);
+    await buscarTareaDelCaso(supervisor, solicitud.case_id, /Planificar Backlog/i);
     const orden = await programarOrden(man, backlog, 1, 4);
     expect(orden.id_orden, 'el backlog generó su orden').toBeTruthy();
     const info = (await man.pedir(`traz-tools-man/Backlog/geteditar?idpred=${backlog}&datos=${equipo.id}`)) as {
