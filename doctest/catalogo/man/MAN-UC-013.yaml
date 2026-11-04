@@ -46,6 +46,7 @@ validaciones:
   - "Son dos aprobaciones distintas: la del supervisor sobre el trabajo, y la del solicitante que pidió el servicio"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-030.ciclo-ot.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s08
 notas:
   - "**Son los dos únicos puntos donde el proceso retrocede**, y por eso un mismo trabajo puede recorrerse más de una vez. Ver `doc/man/proceso-mantenimiento.md`."

@@ -33,6 +33,8 @@ flujos_alternativos:
 validaciones:
   - Solo opera sobre órdenes de la empresa de la sesión
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-021-037.entrega-informe.spec.ts
 notas:
   - El PM la había declarado obsoleta el 2026-08-26 sobre asset. En la revisión de pantallas de la migración se decidió portarla (E49, corrige T64), así que vuelve a estar vigente.
   - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

@@ -55,6 +55,7 @@ validaciones:
   - El aviso "Se ha guardado" sale solo cuando se guardó; los errores del servidor se muestran (E40)
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-030.ciclo-ot.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s06
 notas:
   - "Es una de las dos únicas pantallas donde se trabaja **fuera** de la bandeja de tareas: acá y al lanzar una solicitud. Todo lo demás del proceso llega como tarea."

@@ -42,6 +42,7 @@ validaciones:
   - La solicitud de servicio solo se crea si se reporta una falla
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-024.lectura-falla.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s04
 notas:
   - "**Es el atajo más útil del módulo para una PyME chica**: quien está frente al equipo carga su lectura y, si ve algo raro, lo reporta en el mismo formulario. El sistema crea la solicitud de servicio y arranca el proceso, sin que esa persona tenga que conocer la pantalla de solicitudes."

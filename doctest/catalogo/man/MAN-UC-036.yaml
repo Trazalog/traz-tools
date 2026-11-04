@@ -36,6 +36,7 @@ validaciones:
   - Quitar la asociación no borra el componente del catálogo
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-036.asociacion-componente.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s03
 notas:
   - El **código trazable** identifica a la pieza física puesta en ese equipo. Cambiarlo es la forma de registrar que se reemplazó la pieza por otra.

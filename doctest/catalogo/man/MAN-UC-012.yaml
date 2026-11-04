@@ -53,6 +53,8 @@ validaciones:
   - Si la base falla no se cierra la tarea; si falla Bonita, el informe queda guardado y al reintentar se reemplaza completo (E33)
   - El informe queda asociado a la orden de trabajo
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-030.ciclo-ot.spec.ts
 notas:
   - "Sale de borrador: las secciones del informe se relevaron de la vista de MAN (`view_inf_servicio_modal.php`) y el guardado del recurso `bandeja/tarea/informe` (E33)."
   - Si el equipo no trae lectura, la consola muestra un error al abrir el informe; no impide guardar (H40).

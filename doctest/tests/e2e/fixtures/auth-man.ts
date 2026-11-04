@@ -6,14 +6,10 @@
  * desde el menú "Mantenimiento". El ingreso viejo de asset (`pages/man/LoginManPage.ts`) queda solo
  * para las pruebas que todavía verifican asset (DNATO-UC-014-018).
  *
- * El usuario tiene que ser de una empresa **vinculada con Mantenimiento**
- * (`core.empresas.empr_id_mysql`) y tener el menú MAN. Una empresa recién registrada por el modo
- * casi-full/full no lo está (la vinculación toca `core` y la aprueba el PM), así que el usuario de
- * MAN se configura por ambiente y **no** lo pisa el perfil:
- *
- *   DOCTEST_<AMBIENTE>_MAN_USER / _PASS / _EMPRESA   (AMBIENTE = LOCAL | DEMO | STAGING)
- *
- * y, si no están, DOCTEST_MAN_USER / _PASS / _EMPRESA. Las credenciales nunca se hardcodean.
+ * Con `npm run doctest` el usuario sale del **perfil del ambiente**: la empresa 1 recién creada por
+ * casi-full/full (el alta de empresa la deja vinculada con Mantenimiento). Sin perfil se usan las
+ * variables DOCTEST_<AMBIENTE>_MAN_USER / _PASS / _EMPRESA del .env y, si no están, DOCTEST_MAN_*.
+ * Las credenciales nunca se hardcodean.
  *
  * El ingreso se hace una vez por worker y la sesión se reutiliza con `storageState`.
  */

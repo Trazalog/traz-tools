@@ -43,7 +43,16 @@ export interface PerfilEntorno {
   /** Usuarios de rol de almacén de la empresa 1. */
   alm: { solicitante: CuentaTest; almacen: CuentaTest };
   /** Lo que cargó el modo full, para encadenar. */
-  sembrado?: { equipoCodigo?: string; herramientaCodigo?: string };
+  sembrado?: {
+    equipoCodigo?: string;
+    herramientaCodigo?: string;
+    /** Preventivo de plantilla, con herramienta e insumo (Mantenimiento en Tools). */
+    preventivo?: string;
+    /** Número de usuario de Mantenimiento de quien corre las pruebas. */
+    responsable?: string;
+    /** OT con pedido, entrega y vale. */
+    otMateriales?: string;
+  };
 }
 
 export function entornoActual(): string {

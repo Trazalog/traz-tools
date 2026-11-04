@@ -48,6 +48,8 @@ validaciones:
   - Los reportes se acotan por período y muestran solo datos de la empresa de la sesión
   - Los reportes se pueden imprimir y bajar a Excel
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-012-020.informes-reportes.spec.ts
 notas:
   - "Sale de borrador por decisión del PM (E61–E63): de los indicadores se migra solo lo que hoy se usa — la disponibilidad en Rep Equipo y MTTR, MTTF, MTBF y confiabilidad en el tablero de tools (MAN-UC-042); los de órdenes quedan afuera hasta consultarlo con un experto."
   - Los tres reportes pasaron del menú Reportes de asset al menú Mantenimiento (E62).

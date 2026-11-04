@@ -42,6 +42,7 @@ validaciones:
   - El sistema toma la solicitud y la orden del caso de Bonita, no de lo que manda la pantalla, y verifica que el caso sea de la empresa (E31)
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-008-029-031.solicitud-backlog.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s06
 notas:
   - "Es la bifurcación del proceso: la compuerta *¿Es Urgente?* del diagrama. Todo lo que viene después depende de esta respuesta — ver `doc/man/proceso-mantenimiento.md` §2."

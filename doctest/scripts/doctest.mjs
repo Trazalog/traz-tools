@@ -94,6 +94,15 @@ function aplicarPerfil() {
   set('DOCTEST_EMPRESA2_PASS', p.empresa2?.admin?.clave);
   set('DOCTEST_MAN_USER', p.man?.usuario);
   set('DOCTEST_MAN_PASS', p.man?.clave);
+  // Mantenimiento corre dentro de Tools con la empresa 1 recién creada, no con un usuario fijo:
+  // el perfil pisa las variables por ambiente, y lo que cargó el modo full es de esa empresa.
+  const pre = { local: 'LOCAL', demo: 'DEMO', 'staging-v3': 'STAGING' }[entorno];
+  set(`DOCTEST_${pre}_MAN_USER`, p.man?.usuario);
+  set(`DOCTEST_${pre}_MAN_PASS`, p.man?.clave);
+  set(`DOCTEST_${pre}_MAN_EMPRESA`, p.empresa1?.nombre);
+  set(`DOCTEST_${pre}_MAN_PREVENTIVO`, p.sembrado?.preventivo);
+  set(`DOCTEST_${pre}_MAN_RESPONSABLE`, p.sembrado?.responsable);
+  set(`DOCTEST_${pre}_MAN_OT_MATERIALES`, p.sembrado?.otMateriales);
   set('DOCTEST_ALM_SOLICITANTE_USER', p.alm?.solicitante?.usuario);
   set('DOCTEST_ALM_SOLICITANTE_PASS', p.alm?.solicitante?.clave);
   set('DOCTEST_ALM_ALMACEN_USER', p.alm?.almacen?.usuario);
