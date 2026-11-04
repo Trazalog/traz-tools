@@ -33,11 +33,27 @@ PHP manda la sesión de relleno (`dd`): Bonita contesta 401, la plantilla inicia
 
 ## Comparación con producción
 
-- `toolsCOREAPI.xml` tiene esa consulta igual en `master` y en la rama de la migración, desde 2026-03.
-- **Sin verificar:** por qué no falla en producción. Supuesto propio: el integrador de producción es de otra versión
-  y descarta el cuerpo de un GET. No hay acceso para confirmarlo.
-- En el mismo archivo, las otras dos consultas GET que siguen a un POST (líneas 933-939 y 1120-1126) ya resuelven esto
-  con `NO_ENTITY_BODY`. La de la línea 467 es la que quedó sin hacerlo.
+El PM confirma que en producción, con **dnato `v2.5.0.12`** y **tools `v2.5.1.16`**, crear empresa funciona. Se toma
+como cierto. Comparación de esos tags contra lo desplegado en local (2026-11-04):
+
+| Pieza | Diferencia con el tag | ¿Afecta el alta? |
+|---|---|---|
+| `toolsCOREAPI.xml` | Solo agrega `GET /empresa/{empr_id}`. `POST /usuario` y `POST /empresa` son iguales | No |
+| `COREDataService.dbs`, `toolsbpmAPI.xml` | Ninguna | No |
+| Plantillas, secuencias y recursos | Solo agrega `manAltaConDetalleTemplate` (Mantenimiento) | No |
+| dnato, código | Solo `Oauthlogin.php`, que el alta no usa | No |
+| dnato, `constants.php` local | Direcciones de la máquina local y `$wso2_base` | No: solo dicen a dónde conectarse |
+
+**Conclusión: el código es el mismo; cambia el motor que lo ejecuta.**
+
+- Producción v2 usa **WSO2 EI 6.x**, según `doc/adr/ADR-011-gcp-deployment.md:18`.
+- Local usa **MI 4.5**. El integrador de desarrollo rechaza igual un GET con cuerpo: prueba de solo lectura del
+  2026-11-04, `current_params: {}`.
+- **Sin verificar:** que EI 6 descarte el cuerpo del GET. Es la explicación que encaja con todo lo anterior, pero no se
+  probó en producción.
+- El mismo ADR define que v3 corre sobre MI 4.x, así que esta falla aparecería al pasar producción a v3.
+- En `toolsCOREAPI.xml`, las otras dos consultas GET que siguen a un POST (líneas 933-939 y 1120-1126) ya usan
+  `NO_ENTITY_BODY`. Ese código también está en el tag de producción y corre en EI 6.
 
 ## El cambio propuesto
 
@@ -62,7 +78,7 @@ cuerpo: ninguno lee el cuerpo original.
 
 ## Riesgos
 
-- **Producción:** si su integrador descarta el cuerpo, el cambio no altera nada.
+- **Producción:** usa la misma instrucción que ya corre en EI 6 en este archivo. Si EI 6 descarta el cuerpo, la consulta no cambia.
 - **Correo repetido:** en ambientes donde la consulta fallaba, ahora se ve el error correcto. Hay que probarlo.
 - **Puede haber otra falla después:** este arreglo destraba el primer error, no garantiza que el alta termine.
 
