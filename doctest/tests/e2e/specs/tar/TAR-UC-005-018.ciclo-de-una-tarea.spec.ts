@@ -808,7 +808,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   // Va antes de eliminar el pedido: sin sus tareas, el tablero no tiene filas para comparar.
   test('@TAR-UC-022 TAR-CP-022-01/022-02 "finalizadas" cuenta solo las tareas finalizadas (HIP-TAR-03)', async ({ browser }, testInfo) => {
-    test.fail(true, 'H-120 (B-26): el recuadro cuenta "Finalizada" y la tabla dice otro texto');
+    test.fail(true, 'H-120 (B-26): los recuadros cuentan otros textos que los que muestra la tabla');
     const sh = new ShellTar(await paginaDeRol(browser, 'planificador'));
     try {
       await sh.abrir('indicadores', testInfo);
@@ -828,10 +828,12 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
       const finalizadasEnTabla = conEstado(/finalizad[ao]/i);
       testInfo.annotations.push({
         type: 'kpi',
-        description: `planificadas=${planificadas} finalizadas=${finalizadas} · filas=${filas.length} (finalizada=${finalizadasEnTabla}, iniciada=${conEstado(/iniciada/i)}, planificada=${conEstado(/planificada/i)}, creada=${conEstado(/creada/i)})`,
+        description: `planificadas=${planificadas} finalizadas=${finalizadas} · filas=${filas.length} (finalizada=${finalizadasEnTabla}, iniciada=${conEstado(/iniciada/i)}, planificada=${conEstado(/planificad[ao]/i)}, creada=${conEstado(/creada/i)})`,
       });
 
       test.skip(filas.length === 0, 'bloqueado: no hay tareas de pedidos de trabajo en el período');
+      // Se comparan los dos recuadros: cuál de los dos falla depende de cómo terminó cada tarea en la corrida.
+      expect.soft(planificadas, 'el total de planificadas no coincide con las filas en estado "planificado"').toBe(conEstado(/planificad[ao]/i));
       expect(finalizadas, 'el total de finalizadas no coincide con las filas en estado "finalizada"').toBe(finalizadasEnTabla);
     } finally {
       await sh.page.context().close();
