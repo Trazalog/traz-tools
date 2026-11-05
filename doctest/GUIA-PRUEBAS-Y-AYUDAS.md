@@ -172,14 +172,64 @@ una variable, el test falla diciendo exactamente cuál — nunca inventa un valo
 
 ## 1.3 Dónde queda la evidencia
 
-> ⚠️ **La evidencia de una corrida es efímera y local.** Playwright limpia esas carpetas al empezar
-> la corrida siguiente, y están en `.gitignore`. Si un test falló y querés conservar la prueba,
-> guardala en otro lado **antes** de volver a correr.
+**Cada corrida deja un informe liviano** en `corrida.yaml`, y se lee con una consola local:
+
+```bash
+# Dónde: terminal, en la carpeta doctest/. Abre http://127.0.0.1:9333
+npm run doctest:consola
+```
+
+La consola muestra el resumen, qué cambió respecto de la corrida anterior, qué hizo y qué encontró
+cada prueba, sus capturas, el enlace al issue y un botón **Copiar pedido** con el texto para pedir
+la corrección.
+
+| Corrida | Dónde queda | ¿Se versiona? |
+|---|---|---|
+| `full` y `casi-full` | `corridas/<id>/corrida.yaml` y `capturas/` | sí, el repositorio es público: el informe oculta claves y enlaces de recuperación |
+| `regresion`, `nuevos` y pruebas sueltas | `corridas/.locales/<id>/` | no |
+| Capturas de errores conocidos | `corridas/<id>/capturas/conocidos/` | no: se repiten en cada corrida |
+
+**Estados de una prueba en el informe:**
+
+| Estado | Qué significa | Da rojo |
+|---|---|---|
+| `pasa` | funcionó | no |
+| `error-conocido` | falló justo en el error anotado | no |
+| `sin-comprobar` | tiene `test.fail()`, pero no dice qué falla espera | no |
+| `otro-punto` | tiene marca, pero se cortó antes de llegar al error anotado | sí |
+| `falla` | falla nueva, sin anotar | sí |
+| `dejo-de-fallar` | tenía un error anotado y ahora pasa: hay que sacarle la marca y cerrar el issue | sí |
+| `inestable` | falló y pasó al reintentar | no |
+| `salteada` | no corrió, con su motivo | no |
+
+**Cómo se marca un error conocido:** `test.fail()` acepta cualquier falla, así que se le agrega qué
+falla exacta se espera. El patrón se busca en todo el mensaje de error:
+
+```ts
+debeFallarCon(/la empresa 2 eliminó un pedido/);
+test.fail(true, 'H-119 (B-25): la empresa 2 elimina un pedido de la empresa 1 por URL');
+```
+
+Un `test.fail()` sin esa línea sigue funcionando: solo queda `sin-comprobar`. El número `H-NNN` al
+principio del texto vincula la prueba con su fila de `doc/hallazgos/REGISTRO.md` y su issue.
+
+**Issues.** DocTest no abre issues por su cuenta. Un error nuevo lo analiza una persona o un agente,
+con su causa, y el PM aprueba abrirlo. Para dejar el resumen de una corrida en el issue fijo
+"Estado de DocTest":
+
+```bash
+# Dónde: terminal, en la carpeta doctest/, con `gh` iniciado. Sin --enviar solo lo muestra.
+npm run doctest:publicar -- --enviar
+```
+
+La evidencia completa de Playwright sigue existiendo, pero es efímera y local:
+
+> ⚠️ Playwright limpia estas carpetas al empezar la corrida siguiente, y están en `.gitignore`.
 
 | Artefacto | Dónde queda | Cuándo se genera |
 |---|---|---|
 | **Reporte HTML navegable** | `tests/e2e/.playwright-report/` | siempre. Se abre con `npm run test:report` |
-| Captura de pantalla | `tests/e2e/.test-results/<test>/` | **solo si el test falla** |
+| Captura de pantalla | `tests/e2e/.test-results/<test>/` | en cada prueba; el informe conserva solo las de las fallas |
 | Video de la corrida | `tests/e2e/.test-results/<test>/` | **solo si el test falla** |
 | `error-context.md` — el estado de la pantalla en el momento del fallo, en texto | `tests/e2e/.test-results/<test>/` | solo si falla |
 | Traza navegable paso a paso | `tests/e2e/.test-results/<test>/` | solo en el reintento, y **solo en CI**: localmente los reintentos están apagados |
