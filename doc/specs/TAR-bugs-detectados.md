@@ -120,6 +120,11 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 - **Qué pasa:** con la sesión de la empresa 2, `Pedidotrabajo/eliminarPedidoTrabajo/?petr_id=<pedido de la empresa 1>` borra el pedido. Es prioridad alta: es pérdida de datos entre empresas.
 - **Tests:** `TAR-CP-004-05`.
 
+#### B-26 · Los recuadros de indicadores no coinciden con la tabla — H-120
+- **Qué pasa:** "Tareas Planificadas" cuenta las filas con `En Curso`, pero la tabla muestra `Planificado`: da 0 con tareas en la tabla. Las finalizadas sin fecha real (H-111) quedan afuera de la consulta `getKpiBasico`.
+- **También las finalizadas:** con una tarea finalizada en la tabla, el recuadro dio 0 (visto el 2026-11-05).
+- **Tests:** `TAR-CP-022-01/022-02`.
+
 #### B-05 · Editar una tarea estándar falla siempre que no tenga formulario y receta — H-095 · #582
 - **Qué pasa:** "Guardar" en la edición devuelve "Algo salio mal". El backend responde `DATABASE_ERR`: `updateTarea` hace `CAST(:form_id as integer)` y `CAST(:rece_id as integer)` con texto vacío.
 - **Evidencia:** `TARDataService.dbs` query `updateTarea`; el alta (`setTarea`) sí contempla el vacío con `case when ... = '' then null`. Reproducido por pantalla y por request directo.

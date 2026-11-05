@@ -233,10 +233,10 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
 
   test('TAR-CP-004-05 aislamiento: desde la empresa 2 no se puede eliminar un pedido de la empresa 1 (HIP-TAR-02)', async ({ browser }, testInfo) => {
     test.fail(true, 'H-119 (B-25): la empresa 2 elimina un pedido de la empresa 1 por URL');
+    // Usa el pedido A, que ya nadie necesita: mientras siga H-119, la prueba lo borra de verdad.
     await ped.abrirListado(testInfo);
-    await requierePedido(ped, COD_BORRAR);
-    await ped.buscar(COD_BORRAR);
-    const fila = await ped.datosFila(COD_BORRAR);
+    await requierePedido(ped, COD);
+    const fila = await ped.datosFila(COD);
     const petr = String(fila?.petr_id ?? '');
     expect(petr, 'no se pudo leer el número del pedido').toMatch(/^\d+$/);
 
@@ -248,22 +248,14 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
       await ctx2.close();
     }
     await ped.abrirListado(testInfo);
-    await ped.buscar(COD_BORRAR);
-    await expect(ped.fila(COD_BORRAR), 'la empresa 2 eliminó un pedido de la empresa 1').toHaveCount(1);
+    await ped.buscar(COD);
+    await expect(ped.fila(COD), 'la empresa 2 eliminó un pedido de la empresa 1').toHaveCount(1);
   });
 
   test('TAR-CP-004-01 eliminar un pedido sin hitos: desaparece del listado con mensaje de éxito', async ({}, testInfo) => {
     await ped.abrirListado(testInfo);
     await ped.buscar(COD_BORRAR);
-    await ped.fila(COD_BORRAR).first().waitFor({ timeout: 10_000 }).catch(() => {});
-    if ((await ped.fila(COD_BORRAR).count()) === 0) {
-      // Mientras siga H-119, la prueba de aislamiento lo borra: se crea de nuevo.
-      await ped.crearPedido(datos(COD_BORRAR));
-      await ped.cerrarDialogos();
-      await ped.abrirListado(testInfo);
-      await ped.buscar(COD_BORRAR);
-      await ped.fila(COD_BORRAR).first().waitFor({ timeout: 15_000 });
-    }
+    await ped.fila(COD_BORRAR).first().waitFor({ timeout: 15_000 });
     await ped.eliminar(COD_BORRAR, true);
     const aviso = await ped.dialogoSiAparece(15_000);
     await ped.cerrarDialogos();

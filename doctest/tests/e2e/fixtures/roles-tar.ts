@@ -53,8 +53,8 @@ const VARIABLES: Record<RolTar, { usuario: string; clave: string; empresa: strin
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DIR_SESIONES = resolve(HERE, '..', '.auth');
-/** Una sesión de CodeIgniter dura 2 h; se renueva antes para no morir a mitad de corrida. */
-const VIDA_SESION_MS = 90 * 60 * 1000;
+/** En local, sesiones guardadas de menos de 90 min ya llegaron vencidas: se renuevan cada 30, que cuesta segundos. */
+const VIDA_SESION_MS = 30 * 60 * 1000;
 
 /** Usuario (correo) de un rol, leído del entorno. */
 export function usuarioDeRol(rol: RolTar): string {

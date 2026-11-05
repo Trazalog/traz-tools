@@ -808,6 +808,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   // Va antes de eliminar el pedido: sin sus tareas, el tablero no tiene filas para comparar.
   test('@TAR-UC-022 TAR-CP-022-01/022-02 "finalizadas" cuenta solo las tareas finalizadas (HIP-TAR-03)', async ({ browser }, testInfo) => {
+    test.fail(true, 'H-120 (B-26): el recuadro cuenta "Finalizada" y la tabla dice otro texto');
     const sh = new ShellTar(await paginaDeRol(browser, 'planificador'));
     try {
       await sh.abrir('indicadores', testInfo);
@@ -822,9 +823,9 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
       const finalizadas = Number((await sh.page.locator('#cantidad_finalizadas').innerText()).trim());
       const planificadas = Number((await sh.page.locator('#cantidad_planificadas').innerText()).trim());
       // La grilla vacía tiene una sola fila de "sin datos": se cuentan solo las que traen estado.
-      const filas = (await sh.page.locator('#reportContent table tbody tr').allInnerTexts()).filter((f) => /creada|planificada|iniciada|finalizada/i.test(f));
+      const filas = (await sh.page.locator('#reportContent table tbody tr').allInnerTexts()).filter((f) => /creada|planificad[ao]|iniciad[ao]|finalizad[ao]|en curso/i.test(f));
       const conEstado = (re: RegExp) => filas.filter((f) => re.test(f)).length;
-      const finalizadasEnTabla = conEstado(/finalizada/i);
+      const finalizadasEnTabla = conEstado(/finalizad[ao]/i);
       testInfo.annotations.push({
         type: 'kpi',
         description: `planificadas=${planificadas} finalizadas=${finalizadas} · filas=${filas.length} (finalizada=${finalizadasEnTabla}, iniciada=${conEstado(/iniciada/i)}, planificada=${conEstado(/planificada/i)}, creada=${conEstado(/creada/i)})`,
