@@ -17,7 +17,7 @@ import { contextoDeRol, paginaDeRol } from '../../fixtures/roles-tar.ts';
 import { CLIENTES_TAR, TIPOS_TAR } from '../../seeds/tar/datos-tar.ts';
 import { codigoPedido, PedidosTrabajoPage } from '../../pages/tar/PedidosTrabajoPage.ts';
 import { sufijoDeCorrida } from '../../pages/tar/ShellTar.ts';
-import { requerirUrlDeApp } from '../../config/apps.ts';
+import { entornoActual, requerirUrlDeApp } from '../../config/apps.ts';
 
 const SUF = sufijoDeCorrida();
 const COD = codigoPedido(SUF, 'A');
@@ -46,7 +46,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
 
   test('TAR-CP-002-01 alta completa con el proceso estándar: avisa el éxito y el pedido aparece en el listado (HIP-TAR-09)', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-091 #578 (B-01): la empresa de test no tiene PROCESO-STANDAR y el alta no crea el pedido');
+    test.fail(entornoActual() === 'demo', 'H-091 #578 (B-01): la empresa de test no tiene PROCESO-STANDAR y el alta no crea el pedido');
     await ped.abrirListado(testInfo);
     const respuesta = await ped.crearPedido(datos(COD));
 

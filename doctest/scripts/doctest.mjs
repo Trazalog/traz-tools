@@ -250,6 +250,15 @@ function sembrarTar() {
     console.log(`\n⚠️  No se pudo cargar PROCESO-STANDAR: ${(sql.stderr || '').trim().slice(0, 300)}`);
     return false;
   }
+  const menu = spawnSync(
+    'psql',
+    ['-q', '-v', 'ON_ERROR_STOP=1', '-v', `empresa=${empresa}`, '-f', 'tests/e2e/seeds/tar/menu-planificador.sql'],
+    { env, encoding: 'utf8' },
+  );
+  if (menu.status !== 0) {
+    console.log(`\n⚠️  No se pudo cargar el menú del planificador: ${(menu.stderr || '').trim().slice(0, 300)}`);
+    return false;
+  }
   const seed = spawnSync('npx', ['tsx', 'tests/e2e/seeds/tar/preparar-datos-tar.ts'], { stdio: 'inherit', env: process.env });
   return seed.status === 0;
 }

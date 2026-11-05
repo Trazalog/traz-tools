@@ -21,7 +21,7 @@ import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { requerirUrlDeApp } from '../../config/apps.ts';
+import { entornoActual, requerirUrlDeApp } from '../../config/apps.ts';
 import { contextoDeRol, paginaDeRol, usuarioDeRol } from '../../fixtures/roles-tar.ts';
 import { BandejaTareaPage } from '../../pages/tar/BandejaTareaPage.ts';
 import { codigoPedido, PedidosTrabajoPage } from '../../pages/tar/PedidosTrabajoPage.ts';
@@ -112,6 +112,9 @@ async function tareaRecargada(pl: PlanificacionPage, nombre: string, hito = HITO
 }
 
 test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 @TAR-UC-014 @TAR-UC-016 @TAR-UC-017 @TAR-UC-018 Ciclo de una tarea', () => {
+  // La bandeja consulta a Bonita y varias pruebas abren dos o tres sesiones seguidas.
+  test.setTimeout(240_000);
+
   test('@TAR-menu el planificador ve los menús del módulo de Tareas', async ({ browser }) => {
     const pl = await planificador(browser);
     try {
@@ -130,7 +133,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('@TAR-menu los indicadores de tareas tienen opción de menú', async ({ browser }) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-103: Gestión de Menues no ofrece opción para Indicadores en el módulo TAR');
+    test.fail(entornoActual() === 'demo', 'H-103: Gestión de Menues no ofrece opción para Indicadores en el módulo TAR');
     const pl = await planificador(browser);
     try {
       expect(await pl.tieneMenu('indicadores')).toBe(true);
@@ -141,7 +144,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('prepara los datos de la corrida: pedido, tareas estándar y plantilla', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-091 #578 (B-01): no se puede crear el pedido de la corrida');
+    test.fail(entornoActual() === 'demo', 'H-091 #578 (B-01): no se puede crear el pedido de la corrida');
     const tst = new TareasEstandarPage(await paginaDeRol(browser, 'planificador'));
     try {
       await tst.abrir('tareasEstandar', testInfo);
@@ -281,7 +284,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-009-10 una tarea libre toma el proceso TST001', async ({ browser }) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-092 #579 (B-02): TAREAS_DEFAULT_PROC no está definida en el DEMO');
+    test.fail(entornoActual() === 'demo', 'H-092 #579 (B-02): TAREAS_DEFAULT_PROC no está definida en el DEMO');
     const pl = await planificador(browser);
     try {
       const t = await tareaRecargada(pl, LIBRE);
@@ -471,6 +474,8 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-011-05 asignar responsable a una tarea sin fecha: se guarda, sin caso y sin errores (HIP-TAR-06)', async ({ browser }) => {
+    // Bug conocido, donde TAREAS_DEFAULT_PROC está definida: en el DEMO lo tapa H-092.
+    test.fail(entornoActual() !== 'demo', 'H-108 (B-17): asignar una tarea sin fecha abre un caso de Bonita');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -579,7 +584,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-016-01/016-02 el responsable ve la tarea en su bandeja con el pedido correcto (HIP-TAR-12)', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-105 #593 (B-15): la bandeja muestra la tarea vacía (consulta por case_id sin cast)');
+    test.fail(entornoActual() === 'demo', 'H-105 #593 (B-15): la bandeja muestra la tarea vacía (consulta por case_id sin cast)');
     const caso = await requiereCaso(browser, STD_INSP);
     const pl = await planificador(browser);
     let petr = '';
@@ -626,7 +631,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-011-04 reasignar: pasa a la bandeja del nuevo responsable, sale de la del anterior y no crea otro caso', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior');
+    test.fail(entornoActual() === 'demo', 'H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior');
     const caso = await requiereCaso(browser, STD_LIMP);
     const pl = await planificador(browser);
     let casoAntes = '';
@@ -656,7 +661,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-016-03/017-01/017-02 tomar e iniciar: pide "Inicializar tarea" y registra la hora real del clic (HIP-TAR-04, HIP-TAR-13)', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-105 #593 (B-15): el detalle de la tarea abre vacío');
+    test.fail(entornoActual() === 'demo', 'H-105 #593 (B-15): el detalle de la tarea abre vacío');
     const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let clic = new Date();
@@ -692,7 +697,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-018-02 finalizar con una subtarea sin tildar: "No se marcaron como finalizadas todas las subtareas!"', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-105 #593 (B-15): el detalle no trae subtareas');
+    test.fail(entornoActual() === 'demo', 'H-105 #593 (B-15): el detalle no trae subtareas');
     const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     try {
@@ -710,7 +715,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-018-01/018-03 finalizar: sale de la bandeja y queda "finalizada" con la hora real de fin (HIP-TAR-05)', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-105 #593 (B-15): el detalle no trae subtareas ni formulario');
+    test.fail(entornoActual() === 'demo', 'H-105 #593 (B-15): el detalle no trae subtareas ni formulario');
     const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let planificada: TareaPlanificada | null = null;

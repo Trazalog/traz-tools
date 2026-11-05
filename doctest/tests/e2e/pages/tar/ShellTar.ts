@@ -70,6 +70,10 @@ export class ShellTar {
     const base = ruta.split('?')[0];
     // Sin distinguir mayúsculas: el menú usa `.../tarea` y la ruta del controller es `.../Tarea`.
     const item = this.page.locator(`.sidebar-menu a[onclick*="${base}" i]`).first();
+    // `linkTo()` carga por ajax: sin esperar esa respuesta, se lee la pantalla anterior o una todavía vacía.
+    const carga = this.page
+      .waitForResponse((r) => r.url().toLowerCase().includes(base.toLowerCase()), { timeout: 60_000 })
+      .catch(() => null);
     if (await item.count()) {
       // El menú puede estar colapsado: el click va igual por el onclick del <a>.
       await item.evaluate((a: HTMLElement) => a.click());
@@ -80,6 +84,9 @@ export class ShellTar {
       });
       await this.page.evaluate((r) => (window as unknown as { linkTo: (x: string) => void }).linkTo(r), ruta);
     }
+    // La respuesta llega antes de que `linkTo()` pegue el contenido en la página.
+    await (await carga)?.finished().catch(() => null);
+    await this.page.waitForTimeout(500);
     await this.esperarCarga();
   }
 

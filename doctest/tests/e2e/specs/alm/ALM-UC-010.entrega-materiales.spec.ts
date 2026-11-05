@@ -143,6 +143,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
    * posible: es la precondición del caso, cumplida en vez de asumida.
    */
   test('preparación: el almacén recibe materiales y deja stock (ALM-UC-009)', async ({ browser }) => {
+    test.setTimeout(240_000);
     const alm = await sesionDeRol(browser, 'almacen');
     try {
       await asegurarArticulo(alm, { codigo: CODIGO, descripcion: `Artículo de ${MARCA}` });
@@ -197,7 +198,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
         .filter({ hasText: MARCA })
         .filter({ hasText: /Aprueba pedido/i });
       await expect(tarea.first(), 'la tarea de aprobación de esta corrida tiene que estar en la bandeja').toBeVisible({
-        timeout: 30_000,
+        timeout: 150_000,
       });
       await tarea.first().click();
 

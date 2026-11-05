@@ -66,6 +66,16 @@ export function credencialesSupervisor(): CredencialesManTools {
   return { usuario, password, empresa: leer('EMPRESA') };
 }
 
+/** El Solicitante de Mantenimiento (usuario@ del alta): recibe "Presta conformidad" en su bandeja. */
+export function credencialesSolicitante(): CredencialesManTools {
+  const usuario = process.env.DOCTEST_ALM_SOLICITANTE_USER?.trim();
+  const password = process.env.DOCTEST_ALM_SOLICITANTE_PASS?.trim();
+  if (!usuario || !password) {
+    throw new Error('Falta el Solicitante: DOCTEST_ALM_SOLICITANTE_USER y _PASS, o el perfil de `npm run doctest -- casi-full|full`.');
+  }
+  return { usuario, password, empresa: leer('EMPRESA') };
+}
+
 async function ingresar(browser: Browser, datos: CredencialesManTools, archivo: string): Promise<string> {
   const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await contexto.newPage();
@@ -107,7 +117,8 @@ async function abrirPagina(browser: Browser, sesion: string, usar: (p: Page) => 
   await contexto.close();
 }
 
-export const test = base.extend<{ paginaMan: Page; paginaSupervisor: Page }, { sesionMan: string; sesionSupervisor: string }>({
+export const test = base.extend<{ paginaMan: Page; paginaSupervisor: Page; paginaSolicitante: Page },
+  { sesionMan: string; sesionSupervisor: string; sesionSolicitante: string }>({
   sesionMan: [
     async ({ browser }, usar) => {
       await usar(await ingresar(browser, credencialesMan(), 'man'));
@@ -120,11 +131,20 @@ export const test = base.extend<{ paginaMan: Page; paginaSupervisor: Page }, { s
     },
     { scope: 'worker' },
   ],
+  sesionSolicitante: [
+    async ({ browser }, usar) => {
+      await usar(await ingresar(browser, credencialesSolicitante(), 'man-solicitante'));
+    },
+    { scope: 'worker' },
+  ],
   paginaMan: async ({ browser, sesionMan }, usar) => {
     await abrirPagina(browser, sesionMan, usar);
   },
   paginaSupervisor: async ({ browser, sesionSupervisor }, usar) => {
     await abrirPagina(browser, sesionSupervisor, usar);
+  },
+  paginaSolicitante: async ({ browser, sesionSolicitante }, usar) => {
+    await abrirPagina(browser, sesionSolicitante, usar);
   },
 });
 

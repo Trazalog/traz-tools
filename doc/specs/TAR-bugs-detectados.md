@@ -81,6 +81,11 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 - **Evidencia:** `Tareas::guardarPlanificada()` reasigna con `ObtenerActividades` + `setUsuario`; ver HIP-TAR-06.
 - **Tests:** `TAR-CP-011-04`.
 
+#### B-17 · Asignar una tarea sin fecha abre un caso de Bonita — H-108
+- **Qué pasa:** al asignar responsable a una tarea libre sin fecha, se lanza el caso y la tarea queda `planificada` con fecha 3000-12-31 (tarea 296, caso 30314, empresa 203, 2026-11-04). El catálogo dice "sin caso" (TAR-UC-011). En el DEMO no se ve porque lo tapa B-02.
+- **Causa probable (leída del código, sin confirmar con el dato enviado):** `Tareas::lanzarProceso()` compara con `'3000-12-31'`, y `planificacion_tareas.php:158` trabaja la fecha como `'31-12-3000'`: la comparación no detecta "sin fecha".
+- **Tests:** `TAR-CP-011-05`.
+
 #### B-05 · Editar una tarea estándar falla siempre que no tenga formulario y receta — H-095 · #582
 - **Qué pasa:** "Guardar" en la edición devuelve "Algo salio mal". El backend responde `DATABASE_ERR`: `updateTarea` hace `CAST(:form_id as integer)` y `CAST(:rece_id as integer)` con texto vacío.
 - **Evidencia:** `TARDataService.dbs` query `updateTarea`; el alta (`setTarea`) sí contempla el vacío con `case when ... = '' then null`. Reproducido por pantalla y por request directo.

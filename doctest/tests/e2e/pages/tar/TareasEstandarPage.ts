@@ -220,6 +220,7 @@ export class TareasEstandarPage extends ShellTar {
     await select.selectOption(valor ?? '');
     await this.page.locator('#tareas_asociadas button[onclick*="asociarTareaPlantilla"]').click();
     await this.esperarCarga();
+    await this.dialogoSiAparece(15_000);
     await this.cerrarDialogos();
   }
 
@@ -227,6 +228,8 @@ export class TareasEstandarPage extends ShellTar {
     await this.tareasDePlantilla.filter({ hasText: nombreTarea }).locator('[onclick*="eliminarTareaPlantilla"]').click();
     await this.aceptarDialogo();
     await this.esperarCarga();
+    // El aviso "Guardado con Éxito" llega recién después de la respuesta y tapa la ventana.
+    await this.dialogoSiAparece(15_000);
     await this.cerrarDialogos();
   }
 

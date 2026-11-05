@@ -38,12 +38,14 @@ test.describe('@man @ciclo @MAN-UC-030 Ciclo de vida de una orden de trabajo', (
   test.skip(!PREVENTIVO || !RESPONSABLE, 'Faltan DOCTEST_<AMBIENTE>_MAN_PREVENTIVO y _MAN_RESPONSABLE');
   test.setTimeout(20 * 60_000);
 
-  test('programar → asignar con pedido → ejecutar → informe → verificar → conformidad', async ({ paginaMan, paginaSupervisor }) => {
+  test('programar → asignar con pedido → ejecutar → informe → verificar → conformidad', async ({ paginaMan, paginaSupervisor, paginaSolicitante }) => {
     const man = new ShellMan(paginaMan);
     const supervisor = new ShellMan(paginaSupervisor);
     const page = paginaMan;
     await man.enElShell();
     await supervisor.enElShell();
+    const solicitante = new ShellMan(paginaSolicitante);
+    await solicitante.enElShell();
 
     // 1. Programar el preventivo para mañana: cae dentro del margen y se lanza con su caso (MAN-UC-009)
     const orden = await test.step('programar', async () => {
@@ -91,12 +93,12 @@ test.describe('@man @ciclo @MAN-UC-030 Ciclo de vida de una orden de trabajo', (
       await pulsarHecho(supervisor);
     });
 
-    // 6. Presta conformidad: la pestaña se ve (solo lectura) y se da la conformidad
+    // 6. Presta conformidad: la tarea le llega al Solicitante; ve la pestaña (solo lectura) y da la conformidad
     await test.step('conformidad', async () => {
-      await abrirTareaDelCaso(man, caso, /Presta conformidad/i);
-      await verificarMateriales(page, false);
-      await page.locator('input[name="opcion"][value="true"]').first().check({ force: true });
-      await pulsarHecho(man);
+      await abrirTareaDelCaso(solicitante, caso, /Presta conformidad/i);
+      await verificarMateriales(paginaSolicitante, false);
+      await paginaSolicitante.locator('input[name="opcion"][value="true"]').first().check({ force: true });
+      await pulsarHecho(solicitante);
     });
 
     // 7. La orden quedó cerrada y su caso ya no tiene tareas en la bandeja
