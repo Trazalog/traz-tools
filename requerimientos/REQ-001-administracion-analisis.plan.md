@@ -202,3 +202,13 @@ respete:
 8. ✅ **Secretos de configuración:** se dejan para una tarea de infraestructura aparte.
 9. ✅ **Servicios de datos:** la fuente de verdad está en `traz-tools/_backend/api/ToolsAPIProject/…/artifacts`;
    las copias en `dnato/development/…` son restos viejos, no lo desplegado.
+
+---
+
+**Decisión agregada (2026-11-05, condición de aprobación):**
+
+10. ✅ **Acceso a datos de la registración e ingreso copiados:** siguen accediendo **directo a la base**,
+    igual que hoy en DNATO. Es una **excepción aprobada** a la regla de que todo pasa por WSO2, para poder
+    comparar en paralelo con DNATO. Pasarlos a WSO2 queda para una tarea posterior. **Las pantallas nuevas
+    no tienen esta excepción:** sus datos van por DataServices. La lista de accesos directos que se copian
+    está en la sección C del análisis (`doc/v3/administracion/ANALISIS_INICIAL.md`).
