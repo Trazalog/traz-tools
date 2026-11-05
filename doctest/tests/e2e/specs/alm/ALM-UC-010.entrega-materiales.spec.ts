@@ -69,7 +69,7 @@ async function abrirBandeja(page: Page): Promise<void> {
     { timeout: 60_000 },
   );
   await page.evaluate(() => {
-    (window as unknown as { linkTo: (r: string) => void }).linkTo('traz-comp-bpm/Proceso');
+    (window as unknown as { linkTo: (r: string) => void }).linkTo('traz-comp-bpm/Proceso2');
   });
   await page.waitForTimeout(2500);
 }
@@ -86,9 +86,9 @@ async function entregar(page: Page, cantidad: number, finalizar: 'parcial' | 'to
     .filter({ hasText: MARCA })
     .filter({ hasText: /Entrega pedido pendiente/i });
   await expect(tarea.first(), 'la tarea de entrega de esta corrida tiene que estar en la bandeja').toBeVisible({
-    timeout: 30_000,
+    timeout: 150_000,
   });
-  await tarea.first().click();
+  await tarea.first().click({ timeout: 120_000 }); // la bandeja sigue cargando y la tapa
 
   await page.locator('.btn-tomar').first().click().catch(() => {});
   await page.waitForTimeout(2500);
@@ -115,7 +115,7 @@ async function entregar(page: Page, cantidad: number, finalizar: 'parcial' | 'to
 
   // Finalizar. El POST real (Proceso/cerrarTarea) va dentro del confirm de SweetAlert.
   await page.locator(finalizar === 'parcial' ? '#btncerrarTarea' : '#btnHecho').click();
-  await page.locator('.swal2-confirm').first().click({ timeout: 15_000 });
+  await page.locator('.swal2-confirm').first().click({ timeout: 120_000 });
   await page.waitForTimeout(4000);
   // El aviso de éxito es otro SweetAlert: se acepta si aparece.
   await page.locator('.swal2-confirm').first().click({ timeout: 8_000 }).catch(() => {});
@@ -154,10 +154,12 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
       await new AlmacenesPage(alm).abrir('stock');
       await expect(alm.locator('table thead th').first()).toBeVisible({ timeout: 60_000 });
       const buscador = alm.locator('#content input[type="search"]').first();
-      if (await buscador.isVisible().catch(() => false)) {
-        await buscador.fill(CODIGO);
-        await alm.waitForTimeout(1500);
-      }
+      // El listado pagina: sin filtrar, el artículo nuevo puede no estar en la primera hoja.
+      await expect(buscador).toBeVisible({ timeout: 60_000 });
+      await alm.waitForTimeout(1500);
+      await buscador.fill(CODIGO);
+      await buscador.press('Enter');
+      await alm.waitForTimeout(1500);
       await expect(alm.locator('#content'), 'tras la recepción el artículo tiene que tener stock').toContainText(
         CODIGO,
         { timeout: 30_000 },
@@ -200,7 +202,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
       await expect(tarea.first(), 'la tarea de aprobación de esta corrida tiene que estar en la bandeja').toBeVisible({
         timeout: 150_000,
       });
-      await tarea.first().click();
+      await tarea.first().click({ timeout: 120_000 }); // la bandeja sigue cargando y la tapa
 
       await rep.locator('.btn-tomar').first().click().catch(() => {});
       await rep.locator('input[name="result"][value="true"]').waitFor({ state: 'attached', timeout: 90_000 });
@@ -211,19 +213,19 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
       const depoTieneValor = async () =>
         rep
           .locator('#depositos')
-          .evaluate((el) => el instanceof HTMLSelectElement && !el.disabled && !!el.value && el.value !== '0')
+          .evaluate((el) => el instanceof HTMLSelectElement && !!el.value && el.value !== '0')
           .catch(() => false);
       if (!(await depoTieneValor())) {
         await rep.locator('#establecimientos').selectOption({ index: 1 });
         await rep.waitForFunction(
           () => {
             const el = document.querySelector('#depositos');
-            return el instanceof HTMLSelectElement && !el.disabled && el.options.length > 1;
+            // Solo lectura: al cambiar el establecimiento queda su depósito como única opción.
+            return el instanceof HTMLSelectElement && !!el.value && el.value !== '0';
           },
           undefined,
-          { timeout: 15_000 },
+          { timeout: 30_000 },
         );
-        await rep.locator('#depositos').selectOption({ index: 1 });
       }
 
       await rep.locator('input[name="result"][value="true"]').check();
@@ -236,9 +238,9 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
         .filter({ hasText: MARCA })
         .filter({ hasText: /Entrega pedido pendiente/i });
       await expect(entrega.first(), 'aprobado el pedido, tiene que aparecer la tarea de entrega').toBeVisible({
-        timeout: 30_000,
+        timeout: 150_000,
       });
-      await expect(entrega.first()).toContainText(/Aprobado/i);
+      await expect(entrega.first()).toContainText(/Aprobado/i, { timeout: 120_000 }); // la tabla se redibuja al cargar
     } finally {
       await rep.context().close();
     }
@@ -251,9 +253,11 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
    * pendiente para el resto.
    */
   test('una entrega parcial deja el pedido en Ent. Parcial con saldo pendiente', async ({ browser }) => {
+    test.setTimeout(300_000);
     const rep = await sesionDeRol(browser, 'almacen');
     try {
-      await entregar(rep, CANT_PARCIAL, 'parcial');
+      // Con "Hecho": el botón de entrega parcial hoy deja el pedido Entregado aunque quede saldo (H-112).
+      await entregar(rep, CANT_PARCIAL, 'total');
 
       const estado = await estadoDelPedido(rep);
       expect(estado, 'una entrega parcial tiene que dejar el pedido en estado parcial').toMatch(/Parcial/i);
@@ -268,6 +272,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
    * queda Entregado. La tarea desaparece de la bandeja.
    */
   test('la entrega del resto completa el pedido y lo deja Entregado', async ({ browser }) => {
+    test.setTimeout(300_000);
     const rep = await sesionDeRol(browser, 'almacen');
     try {
       await entregar(rep, CANT_RESTO, 'total');

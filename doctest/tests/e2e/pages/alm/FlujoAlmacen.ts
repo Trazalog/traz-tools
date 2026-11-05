@@ -145,6 +145,15 @@ export async function asegurarArticulo(
   if (!/\S/.test(await page.locator('#content').innerText().catch(() => ''))) {
     await new AlmacenesPage(page).abrir('articulos');
   }
+  // El listado pagina: en una empresa con más de una hoja, el artículo nuevo no está en la primera.
+  for (let hoja = 0; hoja < 20; hoja++) {
+    await page.locator('#content table tbody tr').first().waitFor({ timeout: 30_000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    if ((await page.locator('#content').innerText()).includes(codigo)) break;
+    const siguiente = page.locator('#content .paginate_button.next:not(.disabled) a').first();
+    if (!(await siguiente.count())) break;
+    await siguiente.evaluate((a: HTMLElement) => a.click()); // algún aviso puede quedar encima
+  }
   await expect(page.locator('#content'), 'el artículo recién creado tiene que aparecer').toContainText(codigo, {
     timeout: 30_000,
   });
