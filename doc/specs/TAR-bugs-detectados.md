@@ -88,12 +88,37 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 
 #### B-18 · Un proceso sin formulario no puede crear pedidos de trabajo — H-110
 - **Qué pasa:** si el proceso de la empresa no tiene formulario, el alta manda `info_id` vacío y `pro.pedidos_trabajo.info_id` es NOT NULL. Falla el guardado; después `eliminarPedidoTrabajo()` intenta borrar `/bpm/case/null` y lo que se ve es un error de Bonita ("Can't convert non numeric ID to long"), que no dice la causa.
-- **Efecto en DocTest:** sin pedido, las pruebas que lo necesitan quedan salteadas. El seed copia PROCESO-STANDAR con `form_id = NULL` porque el formulario de la empresa modelo es de otra empresa.
+- **También con formulario:** si se guarda antes de que el formulario termine de cargar, pasa lo mismo y el usuario no recibe ningún aviso (visto el 2026-11-05).
+- **Efecto en DocTest:** sin pedido, las pruebas que lo necesitan quedan salteadas. Por eso el seed conserva el formulario de la empresa modelo (la 777 ya comparte el formulario 1 en DEV). El error sigue abierto: un proceso sin formulario sigue sin poder crear pedidos, y hoy ninguna prueba automática lo recorre.
 - **Tests:** `TAR-CP-002-01` y los que dependen del pedido de la corrida.
 
 #### B-19 · Finalizar una tarea no registra la hora real de fin — H-111
 - **Qué pasa:** después de finalizar, `fec_fin` sigue siendo la planificada (HIP-TAR-05).
 - **Tests:** `TAR-CP-018-01/018-03`.
+
+#### B-20 · El alta de pedido no avisa ni refresca el listado — H-114
+- **Qué pasa:** con `PROCESO-STANDAR` el pedido se guarda, pero después de guardar la pantalla solo contempla SEIN y YUDI: no hay mensaje ni recarga (HIP-TAR-09 confirmada).
+- **Tests:** `TAR-CP-002-01`.
+
+#### B-21 · Un hito con un 0 en su número abre otra planificación — H-115
+- **Qué pasa:** el hito 60 se abrió con `orta_id=6` (HIP-TAR-01 confirmada).
+- **Tests:** `TAR-CP-009-06`.
+
+#### B-22 · Una empresa ve por dirección web el hito de otra — H-116
+- **Qué pasa:** `Pedidotrabajo/hito/{id}` no filtra por empresa (HIP-TAR-02 confirmada).
+- **Tests:** `TAR-CP-006-07`.
+
+#### B-23 · No vuelve "No hay Tareas Planificadas" — H-117
+- **Qué pasa:** al borrar la última tarea de un hito, la lista queda sin el mensaje. `eliminarTarea()` busca el cuerpo dentro del botón y el cambio de pestaña pisa la tabla sin su pie (misma zona que B-09).
+- **Tests:** `TAR-CP-014-01/014-03`.
+
+#### B-24 · "Trabajo Terminado" rechaza sin avisar — H-118
+- **Qué pasa:** el servidor devuelve `status:false` con su motivo y `finalizarTrabajo()` no tiene rama para ese caso.
+- **Tests:** `TAR-CP-005-01/005-02`.
+
+#### B-25 · Una empresa elimina un pedido de otra — H-119
+- **Qué pasa:** con la sesión de la empresa 2, `Pedidotrabajo/eliminarPedidoTrabajo/?petr_id=<pedido de la empresa 1>` borra el pedido. Es prioridad alta: es pérdida de datos entre empresas.
+- **Tests:** `TAR-CP-004-05`.
 
 #### B-05 · Editar una tarea estándar falla siempre que no tenga formulario y receta — H-095 · #582
 - **Qué pasa:** "Guardar" en la edición devuelve "Algo salio mal". El backend responde `DATABASE_ERR`: `updateTarea` hace `CAST(:form_id as integer)` y `CAST(:rece_id as integer)` con texto vacío.

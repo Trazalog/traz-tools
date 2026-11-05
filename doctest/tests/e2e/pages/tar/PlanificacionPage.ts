@@ -186,7 +186,8 @@ export class PlanificacionPage extends ShellTar {
   async verDetalleHito(codigo: string): Promise<void> {
     await this.filaHito(codigo).locator('.dropdown-toggle').click();
     await this.filaHito(codigo).locator('a', { hasText: 'Ver Detalle' }).click();
-    await this.page.locator('#mdl-hito').waitFor({ state: 'visible' });
+    // El id está repetido en el modal y en su caja interna.
+    await this.page.locator('#mdl-hito.modal').waitFor({ state: 'visible' });
     await this.esperarCarga();
   }
 

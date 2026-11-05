@@ -26,6 +26,7 @@ const COD_BORRAR = codigoPedido(SUF, 'B');
 /** Saltea el test si el pedido de la corrida no existe: es la consecuencia de TAR-CP-002-01 (H-091), no un bug nuevo. */
 async function requierePedido(ped: PedidosTrabajoPage, codigo: string): Promise<void> {
   await ped.buscar(codigo);
+  await ped.fila(codigo).first().waitFor({ timeout: 15_000 }).catch(() => {});
   test.skip((await ped.fila(codigo).count()) === 0, `bloqueado: el pedido ${codigo} no se pudo crear (TAR-CP-002-01, H-091)`);
 }
 
@@ -46,7 +47,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
 
   test('TAR-CP-002-01 alta completa con el proceso estándar: avisa el éxito y el pedido aparece en el listado (HIP-TAR-09)', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, entornoActual() === 'demo' ? 'H-091 #578 (B-01): la empresa de test no tiene PROCESO-STANDAR' : 'H-110 (B-18): un proceso sin formulario no puede crear pedidos');
+    test.fail(true, entornoActual() === 'demo' ? 'H-091 #578 (B-01): la empresa de test no tiene PROCESO-STANDAR' : 'H-114 (B-20): el alta de PROCESO-STANDAR guarda el pedido sin avisar ni refrescar el listado');
     await ped.abrirListado(testInfo);
     const respuesta = await ped.crearPedido(datos(COD));
 
@@ -111,6 +112,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   });
 
   test('TAR-CP-002-07 código repetido en la empresa: error claro, sin segundo pedido (HIP-TAR-07)', async ({}, testInfo) => {
+    test.fail(true, 'H-096 #583 (B-06): con un código repetido no se crea otro pedido, pero el usuario no recibe ningún mensaje');
     await ped.abrirListado(testInfo);
     await requierePedido(ped, COD);
     await ped.abrirListado(testInfo);
@@ -150,8 +152,10 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   });
 
   test('TAR-CP-001-02 el paginado informa el total real de pedidos (HIP-TAR-10)', async ({}, testInfo) => {
+    test.fail(true, 'H-097 #584 (B-07): recordsTotal informa el tamaño de la página, no el total');
     await ped.abrirListado(testInfo);
     await requierePedido(ped, COD);
+    await ped.buscar('');
     // Pide una página de 1 registro: si `recordsTotal` es la cantidad de la página y no el total,
     // con 2 o más pedidos los contadores no coinciden.
     const pag = await ped.esperarPaginado(() =>
@@ -166,7 +170,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
 
   test('TAR-CP-001-06 "Mostrar Pedidos Terminados" responde JSON válido y sigue paginando (HIP-TAR-10)', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(true, 'H-097 #584 (B-07): el paginado de terminados no trae data como lista');
+    test.fail(entornoActual() === 'demo', 'H-097 #584 (B-07): el paginado de terminados no trae data como lista');
     await ped.abrirListado(testInfo);
     const pag = await ped.mostrarTerminados();
     expect(pag.recordsTotal, `respuesta: ${JSON.stringify(pag).slice(0, 300)}`).not.toBe(-1);
@@ -228,6 +232,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   });
 
   test('TAR-CP-004-05 aislamiento: desde la empresa 2 no se puede eliminar un pedido de la empresa 1 (HIP-TAR-02)', async ({ browser }, testInfo) => {
+    test.fail(true, 'H-119 (B-25): la empresa 2 elimina un pedido de la empresa 1 por URL');
     await ped.abrirListado(testInfo);
     await requierePedido(ped, COD_BORRAR);
     await ped.buscar(COD_BORRAR);
@@ -250,7 +255,15 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   test('TAR-CP-004-01 eliminar un pedido sin hitos: desaparece del listado con mensaje de éxito', async ({}, testInfo) => {
     await ped.abrirListado(testInfo);
     await ped.buscar(COD_BORRAR);
-    test.skip((await ped.fila(COD_BORRAR).count()) === 0, 'el pedido ya no existe (lo borró la prueba de aislamiento)');
+    await ped.fila(COD_BORRAR).first().waitFor({ timeout: 10_000 }).catch(() => {});
+    if ((await ped.fila(COD_BORRAR).count()) === 0) {
+      // Mientras siga H-119, la prueba de aislamiento lo borra: se crea de nuevo.
+      await ped.crearPedido(datos(COD_BORRAR));
+      await ped.cerrarDialogos();
+      await ped.abrirListado(testInfo);
+      await ped.buscar(COD_BORRAR);
+      await ped.fila(COD_BORRAR).first().waitFor({ timeout: 15_000 });
+    }
     await ped.eliminar(COD_BORRAR, true);
     const aviso = await ped.dialogoSiAparece(15_000);
     await ped.cerrarDialogos();

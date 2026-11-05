@@ -87,7 +87,13 @@ export class PedidosTrabajoPage extends ShellTar {
   }
 
   async buscar(texto: string): Promise<Paginado> {
-    return this.esperarPaginado(() => this.page.locator('#tbl-pedidos_filter input').fill(texto));
+    const caja = this.page.locator('#tbl-pedidos_filter input');
+    // Repetir el mismo texto no dispara ninguna consulta nueva: esperarla colgaría la prueba.
+    if ((await caja.inputValue()) === texto && this.ultimoPaginado) return this.ultimoPaginado;
+    const paginado = await this.esperarPaginado(() => caja.fill(texto));
+    // La respuesta llega antes de que la tabla se redibuje: sin esto, contar filas da un resultado viejo.
+    await this.page.waitForTimeout(500);
+    return paginado;
   }
 
   async mostrarTerminados(): Promise<Paginado> {
@@ -130,6 +136,8 @@ export class PedidosTrabajoPage extends ShellTar {
   /** Alta completa por la pantalla. Devuelve el texto de la respuesta del servidor. */
   async crearPedido(d: DatosPedido): Promise<string> {
     await this.abrirAlta();
+    // El formulario del proceso carga aparte: guardar antes deja el pedido sin él y el alta falla (H-110).
+    await this.page.locator('.frm-new form').first().waitFor({ state: 'attached', timeout: 20_000 }).catch(() => {});
     await this.completarAlta(d);
     const resp = this.page.waitForResponse((r) => /guardarPedidoTrabajo/.test(r.url()), { timeout: 90_000 });
     await this.guardarAlta();

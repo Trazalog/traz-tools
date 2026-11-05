@@ -7,7 +7,9 @@
 -- No hay pantalla para cargarlo: por eso es SQL, manual y revisado (README de seeds, regla 4).
 --
 -- Qué hace: copia la fila PROCESO-STANDAR de una empresa "modelo" que ya la use, cambiando la
--- empresa, sin formulario (el de la modelo es de otra empresa) y con BPM y planificación activos.
+-- empresa, y con planificación activa. Conserva el formulario de la modelo: sin formulario el alta
+-- del pedido falla (H-110) y las pruebas de Tareas quedan salteadas. Compartirlo entre empresas ya
+-- ocurre en DEV (la 777 usa el formulario 1, de la empresa 1).
 -- Copia todas las columnas tal cual (el DDL vigente no está en el repo, hallazgo B-09 del spec).
 -- Es idempotente: si la empresa ya tiene PROCESO-STANDAR, no hace nada.
 -- `lanzar` dice si el alta abre caso de Bonita: en DEV va 'false', porque ese Bonita no tiene
@@ -46,7 +48,6 @@ END $$;
 
 UPDATE tmp_proceso_tar
 SET empr_id = :empresa,
-    form_id = NULL,
     lanzar_bpm = :'lanzar',
     planificar_tareas = 'true';
 
