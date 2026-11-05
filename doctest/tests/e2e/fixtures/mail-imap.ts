@@ -56,7 +56,9 @@ function imapBuscarEnlace(asunto: string, destinatario: string, minutos = 30): P
     let buffer = '';
     let paso = 0;
     const enviar = (cmd: string) => socket.write(`a${++paso} ${cmd}\r\n`);
-    const desde = new Date(Date.now() - minutos * 60_000)
+    // Un día de margen: SINCE compara solo la fecha y la casilla no usa UTC. Cerca de la medianoche UTC
+    // la búsqueda pedía "hoy" y el mail todavía era de "ayer". El destinatario ya es único por corrida.
+    const desde = new Date(Date.now() - minutos * 60_000 - 86_400_000)
       .toUTCString()
       .replace(/^\w+, (\d+) (\w+) (\d+).*$/, '$1-$2-$3');
 
