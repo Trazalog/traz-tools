@@ -69,7 +69,9 @@ export class ShellTar {
     const ruta = RUTAS_TAR[pantalla];
     const base = ruta.split('?')[0];
     // Sin distinguir mayúsculas: el menú usa `.../tarea` y la ruta del controller es `.../Tarea`.
-    const item = this.page.locator(`.sidebar-menu a[onclick*="${base}" i]`).first();
+    // Con la ruta entera: la opción de menú "Pedidos Trabajo" abre el proceso de un cliente (H-102),
+    // y lo deja en sesión aunque la pantalla sea la misma.
+    const item = this.page.locator(`.sidebar-menu a[onclick*="${ruta}" i]`).first();
     // `linkTo()` carga por ajax: sin esperar esa respuesta, se lee la pantalla anterior o una todavía vacía.
     const carga = this.page
       .waitForResponse((r) => r.url().toLowerCase().includes(base.toLowerCase()), { timeout: 60_000 })

@@ -243,7 +243,7 @@ function sembrarTar() {
   }
   const sql = spawnSync(
     'psql',
-    ['-q', '-v', 'ON_ERROR_STOP=1', '-v', `modelo=${v('MODELO') || '1'}`, '-v', `empresa=${id}`, '-f', 'tests/e2e/seeds/tar/pro-procesos-empresas-test.sql'],
+    ['-q', '-v', 'ON_ERROR_STOP=1', '-v', `modelo=${v('MODELO') || '1'}`, '-v', `empresa=${id}`, '-v', `lanzar=${v('LANZAR_BPM') || 'true'}`, '-f', 'tests/e2e/seeds/tar/pro-procesos-empresas-test.sql'],
     { env, encoding: 'utf8' },
   );
   if (sql.status !== 0) {

@@ -144,7 +144,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('prepara los datos de la corrida: pedido, tareas estándar y plantilla', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(entornoActual() === 'demo', 'H-091 #578 (B-01): no se puede crear el pedido de la corrida');
+    test.fail(true, 'H-091 #578 / H-110 (B-18): no se puede crear el pedido de la corrida');
     const tst = new TareasEstandarPage(await paginaDeRol(browser, 'planificador'));
     try {
       await tst.abrir('tareasEstandar', testInfo);
@@ -584,7 +584,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-016-01/016-02 el responsable ve la tarea en su bandeja con el pedido correcto (HIP-TAR-12)', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(entornoActual() === 'demo', 'H-105 #593 (B-15): la bandeja muestra la tarea vacía (consulta por case_id sin cast)');
+    test.fail(true, 'H-105 #593 (B-15) / H-110 (B-18): sin pedido, la tarea no muestra sus datos');
     const caso = await requiereCaso(browser, STD_INSP);
     const pl = await planificador(browser);
     let petr = '';
@@ -631,7 +631,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-011-04 reasignar: pasa a la bandeja del nuevo responsable, sale de la del anterior y no crea otro caso', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(entornoActual() === 'demo', 'H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior');
+    test.fail(true, 'H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior');
     const caso = await requiereCaso(browser, STD_LIMP);
     const pl = await planificador(browser);
     let casoAntes = '';
@@ -661,7 +661,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-016-03/017-01/017-02 tomar e iniciar: pide "Inicializar tarea" y registra la hora real del clic (HIP-TAR-04, HIP-TAR-13)', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(entornoActual() === 'demo', 'H-105 #593 (B-15): el detalle de la tarea abre vacío');
+    test.fail(true, 'H-105 #593 (B-15) / H-110 (B-18): la cabecera no muestra el pedido de trabajo');
     const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let clic = new Date();
@@ -715,7 +715,7 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   test('TAR-CP-018-01/018-03 finalizar: sale de la bandeja y queda "finalizada" con la hora real de fin (HIP-TAR-05)', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    test.fail(entornoActual() === 'demo', 'H-105 #593 (B-15): el detalle no trae subtareas ni formulario');
+    test.fail(true, 'H-111 (B-19): al finalizar no se registra la hora real de fin');
     const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let planificada: TareaPlanificada | null = null;

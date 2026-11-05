@@ -203,6 +203,7 @@ test.describe.serial('@alm @ciclo @ALM-UC-009 @ALM-UC-010 El circuito de entrega
       await tarea.first().click();
 
       await rep.locator('.btn-tomar').first().click().catch(() => {});
+      await rep.locator('input[name="result"][value="true"]').waitFor({ state: 'attached', timeout: 90_000 });
       await rep.waitForTimeout(2500);
 
       // Establecimiento y depósito ya vienen pre-seleccionados con los del pedido; sólo se

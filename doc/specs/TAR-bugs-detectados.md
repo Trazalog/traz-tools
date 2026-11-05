@@ -86,6 +86,15 @@ Lista de los bugs del módulo de Tareas (TAR) **confirmados en vivo** contra el 
 - **Causa probable (leída del código, sin confirmar con el dato enviado):** `Tareas::lanzarProceso()` compara con `'3000-12-31'`, y `planificacion_tareas.php:158` trabaja la fecha como `'31-12-3000'`: la comparación no detecta "sin fecha".
 - **Tests:** `TAR-CP-011-05`.
 
+#### B-18 · Un proceso sin formulario no puede crear pedidos de trabajo — H-110
+- **Qué pasa:** si el proceso de la empresa no tiene formulario, el alta manda `info_id` vacío y `pro.pedidos_trabajo.info_id` es NOT NULL. Falla el guardado; después `eliminarPedidoTrabajo()` intenta borrar `/bpm/case/null` y lo que se ve es un error de Bonita ("Can't convert non numeric ID to long"), que no dice la causa.
+- **Efecto en DocTest:** sin pedido, las pruebas que lo necesitan quedan salteadas. El seed copia PROCESO-STANDAR con `form_id = NULL` porque el formulario de la empresa modelo es de otra empresa.
+- **Tests:** `TAR-CP-002-01` y los que dependen del pedido de la corrida.
+
+#### B-19 · Finalizar una tarea no registra la hora real de fin — H-111
+- **Qué pasa:** después de finalizar, `fec_fin` sigue siendo la planificada (HIP-TAR-05).
+- **Tests:** `TAR-CP-018-01/018-03`.
+
 #### B-05 · Editar una tarea estándar falla siempre que no tenga formulario y receta — H-095 · #582
 - **Qué pasa:** "Guardar" en la edición devuelve "Algo salio mal". El backend responde `DATABASE_ERR`: `updateTarea` hace `CAST(:form_id as integer)` y `CAST(:rece_id as integer)` con texto vacío.
 - **Evidencia:** `TARDataService.dbs` query `updateTarea`; el alta (`setTarea`) sí contempla el vacío con `case when ... = '' then null`. Reproducido por pantalla y por request directo.

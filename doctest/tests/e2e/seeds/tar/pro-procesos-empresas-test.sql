@@ -10,6 +10,8 @@
 -- empresa, sin formulario (el de la modelo es de otra empresa) y con BPM y planificación activos.
 -- Copia todas las columnas tal cual (el DDL vigente no está en el repo, hallazgo B-09 del spec).
 -- Es idempotente: si la empresa ya tiene PROCESO-STANDAR, no hace nada.
+-- `lanzar` dice si el alta abre caso de Bonita: en DEV va 'false', porque ese Bonita no tiene
+-- instalado el proceso PRO-STD y el alta falla con 404 (DOCTEST_LOCAL_PG_LANZAR_BPM=false).
 --
 -- ⚠️ Riesgo conocido: en el DDL del repo (_backend/database/scripts/versiones/v1.4/
 -- "tablas pedidos trabajo.sql") la PK de pro.procesos es solo proc_id. Si la base del DEMO
@@ -21,7 +23,7 @@
 --
 -- Dónde se ejecuta: PC con VPN, contra la base de Tools del DEMO (nunca producción).
 --   psql -h <host base DEMO> -U postgres -d <base Tools DEMO> -v ON_ERROR_STOP=1 \
---     -v modelo=<empr_id de la empresa modelo> -v empresa=27 \
+--     -v modelo=<empr_id de la empresa modelo> -v empresa=27 -v lanzar=true \
 --     -f doctest/tests/e2e/seeds/tar/pro-procesos-empresas-test.sql
 -- y lo mismo con -v empresa=28.
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -45,7 +47,7 @@ END $$;
 UPDATE tmp_proceso_tar
 SET empr_id = :empresa,
     form_id = NULL,
-    lanzar_bpm = 'true',
+    lanzar_bpm = :'lanzar',
     planificar_tareas = 'true';
 
 INSERT INTO pro.procesos

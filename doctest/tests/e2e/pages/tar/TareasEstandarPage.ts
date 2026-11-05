@@ -10,10 +10,10 @@
  * si nadie los escucha, así que esta clase los escucha y los guarda en `alertas`.
  */
 
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 import { requerirUrlDeApp } from '../../config/apps.ts';
-import { ShellTar } from './ShellTar.ts';
+import { ShellTar, type PantallaTar } from './ShellTar.ts';
 
 export interface DatosTareaEstandar {
   nombre: string;
@@ -32,6 +32,13 @@ export class TareasEstandarPage extends ShellTar {
       this.alertas.push(d.message());
       await d.accept().catch(() => {});
     });
+  }
+
+  /** Abre la pantalla y espera las filas: se comparan cantidades, y una tabla a medio cargar da 0. */
+  override async abrir(pantalla: PantallaTar, testInfo?: TestInfo): Promise<void> {
+    await super.abrir(pantalla, testInfo);
+    if (pantalla !== 'tareasEstandar') return;
+    await this.tablaTareas.locator('tbody tr.data-json').first().waitFor({ state: 'attached', timeout: 30_000 }).catch(() => {});
   }
 
   get tablaTareas(): Locator {
