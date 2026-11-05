@@ -324,8 +324,8 @@ pruebas:
       - Click locator('input[type="submit"], button[type="submit"]').first()
       - Wait for timeout
       - Navigate to "/traz-comp-dnato/main/reset_password/token/***"
-      - Fill "Doctest2026#Otra" locator('input[name="password"]')
-      - Fill "Doctest2026#Otra" locator('input[name="passconf"]')
+      - Fill "***" locator('input[name="password"]')
+      - Fill "***" locator('input[name="passconf"]')
       - Click locator('button[type="submit"], input[type="submit"]').first()
       - Wait for timeout
       - Close context
@@ -346,14 +346,14 @@ pruebas:
     error_anotado: "H-034 #467: el cambio no se guarda, updatePassword() escribe en
       users sin el esquema seg."
     pasos:
-      - Fill "Doctest2026#Nueva" locator('input[name="passconf"]')
+      - Fill "***" locator('input[name="passconf"]')
       - Click locator('button[type="submit"], input[type="submit"]').first()
       - Wait for timeout
       - Navigate to
         "/traz-comp-dnato/oauth/login?client_id=trazalog-mcp-connector&redirect_uri=https%3A%2F%2Fclaude.ai%2Fapi%2Fmcp%2Fauth_callback&response_type=code&c
       - Fill "doctest-uc008b-349m1i27ah@fldubai.com"
         locator('input[name="email"]')
-      - Fill "Doctest2026#Nueva" locator('input[name="password"]')
+      - Fill "***" locator('input[name="password"]')
       - Click locator('button[type="submit"], input[type="submit"]').first()
       - Wait for timeout
       - ✗ Expect "toMatch"

@@ -137,7 +137,7 @@ export default class InformeCorrida implements Reporter {
   private filas: Fila[] = [];
 
   private limpiar(texto: string): string {
-    let t = texto.replace(ANSI, '').replace(/((?:pass(?:word)?|clave|contrase[nñ]a|token|secret)["']?\s*[:=]\s*)\S+/gi, '$1***').replace(/(\/token\/)[\w-]+/g, '$1***');
+    let t = texto.replace(ANSI, '').replace(/Fill "[^"]*"( locator\([^\n]*(?:pass|clave|contrase))/gi, 'Fill "***"$1').replace(/((?:pass(?:word)?|clave|contrase[nñ]a|token|secret)["']?\s*[:=]\s*)\S+/gi, '$1***').replace(/(\/token\/)[\w-]+/g, '$1***');
     for (const s of this.ocultar) t = t.split(s).join('***');
     return t;
   }
