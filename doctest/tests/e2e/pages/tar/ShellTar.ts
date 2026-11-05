@@ -53,6 +53,11 @@ export class ShellTar {
       undefined,
       { timeout: 60_000 },
     );
+    // Al entrar, el sistema carga "Mis Tareas" con linkTo() por su cuenta. Si se abre otra pantalla antes de que
+    // esa carga termine y llega última, la pisa: se queda en la bandeja aunque la pantalla pedida ya haya respondido.
+    await this.page
+      .waitForFunction(() => (document.querySelector('#content')?.childElementCount ?? 0) > 0, undefined, { timeout: 30_000 })
+      .catch(() => {});
   }
 
   /**
