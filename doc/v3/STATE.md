@@ -14,7 +14,7 @@
 
 **Sprint actual:** Sprint 3 — Activación early adopter minero
 **Objetivo del sprint:** Reemplazar ngrok por un despliegue estable en GCP (ADR-011) y cerrar la deuda técnica pendiente antes de activar al primer cliente early adopter.
-**Última actualización:** 2026-11-05 por Claude Code (DOCTEST-MAN — prueba completa en una sola corrida, posterior a todos los cambios, con empresas nuevas contra el WSO2 MI local: 203 pruebas; 170 pasan, 31 errores conocidos marcados, 2 salteadas, 0 fallas, ninguna necesitó reintento; 1,9 h)
+**Última actualización:** 2026-11-05 por Claude Code (DOCTEST-MAN — prueba completa con la versión nueva de DocTest, empresas nuevas y WSO2 MI local: 204 pruebas; 171 pasan, 31 errores conocidos comprobados en el punto exacto, 2 salteadas, 0 fallas, 0 inestables; 1,8 h. Informe en `doctest/corridas/2026-11-05_1757_full_local/corrida.yaml`, se ve con `npm run doctest:consola`)
 **Última actualización:** 2026-10-27 por Claude Code (DOCTEST-TAR — catálogo TAR en borrador (22 casos), suite Playwright de TAR y corrida contra el DEMO: 12 bugs de TAR + 2 de DNATO/menús confirmados en vivo, priorizados en `doc/specs/TAR-bugs-detectados.md`, H-091 a H-106, issues #578-#594; ciclo de bandeja destrabado con tareas TST001 por API; menús de TAR asignados a la empresa de test desde Gestión de Menues)
 **Última actualización:** 2026-10-27 por Claude Code (MIG-ASSET-0 — rama de integración y CI de `traz-tools-man`, ADR-014 aceptado, A2/A3/P1 resueltas)
 **Última actualización:** 2026-10-24 por Claude Code (DocTest — DNATO-UC-009 v0.4 con el paso de seleccion de empresa; MCP-UC-001/002 en borrador; la suite Hurl de MCP sigue pendiente, es F4/#441)

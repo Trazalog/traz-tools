@@ -66,7 +66,7 @@ test.describe('@man @MAN-UC-033 @MAN-UC-034 Editar un plan recién creado', () =
   // (views/preventivo/list.php:43, views/predictivo/list.php), así que un plan recién creado no se puede editar.
   test('el listado ofrece Editar en un preventivo recién creado', async ({ paginaMan }) => {
     debeFallarCon(/ofrece Editar/);
-    test.fail(true, 'Un plan recién creado no se puede editar: nace en estado C y el lápiz solo se muestra en S o PL');
+    test.fail(true, 'H-122: un plan recién creado no se puede editar: nace en estado C y el lápiz solo se muestra en S o PL');
     const man = await shell(paginaMan);
     const id = await crearPreventivo(man, await crearEquipo(man));
     await verAcciones(man, 'preventivo', id);
@@ -74,7 +74,7 @@ test.describe('@man @MAN-UC-033 @MAN-UC-034 Editar un plan recién creado', () =
 
   test('el listado ofrece Editar en un predictivo recién creado', async ({ paginaMan }) => {
     debeFallarCon(/ofrece Editar/);
-    test.fail(true, 'Un plan recién creado no se puede editar: nace en estado C y el lápiz solo se muestra en S o PL');
+    test.fail(true, 'H-122: un plan recién creado no se puede editar: nace en estado C y el lápiz solo se muestra en S o PL');
     const man = await shell(paginaMan);
     const id = await crearPredictivo(man, await crearEquipo(man));
     await verAcciones(man, 'predictivo', id);

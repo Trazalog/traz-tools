@@ -33,7 +33,7 @@ if (!id) {
 
 const { corrida, resumen, cambios, pruebas } = parse(readFileSync(join(raiz, id, 'corrida.yaml'), 'utf8'));
 const r = resumen;
-const conEnlace = (p) => (p.issue ? `#${p.issue}` : `${p.hallazgo ?? 'sin número'} (sin issue)`);
+const conEnlace = (p) => (p.issue ? `#${p.issue}` : `${p.hallazgo ?? 'sin número'} (${p.privado ? 'aviso privado' : 'sin issue'})`);
 const lista = (titulo, filas) => (filas.length ? [`### ${titulo}`, ...filas.map((f) => `- ${f}`), ''] : []);
 const atencion = pruebas.filter((p) => ['falla', 'otro-punto', 'dejo-de-fallar', 'inestable'].includes(p.estado));
 const conocidos = [...new Set(pruebas.filter((p) => ['error-conocido', 'sin-comprobar'].includes(p.estado)).map(conEnlace))];

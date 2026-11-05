@@ -21,9 +21,11 @@ const REGISTRO = resolve(DOCTEST_ROOT, '..', 'doc', 'hallazgos', 'REGISTRO.md');
 const ANSI = /\x1b\[[0-9;]*[A-Za-z]/g;
 const MAX_ERROR = 900;
 const MAX_CAPTURAS = 3;
+/** El informe se versiona en un repositorio público: de estos errores queda el número, no el detalle. */
+const TEXTO_PRIVADO = 'Error de seguridad: el detalle está en un aviso privado.';
 const ANOTACIONES_PROPIAS = new Set(['fail', 'skip', 'slow', 'debe-fallar-con', 'menu-ausente']);
 
-type Hallazgo = { severidad: string; resumen: string; issue?: number };
+type Hallazgo = { severidad: string; resumen: string; issue?: number; privado: boolean };
 type Fila = Record<string, unknown> & { clave: string; estado: string };
 
 function hallazgos(): Map<string, Hallazgo> {
@@ -38,6 +40,7 @@ function hallazgos(): Map<string, Hallazgo> {
       severidad: c[6],
       resumen: (c[7] ?? '').replace(/\*\*/g, '').slice(0, 220),
       issue: issue ? Number(issue) : undefined,
+      privado: /aviso privado/i.test(estado),
     });
   }
   return mapa;
@@ -185,7 +188,7 @@ export default class InformeCorrida implements Reporter {
     if (hallazgo) fila.hallazgo = hallazgo;
     if (issue) fila.issue = issue;
     if (delRegistro?.severidad) fila.severidad = delRegistro.severidad;
-    if (marca) fila.error_anotado = this.limpiar(marca);
+    if (marca) fila.error_anotado = delRegistro?.privado ? TEXTO_PRIVADO : this.limpiar(marca);
     const nota = notas.find((a) => a.type === 'skip')?.description;
     if (estado === 'salteada' && nota) fila.motivo = this.limpiar(nota);
     if (notas.some((a) => a.type === 'menu-ausente')) fila.sin_menu = true;
@@ -194,6 +197,12 @@ export default class InformeCorrida implements Reporter {
     const pasos = this.pasos(result.steps, result.status !== 'passed');
     if (pasos.length) fila.pasos = pasos;
     if (mensajes.length && estado !== 'pasa') fila.error = this.limpiar(mensajes.join('\n---\n')).slice(0, MAX_ERROR);
+    if (delRegistro?.privado) {
+      fila.privado = true;
+      delete fila.datos;
+      delete fila.pasos;
+      delete fila.error;
+    }
     if (result.status !== 'passed' && estado !== 'salteada') {
       const capturas = this.copiarCapturas(result, clave, estado === 'error-conocido' ? 'conocidos' : '');
       if (capturas.length) fila.capturas = capturas;

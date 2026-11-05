@@ -189,6 +189,8 @@ la corrección.
 | `regresion`, `nuevos` y pruebas sueltas | `corridas/.locales/<id>/` | no |
 | Capturas de errores conocidos | `corridas/<id>/capturas/conocidos/` | no: se repiten en cada corrida |
 
+El informe se versiona en un repositorio público. Si el estado de un hallazgo en `doc/hallazgos/REGISTRO.md` dice `aviso privado`, el informe guarda el número y la severidad, pero no los pasos, el error ni los datos.
+
 **Estados de una prueba en el informe:**
 
 | Estado | Qué significa | Da rojo |
