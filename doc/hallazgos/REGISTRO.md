@@ -162,6 +162,7 @@ los priorice algún día, y para eso está esta tabla.
 | H-110 | 2026-11-04 | DocTest TAR | traz-comp-bpm / pedido de trabajo | bug | 🟡 | **Un proceso sin formulario no puede crear pedidos de trabajo.** `info_id` llega vacío y la columna es NOT NULL; el error que se muestra es otro, de Bonita (`/bpm/case/null`). | registro del integrador local, 2026-11-04 23:26; `doc/specs/TAR-bugs-detectados.md` B-18 | abierto |
 | H-111 | 2026-11-04 | DocTest TAR | traz-comp-tareasestandar / finalizar | bug | 🟡 | **Finalizar una tarea no registra la hora real de fin:** `fec_fin` sigue siendo la planificada. | `TAR-CP-018-01/018-03`; `doc/specs/TAR-bugs-detectados.md` B-19 | abierto |
 | H-112 | 2026-11-05 | DocTest ALM | traz-comp-almacenes / entrega de materiales | duda | 🟡 | **El botón de entrega parcial deja el pedido `Entregado` aunque quede saldo.** `cerrarTareaParcial()` manda `completa=true` y `Almtareas::getContrato()` mira `completa` antes que `parcial`, así que nunca llega a `Finalizado Ent. Parcial`. Hay que definir qué debe hacer ese botón. | pedido 1537: 6 pedidos, resto 4, estado `Entregado` | abierto |
+| H-113 | 2026-11-05 | DocTest DNATO | sta.entidades_negocio / carga masiva | ambiente | 🟢 | **La plantilla de carga masiva guarda la dirección completa del archivo y en DEV apunta a `localhost`:** el Apache local la rechaza, así que la prueba se saltea en local. Dato de la base, no código. | `DNATO-UC-026`; `doctest/tests/e2e/specs/dnato/DNATO-UC-026-027.carga-masiva.spec.ts` |
 
 ---
 
