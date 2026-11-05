@@ -90,37 +90,42 @@ export async function registrarEmpresa(page: Page, cap: Capturador): Promise<Emp
     throw new Error('Falta DOCTEST_MAIL_IMAP_* en .env: la registración lee el mail de activación por IMAP (Gmail).');
   }
   const sufijo = new Date().toISOString().slice(2, 16).replace(/[-:T]/g, '');
-  // Administrador: una variante por puntos de la casilla Gmail configurada, irrepetible.
-  const email = variantePorPuntos(casillaBase(), Math.floor(Math.random() * 2048));
+  // Administrador: una variante por puntos de la casilla Gmail configurada, elegida al azar.
+  const email = () => variantePorPuntos(casillaBase(), Math.floor(Math.random() * 2048));
   const datos = {
     ...BASE,
-    email,
+    email: email(),
     razonSocial: `${BASE.razonSocial} ${sufijo}`,
     cuit: `30-${sufijo.slice(-8)}-9`,
     // Dominio corporativo ÚNICO por corrida: el sistema lo exige único por empresa, y si
     // no se setea toma el del correo (el de mail.tm, compartido) → "ya está en uso".
     dominioEmpresa: `dt${sufijo.slice(-10)}.com`,
   };
-  console.log(`[ciclo] registrando empresa "${datos.razonSocial}" · admin ${datos.email}`);
 
   // ── Paso 1: registro ───────────────────────────────────────────────────────
-  await page.goto(urlDnato('main/register'), { waitUntil: 'domcontentloaded' });
-  await page.fill('input[name="firstname"]', datos.nombre);
-  await page.fill('input[name="lastname"]', datos.apellido);
-  await page.fill('input[name="email"]', datos.email);
-  await page.fill('input[name="reg_razon_social"]', datos.razonSocial);
-  await page.fill('input[name="telefono"]', datos.telefono);
-  const opcionPais = await page
-    .locator('select[name="reg_pais_id"] option')
-    .filter({ hasText: new RegExp(datos.pais, 'i') })
-    .first()
-    .getAttribute('value');
-  if (opcionPais) await page.selectOption('select[name="reg_pais_id"]', opcionPais);
-  await cap.shot(page, 'registro-formulario', { fullPage: true });
-  await enviarFormulario(page);
-  const textoReg = await page.locator('body').innerText();
-  if (/ya existe|no es válido/i.test(textoReg)) {
-    throw new Error(`Registro rechazado: ${textoReg.split('\n').find((l) => /ya existe|válido/i.test(l))}`);
+  // Las variantes son pocas y cada corrida gasta dos: si sale una ya usada, se prueba con otra.
+  for (let intento = 1; ; intento++) {
+    console.log(`[ciclo] registrando empresa "${datos.razonSocial}" · admin ${datos.email}`);
+    await page.goto(urlDnato('main/register'), { waitUntil: 'domcontentloaded' });
+    await page.fill('input[name="firstname"]', datos.nombre);
+    await page.fill('input[name="lastname"]', datos.apellido);
+    await page.fill('input[name="email"]', datos.email);
+    await page.fill('input[name="reg_razon_social"]', datos.razonSocial);
+    await page.fill('input[name="telefono"]', datos.telefono);
+    const opcionPais = await page
+      .locator('select[name="reg_pais_id"] option')
+      .filter({ hasText: new RegExp(datos.pais, 'i') })
+      .first()
+      .getAttribute('value');
+    if (opcionPais) await page.selectOption('select[name="reg_pais_id"]', opcionPais);
+    await cap.shot(page, 'registro-formulario', { fullPage: true });
+    await enviarFormulario(page);
+    const textoReg = await page.locator('body').innerText();
+    if (!/ya existe|no es válido/i.test(textoReg)) break;
+    if (!/email.*ya existe/i.test(textoReg) || intento === 10) {
+      throw new Error(`Registro rechazado: ${textoReg.split('\n').find((l) => /ya existe|válido/i.test(l))}`);
+    }
+    datos.email = email();
   }
   await cap.shot(page, 'registro-confirmado', { fullPage: true });
   console.log('[ciclo] 1. cuenta registrada, mail de activación enviado');

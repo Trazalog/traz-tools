@@ -33,7 +33,7 @@ export function casillaBase(): string {
 }
 
 /**
- * Variante irrepetible de una dirección de Gmail usando PUNTOS.
+ * Variante de una dirección de Gmail usando PUNTOS. Son pocas (2048): quien la usa reintenta si ya existe.
  * Gmail ignora los puntos de la parte local (misma bandeja), pero Trazalog ve cada
  * variante como un usuario distinto, así que cada corrida estrena administrador sin
  * crear cuentas nuevas. NO se usa `+` porque toolsbpmAPI lo mete sin escapar en un
