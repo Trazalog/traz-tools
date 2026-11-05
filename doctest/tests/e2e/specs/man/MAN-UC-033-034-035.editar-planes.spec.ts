@@ -12,6 +12,7 @@ import {
   crearBacklog, crearEquipo, crearPredictivo, crearPreventivo, crearTarea, idsDeListado, LISTADOS, sufijo,
 } from '../../pages/man/datos.ts';
 import { ShellMan, type PantallaMan } from '../../pages/man/ShellMan.ts';
+import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 async function shell(pagina: Page): Promise<ShellMan> {
   const man = new ShellMan(pagina);
@@ -64,14 +65,16 @@ test.describe('@man @MAN-UC-033 @MAN-UC-034 Editar un plan recién creado', () =
   // Falla conocida, igual que en asset: los planes nacen en estado C y el lápiz solo se muestra en S o PL
   // (views/preventivo/list.php:43, views/predictivo/list.php), así que un plan recién creado no se puede editar.
   test('el listado ofrece Editar en un preventivo recién creado', async ({ paginaMan }) => {
-    test.fail();
+    debeFallarCon(/ofrece Editar/);
+    test.fail(true, 'Un plan recién creado no se puede editar: nace en estado C y el lápiz solo se muestra en S o PL');
     const man = await shell(paginaMan);
     const id = await crearPreventivo(man, await crearEquipo(man));
     await verAcciones(man, 'preventivo', id);
   });
 
   test('el listado ofrece Editar en un predictivo recién creado', async ({ paginaMan }) => {
-    test.fail();
+    debeFallarCon(/ofrece Editar/);
+    test.fail(true, 'Un plan recién creado no se puede editar: nace en estado C y el lápiz solo se muestra en S o PL');
     const man = await shell(paginaMan);
     const id = await crearPredictivo(man, await crearEquipo(man));
     await verAcciones(man, 'predictivo', id);

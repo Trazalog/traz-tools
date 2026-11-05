@@ -266,6 +266,14 @@ function sembrarTar() {
 console.log(`DocTest · modo ${modo} · ambiente ${entorno}${soloPlan ? ' · solo plan' : ''}`);
 const inicio = Date.now();
 
+// Todas las tandas de esta corrida van al mismo informe (tests/e2e/reporter/informe-corrida.ts).
+const dos = (n) => String(n).padStart(2, '0');
+const ahora = new Date();
+const idCorrida = `${ahora.getFullYear()}-${dos(ahora.getMonth() + 1)}-${dos(ahora.getDate())}_${dos(ahora.getHours())}${dos(ahora.getMinutes())}_${modo}_${entorno}`;
+process.env.DOCTEST_CORRIDA_ID = idCorrida;
+process.env.DOCTEST_MODO = modo;
+if (sinPerfil) process.env.DOCTEST_SIN_PERFIL = '1';
+
 if (modo === 'regresion' || modo === 'nuevos') {
   aplicarPerfil();
   const n = nuevos();
@@ -299,6 +307,7 @@ if (soloPlan) {
   console.log(`Todo verde en ${Math.round((Date.now() - inicio) / 60000)} min.` +
     (modo === 'regresion' ? ' Listo para commit y push.' : ''));
 } else {
-  console.log('Hay pruebas en rojo: el reporte se abre con `npm run test:report`.');
+  console.log('Hay pruebas en rojo.');
 }
+if (!soloPlan) console.log(`Informe ${idCorrida}: se ve con \`npm run doctest:consola\`.`);
 process.exit(todoOk ? 0 : 1);

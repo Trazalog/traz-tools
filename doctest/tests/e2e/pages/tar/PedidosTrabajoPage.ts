@@ -72,8 +72,13 @@ export class PedidosTrabajoPage extends ShellTar {
   }
 
   /** Espera la próxima respuesta del paginado y la devuelve. */
-  async esperarPaginado(accion: () => Promise<unknown>): Promise<Paginado> {
-    const resp = this.page.waitForResponse((r) => /Pedidotrabajo\/paginado/.test(r.url()), { timeout: 60_000 });
+  /** Con `largo`, espera la respuesta de esa página: la grilla puede estar terminando una carga anterior. */
+  async esperarPaginado(accion: () => Promise<unknown>, largo?: number): Promise<Paginado> {
+    const delLargo = (pedido: string) => largo === undefined || new RegExp(`(^|[?&])length=${largo}(&|$)`).test(pedido);
+    const resp = this.page.waitForResponse(
+      (r) => /Pedidotrabajo\/paginado/.test(r.url()) && delLargo(`${r.url()}&${r.request().postData() ?? ''}`),
+      { timeout: 60_000 },
+    );
     await accion();
     const r = await resp;
     const texto = await r.text();

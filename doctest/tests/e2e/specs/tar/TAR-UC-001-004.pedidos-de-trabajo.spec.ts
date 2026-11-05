@@ -18,6 +18,7 @@ import { CLIENTES_TAR, TIPOS_TAR } from '../../seeds/tar/datos-tar.ts';
 import { codigoPedido, PedidosTrabajoPage } from '../../pages/tar/PedidosTrabajoPage.ts';
 import { sufijoDeCorrida } from '../../pages/tar/ShellTar.ts';
 import { entornoActual, requerirUrlDeApp } from '../../config/apps.ts';
+import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const SUF = sufijoDeCorrida();
 const COD = codigoPedido(SUF, 'A');
@@ -47,6 +48,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
 
   test('TAR-CP-002-01 alta completa con el proceso estándar: avisa el éxito y el pedido aparece en el listado (HIP-TAR-09)', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    debeFallarCon(/el alta no muestra ningún mensaje/);
     test.fail(true, entornoActual() === 'demo' ? 'H-091 #578 (B-01): la empresa de test no tiene PROCESO-STANDAR' : 'H-114 (B-20): el alta de PROCESO-STANDAR guarda el pedido sin avisar ni refrescar el listado');
     await ped.abrirListado(testInfo);
     const respuesta = await ped.crearPedido(datos(COD));
@@ -112,6 +114,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   });
 
   test('TAR-CP-002-07 código repetido en la empresa: error claro, sin segundo pedido (HIP-TAR-07)', async ({}, testInfo) => {
+    debeFallarCon(/no recibe un mensaje de error claro|locator\('#waiting'\)/);
     test.fail(true, 'H-096 #583 (B-06): con un código repetido no se crea otro pedido, pero el usuario no recibe ningún mensaje');
     await ped.abrirListado(testInfo);
     await requierePedido(ped, COD);
@@ -152,9 +155,18 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   });
 
   test('TAR-CP-001-02 el paginado informa el total real de pedidos (HIP-TAR-10)', async ({}, testInfo) => {
+    debeFallarCon(/recordsTotal=/);
     test.fail(true, 'H-097 #584 (B-07): recordsTotal informa el tamaño de la página, no el total');
     await ped.abrirListado(testInfo);
     await requierePedido(ped, COD);
+    // Hacen falta dos pedidos: si no, el total y la página coinciden y la prueba no mide nada.
+    const otro = codigoPedido(SUF, 'C');
+    await ped.buscar(otro);
+    if (!(await ped.fila(otro).count())) {
+      await ped.crearPedido(datos(otro));
+      await ped.cerrarDialogos();
+      await ped.abrirListado(testInfo);
+    }
     await ped.buscar('');
     // Pide una página de 1 registro: si `recordsTotal` es la cantidad de la página y no el total,
     // con 2 o más pedidos los contadores no coinciden.
@@ -163,6 +175,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
         const w = window as unknown as { $: (s: string) => { DataTable: () => { page: { len: (n: number) => { draw: () => void } } } } };
         w.$('#tbl-pedidos').DataTable().page.len(1).draw();
       }),
+      1,
     );
     expect(pag.recordsFiltered, 'la empresa tiene que tener al menos 2 pedidos para esta prueba').toBeGreaterThanOrEqual(2);
     expect(pag.recordsTotal, `recordsTotal=${pag.recordsTotal} recordsFiltered=${pag.recordsFiltered}`).toBe(pag.recordsFiltered);
@@ -179,6 +192,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
 
   test('TAR-CP-001-05 empresa sin pedidos: la grilla dice "sin datos", sin errores (HIP-TAR-10)', async ({ browser }, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    debeFallarCon(/respuesta: \{"draw"/);
     test.fail(true, 'H-097 #584 (B-07): sin pedidos el paginado devuelve recordsTotal 1 y data false');
     const otra = new PedidosTrabajoPage(await paginaDeRol(browser, 'empresa2'));
     const errores: string[] = [];
@@ -232,6 +246,7 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   });
 
   test('TAR-CP-004-05 aislamiento: desde la empresa 2 no se puede eliminar un pedido de la empresa 1 (HIP-TAR-02)', async ({ browser }, testInfo) => {
+    debeFallarCon(/la empresa 2 eliminó un pedido/);
     test.fail(true, 'H-119 (B-25): la empresa 2 elimina un pedido de la empresa 1 por URL');
     // Usa el pedido A, que ya nadie necesita: mientras siga H-119, la prueba lo borra de verdad.
     await ped.abrirListado(testInfo);

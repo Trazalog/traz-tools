@@ -16,6 +16,7 @@ import { expect, test } from '@playwright/test';
 import { paginaDeRol } from '../../fixtures/roles-tar.ts';
 import { sufijoDeCorrida } from '../../pages/tar/ShellTar.ts';
 import { TareasEstandarPage } from '../../pages/tar/TareasEstandarPage.ts';
+import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const SUF = sufijoDeCorrida();
 const TAREA = `DT Insp ${SUF}`;
@@ -44,6 +45,7 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
 
   test('TAR-CP-019-07 "Proceso Asociado" ofrece el proceso de tarea planificada TST001 (H-093)', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    debeFallarCon(/"TST001"/);
     test.fail(true, 'H-093 #580 (B-03): el selector solo ofrece Reparacion Neumaticos y Fabricación');
     await tst.abrir('tareasEstandar', testInfo);
     expect(await tst.procesosOfrecidos()).toContain('TST001');
@@ -68,6 +70,7 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
 
   test('TAR-CP-019-03 una duración imposible (99:99) no se acepta', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    debeFallarCon(/se guardó una tarea estándar con duración 99:99/);
     test.fail(true, 'H-098 #585 (B-08): la máscara acepta 99:99');
     // Duda D-21 del spec: el rango válido no está definido. Lo que sí es seguro es que 99:99
     // no es una duración HH:MM: con minutos > 59 el fin de la tarea se calcula mal.
@@ -110,6 +113,7 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
 
   test('TAR-CP-021-01 crear plantilla y asociar 2 tareas: el selector ya no las ofrece', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    debeFallarCon(/las tareas ya asociadas se siguen ofreciendo/);
     test.fail(true, 'H-100 #587 (B-10): el selector ofrece tareas ya asociadas');
     await tst.abrir('tareasEstandar', testInfo);
     await tst.crearPlantilla(PLANTILLA);
@@ -138,6 +142,7 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
 
   test('TAR-CP-019-04 editar nombre y duración de una tarea estándar', async ({}, testInfo) => {
     // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    debeFallarCon(/Se editó la tarea estandar/);
     test.fail(true, 'H-095 #582 (B-05): updateTarea castea vacío a integer');
     await tst.abrir('tareasEstandar', testInfo);
     const nuevo = `${TAREA} v2`;

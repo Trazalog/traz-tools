@@ -6,6 +6,7 @@
 import { test, expect } from '../../fixtures/auth-man.ts';
 import { buscarSolicitud, crearEquipo, sufijo } from '../../pages/man/datos.ts';
 import { ShellMan } from '../../pages/man/ShellMan.ts';
+import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const EQUIPO = 'traz-tools-man/Equipo';
 
@@ -26,7 +27,8 @@ test.describe('@man @MAN-UC-024 Lectura desde el equipo', () => {
   test('con falla registra la lectura y crea la solicitud de servicio', async ({ paginaMan }) => {
     // Falla conocida, decisión E14: el mantenimiento autónomo está apagado hasta portarlo con su motor;
     // hoy `Equipo::setLectura` rechaza la lectura con falla. Cuando se porte, esta prueba avisa.
-    test.fail();
+    debeFallarCon(/La lectura con falla todavía no está disponible/);
+    test.fail(true, 'E14: el mantenimiento autónomo está apagado hasta portarlo');
     const man = new ShellMan(paginaMan);
     await man.enElShell();
     const equipo = await crearEquipo(man);
