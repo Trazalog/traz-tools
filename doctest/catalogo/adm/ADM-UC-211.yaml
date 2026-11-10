@@ -1,0 +1,55 @@
+id: ADM-UC-211
+modulo: ADM
+titulo: Comprobar que cada acción administrativa queda auditada
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "sección 'Consola → Auditoría' y tabla de CP"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-100 Acciones auditadas"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-100: lista de lo que se audita"
+pantallas:
+  - "Consola → 📜 Auditoría y uso → Auditoría"
+precondiciones:
+  - Usuario con sesión iniciada en Tools y la marca de superusuario
+  - "Están construidos los requerimientos que escriben cada acción (REQ-004 a REQ-012)"
+  - "Empresa de prueba con plan cargado a mano y una persona del agente con cuota"
+flujo_principal:
+  - paso: "Hace, en la empresa de prueba, una acción de cada grupo de RF-100: crea y edita un plan, cambia el plan de la empresa, la suspende y la reactiva, crea y aprueba un pedido, invita, banea, reactiva y cambia el rol de una persona, crea y asigna un menú, publica una opción del catálogo, marca 'Me interesa', bonifica consultas, cambia una variable y marca un superusuario"
+    resultado: "Cada acción se guarda bien y la pantalla lo confirma"
+  - paso: "Abre Auditoría filtrada por la empresa de prueba y por el período de la prueba"
+    resultado: "Hay una fila por cada acción, con quién (su correo), empresa (o '—' si no es de una empresa), acción, entidad y detalle"
+flujos_alternativos:
+  - nombre: "El consumo de IA no está"
+    pasos:
+      - paso: "Una persona de la empresa hace tres consultas al agente (contra el servicio 'Consumir cuota') y después se mira Auditoría"
+        resultado: "No hay ninguna fila de esas consultas; están solo en el registro de consumos (Uso de IA)"
+  - nombre: "Una acción que falla no deja fila"
+    pasos:
+      - paso: "Intenta invitar a una persona con el tope de lugares alcanzado"
+        resultado: "La invitación se rechaza y en Auditoría no aparece ninguna fila de esa invitación"
+  - nombre: "Quién sale de la sesión"
+    pasos:
+      - paso: "Repite una acción mandando, a propósito, otro correo como autor en el envío"
+        resultado: "La fila de auditoría lleva el correo de la sesión, no el que se mandó"
+validaciones:
+  - "Cada acción de RF-100 hecha con éxito tiene su fila con quién, empresa, acción, entidad y detalle"
+  - "El consumo de IA no va a la auditoría"
+  - "Una acción rechazada no deja fila"
+  - "El autor sale siempre de la sesión"
+datos_prueba:
+  empresa: "empresa DocTest de la base de prueba con plan_id cargado a mano (M-3 es REQ-016)"
+  acciones: "lista de RF-100 con los códigos de REQ-004 a REQ-012 (por ejemplo plan.crear, empresa.cambiar_plan, empresa.suspender, pedido.crear, miembro.invitar, menu.asignar, catalogo.publicar, funcionalidad.interes, cuota.bonificar, superusuario.marcar)"
+dudas:
+  - "RF-100 dice 'empresa (… fin de prueba)'; REQ-008 lo escribe como 'empresa.vencer_plan' desde el proceso diario, sin persona. ¿Qué va en Quién? Propuesta: 'sistema' (sin correo), y en la Actividad del Portal se muestra como 'Trazalog'."
+  - "Esta prueba depende de que estén construidos REQ-004 a REQ-012. Si alguno no está, ¿se marca su acción como pendiente o falla la prueba? Propuesta: la prueba recorre solo las acciones de los requerimientos construidos y lista las que faltan, sin fallar por ellas."
+derivados: {}
+notas:
+  - "Cubre CP-100. Es una prueba de servicio: se puede correr sin pantallas, con pedidos a los recursos."

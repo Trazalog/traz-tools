@@ -1,0 +1,74 @@
+id: ADM-UC-214
+modulo: ADM
+titulo: Ver la actividad de mi empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "sección 'Portal → Actividad de la empresa'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-auditoria.html
+    detalle: "maqueta de Actividad"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-30, CU-19 y RF-100"
+pantallas:
+  - "Portal de la empresa → 📜 Actividad"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ (plan Free); bruno@ es Supervisor"
+  - "En octubre: Trazalog quitó Órdenes de trabajo del plan Free (28/10), bruno@ marcó 'Me interesa' en Procesos (27/10), ana@ asignó el menú Operación al rol Mantenedor (27/10), invitó a Darío Gómez como Mantenedor (24/10) y baneó a Elena Soto con motivo 'licencia' (20/10)"
+  - "Yudica tiene su propia actividad en el mismo mes"
+flujo_principal:
+  - paso: "En el Portal toca '📜 Actividad'"
+    resultado: "Ve 'Actividad' y 'Quién hizo qué en MinTest_SJ…', con la tabla Fecha, Quién, Qué hizo"
+  - paso: "Lee las filas"
+    resultado: "Ve, de la más nueva a la más vieja: 'Trazalog · Quitó Órdenes de trabajo del plan Free', 'Bruno Díaz · Marcó \"Me interesa\" en Procesos (plan Business)', 'Ana Pérez · Asignó el menú Operación al rol Mantenedor', 'Ana Pérez · Invitó a Darío Gómez como Mantenedor', 'Ana Pérez · Baneó a Elena Soto · \"licencia\"'"
+  - paso: "Toca el filtro 'Usuarios'"
+    resultado: "Quedan solo la invitación y el baneo"
+  - paso: "Toca '⬇ CSV'"
+    resultado: "Baja las filas del filtro con los mismos textos"
+flujos_alternativos:
+  - nombre: "Solo mi empresa"
+    pasos:
+      - paso: "Busca alguna fila de Yudica"
+        resultado: "No hay ninguna"
+  - nombre: "Empresa del navegador"
+    pasos:
+      - paso: "Pide la actividad mandando, a propósito, el número de Yudica en la dirección"
+        resultado: "Ve igual la actividad de MinTest_SJ, la de su sesión"
+  - nombre: "Lo que hizo un superusuario"
+    pasos:
+      - paso: "Mira una fila hecha por root@trazalog"
+        resultado: "En Quién dice 'Trazalog', sin el correo"
+  - nombre: "El consumo de IA no está"
+    pasos:
+      - paso: "Bruno hace consultas al agente y ana@ vuelve a Actividad"
+        resultado: "No aparece ninguna fila de esas consultas"
+  - nombre: "Sin actividad"
+    pasos:
+      - paso: "La administradora de una empresa recién creada abre Actividad"
+        resultado: "Ve 'Todavía no hay actividad registrada.'"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "bruno@ entra a la dirección de Actividad"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Muestra solo la actividad de la empresa de la sesión, más las restricciones de su plan"
+  - "Una empresa que llega del navegador se ignora"
+  - "Las acciones de un superusuario figuran como 'Trazalog'"
+  - "Cada acción se muestra con una frase en lenguaje de usuario"
+  - "Los filtros y la exportación respetan la empresa y el filtro elegido"
+  - "El consumo de IA no aparece"
+  - "Solo el administrador entra"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (MinTest_SJ y Yudica), con nombres inventados"
+dudas:
+  - "Las restricciones de un plan (por ejemplo 'quitó Órdenes de trabajo del plan Free') se guardan sin empresa, una sola fila para todas las afectadas (REQ-005). ¿Cómo se ven en la Actividad de cada empresa? Propuesta: se muestran las del plan que la empresa tiene hoy; no se agregan filas por empresa ni se cambia REQ-005. Si la empresa cambió de plan después, deja de verlas."
+  - "¿Qué acciones no tienen que ver los administradores? Propuesta: no se muestran perfil.password, las de variables de sistema ni las de catálogo (son de Trazalog, no de la empresa)."
+  - "Mostrar 'Trazalog' en vez del correo del superusuario sale de la maqueta, no de la especificación. Propuesta: aceptarlo, así no se exponen los correos internos de Trazalog."
+derivados: {}
+notas:
+  - "Cubre la Actividad de la empresa (CU-30, CU-19, RF-100 filtrada). De acá salen los avisos del Inicio (ADM-UC-216)."

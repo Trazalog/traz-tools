@@ -1,0 +1,58 @@
+id: ADM-UC-212
+modulo: ADM
+titulo: Ver cuánto se usa la plataforma por empresa
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "sección 'Consola → Uso de la plataforma'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-auditoria.html
+    detalle: "tabla 'Uso por empresa · octubre 2026'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-101"
+pantallas:
+  - "Consola → 📜 Auditoría y uso → Uso"
+precondiciones:
+  - Usuario con sesión iniciada en Tools y la marca de superusuario
+  - "En el mes actual, MinTest_SJ (Free, semanal) tiene 3 personas que entraron 96 veces en total y 21 consultas de IA de 30; Yudica (Business) tiene 17 personas y 412 accesos"
+flujo_principal:
+  - paso: "En Auditoría y uso toca la pestaña 'Uso'"
+    resultado: "Ve 'Uso por empresa · <mes actual>' con una fila por empresa: Empresa, Plan, Usuarios activos, Accesos, IA usadas / cuota, Más usado"
+  - paso: "Mira la fila de MinTest_SJ"
+    resultado: "Ve '🥉 Free', 3 usuarios activos, 96 accesos y '21 / 30 (semana)'"
+  - paso: "Elige el mes anterior"
+    resultado: "Los números cambian a los de ese mes"
+  - paso: "Toca '⬇ CSV'"
+    resultado: "Baja el uso del mes elegido"
+flujos_alternativos:
+  - nombre: "Empresa sin accesos en el mes"
+    pasos:
+      - paso: "Mira una empresa donde nadie entró en el mes"
+        resultado: "Aparece con 0 usuarios activos y 0 accesos"
+  - nombre: "Plan ilimitado"
+    pasos:
+      - paso: "Mira una empresa con IA sin tope"
+        resultado: "La columna IA muestra solo las consultas usadas"
+  - nombre: "Empresas dadas de baja"
+    pasos:
+      - paso: "Busca una empresa dada de baja"
+        resultado: "No aparece en el uso"
+validaciones:
+  - "Usuarios activos = personas distintas con al menos un acceso a la empresa en el mes"
+  - "Accesos = accesos registrados a la empresa en el mes"
+  - "IA = consultas ok del período en curso sobre cuota más bonificación, o solo las usadas si es ilimitado"
+  - "Las empresas dadas de baja no aparecen"
+datos_prueba:
+  empresas: "fixture dnato_v3_base con accesos y consumos cargados en la base de prueba"
+dudas:
+  - "'Más usado' necesita registrar qué opción del menú abre cada persona, y hoy no se registra (RF-101: 'si se registra el acceso por opción'). Registrarlo es tocar la navegación de Tools en todas las pantallas. Propuesta: la columna se muestra con '—' en este requerimiento y el registro por opción va en uno aparte, junto con el control central de Tools (H-091, T-5)."
+  - "'Usuarios activos': ¿personas que entraron en el mes, o personas en estado activo? Propuesta: las que entraron en el mes (es uso, no padrón); las activas ya se ven en Lugares."
+  - "La columna IA: ¿el período en curso o lo consumido dentro del mes elegido? Con planes semanales no coinciden. Propuesta: lo consumido dentro del mes elegido, y la cuota del período en curso solo para el mes actual."
+derivados: {}
+notas:
+  - "Cubre RF-101 (salvo 'Más usado'). Los accesos salen del registro de ADM-UC-213."
