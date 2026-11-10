@@ -503,6 +503,14 @@ es una derivación con `traz-comp-formularios`. El orden exacto de REQ-004 en ad
 "qué hace el módulo vs qué hace Tools vs qué hace el frente MCP" quedan como **[DECISIÓN]** de Rodolfo
 al aprobar este análisis.
 
+> **Decisiones de Rodolfo (2026-11-10) sobre esta nota:**
+> - **Orden:** el de la especificación, E0→E12, una entrega por requerimiento (REQ-004 = E1 más lo que
+>   faltó de E0, hasta REQ-016 = E12). Lista en `requerimientos/README.md`.
+> - **E8, cuota del agente:** el módulo hace las pantallas y los servicios de cuota; el freno en el
+>   portero de WSO2 es del frente del agente (MCP) y va aparte.
+> - **E11b, formularios:** el módulo hace las pantallas; los cambios dentro de `traz-comp-formularios`
+>   van en un requerimiento aparte, con análisis de impacto, porque es un módulo compartido.
+
 ---
 
 ## Decisiones de Rodolfo (2026-11-04 y 2026-11-05) y pendientes
@@ -533,6 +541,9 @@ al aprobar este análisis.
 - D.2 — el JWT de DNATO para un usuario creado desde el módulo funciona contra el APIM sin cambios.
 - B.4a — la cantidad de membresías afectadas por el criterio nuevo es chica (en desarrollo eran 7, de
   prueba), pero hay que confirmarlo con la medición.
+
+11. ✅ **Orden y reparto de REQ-004 en adelante (2026-11-10):** orden E0→E12; de E8 y E11b el módulo
+    hace las pantallas y lo de WSO2 y `traz-comp-formularios` va aparte (nota de F.4).
 
 **Pendientes de ejecución (no bloquean la aprobación del análisis):**
 - Correr `verificar-membresias-vs-empresas.sql` en DEMO y copia de producción, con las 3 mediciones de
