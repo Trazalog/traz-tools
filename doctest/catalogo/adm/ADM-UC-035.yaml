@@ -1,0 +1,73 @@
+id: ADM-UC-035
+modulo: ADM
+titulo: Preparar la base nueva sin que el sistema actual note nada
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-004-administracion-base-y-atributos.md
+    detalle: "sección 'Datos' (columnas, tablas y carga M-2, M-5, M-6, M-7)"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/tools-barra-superior.html
+    detalle: "el menú lateral de Tools que no tiene que cambiar"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§2 entidades y atributos; §8 migración M-1, M-2, M-5, M-6, M-7"
+pantallas:
+  - "Ingreso → tablero de Tools → menú lateral"
+  - "DNATO → Usuarios"
+precondiciones:
+  - El script de base corrió en el ambiente de prueba
+  - Usuario de la empresa DocTest con roles de operación
+flujo_principal:
+  - paso: "Ingresa a Tools con el mismo usuario que antes de correr el script"
+    resultado: "Entra igual que antes, a la misma empresa"
+  - paso: "Mira el menú lateral de Tools"
+    resultado: "Tiene exactamente las mismas opciones, en el mismo orden, que antes del script"
+  - paso: "Trabaja en una pantalla de su operación (por ejemplo, el listado de equipos)"
+    resultado: "Funciona igual que antes"
+flujos_alternativos:
+  - nombre: "Registración de una empresa nueva"
+    pasos:
+      - paso: "Un visitante registra una empresa nueva después del script"
+        resultado: "La registración termina igual que antes, y la empresa nueva queda activa"
+  - nombre: "Membresías"
+    pasos:
+      - paso: "Después del script, se revisa el estado de todas las membresías existentes"
+        resultado: "Todas están en estado activo; las que no coinciden con ninguna empresa por el nombre están en el listado que recibe Rodolfo"
+  - nombre: "Catálogo"
+    pasos:
+      - paso: "Después del script, se revisan las opciones de menú existentes"
+        resultado: "Todas están publicadas y de tipo pantalla, con su texto de siempre"
+  - nombre: "Administración de DNATO"
+    pasos:
+      - paso: "El administrador abre la lista de usuarios de DNATO y la de empresas"
+        resultado: "Las ve igual que antes"
+  - nombre: "Vuelta atrás"
+    pasos:
+      - paso: "En el ambiente de prueba se corre el script de vuelta atrás"
+        resultado: "Desaparece solo lo que agregó el script, y Tools y DNATO siguen funcionando"
+validaciones:
+  - "El script solo agrega: el ingreso, el menú y las pantallas de operación funcionan igual"
+  - "El menú de Tools de cada usuario es el mismo antes y después"
+  - "La registración funciona igual después del script"
+  - "Toda membresía existente queda activa y las que no se unen a una empresa por el nombre se listan"
+  - "Toda opción de menú existente queda publicada y de tipo pantalla"
+  - "DNATO funciona igual"
+  - "El script tiene vuelta atrás que borra solo lo agregado"
+datos_prueba:
+  usuario: "uno de los usuarios por defecto de la empresa DocTest"
+  ambiente: "copia de DEMO, nunca producción"
+dudas:
+  - "La especificación crea todas las entidades nuevas en esta entrega (E1), aunque las usen REQ-005 a REQ-014. ¿Un solo script o que cada requerimiento cree las suyas? Propuesta: un solo script, para aprobar una vez el cambio de base; si al construir REQ-005 en adelante algo cambia, se agrega con un script chico."
+  - "El estado de la membresía: la especificación lo pone como columnas de seg.memberships_users, pero esa tabla tiene una fila por rol y la especificación dice 'el estado es uno' por persona y empresa. Propuesta: tabla nueva seg.membresias_estado única por (correo, group), sin tocar seg.memberships_users."
+  - "¿En qué schema van las tablas nuevas? Propuesta: seg, donde ya están usuarios y membresías y el usuario de base de WSO2 ya tiene permisos."
+  - "M-2 pide cargar opciones del módulo SEG (administración), pero RF-44 dice que las pantallas del Portal no entran al catálogo. Propuesta: no se carga ninguna opción SEG por ahora."
+  - "M-2 también pide cargar las herramientas del agente como opciones del módulo MCP. Agregar filas a seg.menues puede cambiar el menú de Tools si el armado del menú las muestra (la regla 'si ningún hijo está habilitado se muestran todos'). Propuesta: cargarlas con la lista de herramientas que dé el frente del agente, tipo tool_mcp, y verificar con este caso que el menú de Tools no cambia; si cambia, se dejan para REQ-005 o REQ-011."
+  - "M-5 de la especificación dice 'se resuelve y guarda empr_id' en la membresía; Rodolfo decidió no agregar esa columna (B.4). Propuesta: M-5 solo carga el estado activo y lista las que no se unen por el nombre."
+derivados: {}
+notas:
+  - "Cubre M-1, M-2, M-5 (y la carga de M-6 y M-7, que prueban ADM-UC-031 y ADM-UC-033)."
+  - "Es el caso que demuestra que el cambio de base no rompió v2 (compatibilidad: solo se agrega). Se corre antes de cualquier otro de REQ-004."
