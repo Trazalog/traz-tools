@@ -23,7 +23,6 @@ precondiciones:
   - "'Entrega Materiales' ya es global y publicado y está como 'Global al alta' de formulario_entrega_materiales (ADM-UC-292)"
   - "El punto de uso formulario_checklist_herramientas no tiene 'Global al alta'"
   - "Empresa Test existe desde antes, con su clon de 'Entrega Materiales' y su configuración apuntando a él"
-  - "Hay una lista de opciones global (sin empresa) 'turnos' con 'Mañana', 'Tarde' y 'Noche', y el global 'Entrega Materiales' tiene un campo desplegable que la usa [SUPUESTO: lista inventada para la prueba]"
 flujo_principal:
   - paso: "Da de alta la empresa 'Nueva SA'"
     resultado: "La empresa se crea como siempre"
@@ -54,16 +53,12 @@ flujos_alternativos:
     pasos:
       - paso: "Se compara la configuración y el clon de Empresa Test antes y después del cambio"
         resultado: "Son iguales; su entrega de materiales sigue dibujando su clon"
-  - nombre: "Listas de opciones globales"
+  - nombre: "Campos de lista del global"
     pasos:
-      - paso: "Un responsable de almacén de Nueva SA despliega el campo de turnos en la entrega directa"
-        resultado: "El desplegable muestra 'Mañana', 'Tarde' y 'Noche', las opciones de la lista global"
-      - paso: "Se revisan las listas de opciones antes y después del alta"
-        resultado: "Nueva SA tiene su copia de 'turnos'; la lista global y las listas de las demás empresas están igual que antes"
-  - nombre: "Campo de lista sin lista global"
-    pasos:
-      - paso: "El global al alta tiene un campo desplegable con una lista que no existe como global, y se da de alta 'Cuarta SA'"
-        resultado: "El alta termina bien; ese campo se ve vacío en Cuarta SA, como hoy"
+      - paso: "Un responsable de almacén de Nueva SA mira un campo de lista del formulario en la entrega directa"
+        resultado: "Se ve igual que hoy con el clon: muestra lo que Nueva SA tenga configurado en sus listas de valores; si no tiene esa lista, el campo no muestra nada"
+      - paso: "Se revisan las listas de valores antes y después del alta"
+        resultado: "El alta no copió ni creó ninguna lista para Nueva SA; las demás listas están igual que antes"
   - nombre: "Falla en el bloque de formularios"
     pasos:
       - paso: "En la copia de DEMO se fuerza una falla al escribir la configuración y se da de alta una empresa"
@@ -77,16 +72,14 @@ validaciones:
   - "Todos los canales de alta hacen lo mismo"
   - "Las empresas existentes no cambian"
   - "Una falla en ese bloque no frena el alta"
-  - "El alta copia a la empresa nueva las listas de opciones globales que usan sus formularios, sin cambiar ninguna lista existente"
-  - "Si un campo usa una lista que no existe como global, no se copia nada y el alta sigue"
+  - "El alta no copia ni crea listas de opciones: los campos de lista muestran lo que la empresa tenga configurado, como hoy"
 datos_prueba:
   empresas: "Nueva SA, Otra SA y Tercera SA inventadas, en la copia de DEMO; Empresa Test existente"
 dudas:
   - "Antes del cambio, ¿la función del disparador que está en DEMO y en producción es igual a la versión v2.8.1.3 del repositorio? Propuesta: Pablo la compara en DEMO y Rodolfo en producción (solo lectura) antes de escribir la versión nueva; si difieren, se para."
-  - "No está claro si las listas que usa hoy 'Entrega Materiales' existen como globales (sin empresa): si existen, son de la 9000 ('9000-<lista>'), y el pase mínimo no las toca. Si es así, al pasar el formulario a global no habría lista global para copiar y sus campos de lista seguirían vacíos. Propuesta: Pablo mira en DEMO, en solo lectura, qué campos de lista tiene ese formulario y dónde están sus listas; si solo están en la 9000, el disparador copia de la lista global y, si no hay, de la de la 9000 con el mismo nombre [SUPUESTO], sin cambiar las de la 9000."
   - "Para ver el resultado del alta hay que mirar la configuración en la base o en 'Dónde se usan' de REQ-015. Propuesta: en DocTest se comprueba por la pantalla 'Dónde se usan' del Portal de la empresa nueva, y además dibujando la entrega directa."
 derivados: {}
 notas:
   - "Cubre CP-127 (RF-127). Reemplaza el clonado del disparador v2.8.1.3."
-  - "Listas de opciones (decidido por Rodolfo el 2026-11-10): la empresa nueva usa las listas globales; como no se toca el dibujo de Tools (que busca la lista con el prefijo de la empresa), el disparador se las copia (filas nuevas en core.tablas)."
+  - "Listas de opciones (decidido por Rodolfo el 2026-11-10): las listas de valores las configura cada empresa en core.tablas (ABM de listas de valores); el alta no copia ni crea listas de opciones, y los campos de lista muestran lo que la empresa tenga configurado, como hoy (si no tiene la lista, el campo no muestra nada). Está bien así y no se cambia."
   - "Vale para todos los canales de alta (autorregistro de DNATO, alta del superusuario, registración copiada de REQ-003 y Consola de REQ-008), porque todos insertan en core.empresas y disparan el mismo disparador."
