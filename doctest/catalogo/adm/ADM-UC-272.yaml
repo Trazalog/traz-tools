@@ -57,7 +57,7 @@ validaciones:
 datos_prueba:
   ambiente: "copia de DEMO con el orden completo corrido"
 dudas:
-  - "El corte final (redirigir DNATO al módulo y apagarlo): ¿va acá como una función más o queda aparte? Propuesta: aparte, en un REQ-017 con su propio análisis de impacto, porque toca todas las direcciones de ingreso de Tools (constante DNATO en Dash.php, Login.php, login_helper.php y sesion_helper.php) y porque el token del agente lo sigue emitiendo DNATO (ADR-008): apagar DNATO es mover identidad, que va a workshop. Este requerimiento deja el informe 'Ambiente listo' como condición para empezarlo."
+  - "El corte final (redirigir DNATO al módulo y apagarlo): ¿va acá como una función más o queda aparte? Propuesta: aparte, en un REQ-018 (REQ-017 ahora es Formularios globales en Tools) con su propio análisis de impacto, porque toca todas las direcciones de ingreso de Tools (constante DNATO en Dash.php, Login.php, login_helper.php y sesion_helper.php) y porque el token del agente lo sigue emitiendo DNATO (ADR-008): apagar DNATO es mover identidad, que va a workshop. Este requerimiento deja el informe 'Ambiente listo' como condición para empezarlo."
   - "¿Qué diferencias de menú se aceptan como justificadas? CP-M1 nombra tres motivos. Propuesta: solo esos tres; cualquier otra es 'sin justificar' y frena."
   - "¿Se exige 'Ambiente listo' también para encender menu_resuelto_en_tools (REQ-009 pedía solo la comparación de menú)? Propuesta: sí, el informe completo, porque una empresa sin plan o sin funcionalidades activas también cambiaría el menú."
 derivados: {}

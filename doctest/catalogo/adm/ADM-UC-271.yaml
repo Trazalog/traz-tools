@@ -16,7 +16,7 @@ pantallas:
   - "Terminal con acceso a la base del ambiente"
 precondiciones:
   - "Una copia nueva de la base de producción v2, sin ningún script del módulo corrido"
-  - "Los scripts de REQ-004, 005, 008, 009, 011, 013, 014, 015 y 016 listos; los que cambian filas existentes (M-3, y M-2 de herramientas, M-6 y M-7 de REQ-004) aprobados por Rodolfo"
+  - "Los scripts de REQ-004, 005, 008, 009, 011, 013, 014, 015 y 016 listos; los que cambian filas existentes (M-3, y M-2 de herramientas y M-6 de REQ-004) aprobados por Rodolfo; M-7 solo agrega filas nuevas en core.tablas y lo decide el equipo (regla de Rodolfo del 2026-11-10)"
   - "El correo del superusuario de ese ambiente, que se pasa como parámetro y no queda escrito en el repositorio"
 flujo_principal:
   - paso: "Sigue el documento de ejecución y corre los scripts en el orden que dice: estructura de cada requerimiento, datos de REQ-004 (M-2, M-5, M-6, M-7), M-4 y M-3"
