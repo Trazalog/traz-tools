@@ -52,6 +52,32 @@ test.describe('@dnato @DNATO-UC-001 Registrar una empresa nueva', () => {
     await registro.esperarMensaje(/razón social ingresada ya existe/i);
   });
 
+  test('rechaza una razón social ya usada aunque cambien las mayúsculas', async ({ page }) => {
+    const registro = new RegistroPage(page);
+    await registro.abrir();
+    await registro.completar({ ...base(), razonSocial: credenciales('empresa1').empresa.toUpperCase() });
+    await registro.enviar();
+
+    await registro.esperarMensaje(/razón social ingresada ya existe/i);
+  });
+
+  // Las empresas de test nacen de esta misma registración, así que su país queda escrito
+  // igual que el que elige el formulario. Las anteriores a la registración usan el catálogo
+  // `paises`: por eso el control de duplicados nunca las encontró y DocTest no lo vio
+  // (H-090). Hace falta una de esas empresas de verdad. Si falta el dato, el test falla a
+  // propósito: saltearlo en silencio es exactamente el hueco que este caso viene a cerrar.
+  test('rechaza la razón social de una empresa anterior a la registración', async ({ page }) => {
+    const empresa = process.env.DOCTEST_EMPRESA_ANTIGUA_NOMBRE;
+    expect(empresa, 'Falta DOCTEST_EMPRESA_ANTIGUA_NOMBRE: ver doctest/.env.example').toBeTruthy();
+
+    const registro = new RegistroPage(page);
+    await registro.abrir();
+    await registro.completar({ ...base(), razonSocial: empresa!.toUpperCase() });
+    await registro.enviar();
+
+    await registro.esperarMensaje(/razón social ingresada ya existe/i);
+  });
+
   test('rechaza un teléfono que no cumple el formato del país', async ({ page }) => {
     const registro = new RegistroPage(page);
     await registro.abrir();

@@ -28,6 +28,10 @@ Característica: Registrar una empresa nueva (paso 1 - datos de contacto)
     Cuando Completa el formulario con una razón social ya existente para el país elegido
     Entonces Se muestra 'La Razón Social ingresada ya existe en el sistema para el país solicitado' y la cuenta no se crea
 
+  Escenario: Razón social de una empresa anterior a la registración
+    Cuando Completa el formulario con la razón social de una empresa cargada antes de la registración, aunque cambien las mayúsculas
+    Entonces Se muestra 'La Razón Social ingresada ya existe en el sistema para el país solicitado' y la cuenta no se crea
+
   Escenario: Teléfono con formato inválido para el país
     Cuando Ingresa un teléfono que no cumple el formato del país seleccionado
     Entonces Se avisa 'Formato de teléfono inválido para el país seleccionado', el formulario no se envía y la cuenta no se crea

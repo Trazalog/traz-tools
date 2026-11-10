@@ -39,6 +39,10 @@ flujos_alternativos:
     pasos:
       - paso: "Completa el formulario con una razón social ya existente para el país elegido"
         resultado: "Se muestra 'La Razón Social ingresada ya existe en el sistema para el país solicitado' y la cuenta no se crea"
+  - nombre: "Razón social de una empresa anterior a la registración"
+    pasos:
+      - paso: "Completa el formulario con la razón social de una empresa cargada antes de la registración, aunque cambien las mayúsculas"
+        resultado: "Se muestra 'La Razón Social ingresada ya existe en el sistema para el país solicitado' y la cuenta no se crea"
   - nombre: "Teléfono con formato inválido para el país"
     pasos:
       - paso: "Ingresa un teléfono que no cumple el formato del país seleccionado"
@@ -62,6 +66,7 @@ notas:
   - "Ajuste de la v0.5 tras automatizarlo: el teléfono se valida **primero en el navegador**, que bloquea el envío y muestra su propio aviso; el aviso es un cartel emergente del navegador ('Formato de teléfono inválido para el país seleccionado') y la validación del servidor queda como segunda barrera, que el usuario no llega a ver. El resultado esperado se reescribió para describir lo que la persona ve. **Vale la pena que el PM confirme este matiz en la próxima lectura.**"
   - "El caso ES automatizable de punta a punta: el test se crea una casilla descartable, se registra con ella y lee el mail de activación solo (`tests/e2e/fixtures/casilla-descartable.ts`). Verificado el 2026-08-24 creando una empresa real en el DEMO."
   - "Decisión del PM (2026-08-19): la automatización va contra una empresa de test descartable y se acepta la basura acumulada, con re-seed periódico. Queda pendiente construir un procedimiento de limpieza."
+  - "El país del formulario sale de `paises_registracion` (países habilitados) y el de la empresa de `paises` (catálogo real): se relacionan por el nombre. Una empresa de test nace de la registración, así que el caso de razón social repetida necesita además una empresa anterior a ella (H-090)."
   - "Validado por el PM el 2026-08-24. La cuenta queda creada solo en Dnato, sin confirmar el correo, hasta que se activa: depurar las cuentas sin confirmar es una mejora futura (hallazgo H-021)."
 derivados:
   ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s02
