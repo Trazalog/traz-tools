@@ -17,7 +17,7 @@ que es de otro plan (REQ-012), ni que las pantallas de Tools rechacen lo que no 
 | Entrega de la especificación | **E3** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: Mi empresa → Funcionalidades + reglas R1/R2 + servicio "Funcionalidad visible" + respuestas 403/404. CU-31; CP-14, 15, 41, 50, 52, 53, 91, 92. La validación 403/404 en las pantallas de Tools (RF-94 para toda la suite) **no** va acá: ver "Qué NO hace" |
 | Casos de uso | `ADM-UC-070` a `ADM-UC-072` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantalla, modelo de visibilidad, servicio); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs` |
-| Riesgo | 🟡 Pantalla nueva del módulo, recursos nuevos del DataService y lectura de tablas existentes (`seg.menues`, `seg.memberships_menues`, `seg.memberships_users`, `core.empresas`) **sin modificarlas**. No hay columnas, tablas ni migración nuevas en este requerimiento. Si Rodolfo acepta adelantar M-4 (duda de ADM-UC-071), pasa a 🔴 |
+| Riesgo | 🟡 Pantalla nueva del módulo, recursos nuevos del DataService y lectura de tablas existentes (`seg.menues`, `seg.memberships_menues`, `seg.memberships_users`, `core.empresas`) **sin modificarlas**. No hay columnas, tablas ni migración nuevas en este requerimiento. Si se adelanta M-4 (duda de ADM-UC-071) sigue en 🟡: M-4 solo agrega filas a una tabla nueva (`seg.empresas_funcionalidades`) sin cambiar filas existentes, así que es **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)** |
 
 ---
 

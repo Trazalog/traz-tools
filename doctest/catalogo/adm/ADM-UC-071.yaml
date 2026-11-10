@@ -61,7 +61,7 @@ validaciones:
 datos_prueba:
   empresa: "empresa de prueba con plan_id de Free cargado a mano (el cambio de plan de una empresa es REQ-008)"
 dudas:
-  - "Hasta M-4 (REQ-009) las empresas existentes no tienen ninguna fila en seg.empresas_funcionalidades, así que verían todo 'sin activar'. Propuesta: adelantar M-4 a este requerimiento (pasa a 🔴, con script aprobado por Rodolfo) para que Funcionalidades muestre lo que cada empresa usa hoy; si no, el Portal no publica Funcionalidades en DEMO hasta REQ-009."
+  - "Hasta M-4 (REQ-009) las empresas existentes no tienen ninguna fila en seg.empresas_funcionalidades, así que verían todo 'sin activar'. Propuesta: adelantar M-4 a este requerimiento (solo agrega filas a una tabla nueva: es aditivo y lo decide el equipo, sigue 🟡) para que Funcionalidades muestre lo que cada empresa usa hoy; si no, el Portal no publica Funcionalidades en DEMO hasta REQ-009."
   - "RF-100 no nombra la activación ni el orden entre lo que se audita. Propuesta: auditar activar y apagar (funcionalidad.activar, funcionalidad.desactivar), porque alimentan los avisos del Inicio del Portal (REQ-013), y no auditar cada cambio de orden."
   - "¿El orden es uno solo para toda la empresa o uno por módulo? R3 dice que el predeterminado respeta la jerarquía del catálogo (módulo → opción). Propuesta: un solo orden de la lista; el menú predeterminado agrupa por módulo y dentro de cada módulo usa este orden."
   - "¿Una funcionalidad que se activa por primera vez va al final o en el lugar que le da el catálogo? Propuesta: al final; el administrador la mueve si quiere."
