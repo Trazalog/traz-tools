@@ -1,0 +1,69 @@
+id: ADM-UC-096
+modulo: ADM
+titulo: Cambiar el rol de una persona en línea
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "sección 'Cambiar el rol en línea (RF-75)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-usuarios.html
+    detalle: "selector de rol en la fila de Bruno"
+  - repo: traz-tools
+    path: doc/v3/dnato/DNATO_v2_RELEVAMIENTO.md
+    detalle: "A-05, A-06; el defecto de reenviar todos los roles está en traz-comp-dnato application/controllers/Main.php:947-1022"
+pantallas:
+  - "Portal de la empresa → Usuarios (rol en la fila)"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "Bruno es Supervisor en la empresa"
+flujo_principal:
+  - paso: "En la fila de Bruno, cambia el rol de Supervisor a Planificador"
+    resultado: "Ve 'Guardado ✓' y la fila muestra Planificador"
+  - paso: "Bruno vuelve a ingresar"
+    resultado: "Entra con el rol Planificador; en Bonita tiene la membresía de Planificador y ya no la de Supervisor"
+  - paso: "Revisa la auditoría"
+    resultado: "Tiene miembro.rol con Supervisor como anterior y Planificador como nuevo"
+flujos_alternativos:
+  - nombre: "Falla Bonita al asignar el nuevo"
+    pasos:
+      - paso: "Cambia el rol de Bruno y la asignación de Planificador falla en Bonita"
+        resultado: "Ve 'No pudimos cambiar el rol; quedó como estaba. Probá de nuevo en un rato.' y Bruno sigue Supervisor en la tabla y en Bonita"
+  - nombre: "Agregar un rol a quien ya tiene uno"
+    pasos:
+      - paso: "Le agrega a Bruno el rol Mantenedor además de Supervisor"
+        resultado: "Bruno queda con los dos roles; se pidió asignar solo Mantenedor y no se reenvió Supervisor"
+  - nombre: "Agregar un rol que ya tiene"
+    pasos:
+      - paso: "Manda directo al servidor asignarle a Bruno el rol Supervisor, que ya tiene"
+        resultado: "Ve 'Ya tiene ese rol.' y no se llama a Bonita"
+  - nombre: "Quitar el único rol"
+    pasos:
+      - paso: "Intenta quitarle a una persona su único rol"
+        resultado: "Se le ofrece darla de baja (ADM-UC-095) en lugar de dejarla sin rol"
+  - nombre: "Último administrador"
+    pasos:
+      - paso: "Manda directo al servidor cambiar su propio rol de Administrador a Supervisor"
+        resultado: "El servidor lo rechaza con 'Sos la única administradora: nombrá otra antes'"
+validaciones:
+  - "Cambiar un rol = quitar el viejo y asignar el nuevo con las operaciones existentes"
+  - "Si falla asignar el nuevo, se vuelve a asignar el viejo"
+  - "Se manda solo el cambio: nunca se reenvían los roles que ya tiene"
+  - "Un rol repetido no se vuelve a asignar"
+  - "Nadie queda sin rol: quitar el último es una baja"
+  - "No se le quita el rol Administrador al último administrador activo"
+  - "Cada cambio queda en la auditoría con el rol anterior y el nuevo"
+datos_prueba:
+  persona: "Bruno Díaz, del fixture dnato_v3_base"
+  falla_bonita: "en el ambiente de prueba se simula la falla con un rol inexistente en Bonita"
+dudas:
+  - "La maqueta muestra un solo rol por persona, pero una persona puede tener varios en la misma empresa. Propuesta: la columna muestra todos los roles como etiquetas, cada una con su '✕' y un '＋' para agregar; el selector de la maqueta se usa cuando tiene uno solo."
+  - "El cambio de menú de una persona (RF-75) usa la asignación de REQ-009. Propuesta: el selector de menú en la fila aparece solo si REQ-009 ya está construido; si no, se hace después desde Menús → Asignaciones."
+  - "¿Cambiar el rol pide confirmación? La maqueta lo hace en línea. Propuesta: sin confirmación, con 'Guardado ✓', salvo cuando la persona deja de ser Administrador, que pide confirmar."
+derivados: {}
+notas:
+  - "Cubre CP-79."
+  - "Corrige el defecto de DNATO: al agregar un rol a quien ya tiene roles, DNATO reenvía todos y el primero repetido hace fallar el lote."

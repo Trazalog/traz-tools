@@ -1,0 +1,74 @@
+id: ADM-UC-094
+modulo: ADM
+titulo: Banear y reactivar a una persona en la empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "secciones 'Banear, reactivar y dar de baja' y 'Servicio Estado de membresía'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-usuarios.html
+    detalle: "botones Banear y Reactivar, ventana 'Banear a <nombre>'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-36; RF-73, RF-03; servicio Estado de membresía en 02_MODELO_Y_REGLAS.md §4"
+pantallas:
+  - "Portal de la empresa → Usuarios → Banear / Reactivar"
+  - "Ingreso copiado (traz-comp-adm/main/login)"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "Carla (Mantenedor) está activa en la empresa y tiene sesión abierta en el Portal o en el módulo"
+  - "Elena (Mantenedor) está baneada y solo es miembro de esta empresa"
+flujo_principal:
+  - paso: "Toca 'Banear' en la fila de Carla"
+    resultado: "Se abre 'Banear a Carla Ruiz' con el texto 'Carla no va a poder entrar a <empresa>, ni desde la web ni desde la IA, hasta que lo reactives. Conserva su lugar en el plan y sigue pudiendo usar otras empresas donde esté activo.' y 'Motivo (opcional)'"
+  - paso: "Escribe 'licencia' y toca 'Banear'"
+    resultado: "Carla queda 'Baneado · <fecha de hoy>', los lugares usados no cambian y la auditoría tiene miembro.banear con el motivo"
+  - paso: "Carla hace su próximo pedido en el módulo con su sesión abierta"
+    resultado: "La sesión se cierra y la lleva al ingreso"
+  - paso: "Carla vuelve a ingresar por el ingreso del módulo"
+    resultado: "Si es su única empresa ve 'Tu acceso a <empresa> está suspendido. Comunicate con el administrador de tu empresa: <correo>'; si tiene otra empresa activa, entra a esa y no se le ofrece esta"
+  - paso: "El administrador toca 'Reactivar' en la fila de Carla y confirma"
+    resultado: "Carla queda 'Activo', puede volver a entrar y la auditoría tiene miembro.reactivar"
+flujos_alternativos:
+  - nombre: "Baneada en su única empresa"
+    pasos:
+      - paso: "Elena ingresa por el ingreso del módulo"
+        resultado: "Ve 'Tu acceso a <empresa> está suspendido. Comunicate con el administrador de tu empresa: <correo>' y no se crea sesión"
+  - nombre: "A uno mismo"
+    pasos:
+      - paso: "Mira su propia fila"
+        resultado: "Dice 'sos vos' y no ofrece 'Banear' ni 'Baja'"
+      - paso: "Manda directo al servidor el baneo de su propio correo"
+        resultado: "El servidor lo rechaza con 'Sos la única administradora: nombrá otra antes' y no cambia nada"
+  - nombre: "Sesión abierta en Tools"
+    pasos:
+      - paso: "Carla, ya baneada, sigue usando una pantalla de Tools fuera del módulo"
+        resultado: "Sigue pudiendo usarla hasta que Tools tenga el chequeo central (derivación T-5)"
+  - nombre: "Persona de otra empresa"
+    pasos:
+      - paso: "Manda directo al servidor el baneo de un correo que no es de su empresa"
+        resultado: "El servidor responde que no existe y no cambia nada"
+validaciones:
+  - "Banear conserva el lugar y los roles; reactivar los devuelve tal cual"
+  - "El motivo es opcional y queda en la auditoría"
+  - "Un baneado no usa el módulo: su sesión se corta en el próximo pedido"
+  - "Un baneado no puede elegir esa empresa en el ingreso del módulo; si es su única empresa ve el texto de suspensión con el correo de un administrador"
+  - "No se banea a uno mismo ni al último administrador activo, aunque el pedido llegue directo"
+  - "Solo se banea a personas de la empresa de la sesión"
+datos_prueba:
+  personas: "Carla Ruiz y Elena Soto, del fixture dnato_v3_base, con dominio de prueba del ambiente"
+  texto: "variable texto_suspension_miembro con el texto de RF-03"
+dudas:
+  - "Hasta la redirección final la gente sigue ingresando por DNATO, que no conoce el baneo por empresa: un baneado entra igual por ahí. Propuesta: se acepta y se dice en la ventana de baneo ('Por ahora vale para el ingreso nuevo'), o, si Rodolfo prefiere que valga ya, se agrega a DNATO un chequeo del estado en un requerimiento aparte con análisis de impacto."
+  - "Las pantallas de Tools no cortan la sesión del baneado (no tienen chequeo central, deuda H-091). Propuesta: se deja para la derivación T-5 y CP-73 queda cubierto solo en el módulo y en el ingreso."
+  - "El mensaje de CP-74 dice 'Sos la única administradora'. Propuesta: neutro, 'Sos la única persona que administra la empresa: nombrá a otra antes'."
+  - "¿Reactivar pide confirmación? La especificación dice 'en un clic, con confirmación'. Propuesta: confirmación simple sin motivo, 'Reactivar a <nombre>'."
+  - "¿Quién figura en el mensaje de suspensión si la empresa tiene varios administradores? Propuesta: el contacto_admin de la empresa (REQ-004) y, si está vacío, el administrador activo más antiguo."
+derivados: {}
+notas:
+  - "Cubre CP-03, CP-73 (en el módulo y el ingreso), CP-74 (baneo) y CP-75."
+  - "El rechazo del agente (sin_acceso) es de REQ-011 y del frente MCP: usa el mismo estado."
