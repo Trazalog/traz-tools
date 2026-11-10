@@ -1,0 +1,73 @@
+id: ADM-UC-070
+modulo: ADM
+titulo: Ver qué funcionalidades tiene la empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-006-administracion-funcionalidades.md
+    detalle: "sección 'R1 — Estado de cada funcionalidad para la empresa'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-funcionalidades.html
+    detalle: "maqueta de Funcionalidades: tres grupos y 'Cómo funciona'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§3 regla R1; 01_ESPECIFICACION_FUNCIONAL.md RF-14, RF-50"
+pantallas:
+  - "Portal de la empresa → Funcionalidades (dirección traz-comp-adm/portal/funcionalidades)"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa de prueba está en el plan Free (orden 1); Team (orden 2) trae además Ajustes de stock y la herramienta 'IA: crear orden de trabajo'; Business (orden 3) trae además Procesos y Producción"
+  - "La empresa tiene activas Equipos, Órdenes de trabajo, Stock, Herramientas e 'IA: consultar equipos', y apagada Indicadores; Preventivos está sin publicar"
+flujo_principal:
+  - paso: "Abre 'Funcionalidades' en el menú del Portal"
+    resultado: "Ve '🥉 Plan Free' en la cabecera y el texto 'Elegí qué usa tu empresa dentro del plan 🥉 Free y ordenalas arrastrando…'"
+  - paso: "Mira el grupo '✅ Activas'"
+    resultado: "Ve las cinco activas en su orden, con su módulo e interruptor encendido; 'IA: consultar equipos' está bajo el rótulo '🤖 IA'"
+  - paso: "Mira el grupo '💤 Sin activar'"
+    resultado: "Ve Indicadores con el interruptor apagado"
+  - paso: "Mira el grupo '💎 De otros planes'"
+    resultado: "Ve Ajustes de stock e 'IA: crear orden de trabajo' con '🥈 Team', y Procesos y Producción con '🥇 Business', sin interruptor"
+flujos_alternativos:
+  - nombre: "Sin publicar"
+    pasos:
+      - paso: "Busca Preventivos en los tres grupos"
+        resultado: "No aparece en ninguno"
+  - nombre: "Plan más bajo"
+    pasos:
+      - paso: "El superusuario agrega Procesos también a Team; el administrador vuelve a abrir Funcionalidades"
+        resultado: "Procesos figura ahora con '🥈 Team', el plan de menor orden que la trae"
+  - nombre: "Plan vencido"
+    pasos:
+      - paso: "Con la empresa en estado plan vencido, abre Funcionalidades"
+        resultado: "Ve 'Tu período de prueba terminó.' y todas las funcionalidades en '💎 De otros planes', cada una con el plan no gratuito de menor orden que la trae"
+  - nombre: "Empresa sin plan"
+    pasos:
+      - paso: "Con una empresa que todavía no tiene plan asignado, abre Funcionalidades"
+        resultado: "Ve todo lo publicado como 'Activas' o 'Sin activar', y nada en 'De otros planes'"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "Un usuario sin rol de administrador entra a la dirección de Funcionalidades"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Solo el administrador de la empresa activa ve sus funcionalidades"
+  - "Tres grupos según R1: en el plan y activa, en el plan y apagada, fuera del plan"
+  - "Lo sin publicar no aparece en ningún grupo"
+  - "Lo de otro plan muestra el plan de menor orden que lo trae y no tiene interruptor"
+  - "Con plan vencido todo es de otro plan, con el plan no gratuito de menor orden"
+  - "Las herramientas de IA aparecen bajo 'IA'"
+datos_prueba:
+  empresa: "empresa de prueba con plan_id de Free y filas en seg.empresas_funcionalidades cargadas a mano"
+  planes: "Free, Team y Business del fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1)"
+dudas:
+  - "Empresa sin plan: hasta M-3 (REQ-016) ninguna empresa tiene plan_id. ¿Qué muestra R1? Propuesta: se toma como si el plan trajera todo lo publicado (nada queda 'de otros planes'), igual que el plan 'Completo' de M-3: nadie pierde nada."
+  - "La maqueta dice en '💎 De otros planes': 'Tus usuarios las ven en Más en Trazalog', pero RF-64 dice que no hay grupo aparte 'Más en Trazalog'. Manda la especificación. Propuesta: 'Tus usuarios las ven sombreadas en el menú y pueden avisarte si les interesan.'"
+  - "RF-50 pide los tres grupos 'agrupados por módulo'; la maqueta muestra una lista con el módulo como etiqueta en cada fila. Propuesta: lista con la etiqueta de módulo, como la maqueta, y las herramientas de IA bajo el rótulo 'IA'."
+  - "Al tocar una funcionalidad de otro plan, CU-31 abre la vista de presentación (CU-50), que es REQ-012. Propuesta: hasta REQ-012 la fila no se puede tocar; el enlace 'Ver qué trae cada plan' tampoco se muestra hasta que exista Plan (REQ-010)."
+  - "¿Las opciones raíz sin dirección (MAN / mantenimiento) aparecen como funcionalidades? Propuesta: no, son agrupadores (misma respuesta que la duda de ADM-UC-051)."
+derivados: {}
+notas:
+  - "Cubre CP-50, CP-15 (en Funcionalidades), CP-41 (en Funcionalidades) y CP-53 (en Funcionalidades)."
+  - "Lo que se ve acá no cambia todavía el menú de Tools: eso es REQ-009 y su derivación."
