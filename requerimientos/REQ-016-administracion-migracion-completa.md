@@ -10,7 +10,8 @@ ambiente quedó listo. Lo leen Pablo para planificar y Rodolfo para aprobar los 
 de datos de REQ-004) y decidir el corte.
 **No** hace el corte final (redirigir DNATO al módulo y apagarlo): se propone como requerimiento aparte con
 su propio análisis de impacto (ver "Qué NO hace" y la duda de ADM-UC-272). Tampoco la migración de
-formularios M-7b ([REQ-015](REQ-015-administracion-formularios.md)). Lista completa en
+formularios M-7b: Rodolfo decidió no hacerla; solo se pasan a globales los formularios que usa el alta
+([REQ-017](REQ-017-administracion-formularios-globales.md)). Lista completa en
 [`README.md`](README.md).
 
 | Campo | Valor |
@@ -57,8 +58,8 @@ formularios M-7b ([REQ-015](REQ-015-administracion-formularios.md)). Lista compl
   Rodolfo dice que es "el último paso, con su propio análisis de impacto". Se propone como **requerimiento
   aparte** (duda de ADM-UC-272) porque toca mucho núcleo: el inventario está en "Lo que el corte final
   tiene que resolver".
-- **No hace M-7b** (formularios de la empresa 9000 a globales): REQ-015 la dejó para el requerimiento
-  aparte de `traz-comp-formularios` y del disparador de alta, porque moverla rompe el clonado de v2.
+- **No hace M-7b** (formularios de la empresa 9000 a globales): Rodolfo decidió no hacerla (2026-11-10).
+  Lo mínimo que necesita el disparador de alta lo hace REQ-017.
 - **No hace el corte de v3 de CI/CD** (unir `develop-v3` con `develop`, `TRAZALOG_v3_CICD_STRATEGY.md` §8):
   es otra cosa, del proyecto entero.
 - **No cambia ninguna columna existente** ni ninguna fila de v2 en una columna existente: M-3 solo llena
@@ -85,7 +86,7 @@ formularios M-7b ([REQ-015](REQ-015-administracion-formularios.md)). Lista compl
 | M-5 | Membresías en `activo` y lista de las que no resuelven empresa | REQ-004 | Se ordena; el informe repite la lista |
 | M-6 | Marca de superusuario | REQ-004 | Se ordena; el informe verifica que haya al menos uno |
 | M-7 | Variables de sistema | REQ-004 (más las que agregaron REQ-008 y `menu_resuelto_en_tools` de REQ-009) | Se ordena; el informe verifica que estén todas |
-| M-7b | Formularios de la 9000 | REQ-015: requerimiento aparte | **Fuera** |
+| M-7b | Formularios de la 9000 | No se hace; solo lo mínimo del alta en REQ-017 | **Fuera** |
 | M-8 | Menú v2 = menú v3 por usuario | REQ-009 (adelantada: comparación en una copia de DEMO antes de encender) | **Se corre acá** en cada ambiente, como verificación final |
 | M-9 | Corte | — | **Fuera** (requerimiento aparte) |
 
@@ -169,7 +170,7 @@ cero:
   rol"; `TOOLS_ADMIN_USER` y `seg.users.role`; la regla vieja `menu()` de `menu_helper.php` (REQ-009); las
   empresas que nacen sin plan por el registro de DNATO (M-3 repetible).
 - **Pendientes de otros requerimientos aparte**: el control central de Tools (H-091, T-5), el cambio de
-  `traz-comp-formularios` y del disparador de alta (REQ-015: F-1 a F-5, CP-127, M-7b), el freno de cuota en
+  del disparador de alta y de los combos de formularios (REQ-017, CP-127); F-1 a F-4 de `traz-comp-formularios` no se hacen en este plan (prohibido tocar cómo se muestran los formularios), el freno de cuota en
   WSO2 (REQ-011, frente del agente).
 
 ---
@@ -289,5 +290,5 @@ Están en los casos de uso (campo `dudas`), para contestarlas en un solo lugar.
 | CP-M1 | Menú v2 = menú v3 por usuario; diferencias justificadas con motivo | ADM-UC-272 (en cada ambiente; la comparación es la de REQ-009, ADM-UC-135) |
 | M-3 (§8) | Todas las empresas actuales en "Completo"; nadie pierde nada | ADM-UC-270 |
 | M-1 a M-7 (§8) | Migraciones en orden, repetibles | ADM-UC-271 |
-| M-7b, CP-132 | Formularios de la 9000 a globales | Fuera de alcance (REQ-015: requerimiento aparte) |
+| M-7b, CP-132 | Formularios de la 9000 a globales | Fuera de alcance: no se hace; lo mínimo del alta, en REQ-017 |
 | M-9 | Corte | Fuera de alcance (requerimiento aparte propuesto) |
