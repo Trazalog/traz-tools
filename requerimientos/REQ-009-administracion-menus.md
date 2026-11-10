@@ -7,18 +7,18 @@ donde el administrador arma menús con las funcionalidades activas de su empresa
 a personas, el servicio "Menú resuelto" (regla R3) que dice qué menú le toca a cada uno, la carga
 inicial de funcionalidades activas de las empresas que ya existen (M-4) y **el menú lateral de Tools
 dibujado con ese servicio** (punto T-2), encendido por una variable de sistema. Lo leen Pablo para
-planificar y Rodolfo para aprobar el script y el análisis de impacto en Tools. **No** cubre la vista de
+planificar y Rodolfo para aprobar el análisis de impacto en Tools. **No** cubre la vista de
 presentación que abre una opción sombreada (REQ-012) ni el control de acceso por pantalla en Tools
 (T-5, deuda H-091). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el script de M-4 y el análisis de impacto en Tools |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, y aprobar el análisis de impacto en Tools (incluida la variable nueva en `core.tablas`) |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal), [REQ-004](REQ-004-administracion-base-y-atributos.md) (tablas `seg.menus_custom`, `seg.menus_custom_items`, `seg.menus_asignaciones`, estado de membresía, auditoría), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (catálogo y planes) y [REQ-006](REQ-006-administracion-funcionalidades.md) (R1, R2, Funcionalidades) |
 | Entrega de la especificación | **E6** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: menús custom, asignación en las dos direcciones, "Ver como…", servicio "Menú resuelto" (R3: jerarquía + estado `visible` / `otro_plan` por ítem), migración M-4. CU-32, CU-33; CP-51, CP-60 a 69. Más el punto **T-2** de `02_MODELO_Y_REGLAS.md` §9b (menú operativo de Tools con el menú resuelto) y su parte de **T-10** (pruebas del menú), por decisión de Rodolfo |
 | Casos de uso | `ADM-UC-130` a `ADM-UC-135` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantalla de Menús, aviso en Funcionalidades, modelo y servicio "Menú resuelto"); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs`, el script de M-4, la comparación M-8, **y el núcleo**: `application/controllers/Dash.php`, `application/models/Dashs.php` y `application/helpers/menu_helper.php` (ver "Análisis de impacto en Tools"); prueba DocTest nueva del menú lateral |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: carga de datos M-4 (filas nuevas en `seg.empresas_funcionalidades` para todas las empresas), nombres de columnas de las tablas de menús y una variable nueva en `core.tablas`. No toca ninguna fila ni columna existente. 🔴 **Núcleo de Tools**: el menú lateral de **todas** las pantallas de producción pasa a salir del servicio nuevo cuando se enciende la variable → **análisis de impacto aprobado por Rodolfo antes de construir** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡); `COREDataService` no se modifica |
+| Riesgo | 🔴 La carga M-4 (filas en `seg.empresas_funcionalidades`, tabla nueva) y los nombres de columnas de las tablas de menús (tablas nuevas de `seg`) son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**; no toca ninguna fila ni columna existente. Sigue en rojo por el **núcleo de Tools**: la variable nueva es una fila nueva en `core.tablas` (schema `core`), y el menú lateral de **todas** las pantallas de producción pasa a salir del servicio nuevo cuando se enciende la variable → **análisis de impacto aprobado por Rodolfo antes de construir** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡); `COREDataService` no se modifica |
 
 ---
 
@@ -401,8 +401,9 @@ resuelto o del respaldo, y en el respaldo el motivo (sin respuesta, error, vací
 
 ## Datos
 
-**🔴: Rodolfo aprueba el script antes de construir.** Las tablas las crea REQ-004 con los atributos; acá
-se proponen los nombres de columnas **[SUPUESTO]** (si el script de REQ-004 no corrió todavía, van en
+**Tablas nuevas y M-4: cambio de base aditivo, lo decide el equipo (regla de Rodolfo del 2026-11-10).**
+La fila nueva en `core.tablas` es del núcleo y va con el análisis de impacto que aprueba Rodolfo. Las
+tablas las crea REQ-004 (en `seg`) con los atributos; acá se proponen los nombres de columnas **[SUPUESTO]** (si el script de REQ-004 no corrió todavía, van en
 él; si no, en uno chico con su vuelta atrás).
 
 | Tabla | Columnas propuestas |
