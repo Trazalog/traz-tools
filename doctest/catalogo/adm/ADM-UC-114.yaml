@@ -1,0 +1,67 @@
+id: ADM-UC-114
+modulo: ADM
+titulo: Suspender y reactivar una empresa
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Suspender y reactivar (RF-24, RF-04)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "botones Suspender y Reactivar"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-16; RF-24, RF-04"
+pantallas:
+  - "Consola → Empresas → Suspender / Reactivar"
+  - "Ingreso copiado (traz-comp-adm/main/login)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Carla tiene sesión abierta en el módulo con MinTest_SJ, que está activa"
+  - "Variables texto_suspension_empresa y contacto_soporte cargadas"
+flujo_principal:
+  - paso: "Toca 'Suspender' en la fila de MinTest_SJ"
+    resultado: "Se abre 'Suspender MinTest_SJ' con 'Motivo (opcional)'"
+  - paso: "Escribe 'falta de pago' y toca 'Suspender'"
+    resultado: "Ve 'Suspendimos MinTest_SJ: nadie puede entrar hasta que la reactives.' y la fila dice 'Suspendida · <fecha de hoy>' con 'Reactivar'"
+  - paso: "Carla hace su próximo pedido en el módulo"
+    resultado: "La sesión se cierra y ve 'Tu empresa está momentáneamente suspendida. Comunicate con soporte: <contacto_soporte>'"
+  - paso: "Carla intenta ingresar de nuevo por el ingreso del módulo"
+    resultado: "MinTest_SJ no se le ofrece; si es su única empresa ve el mismo mensaje"
+  - paso: "Revisa la auditoría y Registros"
+    resultado: "La auditoría tiene empresa.suspender con el motivo y Registros una fila '⛔ Suspensión' con el resultado de la notificación a infra"
+  - paso: "Toca 'Reactivar' en la fila de MinTest_SJ y confirma"
+    resultado: "Ve 'Reactivamos MinTest_SJ.', Carla vuelve a entrar y la auditoría tiene empresa.reactivar"
+flujos_alternativos:
+  - nombre: "Los datos no se tocan"
+    pasos:
+      - paso: "Después de reactivar, la administradora revisa sus usuarios, equipos y órdenes"
+        resultado: "Está todo igual que antes de suspender"
+  - nombre: "Sesión abierta en Tools"
+    pasos:
+      - paso: "Con la empresa suspendida, una persona sigue en una pantalla de Tools fuera del módulo"
+        resultado: "Sigue pudiendo usarla hasta que Tools tenga el chequeo central (derivación T-5)"
+  - nombre: "Ingreso por DNATO"
+    pasos:
+      - paso: "Una persona de la empresa suspendida ingresa por el ingreso de DNATO antes de la redirección final"
+        resultado: "Entra igual (DNATO no conoce el estado de la empresa)"
+validaciones:
+  - "Suspender pide confirmación con motivo opcional; reactivar revierte"
+  - "No se tocan datos"
+  - "Una empresa suspendida no se ofrece en el ingreso del módulo y su sesión en el módulo se corta en el próximo pedido"
+  - "El mensaje sale de la variable texto_suspension_empresa con el contacto de soporte"
+  - "Queda en la auditoría y en Registros, y se llama a Notificar a infra"
+datos_prueba:
+  empresa: "MinTest_SJ del fixture dnato_v3_base"
+  persona: "Carla Ruiz, con dominio de prueba del ambiente"
+dudas:
+  - "Hasta la redirección final la gente sigue ingresando por DNATO, que no conoce la suspensión, y las pantallas de Tools no la miran (H-091). Una empresa suspendida por falta de pago seguiría entrando. Propuesta: se acepta hasta la redirección y se dice en la ventana; si Rodolfo necesita que valga ya, la alternativa más chica es un requerimiento aparte que agregue el chequeo de estado en el ingreso de DNATO, con análisis de impacto."
+  - "¿El superusuario puede entrar a una empresa suspendida (para revisar)? Propuesta: no por el ingreso; la ve desde la Consola."
+  - "¿Una empresa con el plan pendiente de aprobación se puede suspender? Propuesta: sí, son estados independientes."
+derivados: {}
+notas:
+  - "Cubre CP-04 en el módulo y en el ingreso copiado. El corte en Tools (T-5) y el rechazo del agente con sin_acceso (REQ-011): fuera de alcance."
+  - "Suspender reemplaza a 'bloquear' (D-20)."

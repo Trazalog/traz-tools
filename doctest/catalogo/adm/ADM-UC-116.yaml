@@ -1,0 +1,68 @@
+id: ADM-UC-116
+modulo: ADM
+titulo: Vencer los planes gratuitos o de prueba cada día
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Proceso diario de vencimiento (CU-61, RF-26)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-61; RF-26; D-21"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "CP-24"
+pantallas:
+  - "Proceso diario (sin pantalla) → Consola → Empresas y Registros"
+precondiciones:
+  - "El proceso diario está programado en el servidor de prueba"
+  - "Empresa Test tiene Prueba Business con vencimiento dentro de 7 días; eva@ es su administradora"
+  - "Matheu tiene un plan de prueba que vence hoy"
+flujo_principal:
+  - paso: "Corre el proceso diario"
+    resultado: "eva@ recibe 'Tu período de prueba de Prueba Business termina el <fecha>'; Matheu queda con el plan vencido y su administrador recibe 'Tu período de prueba terminó'"
+  - paso: "El superusuario abre Empresas"
+    resultado: "Matheu figura con el plan vencido"
+  - paso: "Revisa Registros y la auditoría"
+    resultado: "Hay una fila de vencimiento de Matheu con el resultado de la notificación a infra, y la auditoría tiene empresa.vencer_plan"
+  - paso: "Corre el proceso otra vez el mismo día"
+    resultado: "No manda los correos de nuevo ni repite el vencimiento"
+flujos_alternativos:
+  - nombre: "Un día no corrió"
+    pasos:
+      - paso: "El proceso no corre el día del vencimiento de una empresa y corre al día siguiente"
+        resultado: "Vence esa empresa igual y manda su correo"
+  - nombre: "Plan sin vencimiento"
+    pasos:
+      - paso: "Corre el proceso con empresas en Free (sin vencimiento)"
+        resultado: "No les pasa nada"
+  - nombre: "Extender después de vencido"
+    pasos:
+      - paso: "El superusuario extiende el vencimiento de Matheu a una fecha futura"
+        resultado: "Matheu vuelve a tener el plan vigente (ver ADM-UC-113)"
+  - nombre: "Notificación a infra que falla"
+    pasos:
+      - paso: "Corre el proceso con el servicio de infraestructura caído"
+        resultado: "El vencimiento se hace igual, la fila de Registros dice 'fallida' y se reintenta en la próxima corrida"
+validaciones:
+  - "Avisa por correo a los administradores los días de la variable aviso_vencimiento_dias antes y el día del vencimiento"
+  - "El día del vencimiento la empresa pasa a plan vencido; no se le cambia el plan"
+  - "No repite avisos ni vencimientos"
+  - "Recupera los días que no corrió"
+  - "Genera evento en Registros, llama a Notificar a infra y queda en la auditoría"
+  - "Las notificaciones fallidas se reintentan hasta 3 veces"
+datos_prueba:
+  empresas: "Empresa Test y Matheu del fixture dnato_v3_base, con las fechas de vencimiento cargadas a mano"
+  correo: "buzón de prueba del ambiente"
+dudas:
+  - "CP-24 dice que al vencer la empresa 'queda en Free'; RF-26 y D-21 (corregida el 2026-11-02) dicen que queda en 'plan vencido', con todo fuera de plan hasta pasar a un plan no gratuito. Manda la especificación más nueva. Propuesta: plan vencido, y se corrige CP-24."
+  - "¿Cómo se programa el proceso? Hoy no hay programador de tareas en el módulo. Propuesta: una tarea programada del servidor (cron) que corre el proceso del módulo por línea de comandos una vez por día a las 00:10 de San Juan, igual que el refresco de indicadores que ya existe; la instala quien administra cada servidor."
+  - "Qué ve la gente de una empresa con el plan vencido (menú todo sombreado, aviso en el Portal, rechazo del agente) es de REQ-010, REQ-011 y la derivación del menú de Tools. Propuesta: este requerimiento solo deja el estado y manda los avisos."
+  - "¿El aviso previo es solo a 7 días o también otros (3 días, 1 día)? RF-26 dice 7 días antes y el día. Propuesta: solo esos dos."
+derivados: {}
+notas:
+  - "Cubre CP-24 en la parte de aviso, vencimiento y correo."
+  - "El perfil es Superusuario porque es quien ve el resultado en la Consola; el proceso corre solo."
