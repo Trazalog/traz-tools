@@ -37,6 +37,8 @@ flujo_principal:
 flujos_alternativos:
   - nombre: "Activar de nuevo"
     pasos:
+      - paso: "Mira P-1 en 'Mis formularios' después de inactivarlo"
+        resultado: "P-1 sigue en la lista, marcado 'Inactivo', con 'Activar' en vez de 'Inactivar'"
       - paso: "Toca 'Activar' en P-1"
         resultado: "P-1 vuelve a 'Publicado' y se puede elegir otra vez en 'Dónde se usan' (no vuelve solo a la pantalla)"
   - nombre: "Inactivar uno que no está en uso"
@@ -59,6 +61,7 @@ flujos_alternativos:
         resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
 validaciones:
   - "Se ven los propios de la empresa de la sesión y los globales publicados; los globales en borrador no"
+  - "Los formularios inactivos se ven en el ABM marcados 'Inactivo'"
   - "Los globales no se pueden editar desde el Portal"
   - "Inactivar uno en uso avisa dónde se usa y cuántas respuestas tiene, y pide confirmación"
   - "Al inactivar, los puntos donde se usaba quedan en 'Ninguno'"
@@ -68,9 +71,10 @@ validaciones:
 datos_prueba:
   formularios: "fixture de formularios de 03_CASOS_DE_PRUEBA.md (P-1, P-2, G-1, G-2, G-3), cargado en la copia de DEMO"
 dudas:
-  - "Los formularios sin empresa que existen hoy en producción no se revisaron (verificación §8.5 del relevamiento, no corrida). Con D1, todos aparecerían como 'globales' para todas las empresas, aunque alguno sea de un cliente. Propuesta: correr la verificación antes de desplegar y no mostrar como globales los que Rodolfo marque como de un cliente hasta asignarlos (eso es M-7b)."
+  - "Los formularios sin empresa que existen hoy en producción no se revisaron (verificación §8.5 del relevamiento, no corrida). Con D1, todos aparecerían como 'globales' para todas las empresas, aunque alguno sea de un cliente. Propuesta: correr la verificación antes de desplegar y no mostrar como globales los que Rodolfo marque como de un cliente. Asignarlos a su cliente era parte de M-7b, que no se hace (decisión de Rodolfo del 2026-11-10): ¿se asignan a mano con un script aparte o se dejan ocultos?"
   - "Inactivar: ¿se usa la columna eliminado que ya existe o el estado nuevo? Hoy nadie pone eliminado en 1 y el dibujo no lo mira (relevamiento §5.2). Propuesta: solo el estado nuevo 'inactivo'; eliminado queda como está, para no cambiar lo que lee FRMDataService (que sí filtra eliminado)."
   - "Al volver a activar P-1, ¿vuelve solo a los puntos donde estaba? Propuesta: no; el administrador lo elige otra vez en 'Dónde se usan', para que nada cambie en Tools sin que lo decida."
 derivados: {}
 notas:
-  - "Cubre CP-120, CP-128 (inactivar en uso, baja lógica, respuestas viejas) y CP-130 en las pantallas del módulo. El combo de tareas estándar con '(global)' necesita D2/D3 en FRMDataService: fuera."
+  - "Cubre CP-120, CP-128 (inactivar en uso, baja lógica, respuestas viejas) y CP-130 en las pantallas del módulo. El combo de tareas estándar con '(global)' (D2/D3 en FRMDataService) pasa a REQ-017."
+  - "En este plan está prohibido tocar cómo se dibujan los formularios en Tools (decisión de Rodolfo del 2026-11-10): un inactivo pedido por número fijo se sigue dibujando en Tools (F-4 no se hace); en los puntos de uso se cubre limpiando la configuración."

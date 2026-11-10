@@ -58,8 +58,8 @@ datos_prueba:
   globales: "G-1, G-2, G-3 del fixture de 03_CASOS_DE_PRUEBA.md, en la copia de DEMO"
 dudas:
   - "Inactivar un global usado por 3 empresas les deja la pantalla sin formulario (la especificación lo acepta con confirmación). ¿Te parece bien que la Consola limpie la configuración de esas empresas? Propuesta: sí, y además se manda un correo a sus administradores avisando qué pantalla quedó sin formulario."
-  - "El 'Global al alta' se guarda pero nadie lo usa: el alta de empresa sigue clonando 'Entrega Materiales' desde la empresa plantilla 9000 por el disparador configuracion_inicial_empresa_trg (CP-127). Propuesta: el cambio del disparador, la migración M-7b (la 9000 pasa a globales, CP-132) y los cambios F-1 a F-5 de traz-comp-formularios van juntos en un requerimiento aparte con análisis de impacto, después de este."
-  - "El formulario del autorregistro lo usa el registro (núcleo, hoy con número fijo). Propuesta: en este requerimiento solo se ve; editarlo va con el requerimiento aparte."
+  - "Hasta que se construya REQ-017, el 'Global al alta' se guarda pero nadie lo usa: el alta de empresa sigue clonando 'Entrega Materiales' desde la 9000. Si REQ-015 se despliega antes que REQ-017, ¿mostramos igual la columna 'Global al alta'? Propuesta: sí, con la leyenda 'Se va a usar cuando el alta de empresa escriba la configuración (todavía clona desde la empresa plantilla).'"
+  - "El formulario del autorregistro lo usa el registro (núcleo, hoy con número fijo). Propuesta: en este plan solo se ve (registración = núcleo, y no se toca cómo se dibuja ni se completa en Tools); editarlo queda para cuando Rodolfo lo decida."
 derivados: {}
 notas:
-  - "Cubre CP-131. CP-127 y CP-132 quedan fuera (necesitan el cambio del disparador de alta)."
+  - "Cubre CP-131. CP-127 y la parte mínima de CP-132 pasan a REQ-017 (cambio del disparador y pase a globales de los formularios de la 9000 que usa); el resto de CP-132 (M-7b) no se hace."

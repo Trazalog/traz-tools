@@ -51,8 +51,8 @@ validaciones:
 datos_prueba:
   listas: "obras de MinTest_SJ y obras global, en la copia de DEMO"
 dudas:
-  - "Mientras no se cambie traz-comp-formularios (F-1), las pantallas de Tools buscan las listas solo en la empresa: una lista global se ve vacía en Tools aunque la vista previa la muestre llena. Propuesta: en la vista previa, la lista global lleva la marca '(global · en Tools todavía se ve vacía)' hasta que exista F-1, para no engañar al administrador."
+  - "En este plan no se toca cómo dibuja Tools (F-1 prohibido, decisión de Rodolfo del 2026-11-10): las pantallas de Tools buscan las listas solo en la empresa, así que una lista global se ve vacía en Tools aunque la vista previa la muestre llena. Propuesta: en la vista previa, la lista global lleva la marca '(global · en Tools se ve vacía)', para no engañar al administrador; o bien la vista previa tampoco resuelve globales, para mostrar exactamente lo mismo que Tools. ¿Cuál preferís?"
   - "La función form() del helper usa un número de respuesta para armar el formulario (data-ninfoid). Propuesta: la vista previa le pasa 0 y no incluye ningún botón de guardar, así no hay forma de grabar desde ahí."
 derivados: {}
 notas:
-  - "Cubre CP-124 dentro de la vista previa. Que Tools resuelva empresa → global al dibujar necesita F-1 (fuera)."
+  - "Cubre CP-124 dentro de la vista previa. Que Tools resuelva empresa → global al dibujar (F-1) está prohibido en este plan: no se hace."

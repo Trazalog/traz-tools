@@ -61,7 +61,8 @@ datos_prueba:
 dudas:
   - "La maqueta dice que Recepción de pañol 'hoy usa la misma clave que salida'. Si es así, cambiar una cambia la otra. Propuesta: confirmar en el código de pañol qué clave lee cada pantalla antes de construir; si comparten clave, se muestran como una sola fila 'Salida y recepción de pañol'."
   - "Para 'Ninguno', ¿se da de baja la fila de configuración o se deja con el número vacío? Propuesta: dar de baja la fila (eliminado), que es lo que hoy deja a la pantalla 'sin formulario'; confirmarlo en la copia de DEMO con las pantallas de almacenes y pañol."
-  - "Las claves de pañol (salida, checklist) no las siembra nadie para empresas nuevas (duda 8 del relevamiento). Propuesta: acá se pueden elegir aunque no exista la fila (se crea al guardar); sembrarlas al alta es el cambio del disparador (fuera)."
+  - "Las claves de pañol (salida, checklist) no las siembra nadie para empresas nuevas (duda 8 del relevamiento). Propuesta: acá se pueden elegir aunque no exista la fila (se crea al guardar); sembrarlas al alta para las empresas nuevas es REQ-017 (el disparador escribe la configuración de cada punto con 'Global al alta')."
+  - "La prohibición del plan es tocar cómo se muestran, se dibujan o se completan los formularios en Tools. 'Dónde se usan' no cambia código de Tools, pero sí cambia qué formulario dibuja cada pantalla (por la configuración). Propuesta: queda dentro del ABM (es administrar el formulario) y no choca con la prohibición; confirmalo."
 derivados: {}
 notas:
   - "Cubre CP-126. Funciona sin tocar Tools porque las pantallas ya leen esa configuración (T-7 sigue pendiente para R9)."

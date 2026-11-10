@@ -72,10 +72,10 @@ validaciones:
 datos_prueba:
   formulario: "'Inspección de equipo' (CP-121) en la copia de DEMO, con nombres inventados"
 dudas:
-  - "El DDL real de frm.* no está en el repositorio: solo hay un volcado viejo (v1.5.8.5) donde ni siquiera figura la columna multiple que el código usa (relevamiento §1). Sin él no se puede escribir el script de columnas nuevas sin adivinar. Propuesta: sacar el DDL de frm.* de la copia de DEMO (pg_dump solo de estructura) y versionarlo en el repositorio antes de construir; ese mismo DDL sirve al requerimiento aparte de traz-comp-formularios (F-5)."
   - "¿Cuál es el 'ámbito' para el nombre único: la empresa, o la empresa más los globales? Propuesta: la empresa (los propios entre sí) y los globales entre sí; un propio puede llamarse igual que un global, porque 'Usar como base' propone ese nombre."
   - "El nombre del formulario tiene hasta 45 caracteres (largo de la columna en el volcado viejo). ¿Se agranda? Propuesta: no; el constructor lo limita a 45."
   - "Cómo se guarda el ancho: hoy 'columna' es una clase de diseño (col-md-6, etc.). Propuesta: Completo = col-md-12, Mitad = col-md-6, Un tercio = col-md-4."
 derivados: {}
 notas:
-  - "Cubre CP-121, CP-122 (en el constructor), CP-123 y la baja de ítem de CP-128. Que Tools dibuje listas globales necesita F-1 (fuera)."
+  - "Cubre CP-121, CP-122 (en el constructor), CP-123 y la baja de ítem de CP-128. Que Tools dibuje listas globales (F-1) está prohibido en este plan (decisión de Rodolfo del 2026-11-10): si la empresa no tiene su lista, en Tools se ve como hoy."
+  - "Antes del script de columnas nuevas, Pablo saca la estructura de frm.* de DEMO con pg_dump --schema-only (solo lectura, con la columna multiple) y la versiona en el repositorio (F-5, tarea 0 del REQ). Resuelve la duda vieja del DDL."

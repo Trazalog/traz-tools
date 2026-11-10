@@ -60,4 +60,4 @@ dudas:
   - "¿Se copian también los tipos avanzados de un global (lista desde servicio o URL)? El administrador no los puede editar. Propuesta: se copian tal cual y en el constructor del Portal se ven bloqueados con 'lo configura Trazalog'."
 derivados: {}
 notas:
-  - "Cubre CP-125. Reemplaza, para quien lo elija, el clonado de la empresa plantilla 9000, que sigue funcionando en el alta mientras no cambie el disparador."
+  - "Cubre CP-125. Reemplaza, para quien lo elija, el clonado de la empresa plantilla 9000, que sigue funcionando en el alta hasta que se construya REQ-017 (cambio del disparador)."
