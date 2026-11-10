@@ -1,0 +1,62 @@
+id: ADM-UC-032
+modulo: ADM
+titulo: Ser administrador de la empresa por una sola definición
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-004-administracion-base-y-atributos.md
+    detalle: "sección 'Definición única de administrador'; se completa con ADMDataService y el controlador base al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/inicio-admin.html
+    detalle: "marco del Portal (REQ-002)"
+  - repo: traz-tools
+    path: doc/v3/administracion/ANALISIS_INICIAL.md
+    detalle: "B.4 criterio membresía → empresa por nombre"
+pantallas:
+  - "Tools → 🏢 Mi empresa → Portal de la empresa"
+precondiciones:
+  - Usuario con sesión iniciada en Tools
+  - El usuario tiene rol de Administrador en la empresa activa
+flujo_principal:
+  - paso: "Un usuario con rol de Administrador en la empresa activa entra al tablero de Tools"
+    resultado: "Ve '🏢 Mi empresa'"
+  - paso: "Toca '🏢 Mi empresa'"
+    resultado: "Entra al Portal de la empresa: el botón y el Portal dicen lo mismo"
+flujos_alternativos:
+  - nombre: "Se registró pero no es administrador de esta empresa"
+    pasos:
+      - paso: "Un usuario que se registró solo (tiene el nivel general de administrador) pero en la empresa activa tiene rol de Supervisor entra al tablero y abre la dirección del Portal"
+        resultado: "No ve '🏢 Mi empresa' y el Portal muestra 'No tenés permiso para entrar a esta pantalla.'"
+  - nombre: "Membresía suspendida"
+    pasos:
+      - paso: "En un ambiente de prueba, la membresía de administrador en la empresa queda en estado baneado, y la persona entra al tablero"
+        resultado: "No ve '🏢 Mi empresa' y el Portal le responde 'sin permiso'"
+  - nombre: "La empresa coincide solo por la descripción"
+    pasos:
+      - paso: "Un administrador cuya membresía nombra a la empresa por su descripción y no por su nombre abre el Portal"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.': la membresía se une a la empresa solo por el nombre"
+  - nombre: "Superusuario sin rol en la empresa"
+    pasos:
+      - paso: "Un superusuario sin rol de administrador en la empresa activa abre la dirección del Portal"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Es administrador solo quien tiene rol de Administrador en la membresía de la empresa activa"
+  - "El nivel general del usuario (role = 1) no hace administrador a nadie"
+  - "Una membresía baneada o dada de baja no hace administrador"
+  - "La membresía se une a la empresa por el nombre de la empresa, no por la descripción"
+  - "Ser superusuario no hace administrador de una empresa"
+  - "El botón 'Mi empresa' y el Portal usan la misma definición"
+datos_prueba:
+  administrador: "administrador de la empresa DocTest"
+  registrado_con_otro_rol: "usuario de prueba registrado por la registración (role = 1) con rol Supervisor en la empresa activa"
+dudas:
+  - "El tablero de Tools decide si aterriza en el tablero del administrador con otro servicio (Dashs::esAdminEmpresa, que une por la descripción). Si no se cambia, puede pasar que alguien aterrice en el tablero de administrador y no vea 'Mi empresa', o al revés. ¿Se pasa también ese aterrizaje a la definición única en este requerimiento? Propuesta: no; se deja para la tarea B.4c del análisis (después de corregir las membresías, B.4a), y la medición de B.4 dice cuántos casos hay."
+  - "La especificación pide que solo la membresía 'activa' haga administrador. Hasta que REQ-007 maneje los estados, todas quedan 'activo' por la migración, y estados como 'invitado' no existen todavía. ¿'invitado' cuenta como administrador? Propuesta: no; solo 'activo'."
+  - "El índice de requerimientos dejaba la definición única de administrador para una reunión de arquitectura, pero la especificación ya la decide (D-07) y este requerimiento la aplica solo dentro del módulo. ¿Confirmás que alcanza con D-07? Propuesta: sí, porque no cambia nada fuera del módulo y de los dos botones."
+derivados: {}
+notas:
+  - "Cierra el correctivo C-5 dentro del módulo: reemplaza el servicio /usuario/esadmin que usaba REQ-002 por la definición única."
+  - "Cubre CP-106 y CP-108 en la parte de quién ve qué."

@@ -1,0 +1,59 @@
+id: ADM-UC-034
+modulo: ADM
+titulo: Dejar rastro de cada cambio sin que se pueda borrar
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-004-administracion-base-y-atributos.md
+    detalle: "sección 'Auditoría' y tabla seg.auditoria en 'Datos'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-auditoria.html
+    detalle: "la pantalla de auditoría es de REQ-013; acá solo se guardan las filas"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§2 entidad Auditoría y garantía G5 (§6)"
+pantallas:
+  - "Consola → Variables de sistema"
+precondiciones:
+  - Usuario con sesión iniciada en Tools y la marca de superusuario
+  - El script de base corrió en el ambiente
+flujo_principal:
+  - paso: "Cambia contacto_soporte en Variables de sistema y guarda"
+    resultado: "Queda una fila de auditoría con la fecha, su correo, la acción 'variable de sistema', la clave y el valor anterior y nuevo"
+  - paso: "Vuelve contacto_soporte al valor anterior desde 'Historial'"
+    resultado: "Queda otra fila de auditoría, separada de la primera"
+flujos_alternativos:
+  - nombre: "Intento de modificar una fila"
+    pasos:
+      - paso: "Con el usuario de base de datos que usa la aplicación, se intenta cambiar el detalle de una fila de auditoría"
+        resultado: "La base lo rechaza y la fila queda igual"
+  - nombre: "Intento de borrar una fila"
+    pasos:
+      - paso: "Con el usuario de base de datos que usa la aplicación, se intenta borrar una fila de auditoría"
+        resultado: "La base lo rechaza y la fila sigue estando"
+  - nombre: "No hay forma desde el sistema"
+    pasos:
+      - paso: "Se buscan, en el servicio de datos del módulo, operaciones para cambiar o borrar la auditoría"
+        resultado: "No existe ninguna: solo la de agregar"
+  - nombre: "Un cambio que falla"
+    pasos:
+      - paso: "Guarda una variable mientras el servicio de datos no responde"
+        resultado: "No queda fila de auditoría de un cambio que no se hizo"
+validaciones:
+  - "Cada cambio y cada vuelta atrás de una variable de sistema deja su fila de auditoría"
+  - "La base rechaza modificar filas de auditoría"
+  - "La base rechaza borrar filas de auditoría"
+  - "El sistema no ofrece ninguna operación para cambiar o borrar la auditoría"
+  - "No hay fila de auditoría de un cambio que no se guardó"
+datos_prueba:
+  variable: "contacto_soporte"
+dudas:
+  - "El consumo del agente no va a la auditoría (RF-100). ¿Y los ingresos al sistema (login) o los rechazos de permiso? Propuesta: no; los rechazos van al log (REQ-002) y los ingresos ya quedan en last_login."
+  - "Los cinco años de guarda (RNF-04): ¿hay que borrar lo más viejo automáticamente? Propuesta: no en este requerimiento; con el volumen esperado [SUPUESTO] no hace falta, y borrar exigiría un permiso que justamente se quita."
+  - "Los dos intentos contra la base no son pasos de usuario. ¿Quedan como prueba técnica que corre Pablo con el usuario de base de prueba? Propuesta: sí, como prueba de servicio en DocTest contra la base de DEMO, nunca contra producción."
+derivados: {}
+notas:
+  - "Cubre CP-101 y la parte de CP-100 que corresponde a variables de sistema. Las demás acciones de RF-100 las agrega cada requerimiento."
