@@ -1,0 +1,75 @@
+id: ADM-UC-090
+modulo: ADM
+titulo: Ver las personas de la empresa y los lugares del plan
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "secciones 'Persona, membresía y estado' y 'Portal → Usuarios'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-usuarios.html
+    detalle: "listado, lugares usados, tope alcanzado y pie"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-70, RF-72; R4 en 02_MODELO_Y_REGLAS.md §3"
+pantallas:
+  - "Portal de la empresa → Usuarios"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa tiene un plan con tope de 5 usuarios (cargado a mano en la base de prueba, porque la migración de planes es REQ-016)"
+  - "Personas: Ana (Administradora, activa), Bruno (Supervisor, activo), Carla (Mantenedor, activa), Darío (Mantenedor, invitado) y Elena (Mantenedor, baneada)"
+flujo_principal:
+  - paso: "Entra a Mi empresa y toca '👥 Usuarios'"
+    resultado: "Ve 'Usuarios', '5 de 5 lugares usados' y 'en el plan 🥉 Free · los invitados ocupan lugar, los baneados también, los dados de baja no.'"
+  - paso: "Mira la tabla"
+    resultado: "Ve una fila por persona con Usuario, Rol, Menú, Estado ('Activo', 'Invitado · vence <fecha>', 'Baneado · <fecha>'), Último acceso e IA esta semana ('—' hasta que exista la cuota); su propia fila dice '· vos' y 'sos vos', sin botones"
+  - paso: "Mira el pie"
+    resultado: "Ve '5 lugares usados: 3 activos · 1 invitado · 1 baneado (los baneados ocupan lugar; los dados de baja no)'"
+  - paso: "Como está en el tope, mira dónde estaba 'Invitar'"
+    resultado: "En lugar de '✉️ Invitar' ve 'Llegaste al tope de 5 usuarios del plan Free' y 'Para invitar a alguien más, dá de baja a un usuario o pedí un cambio de plan.' con el botón 'Pedir cambio de plan'"
+flujos_alternativos:
+  - nombre: "Buscar y filtrar"
+    pasos:
+      - paso: "Escribe 'carla' en '🔍 Buscar por nombre o correo'"
+        resultado: "Ve solo a Carla"
+      - paso: "Borra la búsqueda y elige 'Invitado' en 'Todos los estados'"
+        resultado: "Ve solo a Darío"
+  - nombre: "Con lugares libres"
+    pasos:
+      - paso: "Con 4 de 5 lugares usados, entra a Usuarios"
+        resultado: "Ve '4 de 5 lugares usados' y el botón '✉️ Invitar'"
+  - nombre: "Empresa sin plan asignado"
+    pasos:
+      - paso: "En una empresa que todavía no tiene plan, entra a Usuarios"
+        resultado: "Ve 'N lugares usados', sin tope, y el botón '✉️ Invitar'"
+  - nombre: "Persona creada por DNATO en paralelo"
+    pasos:
+      - paso: "Alguien le asigna un rol a una persona nueva desde la pantalla de DNATO y el administrador vuelve a Usuarios"
+        resultado: "La persona aparece como 'Activo' y ocupa un lugar"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "Un Supervisor de la empresa abre la dirección de Usuarios"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Lugares usados = personas en estado distinto de baja; los invitados y los baneados ocupan lugar"
+  - "El tope sale del plan de la empresa; sin plan o con tope ilimitado no hay tope"
+  - "Con el tope alcanzado no se ofrece 'Invitar' y se muestra el aviso con 'Pedir cambio de plan'"
+  - "Una persona con rol en la empresa y sin estado cargado cuenta como activa"
+  - "La propia fila no ofrece acciones"
+  - "Solo entra el administrador de la empresa activa"
+  - "El listado se pagina en el servidor"
+datos_prueba:
+  personas: "membresías de prueba con nombres inventados (Ana Pérez, Bruno Díaz, Carla Ruiz, Darío Gómez, Elena Soto), del fixture dnato_v3_base"
+  plan: "plan de prueba Free con tope 5, asignado a mano a la empresa de prueba"
+dudas:
+  - "'Pedir cambio de plan' lleva a Mi empresa → Plan, que llega con REQ-010. Propuesta: hasta entonces el botón no aparece y el aviso termina en 'Para invitar a alguien más, dá de baja a un usuario o escribile a <contacto_soporte>'."
+  - "'Último acceso' es seg.users.last_login, que es de la persona en toda la plataforma, no en esta empresa. Propuesta: se muestra igual, con ese significado, hasta que exista un registro de accesos por empresa (RF-101, REQ-013)."
+  - "Personas que DNATO sigue creando en paralelo no tienen fila de estado. Propuesta: cuentan como 'Activo' (y por eso pueden pasar el tope), y la migración final las completa."
+  - "¿Se muestran las personas dadas de baja? La maqueta no las muestra y el filtro de estados no trae 'Baja'. Propuesta: no se muestran; se encuentran al invitarlas de nuevo."
+derivados: {}
+notas:
+  - "Cubre CP-71 (mensaje en pantalla) y CP-72 (quién ocupa lugar)."
+  - "La columna Menú depende de REQ-009; sin él muestra 'Predeterminado'."

@@ -1,0 +1,73 @@
+id: ADM-UC-097
+modulo: ADM
+titulo: Elegir a qué funcionalidades accede cada rol
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "sección 'Roles y accesos (RF-77)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-roles.html
+    detalle: "lista de roles, casillas por funcionalidad activa, Administrador no editable"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-40; RF-77, RF-90; A-19 del relevamiento"
+pantallas:
+  - "Portal de la empresa → Roles y accesos"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa tiene 8 funcionalidades activas (equipos, alta de equipo, órdenes de trabajo, stock, herramientas, préstamos y dos de IA)"
+  - "El rol Supervisor accede a todas salvo 'Alta de equipo'; Bruno es Supervisor"
+flujo_principal:
+  - paso: "Toca '🎭 Roles y accesos'"
+    resultado: "Ve 'Roles y accesos', la explicación, '🔒 Administrador · todo · no se edita' y cada rol con la cantidad de personas"
+  - paso: "Toca 'Supervisor'"
+    resultado: "Ve 'Supervisor', '1 persona · Bruno Díaz · menú: Predeterminado' y una casilla por cada una de las 8 funcionalidades activas, todas marcadas menos 'Alta de equipo'; no hay opción de 'ver' u 'operar'"
+  - paso: "Desmarca 'Órdenes de trabajo' y toca 'Guardar'"
+    resultado: "Ve 'Guardado ✓' y la auditoría tiene rol.accesos con Órdenes de trabajo desmarcada"
+  - paso: "Bruno abre Tools"
+    resultado: "Ya no ve 'Órdenes de trabajo' en el menú; el resto de su menú sigue igual"
+flujos_alternativos:
+  - nombre: "Administrador"
+    pasos:
+      - paso: "Toca 'Administrador'"
+        resultado: "Ve sus accesos sin casillas para cambiar"
+      - paso: "Manda directo al servidor un cambio de accesos del rol Administrador"
+        resultado: "El servidor lo rechaza y no cambia nada"
+  - nombre: "Rol con acceso solo por la opción padre"
+    pasos:
+      - paso: "En un rol que hoy tiene asignado solo el padre 'Mantenimiento' (y por eso ve todas sus hijas), desmarca 'Órdenes de trabajo' y guarda"
+        resultado: "Las otras hijas de Mantenimiento siguen marcadas y en el menú de Tools de ese rol desaparece solo 'Órdenes de trabajo'"
+  - nombre: "Sin cambios"
+    pasos:
+      - paso: "Toca 'Guardar' sin cambiar nada"
+        resultado: "Ve 'No hay cambios para guardar.'"
+  - nombre: "Funcionalidad sin activar o de otra empresa"
+    pasos:
+      - paso: "Manda directo al servidor el acceso del rol a una funcionalidad que la empresa no tiene activa"
+        resultado: "El servidor lo rechaza y no cambia nada"
+validaciones:
+  - "Solo se ofrecen funcionalidades activas de la empresa"
+  - "Acceso sí o no, sin modo ver u operar"
+  - "El rol Administrador no se edita"
+  - "Guardar escribe solo lo que cambió, nunca pisa todas las opciones del rol"
+  - "Desmarcar deja la fila con eliminado, como hoy; marcar agrega la fila o la vuelve a habilitar"
+  - "Una hija con acceso solo por el padre se puede desmarcar sin que el rol pierda las demás"
+  - "Los roles son los de Bonita de la empresa, con su nombre base"
+  - "Cada guardado queda en la auditoría"
+datos_prueba:
+  empresa: "empresa de prueba con las funcionalidades activas del fixture dnato_v3_base"
+  rol: "Supervisor con Bruno Díaz"
+dudas:
+  - "La maqueta dice 'Administrador · todo · no se edita', pero hoy el alta de empresa le da al Administrador solo la opción CORE. ¿Qué se muestra? Propuesta: lo que de verdad tiene, en solo lectura, con la leyenda 'no se edita'."
+  - "Desmarcar una hija que el rol tenía solo por el padre obliga a escribir explícitas las hermanas que siguen marcadas (si no, Tools sigue mostrando todas). Propuesta: así, y el análisis de impacto lo prueba con el menú de Tools de un Supervisor antes y después."
+  - "¿La pantalla reemplaza a 'Menú por rol' de DNATO? DNATO sigue andando en paralelo y escribe en la misma tabla. Propuesta: conviven; la leyenda 'Reemplaza a Menú por rol' de la maqueta no se muestra hasta la redirección final."
+  - "¿Las herramientas de IA tienen casilla? La maqueta las muestra. Propuesta: sí, son funcionalidades del rol como las pantallas (las usa el agente con R2)."
+  - "'Sin casilla = no se puede abrir por URL' depende del chequeo central de Tools (T-5). Propuesta: el pie lo dice igual, porque en el módulo y en el agente ya vale; en Tools vale con la derivación."
+derivados: {}
+notas:
+  - "Cubre CP-78. Que la dirección de MAN.ot le responda 403 a Bruno en Tools es la derivación T-5 (fuera de alcance)."
+  - "Corrige los defectos de 'Menú por rol' (A-19): opción tomada del campo equivocado, explode('-') y UPDATE que pisa todas las opciones del rol."

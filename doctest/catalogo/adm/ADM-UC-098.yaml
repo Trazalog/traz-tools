@@ -1,0 +1,83 @@
+id: ADM-UC-098
+modulo: ADM
+titulo: Cambiar mis datos, mi foto y mi contraseña
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "sección 'Mi perfil (RF-111)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/perfil.html
+    detalle: "foto, datos, contraseña con reglas en vivo, mis empresas"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-52; RF-111; ID-08 y A-25 del relevamiento"
+pantallas:
+  - "Tools → Perfil → Mi perfil (traz-comp-adm/perfil)"
+precondiciones:
+  - Usuario con sesión iniciada y membresía activa en la empresa de la sesión
+flujo_principal:
+  - paso: "Entra a 'Mi perfil'"
+    resultado: "Ve 'Mi perfil', 'Tus datos, tu foto y tu contraseña.', su foto o sus iniciales, sus datos y la tabla 'Mis empresas' con empresa, rol, plan y estado"
+  - paso: "Carga el teléfono '264 555 1234' con el país +54 y toca 'Guardar'"
+    resultado: "Ve 'Guardamos tus datos.' y el teléfono queda guardado"
+  - paso: "Toca '📁 Subir foto' y elige una imagen"
+    resultado: "Ve la vista previa recortada a cuadrado antes de guardar"
+  - paso: "En Contraseña escribe la actual y una nueva que va completando"
+    resultado: "Cada regla ('Al menos 10 caracteres', 'Una mayúscula y una minúscula', 'Un número', 'Un símbolo', 'Las dos coinciden') se pone en verde al cumplirse y 'Cambiar contraseña' se habilita solo con todo en verde"
+  - paso: "Toca 'Cambiar contraseña'"
+    resultado: "Ve 'Cambiamos tu contraseña.'; la próxima vez ingresa con la nueva"
+flujos_alternativos:
+  - nombre: "Contraseña actual incorrecta"
+    pasos:
+      - paso: "Escribe una actual equivocada y una nueva válida"
+        resultado: "Ve 'La contraseña actual no es correcta.' y la contraseña no cambia"
+  - nombre: "Sin la actual, pedido directo"
+    pasos:
+      - paso: "Manda directo al servidor el cambio sin la contraseña actual"
+        resultado: "El servidor lo rechaza"
+  - nombre: "Sin cámara"
+    pasos:
+      - paso: "Toca '📷 Tomar foto' en un equipo sin cámara o sin permiso"
+        resultado: "Ve 'No pudimos usar la cámara. Podés subir una foto o elegir un avatar.'"
+  - nombre: "Elegir un avatar"
+    pasos:
+      - paso: "Elige uno de 'O elegí un avatar' y guarda"
+        resultado: "El avatar queda como su foto; se carga del propio sistema, sin servicios de afuera"
+  - nombre: "Quitar la foto"
+    pasos:
+      - paso: "Toca 'Quitar' y guarda"
+        resultado: "Vuelven a verse sus iniciales"
+  - nombre: "Teléfono inválido"
+    pasos:
+      - paso: "Carga '123' con el país +54 y guarda"
+        resultado: "Ve 'Revisá el teléfono: no es válido para Argentina.'"
+  - nombre: "Correo"
+    pasos:
+      - paso: "Intenta cambiar el correo"
+        resultado: "El campo no se edita y dice 'Es tu usuario; no se cambia desde acá.'"
+validaciones:
+  - "El cambio de contraseña exige la actual correcta, también en el servidor"
+  - "La nueva cumple las reglas de hoy (mínimo 10, mayúscula y minúscula, número, símbolo) y coincide con la repetida, también en el servidor"
+  - "El botón se habilita solo con todas las reglas en verde"
+  - "El teléfono se valida por país, como en el registro"
+  - "La foto muestra vista previa cuadrada; sin cámara se ofrece subir o avatar"
+  - "Los avatares se sirven desde el sistema, sin servicios de afuera"
+  - "Solo se cambian los datos de la persona de la sesión; el correo no se cambia"
+datos_prueba:
+  usuario: "cualquier usuario de prueba de la empresa DocTest; contraseña de prueba generada en el momento"
+  foto: "imagen de prueba sin datos personales"
+dudas:
+  - "Para verificar la contraseña actual hay que leer el valor cifrado de seg.users, y las pantallas nuevas no van directo a la base. Propuesta: un recurso nuevo del DataService que lo devuelve solo para el correo de la sesión, y la verificación la hace la librería Password copiada en REQ-003; la alternativa es una función de base que compara, si existe el cifrado en la base."
+  - "¿Cómo llega una persona no administradora a Mi perfil? Hoy 'Perfil' de la barra de Tools lleva a DNATO. Propuesta: en este requerimiento ese enlace pasa a Mi perfil del módulo (núcleo de Tools, con el análisis de impacto de la barra); quien no es administrador ve en el menú lateral solo 'Mi perfil'."
+  - "Idioma y zona horaria no existen hoy en seg.users. Propuesta: dos columnas nuevas (en el script de base), que todavía nadie más lee; si Rodolfo prefiere no agregarlas, se sacan de la pantalla."
+  - "¿Qué set de avatares y cuántos? La maqueta muestra 6 más '+18'. Propuesta: 24 avatares de DiceBear con licencia CC0, generados una vez y guardados en el módulo."
+  - "¿Qué tamaño y formato de foto se aceptan? Propuesta: JPG o PNG de hasta 2 MB, guardada recortada en 256 × 256, en las mismas columnas image e image_name que usa DNATO."
+derivados: {}
+notas:
+  - "Cubre CP-105."
+  - "Reemplaza a main/profile y main/changeuser de DNATO (A-25, ID-08), que no piden la contraseña actual."
+  - "Tomar foto con la cámara solo funciona con la página en https."
