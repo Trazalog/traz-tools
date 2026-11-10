@@ -13,12 +13,12 @@ presentación que abre una opción sombreada (REQ-012) ni el control de acceso p
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, y aprobar el análisis de impacto en Tools (incluida la variable nueva en `core.tablas`) |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, y aprobar el análisis de impacto en Tools |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal), [REQ-004](REQ-004-administracion-base-y-atributos.md) (tablas `seg.menus_custom`, `seg.menus_custom_items`, `seg.menus_asignaciones`, estado de membresía, auditoría), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (catálogo y planes) y [REQ-006](REQ-006-administracion-funcionalidades.md) (R1, R2, Funcionalidades) |
 | Entrega de la especificación | **E6** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: menús custom, asignación en las dos direcciones, "Ver como…", servicio "Menú resuelto" (R3: jerarquía + estado `visible` / `otro_plan` por ítem), migración M-4. CU-32, CU-33; CP-51, CP-60 a 69. Más el punto **T-2** de `02_MODELO_Y_REGLAS.md` §9b (menú operativo de Tools con el menú resuelto) y su parte de **T-10** (pruebas del menú), por decisión de Rodolfo |
 | Casos de uso | `ADM-UC-130` a `ADM-UC-135` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantalla de Menús, aviso en Funcionalidades, modelo y servicio "Menú resuelto"); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs`, el script de M-4, la comparación M-8, **y el núcleo**: `application/controllers/Dash.php`, `application/models/Dashs.php` y `application/helpers/menu_helper.php` (ver "Análisis de impacto en Tools"); prueba DocTest nueva del menú lateral |
-| Riesgo | 🔴 La carga M-4 (filas en `seg.empresas_funcionalidades`, tabla nueva) y los nombres de columnas de las tablas de menús (tablas nuevas de `seg`) son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**; no toca ninguna fila ni columna existente. Sigue en rojo por el **núcleo de Tools**: la variable nueva es una fila nueva en `core.tablas` (schema `core`), y el menú lateral de **todas** las pantallas de producción pasa a salir del servicio nuevo cuando se enciende la variable → **análisis de impacto aprobado por Rodolfo antes de construir** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡); `COREDataService` no se modifica |
+| Riesgo | 🔴 La carga M-4 (filas en `seg.empresas_funcionalidades`, tabla nueva) y los nombres de columnas de las tablas de menús (tablas nuevas de `seg`) son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**; no toca ninguna fila ni columna existente. La variable nueva es una fila nueva en `core.tablas` sin cambiar las existentes: **lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por el **núcleo de Tools**: el menú lateral de **todas** las pantallas de producción pasa a salir del servicio nuevo cuando se enciende la variable → **análisis de impacto aprobado por Rodolfo antes de construir** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡); `COREDataService` no se modifica |
 
 ---
 
@@ -402,7 +402,8 @@ resuelto o del respaldo, y en el respaldo el motivo (sin respuesta, error, vací
 ## Datos
 
 **Tablas nuevas y M-4: cambio de base aditivo, lo decide el equipo (regla de Rodolfo del 2026-11-10).**
-La fila nueva en `core.tablas` es del núcleo y va con el análisis de impacto que aprueba Rodolfo. Las
+La fila nueva en `core.tablas` (sin cambiar las existentes): lo decide el equipo (regla de Rodolfo del
+2026-11-10). Lo que la variable **enciende** (el menú de Tools) sigue en el análisis de impacto. Las
 tablas las crea REQ-004 (en `seg`) con los atributos; acá se proponen los nombres de columnas **[SUPUESTO]** (si el script de REQ-004 no corrió todavía, van en
 él; si no, en uno chico con su vuelta atrás).
 
