@@ -39,6 +39,8 @@ Cada requerimiento es un archivo `REQ-###-nombre-corto.md` en esta carpeta, más
 | [REQ-014](REQ-014-administracion-cargas-masivas.md) | Módulo Administración — Cargas masivas. Entrega E11 de la especificación. Casos ADM-UC-230 a 249 | Especificación DNATO v3 y análisis de REQ-001 | Borrador, escrito por adelantado |
 | [REQ-015](REQ-015-administracion-formularios.md) | Módulo Administración — Formularios de la empresa (los cambios a `traz-comp-formularios` van aparte). Entrega E11b de la especificación. Casos ADM-UC-250 a 269 | Especificación DNATO v3 y análisis de REQ-001 | Borrador, escrito por adelantado |
 | [REQ-016](REQ-016-administracion-migracion-completa.md) | Módulo Administración — Migración completa. Entrega E12 de la especificación. Casos ADM-UC-270 a 289 | Especificación DNATO v3 y análisis de REQ-001 | Borrador, escrito por adelantado |
+| [REQ-017](REQ-017-administracion-formularios-globales.md) | Formularios globales en Tools: los combos de tareas muestran los globales, el alta de empresa apunta a los globales en vez de copiarlos, y se pasan a globales solo los formularios que usa el alta. Casos ADM-UC-290 a 309 | Decisión de Rodolfo del 2026-11-10 sobre REQ-015 | Borrador, escrito por adelantado |
+| REQ-018 | Corte final: redirigir DNATO al módulo y apagarlo. Necesita reunión de arquitectura, porque el token del agente lo emite DNATO | Propuesta de REQ-016 | Sin escribir |
 
 ## Módulo Administración (DNATO v3): de la especificación a los requerimientos
 

@@ -554,6 +554,15 @@ al aprobar este análisis.
 14. ✅ **Cargas masivas (2026-11-10):** son **todo o nada**. Los procedimientos que valen son los de la
     base, no los del repositorio; Pablo los compara y versiona antes de construir REQ-014.
 
+15. ✅ **Más cambios de base que decide el equipo (2026-11-10):** llenar una tabla nueva con datos
+    existentes, y agregar filas nuevas en `core.tablas` sin cambiar las existentes.
+16. ✅ **Formularios (2026-11-10):** en este plan de trabajo está **prohibido tocar cómo se muestran, se
+    dibujan o se completan** los formularios en Tools; el módulo hace solo el ABM (REQ-015). Entran
+    aparte, en REQ-017 "Formularios globales en Tools": los combos de tareas con los formularios
+    globales (cambio a `FRMDataService`), el alta de empresa apuntando a los globales (cambio al
+    disparador) y pasar a globales solo los formularios que usa ese disparador. El corte final de DNATO
+    pasa a ser REQ-018.
+
 **Pendientes de ejecución (no bloquean la aprobación del análisis):**
 - Correr `verificar-membresias-vs-empresas.sql` en DEMO y copia de producción, con las 3 mediciones de
   B.4 (usuarios/membresías sin empresa por `nombre`, cuántas matchean solo por `descripcion`, empresas
