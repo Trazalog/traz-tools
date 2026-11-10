@@ -10,7 +10,11 @@ técnico de DocTest (está en [`doctest/README.md`](../../doctest/README.md) y
 [`doctest/GUIA-PRUEBAS-Y-AYUDAS.md`](../../doctest/GUIA-PRUEBAS-Y-AYUDAS.md)) ni la metodología de ramas
 y PR (está en el `CLAUDE.md` del repo).
 
-> Versión 1.5 · noviembre 2026 · Trazalog v2.5 / v3
+> Versión 1.6 · noviembre 2026 · Trazalog v2.5 / v3
+> **Cambios en 1.6:** cómo se trabaja cuando el código va en un **módulo con repositorio propio**
+> (submódulo), como `traz-comp-adm`: el código se commitea en el repositorio del módulo, en `traz-tools`
+> solo el puntero, y cada cambio lleva dos pull requests (sección 2.9 y `REGLAS-PARA-AGENTES.md`).
+>
 > **Cambios en 1.5:**
 > - Claude puede escribir **varios requerimientos por adelantado**, en borrador, pero a Pablo se le pasan
 >   **de a uno**. Pablo y DeepSeek solo trabajan sobre los que están "Listo para Pablo" (sección 2.3).
@@ -144,6 +148,9 @@ flowchart TD
 - 📋 **El catálogo manda.** Los casos de uso viven en `doctest/catalogo/`, no en el requerimiento ni en
   un chat.
 - 🔢 **Una tarea por vez.** Siempre.
+- 📦 **El código de un submódulo va en su repositorio.** Si el requerimiento dice que el módulo tiene
+  repositorio propio (por ejemplo `traz-comp-adm`), el código se commitea ahí; en `traz-tools` solo
+  el puntero (sección 2.9).
 - 📑 **Un requerimiento por vez para Pablo.** Puede haber varios escritos en borrador; Pablo solo toma
   el que está "Listo para Pablo" en `requerimientos/README.md`.
 - 🧪 **Sin caso validado no hay prueba, y sin DocTest en verde no hay commit.**
@@ -597,6 +604,56 @@ Pablo trabaja **de a una tarea del plan**. Para cada una:
 
 Lo que Flash **no** debe recibir nunca: varias tareas juntas, un pedido vago ("mejorá esto"), o un
 pedido sin caso de uso asociado.
+
+### Si el código va en un módulo con repositorio propio (submódulo)
+
+Pasa cuando el requerimiento dice "repositorio propio, montado como submódulo" (por ejemplo
+`traz-comp-adm`, el módulo Administración). El código vive en **el repositorio del módulo**; `traz-tools`
+solo guarda en qué commit del módulo está parado (el "puntero").
+
+```mermaid
+flowchart LR
+  A["Código y commits<br/>dentro de application/modules/traz-comp-adm"] --> B["Pull request en traz-comp-adm<br/>a develop del módulo"]
+  B --> C["Rodolfo lo une"]
+  C --> D["En traz-tools: actualizar el puntero<br/>y commitear la carpeta del módulo"]
+  D --> E["Pull request en traz-tools<br/>(el mismo del plan)"]
+```
+
+**Montar el módulo por primera vez** (terminal, parado en `traz-tools`, en la rama del requerimiento):
+
+```bash
+git submodule add -b develop https://github.com/Trazalog/traz-comp-adm.git application/modules/traz-comp-adm
+git add .gitmodules application/modules/traz-comp-adm
+git commit -m "chore(adm): monta el submodulo traz-comp-adm [REQ-002]"
+```
+
+**Programar dentro del módulo** (terminal, parado en `traz-tools/application/modules/traz-comp-adm`). La
+rama del módulo se llama igual que la de `traz-tools`:
+
+```bash
+git checkout develop && git pull origin develop
+git checkout -b feature/req-###-desc-corta
+# ... commits del código del módulo, siempre parado en esta carpeta ...
+git push origin feature/req-###-desc-corta
+```
+
+Pull request en el repositorio del módulo, a `develop`, con el enlace al pull request de `traz-tools`.
+
+**Mover el puntero** cuando Rodolfo une el pull request del módulo (terminal, parado en `traz-tools`):
+
+```bash
+cd application/modules/traz-comp-adm && git checkout develop && git pull origin develop && cd ../../..
+git add application/modules/traz-comp-adm
+git commit -m "chore(adm): actualiza el submodulo traz-comp-adm [REQ-###]"
+git push origin feature/req-###-desc-corta
+```
+
+Mientras se programa, DocTest corre sobre lo que hay en la carpeta del módulo, aunque el puntero
+todavía no se haya movido: se prueba igual en la máquina de Pablo.
+
+⚠️ **Antes de cada commit**, `git status` dentro de la carpeta del módulo. Si dice `HEAD detached`, pasar
+a la rama de trabajo antes (`git checkout feature/req-###-desc-corta`): un commit hecho así queda suelto
+y se pierde.
 
 ## 2.10 El pull request de Pablo
 

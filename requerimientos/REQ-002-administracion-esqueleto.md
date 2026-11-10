@@ -14,7 +14,7 @@ con datos (REQ-004 en adelante, ver [`README.md`](README.md)). La forma de traba
 | Estado | Casos validados por Rodolfo el 2026-11-10. Pasa a "Listo para Pablo" cuando se una a `develop` y exista el repositorio `traz-comp-adm` |
 | Se apoya en | [REQ-001](REQ-001-administracion-analisis.md) y su resultado, [`doc/v3/administracion/ANALISIS_INICIAL.md`](../doc/v3/administracion/ANALISIS_INICIAL.md) (secciones C.2, F.2 y F.3) |
 | Casos de uso | `ADM-UC-001`, `ADM-UC-002` y `ADM-UC-003` en `doctest/catalogo/adm/` |
-| Repos que se tocan | `traz-comp-adm` (nuevo, lo crea Rodolfo), `traz-tools` (para montarlo: `.gitmodules` y una constante; y las comparaciones de `TOOLS_ADMIN_USER`) y `traz-comp-dnato` (solo las comparaciones de `TOOLS_ADMIN_USER`) |
+| Repos que se tocan | `traz-comp-adm` (nuevo, ya creado: `https://github.com/Trazalog/traz-comp-adm.git`), `traz-tools` (para montarlo: `.gitmodules` y una constante; y las comparaciones de `TOOLS_ADMIN_USER`) y `traz-comp-dnato` (solo las comparaciones de `TOOLS_ADMIN_USER`) |
 | Riesgo | 🟡 Código nuevo. Del núcleo de Tools se **agrega** la constante `ADM` y se cambia cómo se compara `TOOLS_ADMIN_USER` (8 lugares, en Tools y en DNATO). Ese cambio lo pidió Rodolfo el 2026-11-10; con un solo correo en la constante, todo sigue igual |
 
 ---
@@ -63,8 +63,11 @@ después las hereda sin tener que acordarse.
 
 ### El módulo dentro de Tools
 
-- Repositorio propio `traz-comp-adm`, montado como submódulo en `application/modules/traz-comp-adm`,
-  igual que `traz-comp-pan`. Rama base `develop`.
+- Repositorio propio `traz-comp-adm` (**ya creado**: `https://github.com/Trazalog/traz-comp-adm.git`),
+  montado como submódulo en `application/modules/traz-comp-adm`, igual que `traz-comp-pan`. Rama base
+  `develop`. **Todo el código del módulo se commitea en ese repositorio, no en `traz-tools`**; en
+  `traz-tools` solo van `.gitmodules`, el puntero del submódulo, la constante y `es_superusuario`
+  (cómo se trabaja: guía, sección 2.9, "Si el código va en un módulo con repositorio propio").
 - Carpetas: `controllers/`, `models/`, `views/`, `helpers/`, `config/` (análisis, F.2).
 - Constante de prefijo `ADM` = `'traz-comp-adm/'` en `application/config/constants.php` de Tools,
   junto a `PRD`, `PAN`, `ALM`, etc. Es la única constante nueva.
