@@ -1,0 +1,54 @@
+id: ADM-UC-232
+modulo: ADM
+titulo: Cargar una planilla en Mantenimiento
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-014-administracion-cargas-masivas.md
+    detalle: "sección 'Entidades de Mantenimiento (AssetPlanner, MariaDB)'"
+  - repo: traz-comp-dnato
+    path: application/models/Bulkloads.php
+    detalle: "ejecutarCargaMariaDB() (730+) y resolverEmprIdAssetPlanner() (1040-1065): comportamiento que se mantiene"
+  - repo: traz-tools
+    path: doctest/catalogo/dnato/DNATO-UC-027.yaml
+    detalle: "flujos 'carga anterior sin terminar' y 'empresa no vinculada'"
+pantallas:
+  - "Portal de la empresa → 🗂️ Cargas masivas"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ, que tiene su vínculo con AssetPlanner (empr_id_mysql) cargado"
+  - "La administradora de 'Empresa sin Asset' es de una empresa sin ese vínculo"
+  - "Hay una planilla de equipos válida"
+flujo_principal:
+  - paso: "ana@ elige 'Mantenimiento · Equipos (AssetPlanner)', adjunta la planilla y toca 'Procesar carga'"
+    resultado: "Ve el resultado con las filas ok y con error, y la carga queda en el historial"
+  - paso: "Abre Mantenimiento en Tools"
+    resultado: "Los equipos cargados están en su empresa"
+flujos_alternativos:
+  - nombre: "Empresa sin vínculo con AssetPlanner"
+    pasos:
+      - paso: "La administradora de 'Empresa sin Asset' carga la misma planilla"
+        resultado: "Ve 'Tu empresa no está vinculada con Mantenimiento, así que cancelamos la carga para no cargar los datos en otra empresa. Pedile a soporte que complete el vínculo.' y no se carga nada en AssetPlanner"
+  - nombre: "Carga anterior sin terminar"
+    pasos:
+      - paso: "La tabla de paso de equipos tiene 4 filas sin procesar de otra corrida y ana@ carga la planilla"
+        resultado: "Ve 'Quedaron 4 filas sin procesar de una carga anterior de Mantenimiento · Equipos. Pedile a soporte que las revise antes de volver a cargar.', no se carga nada y las 4 filas siguen ahí"
+  - nombre: "El procedimiento no viene del navegador"
+    pasos:
+      - paso: "Se manda, a propósito, el nombre de otro procedimiento de AssetPlanner en el envío"
+        resultado: "Se ignora: se ejecuta el de la entidad elegida, o nada si la entidad no está en el catálogo"
+validaciones:
+  - "Las entidades de Mantenimiento se cargan en AssetPlanner con el id de empresa vinculado"
+  - "Sin vínculo con AssetPlanner, la carga se cancela sin tocar nada"
+  - "Con filas pendientes de otra carga, se cancela, se dice cuántas y no se borran"
+  - "El procedimiento sale del catálogo por la entidad"
+datos_prueba:
+  empresas: "MinTest_SJ con empr_id_mysql y una empresa de prueba sin empr_id_mysql, en la copia de DEMO"
+dudas:
+  - "Hoy DNATO entra directo a la base de AssetPlanner; el módulo lo hace por el DataService con la fuente de datos AssetPlannerDataSource que ya existe. Ese usuario de base tiene que poder insertar en las tablas de paso y llamar a los procedimientos. ¿Te parece bien usar esa fuente, o preferís una con permisos acotados? Propuesta: una fuente aparte con solo esos permisos, para no ampliar lo que puede la que ya usan los servicios de Mantenimiento."
+  - "Los textos para el administrador piden 'Pedile a soporte…', porque él no puede completar el vínculo ni limpiar la tabla de paso. ¿Quién lo hace hoy? Propuesta: soporte de Trazalog, a mano, como hasta ahora."
+derivados: {}
+notas:
+  - "Mantiene los dos frenos de DNATO-UC-027 para Mantenimiento: empresa sin empr_id_mysql y tabla de paso con filas pendientes."
