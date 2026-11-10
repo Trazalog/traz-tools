@@ -1,0 +1,71 @@
+id: ADM-UC-072
+modulo: ADM
+titulo: Preguntar si una funcionalidad está habilitada para mí
+perfil: Supervisor
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-006-administracion-funcionalidades.md
+    detalle: "secciones 'R2 — Visible para una persona' y 'Dónde vive cada regla'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§3 regla R2; §4 servicio 'Funcionalidad visible'; 01_ESPECIFICACION_FUNCIONAL.md RF-94"
+pantallas:
+  - "Servicio del módulo traz-comp-adm/servicios/funcionalidad-visible/{modulo}/{opcion} (sin pantalla: lo usan otras pantallas)"
+precondiciones:
+  - "Usuario con sesión iniciada en la empresa de prueba, con rol Supervisor y membresía activa"
+  - "La empresa está en Free con Equipos activa e Indicadores sin activar; Procesos es de Business; el rol Supervisor tiene acceso a Equipos e Indicadores, y no a 'Alta de equipo'"
+flujo_principal:
+  - paso: "Con su sesión, pide el servicio para MAN / equipos"
+    resultado: "Responde 200, visible"
+  - paso: "Pide el servicio para BPM / procesos"
+    resultado: "Responde 403, motivo fuera_plan, 'Esa funcionalidad no está activa para tu empresa.'"
+flujos_alternativos:
+  - nombre: "Sin activar"
+    pasos:
+      - paso: "Pide el servicio para MAN / indicadores"
+        resultado: "Responde 403, motivo sin_activar, 'Esa funcionalidad no está activa para tu empresa.'"
+  - nombre: "Sin permiso del rol"
+    pasos:
+      - paso: "Pide el servicio para MAN / equipo_alta, activa en la empresa pero sin acceso para Supervisor"
+        resultado: "Responde 403, motivo sin_permiso, 'Tu rol no tiene acceso a esa funcionalidad.'"
+  - nombre: "No existe o sin publicar"
+    pasos:
+      - paso: "Pide el servicio para una opción que no existe y para MAN / preventivos, sin publicar"
+        resultado: "Las dos responden 404, 'Esa página no existe.', distinto del 403"
+  - nombre: "Membresía baneada"
+    pasos:
+      - paso: "Con su membresía en la empresa en estado baneado, pide el servicio para MAN / equipos"
+        resultado: "Responde 403, motivo sin_acceso, con el texto de suspensión del miembro"
+  - nombre: "Empresa suspendida"
+    pasos:
+      - paso: "Con la empresa suspendida, pide el servicio para MAN / equipos"
+        resultado: "Responde 403, motivo sin_acceso, con el texto de suspensión de la empresa"
+  - nombre: "Otra empresa u otra persona en el pedido"
+    pasos:
+      - paso: "Pide el servicio agregando el número de otra empresa y el correo de otra persona"
+        resultado: "La respuesta es la de su propia sesión; lo agregado se ignora"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Sin haber iniciado sesión, pide el servicio"
+        resultado: "Responde 401"
+validaciones:
+  - "Visible = membresía activa, empresa no suspendida, activa en el plan de la empresa y con acceso para el rol"
+  - "No visible responde 403 con el primer motivo que falla: sin_acceso, fuera_plan, sin_activar, sin_permiso"
+  - "Lo inexistente o sin publicar responde 404, no 403"
+  - "Persona y empresa salen de la sesión"
+  - "Sin sesión responde 401"
+datos_prueba:
+  usuario: "usuario Supervisor de prueba de la empresa DocTest, sin datos reales"
+  estados: "estado de membresía y de empresa cambiados a mano en la base de prueba (las pantallas que los cambian son REQ-007 y REQ-008)"
+dudas:
+  - "Acceso del rol a una opción hija: hoy el alta de empresa asigna a los roles solo las opciones raíz (por ejemplo MAN / mantenimiento) y Tools muestra todos los hijos si ninguno está asignado (menu_helper.php:122-125). Con R2 tal cual, Supervisor no tendría acceso a MAN / equipos. Propuesta: hasta que M-4 (REQ-009) agregue las hijas a seg.memberships_menues, R2 da acceso a una hija si la tiene asignada o si tiene asignado su padre y ninguna hermana (la misma regla de hoy)."
+  - "Una persona con varios roles en la misma empresa (varias filas en seg.memberships_users): ¿alcanza con que uno de sus roles tenga acceso? Propuesta: sí, alcanza con uno."
+  - "¿El 404 incluye las despublicadas y sin publicar, o esas responden 403? Propuesta: 404, porque para la empresa no existen (CP-41)."
+  - "¿Qué texto lleva sin_permiso? RF-94 solo da 'no está activa para tu empresa'. Propuesta: 'Tu rol no tiene acceso a esa funcionalidad.'"
+  - "¿El servicio del navegador hace falta, o alcanza con el modelo que otros módulos cargan por dentro? Propuesta: los dos; el del navegador sirve para la vista de presentación (REQ-012) y para probar CP-91 sin tocar Tools."
+derivados: {}
+notas:
+  - "Cubre CP-91 contra el servicio y la parte de CP-92 que es del servicio (motivo sin_permiso). Que las pantallas de Tools respondan 403 o escondan el botón es la deuda H-091, fuera de este requerimiento."
