@@ -1,6 +1,6 @@
 id: ADM-UC-254
 modulo: ADM
-titulo: Elegir qué formulario muestra cada pantalla de Tools
+titulo: Ver qué formulario muestra cada pantalla de Tools
 perfil: Administrador
 estado: borrador
 version: "1.0"
@@ -8,7 +8,7 @@ origen: baseline
 referencias_codigo:
   - repo: traz-tools
     path: requerimientos/REQ-015-administracion-formularios.md
-    detalle: "sección 'Dónde se usan (CU-74, RF-126)'"
+    detalle: "sección 'Dónde se usan, solo de lectura (CU-74, RF-126 en la parte de mostrar)'"
   - repo: traz-tools
     path: doc/v3/dnato/mockups/empresa-formularios.html
     detalle: "pestaña 'Dónde se usan'"
@@ -17,52 +17,42 @@ referencias_codigo:
     detalle: "§3.2 mecanismo A (configuraciones/formulario_<punto> en core.tablas)"
 pantallas:
   - "Portal de la empresa → 📝 Formularios → Dónde se usan"
-  - "Tools → Almacenes → Entrega de materiales"
-  - "Tools → Pañol → Checklist de herramienta"
 precondiciones:
   - "ana@ es administradora de MinTest_SJ"
-  - "Entrega de materiales de MinTest_SJ usa P-1; G-1 es un global publicado; 'Inspección de equipo' está en borrador"
+  - "En MinTest_SJ, Entrega de materiales usa P-1 (propio), Salida de pañol usa G-1 (global) y Checklist de herramienta no tiene formulario"
   - "MinTest_SJ tiene un proceso y una tarea estándar con formulario elegido en su ABM"
 flujo_principal:
   - paso: "En Formularios toca la pestaña 'Dónde se usan'"
-    resultado: "Ve 'Qué formulario muestra cada pantalla de Tools en tu empresa.' y una fila por pantalla (Entrega de materiales, Salida de pañol, Recepción de pañol, Checklist de herramienta) con su módulo y el formulario elegido"
-  - paso: "En Entrega de materiales cambia P-1 por '🌐 G-1 (global)' y toca 'Guardar'"
-    resultado: "Se guarda y queda en la Actividad de la empresa"
-  - paso: "Abre en Tools la entrega directa de materiales"
-    resultado: "La pantalla dibuja G-1"
+    resultado: "Ve 'Qué formulario muestra cada pantalla de Tools en tu empresa.' y una fila por pantalla (Entrega de materiales, Salida de pañol, Recepción de pañol, Checklist de herramienta) con su módulo y el formulario: 'P-1 (propio)', '🌐 G-1 (global)' y 'Ninguno'"
+  - paso: "Busca cómo cambiar el formulario de Entrega de materiales"
+    resultado: "No hay selector ni 'Guardar': la pestaña es solo para mirar"
   - paso: "Mira la parte 'Elegidos en su propio ABM (solo lectura)'"
     resultado: "Ve el proceso y la tarea estándar con su formulario y 'Ir a Procesos →', 'Ir a Tareas estándar →', sin poder cambiarlos desde acá"
 flujos_alternativos:
-  - nombre: "Ninguno"
+  - nombre: "Formulario inactivo en uso"
     pasos:
-      - paso: "En Checklist de herramienta elige 'Ninguno' y guarda"
-        resultado: "Ve 'La pantalla quedará sin formulario' y, al confirmar, se guarda"
-      - paso: "Abre el checklist de una herramienta en Tools y guarda"
-        resultado: "La pantalla dice 'No se especificó un formulario' y guarda sin formulario, como hoy"
-  - nombre: "Un borrador no se puede elegir"
+      - paso: "Con P-1 inactivado (ADM-UC-250), vuelve a 'Dónde se usan'"
+        resultado: "Entrega de materiales sigue mostrando P-1, marcado '(inactivo)'"
+  - nombre: "No se puede cambiar por un envío armado a mano"
     pasos:
-      - paso: "Abre el selector de Checklist de herramienta"
-        resultado: "'Inspección de equipo' aparece deshabilitado con '(propio · borrador, publicalo primero)'"
-      - paso: "Manda, a propósito, el número de 'Inspección de equipo' en el envío"
-        resultado: "Se rechaza y la configuración no cambia"
-  - nombre: "Formulario de otra empresa"
+      - paso: "Manda, a propósito, un envío para cambiar el formulario de Entrega de materiales"
+        resultado: "No hay ninguna dirección que lo reciba: ve 'Esa página no existe.' y la configuración formulario_entrega_materiales de MinTest_SJ está igual que antes"
+  - nombre: "Configuración de otra empresa"
     pasos:
-      - paso: "Manda, a propósito, el número de un formulario de Yudica en el envío"
-        resultado: "Se rechaza y la configuración no cambia"
+      - paso: "Escribe a mano la dirección de 'Dónde se usan' con la empresa de Yudica"
+        resultado: "Ve lo de MinTest_SJ (la empresa sale de la sesión), nunca lo de Yudica"
 validaciones:
-  - "Por cada pantalla se elige un propio publicado, un global publicado o ninguno"
-  - "Lo elegido se ve en la pantalla de Tools en la próxima carga"
-  - "Elegir 'Ninguno' avisa y la pantalla de Tools queda sin formulario, como hoy"
-  - "Los borradores e inactivos no se pueden elegir, tampoco por envío manipulado"
-  - "No se puede elegir un formulario de otra empresa"
+  - "Por cada pantalla se muestra el formulario que tiene hoy la configuración de la empresa (propio, global o 'Ninguno')"
+  - "Un formulario inactivo que sigue en uso se muestra marcado '(inactivo)'"
+  - "Desde el módulo no se puede cambiar la configuración, tampoco por un envío armado a mano"
+  - "Solo se ve la configuración de la empresa de la sesión"
   - "Procesos, tareas estándar y etapas se muestran solo para leer, con enlace a su ABM"
 datos_prueba:
   empresa: "MinTest_SJ con la configuración de formularios de la copia de DEMO"
 dudas:
   - "La maqueta dice que Recepción de pañol 'hoy usa la misma clave que salida'. Si es así, cambiar una cambia la otra. Propuesta: confirmar en el código de pañol qué clave lee cada pantalla antes de construir; si comparten clave, se muestran como una sola fila 'Salida y recepción de pañol'."
-  - "Para 'Ninguno', ¿se da de baja la fila de configuración o se deja con el número vacío? Propuesta: dar de baja la fila (eliminado), que es lo que hoy deja a la pantalla 'sin formulario'; confirmarlo en la copia de DEMO con las pantallas de almacenes y pañol."
-  - "Las claves de pañol (salida, checklist) no las siembra nadie para empresas nuevas (duda 8 del relevamiento). Propuesta: acá se pueden elegir aunque no exista la fila (se crea al guardar); sembrarlas al alta para las empresas nuevas es REQ-017 (el disparador escribe la configuración de cada punto con 'Global al alta')."
-  - "La prohibición del plan es tocar cómo se muestran, se dibujan o se completan los formularios en Tools. 'Dónde se usan' no cambia código de Tools, pero sí cambia qué formulario dibuja cada pantalla (por la configuración). Propuesta: queda dentro del ABM (es administrar el formulario) y no choca con la prohibición; confirmalo."
+  - "Como la pestaña ya no deja cambiar nada, el administrador no sabe dónde se cambia. Propuesta: debajo de la tabla, el texto 'Para cambiar qué formulario usa una pantalla, hoy se hace en \"Lista de valores\" de Tools.' [SUPUESTO], sin enlace (es una pantalla de Tools que no se toca)."
+  - "Si la configuración apunta a un número de formulario que no existe o que no es de la empresa ni global, ¿qué se muestra? Propuesta: 'N.º <número> (no encontrado)' [SUPUESTO], para que el administrador vea el problema sin que el módulo lo arregle."
 derivados: {}
 notas:
-  - "Cubre CP-126. Funciona sin tocar Tools porque las pantallas ya leen esa configuración (T-7 sigue pendiente para R9)."
+  - "Cubre CP-126 solo en la parte de mostrar. Elegir desde el módulo qué formulario usa cada pantalla queda fuera por la prohibición (decisión de Rodolfo del 2026-11-10: solo vale lo que tiene efecto dentro del módulo; F-6 del REQ)."

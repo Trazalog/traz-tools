@@ -27,20 +27,20 @@ flujo_principal:
   - paso: "Mira las acciones de los globales"
     resultado: "Cada global tiene 'Vista previa' y '⧉ Usar como base', y ninguno tiene 'Editar'"
   - paso: "Toca 'Inactivar' en P-1"
-    resultado: "Se abre 'Inactivar \"P-1\"' con 'Está en uso en Entrega de materiales: esa pantalla quedará sin formulario hasta que elijas otro en \"Dónde se usan\". Las 12 respuestas cargadas se siguen viendo.'"
+    resultado: "Se abre 'Inactivar \"P-1\"' con 'Está en uso en Entrega de materiales. Inactivarlo no cambia esas pantallas de Tools: lo van a seguir mostrando hasta que se elija otro formulario en \"Lista de valores\". Las 12 respuestas cargadas se siguen viendo.'"
   - paso: "Toca 'Inactivar'"
-    resultado: "P-1 queda 'Inactivo', 'Dónde se usan' muestra 'Ninguno' en Entrega de materiales y P-1 no se ofrece ahí"
+    resultado: "P-1 queda 'Inactivo' y 'Dónde se usan' sigue mostrando P-1 en Entrega de materiales, marcado '(inactivo)'"
   - paso: "Abre en Tools un vale de entrega viejo que usó P-1"
     resultado: "Se ve completo, con lo que se cargó"
   - paso: "Abre en Tools la pantalla de entrega de materiales"
-    resultado: "Dice 'No se especificó un formulario', como hoy cuando no hay ninguno"
+    resultado: "Sigue mostrando P-1, igual que antes de inactivarlo: el módulo no cambió la configuración de esa pantalla"
 flujos_alternativos:
   - nombre: "Activar de nuevo"
     pasos:
       - paso: "Mira P-1 en 'Mis formularios' después de inactivarlo"
         resultado: "P-1 sigue en la lista, marcado 'Inactivo', con 'Activar' en vez de 'Inactivar'"
       - paso: "Toca 'Activar' en P-1"
-        resultado: "P-1 vuelve a 'Publicado' y se puede elegir otra vez en 'Dónde se usan' (no vuelve solo a la pantalla)"
+        resultado: "P-1 vuelve a 'Publicado' y 'Dónde se usan' lo muestra sin '(inactivo)'"
   - nombre: "Inactivar uno que no está en uso"
     pasos:
       - paso: "Publica P-2 y lo inactiva"
@@ -48,7 +48,7 @@ flujos_alternativos:
   - nombre: "No se borra nada"
     pasos:
       - paso: "Se revisa la base después de inactivar P-1"
-        resultado: "P-1 y sus ítems siguen ahí, con estado inactivo; no hay ninguna fila borrada"
+        resultado: "P-1 y sus ítems siguen ahí, con estado inactivo; no hay ninguna fila borrada y la configuración formulario_entrega_materiales de MinTest_SJ está igual que antes"
   - nombre: "Formularios de otra empresa"
     pasos:
       - paso: "ana@ busca P-9 de Empresa Test en la lista"
@@ -63,8 +63,8 @@ validaciones:
   - "Se ven los propios de la empresa de la sesión y los globales publicados; los globales en borrador no"
   - "Los formularios inactivos se ven en el ABM marcados 'Inactivo'"
   - "Los globales no se pueden editar desde el Portal"
-  - "Inactivar uno en uso avisa dónde se usa y cuántas respuestas tiene, y pide confirmación"
-  - "Al inactivar, los puntos donde se usaba quedan en 'Ninguno'"
+  - "Inactivar uno en uso avisa en qué lugares se usa y cuántas respuestas tiene, y pide confirmación"
+  - "Inactivar no cambia la configuración de las pantallas de Tools: las que lo usan lo siguen mostrando"
   - "Inactivar es baja lógica y las respuestas viejas se siguen viendo"
   - "Un formulario de otra empresa no se ve ni se abre"
   - "Solo el administrador entra"
@@ -73,8 +73,8 @@ datos_prueba:
 dudas:
   - "Los formularios sin empresa que existen hoy en producción no se revisaron (verificación §8.5 del relevamiento, no corrida). Con D1, todos aparecerían como 'globales' para todas las empresas, aunque alguno sea de un cliente. Propuesta: correr la verificación antes de desplegar y no mostrar como globales los que Rodolfo marque como de un cliente. Asignarlos a su cliente era parte de M-7b, que no se hace (decisión de Rodolfo del 2026-11-10): ¿se asignan a mano con un script aparte o se dejan ocultos?"
   - "Inactivar: ¿se usa la columna eliminado que ya existe o el estado nuevo? Hoy nadie pone eliminado en 1 y el dibujo no lo mira (relevamiento §5.2). Propuesta: solo el estado nuevo 'inactivo'; eliminado queda como está, para no cambiar lo que lee FRMDataService (que sí filtra eliminado)."
-  - "Al volver a activar P-1, ¿vuelve solo a los puntos donde estaba? Propuesta: no; el administrador lo elige otra vez en 'Dónde se usan', para que nada cambie en Tools sin que lo decida."
+  - "¿Se impide directamente inactivar un formulario en uso? Como el módulo no puede cambiar la configuración (decisión de Rodolfo del 2026-11-10), un inactivo en uso se sigue mostrando en Tools y el estado 'Inactivo' engaña. Propuesta: sí, impedirlo; 'Inactivar' en uno en uso muestra 'No podés inactivarlo: está en uso en <lugares>. Primero cambiá el formulario de esas pantallas en \"Lista de valores\".' [SUPUESTO] y no cambia nada. Mientras no lo decidas, el caso queda con el aviso y la confirmación."
 derivados: {}
 notas:
   - "Cubre CP-120, CP-128 (inactivar en uso, baja lógica, respuestas viejas) y CP-130 en las pantallas del módulo. El combo de tareas estándar con '(global)' (D2/D3 en FRMDataService) pasa a REQ-017."
-  - "En este plan está prohibido tocar cómo se dibujan los formularios en Tools (decisión de Rodolfo del 2026-11-10): un inactivo pedido por número fijo se sigue dibujando en Tools (F-4 no se hace); en los puntos de uso se cubre limpiando la configuración."
+  - "En este plan está prohibido tocar cómo se dibujan los formularios en Tools (decisión de Rodolfo del 2026-11-10): un inactivo se sigue dibujando en Tools (F-4 no se hace) y tampoco se limpia la configuración de los puntos de uso (F-6). Que Tools deje de mostrarlo queda fuera por la prohibición."
