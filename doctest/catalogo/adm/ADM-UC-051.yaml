@@ -1,0 +1,83 @@
+id: ADM-UC-051
+modulo: ADM
+titulo: Definir qué trae cada plan
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-005-administracion-catalogo-y-planes.md
+    detalle: "secciones 'Planes' y 'Cambios que restringen un plan con empresas'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-planes.html
+    detalle: "matriz con casillas, aviso de restricción y 'Guardado ✓'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-11 a RF-16; CU-11"
+pantallas:
+  - "Consola → Planes → matriz"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Planes Free y Team; funcionalidades publicadas MAN.equipos, MAN.ot, ALM.stock y ALM.ajustes; MAN.preventivos sin publicar"
+  - "Una empresa de prueba en Free, con 5 lugares usados y un administrador con correo de prueba"
+flujo_principal:
+  - paso: "Abre Planes"
+    resultado: "Ve una columna por funcionalidad publicada agrupada por módulo (incluidas las herramientas de IA bajo MCP); 'Preventivos ⏳' aparece atenuada y sin casillas"
+  - paso: "Marca la casilla de Team en 'Ajustes de stock'"
+    resultado: "Ve 'Guardado ✓' sin recargar la página; Team trae Ajustes de stock y la auditoría tiene plan.funcionalidad.agregar"
+  - paso: "Sube la cuota de IA de Team de 1000 a 1500 en la fila"
+    resultado: "Ve 'Guardado ✓', sin aviso, y queda en la auditoría"
+flujos_alternativos:
+  - nombre: "Quitar una funcionalidad de un plan con empresas"
+    pasos:
+      - paso: "Desmarca 'Órdenes de trabajo' en Free"
+        resultado: "Ve 'Este cambio restringe el plan Free: afecta a 1 empresa (<empresa>)' y '\"Órdenes de trabajo\" dejará de verse en esa empresa (sus datos se conservan). Al confirmar se avisa por correo a sus administradores. ¿Continuar?'"
+      - paso: "Toca 'Confirmar y avisar'"
+        resultado: "La casilla queda desmarcada; el administrador de la empresa recibe el correo 'Trazalog cambió tu plan Free'; la auditoría tiene plan.funcionalidad.quitar"
+  - nombre: "Cancelar la restricción"
+    pasos:
+      - paso: "Desmarca otra funcionalidad de Free y toca 'Cancelar' en el aviso"
+        resultado: "La casilla vuelve a quedar marcada y no se guarda nada"
+  - nombre: "Bajar el tope por debajo de lo usado"
+    pasos:
+      - paso: "Cambia el tope de Free de 5 a 3"
+        resultado: "Ve '1 empresa tiene más de 3 lugares usados (<empresa>: 5). Se aplicará y no podrán invitar hasta bajar del tope'"
+      - paso: "Confirma"
+        resultado: "El tope queda en 3 y el administrador recibe el correo"
+  - nombre: "Ampliar un plan con empresas"
+    pasos:
+      - paso: "Marca 'Ajustes de stock' en Free"
+        resultado: "Se guarda sin aviso ni correo, y la auditoría tiene plan.funcionalidad.agregar"
+  - nombre: "Restringir un plan sin empresas"
+    pasos:
+      - paso: "Desmarca una funcionalidad de Team, que no tiene empresas"
+        resultado: "Se guarda sin aviso ni correo"
+  - nombre: "El correo no sale"
+    pasos:
+      - paso: "Con el envío de correo caído, confirma una restricción de Free"
+        resultado: "El cambio queda hecho y ve 'Guardamos el cambio, pero no pudimos mandar el correo a <empresa>. Avisale por otro medio.'"
+  - nombre: "Funcionalidad sin publicar"
+    pasos:
+      - paso: "Intenta marcar 'Preventivos ⏳' o manda la marca directo al servidor"
+        resultado: "No hay casilla, y el servidor rechaza la marca"
+validaciones:
+  - "Cada casilla y cada cambio de tope o cuota se guarda solo y queda auditado"
+  - "Restringir un plan con empresas avisa cuántas y cuáles, pide confirmación y manda correo a sus administradores"
+  - "Cancelar el aviso no guarda nada"
+  - "Ampliar un plan, o cambiar un plan sin empresas, no avisa ni manda correo"
+  - "Si el correo falla el cambio queda y la pantalla lo dice"
+  - "Solo se marcan funcionalidades publicadas"
+datos_prueba:
+  empresa: "empresa de prueba con plan_id de Free cargado a mano (M-3 es REQ-016) y 5 membresías que no están de baja"
+  correo_admin: "buzón de prueba del ambiente, nunca un correo real de cliente"
+dudas:
+  - "¿Qué opciones del catálogo son columnas? El catálogo tiene opciones raíz sin dirección (por ejemplo MAN / mantenimiento) que hoy son las que el alta de empresa asigna a los roles. Propuesta: son columnas solo las opciones con dirección y las de tipo tool_mcp; las raíz sin dirección son agrupadores y no se venden por plan."
+  - "¿Cambiar el período (semana / mes) o el día de renovación de un plan con empresas cuenta como restricción? La especificación solo nombra funcionalidad, tope y cuota. Propuesta: no avisa; se audita y rige desde el próximo período (REQ-011)."
+  - "¿A quién se manda el correo: a todos los administradores de la empresa o al contacto_admin de core.empresas? Propuesta: a todos los administradores con membresía activa (la definición única de REQ-004); contacto_admin queda para los mensajes de suspensión."
+  - "La maqueta muestra 'Preventivos ⏳' como columna atenuada y CP-40 dice que al publicar 'aparece como columna'. Propuesta: la columna se ve atenuada y sin casillas mientras no esté publicada, como la maqueta; recién publicada tiene casillas."
+  - "Hasta M-3 (REQ-016) ninguna empresa tiene plan, así que ninguna restricción avisa. Propuesta: aceptarlo; la prueba carga plan_id a mano en la base de prueba."
+derivados: {}
+notas:
+  - "Cubre CP-13 y CP-16 (menos el aviso en el Inicio del Portal, que es REQ-013, y 'MinTest_SJ la ve como sin activar', que es REQ-006)."
+  - "El efecto del plan en lo que ve cada empresa no es de este caso: lo calcula REQ-006 y lo dibuja el menú resuelto (REQ-009)."
