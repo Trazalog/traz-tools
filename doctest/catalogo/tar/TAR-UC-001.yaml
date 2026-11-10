@@ -1,0 +1,58 @@
+id: TAR-UC-001
+modulo: TAR
+titulo: Listar y buscar pedidos de trabajo
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-bpm
+    path: controllers/Pedidotrabajo.php
+    detalle: index(), paginado()
+  - repo: traz-comp-bpm
+    path: models/Pedidotrabajos.php
+    detalle: pedidosTrabajoPaginados(), pedidosTrabajoFinalizadosPaginados()
+  - repo: traz-comp-bpm
+    path: views/listar_pedidos_trabajo.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/PRODataService.dbs
+    detalle: /pedidoTrabajoPaginadoAscV2|DscV2, /pedidoTrabajoNoFinalizado
+pantallas:
+  - Pedidos de Trabajo → Listado de Pedido Trabajo
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - La empresa tiene pedidos en distintos estados
+flujo_principal:
+  - paso: Entra al listado de pedidos de trabajo
+    resultado: Ve los pedidos no finalizados de su empresa, 10 por página, del más nuevo al más viejo, con número, código, cliente, domicilio, tipo de trabajo, fecha de inicio y estado
+  - paso: Escribe en el buscador
+    resultado: La tabla se recarga con los pedidos que coinciden
+  - paso: Ordena por una columna
+    resultado: La tabla se ordena por esa columna
+  - paso: Activa "Mostrar Pedidos Terminados"
+    resultado: Aparecen también los finalizados y el paginado sigue funcionando
+  - paso: Exporta a Excel, PDF, copia o imprime
+    resultado: Sale el listado con número, código, cliente, domicilio, tipo y fecha
+flujos_alternativos:
+  - nombre: La empresa no tiene pedidos
+    pasos:
+      - paso: Entra al listado
+        resultado: La tabla muestra que no hay datos, sin errores
+  - nombre: Búsqueda con caracteres especiales
+    pasos:
+      - paso: Busca un texto con "/", "%", espacio o tilde
+        resultado: La tabla filtra sin error
+validaciones:
+  - Solo se ven pedidos de la empresa de la sesión
+  - El contador del paginado informa el total real de pedidos
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - 'D-06: el toggle "Mostrar Pedidos Terminados", ¿incluye los TRABAJO_TERMINADO o solo los finalizados?'
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-001-01 a 001-09"
+  - "Hipótesis: HIP-TAR-10"

@@ -1,0 +1,74 @@
+id: MAN-UC-043
+modulo: MAN
+titulo: Administrar los catálogos de mantenimiento
+perfil: Supervisor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-11-03
+referencias_codigo:
+  - repo: traz-tools-man
+    path: controllers/Area.php
+  - repo: traz-tools-man
+    path: controllers/Proceso.php
+  - repo: traz-tools-man
+    path: controllers/Grupo.php
+  - repo: traz-tools-man
+    path: controllers/Sector.php
+  - repo: traz-tools-man
+    path: controllers/Contratista.php
+  - repo: traz-tools-man
+    path: controllers/Tareaestandar.php
+  - repo: traz-tools-man
+    path: controllers/Altparametro.php
+  - repo: traz-tools-man
+    path: controllers/Family.php
+  - repo: traz-tools-man
+    path: controllers/Marca.php
+  - repo: traz-tools-man
+    path: controllers/Cliente.php
+  - repo: traz-tools-man
+    path: controllers/Criticidad.php
+  - repo: traz-tools-man
+    path: controllers/Sucursal.php
+  - repo: traz-tools-man
+    path: controllers/SistemaABM.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/MANDataService.dbs
+    detalle: rutas /abm/... (E56)
+pantallas:
+  - ABM de Mantenimiento → Área
+  - ABM de Mantenimiento → Procesos
+  - ABM de Mantenimiento → Grupo
+  - ABM de Mantenimiento → Sector
+  - ABM de Mantenimiento → Contratista
+  - ABM de Mantenimiento → Tareas estándar
+  - ABM de Mantenimiento → Parámetros
+  - ABM de Mantenimiento → Familia
+  - ABM de Mantenimiento → Marca
+  - ABM de Mantenimiento → Clientes
+  - ABM de Mantenimiento → Criticidad
+  - ABM de Mantenimiento → Sucursales
+  - ABM de Mantenimiento → Sistemas
+precondiciones:
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Supervisor
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+produce:
+  - Las listas que usan los formularios de equipos, planes y órdenes
+flujo_principal:
+  - paso: Entra a un catálogo del menú ABM de Mantenimiento
+    resultado: Se lista lo cargado en la empresa
+  - paso: Agrega un valor nuevo
+    resultado: Aparece en el listado y en los desplegables que lo usan
+  - paso: Edita un valor
+    resultado: Queda actualizado
+  - paso: Elimina un valor
+    resultado: Deja de figurar en el listado
+validaciones:
+  - Cada catálogo muestra y modifica solo los valores de la empresa de la sesión
+  - "Unidad de medida no está: se administra en Almacenes de tools (E57)"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-043.catalogos.spec.ts
+notas:
+  - Comportamiento decidido por el PM en la migración (E52, E56). Validación del caso pendiente en el PR.

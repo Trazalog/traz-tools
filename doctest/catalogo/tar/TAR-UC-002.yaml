@@ -1,0 +1,71 @@
+id: TAR-UC-002
+modulo: TAR
+titulo: Crear un pedido de trabajo
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-bpm
+    path: controllers/Pedidotrabajo.php
+    detalle: guardarPedidoTrabajo(), BonitaProccess(), ActualizarCaseId(), eliminarPedidoTrabajo()
+  - repo: traz-comp-bpm
+    path: views/pedido_trabajo.php
+    detalle: cierraPedidoTrabajo(), guardarPedidoTrabajo()
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/PRODataService.dbs
+    detalle: POST/PUT /pedidoTrabajo, GET /proceso/nombre
+pantallas:
+  - Pedidos de Trabajo → Listado → Agregar
+  - Planificación de Trabajos → Nuevo Pedido Trabajo
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - La empresa tiene clientes activos, tipos de trabajo y unidades de tiempo
+  - La empresa tiene su proceso de negocio de pedidos (pro.procesos), el que indica el menú o PROCESO-STANDAR
+flujo_principal:
+  - paso: Pulsa "Agregar"
+    resultado: Se abre el formulario; la fecha de inicio es hoy y no se puede cambiar
+  - paso: Completa código (4 a 10 caracteres), objetivo y unidad de tiempo, cliente, fecha de entrega, tipo de trabajo y descripción; si el proceso tiene formulario, lo completa
+    resultado: Al elegir el cliente se completa su dirección de entrega
+  - paso: Pulsa "Guardar"
+    resultado: Ve un mensaje de éxito; el pedido queda creado en el estado inicial del proceso
+  - paso: Si el proceso lanza BPM
+    resultado: Se crea el caso de Bonita y queda asociado al pedido
+  - paso: Vuelve al listado
+    resultado: El pedido aparece sin tener que recargar la pantalla
+flujos_alternativos:
+  - nombre: Falta un dato obligatorio
+    pasos:
+      - paso: Guarda sin código, cliente, tipo o descripción
+        resultado: Ve "Debes completar los campos obligatorios (*)" y no se crea nada
+  - nombre: Objetivo sin unidad
+    pasos:
+      - paso: Carga objetivo sin elegir la unidad de tiempo
+        resultado: Ve "Si completo objetivo, seleccione medida de tiempo"
+  - nombre: Fecha de entrega anterior
+    pasos:
+      - paso: Elige una fecha de entrega anterior a hoy
+        resultado: Ve un error y la fecha se borra
+  - nombre: Código repetido
+    pasos:
+      - paso: Guarda con un código que ya existe en la empresa
+        resultado: Ve un error claro y no se crea un segundo pedido ni un caso huérfano en Bonita
+  - nombre: Falla Bonita
+    pasos:
+      - paso: El caso de Bonita no se puede crear
+        resultado: Ve un error y el pedido no queda creado
+validaciones:
+  - El código es único por empresa (el mismo código en otra empresa se acepta)
+  - El pedido queda con la empresa y el usuario de la sesión
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-07: al crear un pedido con el proceso estándar, ¿qué tiene que ver el usuario? Hoy el código solo da aviso para Sein y Yudica"
+  - ¿Una empresa nueva (registración freemium) tiene que traer PROCESO-STANDAR de fábrica? Hoy no lo trae y el alta falla
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-002-01 a 002-12"
+  - "Hipótesis: HIP-TAR-07, HIP-TAR-09"

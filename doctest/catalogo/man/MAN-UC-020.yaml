@@ -2,39 +2,55 @@ id: MAN-UC-020
 modulo: MAN
 titulo: Consultar los reportes e indicadores de mantenimiento
 perfil: Supervisor
-estado: borrador
-version: "0.1"
+estado: validado
+version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Reporteorden.php
-    detalle: "reporte de órdenes de trabajo"
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Reporte.php
-    detalle: "reporte de informes de servicio"
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Otrabajo.php
-    detalle: "el panel de KPIs"
+  - repo: traz-tools-man
+    path: controllers/Kpi.php
+    detalle: "Rep Equipo: disponibilidad de cada equipo contra su meta"
+  - repo: traz-tools-man
+    path: views/kpis/rep_equipos.php
+  - repo: traz-tools-man
+    path: controllers/Reporte.php
+    detalle: Rep Informe de Servicios
+  - repo: traz-tools-man
+    path: views/reportes/rep_informes.php
+  - repo: traz-tools-man
+    path: controllers/Reporteorden.php
+    detalle: Rep Ordenes de trabajo
+  - repo: traz-tools-man
+    path: views/reporteorden/rep_ordenes.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/MANDataService.dbs
+    detalle: /rep/equipos/..., /rep/informes/..., /rep/ordenes/... (bloques MIG-REP-1 a 3)
 pantallas:
-  - "Reportes → Rep Ordenes de trabajo"
-  - "Reportes → Rep Informe de Servicios"
-  - "Reportes → Panel de KPIs"
+  - Mantenimiento → Rep Equipo
+  - Mantenimiento → Rep Informe de Servicios
+  - Mantenimiento → Rep Ordenes de trabajo
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - Hay órdenes e informes registrados en el período que se consulta
 depende_de:
   - MAN-UC-012
 flujo_principal:
-  - paso: "Entra a Reportes → Rep Ordenes de trabajo, elige equipo, estado y período, y consulta"
-    resultado: "Se listan las órdenes con su descripción, tarea estándar, equipo y fechas de programación y terminación"
-  - paso: "Entra a Reportes → Rep Informe de Servicios, elige sector, equipo y período, y consulta"
-    resultado: "Se listan los informes con la tarea, las fechas, la cantidad de personas, las horas hombre ejecutadas y el estado"
-  - paso: "Entra a Reportes → Panel de KPIs, filtra por grupo, sector, equipo y período"
-    resultado: "Se muestran los indicadores del período"
+  - paso: Entra a Mantenimiento → Rep Equipo y elige el período
+    resultado: Se listan los equipos con área, proceso, sector, criticidad, estado y su porcentaje de disponibilidad
+  - paso: Entra a Mantenimiento → Rep Informe de Servicios, elige los filtros y consulta
+    resultado: "Se listan las solicitudes, los preventivos y los backlogs con su informe: tarea, fechas, personas, horas hombre y estado"
+  - paso: Entra a Mantenimiento → Rep Ordenes de trabajo, elige equipo, estado y período, y consulta
+    resultado: Se listan las órdenes con su descripción, tarea estándar, equipo, fechas, origen, mantenedor y estado
 validaciones:
-  - "El indicador central es la **disponibilidad** de cada equipo, que se compara contra su meta (MAN-UC-026)"
-  - "Los equipos inhabilitados quedan fuera del cálculo"
-  - "Los tres reportes se acotan por período"
-dudas:
-  - "**Falta relevar el resto de los indicadores del panel.** Está identificado que el central es la disponibilidad —`kpiCalcularDisponibilidad()`, sobre el historial de lecturas y excluyendo los equipos inhabilitados— y que hay un conteo de órdenes por tipo (`kpiCantTipoOrdenTrabajo()`). Falta abrir el panel con datos cargados para ver qué más muestra y cómo se calcula cada uno."
-  - "¿Los reportes se pueden exportar o imprimir?"
+  - El indicador central es la **disponibilidad** de cada equipo, que se compara contra su meta (MAN-UC-026)
+  - Los equipos inhabilitados quedan fuera del cálculo
+  - Los reportes se acotan por período y muestran solo datos de la empresa de la sesión
+  - Los reportes se pueden imprimir y bajar a Excel
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-012-020.informes-reportes.spec.ts
+notas:
+  - "Sale de borrador por decisión del PM (E61–E63): de los indicadores se migra solo lo que hoy se usa — la disponibilidad en Rep Equipo y MTTR, MTTF, MTBF y confiabilidad en el tablero de tools (MAN-UC-042); los de órdenes quedan afuera hasta consultarlo con un experto."
+  - Los tres reportes pasaron del menú Reportes de asset al menú Mantenimiento (E62).
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

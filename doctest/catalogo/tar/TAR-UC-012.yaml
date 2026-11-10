@@ -1,0 +1,43 @@
+id: TAR-UC-012
+modulo: TAR
+titulo: Asignar equipos a una tarea
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/planificacion/modal_equipos.php
+  - repo: traz-comp-tareasestandar
+    path: models/Tareas.php
+    detalle: asignarRecursos(), eliminarRecursos()
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/TARDataService.dbs
+    detalle: GET /sectores, /tarea/recursos
+pantallas:
+  - Planificación de Trabajos → hito → Calendario → ⚙️ Rec.Trabajo
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Un sector con equipos
+depende_de:
+  - TAR-UC-009
+flujo_principal:
+  - paso: Pulsa ⚙️ en la tarea y elige un sector
+    resultado: Se ofrecen los equipos de ese sector
+  - paso: Elige uno o varios y guarda
+    resultado: La tarea queda con esos equipos; al reabrir se ven precargados
+  - paso: Quita todos y guarda
+    resultado: La tarea queda sin equipos
+validaciones:
+  - Solo se ofrecen sectores y equipos de la empresa
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - ¿Los sectores de equipos son por empresa? El servicio /sectores no filtra empresa
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-012-01 a 012-04 (no automatizados en esta tanda)"
+  - "Hipótesis: HIP-TAR-02, HIP-TAR-17"

@@ -2,41 +2,60 @@ id: MAN-UC-012
 modulo: MAN
 titulo: Cargar el informe de servicio
 perfil: Mantenedor
-estado: borrador
-version: "1.0"
+estado: validado
+version: "2.0"
 origen: baseline
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Ordenservicio.php
-    detalle: "setOrdenServ() guarda el informe; getInsumosPorOT() trae los insumos"
-  - repo: traz-prod-assetplanner
-    path: application/models/Ordenservicios.php
-    detalle: "setOrdenServicios() escribe orden_servicio, deta_ordenservicio, asignausuario y el vale de salida de herramientas"
+  - repo: traz-tools-man
+    path: controllers/Tarea.php
+    detalle: la tarea "Confecciona informe de servicio" de la bandeja
+  - repo: traz-tools-man
+    path: views/tareas/view_inf_servicio_modal.php
+    detalle: pestañas Lecturas, Tareas, Recursos Humanos, Herramientas e Insumos y Evidencias
+  - repo: traz-tools-man
+    path: views/ot/materiales.php
+    detalle: la pestaña Herramientas e Insumos
+  - repo: traz-tools-man
+    path: controllers/Ordenservicio.php
+    detalle: getInsumosPorOT(), getEntregasPorOT(), getHerramientasUsadas(), buscarVales(), asociarVale(), quitarVale(), tildarHerramienta()
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: "POST /tools/man/bandeja/tarea/informe: borra el informe anterior y escribe el nuevo en una operación; primero la base, después Bonita (E33)"
 pantallas:
-  - "Mantenimiento → Informe de Servicios"
+  - Mis Tareas → Confecciona informe de servicio
+  - Mantenimiento → Bandeja de Tareas → Confecciona informe de servicio
 precondiciones:
-  - Sesión iniciada en AssetPlanner
-  - La orden de trabajo se ejecutó
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Mantenedor
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - La orden de trabajo se ejecutó y la tarea "Confecciona informe de servicio" está en su bandeja
 produce:
-  - "El informe de servicio de la orden, que la deja Terminada (`T`)"
+  - El informe de servicio de la orden, que la deja Terminada (`T`)
 depende_de:
   - MAN-UC-011
 flujo_principal:
-  - paso: "Entra a Mantenimiento → Informe de Servicios"
-    resultado: "Se muestra el listado con Nº Informe, Nº OT, Descripción, Tarea, Equipo, fechas y recursos humanos"
-  - paso: "Carga el informe de la orden que ejecutó"
-    resultado: "Se abre el formulario con las secciones del informe"
-  - paso: "Registra qué se hizo, quiénes trabajaron y cuánto tiempo llevó"
-    resultado: "Quedan registradas las tareas realizadas y los operarios"
-  - paso: "Confirma"
-    resultado: "El informe queda cargado y a la espera de verificación"
+  - paso: Abre la tarea "Confecciona informe de servicio" desde su bandeja
+    resultado: Se abre el informe con las pestañas Lecturas, Tareas, Recursos Humanos, Herramientas e Insumos y Evidencias
+  - paso: Registra la lectura de cierre del equipo, las tareas realizadas y quiénes trabajaron
+    resultado: Quedan cargadas las tareas y los operarios
+  - paso: En Herramientas e Insumos revisa el pedido y las entregas, y asocia los vales del pañol que usó en esta orden (MAN-UC-039)
+    resultado: Las herramientas de esos vales quedan como usadas en la orden
+  - paso: Adjunta evidencias si las tiene y confirma
+    resultado: El informe queda guardado, la orden pasa a Terminada (`T`) y la tarea de verificación le llega al Supervisor
+flujos_alternativos:
+  - nombre: El Supervisor rechazó el informe
+    pasos:
+      - paso: Abre la tarea "Edición Informe de Servicios"
+        resultado: Se abre el informe cargado, con las mismas pestañas, para corregirlo; al guardar vuelve a verificación. Las evidencias se conservan
 validaciones:
   - "Insumos: lo pedido = lo entregado + lo pendiente; las entregas parciales se ven una por una"
-  - "Herramientas usadas: se asocian desde vales del pañol y muestran días de uso; el vale del pañolero no lo quita el mantenedor"
-  - "Si el Supervisor rechaza el informe, **vuelve al Mantenedor para corregirlo** y presentarlo de nuevo"
-  - "El informe queda asociado a la orden de trabajo"
-dudas:
-  - "**Cuáles son las secciones del informe y qué se exige en cada una hay que relevarlo del código del guardado**, no del HTML ni de la base. El manual de ayuda existente habla de *cinco solapas*: falta contrastarlo con `Ordenservicio::setOrdenServ()` y ver qué valida antes de guardar."
+  - "**Desde el informe nunca se genera un vale**: los vales los hace siempre el pañolero; el mantenedor solo indica cuáles de sus vales son de esta orden (regla del PM, 2026-11-03)"
+  - Si la base falla no se cierra la tarea; si falla Bonita, el informe queda guardado y al reintentar se reemplaza completo (E33)
+  - El informe queda asociado a la orden de trabajo
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-030.ciclo-ot.spec.ts
 notas:
-  - "**El informe separa lo pedido de lo entregado (F4).** La sección de insumos muestra Pedido / Entregado / Pendiente y, debajo, el **detalle de entregas** del almacén de Tools (comprobante, artículo, lote, depósito y cantidad; el precio no se muestra). Antes mostraba solo lo pedido."
-  - "**Herramientas usadas (F5):** el informe arma la lista desde los vales reales del pañol, con el **tiempo de uso en días** de cada herramienta. El mantenedor busca sus vales por DNI y los asocia; los permisos (def. 8) definen quién puede quitar cada vale según quién lo asoció."
+  - "Sale de borrador: las secciones del informe se relevaron de la vista de MAN (`view_inf_servicio_modal.php`) y el guardado del recurso `bandeja/tarea/informe` (E33)."
+  - Si el equipo no trae lectura, la consola muestra un error al abrir el informe; no impide guardar (H40).
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

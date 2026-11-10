@@ -59,6 +59,7 @@ El validador rechaza cualquier valor fuera de esta lista, a propósito: si en un
 | `Planificador` | Programa preventivos y asigna órdenes de trabajo (*Planificador de Mantenimiento*, *Planificador de Tareas*) | ✅ validado |
 | `Mantenedor` | Ejecuta órdenes de trabajo y carga el informe de servicio | ✅ validado |
 | `Responsable de Almacén` | Administra el almacén: da de alta artículos, recibe materiales, entrega contra pedido, ajusta stock y mueve entre depósitos | ✅ validado (F3, 2026-08-25) |
+| `Operario` | Recibe una tarea planificada en su bandeja, la toma, la inicia y la finaliza (módulo de Tareas, TAR-UC-016 a 018). `Mantenedor` no sirve: está definido para órdenes de trabajo de Mantenimiento | ⏳ propuesto en el relevamiento de TAR (duda D-01 del spec) |
 
 **Perfiles de DNATO (los que administran la cuenta).** Son otra cosa: no dicen qué puede hacer el usuario en la operación, sino qué puede administrar. Salen de la tabla `seg.roles` y del `constants.php` de cada ambiente.
 
