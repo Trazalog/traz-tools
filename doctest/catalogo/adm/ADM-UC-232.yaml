@@ -20,13 +20,17 @@ pantallas:
 precondiciones:
   - "ana@ es administradora de MinTest_SJ, que tiene su vínculo con AssetPlanner (empr_id_mysql) cargado"
   - "La administradora de 'Empresa sin Asset' es de una empresa sin ese vínculo"
-  - "Hay una planilla de equipos válida"
+  - "Hay una planilla de equipos válida y otra igual con una fila con error"
 flujo_principal:
-  - paso: "ana@ elige 'Mantenimiento · Equipos (AssetPlanner)', adjunta la planilla y toca 'Procesar carga'"
-    resultado: "Ve el resultado con las filas ok y con error, y la carga queda en el historial"
+  - paso: "ana@ elige 'Mantenimiento · Equipos (AssetPlanner)', adjunta la planilla válida y toca 'Procesar carga'"
+    resultado: "Ve 'Listo: se cargaron <N> filas.' y la carga queda en el historial"
   - paso: "Abre Mantenimiento en Tools"
     resultado: "Los equipos cargados están en su empresa"
 flujos_alternativos:
+  - nombre: "Planilla con una fila con error: no se carga ninguna"
+    pasos:
+      - paso: "ana@ carga la planilla con una fila con error"
+        resultado: "Ve 'No se cargó ninguna fila: 1 con error. Corregí la planilla y volvé a cargarla.', el resultado dice qué fila y por qué, y en Mantenimiento no aparece ningún equipo nuevo"
   - nombre: "Empresa sin vínculo con AssetPlanner"
     pasos:
       - paso: "La administradora de 'Empresa sin Asset' carga la misma planilla"
@@ -40,6 +44,7 @@ flujos_alternativos:
       - paso: "Se manda, a propósito, el nombre de otro procedimiento de AssetPlanner en el envío"
         resultado: "Se ignora: se ejecuta el de la entidad elegida, o nada si la entidad no está en el catálogo"
 validaciones:
+  - "La carga es todo o nada también en Mantenimiento: si una fila tiene error, no se carga ninguna"
   - "Las entidades de Mantenimiento se cargan en AssetPlanner con el id de empresa vinculado"
   - "Sin vínculo con AssetPlanner, la carga se cancela sin tocar nada"
   - "Con filas pendientes de otra carga, se cancela, se dice cuántas y no se borran"
@@ -49,6 +54,8 @@ datos_prueba:
 dudas:
   - "Hoy DNATO entra directo a la base de AssetPlanner; el módulo lo hace por el DataService con la fuente de datos AssetPlannerDataSource que ya existe. Ese usuario de base tiene que poder insertar en las tablas de paso y llamar a los procedimientos. ¿Te parece bien usar esa fuente, o preferís una con permisos acotados? Propuesta: una fuente aparte con solo esos permisos, para no ampliar lo que puede la que ya usan los servicios de Mantenimiento."
   - "Los textos para el administrador piden 'Pedile a soporte…', porque él no puede completar el vínculo ni limpiar la tabla de paso. ¿Quién lo hace hoy? Propuesta: soporte de Trazalog, a mano, como hasta ahora."
+  - "La primera tarea de Pablo compara los procedimientos sta.* del repositorio contra los de la base de DEMO. ¿Se revisan igual los procedimientos de carga de AssetPlanner (MariaDB), que también tienen que ser todo o nada? Propuesta: sí, con el mismo criterio: vale el de la base de DEMO, se versiona en el repositorio de AssetPlanner y, si alguno carga fila por fila, Pablo para y te lo consulta."
 derivados: {}
 notas:
+  - "Todo o nada por decisión de Rodolfo del 2026-11-10, como DNATO-UC-027 para Mantenimiento."
   - "Mantiene los dos frenos de DNATO-UC-027 para Mantenimiento: empresa sin empr_id_mysql y tabla de paso con filas pendientes."

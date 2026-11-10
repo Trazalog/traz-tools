@@ -19,17 +19,26 @@ pantallas:
   - "Portal de la empresa → 🗂️ Cargas masivas"
 precondiciones:
   - "ana@ es administradora de MinTest_SJ"
-  - "Tiene una planilla de artículos de 123 filas, 3 con errores (unidad de medida 'KGS' que no existe, código 'ART-0099' repetido, familia 'Lubricantes 2' que no existe)"
+  - "Tiene una planilla de artículos de 120 filas sin errores"
+  - "Tiene otra planilla de artículos de 123 filas, 3 con errores (unidad de medida 'KGS' que no existe, código 'ART-0099' repetido, familia 'Lubricantes 2' que no existe)"
 flujo_principal:
-  - paso: "Elige 'Artículos', adjunta la planilla y toca 'Procesar carga'"
-    resultado: "Ve 'Listo: 120 ok · 3 con error.' y el resultado 'Resultado · Artículos · <fecha>' con una fila por error: Fila, Nivel y Mensaje"
-  - paso: "Toca '⬇ CSV' del resultado"
-    resultado: "Baja el detalle de los errores"
+  - paso: "Elige 'Artículos', adjunta la planilla de 120 filas y toca 'Procesar carga'"
+    resultado: "Ve 'Listo: se cargaron 120 filas.' y el resultado 'Resultado · Artículos · <fecha>'"
   - paso: "Mira el 'Historial de cargas'"
-    resultado: "La carga aparece arriba con la fecha, 'ana@', 'Artículos', 120 ok y 3 con error"
+    resultado: "La carga aparece arriba con la fecha, 'ana@', 'Artículos', 120 ok y 0 con error"
   - paso: "Cierra sesión, vuelve a entrar y abre Cargas masivas"
     resultado: "La carga sigue en el historial; al tocarla ve el mismo resultado"
 flujos_alternativos:
+  - nombre: "Planilla con filas con error: no se carga ninguna"
+    pasos:
+      - paso: "Elige 'Artículos', adjunta la planilla de 123 filas con 3 errores y toca 'Procesar carga'"
+        resultado: "Ve 'No se cargó ninguna fila: 3 con error. Corregí la planilla y volvé a cargarla.' y el resultado con una fila por error: Fila, Nivel y Mensaje"
+      - paso: "Toca '⬇ CSV' del resultado"
+        resultado: "Baja el detalle de los errores"
+      - paso: "Busca en Tools los artículos de las 120 filas buenas"
+        resultado: "No está ninguno: no se cargó nada"
+      - paso: "Mira el 'Historial de cargas'"
+        resultado: "La carga figura con 'Artículos', 0 ok y 3 con error"
   - nombre: "Sin entidad"
     pasos:
       - paso: "Adjunta la planilla sin elegir entidad y toca 'Procesar carga'"
@@ -55,6 +64,7 @@ flujos_alternativos:
       - paso: "Busca cómo borrar o deshacer una carga del historial"
         resultado: "No hay forma: el historial es solo de lectura"
 validaciones:
+  - "La carga es todo o nada: si una fila tiene error, no se carga ninguna"
   - "La entidad y el archivo son obligatorios"
   - "Solo se aceptan .xlsx y .xls"
   - "Los datos se cargan en la empresa de la sesión"
@@ -64,10 +74,10 @@ validaciones:
 datos_prueba:
   planilla: "artículos de prueba con prefijo ART-TEST-, en la base de prueba"
 dudas:
-  - "DNATO-UC-027 (validado por vos el 2026-08-24) dice 'la carga es todo o nada: si alguna fila tiene un error, no se carga ninguna'. La especificación (RF-110, nota de la maqueta) dice 'la carga parcial por fila se mantiene', y el relevamiento muestra que el procedimiento de artículos carga las filas buenas y cuenta las malas (bulkload_articulos.sql:65-79). ¿Cuál vale? Propuesta: no cambiar ningún procedimiento; el módulo muestra lo que cada uno hizo (ok y con error) y corregimos DNATO-UC-027 cuando lo confirmes en la copia de DEMO."
   - "Los procedimientos leen el archivo con COPY desde el servidor de PostgreSQL, así que el archivo tiene que estar en una carpeta que la base pueda leer (hoy la de DNATO, dentro del sitio web). Con la base en otra máquina deja de andar. Propuesta: usar la misma carpeta de DNATO en cada ambiente, fuera de la parte pública del sitio si se puede, y anotarlo para la infraestructura nueva."
   - "¿La carga deja una fila en la auditoría? RF-100 no la nombra. Propuesta: no; tiene su propio historial (como el consumo de IA). Los usuarios que crea sí dejan su miembro.invitar."
   - "Solicitantes de transporte crea una empresa por cada solicitante (POST API_CORE/empresa) desde el PHP de DNATO. Propuesta: el módulo copia ese paso tal cual; no usa la librería de alta de empresa de REQ-008 porque eso cambiaría lo que hace."
 derivados: {}
 notas:
   - "Equivale a DNATO-UC-027 (camino PostgreSQL) en la nueva pantalla, con historial persistente (RF-110)."
+  - "Todo o nada por decisión de Rodolfo del 2026-11-10 (lo validado en DNATO-UC-027), en lugar de la carga parcial que dice la especificación (RF-110). Si la revisión de procedimientos de la primera tarea encuentra que el de artículos de la base carga fila por fila, Pablo para y lo consulta antes de construir."
