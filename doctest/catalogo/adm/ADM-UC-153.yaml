@@ -1,0 +1,58 @@
+id: ADM-UC-153
+modulo: ADM
+titulo: Cambiar el plan directamente con un pedido pendiente
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-010-administracion-plan-y-pedidos.md
+    detalle: "sección 'Un solo paso para cambiar el plan'"
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Cambio directo de plan', que este caso amplía"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-23; CP-27 en 03_CASOS_DE_PRUEBA.md"
+pantallas:
+  - "Consola → Empresas → Plan"
+  - "Portal de la empresa → Plan"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Yudica en Business con pedido pendiente a Enterprise (29/10, 'cerramos minera nueva')"
+flujo_principal:
+  - paso: "Toca 'Plan' en la fila de Yudica, elige Enterprise y confirma"
+    resultado: "Ve 'Yudica pasó al plan Enterprise. Avisamos por correo a sus administradores.' y la columna Pedido queda vacía"
+  - paso: "Abre Registros → Pedidos de plan"
+    resultado: "El pedido de Yudica figura 'cancelado' con motivo 'resuelto por cambio directo'"
+  - paso: "Se revisan el correo de la administradora de Yudica y la auditoría"
+    resultado: "Recibió el aviso del cambio de plan y de que su pedido quedó resuelto; la auditoría tiene empresa.cambiar_plan con origen consola y pedido.cancelar"
+  - paso: "La administradora abre Plan"
+    resultado: "Ve Enterprise como 'Tu plan actual' y ningún pedido pendiente; puede pedir otro"
+flujos_alternativos:
+  - nombre: "Cambio directo a otro plan"
+    pasos:
+      - paso: "Con el pedido a Enterprise pendiente, cambia Yudica directamente a Team"
+        resultado: "El pedido queda igual 'cancelado' con motivo 'resuelto por cambio directo' y Yudica queda en Team"
+  - nombre: "Sin pedido pendiente"
+    pasos:
+      - paso: "Cambia directamente el plan de MinTest_SJ, que no tiene pedido"
+        resultado: "Se cambia como en REQ-008 y no se crea ni cancela ningún pedido"
+  - nombre: "Falla en el medio"
+    pasos:
+      - paso: "Cambia el plan con la base que rechaza la cancelación del pedido a propósito (ambiente de prueba)"
+        resultado: "No cambia ni el plan ni el pedido, y ve 'No pudimos guardar. Probá de nuevo en un rato.'"
+validaciones:
+  - "El cambio directo cancela el pedido pendiente con motivo 'resuelto por cambio directo', sea al plan pedido o a otro"
+  - "Plan y pedido cambian en la misma operación: o los dos o ninguno"
+  - "Los administradores reciben correo"
+  - "Queda en la auditoría el cambio de plan y la cancelación"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), Yudica y MinTest_SJ, con nombres inventados"
+dudas:
+  - "¿Un correo o dos para la administradora (cambio de plan + pedido cancelado)? Propuesta: uno solo, el de cambio de plan de REQ-008, con la línea 'Tu pedido de plan <plan> quedó resuelto por este cambio'."
+  - "Si el cambio directo es exactamente al plan pedido, ¿el pedido queda 'cancelado' o 'aprobado'? CP-27 dice cancelado con motivo 'resuelto por cambio directo'. Propuesta: cancelado, como dice CP-27, también cuando coincide con lo pedido."
+derivados: {}
+notas:
+  - "Cubre CP-27 y la parte de RF-23 que REQ-008 dejó para acá (duda de ADM-UC-113)."
