@@ -24,6 +24,7 @@ Cada requerimiento es un archivo `REQ-###-nombre-corto.md` en esta carpeta, más
 | REQ | Qué | Origen | Estado |
 |---|---|---|---|
 | [REQ-001](REQ-001-administracion-analisis.md) | Módulo Administración — análisis inicial: qué se reutiliza de DNATO, impacto en el agente (MCP) y en Tools, cómo se arma el módulo. Sin código | Replanteo de Rodolfo sobre la especificación DNATO v3 0.5.2 | Listo para Pablo |
+| [REQ-002](REQ-002-administracion-esqueleto.md) | Módulo Administración — esqueleto con seguridad incluida: módulo montado en Tools, Portal y Consola vacíos, control de sesión y permisos solo dentro del módulo, protección de envíos. Casos ADM-UC-001 a 003 | Análisis de REQ-001 (#607) | Borrador: dudas de Rodolfo y repositorio `traz-comp-adm` por crear |
 
 ## Módulo Administración (DNATO v3): de la especificación a los requerimientos
 

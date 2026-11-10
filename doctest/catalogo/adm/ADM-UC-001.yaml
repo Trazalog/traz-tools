@@ -1,0 +1,57 @@
+id: ADM-UC-001
+modulo: ADM
+titulo: Entrar al Portal de la empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-002-administracion-esqueleto.md
+    detalle: "se completa con el controlador base y el del Portal al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/inicio-admin.html
+    detalle: "maqueta del Portal; en REQ-002 solo el marco"
+pantallas:
+  - "Portal de la empresa → Inicio (dirección traz-comp-adm/portal)"
+precondiciones:
+  - Usuario con sesión iniciada en Tools
+  - El usuario es Administrador de la empresa activa de su sesión
+flujo_principal:
+  - paso: "Con la sesión de Tools abierta, entra a la dirección del Portal de la empresa"
+    resultado: "Se abre el Portal con la barra 'Trazalog · Mi empresa', la inicial y el nombre de su empresa, el menú lateral con 'Inicio' y el saludo 'Hola, <nombre>'"
+  - paso: "Toca '← Ir a Tools'"
+    resultado: "Vuelve al tablero de Tools, con la misma sesión y la misma empresa"
+flujos_alternativos:
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Sin haber iniciado sesión, entra a la dirección del Portal"
+        resultado: "Lo lleva a la pantalla de ingreso y no ve nada del Portal"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "Un usuario sin rol de administrador en la empresa activa entra a la dirección del Portal"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y no ve el nombre de la empresa ni el menú"
+  - nombre: "Otra empresa en la dirección"
+    pasos:
+      - paso: "Agrega a la dirección del Portal el número de otra empresa (por ejemplo, ?empr_id=1)"
+        resultado: "El Portal sigue mostrando la empresa de su sesión; la de la dirección se ignora"
+  - nombre: "Página del módulo que no existe"
+    pasos:
+      - paso: "Entra a una dirección del módulo que no existe (por ejemplo, traz-comp-adm/portal/no-existe)"
+        resultado: "Ve 'Esa página no existe.', distinto del mensaje de falta de permiso"
+validaciones:
+  - "Sin sesión no se entra a ninguna pantalla del módulo"
+  - "Al Portal entra solo el administrador de la empresa activa de la sesión"
+  - "La empresa sale siempre de la sesión; la que venga del navegador se ignora"
+  - "Una página inexistente responde 'no existe' y no 'sin permiso'"
+datos_prueba:
+  empresa: "empresa DocTest del ambiente (DOCTEST_EMPRESA)"
+  usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest, por ejemplo usuario@<dominio>"
+  empresa_ajena_en_direccion: "cualquier empr_id distinto del de la sesión"
+dudas:
+  - "Si el administrador tiene varias empresas, ¿el Portal muestra siempre la empresa activa de la sesión, y para ver otra tiene que cambiarla desde Tools? Propuesta: sí, el módulo no trae selector de empresa."
+  - "Sin sesión, ¿va al ingreso de DNATO (como el resto de Tools hoy) y después del ingreso vuelve al tablero de Tools, no al Portal? Propuesta: sí; volver a la pantalla pedida queda para REQ-003."
+  - "¿El superusuario que no es administrador de su empresa activa puede entrar al Portal? Propuesta: no; el superusuario entra a la Consola, y al Portal solo si además es administrador."
+derivados: {}
+notas:
+  - "En REQ-002 el Portal es solo el marco: el contenido de la maqueta (plan, uso de IA, avisos, accesos) llega con las pantallas de REQ-004 en adelante. El botón \"Mi empresa\" en la barra de Tools tampoco es parte de este caso."

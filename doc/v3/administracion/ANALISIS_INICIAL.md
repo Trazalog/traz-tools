@@ -276,6 +276,10 @@ salvo que se indique; líneas según `DNATO_v2_RELEVAMIENTO.md`):
 
 ### C.2 La excepción pública dentro de Tools
 
+> **Cambio de Rodolfo (2026-11-10), reemplaza la decisión de abajo:** el control **no** se hace para
+> todo Tools sino **solo dentro del módulo** (controlador base propio de `traz-comp-adm`, REQ-002).
+> Llevarlo a Tools queda como deuda técnica, hallazgo H-091 de `doc/hallazgos/REGISTRO.md`.
+
 Tools exige sesión iniciada (`Dash::index` redirige a `DNATO.main/login` si no hay `empr_id`,
 `application/controllers/Dash.php:21,45-48`), pero registración e ingreso son **públicos** (los usa un
 visitante sin sesión). **Decisión de Rodolfo (2026-11-04):** la excepción se resuelve con un **control
@@ -468,7 +472,8 @@ identidad copiadas (estilo `tz-*`/`REG`), y el layout "portal" para Portal y Con
 
 El módulo corre **dentro** de Tools, así que hereda por diseño (no reimplementa):
 
-- **Sesión obligatoria**: entra por el chequeo central de Tools (T-5), excepto la lista blanca pública
+- **Sesión obligatoria**: entra por el control del propio módulo (cambio del 2026-11-10; antes decía
+  "el chequeo central de Tools (T-5)"), excepto la lista blanca pública
   de identidad (C.2).
 - **Empresa activa**: siempre de la sesión (`empresa()` → `empr_id`), nunca del navegador (G2, RNF-02).
 - **Menú operativo**: lo dibuja Tools. El Portal y la Consola tienen su **propia** barra lateral (layout
@@ -508,7 +513,8 @@ al aprobar este análisis.
    que usa el disparador de alta de empresa). Sin comparar `descripcion` ni agregar columna (B.4).
 2. ✅ **Tiempo de sesión:** el de Tools (sin límite), dejándolo **configurable** en `constants.php` (C.3).
 3. ✅ **Estilos de login/registro:** se copian **tal cual**, sin unificar (C.1).
-4. ✅ **Excepción pública de identidad:** control **general de Tools** (no del módulo) (C.2).
+4. ✅ **Excepción pública de identidad:** ~~control general de Tools~~ → **control solo dentro del
+   módulo** (cambio del 2026-11-10; propagarlo a Tools es la deuda H-091) (C.2).
 5. ✅ **Prefijo del módulo:** `ADM` confirmado (F.2).
 6. ✅ **Portal/Consola:** diseño propio (layout "portal" de las maquetas), respetando las maquetas; al
    presionar "Mi empresa" se sale del contexto visual de Tools (E.2, F.2). Se estudian las maquetas a
