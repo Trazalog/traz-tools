@@ -545,6 +545,15 @@ al aprobar este análisis.
 11. ✅ **Orden y reparto de REQ-004 en adelante (2026-11-10):** orden E0→E12; de E8 y E11b el módulo
     hace las pantallas y lo de WSO2 y `traz-comp-formularios` va aparte (nota de F.4).
 
+12. ✅ **Cambios de base aditivos (2026-11-10):** crear tablas nuevas y agregar columnas **optativas**
+    (que aceptan vacío o tienen valor por defecto), índices y funciones nuevas lo decide el equipo, sin
+    aprobación de Rodolfo. Siguen necesitando su aprobación: cambiar o borrar algo existente, columnas
+    obligatorias en tablas existentes y migraciones que cambian filas existentes.
+13. ✅ **Schema de las tablas nuevas (2026-11-10):** todas en `seg`, como las actuales. Las columnas nuevas
+    de tablas existentes de otro schema (`core.empresas`, `frm.formularios`) se quedan en su tabla.
+14. ✅ **Cargas masivas (2026-11-10):** son **todo o nada**. Los procedimientos que valen son los de la
+    base, no los del repositorio; Pablo los compara y versiona antes de construir REQ-014.
+
 **Pendientes de ejecución (no bloquean la aprobación del análisis):**
 - Correr `verificar-membresias-vs-empresas.sql` en DEMO y copia de producción, con las 3 mediciones de
   B.4 (usuarios/membresías sin empresa por `nombre`, cuántas matchean solo por `descripcion`, empresas
