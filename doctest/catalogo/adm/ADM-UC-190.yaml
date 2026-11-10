@@ -1,0 +1,72 @@
+id: ADM-UC-190
+modulo: ADM
+titulo: Ver qué trae una funcionalidad de otro plan
+perfil: Supervisor
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-012-administracion-visibilidad.md
+    detalle: "secciones 'Vista de presentación' y 'En el menú de Tools (T-6)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/vista-esfumada.html
+    detalle: "tarjeta sobre el fondo esfumado y variante 'plan vencido'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-50, CU-63; RF-91, RF-64; RNF-07"
+pantallas:
+  - "Tools → menú lateral → opción sombreada"
+  - "Vista de presentación (traz-comp-adm/presentacion/<módulo>/<opción>)"
+precondiciones:
+  - "MinTest_SJ en Free; Procesos está en Business; la variable menu_resuelto_en_tools está encendida (REQ-009)"
+  - "bruno@ Supervisor con sesión iniciada en Tools"
+  - "Procesos tiene el texto de presentación 'Diseñá y ejecutá tus procesos (permisos de trabajo, inspecciones, reportes de incidentes) con aprobaciones y trazabilidad.'"
+flujo_principal:
+  - paso: "En el menú lateral toca 'Procesos', sombreada con '🥇'"
+    resultado: "Se abre la vista de presentación dentro de Tools"
+  - paso: "Mira la tarjeta"
+    resultado: "Ve el ícono 🥇, 'Procesos', 'No está en tu plan Free · está incluido en el plan Business', el texto de presentación y '👍 Me interesa'"
+  - paso: "Mira el fondo"
+    resultado: "Ve tarjetas y una tabla esfumadas con datos de relleno, sin ningún proceso real de su empresa"
+  - paso: "Se revisa lo que bajó el navegador"
+    resultado: "No contiene datos de procesos ni de la empresa: solo nombre, textos, íconos y planes"
+flujos_alternativos:
+  - nombre: "Plan vencido"
+    pasos:
+      - paso: "Una persona de Empresa Test (plan de prueba vencido) toca cualquier opción del menú, todas sombreadas"
+        resultado: "Ve 'El período de prueba de tu empresa terminó' y 'Pedile a tu administrador que elija un plan', con el ícono del plan no gratuito de menor orden que trae esa opción y 'Me interesa'"
+  - nombre: "Ya está en su plan"
+    pasos:
+      - paso: "bruno@ escribe la dirección de la vista de presentación de Stock"
+        resultado: "Ve 'Esta funcionalidad ya está en tu plan.' con 'Abrir'"
+  - nombre: "No corresponde"
+    pasos:
+      - paso: "bruno@ escribe la dirección de la vista de Indicadores (sin activar), de Alta de equipo (sin acceso para Supervisor) o de una opción que no existe"
+        resultado: "Ve 'Esta página no está disponible.' sin ningún dato de la funcionalidad"
+  - nombre: "Texto con código"
+    pasos:
+      - paso: "El superusuario pone en el texto de presentación '<b>Procesos</b>' y bruno@ abre la vista"
+        resultado: "Ve el texto tal cual, sin formato"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Sin haber iniciado sesión, se pide la dirección de la vista"
+        resultado: "Lleva al ingreso, como el resto del módulo"
+validaciones:
+  - "La vista se muestra solo para funcionalidades de otro plan para la persona, o con el plan vencido"
+  - "El servidor no envía datos de la empresa; el fondo es de relleno"
+  - "El plan mostrado es el de menor orden que la trae; con el plan vencido, el no gratuito de menor orden"
+  - "Lo que ya está en el plan dice 'ya está en tu plan'; lo sin activar, sin acceso o inexistente, 'no disponible'"
+  - "El texto de presentación se muestra escapado"
+  - "Desde el menú de Tools se abre dentro de Tools"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), MinTest_SJ y Empresa Test, con nombres inventados"
+dudas:
+  - "RF-91 pide 'un fondo esfumado con datos de relleno' sin decir si es distinto por pantalla. Propuesta: uno genérico (tarjetas con '00' y una tabla de filas inventadas) para todas; uno por pantalla queda para más adelante si Rodolfo lo pide."
+  - "¿Y si la funcionalidad de otro plan no tiene texto de presentación cargado? Propuesta: se muestra solo 'Está incluido en el plan <plan>' y el botón; el catálogo (REQ-005) ya pide el texto al publicar."
+  - "Desde Funcionalidades del Portal (fila 💎) ¿se abre la misma vista? Propuesta: sí, como página del Portal, para el administrador; ahí 'Me interesa' no tiene sentido y se reemplaza por 'Ver planes', que lleva a Plan."
+  - "Un administrador que toca una opción sombreada en Tools, ¿ve 'Me interesa' (se avisaría a sí mismo)? Propuesta: ve además 'Ver planes', que lleva a Plan (REQ-010), y 'Me interesa' sigue para que cuente en el catálogo."
+derivados: {}
+notas:
+  - "Cubre CP-90, el clic de CP-67 y la parte de la vista de CP-19 y CU-63. Completa T-6 de 02_MODELO_Y_REGLAS.md §9b."
+  - "Los textos 'Esta funcionalidad ya está en tu plan.' y 'Esta página no está disponible.' son propuesta: la especificación no los trae."
