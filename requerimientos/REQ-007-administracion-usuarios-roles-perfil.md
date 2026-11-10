@@ -15,12 +15,12 @@ Tools corte las sesiones abiertas de un baneado (derivación H-091). Lista compl
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el script de base y el análisis de impacto sobre el menú y la barra de Tools |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, y aprobar el análisis de impacto sobre el menú y la barra de Tools |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal), [REQ-003](REQ-003-administracion-identidad.md) (ingreso copiado, `Password`, correo), [REQ-004](REQ-004-administracion-base-y-atributos.md) (`seg.membresias_estado`, `seg.users.cambiar_password`, auditoría, variables, definición única de administrador, `ADMDataService.dbs`), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (`seg.planes.tope_usuarios`) y [REQ-006](REQ-006-administracion-funcionalidades.md) (funcionalidades activas, R2) |
 | Entrega de la especificación | **E4** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: Portal → Usuarios, Roles y accesos, Perfil; estados de membresía; invitar; alta directa; banear; baja; cambio de rol en línea; tope; servicio "Estado de membresía"; mensajes RF-03. CU-35 a 40, 52; CP-03, 70 a 76, 78, 79, 105, 113 |
 | Casos de uso | `ADM-UC-090` a `ADM-UC-098` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (tres pantallas, página de aceptar invitación, modelo `Membresias`, ajustes al ingreso copiado); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs`, script de base chico y, del núcleo, `application/views/layout/perfil.php` (dos enlaces) |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: columnas nuevas en `seg.tokens` y `seg.users` (lista en "Datos"). Además **núcleo de Tools**: (1) Roles y accesos escribe en `seg.memberships_menues`, de donde sale hoy el menú de Tools en todas las pantallas de producción; (2) se escriben `seg.users` y `seg.memberships_users` desde el módulo (por la API existente y por recursos nuevos); (3) en la barra de Tools se saca "Usuarios" del menú del perfil y "Perfil" pasa a abrir el del módulo → **análisis de impacto aprobado por Rodolfo**. Las APIs `API_CORE/usuario`, `/rol/asignar` y `/rol/desasignar` se **llaman** como están: no se modifican |
+| Riesgo | 🔴 Las columnas nuevas en `seg.tokens` y `seg.users` (lista en "Datos") son todas optativas: **cambio de base aditivo, lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por el **núcleo de Tools**: (1) Roles y accesos escribe en `seg.memberships_menues`, de donde sale hoy el menú de Tools en todas las pantallas de producción; (2) se escriben `seg.users` y `seg.memberships_users` desde el módulo (por la API existente y por recursos nuevos); (3) en la barra de Tools se saca "Usuarios" del menú del perfil y "Perfil" pasa a abrir el del módulo → **análisis de impacto aprobado por Rodolfo**. Las APIs `API_CORE/usuario`, `/rol/asignar` y `/rol/desasignar` se **llaman** como están: no se modifican |
 
 ---
 
@@ -435,8 +435,9 @@ registre (ver la duda de ADM-UC-093).
 
 ## Datos
 
-**🔴: Rodolfo aprueba el script antes de construir.** Si el script de REQ-004 no corrió todavía, va
-dentro de él; si no, en uno chico con su vuelta atrás. Nombres **[SUPUESTO]**; Pablo puede ajustarlos en
+**Cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10).** Todas las columnas
+nuevas son optativas (aceptan vacío) y no hay tablas nuevas. Si el script de REQ-004 no corrió todavía,
+va dentro de él; si no, en uno chico con su vuelta atrás. Nombres **[SUPUESTO]**; Pablo puede ajustarlos en
 el plan.
 
 ### Columnas nuevas en tablas existentes
@@ -483,7 +484,7 @@ coinciden con un código de DNATO **[SUPUESTO]**.
 
 ## Cómo se revisa (además de DocTest)
 
-- Script de base aprobado por Rodolfo, corrido en una copia de DEMO, con su vuelta atrás.
+- Script de base (aditivo) corrido en una copia de DEMO, con su vuelta atrás.
 - **Análisis de impacto aprobado por Rodolfo** sobre (a) `seg.memberships_menues`: menú de Tools de un
   Supervisor de prueba antes y después de desmarcar una hija que solo tenía por el padre; (b) la barra
   de Tools sin "Usuarios" y con "Perfil" al módulo, con y sin el módulo montado.

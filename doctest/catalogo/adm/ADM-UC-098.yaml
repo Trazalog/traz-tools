@@ -73,7 +73,7 @@ datos_prueba:
 dudas:
   - "Para verificar la contraseña actual hay que leer el valor cifrado de seg.users, y las pantallas nuevas no van directo a la base. Propuesta: un recurso nuevo del DataService que lo devuelve solo para el correo de la sesión, y la verificación la hace la librería Password copiada en REQ-003; la alternativa es una función de base que compara, si existe el cifrado en la base."
   - "¿Cómo llega una persona no administradora a Mi perfil? Hoy 'Perfil' de la barra de Tools lleva a DNATO. Propuesta: en este requerimiento ese enlace pasa a Mi perfil del módulo (núcleo de Tools, con el análisis de impacto de la barra); quien no es administrador ve en el menú lateral solo 'Mi perfil'."
-  - "Idioma y zona horaria no existen hoy en seg.users. Propuesta: dos columnas nuevas (en el script de base), que todavía nadie más lee; si Rodolfo prefiere no agregarlas, se sacan de la pantalla."
+  - "Idioma y zona horaria no existen hoy en seg.users. Propuesta: dos columnas nuevas optativas (cambio aditivo, lo decide el equipo), que todavía nadie más lee. ¿Se muestran ya en Mi perfil aunque Tools todavía no las use (ni el idioma ni la zona horaria cambian nada en otras pantallas)? Propuesta: sí, con la nota 'Por ahora solo se guarda'; si no, se sacan de la pantalla hasta que algo las use."
   - "¿Qué set de avatares y cuántos? La maqueta muestra 6 más '+18'. Propuesta: 24 avatares de DiceBear con licencia CC0, generados una vez y guardados en el módulo."
   - "¿Qué tamaño y formato de foto se aceptan? Propuesta: JPG o PNG de hasta 2 MB, guardada recortada en 256 × 256, en las mismas columnas image e image_name que usa DNATO."
 derivados: {}
