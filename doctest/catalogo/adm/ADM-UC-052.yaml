@@ -1,0 +1,77 @@
+id: ADM-UC-052
+modulo: ADM
+titulo: Publicar funcionalidades del catálogo
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-005-administracion-catalogo-y-planes.md
+    detalle: "sección 'El catálogo es seg.menues'; se completa con el controlador y la vista del Catálogo al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-catalogo.html
+    detalle: "pestaña Catálogo: tabla, filtros y ficha de la funcionalidad"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-40 a RF-44; CU-17"
+pantallas:
+  - "Consola → Catálogo y menú global → Catálogo (dirección traz-comp-adm/consola/catalogo)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Catálogo de prueba: MAN.equipos y BPM.procesos publicadas, MAN.preventivos sin publicar, RES.residuos despublicada"
+flujo_principal:
+  - paso: "Abre 'Catálogo y menú global'"
+    resultado: "Ve la tabla con Módulo / opción, Nombre, Tipo, En planes, Me interesa y Estado, y los filtros 'Todas', 'Sin publicar', 'Publicadas' y 'Despublicadas' con su cantidad"
+  - paso: "Toca 'Sin publicar (1)' y elige MAN / preventivos"
+    resultado: "Se abre la ficha con módulo, opción, dirección y padre fijos, y Nombre, Ícono, Tipo, Texto de presentación y Ayuda para completar"
+  - paso: "Completa nombre 'Preventivos', ícono, tipo pantalla, texto de presentación y ayuda, y toca 'Guardar'"
+    resultado: "Ve 'Guardado ✓'; sigue sin publicar"
+  - paso: "Toca 'Publicar'"
+    resultado: "Ve 'Publicada. Ya podés sumarla a los planes.'; en Planes aparece la columna Preventivos con casillas; la auditoría tiene catalogo.publicar"
+flujos_alternativos:
+  - nombre: "Faltan datos para publicar"
+    pasos:
+      - paso: "En una opción sin publicar sin texto de presentación, toca 'Publicar'"
+        resultado: "Ve 'Para publicar completá nombre, ícono, tipo, texto de presentación y ayuda.' y sigue sin publicar"
+  - nombre: "Despublicar"
+    pasos:
+      - paso: "En la ficha de BPM / procesos toca 'Despublicar' y confirma"
+        resultado: "Ve 'Despublicada: no se ve en ninguna empresa. Podés volver a publicarla.'; la opción deja de aparecer en el menú de Tools de las empresas que la tenían; la auditoría tiene catalogo.despublicar"
+  - nombre: "Volver a publicar"
+    pasos:
+      - paso: "En RES / residuos, despublicada, toca 'Publicar'"
+        resultado: "Vuelve a publicada con los mismos textos y los mismos planes que tenía"
+  - nombre: "Contador de Me interesa"
+    pasos:
+      - paso: "Con 4 avisos de una empresa y 3 de otra sobre BPM / procesos, abre su ficha"
+        resultado: "Ve 'Me interesa (7)' desglosado por empresa, y 7 en la columna 'Me interesa' de la tabla"
+  - nombre: "Buscar"
+    pasos:
+      - paso: "Escribe 'proc' en '🔍 Buscar'"
+        resultado: "La tabla muestra solo las opciones cuyo módulo, opción o nombre contienen 'proc'"
+  - nombre: "Administrador de empresa"
+    pasos:
+      - paso: "Un administrador de empresa entra a la dirección del Catálogo o manda directo un cambio de textos o de publicación"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y el servidor responde 403 sin cambiar nada"
+validaciones:
+  - "Solo el superusuario ve y cambia el catálogo"
+  - "Publicar exige nombre, ícono, tipo, texto de presentación y ayuda"
+  - "Al publicar, la funcionalidad aparece en la matriz de Planes"
+  - "Despublicar la saca de todas las empresas (también del menú de Tools) sin borrarla"
+  - "Volver a publicar conserva textos y planes"
+  - "El contador de Me interesa suma los avisos y los desglosa por empresa"
+  - "Cada cambio de textos y de publicación queda en la auditoría"
+datos_prueba:
+  catalogo: "opciones del fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), cargadas en la base de prueba"
+  intereses: "filas en seg.intereses cargadas a mano hasta que REQ-012 haga el botón 'Me interesa'"
+  administrador_no_super: "el administrador de la empresa DocTest del ambiente"
+dudas:
+  - "¿'Nombre' de la funcionalidad es la columna texto que ya existe (lo que Tools muestra en el menú) o un dato aparte? M-2 dice 'su texto actual como nombre'. Propuesta: es la misma columna texto; cambiar el nombre en el Catálogo cambia el texto del menú en Tools, igual que hoy en el ABM de DNATO."
+  - "La maqueta muestra íconos como emojis (🔀) y el formulario de opción nueva los elige de core.iconos (clases de letra de íconos, por ejemplo fa fa-calendar-check). Propuesta: un solo ícono, url_icono de core.iconos, como hoy; los emojis de la maqueta son ilustrativos."
+  - "Despublicar una funcionalidad que está en planes o activa en empresas: ¿avisa cuántas empresas afecta, como la restricción de un plan? La especificación no lo pide. Propuesta: sí, mismo aviso con cantidad de empresas y confirmación, sin correo."
+  - "¿Se puede cambiar el tipo (pantalla, acción, tool_mcp) de una opción ya publicada? Propuesta: sí, salvo pasar a tool_mcp o desde tool_mcp, porque cambia de módulo (MCP)."
+derivados: {}
+notas:
+  - "Cubre CP-40 (menos 'para Yudica aparece sombreada en el menú', que es REQ-009), CP-42 y la parte de CP-43 sobre el catálogo. CP-41 (sin publicar no se ve en ninguna empresa) es de REQ-006."
+  - "Despublicar pone eliminado = 1 para que el menú actual de Tools deje de mostrarla (ver REQ-005, 'El catálogo es seg.menues')."

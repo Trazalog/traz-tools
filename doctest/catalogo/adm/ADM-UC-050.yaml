@@ -1,0 +1,89 @@
+id: ADM-UC-050
+modulo: ADM
+titulo: Administrar los planes de Trazalog
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-005-administracion-catalogo-y-planes.md
+    detalle: "se completa con el controlador y la vista de Planes al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-planes.html
+    detalle: "maqueta de Planes: matriz y formulario 'Nuevo plan / editar plan'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-10, RF-12; CU-10"
+pantallas:
+  - "Consola → Planes (dirección traz-comp-adm/consola/planes)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Existen los planes de prueba Free (base, gratuito sin vencimiento, orden 1) y Team (orden 2)"
+flujo_principal:
+  - paso: "Abre 'Planes' en el menú de la Consola"
+    resultado: "Ve la matriz con un plan por fila, por orden, con las columnas 'Gratuito / de prueba', 'Tope usuarios' y 'Cuota IA · período · renovación'"
+  - paso: "Toca '＋ Nuevo plan', completa código starter, nombre Starter, orden entre Free y Team, tope 8, cuota 50 por semana con renovación los lunes, y toca 'Guardar'"
+    resultado: "Ve 'Guardado ✓' y Starter aparece entre Free y Team, sin ninguna funcionalidad marcada"
+  - paso: "Toca '✎' en Starter, cambia el precio a 'Consultar' y guarda"
+    resultado: "El precio queda en 'Consultar'"
+  - paso: "Toca '⧉' en Starter y le pone el código starter_plus"
+    resultado: "Aparece 'Starter (copia)' con los mismos datos y las mismas casillas, sin la marca de plan base"
+  - paso: "Toca '🗑' en 'Starter (copia)', que ninguna empresa tiene, y confirma"
+    resultado: "El plan deja de aparecer en la matriz"
+flujos_alternativos:
+  - nombre: "Plan en uso"
+    pasos:
+      - paso: "Intenta dar de baja Free, que tiene una empresa"
+        resultado: "Ve 'Este plan lo usa 1 empresa: cambiala de plan antes de darlo de baja' y el plan sigue"
+  - nombre: "Otro plan base"
+    pasos:
+      - paso: "Edita Team, marca 'Plan base' y guarda"
+        resultado: "Ve 'Free dejó de ser el plan base'; Team queda como único plan base"
+  - nombre: "Gratuito / de prueba con vencimiento"
+    pasos:
+      - paso: "Crea Prueba Business, marca 'Gratuito / de prueba' y elige 'Vence a los…' 30 días"
+        resultado: "En la columna 'Gratuito / de prueba' ve Free 'Sí · sin vencimiento', Prueba Business 'Sí · 30 días' y Team 'No'"
+  - nombre: "Vencimiento en un plan pago"
+    pasos:
+      - paso: "Edita Team, que no es gratuito / de prueba"
+        resultado: "El campo 'Vencimiento' no está disponible"
+  - nombre: "Código repetido"
+    pasos:
+      - paso: "Crea otro plan con el código free"
+        resultado: "Ve 'Ya hay un plan con ese código.' y no se crea"
+  - nombre: "Tope inválido"
+    pasos:
+      - paso: "Pone 0 en el tope de usuarios de un plan y guarda"
+        resultado: "Ve 'El tope tiene que ser mayor que 0, o ilimitado.' y no guarda"
+  - nombre: "Ilimitado"
+    pasos:
+      - paso: "Marca 'Ilimitado' en el tope y en la cuota de un plan"
+        resultado: "La fila muestra '∞' en tope y en cuota"
+  - nombre: "Administrador de empresa"
+    pasos:
+      - paso: "Un administrador de empresa, sin marca de superusuario, entra a la dirección de Planes o manda un cambio de plan directo"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y no cambia nada"
+validaciones:
+  - "Solo el superusuario entra a Planes y cambia planes"
+  - "El código de plan es único"
+  - "Tope mayor que 0 o ilimitado; cuota 0 o más, o ilimitada"
+  - "Hay un solo plan base; marcar otro transfiere la marca con aviso"
+  - "No se da de baja un plan que tenga empresas; la baja es lógica"
+  - "El vencimiento solo se puede poner en un plan gratuito / de prueba"
+  - "Cada alta, cambio, copia, baja y cambio de plan base queda en la auditoría"
+datos_prueba:
+  planes: "Free, Team, Starter, Prueba Business (fixture dnato_v3_base de 03_CASOS_DE_PRUEBA.md)"
+  empresa_en_free: "una empresa de prueba con plan_id de Free cargado a mano en la base de prueba (M-3 es REQ-016)"
+  administrador_no_super: "el administrador de la empresa DocTest del ambiente"
+dudas:
+  - "El precio está dos veces: RF-10 lo pone en el plan y RF-33/RF-102 como variable precio_plan_{codigo}; REQ-004 creó las dos cosas. Propuesta: un solo lugar, la variable de sistema (tiene historial); el campo 'Precio' del formulario la escribe y la columna de precio no se crea."
+  - "¿El código del plan se puede cambiar después de creado? La variable de precio usa el código en su clave. Propuesta: no se cambia; si hace falta otro código, se duplica el plan."
+  - "¿Qué datos lleva la copia? La especificación solo dice 'copia'. Propuesta: todo (datos y matriz) salvo la marca de plan base, con nombre '<nombre> (copia)' y un código nuevo que pide la pantalla."
+  - "La maqueta pone a Prueba Business con orden 2 y el fixture de pruebas con '3b'. Propuesta: el orden es un número entero; Prueba Business queda con el orden que le dé el superusuario, y para el plan de menor orden (RF-14) se usa ese número."
+  - "¿El plan base tiene que ser gratuito? La especificación dice que el base es el preseleccionado del registro y Freemium es gratuito, pero no lo exige. Propuesta: no se exige; el registro (REQ-010) decide qué hacer si el base no es gratuito."
+  - "¿Qué día de renovación se permite para planes mensuales? Propuesta: del 1 al 28, para que exista en todos los meses."
+derivados: {}
+notas:
+  - "Cubre CP-10, CP-11, CP-12, la parte de CP-17 que es del plan (campo y columna) y la parte de CP-43 sobre planes."
+  - "Hasta M-3 (REQ-016) ninguna empresa tiene plan; para probar 'Plan en uso' se carga plan_id a mano en la base de prueba."
