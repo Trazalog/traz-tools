@@ -46,6 +46,9 @@ git push origin feature/req-###-desc-corta
 
 ## 3. Pull requests
 
+- **Solo requerimientos en "Listo para Pablo".** El estado de cada uno está en
+  `requerimientos/README.md`. Un requerimiento en **Borrador** se puede leer para entender hacia dónde
+  va el trabajo, pero **no** se planifica ni se programa.
 - **Uno por requerimiento**, a `develop`. Se abre **en borrador** con solo el plan
   (`requerimientos/REQ-###-….plan.md`) y no se programa hasta que Rodolfo deja el comentario
   **`✅ Plan aprobado`**. Con todas las tareas hechas, se pasa a "Ready for review".
@@ -80,6 +83,11 @@ Closes #NNN
 - Los casos de uso los valida Rodolfo. Si falta uno, el agente redacta un borrador y **para**.
 - Las pruebas **nunca** apuntan a producción.
 - Si algo falla dos veces seguidas, **parar** y mostrar el error completo, sin seguir tocando.
+- **Verde** quiere decir que en el informe de la corrida (`npm run doctest:consola`) no hay ninguna
+  prueba en `falla`, `otro-punto` ni `dejo-de-fallar`. Un `error-conocido` no frena el commit.
+- Si una prueba choca con un error **ya anotado** (hallazgo `H-NNN` de `doc/hallazgos/REGISTRO.md`), se
+  marca con `debeFallarCon(/.../)` + `test.fail(true, 'H-NNN: ...')`. Un error **nuevo** no se marca: se
+  avisa a Rodolfo. Nunca abrir issues por cuenta propia.
 
 ## 5. Sistema productivo: lo que no se toca sin aprobación
 

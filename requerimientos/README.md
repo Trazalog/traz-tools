@@ -14,7 +14,7 @@ Cada requerimiento es un archivo `REQ-###-nombre-corto.md` en esta carpeta, más
 
 | Estado | Qué significa |
 |---|---|
-| Borrador | Rodolfo todavía tiene dudas por contestar o casos por validar. Pablo no arranca |
+| Borrador | Escrito por adelantado, o con dudas por contestar o casos por validar. Pablo no arranca: lo puede leer, no planificar ni programar |
 | Listo para Pablo | Casos validados y unidos a `develop`. Pablo puede armar el plan |
 | En construcción | Plan aprobado; Pablo programando |
 | Hecho | Desplegado en DEMO y verificado con DocTest |
@@ -41,6 +41,7 @@ Cada requerimiento es un archivo `REQ-###-nombre-corto.md` en esta carpeta, más
 | [REQ-016](REQ-016-administracion-migracion-completa.md) | Módulo Administración — Migración completa. Entrega E12 de la especificación. Casos ADM-UC-270 a 289 | Especificación DNATO v3 y análisis de REQ-001 | Borrador, escrito por adelantado |
 | [REQ-017](REQ-017-administracion-formularios-globales.md) | Formularios globales en Tools: los combos de tareas muestran los globales, el alta de empresa apunta a los globales en vez de copiarlos, y se pasan a globales solo los formularios que usa el alta. Casos ADM-UC-290 a 309 | Decisión de Rodolfo del 2026-11-10 sobre REQ-015 | Borrador, escrito por adelantado |
 | REQ-018 | Corte final: redirigir DNATO al módulo y apagarlo. Necesita reunión de arquitectura, porque el token del agente lo emite DNATO | Propuesta de REQ-016 | Sin escribir |
+| [REQ-001](REQ-001-administracion-analisis.md) | Módulo Administración — análisis inicial: qué se reutiliza de DNATO, impacto en el agente (MCP) y en Tools, cómo se arma el módulo. Sin código | Replanteo de Rodolfo sobre la especificación DNATO v3 0.5.2 | Hecho: análisis unido a `develop` el 2026-11-05 (#607) |
 
 ## Módulo Administración (DNATO v3): de la especificación a los requerimientos
 
@@ -51,8 +52,9 @@ DataServices, y deja a DNATO funcionando en paralelo y para lo que necesita el a
 completas están en [REQ-001](REQ-001-administracion-analisis.md).
 
 De la especificación se usa el **qué** (requisitos, casos de prueba, maquetas, reglas de negocio); el
-**cómo** sale del análisis de REQ-001. Cada requerimiento se escribe **cuando le toca**, con lo
-aprendido en el anterior. Orden propuesto (los números se confirman al escribirlos):
+**cómo** sale del análisis de REQ-001. Los requerimientos se pueden escribir por adelantado, en
+Borrador, pero a Pablo se le pasan de a uno y cada uno se revisa con lo aprendido en el anterior
+(guía, sección 2.3). Orden propuesto (los números se confirman al escribirlos):
 
 | REQ | Qué | Bloqueado por |
 |---|---|---|
