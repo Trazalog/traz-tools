@@ -1,0 +1,77 @@
+id: ADM-UC-270
+modulo: ADM
+titulo: Pasar las empresas actuales al plan Completo sin que pierdan nada
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-016-administracion-migracion-completa.md
+    detalle: "sección 'M-3 — Plan Completo y plan base'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§8 paso M-3: 'nadie pierde nada el día del cambio'"
+pantallas:
+  - "Portal de la empresa → 🏠 Inicio y 📦 Plan"
+  - "Consola → 🏢 Empresas"
+  - "Tools → tablero y menú lateral"
+precondiciones:
+  - "Copia de DEMO con M-1, M-2, M-4, M-5, M-6 y M-7 corridos y ninguna empresa con plan"
+  - "ana@ es administradora de MinTest_SJ, que tiene 7 personas y funcionalidades de Mantenimiento, Almacenes y Herramientas activas; bruno@ es Supervisor"
+  - "Una empresa creada por el módulo con el registro copiado tiene ya el plan Free"
+flujo_principal:
+  - paso: "Se corre el script de M-3 en la copia"
+    resultado: "La salida dice cuántas empresas pasó a 'Completo' y que no tocó las que ya tenían plan"
+  - paso: "ana@ entra al Portal"
+    resultado: "La cabecera dice 'Plan Completo'; en Inicio, Lugares muestra '7 · sin tope' y la IA, sin tope"
+  - paso: "Abre Funcionalidades"
+    resultado: "Todo lo que tenía activo sigue activo y nada aparece 'de otro plan'"
+  - paso: "bruno@ entra a Tools"
+    resultado: "Ve el mismo menú que antes de M-3"
+  - paso: "El superusuario abre Consola → Empresas"
+    resultado: "MinTest_SJ figura en 'Completo' y la empresa del registro copiado sigue en Free"
+  - paso: "Mira la Auditoría filtrada por MinTest_SJ"
+    resultado: "Hay una fila de cambio de plan a 'Completo' con origen migración"
+flujos_alternativos:
+  - nombre: "Correrlo de nuevo"
+    pasos:
+      - paso: "Se corre M-3 otra vez en la misma copia"
+        resultado: "No cambia nada y no agrega filas de auditoría"
+  - nombre: "Empresa registrada por DNATO después"
+    pasos:
+      - paso: "Se registra una empresa nueva por el registro de DNATO y se vuelve a correr M-3"
+        resultado: "Esa empresa pasa a 'Completo'; las demás no cambian"
+  - nombre: "Sin correos"
+    pasos:
+      - paso: "Se revisa el correo de los administradores después de M-3"
+        resultado: "No recibieron ningún aviso de cambio de plan"
+  - nombre: "Plan base"
+    pasos:
+      - paso: "Se mira Consola → Planes"
+        resultado: "Está 'Completo' (no se ofrece en la comparativa) y el plan base marcado como base"
+      - paso: "Una persona nueva se registra con el registro copiado"
+        resultado: "Su empresa nace en el plan base, no en 'Completo'"
+  - nombre: "Vuelta atrás"
+    pasos:
+      - paso: "Se corre la vuelta atrás de M-3"
+        resultado: "Las empresas que pasó la migración vuelven a no tener plan; la empresa con Free sigue en Free"
+validaciones:
+  - "Solo pasan a 'Completo' las empresas sin plan"
+  - "Ninguna empresa pierde funcionalidades, lugares ni consultas de IA"
+  - "El menú de Tools de cada usuario no cambia"
+  - "Cada empresa pasada deja su auditoría con origen migración"
+  - "Correrlo de nuevo no cambia nada"
+  - "No se mandan correos"
+  - "El plan base queda para las empresas nuevas"
+  - "La vuelta atrás deshace solo lo que hizo la migración"
+datos_prueba:
+  ambiente: "copia de DEMO (fixture dnato_v3_base), nunca producción para la prueba"
+dudas:
+  - "¿Qué cuota de IA tiene el plan 'Completo'? §8 dice 'según decisión del PM'. Propuesta: ilimitada, igual que lo que asumieron REQ-011 y REQ-013 para 'sin plan', así nadie pierde el agente el día del cambio; si querés un tope, que sea un plan pago aparte."
+  - "Mientras DNATO siga registrando empresas, nacen sin plan. ¿Qué plan reciben? Propuesta: correr M-3 de nuevo antes del corte final (las pasa a 'Completo'); si preferís que reciban el plan base, M-3 necesita distinguirlas por fecha de alta y lo decidís vos."
+  - "¿Las empresas dadas de baja también pasan a 'Completo'? Propuesta: sí, para que si se recuperan tengan plan; no se ven en ningún listado salvo el filtro 'Dadas de baja'."
+  - "¿El plan 'Completo' incluye lo que se publique después en el catálogo? Propuesta: no solo; el script carga lo publicado al correr, y el superusuario agrega lo nuevo desde Planes (si no, una opción nueva aparecería 'de otro plan' para las empresas viejas)."
+derivados: {}
+notas:
+  - "Cubre M-3 de §8. Deja sin efecto, para las empresas existentes, las propuestas de 'sin plan' de REQ-006, REQ-007, REQ-010, REQ-011 y REQ-013."
