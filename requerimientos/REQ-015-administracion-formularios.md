@@ -6,7 +6,7 @@ Decimoquinto trabajo de Pablo para el módulo **Administración** (`traz-comp-ad
 administrar los formularios dinámicos que usan las pantallas de Tools: **Formularios** del Portal (los
 propios y los globales disponibles, el constructor, la vista previa, "Usar como base" y "Dónde se usan") y
 **Formularios globales** de la Consola (con el catálogo de puntos de uso). Lo leen Pablo para planificar y
-Rodolfo para aprobar el cambio de base y para decidir el requerimiento aparte del módulo compartido.
+Rodolfo para aprobar el análisis de impacto y para decidir el requerimiento aparte del módulo compartido.
 **No** cambia nada dentro de `traz-comp-formularios` (módulo compartido con todo Tools): esos cambios van en
 un requerimiento **aparte** con su análisis de impacto, y la sección "Qué NO hace" lista exactamente cuáles
 son. Tampoco hace la migración de la empresa plantilla 9000 (va con ese requerimiento aparte o con
@@ -14,12 +14,12 @@ son. Tampoco hace la migración de la empresa plantilla 9000 (va con ese requeri
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos (en especial el DDL real de `frm.*`), aprobar el script de base y el análisis de impacto, y decidir cuándo va el requerimiento aparte de `traz-comp-formularios` |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos (en especial el DDL real de `frm.*`), aprobar el análisis de impacto y decidir cuándo va el requerimiento aparte de `traz-comp-formularios` |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal, Consola), [REQ-004](REQ-004-administracion-base-y-atributos.md) (auditoría; REQ-004 dejó los atributos de `frm.*` para acá), [REQ-008](REQ-008-administracion-consola-empresas.md) (pestaña "Formularios" de la ficha de la empresa); relevamiento [`doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md`](../doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md) y sus decisiones D1 a D3 |
 | Entrega de la especificación | **E11b** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`, solo la parte de pantallas: constructor (Portal y Consola), listas de opciones, vista previa sin respuesta, usar como base, puntos de uso. CU-70 a 76; CP-120 a 132; RF-120 a 131; R9 |
 | Casos de uso | `ADM-UC-250` a `ADM-UC-255` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantallas, constructor, vista previa); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs` y un script de base. **No** se toca `traz-comp-formularios` |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: columnas nuevas en `frm.formularios`, tabla nueva de puntos de uso con su carga inicial y funciones nuevas (lista en "Datos"). El DDL real de `frm.*` **no está en el repositorio** (duda de ADM-UC-251). 🔴 **Núcleo de Tools**: se escriben `frm.formularios`, `frm.items` y `core.tablas` (listas de opciones y configuración `configuraciones/formulario_<punto>`), que leen las pantallas de almacenes, pañol, tareas estándar y etapas → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto"). Recursos del DataService nuevos (🟡) |
+| Riesgo | 🔴 Las columnas nuevas optativas en `frm.formularios`, la tabla nueva `seg.formularios_puntos_uso` con su carga inicial y las funciones nuevas en `seg` (lista en "Datos") son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. El DDL real de `frm.*` **no está en el repositorio** (duda de ADM-UC-251): hace falta para escribir el script sin adivinar, no para aprobarlo. Sigue en rojo por el **núcleo de Tools**: se escriben `frm.formularios`, `frm.items` y `core.tablas` (listas de opciones y configuración `configuraciones/formulario_<punto>`), que leen las pantallas de almacenes, pañol, tareas estándar y etapas → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto"). Recursos del DataService nuevos (🟡) |
 
 ---
 
@@ -106,7 +106,7 @@ de hoy y el CP que queda sin cubrir mientras no esté:
   `form_id` (no se leen los valores).
 - **Listas de opciones** = filas de `core.tablas` con el mismo mecanismo de hoy (el disparador
   `core.set_tabla_id_trg` antepone el `empr_id`; relevamiento §1.d). Lista global = sin empresa.
-- **Puntos de uso** = tabla nueva con clave (`formulario_entrega_materiales`, …), pantalla, módulo y
+- **Puntos de uso** = tabla nueva `seg.formularios_puntos_uso` con clave (`formulario_entrega_materiales`, …), pantalla, módulo y
   "global al alta". Carga inicial: las cuatro claves de la maqueta `consola-formularios.html`.
 - **Dónde se usa** (mecanismo A del relevamiento) = la fila `configuraciones` / `formulario_<punto>` de la
   empresa en `core.tablas`, con el número de formulario en `descripcion` (relevamiento, duda 4).
@@ -317,16 +317,19 @@ cambio de "Dónde se usan" (formulario, empresa, quién), y cada rechazo.
 
 ## Datos
 
-**🔴 Rodolfo aprueba el script antes de construir.** Nombres **[SUPUESTO]**. Antes de escribir el script
-hace falta el DDL real de `frm.*` de una base real (duda de ADM-UC-251).
+**Cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10).** Las dos columnas nuevas
+de `frm.formularios` son optativas (una con valor por defecto, la otra acepta vacío) y se quedan en su
+tabla; la tabla nueva va en `seg`, como todas las del módulo (regla de Rodolfo del 2026-11-10). Nombres
+**[SUPUESTO]**. Antes de escribir el script hace falta el DDL real de `frm.*` de una base real (duda de
+ADM-UC-251).
 
 | Tabla | Cambio | Por defecto |
 |---|---|---|
 | `frm.formularios` | Columna nueva `estado` (`borrador` / `publicado` / `inactivo`) | `publicado` (nada cambia para v2) |
 | `frm.formularios` | Columna nueva `copiado_de` (`form_id` de origen) | nulo |
-| `frm.puntos_uso` (nueva) | `clave`, `pantalla`, `modulo`, `form_id_alta` (global al alta, nulo), `orden` | Carga inicial: `formulario_entrega_materiales`, `formulario_salida_herramientas`, `formulario_recepcion_herramientas`, `formulario_checklist_herramientas` (maqueta), sin global al alta |
+| `seg.formularios_puntos_uso` (nueva) | `clave`, `pantalla`, `modulo`, `form_id_alta` (global al alta, nulo), `orden` | Carga inicial: `formulario_entrega_materiales`, `formulario_salida_herramientas`, `formulario_recepcion_herramientas`, `formulario_checklist_herramientas` (maqueta), sin global al alta |
 
-Funciones nuevas (en `seg` **[SUPUESTO]**, para no mezclar con el esquema `frm` sin DDL): guardar formulario
+Funciones nuevas (en `seg`, como las tablas nuevas; además no se mezcla con el esquema `frm` sin DDL): guardar formulario
 (cabecera + ítems + listas + auditoría), cambiar estado (con la limpieza de la configuración), copiar,
 guardar uso. Ninguna fila existente cambia en una columna existente; vuelta atrás: borrar las columnas, la
 tabla y las funciones.
@@ -360,7 +363,7 @@ tabla y las funciones.
 
 ## Cómo se revisa (además de DocTest)
 
-- DDL real de `frm.*` obtenido de una base real; script aprobado por Rodolfo, corrido en una copia de DEMO,
+- DDL real de `frm.*` obtenido de una base real; script de base (aditivo) corrido en una copia de DEMO,
   con su vuelta atrás.
 - Verificación §8.5 del relevamiento corrida en producción y revisada por Rodolfo antes de desplegar.
 - Después de abrir varias vistas previas, `frm.instancias_formularios` tiene la misma cantidad de filas.
