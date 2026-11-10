@@ -6,19 +6,19 @@ Decimotercer trabajo de Pablo para el módulo **Administración** (`traz-comp-ad
 **Auditoría y uso** de la Consola (quién hizo qué, y cuánto se usa la plataforma), la **Actividad** de la
 empresa en el Portal, el contenido del **Inicio** del Portal (que REQ-002 dejó vacío) con sus avisos, el
 **registro de accesos por empresa** y las mejoras al **tablero del Administrador de Tools** (punto T-1).
-Lo leen Pablo para planificar y Rodolfo para aprobar el cambio de base y el análisis de impacto en Tools.
+Lo leen Pablo para planificar y Rodolfo para aprobar el análisis de impacto en Tools.
 **No** cubre los indicadores de operación del tablero (KPI y su caché, que no cambian), las cargas
 masivas ([REQ-014](REQ-014-administracion-cargas-masivas.md)) ni el registro de qué opción del menú usa
 cada persona. Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el script de base y el análisis de impacto en Tools |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, y aprobar el análisis de impacto en Tools |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal, Consola, Inicio vacío), [REQ-004](REQ-004-administracion-base-y-atributos.md) (`seg.auditoria`, servicio Contexto, `Dash::index` con Contexto), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (acciones `plan.*` y aviso de restricción), [REQ-006](REQ-006-administracion-funcionalidades.md) (funcionalidades activas, ícono del plan), [REQ-007](REQ-007-administracion-usuarios-roles-perfil.md) (personas, lugares, invitaciones, "Último acceso"), [REQ-008](REQ-008-administracion-consola-empresas.md) (ficha, Usuarios de la plataforma, "📜 Ver actividad"), [REQ-010](REQ-010-administracion-plan-y-pedidos.md) (plan y pedido pendiente) y [REQ-011](REQ-011-administracion-cuota-agente.md) (cuota en el Contexto) |
 | Entrega de la especificación | **E10** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: auditoría y uso en la Consola, Actividad en el Portal, Inicio del Portal (control, sin KPIs). CU-19, CU-30; CP-100, CP-104, CP-106. **Más T-1** de `doc/v3/dnato/02_MODELO_Y_REGLAS.md` §9b y `doc/v3/administracion/ANALISIS_INICIAL.md` E.1, por decisión de Rodolfo |
 | Casos de uso | `ADM-UC-210` a `ADM-UC-218` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (Auditoría y uso, Actividad, Inicio, ampliación del Contexto); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs`, un script de base chico, y del núcleo `application/controllers/Dash.php` y `application/views/dashboard/admin_dashboard.php` |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: tabla nueva `seg.accesos` e índices nuevos en `seg.auditoria` (lista en "Datos"). 🔴 **Núcleo de Tools**: el tablero del Administrador (`Dash.php`, `admin_dashboard.php`) y el registro del acceso en `Dash::index` → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡) |
+| Riesgo | 🔴 La tabla nueva `seg.accesos` y los índices nuevos en `seg.auditoria` (lista en "Datos") son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo solo por el **núcleo de Tools**: el tablero del Administrador (`Dash.php`, `admin_dashboard.php`) y el registro del acceso en `Dash::index` → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡) |
 
 ---
 
@@ -384,7 +384,8 @@ accesos. En `Dash.php`, con el formato que ya usa (`'#TRAZA | CORE | Dash | dash
 
 ## Datos
 
-**🔴 Rodolfo aprueba el script antes de construir.** Nombres **[SUPUESTO]**, como en REQ-004.
+**Cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10).** La tabla nueva va en
+`seg`, como todas las del módulo. Nombres **[SUPUESTO]**, como en REQ-004.
 
 ### Tabla nueva
 
@@ -436,7 +437,7 @@ Verificado contra la rama `develop` (2026-11-10).
 
 ## Cómo se revisa (además de DocTest)
 
-- Script de base aprobado por Rodolfo, corrido en una copia de DEMO, con su vuelta atrás.
+- Script de base (aditivo) corrido en una copia de DEMO, con su vuelta atrás.
 - Análisis de impacto en Tools aprobado por Rodolfo; tiempo del tablero medido antes y después en la
   copia de DEMO.
 - Búsqueda de recursos que escriban `seg.auditoria` fuera de "agregar": ninguno (resultado en la
