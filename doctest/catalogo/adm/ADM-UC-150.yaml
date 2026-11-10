@@ -1,0 +1,65 @@
+id: ADM-UC-150
+modulo: ADM
+titulo: Comparar los planes y ver lo que gano
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-010-administracion-plan-y-pedidos.md
+    detalle: "sección 'Comparativa (RF-93)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-plan.html
+    detalle: "tabla 'Qué incluye', pie de columnas y aviso de plan vencido"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-42, CU-63; RF-93, RF-26, RF-26b"
+pantallas:
+  - "Portal de la empresa → Plan"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "MinTest_SJ en Free (gratuito, ya usado), sin pedido pendiente"
+  - "Planes activos Free, Team (USD 79 / mes), Business (USD 179 / mes), Enterprise (Consultar) y Prueba Business (gratuito, 30 días)"
+flujo_principal:
+  - paso: "Abre Plan desde el menú del Portal"
+    resultado: "Ve 'Plan' y 'Los cambios de plan los aprueba Trazalog. El cobro se maneja aparte. Si bajás de plan, tus datos se conservan.'"
+  - paso: "Mira la tabla 'Qué incluye'"
+    resultado: "Ve una columna por plan con ícono, nombre y precio; Free dice 'Tu plan actual'; filas Usuarios ('hasta 5', 'hasta 15', 'hasta 40', 'sin límite'), Consultas de IA ('30 por semana', '1.000 por mes', '4.000 por mes', 'sin límite') y las funcionalidades agrupadas por Mantenimiento, Almacenes, Herramientas (Pañol), Procesos y producción e IA (herramientas MCP)"
+  - paso: "Mira la columna de Team"
+    resultado: "Ve en verde lo que suma respecto de Free: 'hasta 15', '1.000 por mes', Ajustes de stock y Crear orden de trabajo"
+  - paso: "Mira el pie de las columnas"
+    resultado: "Free dice 'Tu plan actual' sin botón; Prueba Business dice 'gratuito · ya usado' sin botón; Team y Business tienen 'Pedir cambio a Team' y 'Pedir cambio a Business'; Enterprise tiene 'Consultar'"
+flujos_alternativos:
+  - nombre: "Plan vencido"
+    pasos:
+      - paso: "La administradora de Empresa Test, con el plan de prueba vencido el 31/10, abre el Portal"
+        resultado: "Se abre en Plan con '⏰ Tu período de prueba terminó el 31/10' y el texto de que sus usuarios pueden entrar pero todo está fuera de plan"
+      - paso: "Mira la comparativa"
+        resultado: "Solo están Team, Business y Enterprise con su botón; Free y Prueba Business figuran 'ya usado'"
+  - nombre: "Lo que no es una funcionalidad"
+    pasos:
+      - paso: "Busca en las filas las opciones del catálogo sin publicar y las raíces sin dirección"
+        resultado: "No están Preventivos (sin publicar) ni 'Mantenimiento' como fila: aparece solo como título del grupo"
+  - nombre: "No es administrador"
+    pasos:
+      - paso: "Un usuario sin rol Administrador entra a la dirección de Plan"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Las columnas son los planes activos en su orden, con su precio o 'Consultar'"
+  - "Las filas son las funcionalidades publicadas agrupadas por módulo, sin las raíces sin dirección"
+  - "Lo que suma respecto del plan actual va en verde"
+  - "El plan actual no tiene botón; un gratuito ya usado dice 'ya usado' sin botón"
+  - "Con el plan vencido, el Portal abre en Plan y solo se ofrecen planes no gratuitos"
+  - "Solo el administrador de la empresa activa entra"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), MinTest_SJ y Empresa Test, con nombres inventados"
+dudas:
+  - "Enterprise tiene precio 'Consultar' y la maqueta le pone el botón 'Consultar' en vez de 'Pedir cambio a'. ¿Qué hace? Propuesta: lo mismo que pedir (crea el pedido con el motivo que escriba), con el título 'Consultar por el plan Enterprise'; Trazalog lo contacta."
+  - "Hasta M-3 (REQ-016) las empresas existentes no tienen plan. ¿Qué muestra la comparativa? Propuesta: ninguna columna marcada como actual, todas con su botón, y arriba 'Tu empresa todavía no tiene un plan asignado'; en DEMO se prueba con planes cargados a mano."
+  - "Para un plan con menos de lo que tiene hoy (bajar de plan), la maqueta solo muestra 'Ganás'. Propuesta: en la ventana de pedido mostrar también 'Dejás de tener: …' y, si el tope es menor que los lugares usados, 'Usás N lugares y <plan> permite M'; el pedido se puede mandar igual."
+  - "¿Las herramientas de IA van como filas una por una o agrupadas? La maqueta las lista una por una bajo 'IA (herramientas MCP)'. Propuesta: una por una, con el nombre del catálogo."
+derivados: {}
+notas:
+  - "Cubre RF-93, la parte del Portal de CP-19 y CP-19b, y 'Tu plan actual' de CP-30."
+  - "Con el plan vencido el Portal abre en Plan (CU-63); el resto de CP-19 es de REQ-008, REQ-009, REQ-011 y REQ-012."

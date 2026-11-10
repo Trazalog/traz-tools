@@ -1,0 +1,72 @@
+id: ADM-UC-151
+modulo: ADM
+titulo: Pedir un cambio de plan y cancelarlo
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-010-administracion-plan-y-pedidos.md
+    detalle: "sección 'Pedido (RF-30, RF-32, RF-33)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-plan.html
+    detalle: "ventana 'Pedir cambio al plan' y aviso de pedido pendiente"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-42; RF-30, RF-32, RF-33, RF-08"
+pantallas:
+  - "Portal de la empresa → Plan → Pedir cambio a …"
+  - "Portal de la empresa → Usuarios (botón 'Pedir cambio de plan' del tope)"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "MinTest_SJ en Free, sin pedido pendiente; Yudica ya tiene un pedido pendiente a Enterprise"
+  - "root@trazalog es el único superusuario"
+flujo_principal:
+  - paso: "En Plan toca 'Pedir cambio a Team'"
+    resultado: "Se abre 'Pedir cambio al plan 🥈 Team' con 'Ganás: hasta 15 usuarios, 1.000 consultas de IA por mes (hoy 30 por semana), Ajustes de stock y Crear orden de trabajo por IA.', 'Motivo (opcional)' y el texto de aprobación y cobro"
+  - paso: "Escribe el motivo 'crear OT por IA' y toca 'Enviar pedido'"
+    resultado: "Ve '⏳ Pediste pasar al plan Team' y 'Trazalog lo está revisando; te avisamos por correo.' con 'Cancelar pedido', y todos los botones de pedir deshabilitados"
+  - paso: "Se revisa el correo del superusuario y la Consola"
+    resultado: "root@trazalog recibió el correo del pedido con empresa, planes y motivo; '📬 Registros' de la Consola muestra 2 (Yudica y MinTest_SJ) y el pedido figura en 'Pedidos de plan'"
+  - paso: "Toca 'Cancelar pedido' y confirma"
+    resultado: "Ve que se canceló y vuelven a estar los botones 'Pedir cambio a …'"
+flujos_alternativos:
+  - nombre: "Otro pedido con uno pendiente"
+    pasos:
+      - paso: "Con el pedido a Team pendiente, manda directo un pedido a Business"
+        resultado: "Recibe 409 'Ya hay un pedido pendiente' y no se crea nada"
+  - nombre: "Plan que no se puede pedir"
+    pasos:
+      - paso: "Manda directo un pedido por Free (su plan actual) o por Prueba Business (gratuito, ya usó uno)"
+        resultado: "Recibe 'Ese plan no se puede pedir.' y no se crea nada"
+  - nombre: "Desde el tope de usuarios"
+    pasos:
+      - paso: "En Usuarios, con el tope alcanzado, toca 'Pedir cambio de plan'"
+        resultado: "Se abre Plan con la comparativa"
+  - nombre: "Falla la notificación"
+    pasos:
+      - paso: "Pide con el sistema de notificaciones de infraestructura caído"
+        resultado: "El pedido queda creado y en Registros figura la notificación 'fallida', para reintentar"
+  - nombre: "Dos pedidos a la vez"
+    pasos:
+      - paso: "Dos administradores de la misma empresa envían un pedido en el mismo momento"
+        resultado: "Uno queda pendiente y el otro recibe 'Ya hay un pedido pendiente'"
+validaciones:
+  - "Un solo pedido pendiente por empresa, también con dos pedidos simultáneos"
+  - "No se puede pedir el plan actual, un plan inactivo ni un gratuito ya usado"
+  - "Crear un pedido avisa por correo a los superusuarios, deja el evento en Registros y llama a la notificación de infraestructura"
+  - "Si la notificación o el correo fallan, el pedido queda igual"
+  - "El administrador puede cancelar su pedido pendiente y pedir de nuevo"
+  - "Cada pedido y cancelación queda en la auditoría"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), MinTest_SJ y Yudica, con nombres inventados"
+dudas:
+  - "RF-30 dice que se puede pedir 'desde Mi empresa → Plan o desde Uso de IA cuando está bloqueado'. Propuesta: el botón de Uso de IA (REQ-011) y el del tope de Usuarios (REQ-007) llevan a Plan, y el pedido siempre se hace desde ahí; origen 'portal' en los dos casos."
+  - "¿A quién le llega el correo de pedido nuevo? RF-32 dice 'el súper usuario'. Propuesta: a todos los que tienen la marca de superusuario (REQ-004), con el enlace a la ventana de resolución en la Consola."
+  - "¿Cancelar el pedido avisa a alguien? La especificación no lo dice. Propuesta: no manda correo; queda en la auditoría y en Registros como 'cancelado'."
+  - "El aviso del pedido pendiente en el Inicio del Portal (CU-30) es de REQ-013. Propuesta: acá solo en Plan."
+derivados: {}
+notas:
+  - "Cubre CP-30 (salvo 'Tu plan actual', que es ADM-UC-150), CP-33 y la parte del pedido de CP-19b."
+  - "El mensaje 'Listo: le mandamos tu pedido a Trazalog.' es propuesta: la maqueta muestra solo el aviso de pendiente."
