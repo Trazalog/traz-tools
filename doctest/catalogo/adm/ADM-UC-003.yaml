@@ -2,7 +2,8 @@ id: ADM-UC-003
 modulo: ADM
 titulo: Rechazar envíos falsificados en el módulo
 perfil: Administrador
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-10
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -19,6 +20,10 @@ flujo_principal:
   - paso: "Con la sesión abierta, manda un envío a la pantalla de inicio del Portal con el código de seguridad que le dio la página"
     resultado: "El envío se acepta y responde la pantalla normal"
 flujos_alternativos:
+  - nombre: "Dos pestañas abiertas"
+    pasos:
+      - paso: "Abre el Portal en dos pestañas y manda un envío desde cada una"
+        resultado: "Los dos envíos se aceptan, porque el código dura toda la sesión"
   - nombre: "Envío sin código de seguridad"
     pasos:
       - paso: "Manda el mismo envío sin el código de seguridad"
@@ -32,14 +37,14 @@ flujos_alternativos:
       - paso: "Sin sesión, manda un envío a la pantalla de inicio del Portal"
         resultado: "Responde que hace falta iniciar sesión (401) y no ejecuta nada"
 validaciones:
+  - "El código de seguridad dura toda la sesión: sirve en dos pestañas abiertas a la vez"
   - "Todo envío que no es de lectura exige el código de seguridad de la sesión"
   - "Un código de otra sesión no sirve"
   - "El control de sesión corre antes que el de código de seguridad"
 datos_prueba:
   empresa: "empresa DocTest del ambiente (DOCTEST_EMPRESA)"
-dudas:
-  - "El esqueleto no tiene ninguna acción que guarde datos, así que la prueba manda el envío a la pantalla de inicio. ¿Alcanza para dar por probada la protección, o preferís que se pruebe además con la primera pantalla que guarde algo (REQ-004)? Propuesta: las dos; esta queda como prueba del controlador base."
-  - "¿El código de seguridad cambia en cada envío o se mantiene durante toda la sesión? Propuesta: toda la sesión, para no romper pantallas con varias pestañas abiertas."
+dudas: []
 derivados: {}
 notas:
+  - "Decisiones de Rodolfo (2026-11-10): la protección se prueba contra la pantalla de inicio y se vuelve a probar con la primera pantalla que guarde algo; el código de seguridad dura toda la sesión."
   - "Es la protección que en DNATO falta (correctivo C-4). No usa la de CodeIgniter de Tools porque esa se prende para todo Tools desde application/config/config.php, y el control vive solo en el módulo."

@@ -18,7 +18,7 @@ pantallas:
   - "Consola (dirección traz-comp-adm/consola)"
 precondiciones:
   - Usuario con sesión iniciada en Tools
-  - El usuario es superusuario del ambiente (su correo está en ADM_SUPERUSUARIOS)
+  - El usuario es superusuario del ambiente (su correo está en TOOLS_ADMIN_USER)
   - El superusuario es además administrador de su empresa activa, para entrar por el Portal
 flujo_principal:
   - paso: "En el Portal de la empresa, toca '🔑 Consola'"
@@ -50,10 +50,10 @@ validaciones:
   - "El botón '🔑 Consola' se muestra solo al superusuario"
   - "Sin sesión no se entra a la Consola"
 datos_prueba:
-  superusuario: "uno de los correos de ADM_SUPERUSUARIOS del ambiente; la contraseña va en doctest/.env, nunca en el catálogo"
+  superusuario: "uno de los correos de TOOLS_ADMIN_USER del ambiente; la contraseña va en doctest/.env, nunca en el catálogo"
   administrador_comun: "el administrador de la empresa DocTest"
 dudas: []
 derivados: {}
 notas:
-  - "Decisiones de Rodolfo (2026-11-10): superusuario = correo incluido en ADM_SUPERUSUARIOS (lista separada por coma; si no está, TOOLS_ADMIN_USER). Las credenciales del superusuario de DEMO las tiene Pablo y van en su doctest/.env."
+  - "Decisiones de Rodolfo (2026-11-10): superusuario = correo incluido en TOOLS_ADMIN_USER, que acepta varios correos separados por coma. Las credenciales del superusuario de DEMO las tiene Pablo y van en su doctest/.env."
   - "En REQ-002 la Consola es solo el marco: la lista de empresas, registros, planes y demás llegan con sus requerimientos. La leyenda y los nombres de botones salen de la maqueta consola-empresas.html."

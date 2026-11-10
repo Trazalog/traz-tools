@@ -11,11 +11,11 @@ con datos (REQ-004 en adelante, ver [`README.md`](README.md)). La forma de traba
 
 | Campo | Valor |
 |---|---|
-| Estado | Borrador: Rodolfo tiene que contestar las dudas de los casos y crear el repositorio `traz-comp-adm` |
+| Estado | Casos validados por Rodolfo el 2026-11-10. Pasa a "Listo para Pablo" cuando se una a `develop` y exista el repositorio `traz-comp-adm` |
 | Se apoya en | [REQ-001](REQ-001-administracion-analisis.md) y su resultado, [`doc/v3/administracion/ANALISIS_INICIAL.md`](../doc/v3/administracion/ANALISIS_INICIAL.md) (secciones C.2, F.2 y F.3) |
 | Casos de uso | `ADM-UC-001`, `ADM-UC-002` y `ADM-UC-003` en `doctest/catalogo/adm/` |
-| Repos que se tocan | `traz-comp-adm` (nuevo, lo crea Rodolfo) y `traz-tools` (solo para montarlo: `.gitmodules` y una constante) |
-| Riesgo | 🟡 Código nuevo. Del núcleo de Tools solo se **agregan** las constantes `ADM` y `ADM_SUPERUSUARIOS` en `application/config/constants.php`; nada existente cambia |
+| Repos que se tocan | `traz-comp-adm` (nuevo, lo crea Rodolfo), `traz-tools` (para montarlo: `.gitmodules` y una constante; y las comparaciones de `TOOLS_ADMIN_USER`) y `traz-comp-dnato` (solo las comparaciones de `TOOLS_ADMIN_USER`) |
+| Riesgo | 🟡 Código nuevo. Del núcleo de Tools se **agrega** la constante `ADM` y se cambia cómo se compara `TOOLS_ADMIN_USER` (8 lugares, en Tools y en DNATO). Ese cambio lo pidió Rodolfo el 2026-11-10; con un solo correo en la constante, todo sigue igual |
 
 ---
 
@@ -54,9 +54,8 @@ después las hereda sin tener que acordarse.
   DNATO, igual que hace Tools hoy.
 - No crea tablas ni columnas. No trae indicadores, planes, usuarios ni menús en el Portal.
 - No agrega la marca de superusuario en la base: va en REQ-004.
-- No cambia `TOOLS_ADMIN_USER` ni las pantallas que hoy lo comparan (Tools: `models/core/Valores.php`,
-  `views/core/valores/view.php`; DNATO: `Empresa.php`, `navbar.php`). Esas comparaciones son por igualdad: si
-  la constante pasara a tener varios correos, esas pantallas dejarían de reconocer al superusuario.
+- De `TOOLS_ADMIN_USER` solo cambia **cómo se compara** (ver "Varios superusuarios"); nada más de esas
+  pantallas.
 
 ---
 
@@ -68,10 +67,41 @@ después las hereda sin tener que acordarse.
   igual que `traz-comp-pan`. Rama base `develop`.
 - Carpetas: `controllers/`, `models/`, `views/`, `helpers/`, `config/` (análisis, F.2).
 - Constante de prefijo `ADM` = `'traz-comp-adm/'` en `application/config/constants.php` de Tools,
-  junto a `PRD`, `PAN`, `ALM`, etc., y la constante `ADM_SUPERUSUARIOS` (ver "De dónde sale cada dato").
-  **Son las únicas dos líneas que se agregan al núcleo de Tools.**
+  junto a `PRD`, `PAN`, `ALM`, etc. Es la única constante nueva.
 - PHP 5.6: nada de sintaxis de PHP 7 (el control es `phpcs` con PHPCompatibility, ver
   `doc/metodologia/REGLAS-PARA-AGENTES.md`).
+
+### Varios superusuarios (`TOOLS_ADMIN_USER` con varios correos)
+
+Pedido de Rodolfo (2026-11-10): poder tener más de un superusuario, usando **la misma constante**.
+`TOOLS_ADMIN_USER` pasa a aceptar varios correos separados por coma, por ejemplo
+`'admin@trazalog.com,otro@trazalog.com'`.
+
+Hoy hay **8 lugares** que la comparan por igualdad, y con varios correos dejarían de reconocer al
+superusuario. Antes de poner más de un correo, se cambian todos para que usen una función nueva
+`es_superusuario($email)`, que separa la lista por coma, quita espacios y compara sin distinguir
+mayúsculas:
+
+| Repo | Archivo:línea | Hoy |
+|---|---|---|
+| traz-tools | `application/models/core/Valores.php:24` | `$data['email'] == TOOLS_ADMIN_USER` |
+| traz-tools | `application/models/core/Valores.php:49` | `$usuario['email'] != TOOLS_ADMIN_USER` |
+| traz-tools | `application/models/core/Valores.php:71` | `$usuario['email'] != TOOLS_ADMIN_USER` |
+| traz-tools | `application/models/core/Valores.php:103` | `$usuario['email'] != TOOLS_ADMIN_USER` |
+| traz-tools | `application/views/core/valores/view.php:55` | `$usuario['email'] == TOOLS_ADMIN_USER` |
+| traz-comp-dnato | `application/controllers/Empresa.php:34` | `$data['email'] == TOOLS_ADMIN_USER` |
+| traz-comp-dnato | `application/controllers/Empresa.php:56` | `$data['email'] == TOOLS_ADMIN_USER` |
+| traz-comp-dnato | `application/views/navbar.php:57` | `...userdata['email'] == TOOLS_ADMIN_USER` |
+
+- La función va en un helper de cada repo (Tools: `application/helpers/sesion_helper.php`; DNATO: su
+  helper de sesión). El módulo usa la de Tools.
+- **Análisis de impacto:** es núcleo (constantes y DNATO). Con **un solo correo** en la constante, la
+  función da lo mismo que la comparación de hoy, así que no cambia nada hasta que alguien agregue un
+  segundo correo. El riesgo es olvidarse de algún lugar: Pablo vuelve a buscar `TOOLS_ADMIN_USER` en
+  **todos** los repositorios (incluidos los submódulos y los disparadores o funciones de la base) y
+  lista lo que encuentre en el pull request.
+- **Orden de despliegue:** primero Tools y DNATO con la función; recién después se agrega el segundo
+  correo en cada ambiente.
 
 ### El controlador base del módulo
 
@@ -84,7 +114,8 @@ Todos los controladores del módulo heredan de **un controlador base propio del 
    requerimiento la lista está **vacía**; la llena REQ-003 con la registración y el ingreso.
 3. **Permiso por pantalla:** cada controlador declara quién puede entrar (`administrador` o
    `superusuario`). Si la persona no cumple, responde 403 con la pantalla "sin permiso".
-4. **Protección de envíos:** todo pedido que no sea de lectura (POST, PUT, DELETE) tiene que traer el
+4. **Protección de envíos:** el código de seguridad se genera una vez por sesión y dura toda la sesión
+   (sirve con varias pestañas abiertas). Todo pedido que no sea de lectura (POST, PUT, DELETE) tiene que traer el
    código de seguridad de la sesión; si falta o no coincide, responde 403 y **no ejecuta el método**.
 5. **Empresa:** la empresa sale **siempre** de la sesión (`empresa()` de
    `application/helpers/sesion_helper.php`). El controlador base no lee ningún `empr_id` que venga en la
@@ -96,7 +127,7 @@ Todos los controladores del módulo heredan de **un controlador base propio del 
 |---|---|---|
 | Hay sesión y empresa activa | Sesión de Tools (`empr_id`, `email`) | Ya existe |
 | Es administrador de la empresa activa | `REST_CORE/usuario/esadmin/porEmail/{email}/empresa/{empr_id}` | Ya existe: lo usa `Dashs::esAdminEmpresa()` en `application/models/Dashs.php:104` |
-| Es superusuario | Correo incluido en la constante nueva `ADM_SUPERUSUARIOS` (lista de correos separados por coma, en `application/config/constants.php` de Tools). Si no está definida, se usa `TOOLS_ADMIN_USER` | Constante nueva (aditiva). Decisión de Rodolfo del 2026-11-10: poder tener varios superusuarios |
+| Es superusuario | Correo incluido en `TOOLS_ADMIN_USER` (`application/config/constants.php`), que pasa a aceptar **varios correos separados por coma** | Ya existe. Ver "Varios superusuarios" |
 | Nombre de la empresa | `REST_CORE/empresa/{empr_id}` | Ya existe (análisis, C.1) |
 | Nombre del usuario | Sesión de Tools | Ya existe |
 
@@ -175,9 +206,8 @@ datos sensibles.
   otra, se cambia desde Tools (Rodolfo, 2026-11-10).
 - **Superusuario y Portal:** el superusuario entra a la Consola; al Portal solo si además es
   administrador de su empresa activa (Rodolfo, 2026-11-10).
-- **Varios superusuarios:** constante nueva `ADM_SUPERUSUARIOS`, lista separada por coma. No se cambia
-  `TOOLS_ADMIN_USER` porque Tools y DNATO lo comparan por igualdad (Rodolfo pidió poder tener varios,
-  2026-11-10).
+- **Varios superusuarios:** se usa la misma constante `TOOLS_ADMIN_USER`, que pasa a aceptar varios
+  correos separados por coma (Rodolfo, 2026-11-10). Ver "Varios superusuarios" en "Cómo se arma".
 - **Pruebas en DEMO:** Pablo tiene las credenciales del superusuario de DEMO (es también el
   administrador de la infraestructura); van en su `doctest/.env`, nunca en el repositorio.
 
@@ -186,7 +216,9 @@ datos sensibles.
 Lo que no tiene caso de uso y Rodolfo verifica en el pull request:
 
 - El submódulo está montado y Tools sigue andando igual: DocTest `regresion` en verde.
-- `application/config/constants.php` de Tools tiene **solo** las líneas nuevas de `ADM` y `ADM_SUPERUSUARIOS`.
+- `application/config/constants.php` de Tools tiene **solo** la línea nueva de `ADM`.
+- Las 8 comparaciones de `TOOLS_ADMIN_USER` usan la función nueva, y con un solo correo en la constante
+  todo se comporta igual que hoy (DocTest `regresion` en verde en Tools y en DNATO).
 - `application/config/config.php` de Tools **no** cambió.
 - La descripción del pull request lista **todos** los métodos públicos de los controladores del módulo,
   con su permiso (regla 8).
