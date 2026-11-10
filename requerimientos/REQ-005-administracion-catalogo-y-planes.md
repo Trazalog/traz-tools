@@ -13,12 +13,12 @@ de planes del administrador (REQ-010). Lista completa en [`README.md`](README.md
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el cambio de base y el análisis de impacto sobre el menú de Tools |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar la ampliación del control de módulos de `seg.menues` y el análisis de impacto sobre el menú de Tools |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Consola) y [REQ-004](REQ-004-administracion-base-y-atributos.md) (tablas `seg.planes` y `seg.planes_funcionalidades`, columnas nuevas de `seg.menues`, auditoría, marca de superusuario, `ADMDataService.dbs`) |
 | Entrega de la especificación | **E2** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: Consola → Catálogo (textos, publicación y estructura del menú global) y Planes (matriz con cuota; gratuito / de prueba y vencimiento; aviso y correo al restringir un plan con suscriptores). CU-10, CU-11, CU-17, CU-24; CP-10 a 13, 16, 18, 40, 42, 43 |
 | Casos de uso | `ADM-UC-050` a `ADM-UC-053` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantallas y modelos); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs` y un script de base chico (ver "Datos") |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: se amplía el control de módulos válidos de `seg.menues` para aceptar `MCP` (es un objeto existente) y se fijan los nombres de columnas de `seg.planes`. Además **núcleo de Tools**: el Catálogo escribe en `seg.menues`, que es la tabla con la que Tools dibuja hoy el menú de todas las pantallas de producción → análisis de impacto aprobado por Rodolfo. Los recursos del DataService son nuevos (🟡); no se modifica ninguno existente |
+| Riesgo | 🔴 Fijar los nombres de columnas de `seg.planes` (tabla nueva) y una función de base nueva, si Pablo la elige, son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por: (1) **cambio a un objeto existente**: se amplía el control de módulos válidos de `seg.menues` para aceptar `MCP` → Rodolfo aprueba ese cambio antes de construir; y (2) **núcleo de Tools**: el Catálogo escribe en `seg.menues`, que es la tabla con la que Tools dibuja hoy el menú de todas las pantallas de producción → análisis de impacto aprobado por Rodolfo. Los recursos del DataService son nuevos (🟡); no se modifica ninguno existente |
 
 ---
 
@@ -138,7 +138,8 @@ la sesión), qué y el valor anterior y nuevo. Acciones: `plan.crear`, `plan.edi
 `catalogo.opcion.crear`, `catalogo.opcion.editar`, `catalogo.orden`, `catalogo.textos`,
 `catalogo.publicar`, `catalogo.despublicar`. Para que cambio y auditoría no queden a medias, cada
 recurso que escribe lo hace en una sola transacción (función de base o pedido en lote del DataService,
-a elección de Pablo en el plan; si es función de base, entra en el script que aprueba Rodolfo).
+a elección de Pablo en el plan; si es función de base nueva, es un cambio aditivo y lo decide el
+equipo).
 
 ---
 
@@ -270,8 +271,9 @@ contenido).
 
 ## Datos
 
-**🔴: Rodolfo aprueba el script antes de construir.** Las tablas ya las crea REQ-004; acá solo se
-ajusta. Si el script de REQ-004 todavía no se corrió, estos ajustes van **dentro** de ese script; si ya
+**Lo aditivo lo decide el equipo (regla de Rodolfo del 2026-11-10); el cambio al control existente de
+`seg.menues` lo aprueba Rodolfo antes de construir.** Las tablas ya las crea REQ-004 (en `seg`); acá
+solo se ajusta. No hay columnas nuevas en tablas existentes. Si el script de REQ-004 todavía no se corrió, estos ajustes van **dentro** de ese script; si ya
 se corrió, van en uno chico con su vuelta atrás.
 
 ### Nombres de columnas de `seg.planes` (REQ-004 dio los atributos, no los nombres)
