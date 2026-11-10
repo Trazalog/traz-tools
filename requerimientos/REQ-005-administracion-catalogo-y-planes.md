@@ -323,7 +323,8 @@ que ya tienen `eliminado = 1`).
 
 ## Cómo se revisa (además de DocTest)
 
-- Script de base aprobado por Rodolfo, corrido en una copia de DEMO, con su vuelta atrás.
+- Script de base corrido en una copia de DEMO, con su vuelta atrás; la ampliación del control de módulos
+  de `seg.menues` (cambio a un objeto existente) aprobada por Rodolfo antes de construir.
 - **Análisis de impacto aprobado por Rodolfo** sobre el menú de Tools: con un usuario de prueba, el
   menú de Tools antes y después de (a) crear una opción sin publicar bajo un padre ya habilitado,
   (b) reordenar un módulo, (c) despublicar y volver a publicar una opción. En (a) no tiene que aparecer
