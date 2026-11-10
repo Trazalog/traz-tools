@@ -83,6 +83,11 @@ Closes #NNN
 - Los casos de uso los valida Rodolfo. Si falta uno, el agente redacta un borrador y **para**.
 - Las pruebas **nunca** apuntan a producción.
 - Si algo falla dos veces seguidas, **parar** y mostrar el error completo, sin seguir tocando.
+- **Verde** quiere decir que en el informe de la corrida (`npm run doctest:consola`) no hay ninguna
+  prueba en `falla`, `otro-punto` ni `dejo-de-fallar`. Un `error-conocido` no frena el commit.
+- Si una prueba choca con un error **ya anotado** (hallazgo `H-NNN` de `doc/hallazgos/REGISTRO.md`), se
+  marca con `debeFallarCon(/.../)` + `test.fail(true, 'H-NNN: ...')`. Un error **nuevo** no se marca: se
+  avisa a Rodolfo. Nunca abrir issues por cuenta propia.
 
 ## 5. Sistema productivo: lo que no se toca sin aprobación
 
