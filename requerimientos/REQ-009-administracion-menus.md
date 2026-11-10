@@ -4,20 +4,21 @@
 
 Noveno trabajo de Pablo para el módulo **Administración** (`traz-comp-adm`): la pantalla del Portal
 donde el administrador arma menús con las funcionalidades activas de su empresa y los asigna a roles o
-a personas, el servicio "Menú resuelto" (regla R3) que dice qué menú le toca a cada uno, y la carga
-inicial de funcionalidades activas de las empresas que ya existen (M-4). Lo leen Pablo para planificar
-y Rodolfo para aprobar el script y la propuesta sobre Tools. **No** cubre que el menú lateral de Tools
-use el servicio nuevo (es una derivación en el núcleo de Tools, ver "Qué NO hace" y la duda de
-ADM-UC-132), ni la vista de presentación (REQ-012). Lista completa en [`README.md`](README.md).
+a personas, el servicio "Menú resuelto" (regla R3) que dice qué menú le toca a cada uno, la carga
+inicial de funcionalidades activas de las empresas que ya existen (M-4) y **el menú lateral de Tools
+dibujado con ese servicio** (punto T-2), encendido por una variable de sistema. Lo leen Pablo para
+planificar y Rodolfo para aprobar el script y el análisis de impacto en Tools. **No** cubre la vista de
+presentación que abre una opción sombreada (REQ-012) ni el control de acceso por pantalla en Tools
+(T-5, deuda H-091). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el script de M-4 y decidir la derivación en Tools |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el script de M-4 y el análisis de impacto en Tools |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal), [REQ-004](REQ-004-administracion-base-y-atributos.md) (tablas `seg.menus_custom`, `seg.menus_custom_items`, `seg.menus_asignaciones`, estado de membresía, auditoría), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (catálogo y planes) y [REQ-006](REQ-006-administracion-funcionalidades.md) (R1, R2, Funcionalidades) |
-| Entrega de la especificación | **E6** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: menús custom, asignación en las dos direcciones, "Ver como…", servicio "Menú resuelto" (R3: jerarquía + estado `visible` / `otro_plan` por ítem), migración M-4. CU-32, CU-33; CP-51, CP-60 a 69 |
-| Casos de uso | `ADM-UC-130` a `ADM-UC-134` en `doctest/catalogo/adm/` |
-| Repos que se tocan | `traz-comp-adm` (pantalla de Menús, aviso en Funcionalidades, modelo y servicio "Menú resuelto"); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs` y el script de M-4 |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: carga de datos M-4 (filas nuevas en `seg.empresas_funcionalidades` para todas las empresas) y nombres de columnas de las tablas de menús. No toca ninguna fila ni columna existente. **Núcleo de Tools: no se toca en este requerimiento**; que Tools dibuje el menú resuelto queda como derivación con su propio análisis de impacto (duda de ADM-UC-132). Recursos del DataService nuevos (🟡) |
+| Entrega de la especificación | **E6** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: menús custom, asignación en las dos direcciones, "Ver como…", servicio "Menú resuelto" (R3: jerarquía + estado `visible` / `otro_plan` por ítem), migración M-4. CU-32, CU-33; CP-51, CP-60 a 69. Más el punto **T-2** de `02_MODELO_Y_REGLAS.md` §9b (menú operativo de Tools con el menú resuelto) y su parte de **T-10** (pruebas del menú), por decisión de Rodolfo |
+| Casos de uso | `ADM-UC-130` a `ADM-UC-135` en `doctest/catalogo/adm/` |
+| Repos que se tocan | `traz-comp-adm` (pantalla de Menús, aviso en Funcionalidades, modelo y servicio "Menú resuelto"); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs`, el script de M-4, la comparación M-8, **y el núcleo**: `application/controllers/Dash.php`, `application/models/Dashs.php` y `application/helpers/menu_helper.php` (ver "Análisis de impacto en Tools"); prueba DocTest nueva del menú lateral |
+| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: carga de datos M-4 (filas nuevas en `seg.empresas_funcionalidades` para todas las empresas), nombres de columnas de las tablas de menús y una variable nueva en `core.tablas`. No toca ninguna fila ni columna existente. 🔴 **Núcleo de Tools**: el menú lateral de **todas** las pantallas de producción pasa a salir del servicio nuevo cuando se enciende la variable → **análisis de impacto aprobado por Rodolfo antes de construir** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡); `COREDataService` no se modifica |
 
 ---
 
@@ -35,7 +36,9 @@ ADM-UC-132), ni la vista de presentación (REQ-012). Lista completa en [`README.
 
 - **Administrador** de una empresa: Mi empresa → Menús.
 - **Mantenedor** y **Supervisor** (perfiles de operación): son a quienes se les asignan menús; se usan
-  para probar la resolución con "Ver como…" y el servicio.
+  para probar la resolución con "Ver como…", el servicio y el menú lateral de Tools.
+- **Superusuario**: enciende o apaga en cada ambiente el menú nuevo de Tools (Consola → Variables de
+  sistema, REQ-004) y corre la comparación M-8 antes de encenderlo.
 
 ## Qué tiene que hacer
 
@@ -48,23 +51,31 @@ ADM-UC-132), ni la vista de presentación (REQ-012). Lista completa en [`README.
    encender (CU-31 A1, RF-51, RF-52) → **ADM-UC-133**.
 5. Cargar las funcionalidades activas de las empresas existentes (M-4) sin que el menú de Tools cambie
    → **ADM-UC-134**.
+6. Que Tools dibuje su menú lateral con el servicio "Menú resuelto" (T-2, RF-64, RF-65), sin la regla
+   "si ningún hijo está habilitado se muestran todos", encendido por una variable de sistema por
+   ambiente, con vuelta al menú de hoy si el servicio no responde, y con la comparación M-8 antes de
+   encender → **ADM-UC-135**.
 
 ## Qué NO hace
 
-- **No cambia el menú lateral de Tools.** Tools sigue dibujando con `getMenuByUserPermission` y
-  `menu_helper.php`. Hacer que Tools pida el menú resuelto (punto T-2 de `02_MODELO_Y_REGLAS.md` §9b)
-  toca el núcleo de Tools (lo que se ve en **todas** las pantallas de producción) y queda como
-  **derivación** en un requerimiento aparte, con análisis de impacto aprobado por Rodolfo (propuesta en
-  la duda de ADM-UC-132). Mientras tanto, los menús que arma el administrador se ven con "Ver como…" y
-  en el servicio, **no en Tools**.
+- **No controla el acceso por pantalla en Tools.** Que una opción no esté en el menú no impide abrirla
+  escribiendo la dirección (igual que hoy): eso es el chequeo central T-5 (deuda H-091).
+- **No cambia la barra superior de Tools** (T-3): botones de REQ-004, perfil de REQ-007, indicador de
+  cuota de REQ-011.
+- **No cambia los menús propios de los submódulos** (`ddpe-tools-pro` arma una copia del menú viejo, ver
+  "Análisis de impacto en Tools"): siguen como hoy.
+- **No borra la regla vieja del código.** `menu()` de `menu_helper.php` queda intacta como respaldo y
+  para cuando la variable está apagada; se quita cuando la variable quede encendida en todos los
+  ambientes (corte final, REQ-016).
 - No hace la vista de presentación que abre una opción de otro plan (REQ-012): el servicio devuelve su
-  dirección, la página llega con REQ-012.
+  dirección, la página llega con REQ-012. Hasta entonces la opción sombreada en Tools no se puede tocar.
 - No cambia el menú de un miembro desde Usuarios (RF-75) ni el menú opcional al invitar (RF-71): es
   REQ-007, que usa esta misma asignación.
 - No modifica `seg.memberships_menues` ("Roles y accesos", REQ-007) ni el "Menú por rol" de DNATO, que
   sigue andando en paralelo.
-- No hace la verificación completa "menú v2 = menú v3 por usuario" (M-8, CP-M1): es E12 (REQ-016). Acá
-  M-4 solo garantiza que el menú de Tools no cambia, porque Tools no lee lo que M-4 carga.
+- No hace la verificación **final** "menú v2 = menú v3 por usuario" del corte (M-8, CP-M1, E12):
+  REQ-016 la corre en todos los ambientes con la comparación que se construye acá. Acá la comparación
+  es la condición para encender la variable en cada ambiente.
 - No pone opciones del Portal ni de la Consola en ningún menú (RF-44, R3).
 - No agrega cache: cada pedido calcula (RNF-06 pide como máximo 60 s; sin cache se cumple).
 
@@ -106,8 +117,11 @@ ADM-UC-132), ni la vista de presentación (REQ-012). Lista completa en [`README.
    raíz del catálogo (jerarquía módulo → opción) en el orden del catálogo, y dentro de cada una las
    activas en el orden de Funcionalidades (ver la duda de ADM-UC-132 sobre dónde van las de otro plan).
 4. Los grupos que quedan vacíos no van.
-5. **Reemplaza** la regla actual "si ningún hijo está habilitado se muestran todos"
-   (`menu_helper.php:122-125`). En Tools esto rige recién con la derivación.
+5. **Reemplaza** la regla de dibujo actual "si ningún hijo está habilitado se muestran todos"
+   (`menu_helper.php:122-125`). En Tools rige cuando la variable `menu_resuelto_en_tools` está encendida
+   (función 6). Ojo: lo que desaparece es la regla **de dibujo**; el **acceso del rol** a una hija que
+   hoy solo tiene asignado el padre lo sigue dando R2 con la herencia (ver "M-4" más abajo), así nadie
+   pierde opciones.
 
 La regla se calcula **en el DataService** (recurso nuevo), igual que R1 y R2, para que el módulo y
 Tools usen la misma. El módulo tiene un modelo (por ejemplo `MenuResuelto`) que la llama con persona y
@@ -160,7 +174,21 @@ Script de carga, una vez por ambiente, después de REQ-005 (catálogo publicado)
   activa también todas sus hijas publicadas, porque hoy Tools las muestra todas (ver la duda de
   ADM-UC-134).
 - Solo **inserta** en una tabla nueva. No toca `seg.memberships_menues`, `seg.menues` ni ninguna otra
-  tabla existente; Tools no lee la tabla nueva, así que su menú **no puede cambiar**.
+  tabla existente. Con la variable apagada Tools no lee la tabla nueva, así que su menú **no puede
+  cambiar**; antes de encenderla, la comparación M-8 prueba que tampoco cambia con el menú nuevo.
+
+**Versión única sobre las hijas (cierra la contradicción con REQ-006):** M-4 **no** agrega filas a
+`seg.memberships_menues`, ni las hijas ni nada. Lo que hace falta para que nadie pierda opciones son dos
+cosas, y ninguna escribe esa tabla:
+
+1. **Funcionalidad activa (R1):** M-4 activa en `seg.empresas_funcionalidades` la raíz asignada y todas
+   sus hijas publicadas.
+2. **Acceso del rol (R2):** el rol tiene acceso a una hija si la tiene asignada **o** si tiene asignada
+   la raíz y **ninguna** hermana asignada. Esta herencia es **permanente** (no "hasta M-4"), vive en el
+   recurso de R2 del DataService y es la misma que ya usa "Roles y accesos" de REQ-007. Así también
+   funcionan las empresas que se sigan dando de alta por DNATO, que asigna solo la raíz.
+
+Lo que hay que corregir en REQ-006 está en la duda de ADM-UC-134.
 - Lista para Rodolfo los `"group"` de `seg.memberships_menues` que no coinciden con ningún `nombre` de
   empresa (no se cargan).
 - Si ya existe la fila de una empresa y funcionalidad, no la pisa (se puede correr dos veces).
@@ -170,6 +198,60 @@ Script de carga, una vez por ambiente, después de REQ-005 (catálogo publicado)
 
 Acciones: `menu.crear`, `menu.editar`, `menu.duplicar`, `menu.baja`, `menu.asignar`,
 `menu.quitar_asignacion` (RF-100: menú alta, cambio, asignación). En la misma operación que el cambio.
+Encender o apagar la variable `menu_resuelto_en_tools` queda en la auditoría de variables de REQ-004.
+
+### Menú lateral de Tools con el menú resuelto (T-2, función 6) — núcleo
+
+Hoy (rama `develop`): `Dash::index` (`application/controllers/Dash.php:26-27`) pide
+`Dashs::obtenerMenu()` (`application/models/Dashs.php:22-29`, que llama a
+`REST_CORE/menuitems/porEmail/{email}/porGrupo/{group}` → consulta `getMenuByUserPermission` de
+`COREDataService.dbs:8`) y lo dibuja con `menu()` de `application/helpers/menu_helper.php:10-144`. El
+HTML queda en `$menu` y lo imprime `application/views/layout/Admin.php:173`. Las pantallas se cargan
+dentro de `#content` con `linkTo(...)`, así que el menú lateral **se arma una sola vez por carga de
+página** y es el mismo para todas las pantallas.
+
+Cómo queda:
+
+1. **Variable de sistema** `menu_resuelto_en_tools` (fila en `core.tablas` sin empresa, como las de
+   REQ-004, con su historial), valores `si` / `no`, **`no` por defecto**. Cada ambiente tiene su base,
+   así que se enciende **por ambiente** desde Consola → Variables de sistema, sin desplegar nada.
+2. `Dash::index` lee la variable **[SUPUESTO]** con el mismo `Tablas->obtenerTabla(...)` que ya usa para
+   el pie y el logo (`Dash.php:34-41`). Si no es `si`, o no se puede leer: **todo como hoy**
+   (`obtenerMenu()` + `menu()`), sin ningún otro cambio.
+3. Si es `si`: un método nuevo `Dashs::obtenerMenuResuelto()` llama por `wso2()` al recurso
+   `ADMDataService GET /menu-resuelto/{email}/empresa/{empr_id}` con correo y empresa **de la sesión**,
+   con un tiempo máximo de espera corto **[SUPUESTO: 3 segundos]**. Tools llama al DataService
+   directamente, no al módulo, para no depender de que el submódulo `traz-comp-adm` esté instalado.
+4. Se dibuja con una función **nueva** `menu_resuelto($json)` en `menu_helper.php` (la función `menu()`
+   no se toca). Misma estructura de HTML que hoy (`ul.sidebar-menu`, `li.treeview`, `treeview-menu`,
+   `onclick='linkTo("<url>")'`) para que el despliegue de grupos y la navegación sigan andando igual:
+   - grupo = un `li.treeview` con su ícono y etiqueta; opción `visible` = un enlace a su `url`;
+   - opción `otro_plan` = misma posición, sombreada y en cursiva, con el ícono del plan y el título
+     "Incluido en el plan <plan>" **[SUPUESTO]**; **no navega** hasta REQ-012 (después abre
+     `url_presentacion`);
+   - plan vencido: R1 pone todo como de otro plan, así que todo sale sombreado (T-2). El cartel de plan
+     vencido es de REQ-010 / REQ-012;
+   - **sin** la regla "si ningún hijo está habilitado se muestran todos": se dibuja exactamente lo que
+     devuelve el servicio;
+   - etiquetas e íconos se **escapan** antes de dibujar (`html_escape`): las etiquetas las escribe el
+     administrador y el menú se ve en todas las pantallas;
+   - los estilos del sombreado van en el mismo HTML que devuelve la función (un bloque `<style>` chico),
+     para **no tocar** `layout/Admin.php` **[decisión técnica menor]**.
+5. **Vuelta al menú de hoy (respaldo):** si el servicio no responde a tiempo, responde con error, o
+   devuelve una respuesta que no se puede leer **o sin ninguna opción** **[SUPUESTO]**, se dibuja el menú
+   de hoy (`obtenerMenu()` + `menu()`) y se registra en el log con el motivo. La persona nunca se queda
+   sin menú por una falla del servicio.
+6. **Cuándo se ve un cambio:** como el menú se arma al cargar la página, un menú asignado o cambiado se
+   ve en Tools al recargar la página o al volver a ingresar (igual que hoy con "Menú por rol").
+
+### Comparación M-8 antes de encender
+
+Un script de consulta (solo lectura) que, para cada usuario con membresía activa de cada empresa, compara
+las opciones que hoy ve en Tools (lo que devuelve `getMenuByUserPermission` como habilitado, **más** las
+hijas que hoy se muestran por la regla "todos los hijos") contra las opciones `visible` del menú resuelto
+**predeterminado** (sin menús custom), y lista las diferencias por usuario: "falta en el nuevo" y "sobra
+en el nuevo". Se corre en una **copia de DEMO**; con **cero** diferencias sin explicar, Rodolfo autoriza
+encender la variable en ese ambiente. REQ-016 lo vuelve a correr en el corte final (CP-M1).
 
 ---
 
@@ -188,6 +270,10 @@ Acciones: `menu.crear`, `menu.editar`, `menu.duplicar`, `menu.baja`, `menu.asign
 | Menú resuelto (R3) | `ADMDataService GET /menu-resuelto/{email}/empresa/{empr_id}` y `GET /menu-resuelto/rol/{rol}/empresa/{empr_id}` | **NUEVO** |
 | Menús que usan una funcionalidad (aviso) | `ADMDataService GET /empresa/{empr_id}/menus/con/{modulo}/{opcion}` | **NUEVO** |
 | Auditoría | Dentro de cada recurso que escribe | Tabla de REQ-004 |
+| Menú lateral de Tools, variable encendida o apagada | `COREDataService` (`getTabla`, por `Tablas->obtenerTabla`) | Ya existe (no se modifica) |
+| Menú lateral de Tools con la variable encendida | `ADMDataService GET /menu-resuelto/{email}/empresa/{empr_id}` (el mismo de arriba) | **NUEVO** (de este requerimiento) |
+| Menú lateral de Tools con la variable apagada o como respaldo | `COREDataService GET /menuitems/porEmail/{email}/porGrupo/{group}` (`getMenuByUserPermission`) | Ya existe (no se modifica) |
+| Comparación M-8 | Consulta de solo lectura sobre `seg.menues`, `seg.menues_users_vw`, `seg.memberships_menues`, `seg.memberships_users` y el recurso de R3 | Script del requerimiento |
 
 **Nada va directo a la base.** Todo `menu_id` que llega del navegador se verifica contra la empresa de
 la sesión (G2: un menú de otra empresa responde "no existe").
@@ -254,6 +340,22 @@ Maqueta `doc/v3/dnato/mockups/empresa-menus.html`. Dos pestañas: "Constructor" 
 | Funcionalidad que no se puede agregar (pedido directo) **[SUPUESTO]** | "Esa funcionalidad no se puede agregar a un menú." | `adm-menu-error` |
 | Falla del servicio | "No pudimos guardar. Probá de nuevo en un rato." | `adm-menu-error` |
 
+### Tools — menú lateral con la variable encendida (núcleo)
+
+Maqueta: la barra lateral de `doc/v3/dnato/mockups/vista-esfumada.html` (grupos Mantenimiento,
+Almacenes, Procesos, Producción; "🔁 Ajustes de stock 🥈" sombreada en su lugar).
+
+| Elemento | Qué muestra | `data-testid` |
+|---|---|---|
+| Menú | La lista lateral de siempre (`ul.sidebar-menu`) | `adm-tools-menu` (con `data-origen` = `resuelto` o `respaldo`) |
+| Grupo | Ícono y etiqueta del grupo | `adm-tools-menu-grupo-<n>` |
+| Opción visible | Ícono y etiqueta; al hacer clic abre la pantalla como hoy | `adm-tools-menu-opcion-<modulo>-<opcion>` |
+| Opción de otro plan | Sombreada, en cursiva, con el ícono del plan (por ejemplo "🥈") y el título "Incluido en el plan <plan>" **[SUPUESTO]**; no navega hasta REQ-012 | `adm-tools-menu-otro-plan` (además del de la opción) |
+
+Con la variable apagada, o en el respaldo, el menú es el de hoy: sin `data-testid` nuevos salvo
+`adm-tools-menu` con `data-origen="respaldo"` cuando fue por falla **[SUPUESTO]**. No hay mensajes a la
+persona: el respaldo es silencioso y queda en el log.
+
 ---
 
 ## Reglas
@@ -276,13 +378,24 @@ Maqueta `doc/v3/dnato/mockups/empresa-menus.html`. Dos pestañas: "Constructor" 
 11. Todo `menu_id`, rol o persona que llega del navegador se verifica contra la empresa de la sesión.
 12. Borrar un menú es baja lógica.
 13. M-4 solo inserta en `seg.empresas_funcionalidades`; el menú de Tools de cada usuario es el mismo
-    antes y después.
+    antes y después. No escribe `seg.memberships_menues`: el acceso de un rol a las hijas de una raíz
+    asignada lo da R2 con la herencia permanente.
+14. El menú lateral de Tools sale del menú resuelto **solo** si la variable `menu_resuelto_en_tools` del
+    ambiente vale `si`; por defecto vale `no` y Tools dibuja el menú de hoy.
+15. Con la variable encendida, Tools dibuja exactamente lo que devuelve el servicio (sin la regla "todos
+    los hijos"), con correo y empresa de la sesión; lo de otro plan queda sombreado en su lugar.
+16. Si el servicio no responde a tiempo, falla o devuelve un menú sin opciones, Tools dibuja el menú de
+    hoy y lo registra; nadie se queda sin menú.
+17. Las etiquetas que escribe el administrador se escapan antes de dibujarse en Tools.
+18. La variable se enciende en un ambiente solo después de correr M-4 y la comparación M-8 en una copia
+    de ese ambiente sin diferencias sin explicar, con el OK de Rodolfo.
 
 ## Registro en el log
 
 `log_message('DEBUG', '#TRAZA | ADM | <Clase> | <metodo>() ...')`. Se registran los rechazos y cada alta,
 cambio, baja y asignación de menú (empresa, menú, rol o persona, quién). El servicio "Menú resuelto" no
-registra cada consulta.
+registra cada consulta. En Tools: `#TRAZA | CORE | Dash | index()` registra si el menú salió del menú
+resuelto o del respaldo, y en el respaldo el motivo (sin respuesta, error, vacío) y cuánto tardó.
 
 ---
 
@@ -302,18 +415,88 @@ se proponen los nombres de columnas **[SUPUESTO]** (si el script de REQ-004 no c
 
 | Paso | Qué hace |
 |---|---|
-| M-4 | Filas `activa` en `seg.empresas_funcionalidades` por empresa, según lo que hoy tienen asignado sus roles en `seg.memberships_menues` (con las hijas de las opciones raíz), en el orden del catálogo. Lista los `"group"` sin empresa |
+| M-4 | Filas `activa` en `seg.empresas_funcionalidades` por empresa, según lo que hoy tienen asignado sus roles en `seg.memberships_menues` (con las hijas de las opciones raíz), en el orden del catálogo. Lista los `"group"` sin empresa. **No** escribe `seg.memberships_menues` |
+
+### Variable nueva (fila en `core.tablas` sin empresa, con historial de REQ-004)
+
+| Clave | Valor inicial | Para qué |
+|---|---|---|
+| `menu_resuelto_en_tools` | `no` | Encender por ambiente el menú lateral de Tools con el menú resuelto (T-2) |
 
 Ninguna fila ni columna existente cambia.
 
 ---
 
+## Análisis de impacto en Tools (núcleo) — lo aprueba Rodolfo antes de construir
+
+Verificado contra el código de `traz-tools`, rama `develop` (y los submódulos de la copia local; Pablo
+lo confirma en su plan contra cada ambiente).
+
+### Qué archivos cambian
+
+| Archivo | Hoy | Cambio |
+|---|---|---|
+| `application/controllers/Dash.php` (`index()`, líneas 26-27) | Arma `$data['menu'] = menu($this->Dashs->obtenerMenu())` | Lee la variable; si es `si`, pide el menú resuelto y lo dibuja con `menu_resuelto()`; si falla o la variable no es `si`, lo de hoy |
+| `application/models/Dashs.php` (líneas 22-29) | `obtenerMenu()` | Se **agrega** `obtenerMenuResuelto()`; `obtenerMenu()` no cambia |
+| `application/helpers/menu_helper.php` (líneas 10-144) | `menu()` con la regla "todos los hijos" (122-125) | Se **agrega** `menu_resuelto()`; `menu()` no cambia |
+| `application/views/layout/Admin.php:173` | `echo $menu` | **Sin cambios** |
+| `_backend/.../data-services/COREDataService.dbs:8` y recurso `/menuitems/porEmail/{email}/porGrupo/{group}` (:642) | Fuente del menú | **Sin cambios**: sigue para la variable apagada, el respaldo y los submódulos |
+| `_backend/.../data-services/ADMDataService.dbs` | — | Recurso nuevo `/menu-resuelto/...` (ya listado arriba) |
+| `core.tablas` | — | Fila nueva `menu_resuelto_en_tools` = `no` |
+| `doctest/tests/e2e/specs/adm/` | No hay prueba del menú lateral | Prueba nueva del menú lateral (ADM-UC-135), con la variable apagada y encendida |
+
+### Quién lo consume
+
+- **Todas las pantallas de Tools y todos los usuarios**: el menú lateral se arma solo en `Dash::index` y
+  las pantallas se cargan adentro con `linkTo`. Si el menú falla, falla para todos.
+- **Copias en submódulos** (verificado con grep en `application/modules/`):
+  - `ddpe-tools-pro/controllers/Dash.php:24-25` y `models/Dashs.php:22-26` arman **su propio** menú con
+    `menu()` y el mismo recurso de `COREDataService`: **no cambian** (siguen con el menú de hoy). Ver la
+    duda de ADM-UC-135.
+  - `traz-comp-pan/helpers/menu_helper.php` es una copia vieja del helper; su `Dash` tiene la llamada
+    comentada (`controllers/Dash.php:24-25`), igual que `traz-comp-codigos`. `traz-comp-formularios` y
+    `traz-prod-trazasoft` dejan el menú vacío, `traz-comp-tareasestandar` lo lee de un `menu.json`,
+    `traz-comp-almacenes` carga el helper sin usarlo. **Ninguno cambia.** Como en HMVC un módulo con su
+    propio `menu_helper.php` carga el suyo, ningún submódulo debe llamar a `menu_resuelto()`.
+- **DNATO** (aplicación aparte) tiene su propia barra: no cambia. **AssetPlanner** y **el agente** no
+  usan este menú.
+- **DocTest**: ninguna prueba lee hoy el menú lateral (grep en `doctest/tests/e2e/`); navegan con
+  `linkTo` (`pages/alm/AlmacenesPage.ts:45-75`, `pages/alm/FlujoAlmacen.ts`). La suite `regresion`
+  tiene que seguir en verde con la variable encendida.
+
+### Qué se rompe si falla, y cómo se protege
+
+| Si pasa esto | Efecto | Protección |
+|---|---|---|
+| El servicio no responde, tarda o falla | Sin menú lateral: nadie puede navegar Tools | Tiempo máximo corto y **respaldo al menú de hoy** (regla 16) |
+| R3 calcula mal (hijas por la regla del padre, comodín `TODOS` de `seg.menues_users_vw`, empresas sin M-4) | Personas que pierden opciones y no pueden trabajar | **Comparación M-8** en una copia de DEMO con cero diferencias sin explicar antes de encender; la variable se apaga sin desplegar |
+| Se enciende en un ambiente sin M-4 | Todo "sin activar": menú vacío | Regla 18 (M-4 primero) y respaldo por menú vacío (regla 16) |
+| Una etiqueta con código | Código que corre en todas las pantallas | Se escapan etiquetas e íconos (regla 17) |
+| El tablero carga más lento | Peor experiencia en cada ingreso | Se mide el tiempo de `Dash::index` antes y después en la copia de DEMO; Rodolfo decide si es aceptable |
+| Hay que volver atrás | — | Poner la variable en `no` desde Consola → Variables (queda en el historial); ningún despliegue |
+
+### Pruebas que se actualizan en este mismo requerimiento (T-10)
+
+- Prueba DocTest nueva del menú lateral de Tools (ADM-UC-135): variable apagada = menú de hoy; encendida
+  = menú resuelto (predeterminado, por rol, por persona, sombreado); respaldo con el servicio caído.
+- La barra **lateral** es la única que cambia acá; las pruebas de la barra **superior** van con quien la
+  toca (REQ-004, REQ-007, REQ-011).
+- Suite `regresion` de DocTest en verde con la variable encendida en la copia de DEMO.
+
+---
+
 ## Decisiones tomadas
 
-- **Tools no cambia en este requerimiento** (propuesta para Rodolfo en la duda de ADM-UC-132): el menú
-  lateral está en todas las pantallas de producción; cambiar su fuente necesita análisis de impacto, la
-  comparación M-8 sobre datos reales y una forma de volver atrás. Este requerimiento deja el servicio
-  listo y probado con "Ver como…".
+- **El menú operativo de Tools entra en este requerimiento** (Rodolfo, 2026-11-10): Tools dibuja con el
+  servicio "Menú resuelto", sin la regla "todos los hijos" y sin `getMenuByUserPermission` como fuente
+  cuando la variable está encendida. Como es núcleo, va con análisis de impacto, variable por ambiente
+  apagada por defecto, respaldo al menú de hoy y comparación M-8 antes de encender.
+- **Tools llama al DataService, no al módulo**: así el menú no depende de que `traz-comp-adm` esté
+  instalado en ese ambiente, y la regla sigue en un solo lugar.
+- **Funciones nuevas al lado de las viejas** (`menu_resuelto()`, `obtenerMenuResuelto()`): la vuelta
+  atrás es apagar la variable, sin desplegar.
+- **La herencia padre → hijas es parte de R2, para siempre**: M-4 no escribe `seg.memberships_menues`
+  (compatibilidad con v2 y con las altas de DNATO, que asignan solo la raíz).
 - **R3 en el DataService**, como R1 y R2: una sola regla para el módulo y para Tools.
 - **El predeterminado no se guarda**: se calcula, así nunca queda desactualizado respecto de
   Funcionalidades.
@@ -329,9 +512,14 @@ Ninguna fila ni columna existente cambia.
 - El menú de Tools de los usuarios DocTest es el mismo antes y después de M-4 (DocTest `regresion` en
   verde).
 - Un `menu_id` de otra empresa responde "no existe" en todos los recursos.
+- **Análisis de impacto en Tools aprobado por Rodolfo** antes de construir; comparación M-8 corrida en la
+  copia de DEMO, con la lista de diferencias (o "cero") en la descripción del pull request.
+- Con la variable encendida en la copia de DEMO: ADM-UC-135 y la suite `regresion` en verde; con el
+  recurso del menú resuelto apagado a propósito, el menú de hoy aparece (respaldo).
+- Tiempo de carga de `Dash::index` antes y después, en la descripción del pull request.
 - `phpcs` con PHPCompatibility para PHP 5.6 sin errores; `./mvnw clean install` del proyecto de APIs.
 - **Aviso para el despliegue:** el script de despliegue sube los DataServices pero no las APIs; este
-  requerimiento no agrega APIs.
+  requerimiento no agrega APIs. La variable se carga en `no` en cada ambiente con el script de base.
 
 ## Dudas abiertas
 
@@ -352,9 +540,11 @@ Están en los casos de uso (campo `dudas`), para contestarlas en un solo lugar.
 | CP-69 | Las dos direcciones | ADM-UC-131 |
 | CP-64 | Resolución persona > rol > predeterminado | ADM-UC-132 |
 | CP-65 | "Ver como…" = servicio "Menú resuelto" | ADM-UC-132 |
-| CP-67 | Menú resuelto: jerarquía del catálogo y opciones de otro plan en su lugar | ADM-UC-132, **contra el servicio**. "Al hacer clic se abre la vista de presentación": REQ-012. Que la barra lateral de Tools lo dibuje: derivación en Tools (fuera de alcance) |
+| CP-67 | Menú resuelto: jerarquía del catálogo y opciones de otro plan en su lugar | ADM-UC-132 contra el servicio y **ADM-UC-135 en la barra lateral de Tools**. "Al hacer clic se abre la vista de presentación": REQ-012 |
 | CP-51 | Apagar una funcionalidad la oculta en menús custom con aviso | ADM-UC-133 (aviso, oculta sin borrar, en el servicio y en "Ver como…") |
 | CP-14, CP-52 (parte de menús) | Lo que sale del plan queda en el menú como `otro_plan` y reaparece al volver | ADM-UC-133 (la parte de activación ya la cubre ADM-UC-071 de REQ-006) |
 | CP-53 (parte de menús) | Las herramientas de IA no están en el panel ni en el menú resuelto | ADM-UC-130 y ADM-UC-132 |
 | CP-15 (parte de menús) | Opción de otro plan en su lugar con el ícono del plan más bajo | ADM-UC-132 (en el servicio) |
-| CP-M1 | Menú v2 = menú v3 por usuario | Fuera de alcance: M-8, E12 (REQ-016). ADM-UC-134 solo prueba que M-4 no cambia el menú de Tools |
+| CP-M1 | Menú v2 = menú v3 por usuario | En parte: ADM-UC-135 (comparación M-8 en una copia de DEMO, condición para encender la variable) y ADM-UC-134 (M-4 no cambia el menú de hoy). La verificación final del corte en todos los ambientes: REQ-016 |
+| T-2 (§9b) | Menú operativo de Tools con el menú resuelto, sin la regla "todos los hijos" | ADM-UC-135 |
+| T-10 (§9b, parte del menú) | Pruebas del menú actualizadas en la misma entrega | ADM-UC-135 (prueba nueva del menú lateral) |

@@ -57,10 +57,10 @@ datos_prueba:
   usuario: "uno de los usuarios por defecto de la empresa DocTest"
   ambiente: "copia de DEMO, nunca producción"
 dudas:
-  - "Hoy el alta de empresa asigna a los roles solo las opciones raíz y Tools muestra todas sus hijas. Propuesta: M-4 activa la raíz y todas sus hijas publicadas, sin tocar seg.memberships_menues. La otra opción (agregar las hijas a seg.memberships_menues para que R2 no necesite la regla del padre) modifica una tabla que usa v2 y se descarta salvo que Rodolfo prefiera."
+  - "Contradicción con REQ-006 a corregir allá: la duda de ADM-UC-072 dice 'hasta que M-4 (REQ-009) agregue las hijas a seg.memberships_menues, R2 da acceso por el padre'. En REQ-009 queda una sola versión: M-4 no escribe seg.memberships_menues; activa la raíz y sus hijas en seg.empresas_funcionalidades, y la herencia del rol (padre asignado y ninguna hermana → todas las hijas) es permanente en R2, como ya dice REQ-007 en Roles y accesos. Propuesta: en REQ-006 cambiar esa duda por 'R2 da acceso a una hija si la tiene asignada o si tiene asignada la raíz y ninguna hermana; es permanente, M-4 no escribe seg.memberships_menues'. La otra opción (escribir las hijas en seg.memberships_menues) cambia lo que muestra 'Menú por rol' de DNATO y no sirve para las empresas que DNATO siga dando de alta: se descarta salvo que Rodolfo prefiera."
   - "M-4 está en esta entrega (E6), pero Funcionalidades (REQ-006) la necesita antes. Propuesta: si Rodolfo acepta adelantarla, el script pasa a REQ-006 y este caso se mueve con él (ver la duda de ADM-UC-071)."
   - "¿En qué orden quedan las activas? M-4 dice 'en el orden del catálogo'. Propuesta: el orden del catálogo (opción raíz y después sus hijas), renumerado como en REQ-005."
 derivados: {}
 notas:
   - "Cubre M-4. La verificación completa 'menú v2 = menú v3 por usuario' (M-8, CP-M1) es de REQ-016."
-  - "Tools no lee seg.empresas_funcionalidades, así que este caso demuestra la compatibilidad con v2; se corre antes que los demás de REQ-009."
+  - "Con la variable menu_resuelto_en_tools apagada (por defecto), Tools no lee seg.empresas_funcionalidades, así que este caso demuestra la compatibilidad con v2; se corre antes que los demás de REQ-009 y antes de encender la variable (ADM-UC-135)."

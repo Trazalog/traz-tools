@@ -65,10 +65,9 @@ validaciones:
 datos_prueba:
   empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), MinTest_SJ, con nombres inventados"
 dudas:
-  - "Que Tools use el servicio para dibujar su menú lateral es un cambio del núcleo de Tools (menu_helper, Dash, Dashs). Propuesta: queda FUERA de este requerimiento, como derivación en un requerimiento aparte con análisis de impacto aprobado por Rodolfo, que (1) haga la comparación M-8 sobre una copia de DEMO, (2) se encienda con una variable de sistema por ambiente (apagada por defecto) para volver atrás sin desplegar, y (3) si el servicio no responde, dibuje el menú de hoy. La alternativa (incluirlo acá como función marcada) suma núcleo de Tools a un requerimiento que ya es 🔴 por M-4."
   - "R3 dice que el predeterminado respeta la jerarquía del catálogo y RF-61 que va en el orden de Funcionalidades. Propuesta: grupos = opciones raíz en el orden del catálogo; dentro de cada una, las activas en el orden de Funcionalidades y las de otro plan a continuación de la opción que las precede en el catálogo."
   - "La vista de presentación de una opción de otro plan es REQ-012. Propuesta: el servicio ya devuelve su dirección (traz-comp-adm/presentacion/<módulo>/<opción>) y en 'Ver como…' la opción sombreada no se puede tocar hasta REQ-012."
   - "En un menú custom, ¿una opción de otro plan que el administrador agregó cuando estaba en el plan queda en su lugar sombreada (otro_plan) o se oculta? R3 dice que queda; RF-51 dice que lo apagado se oculta. Propuesta: lo de otro plan queda sombreado en su lugar; lo apagado (sin activar) se oculta."
 derivados: {}
 notas:
-  - "Cubre CP-64, CP-65, CP-67 contra el servicio, y la parte de menú de CP-15 y CP-53. Que la barra lateral de Tools lo dibuje es la derivación de la primera duda."
+  - "Cubre CP-64, CP-65, CP-67 contra el servicio, y la parte de menú de CP-15 y CP-53. Que la barra lateral de Tools lo dibuje es ADM-UC-135 (decisión de Rodolfo: entra en REQ-009)."
