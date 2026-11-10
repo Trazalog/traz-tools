@@ -1,0 +1,66 @@
+id: ADM-UC-191
+modulo: ADM
+titulo: Avisarle al administrador que me interesa una funcionalidad
+perfil: Supervisor
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-012-administracion-visibilidad.md
+    detalle: "sección '\"Me interesa\" (RF-92)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/vista-esfumada.html
+    detalle: "botón '👍 Me interesa' y 'Ya avisaste el …'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-92; CU-50; pregunta abierta 2 de §10"
+pantallas:
+  - "Vista de presentación"
+  - "Correo del administrador"
+precondiciones:
+  - "bruno@ Supervisor de MinTest_SJ, en la vista de presentación de Procesos; nunca tocó 'Me interesa' en Procesos"
+  - "ana@ es la administradora de MinTest_SJ"
+flujo_principal:
+  - paso: "Toca '👍 Me interesa'"
+    resultado: "Ve 'Listo: le avisamos a tu administrador' y el botón queda deshabilitado"
+  - paso: "Se revisan el correo de ana@ y la auditoría"
+    resultado: "ana@ recibió 'A Bruno le interesa Procesos. Podés pedir el cambio desde Mi empresa → Plan' con el enlace a Plan; la auditoría tiene funcionalidad.interes con bruno@ y Procesos"
+  - paso: "Al otro día vuelve a la vista de Procesos"
+    resultado: "Ve 'Ya avisaste el 29/10' y el botón deshabilitado"
+flujos_alternativos:
+  - nombre: "Pedido repetido"
+    pasos:
+      - paso: "Manda directo otro 'Me interesa' por Procesos"
+        resultado: "Ve 'Ya avisaste el 29/10'; no se crea otra fila ni se manda otro correo"
+  - nombre: "Dos toques a la vez"
+    pasos:
+      - paso: "Toca dos veces muy rápido"
+        resultado: "Queda un solo interés y llega un solo correo"
+  - nombre: "Otra funcionalidad u otra persona"
+    pasos:
+      - paso: "bruno@ toca 'Me interesa' en Producción y carla@ en Procesos"
+        resultado: "Los dos avisos se guardan y llegan"
+  - nombre: "Falla el correo"
+    pasos:
+      - paso: "Toca 'Me interesa' con el correo fallando"
+        resultado: "Ve 'Guardamos tu aviso, pero no pudimos mandar el correo. Tu administrador lo va a ver en el catálogo de intereses.' y el interés queda"
+  - nombre: "Funcionalidad que no corresponde"
+    pasos:
+      - paso: "Manda directo 'Me interesa' por Stock (ya está en su plan)"
+        resultado: "Se rechaza y no se guarda nada"
+validaciones:
+  - "Un 'Me interesa' por persona, empresa y funcionalidad, también con toques simultáneos"
+  - "Cada 'Me interesa' manda correo a los administradores y queda en la auditoría"
+  - "La segunda vez muestra 'Ya avisaste el <fecha>'"
+  - "Si el correo falla, el interés queda guardado"
+  - "Solo se acepta para funcionalidades que la vista mostraría"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados; fecha de hoy jueves 29/10/2026"
+dudas:
+  - "La especificación deja abierta la pregunta '¿Me interesa lo puede tocar cualquier rol?' (01 §10, pregunta 2). Propuesta: sí, cualquier persona con membresía activa en la empresa."
+  - "¿'Ya avisaste' es para siempre? Si la empresa pasa a un plan con la funcionalidad y después vuelve a bajar, la persona no podría volver a avisar. Propuesta: para siempre en esta versión; se puede volver a avisar después de 90 días si Rodolfo lo prefiere."
+  - "El mensaje de error de correo dice que el administrador lo ve 'en el catálogo de intereses', pero el contador solo lo ve el superusuario (REQ-005). Propuesta: cambiar el texto a 'Guardamos tu aviso, pero no pudimos mandar el correo.' o sumar en Funcionalidades del Portal cuántas personas pidieron cada una (fuera de E9)."
+derivados: {}
+notas:
+  - "Cubre CP-93 y RF-92."
