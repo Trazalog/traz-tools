@@ -1,0 +1,81 @@
+id: ADM-UC-215
+modulo: ADM
+titulo: Ver el Inicio del Portal de mi empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "secciones 'Portal → Inicio' y 'Contexto ampliado'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/inicio-admin.html
+    detalle: "maqueta del Inicio"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-30"
+pantallas:
+  - "Tools → barra superior → 🏢 Mi empresa"
+  - "Portal de la empresa → 🏠 Inicio"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ, plan Free (tope 5 usuarios, 30 consultas de IA por semana) cargado a mano en la base de prueba"
+  - "MinTest_SJ usa 5 de 5 lugares, con 1 invitación sin aceptar, y lleva 21 consultas de 30 en la semana que se renueva el lunes 2/11"
+  - "MinTest_SJ no tiene pedido de cambio de plan pendiente"
+flujo_principal:
+  - paso: "En Tools toca '🏢 Mi empresa'"
+    resultado: "Se abre el Inicio del Portal con 'Hola, Ana' y 'Lo que tenés que controlar de MinTest_SJ. Los indicadores de operación (KPIs) siguen en el tablero de Tools.'"
+  - paso: "Mira las tres tarjetas"
+    resultado: "Plan: '🥉 Free', '5 usuarios · 30 consultas de IA por semana', 'Ver planes →'. Lugares del plan: '5 de 5', 'Tope alcanzado · 1 invitación sin aceptar'. Consultas de IA esta semana: '21 de 30', 'Se renueva el lunes 2/11 00:00'"
+  - paso: "Mira el resto de la pantalla"
+    resultado: "Ve 'Requiere tu atención' con los avisos y los accesos 'Usuarios y accesos', 'Menús por rol o persona', 'Funcionalidades activas' y 'Actividad de la empresa'; no ve ningún indicador de operación"
+  - paso: "Toca '👥 Invitar usuario'"
+    resultado: "Se abre Usuarios con el formulario de invitar"
+  - paso: "Vuelve al Inicio y toca '📊 Tablero de Tools'"
+    resultado: "Vuelve al tablero de Tools con la misma sesión"
+flujos_alternativos:
+  - nombre: "Con pedido pendiente"
+    pasos:
+      - paso: "MinTest_SJ pidió pasar a Team y ana@ abre el Inicio"
+        resultado: "Debajo de la tarjeta Plan ve '⏳ Pediste pasar al plan Team'"
+  - nombre: "Plan ilimitado o sin IA"
+    pasos:
+      - paso: "La administradora de una empresa Enterprise abre el Inicio"
+        resultado: "La tarjeta de IA muestra las consultas usadas y 'sin tope'"
+      - paso: "La administradora de una empresa con plan sin IA abre el Inicio"
+        resultado: "La tarjeta de IA dice 'Tu plan no incluye IA'"
+  - nombre: "Empresa sin plan asignado"
+    pasos:
+      - paso: "La administradora de una empresa sin plan (antes de la migración M-3) abre el Inicio"
+        resultado: "La tarjeta Plan dice 'Tu empresa todavía no tiene un plan asignado', Lugares muestra los usados 'sin tope' y la IA, como ilimitada"
+  - nombre: "Quedan lugares"
+    pasos:
+      - paso: "Una empresa con 3 de 5 lugares abre el Inicio"
+        resultado: "La tarjeta Lugares dice '3 de 5' y 'Te quedan 2'"
+  - nombre: "El resumen no responde"
+    pasos:
+      - paso: "Con el recurso de resumen detenido a propósito, ana@ abre el Inicio"
+        resultado: "Las tarjetas muestran '—', ve 'No pudimos cargar los datos de tu plan. Probá de nuevo en un rato.' y los accesos funcionan"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "bruno@ entra a la dirección del Portal"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Las tres tarjetas muestran el plan, los lugares usados sobre el tope y la cuota de IA del período con su renovación"
+  - "El pedido pendiente se ve debajo de la tarjeta Plan"
+  - "Ilimitado y sin IA se muestran distinto"
+  - "Una empresa sin plan ve que no tiene plan asignado, sin tope"
+  - "La tarjeta Lugares dice si se llegó al tope o cuántos quedan"
+  - "No se muestran indicadores de operación"
+  - "Si el resumen falla, la pantalla lo dice y los accesos siguen andando"
+  - "Solo el administrador de la empresa activa entra"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (CP-104), con nombres inventados; plan_id cargado a mano (M-3 es REQ-016)"
+dudas:
+  - "¿Dónde va el pedido pendiente? La maqueta no lo muestra (CP-104 es 'sin pedido pendiente') y CU-30 solo dice 'pedido pendiente si hay'. Propuesta: una línea debajo de la tarjeta Plan con el texto de REQ-010 ('⏳ Pediste pasar al plan <plan>') que lleva a Plan; así no se agrega una cuarta tarjeta."
+  - "El acceso 'Cargas masivas' de la maqueta lleva a una pantalla que llega con REQ-014. Propuesta: aparece cuando REQ-014 esté construido."
+  - "La especificación pide 'comparar con la pantalla actual y sumar solo lo nuevo'. El tablero de Tools ya muestra 'Usuarios generados' y la suscripción. Propuesta: el Inicio no repite el conteo de usuarios del tablero (ya está en Lugares) ni los KPI; solo lo de CU-30."
+derivados: {}
+notas:
+  - "Cubre CP-106 (Inicio con tres tarjetas, avisos y accesos, sin KPIs, '← Ir a Tools' de REQ-002) y la parte de tarjetas de CP-104. Los avisos se prueban en ADM-UC-216."
+  - "'🏢 Mi empresa' en la barra es de REQ-004 (ADM-UC-030) y el indicador de cuota de REQ-011 (ADM-UC-175)."

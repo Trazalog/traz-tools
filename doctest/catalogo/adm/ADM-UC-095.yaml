@@ -1,0 +1,68 @@
+id: ADM-UC-095
+modulo: ADM
+titulo: Dar de baja a una persona de la empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "sección 'Banear, reactivar y dar de baja'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-usuarios.html
+    detalle: "botón Baja"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-37; RF-74; A-04 del relevamiento (hoy borra el usuario)"
+pantallas:
+  - "Portal de la empresa → Usuarios → Baja"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa tiene 5 de 5 lugares usados; Darío está invitado"
+  - "Bruno es Supervisor y también es miembro de otra empresa"
+flujo_principal:
+  - paso: "Toca 'Baja' en la fila de Darío"
+    resultado: "Se abre 'Dar de baja a Darío Gómez' con 'Deja de ser parte de <empresa> y libera su lugar. Su usuario no se borra y lo podés volver a invitar.'"
+  - paso: "Toca 'Dar de baja'"
+    resultado: "Darío desaparece de la tabla, ve '4 de 5 lugares usados' y vuelve '✉️ Invitar'"
+  - paso: "Revisa la auditoría"
+    resultado: "Tiene miembro.baja con el correo de Darío"
+flujos_alternativos:
+  - nombre: "Miembro de otra empresa"
+    pasos:
+      - paso: "Da de baja a Bruno"
+        resultado: "Bruno sale de esta empresa y sus roles de esta empresa se quitan en Bonita; sigue entrando a la otra empresa con sus roles de siempre"
+  - nombre: "Con varios roles"
+    pasos:
+      - paso: "Da de baja a una persona que tiene dos roles en la empresa"
+        resultado: "Se le quitan los dos roles y queda de baja"
+  - nombre: "Falla Bonita a mitad"
+    pasos:
+      - paso: "Da de baja a una persona con dos roles y la quita del segundo falla en Bonita"
+        resultado: "Ve 'No pudimos guardar. Probá de nuevo en un rato.' y la persona queda como estaba, con sus dos roles"
+  - nombre: "A uno mismo"
+    pasos:
+      - paso: "Manda directo al servidor la baja de su propio correo"
+        resultado: "El servidor la rechaza con 'Sos la única administradora: nombrá otra antes'"
+  - nombre: "Volver a invitar"
+    pasos:
+      - paso: "Invita de nuevo a Darío"
+        resultado: "Darío vuelve como 'Invitado' (ver ADM-UC-091)"
+validaciones:
+  - "La baja libera el lugar; el usuario no se borra"
+  - "Se quitan todos los roles de la persona en la empresa, en Bonita y en la tabla, con la operación existente de quitar rol"
+  - "Si un paso falla, se vuelven a asignar los roles ya quitados"
+  - "Las otras empresas de la persona no cambian"
+  - "No se da de baja a uno mismo ni al último administrador activo"
+  - "Queda en la auditoría"
+datos_prueba:
+  personas: "Darío Gómez y Bruno Díaz, del fixture dnato_v3_base; Bruno con membresía en una segunda empresa de prueba"
+dudas:
+  - "La baja, ¿quita también la marca 'dado de alta para esta empresa' (seg.users_business) que usa la lista de usuarios de DNATO? Propuesta: no se toca (lo escribe la API de alta y lo lee DNATO); la persona sigue viéndose en la lista vieja de DNATO hasta la redirección."
+  - "¿Se pide confirmación con motivo, como en el baneo? Propuesta: confirmación sin motivo; el motivo no lo pide la especificación."
+  - "Si la persona tenía tareas abiertas en Bonita con ese rol, ¿qué pasa con ellas? Propuesta: nada en este requerimiento (es lo mismo que pasa hoy al quitar un rol en DNATO); se anota para revisar con quien maneja los procesos."
+derivados: {}
+notas:
+  - "Cubre CP-72 (la baja libera lugar) y CP-74 (baja)."
+  - "Reemplaza el borrado físico de DNATO (A-04), que borra al usuario de todas sus empresas."

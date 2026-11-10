@@ -1,0 +1,62 @@
+id: ADM-UC-011
+modulo: ADM
+titulo: Ingresar por el módulo y seguir trabajando en Tools y en DNATO
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-003-administracion-identidad.md
+    detalle: "sección 'Sesión compartida'; se completa con el ingreso copiado al programar"
+  - repo: traz-tools
+    path: doc/v3/administracion/ANALISIS_INICIAL.md
+    detalle: "C.3 convivencia en paralelo y claves de sesión"
+  - repo: traz-tools
+    path: doc/v3/dnato/DNATO_v2_RELEVAMIENTO.md
+    detalle: "§3.1, tabla 'Sesión: todas las claves que escribe DNATO'"
+pantallas:
+  - "Ingreso del módulo → ¿Con qué empresa querés ingresar? → tablero de Tools"
+  - "DNATO (dirección traz-comp-dnato/main/...)"
+precondiciones:
+  - Sin sesión iniciada
+  - El usuario tiene membresía en al menos dos empresas
+flujo_principal:
+  - paso: "Ingresa por la dirección del ingreso del módulo con su correo y contraseña, y elige una empresa"
+    resultado: "Entra al tablero de Tools con esa empresa como empresa activa"
+  - paso: "Abre en Tools una pantalla de su trabajo (por ejemplo, el listado de equipos)"
+    resultado: "La pantalla muestra los datos de la empresa elegida, sin volver a pedir el ingreso"
+  - paso: "Abre en la misma ventana una pantalla de DNATO que use la sesión (por ejemplo, su perfil)"
+    resultado: "DNATO lo reconoce con el mismo usuario y la misma empresa, sin volver a pedir el ingreso"
+  - paso: "Elige 'Salir' en el menú de usuario de Tools"
+    resultado: "Se cierra la sesión para las tres partes: Tools, DNATO y el módulo vuelven a pedir el ingreso"
+flujos_alternativos:
+  - nombre: "Una sola empresa"
+    pasos:
+      - paso: "Un usuario con una sola empresa ingresa por la copia"
+        resultado: "Entra directo al tablero de Tools con esa empresa, y en DNATO se ve la misma empresa"
+  - nombre: "Salir desde la copia"
+    pasos:
+      - paso: "Con la sesión abierta por la copia, abre la salida del módulo (traz-comp-adm/main/logout)"
+        resultado: "Vuelve al ingreso del módulo, y Tools y DNATO también piden ingresar de nuevo"
+  - nombre: "Misma sesión en el sistema de procesos"
+    pasos:
+      - paso: "Ingresa por la copia y abre en Tools la bandeja de tareas"
+        resultado: "Ve sus tareas de la empresa elegida, igual que si hubiera ingresado por DNATO"
+validaciones:
+  - "La sesión abierta por la copia sirve, sin volver a ingresar, en Tools y en DNATO"
+  - "La empresa activa es la misma en las tres partes"
+  - "La copia guarda en la sesión los mismos datos que DNATO, incluido el usuario y el grupo del sistema de procesos"
+  - "Salir, desde Tools o desde la copia, cierra la sesión para las tres partes"
+  - "Un usuario con una sola empresa entra directo también por la copia"
+datos_prueba:
+  usuario_varias_empresas: "usuario de la empresa DocTest con membresía también en otra empresa de prueba del ambiente"
+  usuario_una_empresa: "uno de los usuarios por defecto de la empresa DocTest"
+dudas:
+  - "Salir en Tools sigue yendo a la salida de DNATO (no se redirige nada), así que después de salir el usuario ve el ingreso de DNATO aunque haya entrado por la copia. ¿Está bien hasta la redirección final? Propuesta: sí; la salida del módulo lleva al ingreso del módulo."
+  - "El análisis (C.3) pide dejar el tiempo de sesión en una constante configurable. La copia hereda el de Tools (sin límite) sin tocar nada; hacerlo configurable implica tocar application/config/config.php de Tools. ¿Se deja para el requerimiento de propagar el control a Tools (H-091)? Propuesta: sí, en REQ-003 no se toca config.php."
+  - "[SUPUESTO] Tools y DNATO siguen compartiendo la sesión en DEMO y producción como dice la configuración (misma cookie, misma carpeta de sesiones, mismo servidor); el relevamiento lo dedujo de los archivos, no lo probó corriendo. Propuesta: este caso lo confirma en DEMO; si falla en el paso de DNATO, se para y se avisa antes de cambiar configuración."
+derivados: {}
+notas:
+  - "Cubre el supuesto de C.3 del análisis (Tools acepta la sesión de la copia) y, junto con DNATO-UC-006 contra la copia, CP-01 y CP-02."
+  - "Sentido 1 de la sesión compartida. El sentido 2 (ingresar por DNATO y usar el módulo) es ADM-UC-012."

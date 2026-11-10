@@ -1,0 +1,59 @@
+id: ADM-UC-175
+modulo: ADM
+titulo: Ver cuánta IA queda desde la barra
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-011-administracion-cuota-agente.md
+    detalle: "secciones 'Contexto e indicador' y 'Análisis de impacto en Tools'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/tools-barra-superior.html
+    detalle: "indicador '🤖 21/30' de la barra superior, solo administradores"
+  - repo: traz-tools
+    path: application/views/layout/perfil.php
+    detalle: "barra superior de Tools (núcleo)"
+pantallas:
+  - "Tools → barra superior"
+  - "Portal de la empresa → barra superior y Usuarios"
+precondiciones:
+  - "MinTest_SJ en Free con 21 de 30; ana@ administradora, bruno@ Supervisor"
+flujo_principal:
+  - paso: "ana@ entra a Tools"
+    resultado: "Ve '🤖 21/30' al lado de '🏢 Mi empresa'"
+  - paso: "Toca el indicador"
+    resultado: "Se abre Uso de IA en el Portal"
+  - paso: "Mira la barra del Portal y Usuarios"
+    resultado: "Ve '🤖 21/30 esta semana' arriba y, en Usuarios, la columna 'IA esta semana' con Bruno 15 y Carla 6"
+flujos_alternativos:
+  - nombre: "No es administrador"
+    pasos:
+      - paso: "bruno@ entra a Tools"
+        resultado: "No ve el indicador ni '🏢 Mi empresa'"
+  - nombre: "El Contexto no responde"
+    pasos:
+      - paso: "Con el servicio Contexto detenido a propósito, ana@ entra a Tools"
+        resultado: "La barra se ve como hoy, sin indicador ni botones, y puede trabajar"
+  - nombre: "Ilimitado y mensual"
+    pasos:
+      - paso: "La administradora de una empresa Enterprise entra a Tools"
+        resultado: "Ve '🤖 <consumidas>' sin tope"
+      - paso: "La administradora de una empresa Team entra al Portal"
+        resultado: "Ve '🤖 <N>/1.000 este mes'"
+validaciones:
+  - "El indicador lo ve solo el administrador de la empresa activa"
+  - "Muestra consumidas sobre cuota más bonificación del período, o solo consumidas si es ilimitado"
+  - "Si el Contexto falla, la barra de Tools queda como hoy"
+  - "La columna de Usuarios cuenta las consultas ok de cada persona en el período"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados"
+dudas:
+  - "Con IA sin incluir (cuota 0), ¿se muestra el indicador? Propuesta: no se muestra."
+  - "El indicador cambia de color con el estado (aviso, bloqueado)? La maqueta lo muestra neutro. Propuesta: ámbar en aviso y rojo en bloqueado, con el mismo umbral de la variable."
+  - "Las copias de la barra en los submódulos (por ejemplo traz-comp-pan/views/layout/perfil.php) no tienen el indicador. Propuesta: quedan como hoy; se igualan cuando se unifiquen las barras (T-3)."
+derivados: {}
+notas:
+  - "Cubre el 'indicador en Contexto' de E8 y la columna 'IA esta semana' que REQ-007 dejó para acá."
+  - "La tarjeta del tablero de Tools (T-1) con la cuota resumida queda para REQ-013 (supuesto, a confirmar)."

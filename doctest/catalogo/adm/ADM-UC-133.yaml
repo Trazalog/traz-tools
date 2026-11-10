@@ -1,0 +1,62 @@
+id: ADM-UC-133
+modulo: ADM
+titulo: Apagar una funcionalidad que está en menús
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-009-administracion-menus.md
+    detalle: "sección 'Aviso en Funcionalidades (CU-31 A1)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-funcionalidades.html
+    detalle: "aviso '\"Órdenes de trabajo\" está en 1 menú: dejará de verse en él'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-51, RF-52; CU-31 A1"
+pantallas:
+  - "Portal de la empresa → Funcionalidades"
+  - "Portal de la empresa → Menús → Constructor"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "Órdenes de trabajo está activa y en el menú Operación, asignado al rol Mantenedor"
+flujo_principal:
+  - paso: "En Funcionalidades apaga Órdenes de trabajo"
+    resultado: "Antes de guardar ve '\"Órdenes de trabajo\" está en 1 menú: dejará de verse en él' y 'El menú \"Operación\" la oculta mientras esté apagada; si la volvés a encender, reaparece. ¿Continuar?'"
+  - paso: "Toca 'Apagar'"
+    resultado: "Órdenes de trabajo pasa a 'Sin activar'"
+  - paso: "En Menús, elige 'Ver como… Darío Gómez' (Mantenedor)"
+    resultado: "El grupo 'Mi trabajo' ya no muestra Órdenes de trabajo"
+  - paso: "Abre el menú Operación en el Constructor"
+    resultado: "Órdenes de trabajo sigue en el árbol, marcada como oculta"
+  - paso: "Vuelve a Funcionalidades y la enciende"
+    resultado: "'Ver como… Darío Gómez' vuelve a mostrarla en su lugar"
+flujos_alternativos:
+  - nombre: "Cancelar"
+    pasos:
+      - paso: "Apaga Órdenes de trabajo y toca 'Cancelar' en el aviso"
+        resultado: "El interruptor sigue encendido y no se guarda nada"
+  - nombre: "Sin menús"
+    pasos:
+      - paso: "Apaga una funcionalidad que no está en ningún menú"
+        resultado: "Se apaga sin aviso"
+  - nombre: "Sale del plan y vuelve"
+    pasos:
+      - paso: "El superusuario quita Órdenes de trabajo de Free y confirma"
+        resultado: "'Ver como… Darío Gómez' la muestra en su lugar dentro de 'Mi trabajo', sombreada y con el ícono de Team"
+      - paso: "El superusuario la vuelve a poner en Free"
+        resultado: "'Ver como… Darío Gómez' la muestra otra vez normal, en el mismo lugar, sin que el administrador haga nada"
+validaciones:
+  - "Apagar algo que está en menús avisa cuántos y cuáles antes de guardar"
+  - "Cancelar no cambia nada"
+  - "Lo apagado se oculta en los menús, no se borra, y reaparece al encenderlo"
+  - "Lo que sale del plan queda en su lugar como de otro plan y vuelve igual al volver al plan"
+datos_prueba:
+  empresa: "empresa de prueba con plan_id de Free cargado a mano y el menú Operación del fixture dnato_v3_base"
+dudas:
+  - "CP-51 dice que carla@ (menú 'Solo equipos') tampoco ve Órdenes de trabajo, pero 'Solo equipos' no la tiene. Propuesta: el caso prueba solo los menús que la contienen; lo de carla@ no aporta."
+  - "¿El aviso también aparece cuando el superusuario quita del plan algo que está en menús de una empresa? RF-16 ya avisa cuántas empresas afecta. Propuesta: no; el aviso de REQ-005 alcanza."
+derivados: {}
+notas:
+  - "Cubre CP-51 y la parte de menús de CP-14 y CP-52. La parte de activación y orden es ADM-UC-071 (REQ-006)."

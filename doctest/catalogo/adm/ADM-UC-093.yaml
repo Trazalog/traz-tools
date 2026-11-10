@@ -1,0 +1,68 @@
+id: ADM-UC-093
+modulo: ADM
+titulo: Crear un usuario con contraseña inicial
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "sección 'Alta directa con contraseña inicial (RF-76)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-usuarios.html
+    detalle: "nota de maqueta: 'Crear con contraseña inicial' (CU-39)"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-39; RF-76, RF-72"
+pantallas:
+  - "Portal de la empresa → Usuarios → ✉️ Invitar → Crear con contraseña inicial"
+  - "Ingreso copiado → Cambiá tu contraseña"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa tiene lugares libres"
+  - "gina@ no es usuaria de la plataforma"
+flujo_principal:
+  - paso: "Toca '✉️ Invitar', carga gina@, nombre, apellido y rol Supervisor, y marca 'Crear con contraseña inicial'"
+    resultado: "Aparecen Contraseña y Repetir con las reglas en vivo, y el botón 'Crear'"
+  - paso: "Escribe una contraseña que cumple las reglas y toca 'Crear'"
+    resultado: "Ve 'Listo. Pasale la contraseña a <nombre>: la va a tener que cambiar al entrar.' y Gina aparece como 'Activo'; no se manda correo"
+  - paso: "Gina ingresa por el ingreso del módulo con esa contraseña"
+    resultado: "Ve 'Cambiá tu contraseña' y no puede seguir sin cambiarla"
+  - paso: "Escribe una contraseña nueva que cumple las reglas y toca 'Cambiar y entrar'"
+    resultado: "Entra a Tools con la empresa; la próxima vez ya no se le pide cambiarla"
+flujos_alternativos:
+  - nombre: "El correo ya es usuario"
+    pasos:
+      - paso: "Marca 'Crear con contraseña inicial' con el correo de alguien que ya tiene usuario"
+        resultado: "Ve que esa persona ya tiene usuario y que se la puede invitar; no se le cambia la contraseña"
+  - nombre: "Tope alcanzado"
+    pasos:
+      - paso: "Con el tope alcanzado se manda directo al servidor un alta con contraseña"
+        resultado: "El servidor la rechaza con el mensaje del tope y no crea nada"
+  - nombre: "Pedido por correo de otra empresa"
+    pasos:
+      - paso: "El administrador de otra empresa manda directo al servidor un pedido de la ficha o del baneo de carla@, que no es de su empresa"
+        resultado: "El servidor responde que no existe y no cambia nada"
+  - nombre: "Ingresa por DNATO"
+    pasos:
+      - paso: "Gina ingresa por el ingreso de DNATO antes de la redirección final"
+        resultado: "Entra sin que se le pida cambiar la contraseña (DNATO no conoce la marca)"
+validaciones:
+  - "El alta usa la misma operación de alta de usuario que la invitación"
+  - "Queda activa, sin correo, y marcada para cambiar la contraseña"
+  - "El ingreso del módulo no deja pasar sin cambiar la contraseña; al cambiarla la marca se borra"
+  - "Solo para correos que no son usuarios"
+  - "Respeta el tope en el servidor"
+  - "Ninguna operación acepta un correo de otra empresa"
+datos_prueba:
+  nueva: "gina@ con dominio de prueba del ambiente; contraseña de prueba generada en el momento, nunca escrita en el caso"
+  otra_empresa: "administrador de una segunda empresa de prueba"
+dudas:
+  - "Quien entra por el ingreso de DNATO no ve la obligación de cambiar la contraseña hasta la redirección final. Propuesta: se acepta y se avisa en la pantalla de alta ('Que entre por <dirección del ingreso del módulo>') hasta la redirección."
+  - "La contraseña inicial viaja a la API de alta, que hoy la registra completa en el log (REST.php a nivel DEBUG). Propuesta: no se cambia la API (es núcleo); se pide a infraestructura que el log de producción no esté en DEBUG y se anota como hallazgo."
+  - "¿El administrador puede ver o volver a generar la contraseña inicial después? Propuesta: no; si la pierde, la persona usa '¿Olvidaste tu contraseña?'."
+derivados: {}
+notas:
+  - "Cubre CP-76 (alta directa y pedido por número o correo de otra empresa)."
+  - "Agrega un paso al ingreso copiado de REQ-003 solo para quien tiene la marca; DNATO-UC-001 a 008 no cambian."

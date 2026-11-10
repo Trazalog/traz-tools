@@ -1,0 +1,80 @@
+id: ADM-UC-154
+modulo: ADM
+titulo: Elegir el plan al registrar la empresa
+perfil: Visitante
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-010-administracion-plan-y-pedidos.md
+    detalle: "secciones 'Elegí tu plan en la registración copiada' y 'Análisis de impacto en la registración'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/registro-plan.html
+    detalle: "paso 'Registro · paso 3 de 4 · Tu plan'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-53; RF-07, RF-08, RF-21"
+pantallas:
+  - "Registro del módulo → Elegí tu plan (traz-comp-adm/register/elegirPlan)"
+  - "Registro del módulo → Datos de la empresa"
+  - "Portal de la empresa → Plan"
+precondiciones:
+  - "Un visitante activó su cuenta en la registración del módulo y completó el formulario de registro"
+  - "Planes activos Free (plan base, gratuito, sin vencimiento), Team, Business y Enterprise"
+flujo_principal:
+  - paso: "Llega al paso del plan"
+    resultado: "Ve 'Registro · paso 3 de 4 · Tu plan', 'Elegí cómo arrancar' y las tarjetas de los planes; Freemium está preseleccionado con 'Recomendado para empezar', 'Hasta 5 usuarios', Mantenimiento, Almacenes, Herramientas y '30 consultas de IA por semana'"
+  - paso: "Toca '✔ Seguir con Freemium' y completa los datos de la empresa"
+    resultado: "Termina el registro como siempre y llega a la página de bienvenida"
+  - paso: "Entra al Portal de su empresa nueva"
+    resultado: "Plan muestra Free como 'Tu plan actual' y Funcionalidades tiene activas las del plan Free en el orden del catálogo"
+  - paso: "El superusuario abre Registros"
+    resultado: "Ve '🆕 Alta por registro' con Free 'Activa · sin aprobación' y el resultado de la notificación a infraestructura"
+flujos_alternativos:
+  - nombre: "Plan pago"
+    pasos:
+      - paso: "Otro visitante toca 'Pedir Team' y completa los datos de la empresa"
+        resultado: "La empresa se crea en Free; no se le piden datos de pago"
+      - paso: "Entra al Portal de su empresa y abre Plan"
+        resultado: "Ve 'Tu plan Team está pendiente de aprobación por Trazalog' con 'Cancelar pedido'"
+      - paso: "El superusuario revisa su correo y Registros"
+        resultado: "Recibió el correo; en Registros está el alta con 'Pedido: 🥈 Team · opera en Free mientras tanto' y 'Pendiente de aprobación', y el pedido Free → Team con origen registro"
+  - nombre: "Volver"
+    pasos:
+      - paso: "En el paso del plan toca '← Volver'"
+        resultado: "Vuelve al paso anterior del registro sin perder lo cargado"
+  - nombre: "Plan manipulado"
+    pasos:
+      - paso: "Manda el paso con el número de un plan dado de baja"
+        resultado: "Vuelve al paso con 'Elegí un plan de la lista.'"
+  - nombre: "Falla el paso del plan"
+    pasos:
+      - paso: "Termina los datos de la empresa con el recurso de plan detenido a propósito (ambiente de prueba)"
+        resultado: "Ve el mensaje de error del registro y la empresa no queda creada a medias"
+  - nombre: "El registro de DNATO no cambia"
+    pasos:
+      - paso: "Un visitante se registra por la registración de DNATO"
+        resultado: "No ve ningún paso de plan y el registro funciona como hoy"
+validaciones:
+  - "El plan base está preseleccionado"
+  - "Un plan gratuito o de prueba se activa al crear la empresa, con su vencimiento si lo tiene"
+  - "Otro plan deja la empresa en el plan base con un pedido pendiente de origen registro, sin datos de pago"
+  - "Las funcionalidades del plan con que arranca quedan activas en el orden del catálogo"
+  - "Cada alta deja un evento en Registros y avisa a infraestructura sin frenar el registro"
+  - "El servidor solo acepta planes activos"
+  - "Si el paso del plan falla, la empresa no queda a medias"
+  - "El registro de DNATO no cambia"
+datos_prueba:
+  visitante: "correo de prueba inventado (por ejemplo visitante.plan@example.com), nunca de un cliente real"
+  ambiente: "registración del módulo en una copia de DEMO"
+dudas:
+  - "Si el paso del plan falla después de crear la empresa, ¿se revierte todo el alta? Propuesta: sí, como cuando falla cualquier otro paso de AltaEmpresa (baja lógica y el mismo mensaje del registro copiado); la notificación y los correos no cuentan como falla."
+  - "¿Qué planes se ofrecen en el registro? RF-07 dice 'los planes publicados'. Propuesta: todos los activos de REQ-005 en su orden; si hace falta esconder uno (por ejemplo SinIA, que es de prueba), se agrega una marca 'se ofrece en el registro' en un requerimiento aparte."
+  - "La maqueta dice 'paso 3 de 4', pero la registración copiada no numera sus pasos. Propuesta: el paso nuevo muestra 'Tu plan' sin número, para no cambiar las páginas copiadas."
+  - "Freemium es gratuito: ¿elegirlo marca uso_plan_gratuito? CP-19 muestra Free como 'ya usado'. Propuesta: sí; también cuando la empresa arranca en Free porque pidió un plan pago."
+  - "'Consultar' (Enterprise) en el registro. Propuesta: igual que 'Pedir': la empresa arranca en Free con un pedido a Enterprise de origen registro."
+derivados: {}
+notas:
+  - "Cubre CP-54 y CU-53. DNATO-UC-002 a 005 corridos contra la registración del módulo suman este paso; contra DNATO no cambian."
+  - "El texto 'Elegí un plan de la lista.' es propuesta: la maqueta no trae mensajes de error."

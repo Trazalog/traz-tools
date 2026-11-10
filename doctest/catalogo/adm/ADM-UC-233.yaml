@@ -1,0 +1,78 @@
+id: ADM-UC-233
+modulo: ADM
+titulo: Cargar usuarios desde una planilla sin pasar el tope del plan
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-014-administracion-cargas-masivas.md
+    detalle: "sección 'Usuarios (entidad del módulo, CP-77)' y 'Decisiones tomadas'"
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "modelo Membresias e invitar (rama feature/req-007-administracion-usuarios-roles-perfil)"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-77 Carga masiva"
+pantallas:
+  - "Portal de la empresa → 🗂️ Cargas masivas"
+  - "Portal de la empresa → 👥 Usuarios"
+precondiciones:
+  - "MinTest_SJ tiene un plan con tope de 5 usuarios (cargado a mano en la base de prueba, porque M-3 es REQ-016) y usa 3 de 5 lugares"
+  - "ana@ tiene una planilla de 2 usuarios nuevos y otra de 4 usuarios nuevos, todos con rol Mantenedor"
+flujo_principal:
+  - paso: "ana@ elige 'Usuarios'"
+    resultado: "Ve 'ℹ️ Si la planilla crea usuarios, se respeta el tope de tu plan (3 de 5 hoy): si no entran todos, no se carga ninguno.'"
+  - paso: "Adjunta la planilla de 2 usuarios y toca 'Procesar carga'"
+    resultado: "Ve 'Listo: se cargaron 2 filas.'"
+  - paso: "Mira el historial"
+    resultado: "La carga figura con 'Usuarios', 2 ok y 0 con error"
+  - paso: "Abre Usuarios"
+    resultado: "Las dos personas aparecen como 'Invitado · vence <fecha>', recibieron su invitación y el contador dice 5 de 5"
+flujos_alternativos:
+  - nombre: "No entran todos en el tope: no se carga ninguno"
+    pasos:
+      - paso: "Con 3 de 5 lugares, adjunta la planilla de 4 usuarios y toca 'Procesar carga'"
+        resultado: "Ve 'No se cargó ninguna fila: 2 con error. Corregí la planilla y volvé a cargarla.'; el resultado dice, para las dos últimas filas, 'Tope del plan: no hay lugar para <correo>.'"
+      - paso: "Mira el historial y abre Usuarios"
+        resultado: "La carga figura con 'Usuarios', 0 ok y 2 con error, marcada 'tope'; en Usuarios no hay nadie nuevo, nadie recibió invitación y el contador sigue en 3 de 5"
+  - nombre: "Fila inválida"
+    pasos:
+      - paso: "Carga una planilla con un correo mal escrito, un correo repetido y un rol que no existe, junto con filas válidas"
+        resultado: "Esas filas quedan con error y su motivo, y no se invita a nadie, tampoco a las filas válidas"
+  - nombre: "Ya es miembro"
+    pasos:
+      - paso: "Una fila tiene el correo de alguien que ya es miembro de la empresa"
+        resultado: "Esa fila queda con error con el mismo mensaje que da Usuarios al invitarlo, y no se invita a nadie"
+  - nombre: "Falla a mitad de la carga"
+    pasos:
+      - paso: "Con todas las filas válidas, el servicio de alta deja de responder después de invitar a la primera"
+        resultado: "Ve 'No pudimos procesar la carga. Probá de nuevo en un rato.'; la primera invitación se deshace, nadie recibe correo y en Usuarios no hay nadie nuevo"
+  - nombre: "Tope ya alcanzado"
+    pasos:
+      - paso: "Con 5 de 5 lugares, carga una planilla de 2 usuarios"
+        resultado: "Las dos filas quedan con error por tope y no se crea nada"
+  - nombre: "Empresa sin tope"
+    pasos:
+      - paso: "La administradora de una empresa sin plan carga 4 usuarios"
+        resultado: "Se invitan los 4 y no aparece el aviso del tope"
+validaciones:
+  - "Cada fila se invita con la misma operación de Usuarios del Portal"
+  - "La carga es todo o nada: si una fila tiene error, no se invita a nadie"
+  - "Si las filas no entran todas en el tope, no se carga ninguna y las que sobran figuran con 'tope del plan'"
+  - "Las filas inválidas se rechazan con su motivo"
+  - "Lo que ya es miembro se rechaza como en Usuarios"
+  - "Si una invitación falla a mitad de la carga, se deshacen las anteriores y no sale ningún correo"
+  - "Sin tope, se invitan todos"
+datos_prueba:
+  planilla: "4 correos inventados del dominio de prueba (por ejemplo carga1@doctest.invalid a carga4@doctest.invalid)"
+dudas:
+  - "REQ-007 dejó para acá decidir si la operación de invitar pasa a una API (la regla del repo pide la lógica de negocio en las APIs). Propuesta: en este requerimiento sigue en el modelo Membresias del módulo, que ya usan Portal, Consola y ahora la carga (un solo código); pasarla a una API nueva va en un requerimiento aparte, cuando el agente de IA tenga que invitar, porque necesita los datos de la sesión de Bonita que hoy aporta el PHP y una API nueva es núcleo."
+  - "¿Cuántas filas puede tener una planilla de usuarios? Cada fila llama a la API de alta (Bonita y AssetPlanner) y manda un correo. Propuesta: hasta 100 filas por carga; más, se rechaza el archivo con 'La planilla de usuarios puede tener hasta 100 filas.'"
+  - "Si el correo de una invitación no sale, en Usuarios se muestra el enlace para copiar. En la carga no hay dónde. Propuesta: la fila queda ok con el aviso 'No pudimos mandar el correo; reenviá la invitación desde Usuarios.'"
+  - "Para que la carga sea todo o nada, si una invitación falla a mitad de camino hay que deshacer las anteriores, y un correo ya mandado no se puede deshacer. Propuesta: validar todo antes de invitar, deshacer las anteriores con la compensación de REQ-007 si algo falla, y mandar los correos de invitación recién al final, cuando todas quedaron hechas."
+  - "La maqueta dice en el aviso 'los que no entren quedan rechazados en el resultado' (carga parcial) y CP-77 espera 'se crean 2 … 2 rechazados'. Con la regla todo o nada no se crea ninguno. Propuesta: cambiar el texto del aviso a '… si no entran todos, no se carga ninguno.' y probar CP-77 con el resultado nuevo (0 ok, 2 con error por tope)."
+derivados: {}
+notas:
+  - "Cubre CP-77 (parte del tope y del historial) y RF-72 en la carga masiva, con el resultado cambiado por la regla todo o nada de Rodolfo del 2026-11-10: con 3 de 5 lugares y 4 filas no se crea ninguno."
