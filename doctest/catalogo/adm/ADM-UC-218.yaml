@@ -1,0 +1,70 @@
+id: ADM-UC-218
+modulo: ADM
+titulo: Ver datos reales de mi cuenta en el tablero de Tools
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "tabla 'Hoy / Con este requerimiento / Si el Contexto no responde' y 'Análisis de impacto en Tools'"
+  - repo: traz-tools
+    path: application/controllers/Dash.php
+    detalle: "dashboard(): datos fijos de las líneas 88-90 (núcleo)"
+  - repo: traz-tools
+    path: doc/analisis/dashboard-administrador-landing.md
+    detalle: "§3 y §8, supuestos A5, A6 y A7"
+pantallas:
+  - "Tools → tablero del Administrador (al entrar)"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ, plan Free cargado a mano"
+  - "MinTest_SJ tiene activas funcionalidades de Mantenimiento y Almacenes, y ninguna de Herramientas"
+  - "MinTest_SJ tiene actividad reciente (invitación, baneo, menú asignado)"
+flujo_principal:
+  - paso: "ana@ entra a Tools"
+    resultado: "La píldora de la empresa y la caja 'Suscripción' dicen '🥉 Free' en vez de 'Freemium'"
+  - paso: "Mira 'Módulos habilitados'"
+    resultado: "Ve solo Mantenimiento y Almacenes, cada uno con cuántas funcionalidades activas tiene"
+  - paso: "Mira 'Últimos movimientos de tu cuenta'"
+    resultado: "Ve las cinco últimas acciones de su empresa con los mismos textos de Actividad y 'Ver toda la actividad →'"
+  - paso: "Toca 'Ver toda la actividad →'"
+    resultado: "Se abre la Actividad de la empresa en el Portal"
+flujos_alternativos:
+  - nombre: "El Contexto no responde"
+    pasos:
+      - paso: "Con el servicio Contexto detenido a propósito, ana@ entra a Tools"
+        resultado: "El tablero se ve exactamente como antes de este cambio: 'Freemium', Mantenimiento, Almacenes y Herramientas, sin tarjeta de plan ni últimos movimientos, y los indicadores de operación andan"
+  - nombre: "Módulo sin montar"
+    pasos:
+      - paso: "En un ambiente sin el módulo Administración, ana@ entra a Tools"
+        resultado: "El tablero se ve como antes de este cambio"
+  - nombre: "Empresa sin funcionalidades activas registradas"
+    pasos:
+      - paso: "La administradora de una empresa sin ninguna funcionalidad activa en el módulo entra a Tools"
+        resultado: "Ve los tres módulos de siempre"
+  - nombre: "Empresa sin plan"
+    pasos:
+      - paso: "La administradora de una empresa sin plan asignado entra a Tools"
+        resultado: "La caja 'Suscripción' dice que la empresa todavía no tiene un plan asignado"
+  - nombre: "Sin actividad"
+    pasos:
+      - paso: "La administradora de una empresa recién creada entra a Tools"
+        resultado: "'Últimos movimientos de tu cuenta' dice 'Todavía no hay actividad registrada.'"
+validaciones:
+  - "La suscripción muestra el plan real de la empresa"
+  - "Los módulos habilitados son los que tienen funcionalidades activas en la empresa"
+  - "Los últimos movimientos son la actividad real de la empresa"
+  - "Si el Contexto falla o el módulo no está, el tablero queda como hoy"
+  - "Sin funcionalidades activas registradas se muestran los módulos de siempre"
+  - "Una empresa sin plan ve que no tiene plan asignado"
+  - "Sin actividad, la lista lo dice"
+datos_prueba:
+  empresa: "fixture dnato_v3_base con funcionalidades activadas en seg.empresas_funcionalidades (REQ-006 / M-4)"
+dudas:
+  - "Los códigos de módulo de la configuración del tablero son MAN, ALM y HER, pero en el catálogo Herramientas puede tener otro código (por ejemplo PAN). Propuesta: el tablero usa los códigos del catálogo y la configuración solo pone colores y nombres; un módulo que no está en la configuración sale en gris con su código."
+  - "Si la empresa no tiene ninguna funcionalidad activa registrada (antes de M-4), ¿se muestran los tres de siempre o 'ninguno'? Propuesta: los tres de siempre, para no mostrarle a nadie que no tiene nada."
+  - "La línea de tiempo de hoy era 'por módulo' (A7) y la actividad real no es por módulo. Propuesta: una sola lista con las cinco últimas acciones; por módulo se decide cuando haya registro de uso por opción."
+derivados: {}
+notas:
+  - "Cubre T-1 parte b: A5 (suscripción), A6 (módulos) y A7 (línea de tiempo, que hoy la vista ni dibuja) pasan a datos reales; el respaldo es la configuración actual."

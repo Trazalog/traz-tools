@@ -1,0 +1,65 @@
+id: ADM-UC-213
+modulo: ADM
+titulo: Registrar los accesos a cada empresa y ver el último acceso
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "sección 'Registro de accesos por empresa' y 'Análisis de impacto en Tools'"
+  - repo: traz-tools
+    path: application/controllers/Dash.php
+    detalle: "index(): punto donde se registra el acceso (núcleo)"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-usuarios.html
+    detalle: "columna 'Último acceso' de Usuarios (REQ-007)"
+pantallas:
+  - "Ingreso a Tools y cambio de empresa"
+  - "Portal de la empresa → 👥 Usuarios"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ; bruno@ es Supervisor de MinTest_SJ y de Yudica"
+  - "bruno@ entró por última vez a la plataforma hoy, pero a MinTest_SJ hace 10 días"
+flujo_principal:
+  - paso: "bruno@ entra a Tools con MinTest_SJ como empresa activa"
+    resultado: "Trabaja como siempre; queda registrado un acceso de bruno@ a MinTest_SJ"
+  - paso: "bruno@ recarga la página tres veces"
+    resultado: "No se suman accesos: sigue habiendo uno solo de esta sesión"
+  - paso: "bruno@ cambia a Yudica desde el selector de empresa"
+    resultado: "Queda registrado un acceso de bruno@ a Yudica"
+  - paso: "ana@ abre Usuarios en el Portal de MinTest_SJ"
+    resultado: "En la fila de Bruno, 'Último acceso' muestra la fecha y hora de su acceso a MinTest_SJ de hoy"
+flujos_alternativos:
+  - nombre: "Último acceso a esta empresa, no a la plataforma"
+    pasos:
+      - paso: "bruno@ entra solo a Yudica durante una semana; ana@ mira Usuarios de MinTest_SJ"
+        resultado: "El último acceso de Bruno sigue siendo el de MinTest_SJ, no el de Yudica"
+  - nombre: "Persona sin accesos registrados todavía"
+    pasos:
+      - paso: "ana@ mira la fila de alguien que no entró desde que existe el registro"
+        resultado: "Ve su último ingreso a la plataforma, como antes de este cambio"
+  - nombre: "El registro no responde"
+    pasos:
+      - paso: "Con el recurso de accesos detenido a propósito, bruno@ entra a Tools"
+        resultado: "Entra y trabaja igual; ese acceso no queda registrado y no ve ningún error"
+  - nombre: "Usuarios de la plataforma no cambia"
+    pasos:
+      - paso: "El superusuario mira 'Último acceso' en Consola → Usuarios"
+        resultado: "Sigue viendo el último ingreso a la plataforma, sin importar la empresa"
+validaciones:
+  - "Se registra un acceso por sesión y por empresa, al entrar y al cambiar de empresa"
+  - "Recargar la página no suma accesos"
+  - "'Último acceso' del Portal es el de esa empresa"
+  - "Sin accesos registrados, se muestra el último ingreso a la plataforma"
+  - "Si el registro falla, Tools funciona igual y no muestra error"
+  - "En la Consola, 'Último acceso' sigue siendo de toda la plataforma"
+datos_prueba:
+  personas: "fixture dnato_v3_base, con nombres inventados"
+dudas:
+  - "El acceso se registra en Dash::index de Tools (núcleo), que es por donde pasa toda persona después del ingreso y del cambio de empresa. ¿Te parece bien, o preferís registrarlo en el ingreso (DNATO y el ingreso copiado de REQ-003)? Propuesta: en Dash::index, porque no toca DNATO, cubre el cambio de empresa y Dash.php ya se toca en este requerimiento."
+  - "Con el registro nuevo, ¿'Último acceso' del Portal pasa a ser por empresa? REQ-007 propuso dejar last_login hasta tener este registro. Propuesta: sí, por empresa, con last_login de respaldo para quien todavía no tiene accesos registrados."
+  - "¿Cuánto tiempo se guardan los accesos? Propuesta: igual que la auditoría (5 años), sin depuración en este requerimiento; son una fila por sesión."
+derivados: {}
+notas:
+  - "Cubre el registro de accesos que pide RF-101 y la 'Último acceso' por empresa que REQ-007 (duda de ADM-UC-090) dejó para acá."

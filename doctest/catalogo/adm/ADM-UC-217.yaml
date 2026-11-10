@@ -1,0 +1,68 @@
+id: ADM-UC-217
+modulo: ADM
+titulo: Ver mi plan y uso en el tablero de Tools
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "secciones 'Tablero del Administrador de Tools (T-1)' y 'Análisis de impacto en Tools'"
+  - repo: traz-tools
+    path: application/views/dashboard/admin_dashboard.php
+    detalle: "tablero del Administrador, versión 2.5 (núcleo)"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§9b, punto T-1"
+pantallas:
+  - "Tools → tablero del Administrador (al entrar)"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ, plan Free cargado a mano, 5 de 5 lugares y 21 de 30 consultas de IA en la semana"
+  - "bruno@ es Supervisor de MinTest_SJ"
+flujo_principal:
+  - paso: "ana@ entra a Tools"
+    resultado: "Cae en el tablero de siempre y ve, debajo del saludo y la empresa, la tarjeta de plan y uso: '🥉 Free', 'Lugares 5 de 5', 'IA 21 de 30 esta semana' con su barra y 'Se renueva el lunes 2/11'"
+  - paso: "Mira los avisos de la tarjeta"
+    resultado: "Ve 'Llegaste al tope de 5 usuarios de tu plan'"
+  - paso: "Toca 'Ir a Mi empresa →'"
+    resultado: "Se abre el Inicio del Portal"
+  - paso: "Vuelve al tablero y mira los indicadores de operación"
+    resultado: "Las cajas de indicadores se ven y se ordenan igual que antes"
+flujos_alternativos:
+  - nombre: "Pedido pendiente"
+    pasos:
+      - paso: "MinTest_SJ pidió pasar a Team y ana@ entra a Tools"
+        resultado: "La tarjeta muestra '⏳ Pedido pendiente: Team'"
+  - nombre: "Vencimiento próximo y plan vencido"
+    pasos:
+      - paso: "La administradora de una empresa con plan de prueba que vence en 5 días entra a Tools"
+        resultado: "La tarjeta avisa que su plan vence en esa fecha"
+      - paso: "La administradora de una empresa con plan vencido entra a Tools"
+        resultado: "La tarjeta dice 'El período de prueba de tu empresa terminó'"
+  - nombre: "No es administrador"
+    pasos:
+      - paso: "bruno@ entra a Tools"
+        resultado: "Cae donde caía siempre y no ve ninguna tarjeta de plan"
+      - paso: "bruno@ escribe a mano la dirección del tablero"
+        resultado: "No ve la tarjeta de plan y uso"
+  - nombre: "La tarjeta no se refresca sola"
+    pasos:
+      - paso: "ana@ deja el tablero abierto mientras una persona hace consultas al agente"
+        resultado: "La tarjeta no cambia hasta que vuelve a entrar al tablero"
+validaciones:
+  - "La tarjeta muestra plan e ícono, lugares sobre tope, IA del período con barra y renovación, pedido pendiente y avisos críticos"
+  - "Los avisos críticos son vencimiento próximo, plan vencido y tope alcanzado"
+  - "La tarjeta lleva al Portal"
+  - "Los indicadores de operación no cambian"
+  - "Quien no es administrador no ve la tarjeta, ni entrando por la dirección"
+  - "La tarjeta se dibuja una sola vez al abrir el tablero"
+datos_prueba:
+  empresa: "fixture dnato_v3_base con plan_id cargado a mano en la base de prueba"
+dudas:
+  - "¿Dónde va la tarjeta en el tablero? La especificación dice 'tarjeta resumida' sin ubicarla. Propuesta: una fila a todo el ancho entre el saludo y las tres cajas de arriba, para que no compita con los indicadores."
+  - "El aterrizaje en el tablero lo decide Dashs::esAdminEmpresa (definición vieja) y la tarjeta, el Contexto (definición única de REQ-004). Alguien podría caer en el tablero sin tarjeta. Propuesta: aceptarlo hasta resolver la duda de ADM-UC-032 (alinear el aterrizaje)."
+  - "'Usuarios generados' del tablero y 'Lugares' de la tarjeta pueden dar números distintos (uno cuenta usuarios de la empresa, el otro personas que no están de baja). Propuesta: dejar 'Usuarios generados' como está en este requerimiento y decidir después si se reemplaza por Lugares."
+derivados: {}
+notas:
+  - "Cubre T-1 parte a (tarjeta resumida de plan y uso para administradores). El indicador de cuota de la barra es de REQ-011."

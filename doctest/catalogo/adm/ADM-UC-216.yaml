@@ -1,0 +1,83 @@
+id: ADM-UC-216
+modulo: ADM
+titulo: Ver los avisos que requieren mi atención
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "sección 'Avisos'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/inicio-admin.html
+    detalle: "bloque 'Requiere tu atención'"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-104 Inicio"
+pantallas:
+  - "Portal de la empresa → 🏠 Inicio → Requiere tu atención"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ, plan Free cargado a mano"
+  - "El 28/10 el superusuario quitó 'Órdenes de trabajo' del plan Free"
+  - "El 24/10 ana@ invitó a Darío Gómez, que no aceptó; la invitación vence el 31/10"
+  - "Hoy es 30/10"
+flujo_principal:
+  - paso: "ana@ abre el Inicio"
+    resultado: "En 'Requiere tu atención' ve '⚠️ Se quitó \"Órdenes de trabajo\" del plan Free' con 'Pasó a mostrarse sombreada en el menú de tus usuarios (28/10).' y 'Ver funcionalidades'"
+  - paso: "Mira el segundo aviso"
+    resultado: "Ve '✉️ Darío Gómez todavía no aceptó la invitación', 'Enviada el 24/10, vence el 31/10.' y 'Reenviar'"
+  - paso: "Toca 'Reenviar'"
+    resultado: "Se reenvía la invitación como en Usuarios (REQ-007) y el aviso muestra la nueva fecha de vencimiento"
+  - paso: "Mira el pie"
+    resultado: "Ve 'Nada más por ahora. Los avisos salen de la actividad de los últimos 30 días.'"
+flujos_alternativos:
+  - nombre: "Cuota agotada"
+    pasos:
+      - paso: "MinTest_SJ usó las 30 consultas de la semana y ana@ abre el Inicio"
+        resultado: "Ve '🤖 Tu empresa usó las 30 consultas de IA de esta semana', 'Se renueva el lunes 2/11 00:00.' y 'Ver uso de IA'"
+  - nombre: "El plan bajó el tope"
+    pasos:
+      - paso: "El superusuario bajó el tope del plan Free de 5 a 3 hace 5 días"
+        resultado: "Ve un aviso de que el plan Free ahora permite 3 usuarios, con 'Ver plan'"
+  - nombre: "Vencimiento próximo y plan vencido"
+    pasos:
+      - paso: "Una empresa con plan de prueba que vence en 5 días abre el Inicio"
+        resultado: "Ve el aviso de que su plan vence en esa fecha, con 'Ver planes'"
+      - paso: "Una empresa con el plan vencido abre el Inicio"
+        resultado: "Ve primero 'El período de prueba de tu empresa terminó', con 'Ver planes'"
+  - nombre: "Pasaron más de 30 días"
+    pasos:
+      - paso: "Con fecha 1/12, ana@ abre el Inicio"
+        resultado: "Ya no ve el aviso de 'Órdenes de trabajo'"
+  - nombre: "Se resolvió"
+    pasos:
+      - paso: "Darío acepta la invitación y ana@ vuelve al Inicio"
+        resultado: "El aviso de la invitación ya no aparece"
+  - nombre: "Restricción de otro plan"
+    pasos:
+      - paso: "El superusuario quitó una funcionalidad del plan Business y ana@ (plan Free) abre el Inicio"
+        resultado: "No ve ese aviso"
+  - nombre: "Sin avisos"
+    pasos:
+      - paso: "La administradora de una empresa sin novedades abre el Inicio"
+        resultado: "Ve 'No hay nada que requiera tu atención.'"
+validaciones:
+  - "Las restricciones del plan actual de la empresa de los últimos 30 días generan un aviso"
+  - "Las invitaciones sin aceptar generan un aviso con fecha de envío y vencimiento, y se pueden reenviar desde ahí"
+  - "La cuota agotada genera un aviso con la renovación"
+  - "El vencimiento próximo y el plan vencido generan un aviso, y el plan vencido va primero"
+  - "Lo de más de 30 días no aparece"
+  - "Lo que se resolvió deja de aparecer"
+  - "Las restricciones de otros planes no aparecen"
+  - "Sin avisos, la pantalla lo dice"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (CP-104), con filas de auditoría cargadas con las fechas del escenario"
+dudas:
+  - "CU-30 lista tres avisos (funcionalidad quitada, invitación sin aceptar, cuota agotada) y T-1 pide para el tablero además vencimiento próximo, plan vencido y tope alcanzado. ¿El Inicio muestra también esos? Propuesta: sí vencimiento y plan vencido (es lo más urgente); el tope no, porque ya lo dice la tarjeta Lugares."
+  - "¿El administrador puede descartar un aviso? La especificación no lo dice. Propuesta: no; se van solos a los 30 días o cuando se resuelve, así no hace falta guardar qué descartó cada uno."
+  - "RF-16 dice que el aviso aparece cuando una restricción baja 'el tope o la cuota', no solo cuando quita una funcionalidad, pero la maqueta solo trae el de la funcionalidad. Propuesta: los tres, con textos propios ('El plan <plan> ahora permite <M> usuarios' y '… <M> consultas de IA por <período>')."
+  - "¿Cuántos días antes avisa el vencimiento? Propuesta: 7, los mismos del correo de aviso del proceso diario de REQ-008."
+derivados: {}
+notas:
+  - "Cubre CP-104 (avisos de la auditoría de 30 días), el aviso de restricción en el Inicio que dejó REQ-005 (CP-16) y los de vencimiento de T-1."
