@@ -61,9 +61,8 @@ datos_prueba:
   usuario: "uno de los usuarios por defecto de la empresa DocTest"
   ambiente: "copia de DEMO, nunca producción"
 dudas:
-  - "La especificación crea todas las entidades nuevas en esta entrega (E1), aunque las usen REQ-005 a REQ-014. ¿Un solo script o que cada requerimiento cree las suyas? Propuesta: un solo script, para aprobar una vez el cambio de base; si al construir REQ-005 en adelante algo cambia, se agrega con un script chico."
+  - "La especificación crea todas las entidades nuevas en esta entrega (E1), aunque las usen REQ-005 a REQ-014. ¿Un solo script o que cada requerimiento cree las suyas? Propuesta: un solo script, para que la base quede lista y se pruebe una sola vez la vuelta atrás; si al construir REQ-005 en adelante algo cambia, se agrega con un script chico."
   - "El estado de la membresía: la especificación lo pone como columnas de seg.memberships_users, pero esa tabla tiene una fila por rol y la especificación dice 'el estado es uno' por persona y empresa. Propuesta: tabla nueva seg.membresias_estado única por (correo, group), sin tocar seg.memberships_users."
-  - "¿En qué schema van las tablas nuevas? Propuesta: seg, donde ya están usuarios y membresías y el usuario de base de WSO2 ya tiene permisos."
   - "M-2 pide cargar opciones del módulo SEG (administración), pero RF-44 dice que las pantallas del Portal no entran al catálogo. Propuesta: no se carga ninguna opción SEG por ahora."
   - "M-2 también pide cargar las herramientas del agente como opciones del módulo MCP. Agregar filas a seg.menues puede cambiar el menú de Tools si el armado del menú las muestra (la regla 'si ningún hijo está habilitado se muestran todos'). Propuesta: cargarlas con la lista de herramientas que dé el frente del agente, tipo tool_mcp, y verificar con este caso que el menú de Tools no cambia; si cambia, se dejan para REQ-005 o REQ-011."
   - "M-5 de la especificación dice 'se resuelve y guarda empr_id' en la membresía; Rodolfo decidió no agregar esa columna (B.4). Propuesta: M-5 solo carga el estado activo y lista las que no se unen por el nombre."
