@@ -1,0 +1,58 @@
+id: ADM-UC-012
+modulo: ADM
+titulo: Ingresar por DNATO y entrar al módulo sin volver a ingresar
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-003-administracion-identidad.md
+    detalle: "sección 'Sesión compartida'"
+  - repo: traz-tools
+    path: doc/v3/administracion/ANALISIS_INICIAL.md
+    detalle: "C.3 convivencia en paralelo"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/inicio-admin.html
+    detalle: "marco del Portal (REQ-002)"
+pantallas:
+  - "Ingreso de DNATO → tablero de Tools"
+  - "Portal de la empresa (dirección traz-comp-adm/portal)"
+precondiciones:
+  - Sin sesión iniciada
+  - El usuario es Administrador de una empresa
+flujo_principal:
+  - paso: "Ingresa por el ingreso de DNATO, como hoy"
+    resultado: "Entra al tablero de Tools con su empresa activa"
+  - paso: "En la misma ventana abre la dirección del Portal de la empresa"
+    resultado: "Se abre el Portal con el nombre de su empresa y el saludo 'Hola, <nombre>', sin volver a pedir el ingreso"
+  - paso: "Abre la dirección del ingreso del módulo"
+    resultado: "Lo lleva al tablero de Tools sin mostrar el ingreso, porque ya tiene sesión"
+flujos_alternativos:
+  - nombre: "Ingresó por DNATO con otra empresa"
+    pasos:
+      - paso: "Un administrador de dos empresas ingresa por DNATO eligiendo la empresa donde no es administrador, y abre el Portal"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.': el módulo usa la empresa elegida en DNATO"
+  - nombre: "Sale por DNATO"
+    pasos:
+      - paso: "Con el Portal abierto, sale por la salida de DNATO y vuelve a abrir el Portal"
+        resultado: "Lo lleva al ingreso del módulo y no ve nada del Portal"
+  - nombre: "Usuario sin rol de administrador"
+    pasos:
+      - paso: "Un usuario que no es administrador ingresa por DNATO y abre el Portal"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.', igual que si hubiera ingresado por la copia"
+validaciones:
+  - "La sesión abierta por DNATO sirve en el módulo sin volver a ingresar"
+  - "El módulo usa la empresa activa que eligió en DNATO"
+  - "Con sesión abierta por DNATO, el ingreso del módulo manda al tablero de Tools"
+  - "Si sale por DNATO, el módulo también queda sin sesión"
+  - "El permiso en el módulo es el mismo, haya ingresado por DNATO o por la copia"
+datos_prueba:
+  administrador: "administrador de la empresa DocTest (el que crea la registración)"
+  usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest"
+dudas:
+  - "Una cuenta recién activada por DNATO que todavía no dio de alta su empresa tiene sesión sin empresa (o con la empresa temporal 9000 del registro). Si en ese momento abre el Portal, ¿qué ve? Propuesta: 'No tenés permiso para entrar a esta pantalla.', igual que cualquiera que no es administrador de la empresa activa; no se lo manda al ingreso para no cortarle la registración."
+derivados: {}
+notas:
+  - "Sentido 2 de la sesión compartida. El sentido 1 es ADM-UC-011."
+  - "Cubre también la duda de ADM-UC-001 sobre qué pasa sin sesión: ahora va al ingreso del módulo, no al de DNATO."
