@@ -35,6 +35,28 @@ git checkout -b feature/req-###-desc-corta
 git push origin feature/req-###-desc-corta
 ```
 
+### Módulos con repositorio propio (submódulos)
+
+Varios módulos de `application/modules/` tienen **su propio repositorio** en GitHub y Tools solo guarda
+en qué commit de ese repositorio está parado (la lista está en `.gitmodules`). El módulo Administración
+es uno: **`https://github.com/Trazalog/traz-comp-adm.git`**, en `application/modules/traz-comp-adm`.
+
+- **El código de un submódulo se commitea en SU repositorio, nunca en `traz-tools`.** Los comandos de
+  git se corren parado dentro de la carpeta del módulo (`application/modules/<módulo>/`): ahí `git`
+  habla con el repositorio del módulo.
+- Dentro del submódulo valen las mismas reglas: rama propia desde `develop` del módulo, con el mismo
+  nombre que la rama de `traz-tools` (`feature/req-###-desc-corta`), pull request a `develop` **del
+  módulo**, nunca directo a `develop` ni a `main`.
+- En `traz-tools` solo se commitea el **puntero** (la carpeta del módulo como un todo, con
+  `git add application/modules/<módulo>`), y `.gitmodules` cuando se monta un módulo nuevo.
+- Por eso un cambio en un submódulo lleva **dos pull requests**: el del módulo (con el código) y el de
+  `traz-tools` (con el puntero). En la descripción de cada uno va el enlace del otro.
+- El pull request del módulo se une **primero**. Recién después se mueve el puntero en `traz-tools` a
+  ese commit de `develop` del módulo.
+- Antes de cada commit en el módulo, `git status` **dentro** de la carpeta del módulo: si dice
+  `HEAD detached`, crear o pasar a la rama de trabajo antes de commitear (si no, el commit queda suelto
+  y se pierde).
+
 ## 2. Commits
 
 - Formato: `tipo(scope): descripción [ID]` — por ejemplo `feat(man): alta de equipo con componentes [REQ-012]`.
