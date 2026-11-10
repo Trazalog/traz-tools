@@ -13,12 +13,12 @@ Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, ver el listado de formularios sin empresa que saca Pablo (verificación §8.5, solo lectura) y aprobar el análisis de impacto. Nace el 2026-11-10 con lo que salió de REQ-015 por decisión de Rodolfo |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos y aprobar el análisis de impacto. Nace el 2026-11-10 con lo que salió de REQ-015 por decisión de Rodolfo |
 | Se apoya en | [REQ-015](REQ-015-administracion-formularios.md) (columna `estado` de `frm.formularios`, tabla `seg.formularios_puntos_uso` con su "Global al alta", estructura de `frm.*` versionada), [REQ-002](REQ-002-administracion-esqueleto.md); relevamiento [`doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md`](../doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md) (§4.2, §8 y decisiones D1 a D3); análisis previo del clonado [`doc/analisis/impacto-config-formulario-entrega-alta.md`](../doc/analisis/impacto-config-formulario-entrega-alta.md) |
 | Entrega de la especificación | Parte de **E11b** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: configuración al alta (RF-127, reemplaza el clonado del disparador), punto T-8 de `02_MODELO_Y_REGLAS.md` (combos), y de M-7b / RF-131 **solo** el pase de los formularios de la 9000 que usa el disparador. CP-127, la parte de combos de CP-130 y la parte mínima de CP-132 |
 | Casos de uso | `ADM-UC-290` a `ADM-UC-292` en `doctest/catalogo/adm/` (rango reservado 290 a 309) |
 | Repos que se tocan | `traz-tools`: `FRMDataService.dbs` (consulta existente `getFormularios`), una versión nueva de la función del disparador `core.configuracion_inicial_empresa_trg` y un script de datos. **No** se toca `traz-comp-formularios`, ni las pantallas de tareas estándar, subtareas ni etapas, ni `traz-comp-adm` |
-| Riesgo | 🔴 **Núcleo de Tools, las tres cosas**: (1) se **modifica un DataService existente** (`FRMDataService.getFormularios`), que llenan los combos de tres pantallas de producción; (2) se **modifica un disparador existente** del schema `core` (`configuracion_inicial_empresa_trg`), que corre en **toda** alta de empresa, por cualquier canal; (3) la migración **cambia filas existentes** (`frm.formularios.empr_id` de la 9000 pasa a vacío). → **Rodolfo aprueba el análisis de impacto (sección "Análisis de impacto en Tools") y el script antes de construir.** Lo que es aditivo (la fila de "Global al alta" en `seg.formularios_puntos_uso`, tabla nueva de REQ-015; las filas **nuevas** de configuración en `core.tablas` para cada empresa nueva) lo decide el equipo (reglas de Rodolfo del 2026-11-10) |
+| Riesgo | 🔴 **Núcleo de Tools, las tres cosas**: (1) se **modifica un DataService existente** (`FRMDataService.getFormularios`), que llenan los combos de tres pantallas de producción; (2) se **modifica un disparador existente** del schema `core` (`configuracion_inicial_empresa_trg`), que corre en **toda** alta de empresa, por cualquier canal; (3) la migración **cambia filas existentes** (`frm.formularios.empr_id` de la 9000 pasa a vacío). → **Rodolfo aprueba el análisis de impacto (sección "Análisis de impacto en Tools") y el script antes de construir.** Lo que es aditivo (la fila de "Global al alta" en `seg.formularios_puntos_uso`, tabla nueva de REQ-015; las filas **nuevas** de configuración y la copia de las listas de opciones globales en `core.tablas` para cada empresa nueva) lo decide el equipo (reglas de Rodolfo del 2026-11-10) |
 
 ---
 
@@ -61,8 +61,10 @@ Lista completa en [`README.md`](README.md).
 
 - **No toca cómo se muestran, se dibujan o se completan los formularios en Tools** (prohibición del plan,
   decisión de Rodolfo del 2026-11-10): nada dentro de `traz-comp-formularios`. En particular, **F-1 no se
-  hace**: si la empresa nueva no tiene su lista de opciones, los campos de lista del global se ven vacíos,
-  **igual que hoy** con el clon (el disparador nunca copió las listas, relevamiento §4.2).
+  hace**: Tools sigue buscando la lista solo con el prefijo de la empresa. Para que los campos de lista del
+  global carguen, el disparador le copia a la empresa nueva las listas globales ("Cómo se arma", (vii)).
+- **No cambia ninguna lista de opciones existente** (ni globales, ni de la 9000, ni de otras empresas): solo
+  agrega filas para la empresa que nace.
 - **No cambia las pantallas** de tareas estándar, subtareas ni etapas: solo cambia lo que devuelve la
   consulta que llena sus combos (mismo contrato: `form_id`, `nombre`, `descripcion`).
 - **No hace la migración completa M-7b / RF-131** (decisión de Rodolfo del 2026-11-10): no pasa a
@@ -71,8 +73,7 @@ Lista completa en [`README.md`](README.md).
   empresas existentes ni arma el informe de pañol.
 - **No toca las empresas existentes**: conservan su clon y su configuración (ver el análisis de impacto).
 - **No asigna ni cambia ningún formulario existente sin empresa** (decisión de Rodolfo del 2026-11-10: los
-  datos existentes no se tocan). Solo se listan, en solo lectura, antes de desplegar (verificación §8.5).
-  El único formulario que cambia es el de la 9000 del pase mínimo (viii).
+  datos existentes no se tocan). El único formulario que cambia es el de la 9000 del pase mínimo (viii).
 - **No toca el formulario del autorregistro** ni `REGISTER_TEMP_EMPR_ID='9000'` de DNATO.
 - **No cambia la parte del disparador que no es de formularios** (menús, superadministrador, listas de
   valores por defecto): se copia tal cual.
@@ -121,8 +122,18 @@ a hacer:
 1. por cada fila de `seg.formularios_puntos_uso` con `form_id_alta` cargado, si ese formulario existe, es
    global (`empr_id` vacío), no está eliminado y está `publicado`:
    `insert into core.tablas (tabla, valor, descripcion, empr_id) values ('configuraciones', <clave>, <form_id_alta>::text, new.empr_id)`;
-2. **no** crea ningún formulario ni ítem;
-3. si algo falla, `raise warning` con el mismo prefijo `CONFINICEMP:` y el alta sigue, como hoy.
+2. **copia las listas de opciones globales** que usan esos formularios: por cada ítem no eliminado de tipo
+   `select`, `check` o `radio` (los que leen `core.tablas`; `service`, `urlConsultor` y `urlEvaluador`
+   tienen una dirección en `valo_id`, no una lista), toma las filas no eliminadas de la lista global con ese
+   nombre (`core.tablas` con `empr_id` vacío y `tabla = <valo_id>`, que es como se guarda una lista sin
+   empresa, `02_MODELO_Y_REGLAS.md` §2 y relevamiento §1.d) y las inserta para la empresa nueva:
+   `insert into core.tablas (tabla, valor, descripcion, empr_id) values (<valo_id>, <valor>, <descripcion>, new.empr_id)`.
+   El disparador `core.set_tabla_id_trg` les pone el prefijo (`tabla = <empr_id>-<valo_id>`,
+   `tabl_id = tabla||valor`), que es justo lo que busca `Forms::obtenerValores`. Si dos formularios usan la
+   misma lista, se copia una sola vez. Si no hay lista global con ese nombre, no copia nada para ese campo
+   (se ve vacío, como hoy; duda de ADM-UC-291). Son filas **nuevas**: ninguna existente cambia;
+3. **no** crea ningún formulario ni ítem;
+4. si algo falla, `raise warning` con el mismo prefijo `CONFINICEMP:` y el alta sigue, como hoy.
 
 Así cubre también los puntos de pañol que hoy nadie siembra, en cuanto el superusuario les elija un
 "Global al alta" en la Consola (REQ-015). Las filas que escribe son **nuevas** (la empresa recién nace).
@@ -149,7 +160,7 @@ de la 9000.
 1. Script de base de REQ-015 (columna `estado`, tabla `seg.formularios_puntos_uso`): sin eso, la consulta
    nueva y el disparador nuevo fallan.
 2. (vii) + (viii) juntos, en una transacción.
-3. (vi), **después** de la verificación §8.5: antes de desplegar, Pablo corre una consulta **de solo lectura** en DEMO y en la copia de producción que lista qué formularios sin empresa van a empezar a verse en los combos de todas las empresas, y se la muestra a Rodolfo; no se cambia ningún dato.
+3. (vi).
 
 (vi) y (vii)+(viii) se pueden desplegar por separado; las dos dependen de REQ-015.
 
@@ -190,9 +201,11 @@ Texto que agrega la consulta: " (global)" después del nombre (D3).
    alta", si existe, es global y está publicado (RF-127).
 4. Si un punto no tiene "Global al alta", o el global no está publicado, la empresa nueva queda sin fila
    para ese punto ("No se especificó un formulario", como hoy cuando no hay).
-5. Una falla en ese bloque no frena el alta de empresa (como hoy).
-6. Las empresas existentes no cambian.
-7. Del pase a globales, solo el formulario que usa el disparador; ningún otro.
+5. El alta copia a la empresa nueva las listas de opciones **globales** que usan los formularios "al alta"
+   (filas nuevas en `core.tablas` con el prefijo de la empresa nueva); nunca cambia una lista existente.
+6. Una falla en ese bloque no frena el alta de empresa (como hoy).
+7. Las empresas existentes no cambian.
+8. Del pase a globales, solo el formulario que usa el disparador; ningún otro.
 
 ## Registro en el log
 
@@ -208,6 +221,7 @@ formularios; el script de (viii) informa el `form_id` que pasó a global.
 | `frm.formularios` | `empr_id` de **una** fila existente ("Entrega Materiales" de la 9000) pasa a vacío | **Rodolfo** (cambia una fila existente) |
 | `seg.formularios_puntos_uso` (nueva, REQ-015) | `form_id_alta` de `formulario_entrega_materiales` = ese formulario | El equipo (tabla nueva) |
 | `core.tablas` | Filas **nuevas** `configuraciones/formulario_<punto>` de cada empresa **nueva** (las escribe el disparador) | El equipo (filas nuevas, regla de Rodolfo del 2026-11-10) |
+| `core.tablas` | Filas **nuevas** con la copia de las listas globales que usan los formularios "al alta", para cada empresa **nueva** (las escribe el disparador) | El equipo (filas nuevas, decisión de Rodolfo del 2026-11-10) |
 | `core.configuracion_inicial_empresa_trg()` | Versión nueva de la función existente | **Rodolfo** (objeto existente del núcleo) |
 | `FRMDataService.getFormularios` | Consulta modificada | **Rodolfo** (DataService existente) |
 
@@ -230,10 +244,8 @@ No se encontraron otros llamadores del recurso (buscado `/formularios/` y `lista
 submódulos de Tools, `_backend`, `esb` y en AssetPlanner). El contrato no cambia (mismas claves), así que
 ninguno se rompe por la forma. Lo que sí cambia, a propósito:
 
-- **Aparecen los formularios sin empresa** en los combos de **todas** las empresas. Hoy no aparecía ninguno.
-  Si en producción hay formularios sin empresa que son de un cliente (relevamiento §8.5, consulta **no
-  corrida**), se van a ver en todas las empresas. Los datos existentes **no se tocan** (decisión de Rodolfo
-  del 2026-11-10): no se asigna ni se cambia ningún formulario. Lo que se hace es que, antes de desplegar, Pablo corre una consulta **de solo lectura** en DEMO y en la copia de producción que lista qué formularios sin empresa van a empezar a verse en los combos de todas las empresas, y se la muestra a Rodolfo; no se cambia ningún dato.
+- **Aparecen los formularios sin empresa** en los combos de **todas** las empresas. Hoy no aparecía ninguno:
+  es lo buscado (D1 a D3). Los datos existentes **no se tocan** (decisión de Rodolfo del 2026-11-10).
 - Después de (viii), "Entrega Materiales (global)" aparece en esos combos de todas las empresas; las que ya
   tienen su clon ven además "Entrega Materiales" (el suyo).
 - **Editar una tarea o etapa cuyo formulario quedó inactivo:** como la consulta ya no lo trae, el combo de
@@ -252,7 +264,9 @@ ninguno se rompe por la forma. Lo que sí cambia, a propósito:
   `solicitante` y `dni` del formulario, relevamiento §5.1). Dibujar por número **no mira la empresa del
   formulario** (relevamiento §8.2), así que apuntar al global funciona igual que apuntar al clon.
 - Las listas de opciones: el clon nunca las copió (§4.2), y se buscan con la empresa de quien mira
-  (`Forms.php:228-231`). Con el global pasa **exactamente lo mismo**. No hay diferencia para el usuario.
+  (`Forms.php:228-231`), así que hoy los campos de lista del clon salen vacíos en la empresa nueva. Con el
+  cambio, el disparador le copia las listas globales y esos campos **cargan** las opciones: es una mejora
+  visible, sin tocar el dibujo.
 - La única diferencia visible: la empresa nueva ya no tiene un formulario **propio** "Entrega Materiales"
   en su ABM (REQ-015); si quiere cambiarlo, usa "⧉ Usar como base" del global.
 
@@ -301,21 +315,18 @@ ninguno se rompe por la forma. Lo que sí cambia, a propósito:
   de la 9000, y el nuevo de que sea global.
 - **El disparador lee la marca "Global al alta"** de REQ-015 por número, no por nombre: si el superusuario
   renombra el global en la Consola, el alta sigue funcionando.
-- **Las listas de opciones no se copian a la empresa nueva** (decisión de Rodolfo del 2026-11-10): el clon de
-  hoy nunca las copió (relevamiento §4.2), así que con el global queda igual que hoy (los campos de lista se
-  ven vacíos en Tools si la empresa no tiene su lista) y no se hace nada.
+- **La empresa nueva usa las listas de opciones globales** (decisión de Rodolfo del 2026-11-10): si no, los
+  campos de lista no cargan nada. Como Tools busca la lista solo con el prefijo de la empresa
+  (`Forms::obtenerValores`, `traz-comp-formularios/models/Forms.php:228-231`) y en este plan no se toca el
+  dibujo (F-1), el disparador **copia a la empresa nueva** las listas globales que usan sus formularios "al
+  alta": filas **nuevas** en `core.tablas`, sin cambiar las existentes. Lo decide el equipo (filas nuevas).
 - **Los formularios sin empresa que ya existen no se tocan** (decisión de Rodolfo del 2026-11-10): no se
-  asigna ni se cambia ninguno. Antes de desplegar (vi), Pablo corre una consulta de solo lectura en DEMO y
-  en la copia de producción que lista cuáles van a empezar a verse en los combos de todas las empresas, y
-  se la muestra a Rodolfo.
+  asigna ni se cambia ninguno.
 
 ## Cómo se revisa (además de DocTest)
 
 - Tarea 0 hecha: la función desplegada en DEMO (y en producción, por Rodolfo) es igual a la de v2.8.1.3, o
   la diferencia está reportada y resuelta antes de seguir.
-- Verificación §8.5 **antes** de desplegar (vi): Pablo corre la consulta de solo lectura en DEMO y en la
-  copia de producción, lista los formularios sin empresa que van a empezar a verse en los combos de todas
-  las empresas y se la muestra a Rodolfo. No se cambia ningún dato.
 - En una copia de DEMO: alta de una empresa de prueba → tiene la fila `configuraciones/formulario_entrega_materiales`
   apuntando al global y **ningún** formulario con su `empr_id`; la entrega directa dibuja el global.
 - Una empresa existente: su configuración y su clon, iguales antes y después (comparar las filas).

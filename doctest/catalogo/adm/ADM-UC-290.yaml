@@ -14,7 +14,7 @@ referencias_codigo:
     detalle: "consulta getFormularios (línea 6), recurso GET /formularios/{empr_id}"
   - repo: traz-tools
     path: doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md
-    detalle: "§8.3, §8.5 y decisiones D1 a D3"
+    detalle: "§8.3 y decisiones D1 a D3"
   - repo: traz-tools
     path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
     detalle: "escenario CP-130 Ámbito (combo de tareas estándar)"
@@ -68,4 +68,4 @@ derivados: {}
 notas:
   - "Cubre la parte de combos de CP-130 y el punto T-8. Decisiones D2 y D3 del relevamiento."
   - "No cambia las pantallas: solo lo que devuelve la consulta existente, con las mismas claves (form_id, nombre, descripcion)."
-  - "Formularios sin empresa que ya existen (decisión de Rodolfo del 2026-11-10): no se asigna ni se cambia ninguno. Antes de desplegar, Pablo corre una consulta de solo lectura en DEMO y en la copia de producción que lista cuáles van a empezar a verse en los combos de todas las empresas, y se la muestra a Rodolfo; no se cambia ningún dato."
+  - "Los formularios sin empresa que ya existen no se tocan (decisión de Rodolfo del 2026-11-10)."
