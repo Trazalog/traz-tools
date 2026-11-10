@@ -14,12 +14,12 @@ pantalla de auditoría (REQ-013). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el análisis de impacto (incluidas las filas nuevas en `core.tablas`) y acordar con el especialista de infraestructura el contrato de "Notificar a infra" |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el análisis de impacto y acordar con el especialista de infraestructura el contrato de "Notificar a infra" |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Consola), [REQ-003](REQ-003-administracion-identidad.md) (autorregistro copiado: su orquestación de alta), [REQ-004](REQ-004-administracion-base-y-atributos.md) (columnas de `core.empresas`, `seg.users.superusuario`, `seg.eventos_registro`, auditoría, variables), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (planes, vencimiento del plan), [REQ-006](REQ-006-administracion-funcionalidades.md) (`seg.empresas_funcionalidades`) y [REQ-007](REQ-007-administracion-usuarios-roles-perfil.md) (modelo `Membresias`, invitar, banear, servicio "Estado de membresía") |
 | Entrega de la especificación | **E5** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: Consola → Empresas, Registros y Usuarios; alta reutilizando la orquestación del autorregistro, con manejo de error; cambio directo de plan; suspender / reactivar; vencimiento de planes gratuitos / de prueba; baja lógica; "Notificar a infra"; aprobación de planes pendientes; usuarios con filtros, exportación y actividad. CU-12 a 16, 18, 23, 61; CP-04, 17, 20 a 24, 26, 28, 29, 103, 107 |
 | Casos de uso | `ADM-UC-110` a `ADM-UC-119` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (cuatro pantallas, proceso diario, librería de alta de empresa compartida con el registro copiado, logo en el Portal); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs` y un script de base chico |
-| Riesgo | 🔴 Las columnas nuevas de `core.empresas` (optativas) y los nombres de columnas de `seg.eventos_registro` (tabla nueva) son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por el **núcleo de Tools**: las variables nuevas son filas nuevas en `core.tablas` (schema `core`, lista en "Datos"); se escriben `core.empresas` (estado, plan, datos, logo, `eliminado`) y `seg.users` (`banned_users`, `superusuario`) desde recursos nuevos; el alta llama a `API_CORE/empresa` (toolsCOREAPI, Bonita, AssetPlanner, disparador de alta) **sin modificarla**; el proceso diario necesita una tarea programada en el servidor → **análisis de impacto aprobado por Rodolfo**. "Notificar a infra": contrato a acordar (duda de ADM-UC-117) |
+| Riesgo | 🔴 Las columnas nuevas de `core.empresas` (optativas) y los nombres de columnas de `seg.eventos_registro` (tabla nueva) son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Las variables nuevas son filas nuevas en `core.tablas` sin cambiar las existentes (lista en "Datos"): **lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por el **núcleo de Tools**: se escriben `core.empresas` (estado, plan, datos, logo, `eliminado`) y `seg.users` (`banned_users`, `superusuario`) desde recursos nuevos; el alta llama a `API_CORE/empresa` (toolsCOREAPI, Bonita, AssetPlanner, disparador de alta) **sin modificarla**; el proceso diario necesita una tarea programada en el servidor → **análisis de impacto aprobado por Rodolfo**. "Notificar a infra": contrato a acordar (duda de ADM-UC-117) |
 
 ---
 
@@ -447,8 +447,7 @@ contraseñas ni enlaces de invitación.
 
 **Estructura: cambio de base aditivo, lo decide el equipo (regla de Rodolfo del 2026-11-10).** Las dos
 columnas nuevas de `core.empresas` son optativas (aceptan vacío) y `seg.eventos_registro` es tabla nueva
-de `seg`. **Las filas nuevas en `core.tablas` (variables) son del núcleo y las aprueba Rodolfo** con el
-análisis de impacto. Si el script de REQ-004 no corrió todavía, va dentro de él; si no, en uno chico con
+de `seg`. **Las filas nuevas en `core.tablas` (variables), sin cambiar las existentes: lo decide el equipo (regla de Rodolfo del 2026-11-10).** Si el script de REQ-004 no corrió todavía, va dentro de él; si no, en uno chico con
 su vuelta atrás. Nombres **[SUPUESTO]**.
 
 ### Columnas nuevas en tablas existentes
@@ -505,8 +504,8 @@ la configuración del servidor (como en REQ-003).
 
 ## Cómo se revisa (además de DocTest)
 
-- Script de base corrido en una copia de DEMO, con su vuelta atrás (las filas de `core.tablas`, aprobadas
-  por Rodolfo con el análisis de impacto).
+- Script de base corrido en una copia de DEMO, con su vuelta atrás (las filas nuevas de `core.tablas`:
+  lo decide el equipo, regla de Rodolfo del 2026-11-10).
 - **Análisis de impacto aprobado por Rodolfo**: (a) escribir `core.empresas` desde recursos nuevos (qué
   más lee esas columnas: Tools, DNATO, AssetPlanner, el disparador); (b) la librería `AltaEmpresa`:
   DNATO-UC-002 a 005 contra el registro copiado, en verde, antes y después de sacarla del controlador;
