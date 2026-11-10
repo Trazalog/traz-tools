@@ -2,7 +2,8 @@ id: ADM-UC-001
 modulo: ADM
 titulo: Entrar al Portal de la empresa
 perfil: Administrador
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-10
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -48,10 +49,8 @@ datos_prueba:
   empresa: "empresa DocTest del ambiente (DOCTEST_EMPRESA)"
   usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest, por ejemplo usuario@<dominio>"
   empresa_ajena_en_direccion: "cualquier empr_id distinto del de la sesión"
-dudas:
-  - "Si el administrador tiene varias empresas, ¿el Portal muestra siempre la empresa activa de la sesión, y para ver otra tiene que cambiarla desde Tools? Propuesta: sí, el módulo no trae selector de empresa."
-  - "Sin sesión, ¿va al ingreso de DNATO (como el resto de Tools hoy) y después del ingreso vuelve al tablero de Tools, no al Portal? Propuesta: sí; volver a la pantalla pedida queda para REQ-003."
-  - "¿El superusuario que no es administrador de su empresa activa puede entrar al Portal? Propuesta: no; el superusuario entra a la Consola, y al Portal solo si además es administrador."
+dudas: []
 derivados: {}
 notas:
+  - "Decisiones de Rodolfo (2026-11-10): el Portal muestra la empresa activa de la sesión, sin selector; sin sesión va al ingreso de DNATO y después al tablero de Tools; el superusuario entra al Portal solo si además es administrador."
   - "En REQ-002 el Portal es solo el marco: el contenido de la maqueta (plan, uso de IA, avisos, accesos) llega con las pantallas de REQ-004 en adelante. El botón \"Mi empresa\" en la barra de Tools tampoco es parte de este caso."

@@ -15,7 +15,7 @@ con datos (REQ-004 en adelante, ver [`README.md`](README.md)). La forma de traba
 | Se apoya en | [REQ-001](REQ-001-administracion-analisis.md) y su resultado, [`doc/v3/administracion/ANALISIS_INICIAL.md`](../doc/v3/administracion/ANALISIS_INICIAL.md) (secciones C.2, F.2 y F.3) |
 | Casos de uso | `ADM-UC-001`, `ADM-UC-002` y `ADM-UC-003` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (nuevo, lo crea Rodolfo) y `traz-tools` (solo para montarlo: `.gitmodules` y una constante) |
-| Riesgo | 🟡 Código nuevo. Del núcleo de Tools solo se **agrega** la constante `ADM` en `application/config/constants.php`; nada existente cambia |
+| Riesgo | 🟡 Código nuevo. Del núcleo de Tools solo se **agregan** las constantes `ADM` y `ADM_SUPERUSUARIOS` en `application/config/constants.php`; nada existente cambia |
 
 ---
 
@@ -53,7 +53,10 @@ después las hereda sin tener que acordarse.
 - No copia la registración ni el ingreso (REQ-003). Mientras tanto, sin sesión se manda al ingreso de
   DNATO, igual que hace Tools hoy.
 - No crea tablas ni columnas. No trae indicadores, planes, usuarios ni menús en el Portal.
-- No agrega la marca de superusuario en la base (ver la duda de ADM-UC-002).
+- No agrega la marca de superusuario en la base: va en REQ-004.
+- No cambia `TOOLS_ADMIN_USER` ni las pantallas que hoy lo comparan (Tools: `models/core/Valores.php`,
+  `views/core/valores/view.php`; DNATO: `Empresa.php`, `navbar.php`). Esas comparaciones son por igualdad: si
+  la constante pasara a tener varios correos, esas pantallas dejarían de reconocer al superusuario.
 
 ---
 
@@ -65,7 +68,8 @@ después las hereda sin tener que acordarse.
   igual que `traz-comp-pan`. Rama base `develop`.
 - Carpetas: `controllers/`, `models/`, `views/`, `helpers/`, `config/` (análisis, F.2).
 - Constante de prefijo `ADM` = `'traz-comp-adm/'` en `application/config/constants.php` de Tools,
-  junto a `PRD`, `PAN`, `ALM`, etc. **Es la única línea que se agrega al núcleo de Tools.**
+  junto a `PRD`, `PAN`, `ALM`, etc., y la constante `ADM_SUPERUSUARIOS` (ver "De dónde sale cada dato").
+  **Son las únicas dos líneas que se agregan al núcleo de Tools.**
 - PHP 5.6: nada de sintaxis de PHP 7 (el control es `phpcs` con PHPCompatibility, ver
   `doc/metodologia/REGLAS-PARA-AGENTES.md`).
 
@@ -92,7 +96,7 @@ Todos los controladores del módulo heredan de **un controlador base propio del 
 |---|---|---|
 | Hay sesión y empresa activa | Sesión de Tools (`empr_id`, `email`) | Ya existe |
 | Es administrador de la empresa activa | `REST_CORE/usuario/esadmin/porEmail/{email}/empresa/{empr_id}` | Ya existe: lo usa `Dashs::esAdminEmpresa()` en `application/models/Dashs.php:104` |
-| Es superusuario | Correo igual a `TOOLS_ADMIN_USER` (`application/config/constants.php`) | Ya existe. Ver duda en ADM-UC-002 |
+| Es superusuario | Correo incluido en la constante nueva `ADM_SUPERUSUARIOS` (lista de correos separados por coma, en `application/config/constants.php` de Tools). Si no está definida, se usa `TOOLS_ADMIN_USER` | Constante nueva (aditiva). Decisión de Rodolfo del 2026-11-10: poder tener varios superusuarios |
 | Nombre de la empresa | `REST_CORE/empresa/{empr_id}` | Ya existe (análisis, C.1) |
 | Nombre del usuario | Sesión de Tools | Ya existe |
 
@@ -165,14 +169,24 @@ datos sensibles.
   pantallas de producción. Si en el módulo funciona bien, se propaga (H-091).
 - **Administrador = el servicio que ya usa el tablero de Tools** (`/usuario/esadmin`), para que Tools y
   el módulo digan lo mismo. No se usa `seg.users.role` (correctivo C-5).
-- **Sin sesión se va al ingreso de DNATO**, como el resto de Tools, hasta que REQ-003 copie el ingreso.
+- **Sin sesión se va al ingreso de DNATO**, como el resto de Tools, y después del ingreso se cae en el
+  tablero de Tools. Volver a la pantalla pedida queda para REQ-003.
+- **Varias empresas:** el Portal muestra siempre la empresa activa de la sesión, sin selector; para ver
+  otra, se cambia desde Tools (Rodolfo, 2026-11-10).
+- **Superusuario y Portal:** el superusuario entra a la Consola; al Portal solo si además es
+  administrador de su empresa activa (Rodolfo, 2026-11-10).
+- **Varios superusuarios:** constante nueva `ADM_SUPERUSUARIOS`, lista separada por coma. No se cambia
+  `TOOLS_ADMIN_USER` porque Tools y DNATO lo comparan por igualdad (Rodolfo pidió poder tener varios,
+  2026-11-10).
+- **Pruebas en DEMO:** Pablo tiene las credenciales del superusuario de DEMO (es también el
+  administrador de la infraestructura); van en su `doctest/.env`, nunca en el repositorio.
 
 ## Cómo se revisa (además de DocTest)
 
 Lo que no tiene caso de uso y Rodolfo verifica en el pull request:
 
 - El submódulo está montado y Tools sigue andando igual: DocTest `regresion` en verde.
-- `application/config/constants.php` de Tools tiene **solo** la línea nueva de `ADM`.
+- `application/config/constants.php` de Tools tiene **solo** las líneas nuevas de `ADM` y `ADM_SUPERUSUARIOS`.
 - `application/config/config.php` de Tools **no** cambió.
 - La descripción del pull request lista **todos** los métodos públicos de los controladores del módulo,
   con su permiso (regla 8).

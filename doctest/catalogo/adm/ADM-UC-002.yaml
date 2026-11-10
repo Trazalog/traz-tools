@@ -2,7 +2,8 @@ id: ADM-UC-002
 modulo: ADM
 titulo: Entrar a la Consola de Trazalog
 perfil: Superusuario
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-10
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -17,7 +18,7 @@ pantallas:
   - "Consola (dirección traz-comp-adm/consola)"
 precondiciones:
   - Usuario con sesión iniciada en Tools
-  - El usuario es el superusuario del ambiente
+  - El usuario es superusuario del ambiente (su correo está en ADM_SUPERUSUARIOS)
   - El superusuario es además administrador de su empresa activa, para entrar por el Portal
 flujo_principal:
   - paso: "En el Portal de la empresa, toca '🔑 Consola'"
@@ -27,6 +28,10 @@ flujo_principal:
   - paso: "Vuelve a la Consola y toca '← Ir a Tools'"
     resultado: "Vuelve al tablero de Tools, con la misma sesión"
 flujos_alternativos:
+  - nombre: "Segundo superusuario de la lista"
+    pasos:
+      - paso: "Otro usuario, cuyo correo es el segundo de la lista de superusuarios del ambiente, entra a la dirección de la Consola"
+        resultado: "Entra a la Consola igual que el primero"
   - nombre: "Administrador que no es superusuario: no ve el botón"
     pasos:
       - paso: "Un administrador que no es superusuario entra al Portal"
@@ -40,15 +45,15 @@ flujos_alternativos:
       - paso: "Sin haber iniciado sesión, entra a la dirección de la Consola"
         resultado: "Lo lleva a la pantalla de ingreso"
 validaciones:
+  - "Puede haber varios superusuarios: entra cualquiera cuyo correo esté en la lista del ambiente"
   - "A la Consola entra solo el superusuario"
   - "El botón '🔑 Consola' se muestra solo al superusuario"
   - "Sin sesión no se entra a la Consola"
 datos_prueba:
-  superusuario: "el correo de TOOLS_ADMIN_USER del ambiente; la contraseña va en doctest/.env, nunca en el catálogo"
+  superusuario: "uno de los correos de ADM_SUPERUSUARIOS del ambiente; la contraseña va en doctest/.env, nunca en el catálogo"
   administrador_comun: "el administrador de la empresa DocTest"
-dudas:
-  - "¿Quién es superusuario por ahora? Hoy es un solo correo por ambiente (TOOLS_ADMIN_USER). La especificación pide una marca en el usuario (R7, correctivo C-5), y eso es una columna nueva en la base. Propuesta: en REQ-002 usar el correo y dejar la marca para el requerimiento de la Consola."
-  - "Para la prueba automática en DEMO hace falta la contraseña del superusuario de DEMO en doctest/.env de quien corre las pruebas. ¿Se la das a Pablo, o preferís crear un superusuario de prueba aparte?"
+dudas: []
 derivados: {}
 notas:
+  - "Decisiones de Rodolfo (2026-11-10): superusuario = correo incluido en ADM_SUPERUSUARIOS (lista separada por coma; si no está, TOOLS_ADMIN_USER). Las credenciales del superusuario de DEMO las tiene Pablo y van en su doctest/.env."
   - "En REQ-002 la Consola es solo el marco: la lista de empresas, registros, planes y demás llegan con sus requerimientos. La leyenda y los nombres de botones salen de la maqueta consola-empresas.html."
