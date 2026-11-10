@@ -27,9 +27,9 @@ flujo_principal:
   - paso: "Toca '＋ Nuevo global', arma 'Checklist de herramienta' con un campo de lista desde servicio y lo publica"
     resultado: "El global queda publicado; la paleta de la Consola ofrece los tipos avanzados"
   - paso: "Toca 'Inactivar' en G-2"
-    resultado: "Ve 'Lo usan por referencia 3 empresas en Salida y Recepción de pañol. Inactivarlo no cambia esas pantallas de Tools: lo van a seguir mostrando. Las copias no se tocan.' con 'Cancelar' / 'Inactivar'"
+    resultado: "Ve 'Lo usan por referencia 3 empresas en Salida y Recepción de pañol: esas pantallas quedarán sin formulario hasta que cada empresa elija otro. Las copias no se tocan.' con 'Cancelar' / 'Inactivar'"
   - paso: "Confirma"
-    resultado: "G-2 queda Inactivo; la configuración de esas tres empresas no cambia (siguen con G-2 en esos puntos) y las copias de G-2 siguen igual"
+    resultado: "G-2 queda Inactivo, esas tres empresas quedan con 'Ninguno' en esos puntos y las copias de G-2 siguen igual"
   - paso: "Abre la pestaña 'Puntos de uso' y elige G-1 como 'Global al alta' de formulario_entrega_materiales"
     resultado: "Se guarda y queda en la auditoría"
 flujos_alternativos:
@@ -42,7 +42,7 @@ flujos_alternativos:
   - nombre: "Nuevo punto de uso"
     pasos:
       - paso: "Toca '＋ Punto de uso' y carga clave, pantalla y módulo"
-        resultado: "El punto aparece, solo para leer, en 'Dónde se usan' de todas las empresas, con 'Ninguno' donde la empresa no tiene configuración"
+        resultado: "El punto aparece en 'Dónde se usan' de todas las empresas, en 'Ninguno'"
   - nombre: "El formulario del autorregistro"
     pasos:
       - paso: "Busca el formulario del registro de usuario"
@@ -50,14 +50,14 @@ flujos_alternativos:
 validaciones:
   - "La Consola muestra los globales con estado, campos, empresas que lo usan y copias"
   - "Solo el superusuario crea y edita globales y usa los tipos avanzados"
-  - "Inactivar un global en uso avisa cuántas empresas lo usan y no cambia la configuración de ninguna empresa"
+  - "Inactivar un global en uso avisa cuántas empresas lo usan y deja esos puntos en 'Ninguno'"
   - "Las copias de un global no se tocan al inactivarlo"
   - "Los puntos de uso tienen su global al alta"
   - "El formulario del autorregistro no se puede editar desde acá"
 datos_prueba:
   globales: "G-1, G-2, G-3 del fixture de 03_CASOS_DE_PRUEBA.md, en la copia de DEMO"
 dudas:
-  - "¿Se impide inactivar un global que usan empresas, igual que se pregunta para el Portal (ADM-UC-250)? La Consola no puede limpiar la configuración de esas empresas (decisión de Rodolfo del 2026-11-10), así que lo siguen mostrando. Propuesta: misma respuesta que en ADM-UC-250; si se impide, el mensaje lista cuántas empresas y en qué puntos lo usan."
+  - "Inactivar un global usado por 3 empresas les deja la pantalla sin formulario (la especificación lo acepta con confirmación). ¿Te parece bien que la Consola limpie la configuración de esas empresas? Propuesta: sí, y además se manda un correo a sus administradores avisando qué pantalla quedó sin formulario."
   - "Hasta que se construya REQ-017, el 'Global al alta' se guarda pero nadie lo usa: el alta de empresa sigue clonando 'Entrega Materiales' desde la 9000. Si REQ-015 se despliega antes que REQ-017, ¿mostramos igual la columna 'Global al alta'? Propuesta: sí, con la leyenda 'Se va a usar cuando el alta de empresa escriba la configuración (todavía clona desde la empresa plantilla).'"
   - "El formulario del autorregistro lo usa el registro (núcleo, hoy con número fijo). Propuesta: en este plan solo se ve (registración = núcleo, y no se toca cómo se dibuja ni se completa en Tools); editarlo queda para cuando Rodolfo lo decida."
 derivados: {}

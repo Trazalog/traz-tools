@@ -4,26 +4,24 @@
 
 Decimoquinto trabajo de Pablo para el módulo **Administración** (`traz-comp-adm`): las **pantallas** para
 administrar los formularios dinámicos que usan las pantallas de Tools: **Formularios** del Portal (los
-propios y los globales disponibles, el constructor, la vista previa, "Usar como base" y "Dónde se usan", este
-último **solo de lectura**) y
+propios y los globales disponibles, el constructor, la vista previa, "Usar como base" y "Dónde se usan") y
 **Formularios globales** de la Consola (con el catálogo de puntos de uso). Lo leen Pablo para planificar y
 Rodolfo para aprobar el análisis de impacto. **En este plan de trabajo está prohibido tocar cómo se
 muestran, se dibujan o se completan los formularios en Tools** (decisión de Rodolfo del 2026-11-10): acá
 solo se hace el ABM para administrarlos y modificarlos dentro del módulo, y `traz-comp-formularios` no se
-toca. **"Dónde se usan" solo muestra en qué lugares de Tools se usa cada formulario: no permite cambiarlo**
-(decisión de Rodolfo del 2026-11-10: solo vale lo que tiene efecto dentro del módulo). El listado de los combos de Tools (`FRMDataService.getFormularios`), el disparador de alta de empresa
+toca. El listado de los combos de Tools (`FRMDataService.getFormularios`), el disparador de alta de empresa
 y el pase mínimo de la empresa plantilla 9000 a globales van en
 [REQ-017](REQ-017-administracion-formularios-globales.md); la migración completa de formularios no se hace.
 Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos y aprobar el análisis de impacto. Ajustado el 2026-11-10 por las decisiones de Rodolfo (prohibición de tocar el dibujo de formularios en Tools; parte del alcance pasa a REQ-017; "Dónde se usan" solo de lectura) |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos y aprobar el análisis de impacto. Ajustado el 2026-11-10 por las decisiones de Rodolfo (prohibición de tocar el dibujo de formularios en Tools; parte del alcance pasa a REQ-017) |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal, Consola), [REQ-004](REQ-004-administracion-base-y-atributos.md) (auditoría; REQ-004 dejó los atributos de `frm.*` para acá), [REQ-008](REQ-008-administracion-consola-empresas.md) (pestaña "Formularios" de la ficha de la empresa); relevamiento [`doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md`](../doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md) y sus decisiones D1 a D3 |
 | Entrega de la especificación | **E11b** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`, solo la parte de pantallas: constructor (Portal y Consola), listas de opciones, vista previa sin respuesta, usar como base, puntos de uso. CU-70 a 76; CP-120 a 132 (CP-127, la parte de combos de CP-130 y la parte mínima de CP-132 van en REQ-017); RF-120 a 130; R9 solo en la vista previa |
 | Casos de uso | `ADM-UC-250` a `ADM-UC-255` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantallas, constructor, vista previa); `traz-tools`: estructura de `frm.*` versionada (primera tarea), recursos **nuevos** en `ADMDataService.dbs` y un script de base. **No** se toca `traz-comp-formularios`, ni `FRMDataService.dbs`, ni el disparador de alta (eso es REQ-017) |
-| Riesgo | 🔴 Las columnas nuevas optativas en `frm.formularios`, la tabla nueva `seg.formularios_puntos_uso` con su carga inicial y las funciones nuevas en `seg` (lista en "Datos") son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Las filas **nuevas** de `core.tablas` (solo listas de opciones nuevas) **las decide el equipo (regla de Rodolfo del 2026-11-10)**. **Nunca** se escribe la configuración `configuraciones/formulario_<punto>` (ni filas nuevas ni existentes): "Dónde se usan" solo la lee. La estructura real de `frm.*` **no está en el repositorio**: sacarla es la primera tarea (F-5, sin cambiar nada en la base). Sigue en rojo por el **núcleo de Tools**: se **cambian filas existentes** (formularios e ítems de `frm.*` que ya existen), que leen las pantallas de almacenes, pañol, tareas estándar y etapas → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto"). Recursos del DataService nuevos (🟡) |
+| Riesgo | 🔴 Las columnas nuevas optativas en `frm.formularios`, la tabla nueva `seg.formularios_puntos_uso` con su carga inicial y las funciones nuevas en `seg` (lista en "Datos") son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Las filas **nuevas** de `core.tablas` (listas de opciones nuevas, y la fila `configuraciones/formulario_<punto>` cuando la empresa todavía no la tiene) **las decide el equipo (regla de Rodolfo del 2026-11-10)**. La estructura real de `frm.*` **no está en el repositorio**: sacarla es la primera tarea (F-5, sin cambiar nada en la base). Sigue en rojo por el **núcleo de Tools**: se **cambian filas existentes** (formularios e ítems de `frm.*` que ya existen, y la fila de configuración de un punto de uso que la empresa ya tiene, al elegir otro formulario o al inactivar), que leen las pantallas de almacenes, pañol, tareas estándar y etapas → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto"). Recursos del DataService nuevos (🟡) |
 
 ---
 
@@ -31,8 +29,8 @@ Lista completa en [`README.md`](README.md).
 
 - Hoy **no hay ninguna pantalla** para crear o editar formularios: todo se hace con SQL a mano, con
   scripts que se contradicen (relevamiento §6 y §4; el formulario de registro aparece como 24, 1 y 72).
-- No hay dónde ver qué formulario usa cada pantalla de Tools: hay que buscar el número en el ABM "Lista de
-  valores" (CU-74, "Hoy"). Se sigue cambiando ahí: este requerimiento solo lo muestra.
+- Para cambiar qué formulario muestra una pantalla de Tools hay que tipear el número del formulario en el
+  ABM "Lista de valores" (CU-74, "Hoy").
 - Los formularios globales no tienen dónde verse ni mantenerse; el alta de empresa clona uno solo desde la
   empresa plantilla 9000 (relevamiento §4.2).
 
@@ -51,7 +49,7 @@ Lista completa en [`README.md`](README.md).
    volcado binario viejo `_backend/database/traz_tools_v1.5.8.5.dmp` (relevamiento §1). Sin caso propio:
    se revisa en "Cómo se revisa".
 1. Listado de formularios propios y globales disponibles, con estado, campos, dónde se usa y respuestas;
-   activar e inactivar con aviso de los lugares donde se usa (sin cambiar esos lugares); los inactivos se ven marcados "Inactivo" en el ABM del
+   activar e inactivar con aviso si está en uso; los inactivos se ven marcados "Inactivo" en el ABM del
    módulo (CU-70, RF-120, RF-128, RF-130) → **ADM-UC-250**.
 2. Constructor: cabecera, ítems arrastrables, nombre interno, listas de opciones existentes o nuevas,
    guardar como borrador o publicar; con respuestas, nombre interno y tipo bloqueados (CU-71, RF-122,
@@ -59,8 +57,8 @@ Lista completa en [`README.md`](README.md).
 3. Vista previa con el mismo dibujo de Tools, sin crear ninguna respuesta (CU-73, RF-124) →
    **ADM-UC-252**.
 4. Duplicar y "Usar como base" un global (CU-72, RF-125) → **ADM-UC-253**.
-5. "Dónde se usan", **solo de lectura**: ver, por pantalla de Tools, qué formulario usa la empresa (propio,
-   global o ninguno), sin poder cambiarlo (CU-74, RF-126 en la parte de mostrar) → **ADM-UC-254**.
+5. "Dónde se usan": elegir, por pantalla de Tools, el formulario propio, global o ninguno (CU-74, RF-126)
+   → **ADM-UC-254**.
 6. Consola → Formularios globales y puntos de uso, con los tipos avanzados (CU-75, RF-121) →
    **ADM-UC-255**.
 
@@ -77,11 +75,10 @@ en Tools.** No es un "requerimiento aparte" pendiente: no se hace. Por eso **no 
 | F-1 | Opciones empresa → global (R9) al dibujar en Tools | **No se toca.** Si la empresa no tiene su lista de opciones, el campo se muestra como hoy: vacío (`Forms::obtenerValores` busca solo `empresa()."-".$id`, `traz-comp-formularios/models/Forms.php:228-231`). R9 se aplica **solo en la vista previa del módulo** | CP-122 y CP-124 en las pantallas de Tools, CU-76 |
 | F-2 | Sesión obligatoria, protección de envíos y validación en servidor en `Form/*`; `info_id` verificado contra la empresa; `obtenerTodos` filtrado (correctivo C-9) | `Form.php` y `Forms.php` siguen como están | CP-129 completo |
 | F-3 | Número de respuesta (`info_id`) por secuencia en vez de `select_max` (correctivo C-10) | `Forms.php:98` sigue como está | Ninguno directo |
-| F-4 | No dibujar en Tools los formularios inactivos (cabecera `inactivo` o dada de baja) | `obtenerPlantilla` y `obtenerXEmpresa` siguen sin mirar la cabecera (`Forms.php:183-191`, `414-418`). Tampoco se limpia la configuración de los puntos de uso al inactivar: un inactivo que está en uso **se sigue dibujando** en Tools | CP-128 en las pantallas de Tools |
-| F-6 | Elegir desde el módulo qué formulario usa cada pantalla de Tools ("Dónde se usan" con selector y "Guardar") | La configuración `configuraciones/formulario_<punto>` se sigue cambiando como hoy, en "Lista de valores" de Tools. El módulo **solo la lee** | CP-126 en la parte de elegir |
+| F-4 | No dibujar en Tools los formularios inactivos (cabecera `inactivo` o dada de baja) | `obtenerPlantilla` y `obtenerXEmpresa` siguen sin mirar la cabecera (`Forms.php:183-191`, `414-418`). En los puntos de uso se cubre limpiando la configuración al inactivar ("Cómo se arma") | CP-128 en las pantallas que llegan al formulario por número fijo |
 
 **Dentro del ABM del módulo**, en cambio, los formularios inactivos **sí** se ven, marcados "Inactivo"
-(Portal y Consola); si alguno sigue en uso, "Dónde se usan" lo muestra con "(inactivo)" **[SUPUESTO]**.
+(Portal y Consola), y no se ofrecen en "Dónde se usan".
 
 F-5 (versionar la estructura de `frm.*`) **sí** se hace: es la tarea 0 de "Qué tiene que hacer".
 
@@ -104,8 +101,8 @@ ni acá ni en REQ-017.
 ### Otros cambios que tampoco hace
 
 - **No cambia las pantallas de Tools que leen la configuración** (T-7: `Entrega_Material.php:50`,
-  `Order.php:31`, `Herramienta.php:56`) **ni la configuración que leen**: siguen leyendo
-  `configuraciones/formulario_<punto>` como hoy, y el módulo nunca la escribe (F-6).
+  `Order.php:31`, `Herramienta.php:56`): siguen leyendo `configuraciones/formulario_<punto>` como hoy, y por
+  eso **ven enseguida** lo que se elige en "Dónde se usan".
 - **No toca la 9000**: hasta REQ-017, sus formularios no aparecen en el Portal ni en la Consola
   **[SUPUESTO]**, para que nadie los renombre y rompa el clonado del disparador.
 - **No permite editar el formulario del autorregistro** (el que usa el registro, hoy número fijo): se ve en
@@ -130,14 +127,9 @@ ni acá ni en REQ-017.
 - **Listas de opciones** = filas de `core.tablas` con el mismo mecanismo de hoy (el disparador
   `core.set_tabla_id_trg` antepone el `empr_id`; relevamiento §1.d). Lista global = sin empresa.
 - **Puntos de uso** = tabla nueva `seg.formularios_puntos_uso` con clave (`formulario_entrega_materiales`, …), pantalla, módulo y
-  "global al alta". Carga inicial: las cuatro claves de la maqueta `consola-formularios.html`. **Sigue
-  haciendo falta** aunque "Dónde se usan" sea de lectura: (a) es la lista de los lugares a mostrar, con el
-  nombre de la pantalla y el módulo (`core.tablas` solo tiene la clave), y (b) guarda el "Global al alta"
-  que lee el disparador de REQ-017. Escribirla no cambia nada en Tools: el "Global al alta" recién tiene
-  efecto con REQ-017, que tiene su propio análisis de impacto.
+  "global al alta". Carga inicial: las cuatro claves de la maqueta `consola-formularios.html`.
 - **Dónde se usa** (mecanismo A del relevamiento) = la fila `configuraciones` / `formulario_<punto>` de la
-  empresa en `core.tablas`, con el número de formulario en `descripcion` (relevamiento, duda 4). **Solo se
-  lee.**
+  empresa en `core.tablas`, con el número de formulario en `descripcion` (relevamiento, duda 4).
 
 ### Portal → Formularios (CU-70)
 
@@ -146,12 +138,12 @@ ni acá ni en REQ-017.
   "Publicar" / "Inactivar" / "Activar".
 - **Globales disponibles**: los globales **publicados** (no los borradores ni los inactivos), con
   Formulario, Campos, "Lo usás en" y "Vista previa", "⧉ Usar como base". **Nunca** "Editar" (CP-120).
-- **Inactivar** uno en uso: ventana "Está en uso en <lugares>. Inactivarlo no cambia esas pantallas de
-  Tools: lo van a seguir mostrando hasta que se elija otro formulario en "Lista de valores". Las <N>
-  respuestas cargadas se siguen viendo." **[SUPUESTO]** (el texto de la maqueta prometía dejar la pantalla
-  sin formulario, y eso ya no pasa) con "Cancelar" / "Inactivar". <lugares> sale de "Dónde se usan" (puntos
-  de uso, procesos, tareas estándar y etapas). Al confirmar solo cambia el estado a `inactivo`: **no se toca
-  la configuración** (F-4 y F-6). Si directamente se impide inactivar uno en uso es duda de ADM-UC-250.
+- **Inactivar** uno en uso: ventana "Está en uso en <punto>: esa pantalla quedará sin formulario hasta que
+  elijas otro en "Dónde se usan". Las <N> respuestas cargadas se siguen viendo." con "Cancelar" /
+  "Inactivar". Al confirmar, en **la misma operación**: estado `inactivo` y la configuración de esos puntos
+  de la empresa queda en "ninguno" (así la pantalla de Tools dice "No se especificó un formulario", como
+  hoy cuando no hay; CP-126). Sin esto, como Tools dibuja por número y en este plan no se toca el dibujo
+  (F-4 prohibido), seguiría mostrándolo.
 - Un formulario de otra empresa no aparece nunca (RF-130, CP-130). Pedir uno ajeno por la dirección da
   "Esa página no existe." (404, REQ-002).
 
@@ -198,19 +190,19 @@ lista global se marca "(global · en Tools se ve vacía)" **[SUPUESTO]** (ver la
 - Si una lista con el mismo nombre ya existe en la empresa, se usa la de la empresa y no se copia
   **[SUPUESTO]** (duda de ADM-UC-253).
 
-### Dónde se usan, solo de lectura (CU-74, RF-126 en la parte de mostrar)
+### Dónde se usan (CU-74, RF-126)
 
-- **Todo es de lectura** (decisión de Rodolfo del 2026-11-10): cambiar la configuración cambiaría lo que
-  dibuja Tools, y eso está prohibido en este plan (F-6). No hay selector, ni "Guardar", ni recurso que
-  escriba `configuraciones/formulario_*`. La maqueta muestra selectores: manda la decisión.
-- Una fila por punto de uso del catálogo (`seg.formularios_puntos_uso`): Pantalla, Módulo y el formulario
-  que tiene hoy la fila `configuraciones/formulario_<punto>` de la empresa, como "<nombre> (propio)" o
-  "🌐 <nombre> (global)", con "(inactivo)" si lo está **[SUPUESTO]**. Si la empresa no tiene la fila, o
-  está dada de baja, dice "Ninguno" (la pantalla de Tools muestra "No se especificó un formulario").
-- Debajo, igual que antes: procesos (`pro.procesos_forms`), tareas estándar y etapas con su formulario y el
+- Una fila por punto de uso del catálogo: Pantalla, Módulo y un selector con los propios **publicados**,
+  los globales **publicados** ("🌐 … (global)") y "Ninguno". Los borradores aparecen deshabilitados con
+  "(propio · borrador, publicalo primero)" (maqueta). "Guardar" escribe la fila
+  `configuraciones/formulario_<punto>` de la empresa.
+- Elegir "Ninguno" avisa "La pantalla quedará sin formulario" y, al confirmar, la fila queda dada de baja
+  (`eliminado`) **[SUPUESTO]**: la pantalla de Tools muestra "No se especificó un formulario" y guarda sin
+  `info_id`, como hoy (CP-126).
+- Debajo, **solo lectura**: procesos (`pro.procesos_forms`), tareas estándar y etapas con su formulario y el
   enlace a su ABM ("Ir a Procesos →", "Ir a Tareas estándar →", "Ir a Etapas →").
-- Los mismos datos llenan la columna "Dónde se usa" de "Mis formularios", el "Lo usás en" de los globales y
-  el aviso de inactivar.
+- Como las pantallas de Tools leen esa fila directamente, el cambio se ve en la próxima carga de la
+  pantalla (CP-126 "la pantalla de entrega directa de Tools dibuja G-1"), sin tocar Tools.
 
 ### Consola → Formularios globales (CU-75, RF-121)
 
@@ -218,10 +210,10 @@ lista global se marca "(global · en Tools se ve vacía)" **[SUPUESTO]** (ver la
   configuración), "Copias" (formularios con "copiado de" igual a este), "Al alta de empresa", y "Editar",
   "Vista previa", "Publicar" / "Inactivar". "＋ Nuevo global". El mismo constructor, con los tipos
   avanzados.
-- **Inactivar** un global en uso: "Lo usan por referencia <N> empresas en <puntos>. Inactivarlo no cambia
-  esas pantallas de Tools: lo van a seguir mostrando. Las copias no se tocan." **[SUPUESTO]** y
-  confirmación (CP-131). Al confirmar solo cambia el estado: **no se toca la configuración de ninguna
-  empresa** (F-4 y F-6).
+- **Inactivar** un global en uso: "Lo usan por referencia <N> empresas en <puntos>: esas pantallas quedarán
+  sin formulario hasta que cada empresa elija otro. Las copias no se tocan." y confirmación (CP-131). Al
+  confirmar, como en el Portal, la configuración de esas empresas para esos puntos queda en "Ninguno"
+  (ver la duda de ADM-UC-255).
 - Pestaña **Puntos de uso**: Clave, Pantalla, Módulo, "Global al alta" (selector), "＋ Punto de uso". Leyenda
   "Al dar de alta una empresa se escribe su configuración apuntando a estos globales (por referencia, sin
   copiar)…" **[SUPUESTO]** cambiada mientras no esté construido REQ-017 (que cambia el disparador): "Se
@@ -234,7 +226,7 @@ lista global se marca "(global · en Tools se ve vacía)" **[SUPUESTO]** (ver la
 
 En la misma operación que el cambio: `formulario.crear`, `formulario.editar`, `formulario.publicar`
 (CP-121), `formulario.inactivar`, `formulario.activar`, `formulario.duplicar`, `formulario.copiar` (usar
-como base), `lista.crear`, `punto_uso.editar`. Salvo
+como base), `formulario.punto_uso` (cambio en "Dónde se usan"), `lista.crear`, `punto_uso.editar`. Salvo
 `formulario.publicar`, **[SUPUESTO]**.
 
 ---
@@ -247,10 +239,10 @@ como base), `lista.crear`, `punto_uso.editar`. Salvo
 | Formularios propios y globales con estado, campos, uso y respuestas | `ADMDataService GET /empresa/{empr_id}/formularios`, `GET /consola/formularios` | **NUEVO** |
 | Un formulario con sus ítems (verifica que sea de la empresa o global) | `ADMDataService GET /empresa/{empr_id}/formulario/{form_id}` | **NUEVO** |
 | Guardar (cabecera, ítems, listas nuevas, auditoría) | `ADMDataService PUT /formulario` → función nueva | **NUEVO** |
-| Cambiar estado (no toca la configuración) | `ADMDataService PUT /formulario/estado` → función nueva | **NUEVO** |
+| Cambiar estado (y limpiar la configuración si estaba en uso) | `ADMDataService PUT /formulario/estado` → función nueva | **NUEVO** |
 | Copiar (duplicar o usar como base) | `ADMDataService POST /formulario/copia` → función nueva | **NUEVO** |
 | Listas de opciones de la empresa y globales, con sus valores | `ADMDataService GET /empresa/{empr_id}/listas`, `GET /lista/{nombre}/empresa/{empr_id}` | **NUEVO** |
-| Puntos de uso y la configuración de la empresa (solo lectura) | `ADMDataService GET /formularios/puntos-uso`, `GET /empresa/{empr_id}/formularios/uso` | **NUEVO**. No hay recurso que escriba `configuraciones/formulario_*` |
+| Puntos de uso y la configuración de la empresa | `ADMDataService GET /formularios/puntos-uso`, `GET /empresa/{empr_id}/formularios/uso`, `PUT /empresa/formulario/uso` | **NUEVO** |
 | Usos por proceso, tarea estándar y etapa (solo lectura) | `ADMDataService GET /empresa/{empr_id}/formularios/usos-abm` | **NUEVO** (lectura de `pro.*`, `tst.*`, `prd.*`) |
 | Editar puntos de uso (Consola) | `ADMDataService PUT /consola/formularios/punto-uso` | **NUEVO** |
 | Dibujo de la vista previa | Función `form($data)` de `traz-comp-formularios/helpers/form_helper.php` | Ya existe (no se modifica) |
@@ -281,7 +273,7 @@ Maqueta `doc/v3/dnato/mockups/empresa-formularios.html`.
 | Globales disponibles | "los mantiene Trazalog · se usan tal cual o como base de una copia propia"; Formulario, Campos, Lo usás en; "Vista previa", "⧉ Usar como base" | `adm-formularios-globales`; `adm-formulario-usar-base` |
 | Inactivar | Ventana con el aviso de uso; "Cancelar" / "Inactivar" | `adm-formulario-inactivar-modal`; `adm-inactivar-confirmar` |
 | Copia | Ventana "Nombre de la copia", "Cancelar" / "Crear copia" **[SUPUESTO]** | `adm-formulario-copia-modal`; `adm-copia-confirmar` |
-| Dónde se usan (solo lectura) | "Qué formulario muestra cada pantalla de Tools en tu empresa."; Pantalla, Módulo, Formulario (texto, sin selector ni "Guardar"); "Elegidos en su propio ABM (solo lectura)" con Dónde, Formulario y enlace | `adm-formularios-uso`; fila `adm-uso-<clave>`; `adm-formularios-usos-abm` |
+| Dónde se usan | "Qué formulario muestra cada pantalla de Tools en tu empresa."; Pantalla, Módulo, selector; "Guardar"; "Elegidos en su propio ABM (solo lectura)" con Dónde, Formulario y enlace | `adm-formularios-uso`; fila `adm-uso-<clave>`; `adm-formularios-uso-guardar`; `adm-formularios-usos-abm` |
 
 ### Constructor — `traz-comp-adm/portal/formulario/<form_id>` (y `traz-comp-adm/consola/formulario/<form_id>`)
 
@@ -332,16 +324,16 @@ Maqueta `doc/v3/dnato/mockups/consola-formularios.html`.
 4. No se publica un formulario sin al menos un campo con nombre.
 5. Con respuestas cargadas, el nombre interno y el tipo de un ítem no cambian (se controla en el servidor).
 6. Inactivar es baja lógica: no se borra nada y las respuestas viejas se siguen viendo; si estaba en uso,
-   avisa dónde, y no cambia la configuración de esos lugares.
-7. "Dónde se usan" es solo de lectura: el módulo nunca escribe `configuraciones/formulario_*`.
+   avisa y deja esos puntos en "Ninguno".
+7. Solo los formularios publicados se pueden elegir en "Dónde se usan".
 8. La vista previa no crea ninguna respuesta.
 9. Usar como base copia cabecera, ítems y listas; la copia no sigue al global.
 10. Cada cambio queda en la auditoría con quién (de la sesión).
 
 ## Registro en el log
 
-`log_message('DEBUG', '#TRAZA | ADM | <Clase> | <metodo>() ...')`: cada guardado, cambio de estado y copia
-(formulario, empresa, quién), y cada rechazo.
+`log_message('DEBUG', '#TRAZA | ADM | <Clase> | <metodo>() ...')`: cada guardado, cambio de estado, copia y
+cambio de "Dónde se usan" (formulario, empresa, quién), y cada rechazo.
 
 ---
 
@@ -351,8 +343,9 @@ Maqueta `doc/v3/dnato/mockups/consola-formularios.html`.
 de `frm.formularios` son optativas (una con valor por defecto, la otra acepta vacío) y se quedan en su
 tabla; la tabla nueva va en `seg`, como todas las del módulo (regla de Rodolfo del 2026-11-10). Nombres
 **[SUPUESTO]**. El script se escribe **después** de versionar la estructura real de `frm.*` sacada de DEMO
-(tarea 0, F-5). Las filas **nuevas** de `core.tablas` (solo listas de opciones nuevas) las decide el equipo (regla de Rodolfo
-del 2026-11-10). La configuración `configuraciones/formulario_*` no se escribe nunca.
+(tarea 0, F-5). Las filas **nuevas** de `core.tablas` (listas de opciones nuevas y la configuración de un
+punto de uso que la empresa todavía no tiene) las decide el equipo (regla de Rodolfo del 2026-11-10); cambiar
+una fila de configuración que ya existe sigue en el análisis de impacto.
 
 | Tabla | Cambio | Por defecto |
 |---|---|---|
@@ -361,8 +354,8 @@ del 2026-11-10). La configuración `configuraciones/formulario_*` no se escribe 
 | `seg.formularios_puntos_uso` (nueva) | `clave`, `pantalla`, `modulo`, `form_id_alta` (global al alta, nulo), `orden` | Carga inicial: `formulario_entrega_materiales`, `formulario_salida_herramientas`, `formulario_recepcion_herramientas`, `formulario_checklist_herramientas` (maqueta), sin global al alta |
 
 Funciones nuevas (en `seg`, como las tablas nuevas; además no se mezcla con el esquema `frm` sin DDL): guardar formulario
-(cabecera + ítems + listas + auditoría), cambiar estado, copiar, guardar punto de uso de la Consola (solo
-`seg.formularios_puntos_uso`). Ninguna fila existente cambia en una columna existente; vuelta atrás: borrar las columnas, la
+(cabecera + ítems + listas + auditoría), cambiar estado (con la limpieza de la configuración), copiar,
+guardar uso. Ninguna fila existente cambia en una columna existente; vuelta atrás: borrar las columnas, la
 tabla y las funciones.
 
 ---
@@ -371,10 +364,10 @@ tabla y las funciones.
 
 | Qué | Detalle |
 |---|---|
-| Qué se escribe | `frm.formularios` y `frm.items` (formularios nuevos o editados), `core.tablas` (solo listas nuevas), `seg.formularios_puntos_uso`. **No** se escribe `configuraciones/formulario_*` |
+| Qué se escribe | `frm.formularios` y `frm.items` (formularios nuevos o editados), `core.tablas` (listas nuevas y la fila `configuraciones/formulario_<punto>` de la empresa) |
 | Quién lo lee | Almacenes (entrega de materiales), pañol (salida, recepción, checklist), BPM/procesos, tareas estándar, etapas, residuos, módulos de cliente (relevamiento §3.1). Todos dibujan **por número** con el módulo `traz-comp-formularios`, que no cambia |
 | Qué se rompe si se hace mal | Renombrar el nombre interno de un ítem rompe a quien busca respuestas por nombre (`PANDataservice.dbs:220`, `ALMDataService.dbs:555`, entrega de materiales, relevamiento §5.1) → regla 5. Cambiar el nombre de "Entrega Materiales" de la 9000 rompería el clonado del disparador → la 9000 **no** aparece en el Portal ni en la Consola hasta REQ-017 **[SUPUESTO]** |
-| Lo que cambia en Tools sin tocar código | Solo editar un formulario que ya se usa (sus ítems) cambia lo que dibuja Tools, que es el ABM pedido. "Dónde se usan" no cambia nada (solo lee) e inactivar tampoco: Tools lo sigue dibujando (F-4, F-6). Que los combos de tareas estándar respeten el estado es de REQ-017 |
+| Lo que cambia en Tools sin tocar código | Elegir un formulario en "Dónde se usan" o inactivarlo cambia lo que dibuja la pantalla de Tools en la próxima carga (es lo buscado, CP-126) |
 | Formularios sin empresa que existen hoy | La verificación §8.5 del relevamiento (qué formularios sin `empr_id` hay en producción y si son de un cliente) **no se corrió**: hasta correrla, un formulario de un cliente sin empresa aparecería como "global" para todos en el ABM del módulo (duda de ADM-UC-250). En los combos de Tools recién aparecen con REQ-017 |
 | Pruebas | ADM-UC-250 a 255 en la copia de DEMO; ALM y PAN de DocTest (`regresion`) en verde, porque usan esos formularios |
 
@@ -383,19 +376,15 @@ tabla y las funciones.
 ## Decisiones tomadas
 
 - **El módulo solo hace el ABM** (decisión de Rodolfo del 2026-11-10): en este plan está prohibido tocar
-  cómo se muestran, se dibujan o se completan los formularios en Tools. F-1 a F-4 y F-6 no se hacen; F-5 (versionar
+  cómo se muestran, se dibujan o se completan los formularios en Tools. F-1 a F-4 no se hacen; F-5 (versionar
   la estructura de `frm.*`) es la primera tarea, porque no cambia nada en la base.
 - **Combos, disparador y pase mínimo de la 9000 van en REQ-017** (decisión de Rodolfo del 2026-11-10):
   tocan un DataService existente, un disparador existente y filas existentes, con su propio análisis de
   impacto. La migración completa (M-7b / RF-131) no se hace.
 - **La vista previa usa `form($data)`**, que ya existe: mismo dibujo que Tools, sin crear respuestas y sin
   tocar el módulo compartido.
-- **"Dónde se usan" es solo de lectura e inactivar no limpia la configuración** (decisión de Rodolfo del
-  2026-11-10): solo vale lo que tiene efecto dentro del módulo, y cambiar `configuraciones/formulario_*`
-  cambia lo que muestran las pantallas de Tools. Por eso un inactivo en uso se sigue dibujando, y el aviso
-  lo dice.
-- **`seg.formularios_puntos_uso` se queda**: es la lista de lugares que muestra "Dónde se usan" y guarda el
-  "Global al alta" que usa REQ-017.
+- **Inactivar limpia la configuración de los puntos de uso**: es la única forma, sin tocar el módulo
+  compartido, de que la pantalla de Tools deje de mostrar un formulario inactivo.
 - **Estado nuevo con valor por defecto `publicado`**: los formularios de hoy siguen exactamente igual.
 - **No se toca la 9000 ni el disparador** en este requerimiento: moverla sin cambiar el disparador
   rompería el alta de empresa de v2; las dos cosas van juntas en REQ-017.
@@ -407,8 +396,6 @@ tabla y las funciones.
   copia de DEMO, con su vuelta atrás.
 - Verificación §8.5 del relevamiento corrida en producción y revisada por Rodolfo antes de desplegar.
 - Después de abrir varias vistas previas, `frm.instancias_formularios` tiene la misma cantidad de filas.
-- Después de recorrer ADM-UC-250, 254 y 255 (inactivar en uso incluido), las filas
-  `configuraciones/formulario_*` de `core.tablas` están igual que antes (misma consulta antes y después).
 - `git diff` sin cambios en `application/modules/traz-comp-formularios`, en `FRMDataService.dbs` ni en el
   disparador `configuracion_inicial_empresa_trg` (los dos últimos son de REQ-017).
 - DocTest `regresion` en verde (ALM, PAN).
@@ -425,8 +412,7 @@ Están en los casos de uso (campo `dudas`), para contestarlas en un solo lugar.
 ## Casos de prueba de la especificación que cubre
 
 Ajustada el 2026-11-10: "**Prohibido**" = queda fuera por la prohibición del plan de tocar cómo se muestran,
-se dibujan o se completan los formularios en Tools, incluido cambiar desde el módulo la configuración que
-eligen esas pantallas (no se hace en ningún requerimiento de este plan).
+se dibujan o se completan los formularios en Tools (no se hace en ningún requerimiento de este plan).
 
 | CP | Qué prueba | Lo cubre |
 |---|---|---|
@@ -436,10 +422,10 @@ eligen esas pantallas (no se hace en ningún requerimiento de este plan).
 | CP-123 | Nombre interno sugerido, repetido rechazado, congelado con respuestas | ADM-UC-251 |
 | CP-124 | Vista previa sin respuesta y opciones empresa → global | **Parcial**: ADM-UC-252 (en la vista previa del módulo). En las pantallas de Tools: **prohibido** (F-1) |
 | CP-125 | Usar como base copia todo y no sigue al global | ADM-UC-253 |
-| CP-126 | Dónde se usa: propio, global o ninguno; Tools lo refleja | **Parcial**: ADM-UC-254 muestra, solo para leer, qué formulario usa cada pantalla (propio, global o ninguno). Elegirlo desde el módulo y que Tools lo refleje: **prohibido** (F-6) |
+| CP-126 | Dónde se usa: propio, global o ninguno; Tools lo refleja | ADM-UC-254 (Tools lo refleja porque ya lee la configuración; no se cambia su código) |
 | CP-127 | El alta escribe la configuración apuntando a los globales | **Pasa a REQ-017** (cambio del disparador de alta). Acá solo se guarda la marca "Global al alta" (ADM-UC-255) |
-| CP-128 | Inactivar en uso avisa; baja lógica; respuestas intactas; baja de ítem | **Parcial**: ADM-UC-250 (aviso con los lugares, baja lógica, respuestas intactas) y ADM-UC-251 (baja de ítem). Que la pantalla de Tools quede sin formulario o no dibuje el inactivo: **prohibido** (F-4 y F-6) |
+| CP-128 | Inactivar en uso avisa; baja lógica; respuestas intactas; baja de ítem | **Parcial**: ADM-UC-250 y ADM-UC-251 (en los puntos de uso se cubre limpiando la configuración). Que Tools no dibuje un inactivo pedido por número fijo: **prohibido** (F-4) |
 | CP-129 | Guardar respuesta con sesión, protección, obligatorios en servidor, `info_id` ajeno rechazado | **Prohibido** completo (F-2) |
 | CP-130 | Un propio nunca en otra empresa; un global sí; combo de tareas con "(global)" | **Parcial**: ADM-UC-250 (pantallas del módulo). El combo de tareas estándar con "(global)": **pasa a REQ-017** (D2/D3 en `FRMDataService`) |
-| CP-131 | Consola: globales, puntos de uso, inactivar global usado avisa cuántas empresas; tipos avanzados solo superusuario | ADM-UC-255 (el aviso; que esas pantallas queden sin formulario: **prohibido**, F-6) |
+| CP-131 | Consola: globales, puntos de uso, inactivar global usado avisa cuántas empresas; tipos avanzados solo superusuario | ADM-UC-255 |
 | CP-132 | Migración de la 9000 a globales | **Pasa a REQ-017 solo la parte mínima** (los formularios de la 9000 que usa el disparador). El resto (listas a globales, sin empresa asignados a su cliente, informe de pañol: M-7b / RF-131) **no se hace** (decisión de Rodolfo) |
