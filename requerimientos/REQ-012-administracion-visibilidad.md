@@ -5,19 +5,19 @@
 Duodécimo trabajo de Pablo para el módulo **Administración** (`traz-comp-adm`): la **vista de
 presentación** que se abre al tocar en el menú de Tools una opción sombreada (de otro plan, o con el
 plan vencido), el botón **"Me interesa"** que avisa al administrador, y el **contador** de "Me interesa"
-del catálogo con datos reales. Lo leen Pablo para planificar y Rodolfo para aprobar el script de base y
+del catálogo con datos reales. Lo leen Pablo para planificar y Rodolfo para aprobar
 el cambio chico en el menú de Tools. **No** cubre el dibujo del menú sombreado (ya lo hace
 [REQ-009](REQ-009-administracion-menus.md)), el pedido de cambio de plan (REQ-010) ni el rechazo de pantallas no visibles en
 Tools (T-5, deuda H-091). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos y aprobar el script de base y el análisis de impacto en Tools |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos y aprobar el análisis de impacto en Tools |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base), [REQ-004](REQ-004-administracion-base-y-atributos.md) (`seg.intereses`, `seg.menues.texto_presentacion`, auditoría), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (catálogo con su contador, plan de menor orden), [REQ-006](REQ-006-administracion-funcionalidades.md) (R1, R2, `otro_plan`, servicio "Funcionalidad visible"), [REQ-009](REQ-009-administracion-menus.md) (menú resuelto con `url_presentacion` y menú lateral de Tools) y [REQ-010](REQ-010-administracion-plan-y-pedidos.md) (Plan) |
 | Entrega de la especificación | **E9** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: vista de presentación, "Me interesa", contador en el catálogo. CU-50; CP-90, CP-93, CP-42. Más el punto **T-6** de `02_MODELO_Y_REGLAS.md` §9b (enlace desde la opción sombreada) |
 | Casos de uso | `ADM-UC-190` a `ADM-UC-192` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (vista de presentación, "Me interesa", correo, fila de Funcionalidades); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs`, un script de base chico y, del núcleo, `application/helpers/menu_helper.php` (solo la función nueva `menu_resuelto()` de REQ-009) |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: nombres de columnas de `seg.intereses` y un índice único (lista en "Datos"). 🔴 **Núcleo de Tools**: la opción sombreada del menú lateral pasa a abrir la vista de presentación (cambio en `menu_resuelto()`, que solo corre con la variable `menu_resuelto_en_tools` encendida) → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡) |
+| Riesgo | 🔴 Los nombres de columnas de `seg.intereses` (tabla nueva) y su índice único (lista en "Datos") son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo solo por el **núcleo de Tools**: la opción sombreada del menú lateral pasa a abrir la vista de presentación (cambio en `menu_resuelto()`, que solo corre con la variable `menu_resuelto_en_tools` encendida) → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto en Tools"). Recursos del DataService nuevos (🟡) |
 
 ---
 
@@ -202,7 +202,8 @@ correo.
 
 ## Datos
 
-**🔴: Rodolfo aprueba el script antes de construir.** La tabla la crea REQ-004 con los atributos; acá
+**Cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10).** La tabla la crea
+REQ-004 (en `seg`) con los atributos; acá
 se proponen los nombres **[SUPUESTO]** (si el script de REQ-004 no corrió, van en él; si no, en uno
 chico con su vuelta atrás).
 
@@ -239,7 +240,7 @@ Ninguna fila ni columna existente cambia; no hay carga de datos.
 
 ## Cómo se revisa (además de DocTest)
 
-- Script de base aprobado por Rodolfo, corrido en una copia de DEMO, con su vuelta atrás.
+- Script de base (aditivo) corrido en una copia de DEMO, con su vuelta atrás.
 - **Análisis de impacto en Tools aprobado por Rodolfo.**
 - La respuesta de la vista (lo que baja el navegador) no contiene ningún dato de la empresa: se revisa
   con las herramientas del navegador sobre BPM.procesos (CP-90).
