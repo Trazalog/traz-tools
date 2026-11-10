@@ -13,12 +13,12 @@ copiada ([REQ-003](REQ-003-administracion-identidad.md)).
 
 | Campo | Valor |
 |---|---|
-| Estado | Borrador: Rodolfo tiene que contestar las dudas de los casos, aprobar la carga de datos sobre filas existentes (M-2 de las herramientas del agente, M-6 y M-7) y el análisis de impacto de la barra de Tools |
+| Estado | Borrador: Rodolfo tiene que contestar las dudas de los casos, aprobar la carga de datos sobre tablas existentes (M-2 de las herramientas del agente y M-6; M-7 lo decide el equipo (regla de Rodolfo del 2026-11-10)) y el análisis de impacto de la barra de Tools |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal y Consola) y [REQ-003](REQ-003-administracion-identidad.md) (ingreso copiado); análisis [`ANALISIS_INICIAL.md`](../doc/v3/administracion/ANALISIS_INICIAL.md) B.3 (extensiones) y B.4 (criterio membresía → empresa) |
 | Entrega de la especificación | **E1** completa de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md` (atributos y entidades, auditoría, variables con historial, migraciones M-1, M-2, M-5, M-6, M-7; CU-22; CP-101, CP-102) **más lo de E0 que REQ-002 no cubrió**: marca de superusuario (R7, C-5), definición única de administrador (R7, D-07), servicio "Contexto del usuario" (`02_MODELO_Y_REGLAS.md` §4) y el botón en la barra de Tools (`mockups/tools-barra-superior.html`, T-3 de §9b) |
 | Casos de uso | `ADM-UC-030` a `ADM-UC-035` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantalla de variables, servicio Contexto, controlador base); `traz-tools`: script de base nuevo, DataService **nuevo** `ADMDataService.dbs`, y del núcleo `application/controllers/Dash.php` y `application/views/layout/perfil.php` (los botones) |
-| Riesgo | 🔴 Las tablas nuevas (todas en `seg`), las columnas optativas nuevas en `core.empresas`, `seg.users` y `seg.menues`, la función y el disparador nuevos son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por: (1) **núcleo de Tools**: la barra superior y el tablero (`perfil.php`, `Dash.php`); (2) **carga de datos que cambia o agrega filas en tablas existentes**: M-2 (herramientas del agente como filas nuevas de `seg.menues`, que pueden cambiar el menú de Tools), M-6 (marca `superusuario` en una fila existente de `seg.users`) y M-7 (filas nuevas en `core.tablas`). Esas tres cosas las aprueba Rodolfo antes de construir, con análisis de impacto. El DataService es nuevo (🟡); no se modifica ninguno existente |
+| Riesgo | 🔴 Las tablas nuevas (todas en `seg`), las columnas optativas nuevas en `core.empresas`, `seg.users` y `seg.menues`, la función y el disparador nuevos son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por: (1) **núcleo de Tools**: la barra superior y el tablero (`perfil.php`, `Dash.php`); (2) **carga de datos que cambia o agrega filas en tablas existentes**: M-2 (herramientas del agente como filas nuevas de `seg.menues`, que pueden cambiar el menú de Tools) y M-6 (marca `superusuario` en una fila existente de `seg.users`). Esas dos cosas las aprueba Rodolfo antes de construir, con análisis de impacto. M-7 (filas nuevas en `core.tablas`, sin cambiar las existentes) **lo decide el equipo (regla de Rodolfo del 2026-11-10)**. El DataService es nuevo (🟡); no se modifica ninguno existente |
 
 ---
 
@@ -89,8 +89,8 @@ Un solo script, versionado en `traz-tools` (por ejemplo
 Se corre primero en una base de prueba (copia de DEMO) y después en DEMO, nunca directo en producción.
 Lleva su script de vuelta atrás (borra solo lo que agregó). La parte de estructura es **aditiva y la
 decide el equipo** (regla de Rodolfo del 2026-11-10). La parte de datos que toca tablas existentes (M-2
-de las herramientas del agente, M-6 y M-7) la aprueba Rodolfo **antes** de construir; M-5 solo carga
-una tabla nueva y no la necesita.
+de las herramientas del agente y M-6) la aprueba Rodolfo **antes** de construir; M-5 solo carga
+una tabla nueva y M-7 solo agrega filas nuevas en `core.tablas`: esas dos lo decide el equipo (regla de Rodolfo del 2026-11-10).
 
 ### El DataService nuevo
 
@@ -271,8 +271,9 @@ de variable (clave y quién, sin el valor si la clave es de texto largo).
 
 **Estructura: cambio de base aditivo, lo decide el equipo (regla de Rodolfo del 2026-11-10).** Todas las
 columnas nuevas en tablas existentes son **optativas** (aceptan vacío o tienen valor por defecto), así
-que ninguna necesita aprobación. **Carga de datos: M-2 (herramientas del agente), M-6 y M-7 tocan tablas
-existentes y las aprueba Rodolfo**; M-5 solo llena una tabla nueva. Nombres de tablas y columnas
+que ninguna necesita aprobación. **Carga de datos: M-2 (herramientas del agente) y M-6 tocan tablas
+existentes y las aprueba Rodolfo**; M-5 solo llena una tabla nueva y M-7 solo agrega filas nuevas en
+`core.tablas`: lo decide el equipo (regla de Rodolfo del 2026-11-10). Nombres de tablas y columnas
 propuestos **[SUPUESTO]** (la especificación da los atributos, no los nombres); Pablo puede ajustarlos en
 el plan. Todas las tablas nuevas van en el schema `seg` (regla de Rodolfo del 2026-11-10).
 
@@ -348,7 +349,7 @@ Más la función `seg.cambiar_variable(…)` y el disparador que impide modifica
 ## Cómo se revisa (además de DocTest)
 
 - El script de base corrido en una copia de DEMO y con su vuelta atrás probada; la carga de M-2 (herramientas
-  del agente), M-6 y M-7 aprobada por Rodolfo antes de correrla.
+  del agente) y M-6 aprobada por Rodolfo antes de correrla (M-7 lo decide el equipo (regla de Rodolfo del 2026-11-10)).
 - **Búsqueda de usos de las tablas tocadas** (`core.empresas`, `seg.users`, `seg.menues`, `core.tablas`)
   en DataServices, funciones, disparadores, DNATO, Tools y AssetPlanner: ningún `INSERT` sin lista de
   columnas ni `SELECT *` que se rompa con columnas nuevas. El resultado va en la descripción del pull
