@@ -1,0 +1,69 @@
+id: ADM-UC-131
+modulo: ADM
+titulo: Asignar un menú a roles y a personas
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-009-administracion-menus.md
+    detalle: "sección 'Asignación (RF-62)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-menus.html
+    detalle: "chips 'Lo ven', pestaña Asignaciones 'Por rol / persona' y 'Por menú'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-62; CU-33"
+pantallas:
+  - "Portal de la empresa → Menús → Asignaciones"
+  - "Portal de la empresa → Menús → Constructor (chips 'Lo ven')"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "Menús Operación (asignado al rol Mantenedor), Solo equipos (asignado a Carla, Mantenedor) y Taller (sin asignar)"
+  - "Mantenedores: Carla, Darío y Elena; Supervisor: Bruno, sin asignación"
+flujo_principal:
+  - paso: "Abre la pestaña 'Asignaciones', 'Por rol / persona'"
+    resultado: "Ve el rol Mantenedor con 'Operación' asignado y resuelto; Carla con 'Solo equipos' y resuelto 'Solo equipos por persona'; Bruno con '— por rol —' y resuelto 'Predeterminado'"
+  - paso: "Cambia el menú del rol Mantenedor a Taller"
+    resultado: "Ve 'El rol Mantenedor tenía Operación: se reemplaza' y confirma"
+  - paso: "Mira la fila del rol Mantenedor"
+    resultado: "Tiene una sola asignación, Taller, con 'cambió el <fecha de hoy>'; la auditoría tiene menu.asignar"
+  - paso: "Abre la pestaña 'Por menú'"
+    resultado: "Ve por cada menú los roles, las personas directas y cuántos lo ven en total: Taller → Mantenedor (2), Solo equipos → Carla (1), Predeterminado → los demás roles"
+flujos_alternativos:
+  - nombre: "Asignar a una persona"
+    pasos:
+      - paso: "Toca '＋ Asignar a una persona', elige a Bruno y el menú Taller"
+        resultado: "Bruno queda con 'Taller' y resuelto 'Taller por persona'"
+  - nombre: "Quitar una asignación por persona"
+    pasos:
+      - paso: "Toca 'Quitar' en la fila de Carla"
+        resultado: "Carla pasa a resuelto por su rol; la auditoría tiene menu.quitar_asignacion"
+  - nombre: "Desde el constructor"
+    pasos:
+      - paso: "Abre el menú Taller en el Constructor"
+        resultado: "Ve 'Lo ven: 🎭 Mantenedor · 👤 Darío (por rol) · 👤 Elena (por rol)'; Carla no figura porque tiene menú por persona"
+      - paso: "Toca '＋ Asignar' y elige a una persona que ya tenía otro menú"
+        resultado: "Ve '<persona> tenía <menú>: se reemplaza' y confirma"
+  - nombre: "Persona o rol de otra empresa"
+    pasos:
+      - paso: "Manda directo al servidor una asignación para un correo que no es de su empresa"
+        resultado: "El servidor la rechaza y no guarda"
+validaciones:
+  - "Un rol tiene a lo sumo un menú y una persona también"
+  - "Asignar sobre uno existente lo reemplaza con aviso"
+  - "Se ve en las dos direcciones: qué menú tiene cada rol o persona, y quién ve cada menú"
+  - "La columna Resuelto aplica persona, después rol, después predeterminado"
+  - "Solo se asigna a roles y personas de la empresa de la sesión"
+  - "Cada asignación y cada quitada queda en la auditoría"
+datos_prueba:
+  personas: "membresías de prueba con nombres inventados (Carla Ruiz, Darío Gómez, Elena Soto, Bruno Díaz), del fixture dnato_v3_base"
+dudas:
+  - "¿De dónde sale la lista de roles de la empresa: de Bonita, de seg.memberships_users o de seg.memberships_menues? Propuesta: la misma fuente que use 'Roles y accesos' en REQ-007, para que las dos pantallas muestren los mismos roles."
+  - "Una persona con dos roles en la empresa que tienen menús distintos: ¿cuál ve? Propuesta: la columna Resuelto avisa 'tiene dos roles con menús distintos' y se usa el del rol que viene primero en orden alfabético, hasta que el administrador le asigne uno por persona."
+  - "¿Quién cuenta en 'Lo ven' y en 'Lo ven en total'? CP-69 cuenta a una persona invitada y a una baneada. Propuesta: toda membresía que no esté de baja."
+  - "¿Se puede asignar un menú al rol Administrador? La maqueta lo permite. Propuesta: sí."
+derivados: {}
+notas:
+  - "Cubre CP-66 y CP-69."

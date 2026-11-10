@@ -1,0 +1,66 @@
+id: ADM-UC-134
+modulo: ADM
+titulo: Cargar lo que usa hoy cada empresa sin cambiar su menú
+perfil: Usuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-009-administracion-menus.md
+    detalle: "sección 'M-4 — Funcionalidades activas de las empresas existentes'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§8 migración M-4"
+  - repo: traz-tools
+    path: doc/v3/dnato/DNATO_v2_RELEVAMIENTO.md
+    detalle: "§5.1: regla 'si ningún hijo está habilitado se muestran todos' (menu_helper.php:122-125)"
+pantallas:
+  - "Ingreso → tablero de Tools → menú lateral"
+  - "Portal de la empresa → Funcionalidades"
+precondiciones:
+  - El script de M-4 corrió en el ambiente de prueba (copia de DEMO)
+  - "Usuario de la empresa DocTest con roles de operación, y su administrador"
+flujo_principal:
+  - paso: "Ingresa a Tools con el mismo usuario que antes del script"
+    resultado: "Entra igual que antes, a la misma empresa"
+  - paso: "Mira el menú lateral de Tools"
+    resultado: "Tiene exactamente las mismas opciones, en el mismo orden, que antes del script"
+  - paso: "El administrador de la empresa abre Funcionalidades"
+    resultado: "Ve como activas las funcionalidades que hoy usan los roles de su empresa, incluidas las opciones de los módulos que hoy tiene asignados completos"
+flujos_alternativos:
+  - nombre: "Empresas que no se unen"
+    pasos:
+      - paso: "Se revisa el listado que deja el script"
+        resultado: "Están los nombres de grupo de 'Menú por rol' que no coinciden con ninguna empresa, y para ellos no se cargó nada"
+  - nombre: "Correr dos veces"
+    pasos:
+      - paso: "Se corre el script de nuevo en el mismo ambiente"
+        resultado: "No duplica ni cambia lo que ya estaba cargado"
+  - nombre: "DNATO sigue igual"
+    pasos:
+      - paso: "Un administrador abre 'Menu por Rol' de DNATO"
+        resultado: "Ve las mismas asignaciones que antes"
+  - nombre: "Vuelta atrás"
+    pasos:
+      - paso: "En el ambiente de prueba se corre el script de vuelta atrás"
+        resultado: "Desaparece solo lo que cargó M-4, y Tools y DNATO siguen funcionando"
+validaciones:
+  - "M-4 solo agrega: el menú de Tools de cada usuario es el mismo antes y después"
+  - "Cada empresa queda con activas las funcionalidades que hoy tienen asignadas sus roles"
+  - "Las asignadas como opción raíz activan sus hijas publicadas"
+  - "Los grupos sin empresa se listan y no se cargan"
+  - "El script se puede correr dos veces sin duplicar"
+  - "DNATO funciona igual"
+  - "El script tiene vuelta atrás que borra solo lo cargado"
+datos_prueba:
+  usuario: "uno de los usuarios por defecto de la empresa DocTest"
+  ambiente: "copia de DEMO, nunca producción"
+dudas:
+  - "Hoy el alta de empresa asigna a los roles solo las opciones raíz y Tools muestra todas sus hijas. Propuesta: M-4 activa la raíz y todas sus hijas publicadas, sin tocar seg.memberships_menues. La otra opción (agregar las hijas a seg.memberships_menues para que R2 no necesite la regla del padre) modifica una tabla que usa v2 y se descarta salvo que Rodolfo prefiera."
+  - "M-4 está en esta entrega (E6), pero Funcionalidades (REQ-006) la necesita antes. Propuesta: si Rodolfo acepta adelantarla, el script pasa a REQ-006 y este caso se mueve con él (ver la duda de ADM-UC-071)."
+  - "¿En qué orden quedan las activas? M-4 dice 'en el orden del catálogo'. Propuesta: el orden del catálogo (opción raíz y después sus hijas), renumerado como en REQ-005."
+derivados: {}
+notas:
+  - "Cubre M-4. La verificación completa 'menú v2 = menú v3 por usuario' (M-8, CP-M1) es de REQ-016."
+  - "Tools no lee seg.empresas_funcionalidades, así que este caso demuestra la compatibilidad con v2; se corre antes que los demás de REQ-009."
