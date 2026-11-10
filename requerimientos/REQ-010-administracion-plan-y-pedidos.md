@@ -6,19 +6,19 @@ Décimo trabajo de Pablo para el módulo **Administración** (`traz-comp-adm`): 
 Portal (comparativa de planes, pedir un cambio de plan y cancelarlo), la resolución de esos pedidos por
 el superusuario en la Consola, la cancelación automática del pedido cuando el superusuario cambia el
 plan directamente, y el paso nuevo **"Elegí tu plan"** en la registración copiada del módulo (REQ-003).
-Lo leen Pablo para planificar y Rodolfo para aprobar el script de base y el análisis de impacto sobre la
+Lo leen Pablo para planificar y Rodolfo para aprobar el análisis de impacto sobre la
 registración. **No** cubre la cuota del agente ni su recálculo al cambiar de plan (REQ-011), la vista de
 presentación ni "Me interesa" (REQ-012), las tarjetas de Inicio (REQ-013) ni el registro de DNATO, que
 no se toca. Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el script de base y el análisis de impacto en la registración |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, y aprobar el análisis de impacto en la registración |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal, Consola), [REQ-003](REQ-003-administracion-identidad.md) (registración copiada), [REQ-004](REQ-004-administracion-base-y-atributos.md) (`seg.pedidos_plan`, columnas de plan en `core.empresas`, auditoría, variables), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (planes, matriz, precio en variable), [REQ-006](REQ-006-administracion-funcionalidades.md) (R1, "sin activar"), [REQ-007](REQ-007-administracion-usuarios-roles-perfil.md) (lugares usados, botón "Pedir cambio de plan" en Usuarios) y [REQ-008](REQ-008-administracion-consola-empresas.md) (cambio directo de plan, librería `AltaEmpresa`, Registros, "Notificar a infra") |
 | Entrega de la especificación | **E7** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: comparativa, pedir, cancelar, resolver, correos; cancelación automática por cambio directo; paso "Elegí tu plan" en el registro (Freemium por defecto, plan pago = pedido con origen registro). CU-42, CU-20, CU-53; CP-27, CP-30 a 33, CP-54 |
 | Casos de uso | `ADM-UC-150` a `ADM-UC-154` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (pantalla Plan, ventana de resolución en la Consola, paso nuevo en la registración copiada, correos); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs` y un script de base chico |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: nombres de columnas de `seg.pedidos_plan` y un índice único nuevo (lista en "Datos"). 🔴 **Núcleo de Tools: registración** — se agrega un paso a la registración copiada del módulo y el alta pasa a dejar plan, funcionalidades y pedido → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto en la registración"). No toca la registración de DNATO, `API_CORE/empresa`, Bonita ni el disparador de alta. Recursos del DataService nuevos (🟡) |
+| Riesgo | 🔴 Los nombres de columnas de `seg.pedidos_plan` (tabla nueva) y su índice único nuevo (lista en "Datos") son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo solo por el **núcleo de Tools: registración** — se agrega un paso a la registración copiada del módulo y el alta pasa a dejar plan, funcionalidades y pedido → **análisis de impacto aprobado por Rodolfo** (sección "Análisis de impacto en la registración"). No toca la registración de DNATO, `API_CORE/empresa`, Bonita ni el disparador de alta. Recursos del DataService nuevos (🟡) |
 
 ---
 
@@ -328,7 +328,8 @@ plan elegido y el resultado del paso "plan inicial". Sin datos personales del fo
 
 ## Datos
 
-**🔴: Rodolfo aprueba el script antes de construir.** La tabla la crea REQ-004 con los atributos; acá
+**Cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10).** La tabla la crea
+REQ-004 (en `seg`) con los atributos; acá
 se proponen los nombres **[SUPUESTO]** (si el script de REQ-004 no corrió, van en él; si no, en uno
 chico con su vuelta atrás).
 
@@ -412,7 +413,7 @@ Ninguna fila ni columna existente cambia; no hay carga de datos.
 
 ## Cómo se revisa (además de DocTest)
 
-- Script de base aprobado por Rodolfo, corrido en una copia de DEMO, con su vuelta atrás.
+- Script de base (aditivo) corrido en una copia de DEMO, con su vuelta atrás.
 - **Análisis de impacto en la registración aprobado por Rodolfo**; DNATO-UC-001 a 005 en verde contra
   DNATO (sin cambios) y contra la copia del módulo (con el paso nuevo); ADM-UC-111 en verde.
 - Dos pedidos simultáneos de la misma empresa: uno pasa y el otro recibe "Ya hay un pedido pendiente".
