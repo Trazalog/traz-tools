@@ -1,0 +1,72 @@
+id: ADM-UC-112
+modulo: ADM
+titulo: Ver y editar la ficha de una empresa
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Ficha y edición (RF-25, RF-27)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresa-ficha.html
+    detalle: "cabecera, editar empresa, tarjetas, historial de planes"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-14; RF-25, RF-27"
+pantallas:
+  - "Consola → Empresas → Ficha"
+  - "Portal de la empresa (marco con el logo)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "MinTest_SJ con plan Free, 5 de 5 lugares, sin logo"
+  - "Matheu sin logo y con el administrador sin aceptar la invitación"
+flujo_principal:
+  - paso: "Toca 'Ficha' en la fila de MinTest_SJ"
+    resultado: "Ve la inicial 'M', el nombre, '<descripción> · moneda ARS · idioma es · alta <fecha> · contacto <correo>', el estado y las tarjetas Plan ('🥉 Free · gratuito · sin vencimiento'), Usuarios ('5 / 5 · tope alcanzado') y Pedido pendiente ('Ninguno')"
+  - paso: "Mira 'Historial de planes y auditoría reciente'"
+    resultado: "Ve las filas de la auditoría de la empresa con Fecha, Quién, Acción y Detalle, incluidos los cambios de plan"
+  - paso: "Toca '✎ Editar', cambia la descripción y el contacto, sube un logo y toca 'Guardar'"
+    resultado: "Ve 'Guardado ✓', el logo en la ficha y en la fila de Empresas, y la auditoría tiene empresa.editar"
+  - paso: "La administradora de MinTest_SJ abre su Portal"
+    resultado: "Ve el logo nuevo en lugar de la inicial"
+flujos_alternativos:
+  - nombre: "Sin logo"
+    pasos:
+      - paso: "Abre la ficha de Matheu"
+        resultado: "Ve la inicial 'M' como sustituto del logo"
+  - nombre: "Quitar el logo"
+    pasos:
+      - paso: "En Editar toca 'Quitar' y guarda"
+        resultado: "Vuelve a verse la inicial en la ficha, en Empresas y en el Portal"
+  - nombre: "Logo inválido"
+    pasos:
+      - paso: "Sube un archivo de texto como logo"
+        resultado: "Ve 'El logo tiene que ser JPG o PNG de hasta 1 MB.' y no se guarda"
+  - nombre: "Reenviar la invitación"
+    pasos:
+      - paso: "En la ficha de Matheu toca 'Reenviar invitación'"
+        resultado: "El administrador recibe un enlace nuevo; si el correo falla, ve el enlace para copiar"
+  - nombre: "Miembros"
+    pasos:
+      - paso: "Toca la pestaña 'Miembros (N)' o '👥 Usuarios'"
+        resultado: "Abre Usuarios de la plataforma con la empresa filtrada"
+validaciones:
+  - "La ficha muestra logo o inicial, datos, plan, estado, lugares y pedido"
+  - "El historial de planes sale de la auditoría"
+  - "Nombre, descripción, contacto, moneda, idioma y logo se pueden editar y quedan en la auditoría"
+  - "El logo se ve en la ficha, en el listado y en el Portal; sin logo, la inicial"
+  - "Reenviar la invitación usa la misma operación que en Usuarios de la empresa"
+datos_prueba:
+  empresas: "MinTest_SJ y Matheu del fixture dnato_v3_base"
+  logo: "imagen de prueba sin marcas reales"
+dudas:
+  - "¿Cambiar el nombre de la empresa está permitido? Las membresías se unen a la empresa por el nombre (B.4), y los roles de Bonita y el disparador lo llevan en el texto; cambiarlo dejaría a todos sin empresa. Propuesta: el nombre no se edita desde la ficha (se muestra fijo) hasta que exista un procedimiento que renombre membresías y roles."
+  - "¿Qué tamaño y formato de logo? Propuesta: JPG o PNG de hasta 1 MB, en las mismas columnas que hoy usa el alta (image e imagepath)."
+  - "La ficha de la maqueta trae 'Uso de IA', bonificación y 'Formularios'. Propuesta: aparecen cuando existan REQ-011 y REQ-015; 'Menús' muestra los menús de REQ-009 en solo lectura."
+  - "'alta <fecha>': no está claro que core.empresas tenga fecha de alta. Propuesta: si existe la columna se usa; si no, la fecha de la fila empresa.crear de la auditoría, y vacía para las empresas viejas."
+derivados: {}
+notas:
+  - "Cubre CP-28 y CP-26 en la parte de ficha (salvo '21 de 30 IA', que es REQ-011)."
+  - "La edición de empresa no existe hoy (A-13)."

@@ -1,0 +1,59 @@
+id: ADM-UC-115
+modulo: ADM
+titulo: Dar de baja una empresa y recuperarla
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Baja lógica y recuperación (RF-28)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "pie '(la baja es lógica: eliminado, como hoy)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-28; A-14 del relevamiento (baja rota hoy)"
+pantallas:
+  - "Consola → Ficha de empresa → Dar de baja / Recuperar"
+  - "Consola → Empresas (filtro Dadas de baja)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Empresa de prueba 'Baja SA' sin personas activas (todas de baja)"
+  - "MinTest_SJ con personas activas"
+flujo_principal:
+  - paso: "Abre la ficha de Baja SA y toca 'Dar de baja'"
+    resultado: "Se abre una confirmación con motivo opcional"
+  - paso: "Confirma"
+    resultado: "Ve 'Dimos de baja Baja SA. La podés recuperar desde Empresas → Dadas de baja.' y Baja SA ya no aparece en 'Todas'"
+  - paso: "Elige el filtro 'Dadas de baja' en Empresas"
+    resultado: "Ve Baja SA con el botón 'Recuperar'"
+  - paso: "Toca 'Recuperar' y confirma"
+    resultado: "Baja SA vuelve a 'Todas' con sus datos, su plan y sus funcionalidades como estaban; la auditoría tiene empresa.baja y empresa.recuperar"
+flujos_alternativos:
+  - nombre: "Con personas activas"
+    pasos:
+      - paso: "Intenta dar de baja MinTest_SJ"
+        resultado: "Ve 'MinTest_SJ tiene N personas activas. Para cortar el acceso sin darla de baja, suspendela.' y no se da de baja"
+  - nombre: "Nada se borra"
+    pasos:
+      - paso: "Después de dar de baja Baja SA, se revisa la base de prueba"
+        resultado: "La empresa sigue en la base con la marca de baja; sus datos, roles y membresías siguen ahí"
+validaciones:
+  - "La baja es siempre lógica (marca de eliminado), nunca un borrado"
+  - "La baja se puede revertir con Recuperar"
+  - "Solo se da de baja una empresa sin personas activas"
+  - "Las dadas de baja no aparecen en el listado salvo con su filtro"
+  - "Queda en la auditoría, con el motivo"
+datos_prueba:
+  empresa: "Baja SA, empresa de prueba con nombre inventado creada para el caso"
+dudas:
+  - "RF-28 dice 'solo si no tiene miembros activos', pero la baja suele ser por falta de pago y es reversible, y en ese caso la empresa tiene gente activa. Propuesta: se respeta RF-28, y para la falta de pago se usa Suspender (ADM-UC-114), que corta el acceso sin dar de baja; si Rodolfo prefiere que la baja se pueda hacer con gente activa, se saca la condición y la baja también corta el acceso, como la suspensión."
+  - "Hoy la baja lógica la usa solo la reversión del registro, y no sé si el ingreso, Tools o AssetPlanner miran 'eliminado'. Propuesta: el análisis de impacto lo revisa; si alguno no la mira, la baja va siempre después de suspender."
+  - "¿Dónde está el botón? La maqueta no lo muestra. Propuesta: en la ficha, al final de los botones, y 'Recuperar' con el filtro 'Dadas de baja'."
+  - "¿La baja avisa a infraestructura y queda en Registros? Propuesta: sí, como la suspensión."
+derivados: {}
+notas:
+  - "Usa el recurso existente de baja lógica de COREDataService (DELETE /empresa, CORE.dbs:325); recuperar es un recurso nuevo."
+  - "Reemplaza a empresa/borrarEmpresa de DNATO, que está roto (A-14)."

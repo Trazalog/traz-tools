@@ -1,0 +1,69 @@
+id: ADM-UC-119
+modulo: ADM
+titulo: Marcar superusuarios y aplicar el ban global
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Superusuarios y ban global (CP-103)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-usuarios.html
+    detalle: "columnas Súper y Ban global, filtros 'Súper usuarios' y 'Con ban global'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-18 E1; RF-78; D-06, D-07"
+pantallas:
+  - "Consola → 👥 Usuarios (columnas Súper y Ban global)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "root@ es el único superusuario"
+  - "Bruno es miembro activo de dos empresas"
+flujo_principal:
+  - paso: "En la fila de Rodolfo (root@) mira la columna Súper"
+    resultado: "Dice 'único'"
+  - paso: "Intenta desmarcarse como superusuario"
+    resultado: "Ve 'Tiene que quedar al menos un súper usuario' y la marca queda puesta"
+  - paso: "Marca a Ana como superusuaria"
+    resultado: "Ana queda marcada, el filtro 'Súper usuarios (2)' la muestra y la auditoría tiene superusuario.marcar"
+  - paso: "Aplica el ban global a Bruno y confirma"
+    resultado: "Bruno queda con ban global y la auditoría tiene usuario.ban_global"
+  - paso: "Bruno intenta ingresar"
+    resultado: "No entra a ninguna empresa, ni por el ingreso del módulo ni por el de DNATO, y ve el mensaje de soporte"
+flujos_alternativos:
+  - nombre: "Quitar el ban global"
+    pasos:
+      - paso: "Quita el ban global de Bruno"
+        resultado: "Bruno vuelve a entrar a sus empresas; la auditoría tiene usuario.quitar_ban_global"
+  - nombre: "Dos superusuarios desmarcándose a la vez"
+    pasos:
+      - paso: "Con dos superusuarios, los dos se desmarcan mutuamente al mismo tiempo"
+        resultado: "Uno de los dos cambios se rechaza con 'Tiene que quedar al menos un súper usuario'"
+  - nombre: "Ban global a un superusuario o a uno mismo"
+    pasos:
+      - paso: "Intenta aplicar el ban global a Ana, que es superusuaria"
+        resultado: "Se rechaza: primero hay que sacarle la marca"
+  - nombre: "Nueva superusuaria"
+    pasos:
+      - paso: "Ana entra a Tools"
+        resultado: "Ve '🔑 Consola' y puede entrar"
+validaciones:
+  - "Tiene que quedar al menos un superusuario; la base lo garantiza aunque haya dos cambios a la vez"
+  - "Solo el superusuario marca, desmarca y aplica el ban global"
+  - "El ban global vale en todas las empresas, también en el ingreso de DNATO"
+  - "No se aplica el ban global a un superusuario ni a uno mismo"
+  - "Cada cambio queda en la auditoría"
+datos_prueba:
+  superusuario: "root@ de prueba del ambiente (marca cargada por M-6, REQ-004)"
+  personas: "Ana Pérez y Bruno Díaz del fixture dnato_v3_base"
+dudas:
+  - "El ban global usa la columna de hoy (banned_users) y el ingreso de DNATO, al verla, muestra 'Ud se encuentra temporalmente inhabilitado para este Sistema...'. RF-03 pide el mensaje de soporte de Trazalog. Propuesta: en el ingreso del módulo se muestra el texto de la variable texto_suspension_miembro con contacto_soporte; el de DNATO queda como está."
+  - "¿Se puede aplicar el ban global a un superusuario? Propuesta: no; primero se le saca la marca, para no dejar la plataforma sin acceso por error."
+  - "¿Una nueva superusuaria necesita además ser administradora de alguna empresa? Propuesta: no; la Consola no depende de ninguna empresa."
+  - "¿El ban global se puede aplicar con motivo? La especificación no lo pide. Propuesta: motivo opcional, que queda en la auditoría."
+derivados: {}
+notas:
+  - "Cubre CP-103."
+  - "Hoy el ban global lo puede cambiar cualquier administrador de empresa desde DNATO (A-08); en el módulo pasa a ser solo del superusuario. DNATO sigue igual hasta la redirección."
