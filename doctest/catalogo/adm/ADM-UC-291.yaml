@@ -1,0 +1,78 @@
+id: ADM-UC-291
+modulo: ADM
+titulo: Dar de alta una empresa que usa los formularios globales sin copiarlos
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-017-administracion-formularios-globales.md
+    detalle: "secciones '(vii) Disparador de alta' y 'Análisis de impacto en Tools'"
+  - repo: traz-tools
+    path: _backend/database/scripts/versiones/v2.8.1.3/configuracion_inicial_empresa_trg_func.sql
+    detalle: "bloque de clonado de 'Entrega Materiales' (94-129), que se reemplaza"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-127 Alta de empresa"
+pantallas:
+  - "Consola → Empresas → Nueva empresa"
+  - "Tools → Almacenes → Entrega Materiales → Entrega Materiales Directa"
+precondiciones:
+  - Usuario con sesión iniciada en Tools y la marca de superusuario
+  - "'Entrega Materiales' ya es global y publicado y está como 'Global al alta' de formulario_entrega_materiales (ADM-UC-292)"
+  - "El punto de uso formulario_checklist_herramientas no tiene 'Global al alta'"
+  - "Empresa Test existe desde antes, con su clon de 'Entrega Materiales' y su configuración apuntando a él"
+flujo_principal:
+  - paso: "Da de alta la empresa 'Nueva SA'"
+    resultado: "La empresa se crea como siempre"
+  - paso: "Se revisa la configuración de formularios de Nueva SA"
+    resultado: "Entrega de materiales apunta al global 'Entrega Materiales', por referencia"
+  - paso: "Se revisan los formularios de Nueva SA"
+    resultado: "No tiene ningún formulario propio: no se copió nada"
+  - paso: "Un responsable de almacén de Nueva SA abre la entrega directa de materiales"
+    resultado: "La pantalla dibuja el formulario global 'Entrega Materiales', con los mismos campos que antes tenía el clon"
+flujos_alternativos:
+  - nombre: "Punto sin global al alta"
+    pasos:
+      - paso: "Se revisa la configuración de Checklist de herramienta de Nueva SA"
+        resultado: "No tiene: esa pantalla dice 'No se especificó un formulario', como hoy"
+  - nombre: "Global al alta no publicado"
+    pasos:
+      - paso: "El superusuario inactiva el global marcado para un punto y da de alta 'Otra SA'"
+        resultado: "Otra SA queda sin configuración para ese punto y el alta termina bien"
+  - nombre: "Global al alta en pañol"
+    pasos:
+      - paso: "El superusuario elige un global como 'Global al alta' de formulario_salida_herramientas y da de alta 'Tercera SA'"
+        resultado: "Tercera SA queda con la salida de pañol apuntando a ese global"
+  - nombre: "Autorregistro"
+    pasos:
+      - paso: "Una persona se registra y crea su empresa por el autorregistro"
+        resultado: "La empresa queda igual que Nueva SA: apunta al global y no tiene formularios copiados"
+  - nombre: "Las empresas existentes no cambian"
+    pasos:
+      - paso: "Se compara la configuración y el clon de Empresa Test antes y después del cambio"
+        resultado: "Son iguales; su entrega de materiales sigue dibujando su clon"
+  - nombre: "Falla en el bloque de formularios"
+    pasos:
+      - paso: "En la copia de DEMO se fuerza una falla al escribir la configuración y se da de alta una empresa"
+        resultado: "La empresa se crea igual y queda un aviso 'CONFINICEMP:' en el registro de la base, como hoy"
+validaciones:
+  - "El alta escribe la configuración apuntando al global marcado 'al alta' de cada punto"
+  - "El alta no crea ningún formulario con la empresa nueva"
+  - "Un punto sin global al alta queda sin configuración"
+  - "Un global al alta que no está publicado no se usa"
+  - "Los puntos de pañol también se configuran si tienen global al alta"
+  - "Todos los canales de alta hacen lo mismo"
+  - "Las empresas existentes no cambian"
+  - "Una falla en ese bloque no frena el alta"
+datos_prueba:
+  empresas: "Nueva SA, Otra SA y Tercera SA inventadas, en la copia de DEMO; Empresa Test existente"
+dudas:
+  - "Antes del cambio, ¿la función del disparador que está en DEMO y en producción es igual a la versión v2.8.1.3 del repositorio? Propuesta: Pablo la compara en DEMO y Rodolfo en producción (solo lectura) antes de escribir la versión nueva; si difieren, se para."
+  - "Las listas de opciones del global no se copian a la empresa nueva (el clon tampoco las copiaba), así que sus campos de lista se ven vacíos en Tools, como hoy; y en este plan no se toca el dibujo (F-1). Propuesta: aceptarlo como está, porque no empeora nada; ¿o preferís que el disparador copie a la empresa nueva las listas que usa el global (filas nuevas en core.tablas, lo decide el equipo)?"
+  - "Para ver el resultado del alta hay que mirar la configuración en la base o en 'Dónde se usan' de REQ-015. Propuesta: en DocTest se comprueba por la pantalla 'Dónde se usan' del Portal de la empresa nueva, y además dibujando la entrega directa."
+derivados: {}
+notas:
+  - "Cubre CP-127 (RF-127). Reemplaza el clonado del disparador v2.8.1.3."
+  - "Vale para todos los canales de alta (autorregistro de DNATO, alta del superusuario, registración copiada de REQ-003 y Consola de REQ-008), porque todos insertan en core.empresas y disparan el mismo disparador."
