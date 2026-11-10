@@ -1,0 +1,61 @@
+id: ADM-UC-173
+modulo: ADM
+titulo: Recibir el aviso de que se está acabando la cuota de IA
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-011-administracion-cuota-agente.md
+    detalle: "sección 'Avisos al 80 % y al 100 %'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-62; RF-84"
+pantallas:
+  - "Correo del administrador"
+  - "Proceso de avisos (sin pantalla)"
+precondiciones:
+  - "MinTest_SJ en Free con 23 de 30; aviso_cuota_porcentaje = 80; ana@ es la administradora"
+  - "El proceso de avisos está programado en el servidor de prueba"
+flujo_principal:
+  - paso: "Una consulta del agente pasa a MinTest_SJ de 23 a 24 y corre el proceso de avisos"
+    resultado: "ana@ recibe 'Usaste el 80 % de tu cuota de IA'"
+  - paso: "Otra consulta pasa de 24 a 25 y corre el proceso"
+    resultado: "No llega ningún correo"
+  - paso: "Las consultas llegan a 30 y corre el proceso"
+    resultado: "ana@ recibe 'Usaste toda tu cuota de IA'"
+  - paso: "El proceso corre otra vez"
+    resultado: "No repite ninguno de los dos correos"
+flujos_alternativos:
+  - nombre: "Período nuevo"
+    pasos:
+      - paso: "Se renueva el período y la empresa vuelve a pasar el 80 %"
+        resultado: "ana@ recibe el aviso de nuevo, una vez en el período nuevo"
+  - nombre: "Varios administradores"
+    pasos:
+      - paso: "La empresa tiene dos administradores y pasa el 80 %"
+        resultado: "Los dos reciben el aviso"
+  - nombre: "Falla el correo"
+    pasos:
+      - paso: "El envío falla"
+        resultado: "El aviso queda pendiente y se vuelve a intentar en la próxima corrida; las consultas siguen descontándose"
+  - nombre: "Ilimitado o sin IA"
+    pasos:
+      - paso: "Una empresa Enterprise hace 5.000 consultas"
+        resultado: "No se manda ningún aviso"
+validaciones:
+  - "El aviso del umbral se manda al cruzar el porcentaje de la variable; el del total al llegar a cuota más bonificación"
+  - "Cada aviso se manda una sola vez por período, a todos los administradores"
+  - "Un correo fallido se reintenta y no frena el consumo"
+  - "Las empresas con IA ilimitada o sin IA no reciben avisos"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados"
+dudas:
+  - "RF-84 pide el correo 'al cruzar' el umbral, pero el portero de WSO2 y la base no mandan correos. Propuesta: la función de consumo marca el aviso y un proceso del módulo lo manda cada 5 minutos; el correo llega con hasta 5 minutos de demora. La alternativa (una secuencia de MI que mande el correo) es una API nueva que no despliega el script de despliegue."
+  - "Si con una bonificación el total sube después de haber mandado 'Usaste toda tu cuota de IA', ¿se vuelve a avisar al llegar al nuevo total? Propuesta: no, un aviso de cada tipo por período."
+  - "¿Se avisa también a la persona que consultó? RF-84 dice a los administradores. Propuesta: solo administradores; la persona ya ve el mensaje en Claude."
+derivados: {}
+notas:
+  - "Cubre CP-86 y CU-62."
+  - "Los cuerpos de los correos son propuesta: la especificación solo da los asuntos."

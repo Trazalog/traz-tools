@@ -1,0 +1,77 @@
+id: ADM-UC-172
+modulo: ADM
+titulo: Ver el uso de IA de mi empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-011-administracion-cuota-agente.md
+    detalle: "sección 'Pantallas → Portal → Uso de IA'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-uso-ia.html
+    detalle: "tarjeta con sus estados, por día, por persona, por herramienta y períodos anteriores"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-41; RF-83"
+pantallas:
+  - "Portal de la empresa → Uso de IA"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "MinTest_SJ en Free con 21 de 30: bruno@ 15 y carla@ 6; man_get_equipos 15, man_get_ots 6; 3 rechazos fuera del plan de bruno@ con man_crear_ot"
+flujo_principal:
+  - paso: "Abre Uso de IA desde el menú del Portal"
+    resultado: "Ve 'Uso de IA', 'Consultas MCP de tu empresa en el período del plan 🥉 Free.' y '⬇ Exportar CSV'"
+  - paso: "Mira la tarjeta"
+    resultado: "Ve '21 / 30 esta semana' con la barra normal y 'Se renueva el lunes 2/11 a las 00:00'"
+  - paso: "Mira por persona y por herramienta"
+    resultado: "Ve Bruno Díaz 15, Carla Ruiz 6, Ana Pérez 0; Consultar equipos 15 ok, Consultar órdenes de trabajo 6 ok, Crear orden de trabajo con '🥈 Team', 0 ok y '3 fuera del plan'"
+  - paso: "Mira las consultas por día y los períodos anteriores"
+    resultado: "Ve una barra por día de 26/10 a 1/11 y los últimos períodos con usadas y cuota, y 'bloqueado 2 días' en el que llegó al tope"
+  - paso: "Toca '⬇ Exportar CSV'"
+    resultado: "Descarga el detalle del período con fecha, persona, herramienta y resultado"
+flujos_alternativos:
+  - nombre: "Aviso"
+    pasos:
+      - paso: "Con 24 de 30 abre Uso de IA"
+        resultado: "Ve la barra ámbar y 'Te quedan 6 consultas · avisamos por correo'"
+  - nombre: "Bloqueado"
+    pasos:
+      - paso: "Con 30 de 30 abre Uso de IA"
+        resultado: "Ve el cartel rojo 'Sin consultas hasta el lunes 2/11 00:00', 'Pedir cambio de plan' y lo que ve el usuario en Claude"
+      - paso: "Toca 'Pedir cambio de plan'"
+        resultado: "Se abre Plan con la comparativa"
+  - nombre: "Sin IA"
+    pasos:
+      - paso: "La administradora de Prueba SinIA abre Uso de IA"
+        resultado: "Ve 'Tu plan no incluye IA' y la comparativa de planes"
+  - nombre: "Ilimitado"
+    pasos:
+      - paso: "La administradora de una empresa Enterprise abre Uso de IA"
+        resultado: "Ve lo consumido sin barra ni tope"
+  - nombre: "Con bonificación"
+    pasos:
+      - paso: "Con 30 de 30 y 5 bonificadas abre Uso de IA"
+        resultado: "Ve '30 / 35' y la barra en estado aviso"
+  - nombre: "No es administrador"
+    pasos:
+      - paso: "Un usuario sin rol Administrador entra a la dirección de Uso de IA"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "La tarjeta muestra un solo estado: normal, aviso, bloqueado, sin IA o ilimitado"
+  - "El aviso empieza en el porcentaje de la variable aviso_cuota_porcentaje"
+  - "El total es la cuota más la bonificación del período"
+  - "Por persona cuenta las consultas ok; por herramienta, ok y rechazadas con su motivo"
+  - "Exportar respeta el período mostrado"
+  - "Solo el administrador de la empresa activa entra; la empresa sale de la sesión"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados"
+dudas:
+  - "'bloqueado 2 días' en Períodos anteriores no está definido. Propuesta: días enteros entre el momento en que se llegó al tope y el fin del período, redondeado hacia arriba; si nunca llegó, no se muestra."
+  - "En el estado sin IA la maqueta dice '+ comparativa'. Propuesta: el texto 'Tu plan no incluye IA' y el botón 'Ver qué trae cada plan', que lleva a Plan (REQ-010), en vez de repetir la tabla."
+  - "¿Se puede ver un período anterior en detalle? La maqueta solo lo lista. Propuesta: no en este requerimiento; Exportar CSV es del período en curso."
+  - "RF-83 nombra la pantalla 'Uso de IA' y la maqueta dice 'Consultas MCP'. RNF-09 pide sin tecnicismos. Propuesta: 'Consultas de IA de tu empresa en el período del plan <plan>.'"
+derivados: {}
+notas:
+  - "Cubre CP-85 y CU-41."
