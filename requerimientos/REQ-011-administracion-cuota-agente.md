@@ -6,7 +6,7 @@ Undécimo trabajo de Pablo para el módulo **Administración** (`traz-comp-adm`)
 cuota"** (reglas R5 y R6) que dice si una consulta del agente de IA se puede hacer y la descuenta, los
 **períodos** de cuota con su renovación diaria, los **avisos** al 80 % y al 100 %, la **bonificación**
 del superusuario, la pantalla **Uso de IA** del Portal y el **indicador** de cuota en la barra de Tools y
-del Portal. Lo leen Pablo para planificar y Rodolfo para aprobar el script de base, el análisis de
+del Portal. Lo leen Pablo para planificar y Rodolfo para aprobar el análisis de
 impacto de la barra y el contrato con el frente del agente. **No** cubre el freno en el portero de WSO2
 (Gateway / APIM): lo hace el **frente del agente (MCP)** con el contrato de la sección "Derivación al
 frente del agente" ([`doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md`](../doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md),
@@ -14,12 +14,12 @@ ADR-008). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el script de base y el análisis de impacto de la barra, y acordar el contrato con el frente del agente |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, aprobar el análisis de impacto de la barra y acordar el contrato con el frente del agente |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base, Portal, Consola), [REQ-004](REQ-004-administracion-base-y-atributos.md) (`seg.cuota_periodos`, `seg.consumos_mcp`, auditoría, variables `aviso_cuota_porcentaje` y `zona_horaria_cuotas`, servicio Contexto, barra de Tools), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (cuota, período y día de renovación del plan; herramientas de IA en el catálogo), [REQ-006](REQ-006-administracion-funcionalidades.md) (R1, R2), [REQ-007](REQ-007-administracion-usuarios-roles-perfil.md) (estado de membresía, columna "IA esta semana"), [REQ-008](REQ-008-administracion-consola-empresas.md) (proceso diario del módulo, ficha, listado, plan vencido) y [REQ-010](REQ-010-administracion-plan-y-pedidos.md) (paso único de cambio de plan, pantalla Plan) |
 | Entrega de la especificación | **E8** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: servicio "Consumir cuota" (R5/R6, atómico), períodos, renovación diaria, avisos, bonificación, Uso de IA, indicador en Contexto. CU-41, CU-51, CU-60, CU-62, CU-21; CP-25, CP-80 a 89 |
 | Casos de uso | `ADM-UC-170` a `ADM-UC-175` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-comp-adm` (Uso de IA, bonificación en la ficha, columnas de IA, procesos de línea de comandos, Contexto); `traz-tools`: recursos **nuevos** en `ADMDataService.dbs`, script de base (funciones nuevas), y del núcleo `application/views/layout/perfil.php` (indicador) |
-| Riesgo | 🔴 **Cambio de base de datos; Rodolfo aprueba el script antes de construir**: nombres de columnas de `seg.cuota_periodos` y `seg.consumos_mcp`, índices y **funciones nuevas** de base (consumo atómico) (lista en "Datos"). 🔴 **Núcleo de Tools**: indicador en la barra superior (`perfil.php`), que se ve en todas las pantallas → análisis de impacto aprobado por Rodolfo. Dos tareas programadas en cada servidor (como REQ-008). El freno en WSO2 queda **fuera** (derivación al frente del agente). Recursos del DataService nuevos (🟡) |
+| Riesgo | 🔴 Los nombres de columnas de `seg.cuota_periodos` y `seg.consumos_mcp` (tablas nuevas), sus índices y las **funciones nuevas** de base en `seg` (consumo atómico) (lista en "Datos") son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por el **núcleo de Tools**: indicador en la barra superior (`perfil.php`), que se ve en todas las pantallas → análisis de impacto aprobado por Rodolfo. Dos tareas programadas en cada servidor (como REQ-008). El freno en WSO2 queda **fuera** (derivación al frente del agente). Recursos del DataService nuevos (🟡) |
 
 ---
 
@@ -303,7 +303,8 @@ rechazos de las pantallas. Cada consumo **no** va al log de PHP: queda en `seg.c
 
 ## Datos
 
-**🔴: Rodolfo aprueba el script antes de construir.** Las tablas las crea REQ-004 con los atributos;
+**Cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10).** Las tablas las crea
+REQ-004 (en `seg`) con los atributos;
 acá se proponen nombres **[SUPUESTO]** y se agregan funciones e índices (si el script de REQ-004 no
 corrió, van en él; si no, en uno chico con su vuelta atrás).
 
@@ -371,7 +372,7 @@ REQ-008: análisis de quién las instala y cómo se ve si fallaron, en el mismo 
 
 ## Cómo se revisa (además de DocTest)
 
-- Script de base aprobado por Rodolfo, corrido en una copia de DEMO, con su vuelta atrás.
+- Script de base (aditivo) corrido en una copia de DEMO, con su vuelta atrás.
 - **Prueba de concurrencia** (CP-81): 20 pedidos simultáneos al recurso con un lugar libre → 1 `ok` y
   19 `sin_cuota`, consumidas = tope.
 - Tiempo del recurso "Consumir cuota" medido en la copia de DEMO (objetivo menos de 50 ms).
