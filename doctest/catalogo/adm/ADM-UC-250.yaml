@@ -1,0 +1,76 @@
+id: ADM-UC-250
+modulo: ADM
+titulo: Ver y activar o inactivar los formularios de mi empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-015-administracion-formularios.md
+    detalle: "secciones 'Portal → Formularios (CU-70)' y 'Modelo'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-formularios.html
+    detalle: "pestaña Formularios y ventana Inactivar"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenarios CP-120, CP-128 y CP-130"
+pantallas:
+  - "Portal de la empresa → 📝 Formularios → Formularios"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ"
+  - "MinTest_SJ tiene P-1 (publicado, 5 campos, en uso en Entrega de materiales, 12 respuestas) y P-2 (borrador)"
+  - "Hay globales G-1 y G-2 publicados y G-3 en borrador; Empresa Test tiene su propio formulario P-9"
+flujo_principal:
+  - paso: "En el Portal toca '📝 Formularios'"
+    resultado: "Ve 'Mis formularios' con P-1 (Publicado, 5 campos, '📦 Entrega de materiales', 12 respuestas) y P-2 (Borrador), y 'Globales disponibles' con G-1 y G-2"
+  - paso: "Mira las acciones de los globales"
+    resultado: "Cada global tiene 'Vista previa' y '⧉ Usar como base', y ninguno tiene 'Editar'"
+  - paso: "Toca 'Inactivar' en P-1"
+    resultado: "Se abre 'Inactivar \"P-1\"' con 'Está en uso en Entrega de materiales: esa pantalla quedará sin formulario hasta que elijas otro en \"Dónde se usan\". Las 12 respuestas cargadas se siguen viendo.'"
+  - paso: "Toca 'Inactivar'"
+    resultado: "P-1 queda 'Inactivo', 'Dónde se usan' muestra 'Ninguno' en Entrega de materiales y P-1 no se ofrece ahí"
+  - paso: "Abre en Tools un vale de entrega viejo que usó P-1"
+    resultado: "Se ve completo, con lo que se cargó"
+  - paso: "Abre en Tools la pantalla de entrega de materiales"
+    resultado: "Dice 'No se especificó un formulario', como hoy cuando no hay ninguno"
+flujos_alternativos:
+  - nombre: "Activar de nuevo"
+    pasos:
+      - paso: "Toca 'Activar' en P-1"
+        resultado: "P-1 vuelve a 'Publicado' y se puede elegir otra vez en 'Dónde se usan' (no vuelve solo a la pantalla)"
+  - nombre: "Inactivar uno que no está en uso"
+    pasos:
+      - paso: "Publica P-2 y lo inactiva"
+        resultado: "Se inactiva sin la ventana de aviso"
+  - nombre: "No se borra nada"
+    pasos:
+      - paso: "Se revisa la base después de inactivar P-1"
+        resultado: "P-1 y sus ítems siguen ahí, con estado inactivo; no hay ninguna fila borrada"
+  - nombre: "Formularios de otra empresa"
+    pasos:
+      - paso: "ana@ busca P-9 de Empresa Test en la lista"
+        resultado: "No aparece"
+      - paso: "Escribe a mano la dirección del constructor de P-9"
+        resultado: "Ve 'Esa página no existe.'"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "bruno@ entra a la dirección de Formularios"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Se ven los propios de la empresa de la sesión y los globales publicados; los globales en borrador no"
+  - "Los globales no se pueden editar desde el Portal"
+  - "Inactivar uno en uso avisa dónde se usa y cuántas respuestas tiene, y pide confirmación"
+  - "Al inactivar, los puntos donde se usaba quedan en 'Ninguno'"
+  - "Inactivar es baja lógica y las respuestas viejas se siguen viendo"
+  - "Un formulario de otra empresa no se ve ni se abre"
+  - "Solo el administrador entra"
+datos_prueba:
+  formularios: "fixture de formularios de 03_CASOS_DE_PRUEBA.md (P-1, P-2, G-1, G-2, G-3), cargado en la copia de DEMO"
+dudas:
+  - "Los formularios sin empresa que existen hoy en producción no se revisaron (verificación §8.5 del relevamiento, no corrida). Con D1, todos aparecerían como 'globales' para todas las empresas, aunque alguno sea de un cliente. Propuesta: correr la verificación antes de desplegar y no mostrar como globales los que Rodolfo marque como de un cliente hasta asignarlos (eso es M-7b)."
+  - "Inactivar: ¿se usa la columna eliminado que ya existe o el estado nuevo? Hoy nadie pone eliminado en 1 y el dibujo no lo mira (relevamiento §5.2). Propuesta: solo el estado nuevo 'inactivo'; eliminado queda como está, para no cambiar lo que lee FRMDataService (que sí filtra eliminado)."
+  - "Al volver a activar P-1, ¿vuelve solo a los puntos donde estaba? Propuesta: no; el administrador lo elige otra vez en 'Dónde se usan', para que nada cambie en Tools sin que lo decida."
+derivados: {}
+notas:
+  - "Cubre CP-120, CP-128 (inactivar en uso, baja lógica, respuestas viejas) y CP-130 en las pantallas del módulo. El combo de tareas estándar con '(global)' necesita D2/D3 en FRMDataService: fuera."
