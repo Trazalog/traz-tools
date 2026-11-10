@@ -10,7 +10,11 @@ técnico de DocTest (está en [`doctest/README.md`](../../doctest/README.md) y
 [`doctest/GUIA-PRUEBAS-Y-AYUDAS.md`](../../doctest/GUIA-PRUEBAS-Y-AYUDAS.md)) ni la metodología de ramas
 y PR (está en el `CLAUDE.md` del repo).
 
-> Versión 1.4 · noviembre 2026 · Trazalog v2.5 / v3
+> Versión 1.5 · noviembre 2026 · Trazalog v2.5 / v3
+> **Cambios en 1.5:** Claude puede escribir **varios requerimientos por adelantado**, en borrador, pero a
+> Pablo se le pasan **de a uno**. Pablo y DeepSeek solo trabajan sobre los que están "Listo para Pablo"
+> (sección 2.3).
+>
 > **Cambios en 1.4:**
 > - El documento se parte en dos: **Parte 1, ayuda memoria** del día a día, y **Parte 2, el detalle**.
 > - Dónde deja Pablo el plan y cómo lo aprueba Rodolfo: pull request en borrador y comentario
@@ -102,6 +106,8 @@ flowchart TD
 
 - [ ] **Requerimiento nuevo:** pedido A a Claude → contestar las dudas → validar los casos → subirlos
       a `develop`. Antes de pasárselo a Pablo, la lista de control de la sección 2.14.
+- [ ] **Terminó un requerimiento:** revisar con Claude el siguiente borrador contra lo que se construyó,
+      y recién ahí pasarlo a "Listo para Pablo" (sección 2.3).
 - [ ] **Llega el plan de Pablo** (pull request en borrador en GitHub): comentarios sobre los renglones
       si hay algo para cambiar, o un comentario **`✅ Plan aprobado`** si está bien. No el botón
       "Approve" (sección 2.4).
@@ -131,6 +137,8 @@ flowchart TD
 - 📋 **El catálogo manda.** Los casos de uso viven en `doctest/catalogo/`, no en el requerimiento ni en
   un chat.
 - 🔢 **Una tarea por vez.** Siempre.
+- 📑 **Un requerimiento por vez para Pablo.** Puede haber varios escritos en borrador; Pablo solo toma
+  el que está "Listo para Pablo" en `requerimientos/README.md`.
 - 🧪 **Sin caso validado no hay prueba, y sin DocTest en verde no hay commit.**
 - 🚫 **Nada se deriva desde un caso en `borrador`.** El validador lo rechaza.
 - 🗣️ **Si hay duda, se pregunta.** Pablo abre un aviso test-gap; Rodolfo lo aclara en el caso.
@@ -243,6 +251,24 @@ Todo en una sesión de Claude Code abierta en `traz-tools/`.
 5. En ese pull request corre `doctest-validate.yml`, que verifica que los YAML respeten el esquema. Si
    está en rojo, se corrige antes de seguir.
 6. Rodolfo pasa cada caso a `validado` y mergea. **Recién ahí Pablo puede empezar.**
+
+### Varios escritos por adelantado, de a uno para Pablo
+
+- **Por adelantado:** cuando hay un análisis o una especificación que alcanza, Claude puede escribir
+  varios requerimientos de una vez. Quedan en estado **Borrador** en `requerimientos/README.md`. Así se
+  ve el recorrido completo y las dudas aparecen antes.
+- **De a uno para Pablo:** a Pablo se le pasa un solo requerimiento por vez. El siguiente pasa a
+  **Listo para Pablo** cuando el anterior está **Hecho**. La única excepción es que Rodolfo decida, por
+  escrito en el índice, que dos no dependen entre sí.
+- **Se revisa antes de pasarlo:** antes de marcarlo "Listo para Pablo", Rodolfo y Claude lo comparan con
+  lo que realmente se construyó en el anterior (nombres, carpetas, decisiones nuevas) y lo corrigen.
+  Recién ahí se validan sus casos de uso (pasos 3 a 6 de arriba).
+- **Un borrador no se toca:** Pablo y DeepSeek no planifican ni programan un requerimiento en
+  Borrador, aunque esté en el repositorio. Si DeepSeek lo lee para entender hacia dónde va el trabajo,
+  está bien; construir sobre él, no.
+
+**Por qué:** escribirlos por adelantado da la foto completa; pasarlos de a uno evita construir sobre
+algo que el requerimiento anterior terminó cambiando.
 
 ## 2.4 El plan de Pablo (DeepSeek Pro)
 

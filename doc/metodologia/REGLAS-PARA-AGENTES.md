@@ -46,6 +46,9 @@ git push origin feature/req-###-desc-corta
 
 ## 3. Pull requests
 
+- **Solo requerimientos en "Listo para Pablo".** El estado de cada uno está en
+  `requerimientos/README.md`. Un requerimiento en **Borrador** se puede leer para entender hacia dónde
+  va el trabajo, pero **no** se planifica ni se programa.
 - **Uno por requerimiento**, a `develop`. Se abre **en borrador** con solo el plan
   (`requerimientos/REQ-###-….plan.md`) y no se programa hasta que Rodolfo deja el comentario
   **`✅ Plan aprobado`**. Con todas las tareas hechas, se pasa a "Ready for review".
