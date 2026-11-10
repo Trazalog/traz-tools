@@ -1,0 +1,88 @@
+id: ADM-UC-135
+modulo: ADM
+titulo: Ver en Tools el menú que me toca
+perfil: Supervisor
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-009-administracion-menus.md
+    detalle: "secciones 'Menú lateral de Tools con el menú resuelto', 'Comparación M-8 antes de encender' y 'Análisis de impacto en Tools'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/vista-esfumada.html
+    detalle: "barra lateral: menú resuelto con lo de otro plan sombreado en su lugar"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§3 regla R3; §8 M-8; §9b puntos T-2 y T-10"
+  - repo: traz-tools
+    path: application/helpers/menu_helper.php
+    detalle: "regla 'si ningún hijo está habilitado se muestran todos' (líneas 122-125), que el menú nuevo no aplica"
+pantallas:
+  - "Ingreso → tablero de Tools → menú lateral"
+  - "Consola → Variables de sistema (menu_resuelto_en_tools)"
+precondiciones:
+  - "Copia de DEMO con M-4 corrido (ADM-UC-134) y la comparación M-8 sin diferencias sin explicar"
+  - "Empresa MinTest_SJ en Free; Team trae además Ajustes de stock; Business trae además Procesos y Producción"
+  - "Bruno Díaz (Supervisor) sin menú asignado; menú Operación asignado al rol Mantenedor; Solo equipos asignado a Carla Ruiz"
+  - "El superusuario puso la variable menu_resuelto_en_tools en 'si'"
+flujo_principal:
+  - paso: "Bruno ingresa a Tools"
+    resultado: "El menú lateral muestra Mantenimiento, Almacenes, Herramientas, Procesos y Producción en ese orden"
+  - paso: "Despliega Almacenes"
+    resultado: "Ve Stock y, a continuación, Ajustes de stock sombreada, en cursiva y con '🥈'"
+  - paso: "Pasa el puntero sobre Ajustes de stock y le hace clic"
+    resultado: "Ve 'Incluido en el plan Team' y no se abre ninguna pantalla"
+  - paso: "Hace clic en Stock"
+    resultado: "Se abre la pantalla de stock como siempre"
+  - paso: "Compara el menú con lo que devuelve el servicio 'Menú resuelto' para Bruno"
+    resultado: "Es exactamente lo mismo: no aparecen Alta de equipo (sin acceso), Indicadores (sin activar) ni las herramientas de IA, ni opciones del Portal o de la Consola"
+flujos_alternativos:
+  - nombre: "Menú por rol y por persona"
+    pasos:
+      - paso: "Darío (Mantenedor) ingresa a Tools"
+        resultado: "Ve el menú Operación: 'Mi trabajo' con 'Equipos del taller' y Órdenes de trabajo, y 'Repuestos' con Stock"
+      - paso: "Carla ingresa a Tools"
+        resultado: "Ve el menú Solo equipos con Equipos"
+  - nombre: "Sin la regla de todos los hijos"
+    pasos:
+      - paso: "El administrador apaga Equipos en Funcionalidades y Darío vuelve a ingresar"
+        resultado: "En 'Mi trabajo' ya no está 'Equipos del taller'; no aparecen otras opciones de Mantenimiento en su lugar"
+  - nombre: "Etiqueta con código"
+    pasos:
+      - paso: "El administrador pone a una opción la etiqueta '<b>Equipos</b>' y Darío vuelve a ingresar"
+        resultado: "Ve el texto '<b>Equipos</b>' tal cual, sin formato"
+  - nombre: "El servicio no responde"
+    pasos:
+      - paso: "Con el recurso del menú resuelto detenido a propósito, Bruno ingresa a Tools"
+        resultado: "Ve el menú de siempre, con las opciones de hoy, y puede trabajar; el log dice que se usó el respaldo"
+  - nombre: "Variable apagada"
+    pasos:
+      - paso: "El superusuario pone menu_resuelto_en_tools en 'no' y Bruno vuelve a ingresar"
+        resultado: "Ve el menú de siempre, sin opciones sombreadas"
+  - nombre: "Comparación antes de encender"
+    pasos:
+      - paso: "Antes de encender la variable, se corre la comparación M-8 en la copia de DEMO"
+        resultado: "Para cada usuario, la lista de opciones que faltan o sobran en el menú nuevo está vacía, o cada diferencia tiene su explicación"
+validaciones:
+  - "Con la variable en 'si', el menú lateral es exactamente el que devuelve el servicio 'Menú resuelto'"
+  - "Lo de otro plan queda sombreado en su lugar y no navega hasta REQ-012"
+  - "No se aplica la regla 'si ningún hijo está habilitado se muestran todos'"
+  - "Las etiquetas se muestran como texto, sin interpretar código"
+  - "Si el servicio no responde, falla o devuelve un menú sin opciones, se ve el menú de hoy"
+  - "Con la variable en 'no' (por defecto), el menú es el de hoy"
+  - "La variable se enciende solo con M-4 corrido y la comparación M-8 sin diferencias sin explicar"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), MinTest_SJ, con nombres inventados"
+  ambiente: "copia de DEMO, nunca producción"
+dudas:
+  - "La consulta de hoy cruza contra la vista seg.menues_users_vw, que acepta el comodín 'TODOS' en correo y grupo (COREDataService.dbs:8; su definición no está en el repositorio), y R2 lee seg.memberships_menues. Si hay filas 'TODOS', el menú nuevo perdería esas opciones. Propuesta: antes de construir, Rodolfo corre SELECT pg_get_viewdef('seg.menues_users_vw'::regclass, true) en DEMO; si la vista agrega permisos por correo o 'TODOS', R2 lee la vista en vez de la tabla, y la comparación M-8 lo confirma."
+  - "El módulo de cliente ddpe-tools-pro arma su propio menú con la copia vieja (controllers/Dash.php:24-25). Propuesta: queda como hoy en este requerimiento; si ese módulo está en uso en algún ambiente, se lo pasa al menú nuevo en una tarea aparte."
+  - "¿Cuánto espera Tools al servicio antes de usar el respaldo? Propuesta: 3 segundos, como variable de configuración del servidor; se ajusta con la medición del tiempo de carga del tablero en la copia de DEMO."
+  - "Un menú sin ninguna opción, ¿es un error (respaldo) o lo que le toca a la persona? Propuesta: se toma como error y se dibuja el menú de hoy, porque una persona activa sin ninguna opción hoy no existe y dejarla sin menú la deja sin poder trabajar; se revisa cuando T-5 controle el acceso por pantalla."
+  - "El menú se arma una vez por carga de página, así que un cambio de menú se ve al recargar o reingresar. ¿Alcanza? Propuesta: sí, es como funciona hoy 'Menú por rol' de DNATO."
+derivados: {}
+notas:
+  - "Cubre T-2 y la parte de menú de T-10 (02_MODELO_Y_REGLAS.md §9b), CP-67 en la barra lateral de Tools y la comparación M-8 (CP-M1) en una copia de DEMO antes de encender. La verificación final del corte es de REQ-016."
+  - "El texto 'Incluido en el plan <plan>' es propuesta: la maqueta muestra solo el ícono del plan en la barra lateral."
+  - "Que la opción sombreada abra la vista de presentación es REQ-012 (T-6)."
