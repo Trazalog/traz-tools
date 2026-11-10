@@ -49,7 +49,7 @@ responde una línea y el caso sale de borrador.
 ### b) Un bug corregido
 
 Buscá el caso que lo describe. Los casos describen el comportamiento **esperado**, así que el caso ya
-dice lo correcto: lo que hay que hacer es **sacar el `test.fail()` del spec** y verificar que ahora
+dice lo correcto: lo que hay que hacer es **sacar el `test.fail()` y su `debeFallarCon()` del spec** y verificar que ahora
 pasa de verdad contra el entorno. Si pasa, el issue se cierra en ese PR.
 
 Si el arreglo cambió además el comportamiento respecto de lo que el caso decía, ahí sí se actualiza

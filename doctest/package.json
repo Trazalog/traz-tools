@@ -10,6 +10,8 @@
   },
   "scripts": {
     "doctest": "node scripts/doctest.mjs",
+    "doctest:consola": "node scripts/consola.mjs",
+    "doctest:publicar": "node scripts/publicar-corrida.mjs",
     "test:smoke": "node scripts/pw.mjs --grep @smoke --grep-invert \"@quarantine|@alta-empresa|@ciclo|@preparar-entorno\" --pass-with-no-tests",
     "test:module": "node scripts/test-module.mjs",
     "test:all": "node scripts/pw.mjs --grep-invert \"@quarantine|@alta-empresa|@ciclo|@preparar-entorno\" --pass-with-no-tests",
