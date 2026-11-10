@@ -276,6 +276,10 @@ salvo que se indique; líneas según `DNATO_v2_RELEVAMIENTO.md`):
 
 ### C.2 La excepción pública dentro de Tools
 
+> **Cambio de Rodolfo (2026-11-10), reemplaza la decisión de abajo:** el control **no** se hace para
+> todo Tools sino **solo dentro del módulo** (controlador base propio de `traz-comp-adm`, REQ-002).
+> Llevarlo a Tools queda como deuda técnica, hallazgo H-091 de `doc/hallazgos/REGISTRO.md`.
+
 Tools exige sesión iniciada (`Dash::index` redirige a `DNATO.main/login` si no hay `empr_id`,
 `application/controllers/Dash.php:21,45-48`), pero registración e ingreso son **públicos** (los usa un
 visitante sin sesión). **Decisión de Rodolfo (2026-11-04):** la excepción se resuelve con un **control
@@ -468,7 +472,8 @@ identidad copiadas (estilo `tz-*`/`REG`), y el layout "portal" para Portal y Con
 
 El módulo corre **dentro** de Tools, así que hereda por diseño (no reimplementa):
 
-- **Sesión obligatoria**: entra por el chequeo central de Tools (T-5), excepto la lista blanca pública
+- **Sesión obligatoria**: entra por el control del propio módulo (cambio del 2026-11-10; antes decía
+  "el chequeo central de Tools (T-5)"), excepto la lista blanca pública
   de identidad (C.2).
 - **Empresa activa**: siempre de la sesión (`empresa()` → `empr_id`), nunca del navegador (G2, RNF-02).
 - **Menú operativo**: lo dibuja Tools. El Portal y la Consola tienen su **propia** barra lateral (layout
@@ -498,6 +503,14 @@ es una derivación con `traz-comp-formularios`. El orden exacto de REQ-004 en ad
 "qué hace el módulo vs qué hace Tools vs qué hace el frente MCP" quedan como **[DECISIÓN]** de Rodolfo
 al aprobar este análisis.
 
+> **Decisiones de Rodolfo (2026-11-10) sobre esta nota:**
+> - **Orden:** el de la especificación, E0→E12, una entrega por requerimiento (REQ-004 = E1 más lo que
+>   faltó de E0, hasta REQ-016 = E12). Lista en `requerimientos/README.md`.
+> - **E8, cuota del agente:** el módulo hace las pantallas y los servicios de cuota; el freno en el
+>   portero de WSO2 es del frente del agente (MCP) y va aparte.
+> - **E11b, formularios:** el módulo hace las pantallas; los cambios dentro de `traz-comp-formularios`
+>   van en un requerimiento aparte, con análisis de impacto, porque es un módulo compartido.
+
 ---
 
 ## Decisiones de Rodolfo (2026-11-04 y 2026-11-05) y pendientes
@@ -508,7 +521,8 @@ al aprobar este análisis.
    que usa el disparador de alta de empresa). Sin comparar `descripcion` ni agregar columna (B.4).
 2. ✅ **Tiempo de sesión:** el de Tools (sin límite), dejándolo **configurable** en `constants.php` (C.3).
 3. ✅ **Estilos de login/registro:** se copian **tal cual**, sin unificar (C.1).
-4. ✅ **Excepción pública de identidad:** control **general de Tools** (no del módulo) (C.2).
+4. ✅ **Excepción pública de identidad:** ~~control general de Tools~~ → **control solo dentro del
+   módulo** (cambio del 2026-11-10; propagarlo a Tools es la deuda H-091) (C.2).
 5. ✅ **Prefijo del módulo:** `ADM` confirmado (F.2).
 6. ✅ **Portal/Consola:** diseño propio (layout "portal" de las maquetas), respetando las maquetas; al
    presionar "Mi empresa" se sale del contexto visual de Tools (E.2, F.2). Se estudian las maquetas a
@@ -527,6 +541,27 @@ al aprobar este análisis.
 - D.2 — el JWT de DNATO para un usuario creado desde el módulo funciona contra el APIM sin cambios.
 - B.4a — la cantidad de membresías afectadas por el criterio nuevo es chica (en desarrollo eran 7, de
   prueba), pero hay que confirmarlo con la medición.
+
+11. ✅ **Orden y reparto de REQ-004 en adelante (2026-11-10):** orden E0→E12; de E8 y E11b el módulo
+    hace las pantallas y lo de WSO2 y `traz-comp-formularios` va aparte (nota de F.4).
+
+12. ✅ **Cambios de base aditivos (2026-11-10):** crear tablas nuevas y agregar columnas **optativas**
+    (que aceptan vacío o tienen valor por defecto), índices y funciones nuevas lo decide el equipo, sin
+    aprobación de Rodolfo. Siguen necesitando su aprobación: cambiar o borrar algo existente, columnas
+    obligatorias en tablas existentes y migraciones que cambian filas existentes.
+13. ✅ **Schema de las tablas nuevas (2026-11-10):** todas en `seg`, como las actuales. Las columnas nuevas
+    de tablas existentes de otro schema (`core.empresas`, `frm.formularios`) se quedan en su tabla.
+14. ✅ **Cargas masivas (2026-11-10):** son **todo o nada**. Los procedimientos que valen son los de la
+    base, no los del repositorio; Pablo los compara y versiona antes de construir REQ-014.
+
+15. ✅ **Más cambios de base que decide el equipo (2026-11-10):** llenar una tabla nueva con datos
+    existentes, y agregar filas nuevas en `core.tablas` sin cambiar las existentes.
+16. ✅ **Formularios (2026-11-10):** en este plan de trabajo está **prohibido tocar cómo se muestran, se
+    dibujan o se completan** los formularios en Tools; el módulo hace solo el ABM (REQ-015). Entran
+    aparte, en REQ-017 "Formularios globales en Tools": los combos de tareas con los formularios
+    globales (cambio a `FRMDataService`), el alta de empresa apuntando a los globales (cambio al
+    disparador) y pasar a globales solo los formularios que usa ese disparador. El corte final de DNATO
+    pasa a ser REQ-018.
 
 **Pendientes de ejecución (no bloquean la aprobación del análisis):**
 - Correr `verificar-membresias-vs-empresas.sql` en DEMO y copia de producción, con las 3 mediciones de

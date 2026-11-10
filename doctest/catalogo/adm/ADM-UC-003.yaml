@@ -1,0 +1,50 @@
+id: ADM-UC-003
+modulo: ADM
+titulo: Rechazar envíos falsificados en el módulo
+perfil: Administrador
+estado: validado
+fecha_validacion: 2026-11-10
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-002-administracion-esqueleto.md
+    detalle: "se completa con la protección de envíos del controlador base al programar"
+pantallas:
+  - "Portal de la empresa → Inicio (dirección traz-comp-adm/portal)"
+precondiciones:
+  - Usuario con sesión iniciada en Tools
+  - El usuario es Administrador de la empresa activa de su sesión
+  - Es una prueba de servicio, sin pantalla propia; el esqueleto todavía no tiene acciones que guarden
+flujo_principal:
+  - paso: "Con la sesión abierta, manda un envío a la pantalla de inicio del Portal con el código de seguridad que le dio la página"
+    resultado: "El envío se acepta y responde la pantalla normal"
+flujos_alternativos:
+  - nombre: "Dos pestañas abiertas"
+    pasos:
+      - paso: "Abre el Portal en dos pestañas y manda un envío desde cada una"
+        resultado: "Los dos envíos se aceptan, porque el código dura toda la sesión"
+  - nombre: "Envío sin código de seguridad"
+    pasos:
+      - paso: "Manda el mismo envío sin el código de seguridad"
+        resultado: "Responde 'La página venció. Volvé a cargarla e intentá de nuevo.' (403) y no ejecuta nada"
+  - nombre: "Envío con el código de otra sesión"
+    pasos:
+      - paso: "Manda el envío con un código de seguridad sacado de otra sesión"
+        resultado: "Responde lo mismo que sin código y no ejecuta nada"
+  - nombre: "Envío sin sesión"
+    pasos:
+      - paso: "Sin sesión, manda un envío a la pantalla de inicio del Portal"
+        resultado: "Responde que hace falta iniciar sesión (401) y no ejecuta nada"
+validaciones:
+  - "El código de seguridad dura toda la sesión: sirve en dos pestañas abiertas a la vez"
+  - "Todo envío que no es de lectura exige el código de seguridad de la sesión"
+  - "Un código de otra sesión no sirve"
+  - "El control de sesión corre antes que el de código de seguridad"
+datos_prueba:
+  empresa: "empresa DocTest del ambiente (DOCTEST_EMPRESA)"
+dudas: []
+derivados: {}
+notas:
+  - "Decisiones de Rodolfo (2026-11-10): la protección se prueba contra la pantalla de inicio y se vuelve a probar con la primera pantalla que guarde algo; el código de seguridad dura toda la sesión."
+  - "Es la protección que en DNATO falta (correctivo C-4). No usa la de CodeIgniter de Tools porque esa se prende para todo Tools desde application/config/config.php, y el control vive solo en el módulo."
