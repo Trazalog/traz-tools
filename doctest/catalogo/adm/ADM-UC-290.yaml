@@ -61,7 +61,6 @@ validaciones:
 datos_prueba:
   formularios: "fixture de formularios de 03_CASOS_DE_PRUEBA.md (P-1, G-1, G-2, G-3) más P-9, P-10 y G-4 inventados, en la copia de DEMO"
 dudas:
-  - "La verificación §8.5 (formularios sin empresa que hoy existen en producción) no se corrió. Con este cambio, todos se verían en los combos de todas las empresas, aunque alguno sea de un cliente, y la migración que los asignaba (M-7b) no se hace. Propuesta: Rodolfo corre la consulta de solo lectura en producción antes de desplegar; si aparece alguno de un cliente, se le pone a mano su empresa con un script chico aprobado por él, y recién después se despliega."
   - "Una tarea o etapa que ya tiene un formulario que después se inactiva: el combo de edición ya no lo trae y, en etapas, guardar lo deja vacío (Etapa.php:764-765). Propuesta: aceptarlo (hoy no pasa, porque todos los formularios nacen publicados) y que la ventana 'Inactivar' del ABM (REQ-015) avise también cuántas tareas estándar y etapas lo usan."
   - "El perfil de quien arma etapas productivas (Responsable de Producción) no está en el vocabulario de DocTest. Propuesta: el caso usa Planificador y el flujo de etapas se corre con un usuario que tenga el rol de producción; si querés, se propone el perfil nuevo en SCHEMA.md."
   - "Hay una copia vieja del DataService en esb/dataservices/FRMDataService.xml con la misma consulta. Propuesta: no tocarla, porque lo que se despliega es ToolsAPIProject; confirmá que esa carpeta no se despliega en ningún ambiente."
@@ -69,3 +68,4 @@ derivados: {}
 notas:
   - "Cubre la parte de combos de CP-130 y el punto T-8. Decisiones D2 y D3 del relevamiento."
   - "No cambia las pantallas: solo lo que devuelve la consulta existente, con las mismas claves (form_id, nombre, descripcion)."
+  - "Formularios sin empresa que ya existen (decisión de Rodolfo del 2026-11-10): no se asigna ni se cambia ninguno. Antes de desplegar, Pablo corre una consulta de solo lectura en DEMO y en la copia de producción que lista cuáles van a empezar a verse en los combos de todas las empresas, y se la muestra a Rodolfo; no se cambia ningún dato."

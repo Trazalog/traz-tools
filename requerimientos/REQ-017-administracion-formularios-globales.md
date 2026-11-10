@@ -13,7 +13,7 @@ Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, correr (o hacer correr) la verificación §8.5 en producción y aprobar el análisis de impacto. Nace el 2026-11-10 con lo que salió de REQ-015 por decisión de Rodolfo |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos, ver el listado de formularios sin empresa que saca Pablo (verificación §8.5, solo lectura) y aprobar el análisis de impacto. Nace el 2026-11-10 con lo que salió de REQ-015 por decisión de Rodolfo |
 | Se apoya en | [REQ-015](REQ-015-administracion-formularios.md) (columna `estado` de `frm.formularios`, tabla `seg.formularios_puntos_uso` con su "Global al alta", estructura de `frm.*` versionada), [REQ-002](REQ-002-administracion-esqueleto.md); relevamiento [`doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md`](../doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md) (§4.2, §8 y decisiones D1 a D3); análisis previo del clonado [`doc/analisis/impacto-config-formulario-entrega-alta.md`](../doc/analisis/impacto-config-formulario-entrega-alta.md) |
 | Entrega de la especificación | Parte de **E11b** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: configuración al alta (RF-127, reemplaza el clonado del disparador), punto T-8 de `02_MODELO_Y_REGLAS.md` (combos), y de M-7b / RF-131 **solo** el pase de los formularios de la 9000 que usa el disparador. CP-127, la parte de combos de CP-130 y la parte mínima de CP-132 |
 | Casos de uso | `ADM-UC-290` a `ADM-UC-292` en `doctest/catalogo/adm/` (rango reservado 290 a 309) |
@@ -70,6 +70,9 @@ Lista completa en [`README.md`](README.md).
   los demás formularios de la 9000 (el del registro, entre otros), no completa los puntos de uso de las
   empresas existentes ni arma el informe de pañol.
 - **No toca las empresas existentes**: conservan su clon y su configuración (ver el análisis de impacto).
+- **No asigna ni cambia ningún formulario existente sin empresa** (decisión de Rodolfo del 2026-11-10: los
+  datos existentes no se tocan). Solo se listan, en solo lectura, antes de desplegar (verificación §8.5).
+  El único formulario que cambia es el de la 9000 del pase mínimo (viii).
 - **No toca el formulario del autorregistro** ni `REGISTER_TEMP_EMPR_ID='9000'` de DNATO.
 - **No cambia la parte del disparador que no es de formularios** (menús, superadministrador, listas de
   valores por defecto): se copia tal cual.
@@ -146,7 +149,7 @@ de la 9000.
 1. Script de base de REQ-015 (columna `estado`, tabla `seg.formularios_puntos_uso`): sin eso, la consulta
    nueva y el disparador nuevo fallan.
 2. (vii) + (viii) juntos, en una transacción.
-3. (vi), **después** de que Rodolfo revise el resultado de la verificación §8.5 en producción.
+3. (vi), **después** de la verificación §8.5: antes de desplegar, Pablo corre una consulta **de solo lectura** en DEMO y en la copia de producción que lista qué formularios sin empresa van a empezar a verse en los combos de todas las empresas, y se la muestra a Rodolfo; no se cambia ningún dato.
 
 (vi) y (vii)+(viii) se pueden desplegar por separado; las dos dependen de REQ-015.
 
@@ -228,9 +231,9 @@ submódulos de Tools, `_backend`, `esb` y en AssetPlanner). El contrato no cambi
 ninguno se rompe por la forma. Lo que sí cambia, a propósito:
 
 - **Aparecen los formularios sin empresa** en los combos de **todas** las empresas. Hoy no aparecía ninguno.
-  Riesgo: si en producción hay formularios sin empresa que son de un cliente (relevamiento §8.5, consulta
-  **no corrida**), se verían en todas las empresas → la verificación §8.5 en producción es **condición**
-  para desplegar (vi) (duda de ADM-UC-290).
+  Si en producción hay formularios sin empresa que son de un cliente (relevamiento §8.5, consulta **no
+  corrida**), se van a ver en todas las empresas. Los datos existentes **no se tocan** (decisión de Rodolfo
+  del 2026-11-10): no se asigna ni se cambia ningún formulario. Lo que se hace es que, antes de desplegar, Pablo corre una consulta **de solo lectura** en DEMO y en la copia de producción que lista qué formularios sin empresa van a empezar a verse en los combos de todas las empresas, y se la muestra a Rodolfo; no se cambia ningún dato.
 - Después de (viii), "Entrega Materiales (global)" aparece en esos combos de todas las empresas; las que ya
   tienen su clon ven además "Entrega Materiales" (el suyo).
 - **Editar una tarea o etapa cuyo formulario quedó inactivo:** como la consulta ya no lo trae, el combo de
@@ -298,12 +301,21 @@ ninguno se rompe por la forma. Lo que sí cambia, a propósito:
   de la 9000, y el nuevo de que sea global.
 - **El disparador lee la marca "Global al alta"** de REQ-015 por número, no por nombre: si el superusuario
   renombra el global en la Consola, el alta sigue funcionando.
+- **Las listas de opciones no se copian a la empresa nueva** (decisión de Rodolfo del 2026-11-10): el clon de
+  hoy nunca las copió (relevamiento §4.2), así que con el global queda igual que hoy (los campos de lista se
+  ven vacíos en Tools si la empresa no tiene su lista) y no se hace nada.
+- **Los formularios sin empresa que ya existen no se tocan** (decisión de Rodolfo del 2026-11-10): no se
+  asigna ni se cambia ninguno. Antes de desplegar (vi), Pablo corre una consulta de solo lectura en DEMO y
+  en la copia de producción que lista cuáles van a empezar a verse en los combos de todas las empresas, y
+  se la muestra a Rodolfo.
 
 ## Cómo se revisa (además de DocTest)
 
 - Tarea 0 hecha: la función desplegada en DEMO (y en producción, por Rodolfo) es igual a la de v2.8.1.3, o
   la diferencia está reportada y resuelta antes de seguir.
-- Verificación §8.5 corrida en producción por Rodolfo y revisada **antes** de desplegar (vi).
+- Verificación §8.5 **antes** de desplegar (vi): Pablo corre la consulta de solo lectura en DEMO y en la
+  copia de producción, lista los formularios sin empresa que van a empezar a verse en los combos de todas
+  las empresas y se la muestra a Rodolfo. No se cambia ningún dato.
 - En una copia de DEMO: alta de una empresa de prueba → tiene la fila `configuraciones/formulario_entrega_materiales`
   apuntando al global y **ningún** formulario con su `empr_id`; la entrega directa dibuja el global.
 - Una empresa existente: su configuración y su clon, iguales antes y después (comparar las filas).
