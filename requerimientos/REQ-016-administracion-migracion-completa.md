@@ -6,7 +6,8 @@ Decimosexto trabajo de Pablo para el módulo **Administración** (`traz-comp-adm
 datos de DNATO v3. Pasa **todas las empresas actuales al plan "Completo"** (M-3, para que nadie pierda nada),
 junta en **un solo orden de ejecución por ambiente** las migraciones que REQ-004 a REQ-015 dejaron
 repartidas (M-1 a M-7, M-4) y corre la **verificación final** (M-8, CP-M1) con un informe que dice si el
-ambiente quedó listo. Lo leen Pablo para planificar y Rodolfo para aprobar los scripts y decidir el corte.
+ambiente quedó listo. Lo leen Pablo para planificar y Rodolfo para aprobar los scripts que cambian filas existentes (M-3 y los
+de datos de REQ-004) y decidir el corte.
 **No** hace el corte final (redirigir DNATO al módulo y apagarlo): se propone como requerimiento aparte con
 su propio análisis de impacto (ver "Qué NO hace" y la duda de ADM-UC-272). Tampoco la migración de
 formularios M-7b ([REQ-015](REQ-015-administracion-formularios.md)). Lista completa en
@@ -14,12 +15,12 @@ formularios M-7b ([REQ-015](REQ-015-administracion-formularios.md)). Lista compl
 
 | Campo | Valor |
 |---|---|
-| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos (cuota del plan "Completo", ambientes, corte final) y aprobar los scripts |
+| Estado | **Borrador**: Rodolfo tiene que contestar las dudas de los casos (cuota del plan "Completo", ambientes, corte final) y aprobar los scripts que cambian filas existentes (M-3, y M-2 de herramientas, M-6 y M-7 de REQ-004) |
 | Se apoya en | [REQ-004](REQ-004-administracion-base-y-atributos.md) (M-1, M-2, M-5, M-6, M-7 y columnas `plan_id`, `estado_plan`, `plan_vence`, `uso_plan_gratuito`), [REQ-005](REQ-005-administracion-catalogo-y-planes.md) (`seg.planes`, `seg.planes_funcionalidades`, plan base), [REQ-008](REQ-008-administracion-consola-empresas.md) (columnas y variables nuevas), [REQ-009](REQ-009-administracion-menus.md) (M-4, comparación M-8, variable `menu_resuelto_en_tools`), [REQ-010](REQ-010-administracion-plan-y-pedidos.md) (plan base en el registro), [REQ-011](REQ-011-administracion-cuota-agente.md) (cuota), [REQ-013](REQ-013-administracion-actividad-y-auditoria.md), [REQ-014](REQ-014-administracion-cargas-masivas.md) y [REQ-015](REQ-015-administracion-formularios.md) (objetos de base nuevos) |
 | Entrega de la especificación | **E12** de `doc/v3/dnato/PROMPT_CLI_DNATO_V3_BUILD.md`: migración completa (M-3 plan "Completo" y M-8 verificación) + corte según CI/CD. CP-M1; `02_MODELO_Y_REGLAS.md` §8 |
 | Casos de uso | `ADM-UC-270` a `ADM-UC-272` en `doctest/catalogo/adm/` |
 | Repos que se tocan | `traz-tools`: scripts de base de M-3, el orden de ejecución y el script de verificación (en `doc/v3/administracion/sql/` **[SUPUESTO]**, la carpeta que propuso REQ-004). `traz-comp-adm`: nada nuevo, salvo que la verificación use el servicio "Menú resuelto" de REQ-009 |
-| Riesgo | 🔴 **Migración de datos; Rodolfo aprueba cada script antes de correrlo**: M-3 escribe `plan_id`, `estado_plan`, `plan_vence` y `uso_plan_gratuito` (columnas nuevas de REQ-004) en **todas** las empresas y crea filas en `seg.planes` y `seg.planes_funcionalidades` (lista en "Datos"). Se corre en todos los ambientes, producción incluida. Toca datos de `core.empresas` (núcleo, aunque solo columnas nuevas) → **análisis de impacto aprobado por Rodolfo** |
+| Riesgo | 🔴 La tabla nueva de control `seg.migracion_scripts` y las filas nuevas de M-3 en `seg.planes` y `seg.planes_funcionalidades` (tablas nuevas) son **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del 2026-11-10)**. Sigue en rojo por la **migración que cambia filas existentes**: M-3 escribe `plan_id`, `estado_plan`, `plan_vence` y `uso_plan_gratuito` (columnas nuevas de REQ-004) en **todas** las empresas existentes de `core.empresas` (núcleo), en todos los ambientes, producción incluida → **Rodolfo aprueba el script de M-3 antes de correrlo, con su análisis de impacto**. Lo mismo para los datos de REQ-004 que el orden junta (M-2 de herramientas, M-6 y M-7) |
 
 ---
 
@@ -114,7 +115,7 @@ formularios M-7b ([REQ-015](REQ-015-administracion-formularios.md)). Lista compl
 ### Orden único de ejecución (ADM-UC-271)
 
 Un documento de ejecución con la lista de scripts **en este orden**, cada uno con el requerimiento que lo
-aprobó, dónde se corre (terminal con acceso a la base del ambiente, como el refresco de indicadores de
+definió (y, para los que cambian filas existentes, la aprobación de Rodolfo), dónde se corre (terminal con acceso a la base del ambiente, como el refresco de indicadores de
 `doc/infra/kpi-cron-refresh.md`) y su vuelta atrás:
 
 1. Estructura (M-1): REQ-004, REQ-005, REQ-008, REQ-009, REQ-011, REQ-013, REQ-014, REQ-015, en ese orden.
@@ -129,7 +130,8 @@ Reglas del orden:
   que no está). Si un ambiente ya tiene parte (por ejemplo DEMO, donde se fueron corriendo de a uno), el
   orden completo se puede correr igual.
 - **Se para en el primer error** y dice cuál; no sigue con el siguiente.
-- Deja un registro de qué corrió, cuándo y con qué resultado (ver la duda de ADM-UC-271 sobre dónde).
+- Deja un registro de qué corrió, cuándo y con qué resultado en la tabla nueva de control
+  `seg.migracion_scripts` (ver "Datos"); cada script la consulta para saber si ya corrió en ese ambiente.
 - Siempre primero en una **copia** del ambiente, después en el ambiente. Producción, con respaldo de la
   base tomado antes y la ventana que fije Rodolfo.
 
@@ -225,7 +227,13 @@ informe de verificación se guarda con fecha y ambiente.
 
 ## Datos
 
-**🔴 Rodolfo aprueba cada script antes de correrlo.** No hay tablas ni columnas nuevas.
+**M-3 cambia filas existentes de `core.empresas`: Rodolfo aprueba el script antes de correrlo.** La tabla
+de control es nueva, va en `seg` y es **cambio de base aditivo: lo decide el equipo (regla de Rodolfo del
+2026-11-10)**. No hay columnas nuevas.
+
+| Tabla nueva | Columnas | Para qué |
+|---|---|---|
+| `seg.migracion_scripts` | `script` (nombre del archivo), `requerimiento`, `fecha`, `resultado` (`ok` / `error`), `detalle`, `usuario` (de base); única por `script` **[SUPUESTO]** | Registro de qué scripts corrieron en ese ambiente (ADM-UC-271) |
 
 | Tabla | Qué escribe M-3 |
 |---|---|
@@ -252,13 +260,17 @@ informe de verificación se guarda con fecha y ambiente.
 
 - **"Completo" = sin límites** (§8: "nadie pierde nada el día del cambio"), con la cuota a confirmar.
 - **M-3 solo toca `plan_id` nulo**, así es repetible y no pisa lo que eligió una empresa nueva.
+- **Tabla de control `seg.migracion_scripts`**: es más seguro que cada script consulte si ya corrió que
+  depender de que detecte solo lo que ya existe. Es aditiva y va en `seg`, así que la decide el equipo
+  (regla de Rodolfo del 2026-11-10).
 - **La verificación reusa la comparación de REQ-009**: un solo código para comparar menús.
 - **El corte final se propone aparte**: toca identidad (el token del agente) y todas las direcciones de
   ingreso de Tools.
 
 ## Cómo se revisa (además de DocTest)
 
-- Cada script aprobado por Rodolfo, corrido en una copia de DEMO, con su vuelta atrás probada.
+- Cada script corrido en una copia de DEMO, con su vuelta atrás probada; el de M-3 (y los de datos de
+  REQ-004 que cambian filas existentes) aprobado por Rodolfo antes de correrlo.
 - El orden completo corrido dos veces seguidas en la misma copia: la segunda no cambia nada.
 - Informe de verificación de la copia de DEMO con "Ambiente listo" (o la lista de lo que falta, revisada
   por Rodolfo).

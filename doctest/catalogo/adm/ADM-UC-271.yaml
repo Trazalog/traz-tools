@@ -16,7 +16,7 @@ pantallas:
   - "Terminal con acceso a la base del ambiente"
 precondiciones:
   - "Una copia nueva de la base de producción v2, sin ningún script del módulo corrido"
-  - "Los scripts de REQ-004, 005, 008, 009, 011, 013, 014, 015 y 016 aprobados por Rodolfo"
+  - "Los scripts de REQ-004, 005, 008, 009, 011, 013, 014, 015 y 016 listos; los que cambian filas existentes (M-3, y M-2 de herramientas, M-6 y M-7 de REQ-004) aprobados por Rodolfo"
   - "El correo del superusuario de ese ambiente, que se pasa como parámetro y no queda escrito en el repositorio"
 flujo_principal:
   - paso: "Sigue el documento de ejecución y corre los scripts en el orden que dice: estructura de cada requerimiento, datos de REQ-004 (M-2, M-5, M-6, M-7), M-4 y M-3"
@@ -52,9 +52,9 @@ validaciones:
 datos_prueba:
   ambiente: "copia de la base de producción v2 en un servidor de prueba, con los datos de clientes protegidos según la política de copias"
 dudas:
-  - "¿Dónde queda el registro de qué scripts corrieron en cada ambiente? Propuesta: una tabla chica nueva de control (script, fecha, resultado), que cada script consulta para saber si ya corrió; es más seguro que depender de que cada script detecte solo lo que ya existe. Es una tabla nueva: la tenés que aprobar."
   - "¿En qué ambientes se corre? La especificación dice TEST (staging-v3) y después producción, pero staging-v3 no está armado y hoy DEMO despliega desde develop. Propuesta: copia de DEMO, DEMO, copia de producción y producción, en ese orden."
   - "¿Quién corre los scripts en producción? Propuesta: Rodolfo o el especialista de infraestructura, con el documento de ejecución, nunca Pablo directo."
 derivados: {}
 notas:
+  - "El registro de la ejecución queda en la tabla nueva de control seg.migracion_scripts (REQ-016, sección 'Datos'): es aditiva y la decide el equipo (regla de Rodolfo del 2026-11-10)."
   - "Junta M-1, M-2, M-4, M-5, M-6 y M-7, que quedaron en REQ-004 a REQ-015, con M-3 de este requerimiento. M-7b (formularios) queda fuera (REQ-015)."
