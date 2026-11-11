@@ -9,7 +9,7 @@ Qué es: cómo Kuntur acompaña al administrador de una empresa cliente en la pu
 | Versión | 2, 2026-11-11 (la 1 era un borrador de 5 preguntas; esta incorpora lo que pidió el PM el mismo día) |
 | Tareas | AGENTE-CO-02 (entrevista), CO-07 (avisos), y las etapas nuevas CO-09 (carga inicial) y CO-10 (menús y roles) |
 | Etapa 1 | **Hecha** (rama `feat/AGENTE-CO-02-entrevista-kuntur`) |
-| Etapas 2 y 3 | **Diseño. Necesitan aprobación**: cambian la regla de que los agentes no graban (ADR-A8) y tocan el núcleo del sistema |
+| Etapas 2 y 3 | **ADR-A12 aprobado** (2026-11-11). El mecanismo "Kuntur propone, el administrador toca Cargar" ya está hecho. Las herramientas de alta esperan el análisis de impacto: [`analisis-impacto-kuntur-configuracion.md`](analisis-impacto-kuntur-configuracion.md) |
 | Etapa 4 | Espera al módulo de Tareas |
 
 ---
@@ -100,7 +100,7 @@ Ya no hay una pregunta de "cada cuánto te aviso" (pedido del PM). Cada meta tie
 
 ### 3.2 Lo que cambia en las reglas
 
-Hoy los agentes **no graban nada** (ADR-A8, decisión D3 del plan). Esta etapa necesita una excepción, que propongo como **ADR-A12**:
+Hasta acá los agentes **no grababan nada** (ADR-A8, decisión D3 del plan). Esta etapa necesita una excepción, **ADR-A12, aprobado por el PM el 2026-11-11**:
 
 > Kuntur puede ejecutar herramientas que graban **datos de configuración** de la empresa cuando se cumplen estas cinco condiciones:
 >
@@ -135,14 +135,16 @@ sequenceDiagram
 
 ### 3.4 Qué hace falta construir
 
-| Pieza | Dónde | Comentario |
-|---|---|---|
-| Herramientas de alta: establecimiento, depósito, unidad de medida, tipo de artículo, tipo de herramienta, punto de pedido | Tools, sobre las operaciones que ya usan las pantallas | **Toca el núcleo del sistema** (servicios de datos y APIs): antes, análisis de impacto aprobado por el PM |
-| Preventivos y correctivos | Mantenimiento | **Coordinar con la migración de AssetPlanner a Mantenimiento**, que lleva otra sesión. No se toca hasta que esa migración lo permita |
-| Herramienta de carga masiva para agentes | Sobre la carga masiva de Dnato (procedimientos `sta.*`) | La nueva versión de Dnato la mantiene (entrega E11). Se reutiliza su validación de todo o nada |
-| Lectura de la planilla del administrador | Orquestador | Al modelo de lenguaje solo le llegan **los encabezados y una muestra de filas**, no la planilla entera. Supuesto propio: alcanza con unas 20 filas para entender las columnas |
-| Clase `configuracion`, lista de Kuntur y tarjeta "Cargar" | Base de los agentes y panel | Igual que "Cargar meta", pero ejecutada por Kuntur después de la confirmación |
-| Contenido por industria | Base de conocimiento | Faustino lo releva con expertos; antes de eso, Kuntur no propone listas típicas, solo carga lo que le da el administrador |
+El detalle y lo que toca del núcleo está en [`analisis-impacto-kuntur-configuracion.md`](analisis-impacto-kuntur-configuracion.md). En resumen:
+
+| Pieza | Estado |
+|---|---|
+| Mecanismo de carga propuesta: tarjeta "Cargar", ejecución con el token del administrador (`agente/cargas.py`, `025`) | **Hecho** |
+| Alta de establecimiento, depósito y valores de listas (unidades, tipos de artículo, tipos de herramienta) | Lote 1, para aprobar: sobre servicios de datos que ya existen, sin modificarlos |
+| Carga de artículos y herramientas de a muchos, incluida la planilla del cliente | Lote 2, para aprobar la dirección: una función nueva que reutiliza la carga masiva de Dnato |
+| Lo que se carga el primer día en Mantenimiento: sectores, áreas, criticidades, grupos, marcas, familias (pedido del PM) | Lote 3: espera a la migración de AssetPlanner a Mantenimiento (otra sesión) |
+| Preventivos | **No se cargan el primer día** (PM). Kuntur propone una **tarea** "generar los preventivos de estos equipos" (etapa 4, módulo de Tareas) |
+| Contenido típico por industria | Lo releva Faustino con expertos y queda en la base de conocimiento (PM). Hasta entonces, Kuntur solo carga lo que le da el administrador |
 
 ---
 
@@ -194,14 +196,17 @@ Esto hay que pedírselo al frente de Dnato. No lo programo yo: es identidad y es
 
 ---
 
-## 6. Decisiones pendientes del PM
+## 6. Decisiones del PM (2026-11-11)
 
-| # | Pregunta | Propuesta |
+| # | Pregunta | Respuesta |
 |---|---|---|
-| P-5 | ¿Se aprueba el ADR-A12 (Kuntur graba configuración con confirmación, §3.2)? | Sí, con las cinco condiciones |
-| P-6 | ¿Por qué empieza la etapa 2? | Depósitos, unidades y tipos de artículo, más la importación de artículos con la carga masiva. Es lo que más usan los clientes de Almacenes. Supuesto propio, sin datos de uso |
-| P-7 | Etapa 3: ¿se le piden al frente de Dnato las tres cosas de §4.3? | Sí, como requisito para la nueva versión |
-| P-8 | La planilla del administrador: ¿se puede mandar una muestra al modelo de lenguaje (servicio externo)? | Sí, solo encabezados y unas 20 filas, avisándolo en la tarjeta. Entra en la revisión legal |
+| P-5 | ¿Se aprueba el ADR-A12 (Kuntur graba configuración con confirmación)? | **Sí** |
+| P-6 | ¿Por dónde empieza la etapa 2? | Depósitos, unidades, tipos de artículo, artículos **y los ABM de Mantenimiento** (sectores, áreas y demás). **Los preventivos no**: Kuntur propone una tarea para generarlos |
+| P-7 | Etapa 3: ¿se le pide al frente de Dnato lo de §4.3? | Se asumen **servicios de datos simulados** por ahora y se anota como deuda técnica usar los reales |
+| P-8 | ¿Puede ir una muestra de la planilla del cliente al modelo de lenguaje? | **Sí**: encabezados y unas 20 filas, avisándolo en la tarjeta. Entra en la revisión legal |
+| P-1 a P-4 | Las del borrador de 5 preguntas | Respondidas en la versión 2 de este documento |
+
+Pendiente: aprobar el análisis de impacto de las herramientas de alta (A-1 a A-4).
 
 ---
 
