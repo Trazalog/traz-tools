@@ -55,6 +55,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 021 | `021-drop-avisos-agente.sql` | Borra la cola de avisos propia del agente (`notificacion`, `envio`, `dispositivo`, `destinatario_alerta`, sus funciones y el rol `agente_envio`): desde ADR-015 los agentes publican en `ntf` de Tools. **Destructivo**: lo que haya en esas tablas se pierde. `credencial_empresa` (018) queda. El rollback las recrea vacías |
 | 022 | `022-tools-kpi.sql` | Cataloga las 4 tools de indicadores (`kpi_get_valor`, `kpi_get_historico`, `kpi_get_objetivos`, `kpi_get_desvios`), de lectura. Quirqui alcanza solo el valor de hoy; Kuntur, las cuatro. Requiere `v2.8.1.6/kpi_objetivos.sql` en la base de Tools y el CAR con `/mcp/kpi/*`
 | 023 | `023-kuntur-metas.sql` | Activa a Kuntur (solo administradores) y cataloga `kpi_proponer_meta`, la tool del motor con la que propone una meta sin grabarla. La graba el administrador desde el panel |
+| 024 | `024-kuntur-configuracion.sql` | Entrevista de configuración de Kuntur: `perfil_empresa` suma lo que cuenta el administrador (y quién lo confirmó), `entrevista_config` guarda la entrevista en curso y `aviso_meta` el último estado avisado de cada meta y el "No insistas". El runtime ahora escribe el perfil de su empresa |
 
 Aplicación completa, desde el directorio del repo:
 
