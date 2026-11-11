@@ -154,3 +154,14 @@ flowchart LR
    pasan, y lo mismo `010-04` (hora), `016-01`, `016-03` y `018-01` (bandeja, inicio y fin). Se les
    saca el `test.fail()` en el mismo pedido de cambios.
 4. **Un solo despliegue por ambiente**, con el orden de §2.
+
+## 5. Estado
+
+| Corrección | Estado (2026-11-11) |
+|---|---|
+| C1 a C4 | Esperan la aprobación del PM. No se programaron |
+| C5 | Programada, sin probar en vivo: Trazalog/traz-comp-bpm#6 y Trazalog/traz-comp-tareasestandar#114. La hora real la pone el servidor; la tarea planificada se reconoce por su proceso y también por el nombre, así que si el proceso no coincide queda como hoy |
+| C6 | Programada, sin probar en vivo: Trazalog/traz-comp-tareasestandar#114 |
+| C7 | Espera la aprobación del PM |
+| C8 | Lo hace quien despliega en el DEMO |
+| C9 | Workshop |
