@@ -1,10 +1,11 @@
 -- v2.8.1.7 — una empresa nueva puede crear pedidos de trabajo de entrada (#578).
--- Agrega a v2.8.1.3 un bloque que crea el proceso PROCESO-STANDAR de la empresa (sin caso propio
+-- Parte de v2.8.1.3 + v2.8.1.5 (roles de Residuos y menú de Mantenimiento, rama
+-- feat/MIG-ASSET-2-informes, ya aplicada en la base de desarrollo) y agrega un bloque que crea el proceso PROCESO-STANDAR de la empresa (sin caso propio
 -- en Bonita, con planificación de tareas, sin formulario y en estado "En curso") y la lista
 -- tipos_pedidos_trabajo con el valor "General". Las tareas de esos pedidos lanzan TST001.
 -- Análisis aprobado por el PM el 2026-11-11: doc/analisis/impacto-alta-empresa-pedidos-trabajo.md.
 -- Idempotente (CREATE OR REPLACE). Requiere v2.8.1.3 y pedidos_sin_formulario.sql de esta versión.
--- Rollback: volver a aplicar v2.8.1.3/configuracion_inicial_empresa_trg_func.sql.
+-- Rollback: volver a aplicar v2.8.1.5/configuracion_inicial_empresa_trg_func.sql (la que está en desarrollo).
 CREATE OR REPLACE FUNCTION core.configuracion_inicial_empresa_trg()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -48,11 +49,39 @@ AS $function$
 		(new.nombre,'Responsable de Lote '||new.nombre,'PRD','lotes_operarios','core'),
 		(new.nombre,'Responsable de Pañol '||new.nombre,'PAN','panol','core'),
 		(new.nombre,'Planificador de Tareas '||new.nombre,'TAR','tareas','core'),
-		(new.nombre,'Responsable Procesos '||new.nombre,'PRO','procesos','core');
+		(new.nombre,'Responsable Procesos '||new.nombre,'PRO','procesos','core'),
+		(new.nombre,'Transportista '||new.nombre,'RESI','residuos_transportista','core'),
+		(new.nombre,'Generador '||new.nombre,'RESI','residuos','core'),
+		(new.nombre,'Operario Descarga '||new.nombre,'RESI','residuos_transportista','core'),
+		(new.nombre,'Operador de Bascula '||new.nombre,'RESI','residuos_transportista','core');
 	exception
 		when others then
 	    	raise warning 'CONFINICEMP: error generando roles %: %', sqlstate,sqlerrm;
 
+	end;
+
+	/** Menu de Mantenimiento (MAN), en su propio bloque: si en un ambiente faltan las opciones MAN en
+	 *  seg.menues, el error no se lleva puesto el resto de los menues de la empresa.
+	 *  Las opciones salen de lo que cada rol ve en asset (ver toolsAssetUserEmpresa). Dar solo la opcion
+	 *  padre habilita todas sus hijas, por eso el Administrador lleva dos filas. */
+	begin
+		insert into seg.memberships_menues ("group","role",modulo,opcion,usuario_app)
+		select new.nombre, r.rol||' '||new.nombre, 'MAN', o.opcion, 'core'
+		from unnest(array['Administrador']) r(rol)
+		cross join unnest(array['mantenimiento','abm_man']) o(opcion)
+		union all
+		select new.nombre, r.rol||' '||new.nombre, 'MAN', o.opcion, 'core'
+		from unnest(array['Supervisor de Mantenimiento','Planificador de Mantenimiento']) r(rol)
+		cross join unnest(array['equipos','bandeja','componentes','solicitud_servicio','informe_servicios','preventivo','backlog',
+			            'ordenes_trabajo','plan_mantenimiento','rep_equipo','rep_informe_servicios','rep_ordenes_trabajo',
+			            'mantenimiento','abm_man','abm_area','abm_grupo','abm_clientes','abm_sector','abm_criticidad',
+			            'abm_proceso','abm_tarea_estandar','abm_marca','abm_sistemas']) o(opcion)
+		union all
+		select new.nombre, 'Solicitante de Mantenimiento '||new.nombre, 'MAN', o.opcion, 'core'
+		from unnest(array['mantenimiento','bandeja','equipos','solicitud_servicio','informe_servicios','preventivo','backlog']) o(opcion);
+	exception
+		when others then
+	    	raise warning 'CONFINICEMP: error generando menu de Mantenimiento %: %', sqlstate,sqlerrm;
 	end;
 
 
