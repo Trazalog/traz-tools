@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -217,12 +217,29 @@ OBJETIVOS = {"objetivos": {"objetivo": [
 ]}}
 
 
-def _mcp(monkeypatch, llm_falso, disponibilidad="91.4"):
-    mcp = MCPFalso(salidas={"kpi_get_objetivos": OBJETIVOS,
-                            "man_get_kpi_disponibilidad": {"respuesta": {"disponibilidad": disponibilidad}}})
+def _mcp(monkeypatch, llm_falso, disponibilidad="91.4", objetivos=None, historico=None):
+    salidas = {"kpi_get_objetivos": objetivos or OBJETIVOS,
+               "man_get_kpi_disponibilidad": {"respuesta": {"disponibilidad": disponibilidad}}}
+    if historico is not None:
+        salidas["kpi_get_historico"] = historico
+    mcp = MCPFalso(salidas=salidas)
     _parchar(monkeypatch, llm_falso([]), mcp)
     monkeypatch.setattr("agente.coach.ClienteMCP", lambda cfg, auth: mcp)
     return mcp
+
+
+async def _sin_avisos_previos(con):
+    """El seguimiento guarda lo que aviso, y la corrida hace commit: se arranca limpio."""
+    async with con.cursor() as cur:
+        await cur.execute("DELETE FROM agente.aviso_meta WHERE empr_id = %s", (EMPRESA,))
+    await con.commit()
+
+
+async def _avisados(con) -> dict:
+    async with con.cursor() as cur:
+        await cur.execute("SELECT objetivo_id, estado, silenciado FROM agente.aviso_meta "
+                          "WHERE empr_id = %s", (EMPRESA,))
+        return {f["objetivo_id"]: (f["estado"], f["silenciado"]) for f in await cur.fetchall()}
 
 
 def _api(monkeypatch) -> APIAvisosFalso:
@@ -244,41 +261,109 @@ def _cfg() -> Config:
 
 
 async def test_avisa_a_quien_cargo_la_meta_firmado_por_kuntur(con_admin, monkeypatch, llm_falso):
+    await _sin_avisos_previos(con_admin)
     mcp = _mcp(monkeypatch, llm_falso)
     api = _api(monkeypatch)
 
     r = await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer maquina", hoy=HOY)
 
-    assert r == {"empr_id": EMPRESA, "metas": 3, "desvios": 2, "avisos": 2, "sin_publicar": 0, "error": None}
+    assert r == {"empr_id": EMPRESA, "metas": 3, "desvios": 2, "en_riesgo": 0, "silenciados": 0,
+                 "avisos": 2, "sin_publicar": 0, "error": None}
     por_objetivo = {p["entidad_id"]: (auth, p) for auth, p in api.pedidos}
     auth, alm = por_objetivo["7"]
     assert auth == "Bearer maquina"
     assert alm["emisor"] == "Kuntur" and alm["tipo"] == "kpi_desvio"
     assert alm["destinatarios"] == ["admin@empresa"], "a quien la cargo, no a los suscriptos"
-    assert alm["cuerpo"] == "Hoy está en 12 y la meta es ≤ 5 para el 31/12/2026."
+    assert alm["titulo"] == "No se cumple la meta: Artículos bajo punto de pedido"
+    assert alm["cuerpo"] == ("Hoy está en 12 y la meta es ≤ 5 para el 31/12/2026. "
+                             "Si no querés que insista, tocá «No insistas» en la pestaña Kuntur.")
     assert alm["enlace"] == "Dash/dashboard"
+    assert alm["dedupe_key"] == "kpi_desvio:7:no_cumple:2026-10-29"
     _, man = por_objetivo["9"]
     assert man["destinatarios"] == ["otro@empresa"]
     assert man["cuerpo"].startswith("Hoy está en 91,4 y la meta es ≥ 95")
     assert "Responsable: Jefe de mantenimiento." in man["cuerpo"]
-    assert {ll.tool for ll in mcp.llamadas} == {"kpi_get_objetivos", "man_get_kpi_disponibilidad"}
+    assert {ll.tool for ll in mcp.llamadas} == {"kpi_get_objetivos", "man_get_kpi_disponibilidad",
+                                                 "kpi_get_historico"}
     disp = [ll for ll in mcp.llamadas if ll.tool == "man_get_kpi_disponibilidad"][0]
     assert disp.argumentos == {"fec_inicio": "2026-09-29", "fec_fin": "2026-10-29"}
+    hist = sorted(ll.argumentos["nombre"] for ll in mcp.llamadas if ll.tool == "kpi_get_historico")
+    assert hist == ["alm_reorder", "her_transito"], "la historia solo de las metas de Tools"
+    assert await _avisados(con_admin) == {7: ("no_cumple", False), 9: ("no_cumple", False)}
 
 
-async def test_una_vez_por_semana(con_admin, monkeypatch, llm_falso):
+async def test_avisa_cuando_cambia_el_estado_no_todos_los_dias(con_admin, monkeypatch, llm_falso):
+    await _sin_avisos_previos(con_admin)
     _mcp(monkeypatch, llm_falso)
     api = _api(monkeypatch)
-    await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
-    await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=date(2026, 10, 30))
-    await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=date(2026, 11, 2))
+    for dia in (HOY, date(2026, 10, 30), date(2026, 11, 2)):
+        await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=dia)
+    assert len(api.pedidos) == 2, "la misma situacion se avisa una sola vez"
+
+    # Se recupera (12 -> 4) y vuelve a caer (4 -> 9): se avisa de nuevo.
+    _mcp(monkeypatch, llm_falso, objetivos={"objetivos": {"objetivo": [_fila(valor_actual="4")]}})
+    await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=date(2026, 11, 3))
+    assert (await _avisados(con_admin))[7] == ("ok", False)
+    _mcp(monkeypatch, llm_falso, objetivos={"objetivos": {"objetivo": [_fila(valor_actual="9")]}})
+    await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=date(2026, 11, 4))
     claves = [p["dedupe_key"] for _, p in api.pedidos]
-    assert sorted(set(claves)) == ["kpi_desvio:7:2026-W44", "kpi_desvio:7:2026-W45",
-                                   "kpi_desvio:9:2026-W44", "kpi_desvio:9:2026-W45"]
+    assert claves[-1] == "kpi_desvio:7:no_cumple:2026-11-04" and len(claves) == 3
+
+
+def _historia(valores, hasta=HOY) -> dict:
+    """Un punto por dia, terminando hoy."""
+    n = len(valores)
+    return {"historico": {"punto": [
+        {"fecha": (hasta - timedelta(days=n - 1 - i)).isoformat(), "valor": str(v)}
+        for i, v in enumerate(valores)]}}
+
+
+async def test_en_riesgo_si_la_tendencia_no_llega(con_admin, monkeypatch, llm_falso):
+    """Hoy 4 con meta <= 5, pero sube 1 por semana: al 31/12 no llega."""
+    await _sin_avisos_previos(con_admin)
+    fila = _fila(valor_actual="4", cumple="true")
+    subiendo = [Decimal(1) + Decimal(i) / 7 for i in range(22)]   # termina en 4
+    _mcp(monkeypatch, llm_falso, objetivos={"objetivos": {"objetivo": [fila]}},
+         historico=_historia(subiendo))
+    api = _api(monkeypatch)
+    r = await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
+    assert r["en_riesgo"] == 1 and r["avisos"] == 1
+    aviso = api.pedidos[0][1]
+    assert aviso["titulo"] == "Una meta está en riesgo: Artículos bajo punto de pedido"
+    assert aviso["cuerpo"].startswith("Hoy está en 4 y la meta es ≤ 5 para el 31/12/2026: "
+                                      "con la tendencia del último mes, no llega.")
+
+
+async def test_no_insistas_hasta_que_vuelva_a_cumplirse(con_admin, monkeypatch, llm_falso):
+    await _sin_avisos_previos(con_admin)
+    fila = _fila(valor_actual="4", cumple="true")
+    subiendo = [Decimal(1) + Decimal(i) / 7 for i in range(22)]
+    _mcp(monkeypatch, llm_falso, objetivos={"objetivos": {"objetivo": [fila]}},
+         historico=_historia(subiendo))
+    api = _api(monkeypatch)
+    await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
+    assert len(api.pedidos) == 1
+
+    # El administrador toca "No insistas".
+    from agente import configuracion
+    await configuracion.silenciar(con_admin, EMPRESA, 7, "admin@empresa", silenciado=True)
+
+    # Empeora (en riesgo -> no se cumple): no se avisa, pero queda anotado.
+    _mcp(monkeypatch, llm_falso)
+    r = await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=date(2026, 10, 30))
+    assert len([p for _, p in api.pedidos if p["entidad_id"] == "7"]) == 1
+    assert r["silenciados"] == 1
+    assert (await _avisados(con_admin))[7] == ("no_cumple", True)
+
+    # Se cumple de nuevo: se limpia el "no insistas", y una caida nueva se avisa.
+    _mcp(monkeypatch, llm_falso, objetivos={"objetivos": {"objetivo": [_fila(valor_actual="3")]}})
+    await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=date(2026, 10, 31))
+    assert (await _avisados(con_admin))[7] == ("ok", False)
 
 
 async def test_si_mantenimiento_no_responde_sigue_con_las_demas(con_admin, monkeypatch, llm_falso):
     from agente.mcp_client import MCPError
+    await _sin_avisos_previos(con_admin)
     mcp = _mcp(monkeypatch, llm_falso)
     original = mcp.llamar
 
@@ -294,10 +379,12 @@ async def test_si_mantenimiento_no_responde_sigue_con_las_demas(con_admin, monke
 
 
 async def test_sin_url_de_avisos_queda_en_la_corrida(con_admin, monkeypatch, llm_falso):
+    await _sin_avisos_previos(con_admin)
     _mcp(monkeypatch, llm_falso)
     api = _api(monkeypatch)
     r = await coach.revisar_empresa(con_admin, Config(), EMPRESA, "Bearer m", hoy=HOY)
     assert api.pedidos == [] and r["sin_publicar"] == r["desvios"] == 2
+    assert await _avisados(con_admin) == {}, "sin publicar no se da por avisado: se reintenta"
 
 
 async def test_con_kuntur_apagado_no_lee_nada(con_admin, monkeypatch, llm_falso):
@@ -306,3 +393,39 @@ async def test_con_kuntur_apagado_no_lee_nada(con_admin, monkeypatch, llm_falso)
         await cur.execute("UPDATE agente.agente SET activo = false WHERE clave = 'kuntur'")
     r = await coach.revisar_empresa(con_admin, _cfg(), EMPRESA, "Bearer m", hoy=HOY)
     assert "no esta activo" in r["error"] and mcp.llamadas == []
+
+
+# ======================================================= tendencia (puras)
+def _serie(valores):
+    return metas.serie_historico(_historia(valores))
+
+
+def test_la_tendencia_necesita_puntos_suficientes():
+    assert metas.pendiente(_serie([1, 2, 3])) is None
+    assert metas.estado_meta("<=", Decimal(4), Decimal(5), "2026-12-31", HOY, _serie([1, 2, 3])) == metas.OK
+
+
+def test_bajando_hacia_la_meta_esta_ok():
+    bajando = [10 - i * 0.2 for i in range(20)]
+    assert metas.pendiente(_serie(bajando)) < 0
+    assert metas.estado_meta("<=", Decimal(4), Decimal(5), "2026-12-31", HOY, _serie(bajando)) == metas.OK
+
+
+def test_meta_de_minimo_que_viene_cayendo_esta_en_riesgo():
+    """Disponibilidad >= 90: hoy 93, pero cae medio punto por dia."""
+    cayendo = [103 - i * 0.5 for i in range(21)]                  # termina en 93
+    assert metas.estado_meta(">=", Decimal(93), Decimal(90), "2026-11-30", HOY, _serie(cayendo)) == metas.EN_RIESGO
+
+
+def test_sin_dias_por_delante_no_hay_riesgo_sino_el_valor_de_hoy():
+    subiendo = [1 + i / 7 for i in range(22)]
+    assert metas.estado_meta("<=", Decimal(4), Decimal(5), HOY.isoformat(), HOY, _serie(subiendo)) == metas.OK
+    assert metas.estado_meta("<=", Decimal(6), Decimal(5), HOY.isoformat(), HOY, _serie(subiendo)) == metas.NO_CUMPLE
+
+
+def test_la_historia_ignora_puntos_rotos_y_ordena():
+    data = {"historico": {"punto": [{"fecha": "2026-10-02", "valor": "2"}, {"fecha": "x", "valor": "1"},
+                                    {"fecha": "2026-10-01", "valor": ""}, {"fecha": "2026-10-01", "valor": "1"}]}}
+    assert metas.serie_historico(data) == [(date(2026, 10, 1), Decimal(1)), (date(2026, 10, 2), Decimal(2))]
+    assert metas.serie_historico({"historico": {"punto": {"fecha": "2026-10-01", "valor": "3"}}}) == [
+        (date(2026, 10, 1), Decimal(3))]

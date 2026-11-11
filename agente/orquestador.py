@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, guardian, metas, pantalla, rag, sugerencias, web
+from . import agentes, configuracion, guardian, metas, pantalla, rag, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -173,6 +173,14 @@ class Orquestador:
             contexto += "\n\n" + texto_pantalla
             res.controles.append({"control": "pantalla", "ruta": consulta.pantalla,
                                   "casos": [c.caso_uso for c in casos]})
+        # Lo que el administrador le conto a Kuntur en la entrevista de
+        # configuracion (AGENTE-CO-02): que exige la operadora, que le preocupa.
+        if consulta.agente.clave == "kuntur":
+            texto_perfil = configuracion.contexto(await configuracion.perfil(con, consulta.empr_id))
+            if texto_perfil:
+                mensajes.append({"role": "system", "content": texto_perfil})
+                contexto += "\n\n" + texto_perfil
+            res.controles.append({"control": "perfil_empresa", "configurado": bool(texto_perfil)})
         mensajes.append({"role": "user", "content": consulta.pregunta})
         # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
         # VE las tools que este agente puede usar. Las de escritura no estan,

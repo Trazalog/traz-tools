@@ -349,13 +349,14 @@ SELECT 'agente.' || t || ' tiene columna vertical con CHECK',
 FROM unnest(ARRAY['chunk', 'tema']) AS t;
 
 INSERT INTO _resultado
-SELECT 'perfil_empresa con RLS forzado y solo lectura para el runtime',
+SELECT 'perfil_empresa con RLS forzado; el runtime lee y escribe, no borra',
        coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
                  WHERE oid = to_regclass('agente.perfil_empresa')), false)
        AND has_table_privilege('agente_app', 'agente.perfil_empresa', 'SELECT')
-       AND NOT has_table_privilege('agente_app', 'agente.perfil_empresa', 'INSERT')
-       AND NOT has_table_privilege('agente_app', 'agente.perfil_empresa', 'UPDATE'),
-       'la industria la carga Trazalog (y despues Kuntur)';
+       AND has_table_privilege('agente_app', 'agente.perfil_empresa', 'INSERT')
+       AND has_table_privilege('agente_app', 'agente.perfil_empresa', 'UPDATE')
+       AND NOT has_table_privilege('agente_app', 'agente.perfil_empresa', 'DELETE'),
+       'desde 024 la confirma el administrador en la entrevista de Kuntur';
 
 -- ---------------------------------------------------------------------------
 -- 017 - propuestas de siguiente paso
@@ -465,6 +466,23 @@ SELECT 'Kuntur activo, solo para administradores, y solo el propone metas',
        'CO-01, CO-03';
 
 -- ---------------------------------------------------------------------------
+-- 024 - entrevista de configuracion y estado de los avisos de metas
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT t || ' con RLS forzado', coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.' || t)), false), 'CO-02, CO-07'
+FROM unnest(ARRAY['entrevista_config', 'aviso_meta']) AS t;
+
+INSERT INTO _resultado
+SELECT 'perfil_empresa con lo que cuenta el administrador y quien lo confirmo',
+       (SELECT count(*) FROM information_schema.columns
+         WHERE table_schema = 'agente' AND table_name = 'perfil_empresa'
+           AND column_name IN ('modulos', 'operadora', 'operadora_nombre', 'exigencias',
+                               'preocupaciones', 'confirmado_por', 'fec_confirmacion')) = 7
+       AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'perfil_empresa_modulos_ck'),
+       'CO-02';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -476,7 +494,8 @@ FROM unnest(ARRAY[
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
-    '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas'
+    '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
+    '024-kuntur-configuracion'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

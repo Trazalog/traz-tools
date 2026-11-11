@@ -8,7 +8,8 @@ Dos cosas, las dos sin escribir nada en Tools (ADR-A8):
     tarjeta con el boton "Cargar meta". La graba el administrador, con su
     sesion, en Objetivos/guardar (la misma validacion que la tarjeta Metas).
 
-  * evaluar(): que metas vigentes hoy no se cumplen. Las de fuente 'tools' ya
+  * evaluar() y seguir(): que metas vigentes hoy no se cumplen y cuales, aunque
+    hoy se cumplan, a este ritmo no llegan a la fecha (en riesgo). Las de fuente 'tools' ya
     vienen evaluadas por kpi_get_objetivos; la de Mantenimiento (fuente
     'man') la evalua este modulo con man_get_kpi_disponibilidad, porque el
     valor vive en AssetPlanner (analisis de impacto aprobado, seccion 7). Lo
@@ -38,6 +39,15 @@ INDICADORES: dict[str, tuple[str, str]] = {
 
 # Ventana con la que se mide la disponibilidad para compararla con su meta.
 DIAS_DISPONIBILIDAD = 30
+
+# Tendencia (AGENTE-CO-07): con la historia de los ultimos DIAS_TENDENCIA dias
+# y al menos MIN_PUNTOS valores, se proyecta en linea recta hasta la fecha de
+# la meta. Si hoy se cumple pero la proyeccion no, la meta esta "en riesgo".
+DIAS_TENDENCIA = 30
+MIN_PUNTOS = 7
+
+# Los estados de una meta, del mejor al peor.
+OK, EN_RIESGO, NO_CUMPLE = "ok", "en_riesgo", "no_cumple"
 
 DEFINICION = {
     "type": "function",
@@ -124,6 +134,9 @@ class Desvio:
     hasta: str
     usuario_alta: str
     responsable: str = ""
+    # ok | en_riesgo | no_cumple. evaluar() solo devuelve los no_cumple;
+    # seguir() devuelve todas las metas con su estado.
+    estado: str = NO_CUMPLE
 
 
 def _decimal(v) -> Decimal | None:
@@ -170,6 +183,71 @@ def valor_disponibilidad(data) -> Decimal | None:
     return _decimal(data.get("disponibilidad")) if isinstance(data, dict) else None
 
 
+def serie_historico(data) -> list[tuple[date, Decimal]]:
+    """Los puntos de kpi_get_historico ({"historico":{"punto":[{fecha, valor}]}}), en orden."""
+    puntos = []
+    for f in _filas(data, "historico", "punto"):
+        v = _decimal(f.get("valor"))
+        try:
+            d = date.fromisoformat(str(f.get("fecha") or "")[:10])
+        except ValueError:
+            continue
+        if v is not None:
+            puntos.append((d, v))
+    return sorted(puntos)
+
+
+def periodo_tendencia(hoy: date) -> dict:
+    """Los argumentos de kpi_get_historico para la tendencia (sin el nombre)."""
+    return {"desde": (hoy - timedelta(days=DIAS_TENDENCIA)).isoformat(), "hasta": hoy.isoformat()}
+
+
+def pendiente(serie: list[tuple[date, Decimal]]) -> Decimal | None:
+    """Cuanto cambia por dia, por minimos cuadrados. None si no alcanzan los puntos."""
+    if len(serie) < MIN_PUNTOS:
+        return None
+    x0 = serie[0][0]
+    xs = [Decimal((d - x0).days) for d, _ in serie]
+    ys = [v for _, v in serie]
+    n = Decimal(len(serie))
+    mx, my = sum(xs) / n, sum(ys) / n
+    den = sum((x - mx) ** 2 for x in xs)
+    if den == 0:
+        return None
+    return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den
+
+
+def estado_meta(operador: str, valor: Decimal, meta: Decimal, hasta: str, hoy: date,
+                serie: list[tuple[date, Decimal]] | None = None) -> str:
+    """ok, en_riesgo (hoy se cumple pero a este ritmo no llega) o no_cumple."""
+    if not cumple(operador, valor, meta):
+        return NO_CUMPLE
+    try:
+        dias = (date.fromisoformat(hasta) - hoy).days if hasta else 0
+    except ValueError:
+        dias = 0
+    p = pendiente(serie or [])
+    if p is None or dias <= 0:
+        return OK
+    proyectado = valor + p * Decimal(dias)
+    return OK if cumple(operador, proyectado, meta) else EN_RIESGO
+
+
+def seguir(filas: list[dict], *, hoy: date, valores_man: dict[str, Decimal | None],
+           series: dict[str, list[tuple[date, Decimal]]] | None = None) -> list[Desvio]:
+    """Todas las metas vigentes con valor, cada una con su estado (ok, en riesgo, no se cumple).
+
+    series: la historia de cada indicador (kpi -> puntos), para la tendencia.
+    Sin historia, una meta que hoy se cumple queda ok: no se adivina.
+    """
+    series = series or {}
+    salida = []
+    for d in _vigentes(filas, hoy=hoy, valores_man=valores_man):
+        d.estado = estado_meta(d.operador, d.valor, d.meta, d.hasta, hoy, series.get(d.kpi))
+        salida.append(d)
+    return salida
+
+
 def evaluar(filas: list[dict], *, hoy: date, valores_man: dict[str, Decimal | None]) -> list[Desvio]:
     """Las metas vigentes que hoy no se cumplen.
 
@@ -177,6 +255,12 @@ def evaluar(filas: list[dict], *, hoy: date, valores_man: dict[str, Decimal | No
     valores_man: el valor de hoy de cada indicador de Mantenimiento.
     Una meta sin valor no es un desvio: no hay con que compararla.
     """
+    return [d for d in _vigentes(filas, hoy=hoy, valores_man=valores_man)
+            if not cumple(d.operador, d.valor, d.meta)]
+
+
+def _vigentes(filas: list[dict], *, hoy: date, valores_man: dict[str, Decimal | None]) -> list[Desvio]:
+    """Las metas vigentes con meta, valor y operador validos."""
     desvios = []
     for f in filas:
         if f.get("estado") not in (None, "", "vigente"):
@@ -189,8 +273,6 @@ def evaluar(filas: list[dict], *, hoy: date, valores_man: dict[str, Decimal | No
         valor = valores_man.get(kpi) if f.get("fuente") == "man" else _decimal(f.get("valor_actual"))
         operador = str(f.get("operador") or "")
         if meta is None or valor is None or operador not in (">=", "<="):
-            continue
-        if cumple(operador, valor, meta):
             continue
         try:
             objetivo_id = int(f.get("objetivo_id"))

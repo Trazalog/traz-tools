@@ -8,6 +8,12 @@ Endpoints:
     POST /sugerencias/respuesta  el usuario ve o descarta una propuesta
     POST /feedback         calificacion de una respuesta (pulgar arriba/abajo)
     GET  /admin/feedback   feedback negativo agrupado, para el ciclo de mejora
+    GET  /kuntur/configuracion             la entrevista de configuracion: pregunta que sigue o tarjeta
+    POST /kuntur/configuracion/iniciar     empezar o revisar la configuracion
+    POST /kuntur/configuracion/responder   responder la pregunta que sigue
+    POST /kuntur/configuracion/confirmar   guardar la configuracion propuesta
+    GET  /kuntur/avisos                    metas en riesgo o sin cumplirse que Kuntur ya aviso
+    POST /kuntur/avisos/silenciar          "no insistas" (o volver a avisar)
 
 Los avisos (la campanita y el push) ya no estan aca: son los de Tools
 (ADR-015, esquema ntf); el monitoreo publica con agente/avisos.py.
@@ -27,7 +33,7 @@ import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import agentes, entrevistador, rag
+from . import agentes, configuracion, entrevistador, rag
 from .config import Config, cargar
 from .llm import OpenRouter
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
@@ -139,6 +145,17 @@ class RespuestaPropuestaIn(BaseModel):
     estado: str = Field(pattern=r"^(aceptada|descartada)$")
 
 
+class RespuestaConfigIn(BaseModel):
+    pregunta: str = Field(pattern=r"^[a-z_]{1,40}$")
+    valores: list[str] = Field(default_factory=list, max_length=10)
+    texto: str | None = Field(default=None, max_length=1000)
+
+
+class SilenciarIn(BaseModel):
+    objetivo_id: int
+    silenciado: bool = True
+
+
 class FeedbackIn(BaseModel):
     interaccion_id: str
     util: bool
@@ -247,6 +264,87 @@ async def consulta(
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms, propuestas_meta=res.propuestas_meta,
     )
+
+
+# ------------------------------------------------- Kuntur: configuracion y avisos
+async def _admin_de_kuntur(con: psycopg.AsyncConnection, ident: Identidad) -> str:
+    """Solo un administrador que puede usar a Kuntur (R1). Para cualquier otro,
+    lo mismo que si Kuntur no existiera. Devuelve el usuario y fija el RLS."""
+    try:
+        await agentes.para_consulta(con, "kuntur", ident.rol)
+    except (agentes.AgenteDesconocido, agentes.AccesoDenegado) as e:
+        raise HTTPException(404, "No existe ese agente") from e
+    except agentes.AgenteNoDisponible as e:
+        raise HTTPException(409, str(e)) from e
+    await rag.fijar_empresa(con, ident.empr_id)
+    return ident.nick or str(ident.usr_id or "")
+
+
+@app.get("/kuntur/configuracion")
+async def kuntur_configuracion(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    await _admin_de_kuntur(con, ident)
+    return configuracion.estado(await configuracion.perfil(con, ident.empr_id),
+                                await configuracion.entrevista(con, ident.empr_id))
+
+
+@app.post("/kuntur/configuracion/iniciar")
+async def kuntur_configuracion_iniciar(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    return await configuracion.iniciar(con, ident.empr_id, usuario)
+
+
+@app.post("/kuntur/configuracion/responder")
+async def kuntur_configuracion_responder(
+    entrada: RespuestaConfigIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await configuracion.contestar(con, ident.empr_id, usuario, entrada.pregunta,
+                                             entrada.valores, entrada.texto)
+    except configuracion.RespuestaInvalida as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/kuntur/configuracion/confirmar")
+async def kuntur_configuracion_confirmar(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await configuracion.confirmar(con, ident.empr_id, usuario)
+    except configuracion.RespuestaInvalida as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.get("/kuntur/avisos")
+async def kuntur_avisos(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    await _admin_de_kuntur(con, ident)
+    return {"avisos": await configuracion.avisos_activos(con, ident.empr_id)}
+
+
+@app.post("/kuntur/avisos/silenciar")
+async def kuntur_avisos_silenciar(
+    entrada: SilenciarIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    if not await configuracion.silenciar(con, ident.empr_id, entrada.objetivo_id, usuario,
+                                         silenciado=entrada.silenciado):
+        raise HTTPException(404, "Kuntur no avisó nada de esa meta")
+    return {"objetivo_id": entrada.objetivo_id, "silenciado": entrada.silenciado}
 
 
 @app.post("/sugerencias")
