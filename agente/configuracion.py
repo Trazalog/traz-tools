@@ -304,7 +304,10 @@ def estado(perfil_actual: dict | None, ent: dict | None) -> dict:
         return salida
     respuestas = ent["respuestas"] or {}
     previas = respuestas.get("_previas") or {}
-    aplicables = [p for p in GUION if _aplica(p, {**previas, **respuestas})]
+    # Para contar los pasos, las preguntas de la operadora cuentan salvo que ya
+    # haya dicho que no: asi el "Pregunta 1 de 6" no cambia a mitad de camino.
+    sin_operadora = (respuestas.get("operadora") or {}).get("valores") == ["no"]
+    aplicables = [p for p in GUION if not (sin_operadora and p.id in _SOLO_CON_OPERADORA)]
     salida["pasos"] = len(aplicables)
     p = siguiente({k: v for k, v in respuestas.items() if not k.startswith("_")})
     if p is None:

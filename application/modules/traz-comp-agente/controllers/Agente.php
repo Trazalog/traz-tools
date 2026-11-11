@@ -240,6 +240,57 @@ class Agente extends CI_Controller
         $this->_json($this->Agentes->agentes($this->_token()));
     }
 
+    // ------------------------------------------- Kuntur: configuracion y avisos
+    // Proxy a /kuntur/* (AGENTE-CO-02). Quien decide si el usuario es
+    // administrador es la API (R1): aca solo se valida la forma de lo que llega.
+
+    public function kuntur_configuracion()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/configuracion', null);
+    }
+
+    public function kuntur_iniciar()
+    {
+        $this->_proxyKuntur('POST', '/kuntur/configuracion/iniciar', array());
+    }
+
+    public function kuntur_responder()
+    {
+        $pregunta = (string) $this->input->post('pregunta');
+        $valores  = $this->input->post('valores');
+        $valores  = is_array($valores) ? array_values($valores) : array();
+        $texto    = (string) $this->input->post('texto');
+        $validos  = array_filter($valores, function ($v) {
+            return is_string($v) && preg_match('/^[a-z_]{1,40}$/', $v);
+        });
+        if (!preg_match('/^[a-z_]{1,40}$/', $pregunta) || count($validos) !== count($valores)
+            || count($valores) > 10 || mb_strlen($texto) > 1000) {
+            $this->_json(array('error' => 'respuesta inválida'), 400);
+            return;
+        }
+        $this->_proxyKuntur('POST', '/kuntur/configuracion/responder', array(
+            'pregunta' => $pregunta, 'valores' => $valores, 'texto' => $texto,
+        ));
+    }
+
+    public function kuntur_confirmar()
+    {
+        $this->_proxyKuntur('POST', '/kuntur/configuracion/confirmar', array());
+    }
+
+    public function kuntur_avisos()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/avisos', null);
+    }
+
+    public function kuntur_silenciar()
+    {
+        $this->_proxyKuntur('POST', '/kuntur/avisos/silenciar', array(
+            'objetivo_id' => (int) $this->input->post('objetivo_id'),
+            'silenciado'  => $this->input->post('silenciado') !== 'false',
+        ));
+    }
+
     /** Estado del orquestador, para diagnosticar desde la UI. */
     public function salud()
     {
@@ -293,6 +344,17 @@ class Agente extends CI_Controller
             return;
         }
         $this->_json($this->Agentes->entrevista($this->_token(), $ruta, $cuerpo));
+    }
+
+    /** Proxy a los endpoints de Kuntur, devolviendo el codigo HTTP del orquestador. */
+    private function _proxyKuntur($metodo, $ruta, $cuerpo)
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('error' => 'sin_autorizacion'), 401);
+            return;
+        }
+        $rsp = $this->Agentes->kuntur($this->_token(), $metodo, $ruta, $cuerpo);
+        $this->_json($rsp['data'], $rsp['status']);
     }
 
     /** La cookie de sesion del usuario, para reenviarsela a Dnato. */

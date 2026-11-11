@@ -255,3 +255,12 @@ async def test_el_administrador_hace_la_entrevista_por_la_api(api):
     assert r.status_code == 400
     r = await api.post("/kuntur/avisos/silenciar", headers=h, json={"objetivo_id": 123456})
     assert r.status_code == 404
+
+
+def test_el_contador_de_preguntas_no_cambia_a_mitad_de_camino():
+    e = c.estado(None, {"estado": "en_curso", "respuestas": {"_previas": {}}})
+    assert (e["paso"], e["pasos"]) == (1, 6)
+    r = {"industria": {"valores": ["mineria"], "texto": ""}, "modulos": {"valores": ["almacenes"], "texto": ""},
+         "operadora": {"valores": ["no"], "texto": ""}}
+    e = c.estado(None, {"estado": "en_curso", "respuestas": r})
+    assert (e["paso"], e["pasos"]) == (4, 4) and e["pregunta"]["id"] == "preocupaciones"

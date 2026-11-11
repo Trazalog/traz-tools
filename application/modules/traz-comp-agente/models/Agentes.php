@@ -234,6 +234,24 @@ class Agentes extends CI_Model
         return $rsp['data'];
     }
 
+    /**
+     * Configuracion y avisos de Kuntur (AGENTE-CO-02). Devuelve el codigo del
+     * orquestador para que el panel distinga "no sos administrador" (404) de
+     * "respuesta invalida" (400) o "no disponible".
+     */
+    public function kuntur($jwt, $metodo, $ruta, $cuerpo)
+    {
+        $rsp = $this->_llamar($metodo, $ruta, $cuerpo, $jwt, 15);
+        if ($rsp['ok']) {
+            return ['status' => 200, 'data' => $rsp['data']];
+        }
+        log_message('ERROR', '#TRAZA | AGENTE | Agentes | kuntur() >> ' . $rsp['error']);
+        $status = isset($rsp['status']) ? $rsp['status'] : 502;
+        $detalle = isset($rsp['data']['detail']) && is_string($rsp['data']['detail'])
+            ? $rsp['data']['detail'] : 'Kuntur no está disponible en este momento.';
+        return ['status' => $status, 'data' => ['error' => $detalle]];
+    }
+
     public function agentes($jwt)
     {
         $rsp = $this->_llamar('GET', '/agentes', null, $jwt, 10);
@@ -281,7 +299,7 @@ class Agentes extends CI_Model
         $data = json_decode($body, true);
         if ($status >= 300) {
             $detalle = isset($data['detail']) ? $data['detail'] : substr((string) $body, 0, 200);
-            return ['ok' => false, 'error' => "HTTP $status — $detalle", 'data' => $data];
+            return ['ok' => false, 'error' => "HTTP $status — $detalle", 'data' => $data, 'status' => $status];
         }
         return ['ok' => true, 'data' => $data];
     }
