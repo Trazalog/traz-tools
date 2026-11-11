@@ -24,6 +24,37 @@ cada uno, y el botón **Copiar** arma el texto con todas las decisiones para peg
 
 ---
 
+## Rearmado para MAN en tools (2026-11-03)
+
+**Qué cambió.** Mantenimiento ya no corre en AssetPlanner: se migró a tools como el módulo `traz-tools-man`
+(ver `doc/migracion/MIGRACION-ASSETPLANNER.md` en la rama `feat/MIG-ASSET-2-informes`). Los 37 casos se reescribieron
+contra ese módulo:
+
+- Las referencias apuntan a `traz-tools-man` (repositorio nuevo en el esquema) y a `toolsMANAPI` / `MANDataService`
+  cuando la operación pasa por ahí.
+- Se entra por el ingreso de tools (DNATO), no por el de asset, y la empresa tiene que estar vinculada con Mantenimiento.
+- Los flujos incorporan las mejoras de la migración: motor de programar con deshacer y series por calendario (009),
+  asignar la orden con sus herramientas y el pedido al almacén de tools (011, que pasa a perfil Planificador), informe,
+  verificación y conformidad desde la bandeja de tools con la pestaña "Herramientas e Insumos" (012, 013, 019), los tres
+  reportes dentro del menú Mantenimiento (020) y el ciclo de la orden con asignada, sin lanzar y anulada (030).
+- La regla de los vales del PM (2026-11-03): desde la orden nunca se genera un vale; el mantenedor solo asocia los suyos
+  por DNI y el supervisor puede corregirlos al verificar.
+- Los casos validados subieron de versión (mayor) con fecha 2026-11-03; **la validación del PM queda pendiente en el PR**.
+
+**Casos nuevos:** MAN-UC-038 (herramientas, insumos y pedido en cada paso de la orden), 039 (asociar vales del pañol),
+040 (lanzar órdenes programadas), 041 (anular una orden sin lanzar), 042 (indicadores en el tablero de tools) y 043
+(catálogos de ABM de Mantenimiento).
+
+**Salen de borrador:** 012 (las secciones del informe se relevaron de la vista de MAN), 020 (decisión del PM sobre los
+indicadores, E61–E63), 037 (la casilla de cada fila es para verificar en bloque, E28). **Vuelve a estar vigente** 021,
+Administrar Ordenes, que se portó por decisión de la revisión de pantallas (E49).
+
+**Siguen en borrador:** 002 (¿el código de equipo es único por empresa o en todo el sistema? la consulta de MAN no filtra
+por empresa), 006 (duplicados al asociar componentes), 023 (para qué se usan los contratistas), 025 (corregir una lectura
+no recalcula ni deja registro), 027 (tipos y tamaño de adjuntos) y 032 (desde cuándo se cuenta el próximo vencimiento).
+
+---
+
 ## 1. Lo primero: acá ya había trabajo hecho, y es bueno
 
 Antes de relevar nada encontré, en la rama `develop-v3` del repo de asset, material que no conviene

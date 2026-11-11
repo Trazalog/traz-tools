@@ -1,0 +1,61 @@
+id: MAN-UC-039
+modulo: MAN
+titulo: Asociar a la orden de trabajo los vales del pañol
+perfil: Mantenedor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-11-03
+referencias_codigo:
+  - repo: traz-tools-man
+    path: views/ot/materiales.php
+    detalle: la búsqueda y la lista de vales, según el rol (rolVales MANTENEDOR o SUPERVISOR)
+  - repo: traz-tools-man
+    path: controllers/Ordenservicio.php
+    detalle: buscarVales(), asociarVale(), quitarVale(), tildarHerramienta()
+  - repo: traz-tools-man
+    path: models/Ordenservicios.php
+    detalle: asociarVale(), quitarVale(), setActivaHerramienta()
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/MANDataService.dbs
+    detalle: /ot/vale/{sapa}/empresa/{e}, /ot/vale/borrar, /ot/herramienta-usada/activa
+pantallas:
+  - Mis Tareas → Confecciona informe de servicio → Herramientas e Insumos
+  - Mis Tareas → Edición Informe de Servicios → Herramientas e Insumos
+  - Mis Tareas → Verifica Informe de Servicio → Herramientas e Insumos
+precondiciones:
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Mantenedor (o Supervisor al verificar)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - El pañolero de tools le entregó herramientas con un vale de salida
+depende_de:
+  - MAN-UC-038
+flujo_principal:
+  - paso: En el informe, en Herramientas e Insumos, busca sus vales por DNI
+    resultado: Se listan los vales de salida del pañol entregados a ese DNI que todavía no están en otra orden
+  - paso: Asocia el vale que usó en esta orden
+    resultado: Las herramientas del vale aparecen como usadas en la orden
+  - paso: Destilda la herramienta del vale que al final no usó
+    resultado: Esa herramienta queda registrada como no usada
+flujos_alternativos:
+  - nombre: Quitar un vale asociado por error
+    pasos:
+      - paso: Quita un vale que asoció él
+        resultado: El vale deja de estar en la orden y vuelve a estar disponible
+  - nombre: El Supervisor corrige los vales al verificar
+    pasos:
+      - paso: En "Verifica Informe de Servicio" busca vales sin poner DNI
+        resultado: Ve los vales disponibles de la empresa y puede asociarlos
+      - paso: Quita un vale que había asociado el pañolero
+        resultado: El vale deja de estar en la orden
+validaciones:
+  - "**Desde la orden nunca se crea un vale**: los vales los hace siempre el pañolero o el responsable de pañol; acá solo se asocian (regla del PM, 2026-11-03)"
+  - Si el pañolero ya ató el vale a la orden al entregarlo, sus herramientas se ven sin que nadie haga nada
+  - El Mantenedor busca solo por DNI y solo puede quitar los vales que asoció él; el Supervisor busca sin DNI y puede quitar también los del pañolero (def. 8)
+  - Un vale no se asocia dos veces a la misma orden, ni se toma uno que ya está en otra orden
+  - Los permisos se controlan en el servidor, no solo en la pantalla
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts
+notas:
+  - Comportamiento decidido por el PM en la migración (E66, H38 y la confirmación del rol del Supervisor del 2026-11-03). Validación del caso pendiente en el PR.
+  - "Asset creaba un vale de salida al guardar el informe (mejora M2). El PM la descartó: no se porta (H38)."

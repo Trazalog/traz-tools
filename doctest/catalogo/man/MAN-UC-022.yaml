@@ -3,36 +3,37 @@ modulo: MAN
 titulo: Habilitar o inhabilitar un equipo
 perfil: Supervisor
 estado: validado
-version: "1.0"
+version: "2.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/views/equipo/list.php
-    detalle: "las acciones habilitarEquipo() e inhabilitarEquipo() de la columna Acciones"
-  - repo: traz-prod-assetplanner
-    path: application/models/Equipos.php
-    detalle: "los estados 'AC' (activo) y 'AN' del equipo"
+  - repo: traz-tools-man
+    path: views/Equipo/list.php
+    detalle: las acciones Habilitar e Inhabilitar de la columna Acciones
+  - repo: traz-tools-man
+    path: controllers/Equipo.php
+    detalle: cambio_equipo() pasa el equipo a IN; estado_alta() lo devuelve a AC
 pantallas:
-  - "Mantenimiento → Equipos → Habilitar / Inhabilitar"
+  - Mantenimiento → Equipos → Habilitar / Inhabilitar
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - Existe el equipo
 depende_de:
   - MAN-UC-002
 flujo_principal:
-  - paso: "En el listado, sobre un equipo activo, elige Inhabilitar"
-    resultado: "El equipo pasa a estado inactivo y la columna Estado lo refleja"
-  - paso: "Sobre un equipo inactivo, elige Habilitar"
-    resultado: "El equipo vuelve a estar activo"
+  - paso: En el listado, sobre un equipo activo, elige Inhabilitar
+    resultado: El equipo pasa a estado inactivo y la columna Estado lo refleja
+  - paso: Sobre un equipo inactivo, elige Habilitar
+    resultado: El equipo vuelve a estar activo
 validaciones:
-  - "Inhabilitar deja el equipo en estado `IN`; habilitar lo devuelve a activo"
-  - "El equipo tiene dos estados: activo (`AC`) e inhabilitado (`AN`)"
+  - Inhabilitar deja el equipo en estado `IN`; habilitar lo devuelve a activo (`AC`)
   - "La acción que se ofrece depende del estado actual: a un equipo activo se le ofrece Inhabilitar y a uno inactivo, Habilitar"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-003-004-022-026-028.equipos.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s02
 notas:
   - "**Es distinto de eliminar** (MAN-UC-004), que deja el equipo en `AN`. Inhabilitar es para un equipo que sale de servicio un tiempo y va a volver; eliminar, para el que se da de baja."
-  - "Es la única transición de estado del módulo que el usuario controla a mano; todas las demás las mueve el proceso."
-  - "Es el **ciclo de vida del equipo**: en la base son los estados `AC` y `AN`. Es la única transición de estado que el usuario controla a mano desde el listado."
+  - Es la única transición de estado del módulo que el usuario controla a mano; todas las demás las mueve el proceso.
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

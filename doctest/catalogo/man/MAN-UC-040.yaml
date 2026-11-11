@@ -1,0 +1,62 @@
+id: MAN-UC-040
+modulo: MAN
+titulo: Lanzar las órdenes programadas
+perfil: Planificador
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-11-03
+referencias_codigo:
+  - repo: traz-tools-man
+    path: controllers/Otrabajo.php
+    detalle: lanzar() — el botón Lanzar de la lista
+  - repo: traz-tools-man
+    path: controllers/Lanzamiento.php
+    detalle: ejecutar() — la corrida que dispara el cron
+  - repo: traz-tools-man
+    path: views/otrabajos/tabla_opciones.php
+    detalle: Lanzar y Anular solo en las órdenes sin lanzar
+  - repo: traz-tools-man
+    path: views/calendar/calendar1.php
+    detalle: "la ventanita de la orden: Ver orden / Lanzar ahora / Anular"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: POST /tools/man/plan/lanzar
+pantallas:
+  - Mantenimiento → Ordenes de Trabajo → Lanzar
+  - Mantenimiento → Plan de Mantenimiento → (clic en la orden) → Lanzar ahora
+precondiciones:
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Planificador
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - Hay una orden de preventivo o predictivo programada sin lanzar (MAN-UC-009)
+produce:
+  - La orden con su caso de Bonita, iniciado en nombre de quien la programó
+depende_de:
+  - MAN-UC-009
+flujo_principal:
+  - paso: En Ordenes de Trabajo ubica una orden marcada "Sin lanzar" y elige Lanzar
+    resultado: Se abre el caso de Bonita de la orden y la marca "Sin lanzar" desaparece
+flujos_alternativos:
+  - nombre: Lanzamiento automático
+    pasos:
+      - paso: El cron del servidor corre el lanzamiento
+        resultado: Se lanzan todas las órdenes sin lanzar cuya fecha entró en el margen de la empresa
+  - nombre: Desde el calendario
+    pasos:
+      - paso: Hace clic sobre la orden y elige "Lanzar ahora"
+        resultado: Pasa lo mismo que con el botón de la lista
+  - nombre: El lanzamiento falla
+    pasos:
+      - paso: Bonita no responde al lanzar
+        resultado: La orden queda programada sin lanzar y se reintenta en la corrida siguiente
+validaciones:
+  - '"Sin lanzar" es una orden `PL` de preventivo o predictivo sin caso de Bonita (`case_id` 0)'
+  - El margen es de 7 días salvo que la empresa configure otro en la lista de valores (`core.tablas`, `man_dias_lanzamiento_<empresa>`)
+  - El caso se inicia en nombre del usuario que programó la orden
+  - Las series ya lanzadas se dejan como están
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-040-041.lanzar-anular.spec.ts
+notas:
+  - Comportamiento decidido por el PM en la migración (E54, E58–E60, MIG-8). Validación del caso pendiente en el PR.
+  - El cron no está instalado en demo ni en producción todavía (`doc/infra/man-lanzamiento-cron.md`). Falta el botón Lanzar en Solicitud de Servicio.

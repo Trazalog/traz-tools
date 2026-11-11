@@ -3,39 +3,45 @@ modulo: MAN
 titulo: Ver el listado de equipos
 perfil: Supervisor
 estado: validado
-version: "0.1"
+version: "1.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Equipo.php
-    detalle: "index($permission) carga el listado; paginado() es el server-side de la grilla"
-  - repo: traz-prod-assetplanner
-    path: application/models/Equipos.php
-  - repo: traz-prod-assetplanner
-    path: application/views/equipo/
+  - repo: traz-tools-man
+    path: controllers/Equipo.php
+    detalle: index($permission) carga el listado; paginado() es la grilla del lado del servidor
+  - repo: traz-tools-man
+    path: models/Equipos.php
+    detalle: todas las consultas filtran por la empresa de la sesión (E4)
+  - repo: traz-tools-man
+    path: views/Equipo/list.php
+    detalle: la grilla y la columna Acciones
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/MANDataService.dbs
+    detalle: consultas de equipos de MAN
 pantallas:
-  - "Mantenimiento → Equipos"
+  - Mantenimiento → Equipos
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - La empresa tiene equipos cargados
 depende_de:
   - MAN-UC-002
 flujo_principal:
-  - paso: "Entra a Mantenimiento → Equipos"
-    resultado: "Se muestra la grilla con las columnas Acciones, Código Equipo, Descripción, Área, Proceso, Sector, Criticidad, Cliente y Estado"
-  - paso: "Busca un equipo por su código o su descripción"
-    resultado: "La grilla se reduce a los equipos que coinciden"
-  - paso: "Mira la columna Acciones de una fila"
+  - paso: Entra a Mantenimiento → Equipos
+    resultado: Se muestra la grilla con las columnas Acciones, Equipo, Descripción, Área, Proceso, Sector, Criticidad, Cliente y Estado
+  - paso: Busca un equipo por su código o su descripción
+    resultado: La grilla se reduce a los equipos que coinciden
+  - paso: Mira la columna Acciones de una fila
     resultado: "Se ofrecen las once acciones que se pueden hacer sobre ese equipo, cada una con su caso propio: editar (MAN-UC-003), eliminar (MAN-UC-004), habilitar o inhabilitar (MAN-UC-022), asignar contratistas (MAN-UC-023), registrar una lectura o reportar una falla (MAN-UC-024), ver el historial de lecturas (MAN-UC-025), asignar una meta (MAN-UC-026) y adjuntar documentación (MAN-UC-027)"
 validaciones:
   - "La columna Estado distingue los tres estados del equipo: activo, inhabilitado y dado de baja"
-  - "El listado solo muestra equipos de la empresa de la sesión"
+  - El listado solo muestra equipos de la empresa de la sesión
+  - Las acciones que se ofrecen dependen de los permisos que trae la opción de menú en la URL (`index/Add-Edit-Del-Lectura`); sin permisos la pantalla queda de solo lectura (E3)
 dudas: []
 derivados:
   test_e2e: tests/e2e/specs/man/MAN-UC-001.listado-equipos.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s02
 notas:
-  - "El listado muestra los equipos en cualquiera de sus tres estados; la columna Estado los distingue."
-  - "**Verificado en pantalla el 2026-08-26** contra el DEMO, con el usuario que proveyó el PM."
-  - "El alta de equipos y componentes **no difiere entre `develop` y `develop-v3`** del repo de asset (verificado con `git diff`), así que este caso no depende de esa diferencia. El relevamiento se hace sobre `develop`, que es lo que corre en el DEMO (decisión del PM, 2026-08-25)."
+  - El listado muestra los equipos en cualquiera de sus tres estados; la columna Estado los distingue.
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

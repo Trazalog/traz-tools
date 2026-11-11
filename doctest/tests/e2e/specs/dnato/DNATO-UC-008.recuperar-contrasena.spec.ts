@@ -13,6 +13,7 @@ import { expect, test } from '@playwright/test';
 import { RegistroPage } from '../../pages/dnato/RegistroPage.ts';
 import { crearCasilla } from '../../fixtures/casilla-descartable.ts';
 import { urlDnato } from '../../config/apps.ts';
+import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const ENLACE_ACTIVACION = /https?:\/\/[^\s"'<>]*main\/complete\/token\/[A-Za-z0-9_-]+/;
 const ENLACE_RESET = /https?:\/\/[^\s"'<>]*main\/reset_password\/token\/[A-Za-z0-9_-]+/;
@@ -79,7 +80,8 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
     // FALLA CONOCIDA — hallazgo H-034, issue #467: el cambio no se guarda, porque
     // `updatePassword()` escribe en `users` sin el esquema `seg.`. El correo llega y la
     // pantalla acepta la contraseña nueva, pero el usuario sigue entrando con la vieja.
-    test.fail();
+    debeFallarCon(/Correo o contraseña incorrectos/);
+    test.fail(true, 'H-034 #467: el cambio no se guarda, updatePassword() escribe en users sin el esquema seg.');
     test.slow();
     const casilla = await crearCasilla('doctest-uc008b');
     const passInicial = 'Doctest2026!';
@@ -115,7 +117,7 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
     await page.goto(reset, { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="password"]').fill(passNueva);
     await page.locator('input[name="passconf"]').fill(passNueva);
-    await page.locator('input[type="submit"]').first().click({ noWaitAfter: true });
+    await page.locator('button[type="submit"], input[type="submit"]').first().click({ noWaitAfter: true });
     await page.waitForTimeout(3000);
 
     // 4. Lo que importa: la contraseña nueva tiene que servir y la vieja dejar de
@@ -129,7 +131,8 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
   test('el aviso de contraseña actualizada llega a la pantalla de ingreso', async ({ page }) => {
     // FALLA CONOCIDA — hallazgo H-033, issue #466: al terminar, el usuario queda en una
     // página en blanco. La contraseña sí cambia; lo que falta es el cierre del flujo.
-    test.fail();
+    debeFallarCon(/actualiz|locator\('body'\)/);
+    test.fail(true, 'H-033 #466: al terminar, el usuario queda en una página en blanco');
     test.slow();
 
     const casilla = await crearCasilla('doctest-uc008c');
@@ -162,7 +165,7 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
     const nueva = 'Doctest2026#Otra';
     await page.locator('input[name="password"]').fill(nueva);
     await page.locator('input[name="passconf"]').fill(nueva);
-    await page.locator('input[type="submit"]').first().click({ noWaitAfter: true });
+    await page.locator('button[type="submit"], input[type="submit"]').first().click({ noWaitAfter: true });
     await page.waitForTimeout(3000);
 
     expect((await page.locator('body').innerText()).replace(/\s+/g, ' ')).toMatch(/actualiz/i);

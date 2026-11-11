@@ -9,6 +9,7 @@ import { LoginPage } from '../../pages/dnato/LoginPage.ts';
 import { PerfilPage } from '../../pages/dnato/PerfilPage.ts';
 import { credenciales } from '../../fixtures/auth.ts';
 import { urlDnato } from '../../config/apps.ts';
+import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 test.describe('@dnato @DNATO-UC-010 Ver el perfil propio', () => {
   test('muestra los datos de la cuenta y no el nombre de usuario interno', async ({ paginaEmpresa1 }) => {
@@ -16,7 +17,8 @@ test.describe('@dnato @DNATO-UC-010 Ver el perfil propio', () => {
     // blanco porque `profile.php` llama a `image()` y el helper define `imageAdmin()`.
     // `test.fail()` deja el test activo: hoy tiene que fallar, y el día que se corrija
     // el bug la corrida se pone en rojo avisando que hay que sacar esta marca.
-    test.fail();
+    debeFallarCon(/Received string:\s+""/);
+    test.fail(true, 'H-031 #463: el perfil es una página en blanco, profile.php llama a image()');
     const perfil = new PerfilPage(paginaEmpresa1);
     await perfil.abrir();
 

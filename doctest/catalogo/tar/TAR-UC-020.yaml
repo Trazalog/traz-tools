@@ -1,0 +1,42 @@
+id: TAR-UC-020
+modulo: TAR
+titulo: Administrar subtareas
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/subtareas.php
+  - repo: traz-comp-tareasestandar
+    path: controllers/Tarea.php
+    detalle: guardarSubtarea(), tablaSubtareas(), eliminarSubtarea()
+pantallas:
+  - Tareas estándar → Tareas → Agregar Subtarea
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Una tarea estándar
+depende_de:
+  - TAR-UC-019
+flujo_principal:
+  - paso: En una tarea pulsa "Agregar Subtarea", completa nombre, duración y descripción y guarda
+    resultado: La subtarea aparece en la lista
+  - paso: Pulsa 🗑 en una subtarea
+    resultado: La subtarea sale de la lista
+flujos_alternativos:
+  - nombre: Sin nombre
+    pasos:
+      - paso: Guarda sin nombre
+        resultado: Ve "Por favor complete los campos obligatorios" y no se guarda
+validaciones:
+  - La subtarea con formulario muestra su formulario en la bandeja
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-03: ¿quién administra el catálogo de tareas estándar y plantillas?"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-020-01 a 020-03"
