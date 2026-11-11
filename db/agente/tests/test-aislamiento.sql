@@ -109,6 +109,18 @@ INSERT INTO agente.aviso_meta (empr_id, objetivo_id, estado, titulo)
 VALUES (:EMPRESA_B, 1, 'en_riesgo', 'meta de B')
 ON CONFLICT (empr_id, objetivo_id) DO UPDATE SET titulo = 'meta de B';
 
+-- Cargas propuestas y simulaciones (025, 026).
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.carga_propuesta (empr_id, agente, tool, argumentos, usuario)
+VALUES (:EMPRESA_A, 'kuntur', 'man_alta_sector', '{"descripcion": "carga de A"}', 'ana');
+INSERT INTO agente.simulacion (empr_id, servicio, entidad, datos)
+VALUES (:EMPRESA_A, 'man_alta_sector', 'man.sector', '{"descripcion": "sector de A"}');
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.carga_propuesta (empr_id, agente, tool, argumentos, usuario)
+VALUES (:EMPRESA_B, 'kuntur', 'man_alta_sector', '{"descripcion": "carga de B"}', 'beto');
+INSERT INTO agente.simulacion (empr_id, servicio, entidad, datos)
+VALUES (:EMPRESA_B, 'man_alta_sector', 'man.sector', '{"descripcion": "sector de B"}');
+
 -- Propuestas de siguiente paso (017).
 SET LOCAL agente.empr_id = :'EMPRESA_A';
 INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
@@ -209,6 +221,13 @@ SELECT 'entrevista_config y aviso_meta: con contexto A, lo de B es invisible',
        AND EXISTS (SELECT 1 FROM agente.aviso_meta WHERE titulo = 'meta de A'),
        '024';
 
+INSERT INTO _resultado
+SELECT 'carga_propuesta y simulacion: con contexto A, lo de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.carga_propuesta WHERE argumentos->>'descripcion' = 'carga de B')
+       AND NOT EXISTS (SELECT 1 FROM agente.simulacion WHERE datos->>'descripcion' = 'sector de B')
+       AND EXISTS (SELECT 1 FROM agente.simulacion WHERE datos->>'descripcion' = 'sector de A'),
+       '025, 026';
+
 -- ---------------------------------------------------------------------------
 -- CONTROL 2 — Simetrico: con el contexto de B, A es invisible
 -- ---------------------------------------------------------------------------
@@ -235,6 +254,11 @@ INSERT INTO _resultado
 SELECT 'memoria: sin contexto de empresa no se ve ninguna fila (falla cerrado)',
        NOT EXISTS (SELECT 1 FROM agente.memoria),
        'no debe devolver todo';
+
+INSERT INTO _resultado
+SELECT 'carga_propuesta y simulacion: sin contexto no se ve nada (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.carga_propuesta)
+       AND NOT EXISTS (SELECT 1 FROM agente.simulacion), '025, 026';
 
 INSERT INTO _resultado
 SELECT 'entrevista_config y aviso_meta: sin contexto no se ve nada (falla cerrado)',

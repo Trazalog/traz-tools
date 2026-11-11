@@ -19,8 +19,8 @@ Qué es: el análisis de impacto que exige el `CLAUDE.md` antes de tocar el núc
 |---|---|---|---|---|
 | 1 | Alta de establecimiento, depósito y valores de listas (unidades de medida, tipos de artículo, tipos de herramienta) | **Sí, solo se suman** recursos nuevos a la fachada MCP (`toolsMCPAPI.xml`). Los servicios de datos que llaman **no se modifican** | Bajo | Hacerlo ya |
 | 2 | Carga de artículos y herramientas de a muchos (con la planilla del cliente) | **Sí: una función nueva** en la base (`sta.carga_masiva_filas`), que reutiliza los procedimientos de la carga masiva de Dnato sin cambiarlos | Medio | Hacerlo después del lote 1 |
-| 3 | ABM de Mantenimiento: sectores, áreas, criticidades, grupos, marcas, familias | No por ahora: esos servicios **solo existen en la rama de la migración** de AssetPlanner a Mantenimiento (`feat/MIG-ASSET-2-informes`, otra sesión) | — | Esperar a que esa rama llegue a `develop-v3.5` |
-| 4 | Menús, roles y administradores (Dnato v3) | No: servicios **simulados** dentro del motor de los agentes (decisión del PM, deuda técnica) | Bajo | Hacerlo ya |
+| 3 | ABM de Mantenimiento: sectores, áreas, procesos, criticidades, grupos, marcas y equipos | No: **servicios simulados** con la interfaz de `MANDataService` de `develop-v3` (decisión del PM, 2026-11-11). **Hecho** | Bajo | Reemplazar por los reales cuando lleguen a `develop-v3.5` (deuda técnica) |
+| 4 | Menús, roles y administradores (Dnato v3) | No: servicios **simulados** dentro del motor de los agentes (decisión del PM, deuda técnica). **Hecho** | Bajo | Reemplazar por los reales cuando Dnato v3 exista |
 
 ---
 
@@ -108,12 +108,23 @@ La carga masiva de Dnato (`sta.ejecutar_carga_masiva(procedimiento, url_archivo,
 
 ---
 
-## 4. Lote 3 — ABM de Mantenimiento
+## 4. Lote 3 — ABM de Mantenimiento (simulado, hecho)
 
-- **Sectores, áreas, criticidades, grupos (lo más cercano a "tipo de equipo"), marcas y familias** tienen servicio de datos (`MANDataService` `POST /abm/*`, `/area`). Graban en **MySQL de AssetPlanner** por `id_empresa` (`empr_id_mysql`).
-- **Esos recursos solo existen en la rama de la migración** (`traz-tools-mig`, `feat/MIG-ASSET-2-informes`, 380 recursos). En `develop-v3.5` el servicio tiene 38 y ninguno de estos. La migración la lleva otra sesión y **no se toca** desde acá.
-- **Propuesta:** cuando esa rama llegue a `develop-v3.5`, sumar las herramientas encima, con el mismo patrón del lote 1.
-- **Riesgo a tener en cuenta:** si la empresa nueva no tiene `empr_id_mysql`, Mantenimiento no puede dar de alta nada. La puesta en marcha tiene que verificarlo primero.
+**Decisión del PM (2026-11-11):** se simulan con las interfaces de `develop-v3` ("ya está probado, no va a cambiar mucho"). Los equipos van en la tabla de **MariaDB** (AssetPlanner); la de PostgreSQL (`core.equipos`) está deprecada y no se usa.
+
+| Herramienta (simulada) | Interfaz que copia (`MANDataService`, `develop-v3`) |
+|---|---|
+| `man_alta_sector` | `POST /equipos/sector` (`setSectorEqMan`): `descripcion` (50) |
+| `man_alta_area` | `POST /area` (`setAreaMan`): `descripcion` |
+| `man_alta_proceso` | `POST /proceso` (`setProcesoMan`): `descripcion` |
+| `man_alta_criticidad` | `POST /equipos/criticidad` (`setCriticidadEqMan`): `descripcion` (50) |
+| `man_alta_grupo` | `POST /equipos/grupo` (`setGrupoEqMan`): `descripcion` (50) |
+| `man_alta_marca` | `POST /equipos/marca` (`setMarcaEqMan`): `marcadescrip` (255) |
+| `man_alta_equipo` | `POST /equipo` (`setEquipoMan`): descripción, código, marca, número de serie, fechas e id de sector, grupo, criticidad, área y proceso |
+| `man_get_configuracion` | Las lecturas de cada ABM |
+
+- `id_empresa` **no es un parámetro**: en las reales sale del token (traducido a `empr_id_mysql`), igual que en el resto de la fachada MCP.
+- **Al reemplazarlas por las reales** hay que tener en cuenta que, si la empresa no tiene `empr_id_mysql`, Mantenimiento no puede dar de alta nada. La puesta en marcha tiene que verificarlo primero.
 - **Preventivos:** no se cargan el primer día (pedido del PM). Kuntur va a **proponer una tarea** del tipo "Generar los preventivos de estos equipos", como pedido de trabajo en estado propuesta (ADR-A9). Depende del módulo de Tareas.
 
 ---
@@ -121,7 +132,6 @@ La carga masiva de Dnato (`sta.ejecutar_carga_masiva(procedimiento, url_archivo,
 ## 5. Lo que queda afuera a propósito
 
 - **Artículos y proveedores de a uno.** El alta de artículos de la pantalla **graba directo en la base sin servicio de datos** (`ALM/models/Articulos.php:72`), y la edición no filtra por empresa. No se expone como herramienta. Los artículos entran por el lote 2.
-- **Equipos.** Hay dos tablas distintas (`core.equipos` en PostgreSQL y la de Mantenimiento en MySQL), con riesgo de duplicarlos. Se decide después de la migración.
 - **Encargados de depósito y pañoles.** Requieren usuarios creados y varias llamadas sin transacción.
 
 ---
@@ -149,5 +159,5 @@ Por decisión del PM, hasta que la nueva versión de Dnato exista, Kuntur trabaj
 |---|---|---|
 | A-1 | Lote 1: las tres herramientas sobre servicios de datos existentes, sin modificarlos | Aprobar |
 | A-2 | Lote 2: la dirección (función nueva `sta.carga_masiva_filas` que reutiliza los procedimientos de Dnato), con su análisis detallado más adelante | Aprobar la dirección |
-| A-3 | Lote 3: esperar a la migración de Mantenimiento | Aprobar |
-| A-4 | Lote 4: servicios simulados de Dnato v3, como deuda técnica | Aprobar |
+| A-3 | Lote 3 | **Resuelto por el PM:** simulado con las interfaces de `develop-v3`; los equipos van en MariaDB |
+| A-4 | Lote 4 | **Resuelto por el PM:** simulado, como deuda técnica |

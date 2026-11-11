@@ -40,13 +40,17 @@ async def _conectar_o_saltear():
 
 @pytest.fixture
 async def con(con_admin):
-    """Siembra la tool de prueba (como curador) y se la da a Kuntur, por nombre."""
+    """Siembra la tool de prueba (como curador) y se la da a Kuntur, por nombre.
+    Al final le devuelve a Kuntur su lista original."""
     async with con_admin.cursor() as cur:
+        await cur.execute("SELECT tools_configuracion FROM agente.agente WHERE clave = 'kuntur'")
+        original = (await cur.fetchone())["tools_configuracion"]
         await cur.execute(
             "INSERT INTO agente.tool (nombre, modulo, clase, riesgo, reversible, descripcion) "
             "VALUES (%s, 'alm', 'configuracion', 'medio', false, 'Alta de depósitos (prueba)') "
             "ON CONFLICT (nombre) DO UPDATE SET clase = 'configuracion'", (TOOL,))
-        await cur.execute("UPDATE agente.agente SET tools_configuracion = ARRAY[%s] WHERE clave = 'kuntur'", (TOOL,))
+        await cur.execute("UPDATE agente.agente SET tools_configuracion = tools_configuracion || %s::text "
+                          "WHERE clave = 'kuntur'", (TOOL,))
         await cur.execute("UPDATE agente.agente SET tools_permitidas = tools_permitidas || 'alm_prueba_*'::text "
                           "WHERE clave = 'quirqui' AND NOT ('alm_prueba_*' = ANY (tools_permitidas))")
     await con_admin.commit()
@@ -57,7 +61,7 @@ async def con(con_admin):
         await c.rollback()
         await c.close()
         async with con_admin.cursor() as cur:
-            await cur.execute("UPDATE agente.agente SET tools_configuracion = '{}' WHERE clave = 'kuntur'")
+            await cur.execute("UPDATE agente.agente SET tools_configuracion = %s WHERE clave = 'kuntur'", (original,))
             await cur.execute("UPDATE agente.agente SET tools_permitidas = array_remove(tools_permitidas, 'alm_prueba_*') "
                               "WHERE clave = 'quirqui'")
             await cur.execute("DELETE FROM agente.tool_llamada WHERE tool = %s", (TOOL,))
@@ -83,7 +87,7 @@ async def _consultar(con, monkeypatch, llm, mcp, clave="kuntur"):
 async def test_un_patron_no_habilita_una_tool_de_configuracion(con):
     assert TOOL not in await agentes.tools_permitidas(con, "quirqui"), "quirqui tiene 'alm_prueba_*'"
     assert TOOL in await agentes.tools_permitidas(con, "kuntur")
-    assert await cargas.de_configuracion(con, "kuntur") == frozenset({TOOL})
+    assert TOOL in await cargas.de_configuracion(con, "kuntur")
     assert await cargas.de_configuracion(con, "quirqui") == frozenset()
 
 
@@ -176,7 +180,8 @@ async def test_si_falla_queda_como_fallida(con, monkeypatch):
 async def test_si_sacaron_la_tool_de_la_lista_no_se_ejecuta(con, con_admin, monkeypatch):
     carga = await _proponer(con)
     async with con_admin.cursor() as cur:
-        await cur.execute("UPDATE agente.agente SET tools_configuracion = '{}' WHERE clave = 'kuntur'")
+        await cur.execute("UPDATE agente.agente SET tools_configuracion = array_remove(tools_configuracion, %s) "
+                          "WHERE clave = 'kuntur'", (TOOL,))
     await con_admin.commit()
     vistos = _mcp_de_confirmacion(monkeypatch)
     with pytest.raises(cargas.CargaInvalida, match="ya no está habilitada"):

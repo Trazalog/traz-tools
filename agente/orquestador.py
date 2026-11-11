@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, cargas, configuracion, guardian, metas, pantalla, rag, sugerencias, web
+from . import agentes, cargas, configuracion, guardian, metas, pantalla, rag, simulados, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -201,6 +201,14 @@ class Orquestador:
         # Proponer una meta tambien es del motor: no escribe nada (AGENTE-CO-03).
         if metas.NOMBRE in permitidas:
             tools.append(metas.DEFINICION)
+        # Servicios simulados de la puesta en marcha (deuda tecnica): mismo
+        # nombre e interfaz que tendran los reales. Si el gateway ya publica
+        # uno, gana el del gateway.
+        # Son parte de la puesta en marcha: solo para el agente que la hace (el
+        # que tiene tools de configuracion). Quirqui no ve datos simulados.
+        publicadas = {t.get("function", {}).get("name") for t in tools}
+        if de_config:
+            tools += [d for d in simulados.definiciones(permitidas) if d["function"]["name"] not in publicadas]
         res.controles.append({
             "control": "lista_blanca",
             "publicadas": len(del_gateway), "ofrecidas": len(tools),
@@ -225,8 +233,12 @@ class Orquestador:
                 "tool_calls": respuesta.tool_calls,
             })
             for llamada in respuesta.tool_calls:
-                if llamada.get("function", {}).get("name") in de_config:
+                pedida = llamada.get("function", {}).get("name")
+                if pedida in de_config:
                     mensaje = await self._proponer_carga(con, consulta, mcp, llamada, res)
+                elif (de_config and pedida in permitidas and pedida in simulados.SERVICIOS
+                      and simulados.SERVICIOS[pedida].clase == simulados.LECTURA):
+                    mensaje = await self._leer_simulado(con, consulta, mcp, llamada)
                 else:
                     mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
                 mensajes.append(mensaje)
@@ -350,9 +362,19 @@ class Orquestador:
             argumentos = json.loads(fn.get("arguments") or "{}")
         except (json.JSONDecodeError, ValueError):
             argumentos = None
+        error = None
         if not isinstance(argumentos, dict):
-            mcp.llamadas.append(LlamadaTool(nombre, {}, "error", 0, "argumentos invalidos"))
-            salida = {"error": "Los datos de la carga no son válidos: revisalos y volvé a armarla."}
+            error = "Los datos de la carga no son válidos: revisalos y volvé a armarla."
+        elif nombre in simulados.SERVICIOS:
+            # La interfaz se controla al proponer: una tarjeta que no se puede cargar no se muestra.
+            try:
+                argumentos = simulados.validar(nombre, argumentos)
+            except simulados.SimulacionInvalida as e:
+                error = f"No se puede proponer: {e}. Corregilo y volvé a armarla."
+        if error:
+            mcp.llamadas.append(LlamadaTool(nombre, argumentos if isinstance(argumentos, dict) else {},
+                                            "error", 0, error[:300]))
+            salida = {"error": error}
         else:
             p = await cargas.proponer(
                 con, empr_id=consulta.empr_id, interaccion_id=res.interaccion_id,
@@ -361,6 +383,15 @@ class Orquestador:
             res.propuestas_carga.append(p.tarjeta())
             mcp.llamadas.append(LlamadaTool(nombre, argumentos, "propuesta", 0, None))
             salida = p.para_el_modelo()
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
+                "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    async def _leer_simulado(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict) -> dict:
+        """Una lectura de los servicios simulados (agente/simulados.py)."""
+        nombre = llamada.get("function", {}).get("name", "")
+        t0 = time.monotonic()
+        salida = await simulados.leer(con, consulta.empr_id, nombre)
+        mcp.llamadas.append(LlamadaTool(nombre, {}, "ok", int((time.monotonic() - t0) * 1000)))
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
 

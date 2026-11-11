@@ -27,7 +27,7 @@ from dataclasses import dataclass
 
 import psycopg
 
-from . import rag
+from . import rag, simulados
 from .config import Config
 from .mcp_client import ClienteMCP, MCPError
 
@@ -71,6 +71,7 @@ class Propuesta:
         filas = _filas(self.argumentos)
         datos = {k: v for k, v in self.argumentos.items() if k != "filas"}
         return {"carga_id": self.carga_id, "tool": self.tool, "titulo": self.titulo,
+                "simulado": self.tool in simulados.SERVICIOS,
                 "datos": datos, "filas": (filas or [])[:MAX_FILAS_MUESTRA],
                 "total_filas": len(filas) if filas is not None else None}
 
@@ -134,10 +135,14 @@ async def confirmar(con: psycopg.AsyncConnection, cfg: Config, *, empr_id: int, 
         raise CargaInvalida(f"{c['tool']} ya no está habilitada para {c['agente']}")
     t0 = time.monotonic()
     try:
-        async with ClienteMCP(cfg, autorizacion) as mcp:
-            salida = await mcp.llamar(c["tool"], c["argumentos"])
+        if c["tool"] in simulados.SERVICIOS:
+            # Deuda tecnica: servicio simulado con la interfaz del real (agente/simulados.py).
+            salida = await simulados.ejecutar(con, empr_id, c["tool"], c["argumentos"])
+        else:
+            async with ClienteMCP(cfg, autorizacion) as mcp:
+                salida = await mcp.llamar(c["tool"], c["argumentos"])
         estado, resultado = "ejecutada", {"respuesta": salida}
-    except MCPError as e:
+    except (MCPError, simulados.SimulacionInvalida) as e:
         estado, resultado = "fallida", {"error": str(e)[:1000]}
     resultado["ms"] = int((time.monotonic() - t0) * 1000)
     async with con.cursor() as cur:

@@ -480,7 +480,8 @@
                }).join('') + '</table>';
     }
     function tarjetaCarga(c) {
-        var html = '<div class="agp-carga" data-carga="' + escapar(c.carga_id) + '"><strong>Para cargar: ' + escapar(c.titulo) + '</strong>';
+        var html = '<div class="agp-carga" data-carga="' + escapar(c.carga_id) + '"><strong>Para cargar: ' + escapar(c.titulo) + '</strong>' +
+                   (c.simulado ? '<em>Simulación: todavía no se graba en el sistema real.</em><br>' : '');
         Object.keys(c.datos || {}).forEach(function (k) { html += escapar(k) + ': ' + escapar(c.datos[k]) + '<br>'; });
         if ((c.filas || []).length) {
             html += tablaFilas(c.filas);

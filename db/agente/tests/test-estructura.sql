@@ -483,6 +483,33 @@ SELECT 'perfil_empresa con lo que cuenta el administrador y quien lo confirmo',
        'CO-02';
 
 -- ---------------------------------------------------------------------------
+-- 025/026 - Kuntur graba configuracion con confirmacion (ADR-A12) y simulados
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT t || ' con RLS forzado', coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.' || t)), false), 'ADR-A12'
+FROM unnest(ARRAY['carga_propuesta', 'simulacion']) AS t;
+
+INSERT INTO _resultado
+SELECT 'ningun patron habilita una tool de configuracion ni de accion',
+       NOT EXISTS (SELECT 1 FROM agente.tools_por_patrones(ARRAY['*']) n
+                   JOIN agente.tool t ON t.nombre = n WHERE t.clase IN ('accion', 'configuracion')),
+       'ADR-A8, ADR-A12';
+
+INSERT INTO _resultado
+SELECT 'solo Kuntur propone cargas de configuracion',
+       EXISTS (SELECT 1 FROM agente.tools_de_configuracion('kuntur'))
+       AND NOT EXISTS (SELECT 1 FROM agente.tools_de_configuracion('quirqui'))
+       AND NOT EXISTS (SELECT 1 FROM agente.tools_de_configuracion('faustino')),
+       'ADR-A12';
+
+INSERT INTO _resultado
+SELECT 'las tools de accion siguen fuera de todas las listas',
+       NOT EXISTS (SELECT 1 FROM agente.agente a, agente.tools_permitidas(a.clave) n
+                   JOIN agente.tool t ON t.nombre = n WHERE t.clase = 'accion'),
+       'ADR-A8';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -495,7 +522,7 @@ FROM unnest(ARRAY[
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
-    '024-kuntur-configuracion'
+    '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

@@ -124,11 +124,14 @@ async def test_la_base_y_los_patrones_coinciden(con):
     Si divergieran, un test sobre tool_permitida() podria dar verde mientras
     la base deja pasar otra cosa.
     """
+    from agente import cargas
     catalogo = await _catalogo(con)
     for a in await agentes.listar(con):
+        # Las de configuracion no entran por patron: se nombran una por una (ADR-A12).
         por_patron = {n for n, clase in catalogo.items()
-                      if clase != "accion" and a.tool_permitida(n)}
-        assert por_patron == set(await agentes.tools_permitidas(con, a.clave)), a.clave
+                      if clase not in ("accion", "configuracion") and a.tool_permitida(n)}
+        esperadas = por_patron | set(await cargas.de_configuracion(con, a.clave))
+        assert esperadas == set(await agentes.tools_permitidas(con, a.clave)), a.clave
 
 
 async def test_quirqui_ve_todas_las_de_lectura(con):
@@ -136,7 +139,9 @@ async def test_quirqui_ve_todas_las_de_lectura(con):
     del Coach (011). Del motor de KPIs, Quirqui solo ve el valor de hoy."""
     catalogo = await _catalogo(con)
     lectura = {n for n, c in catalogo.items() if c == "lectura"}
-    del_coach = {"kpi_get_historico", "kpi_get_objetivos", "kpi_get_desvios"}
+    del_coach = {"kpi_get_historico", "kpi_get_objetivos", "kpi_get_desvios",
+                 # Dnato v3 simulado: lo usa Kuntur en la puesta en marcha (026).
+                 "dnato_get_funcionalidades", "dnato_get_administradores"}
     assert set(await agentes.tools_permitidas(con, "quirqui")) == lectura - del_coach
 
 
