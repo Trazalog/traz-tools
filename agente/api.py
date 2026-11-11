@@ -35,7 +35,7 @@ import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import agentes, cargas, configuracion, entrevistador, rag
+from . import agentes, cargas, configuracion, entrevistador, planillas, rag
 from .config import Config, cargar
 from .llm import OpenRouter
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
@@ -121,6 +121,9 @@ class ConsultaIn(BaseModel):
     pantalla: str | None = Field(
         default=None, max_length=300,
         pattern=r"^/?[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-.%=]*)*(?:\?[A-Za-z0-9_\-.%=&]*)?$")
+    # La planilla que el administrador subio a Kuntur (POST /kuntur/planillas).
+    # Solo cuenta para Kuntur; para los demas agentes se ignora.
+    planilla_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 
 class ConsultaOut(BaseModel):
@@ -266,6 +269,7 @@ async def consulta(
         autorizacion=ident.autorizacion, usr_id=ident.usr_id,
         usuario_nick=ident.nick, canal=entrada.canal, agente=agente,
         pantalla=entrada.pantalla,
+        planilla_id=entrada.planilla_id if agente.clave == "kuntur" else None,
     ))
     return ConsultaOut(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
@@ -354,6 +358,35 @@ async def kuntur_avisos_silenciar(
                                          silenciado=entrada.silenciado):
         raise HTTPException(404, "Kuntur no avisó nada de esa meta")
     return {"objetivo_id": entrada.objetivo_id, "silenciado": entrada.silenciado}
+
+
+class PlanillaIn(BaseModel):
+    nombre: str = Field(min_length=1, max_length=200)
+    # El archivo tal cual, en base64 (CSV o Excel .xlsx). Hasta 5 MB.
+    contenido_base64: str = Field(min_length=4, max_length=7_000_000)
+
+
+@app.post("/kuntur/planillas")
+async def kuntur_planillas(
+    entrada: PlanillaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El administrador sube su planilla como la tiene (lote 2). Se guarda por
+    empresa; despues se le pregunta a Kuntur con su planilla_id."""
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        contenido = base64.b64decode(entrada.contenido_base64, validate=True)
+    except (binascii.Error, ValueError) as e:
+        raise HTTPException(400, "El archivo no vino bien codificado") from e
+    try:
+        p = await planillas.guardar(con, empr_id=ident.empr_id, usuario=usuario,
+                                    nombre=entrada.nombre, contenido=contenido)
+    except planillas.PlanillaInvalida as e:
+        raise HTTPException(400, str(e)) from e
+    await con.commit()
+    await rag.fijar_empresa(con, ident.empr_id)
+    return p.resumen()
 
 
 @app.post("/kuntur/cargas/confirmar")

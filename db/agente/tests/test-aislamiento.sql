@@ -120,6 +120,12 @@ INSERT INTO agente.carga_propuesta (empr_id, agente, tool, argumentos, usuario)
 VALUES (:EMPRESA_B, 'kuntur', 'man_alta_sector', '{"descripcion": "carga de B"}', 'beto');
 INSERT INTO agente.simulacion (empr_id, servicio, entidad, datos)
 VALUES (:EMPRESA_B, 'man_alta_sector', 'man.sector', '{"descripcion": "sector de B"}');
+-- Planillas subidas a Kuntur (028).
+INSERT INTO agente.planilla (planilla_id, empr_id, usuario, nombre, encabezados, filas, total_filas)
+VALUES (gen_random_uuid(), :EMPRESA_B, 'beto', 'planilla de B', '["a"]', '[["1"]]', 1);
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.planilla (planilla_id, empr_id, usuario, nombre, encabezados, filas, total_filas)
+VALUES (gen_random_uuid(), :EMPRESA_A, 'ana', 'planilla de A', '["a"]', '[["1"]]', 1);
 
 -- Propuestas de siguiente paso (017).
 SET LOCAL agente.empr_id = :'EMPRESA_A';
@@ -228,6 +234,12 @@ SELECT 'carga_propuesta y simulacion: con contexto A, lo de B es invisible',
        AND EXISTS (SELECT 1 FROM agente.simulacion WHERE datos->>'descripcion' = 'sector de A'),
        '025, 026';
 
+INSERT INTO _resultado
+SELECT 'planilla: con contexto A, la de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.planilla WHERE nombre = 'planilla de B')
+       AND EXISTS (SELECT 1 FROM agente.planilla WHERE nombre = 'planilla de A'),
+       '028';
+
 -- ---------------------------------------------------------------------------
 -- CONTROL 2 — Simetrico: con el contexto de B, A es invisible
 -- ---------------------------------------------------------------------------
@@ -259,6 +271,10 @@ INSERT INTO _resultado
 SELECT 'carga_propuesta y simulacion: sin contexto no se ve nada (falla cerrado)',
        NOT EXISTS (SELECT 1 FROM agente.carga_propuesta)
        AND NOT EXISTS (SELECT 1 FROM agente.simulacion), '025, 026';
+
+INSERT INTO _resultado
+SELECT 'planilla: sin contexto no se ve nada (falla cerrado)',
+       NOT EXISTS (SELECT 1 FROM agente.planilla), '028';
 
 INSERT INTO _resultado
 SELECT 'entrevista_config y aviso_meta: sin contexto no se ve nada (falla cerrado)',

@@ -136,7 +136,7 @@ class Agentes extends CI_Model
      * Devuelve el cuerpo del orquestador tal cual, que incluye el
      * interaccion_id necesario para calificar la respuesta despues.
      */
-    public function consultar($jwt, $pregunta, $pantalla = '', $agente = '')
+    public function consultar($jwt, $pregunta, $pantalla = '', $agente = '', $planilla_id = '')
     {
         $cuerpo = [
             'pregunta' => $pregunta,
@@ -147,6 +147,9 @@ class Agentes extends CI_Model
         }
         if ($agente !== '') {
             $cuerpo['agente'] = $agente;
+        }
+        if ($planilla_id !== '') {
+            $cuerpo['planilla_id'] = $planilla_id;
         }
         $rsp = $this->_llamar('POST', '/consulta', $cuerpo, $jwt, self::TIMEOUT_CONSULTA);
 
@@ -239,9 +242,9 @@ class Agentes extends CI_Model
      * orquestador para que el panel distinga "no sos administrador" (404) de
      * "respuesta invalida" (400) o "no disponible".
      */
-    public function kuntur($jwt, $metodo, $ruta, $cuerpo)
+    public function kuntur($jwt, $metodo, $ruta, $cuerpo, $timeout = 15)
     {
-        $rsp = $this->_llamar($metodo, $ruta, $cuerpo, $jwt, 15);
+        $rsp = $this->_llamar($metodo, $ruta, $cuerpo, $jwt, $timeout);
         if ($rsp['ok']) {
             return ['status' => 200, 'data' => $rsp['data']];
         }

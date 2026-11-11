@@ -32,6 +32,8 @@ class Agente extends CI_Controller
 {
     /** Margen antes de que venza el token, para no usar uno a punto de expirar. */
     const MARGEN_VENCIMIENTO = 60;
+    /** La planilla que se sube a Kuntur: el mismo límite que el orquestador. */
+    const MAX_PLANILLA = 5242880;
 
     public function __construct()
     {
@@ -102,9 +104,15 @@ class Agente extends CI_Controller
             $agente = '';
         }
 
+        // La planilla que el administrador subió a Kuntur (kuntur_planilla). Solo el id.
+        $planilla = (string) $this->input->post('planilla_id');
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $planilla)) {
+            $planilla = '';
+        }
+
         log_message('DEBUG', '#TRAZA | AGENTE | Agente | consultar() >> ' . substr($pregunta, 0, 80)
             . ($pantalla !== '' ? ' | pantalla: ' . substr($pantalla, 0, 120) : ''));
-        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla, $agente));
+        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla, $agente, $planilla));
     }
 
     /** Siguiente paso en la pantalla (AGENTE-AS-02). Lo pide el panel al abrirse. */
@@ -312,7 +320,38 @@ class Agente extends CI_Controller
             $this->_json(array('error' => 'carga inválida'), 400);
             return;
         }
-        $this->_proxyKuntur('POST', $ruta, array('carga_id' => $id));
+        // Una carga masiva puede tardar: la corre la Carga Masiva de Dnato.
+        $this->_proxyKuntur('POST', $ruta, array('carga_id' => $id), 150);
+    }
+
+    /**
+     * El administrador sube su planilla como la tiene (CSV o Excel .xlsx), para
+     * que Kuntur la pase a la Carga Masiva (ADR-A12). Acá solo se controla el
+     * tamaño y la forma; la lee y la valida el orquestador.
+     */
+    public function kuntur_planilla()
+    {
+        $f = isset($_FILES['planilla']) ? $_FILES['planilla'] : null;
+        if (!$f || $f['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) {
+            $this->_json(array('error' => 'No llegó el archivo. Probá de nuevo.'), 400);
+            return;
+        }
+        if ($f['size'] > self::MAX_PLANILLA) {
+            $this->_json(array('error' => 'La planilla pasa de 5 MB.'), 400);
+            return;
+        }
+        $nombre = basename((string) $f['name']);
+        if (!preg_match('/\.(csv|xlsx|xls|txt)$/i', $nombre)) {
+            $this->_json(array('error' => 'Subí la planilla como .xlsx o .csv.'), 400);
+            return;
+        }
+        $contenido = file_get_contents($f['tmp_name']);
+        log_message('DEBUG', '#TRAZA | AGENTE | Agente | kuntur_planilla() >> ' . substr($nombre, 0, 120)
+            . ' (' . strlen($contenido) . ' bytes)');
+        $this->_proxyKuntur('POST', '/kuntur/planillas', array(
+            'nombre'           => substr($nombre, 0, 200),
+            'contenido_base64' => base64_encode($contenido),
+        ), 60);
     }
 
     /** Estado del orquestador, para diagnosticar desde la UI. */
@@ -371,13 +410,13 @@ class Agente extends CI_Controller
     }
 
     /** Proxy a los endpoints de Kuntur, devolviendo el codigo HTTP del orquestador. */
-    private function _proxyKuntur($metodo, $ruta, $cuerpo)
+    private function _proxyKuntur($metodo, $ruta, $cuerpo, $timeout = 15)
     {
         if (!$this->_asegurarToken()) {
             $this->_json(array('error' => 'sin_autorizacion'), 401);
             return;
         }
-        $rsp = $this->Agentes->kuntur($this->_token(), $metodo, $ruta, $cuerpo);
+        $rsp = $this->Agentes->kuntur($this->_token(), $metodo, $ruta, $cuerpo, $timeout);
         $this->_json($rsp['data'], $rsp['status']);
     }
 

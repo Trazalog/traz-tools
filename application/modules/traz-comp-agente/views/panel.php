@@ -63,6 +63,11 @@
   <div id="agp-kuntur" hidden>
     <div id="agp-config"></div>
     <div id="agp-seguimiento"></div>
+    <div id="agp-planilla">
+      <label class="agp-planilla-subir">📎 Subí tu planilla de artículos, herramientas o equipos
+        <input type="file" id="agp-planilla-archivo" accept=".xlsx,.csv" hidden></label>
+      <span class="agp-planilla-estado" hidden></span>
+    </div>
   </div>
   <div id="agp-propuestas"></div>
 
@@ -138,6 +143,10 @@
 .agp-meta .agp-meta-msg { margin-top: 4px; }
 .agp-carga { border: 1px solid #f0e0c0; border-left: 3px solid #f39c12; border-radius: 3px;
              padding: 6px 8px; margin-top: 6px; font-size: 12px; background: #fffdf8; }
+#agp-planilla { margin: 6px 0; }
+#agp-planilla .agp-planilla-subir { cursor: pointer; color: #3c8dbc; font-weight: normal; }
+#agp-planilla .agp-planilla-estado { display: block; }
+#agp-planilla .agp-planilla-estado a { cursor: pointer; margin-left: 6px; }
 .agp-carga strong { display: block; }
 .agp-carga table { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 11px; }
 .agp-carga th, .agp-carga td { border: 1px solid #eee; padding: 2px 4px; text-align: left; }
@@ -532,12 +541,50 @@
         var texto = $.trim($('#agp-pregunta').val());
         if (!texto) { return; }
         $('#agp-pregunta').val('');
+        enviar(texto);
+    });
+
+    // --- planilla para la Carga Masiva (ADR-A12, lote 2) ---------------------
+    // Se sube una vez; mientras esté, cada pregunta a Kuntur lleva su id. Kuntur
+    // ve solo los encabezados y 20 filas, y propone la carga como tarjeta.
+    var planilla = null;
+    function pintarPlanilla(msg, clase) {
+        var $e = $('#agp-planilla .agp-planilla-estado').prop('hidden', false).attr('class', 'agp-planilla-estado ' + (clase || ''));
+        $e.html(msg);
+    }
+    $('#agp-planilla-archivo').on('change', function () {
+        var archivo = this.files && this.files[0];
+        if (!archivo) { return; }
+        var datos = new FormData();
+        datos.append('planilla', archivo);
+        pintarPlanilla('Subiendo ' + escapar(archivo.name) + '...');
+        $.ajax({ url: BASE + 'kuntur_planilla', type: 'POST', data: datos, processData: false, contentType: false })
+            .done(function (r) {
+                planilla = r;
+                pintarPlanilla('Planilla «' + escapar(r.nombre) + '», ' + r.total_filas + ' filas.' +
+                               '<a class="agp-planilla-quitar">Quitar</a>', 'text-success');
+                enviar('Te subí la planilla «' + r.nombre + '». ¿Cómo la cargamos?');
+            })
+            .fail(function (xhr) {
+                var r = xhr && xhr.responseJSON;
+                pintarPlanilla(escapar((r && r.error) || 'No se pudo subir la planilla.'), 'text-danger');
+            })
+            .always(function () { $('#agp-planilla-archivo').val(''); });
+    });
+    $('#agp-planilla').on('click', '.agp-planilla-quitar', function () {
+        planilla = null;
+        $('#agp-planilla .agp-planilla-estado').prop('hidden', true).empty();
+    });
+
+    function enviar(texto) {
         $('#agp-enviar').prop('disabled', true);
         pintar('Vos', 'agp-usuario', '<div class="agp-texto">' + escapar(texto) + '</div>');
         pintar(agente.nombre, 'agp-agente agp-pensando-wrap', '<div class="agp-texto agp-pensando">Pensando...</div>');
         estado('pensando');
 
-        $.post(BASE + 'consultar', { pregunta: texto, pantalla: pantallaActual(), agente: agente.clave })
+        var pedido = { pregunta: texto, pantalla: pantallaActual(), agente: agente.clave };
+        if (planilla && agente.rol === 'coach') { pedido.planilla_id = planilla.planilla_id; }
+        $.post(BASE + 'consultar', pedido)
             .done(function (r) { $('.agp-pensando-wrap').remove(); pintarRespuesta(r);
                                  estado('hablando'); setTimeout(function () { estado('saludo'); }, 2500); })
             .fail(function (xhr) {
@@ -547,7 +594,7 @@
                     : 'No se pudo enviar la consulta. Revisá tu conexión y probá de nuevo.' });
             })
             .always(function () { $('#agp-enviar').prop('disabled', false); $('#agp-pregunta').focus(); });
-    });
+    }
 
     $conv.on('click', '.agp-feedback button', function () {
         var $b = $(this), $caja = $b.closest('.agp-feedback');

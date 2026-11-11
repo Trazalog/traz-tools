@@ -488,7 +488,7 @@ SELECT 'perfil_empresa con lo que cuenta el administrador y quien lo confirmo',
 INSERT INTO _resultado
 SELECT t || ' con RLS forzado', coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
                  WHERE oid = to_regclass('agente.' || t)), false), 'ADR-A12'
-FROM unnest(ARRAY['carga_propuesta', 'simulacion']) AS t;
+FROM unnest(ARRAY['carga_propuesta', 'simulacion', 'planilla']) AS t;
 
 INSERT INTO _resultado
 SELECT 'ningun patron habilita una tool de configuracion ni de accion',
@@ -502,6 +502,13 @@ SELECT 'solo Kuntur propone cargas de configuracion',
        AND NOT EXISTS (SELECT 1 FROM agente.tools_de_configuracion('quirqui'))
        AND NOT EXISTS (SELECT 1 FROM agente.tools_de_configuracion('faustino')),
        'ADR-A12';
+
+INSERT INTO _resultado
+SELECT 'la carga masiva de planillas es de configuracion y solo de Kuntur',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = 'kuntur_carga_masiva' AND clase = 'configuracion')
+       AND 'kuntur_carga_masiva' IN (SELECT agente.tools_de_configuracion('kuntur'))
+       AND 'kuntur_carga_masiva' NOT IN (SELECT agente.tools_permitidas('quirqui')),
+       '028, ADR-A12';
 
 INSERT INTO _resultado
 SELECT 'las tools de accion siguen fuera de todas las listas',
@@ -523,7 +530,7 @@ FROM unnest(ARRAY[
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
     '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
-    '027-tools-alta-configuracion'
+    '027-tools-alta-configuracion', '028-planillas-carga-masiva'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

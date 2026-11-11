@@ -8,7 +8,7 @@ Qué es: el análisis de impacto que exige el `CLAUDE.md` antes de tocar el núc
 |---|---|
 | Fecha | 2026-11-11 |
 | Tarea | AGENTE-CO-09 (carga inicial) |
-| Estado | A-1 **aprobado y hecho** (2026-11-11); A-2 **para decidir** (ver §3.2); A-3 y A-4 resueltos como simulados |
+| Estado | A-1 **aprobado y hecho** (2026-11-11); A-2 **aprobado y hecho** (ver §3.2); A-3 y A-4 resueltos como simulados |
 | Comparado contra | `origin/master` (producción) y `origin/develop-v3.5`, el 2026-11-11 |
 
 ---
@@ -112,7 +112,15 @@ flowchart LR
 - **La carga:** hace falta una **entrada a la Carga Masiva que no dependa de la sesión de la pantalla**: recibe el CSV y la entidad, toma la empresa del token del administrador, y llama a `Bulkloads::enviarADataservice` tal como está (los dos motores, todo o nada). Lo que existe hoy no se modifica.
 - **Por qué no una herramienta MCP directa:** la carga necesita dejar el archivo en el servidor de la base, y el camino de MariaDB vive en el PHP de Dnato, no en un servicio de datos.
 - **Toca Dnato** (núcleo): necesita este análisis aprobado y avisarle a ese frente.
-- *Alternativa:* que el PHP de Tools deje el CSV y llame al recurso existente `COREDataService /carga_masiva/archivo`. No toca Dnato, pero sirve solo para PostgreSQL y depende de que Tools escriba en una carpeta que lea la base.
+- *Alternativa descartada:* que el PHP de Tools deje el CSV y llame al recurso existente `COREDataService /carga_masiva/archivo`. No toca Dnato, pero sirve solo para PostgreSQL y depende de que Tools escriba en una carpeta que lea la base.
+
+### 3.3 Cómo quedó (2026-11-11, aprobado por el PM)
+
+- **Dnato** (traz-comp-dnato#50, contra `develop-v3`): `POST /bulkload_api/cargar` y la biblioteca `JwtVerifier`. `Bulkload.php` y `Bulkloads.php` no se tocan. Solo administradores (`role` = 1), nunca token de máquina; la empresa sale del token y el procedimiento del catálogo; solo Articulos, Herramientas, Mantenimiento Equipos y Mantenimiento Articulos; hasta 5.000 filas.
+- ⚠️ `develop-v3` de Dnato todavía no tiene el despacho a MariaDB (está en `develop` y `master`): hasta la sincronización, en v3 solo cargan artículos y herramientas.
+- **Agente:** `agente/planillas.py` lee CSV y `.xlsx` sin dependencias nuevas (`.xls` viejo no: se pide guardarla como `.xlsx`); `028` guarda la planilla por empresa; `kuntur_carga_masiva` es una herramienta del motor, que se ofrece solo si hay planilla; el modelo da el mapeo y el código transforma todas las filas, avisando con el número de fila lo que falta.
+- **Panel:** «Subí tu planilla» en la pestaña de Kuntur; la tarjeta muestra la entidad, cómo se leyó cada columna, 10 filas y el total.
+- **Hallazgo, no corregido:** la plantilla de «Mantenimiento Articulos» tiene encabezados en mayúsculas y con tilde (`CÓDIGO`, `UNIDAD DE MEDIDA`), que no coinciden con las columnas de la tabla intermedia (`codigo`, `u_medida`), así que la pantalla probablemente no la pueda cargar. Supuesto: no lo probé. Kuntur no la usa: arma el archivo con los nombres de la tabla.
 
 ---
 
@@ -166,6 +174,6 @@ Por decisión del PM, hasta que la nueva versión de Dnato exista, Kuntur trabaj
 | # | Qué | Propuesta |
 |---|---|---|
 | A-1 | Lote 1 | **Aprobado (2026-11-11) y hecho**: `toolsMCPAPI.xml`, `doc/api/trazalog-operaciones.yaml`, `027`. Probado en una copia del MI: 12 de 12 (§2.5) |
-| A-2 | Lote 2: Kuntur arma el CSV de la plantilla y usa la Carga Masiva existente por una entrada nueva con token (§3.2) | Aprobar, o elegir la alternativa por Tools (solo PostgreSQL) |
+| A-2 | Lote 2: Kuntur arma el CSV de la plantilla y usa la Carga Masiva existente por una entrada nueva con token (§3.2) | **Aprobado (2026-11-11) y hecho**: entrada en Dnato (traz-comp-dnato#50, 18 de 18 en una copia aislada); en el agente `agente/planillas.py`, `028`, `POST /kuntur/planillas` y el botón en el panel |
 | A-3 | Lote 3 | **Resuelto por el PM:** simulado con las interfaces de `develop-v3`; los equipos van en MariaDB |
 | A-4 | Lote 4 | **Resuelto por el PM:** simulado, como deuda técnica |

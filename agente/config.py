@@ -90,6 +90,11 @@ class Config:
     # Endpoint de token de Dnato (client_credentials). Vacio = los jobs no
     # pueden pedir tokens y no corren.
     dnato_token_url: str = field(default_factory=lambda: _env("AGENTE_DNATO_TOKEN_URL", ""))
+    # Carga Masiva de Dnato con el token del administrador (ADR-A12, lote 2):
+    # POST /bulkload_api/cargar (traz-comp-dnato#50). Vacia = Kuntur puede
+    # proponer la carga, pero al confirmar falla diciendo que no esta configurada.
+    dnato_bulkload_url: str = field(default_factory=lambda: _env("AGENTE_DNATO_BULKLOAD_URL", ""))
+    dnato_bulkload_timeout: float = field(default_factory=lambda: float(_env("AGENTE_DNATO_BULKLOAD_TIMEOUT", "120")))
     # Clave con la que se cifran los secretos de agente.credencial_empresa. NO
     # va en la base: sin ella, lo que hay en la tabla no sirve.
     clave_credenciales: str = field(default_factory=lambda: _env("AGENTE_CLAVE_CREDENCIALES", ""))

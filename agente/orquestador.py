@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, cargas, configuracion, guardian, metas, pantalla, rag, simulados, sugerencias, web
+from . import agentes, cargas, configuracion, guardian, metas, pantalla, planillas, rag, simulados, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -54,6 +54,9 @@ class Consulta:
     # El agente ya resuelto y con el acceso verificado (agentes.para_consulta).
     # None = el agente por defecto.
     agente: Agente | None = None
+    # La planilla que el administrador subio para que Kuntur la pase a la
+    # Carga Masiva (agente/planillas.py). None = no hay planilla en juego.
+    planilla_id: str | None = None
 
 
 @dataclass
@@ -184,6 +187,17 @@ class Orquestador:
                 mensajes.append({"role": "system", "content": texto_perfil})
                 contexto += "\n\n" + texto_perfil
             res.controles.append({"control": "perfil_empresa", "configurado": bool(texto_perfil)})
+            # La planilla subida: al modelo, solo encabezados y unas 20 filas (P-8).
+            # Cuenta como fuente para el guardian de cifras.
+            if consulta.planilla_id:
+                try:
+                    texto_planilla = planillas.contexto(await planillas.obtener(con, consulta.planilla_id))
+                    mensajes.append({"role": "system", "content": texto_planilla})
+                    contexto += "\n\n" + texto_planilla
+                    res.controles.append({"control": "planilla", "planilla_id": consulta.planilla_id})
+                except planillas.PlanillaInvalida:
+                    res.controles.append({"control": "planilla", "planilla_id": consulta.planilla_id,
+                                          "error": "no existe"})
         mensajes.append({"role": "user", "content": consulta.pregunta})
         # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
         # VE las tools que este agente puede usar. Las de escritura no estan,
@@ -209,6 +223,9 @@ class Orquestador:
         publicadas = {t.get("function", {}).get("name") for t in tools}
         if de_config:
             tools += [d for d in simulados.definiciones(permitidas) if d["function"]["name"] not in publicadas]
+        # La carga masiva de una planilla es del motor (lote 2): solo si hay planilla.
+        if planillas.NOMBRE in de_config and consulta.planilla_id:
+            tools.append(planillas.DEFINICION)
         res.controles.append({
             "control": "lista_blanca",
             "publicadas": len(del_gateway), "ofrecidas": len(tools),
@@ -365,6 +382,12 @@ class Orquestador:
         error = None
         if not isinstance(argumentos, dict):
             error = "Los datos de la carga no son válidos: revisalos y volvé a armarla."
+        elif nombre == planillas.NOMBRE:
+            # El modelo dio el mapeo; las filas las transforma el codigo, todas.
+            try:
+                argumentos = await planillas.preparar(con, argumentos)
+            except planillas.PlanillaInvalida as e:
+                error = f"No se puede proponer: {e}. Corregilo y volvé a armarla."
         elif nombre in simulados.SERVICIOS:
             # La interfaz se controla al proponer: una tarjeta que no se puede cargar no se muestra.
             try:
@@ -381,7 +404,9 @@ class Orquestador:
                 agente=consulta.agente.clave, usuario=consulta.usuario_nick or str(consulta.usr_id or ""),
                 tool=nombre, argumentos=argumentos)
             res.propuestas_carga.append(p.tarjeta())
-            mcp.llamadas.append(LlamadaTool(nombre, argumentos, "propuesta", 0, None))
+            registro = ({k: v for k, v in argumentos.items() if k != "filas"} | {"total_filas": len(argumentos["filas"])}
+                        if isinstance(argumentos.get("filas"), list) else argumentos)
+            mcp.llamadas.append(LlamadaTool(nombre, registro, "propuesta", 0, None))
             salida = p.para_el_modelo()
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}

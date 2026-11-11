@@ -27,7 +27,7 @@ from dataclasses import dataclass
 
 import psycopg
 
-from . import rag, simulados
+from . import planillas, rag, simulados
 from .config import Config
 from .mcp_client import ClienteMCP, MCPError
 
@@ -59,6 +59,13 @@ def _filas(argumentos: dict) -> list | None:
     return filas if isinstance(filas, list) else None
 
 
+def _legible(v):
+    """Un mapeo {columna: encabezado} como texto, para la tarjeta."""
+    if isinstance(v, dict):
+        return ", ".join(f"{k} ← {x}" for k, x in v.items())
+    return v
+
+
 @dataclass
 class Propuesta:
     carga_id: str
@@ -69,7 +76,9 @@ class Propuesta:
     def tarjeta(self) -> dict:
         """Lo que ve el administrador: que se va a grabar. Con muchas filas, una muestra."""
         filas = _filas(self.argumentos)
-        datos = {k: v for k, v in self.argumentos.items() if k != "filas"}
+        # Para leer, no para ejecutar: lo que se ejecuta es self.argumentos tal cual.
+        datos = {k: _legible(v) for k, v in self.argumentos.items()
+                 if k not in ("filas", "planilla_id") and v not in ({}, None, "")}
         return {"carga_id": self.carga_id, "tool": self.tool, "titulo": self.titulo,
                 "simulado": self.tool in simulados.SERVICIOS,
                 "datos": datos, "filas": (filas or [])[:MAX_FILAS_MUESTRA],
@@ -135,14 +144,17 @@ async def confirmar(con: psycopg.AsyncConnection, cfg: Config, *, empr_id: int, 
         raise CargaInvalida(f"{c['tool']} ya no está habilitada para {c['agente']}")
     t0 = time.monotonic()
     try:
-        if c["tool"] in simulados.SERVICIOS:
+        if c["tool"] == planillas.NOMBRE:
+            # La Carga Masiva de Dnato, con las filas que vio el administrador (lote 2).
+            salida = await planillas.ejecutar(cfg, autorizacion, c["argumentos"])
+        elif c["tool"] in simulados.SERVICIOS:
             # Deuda tecnica: servicio simulado con la interfaz del real (agente/simulados.py).
             salida = await simulados.ejecutar(con, empr_id, c["tool"], c["argumentos"])
         else:
             async with ClienteMCP(cfg, autorizacion) as mcp:
                 salida = await mcp.llamar(c["tool"], c["argumentos"])
         estado, resultado = "ejecutada", {"respuesta": salida}
-    except (MCPError, simulados.SimulacionInvalida) as e:
+    except (MCPError, simulados.SimulacionInvalida, planillas.CargaFallida) as e:
         estado, resultado = "fallida", {"error": str(e)[:1000]}
     resultado["ms"] = int((time.monotonic() - t0) * 1000)
     async with con.cursor() as cur:
