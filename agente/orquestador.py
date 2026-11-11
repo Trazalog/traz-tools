@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, configuracion, guardian, metas, pantalla, rag, sugerencias, web
+from . import agentes, cargas, configuracion, guardian, metas, pantalla, rag, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -78,6 +78,9 @@ class Resultado:
     # Metas que Kuntur propuso con kpi_proponer_meta (AGENTE-CO-03). No se
     # graban: el panel las muestra y las carga el administrador.
     propuestas_meta: list[dict] = field(default_factory=list)
+    # Cargas de configuracion que propuso Kuntur (ADR-A12): no se ejecutaron;
+    # el panel las muestra y se ejecutan si el administrador toca "Cargar".
+    propuestas_carga: list[dict] = field(default_factory=list)
 
 
 class Orquestador:
@@ -186,6 +189,8 @@ class Orquestador:
         # VE las tools que este agente puede usar. Las de escritura no estan,
         # aunque el gateway las publique.
         permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
+        # Las de configuracion (ADR-A12) se ofrecen, pero el motor no las ejecuta.
+        de_config = await cargas.de_configuracion(con, consulta.agente.clave)
         del_gateway = await mcp.listar_tools()
         tools = [t for t in del_gateway
                  if t.get("function", {}).get("name") in permitidas]
@@ -220,7 +225,10 @@ class Orquestador:
                 "tool_calls": respuesta.tool_calls,
             })
             for llamada in respuesta.tool_calls:
-                mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
+                if llamada.get("function", {}).get("name") in de_config:
+                    mensaje = await self._proponer_carga(con, consulta, mcp, llamada, res)
+                else:
+                    mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
                 mensajes.append(mensaje)
                 res.contenidos_tools.append(mensaje["content"])
                 res.tools_vistas.append((mensaje["name"], mensaje["content"]))
@@ -260,6 +268,9 @@ class Orquestador:
             res.respuesta = guardian.MENSAJE_BLOQUEO
             # Una tarjeta de meta al lado de "no tengo datos" confunde: se cae con la respuesta.
             res.propuestas_meta = []
+            # Las cargas quedan guardadas como propuesta, pero no se muestran: sin
+            # tarjeta nadie las confirma y vencen solas.
+            res.propuestas_carga = []
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
                         permitidas: frozenset[str], res: Resultado | None = None) -> dict:
@@ -327,6 +338,30 @@ class Orquestador:
             web.NOMBRE, argumentos, status, int((time.monotonic() - t0) * 1000), error,
         ))
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": web.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    async def _proponer_carga(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict,
+                              res: Resultado) -> dict:
+        """Una tool de configuracion (ADR-A12): se guarda como carga propuesta y
+        NO sale al MCP. La ejecuta el administrador desde la tarjeta."""
+        fn = llamada.get("function", {})
+        nombre = fn.get("name", "")
+        try:
+            argumentos = json.loads(fn.get("arguments") or "{}")
+        except (json.JSONDecodeError, ValueError):
+            argumentos = None
+        if not isinstance(argumentos, dict):
+            mcp.llamadas.append(LlamadaTool(nombre, {}, "error", 0, "argumentos invalidos"))
+            salida = {"error": "Los datos de la carga no son válidos: revisalos y volvé a armarla."}
+        else:
+            p = await cargas.proponer(
+                con, empr_id=consulta.empr_id, interaccion_id=res.interaccion_id,
+                agente=consulta.agente.clave, usuario=consulta.usuario_nick or str(consulta.usr_id or ""),
+                tool=nombre, argumentos=argumentos)
+            res.propuestas_carga.append(p.tarjeta())
+            mcp.llamadas.append(LlamadaTool(nombre, argumentos, "propuesta", 0, None))
+            salida = p.para_el_modelo()
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
 
     def _proponer_meta(self, mcp: ClienteMCP, llamada: dict, argumentos: dict,

@@ -17,6 +17,11 @@
   tarjetas; "Cargar meta" la graba el administrador con su sesión en
   index.php/Objetivos/guardar, que vuelve a verificar que es administrador.
 
+  CARGAS (ADR-A12): Kuntur puede proponer grabar datos de configuración
+  (depósitos, unidades, menús...). Llegan como tarjeta en propuestas_carga;
+  "Cargar" manda SOLO el id y el orquestador ejecuta lo que quedó guardado,
+  con el token del administrador.
+
   CONFIGURACIÓN (AGENTE-CO-02): la primera vez, Kuntur ofrece una entrevista
   corta (#agp-kuntur). Las preguntas y la tarjeta final vienen de la API
   (/kuntur/configuracion): acá solo se pintan. Nada queda guardado hasta
@@ -131,6 +136,12 @@
 .agp-meta .agp-meta-acciones { margin-top: 5px; }
 .agp-meta .agp-meta-acciones a { margin-right: 10px; cursor: pointer; }
 .agp-meta .agp-meta-msg { margin-top: 4px; }
+.agp-carga { border: 1px solid #f0e0c0; border-left: 3px solid #f39c12; border-radius: 3px;
+             padding: 6px 8px; margin-top: 6px; font-size: 12px; background: #fffdf8; }
+.agp-carga strong { display: block; }
+.agp-carga table { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 11px; }
+.agp-carga th, .agp-carga td { border: 1px solid #eee; padding: 2px 4px; text-align: left; }
+.agp-carga .agp-carga-acciones a { margin-right: 10px; cursor: pointer; }
 .agp-feedback { margin-top: 4px; }
 .agp-feedback button { border: 1px solid #ddd; background: #fff; border-radius: 3px;
                        padding: 0 7px; cursor: pointer; }
@@ -458,9 +469,55 @@
         $t.slideUp(150, function () { $t.remove(); });
     });
 
+    // --- cargas que propone Kuntur (ADR-A12) -----------------------------------
+    // Se muestra lo que se va a grabar; "Cargar" manda solo el id.
+    function tablaFilas(filas) {
+        var cols = [];
+        filas.forEach(function (f) { Object.keys(f || {}).forEach(function (k) { if (cols.indexOf(k) < 0) { cols.push(k); } }); });
+        return '<table><tr>' + cols.map(function (k) { return '<th>' + escapar(k) + '</th>'; }).join('') + '</tr>' +
+               filas.map(function (f) {
+                   return '<tr>' + cols.map(function (k) { return '<td>' + escapar(f[k]) + '</td>'; }).join('') + '</tr>';
+               }).join('') + '</table>';
+    }
+    function tarjetaCarga(c) {
+        var html = '<div class="agp-carga" data-carga="' + escapar(c.carga_id) + '"><strong>Para cargar: ' + escapar(c.titulo) + '</strong>';
+        Object.keys(c.datos || {}).forEach(function (k) { html += escapar(k) + ': ' + escapar(c.datos[k]) + '<br>'; });
+        if ((c.filas || []).length) {
+            html += tablaFilas(c.filas);
+            if (c.total_filas > c.filas.length) { html += 'Y ' + (c.total_filas - c.filas.length) + ' más (' + c.total_filas + ' en total).'; }
+        }
+        return html + '<div class="agp-carga-acciones"><a class="agp-carga-si">Cargar</a><a class="agp-carga-no">Ahora no</a></div>' +
+               '<div class="agp-carga-msg" hidden></div></div>';
+    }
+    function responderCarga($t, ruta) {
+        var $msg = $t.find('.agp-carga-msg');
+        $t.find('.agp-carga-acciones').hide();
+        return $.post(BASE + ruta, { carga_id: String($t.data('carga')) })
+            .fail(function (xhr) {
+                var r = xhr && xhr.responseJSON;
+                $msg.prop('hidden', false).attr('class', 'agp-carga-msg text-danger').text((r && r.error) || 'No se pudo.');
+                $t.find('.agp-carga-acciones').show();
+            });
+    }
+    $conv.on('click', '.agp-carga-si', function () {
+        var $t = $(this).closest('.agp-carga');
+        responderCarga($t, 'kuntur_cargar').done(function (r) {
+            var bien = r.estado === 'ejecutada';
+            $t.find('.agp-carga-msg').prop('hidden', false)
+              .attr('class', 'agp-carga-msg ' + (bien ? 'text-success' : 'text-danger'))
+              .text(bien ? 'Cargado.' : 'No se cargó nada: ' + (r.error || 'hubo un error.') +
+                    ' Contale a Kuntur qué pasó y la arma de nuevo.');
+        });
+    });
+    $conv.on('click', '.agp-carga-no', function () {
+        var $t = $(this).closest('.agp-carga');
+        responderCarga($t, 'kuntur_descartar').done(function () { $t.slideUp(150, function () { $t.remove(); }); });
+    });
+
     function pintarRespuesta(r) {
         var html = '<div class="agp-texto">' + escapar(r.respuesta) + '</div>';
         (r.propuestas_meta || []).forEach(function (m) { html += tarjetaMeta(m); });
+        (r.propuestas_carga || []).forEach(function (c) { html += tarjetaCarga(c); });
         if (!r.error && r.interaccion_id) {
             html += '<div class="agp-feedback" data-interaccion="' + escapar(r.interaccion_id) + '">' +
                     '<button type="button" data-util="1" title="Me sirvió">👍</button> ' +

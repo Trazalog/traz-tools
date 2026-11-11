@@ -14,6 +14,8 @@ Endpoints:
     POST /kuntur/configuracion/confirmar   guardar la configuracion propuesta
     GET  /kuntur/avisos                    metas en riesgo o sin cumplirse que Kuntur ya aviso
     POST /kuntur/avisos/silenciar          "no insistas" (o volver a avisar)
+    POST /kuntur/cargas/confirmar          el administrador toco "Cargar": se ejecuta con su token (ADR-A12)
+    POST /kuntur/cargas/descartar          "Ahora no"
 
 Los avisos (la campanita y el push) ya no estan aca: son los de Tools
 (ADR-015, esquema ntf); el monitoreo publica con agente/avisos.py.
@@ -33,7 +35,7 @@ import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import agentes, configuracion, entrevistador, rag
+from . import agentes, cargas, configuracion, entrevistador, rag
 from .config import Config, cargar
 from .llm import OpenRouter
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
@@ -132,6 +134,8 @@ class ConsultaOut(BaseModel):
     # Metas que propuso Kuntur (AGENTE-CO-03): el panel las muestra como tarjeta
     # y el administrador decide si las carga. Vacio para los demas agentes.
     propuestas_meta: list[dict] = []
+    # Cargas de configuracion que propuso Kuntur (ADR-A12): tarjeta con "Cargar".
+    propuestas_carga: list[dict] = []
 
 
 class SugerenciasIn(BaseModel):
@@ -149,6 +153,10 @@ class RespuestaConfigIn(BaseModel):
     pregunta: str = Field(pattern=r"^[a-z_]{1,40}$")
     valores: list[str] = Field(default_factory=list, max_length=10)
     texto: str | None = Field(default=None, max_length=1000)
+
+
+class CargaIn(BaseModel):
+    carga_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
 
 
 class SilenciarIn(BaseModel):
@@ -263,6 +271,7 @@ async def consulta(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms, propuestas_meta=res.propuestas_meta,
+        propuestas_carga=res.propuestas_carga,
     )
 
 
@@ -345,6 +354,35 @@ async def kuntur_avisos_silenciar(
                                          silenciado=entrada.silenciado):
         raise HTTPException(404, "Kuntur no avisó nada de esa meta")
     return {"objetivo_id": entrada.objetivo_id, "silenciado": entrada.silenciado}
+
+
+@app.post("/kuntur/cargas/confirmar")
+async def kuntur_cargas_confirmar(
+    entrada: CargaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """ADR-A12: se ejecuta exactamente lo que se guardo, con el token de ESTE
+    administrador. Un token de maquina no llega aca: no tiene rol de administrador."""
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await cargas.confirmar(con, cfg, empr_id=ident.empr_id, carga_id=entrada.carga_id,
+                                      usuario=usuario, autorizacion=ident.autorizacion)
+    except cargas.CargaInvalida as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/kuntur/cargas/descartar")
+async def kuntur_cargas_descartar(
+    entrada: CargaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await cargas.descartar(con, empr_id=ident.empr_id, carga_id=entrada.carga_id, usuario=usuario)
+    except cargas.CargaInvalida as e:
+        raise HTTPException(409, str(e)) from e
 
 
 @app.post("/sugerencias")

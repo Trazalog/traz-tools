@@ -291,6 +291,30 @@ class Agente extends CI_Controller
         ));
     }
 
+    /**
+     * "Cargar" / "Ahora no" sobre una carga que propuso Kuntur (ADR-A12). Solo
+     * viaja el id: se ejecuta lo que quedó guardado, con el token del usuario.
+     */
+    public function kuntur_cargar()
+    {
+        $this->_cargaKuntur('/kuntur/cargas/confirmar');
+    }
+
+    public function kuntur_descartar()
+    {
+        $this->_cargaKuntur('/kuntur/cargas/descartar');
+    }
+
+    private function _cargaKuntur($ruta)
+    {
+        $id = (string) $this->input->post('carga_id');
+        if (!preg_match('/^[0-9a-f-]{36}$/', $id)) {
+            $this->_json(array('error' => 'carga inválida'), 400);
+            return;
+        }
+        $this->_proxyKuntur('POST', $ruta, array('carga_id' => $id));
+    }
+
     /** Estado del orquestador, para diagnosticar desde la UI. */
     public function salud()
     {
