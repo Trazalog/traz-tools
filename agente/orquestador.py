@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, guardian, pantalla, rag, sugerencias, web
+from . import agentes, guardian, metas, pantalla, rag, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -75,6 +75,9 @@ class Resultado:
     contenidos_tools: list[str] = field(default_factory=list)
     # (tool, contenido) en el orden en que se ejecutaron: lo que lee el guardian.
     tools_vistas: list[tuple[str, str]] = field(default_factory=list)
+    # Metas que Kuntur propuso con kpi_proponer_meta (AGENTE-CO-03). No se
+    # graban: el panel las muestra y las carga el administrador.
+    propuestas_meta: list[dict] = field(default_factory=list)
 
 
 class Orquestador:
@@ -182,6 +185,9 @@ class Orquestador:
         # misma lista blanca, y solo se ofrece si hay un buscador configurado.
         if web.NOMBRE in permitidas and web.habilitada(self.cfg):
             tools.append(web.DEFINICION)
+        # Proponer una meta tambien es del motor: no escribe nada (AGENTE-CO-03).
+        if metas.NOMBRE in permitidas:
+            tools.append(metas.DEFINICION)
         res.controles.append({
             "control": "lista_blanca",
             "publicadas": len(del_gateway), "ofrecidas": len(tools),
@@ -206,7 +212,7 @@ class Orquestador:
                 "tool_calls": respuesta.tool_calls,
             })
             for llamada in respuesta.tool_calls:
-                mensaje = await self._ejecutar(mcp, llamada, permitidas)
+                mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
                 mensajes.append(mensaje)
                 res.contenidos_tools.append(mensaje["content"])
                 res.tools_vistas.append((mensaje["name"], mensaje["content"]))
@@ -233,17 +239,22 @@ class Orquestador:
         cada tool tal como se le paso, el contexto de conocimiento y memoria, y
         la pregunta. Ver agente/guardian.py.
         """
-        veredicto = guardian.revisar(res.respuesta, tools=res.tools_vistas, contexto=contexto,
+        # El motivo de una meta propuesta lo escribe el modelo y se muestra en la
+        # tarjeta: sus cifras se controlan igual que las de la respuesta.
+        texto = "\n\n".join([res.respuesta] + [p["motivo"] for p in res.propuestas_meta])
+        veredicto = guardian.revisar(texto, tools=res.tools_vistas, contexto=contexto,
                                      pregunta=consulta.pregunta)
         res.controles.append(veredicto.control())
         if veredicto.bloquear:
             log.warning("R4: respuesta bloqueada por cifras sin fuente: %s",
                         veredicto.sin_fuente + veredicto.web_sin_cita)
-            res.incidentes.append(veredicto.incidente(res.respuesta))
+            res.incidentes.append(veredicto.incidente(texto))
             res.respuesta = guardian.MENSAJE_BLOQUEO
+            # Una tarjeta de meta al lado de "no tengo datos" confunde: se cae con la respuesta.
+            res.propuestas_meta = []
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
-                        permitidas: frozenset[str]) -> dict:
+                        permitidas: frozenset[str], res: Resultado | None = None) -> dict:
         """Ejecuta una tool y arma el mensaje de vuelta para el modelo."""
         fn = llamada.get("function", {})
         nombre = fn.get("name", "")
@@ -270,6 +281,8 @@ class Orquestador:
 
         if nombre == web.NOMBRE:
             return await self._buscar_web(mcp, llamada, argumentos)
+        if nombre == metas.NOMBRE:
+            return self._proponer_meta(mcp, llamada, argumentos, res)
 
         try:
             salida = await mcp.llamar(nombre, argumentos)
@@ -307,6 +320,25 @@ class Orquestador:
         ))
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": web.NOMBRE,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    def _proponer_meta(self, mcp: ClienteMCP, llamada: dict, argumentos: dict,
+                       res: Resultado | None) -> dict:
+        """kpi_proponer_meta: valida y deja la propuesta en la respuesta. No graba
+        nada; la meta la carga el administrador desde la tarjeta (ADR-A8)."""
+        try:
+            propuesta = metas.proponer(argumentos)
+            if res is not None:
+                res.propuestas_meta.append(propuesta)
+            # Al modelo vuelve la propuesta SIN el motivo: si volviera entero, una
+            # cifra inventada en el motivo pasaria despues como "leida de una tool".
+            salida = {"propuesta": {k: propuesta[k] for k in ("kpi", "titulo", "operador", "meta", "hasta")},
+                      "nota": "Se le muestra al administrador como tarjeta; la carga él si está de acuerdo."}
+            status, error = "ok", None
+        except metas.PropuestaInvalida as e:
+            salida, status, error = {"error": str(e)}, "error", str(e)[:300]
+        mcp.llamadas.append(LlamadaTool(metas.NOMBRE, argumentos, status, 0, error))
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": metas.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False)}
 
     # ------------------------------------------------------- siguiente paso
     async def sugerir(self, con: psycopg.AsyncConnection, consulta: Consulta) -> list[dict]:
