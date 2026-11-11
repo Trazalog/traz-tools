@@ -1,43 +1,68 @@
 id: MAN-UC-011
 modulo: MAN
-titulo: Ejecutar una orden de trabajo y pedir los materiales
-perfil: Mantenedor
+titulo: Asignar la orden de trabajo, con sus herramientas y el pedido de materiales
+perfil: Planificador
 estado: validado
-version: "1.0"
+version: "2.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Otrabajo.php
-    detalle: "verEjecutarOT() abre el modal y crea el pedido; EjecutarOT() lanza el proceso"
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Ordeninsumo.php
-    detalle: "el pedido de materiales de la orden"
+  - repo: traz-tools-man
+    path: controllers/Calendario.php
+    detalle: verEjecutarOT() abre la ventana "Ejecutar OT" con el pedido, los insumos y las herramientas de la OT
+  - repo: traz-tools-man
+    path: views/calendar/view_OtEjecutar_modal.php
+    detalle: pestañas Detalle, Herramientas, Pedido Materiales y Asignación Responsable; botones "Asignar OT" y "Enviar pedido"
+  - repo: traz-tools-man
+    path: controllers/Otrabajo.php
+    detalle: EjecutarOT() guarda las herramientas, asigna y crea el pedido; enviarPedido() reintenta el pedido
+  - repo: traz-tools-man
+    path: models/Otrabajos.php
+    detalle: pedidoDeOT(), crearPedidoPlan(), guardarHerramientasPlan()
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: POST /tools/man/plan/asignar (asigna "Ejecutar OT" al responsable) y POST /tools/man/plan/ot/pedido (pedido en el almacén de tools con la OT, "Pedido de Recursos Materiales" en Bonita; deshace si falla)
 pantallas:
-  - "Mantenimiento → Ordenes de trabajo → Ejecutar"
+  - Mantenimiento → Plan de Mantenimiento → (clic en la orden) → Ejecutar OT
+  - Mis Tareas → Asignar Recursos y Tareas
 precondiciones:
-  - "Sesión iniciada en AssetPlanner con perfil Mantenedor"
-  - "Existe una orden de trabajo programada, creada con MAN-UC-009"
-  - "La tarea llegó a su bandeja de entrada (MAN-UC-019)"
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Planificador
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - Existe una orden de trabajo programada, creada con MAN-UC-009
+  - La empresa tiene artículos en el almacén de tools y herramientas en el pañol de tools
 produce:
-  - "La orden de trabajo en curso (`C`) y, si hizo falta material, un pedido al almacén"
+  - La orden de trabajo asignada (`AS`) a su responsable, con su lista de herramientas, y un pedido de materiales al almacén de tools atado a la orden
 depende_de:
   - MAN-UC-009
 flujo_principal:
-  - paso: "Abre la orden de trabajo y elige ejecutarla"
-    resultado: "Se muestra qué hay que hacer, con las herramientas y los insumos que se declararon"
-  - paso: "Revisa los materiales que hacen falta y agrega los que falten"
-    resultado: "El pedido de materiales queda armado"
-  - paso: "Confirma la ejecución"
-    resultado: "El pedido se manda al almacén para que lo aprueben y lo entreguen"
+  - paso: Abre la orden en el calendario y elige ejecutarla
+    resultado: Se abre la ventana "Ejecutar OT" con las pestañas Detalle, Herramientas, Pedido Materiales y Asignación Responsable
+  - paso: En Herramientas revisa la lista que la orden heredó de su plan
+    resultado: Puede agregar herramientas del maestro del pañol de tools, o en texto libre las que no están, y quitar las que sobran
+  - paso: En Pedido Materiales revisa el pedido
+    resultado: El pedido viene prearmado con los insumos de la orden; puede agregar artículos del almacén de tools buscándolos por código o por descripción, y cambiar cantidades
+  - paso: Elige el responsable y confirma con "Asignar OT"
+    resultado: Se guardan las herramientas, la tarea "Ejecutar OT" le llega al responsable y el pedido se manda al almacén, atado a la orden
+flujos_alternativos:
+  - nombre: El envío del pedido falló
+    pasos:
+      - paso: La orden quedó asignada o en curso pero el pedido no se creó
+        resultado: La pestaña Pedido Materiales ofrece "Enviar pedido" para reintentarlo, mientras la orden esté `AS` o `C`
+  - nombre: La orden ya tiene su pedido
+    pasos:
+      - paso: Abre de nuevo la ventana de una orden con el pedido enviado
+        resultado: "Ve el pedido en solo lectura: a una orden con el pedido enviado no se le agregan artículos"
 validaciones:
-  - "El pedido se crea, y desde ahí lo toma el almacenero: **aprueba o rechaza, y después entrega**"
-  - "El pedido de materiales se arma con los insumos declarados en la orden"
+  - "**Una orden tiene un solo pedido de materiales**; ya enviado, no se le agregan artículos (decisión del PM)"
+  - "El pedido se crea en el almacén de tools con el número de la orden, y sigue el circuito de Almacenes: el almacenero lo aprueba o lo rechaza, y después entrega"
+  - "**Las herramientas no se piden**: solo se declaran en la orden; las que se usan se registran desde los vales del pañol (MAN-UC-039)"
+  - Si el pedido no se puede crear entero (almacén o Bonita), se deshace lo creado y la orden queda sin pedido, lista para "Enviar pedido"
 dudas: []
-
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-030.ciclo-ot.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s07
 notas:
-  - "Es **el mismo proceso de Bonita que el pedido de materiales de Almacenes en Tools**: se crea el pedido, el almacenero lo aprueba o lo rechaza, y al entregar descuenta el stock. El circuito completo está en el manual de Almacenes."
-  - "**Herramientas (v3):** además de declararse en la OT (con texto libre para lo que no está en el maestro), las usadas se registran desde los **vales reales del pañol de Tools**. El pañolero puede asociar la OT al entregar la herramienta (según la config `configuraciones_panol`)."
-  - "Es el punto donde Mantenimiento se engancha con Almacenes. Del otro lado, el pedido sigue el circuito que documenta el manual de Almacenes: aprobación y entrega, que es lo único que descuenta stock."
+  - 'En el proceso de Bonita este paso es "Asignar Recursos y Tareas": lo hace el Planificador (o el Supervisor en el camino urgente). La ejecución propiamente dicha la hace el Mantenedor desde su bandeja, y ahí ve la pestaña "Herramientas e Insumos" (MAN-UC-038).'
+  - Es el punto donde Mantenimiento se engancha con Almacenes y Pañol de tools (REQ-ASSET-ALM, decisiones E65 y E66 de la migración).
+  - Editar una orden pierde las herramientas cargadas en texto libre (H35, viene de asset).
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

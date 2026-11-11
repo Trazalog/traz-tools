@@ -3,32 +3,41 @@ modulo: MAN
 titulo: Ver y filtrar las órdenes de trabajo
 perfil: Planificador
 estado: validado
-version: "0.1"
+version: "1.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Otrabajo.php
-    detalle: "listOrden() y sus filtros"
-  - repo: traz-prod-assetplanner
-    path: application/models/Otrabajos.php
+  - repo: traz-tools-man
+    path: controllers/Otrabajo.php
+    detalle: listOrden() y filtrarListado(); FinalizaOt() para Parcial y Total; lanzar() y anular() para las órdenes sin lanzar
+  - repo: traz-tools-man
+    path: models/Otrabajos.php
+  - repo: traz-tools-man
+    path: views/otrabajos/list.php
+  - repo: traz-tools-man
+    path: views/otrabajos/tabla_opciones.php
+    detalle: las opciones de cada fila
 pantallas:
-  - "Mantenimiento → Ordenes de trabajo"
+  - Mantenimiento → Ordenes de Trabajo
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
 depende_de:
   - MAN-UC-009
 flujo_principal:
-  - paso: "Entra a Mantenimiento → Ordenes de trabajo"
-    resultado: "Se muestran los filtros —Programada Desde, Programada Hasta, Equipo y Estado— sobre el listado"
-  - paso: "Elige el rango de fechas, el equipo o el estado que le interesa y filtra"
-    resultado: "El listado muestra Nº Orden, Fecha Programada, Fecha Inicio, Fecha Terminada, Detalle, Tarea estándar, Equipo, Origen, Id Solicitud y a quién está asignada"
+  - paso: Entra a Mantenimiento → Ordenes de Trabajo
+    resultado: Se muestran los filtros —Programada Desde, Programada Hasta, Equipo y Estado— sobre el listado
+  - paso: Elige el rango de fechas, el equipo o el estado que le interesa y filtra
+    resultado: El listado muestra Nº Orden, Fecha Programada, Fecha Inicio, Fecha Terminada, Detalle, Tarea estándar, Equipo, Origen, Id Solicitud y a quién está asignada
 validaciones:
   - "**Parcial** deja la orden en estado terminada-parcial (`TE`); **Total** la finaliza"
   - "La columna Origen dice de dónde vino la orden: solicitud, preventivo, predictivo o backlog"
+  - Las órdenes programadas sin lanzar se ven con la marca "Sin lanzar" y ofrecen Lanzar y Anular (MAN-UC-040 y MAN-UC-041)
+  - Las órdenes anuladas (`AN`) no aparecen en el listado
 dudas: []
 derivados:
   test_e2e: tests/e2e/specs/man/MAN-UC-010.ordenes-trabajo.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s07
 notas:
   - "**Qué hacen Parcial y Total, verificado en el código:** son las dos formas de cerrar una orden desde el listado. *Parcial* (`CambioParcial()`) la deja en `TE` —se hizo parte del trabajo—; *Total* la finaliza. Es la única acción del listado además de los filtros."
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

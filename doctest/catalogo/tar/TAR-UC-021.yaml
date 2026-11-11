@@ -1,0 +1,49 @@
+id: TAR-UC-021
+modulo: TAR
+titulo: Administrar plantillas
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/plantillas.php
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/tabla_plantillas.php
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/tabla_tareas_plantilla.php
+  - repo: traz-comp-tareasestandar
+    path: controllers/Tarea.php
+    detalle: guardarPlantilla(), asociarTareaPlantilla(), eliminarTareaPlantilla(), eliminarPlantilla()
+pantallas:
+  - Tareas estándar → Plantillas
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Tareas estándar cargadas
+depende_de:
+  - TAR-UC-019
+flujo_principal:
+  - paso: Crea una plantilla con nombre
+    resultado: Aparece en la lista
+  - paso: Edita el nombre
+    resultado: El modal muestra el nombre actual y al guardar cambia
+  - paso: Abre una plantilla y pulsa "Asociar Tarea"
+    resultado: Se ofrecen las tareas estándar no asociadas; al elegir una se agrega
+  - paso: Pulsa 🗑 en una tarea asociada
+    resultado: Se desasocia
+  - paso: Elimina la plantilla
+    resultado: Sale de la lista y de la planificación
+validaciones:
+  - Las tareas ya asociadas no se vuelven a ofrecer
+  - Una tarea estándar eliminada no se muestra en la plantilla
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-03: ¿quién administra el catálogo de tareas estándar y plantillas?"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-021-01 a 021-04"
+  - "Hipótesis: HIP-TAR-16 (descartada en la corrida del 2026-10-27)"

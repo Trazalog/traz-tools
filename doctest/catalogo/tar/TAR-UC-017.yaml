@@ -1,0 +1,44 @@
+id: TAR-UC-017
+modulo: TAR
+titulo: Iniciar una tarea
+perfil: Operario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-bpm
+    path: views/notificacion_estandar.php
+    detalle: IniciarTarea()
+  - repo: traz-comp-tareasestandar
+    path: views/proceso/tarea_generica.php
+  - repo: traz-comp-tareasestandar
+    path: controllers/Tarea.php
+    detalle: iniciarTareaPlanificada()
+pantallas:
+  - Mis Tareas → tarea → Inicializar tarea
+precondiciones:
+  - Sesión iniciada en Tools con perfil Operario
+  - La tarea tomada por el usuario
+depende_de:
+  - TAR-UC-016
+flujo_principal:
+  - paso: Pulsa "Inicializar tarea"
+    resultado: Ve "Se inicio la tarea correctamente!"; se habilitan el checklist de subtareas y el formulario; la tarea queda iniciada con la fecha y hora reales del clic
+flujos_alternativos:
+  - nombre: Antes de iniciar
+    pasos:
+      - paso: Intenta tildar subtareas
+        resultado: La vista está bloqueada
+validaciones:
+  - La hora de inicio real es la del clic, no la de apertura de la pantalla
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-01: perfil de quien ejecuta (ver TAR-UC-016)"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-017-01 a 017-04"
+  - "Hipótesis: HIP-TAR-04"

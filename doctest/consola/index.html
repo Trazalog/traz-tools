@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Consola DocTest</title>
+<style>
+:root{--bg:#f6f7f8;--sup:#fff;--fg:#1b2329;--mute:#5a6872;--linea:#d9dfe3;--acento:#0f5e78;--ok:#1f7a4d;--okb:#e2f3ea;--warn:#9a6200;--warnb:#fbf1dc;--mal:#b3261e;--malb:#fbe7e5;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#12181c;--sup:#1a2227;--fg:#e6ebee;--mute:#9dabb4;--linea:#2e3a41;--acento:#6cc0da;--ok:#5fcf97;--okb:#13301f;--warn:#e7b65a;--warnb:#33290f;--mal:#f28b82;--malb:#3b1c1a;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 64px;display:grid;gap:22px}main>*{min-width:0}
+h1{font-size:24px;margin:0}h2{font-size:18px;margin:0 0 8px}p{margin:0}.sub{color:var(--mute);font-size:13.5px}
+select,input,button{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--linea);background:var(--sup);color:var(--fg);border-radius:6px}
+button{cursor:pointer}button[aria-pressed=true]{background:var(--acento);color:var(--bg);border-color:var(--acento)}
+.fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}input{flex:1 1 220px;min-width:0}
+.cifras{display:flex;flex-wrap:wrap;border:1px solid var(--linea);background:var(--sup);border-radius:6px}.cifras div{flex:1 1 110px;padding:10px 14px}.cifras b{display:block;font:500 24px ui-monospace,monospace}.cifras span{font-size:12.5px;color:var(--mute)}
+.alerta{background:var(--malb);padding:10px 14px;border-radius:6px}.bien{background:var(--okb);padding:10px 14px;border-radius:6px}
+details{background:var(--sup);border:1px solid var(--linea);border-radius:6px;margin-bottom:6px}summary{cursor:pointer;padding:9px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.t{flex:1 1 300px;min-width:0}.est{font-size:12px;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.pasa{background:var(--okb);color:var(--ok)}.salteada{background:var(--linea);color:var(--mute)}.error-conocido,.sin-comprobar,.inestable{background:var(--warnb);color:var(--warn)}.falla,.otro-punto,.dejo-de-fallar{background:var(--malb);color:var(--mal)}
+.h{font:500 12px ui-monospace,monospace}.det{padding:0 12px 12px;display:grid;gap:8px;font-size:13.5px}
+pre{margin:0;font:12.5px/1.45 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--mute)}
+ul{margin:0;padding-left:20px}img{max-width:100%;border:1px solid var(--linea);border-radius:4px}
+table{border-collapse:collapse;font-size:13.5px;background:var(--sup);width:100%}td{padding:5px 10px;border-bottom:1px solid var(--linea);overflow-wrap:anywhere}
+</style></head><body><main>
+<header class="fila"><h1>Consola DocTest</h1><select id="sel" aria-label="Corrida"></select></header>
+<div id="cab"></div>
+<section><div class="fila" id="filtros"></div><div class="fila" style="margin-top:8px"><input id="q" type="search" placeholder="Buscar por caso, error o número" aria-label="Buscar"><button id="copiar">Copiar pedido de lo filtrado</button></div></section>
+<section id="lista"></section>
+<section id="emp"></section>
+</main><script>
+const ETQ={'pasa':'Pasa','error-conocido':'Error conocido','sin-comprobar':'Sin comprobar','otro-punto':'Se cortó en otro punto','falla':'Falla','inestable':'Pasó al reintentar','dejo-de-fallar':'Dejó de fallar','salteada':'Salteada'};
+const AYUDA={'error-conocido':'Falló exactamente en el error anotado.','sin-comprobar':'Está marcada, pero no dice qué falla espera: puede haberse cortado por otra causa.','otro-punto':'Se cortó antes de llegar al error anotado: ese error no quedó confirmado.','falla':'Falla nueva: no estaba anotada.','dejo-de-fallar':'Tenía un error anotado y ahora pasa: probablemente se corrigió. Hay que sacarle la marca.','inestable':'Falló y pasó al reintentar.'};
+const REPO='https://github.com/Trazalog/traz-tools/issues/';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=i=>document.getElementById(i);let C=null,F='problemas';
+const problema=p=>!['pasa','salteada'].includes(p.estado);
+function visibles(){const q=$('q').value.toLowerCase();return C.pruebas.filter(p=>(F==='todas'||(F==='problemas'?problema(p):p.estado===F))&&JSON.stringify(p).toLowerCase().includes(q))}
+function pedido(p){const n=p.hallazgo??'esta falla';return `${p.estado==='dejo-de-fallar'?'Sacá la marca de':p.estado==='otro-punto'||p.estado==='falla'?'Revisá':'Corregí'} ${n}${p.issue?` (issue #${p.issue})`:''}: ${p.titulo}. Caso ${p.caso}, corrida ${C.corrida.id}.`}
+function tarjeta(p,i){return `<details><summary><span class="est ${p.estado}">${ETQ[p.estado]}</span>${p.hallazgo?`<span class="h">${esc(p.severidad??'')} ${esc(p.hallazgo)}</span>`:''}<span class="t">${esc(p.titulo)}</span><span class="sub">${esc(p.caso)}</span></summary><div class="det">
+${AYUDA[p.estado]?`<p>${AYUDA[p.estado]}</p>`:''}${p.error_anotado?`<p><b>Error anotado:</b> ${esc(p.error_anotado)}</p>`:''}${p.motivo?`<p><b>Motivo:</b> ${esc(p.motivo)}</p>`:''}
+${p.sin_menu?'<p>El usuario no tenía la opción en el menú: la prueba abrió la pantalla directo.</p>':''}
+${p.pasos?`<div><b>Qué hizo</b><ul>${p.pasos.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+${p.datos?`<div><b>Datos</b><pre>${esc(Object.entries(p.datos).map(([k,v])=>k+': '+v).join('\n'))}</pre></div>`:''}
+${p.error?`<div><b>Qué encontró</b><pre>${esc(p.error)}</pre></div>`:''}
+${(p.capturas??[]).map(c=>`<a href="/captura/${C.corrida.id}/${esc(c)}" target="_blank"><img loading="lazy" alt="Captura de la prueba" src="/captura/${C.corrida.id}/${esc(c)}"></a>`).join('')}
+<div class="fila">${p.issue?`<a href="${REPO}${p.issue}" target="_blank">Ver issue #${p.issue}</a>`:p.hallazgo?'<span class="sub">Sin issue abierto</span>':''}${problema(p)?`<button data-i="${i}">Copiar pedido</button>`:''}<span class="sub">${p.segundos} s${p.intentos?` · ${p.intentos} intentos`:''}</span></div></div></details>`}
+function dibujar(){const v=visibles();window._v=v;$('lista').innerHTML=v.map(tarjeta).join('')||'<p class="sub">Nada para mostrar con este filtro.</p>'}
+function filtros(){const r=C.resumen,o=[['problemas','Para revisar',C.pruebas.filter(problema).length],['todas','Todas',r.total],...Object.keys(ETQ).map(e=>[e,ETQ[e],C.pruebas.filter(p=>p.estado===e).length]).filter(x=>x[2])];
+$('filtros').innerHTML=o.map(([k,t,n])=>`<button data-f="${k}" aria-pressed="${k===F}">${t} (${n})</button>`).join('')}
+function copiar(t,b){const y=b.textContent;navigator.clipboard.writeText(t).then(()=>{b.textContent='Copiado';setTimeout(()=>b.textContent=y,1200)})}
+async function abrir(id){C=await (await fetch('/api/corridas/'+id)).json();const c=C.corrida,r=C.resumen;F='problemas';
+const rojo=r.fallas+r.otro_punto+r.dejaron_de_fallar;
+$('cab').innerHTML=`<p class="sub">${esc(c.modo)} · ${esc(c.entorno)} · rama ${esc(c.rama)} · ${esc(c.commit)} · ${c.minutos} min</p>
+<div class="cifras" style="margin-top:8px">${[['Pruebas',r.total],['Pasan',r.pasan],['Errores conocidos',r.errores_conocidos+r.sin_comprobar],['Fallas',r.fallas+r.otro_punto],['Inestables',r.inestables],['Salteadas',r.salteadas]].map(([t,n])=>`<div><b>${n}</b><span>${t}</span></div>`).join('')}</div>
+<p class="${rojo?'alerta':'bien'}" style="margin-top:10px">${rojo?`Hay ${rojo} para revisar.`:'Sin fallas nuevas.'}${C.cambios?` Respecto de la corrida anterior: ${C.cambios.nuevas.length} nuevas y ${C.cambios.corregidas.length} corregidas.`:''}</p>`;
+const e=C.empresas;$('emp').innerHTML=e?`<h2>Empresas y datos</h2><table>${[['Empresa 1',e.empresa1?.nombre],['Empresa 2',e.empresa2?.nombre],...Object.entries(e.usuarios??{}),...Object.entries(e.datos_cargados??{})].filter(x=>x[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>`:'';
+filtros();dibujar()}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.f){F=b.dataset.f;filtros();dibujar()}else if(b.dataset.i)copiar(pedido(window._v[b.dataset.i]),b)});
+$('copiar').onclick=e=>copiar(window._v.filter(problema).map(pedido).join('\n'),e.target);$('q').oninput=dibujar;$('sel').onchange=e=>abrir(e.target.value);
+fetch('/api/corridas').then(r=>r.json()).then(l=>{if(!l.length){$('lista').innerHTML='<p>Todavía no hay corridas.</p>';return}$('sel').innerHTML=l.map(c=>`<option value="${esc(c.id)}">${esc(c.id)}</option>`).join('');abrir(l[0].id)});
+</script></body></html>

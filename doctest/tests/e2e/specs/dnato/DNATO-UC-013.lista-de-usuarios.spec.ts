@@ -53,7 +53,8 @@ test.describe('@dnato @DNATO-UC-013 Ver la lista de usuarios de la empresa', () 
     expect(correosDos).not.toContain(credenciales('empresa1').email);
 
     // Y tampoco a los usuarios iniciales del otro, que viven en otro dominio.
-    const dominioDos = dominioDe(credenciales('empresa2').email);
+    // El dominio se toma de esos usuarios: el administrador puede tener un correo común (gmail), igual que el de la empresa 1.
+    const dominioDos = dominioDe(correosDos.find((c) => !c.endsWith('@gmail.com')) ?? credenciales('empresa2').email);
     expect(correosUno.filter((c) => c.endsWith('@' + dominioDos))).toHaveLength(0);
   });
 

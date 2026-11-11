@@ -12,6 +12,7 @@
 import { expect, test } from '../../fixtures/auth.ts';
 import { UsuariosListPage } from '../../pages/dnato/UsuariosListPage.ts';
 import { urlDnato } from '../../config/apps.ts';
+import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 /** Id de un usuario de la empresa, tomado del enlace "Asignar Rol" de su fila. */
 async function idDeUnUsuario(usuarios: UsuariosListPage): Promise<string> {
@@ -23,7 +24,8 @@ test.describe('@dnato @DNATO-UC-015 Editar un usuario de la empresa', () => {
   test('abre el formulario de edición con los datos del usuario', async ({ paginaEmpresa1 }) => {
     // FALLA CONOCIDA — H-035 / #468: `main/edituser/{id}` devuelve una página vacía
     // porque el controlador no carga ninguna vista.
-    test.fail();
+    debeFallarCon(/input\[name="firstname"\]/);
+    test.fail(true, 'H-035 #468: main/edituser devuelve una página vacía');
 
     const usuarios = new UsuariosListPage(paginaEmpresa1);
     await usuarios.abrir();
@@ -37,7 +39,8 @@ test.describe('@dnato @DNATO-UC-015 Editar un usuario de la empresa', () => {
   test('editar los datos no obliga a cambiar la contraseña', async ({ paginaEmpresa1 }) => {
     // FALLA CONOCIDA — H-007 / #457, hoy supeditado a H-035: las reglas exigen
     // contraseña y confirmación, pero la pantalla ni siquiera se muestra.
-    test.fail();
+    debeFallarCon(/input\[name="password"\]/);
+    test.fail(true, 'H-007 #457: exige contraseña al editar (hoy supeditado a H-035)');
 
     const usuarios = new UsuariosListPage(paginaEmpresa1);
     await usuarios.abrir();

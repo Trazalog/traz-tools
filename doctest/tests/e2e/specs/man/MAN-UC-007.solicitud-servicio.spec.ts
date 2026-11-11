@@ -4,15 +4,13 @@
  */
 
 import { test, expect } from '../../fixtures/auth-man.ts';
-import { requerirUrlDeApp } from '../../config/apps.ts';
-import { encabezadosDeGrilla } from '../../pages/man/grilla.ts';
-
-const MAN = () => requerirUrlDeApp('man');
+import { ShellMan } from '../../pages/man/ShellMan.ts';
 
 test.describe('@man @MAN-UC-007 Pedir un servicio', () => {
-  test('@smoke el listado muestra los tiempos de servicio', async ({ paginaMan }) => {
-    await paginaMan.goto(`${MAN()}/Sservicio`, { waitUntil: 'domcontentloaded' });
-    const texto = await encabezadosDeGrilla(paginaMan);
+  test('@smoke el listado muestra los tiempos de servicio', async ({ paginaMan }, testInfo) => {
+    const man = new ShellMan(paginaMan);
+    await man.abrir('solicitudes', testInfo);
+    const texto = await man.encabezados();
     for (const columna of ['Solicitante', 'Equipo', 'Sector']) {
       expect(texto).toContain(columna);
     }

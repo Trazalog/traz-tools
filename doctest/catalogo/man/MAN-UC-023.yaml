@@ -3,26 +3,29 @@ modulo: MAN
 titulo: Asignar contratistas a un equipo
 perfil: Supervisor
 estado: borrador
-version: "0.1"
+version: "1.0"
 origen: baseline
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Equipo.php
-    detalle: "getContratistasEquipo(), getcontra()"
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Contratista.php
-    detalle: "el ABM de contratistas"
+  - repo: traz-tools-man
+    path: controllers/Equipo.php
+    detalle: getContratistasEquipo(), getcontra(), guardarcontra(), delContratista()
+  - repo: traz-tools-man
+    path: controllers/Contratista.php
+    detalle: el ABM de contratistas (ABM de Mantenimiento → Contratista)
 pantallas:
-  - "Mantenimiento → Equipos → Contratista"
+  - Mantenimiento → Equipos → Contratista
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - Hay contratistas cargados en el ABM
 depende_de:
   - MAN-UC-002
 flujo_principal:
-  - paso: "En el listado de equipos elige la acción Contratista"
-    resultado: "Se muestran los contratistas ya asignados a ese equipo"
-  - paso: "Agrega uno o más contratistas"
-    resultado: "Quedan asociados al equipo, y aparecen en la tabla 'Contratistas Asignados' del listado"
+  - paso: En el listado de equipos elige la acción Contratista
+    resultado: Se muestran los contratistas ya asignados a ese equipo
+  - paso: Agrega uno o más contratistas
+    resultado: Quedan asociados al equipo, y aparecen en la tabla 'Contratistas Asignados' del listado
 dudas:
   - "**Para qué usa el sistema los contratistas asignados sigue sin estar claro.** Se guardan por equipo y se ven en el listado, pero no se encontró que el proceso los use para asignar trabajo ni para avisar. Conviene confirmarlo antes de documentarlo: si es solo informativo, la ayuda lo dice y listo."
+notas:
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

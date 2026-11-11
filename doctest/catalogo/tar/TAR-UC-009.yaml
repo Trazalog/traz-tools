@@ -1,0 +1,55 @@
+id: TAR-UC-009
+modulo: TAR
+titulo: Agregar tareas a un hito
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: controllers/Tarea.php
+    detalle: planificar(), guardarTareaPlanificada()
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/planificacion_tareas.php
+    detalle: agregarTareaPlanificada(), agregarTareas()
+  - repo: traz-comp-tareasestandar
+    path: models/Tareas.php
+    detalle: guardarTareaPlanificada(), asignarOrigen()
+pantallas:
+  - Planificación de Trabajos → hito → Planificación Tareas
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Un hito
+  - Tareas estándar y plantillas cargadas (TAR-UC-019 y 021)
+depende_de:
+  - TAR-UC-006
+  - TAR-UC-019
+  - TAR-UC-021
+flujo_principal:
+  - paso: Elige un hito
+    resultado: Se carga la planificación con las tareas estándar y las plantillas
+  - paso: Escribe un nombre en "Nueva Tarea" y pulsa +
+    resultado: La tarea aparece en Tareas Planificadas, sin fecha, con "Se planificó la tarea correctamente!"
+  - paso: Pulsa + en una tarea estándar
+    resultado: Se agrega con su nombre, descripción, duración, formulario, receta y proceso
+  - paso: Elige una plantilla y pulsa "Agregar Todas"
+    resultado: Se agregan sus tareas, una sola vez cada una
+flujos_alternativos:
+  - nombre: Nombre vacío
+    pasos:
+      - paso: Pulsa + sin escribir nombre
+        resultado: No se agrega nada
+validaciones:
+  - La tarea queda en el hito elegido, también cuando el número del hito contiene un 0
+  - Una tarea libre toma el proceso TST001
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - ¿"Agregar Todas" debería guardar igual que el + de una tarea? Hoy usa otro camino (guardarPlanificada)
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-009-01 a 009-08"
+  - "Hipótesis: HIP-TAR-01"
