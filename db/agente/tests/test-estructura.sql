@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Test de estructura del esquema de los agentes de IA
 -- =============================================================================
--- Verifica que todo lo que los scripts 001..021 dicen crear, existe de verdad.
+-- Verifica que todo lo que los scripts 001..022 dicen crear, existe de verdad.
 -- No inserta ni modifica datos: es seguro correrlo contra cualquier ambiente.
 --
 --   psql -h <host> -U <usuario> -d <base> -v ON_ERROR_STOP=1 -f tests/test-estructura.sql
@@ -436,6 +436,20 @@ SELECT 'credencial_empresa sigue (la usa el monitoreo)',
        to_regclass('agente.credencial_empresa') IS NOT NULL, '018 no se borra';
 
 -- ---------------------------------------------------------------------------
+-- 022 - tools de indicadores
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'la tool ' || n || ' esta catalogada como lectura',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = n AND clase = 'lectura' AND modulo = 'kpi'), 'KPI-TOOLS'
+FROM unnest(ARRAY['kpi_get_valor', 'kpi_get_historico', 'kpi_get_objetivos', 'kpi_get_desvios']) AS n;
+
+INSERT INTO _resultado
+SELECT 'Quirqui solo alcanza kpi_get_valor; Kuntur las cuatro',
+       (SELECT array_agg(t ORDER BY t) FROM agente.tools_permitidas('quirqui') t WHERE t LIKE 'kpi_%') = ARRAY['kpi_get_valor']
+       AND (SELECT count(*) FROM agente.tools_permitidas('kuntur') t WHERE t LIKE 'kpi_%') = 4,
+       '011 + 022';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -447,7 +461,7 @@ FROM unnest(ARRAY[
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
-    '020-cola-envio', '021-drop-avisos-agente'
+    '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

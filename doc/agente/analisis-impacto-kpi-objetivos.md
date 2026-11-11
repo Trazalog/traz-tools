@@ -4,7 +4,7 @@
 
 Qué es: el análisis de impacto **obligatorio** (CLAUDE.md, "Sistema PRODUCTIVO") antes de tocar el motor de KPIs (`kpi.*`) y `ToolsKPIDataService`, que **ya corren en producción**, para que Kuntur pueda fijar objetivos, detectar desvíos y medir planes (ADR-A9). Para quién: el PM, que lo aprueba o lo corrige; sin su aprobación no se escribe código. Cuándo leerlo: antes de implementar KPI-HIST, KPI-OBJ y KPI-TOOLS, y antes de la Fase 5 (Kuntur). Qué NO cubre: los KPIs nuevos por industria (KPI-VERT, sale del documento de KPIs del PM) ni el módulo de tareas.
 
-**Estado:** propuesta para aprobación del PM (2026-10-27). **No se modificó nada.**
+**Estado:** **aprobado por el PM el 2026-10-29**, con las recomendaciones de la sección 7, e **implementado** el mismo día (rama `feat/AGENTE-fase4-token-kpi` de `traz-tools`). Cómo se instala: [`instalacion-token-y-metas.md`](instalacion-token-y-metas.md).
 **Comparado contra:** `traz-tools` `origin/master` (producción). El motor es **idéntico** en `master` y en `develop-v3.5`.
 
 ---

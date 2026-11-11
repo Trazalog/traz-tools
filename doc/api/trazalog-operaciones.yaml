@@ -59,6 +59,8 @@ tags:
     description: Pañol — herramientas, movimientos y certificaciones
   - name: Identidad
     description: La empresa con la que está conectada la sesión
+  - name: Indicadores
+    description: KPIs del motor de Tools, su historia diaria, las metas de la empresa y los desvíos
 
 paths:
 
@@ -1530,6 +1532,135 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
+
+  /mcp/kpi/valor:
+    get:
+      operationId: kpi_get_valor
+      summary: Valor actual de los indicadores de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Valor de hoy de un indicador (KPI) de la empresa, o de todos si no se
+        pasa `nombre`. Es el mismo número que ve el administrador en su Tablero:
+        sale de la caché del motor de KPIs, que se recalcula cada 5 minutos.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuántos artículos están bajo punto de pedido?»
+        - Antes de proponer o evaluar una meta, para saber de dónde se parte.
+      tags:
+        - Indicadores
+      parameters:
+        - name: nombre
+          in: query
+          required: false
+          description: Nombre del KPI (letras minúsculas, números y `_`). Sin él, devuelve todos.
+          schema:
+            type: string
+            example: alm_reorder
+      responses:
+        "200":
+          description: Un KPI (`kpi`) o todos (`kpis.kpi[]`)
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Nombre inválido
+
+  /mcp/kpi/historico:
+    get:
+      operationId: kpi_get_historico
+      summary: Historia diaria de un indicador
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Un valor por día (el último calculado ese día) de un KPI de la empresa,
+        entre dos fechas. Por defecto, los últimos 90 días. Se guardan 2 años.
+
+        **Cuándo usar esta operación:**
+        - «¿Mejoró el indicador desde que arrancó el plan?»
+        - Para comparar antes y después de un plan de acción (R10).
+      tags:
+        - Indicadores
+      parameters:
+        - name: nombre
+          in: query
+          required: true
+          description: Nombre del KPI.
+          schema:
+            type: string
+        - name: desde
+          in: query
+          required: false
+          description: Primer día, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+        - name: hasta
+          in: query
+          required: false
+          description: Último día, formato `YYYY-MM-DD`.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: "`historico.punto[]` con `fecha`, `valor` y `valor_json`"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Falta el nombre o una fecha tiene otro formato
+
+  /mcp/kpi/objetivos:
+    get:
+      operationId: kpi_get_objetivos
+      summary: Metas de la empresa sobre sus indicadores
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Las metas que fijó el administrador (o que propuso Kuntur y el
+        administrador confirmó): indicador, operador (`>=` o `<=`), meta, plazo,
+        responsable, valor de hoy y si se cumple. Las metas sobre indicadores de
+        Mantenimiento (`fuente = man`) vienen sin valor: se evalúan con
+        `man_get_kpi_*`. Esta operación solo lee: las metas se cargan desde Tools.
+      tags:
+        - Indicadores
+      parameters:
+        - name: todos
+          in: query
+          required: false
+          description: "`true` suma las canceladas y vencidas. Por defecto, solo las vigentes."
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: "`objetivos.objetivo[]`"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /mcp/kpi/desvios:
+    get:
+      operationId: kpi_get_desvios
+      summary: Metas vigentes que hoy no se cumplen
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Las metas vigentes de indicadores de Tools cuyo valor de hoy no cumple,
+        con el valor de hace 30 días y la tendencia (`mejora`, `empeora`,
+        `igual` o `sin_historia`). Es el disparador del Coach.
+      tags:
+        - Indicadores
+      responses:
+        "200":
+          description: "`desvios.desvio[]`"
+          content:
+            application/json:
+              schema:
+                type: object
 
 components:
 

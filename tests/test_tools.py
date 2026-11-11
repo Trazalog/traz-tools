@@ -132,9 +132,12 @@ async def test_la_base_y_los_patrones_coinciden(con):
 
 
 async def test_quirqui_ve_todas_las_de_lectura(con):
+    """Todas las de lectura, salvo las de metas e historia de indicadores: esas son
+    del Coach (011). Del motor de KPIs, Quirqui solo ve el valor de hoy."""
     catalogo = await _catalogo(con)
     lectura = {n for n, c in catalogo.items() if c == "lectura"}
-    assert set(await agentes.tools_permitidas(con, "quirqui")) == lectura
+    del_coach = {"kpi_get_historico", "kpi_get_objetivos", "kpi_get_desvios"}
+    assert set(await agentes.tools_permitidas(con, "quirqui")) == lectura - del_coach
 
 
 # ============================================ las dos barreras, en el loop

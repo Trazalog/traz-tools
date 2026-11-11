@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RechazarTokenMaquina - corta con 403 si el pedido viene con un token de
+  maquina (ADR-A10).
+
+  Los agentes de IA piden a Dnato un token por client_credentials para correr
+  sin un usuario conectado (monitoreo programado). Ese token solo sirve para
+  LEER: los agentes no escriben (ADR-A8). La lista blanca del orquestador no
+  alcanza, porque quien tenga el secreto de una empresa podria llamar al
+  gateway directo; por eso los recursos que escriben lo rechazan aca.
+
+  Va DESPUES de emprIdFromHeader, que es quien setea jwt_token_tipo.
+  Con un token de usuario no hace nada.
+-->
+<sequence name="rechazarTokenMaquina" xmlns="http://ws.apache.org/ns/synapse">
+    <filter source="get-property('jwt_token_tipo')" regex="maquina">
+        <then>
+            <log level="custom" category="WARN">
+                <property name="text" value="#TRAZA | MCP | RechazarTokenMaquina | escritura rechazada: token de maquina"/>
+                <property name="path" expression="get-property('REST_FULL_REQUEST_PATH')"/>
+                <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            </log>
+            <payloadFactory media-type="json">
+                <format>{"error":"forbidden","message":"Un token de maquina solo puede leer. Esta operacion la tiene que hacer una persona."}</format>
+                <args/>
+            </payloadFactory>
+            <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+            <property name="HTTP_SC"     scope="axis2" type="STRING" value="403"/>
+            <respond/>
+        </then>
+    </filter>
+</sequence>
