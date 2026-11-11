@@ -151,6 +151,12 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 
 **Lo próximo que hace Claude Code sin esperar:** terminar la app Siddhi del envío push (`_backend/siddhi/AgenteAvisosPush.siddhi`, **borrador**: probada contra el SI local, manda y marca, pero reenvía los pendientes mientras no los marca; falta el estado `enviando`, D-68) y cerrar la fase con su PR. Cuando se aprueben los análisis: DNATO-TOKEN y el motor de KPIs.
 
+**Decisiones del PM del 2026-11-11 (tarde):**
+- **Base del agente:** por ahora vive en la máquina del PM (`agente_minero`, PostgreSQL local con pgvector). La de demo y producción se decide más adelante.
+- **Firebase:** la única cuenta es la de producción, y no se usa para pruebas. Para probar avisos al celular hay que crear un proyecto de Firebase de prueba (pasos en la respuesta del chat; se pasan a `doc/notificaciones/instalacion-avisos.md` cuando el PM lo cree).
+- **#636 unido:** aprobado el análisis de las correcciones de aislamiento de TAR (C1-C3). Las tools `tar_get_*` se arman recién cuando esas correcciones estén unidas: hoy las operaciones de TAR filtran mal por empresa.
+- **Plan de acción de Kuntur (B-05), en diseño:** el PM propone que Kuntur cree el pedido de trabajo **con sus hitos y tareas** en estado "propuesta", y que si el usuario no lo quiere pase a un estado de cancelado por propuesta del agente. Antes de programar: análisis de impacto (núcleo: TAR, y qué pasa con el caso de Bonita) y ADR, porque es una escritura del agente sin confirmación previa.
+
 ### Decisiones recientes (últimas 5)
 
 | Fecha | Decisión | Referencia |
