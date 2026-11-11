@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, guardian, metas, pantalla, rag, sugerencias, web
+from . import agentes, cargas, configuracion, guardian, metas, pantalla, planillas, rag, simulados, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -54,6 +54,9 @@ class Consulta:
     # El agente ya resuelto y con el acceso verificado (agentes.para_consulta).
     # None = el agente por defecto.
     agente: Agente | None = None
+    # La planilla que el administrador subio para que Kuntur la pase a la
+    # Carga Masiva (agente/planillas.py). None = no hay planilla en juego.
+    planilla_id: str | None = None
 
 
 @dataclass
@@ -78,6 +81,9 @@ class Resultado:
     # Metas que Kuntur propuso con kpi_proponer_meta (AGENTE-CO-03). No se
     # graban: el panel las muestra y las carga el administrador.
     propuestas_meta: list[dict] = field(default_factory=list)
+    # Cargas de configuracion que propuso Kuntur (ADR-A12): no se ejecutaron;
+    # el panel las muestra y se ejecutan si el administrador toca "Cargar".
+    propuestas_carga: list[dict] = field(default_factory=list)
 
 
 class Orquestador:
@@ -173,11 +179,32 @@ class Orquestador:
             contexto += "\n\n" + texto_pantalla
             res.controles.append({"control": "pantalla", "ruta": consulta.pantalla,
                                   "casos": [c.caso_uso for c in casos]})
+        # Lo que el administrador le conto a Kuntur en la entrevista de
+        # configuracion (AGENTE-CO-02): que exige la operadora, que le preocupa.
+        if consulta.agente.clave == "kuntur":
+            texto_perfil = configuracion.contexto(await configuracion.perfil(con, consulta.empr_id))
+            if texto_perfil:
+                mensajes.append({"role": "system", "content": texto_perfil})
+                contexto += "\n\n" + texto_perfil
+            res.controles.append({"control": "perfil_empresa", "configurado": bool(texto_perfil)})
+            # La planilla subida: al modelo, solo encabezados y unas 20 filas (P-8).
+            # Cuenta como fuente para el guardian de cifras.
+            if consulta.planilla_id:
+                try:
+                    texto_planilla = planillas.contexto(await planillas.obtener(con, consulta.planilla_id))
+                    mensajes.append({"role": "system", "content": texto_planilla})
+                    contexto += "\n\n" + texto_planilla
+                    res.controles.append({"control": "planilla", "planilla_id": consulta.planilla_id})
+                except planillas.PlanillaInvalida:
+                    res.controles.append({"control": "planilla", "planilla_id": consulta.planilla_id,
+                                          "error": "no existe"})
         mensajes.append({"role": "user", "content": consulta.pregunta})
         # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
         # VE las tools que este agente puede usar. Las de escritura no estan,
         # aunque el gateway las publique.
         permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
+        # Las de configuracion (ADR-A12) se ofrecen, pero el motor no las ejecuta.
+        de_config = await cargas.de_configuracion(con, consulta.agente.clave)
         del_gateway = await mcp.listar_tools()
         tools = [t for t in del_gateway
                  if t.get("function", {}).get("name") in permitidas]
@@ -188,6 +215,17 @@ class Orquestador:
         # Proponer una meta tambien es del motor: no escribe nada (AGENTE-CO-03).
         if metas.NOMBRE in permitidas:
             tools.append(metas.DEFINICION)
+        # Servicios simulados de la puesta en marcha (deuda tecnica): mismo
+        # nombre e interfaz que tendran los reales. Si el gateway ya publica
+        # uno, gana el del gateway.
+        # Son parte de la puesta en marcha: solo para el agente que la hace (el
+        # que tiene tools de configuracion). Quirqui no ve datos simulados.
+        publicadas = {t.get("function", {}).get("name") for t in tools}
+        if de_config:
+            tools += [d for d in simulados.definiciones(permitidas) if d["function"]["name"] not in publicadas]
+        # La carga masiva de una planilla es del motor (lote 2): solo si hay planilla.
+        if planillas.NOMBRE in de_config and consulta.planilla_id:
+            tools.append(planillas.DEFINICION)
         res.controles.append({
             "control": "lista_blanca",
             "publicadas": len(del_gateway), "ofrecidas": len(tools),
@@ -212,7 +250,14 @@ class Orquestador:
                 "tool_calls": respuesta.tool_calls,
             })
             for llamada in respuesta.tool_calls:
-                mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
+                pedida = llamada.get("function", {}).get("name")
+                if pedida in de_config:
+                    mensaje = await self._proponer_carga(con, consulta, mcp, llamada, res)
+                elif (de_config and pedida in permitidas and pedida in simulados.SERVICIOS
+                      and simulados.SERVICIOS[pedida].clase == simulados.LECTURA):
+                    mensaje = await self._leer_simulado(con, consulta, mcp, llamada)
+                else:
+                    mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
                 mensajes.append(mensaje)
                 res.contenidos_tools.append(mensaje["content"])
                 res.tools_vistas.append((mensaje["name"], mensaje["content"]))
@@ -252,6 +297,9 @@ class Orquestador:
             res.respuesta = guardian.MENSAJE_BLOQUEO
             # Una tarjeta de meta al lado de "no tengo datos" confunde: se cae con la respuesta.
             res.propuestas_meta = []
+            # Las cargas quedan guardadas como propuesta, pero no se muestran: sin
+            # tarjeta nadie las confirma y vencen solas.
+            res.propuestas_carga = []
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
                         permitidas: frozenset[str], res: Resultado | None = None) -> dict:
@@ -319,6 +367,57 @@ class Orquestador:
             web.NOMBRE, argumentos, status, int((time.monotonic() - t0) * 1000), error,
         ))
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": web.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    async def _proponer_carga(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict,
+                              res: Resultado) -> dict:
+        """Una tool de configuracion (ADR-A12): se guarda como carga propuesta y
+        NO sale al MCP. La ejecuta el administrador desde la tarjeta."""
+        fn = llamada.get("function", {})
+        nombre = fn.get("name", "")
+        try:
+            argumentos = json.loads(fn.get("arguments") or "{}")
+        except (json.JSONDecodeError, ValueError):
+            argumentos = None
+        error = None
+        if not isinstance(argumentos, dict):
+            error = "Los datos de la carga no son válidos: revisalos y volvé a armarla."
+        elif nombre == planillas.NOMBRE:
+            # El modelo dio el mapeo; las filas las transforma el codigo, todas.
+            try:
+                argumentos = await planillas.preparar(con, argumentos)
+            except planillas.PlanillaInvalida as e:
+                error = f"No se puede proponer: {e}. Corregilo y volvé a armarla."
+        elif nombre in simulados.SERVICIOS:
+            # La interfaz se controla al proponer: una tarjeta que no se puede cargar no se muestra.
+            try:
+                argumentos = simulados.validar(nombre, argumentos)
+            except simulados.SimulacionInvalida as e:
+                error = f"No se puede proponer: {e}. Corregilo y volvé a armarla."
+        if error:
+            mcp.llamadas.append(LlamadaTool(nombre, argumentos if isinstance(argumentos, dict) else {},
+                                            "error", 0, error[:300]))
+            salida = {"error": error}
+        else:
+            p = await cargas.proponer(
+                con, empr_id=consulta.empr_id, interaccion_id=res.interaccion_id,
+                agente=consulta.agente.clave, usuario=consulta.usuario_nick or str(consulta.usr_id or ""),
+                tool=nombre, argumentos=argumentos)
+            res.propuestas_carga.append(p.tarjeta())
+            registro = ({k: v for k, v in argumentos.items() if k != "filas"} | {"total_filas": len(argumentos["filas"])}
+                        if isinstance(argumentos.get("filas"), list) else argumentos)
+            mcp.llamadas.append(LlamadaTool(nombre, registro, "propuesta", 0, None))
+            salida = p.para_el_modelo()
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
+                "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    async def _leer_simulado(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict) -> dict:
+        """Una lectura de los servicios simulados (agente/simulados.py)."""
+        nombre = llamada.get("function", {}).get("name", "")
+        t0 = time.monotonic()
+        salida = await simulados.leer(con, consulta.empr_id, nombre)
+        mcp.llamadas.append(LlamadaTool(nombre, {}, "ok", int((time.monotonic() - t0) * 1000)))
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
 
     def _proponer_meta(self, mcp: ClienteMCP, llamada: dict, argumentos: dict,

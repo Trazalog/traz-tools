@@ -1,6 +1,6 @@
 # CONTEXT-PACK — traz-tools
 
-> Versión -> 1.6, "último ADR: ADR-015" (ADR-014 está en `develop-v3`, no en esta rama), "último ADR de agentes: ADR-A11", fecha 2026-10-28
+> Versión -> 1.7, "último ADR: ADR-015" (ADR-014 está en `develop-v3`, no en esta rama), "último ADR de agentes: ADR-A12", fecha 2026-11-11
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -43,6 +43,7 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 | **ADR-A9**  | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | El plan de acción del Coach es un pedido de trabajo del módulo de tareas en estado "propuesta"; los objetivos viven en el motor de KPIs (`kpi.*`)                                                                                                                                                                  |
 | **ADR-A10** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Token de máquina para jobs: Dnato emite JWT por `client_credentials`, un cliente por empresa, con `empr_id`                                                                                                                                                                                                        |
 | **ADR-A11** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Conocimiento multi-vertical: `vertical` (minería, oil & gas, electricidad, general) como metadato del conocimiento, la taxonomía y el perfil de la empresa                                                                                                                                                         |
+| **ADR-A12** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Excepción a A8: Kuntur graba datos de configuración (clase `configuracion`) solo con confirmación del administrador, con su token, lista cerrada, registro y todo o nada. Dnato v3 contra servicios simulados hasta que exista |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 

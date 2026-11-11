@@ -32,6 +32,8 @@ class Agente extends CI_Controller
 {
     /** Margen antes de que venza el token, para no usar uno a punto de expirar. */
     const MARGEN_VENCIMIENTO = 60;
+    /** La planilla que se sube a Kuntur: el mismo límite que el orquestador. */
+    const MAX_PLANILLA = 5242880;
 
     public function __construct()
     {
@@ -102,9 +104,15 @@ class Agente extends CI_Controller
             $agente = '';
         }
 
+        // La planilla que el administrador subió a Kuntur (kuntur_planilla). Solo el id.
+        $planilla = (string) $this->input->post('planilla_id');
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $planilla)) {
+            $planilla = '';
+        }
+
         log_message('DEBUG', '#TRAZA | AGENTE | Agente | consultar() >> ' . substr($pregunta, 0, 80)
             . ($pantalla !== '' ? ' | pantalla: ' . substr($pantalla, 0, 120) : ''));
-        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla, $agente));
+        $this->_json($this->Agentes->consultar($this->_token(), $pregunta, $pantalla, $agente, $planilla));
     }
 
     /** Siguiente paso en la pantalla (AGENTE-AS-02). Lo pide el panel al abrirse. */
@@ -240,6 +248,112 @@ class Agente extends CI_Controller
         $this->_json($this->Agentes->agentes($this->_token()));
     }
 
+    // ------------------------------------------- Kuntur: configuracion y avisos
+    // Proxy a /kuntur/* (AGENTE-CO-02). Quien decide si el usuario es
+    // administrador es la API (R1): aca solo se valida la forma de lo que llega.
+
+    public function kuntur_configuracion()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/configuracion', null);
+    }
+
+    public function kuntur_iniciar()
+    {
+        $this->_proxyKuntur('POST', '/kuntur/configuracion/iniciar', array());
+    }
+
+    public function kuntur_responder()
+    {
+        $pregunta = (string) $this->input->post('pregunta');
+        $valores  = $this->input->post('valores');
+        $valores  = is_array($valores) ? array_values($valores) : array();
+        $texto    = (string) $this->input->post('texto');
+        $validos  = array_filter($valores, function ($v) {
+            return is_string($v) && preg_match('/^[a-z_]{1,40}$/', $v);
+        });
+        if (!preg_match('/^[a-z_]{1,40}$/', $pregunta) || count($validos) !== count($valores)
+            || count($valores) > 10 || mb_strlen($texto) > 1000) {
+            $this->_json(array('error' => 'respuesta inválida'), 400);
+            return;
+        }
+        $this->_proxyKuntur('POST', '/kuntur/configuracion/responder', array(
+            'pregunta' => $pregunta, 'valores' => $valores, 'texto' => $texto,
+        ));
+    }
+
+    public function kuntur_confirmar()
+    {
+        $this->_proxyKuntur('POST', '/kuntur/configuracion/confirmar', array());
+    }
+
+    public function kuntur_avisos()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/avisos', null);
+    }
+
+    public function kuntur_silenciar()
+    {
+        $this->_proxyKuntur('POST', '/kuntur/avisos/silenciar', array(
+            'objetivo_id' => (int) $this->input->post('objetivo_id'),
+            'silenciado'  => $this->input->post('silenciado') !== 'false',
+        ));
+    }
+
+    /**
+     * "Cargar" / "Ahora no" sobre una carga que propuso Kuntur (ADR-A12). Solo
+     * viaja el id: se ejecuta lo que quedó guardado, con el token del usuario.
+     */
+    public function kuntur_cargar()
+    {
+        $this->_cargaKuntur('/kuntur/cargas/confirmar');
+    }
+
+    public function kuntur_descartar()
+    {
+        $this->_cargaKuntur('/kuntur/cargas/descartar');
+    }
+
+    private function _cargaKuntur($ruta)
+    {
+        $id = (string) $this->input->post('carga_id');
+        if (!preg_match('/^[0-9a-f-]{36}$/', $id)) {
+            $this->_json(array('error' => 'carga inválida'), 400);
+            return;
+        }
+        // Una carga masiva puede tardar: la corre la Carga Masiva de Dnato.
+        $this->_proxyKuntur('POST', $ruta, array('carga_id' => $id), 150);
+    }
+
+    /**
+     * El administrador sube su planilla como la tiene (CSV o Excel .xlsx), para
+     * que Kuntur la pase a la Carga Masiva (ADR-A12). Acá solo se controla el
+     * tamaño y la forma; la lee y la valida el orquestador.
+     */
+    public function kuntur_planilla()
+    {
+        $f = isset($_FILES['planilla']) ? $_FILES['planilla'] : null;
+        if (!$f || $f['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) {
+            $this->_json(array('error' => 'No llegó el archivo. Probá de nuevo.'), 400);
+            return;
+        }
+        if ($f['size'] > self::MAX_PLANILLA) {
+            $this->_json(array('error' => 'La planilla pasa de 5 MB.'), 400);
+            return;
+        }
+        $nombre = basename((string) $f['name']);
+        if (!preg_match('/\.(csv|xlsx|xls|txt)$/i', $nombre)) {
+            $this->_json(array('error' => 'Subí la planilla como .xlsx o .csv.'), 400);
+            return;
+        }
+        $contenido = file_get_contents($f['tmp_name']);
+        log_message('DEBUG', '#TRAZA | AGENTE | Agente | kuntur_planilla() >> ' . substr($nombre, 0, 120)
+            . ' (' . strlen($contenido) . ' bytes)');
+        $this->_proxyKuntur('POST', '/kuntur/planillas', array(
+            'nombre'           => substr($nombre, 0, 200),
+            'contenido_base64' => base64_encode($contenido),
+        ), 60);
+    }
+
     /** Estado del orquestador, para diagnosticar desde la UI. */
     public function salud()
     {
@@ -293,6 +407,17 @@ class Agente extends CI_Controller
             return;
         }
         $this->_json($this->Agentes->entrevista($this->_token(), $ruta, $cuerpo));
+    }
+
+    /** Proxy a los endpoints de Kuntur, devolviendo el codigo HTTP del orquestador. */
+    private function _proxyKuntur($metodo, $ruta, $cuerpo, $timeout = 15)
+    {
+        if (!$this->_asegurarToken()) {
+            $this->_json(array('error' => 'sin_autorizacion'), 401);
+            return;
+        }
+        $rsp = $this->Agentes->kuntur($this->_token(), $metodo, $ruta, $cuerpo, $timeout);
+        $this->_json($rsp['data'], $rsp['status']);
     }
 
     /** La cookie de sesion del usuario, para reenviarsela a Dnato. */

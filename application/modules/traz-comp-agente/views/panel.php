@@ -17,6 +17,16 @@
   tarjetas; "Cargar meta" la graba el administrador con su sesión en
   index.php/Objetivos/guardar, que vuelve a verificar que es administrador.
 
+  CARGAS (ADR-A12): Kuntur puede proponer grabar datos de configuración
+  (depósitos, unidades, menús...). Llegan como tarjeta en propuestas_carga;
+  "Cargar" manda SOLO el id y el orquestador ejecuta lo que quedó guardado,
+  con el token del administrador.
+
+  CONFIGURACIÓN (AGENTE-CO-02): la primera vez, Kuntur ofrece una entrevista
+  corta (#agp-kuntur). Las preguntas y la tarjeta final vienen de la API
+  (/kuntur/configuracion): acá solo se pintan. Nada queda guardado hasta
+  "Confirmar". Debajo, lo que Kuntur está siguiendo, con "No insistas".
+
   AVISO DE MEDICIÓN: el texto de #agp-aviso es el que pidió el PM (D9 del plan)
   y está PENDIENTE DE REVISIÓN LEGAL (AGENTE-LEGAL-01). No cambiarlo sin esa
   revisión.
@@ -50,6 +60,15 @@
   </div>
 
   <div id="agp-avisos"></div>
+  <div id="agp-kuntur" hidden>
+    <div id="agp-config"></div>
+    <div id="agp-seguimiento"></div>
+    <div id="agp-planilla">
+      <label class="agp-planilla-subir">📎 Subí tu planilla de artículos, herramientas o equipos
+        <input type="file" id="agp-planilla-archivo" accept=".xlsx,.csv" hidden></label>
+      <span class="agp-planilla-estado" hidden></span>
+    </div>
+  </div>
   <div id="agp-propuestas"></div>
 
   <div id="agp-conversacion">
@@ -122,10 +141,41 @@
 .agp-meta .agp-meta-acciones { margin-top: 5px; }
 .agp-meta .agp-meta-acciones a { margin-right: 10px; cursor: pointer; }
 .agp-meta .agp-meta-msg { margin-top: 4px; }
+.agp-carga { border: 1px solid #f0e0c0; border-left: 3px solid #f39c12; border-radius: 3px;
+             padding: 6px 8px; margin-top: 6px; font-size: 12px; background: #fffdf8; }
+#agp-planilla { margin: 6px 0; }
+#agp-planilla .agp-planilla-subir { cursor: pointer; color: #3c8dbc; font-weight: normal; }
+#agp-planilla .agp-planilla-estado { display: block; }
+#agp-planilla .agp-planilla-estado a { cursor: pointer; margin-left: 6px; }
+.agp-carga strong { display: block; }
+.agp-carga table { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 11px; }
+.agp-carga th, .agp-carga td { border: 1px solid #eee; padding: 2px 4px; text-align: left; }
+.agp-carga .agp-carga-acciones a { margin-right: 10px; cursor: pointer; }
 .agp-feedback { margin-top: 4px; }
 .agp-feedback button { border: 1px solid #ddd; background: #fff; border-radius: 3px;
                        padding: 0 7px; cursor: pointer; }
 .agp-feedback .elegido { background: #eaf3f9; border-color: #3c8dbc; }
+#agp-kuntur { padding: 6px 12px 0; font-size: 12px; max-height: 60%; overflow-y: auto; }
+#agp-kuntur[hidden] { display: none; }
+.agp-cfg { border: 1px solid #d6e4f0; border-left: 3px solid #3c8dbc; border-radius: 3px;
+           padding: 8px; margin-bottom: 6px; background: #fafcfe; }
+.agp-cfg strong { display: block; margin-bottom: 4px; }
+.agp-cfg .agp-cfg-paso { color: #999; font-size: 11px; }
+.agp-cfg .agp-opc { display: inline-block; margin: 3px 4px 0 0; padding: 3px 8px; border: 1px solid #c9d8e6;
+                    border-radius: 12px; background: #fff; cursor: pointer; font-size: 12px; }
+.agp-cfg .agp-opc.elegida { background: #3c8dbc; border-color: #3c8dbc; color: #fff; }
+.agp-cfg input[type=text] { width: 100%; margin-top: 6px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 3px; }
+.agp-cfg .agp-cfg-acciones { margin-top: 6px; }
+.agp-cfg .agp-cfg-acciones a { margin-right: 12px; cursor: pointer; }
+.agp-cfg ul { margin: 2px 0 4px 16px; padding: 0; }
+.agp-cfg .agp-cfg-msg { margin-top: 4px; color: #dd4b39; }
+.agp-cfg-resumen { color: #777; margin-bottom: 6px; }
+.agp-cfg-resumen a { cursor: pointer; }
+.agp-seg { border: 1px solid #e5e5e5; border-left: 3px solid #f39c12; border-radius: 3px; padding: 6px 8px; margin-bottom: 6px; }
+.agp-seg.no_cumple { border-left-color: #dd4b39; }
+.agp-seg.silenciado { opacity: .6; }
+.agp-seg strong { display: block; }
+.agp-seg a { cursor: pointer; }
 #agp-form { display: flex; border-top: 1px solid #e5e5e5; }
 #agp-pregunta { flex: 1; border: 0; padding: 10px 12px; font-size: 13px; outline: none; }
 #agp-enviar { border: 0; background: #3c8dbc; color: #fff; padding: 0 14px; cursor: pointer; }
@@ -251,6 +301,8 @@
         $('#agp-aviso-coach').prop('hidden', !coach);
         $('.agp-bienvenida').each(function () { $(this).prop('hidden', $(this).data('agente') !== agente.rol); });
         $('#agp-propuestas').toggle(!coach);
+        $('#agp-kuntur').prop('hidden', !coach);
+        if (coach) { cargarKuntur(); }
         if ($conv.find('.agp-msg').length) {
             $conv.append('<div class="agp-cambio">Ahora hablás con ' + escapar(agente.nombre) + '</div>'); alFinal();
         }
@@ -267,6 +319,120 @@
         }
     });
     $('#agp-pestanias').on('click', 'button', function () { elegir(String($(this).data('clave'))); });
+
+    // --- configuración de la empresa (AGENTE-CO-02) y seguimiento (CO-07) -----
+    // La pregunta que sigue, la tarjeta y el texto los arma la API. Acá no se
+    // decide nada: solo se pinta y se manda lo que eligió el administrador.
+    var cfg = null, elegidas = [];
+    function kunturPost(ruta, datos) { return $.post(BASE + ruta, datos || {}); }
+    function cargarKuntur() {
+        $.getJSON(BASE + 'kuntur_configuracion').done(pintarConfig).fail(function () { $('#agp-config').empty(); });
+        cargarSeguimiento();
+    }
+    function listaModulos(c) {
+        var n = { almacenes: 'Almacenes', mantenimiento: 'Mantenimiento', herramientas: 'Herramientas', tareas: 'Tareas' };
+        return (c || []).map(function (m) { return n[m] || m; }).join(', ');
+    }
+    function pintarConfig(r) {
+        cfg = r; var $c = $('#agp-config').empty();
+        if (r.pregunta) { return pintarPregunta(r); }
+        if (r.propuesta) { return pintarPropuesta(r.propuesta); }
+        if (!r.confirmado) {
+            $c.html('<div class="agp-cfg"><strong>Antes de arrancar, ¿me contás un poco de tu empresa?</strong>' +
+                    'Son unas pocas preguntas, con opciones para tocar. Con eso sé qué indicadores mirar primero. ' +
+                    'No se guarda nada hasta que lo confirmes.' +
+                    '<div class="agp-cfg-acciones"><a class="agp-cfg-iniciar">Dale</a><a class="agp-cfg-luego">Ahora no</a></div></div>');
+            return;
+        }
+        var p = r.perfil || {};
+        $c.html('<div class="agp-cfg-resumen">Tu empresa: ' + escapar(listaModulos(p.modulos)) +
+                (p.operadora ? ' · trabaja para una operadora' : '') +
+                ' — <a class="agp-cfg-iniciar">Revisar configuración</a></div>');
+    }
+    function pintarPregunta(r) {
+        var q = r.pregunta, pre = (q.preseleccion || {});
+        elegidas = (pre.valores || []).slice();
+        var html = '<div class="agp-cfg"><span class="agp-cfg-paso">Pregunta ' + escapar(r.paso) + ' de ' + escapar(r.pasos) + '</span>' +
+                   '<strong>' + escapar(q.texto) + '</strong>';
+        (q.opciones || []).forEach(function (o, i) {
+            html += '<span class="agp-opc' + (elegidas.indexOf(o.valor) >= 0 ? ' elegida' : '') + '" data-i="' + i + '">' +
+                    escapar(o.etiqueta) + '</span>';
+        });
+        if (q.texto_libre) {
+            html += '<input type="text" class="agp-cfg-texto" maxlength="300" placeholder="' + escapar(q.texto_libre) + '">';
+        }
+        var seguir = q.tipo !== 'una' || pre.valores;
+        html += '<div class="agp-cfg-acciones">' + (seguir ? '<a class="agp-cfg-seguir">Seguir</a>' : '') +
+                '<a class="agp-cfg-luego">Seguimos otro día</a></div><div class="agp-cfg-msg" hidden></div></div>';
+        $('#agp-config').html(html);
+        if (pre.texto) { $('#agp-config .agp-cfg-texto').val(pre.texto); }
+    }
+    function responderPregunta() {
+        var q = cfg.pregunta, $t = $('#agp-config .agp-cfg-texto');
+        kunturPost('kuntur_responder', { pregunta: q.id, valores: elegidas, texto: $t.length ? $t.val() : '' })
+            .done(pintarConfig)
+            .fail(function (xhr) {
+                var r = xhr && xhr.responseJSON;
+                $('#agp-config .agp-cfg-msg').prop('hidden', false).text((r && r.error) || 'No se pudo guardar la respuesta.');
+            });
+    }
+    function pintarPropuesta(c) {
+        var html = '<div class="agp-cfg"><strong>Así voy a trabajar con tu empresa</strong><ul>' +
+                   '<li>Industria: ' + escapar(c.industria_nombre) + '</li>' +
+                   '<li>Usan o usarían: ' + escapar(listaModulos(c.modulos) || 'nada todavía') + '</li>' +
+                   '<li>' + (c.operadora ? 'Trabajan para una operadora' + (c.operadora_nombre ? ' (' + escapar(c.operadora_nombre) + ')' : '')
+                                         : 'No trabajan para una operadora') + '</li></ul>';
+        if ((c.prioridades || []).length) {
+            html += 'Voy a mirar primero:<ul>' + c.prioridades.map(function (x) {
+                return '<li>' + escapar(x.titulo) + (x.origen === 'operadora' ? ' (lo pide la operadora)' : '') + '</li>';
+            }).join('') + '</ul>';
+        }
+        (c.observaciones || []).forEach(function (o) { html += '<div>' + escapar(o) + '</div>'; });
+        html += '<div class="agp-cfg-acciones"><a class="agp-cfg-confirmar">Confirmar</a><a class="agp-cfg-iniciar">Corregir</a></div>' +
+                '<div class="agp-cfg-msg" hidden></div></div>';
+        $('#agp-config').html(html);
+    }
+    $('#agp-config').on('click', '.agp-opc', function () {
+        var q = cfg.pregunta, o = q.opciones[$(this).data('i')], i = elegidas.indexOf(o.valor);
+        if (q.tipo === 'una') { elegidas = [o.valor]; return responderPregunta(); }
+        if (i >= 0) { elegidas.splice(i, 1); } else if (!q.maximo || elegidas.length < q.maximo) { elegidas.push(o.valor); }
+        $(this).toggleClass('elegida', elegidas.indexOf(o.valor) >= 0);
+    });
+    $('#agp-config').on('click', '.agp-cfg-seguir', responderPregunta);
+    $('#agp-config').on('click', '.agp-cfg-iniciar', function () { kunturPost('kuntur_iniciar').done(pintarConfig); });
+    $('#agp-config').on('click', '.agp-cfg-luego', function () { $('#agp-config').empty(); });
+    $('#agp-config').on('click', '.agp-cfg-confirmar', function () {
+        kunturPost('kuntur_confirmar').done(function (r) {
+            pintarConfig(r);
+            var prio = ((r.configuracion || {}).prioridades || [])[0];
+            pintar(agente.nombre, 'agp-agente', '<div class="agp-texto">Listo, ya sé cómo es tu empresa.' +
+                   (prio ? ' ¿Querés que miremos cómo viene «' + escapar(prio.titulo) + '» y pongamos una meta? Preguntame.' : '') +
+                   '</div>');
+        }).fail(function (xhr) {
+            var r = xhr && xhr.responseJSON;
+            $('#agp-config .agp-cfg-msg').prop('hidden', false).text((r && r.error) || 'No se pudo guardar.');
+        });
+    });
+
+    // Lo que Kuntur ya avisó y sigue mirando. "No insistas" deja de avisar
+    // de esa meta hasta que vuelva a cumplirse.
+    var seguimiento = [];
+    function cargarSeguimiento() {
+        $.getJSON(BASE + 'kuntur_avisos').done(function (r) {
+            seguimiento = r.avisos || [];
+            var $s = $('#agp-seguimiento').empty();
+            seguimiento.forEach(function (x, i) {
+                $s.append('<div class="agp-seg ' + escapar(x.estado) + (x.silenciado ? ' silenciado' : '') + '" data-i="' + i + '">' +
+                          '<strong>' + escapar(x.titulo) + '</strong>' + escapar(x.cuerpo) + ' ' +
+                          '<a class="agp-seg-silenciar">' + (x.silenciado ? 'Volver a avisarme' : 'No insistas') + '</a></div>');
+            });
+        });
+    }
+    $('#agp-seguimiento').on('click', '.agp-seg-silenciar', function () {
+        var x = seguimiento[$(this).closest('.agp-seg').data('i')];
+        kunturPost('kuntur_silenciar', { objetivo_id: x.objetivo_id, silenciado: x.silenciado ? 'false' : 'true' })
+            .always(cargarSeguimiento);
+    });
 
     function pintar(quien, clase, html) {
         $conv.append('<div class="agp-msg ' + clase + '"><div class="agp-quien">' + quien + '</div>' + html + '</div>');
@@ -312,9 +478,56 @@
         $t.slideUp(150, function () { $t.remove(); });
     });
 
+    // --- cargas que propone Kuntur (ADR-A12) -----------------------------------
+    // Se muestra lo que se va a grabar; "Cargar" manda solo el id.
+    function tablaFilas(filas) {
+        var cols = [];
+        filas.forEach(function (f) { Object.keys(f || {}).forEach(function (k) { if (cols.indexOf(k) < 0) { cols.push(k); } }); });
+        return '<table><tr>' + cols.map(function (k) { return '<th>' + escapar(k) + '</th>'; }).join('') + '</tr>' +
+               filas.map(function (f) {
+                   return '<tr>' + cols.map(function (k) { return '<td>' + escapar(f[k]) + '</td>'; }).join('') + '</tr>';
+               }).join('') + '</table>';
+    }
+    function tarjetaCarga(c) {
+        var html = '<div class="agp-carga" data-carga="' + escapar(c.carga_id) + '"><strong>Para cargar: ' + escapar(c.titulo) + '</strong>' +
+                   (c.simulado ? '<em>Simulación: todavía no se graba en el sistema real.</em><br>' : '');
+        Object.keys(c.datos || {}).forEach(function (k) { html += escapar(k) + ': ' + escapar(c.datos[k]) + '<br>'; });
+        if ((c.filas || []).length) {
+            html += tablaFilas(c.filas);
+            if (c.total_filas > c.filas.length) { html += 'Y ' + (c.total_filas - c.filas.length) + ' más (' + c.total_filas + ' en total).'; }
+        }
+        return html + '<div class="agp-carga-acciones"><a class="agp-carga-si">Cargar</a><a class="agp-carga-no">Ahora no</a></div>' +
+               '<div class="agp-carga-msg" hidden></div></div>';
+    }
+    function responderCarga($t, ruta) {
+        var $msg = $t.find('.agp-carga-msg');
+        $t.find('.agp-carga-acciones').hide();
+        return $.post(BASE + ruta, { carga_id: String($t.data('carga')) })
+            .fail(function (xhr) {
+                var r = xhr && xhr.responseJSON;
+                $msg.prop('hidden', false).attr('class', 'agp-carga-msg text-danger').text((r && r.error) || 'No se pudo.');
+                $t.find('.agp-carga-acciones').show();
+            });
+    }
+    $conv.on('click', '.agp-carga-si', function () {
+        var $t = $(this).closest('.agp-carga');
+        responderCarga($t, 'kuntur_cargar').done(function (r) {
+            var bien = r.estado === 'ejecutada';
+            $t.find('.agp-carga-msg').prop('hidden', false)
+              .attr('class', 'agp-carga-msg ' + (bien ? 'text-success' : 'text-danger'))
+              .text(bien ? 'Cargado.' : 'No se cargó nada: ' + (r.error || 'hubo un error.') +
+                    ' Contale a Kuntur qué pasó y la arma de nuevo.');
+        });
+    });
+    $conv.on('click', '.agp-carga-no', function () {
+        var $t = $(this).closest('.agp-carga');
+        responderCarga($t, 'kuntur_descartar').done(function () { $t.slideUp(150, function () { $t.remove(); }); });
+    });
+
     function pintarRespuesta(r) {
         var html = '<div class="agp-texto">' + escapar(r.respuesta) + '</div>';
         (r.propuestas_meta || []).forEach(function (m) { html += tarjetaMeta(m); });
+        (r.propuestas_carga || []).forEach(function (c) { html += tarjetaCarga(c); });
         if (!r.error && r.interaccion_id) {
             html += '<div class="agp-feedback" data-interaccion="' + escapar(r.interaccion_id) + '">' +
                     '<button type="button" data-util="1" title="Me sirvió">👍</button> ' +
@@ -328,12 +541,50 @@
         var texto = $.trim($('#agp-pregunta').val());
         if (!texto) { return; }
         $('#agp-pregunta').val('');
+        enviar(texto);
+    });
+
+    // --- planilla para la Carga Masiva (ADR-A12, lote 2) ---------------------
+    // Se sube una vez; mientras esté, cada pregunta a Kuntur lleva su id. Kuntur
+    // ve solo los encabezados y 20 filas, y propone la carga como tarjeta.
+    var planilla = null;
+    function pintarPlanilla(msg, clase) {
+        var $e = $('#agp-planilla .agp-planilla-estado').prop('hidden', false).attr('class', 'agp-planilla-estado ' + (clase || ''));
+        $e.html(msg);
+    }
+    $('#agp-planilla-archivo').on('change', function () {
+        var archivo = this.files && this.files[0];
+        if (!archivo) { return; }
+        var datos = new FormData();
+        datos.append('planilla', archivo);
+        pintarPlanilla('Subiendo ' + escapar(archivo.name) + '...');
+        $.ajax({ url: BASE + 'kuntur_planilla', type: 'POST', data: datos, processData: false, contentType: false })
+            .done(function (r) {
+                planilla = r;
+                pintarPlanilla('Planilla «' + escapar(r.nombre) + '», ' + r.total_filas + ' filas.' +
+                               '<a class="agp-planilla-quitar">Quitar</a>', 'text-success');
+                enviar('Te subí la planilla «' + r.nombre + '». ¿Cómo la cargamos?');
+            })
+            .fail(function (xhr) {
+                var r = xhr && xhr.responseJSON;
+                pintarPlanilla(escapar((r && r.error) || 'No se pudo subir la planilla.'), 'text-danger');
+            })
+            .always(function () { $('#agp-planilla-archivo').val(''); });
+    });
+    $('#agp-planilla').on('click', '.agp-planilla-quitar', function () {
+        planilla = null;
+        $('#agp-planilla .agp-planilla-estado').prop('hidden', true).empty();
+    });
+
+    function enviar(texto) {
         $('#agp-enviar').prop('disabled', true);
         pintar('Vos', 'agp-usuario', '<div class="agp-texto">' + escapar(texto) + '</div>');
         pintar(agente.nombre, 'agp-agente agp-pensando-wrap', '<div class="agp-texto agp-pensando">Pensando...</div>');
         estado('pensando');
 
-        $.post(BASE + 'consultar', { pregunta: texto, pantalla: pantallaActual(), agente: agente.clave })
+        var pedido = { pregunta: texto, pantalla: pantallaActual(), agente: agente.clave };
+        if (planilla && agente.rol === 'coach') { pedido.planilla_id = planilla.planilla_id; }
+        $.post(BASE + 'consultar', pedido)
             .done(function (r) { $('.agp-pensando-wrap').remove(); pintarRespuesta(r);
                                  estado('hablando'); setTimeout(function () { estado('saludo'); }, 2500); })
             .fail(function (xhr) {
@@ -343,7 +594,7 @@
                     : 'No se pudo enviar la consulta. Revisá tu conexión y probá de nuevo.' });
             })
             .always(function () { $('#agp-enviar').prop('disabled', false); $('#agp-pregunta').focus(); });
-    });
+    }
 
     $conv.on('click', '.agp-feedback button', function () {
         var $b = $(this), $caja = $b.closest('.agp-feedback');

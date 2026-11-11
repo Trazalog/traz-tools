@@ -8,6 +8,14 @@ Endpoints:
     POST /sugerencias/respuesta  el usuario ve o descarta una propuesta
     POST /feedback         calificacion de una respuesta (pulgar arriba/abajo)
     GET  /admin/feedback   feedback negativo agrupado, para el ciclo de mejora
+    GET  /kuntur/configuracion             la entrevista de configuracion: pregunta que sigue o tarjeta
+    POST /kuntur/configuracion/iniciar     empezar o revisar la configuracion
+    POST /kuntur/configuracion/responder   responder la pregunta que sigue
+    POST /kuntur/configuracion/confirmar   guardar la configuracion propuesta
+    GET  /kuntur/avisos                    metas en riesgo o sin cumplirse que Kuntur ya aviso
+    POST /kuntur/avisos/silenciar          "no insistas" (o volver a avisar)
+    POST /kuntur/cargas/confirmar          el administrador toco "Cargar": se ejecuta con su token (ADR-A12)
+    POST /kuntur/cargas/descartar          "Ahora no"
 
 Los avisos (la campanita y el push) ya no estan aca: son los de Tools
 (ADR-015, esquema ntf); el monitoreo publica con agente/avisos.py.
@@ -27,7 +35,7 @@ import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import agentes, entrevistador, rag
+from . import agentes, cargas, configuracion, entrevistador, planillas, rag
 from .config import Config, cargar
 from .llm import OpenRouter
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
@@ -113,6 +121,9 @@ class ConsultaIn(BaseModel):
     pantalla: str | None = Field(
         default=None, max_length=300,
         pattern=r"^/?[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-.%=]*)*(?:\?[A-Za-z0-9_\-.%=&]*)?$")
+    # La planilla que el administrador subio a Kuntur (POST /kuntur/planillas).
+    # Solo cuenta para Kuntur; para los demas agentes se ignora.
+    planilla_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 
 class ConsultaOut(BaseModel):
@@ -126,6 +137,8 @@ class ConsultaOut(BaseModel):
     # Metas que propuso Kuntur (AGENTE-CO-03): el panel las muestra como tarjeta
     # y el administrador decide si las carga. Vacio para los demas agentes.
     propuestas_meta: list[dict] = []
+    # Cargas de configuracion que propuso Kuntur (ADR-A12): tarjeta con "Cargar".
+    propuestas_carga: list[dict] = []
 
 
 class SugerenciasIn(BaseModel):
@@ -137,6 +150,21 @@ class SugerenciasIn(BaseModel):
 class RespuestaPropuestaIn(BaseModel):
     propuesta_id: int
     estado: str = Field(pattern=r"^(aceptada|descartada)$")
+
+
+class RespuestaConfigIn(BaseModel):
+    pregunta: str = Field(pattern=r"^[a-z_]{1,40}$")
+    valores: list[str] = Field(default_factory=list, max_length=10)
+    texto: str | None = Field(default=None, max_length=1000)
+
+
+class CargaIn(BaseModel):
+    carga_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+
+
+class SilenciarIn(BaseModel):
+    objetivo_id: int
+    silenciado: bool = True
 
 
 class FeedbackIn(BaseModel):
@@ -241,12 +269,153 @@ async def consulta(
         autorizacion=ident.autorizacion, usr_id=ident.usr_id,
         usuario_nick=ident.nick, canal=entrada.canal, agente=agente,
         pantalla=entrada.pantalla,
+        planilla_id=entrada.planilla_id if agente.clave == "kuntur" else None,
     ))
     return ConsultaOut(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms, propuestas_meta=res.propuestas_meta,
+        propuestas_carga=res.propuestas_carga,
     )
+
+
+# ------------------------------------------------- Kuntur: configuracion y avisos
+async def _admin_de_kuntur(con: psycopg.AsyncConnection, ident: Identidad) -> str:
+    """Solo un administrador que puede usar a Kuntur (R1). Para cualquier otro,
+    lo mismo que si Kuntur no existiera. Devuelve el usuario y fija el RLS."""
+    try:
+        await agentes.para_consulta(con, "kuntur", ident.rol)
+    except (agentes.AgenteDesconocido, agentes.AccesoDenegado) as e:
+        raise HTTPException(404, "No existe ese agente") from e
+    except agentes.AgenteNoDisponible as e:
+        raise HTTPException(409, str(e)) from e
+    await rag.fijar_empresa(con, ident.empr_id)
+    return ident.nick or str(ident.usr_id or "")
+
+
+@app.get("/kuntur/configuracion")
+async def kuntur_configuracion(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    await _admin_de_kuntur(con, ident)
+    return configuracion.estado(await configuracion.perfil(con, ident.empr_id),
+                                await configuracion.entrevista(con, ident.empr_id))
+
+
+@app.post("/kuntur/configuracion/iniciar")
+async def kuntur_configuracion_iniciar(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    return await configuracion.iniciar(con, ident.empr_id, usuario)
+
+
+@app.post("/kuntur/configuracion/responder")
+async def kuntur_configuracion_responder(
+    entrada: RespuestaConfigIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await configuracion.contestar(con, ident.empr_id, usuario, entrada.pregunta,
+                                             entrada.valores, entrada.texto)
+    except configuracion.RespuestaInvalida as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/kuntur/configuracion/confirmar")
+async def kuntur_configuracion_confirmar(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await configuracion.confirmar(con, ident.empr_id, usuario)
+    except configuracion.RespuestaInvalida as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.get("/kuntur/avisos")
+async def kuntur_avisos(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    await _admin_de_kuntur(con, ident)
+    return {"avisos": await configuracion.avisos_activos(con, ident.empr_id)}
+
+
+@app.post("/kuntur/avisos/silenciar")
+async def kuntur_avisos_silenciar(
+    entrada: SilenciarIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    if not await configuracion.silenciar(con, ident.empr_id, entrada.objetivo_id, usuario,
+                                         silenciado=entrada.silenciado):
+        raise HTTPException(404, "Kuntur no avisó nada de esa meta")
+    return {"objetivo_id": entrada.objetivo_id, "silenciado": entrada.silenciado}
+
+
+class PlanillaIn(BaseModel):
+    nombre: str = Field(min_length=1, max_length=200)
+    # El archivo tal cual, en base64 (CSV o Excel .xlsx). Hasta 5 MB.
+    contenido_base64: str = Field(min_length=4, max_length=7_000_000)
+
+
+@app.post("/kuntur/planillas")
+async def kuntur_planillas(
+    entrada: PlanillaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El administrador sube su planilla como la tiene (lote 2). Se guarda por
+    empresa; despues se le pregunta a Kuntur con su planilla_id."""
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        contenido = base64.b64decode(entrada.contenido_base64, validate=True)
+    except (binascii.Error, ValueError) as e:
+        raise HTTPException(400, "El archivo no vino bien codificado") from e
+    try:
+        p = await planillas.guardar(con, empr_id=ident.empr_id, usuario=usuario,
+                                    nombre=entrada.nombre, contenido=contenido)
+    except planillas.PlanillaInvalida as e:
+        raise HTTPException(400, str(e)) from e
+    await con.commit()
+    await rag.fijar_empresa(con, ident.empr_id)
+    return p.resumen()
+
+
+@app.post("/kuntur/cargas/confirmar")
+async def kuntur_cargas_confirmar(
+    entrada: CargaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """ADR-A12: se ejecuta exactamente lo que se guardo, con el token de ESTE
+    administrador. Un token de maquina no llega aca: no tiene rol de administrador."""
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await cargas.confirmar(con, cfg, empr_id=ident.empr_id, carga_id=entrada.carga_id,
+                                      usuario=usuario, autorizacion=ident.autorizacion)
+    except cargas.CargaInvalida as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/kuntur/cargas/descartar")
+async def kuntur_cargas_descartar(
+    entrada: CargaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await cargas.descartar(con, empr_id=ident.empr_id, carga_id=entrada.carga_id, usuario=usuario)
+    except cargas.CargaInvalida as e:
+        raise HTTPException(409, str(e)) from e
 
 
 @app.post("/sugerencias")

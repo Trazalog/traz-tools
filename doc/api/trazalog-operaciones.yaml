@@ -1662,6 +1662,122 @@ paths:
               schema:
                 type: object
 
+  # --- Configuracion inicial (ADR-A12): graban. Los agentes las ejecutan solo despues de que
+  #     el administrador confirmo la carga en el panel, con su token. Token de maquina: 403.
+  /mcp/core/establecimiento:
+    post:
+      operationId: core_alta_establecimiento
+      summary: Alta de un establecimiento de la empresa
+      x-mcp-annotations:
+        destructiveHint: false
+      description: |
+        Da de alta un establecimiento (planta, obra, base operativa) de la
+        empresa. Es lo primero que se carga: los depósitos van dentro de un
+        establecimiento. Devuelve `respuesta.esta_id`.
+
+        **Requiere confirmación explícita del administrador** antes de
+        ejecutar: graba en la configuración de la empresa.
+      tags:
+        - Configuración
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties:
+                nombre: { type: string, maxLength: 200, description: "Nombre del establecimiento" }
+                calle: { type: string }
+                altura: { type: string }
+      responses:
+        "200":
+          description: "`respuesta.esta_id`"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Falta el nombre
+        "403":
+          description: Token de máquina (solo lectura)
+
+  /mcp/alm/deposito:
+    post:
+      operationId: alm_alta_deposito
+      summary: Alta de un depósito en un establecimiento
+      x-mcp-annotations:
+        destructiveHint: false
+      description: |
+        Da de alta un depósito dentro de un establecimiento de la empresa
+        (`esta_id`, de la lista de establecimientos). Sin encargados: se
+        asignan desde la pantalla de Establecimientos. Devuelve
+        `respuesta.depo_id`.
+
+        **Requiere confirmación explícita del administrador** antes de ejecutar.
+      tags:
+        - Configuración
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, esta_id]
+              properties:
+                nombre: { type: string, maxLength: 200 }
+                descripcion: { type: string }
+                esta_id: { type: string, description: "Establecimiento de la empresa" }
+      responses:
+        "200":
+          description: "`respuesta.depo_id`"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Faltan datos o el establecimiento no es de la empresa
+        "403":
+          description: Token de máquina (solo lectura)
+
+  /mcp/core/valor:
+    post:
+      operationId: core_alta_valor
+      summary: Alta de una unidad de medida, tipo de artículo o tipo de herramienta
+      x-mcp-annotations:
+        destructiveHint: false
+        idempotentHint: true
+      description: |
+        Agrega un valor a una lista de la empresa: `unidades_medida`,
+        `tipo_articulo` o `tipos_herramienta`. Si el valor ya está, devuelve
+        el existente (`respuesta.existente: true`) sin grabar otro.
+
+        **Requiere confirmación explícita del administrador** antes de ejecutar.
+      tags:
+        - Configuración
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lista, valor]
+              properties:
+                lista: { type: string, enum: [unidades_medida, tipo_articulo, tipos_herramienta] }
+                valor: { type: string, maxLength: 100 }
+                descripcion: { type: string }
+      responses:
+        "200":
+          description: "`respuesta.tabl_id` (y `existente: true` si ya estaba)"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Lista no permitida o valor vacío
+        "403":
+          description: Token de máquina (solo lectura)
+
 components:
 
   securitySchemes:

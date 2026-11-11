@@ -178,7 +178,9 @@ Cada empresa queda como una corrida (`disparador = 'evento_operativo'`, canal `s
 
 Desde `023`, **Kuntur está activo y solo lo ven los administradores** (rol 1 de Dnato). En el panel del agente, un administrador ve dos pestañas: Quirqui y Kuntur. Con Kuntur charla sobre los indicadores del Tablero y, cuando acuerdan una meta, Kuntur la **propone** como una tarjeta con el botón "Cargar meta". Kuntur no graba nada: la meta la carga el administrador con ese botón, que hace lo mismo que la tarjeta Metas del Tablero.
 
-**Seguimiento de metas.** Otro trabajo programado revisa las metas vigentes de cada empresa con credencial de máquina y, si una no se cumple, se lo avisa **a quien la cargó**, firmado por Kuntur (aviso tipo `kpi_desvio`, con enlace al Tablero). Una meta que sigue sin cumplirse se avisa **una vez por semana**. La disponibilidad de equipos se mide con los últimos 30 días. No usa el modelo de lenguaje: es una regla sobre los datos.
+**Entrevista de configuración (desde `024`).** La primera vez, Kuntur le propone al administrador unas pocas preguntas: industria, qué partes de Trazalog usa, si trabaja para una operadora y qué le exige, y qué le preocupa. Con "Confirmar" se guarda en `agente.perfil_empresa`, y desde ahí Kuntur lo tiene en cuenta en cada charla. El detalle está en [`kuntur-entrevista-configuracion.md`](kuntur-entrevista-configuracion.md).
+
+**Seguimiento de metas.** Otro trabajo programado revisa las metas vigentes de cada empresa con credencial de máquina. Cada meta queda **ok, en riesgo** (hoy se cumple pero, con la tendencia de los últimos 30 días, no llega a su fecha) **o no se cumple**. Kuntur avisa **cuando el estado cambia**, a quien cargó la meta, firmado por Kuntur (aviso tipo `kpi_desvio`, con enlace al Tablero). Lo que ya avisó queda en `agente.aviso_meta`, y en la pestaña Kuntur el administrador puede tocar "No insistas": no se avisa más de esa meta hasta que vuelva a cumplirse. La disponibilidad de equipos se mide con los últimos 30 días. No usa el modelo de lenguaje: es una regla sobre los datos.
 
 **Requisitos:** los mismos que el monitoreo de arriba (credenciales de máquina, `AGENTE_AVISOS_URL`), más `022` y `023` aplicados y la base de Tools con `v2.8.1.6/kpi_objetivos.sql`. No hace falta suscribir a nadie: el destinatario sale de la meta.
 
@@ -198,7 +200,7 @@ Cada empresa queda como una corrida (`disparador = 'desvio_kpi'`, canal `schedul
 
 ### La industria de cada empresa (ADR-A11)
 
-El conocimiento está marcado por industria: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Una empresa con la industria declarada recibe lo de su industria y lo general; **sin declarar, recibe todo**, etiquetado. Hoy la industria la carga Trazalog; más adelante la va a completar la entrevista de Kuntur.
+El conocimiento está marcado por industria: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Una empresa con la industria declarada recibe lo de su industria y lo general; **sin declarar, recibe todo**, etiquetado. La industria la carga Trazalog o, desde `024`, la confirma el administrador en la entrevista de Kuntur.
 
 Se declara en la **terminal local** (o en la del servidor de la base), con el propietario de la base o el curador:
 

@@ -101,7 +101,7 @@ VALUES
     'rodeos. Propones, nunca ordenas; y cuando algo no funciono, lo decis.',
     'admin', 'kuntur.md',
     ARRAY['kpi_get_*', 'kpi_proponer_meta', 'tar_get_*', 'man_get_*', 'alm_get_*',
-          'pan_get_*', 'core_get_*', 'web_buscar'],
+          'pan_get_*', 'core_get_*', 'dnato_get_*', 'web_buscar'],
     ARRAY['consulta', 'primer_ingreso_admin', 'cambio_contexto', 'desvio_kpi',
           'cierre_medicion'],
     ARRAY['industria', 'empresa', 'planes'],
