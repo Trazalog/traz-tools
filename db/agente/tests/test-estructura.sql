@@ -446,8 +446,23 @@ FROM unnest(ARRAY['kpi_get_valor', 'kpi_get_historico', 'kpi_get_objetivos', 'kp
 INSERT INTO _resultado
 SELECT 'Quirqui solo alcanza kpi_get_valor; Kuntur las cuatro',
        (SELECT array_agg(t ORDER BY t) FROM agente.tools_permitidas('quirqui') t WHERE t LIKE 'kpi_%') = ARRAY['kpi_get_valor']
-       AND (SELECT count(*) FROM agente.tools_permitidas('kuntur') t WHERE t LIKE 'kpi_%') = 4,
+       AND (SELECT count(*) FROM agente.tools_permitidas('kuntur') t WHERE t LIKE 'kpi\_get\_%') = 4,
        '011 + 022';
+
+-- ---------------------------------------------------------------------------
+-- 023 - Kuntur activo, con la tool de proponer metas
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'kpi_proponer_meta catalogada como generacion',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = 'kpi_proponer_meta' AND clase = 'generacion'), 'CO-03';
+
+INSERT INTO _resultado
+SELECT 'Kuntur activo, solo para administradores, y solo el propone metas',
+       EXISTS (SELECT 1 FROM agente.agente WHERE clave = 'kuntur' AND activo AND acceso = 'admin')
+       AND EXISTS (SELECT 1 FROM agente.tools_permitidas('kuntur') t WHERE t = 'kpi_proponer_meta')
+       AND NOT EXISTS (SELECT 1 FROM agente.tools_permitidas('quirqui') t WHERE t = 'kpi_proponer_meta')
+       AND NOT EXISTS (SELECT 1 FROM agente.tools_permitidas('faustino') t WHERE t = 'kpi_proponer_meta'),
+       'CO-01, CO-03';
 
 -- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
@@ -461,7 +476,7 @@ FROM unnest(ARRAY[
     '008-destinatarios-alerta', '009-alcance-almacenes', '010-seed-taxonomia',
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
-    '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi'
+    '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

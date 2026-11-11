@@ -19,7 +19,7 @@ Procedimiento para poner en marcha, en un ambiente, las dos piezas que Kuntur ne
 | Acceso al Publisher del APIM | `https://<apim>:9443/publisher` |
 | Acceso a la base de los agentes y al entorno del orquestador | El servidor del orquestador |
 
-**Orden:** base de Tools → Dnato → MI → APIM → agentes → Tools (PHP). Cada paso se puede verificar antes de seguir.
+**Orden:** base de Tools → Dnato → MI → APIM → agentes → Tools (PHP) → Kuntur. Cada paso se puede verificar antes de seguir.
 
 ---
 
@@ -162,3 +162,40 @@ python -m agente.credenciales alta --empresa <empr_id> --client-id <client_id>
 Va con el código: `application/controllers/Objetivos.php`, `application/models/Objetivos_model.php`, `application/views/dashboard/objetivos.php`, `application/views/dashboard/admin_dashboard.php` y `lib/props/objetivos.js`.
 
 Verificar con un **administrador** de la empresa: en el Tablero, debajo de los indicadores, aparece la tarjeta **Metas**. Cargar una meta, ver que aparece con el valor de hoy y si se cumple, y cancelarla. Con un usuario que **no** es administrador, la tarjeta dice "Solo el administrador de la empresa ve las metas".
+
+---
+
+## 7. Kuntur: charla de metas y avisos
+
+Requiere los pasos 1 a 6. Lo que se activa acá está explicado para el usuario en [`operacion.md`](operacion.md), sección "Kuntur: metas y avisos al administrador".
+
+### 7.1 Activar a Kuntur
+
+**Dónde:** terminal en el servidor del orquestador, parado en la raíz del repo `traz-tools`.
+
+```bash
+psql -h <host-agente> -U <usuario-dueño> -d <base-agente> -v ON_ERROR_STOP=1 \
+  -f db/agente/023-kuntur-metas.sql
+```
+
+Reiniciar el orquestador para que tome el código nuevo (`agente/metas.py`, `agente/coach.py` y los cambios de `agente/orquestador.py` y `agente/api.py`), y desplegar en Tools el panel nuevo: `application/modules/traz-comp-agente/views/panel.php`, `controllers/Agente.php` y `models/Agentes.php`.
+
+Verificar con un **administrador**: en el panel del agente aparecen las pestañas **Quirqui** y **Kuntur**. Pedirle a Kuntur "quiero bajar los artículos bajo punto de pedido": tiene que mirar el valor de hoy y, cuando acuerden, mostrar una tarjeta "Meta propuesta" con el botón **Cargar meta**. Al tocarlo, la meta aparece en la tarjeta Metas del Tablero con la etiqueta "Kuntur". Con un usuario que **no** es administrador, el panel no muestra pestañas.
+
+**Vuelta atrás:** `db/agente/023-kuntur-metas.rollback.sql` (Kuntur queda inactivo; las metas ya cargadas siguen).
+
+### 7.2 Programar el seguimiento de metas
+
+**Dónde:** crontab del usuario del orquestador, en el servidor del orquestador.
+
+```
+0 8 * * * cd /ruta/a/traz-tools && .venv-agente/bin/python -m agente.coach >> /var/log/agente-coach.log 2>&1
+```
+
+Verificar a mano, en la terminal del servidor del orquestador parado en el repo, con una meta que hoy no se cumpla:
+
+```bash
+.venv-agente/bin/python -m agente.coach --empresa <empr_id>
+```
+
+Tiene que imprimir una línea con `"desvios": 1` y `"avisos": 1`, y a quien cargó la meta le tiene que llegar a la campanita "No se cumple la meta: …", firmado por Kuntur. Corrido otra vez la misma semana, no se repite.
