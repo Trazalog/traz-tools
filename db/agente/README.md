@@ -58,6 +58,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 024 | `024-kuntur-configuracion.sql` | Entrevista de configuración de Kuntur: `perfil_empresa` suma lo que cuenta el administrador (y quién lo confirmó), `entrevista_config` guarda la entrevista en curso y `aviso_meta` el último estado avisado de cada meta y el "No insistas". El runtime ahora escribe el perfil de su empresa |
 | 025 | `025-cargas-configuracion.sql` | ADR-A12: clase de tool `configuracion` (habilitada por nombre exacto en `agente.agente.tools_configuracion`, nunca por patrón) y `carga_propuesta`, lo que Kuntur propuso grabar; se ejecuta solo cuando el administrador toca "Cargar" |
 | 026 | `026-simulados-puesta-en-marcha.sql` | Servicios simulados de la puesta en marcha (deuda técnica): ABM de Mantenimiento con la interfaz de `develop-v3` y Dnato v3. Lo que "graban" queda en `agente.simulacion` |
+| 027 | `027-tools-alta-configuracion.sql` | Las tres primeras herramientas reales de configuración para Kuntur: `core_alta_establecimiento`, `alm_alta_deposito`, `core_alta_valor` (recursos de `toolsMCPAPI` sobre los servicios de datos de las pantallas) |
 
 Aplicación completa, desde el directorio del repo:
 

@@ -1344,6 +1344,343 @@
       </faultSequence>
    </resource>
 
+
+   <!-- core_alta_establecimiento — alta de un establecimiento (planta, obra, base) de la empresa.
+        CLASE configuracion (ADR-A12): graba. Los agentes la ejecutan SOLO despues de que el
+        administrador confirmo la carga en el panel, con SU token. Con token de maquina, 403.
+        La empresa sale del token (jwt_empr_id, PostgreSQL); el agente nunca la manda.
+        Llama al MISMO recurso del servicio de datos que la pantalla, sin modificarlo
+        (doc/agente/analisis-impacto-kuntur-configuracion.md, lote 1). -->
+   <resource methods="POST" uri-template="/mcp/core/establecimiento">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- Mismo cuerpo que Establecimientos::guardarEstablecimiento(); pais/estado/localidad
+              son tabl_id de las listas geograficas y van vacios si no se informan. -->
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            function t(v) { return (v === null || v === undefined) ? "" : ("" + v).replace(/^\s+|\s+$/g, ""); }
+            var nombre = t(b.nombre);
+            if (nombre === "" || nombre.length > 200) {
+               mc.setProperty("cfg_error", "core_alta_establecimiento: requiere nombre (hasta 200 caracteres)");
+            } else {
+               mc.setProperty("cfg_error", "");
+               mc.setPayloadJSON({ "_post_establecimiento": {
+                  "nombre": nombre, "calle": t(b.calle), "altura": t(b.altura),
+                  "pais": t(b.pais), "estado": t(b.estado), "localidad": t(b.localidad),
+                  "empr_id": "" + mc.getProperty("jwt_empr_id") } });
+            }
+         ]]></script>
+         <!-- Parametro invalido: 400 directo (toolsFault no llega a responder desde el inSequence). -->
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | core_alta_establecimiento | iniciando (toolsMCPAPI -> COREDataService)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+         <property name="uri.var.altaEsta_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/establecimiento')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.altaEsta_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/core/establecimiento - COREDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <!-- La operacion es sincrona y ya termino: 200, no 202 (decision 2026-08-21). -->
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP core_alta_establecimiento (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- alm_alta_deposito — alta de un deposito en un establecimiento de la empresa. Sin encargados (son una segunda
+        llamada sin transaccion en la pantalla y requieren usuarios ya creados).
+        CLASE configuracion (ADR-A12): graba. Los agentes la ejecutan SOLO despues de que el
+        administrador confirmo la carga en el panel, con SU token. Con token de maquina, 403.
+        La empresa sale del token (jwt_empr_id, PostgreSQL); el agente nunca la manda.
+        Llama al MISMO recurso del servicio de datos que la pantalla, sin modificarlo
+        (doc/agente/analisis-impacto-kuntur-configuracion.md, lote 1). -->
+   <resource methods="POST" uri-template="/mcp/alm/deposito">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            function t(v) { return (v === null || v === undefined) ? "" : ("" + v).replace(/^\s+|\s+$/g, ""); }
+            var nombre = t(b.nombre), esta = t(b.esta_id);
+            if (nombre === "" || nombre.length > 200 || !/^[0-9]+$/.test(esta)) {
+               mc.setProperty("cfg_error", "alm_alta_deposito: requiere nombre y esta_id (numero)");
+            } else {
+               mc.setProperty("cfg_error", "");
+               mc.setProperty("cfg_nombre", nombre);
+               mc.setProperty("cfg_descripcion", t(b.descripcion) === "" ? nombre : t(b.descripcion));
+               mc.setProperty("cfg_esta_id", esta);
+            }
+         ]]></script>
+         <!-- Parametro invalido: 400 directo (toolsFault no llega a responder desde el inSequence). -->
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+
+         <!-- El servicio de datos no controla que el establecimiento sea de la empresa:
+              se controla aca, con la misma lista que usa la pantalla. -->
+         <property name="uri.var.estas_url"
+                   expression="fn:concat($ctx:dataservices_url,'/COREDataService/establecimientos/',get-property('jwt_empr_id'))"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.estas_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET establecimientos - COREDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.establecimientos && r.establecimientos.establecimiento) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var esta = "" + mc.getProperty("cfg_esta_id"), ok = false;
+            for (var i = 0; i < l.length; i++) { if (("" + l[i].esta_id) === esta) { ok = true; } }
+            mc.setProperty("cfg_error", ok ? "" : "alm_alta_deposito: el establecimiento " + esta + " no es de esta empresa");
+            if (ok) {
+               mc.setPayloadJSON({ "_post_deposito_establecimiento": {
+                  "nombre": "" + mc.getProperty("cfg_nombre"), "descripcion": "" + mc.getProperty("cfg_descripcion"),
+                  "esta_id": esta, "empr_id": "" + mc.getProperty("jwt_empr_id") } });
+            }
+         ]]></script>
+         <!-- Parametro invalido: 400 directo (toolsFault no llega a responder desde el inSequence). -->
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | alm_alta_deposito | iniciando (toolsMCPAPI -> COREDataService)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+         <property name="uri.var.altaDepo_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/deposito/establecimiento')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.altaDepo_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/alm/deposito - COREDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <!-- La operacion es sincrona y ya termino: 200, no 202 (decision 2026-08-21). -->
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP alm_alta_deposito (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
+   <!-- core_alta_valor — alta de un valor en una lista de la empresa: unidades de medida, tipos de
+        articulo o tipos de herramienta. Si el valor ya esta, devuelve el existente sin grabar.
+        CLASE configuracion (ADR-A12): graba. Los agentes la ejecutan SOLO despues de que el
+        administrador confirmo la carga en el panel, con SU token. Con token de maquina, 403.
+        La empresa sale del token (jwt_empr_id, PostgreSQL); el agente nunca la manda.
+        Llama al MISMO recurso del servicio de datos que la pantalla, sin modificarlo
+        (doc/agente/analisis-impacto-kuntur-configuracion.md, lote 1). -->
+   <resource methods="POST" uri-template="/mcp/core/valor">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+
+         <!-- Solo tres listas. Mismo cuerpo que Valores::guardarValor() de un usuario de la
+              empresa: tabla sin prefijo y empr_id aparte (la base arma el nombre por empresa).
+              Nunca una lista global. -->
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            function t(v) { return (v === null || v === undefined) ? "" : ("" + v).replace(/^\s+|\s+$/g, ""); }
+            var listas = { "unidades_medida": 1, "tipo_articulo": 1, "tipos_herramienta": 1 };
+            var lista = t(b.lista), valor = t(b.valor);
+            if (!listas[lista] || valor === "" || valor.length > 100) {
+               mc.setProperty("cfg_error", "core_alta_valor: lista tiene que ser unidades_medida, tipo_articulo o tipos_herramienta, y valor (hasta 100 caracteres)");
+            } else {
+               mc.setProperty("cfg_error", "");
+               mc.setProperty("cfg_lista", lista);
+               mc.setProperty("cfg_valor", valor);
+               mc.setProperty("cfg_descripcion", t(b.descripcion) === "" ? valor : t(b.descripcion));
+            }
+         ]]></script>
+         <!-- Parametro invalido: 400 directo (toolsFault no llega a responder desde el inSequence). -->
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+
+         <!-- Si el valor ya esta en la lista de la empresa, no se repite (la pantalla tampoco lo impide). -->
+         <property name="uri.var.lista_url"
+                   expression="fn:concat($ctx:dataservices_url,'/COREDataService/tabla/',get-property('cfg_lista'),'/empresa/',get-property('jwt_empr_id'))"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.lista_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="GET lista - COREDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.tablas && r.tablas.tabla) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var buscado = ("" + mc.getProperty("cfg_valor")).toLowerCase(), existente = "";
+            for (var i = 0; i < l.length; i++) {
+               if (("" + l[i].valor).replace(/^\s+|\s+$/g, "").toLowerCase() === buscado) { existente = "" + l[i].tabl_id; }
+            }
+            mc.setProperty("cfg_existente", existente);
+            if (existente === "") {
+               mc.setPayloadJSON({ "_post_tablas": {
+                  "tabla": "" + mc.getProperty("cfg_lista"), "valor": "" + mc.getProperty("cfg_valor"),
+                  "descripcion": "" + mc.getProperty("cfg_descripcion"), "empr_id": "" + mc.getProperty("jwt_empr_id") } });
+            } else {
+               mc.setPayloadJSON({ "respuesta": { "tabl_id": existente, "existente": true } });
+            }
+         ]]></script>
+         <filter source="$ctx:cfg_existente" regex=".+">
+            <then>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </then>
+         </filter>
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | core_alta_valor | iniciando (toolsMCPAPI -> COREDataService)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="lista"   expression="get-property('cfg_lista')"/>
+         </log>
+         <property name="uri.var.altaValor_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/tablas')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.altaValor_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+               <property name="TOOLS_ERROR" value="POST /mcp/core/valor - COREDataService error" type="STRING"/>
+               <sequence key="toolsFault"/>
+            </else>
+         </filter>
+         <!-- La operacion es sincrona y ya termino: 200, no 202 (decision 2026-08-21). -->
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
+         <property name="TOOLS_ERROR" value="Error en MCP core_alta_valor (toolsMCPAPI)" type="STRING"/>
+         <sequence key="toolsFault"/>
+      </faultSequence>
+   </resource>
+
    <!-- man_get_kpi_disponibilidad — porcentaje del tiempo que la flota estuvo operativa. Es el KPI que el
          cliente presenta a su propio cliente.
          Reusa la query de KPI que ya usa el tablero de AssetPlanner, sin

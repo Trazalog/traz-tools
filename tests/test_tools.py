@@ -85,11 +85,13 @@ async def test_todo_lo_que_publica_el_gateway_esta_catalogado(con):
     assert not faltan, f"Tools del gateway sin catalogar en 012-tools.sql: {sorted(faltan)}"
 
 
-async def test_todo_lo_que_no_es_get_es_accion(con):
-    """Una tool que escribe no puede quedar como lectura por error de carga."""
+async def test_todo_lo_que_no_es_get_es_accion_o_configuracion(con):
+    """Una tool que escribe no puede quedar como lectura por error de carga. Las
+    de configuracion (ADR-A12) escriben, pero solo con confirmacion del administrador."""
     catalogo = await _catalogo(con)
-    mal = [n for n, m in _operaciones().items() if m != "GET" and catalogo.get(n) != "accion"]
-    assert not mal, f"Tools que escriben y no estan como 'accion': {mal}"
+    mal = [n for n, m in _operaciones().items()
+           if m != "GET" and catalogo.get(n) not in ("accion", "configuracion")]
+    assert not mal, f"Tools que escriben y no estan como 'accion' ni 'configuracion': {mal}"
 
 
 async def test_ningun_agente_puede_usar_una_tool_de_accion(con):

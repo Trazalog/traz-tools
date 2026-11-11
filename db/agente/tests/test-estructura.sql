@@ -522,7 +522,8 @@ FROM unnest(ARRAY[
     '011-agentes', '012-tools', '013-corrida', '014-tool-web', '015-fuentes-producto',
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
-    '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha'
+    '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
+    '027-tools-alta-configuracion'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

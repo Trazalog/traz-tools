@@ -8,7 +8,7 @@ Qué es: el análisis de impacto que exige el `CLAUDE.md` antes de tocar el núc
 |---|---|
 | Fecha | 2026-11-11 |
 | Tarea | AGENTE-CO-09 (carga inicial) |
-| Estado | **Para aprobar** |
+| Estado | A-1 **aprobado y hecho** (2026-11-11); A-2 **en revisión** (ver §3.3); A-3 y A-4 resueltos como simulados |
 | Comparado contra | `origin/master` (producción) y `origin/develop-v3.5`, el 2026-11-11 |
 
 ---
@@ -17,7 +17,7 @@ Qué es: el análisis de impacto que exige el `CLAUDE.md` antes de tocar el núc
 
 | Lote | Qué | Toca el núcleo | Riesgo | Propuesta |
 |---|---|---|---|---|
-| 1 | Alta de establecimiento, depósito y valores de listas (unidades de medida, tipos de artículo, tipos de herramienta) | **Sí, solo se suman** recursos nuevos a la fachada MCP (`toolsMCPAPI.xml`). Los servicios de datos que llaman **no se modifican** | Bajo | Hacerlo ya |
+| 1 | Alta de establecimiento, depósito y valores de listas (unidades de medida, tipos de artículo, tipos de herramienta) | **Sí, solo se suman** recursos nuevos a la fachada MCP (`toolsMCPAPI.xml`). Los servicios de datos que llaman **no se modifican** | Bajo | **Hecho** (falta probarlo en un MI de prueba, §2.5) |
 | 2 | Carga de artículos y herramientas de a muchos (con la planilla del cliente) | **Sí: una función nueva** en la base (`sta.carga_masiva_filas`), que reutiliza los procedimientos de la carga masiva de Dnato sin cambiarlos | Medio | Hacerlo después del lote 1 |
 | 3 | ABM de Mantenimiento: sectores, áreas, procesos, criticidades, grupos, marcas y equipos | No: **servicios simulados** con la interfaz de `MANDataService` de `develop-v3` (decisión del PM, 2026-11-11). **Hecho** | Bajo | Reemplazar por los reales cuando lleguen a `develop-v3.5` (deuda técnica) |
 | 4 | Menús, roles y administradores (Dnato v3) | No: servicios **simulados** dentro del motor de los agentes (decisión del PM, deuda técnica). **Hecho** | Bajo | Reemplazar por los reales cuando Dnato v3 exista |
@@ -38,7 +38,7 @@ Tres recursos nuevos en la fachada MCP (`_backend/api/.../apis/toolsMCPAPI.xml`)
 
 Detalles:
 
-- `core_alta_valor` solo acepta tres listas: `unidades_medida`, `tipo_articulo` y `tipos_herramienta`. El nombre que se graba sigue la convención de la pantalla Lista de Valores (`<empr_id>-<lista>`, `application/models/core/Valores.php:97-107`), armado con el `empr_id` del token. Nunca graba en una lista global (`999999`).
+- `core_alta_valor` solo acepta tres listas: `unidades_medida`, `tipo_articulo` y `tipos_herramienta`. Manda **el mismo cuerpo que la pantalla Lista de Valores para un usuario de la empresa** (`application/models/core/Valores.php:97-107`): el nombre de la lista sin prefijo y el `empr_id` del token aparte. Ojo: las consultas buscan la lista como `<empr_id>-<lista>` y el alta la manda sin prefijo, así que el nombre por empresa lo arma la base. Supuesto: hay un disparador en la base real que no está en el repositorio. Al mandar lo mismo que la pantalla, el resultado es el mismo con o sin ese disparador. Nunca graba en una lista global (`999999`).
 - `alm_alta_deposito` exige un establecimiento **de la misma empresa**: antes de grabar, lee el establecimiento y verifica que sea suyo. El servicio de datos no lo controla.
 - Los encargados del depósito **no entran en esta primera versión**: en la pantalla son una segunda llamada sin transacción y requieren usuarios ya creados.
 - Las tres responden `200` con el id creado, no `202` (decisión del 2026-08-21: con `202` el cliente MCP descarta el cuerpo).
@@ -99,12 +99,24 @@ La carga masiva de Dnato (`sta.ejecutar_carga_masiva(procedimiento, url_archivo,
   - La transformación de todas las filas la hace **el código, no el modelo**, así que no puede inventar datos.
   - La tarjeta muestra las primeras 10 filas ya transformadas y el total.
 
-### 3.3 Qué hay que confirmar antes (comparación contra producción)
+### 3.3 Lo que encontré al leer la carga masiva existente (2026-11-11)
 
-- La función y los procedimientos `sta.*` son de **Dnato** y viven en la base de Tools. Hay que comparar contra lo desplegado en producción: el inventario solo los vio en el repo, y **las filas de `sta.entidades_negocio` dependen de cada ambiente**.
-- La nueva versión de Dnato mantiene la carga masiva (entrega E11) y suma validaciones. La función nueva tiene que quedar dentro de ese diseño. **Hay que avisarle a ese frente.**
+El PM señaló que la carga masiva de artículos y herramientas **ya existe** (y que quizás no esté configurada en DEV). Leí `sta.bulkload_articulos` y `sta.bulkload_herramientas` (`traz-comp-dnato/scripts/sql/sta/`). Tres cosas que importan para Kuntur:
 
-**Propuesta:** aprobar el lote 2 como dirección. El análisis detallado de la función nueva lo escribo cuando el lote 1 esté hecho.
+| Hallazgo | Por qué importa |
+|---|---|
+| El procedimiento **arranca con un `COPY` desde el archivo** que recibe por parámetro. No hay forma de llamarlo con las filas ya cargadas | Una herramienta no puede dejar un archivo en el servidor de la base. Para reutilizarlo, el procedimiento se tiene que partir en dos: "cargar el archivo" y "procesar lo cargado" |
+| La tabla intermedia (`sta.articulos`, `sta.herramientas`) **no tiene empresa**: procesa todo lo que tenga `procesado = false` | Si dos empresas cargan al mismo tiempo, las filas de una se pueden grabar en la otra. Es un riesgo de hoy, no de Kuntur |
+| Cada fila se graba aparte: **si una falla, las demás quedan** ("Procesados / Exitosos / Fallidos") | No es "todo o nada" (DocTest DNATO-UC-027 lo describe así: habría que ver si la pantalla deshace después). ADR-A12 pide todo o nada para Kuntur |
+
+**Propuesta (para aprobar, A-2):** una función nueva por entidad (`sta.bulkload_articulos_filas(filas jsonb, empr_id)`) que hace **la misma alta, con las mismas funciones de búsqueda** de unidad y tipo (`sta.calcula_unidad_medida`, `sta.calcula_tipo_articulo`), pero:
+- sin archivo;
+- sin la tabla intermedia compartida;
+- **todo o nada**.
+
+Los procedimientos actuales no se tocan. Como es de Dnato, hay que avisarle a ese frente.
+- *Alternativa:* partir el procedimiento actual en dos. Es menos código repetido, pero toca lo que usa hoy la pantalla de Carga Masiva en producción.
+- *En DEV:* la función nueva no depende de que la entidad esté configurada en `sta.entidades_negocio`, pero sí de que existan las funciones `sta.calcula_*`. Hay que verificarlo al desplegar.
 
 ---
 
@@ -157,7 +169,7 @@ Por decisión del PM, hasta que la nueva versión de Dnato exista, Kuntur trabaj
 
 | # | Qué | Propuesta |
 |---|---|---|
-| A-1 | Lote 1: las tres herramientas sobre servicios de datos existentes, sin modificarlos | Aprobar |
-| A-2 | Lote 2: la dirección (función nueva `sta.carga_masiva_filas` que reutiliza los procedimientos de Dnato), con su análisis detallado más adelante | Aprobar la dirección |
+| A-1 | Lote 1 | **Aprobado (2026-11-11) y hecho**: `toolsMCPAPI.xml`, `doc/api/trazalog-operaciones.yaml`, `027`. Falta la prueba contra un MI de prueba (`tests/security/mcp-alta-configuracion.hurl`) |
+| A-2 | Lote 2: función nueva por entidad, todo o nada, sin archivo ni tabla intermedia compartida (§3.3) | Aprobar, o elegir partir el procedimiento actual |
 | A-3 | Lote 3 | **Resuelto por el PM:** simulado con las interfaces de `develop-v3`; los equipos van en MariaDB |
 | A-4 | Lote 4 | **Resuelto por el PM:** simulado, como deuda técnica |
