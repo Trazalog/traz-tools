@@ -3,22 +3,22 @@
 ## Objetivo
 
 Qué es: el análisis de impacto para que una empresa recién dada de alta pueda, sin carga manual,
-crear pedidos de trabajo, planificar hitos y generar tareas que lancen el proceso por defecto
-**TST001 - Tarea Planificada**. Trae el diagnóstico, el diseño propuesto y lo que hay que verificar en
-la base antes de programar. Para quién: Rodolfo (PM). Cuándo leerlo: antes de aprobar el cambio.
+crear pedidos de trabajo **sin formulario**, planificar hitos y generar tareas que lancen el proceso
+por defecto **TST001 - Tarea Planificada**. Trae el diagnóstico, el diseño y lo que hay que verificar
+en la base antes de programar. Para quién: Rodolfo (PM). Cuándo leerlo: antes de aprobar el cambio.
 Qué NO cubre: los procesos a medida (Yudica, DDPE, SMA), que siguen configurándose a mano como hoy, y
 las correcciones de seguridad y de horas de Tareas ([`../specs/TAR-analisis-impacto-correcciones.md`](../specs/TAR-analisis-impacto-correcciones.md)).
 
 ## Metadata
 
-- **Fecha:** 2026-11-11
-- **Clase de riesgo:** 🔴 (trigger de alta de empresa, schema core) + 🟡 (alta de tarea estándar en
-  `traz-comp-tareasestandar`)
-- **Diseño pedido por el PM** (2026-11-11, abajo). Sigue el mismo patrón ya aprobado para el formulario
-  "Entrega Materiales" ([`impacto-config-formulario-entrega-alta.md`](impacto-config-formulario-entrega-alta.md)).
-- **Errores que resuelve:** #578 (empresa nueva sin `PROCESO-STANDAR`), H-110 (proceso sin formulario),
-  y la parte de #579/#580 que hace que una tarea estándar no lance TST001.
-- **Estado:** esperando aprobación y las verificaciones de §4. **No se modificó ningún archivo de
+- **Fecha:** 2026-11-11 (versión 2: sin formulario obligatorio y sin empresa plantilla)
+- **Clase de riesgo:** 🔴 (trigger de alta de empresa y una columna de `pro.pedidos_trabajo`) + 🟡
+  (servicio de datos del alta de pedido, `traz-comp-tareasestandar` y `traz-comp-bpm`)
+- **Diseño pedido por el PM** (2026-11-11, abajo).
+- **Errores que resuelve:** #578 (empresa nueva sin `PROCESO-STANDAR`), H-110 (pedido sin formulario),
+  H-118 ("Trabajo Terminado" sin caso) y la parte de #579/#580 que hace que una tarea estándar no lance
+  TST001.
+- **Estado:** esperando aprobación y las verificaciones de §5. **No se modificó ningún archivo de
   código ni de base.**
 
 ## Requisitos (PM, 2026-11-11)
@@ -28,6 +28,9 @@ las correcciones de seguridad y de horas de Tareas ([`../specs/TAR-analisis-impa
    ese proceso. Eso es consultoría aparte y no cambia.
 3. Una empresa nueva tiene que poder, de entrada: crear pedidos de trabajo, planificar hitos y generar
    tareas.
+4. **El pedido se crea sin formulario.** Si el cliente quiere uno, se lo asocia después por lista de
+   valores (o, más adelante, desde el nuevo DNATO).
+5. **Sin empresa plantilla 9000:** los valores por defecto los pone el alta de empresa.
 
 ## 1. Diagnóstico (verificado en el código y en el DEMO)
 
@@ -38,98 +41,130 @@ flowchart LR
     A -.no crea.-> D[lista<br/>tipos_pedidos_trabajo]
     C --> E[Alta de pedido]
     D --> E
-    E --> F[Hitos] --> G[Tareas → TST001]
+    F[info_id NOT NULL] -.bloquea sin formulario.-> E
+    E --> G[Hitos] --> H[Tareas → TST001]
 ```
 
 - **El alta de pedido necesita una fila de `pro.procesos`.** `Pedidotrabajo::guardarPedidoTrabajo()`
-  (`traz-comp-bpm`) busca el proceso de la sesión y, si no hay, `PROCESO-STANDAR` de la empresa
-  (`/proceso/nombre/PROCESO-STANDAR/empresa/<empr_id>`). De esa fila saca el estado inicial
-  (`esin_id` → `pedidos_trabajo.estado`, NOT NULL), si lanza un caso de Bonita para el pedido
-  (`lanzar_bpm`) y el formulario. Sin la fila, el alta falla sin explicar por qué (#578, visto en el
-  DEMO con las 2 empresas de prueba).
+  (`traz-comp-bpm`) busca el proceso de la sesión y, si no hay, `PROCESO-STANDAR` de la empresa. De
+  esa fila saca el estado inicial (`esin_id` → `pedidos_trabajo.estado`, NOT NULL), si lanza un caso de
+  Bonita para el pedido (`lanzar_bpm`) y el formulario (`form_id`). Sin la fila, el alta falla sin
+  explicar por qué (#578, visto en el DEMO con las 2 empresas de prueba).
 - **El trigger no la crea.** `core.configuracion_inicial_empresa_trg()` (última versión:
   `_backend/database/scripts/versiones/v2.8.1.3/configuracion_inicial_empresa_trg_func.sql`) crea
   menús, roles, listas de valores y el formulario de entrega. No crea nada de `pro.procesos` ni la
-  lista `tipos_pedidos_trabajo`, que el alta de pedido lee por empresa
-  (`obtenerTablaEmpr_id('tipos_pedidos_trabajo')`) y que el listado necesita para mostrar el pedido.
-- **Sin formulario no se puede guardar el pedido (H-110).** El alta manda `info_id` (la instancia del
-  formulario del proceso) y `pro.pedidos_trabajo.info_id` es NOT NULL.
+  lista `tipos_pedidos_trabajo`, que el alta lee por empresa (`obtenerTablaEmpr_id`) y que el listado
+  necesita (la consulta `getinfopedidotrabajo` hace `pe.tipt_id = t3.tabl_id`: sin tipo, el pedido no
+  se ve).
+- **Los estados del pedido son una lista general**, no de cada empresa: `estados_procesosPROC_EN_CURSO`
+  y `estados_procesosTRABAJO_TERMINADO` (`listar_pedidos_trabajo.php`, `lista_pedidos.php`). El estado
+  inicial se puede apuntar a esa lista sin crear nada por empresa.
+- **Hoy no se puede crear un pedido sin formulario (H-110), por dos lados:**
+  - la base: `pro.pedidos_trabajo.info_id` es NOT NULL (DDL v1.4);
+  - el servicio de datos: `setPedidoTrabajo` hace `cast(:info_id as integer)`, que falla con texto vacío.
+
+  La pantalla ya lo contempla: el alta solo manda `info_id` si hay formulario
+  (`pedido_trabajo.php`) y el listado muestra "Aún no se completó formulario asociado" si no hay
+  (`listar_pedidos_trabajo.php`).
+- **"Trabajo Terminado" necesita un caso del pedido.** `finalizarTrabajo()` busca la tarea del caso en
+  Bonita; un pedido que no abre caso propio (`lanzar_bpm=false`) responde "El case especificado..." y la
+  pantalla no avisa (H-118).
 - **TST001 ya está preparado para cada empresa.** El alta de empresa mapea el actor de
-  "TST001 - Tarea Planificada" al grupo de la empresa (`toolsCOREAPI.xml`), y `TAREAS_DEFAULT_PROC`
-  vale `TST001` en el `constants.php` del repo. Las tareas libres usan esa constante.
-- **Las tareas estándar no.** El alta de tarea estándar guarda `proc_id` vacío si no se elige un
-  proceso, y una tarea sin proceso no lanza caso (`Tareas::lanzarProceso()`). Además el selector no
-  ofrece TST001 (#580).
-- **Cómo lo resolvió la prueba completa (local, 2026-11-05):** con el script manual
-  `doctest/tests/e2e/seeds/tar/pro-procesos-empresas-test.sql`, que copia la fila `PROCESO-STANDAR`
-  de una empresa modelo con su formulario. Con eso pasaron las pruebas de pedidos, hitos y tareas. En
-  DEV el pedido va con `lanzar_bpm=false`, porque ese Bonita no tiene el proceso del pedido.
+  "TST001 - Tarea Planificada" al grupo de la empresa (`toolsCOREAPI.xml:399`) y `TAREAS_DEFAULT_PROC`
+  vale `TST001` en el `constants.php` del repo (falta en el del DEMO, #579).
+- **Las tareas estándar no lo usan.** Si no se elige proceso, se guardan con `proc_id` vacío y no
+  lanzan caso (`Tareas::lanzarProceso()`). Además el selector no ofrece TST001 (#580).
 
-## 2. Diseño propuesto
+## 2. Diseño
 
-### Cambio 1 — trigger de alta de empresa (próxima versión libre de scripts; hoy sería `v2.8.1.7`)
+### Cambio 1 — base de datos (próxima versión libre de scripts; hoy sería `v2.8.1.7`) 🔴
 
-Un bloque nuevo en `core.configuracion_inicial_empresa_trg()`, con su propio `begin … exception` como
-los demás (si falla, avisa con `raise warning` y la empresa se crea igual):
+1. `alter table pro.pedidos_trabajo alter column info_id drop not null;` con su rollback
+   (`set not null`, que solo funciona si no quedaron pedidos sin formulario).
+2. Bloque nuevo en `core.configuracion_inicial_empresa_trg()`, con su propio `begin … exception` como
+   los demás (si falla, avisa con `raise warning` y la empresa se crea igual). Inserta:
+   - en `pro.procesos`: `proc_id='PROCESO-STANDAR'`, `nombre='Proceso Estándar'`,
+     `lanzar_bpm=false`, `planificar_tareas=true`, `nombre_bpm=null`,
+     `esin_id='estados_procesosPROC_EN_CURSO'`, `form_id=null`, `empr_id=new.empr_id`,
+     `usuario_app='core'`;
+   - en `core.tablas`: la lista `tipos_pedidos_trabajo` con un valor por defecto, **"General"**
+     (propuesta: el PM puede cambiar el nombre o agregar otros).
 
-1. **Copiar el proceso `PROCESO-STANDAR` de la empresa plantilla 9000** a la empresa nueva, cambiando
-   `empr_id` y `usuario_app`. Si 9000 no lo tiene, no se hace nada.
-2. **Copiar su formulario** (cabecera e ítems), igual que el bloque de "Entrega Materiales", y apuntar
-   el `form_id` de la copia del proceso al formulario copiado.
-3. **Copiar las listas que el proceso necesita**: `tipos_pedidos_trabajo` de 9000 y, si el estado
-   inicial (`esin_id`) es una fila de `core.tablas` de 9000, esa fila, ajustando `esin_id` a la copia.
-4. Los valores por defecto los define **la fila de 9000**: ahí se deja `lanzar_bpm=false` (el pedido no
-   abre caso propio) y `planificar_tareas=true`. Así el pedido sirve para planificar hitos y las
-   tareas lanzan TST001. Una empresa que quiera otro proceso se configura a mano, como hoy.
+   `lanzar_bpm=false` significa que el pedido no abre un caso propio: sirve para planificar hitos, y
+   cada tarea lanza su caso de TST001.
 
-Copiar desde 9000, en vez de escribir los valores en el trigger, hace que el PM pueda cambiar el
-estándar editando la empresa plantilla, sin otra versión del trigger.
+### Cambio 2 — servicio de datos del alta de pedido (`PRODataService`) 🟡 núcleo
 
-### Cambio 2 — tarea estándar sin proceso usa TST001 (`traz-comp-tareasestandar`)
+`setPedidoTrabajo`: `cast(:info_id as integer)` pasa a
+`case when :info_id is null or :info_id = '' then null else cast(:info_id as integer) end`, igual
+que ya hace `setTareaPlanificada`.
 
-- `Tarea::guardar` y la edición: si `proc_id` llega vacío, se guarda `TAREAS_DEFAULT_PROC`
-  (`TST001`). Una tarea estándar nueva lanza TST001 sin que nadie lo elija.
-- El selector "Proceso Asociado" muestra TST001 como opción por defecto, más la lista general y la de
-  la empresa (C7 de `TAR-analisis-impacto-correcciones.md`).
-- **Impacto:** las tareas estándar ya guardadas con `proc_id` vacío no cambian (no se tocan datos).
-  Si una empresa usaba a propósito tareas que no abren caso, ahora las nuevas sí lo abren: según el PM,
-  el uso esperado es que abran TST001.
+### Cambio 3 — formulario opcional por lista de valores (`traz-comp-bpm`) 🟡
+
+El alta de pedido muestra formulario si el proceso tiene `form_id` (como hoy, Yudica y los demás no
+cambian). Si no tiene, busca la configuración de la empresa `configuraciones` /
+`formulario_pedido_trabajo` en la Lista de Valores (el mismo mecanismo que
+`formulario_entrega_materiales`). Si tampoco hay, el pedido se guarda sin formulario. Desde el nuevo
+DNATO, el formulario se asociaría escribiendo esa misma configuración.
+
+### Cambio 4 — tareas y "Trabajo Terminado" 🟡
+
+- **Tarea estándar sin proceso usa TST001** (`traz-comp-tareasestandar`, `Tarea::guardar` y la
+  edición): si `proc_id` llega vacío, se guarda `TAREAS_DEFAULT_PROC`. El selector "Proceso Asociado"
+  muestra TST001 como opción por defecto, más la lista general y la de la empresa (C7 del análisis de
+  Tareas). Las tareas ya guardadas no se tocan.
+- **"Trabajo Terminado" sin caso** (`Pedidotrabajo::finalizarTrabajo()`): si el pedido no tiene caso
+  de Bonita, cambia el estado directamente. Si tiene caso, sigue como hoy. Si el servidor rechaza, la
+  pantalla muestra el motivo (H-118).
 
 ### Qué no cambia
 
-- Yudica, DDPE y SMA: tienen su propio proceso (`proccessname` de la sesión) y no pasan por
-  `PROCESO-STANDAR`. El trigger solo actúa sobre empresas **nuevas**.
-- Empresas existentes sin `PROCESO-STANDAR`: no se tocan. Si hace falta, se carga con el script
-  manual de DocTest (decisión aparte).
+- Yudica, DDPE y SMA: usan su propio proceso (`proccessname` de la sesión) y sus formularios. El
+  trigger solo actúa sobre empresas **nuevas**, y el cambio 3 solo se activa cuando el proceso no tiene
+  formulario.
+- Empresas existentes sin `PROCESO-STANDAR`: no se tocan. Si hace falta, se cargan con el mismo
+  `insert` del trigger (decisión aparte, empresa por empresa).
 
-## 3. Qué se rompe si sale mal
+## 3. Qué lo consume
+
+| Pieza | Quién la usa |
+|---|---|
+| `pro.pedidos_trabajo.info_id` | alta de pedido (`traz-comp-bpm`), listado y cabecera de pedido (`getForm($info_id)`), planificación de hitos (`Pedidotrabajo::hitos` arma `"0".info_id`), `ddpe-tools-pro`, `yudi-tools-almproc` y `sein-tools-almpantar` en sus procesos (siempre con formulario: no cambian) |
+| `setPedidoTrabajo` | solo `Pedidotrabajos::guardarPedidoTrabajo()` |
+| `pro.procesos` | alta de pedido, `Tarea.php` (`procesos($proc_id)`), procesos a medida |
+| `finalizarTrabajo()` | botón "Trabajo Terminado" del listado de pedidos |
+
+## 4. Qué se rompe si sale mal
 
 | Riesgo | Efecto | Cómo se cubre |
 |---|---|---|
-| La clave primaria de `pro.procesos` es solo `proc_id` (así figura en el DDL v1.4 del repo) | La segunda empresa no puede tener `PROCESO-STANDAR`: el bloque falla y avisa, la empresa se crea igual pero sin pedidos (como hoy) | Verificación 4.2 antes de programar. En DEV la prueba completa cargó la fila en varias empresas, así que ahí la clave ya es otra |
-| 9000 no tiene `PROCESO-STANDAR` o tiene uno de otra cosa | No se copia nada (como hoy) | Verificación 4.1 y cargar la fila en 9000 en cada ambiente |
-| El estado inicial de 9000 apunta a una fila de otra empresa | El pedido nace con un estado que la empresa no ve | Verificación 4.3 |
+| La clave primaria de `pro.procesos` es solo `proc_id` (así figura en el DDL v1.4) | La segunda empresa no puede tener `PROCESO-STANDAR`: el bloque falla y avisa, la empresa se crea igual pero sin pedidos (como hoy) | Verificación 5.1. En DEV la prueba completa cargó la fila en varias empresas, así que ahí la clave ya es otra |
+| `estados_procesosPROC_EN_CURSO` no existe en algún ambiente | El insert falla por la clave foránea y el bloque avisa | Verificación 5.2 |
+| Código que asume que todo pedido tiene `info_id` | Un pedido sin formulario podría mostrar un error al abrir su cabecera o al planificar hitos | Verificación 5.3 y prueba de punta a punta (§6). `Pedidotrabajo::hitos` concatena `"0".info_id` y `Tarea::planificar` separa por ceros (misma zona que H-115): hay que probarlo con `info_id` nulo |
 | El trigger corre en producción en cada alta | Una falla del bloque no debe frenar el alta | Bloque propio con `exception`, igual que los existentes |
 
-## 4. Verificaciones en la base antes de programar (solo lectura)
+## 5. Verificaciones en la base antes de programar (solo lectura)
 
 Se corren en la base de Tools de **DEV o TEST** (VPN), en `psql` o DBeaver, y después en producción
 antes de desplegar:
 
-1. ¿La empresa plantilla tiene el proceso?
-   `select * from pro.procesos where empr_id = 9000 and proc_id = 'PROCESO-STANDAR' and not eliminado;`
-2. ¿Cuál es la clave primaria real de `pro.procesos`?
+1. Clave primaria real de `pro.procesos`:
    `select conname, pg_get_constraintdef(oid) from pg_constraint where conrelid = 'pro.procesos'::regclass;`
-3. ¿De dónde sale el estado inicial de 9000?
-   `select * from core.tablas where tabl_id = (select esin_id from pro.procesos where empr_id = 9000 and proc_id = 'PROCESO-STANDAR' and not eliminado);`
-4. ¿Qué tipos de trabajo tiene 9000?
-   `select * from core.tablas where tabla = 'tipos_pedidos_trabajo' and empr_id = 9000;`
+2. El estado inicial existe y es general:
+   `select tabl_id, tabla, valor, empr_id from core.tablas where tabl_id = 'estados_procesosPROC_EN_CURSO';`
+3. Cómo están hoy las filas `PROCESO-STANDAR` que existen (para copiar sus valores):
+   `select proc_id, nombre, empr_id, lanzar_bpm, planificar_tareas, nombre_bpm, esin_id, form_id from pro.procesos where proc_id = 'PROCESO-STANDAR' and not eliminado;`
+4. Que la columna sea la del DDL:
+   `select is_nullable from information_schema.columns where table_schema = 'pro' and table_name = 'pedidos_trabajo' and column_name = 'info_id';`
 
-## 5. Cómo se prueba
+## 6. Cómo se prueba
 
-1. En local (servidor web, WSO2 MI y Bonita de la máquina del PM, base DEV): se aplica la versión
-   nueva del trigger.
+1. En local (servidor web, WSO2 MI y Bonita de la máquina del PM, base DEV): se aplica el script de
+   base, se despliega el `.car` con el cambio 2 y el PHP con los cambios 3 y 4.
 2. Se corre DocTest en modo full (`npm run doctest`), que crea empresas nuevas por la registración,
    **sin** el script manual `pro-procesos-empresas-test.sql`. Tienen que pasar `TAR-CP-002-01` (alta de
-   pedido), los de hitos (`TAR-CP-006-*`) y los del ciclo de la tarea hasta la bandeja.
-3. Un solo despliegue por ambiente: primero la fila de 9000, después el trigger.
+   pedido sin formulario), los de hitos (`TAR-CP-006-*`), "Trabajo Terminado" (`TAR-CP-005-01/02`) y los
+   del ciclo de la tarea hasta la bandeja.
+3. Se prueba a mano un pedido de Yudica en local (proceso con formulario) para confirmar que no
+   cambió.
+4. Un solo despliegue por ambiente, en este orden: servicio de datos, PHP, script de base.
