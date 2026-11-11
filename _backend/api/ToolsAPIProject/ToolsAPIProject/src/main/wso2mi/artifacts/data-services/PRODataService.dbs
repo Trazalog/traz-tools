@@ -20,8 +20,9 @@
       <param name="tipt_id" sqlType="STRING"/>
    </query>
    <query id="deletePedidoTrabajo" useConfig="ToolsDataSource">
-      <sql>update pro.pedidos_trabajo &#xd;set eliminado = true&#xd;where petr_id = cast(:petr_id as integer)</sql>
+      <sql>update pro.pedidos_trabajo &#xd;set eliminado = true&#xd;where petr_id = cast(:petr_id as integer)&#xd;and empr_id = cast(:empr_id as integer)</sql>
       <param name="petr_id" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="updatePedidoTrabajoCaseId" useConfig="ToolsDataSource">
       <sql>update pro.pedidos_trabajo&#xd;set case_id = :case_id&#xd;where petr_id = cast(:petr_id as integer)</sql>
@@ -166,6 +167,7 @@
    <resource method="DELETE" path="/pedidoTrabajo">
       <call-query href="deletePedidoTrabajo">
          <with-param name="petr_id" query-param="petr_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/pedidoTrabajo">
