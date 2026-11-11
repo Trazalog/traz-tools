@@ -18,8 +18,8 @@ las correcciones de seguridad y de horas de Tareas ([`../specs/TAR-analisis-impa
 - **Errores que resuelve:** #578 (empresa nueva sin `PROCESO-STANDAR`), H-110 (pedido sin formulario),
   H-118 ("Trabajo Terminado" sin caso) y la parte de #579/#580 que hace que una tarea estándar no lance
   TST001.
-- **Estado:** esperando aprobación y las verificaciones de §5. **No se modificó ningún archivo de
-  código ni de base.**
+- **Estado:** **aprobado por el PM el 2026-11-11**, con el cambio 5 (numeración de hitos) agregado ese
+  día. Programado en ramas, sin probar en vivo: faltan las verificaciones de §5 y la prueba de §6.
 
 ## Requisitos (PM, 2026-11-11)
 
@@ -116,6 +116,19 @@ DNATO, el formulario se asociaría escribiendo esa misma configuración.
 - **"Trabajo Terminado" sin caso** (`Pedidotrabajo::finalizarTrabajo()`): si el pedido no tiene caso
   de Bonita, cambia el estado directamente. Si tiene caso, sigue como hoy. Si el servidor rechaza, la
   pantalla muestra el motivo (H-118).
+
+### Cambio 5 — hitos numerados por pedido (PM, 2026-11-11) 🔴 + 🟡
+
+- `tst.hitos.nro`: número del hito dentro de su pedido (1, 2, 3). Lo asigna el alta del hito
+  (`setHito`); los hitos existentes se numeran por orden de alta. `numero` sigue siendo el código
+  que carga el usuario. La lista de hitos muestra "Hito N · código".
+- La planificación de un hito de pedido recibe el número de hito entero. Antes `Tarea::planificar`
+  lo cortaba en el primer 0 y el hito 60 abría la planificación del 6 (H-115).
+- **Decisión tomada al programar:** el corte se saca **solo para pedidos de trabajo**. La
+  planificación de lotes de producción (`traz-prod-trazasoft`, origen `BATCH`) usa el mismo corte y
+  sus tareas ya guardadas tienen el número cortado: si se corrigiera ahí, las tareas viejas de un lote
+  con un 0 en su número dejarían de verse. Los pedidos no tienen ese problema porque, según el PM, hoy
+  nadie planifica tareas en ellos. El error de los lotes queda anotado como hallazgo aparte.
 
 ### Qué no cambia
 
