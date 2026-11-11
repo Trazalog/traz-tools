@@ -8,7 +8,7 @@ Qué es: el análisis de impacto que exige el `CLAUDE.md` antes de tocar el núc
 |---|---|
 | Fecha | 2026-11-11 |
 | Tarea | AGENTE-CO-09 (carga inicial) |
-| Estado | A-1 **aprobado y hecho** (2026-11-11); A-2 **en revisión** (ver §3.3); A-3 y A-4 resueltos como simulados |
+| Estado | A-1 **aprobado y hecho** (2026-11-11); A-2 **para decidir** (ver §3.2); A-3 y A-4 resueltos como simulados |
 | Comparado contra | `origin/master` (producción) y `origin/develop-v3.5`, el 2026-11-11 |
 
 ---
@@ -38,7 +38,7 @@ Tres recursos nuevos en la fachada MCP (`_backend/api/.../apis/toolsMCPAPI.xml`)
 
 Detalles:
 
-- `core_alta_valor` solo acepta tres listas: `unidades_medida`, `tipo_articulo` y `tipos_herramienta`. Manda **el mismo cuerpo que la pantalla Lista de Valores para un usuario de la empresa** (`application/models/core/Valores.php:97-107`): el nombre de la lista sin prefijo y el `empr_id` del token aparte. Ojo: las consultas buscan la lista como `<empr_id>-<lista>` y el alta la manda sin prefijo, así que el nombre por empresa lo arma la base. Supuesto: hay un disparador en la base real que no está en el repositorio. Al mandar lo mismo que la pantalla, el resultado es el mismo con o sin ese disparador. Nunca graba en una lista global (`999999`).
+- `core_alta_valor` solo acepta tres listas: `unidades_medida`, `tipo_articulo` y `tipos_herramienta`. Manda **el mismo cuerpo que la pantalla Lista de Valores para un usuario de la empresa** (`application/models/core/Valores.php:97-107`): el nombre de la lista sin prefijo y el `empr_id` del token aparte. Las consultas buscan la lista como `<empr_id>-<lista>` y el alta la manda sin prefijo: el nombre por empresa lo arma el disparador `core.set_tabla_id_trg` (`set_tabla_id_bui`, antes de insertar o actualizar en `core.tablas`), que **existe en DEV** (verificado el 2026-11-11) aunque no esté en el repositorio. Arma `tabla = <empr_id>-<lista>` y `tabl_id = tabla + valor`, así que un valor repetido en la misma lista choca con la clave: por eso la herramienta busca antes de grabar. Nunca graba en una lista global (`999999`).
 - `alm_alta_deposito` exige un establecimiento **de la misma empresa**: antes de grabar, lee el establecimiento y verifica que sea suyo. El servicio de datos no lo controla.
 - Los encargados del depósito **no entran en esta primera versión**: en la pantalla son una segunda llamada sin transacción y requieren usuarios ya creados.
 - Las tres responden `200` con el id creado, no `202` (decisión del 2026-08-21: con `202` el cliente MCP descarta el cuerpo).
@@ -64,13 +64,13 @@ Detalles:
 
 ### 2.5 Cómo se prueba
 
-- **Pruebas en mi máquina:** con el MI copia, desconectado de DEV, contra la base de prueba. El MI del PM no se toca.
-- **Por cada herramienta:**
-  - graba en la empresa del token;
-  - rechaza el token de máquina;
-  - rechaza un establecimiento de otra empresa;
-  - no repite un valor de lista.
-- **En el panel:** el circuito completo, desde la propuesta de Kuntur, pasando por "Cargar", hasta el dato en la pantalla de Tools.
+- **Hecho (2026-11-11), en una copia del MI desconectada de DEV** (puerto 8300; el MI del PM no se toca). La copia solo tiene `toolsMCPAPI` y sus secuencias, y apunta a un simulador de COREDataService (`scripts/dev/simulador-core-ds.py`) que responde con las mismas formas que WSO2 e imita el disparador de las listas.
+- `tests/security/mcp-alta-configuracion.hurl`: **12 de 12**. Sin identidad, 503; token de máquina, 403 en las tres; parámetros inválidos, 400; establecimiento de otra empresa, 400; alta real de las tres; valor repetido devuelve el existente; error del servicio de datos, 502 en el acto.
+- **Lo que la prueba encontró y se corrigió:**
+  - *Si el servicio de datos fallaba o no respondía, el cliente quedaba colgado.* Causa: la secuencia común `toolsFault` termina en `<send/>`, y en un recurso que usa `<call>` eso va al servicio de datos en vez de volver al que llamó. Las tres herramientas ahora responden el error ellas mismas (502, `servicio_de_datos` o `servicio_de_datos_no_disponible`).
+  - *Las consultas previas (GET) arrastraban el cuerpo recibido como parámetros de la dirección.* Se vacía el cuerpo antes de consultar.
+- **Pendiente:** el circuito en el panel, desde la propuesta de Kuntur hasta el dato en la pantalla de Tools, con DEV.
+- ⚠️ **Fuera de alcance, para revisar aparte:** los demás recursos de `toolsMCPAPI` que usan `toolsFault` después de un `<call>` probablemente tengan el mismo cuelgue cuando el servicio de datos falla. Supuesto: no lo probé en esos recursos.
 
 ### 2.6 Cómo se vuelve atrás
 
@@ -78,45 +78,41 @@ Sacar los tres recursos de `toolsMCPAPI.xml` y volver a desplegar el CAR. No hay
 
 ---
 
-## 3. Lote 2 — carga de muchas filas (artículos y herramientas)
+## 3. Lote 2 — carga de muchas filas (artículos, herramientas, equipos)
 
-### 3.1 El problema
+### 3.1 Cómo funciona hoy la Carga Masiva (verificado el 2026-11-11)
 
-La carga masiva de Dnato (`sta.ejecutar_carga_masiva(procedimiento, url_archivo, empr_id)`, en `traz-comp-dnato/scripts/sql/sta/`) lee un **archivo que tiene que estar en el servidor de la base** (`COPY`). Una herramienta MCP no puede dejar un archivo ahí.
+Corrige lo que se había escrito antes en esta sección: se había leído la versión del repositorio de los procedimientos, que está **desactualizada**. Lo que vale es lo instalado en DEV.
 
-### 3.2 La propuesta
+- **La pantalla** (`traz-comp-dnato`, `controllers/Bulkload.php::procesarCarga` y `models/Bulkloads.php`):
+  1. recibe el Excel, lo deja en el servidor (`bulkload_stage_files/`) y lo convierte a CSV;
+  2. toma la empresa de la sesión;
+  3. según el motor de la entidad en `sta.entidades_negocio.motor_bd`, carga con la interfaz de PostgreSQL o la de MariaDB.
+- **PostgreSQL** (Artículos, Herramientas, Stock Artículos, Solicitantes de Transporte): `SELECT sta.ejecutar_carga_masiva(procedimiento, ruta_csv, empr_id)`. El procedimiento hace `COPY` del CSV a su tabla intermedia y procesa.
+- **MariaDB** (Mantenimiento Equipos, Mantenimiento Artículos): el PHP lee el CSV por nombre de encabezado, lo inserta en la tabla intermedia (`sta_equipos`, …) y hace `CALL bulkload_equipos(empr_id_de_AssetPlanner)`. Si quedaron filas pendientes de otra carga, aborta.
+- **Es todo o nada.** En DEV, `sta.bulkload_articulos` y `sta.bulkload_herramientas` validan y cortan con error ante la primera fila mala (unidad o tipo inexistente, código repetido, campos obligatorios vacíos), y en ese caso borran lo pendiente: no queda nada grabado. Como todo corre en una sola transacción, dos cargas simultáneas no se mezclan.
+- **Herramientas** necesita que ya existan la marca y el pañol (`sta.calcula_marca_herramienta`, `sta.calcula_panol`, por código).
 
-- **Una función nueva:** `sta.carga_masiva_filas(procedimiento, filas jsonb, empr_id)`. Hace lo mismo que la actual, pero toma las filas como datos:
-  1. las vuelca en la misma tabla temporal que usa hoy el `COPY`;
-  2. llama al **mismo procedimiento** (`sta.bulkload_articulos`, `sta.bulkload_herramientas`);
-  3. devuelve el mismo texto de resultado.
-  
-  Es todo o nada, igual que hoy.
-- **Una herramienta:** `alm_carga_articulos` / `pan_carga_herramientas`, sobre un recurso nuevo de servicio de datos que llama a esa función.
-- **La planilla del cliente:**
-  - El orquestador la lee y le pasa al modelo **solo los encabezados y unas 20 filas** (decisión P-8 del PM).
-  - El modelo devuelve qué columna del cliente corresponde a cada columna de la plantilla.
-  - La transformación de todas las filas la hace **el código, no el modelo**, así que no puede inventar datos.
-  - La tarjeta muestra las primeras 10 filas ya transformadas y el total.
+### 3.2 La propuesta: Kuntur usa la misma Carga Masiva
 
-### 3.3 Lo que encontré al leer la carga masiva existente (2026-11-11)
+Kuntur no tiene carga propia: arma **el mismo archivo que la plantilla de la entidad** y lo pasa por **el mismo camino que la pantalla**.
 
-El PM señaló que la carga masiva de artículos y herramientas **ya existe** (y que quizás no esté configurada en DEV). Leí `sta.bulkload_articulos` y `sta.bulkload_herramientas` (`traz-comp-dnato/scripts/sql/sta/`). Tres cosas que importan para Kuntur:
+```mermaid
+flowchart LR
+  P[Planilla del cliente] --> E[Encabezados y unas 20 filas al modelo]
+  E --> M[El modelo dice qué columna es cuál]
+  M --> T[El código transforma todas las filas]
+  T --> C[Tarjeta: 10 filas de muestra y el total]
+  C -->|Cargar| B[Carga Masiva de Dnato, con el token del administrador]
+  B --> PG[(PostgreSQL)]
+  B --> MDB[(MariaDB)]
+```
 
-| Hallazgo | Por qué importa |
-|---|---|
-| El procedimiento **arranca con un `COPY` desde el archivo** que recibe por parámetro. No hay forma de llamarlo con las filas ya cargadas | Una herramienta no puede dejar un archivo en el servidor de la base. Para reutilizarlo, el procedimiento se tiene que partir en dos: "cargar el archivo" y "procesar lo cargado" |
-| La tabla intermedia (`sta.articulos`, `sta.herramientas`) **no tiene empresa**: procesa todo lo que tenga `procesado = false` | Si dos empresas cargan al mismo tiempo, las filas de una se pueden grabar en la otra. Es un riesgo de hoy, no de Kuntur |
-| Cada fila se graba aparte: **si una falla, las demás quedan** ("Procesados / Exitosos / Fallidos") | No es "todo o nada" (DocTest DNATO-UC-027 lo describe así: habría que ver si la pantalla deshace después). ADR-A12 pide todo o nada para Kuntur |
-
-**Propuesta (para aprobar, A-2):** una función nueva por entidad (`sta.bulkload_articulos_filas(filas jsonb, empr_id)`) que hace **la misma alta, con las mismas funciones de búsqueda** de unidad y tipo (`sta.calcula_unidad_medida`, `sta.calcula_tipo_articulo`), pero:
-- sin archivo;
-- sin la tabla intermedia compartida;
-- **todo o nada**.
-
-Los procedimientos actuales no se tocan. Como es de Dnato, hay que avisarle a ese frente.
-- *Alternativa:* partir el procedimiento actual en dos. Es menos código repetido, pero toca lo que usa hoy la pantalla de Carga Masiva en producción.
-- *En DEV:* la función nueva no depende de que la entidad esté configurada en `sta.entidades_negocio`, pero sí de que existan las funciones `sta.calcula_*`. Hay que verificarlo al desplegar.
+- **La planilla:** el orquestador le pasa al modelo **solo los encabezados y unas 20 filas** (P-8). La transformación de todas las filas la hace el código, no el modelo. Antes de proponer, Kuntur verifica con herramientas de lectura que existan las unidades, tipos, marcas y pañoles que usa la planilla, y si falta alguno propone primero darlo de alta (lote 1).
+- **La carga:** hace falta una **entrada a la Carga Masiva que no dependa de la sesión de la pantalla**: recibe el CSV y la entidad, toma la empresa del token del administrador, y llama a `Bulkloads::enviarADataservice` tal como está (los dos motores, todo o nada). Lo que existe hoy no se modifica.
+- **Por qué no una herramienta MCP directa:** la carga necesita dejar el archivo en el servidor de la base, y el camino de MariaDB vive en el PHP de Dnato, no en un servicio de datos.
+- **Toca Dnato** (núcleo): necesita este análisis aprobado y avisarle a ese frente.
+- *Alternativa:* que el PHP de Tools deje el CSV y llame al recurso existente `COREDataService /carga_masiva/archivo`. No toca Dnato, pero sirve solo para PostgreSQL y depende de que Tools escriba en una carpeta que lea la base.
 
 ---
 
@@ -169,7 +165,7 @@ Por decisión del PM, hasta que la nueva versión de Dnato exista, Kuntur trabaj
 
 | # | Qué | Propuesta |
 |---|---|---|
-| A-1 | Lote 1 | **Aprobado (2026-11-11) y hecho**: `toolsMCPAPI.xml`, `doc/api/trazalog-operaciones.yaml`, `027`. Falta la prueba contra un MI de prueba (`tests/security/mcp-alta-configuracion.hurl`) |
-| A-2 | Lote 2: función nueva por entidad, todo o nada, sin archivo ni tabla intermedia compartida (§3.3) | Aprobar, o elegir partir el procedimiento actual |
+| A-1 | Lote 1 | **Aprobado (2026-11-11) y hecho**: `toolsMCPAPI.xml`, `doc/api/trazalog-operaciones.yaml`, `027`. Probado en una copia del MI: 12 de 12 (§2.5) |
+| A-2 | Lote 2: Kuntur arma el CSV de la plantilla y usa la Carga Masiva existente por una entrada nueva con token (§3.2) | Aprobar, o elegir la alternativa por Tools (solo PostgreSQL) |
 | A-3 | Lote 3 | **Resuelto por el PM:** simulado con las interfaces de `develop-v3`; los equipos van en MariaDB |
 | A-4 | Lote 4 | **Resuelto por el PM:** simulado, como deuda técnica |

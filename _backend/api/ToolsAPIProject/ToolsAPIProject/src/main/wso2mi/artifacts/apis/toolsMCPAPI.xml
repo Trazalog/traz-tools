@@ -1408,9 +1408,24 @@
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
             <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <property name="TOOLS_ERROR" value="POST /mcp/core/establecimiento - COREDataService error" type="STRING"/>
-               <sequence key="toolsFault"/>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+                    en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | POST /mcp/core/establecimiento - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "POST /mcp/core/establecimiento - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
             </else>
          </filter>
          <!-- La operacion es sincrona y ya termino: 200, no 202 (decision 2026-08-21). -->
@@ -1419,9 +1434,24 @@
          <respond/>
       </inSequence>
       <faultSequence>
-         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-         <property name="TOOLS_ERROR" value="Error en MCP core_alta_establecimiento (toolsMCPAPI)" type="STRING"/>
-         <sequence key="toolsFault"/>
+         <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+              servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+              en una copia del MI, 2026-11-11). -->
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP core_alta_establecimiento (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            var d = "";
+            try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+            if (d.indexOf("_post_") >= 0) { d = ""; }
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP core_alta_establecimiento (toolsMCPAPI)", "detalle": d.substring(0, 500) });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
       </faultSequence>
    </resource>
 
@@ -1479,6 +1509,9 @@
          <property name="ContentType" scope="axis2" action="remove"/>
          <header name="Content-Type" scope="transport" action="remove"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo recibido como parametros de la URL: se vacia antes
+              (lo que hace falta despues ya quedo en propiedades cfg_*). -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
          <call>
             <endpoint>
                <http method="GET" uri-template="{uri.var.estas_url}"/>
@@ -1487,9 +1520,24 @@
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
             <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <property name="TOOLS_ERROR" value="GET establecimientos - COREDataService error" type="STRING"/>
-               <sequence key="toolsFault"/>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+                    en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET establecimientos - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET establecimientos - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
             </else>
          </filter>
 
@@ -1535,9 +1583,24 @@
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
             <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <property name="TOOLS_ERROR" value="POST /mcp/alm/deposito - COREDataService error" type="STRING"/>
-               <sequence key="toolsFault"/>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+                    en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | POST /mcp/alm/deposito - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "POST /mcp/alm/deposito - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
             </else>
          </filter>
          <!-- La operacion es sincrona y ya termino: 200, no 202 (decision 2026-08-21). -->
@@ -1546,9 +1609,24 @@
          <respond/>
       </inSequence>
       <faultSequence>
-         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-         <property name="TOOLS_ERROR" value="Error en MCP alm_alta_deposito (toolsMCPAPI)" type="STRING"/>
-         <sequence key="toolsFault"/>
+         <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+              servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+              en una copia del MI, 2026-11-11). -->
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP alm_alta_deposito (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            var d = "";
+            try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+            if (d.indexOf("_post_") >= 0) { d = ""; }
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP alm_alta_deposito (toolsMCPAPI)", "detalle": d.substring(0, 500) });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
       </faultSequence>
    </resource>
 
@@ -1609,6 +1687,9 @@
          <property name="ContentType" scope="axis2" action="remove"/>
          <header name="Content-Type" scope="transport" action="remove"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo recibido como parametros de la URL: se vacia antes
+              (lo que hace falta despues ya quedo en propiedades cfg_*). -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
          <call>
             <endpoint>
                <http method="GET" uri-template="{uri.var.lista_url}"/>
@@ -1617,9 +1698,24 @@
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
             <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <property name="TOOLS_ERROR" value="GET lista - COREDataService error" type="STRING"/>
-               <sequence key="toolsFault"/>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+                    en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET lista - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET lista - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
             </else>
          </filter>
 
@@ -1664,9 +1760,24 @@
          <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
             <then/>
             <else>
-               <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-               <property name="TOOLS_ERROR" value="POST /mcp/core/valor - COREDataService error" type="STRING"/>
-               <sequence key="toolsFault"/>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+                    en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | POST /mcp/core/valor - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "POST /mcp/core/valor - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
             </else>
          </filter>
          <!-- La operacion es sincrona y ya termino: 200, no 202 (decision 2026-08-21). -->
@@ -1675,9 +1786,24 @@
          <respond/>
       </inSequence>
       <faultSequence>
-         <property name="ERROR_MESSAGE" expression="json-eval($)" type="STRING"/>
-         <property name="TOOLS_ERROR" value="Error en MCP core_alta_valor (toolsMCPAPI)" type="STRING"/>
-         <sequence key="toolsFault"/>
+         <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+              servicio de datos en lugar de volver al que llamo, y el cliente quedaba colgado (probado
+              en una copia del MI, 2026-11-11). -->
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP core_alta_valor (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            var d = "";
+            try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+            if (d.indexOf("_post_") >= 0) { d = ""; }
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP core_alta_valor (toolsMCPAPI)", "detalle": d.substring(0, 500) });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
       </faultSequence>
    </resource>
 

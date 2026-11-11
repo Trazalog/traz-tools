@@ -16,10 +16,18 @@
 #   MAQUINA_ASSERTION = empresa A con token de máquina: el mismo payload con
 #                       "token_tipo": "maquina" (ver EmprIdFromHeader.xml)
 #   ESTA_AJENO        = un esta_id de OTRA empresa (para el caso del depósito)
+#   ESTA_PROPIO       = un esta_id de la empresa A (alta de depósito que sí se crea)
+#   SIN_SIMULADOR     = false contra el simulador; true contra una base real (saltea D)
+#
+# Sin base de prueba: scripts/dev/simulador-core-ds.py imita los recursos de
+# COREDataService que se usan (empresa 42 con establecimiento 7, la 99 con el 1).
+# La copia del MI apunta a él en registry/config/tools/apiconfig.xml
+# (dataservices_url = http://127.0.0.1:18766/services).
 #
 # Ejecutar (terminal local, parado en traz-tools):
 #   hurl --variable MI_HOST=localhost:8291 --variable VALID_ASSERTION="$A" \
 #        --variable MAQUINA_ASSERTION="$M" --variable ESTA_AJENO=1 \
+#        --variable ESTA_PROPIO=7 --variable SIN_SIMULADOR=false \
 #        tests/security/mcp-alta-configuracion.hurl
 
 
@@ -96,3 +104,31 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.respuesta.existente" == true
+
+POST http://{{MI_HOST}}/tools/mcp/mcp/core/establecimiento
+X-JWT-Assertion: {{VALID_ASSERTION}}
+Content-Type: application/json
+{"nombre": "Planta Prueba Kuntur"}
+HTTP 200
+
+# Un depósito en un establecimiento PROPIO sí se crea.
+POST http://{{MI_HOST}}/tools/mcp/mcp/alm/deposito
+X-JWT-Assertion: {{VALID_ASSERTION}}
+Content-Type: application/json
+{"nombre": "Pañol Prueba Kuntur", "esta_id": "{{ESTA_PROPIO}}"}
+HTTP 200
+
+
+# ─── D: si el servicio de datos falla, error en el acto (no queda colgado) ───
+# Solo contra el simulador de COREDataService (scripts/dev/simulador-core-ds.py),
+# que responde 500 a este valor. Contra una base real, este caso se saltea.
+POST http://{{MI_HOST}}/tools/mcp/mcp/core/valor
+X-JWT-Assertion: {{VALID_ASSERTION}}
+Content-Type: application/json
+[Options]
+skip: {{SIN_SIMULADOR}}
+{"lista": "unidades_medida", "valor": "Provocar error"}
+HTTP 502
+[Asserts]
+jsonpath "$.error" == "servicio_de_datos"
+duration < 5000
