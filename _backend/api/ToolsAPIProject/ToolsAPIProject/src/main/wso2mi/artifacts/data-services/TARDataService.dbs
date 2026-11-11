@@ -195,7 +195,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="setHito" useConfig="ToolsDataSource">
-      <sql>INSERT INTO tst.hitos&#xd;(numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, nombre_documento)&#xd;VALUES (:numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), cast(:documento as bytea), cast(:petr_id as integer), :nombre_documento)</sql>
+      <sql>INSERT INTO tst.hitos&#xd;(nro, numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, nombre_documento)&#xd;VALUES ((select coalesce(max(h.nro), 0) + 1 from tst.hitos h where h.petr_id = cast(:petr_id as integer)), :numero, :descripcion, TO_DATE(:fec_inicio, 'YYYY-MM-DD'), :user_id, cast(:objetivo as integer), :unidad_tiempo, cast(:esta_id as integer), cast(:documento as bytea), cast(:petr_id as integer), :nombre_documento)</sql>
       <param name="numero" sqlType="STRING"/>
       <param name="fec_inicio" sqlType="STRING"/>
       <param name="objetivo" sqlType="STRING"/>
@@ -208,13 +208,13 @@
       <param name="nombre_documento" sqlType="STRING"/>
    </query>
    <query id="getHitos" useConfig="ToolsDataSource">
-      <sql>SELECT numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id, 'PETR' as origen, hito_id as orta_id&#xd;FROM tst.hitos h&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and not h.eliminado</sql>
-      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;      {&#xd;        "numero": "$numero",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "user_id": "$user_id",&#xd;        "objetivo": "$objetivo",&#xd;        "unidad_tiempo": "$unidad_tiempo",&#xd;        "esta_id": "$esta_id",&#xd;        "documento": "$documento",&#xd;        "petr_id": "$petr_id",&#xd;        "hito_id": "$hito_id",&#xd;        "@getTareasPlanificadas":"$origen-&gt;origen,$orta_id-&gt;orta_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
+      <sql>SELECT nro, numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id, 'PETR' as origen, hito_id as orta_id&#xd;FROM tst.hitos h&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and not h.eliminado order by h.nro</sql>
+      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;      {&#xd;        "nro": "$nro",&#xd;         "numero": "$numero",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "user_id": "$user_id",&#xd;        "objetivo": "$objetivo",&#xd;        "unidad_tiempo": "$unidad_tiempo",&#xd;        "esta_id": "$esta_id",&#xd;        "documento": "$documento",&#xd;        "petr_id": "$petr_id",&#xd;        "hito_id": "$hito_id",&#xd;        "@getTareasPlanificadas":"$origen-&gt;origen,$orta_id-&gt;orta_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="petr_id" sqlType="STRING"/>
    </query>
    <query id="getHito" useConfig="ToolsDataSource">
-      <sql>SELECT numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id&#xd;FROM tst.hitos&#xd;WHERE not eliminado&#xd;and hito_id = cast(:hito_id as integer);</sql>
-      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;        {&#xd;            "numero": "$numero",&#xd;            "descripcion": "$descripcion",&#xd;            "fec_inicio": "$fec_inicio",&#xd;            "user_id": "$user_id",&#xd;            "objetivo": "$objetivo",&#xd;            "unidad_tiempo": "$unidad_tiempo",&#xd;            "esta_id": "$esta_id",&#xd;            "documento": "$documento",&#xd;            "petr_id": "$petr_id",&#xd;            "hito_id": "$hito_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
+      <sql>SELECT nro, numero, descripcion, fec_inicio, user_id, objetivo, unidad_tiempo, esta_id, documento, petr_id, hito_id&#xd;FROM tst.hitos&#xd;WHERE not eliminado&#xd;and hito_id = cast(:hito_id as integer);</sql>
+      <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;        {&#xd;            "nro": "$nro",&#xd;         "numero": "$numero",&#xd;            "descripcion": "$descripcion",&#xd;            "fec_inicio": "$fec_inicio",&#xd;            "user_id": "$user_id",&#xd;            "objetivo": "$objetivo",&#xd;            "unidad_tiempo": "$unidad_tiempo",&#xd;            "esta_id": "$esta_id",&#xd;            "documento": "$documento",&#xd;            "petr_id": "$petr_id",&#xd;            "hito_id": "$hito_id"&#xd;        }&#xd;    ]&#xd;  }&#xd;}</result>
       <param name="hito_id" sqlType="STRING"/>
    </query>
    <query id="getPetrIdXHitoId" useConfig="ToolsDataSource">
