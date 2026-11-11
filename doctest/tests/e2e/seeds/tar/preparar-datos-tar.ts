@@ -36,6 +36,9 @@ const { CLIENTES_TAR, LISTA_PROCESOS, LISTA_TIPOS, PROCESO_TAREAS, TIPOS_TAR } =
 const DRY = process.argv.includes('--dry-run');
 
 async function irA(page: Page, ruta: string): Promise<void> {
+  // La página inicial (bandeja) sigue cargando un rato: si se navega antes, la pisa al terminar.
+  await page.waitForLoadState('networkidle').catch(() => {});
+  await page.locator('#waiting').waitFor({ state: 'hidden', timeout: 60_000 });
   await page.evaluate((r) => (window as unknown as { linkTo: (x: string) => void }).linkTo(r), ruta);
   await page.waitForLoadState('networkidle').catch(() => {});
   await page.locator('#waiting').waitFor({ state: 'hidden', timeout: 60_000 });

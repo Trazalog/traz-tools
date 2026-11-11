@@ -246,8 +246,6 @@ test.describe('@tar @TAR-UC-001 @TAR-UC-002 @TAR-UC-003 @TAR-UC-004 Pedidos de t
   });
 
   test('TAR-CP-004-05 aislamiento: desde la empresa 2 no se puede eliminar un pedido de la empresa 1 (HIP-TAR-02)', async ({ browser }, testInfo) => {
-    debeFallarCon(/la empresa 2 eliminó un pedido/);
-    test.fail(true, 'H-119 (B-25): la empresa 2 elimina un pedido de la empresa 1 por URL');
     // Usa el pedido A, que ya nadie necesita: mientras siga H-119, la prueba lo borra de verdad.
     await ped.abrirListado(testInfo);
     await requierePedido(ped, COD);
