@@ -114,7 +114,10 @@ flowchart LR
 - **Toca Dnato** (núcleo): necesita este análisis aprobado y avisarle a ese frente.
 - *Alternativa descartada:* que el PHP de Tools deje el CSV y llame al recurso existente `COREDataService /carga_masiva/archivo`. No toca Dnato, pero sirve solo para PostgreSQL y depende de que Tools escriba en una carpeta que lea la base.
 
-### 3.3 Cómo quedó (2026-11-11, aprobado por el PM)
+### 3.3 Cómo quedó (2026-11-11)
+
+**Cambio de decisión del PM, el mismo día:** Dnato se reemplaza por Dnato v3 (en construcción), así que no se le abre una entrada. **La carga de Kuntur queda simulada** hasta que Dnato v3 tenga su API de carga masiva en WSO2: se registra en `agente.simulacion` el mismo CSV que recibiría la Carga Masiva, y se controla que no se repitan códigos ya cargados (todo o nada). Lo que sigue de esta sección describe la entrada a Dnato que se programó y probó, y **no se usa** (traz-comp-dnato#50); queda como referencia de qué pedirle a Dnato v3.
+
 
 - **Dnato** (traz-comp-dnato#50, contra `develop-v3`): `POST /bulkload_api/cargar` y la biblioteca `JwtVerifier`. `Bulkload.php` y `Bulkloads.php` no se tocan. Solo administradores (`role` = 1), nunca token de máquina; la empresa sale del token y el procedimiento del catálogo; solo Articulos, Herramientas, Mantenimiento Equipos y Mantenimiento Articulos; hasta 5.000 filas.
 - ⚠️ `develop-v3` de Dnato todavía no tiene el despacho a MariaDB (está en `develop` y `master`): hasta la sincronización, en v3 solo cargan artículos y herramientas.
@@ -174,6 +177,6 @@ Por decisión del PM, hasta que la nueva versión de Dnato exista, Kuntur trabaj
 | # | Qué | Propuesta |
 |---|---|---|
 | A-1 | Lote 1 | **Aprobado (2026-11-11) y hecho**: `toolsMCPAPI.xml`, `doc/api/trazalog-operaciones.yaml`, `027`. Probado en una copia del MI: 12 de 12 (§2.5) |
-| A-2 | Lote 2: Kuntur arma el CSV de la plantilla y usa la Carga Masiva existente por una entrada nueva con token (§3.2) | **Aprobado (2026-11-11) y hecho**: entrada en Dnato (traz-comp-dnato#50, 18 de 18 en una copia aislada); en el agente `agente/planillas.py`, `028`, `POST /kuntur/planillas` y el botón en el panel |
+| A-2 | Lote 2: Kuntur arma el CSV de la plantilla para la Carga Masiva (§3.2, §3.3) | **Hecho, con la carga simulada** (decisión del PM, 2026-11-11): Dnato se reemplaza por Dnato v3. Lo del agente está (`agente/planillas.py`, `028`, `POST /kuntur/planillas`, botón en el panel); la entrada a Dnato (traz-comp-dnato#50) no se usa |
 | A-3 | Lote 3 | **Resuelto por el PM:** simulado con las interfaces de `develop-v3`; los equipos van en MariaDB |
 | A-4 | Lote 4 | **Resuelto por el PM:** simulado, como deuda técnica |

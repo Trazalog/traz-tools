@@ -11,9 +11,8 @@ El administrador sube su planilla como la tiene. Kuntur no la reescribe:
      datos, asi que no puede inventarlos. Lo que falta o esta mal se informa
      con el numero de fila y no se propone nada.
   4. La carga propuesta guarda las filas ya transformadas; la tarjeta muestra
-     10 y el total. Con "Cargar", el CSV va a la Carga Masiva de Dnato
-     (POST /bulkload_api/cargar, traz-comp-dnato#50) con el token del
-     administrador: la misma carga que la pantalla, todo o nada.
+     10 y el total. Con "Cargar" se ejecuta, todo o nada. HOY SIMULADA (ver
+     "la carga" abajo): Dnato se reemplaza por Dnato v3.
 
 Las plantillas copian lo que espera la Carga Masiva en DEV (2026-11-11):
 PostgreSQL toma las columnas POR POSICION (COPY ... WITH CSV HEADER), asi que
@@ -30,10 +29,8 @@ import zipfile
 from dataclasses import dataclass
 from xml.etree import ElementTree as ET
 
-import httpx
 import psycopg
 
-from .config import Config
 
 NOMBRE = "kuntur_carga_masiva"
 MAX_BYTES = 5 * 1024 * 1024
@@ -369,31 +366,37 @@ def a_csv(entidad: str, filas: list[dict]) -> str:
 
 
 # ============================================================ la carga
-async def ejecutar(cfg: Config, autorizacion: str, argumentos: dict) -> dict:
-    """La Carga Masiva de Dnato, con el token del administrador que confirmo."""
-    if not cfg.dnato_bulkload_url:
-        raise CargaFallida("La carga masiva no está configurada en este ambiente (AGENTE_DNATO_BULKLOAD_URL)")
+# SIMULADA (decision del PM, 2026-11-11). La Carga Masiva de hoy vive en Dnato,
+# que se reemplaza por Dnato v3 (en construccion). No se le abre una entrada a
+# algo que va a desaparecer: hasta que Dnato v3 tenga su API de carga masiva
+# (publicada en WSO2), la carga queda registrada en agente.simulacion con el
+# MISMO archivo que recibiria la Carga Masiva. Deuda tecnica en STATE.md.
+SIMULADO = True
+ENTIDAD_SIMULACION = "carga_masiva"
+
+
+async def ejecutar(con: psycopg.AsyncConnection, empr_id: int, argumentos: dict) -> dict:
+    """Simula la Carga Masiva: todo o nada, como la real.
+
+    Controla lo que la real controla sin otra base: que un codigo no se haya
+    cargado antes para esa entidad en esta empresa."""
     entidad = argumentos["entidad"]
-    cuerpo = {"entidad": entidad, "csv": a_csv(entidad, argumentos["filas"])}
-    try:
-        async with httpx.AsyncClient(timeout=cfg.dnato_bulkload_timeout) as http:
-            r = await http.post(cfg.dnato_bulkload_url, json=cuerpo,
-                                headers={"Authorization": autorizacion, "Accept": "application/json"})
-    except httpx.HTTPError as e:
-        raise CargaFallida(f"No pude llegar a la Carga Masiva: {type(e).__name__}") from None
-    try:
-        datos = r.json()
-    except ValueError:
-        datos = {}
-    if r.status_code != 200:
-        motivo = datos.get("message") or datos.get("error") or f"HTTP {r.status_code}"
-        raise CargaFallida(f"La Carga Masiva rechazó el pedido: {motivo}")
-    if not datos.get("success"):
-        raise CargaFallida("No se cargó nada (es todo o nada). " + _motivo(str(datos.get("output", ""))))
-    return {"entidad": entidad, "filas": len(argumentos["filas"]), "resultado": str(datos.get("output", ""))[:1000]}
-
-
-def _motivo(output: str) -> str:
-    """Del texto largo de la Carga Masiva, lo que le sirve al administrador."""
-    m = re.search(r"ERROR:\s*(.*?)(?:\s*\|\s*LOGS:|$)", output, flags=re.S)
-    return (m.group(1) if m else output)[:500].strip()
+    filas = argumentos["filas"]
+    codigos = {str(f.get("codigo", "")).upper() for f in filas if f.get("codigo")}
+    async with con.cursor() as cur:
+        await cur.execute(
+            "SELECT datos->'codigos' AS codigos FROM agente.simulacion "
+            "WHERE empr_id = %s AND entidad = %s AND datos->>'entidad' = %s",
+            (empr_id, ENTIDAD_SIMULACION, entidad))
+        previos = {c for f in await cur.fetchall() for c in (f["codigos"] or [])}
+        repetidos = sorted(codigos & previos)
+        if repetidos:
+            raise CargaFallida("No se cargó nada (es todo o nada). Ya están cargados: "
+                               + ", ".join(repetidos[:5]) + (" y otros" if len(repetidos) > 5 else ""))
+        await cur.execute(
+            "INSERT INTO agente.simulacion (empr_id, servicio, entidad, datos) VALUES (%s, %s, %s, %s::jsonb)",
+            (empr_id, NOMBRE, ENTIDAD_SIMULACION, json.dumps({
+                "entidad": entidad, "planilla": argumentos.get("planilla"), "total_filas": len(filas),
+                "codigos": sorted(codigos), "csv": a_csv(entidad, filas)}, ensure_ascii=False)))
+    return {"simulado": True, "entidad": entidad, "filas": len(filas),
+            "resultado": f"Simulación: {len(filas)} filas de {entidad} quedaron registradas, todavía no en el sistema real."}

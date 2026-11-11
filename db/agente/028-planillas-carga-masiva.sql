@@ -8,10 +8,10 @@
 -- proponga como pasarla a la plantilla de la Carga Masiva. La transformacion de
 -- TODAS las filas la hace el codigo (agente/planillas.py), no el modelo.
 --
--- kuntur_carga_masiva es una tool del MOTOR, no del gateway: al confirmar,
--- manda el CSV a la Carga Masiva de Dnato (POST /bulkload_api/cargar,
--- traz-comp-dnato#50) con el token del administrador. Es la misma carga que la
--- pantalla: mismos motores, mismas validaciones, todo o nada.
+-- kuntur_carga_masiva es una tool del MOTOR, no del gateway. La carga esta
+-- SIMULADA (decision del PM, 2026-11-11): la Carga Masiva vive en Dnato, que
+-- se reemplaza por Dnato v3. Al confirmar, el CSV queda en agente.simulacion.
+-- Pendiente: usar la API de carga masiva de Dnato v3 cuando exista.
 -- Aprobado por el PM el 2026-11-11 (doc/agente/analisis-impacto-kuntur-configuracion.md, A-2).
 -- =============================================================================
 
@@ -45,7 +45,7 @@ GRANT SELECT ON agente.planilla TO agente_curador;
 
 INSERT INTO agente.tool (nombre, modulo, clase, riesgo, reversible, descripcion)
 VALUES ('kuntur_carga_masiva', 'dnato', 'configuracion', 'alto', false,
-        'Carga masiva de una planilla (artículos, herramientas o equipos)')
+        'Carga masiva de una planilla (artículos, herramientas o equipos) (simulado)')
 ON CONFLICT (nombre) DO UPDATE SET
     modulo      = EXCLUDED.modulo,
     clase       = EXCLUDED.clase,

@@ -6,8 +6,8 @@ Lo que importa:
   * el modelo da el mapeo; el codigo transforma TODAS las filas y frena con el
     numero de fila si falta algo;
   * en la charla no se carga nada: queda la tarjeta;
-  * con "Cargar", el CSV va a la Carga Masiva de Dnato con el token del
-    administrador, y si Dnato no grabo, la carga queda fallida.
+  * con "Cargar" se ejecuta, todo o nada. Hoy SIMULADA hasta Dnato v3
+    (decision del PM): queda el mismo CSV que recibiria la Carga Masiva.
 """
 from __future__ import annotations
 
@@ -16,9 +16,7 @@ import io
 import json
 import zipfile
 
-import httpx
 import pytest
-import respx
 from httpx import ASGITransport, AsyncClient
 
 from agente import agentes, cargas, planillas, rag
@@ -29,7 +27,6 @@ from test_orquestador import MCPFalso, _parchar
 
 EMPRESA = 900401
 OTRA = 900402
-URL_DNATO = "http://dnato.prueba/bulkload_api/cargar"
 
 CSV = ("﻿Código;Detalle;Unidad;Rubro;Mínimo\n"
        "a-1;Guante de nitrilo;Par;EPP;10\n"
@@ -161,7 +158,7 @@ async def _conectar_o_saltear():
 @pytest.fixture
 async def con(con_admin):
     async with con_admin.cursor() as cur:
-        for t in ("carga_propuesta", "tool_llamada", "interaccion", "planilla"):
+        for t in ("carga_propuesta", "tool_llamada", "interaccion", "planilla", "simulacion"):
             await cur.execute(f"DELETE FROM agente.{t} WHERE empr_id IN (%s, %s)", (EMPRESA, OTRA))
     await con_admin.commit()
     c = await _conectar_o_saltear()
@@ -253,48 +250,45 @@ async def _confirmar(con, carga_id):
                                   usuario="admin@empresa", autorizacion="Bearer del-admin")
 
 
-@respx.mock
-async def test_cargar_manda_el_csv_a_dnato_con_el_token_del_administrador(con, monkeypatch):
-    monkeypatch.setenv("AGENTE_DNATO_BULKLOAD_URL", URL_DNATO)
-    ruta = respx.post(URL_DNATO).mock(return_value=httpx.Response(200, json={
-        "success": True, "output": "SUCCESS: Carga masiva ejecutada exitosamente | RESULT: Procesados: 3"}))
+async def test_cargar_queda_simulada_con_el_archivo_de_la_plantilla(con):
+    """Hasta Dnato v3 (decision del PM): se registra el MISMO CSV que recibiria la Carga Masiva."""
     r = await _confirmar(con, await _propuesta(con))
+    assert r["estado"] == "ejecutada"
+    assert r["respuesta"]["simulado"] is True and r["respuesta"]["filas"] == 3
+    async with con.cursor() as cur:
+        await cur.execute("SELECT servicio, datos FROM agente.simulacion WHERE entidad = %s",
+                          (planillas.ENTIDAD_SIMULACION,))
+        f = await cur.fetchone()
+    assert f["servicio"] == planillas.NOMBRE and f["datos"]["entidad"] == "Articulos"
+    assert f["datos"]["csv"].splitlines() == ["codigo,descripcion,unidad_medida,tipo,punto_pedido",
+                                              "a-1,Guante de nitrilo,Par,EPP,10", "A-2,Casco,Unidad,EPP,",
+                                              "A-3,Botín,Par,EPP,4"]
 
-    assert r["estado"] == "ejecutada" and r["respuesta"]["filas"] == 3
-    pedido = ruta.calls.last.request
-    assert pedido.headers["Authorization"] == "Bearer del-admin"
-    cuerpo = json.loads(pedido.content)
-    assert set(cuerpo) == {"entidad", "csv"}, "la empresa no viaja: sale del token"
-    assert cuerpo["entidad"] == "Articulos"
-    assert cuerpo["csv"].splitlines() == ["codigo,descripcion,unidad_medida,tipo,punto_pedido",
-                                          "a-1,Guante de nitrilo,Par,EPP,10", "A-2,Casco,Unidad,EPP,",
-                                          "A-3,Botín,Par,EPP,4"]
+
+async def test_la_tarjeta_avisa_que_es_simulada(con):
+    p = await _subir(con)
+    args = await planillas.preparar(con, {"planilla_id": p.planilla_id, "entidad": "Articulos", "mapeo": MAPEO})
+    prop = await cargas.proponer(con, empr_id=EMPRESA, interaccion_id=None, agente="kuntur",
+                                 usuario="admin@empresa", tool=planillas.NOMBRE, argumentos=args)
+    assert prop.tarjeta()["simulado"] is True
 
 
-@respx.mock
-async def test_si_dnato_no_grabo_la_carga_queda_fallida_con_el_motivo(con, monkeypatch):
-    monkeypatch.setenv("AGENTE_DNATO_BULKLOAD_URL", URL_DNATO)
-    respx.post(URL_DNATO).mock(return_value=httpx.Response(200, json={
-        "success": False, "output": "ERROR: El artículo [A-2] tiene una Unidad de Medida no válida "
-                                    "o no registrada en el sistema (\"Unidad\"). | LOGS: INFO: ..."}))
+async def test_codigos_ya_cargados_no_se_cargan_nada_todo_o_nada(con):
+    assert (await _confirmar(con, await _propuesta(con)))["estado"] == "ejecutada"
     r = await _confirmar(con, await _propuesta(con))
-    assert r["estado"] == "fallida"
-    assert "No se cargó nada" in r["error"] and "[A-2]" in r["error"] and "LOGS" not in r["error"]
+    assert r["estado"] == "fallida" and "No se cargó nada" in r["error"] and "A-1" in r["error"]
+    async with con.cursor() as cur:
+        await cur.execute("SELECT count(*) AS n FROM agente.simulacion WHERE entidad = %s",
+                          (planillas.ENTIDAD_SIMULACION,))
+        assert (await cur.fetchone())["n"] == 1, "la segunda no dejo nada"
 
 
-@respx.mock
-async def test_si_dnato_rechaza_el_token_la_carga_queda_fallida(con, monkeypatch):
-    monkeypatch.setenv("AGENTE_DNATO_BULKLOAD_URL", URL_DNATO)
-    respx.post(URL_DNATO).mock(return_value=httpx.Response(403, json={
-        "error": "forbidden", "message": "Solo un administrador puede hacer cargas masivas"}))
-    r = await _confirmar(con, await _propuesta(con))
-    assert r["estado"] == "fallida" and "Solo un administrador" in r["error"]
-
-
-async def test_sin_la_direccion_de_dnato_no_se_carga(con, monkeypatch):
-    monkeypatch.delenv("AGENTE_DNATO_BULKLOAD_URL", raising=False)
-    r = await _confirmar(con, await _propuesta(con))
-    assert r["estado"] == "fallida" and "no está configurada" in r["error"]
+async def test_lo_cargado_por_otra_empresa_no_cuenta(con):
+    assert (await _confirmar(con, await _propuesta(con)))["estado"] == "ejecutada"
+    await rag.fijar_empresa(con, OTRA)
+    async with con.cursor() as cur:
+        await cur.execute("SELECT count(*) AS n FROM agente.simulacion")
+        assert (await cur.fetchone())["n"] == 0
 
 
 # ==================================================================== la API

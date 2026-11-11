@@ -80,7 +80,7 @@ class Propuesta:
         datos = {k: _legible(v) for k, v in self.argumentos.items()
                  if k not in ("filas", "planilla_id") and v not in ({}, None, "")}
         return {"carga_id": self.carga_id, "tool": self.tool, "titulo": self.titulo,
-                "simulado": self.tool in simulados.SERVICIOS,
+                "simulado": self.tool in simulados.SERVICIOS or (self.tool == planillas.NOMBRE and planillas.SIMULADO),
                 "datos": datos, "filas": (filas or [])[:MAX_FILAS_MUESTRA],
                 "total_filas": len(filas) if filas is not None else None}
 
@@ -145,8 +145,8 @@ async def confirmar(con: psycopg.AsyncConnection, cfg: Config, *, empr_id: int, 
     t0 = time.monotonic()
     try:
         if c["tool"] == planillas.NOMBRE:
-            # La Carga Masiva de Dnato, con las filas que vio el administrador (lote 2).
-            salida = await planillas.ejecutar(cfg, autorizacion, c["argumentos"])
+            # Las filas que vio el administrador (lote 2). Simulada hasta Dnato v3.
+            salida = await planillas.ejecutar(con, empr_id, c["argumentos"])
         elif c["tool"] in simulados.SERVICIOS:
             # Deuda tecnica: servicio simulado con la interfaz del real (agente/simulados.py).
             salida = await simulados.ejecutar(con, empr_id, c["tool"], c["argumentos"])
