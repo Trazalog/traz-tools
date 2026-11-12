@@ -8,7 +8,7 @@ Qué es: el análisis de impacto que exige el `CLAUDE.md` antes de tocar el núc
 |---|---|
 | Fecha | 2026-11-12 |
 | Tarea | AGENTE-CO-04 (plan de acción) — B-05 de `TAR-spec-modulo-tareas.md` |
-| Estado | **Propuesta, para que el PM elija opción** |
+| Estado | **El PM eligió la opción B (2026-11-12).** Falta su aprobación del análisis completo y del ADR-A13 antes de programar |
 | Leído en | `traz-tools` rama `fix/TAR-aislamiento-empresa-hora-24` (código de los módulos y `_backend/`), el 2026-11-12. **Todo lo de este documento sale de leer el código; nada se probó en vivo** |
 | Pedido del PM (2026-11-11/12) | Kuntur crea directamente el pedido **con hitos y tareas**; si el usuario no lo quiere, pasa a un estado tipo "cancelado (propuesta del agente)". **Kuntur solo usa el Proceso Estándar**: un proceso propio de un cliente (por ejemplo, el de Yudica) jamás lo genera Kuntur |
 
@@ -115,6 +115,35 @@ flowchart TD
 
 **Recomendación: opción B.** Logra lo mismo que pide el PM (Kuntur arma el plan completo con hitos y tareas, el administrador lo acepta con un clic y si no lo quiere queda registrado) sin cambiar pantallas que usan clientes en producción, sin abrir escrituras con token de máquina y sin riesgo de que una tarea propuesta llegue a una bandeja. Si más adelante se quiere ver las propuestas dentro de Tareas, se puede sumar la opción A encima.
 
+### 4.1 Cómo ve el administrador el plan (opción B)
+
+Pregunta del PM: cómo muestra Kuntur qué tareas tendrá el plan, de forma fácil de evaluar. Kuntur muestra en su panel una **tarjeta del plan**, armada como un pedido de trabajo en papel (los números de abajo son de ejemplo, inventados):
+
+```
+🦅 Kuntur te propone un plan
+📉 Por qué: la disponibilidad de la flota bajó a 78 % (tu meta es 85 %).
+   Causa principal: 6 preventivos atrasados en las palas.
+🎯 Qué espero lograr: volver a 85 % en 30 días.
+
+📁 Pedido: "Recuperar disponibilidad de palas"
+   Proceso Estándar · 3 hitos · 7 tareas · 4 semanas
+  1️⃣ Ponerse al día con los preventivos  (semana 1-2)
+     ▫️ Hacer los 6 preventivos atrasados   → sugerido: jefe de taller
+     ▫️ Pedir los repuestos que faltan      → sugerido: pañolero
+  2️⃣ Evitar que se vuelvan a atrasar     (semana 2-3)  ...
+  3️⃣ Medir                               (semana 4)
+     ▫️ Kuntur compara la disponibilidad antes y después
+
+[✅ Aceptar]   [✏️ Pedir cambios]   [❌ No lo quiero]
+```
+
+- Arriba, el porqué en una línea: qué número se movió y por qué, con la cifra de una herramienta de lectura (regla de cifras con fuente, ADR-A8).
+- Hitos como etapas con semanas; adentro, las tareas con el responsable **sugerido** en gris (no se asigna).
+- **Pedir cambios** abre el chat ("sacá la tarea 3", "dame 6 semanas") y Kuntur rearma la tarjeta.
+- **No lo quiero** pide el motivo en un clic (no es prioridad / ya lo estamos haciendo / no aplica); queda registrado para que Kuntur aprenda.
+- El aviso al celular solo dice "Kuntur te propone un plan para …" y abre la tarjeta.
+- Es una versión ampliada de la tarjeta "Cargar" que ya existe (`agente/cargas.py`).
+
 ---
 
 ## 5. Reglas que valen para las dos opciones
@@ -138,7 +167,7 @@ flowchart TD
 
 ## 7. Qué falta antes de programar
 
-- [ ] El PM elige opción (A o B).
+- [x] El PM elige opción: **B** (2026-11-12).
 - [ ] Verificar en la base de desarrollo (solo lectura) que ninguna empresa tenga `PROCESO-STANDAR` con `lanzar_bpm = true` y cómo están cargados los `estados_procesos*`.
 - [ ] Que se unan los arreglos de aislamiento de Tareas (#639, #640 y los de los módulos): las operaciones nuevas se apoyan en ellas.
 - [ ] Opción B: diseñar el "todo o nada" (qué hacer con hitos creados si falla una tarea).
