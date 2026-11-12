@@ -302,7 +302,9 @@ export class PlanificacionPage extends ShellTar {
   /** Clic en un día sin haber pulsado 📅 antes (para probar fechas pasadas). */
   async clickDia(fecha: Date): Promise<void> {
     await this.irAlMesDe(fecha);
-    await this.page.locator(`#calendar td.fc-day[data-date="${iso(fecha)}"]`).first().click({ force: true });
+    // En una esquina: el centro de la celda puede estar tapado por un evento ya planificado ese día,
+    // y el clic abre el evento en vez de elegir el día.
+    await this.page.locator(`#calendar td.fc-day[data-date="${iso(fecha)}"]`).first().click({ force: true, position: { x: 4, y: 4 } });
   }
 
   private async irAlMesDe(fecha: Date): Promise<void> {

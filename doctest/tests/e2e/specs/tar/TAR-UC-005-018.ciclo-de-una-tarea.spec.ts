@@ -269,9 +269,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-009-09 volver a pulsar la pestaña Calendario no borra las tareas de la vista', async ({ browser }) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/las tareas desaparecieron de la vista/);
-    test.fail(true, 'H-099 #586 (B-09): copiarTareas() vacía la lista');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -474,9 +471,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-011-05 asignar responsable a una tarea sin fecha: se guarda, sin caso y sin errores (HIP-TAR-06)', async ({ browser }) => {
-    // Bug conocido, donde TAREAS_DEFAULT_PROC está definida: en el DEMO lo tapa H-092.
-    debeFallarCon(/Expected: ""/);
-    test.fail(entornoActual() !== 'demo', 'H-108 (B-17): asignar una tarea sin fecha abre un caso de Bonita');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -627,9 +621,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-011-04 reasignar: pasa a la bandeja del nuevo responsable, sale de la del anterior y no crea otro caso', async ({ browser }, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/sigue en la bandeja del responsable anterior/);
-    test.fail(true, 'H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior');
     const caso = await requiereCaso(browser, STD_LIMP);
     const pl = await planificador(browser);
     let casoAntes = '';
@@ -745,8 +736,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-014-01/014-03 eliminar la única tarea de un hito: desaparece y vuelve "No hay Tareas Planificadas" (HIP-TAR-20)', async ({ browser }, testInfo) => {
-    debeFallarCon(/no vuelve el "No hay Tareas Planificadas"/);
-    test.fail(true, 'H-117 (B-23): al quedar vacía la lista, no vuelve "No hay Tareas Planificadas"');
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const pl = await planificador(browser);
@@ -802,8 +791,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   // Va antes de eliminar el pedido: sin sus tareas, el tablero no tiene filas para comparar.
   test('@TAR-UC-022 TAR-CP-022-01/022-02 "finalizadas" cuenta solo las tareas finalizadas (HIP-TAR-03)', async ({ browser }, testInfo) => {
-    debeFallarCon(/el total de planificadas no coincide/);
-    test.fail(true, 'H-120 (B-26): los recuadros cuentan otros textos que los que muestra la tabla');
     const sh = new ShellTar(await paginaDeRol(browser, 'planificador'));
     try {
       await sh.abrir('indicadores', testInfo);
@@ -836,6 +823,9 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-004-04 eliminar un pedido con tareas asignadas: las tareas no quedan en la bandeja (HIP-TAR-08)', async ({ browser }, testInfo) => {
+    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
+    debeFallarCon(/la tarea del pedido eliminado sigue en la bandeja/);
+    test.fail(true, 'traz-comp-bpm #9: eliminar el pedido no cierra los casos TST001 de sus tareas');
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const ped = new PedidosTrabajoPage(await paginaDeRol(browser, 'planificador'));
