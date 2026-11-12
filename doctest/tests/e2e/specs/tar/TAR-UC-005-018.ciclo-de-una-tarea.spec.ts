@@ -801,6 +801,12 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
       await reporte;
       await sh.esperarCarga();
       await sh.page.waitForTimeout(1_500); // el reporte se pega y arma su tabla después de la respuesta
+      // Los recuadros cuentan todas las filas del reporte; la tabla pagina de a 10: se muestran todas.
+      await sh.page.evaluate(() => {
+        const w = window as unknown as { $: (s: string) => { DataTable: () => { page: { len: (n: number) => { draw: () => void } } } } };
+        w.$('#reportContent table.dataTable').DataTable().page.len(-1).draw();
+      }).catch(() => {});
+      await sh.page.waitForTimeout(500);
 
       const finalizadas = Number((await sh.page.locator('#cantidad_finalizadas').innerText()).trim());
       const planificadas = Number((await sh.page.locator('#cantidad_planificadas').innerText()).trim());
