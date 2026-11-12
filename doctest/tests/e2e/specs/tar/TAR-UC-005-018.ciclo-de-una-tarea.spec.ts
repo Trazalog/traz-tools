@@ -828,10 +828,9 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     }
   });
 
-  test('TAR-CP-004-04 eliminar un pedido con tareas asignadas: las tareas no quedan en la bandeja (HIP-TAR-08)', async ({ browser }, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/la tarea del pedido eliminado sigue en la bandeja/);
-    test.fail(true, 'traz-comp-bpm #9: eliminar el pedido no cierra los casos TST001 de sus tareas');
+  test('TAR-CP-004-04 un pedido con tareas asignadas no se puede eliminar y sus tareas siguen en la bandeja (HIP-TAR-08)', async ({ browser }, testInfo) => {
+    // Decisión PM 2026-11-12 (traz-comp-bpm #9): un pedido con tareas asignadas queda como trazabilidad;
+    // solo se borra el que todavía no tiene tareas asignadas.
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const ped = new PedidosTrabajoPage(await paginaDeRol(browser, 'planificador'));
@@ -840,15 +839,19 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
       await ped.buscar(PEDIDO);
       test.skip((await ped.fila(PEDIDO).count()) === 0, 'el pedido de la corrida no existe');
       await ped.eliminar(PEDIDO, true);
-      await ped.dialogoSiAparece(15_000);
+      const aviso = await ped.dialogoSiAparece(15_000);
+      expect(`${aviso?.titulo ?? ''} ${aviso?.texto ?? ''}`, 'el sistema avisa que el pedido no se puede eliminar').toMatch(/no se puede eliminar/i);
       await ped.cerrarDialogos();
+      await ped.abrirListado(testInfo);
+      await ped.buscar(PEDIDO);
+      await expect(ped.fila(PEDIDO), 'el pedido sigue en la lista').not.toHaveCount(0);
     } finally {
       await ped.page.context().close();
     }
     const b2 = new BandejaTareaPage(await paginaDeRol(browser, 'responsable2'));
     try {
       await b2.abrirBandeja(testInfo);
-      await expect(b2.item(STD_LIMP), 'la tarea del pedido eliminado sigue en la bandeja').toHaveCount(0);
+      await expect(b2.item(STD_LIMP), 'la tarea del pedido sigue en la bandeja del responsable').not.toHaveCount(0);
     } finally {
       await b2.page.context().close();
     }
