@@ -211,9 +211,10 @@
       <param name="nombre_documento" sqlType="STRING"/>
    </query>
    <query id="getHitos" useConfig="ToolsDataSource">
-      <sql>SELECT h.nro, h.numero, h.descripcion, h.fec_inicio, h.user_id, h.objetivo, h.unidad_tiempo, h.esta_id, h.documento, h.petr_id, h.hito_id, 'PETR' as origen, h.hito_id as orta_id, pt.empr_id&#xd;FROM tst.hitos h&#xd;join pro.pedidos_trabajo pt on pt.petr_id = h.petr_id&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and not h.eliminado order by h.nro</sql>
+      <sql>SELECT h.nro, h.numero, h.descripcion, h.fec_inicio, h.user_id, h.objetivo, h.unidad_tiempo, h.esta_id, h.documento, h.petr_id, h.hito_id, 'PETR' as origen, h.hito_id as orta_id, pt.empr_id&#xd;FROM tst.hitos h&#xd;join pro.pedidos_trabajo pt on pt.petr_id = h.petr_id&#xd;where h.petr_id = cast(:petr_id as integer)&#xd;and pt.empr_id = cast(nullif(:empr_id,'') as integer)&#xd;and not h.eliminado order by h.nro</sql>
       <result outputType="json">{&#xd;  "hitos": {&#xd;    "hito": [&#xd;      {&#xd;        "nro": "$nro",&#xd;         "numero": "$numero",&#xd;        "descripcion": "$descripcion",&#xd;        "fec_inicio": "$fec_inicio",&#xd;        "user_id": "$user_id",&#xd;        "objetivo": "$objetivo",&#xd;        "unidad_tiempo": "$unidad_tiempo",&#xd;        "esta_id": "$esta_id",&#xd;        "documento": "$documento",&#xd;        "petr_id": "$petr_id",&#xd;        "hito_id": "$hito_id",&#xd;        "@getTareasPlanificadas":"$origen-&gt;origen,$orta_id-&gt;orta_id,$empr_id-&gt;empr_id"&#xd;      }&#xd;    ]&#xd;  }&#xd;}&#xd;</result>
       <param name="petr_id" sqlType="STRING"/>
+      <param defaultValue="" name="empr_id" sqlType="STRING"/>
    </query>
    <query id="getHito" useConfig="ToolsDataSource">
       <sql>SELECT h.nro, h.numero, h.descripcion, h.fec_inicio, h.user_id, h.objetivo, h.unidad_tiempo, h.esta_id, h.documento, h.petr_id, h.hito_id&#xd;FROM tst.hitos h&#xd;join pro.pedidos_trabajo pt on pt.petr_id = h.petr_id&#xd;WHERE not h.eliminado&#xd;and pt.empr_id = cast(:empr_id as integer)&#xd;and h.hito_id = cast(:hito_id as integer);</sql>
@@ -481,6 +482,7 @@
    <resource method="GET" path="/pedidostrabajo/hitos/{petr_id}">
       <call-query href="getHitos">
          <with-param name="petr_id" query-param="petr_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="GET" path="/hitos/{hito_id}">
