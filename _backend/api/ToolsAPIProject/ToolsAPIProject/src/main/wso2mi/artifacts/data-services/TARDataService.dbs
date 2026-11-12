@@ -23,7 +23,7 @@
       <param name="empr_id" sqlType="STRING"/>
    </query>
    <query id="updateTarea" useConfig="ToolsDataSource">
-      <sql>UPDATE tst.tareas_std&#xd;SET nombre=:nombre, descripcion=:descripcion, duracion=:duracion, form_id= CAST(:form_id as integer), rece_id= CAST(:rece_id as integer), proc_id=:proc_id&#xd;WHERE tare_id=CAST(:tare_id as integer)</sql>
+      <sql>UPDATE tst.tareas_std&#xd;SET nombre=:nombre, descripcion=:descripcion, duracion=:duracion, form_id= CAST(nullif(:form_id,'') as integer), rece_id= CAST(nullif(:rece_id,'') as integer), proc_id=:proc_id&#xd;WHERE tare_id=CAST(:tare_id as integer)&#xd;and empr_id = CAST(nullif(:empr_id,'') as integer)</sql>
       <param name="nombre" sqlType="STRING"/>
       <param name="descripcion" sqlType="STRING"/>
       <param name="duracion" sqlType="STRING"/>
@@ -31,6 +31,7 @@
       <param name="rece_id" sqlType="STRING"/>
       <param name="proc_id" sqlType="STRING"/>
       <param name="tare_id" sqlType="STRING"/>
+      <param defaultValue="" name="empr_id" sqlType="STRING"/>
    </query>
    <query id="deleteTarea" useConfig="ToolsDataSource">
       <sql>UPDATE tst.tareas_std&#xd;SET eliminado = true&#xd;WHERE tare_id=CAST(:tare_id as integer)</sql>
@@ -290,6 +291,7 @@
          <with-param name="rece_id" query-param="rece_id"/>
          <with-param name="proc_id" query-param="proc_id"/>
          <with-param name="tare_id" query-param="tare_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
       </call-query>
    </resource>
    <resource method="DELETE" path="/tareas">
