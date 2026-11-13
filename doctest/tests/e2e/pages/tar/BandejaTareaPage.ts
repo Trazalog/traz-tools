@@ -41,7 +41,11 @@ export class BandejaTareaPage extends ShellTar {
    * "Tarea Planificada | case: <n>".
    */
   item(casoONombre: string): Locator {
-    if (/^\d+$/.test(casoONombre)) return this.page.locator(`table#tareas tbody tr.item[data-caseid="${casoONombre}"]`);
+    // La bandeja paginada en el servidor (traz-comp-bpm bb1a27a) ya no pone data-caseid en la fila:
+    // el caso solo aparece en el texto "case: <n>".
+    if (/^\d+$/.test(casoONombre)) {
+      return this.page.locator('table#tareas tbody tr.item').filter({ hasText: new RegExp(`case: ${casoONombre}(?!\\d)`) });
+    }
     return this.page.locator('table#tareas tbody tr.item').filter({ hasText: casoONombre });
   }
 
@@ -89,7 +93,12 @@ export class BandejaTareaPage extends ShellTar {
 
   /** Texto de la cabecera del detalle ("Detalles Tarea"). */
   async cabecera(): Promise<string> {
-    return (await this.page.locator('#content').innerText()).replace(/\s+/g, ' ');
+    // "Detalles Tarea" viene colapsado y sus datos están en inputs de solo lectura: innerText no los
+    // incluye, así que se suman los valores de esos campos.
+    const contenido = this.page.locator('#content');
+    const texto = await contenido.innerText();
+    const valores = await contenido.locator('input[readonly]').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+    return `${texto} ${valores.join(' ')}`.replace(/\s+/g, ' ');
   }
 
   async tildarSubtareas(cuantas?: number): Promise<void> {

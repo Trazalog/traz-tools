@@ -29,7 +29,6 @@ import { ddmmyyyy, enDias, iso, PlanificacionPage, type TareaPlanificada } from 
 import { ShellTar, sufijoDeCorrida, type PantallaTar } from '../../pages/tar/ShellTar.ts';
 import { TareasEstandarPage } from '../../pages/tar/TareasEstandarPage.ts';
 import { CLIENTES_TAR, TIPOS_TAR } from '../../seeds/tar/datos-tar.ts';
-import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const SUF = sufijoDeCorrida();
 const PEDIDO = codigoPedido(SUF, 'C');
@@ -269,9 +268,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-009-09 volver a pulsar la pestaña Calendario no borra las tareas de la vista', async ({ browser }) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/las tareas desaparecieron de la vista/);
-    test.fail(true, 'H-099 #586 (B-09): copiarTareas() vacía la lista');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -359,8 +355,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-009-06 hito cuyo id contiene un 0: la tarea queda en ESE hito (HIP-TAR-01)', async ({ browser }, testInfo) => {
-    debeFallarCon(/se abrió con orta_id=/);
-    test.fail(true, 'H-115 (B-21): la planificación del hito se abre con el id sin el cero');
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     test.setTimeout(10 * 60_000);
@@ -454,9 +448,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-010-04 planificar a las 15:00 y después asignar: sigue a las 15:00 (HIP-TAR-18)', async ({ browser }) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/evento del calendario/);
-    test.fail(true, 'H-104 #591 (HIP-TAR-18): el calendario muestra a las 03:00 una tarea planificada a las 15:00');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -479,9 +470,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-011-05 asignar responsable a una tarea sin fecha: se guarda, sin caso y sin errores (HIP-TAR-06)', async ({ browser }) => {
-    // Bug conocido, donde TAREAS_DEFAULT_PROC está definida: en el DEMO lo tapa H-092.
-    debeFallarCon(/Expected: ""/);
-    test.fail(entornoActual() !== 'demo', 'H-108 (B-17): asignar una tarea sin fecha abre un caso de Bonita');
     const pl = await planificador(browser);
     try {
       await enElHito(pl);
@@ -512,8 +500,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-006-07 aislamiento: la empresa 2 no puede ver un hito de la empresa 1 por URL (HIP-TAR-02)', async ({ browser }) => {
-    debeFallarCon(/la empresa 2 ve el detalle del hito/);
-    test.fail(true, 'H-116 (B-22): la empresa 2 ve por URL el detalle de un hito de la empresa 1');
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const pl = await planificador(browser);
@@ -537,9 +523,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-X-01 aislamiento: la empresa 2 no ve por URL las tareas planificadas de la empresa 1 (HIP-TAR-02)', async ({ browser }) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/la empresa 2 recibe las tareas planificadas/);
-    test.fail(true, 'H-094 #581 (B-04): getTareasPlanificadas no filtra empresa');
     const pl = await planificador(browser);
     let origen = ORIGEN_SINTETICO;
     try {
@@ -559,9 +542,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-014-05 aislamiento: la empresa 2 no puede eliminar una tarea de la empresa 1 por URL (HIP-TAR-02)', async ({ browser }) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/la empresa 2 eliminó una tarea/);
-    test.fail(true, 'H-094 #581 (B-04): deleteTareaPlanificada no filtra empresa');
     // Usa una tarea propia, creada para esta prueba: es la única escritura cruzada de la suite.
     const nombre = `Aislamiento ${SUF}`;
     const pl = await planificador(browser);
@@ -595,9 +575,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-016-01/016-02 el responsable ve la tarea en su bandeja con el pedido correcto (HIP-TAR-12)', async ({ browser }, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/falta "Nro Pedido/);
-    test.fail(true, 'H-105 #593 (B-15): la tarea no muestra sus datos de pedido');
     const caso = await requiereCaso(browser, STD_INSP);
     const pl = await planificador(browser);
     let petr = '';
@@ -643,9 +620,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-011-04 reasignar: pasa a la bandeja del nuevo responsable, sale de la del anterior y no crea otro caso', async ({ browser }, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/sigue en la bandeja del responsable anterior/);
-    test.fail(true, 'H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior');
     const caso = await requiereCaso(browser, STD_LIMP);
     const pl = await planificador(browser);
     let casoAntes = '';
@@ -674,9 +648,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-016-03/017-01/017-02 tomar e iniciar: pide "Inicializar tarea" y registra la hora real del clic (HIP-TAR-04, HIP-TAR-13)', async ({ browser }, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/la cabecera de la tarea no muestra el pedido/);
-    test.fail(true, 'H-105 #593 (B-15): la cabecera no muestra el pedido de trabajo');
     const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let clic = new Date();
@@ -729,9 +700,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-018-01/018-03 finalizar: sale de la bandeja y queda "finalizada" con la hora real de fin (HIP-TAR-05)', async ({ browser }, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/no se registró la hora real de cierre/);
-    test.fail(true, 'H-111 (B-19): al finalizar no se registra la hora real de fin');
     const caso = await requiereCaso(browser, STD_INSP);
     const b = new BandejaTareaPage(await paginaDeRol(browser, 'responsable1'));
     let planificada: TareaPlanificada | null = null;
@@ -767,8 +735,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-014-01/014-03 eliminar la única tarea de un hito: desaparece y vuelve "No hay Tareas Planificadas" (HIP-TAR-20)', async ({ browser }, testInfo) => {
-    debeFallarCon(/no vuelve el "No hay Tareas Planificadas"/);
-    test.fail(true, 'H-117 (B-23): al quedar vacía la lista, no vuelve "No hay Tareas Planificadas"');
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const pl = await planificador(browser);
@@ -801,8 +767,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-005-01/005-02 "Trabajo Terminado": lo marca o explica por qué no', async ({ browser }, testInfo) => {
-    debeFallarCon(/rechazó el cambio y no le dijo nada/);
-    test.fail(true, 'H-118 (B-24): "Trabajo Terminado" rechaza el cambio sin avisar al usuario');
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const pl = await planificador(browser);
@@ -824,8 +788,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
 
   // Va antes de eliminar el pedido: sin sus tareas, el tablero no tiene filas para comparar.
   test('@TAR-UC-022 TAR-CP-022-01/022-02 "finalizadas" cuenta solo las tareas finalizadas (HIP-TAR-03)', async ({ browser }, testInfo) => {
-    debeFallarCon(/el total de planificadas no coincide/);
-    test.fail(true, 'H-120 (B-26): los recuadros cuentan otros textos que los que muestra la tabla');
     const sh = new ShellTar(await paginaDeRol(browser, 'planificador'));
     try {
       await sh.abrir('indicadores', testInfo);
@@ -836,6 +798,12 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
       await reporte;
       await sh.esperarCarga();
       await sh.page.waitForTimeout(1_500); // el reporte se pega y arma su tabla después de la respuesta
+      // Los recuadros cuentan todas las filas del reporte; la tabla pagina de a 10: se muestran todas.
+      await sh.page.evaluate(() => {
+        const w = window as unknown as { $: (s: string) => { DataTable: () => { page: { len: (n: number) => { draw: () => void } } } } };
+        w.$('#reportContent table.dataTable').DataTable().page.len(-1).draw();
+      }).catch(() => {});
+      await sh.page.waitForTimeout(500);
 
       const finalizadas = Number((await sh.page.locator('#cantidad_finalizadas').innerText()).trim());
       const planificadas = Number((await sh.page.locator('#cantidad_planificadas').innerText()).trim());
@@ -857,7 +825,9 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
     }
   });
 
-  test('TAR-CP-004-04 eliminar un pedido con tareas asignadas: las tareas no quedan en la bandeja (HIP-TAR-08)', async ({ browser }, testInfo) => {
+  test('TAR-CP-004-04 un pedido con tareas asignadas no se puede eliminar y sus tareas siguen en la bandeja (HIP-TAR-08)', async ({ browser }, testInfo) => {
+    // Decisión PM 2026-11-12 (traz-comp-bpm #9): un pedido con tareas asignadas queda como trazabilidad;
+    // solo se borra el que todavía no tiene tareas asignadas.
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const ped = new PedidosTrabajoPage(await paginaDeRol(browser, 'planificador'));
@@ -866,15 +836,19 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
       await ped.buscar(PEDIDO);
       test.skip((await ped.fila(PEDIDO).count()) === 0, 'el pedido de la corrida no existe');
       await ped.eliminar(PEDIDO, true);
-      await ped.dialogoSiAparece(15_000);
+      const aviso = await ped.dialogoSiAparece(15_000);
+      expect(`${aviso?.titulo ?? ''} ${aviso?.texto ?? ''}`, 'el sistema avisa que el pedido no se puede eliminar').toMatch(/no se puede eliminar/i);
       await ped.cerrarDialogos();
+      await ped.abrirListado(testInfo);
+      await ped.buscar(PEDIDO);
+      await expect(ped.fila(PEDIDO), 'el pedido sigue en la lista').not.toHaveCount(0);
     } finally {
       await ped.page.context().close();
     }
     const b2 = new BandejaTareaPage(await paginaDeRol(browser, 'responsable2'));
     try {
       await b2.abrirBandeja(testInfo);
-      await expect(b2.item(STD_LIMP), 'la tarea del pedido eliminado sigue en la bandeja').toHaveCount(0);
+      await expect(b2.item(STD_LIMP), 'la tarea del pedido sigue en la bandeja del responsable').not.toHaveCount(0);
     } finally {
       await b2.page.context().close();
     }

@@ -16,7 +16,6 @@ import { expect, test } from '@playwright/test';
 import { paginaDeRol } from '../../fixtures/roles-tar.ts';
 import { sufijoDeCorrida } from '../../pages/tar/ShellTar.ts';
 import { TareasEstandarPage } from '../../pages/tar/TareasEstandarPage.ts';
-import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const SUF = sufijoDeCorrida();
 const TAREA = `DT Insp ${SUF}`;
@@ -43,12 +42,13 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
     expect(datos?.duracion).toBe('02:00');
   });
 
-  test('TAR-CP-019-07 "Proceso Asociado" ofrece el proceso de tarea planificada TST001 (H-093)', async ({}, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/"TST001"/);
-    test.fail(true, 'H-093 #580 (B-03): el selector solo ofrece Reparacion Neumaticos y Fabricación');
+  test('TAR-CP-019-07 "Proceso Asociado" ofrece y propone el proceso de tarea planificada TST001 (H-093)', async ({}, testInfo) => {
+    // Decisión PM 2026-11-12/13: sin proceso elegido la tarea usa TST001 (TAREAS_DEFAULT_PROC), así llega
+    // a la bandeja. El selector lo ofrece y viene elegido; el controller lo pone si llega vacío (#115).
     await tst.abrir('tareasEstandar', testInfo);
-    expect(await tst.procesosOfrecidos()).toContain('TST001');
+    // El formulario se carga aparte de la lista: se espera a que el selector tenga opciones.
+    await expect.poll(() => tst.procesosOfrecidos(), { timeout: 60_000 }).toContain('TST001');
+    await expect(tst.page.locator('#frm-tarea [name="proc_id"]')).toHaveValue('TST001');
   });
 
   test('TAR-CP-019-02 sin nombre o sin duración: avisa que faltan obligatorios y no guarda', async ({}, testInfo) => {
@@ -69,11 +69,9 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
   });
 
   test('TAR-CP-019-03 una duración imposible (99:99) no se acepta', async ({}, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/se guardó una tarea estándar con duración 99:99/);
-    test.fail(true, 'H-098 #585 (B-08): la máscara acepta 99:99');
-    // Duda D-21 del spec: el rango válido no está definido. Lo que sí es seguro es que 99:99
-    // no es una duración HH:MM: con minutos > 59 el fin de la tarea se calcula mal.
+    // H-098 #585 corregido (traz-comp-tareasestandar #119): HH:MM con minutos 00-59 y mayor a 00:00.
+    // Las horas quedan de 00 a 99 (lo que permite la máscara); con minutos > 59 el fin de la tarea
+    // se calculaba mal.
     await tst.abrir('tareasEstandar', testInfo);
     const nombre = `DT Dur ${SUF}`;
     await tst.crearTarea({ nombre, duracion: '99:99' });
@@ -112,9 +110,7 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
   });
 
   test('TAR-CP-021-01 crear plantilla y asociar 2 tareas: el selector ya no las ofrece', async ({}, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/las tareas ya asociadas se siguen ofreciendo/);
-    test.fail(true, 'H-100 #587 (B-10): el selector ofrece tareas ya asociadas');
+    // H-100 #587 corregido (traz-comp-tareasestandar #119).
     await tst.abrir('tareasEstandar', testInfo);
     await tst.crearPlantilla(PLANTILLA);
     await expect(tst.filaPlantilla(PLANTILLA)).toHaveCount(1, { timeout: 30_000 });
@@ -141,9 +137,7 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
   });
 
   test('TAR-CP-019-04 editar nombre y duración de una tarea estándar', async ({}, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/Se editó la tarea estandar/);
-    test.fail(true, 'H-095 #582 (B-05): updateTarea castea vacío a integer');
+    // H-095 #582 corregido: tareasestandar #119 (pantalla) y traz-tools #645 (updateTarea).
     await tst.abrir('tareasEstandar', testInfo);
     const nuevo = `${TAREA} v2`;
     await tst.editarTarea(TAREA, { nombre: nuevo, duracion: '03:00' });
