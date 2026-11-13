@@ -46,7 +46,8 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
     // Decisión PM 2026-11-12/13: sin proceso elegido la tarea usa TST001 (TAREAS_DEFAULT_PROC), así llega
     // a la bandeja. El selector lo ofrece y viene elegido; el controller lo pone si llega vacío (#115).
     await tst.abrir('tareasEstandar', testInfo);
-    expect(await tst.procesosOfrecidos()).toContain('TST001');
+    // El formulario se carga aparte de la lista: se espera a que el selector tenga opciones.
+    await expect.poll(() => tst.procesosOfrecidos(), { timeout: 60_000 }).toContain('TST001');
     await expect(tst.page.locator('#frm-tarea [name="proc_id"]')).toHaveValue('TST001');
   });
 
