@@ -16,7 +16,6 @@ import { expect, test } from '@playwright/test';
 import { paginaDeRol } from '../../fixtures/roles-tar.ts';
 import { sufijoDeCorrida } from '../../pages/tar/ShellTar.ts';
 import { TareasEstandarPage } from '../../pages/tar/TareasEstandarPage.ts';
-import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const SUF = sufijoDeCorrida();
 const TAREA = `DT Insp ${SUF}`;
@@ -43,16 +42,12 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
     expect(datos?.duracion).toBe('02:00');
   });
 
-  test('TAR-CP-019-07 "Proceso Asociado" ofrece el proceso de tarea planificada TST001 (H-093)', async ({}, testInfo) => {
-    // Comportamiento aceptado por el PM (2026-11-12): el selector es para elegir OTRO proceso de Bonita
-    // y no tiene por qué ofrecer TST001. Queda marcado (no se borra) porque falta confirmar la otra
-    // mitad de H-093: una tarea estándar sin proceso, al asignarla, no abre caso y no llega a la
-    // bandeja (models/Tareas.php lanzarProceso() retorna si proc_id == ""). Si el PM decide que sin
-    // proceso se use TST001 por defecto, este caso se reemplaza por "sin proceso llega a la bandeja".
-    debeFallarCon(/"TST001"/);
-    test.fail(true, 'H-093 #580 (B-03): aceptado por el PM que el selector no ofrezca TST001; pendiente decidir el proceso por defecto');
+  test('TAR-CP-019-07 "Proceso Asociado" ofrece y propone el proceso de tarea planificada TST001 (H-093)', async ({}, testInfo) => {
+    // Decisión PM 2026-11-12/13: sin proceso elegido la tarea usa TST001 (TAREAS_DEFAULT_PROC), así llega
+    // a la bandeja. El selector lo ofrece y viene elegido; el controller lo pone si llega vacío (#115).
     await tst.abrir('tareasEstandar', testInfo);
     expect(await tst.procesosOfrecidos()).toContain('TST001');
+    await expect(tst.page.locator('#frm-tarea [name="proc_id"]')).toHaveValue('TST001');
   });
 
   test('TAR-CP-019-02 sin nombre o sin duración: avisa que faltan obligatorios y no guarda', async ({}, testInfo) => {
