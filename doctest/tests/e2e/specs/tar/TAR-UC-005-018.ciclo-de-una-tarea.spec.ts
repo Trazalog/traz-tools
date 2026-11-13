@@ -29,7 +29,6 @@ import { ddmmyyyy, enDias, iso, PlanificacionPage, type TareaPlanificada } from 
 import { ShellTar, sufijoDeCorrida, type PantallaTar } from '../../pages/tar/ShellTar.ts';
 import { TareasEstandarPage } from '../../pages/tar/TareasEstandarPage.ts';
 import { CLIENTES_TAR, TIPOS_TAR } from '../../seeds/tar/datos-tar.ts';
-import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const SUF = sufijoDeCorrida();
 const PEDIDO = codigoPedido(SUF, 'C');

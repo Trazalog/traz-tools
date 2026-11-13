@@ -18,7 +18,6 @@ import { CLIENTES_TAR, TIPOS_TAR } from '../../seeds/tar/datos-tar.ts';
 import { codigoPedido, PedidosTrabajoPage } from '../../pages/tar/PedidosTrabajoPage.ts';
 import { sufijoDeCorrida } from '../../pages/tar/ShellTar.ts';
 import { entornoActual, requerirUrlDeApp } from '../../config/apps.ts';
-import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const SUF = sufijoDeCorrida();
 const COD = codigoPedido(SUF, 'A');
