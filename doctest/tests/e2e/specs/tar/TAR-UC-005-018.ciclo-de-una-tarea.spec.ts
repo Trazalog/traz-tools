@@ -768,8 +768,6 @@ test.describe('@tar @TAR-UC-005 @TAR-UC-006 @TAR-UC-009 @TAR-UC-010 @TAR-UC-011 
   });
 
   test('TAR-CP-005-01/005-02 "Trabajo Terminado": lo marca o explica por qué no', async ({ browser }, testInfo) => {
-    debeFallarCon(/rechazó el cambio y no le dijo nada/);
-    test.fail(true, 'H-118 (B-24): "Trabajo Terminado" rechaza el cambio sin avisar al usuario');
     hayPedido ??= await (async () => { const p = await planificador(browser); try { return await pedidoDisponible(p); } finally { await p.page.context().close(); } })();
     requierePedido();
     const pl = await planificador(browser);
