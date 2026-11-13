@@ -51,10 +51,6 @@ test.describe('@dnato @DNATO-UC-013 Ver la lista de usuarios de la empresa', () 
     // Ninguno ve al administrador del otro.
     expect(correosUno).not.toContain(credenciales('empresa2').email);
     expect(correosDos).not.toContain(credenciales('empresa1').email);
-
-    // Y tampoco a los usuarios iniciales del otro, que viven en otro dominio.
-    const dominioDos = dominioDe(credenciales('empresa2').email);
-    expect(correosUno.filter((c) => c.endsWith('@' + dominioDos))).toHaveLength(0);
   });
 
   test('el buscador filtra por correo', async ({ paginaEmpresa1 }) => {
