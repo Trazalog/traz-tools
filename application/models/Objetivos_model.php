@@ -63,11 +63,104 @@ class Objetivos_model extends CI_Model
             'responsable'   => $m['responsable'],
             'propuesto_por' => $m['propuesto_por'],
             'usuario'       => userNick(),
+            'petr_id'       => isset($m['petr_id']) ? (string) $m['petr_id'] : '',
+            'hito_id'       => isset($m['hito_id']) ? (string) $m['hito_id'] : '',
+            'linea_base'    => isset($m['linea_base']) && $m['linea_base'] !== null ? (string) $m['linea_base'] : '',
         )));
         if (isset($rsp['json']->respuesta->objetivo_id)) {
             return array('ok' => true, 'objetivo_id' => (string) $rsp['json']->respuesta->objetivo_id);
         }
         return array('ok' => false, 'error' => $this->_motivo($rsp['texto']));
+    }
+
+    /**
+     * Metas de un pedido y de sus hitos (TAR-METAS), con línea base, valor actual y avance.
+     * Para los KPIs de Mantenimiento el valor actual lo trae $valorMan (callable nombre => valor|null),
+     * porque vive en AssetPlanner y no en el motor de KPIs.
+     * @return array lista de metas; el avance es el % recorrido entre la línea base y la meta (0-100+)
+     */
+    public function dePedido($petr_id, $valorMan = null)
+    {
+        $rsp = $this->_llamar('GET', '/objetivos/pedido/' . rawurlencode($petr_id) . '/emprid/' . rawurlencode(empresa()));
+        if (!isset($rsp['json']->objetivos->objetivo)) {
+            return array();
+        }
+        $lista = $rsp['json']->objetivos->objetivo;
+        $lista = is_array($lista) ? $lista : array($lista);
+        $cacheMan = array();
+        $metas = array();
+        foreach ($lista as $o) {
+            $valor = ($o->valor_actual === null || $o->valor_actual === '') ? null : (float) $o->valor_actual;
+            if ($valor === null && (string) $o->fuente === 'man' && is_callable($valorMan)) {
+                $k = (string) $o->kpi;
+                if (!array_key_exists($k, $cacheMan)) {
+                    $cacheMan[$k] = call_user_func($valorMan, $k);
+                }
+                $valor = $cacheMan[$k];
+            }
+            $meta = (float) $o->meta;
+            $base = ($o->linea_base === null || $o->linea_base === '') ? null : (float) $o->linea_base;
+            $cumple = null;
+            if ($valor !== null) {
+                $cumple = (string) $o->operador === '>=' ? $valor >= $meta : $valor <= $meta;
+            }
+            $metas[] = array(
+                'objetivo_id'      => (string) $o->objetivo_id,
+                'kpi'              => (string) $o->kpi,
+                'descripcion'      => (string) $o->descripcion,
+                'fuente'           => (string) $o->fuente,
+                'operador'         => (string) $o->operador,
+                'meta'             => $meta,
+                'desde'            => (string) $o->desde,
+                'hasta'            => (string) $o->hasta,
+                'responsable'      => (string) $o->responsable,
+                'hito_id'          => (string) $o->hito_id,
+                'hito'             => (string) $o->hito,
+                'estado'           => (string) $o->estado,
+                'usuario_alta'     => (string) $o->usuario_alta,
+                'linea_base'       => $base,
+                'linea_base_fecha' => (string) $o->linea_base_fecha,
+                'valor_actual'     => $valor,
+                'cumple'           => $cumple,
+                'avance'           => self::avance($base, $meta, $valor),
+            );
+        }
+        return $metas;
+    }
+
+    /**
+     * Cuánto se recorrió del camino entre la línea base y la meta, en %. Sirve para metas que
+     * suben (>=) y que bajan (<=). null si falta la base o el valor, o si la meta es igual a la base.
+     * Ej.: base 54, meta 70, valor 62 -> 50.
+     */
+    public static function avance($base, $meta, $valor)
+    {
+        if ($base === null || $valor === null || (float) $meta == (float) $base) {
+            return null;
+        }
+        return round(((float) $valor - (float) $base) / ((float) $meta - (float) $base) * 100, 1);
+    }
+
+    /**
+     * Los KPIs sobre los que se puede fijar una meta: los del Tablero (config/dashboard.php).
+     * Los de Mantenimiento quedan con fuente 'man' y su nombre de caché en 'kpi_nombre'.
+     * @return array nombre => ['nombre','titulo','fuente','kpi_nombre']
+     */
+    public function kpisDisponibles()
+    {
+        $this->config->load('dashboard', true);
+        $cfg = $this->config->item('dashboard');
+        $kpis = array();
+        foreach ($cfg['dashboard_kpis'] as $k) {
+            $nombre = $k['fuente'] === 'man' ? $k['id'] : $k['kpi_nombre'];
+            $kpis[$nombre] = array(
+                'nombre'     => $nombre,
+                'titulo'     => $k['titulo'],
+                'fuente'     => $k['fuente'],
+                'kpi_nombre' => isset($k['kpi_nombre']) ? $k['kpi_nombre'] : $nombre,
+            );
+        }
+        return $kpis;
     }
 
     /** Cancela una meta de la empresa. Devuelve cuántas canceló (0 o 1). */
