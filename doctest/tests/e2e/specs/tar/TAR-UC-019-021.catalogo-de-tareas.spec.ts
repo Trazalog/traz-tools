@@ -141,11 +141,7 @@ test.describe('@tar @TAR-UC-019 @TAR-UC-020 @TAR-UC-021 Catálogo de tareas est�
   });
 
   test('TAR-CP-019-04 editar nombre y duración de una tarea estándar', async ({}, testInfo) => {
-    // Bug conocido: hoy tiene que fallar. Cuando se corrija, la corrida avisa y se saca esta marca.
-    debeFallarCon(/Se editó la tarea estandar/);
-    // La pantalla ya no le borra el proceso a la tarea (tareasestandar #119), pero el guardado sigue
-    // fallando en TARDataService.dbs updateTarea (core: necesita análisis de impacto aprobado).
-    test.fail(true, 'H-095 #582 (B-05): updateTarea (TARDataService.dbs) castea vacío a integer');
+    // H-095 #582 corregido: tareasestandar #119 (pantalla) y traz-tools #645 (updateTarea).
     await tst.abrir('tareasEstandar', testInfo);
     const nuevo = `${TAREA} v2`;
     await tst.editarTarea(TAREA, { nombre: nuevo, duracion: '03:00' });

@@ -121,8 +121,9 @@ test.describe('@tar @TAR-UC-025 Metas del pedido y de sus hitos', () => {
       ];
       for (const [nombre, form, motivo] of casos) {
         const texto = await (await ctx.request.post(url, { form })).text();
-        expect(texto, `${nombre}: se aceptó`).toMatch(/"ok":\s*false/);
-        expect(texto, `${nombre}: el error no explica el motivo`).toMatch(motivo);
+        const r = JSON.parse(texto) as { ok: boolean; error?: string };
+        expect(r.ok, `${nombre}: se aceptó`).toBe(false);
+        expect(r.error ?? '', `${nombre}: el error no explica el motivo`).toMatch(motivo);
       }
     } finally {
       await ctx.close();
@@ -140,7 +141,7 @@ test.describe('@tar @TAR-UC-025 Metas del pedido y de sus hitos', () => {
       const texto = await (await ctx2.request.post(`${base}/index.php/traz-comp-bpm/Pedidotrabajo/guardarMeta/${petrId}`, {
         form: { kpi: KPI, operador: '>=', meta: '1', hasta: iso(enDias(10)) },
       })).text();
-      expect(texto, 'la empresa 2 pudo cargar una meta en un pedido ajeno').toMatch(/"ok":\s*false/);
+      expect((JSON.parse(texto) as { ok: boolean }).ok, 'la empresa 2 pudo cargar una meta en un pedido ajeno').toBe(false);
     } finally {
       await ctx2.close();
     }
