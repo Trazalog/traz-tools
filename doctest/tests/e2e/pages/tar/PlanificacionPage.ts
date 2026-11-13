@@ -110,6 +110,38 @@ export class PlanificacionPage extends ShellTar {
     return { status: r.status(), texto: await r.text() };
   }
 
+  // ── Metas del pedido (TAR-METAS) ────────────────────────────────────────────
+
+  /** Filas de metas del recuadro "Metas del pedido" (se carga al elegir el pedido). */
+  get filasMeta(): Locator {
+    return this.page.locator('#tbl-metas tbody tr.meta');
+  }
+
+  /** Espera que el recuadro de metas del pedido esté cargado. */
+  async esperarMetas(): Promise<void> {
+    await this.page.locator('#metas-pedido').waitFor({ timeout: 60_000 });
+    await this.esperarCarga();
+  }
+
+  /**
+   * Carga una meta desde el formulario del recuadro y devuelve la respuesta de `guardarMeta`.
+   * `hito` es el texto visible de la opción (vacío = todo el pedido).
+   */
+  async agregarMeta(m: { kpi: string; operador?: '>=' | '<='; meta: string; hasta: string; hito?: string; responsable?: string }): Promise<{ status: number; texto: string }> {
+    const f = this.page.locator('#frm-meta');
+    await f.locator('[name="kpi"]').selectOption(m.kpi);
+    if (m.hito) await f.locator('[name="hito_id"]').selectOption({ label: m.hito });
+    await f.locator('[name="operador"]').selectOption(m.operador ?? '>=');
+    await f.locator('[name="meta"]').fill(m.meta);
+    await f.locator('[name="hasta"]').fill(m.hasta);
+    if (m.responsable) await f.locator('[name="responsable"]').fill(m.responsable);
+    const resp = this.page.waitForResponse((r) => /Pedidotrabajo\/guardarMeta\//.test(r.url()), { timeout: 30_000 }).catch(() => null);
+    // requestSubmit respeta las validaciones del navegador (required, min): si no pasan, no hay pedido.
+    await f.evaluate((form) => (form as HTMLFormElement).requestSubmit());
+    const r = await resp;
+    return r ? { status: r.status(), texto: await r.text() } : { status: 0, texto: '' };
+  }
+
   // ── Hitos ───────────────────────────────────────────────────────────────────
 
   filaHito(codigo: string): Locator {
