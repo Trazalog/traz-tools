@@ -9,14 +9,15 @@
  * Cada tramo es un `test.step` con aserciones `soft`: si un tramo falla, los siguientes
  * corren igual y el reporte dice cuáles fallan y dónde, no solo el primero.
  *
- * - La asignación de rol se hace entrando directo a `main/changeleveluser/<id>`, porque
- *   la Lista de Usuarios no muestra al recién creado (H-032, #464). El id sale del
- *   redirect que hace el alta (`main/users/<id>`).
+ * - La asignación de rol se hace entrando directo a `main/changeleveluser/<id>`: el id sale
+ *   del redirect que hace el alta (`main/users/<id>`). Antes era la única forma porque la
+ *   Lista de Usuarios no mostraba al recién creado (H-032, #464), ya corregido en
+ *   traz-comp-dnato (commit e9c2896).
  * - El correo NO lleva '+': rompe la asignación de roles en Bonita (H-084).
  */
 
 import { expect, test, credenciales } from '../../fixtures/auth.ts';
-import { requerirUrlDeApp, urlDnato } from '../../config/apps.ts';
+import { entornoActual, requerirUrlDeApp, urlDnato } from '../../config/apps.ts';
 import { AltaUsuarioPage } from '../../pages/dnato/AltaUsuarioPage.ts';
 import { LoginPage } from '../../pages/dnato/LoginPage.ts';
 import { UsuariosListPage } from '../../pages/dnato/UsuariosListPage.ts';
@@ -28,6 +29,13 @@ test.describe('@dnato @DNATO-UC-014 @DNATO-UC-018 Circuito: alta de usuario con 
   test.describe.configure({ mode: 'serial', timeout: 600_000 });
 
   test('un usuario nuevo con rol Mantenedor puede entrar a Tools y a Asset', async ({ paginaEmpresa1: page, browser }) => {
+    // AssetPlanner está en migración en develop-v3: en local no se prueba (decisión de
+    // Rodolfo). En DEMO o staging-v3 la prueba sigue corriendo normalmente.
+    test.skip(
+      entornoActual() === 'local',
+      'AssetPlanner en migración en develop-v3: no se prueba por decisión de Rodolfo',
+    );
+
     const empresa = credenciales('empresa1').empresa;
     const marca = Date.now();
     const datos = {
@@ -58,9 +66,8 @@ test.describe('@dnato @DNATO-UC-014 @DNATO-UC-018 Circuito: alta de usuario con 
       await lista.buscar(datos.email);
       const visto = (await lista.correos()).includes(datos.email);
       console.log(`[circuito] 2. aparece en la lista sin roles: ${visto}`);
-      // FALLA CONOCIDA — H-032, #464. La aserción vive en DNATO-UC-014 con test.fail();
-      // acá solo se registra, para que el circuito no quede rojo por un bug ya abierto.
-      // Cuando se arregle #464, este tramo pasa a dar `true` y la anotación lo muestra.
+      // H-032 (#464) está corregido (traz-comp-dnato e9c2896): este tramo ya da `true`.
+      // La aserción vive en DNATO-UC-014; acá la anotación deja el registro.
       test.info().annotations.push({ type: 'H-032', description: `usuario sin roles visible en la lista: ${visto}` });
     });
 
