@@ -114,7 +114,8 @@
               "traz-comp-bpm",
               "traz-comp-formularios",
               "traz-comp-tareasestandar",
-              "traz-comp-calendar"
+              "traz-comp-calendar",
+              "traz-comp-adm"
             ]
           },
           "path": {
