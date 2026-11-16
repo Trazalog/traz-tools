@@ -21,7 +21,7 @@ class Valores extends CI_Model {
   */
   function Listar_Valores(){
     $data = $this->session->userdata();
-    if($data['email'] == TOOLS_ADMIN_USER){
+    if(es_superusuario($data['email'])){
       $resource = "/tablas/lista/empresa/";
       $url = REST_CORE . $resource;
       $aux = $this->rest->callApi('GET', $url);
@@ -46,7 +46,7 @@ class Valores extends CI_Model {
     $empre_id = '';
     $usuario = $this->session->userdata();
     // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
-    if ($usuario['email'] != TOOLS_ADMIN_USER) {
+    if (!es_superusuario($usuario['email'])) {
       $empre_id = empresa();
     }
     $resource = "/tabla/".$tabla."/empresa/".$empre_id;
@@ -68,7 +68,7 @@ class Valores extends CI_Model {
     $empre_id = '';
     $usuario = $this->session->userdata();
     // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
-    if ($usuario['email'] != TOOLS_ADMIN_USER) {
+    if (!es_superusuario($usuario['email'])) {
       $empre_id = empresa();
     }
     $resource = "/tabla/".$tabla."/valor/".$valor."/empresa/".$empre_id;
@@ -100,7 +100,7 @@ class Valores extends CI_Model {
       $post['_post_tablas']['tabla'] = $nombres[1];
     }
     // SI EL USUARIO NO ES ADMIN ENTONCES LE MANDAMOS EL ID DE EMPRESA PARA QUE CONCANTENE
-    if ($usuario['email'] != TOOLS_ADMIN_USER) {
+    if (!es_superusuario($usuario['email'])) {
       $post['_post_tablas']['empr_id'] = empresa();
     }
     if ($post['_post_tablas']['empr_id'] == "999999") {

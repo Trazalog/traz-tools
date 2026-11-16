@@ -600,4 +600,33 @@ if(!function_exists('validarInactividad')){
 		}
 	}
 }
+
+if(!function_exists('es_superusuario')){
+
+	/**
+	 * Indica si un correo pertenece a un superusuario del ambiente.
+	 *
+	 * TOOLS_ADMIN_USER acepta varios correos separados por coma. Se comparan
+	 * ignorando espacios y mayusculas. Con un solo correo se comporta igual que
+	 * la comparacion directa que habia antes.
+	 *
+	 * @param string $email Correo a comprobar.
+	 * @return bool
+	 */
+	function es_superusuario($email)
+	{
+		if ($email === null || trim($email) === '') {
+			return false;
+		}
+
+		$correos = explode(',', TOOLS_ADMIN_USER);
+		foreach ($correos as $correo) {
+			if (strcasecmp(trim($correo), trim($email)) === 0) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
 ?>

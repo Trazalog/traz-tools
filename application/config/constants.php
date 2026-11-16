@@ -147,6 +147,9 @@ define('PAN', 'traz-comp-pan/');
 define('ALM', 'traz-comp-almacenes/');
 define('viewOT', false);
 
+#COMPONENTE ADMINISTRACION
+define('ADM', 'traz-comp-adm/');
+
 #COMPONENTE SICPOA
 define('SICP', 'ddpe-tools-pro/');
 

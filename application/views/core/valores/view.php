@@ -52,7 +52,7 @@
             <!--Empresa-->
             <?php 
             $usuario = $this->session->userdata();
-            if ($usuario['email'] == TOOLS_ADMIN_USER) {                
+            if (es_superusuario($usuario['email'])) {                
             ?>
             <div class="col-md-6 col-sm-6 col-xs-12">
                 <div class="form-group">
