@@ -172,6 +172,7 @@ define('BPM_PROCESS', json_encode(array(
     BPM_PROCESS_ID_INGRESO_CAMIONES  => ['nombre' => 'SICPOA', 'color' => '#00A65A', 'proyecto'=>SICP, 'model'=>'Sicpoatareas'],
     BPM_PROCESS_ID_SOLICITUD_CONTENEDORES => ['nombre' => 'TERSU-BPM01 - Solicitud de Contenedores', 'color' => '#FF3300', 'proyecto'=> RESI.'general/', 'model'=>'Pedidocontenedores'],
     BPM_PROCESS_ID_SOLICITUD_RETIRO_CONTENEDORES => ['nombre' => 'TERSU-BPM02 - Solicitud de Retiro de Contenedores', 'color' => '#ABC51A', 'proyecto'=> RESI.'general/', 'model'=>'Retirocontenedores'],
+    BPM_PROCESS_ID_MANTENIMIENTO => ['nombre' => 'Mantenimiento', 'color' => '#00A65A', 'proyecto'=>MAN, 'model'=>'Mantareas'],
     BPM_PROCESS_ID_ORDEN_TRANSPORTE => ['nombre' => 'TERSU-BPM03 - Generación Orden de Transporte', 'color' => '#1A56C5', 'proyecto'=> RESI.'general/', 'model'=>'Entregaordentransportes']
 )));
 
@@ -247,6 +248,9 @@ define('REST_PRO', HOST.'/services/PRODataService');
 define('REST_COD', HOST.'/services/QRDataService');
 define('REST_PAN', HOST.'/services/PANDataService');
 define('REST_MAN', HOST.'/services/MANDataService'); // REQ-ASSET-ALM F6
+// MIG-8: días de anticipación con que se lanza el caso de Bonita de una OT preventiva o predictiva. Se usa solo si core.tablas
+// (tabla 'configuraciones', valor 'man_dias_lanzamiento') no tiene un valor válido; ver man_dias_lanzamiento() del módulo MAN
+define('MAN_DIAS_LANZAMIENTO', 7);
 define('REST_SICP', HOST.'/services/ddpeSicpoaDataService');
 define('API_SICP', HOST.'/sicpoa/api');
 define('API_BASCULA','http://localhost:8290/tools/bascula/pesar');
