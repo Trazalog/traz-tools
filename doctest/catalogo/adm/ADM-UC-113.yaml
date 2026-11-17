@@ -1,0 +1,73 @@
+id: ADM-UC-113
+modulo: ADM
+titulo: Cambiar el plan de una empresa y su vencimiento
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Cambio directo de plan (RF-23, RF-26, RF-26b)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "botón 'Plan' de la fila"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-15; RF-23, RF-26, RF-26b"
+pantallas:
+  - "Consola → Empresas → Plan"
+  - "Consola → Ficha de empresa → Cambiar plan / Extender vencimiento"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Yudica en Business con 20 personas activas; el plan Team permite 15"
+  - "Matheu nunca usó un plan de prueba; Empresa Test está en Prueba Business"
+flujo_principal:
+  - paso: "Toca 'Plan' en la fila de Yudica y elige Team"
+    resultado: "Ve 'Yudica usa 20 lugares y Team permite 15: sobran 5. No podrá invitar hasta quedar bajo el tope'"
+  - paso: "Escribe un motivo y confirma"
+    resultado: "Ve 'Yudica pasó al plan Team. Avisamos por correo a sus administradores.' y la fila muestra Team con '20 / 15'"
+  - paso: "Revisa la auditoría y el correo de la administradora de Yudica"
+    resultado: "La auditoría tiene empresa.cambiar_plan con Business → Team y el motivo; la administradora recibió 'Trazalog cambió tu plan Team'"
+  - paso: "La administradora de Yudica intenta invitar a alguien"
+    resultado: "Ve el aviso de tope y el servidor rechaza la invitación"
+flujos_alternativos:
+  - nombre: "Asignar un plan de prueba"
+    pasos:
+      - paso: "Cambia Matheu a Prueba Business (vence a los 30 días)"
+        resultado: "Matheu queda con vencimiento a 30 días desde hoy y la ficha ofrece 'Extender vencimiento'"
+  - nombre: "Plan de prueba ya usado"
+    pasos:
+      - paso: "Abre 'Plan' en Empresa Test, que ya tuvo un plan de prueba"
+        resultado: "Los planes de prueba aparecen deshabilitados con 'Ya usó un plan de prueba'"
+  - nombre: "Extender el vencimiento"
+    pasos:
+      - paso: "En la ficha de Empresa Test toca 'Extender vencimiento' y elige una fecha 15 días más adelante"
+        resultado: "Ve 'El plan de Empresa Test vence ahora el <fecha>.' y la auditoría tiene empresa.vencimiento"
+      - paso: "Hace lo mismo con una empresa cuyo plan de prueba ya venció"
+        resultado: "La empresa vuelve a tener el plan vigente hasta la fecha nueva"
+  - nombre: "Plan sin vencimiento"
+    pasos:
+      - paso: "Abre la ficha de una empresa con un plan que no es gratuito ni de prueba"
+        resultado: "No aparece 'Extender vencimiento'"
+  - nombre: "Funcionalidades nuevas del plan"
+    pasos:
+      - paso: "Cambia MinTest_SJ de Free a Team"
+        resultado: "La administradora de MinTest_SJ ve en Funcionalidades lo que suma Team como 'sin activar'"
+validaciones:
+  - "Solo se ofrecen planes activos"
+  - "Si el plan nuevo admite menos lugares, se avisa cuántos sobran y se aplica igual; después no se puede invitar hasta bajar del tope"
+  - "Un plan gratuito o de prueba se usa una sola vez por empresa"
+  - "Un plan con vencimiento deja la fecha de fin calculada; se puede extender, también si ya venció"
+  - "Lo que suma el plan nuevo queda sin activar"
+  - "Cada cambio queda en la auditoría y se avisa por correo a los administradores"
+datos_prueba:
+  empresas: "Yudica, Matheu, Empresa Test y MinTest_SJ del fixture dnato_v3_base, con 20 membresías de prueba en Yudica"
+dudas:
+  - "Si hay un pedido de cambio de plan pendiente (REQ-010), el cambio directo lo cancela (CP-27). Propuesta: este requerimiento deja el cambio directo como un solo paso del modelo, y REQ-010 le agrega la cancelación; mientras tanto no hay pedidos."
+  - "¿Cambiar el plan recalcula el período de cuota de IA? Propuesta: sí, pero lo hace REQ-011 (R6) cuando exista la cuota."
+  - "¿Qué pasa con las funcionalidades que la empresa tenía y el plan nuevo no trae? Propuesta: quedan como 'de otro plan' (R1, REQ-006) y se conservan activas para cuando vuelva, sin aviso extra (el aviso de restricción es de REQ-005, cuando se cambia el plan, no cuando se cambia la empresa de plan)."
+  - "¿Se puede acortar el vencimiento, no solo extenderlo? CP-17 dice 'ajustarla o extenderla'. Propuesta: sí, a cualquier fecha desde mañana."
+derivados: {}
+notas:
+  - "Cubre CP-23 (aviso y aplicación) y CP-17 (fecha calculada al asignar, ajustar o extender)."

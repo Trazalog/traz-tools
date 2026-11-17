@@ -1,0 +1,63 @@
+id: ADM-UC-253
+modulo: ADM
+titulo: Copiar un formulario global o uno propio
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-015-administracion-formularios.md
+    detalle: "sección 'Usar como base y duplicar (CU-72, RF-125)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-formularios.html
+    detalle: "'⧉ Usar como base' y 'Duplicar'"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-125 Usar como base"
+pantallas:
+  - "Portal de la empresa → 📝 Formularios"
+  - "Constructor de formularios"
+precondiciones:
+  - "eva@ es administradora de Empresa Test"
+  - "El global G-2 'Salida de pañol' tiene 4 campos y usa la lista global 'motivos_salida'"
+flujo_principal:
+  - paso: "eva@ toca '⧉ Usar como base' en G-2"
+    resultado: "Se abre 'Nombre de la copia' con el nombre del global propuesto"
+  - paso: "Escribe 'Salida de pañol Test' y toca 'Crear copia'"
+    resultado: "Se abre el constructor con 'Salida de pañol Test' en Borrador, los mismos 4 campos y el aviso 'Esta copia no sigue los cambios del formulario global'"
+  - paso: "Vuelve a Formularios"
+    resultado: "En 'Mis formularios' está 'Salida de pañol Test', 'copiado de \"Salida de pañol\" (global)'"
+  - paso: "Mira la lista de opciones del campo que usaba 'motivos_salida'"
+    resultado: "Ahora usa una lista 'motivos_salida' de Empresa Test, con los mismos valores"
+flujos_alternativos:
+  - nombre: "El global cambia después"
+    pasos:
+      - paso: "El superusuario agrega un campo a G-2"
+        resultado: "La copia de Empresa Test no cambia"
+  - nombre: "Duplicar uno propio"
+    pasos:
+      - paso: "eva@ toca 'Duplicar' en 'Salida de pañol Test' y la llama 'Salida de pañol Test 2'"
+        resultado: "Aparece la copia en Borrador, copiada de 'Salida de pañol Test'"
+  - nombre: "Nombre repetido"
+    pasos:
+      - paso: "Usa G-2 como base otra vez con el nombre 'Salida de pañol Test'"
+        resultado: "Ve 'Ya hay un formulario con ese nombre' y no se crea nada"
+  - nombre: "La copia no se usa sola"
+    pasos:
+      - paso: "Mira 'Dónde se usan' después de copiar"
+        resultado: "Nada cambió: la copia en borrador no está en ninguna pantalla"
+validaciones:
+  - "Usar como base copia cabecera, campos y listas de opciones a la empresa, en borrador y con 'copiado de'"
+  - "La copia no sigue los cambios del global"
+  - "Duplicar hace lo mismo con un formulario propio"
+  - "El nombre de la copia no se repite en la empresa"
+  - "Copiar no cambia lo que muestran las pantallas de Tools"
+datos_prueba:
+  global: "G-2 'Salida de pañol' con la lista global motivos_salida, en la copia de DEMO"
+dudas:
+  - "Si la empresa ya tiene una lista con el mismo nombre que la del global, ¿se pisa, se usa la de la empresa o se crea con otro nombre? Propuesta: se usa la de la empresa y no se copia, porque al dibujar Tools igual busca la de la empresa; la pantalla lo avisa."
+  - "¿Se copian también los tipos avanzados de un global (lista desde servicio o URL)? El administrador no los puede editar. Propuesta: se copian tal cual y en el constructor del Portal se ven bloqueados con 'lo configura Trazalog'."
+derivados: {}
+notas:
+  - "Cubre CP-125. Reemplaza, para quien lo elija, el clonado de la empresa plantilla 9000, que sigue funcionando en el alta hasta que se construya REQ-017 (cambio del disparador)."

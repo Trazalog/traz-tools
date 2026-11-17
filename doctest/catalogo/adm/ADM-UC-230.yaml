@@ -1,0 +1,58 @@
+id: ADM-UC-230
+modulo: ADM
+titulo: Elegir qué cargar y bajar la plantilla
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-014-administracion-cargas-masivas.md
+    detalle: "sección 'Entidades (catálogo)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-cargas.html
+    detalle: "bloque 'Nueva carga'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-43 y RF-110"
+pantallas:
+  - "Portal de la empresa → 🗂️ Cargas masivas"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ"
+  - "El catálogo de entidades del ambiente tiene Artículos, Herramientas, Stock / lotes, Etapas de artículos, Solicitantes de transporte y Mantenimiento · Equipos"
+flujo_principal:
+  - paso: "En el Portal toca '🗂️ Cargas masivas'"
+    resultado: "Ve 'Cargas masivas', el bloque 'Nueva carga' y el 'Historial de cargas'"
+  - paso: "Abre 'Entidad'"
+    resultado: "Ve las entidades del catálogo, las de Mantenimiento marcadas '(AssetPlanner)', y 'Usuarios'"
+  - paso: "Elige 'Artículos' y toca '⬇ Descargar plantilla artículos.xlsx'"
+    resultado: "Baja la planilla de artículos con las columnas que se esperan"
+  - paso: "Elige 'Usuarios' y descarga su plantilla"
+    resultado: "Baja una planilla con Correo, Nombre, Apellido y Rol, y aparece el aviso del tope de su plan"
+flujos_alternativos:
+  - nombre: "El servicio de entidades no responde"
+    pasos:
+      - paso: "Con el servicio detenido a propósito, abre Cargas masivas"
+        resultado: "Ve 'No pudimos cargar las entidades. Probá de nuevo en un rato.' y no puede procesar; no aparece ninguna lista de prueba"
+  - nombre: "Entidad nueva en el catálogo"
+    pasos:
+      - paso: "Soporte agrega una entidad al catálogo y ana@ vuelve a abrir la pantalla"
+        resultado: "La entidad nueva aparece sin cambiar nada del módulo"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "bruno@ entra a la dirección de Cargas masivas"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Las entidades salen del catálogo, más 'Usuarios'"
+  - "La plantilla corresponde a la entidad elegida"
+  - "Si el servicio no responde, no se muestra una lista de prueba ni se deja procesar"
+  - "Una entidad nueva del catálogo aparece sola"
+  - "Solo el administrador entra"
+datos_prueba:
+  empresa: "MinTest_SJ del fixture dnato_v3_base, con nombres inventados"
+dudas:
+  - "La maqueta muestra 'Usuarios' en el historial pero no en la lista de entidades, y no hay hoy ningún procedimiento de carga de usuarios. Propuesta: 'Usuarios' es una entidad del módulo (no de sta.entidades_negocio), con una plantilla propia de cuatro columnas: Correo, Nombre, Apellido, Rol."
+  - "¿Dónde vive la plantilla de 'Usuarios'? Las demás son una dirección guardada en el catálogo. Propuesta: un archivo dentro del módulo, versionado con el código."
+derivados: {}
+notas:
+  - "Equivale a DNATO-UC-026 en la nueva pantalla; la diferencia es que no hay lista de prueba y la plantilla se elige por nombre."

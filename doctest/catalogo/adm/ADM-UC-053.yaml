@@ -1,0 +1,73 @@
+id: ADM-UC-053
+modulo: ADM
+titulo: Administrar la estructura del menú global
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-005-administracion-catalogo-y-planes.md
+    detalle: "sección 'El catálogo es seg.menues' (publicación con eliminado, orden con números del mismo largo)"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-catalogo.html
+    detalle: "pestaña 'Estructura del menú' y formulario 'Nueva opción'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-40; CU-24"
+pantallas:
+  - "Consola → Catálogo y menú global → Estructura del menú"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Módulo MAN con la opción raíz mantenimiento y sus opciones equipos, ot e indicadores"
+  - "Un usuario de prueba de una empresa con la opción raíz MAN / mantenimiento habilitada para su rol"
+flujo_principal:
+  - paso: "Abre la pestaña 'Estructura del menú'"
+    resultado: "Ve el árbol por módulo (opción raíz y sus opciones) con estado y '✎' en cada una; el módulo MCP dice 'Herramientas de IA · no entran al menú'"
+  - paso: "Toca '＋ Nueva opción' y completa módulo MAN, opción preventivos, texto Preventivos, dirección mantenimiento/preventivos, padre mantenimiento, un ícono y tipo pantalla; toca 'Crear (queda sin publicar)'"
+    resultado: "La opción aparece en el árbol bajo mantenimiento, 'sin publicar'; la auditoría tiene catalogo.opcion.crear"
+  - paso: "Arrastra preventivos entre equipos y ot y toca 'Guardar orden'"
+    resultado: "Ve 'Guardamos el orden.' y el árbol queda equipos, preventivos, ot, indicadores; la auditoría tiene catalogo.orden"
+  - paso: "El usuario de prueba entra a Tools"
+    resultado: "Su menú lateral es el mismo de antes: preventivos no aparece porque está sin publicar"
+flujos_alternativos:
+  - nombre: "Mover a otro módulo"
+    pasos:
+      - paso: "Intenta arrastrar preventivos al módulo ALM, o manda ese cambio directo al servidor"
+        resultado: "Ve 'Una opción no se puede mover a otro módulo.' y la opción sigue en MAN"
+  - nombre: "Clave repetida"
+    pasos:
+      - paso: "Crea otra opción MAN / equipos"
+        resultado: "Ve 'Ya existe la opción equipos en el módulo MAN.' y no se crea"
+  - nombre: "Padre de otro módulo"
+    pasos:
+      - paso: "Crea una opción del módulo MAN eligiendo un padre de ALM, o lo manda directo al servidor"
+        resultado: "El formulario solo ofrece padres de MAN, y el servidor rechaza el padre de otro módulo"
+  - nombre: "Editar una opción publicada"
+    pasos:
+      - paso: "Toca '✎' en ot, cambia la dirección y guarda"
+        resultado: "Ve 'Guardado ✓'; en el próximo pedido el menú de Tools lleva a la dirección nueva; la auditoría tiene catalogo.opcion.editar"
+  - nombre: "Orden de más de nueve opciones"
+    pasos:
+      - paso: "En un módulo con doce opciones, lleva la última al segundo lugar y guarda"
+        resultado: "El menú de Tools del usuario de prueba muestra las doce en el orden nuevo (el orden de texto de Tools y el número coinciden)"
+validaciones:
+  - "Solo el superusuario cambia la estructura del menú global"
+  - "La clave es módulo + opción: no se repite"
+  - "Una opción no se mueve a otro módulo y su padre es del mismo módulo"
+  - "Una opción nueva queda sin publicar y no aparece en el menú de Tools"
+  - "El orden guardado es el que muestra el menú de Tools, aunque haya más de nueve opciones"
+  - "Cada alta, edición y cambio de orden queda en la auditoría"
+datos_prueba:
+  usuario_tools: "uno de los usuarios por defecto de la empresa DocTest, con su rol"
+  ambiente: "copia de DEMO, nunca producción: los cambios de estructura se ven en todas las empresas"
+dudas:
+  - "Publicación y eliminado: para que una opción nueva 'sin publicar' no aparezca en el menú actual de Tools (regla 'si ningún hijo está habilitado se muestran todos'), se propone que sin publicar y despublicada pongan eliminado = 1 y publicada eliminado = 0. Hoy hay opciones con eliminado = 1 que M-2 de REQ-004 deja 'publicadas' por defecto. Propuesta: en M-2 las que tienen eliminado = 1 quedan 'despublicada', y desde la Consola publicación y eliminado van siempre juntos."
+  - "El control de módulos válidos de seg.menues no acepta MCP (es un objeto existente). Propuesta: ampliarlo con MCP en el script de este requerimiento, como ya se hizo con BPM; sin eso no se pueden crear las herramientas del agente en el catálogo."
+  - "¿Las herramientas del agente (módulo MCP) se crean a mano acá o las carga un script con la lista del frente del agente? REQ-004 (M-2) las dejó en duda. Propuesta: las carga un script con la lista que dé el frente del agente, aprobado por Rodolfo; acá se pueden editar textos y publicación, y crear alguna suelta."
+  - "¿Se pueden reordenar los módulos entre sí (la maqueta muestra '⋮⋮' en cada módulo) o solo las opciones dentro de cada uno? Propuesta: sí, se reordenan las opciones raíz con la misma regla de números del mismo largo."
+  - "¿Se permite un tercer nivel (opción hija de una hija)? Tools solo dibuja dos niveles (menu_helper.php:30,67). Propuesta: no; el padre solo puede ser una opción raíz."
+derivados: {}
+notas:
+  - "Cubre CP-18 (menos 'aparece en el menú de MinTest_SJ al publicarla y sumarla a Free', que depende del menú resuelto de REQ-009)."
+  - "Los cambios de estructura se ven en el menú de Tools de todas las empresas en el próximo pedido, como hoy con el ABM de DNATO: por eso el análisis de impacto de REQ-005."

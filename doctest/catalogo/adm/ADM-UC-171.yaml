@@ -1,0 +1,67 @@
+id: ADM-UC-171
+modulo: ADM
+titulo: Renovar la cuota cada período y al cambiar de plan
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-011-administracion-cuota-agente.md
+    detalle: "secciones 'R6 — Período de cuota' y 'Proceso diario de renovación'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§3 regla R6"
+  - repo: traz-tools
+    path: doc/infra/kpi-cron-refresh.md
+    detalle: "tarea programada del servidor que ya corre en DEMO y producción (mismo mecanismo que REQ-008)"
+pantallas:
+  - "Proceso diario (sin pantalla) → Portal → Uso de IA"
+  - "Consola → Empresas → Plan"
+precondiciones:
+  - "El proceso de renovación está programado en el servidor de prueba"
+  - "MinTest_SJ en Free (30 por semana, renovación lunes), período 26/10 → 2/11 con 21 consumidas"
+flujo_principal:
+  - paso: "Corre el proceso el lunes 2/11 a las 00:05"
+    resultado: "Existe el período 2/11 → 9/11 con cuota 30 y 0 consumidas; el anterior quedó con 21"
+  - paso: "La administradora abre Uso de IA"
+    resultado: "Ve '0 / 30 esta semana' y 'Se renueva el lunes 9/11 a las 00:00', y en Períodos anteriores '26/10 → 1/11 · 21 · 30'"
+  - paso: "Corre el proceso otra vez el mismo día"
+    resultado: "No abre otro período ni cambia nada"
+flujos_alternativos:
+  - nombre: "Cambio de plan a mitad de período"
+    pasos:
+      - paso: "Con 21 de 30, el superusuario pasa MinTest_SJ a Team (1.000 por mes, día 1)"
+        resultado: "El período en curso tiene cuota 1.000, consumidas 21 y fin el 1/12 00:00"
+  - nombre: "Pedido aprobado"
+    pasos:
+      - paso: "El superusuario aprueba un pedido de MinTest_SJ a Team"
+        resultado: "El período en curso se recalcula igual que en el cambio directo"
+  - nombre: "El proceso no corrió"
+    pasos:
+      - paso: "El proceso no corre el lunes y corre el martes"
+        resultado: "Abre el período 2/11 → 9/11, sin perder consumos hechos el lunes al vuelo"
+  - nombre: "Bonificación no pasa al período siguiente"
+    pasos:
+      - paso: "MinTest_SJ tenía 5 bonificadas y corre la renovación"
+        resultado: "El período nuevo arranca con 0 bonificadas"
+  - nombre: "Plan mensual"
+    pasos:
+      - paso: "Corre el proceso el 1/12 con Yudica en Business (4.000 por mes, día 1)"
+        resultado: "Se abre el período 1/12 → 1/1 con cuota 4.000"
+validaciones:
+  - "El período sigue el plan: semana desde el día de renovación, mes desde el día N, a las 00:00 de la zona horaria de la variable"
+  - "El proceso abre lo que falta; correrlo dos veces o saltear días no duplica ni pierde"
+  - "Al cambiar de plan, el período en curso toma cuota y fin del plan nuevo y no descuenta lo consumido"
+  - "El recálculo vale para el cambio directo, el pedido aprobado y el registro"
+  - "La bonificación es del período en curso"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados; fecha de hoy jueves 29/10/2026"
+dudas:
+  - "¿A qué hora corre la renovación? CP-84 dice 00:05. Propuesta: 00:05 hora de San Juan, en la misma tarea programada que el vencimiento de planes de REQ-008 (una línea que corre los dos procesos uno detrás del otro)."
+  - "La tarea programada que ya existe en DEMO y producción corre una función de PostgreSQL directo (kpi.correr()), y REQ-008 propuso un proceso del módulo por línea de comandos. Propuesta: el de REQ-008 (un solo mecanismo para los procesos del módulo); la alternativa de llamar a seg.renovar_cuotas() con psql desde el crontab de postgres es más simple pero saltea el DataService."
+  - "Al pasar de un plan semanal a uno mensual a mitad de semana, el período en curso queda más largo (de 26/10 a 1/12). ¿Es lo esperado? Propuesta: sí, es lo que dice R6 y CP-87; las consultas ya hechas cuentan para el período largo."
+  - "¿Qué pasa con una empresa cuyo plan pasa a cuota 0 a mitad de período? Propuesta: el período queda con cuota 0 y R5 responde sin_ia desde ese momento."
+derivados: {}
+notas:
+  - "Cubre CP-84, CP-87 y la parte de proceso de CP-89; completa lo que REQ-008 dejó en la duda de ADM-UC-113."

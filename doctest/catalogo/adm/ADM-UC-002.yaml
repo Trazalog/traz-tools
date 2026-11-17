@@ -1,0 +1,59 @@
+id: ADM-UC-002
+modulo: ADM
+titulo: Entrar a la Consola de Trazalog
+perfil: Superusuario
+estado: validado
+fecha_validacion: 2026-11-10
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-002-administracion-esqueleto.md
+    detalle: "se completa con el controlador de la Consola al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "maqueta de la Consola; en REQ-002 solo el marco"
+pantallas:
+  - "Portal de la empresa → 🔑 Consola"
+  - "Consola (dirección traz-comp-adm/consola)"
+precondiciones:
+  - Usuario con sesión iniciada en Tools
+  - El usuario es superusuario del ambiente (su correo está en TOOLS_ADMIN_USER)
+  - El superusuario es además administrador de su empresa activa, para entrar por el Portal
+flujo_principal:
+  - paso: "En el Portal de la empresa, toca '🔑 Consola'"
+    resultado: "Se abre la Consola, con la barra 'Trazalog · Consola' y la leyenda 'solo súper usuarios'"
+  - paso: "Toca '🏢 Mi empresa'"
+    resultado: "Vuelve al Portal de su empresa activa"
+  - paso: "Vuelve a la Consola y toca '← Ir a Tools'"
+    resultado: "Vuelve al tablero de Tools, con la misma sesión"
+flujos_alternativos:
+  - nombre: "Segundo superusuario de la lista"
+    pasos:
+      - paso: "Otro usuario, cuyo correo es el segundo de la lista de superusuarios del ambiente, entra a la dirección de la Consola"
+        resultado: "Entra a la Consola igual que el primero"
+  - nombre: "Administrador que no es superusuario: no ve el botón"
+    pasos:
+      - paso: "Un administrador que no es superusuario entra al Portal"
+        resultado: "No ve el botón '🔑 Consola'"
+  - nombre: "Administrador que no es superusuario: dirección directa"
+    pasos:
+      - paso: "Un administrador que no es superusuario entra a la dirección de la Consola"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y no ve nada de la Consola"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Sin haber iniciado sesión, entra a la dirección de la Consola"
+        resultado: "Lo lleva a la pantalla de ingreso"
+validaciones:
+  - "Puede haber varios superusuarios: entra cualquiera cuyo correo esté en la lista del ambiente"
+  - "A la Consola entra solo el superusuario"
+  - "El botón '🔑 Consola' se muestra solo al superusuario"
+  - "Sin sesión no se entra a la Consola"
+datos_prueba:
+  superusuario: "uno de los correos de TOOLS_ADMIN_USER del ambiente; la contraseña va en doctest/.env, nunca en el catálogo"
+  administrador_comun: "el administrador de la empresa DocTest"
+dudas: []
+derivados: {}
+notas:
+  - "Decisiones de Rodolfo (2026-11-10): superusuario = correo incluido en TOOLS_ADMIN_USER, que acepta varios correos separados por coma. Las credenciales del superusuario de DEMO las tiene Pablo y van en su doctest/.env."
+  - "En REQ-002 la Consola es solo el marco: la lista de empresas, registros, planes y demás llegan con sus requerimientos. La leyenda y los nombres de botones salen de la maqueta consola-empresas.html."

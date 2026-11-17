@@ -1,0 +1,73 @@
+id: ADM-UC-132
+modulo: ADM
+titulo: Ver el menú que le toca a cada persona
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-009-administracion-menus.md
+    detalle: "secciones 'R3 — Menú resuelto de una persona' y 'Ver como…'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-menus.html
+    detalle: "selector 'Ver como…'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§3 regla R3; §4 servicio 'Menú resuelto'; 01_ESPECIFICACION_FUNCIONAL.md RF-63 a RF-65"
+pantallas:
+  - "Portal de la empresa → Menús → Constructor → Ver como…"
+  - "Servicio del módulo traz-comp-adm/servicios/menu-resuelto (sin pantalla)"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa está en Free; Team trae además Ajustes de stock; Business trae además Procesos y Producción"
+  - "Menú Operación (grupo 'Mi trabajo': Equipos con etiqueta 'Equipos del taller', Órdenes de trabajo; grupo 'Repuestos': Stock) asignado al rol Mantenedor; Solo equipos (Equipos) asignado a Carla"
+  - "El rol Supervisor no tiene acceso a Alta de equipo; Indicadores está sin activar"
+flujo_principal:
+  - paso: "En el Constructor elige 'Ver como… Carla Ruiz'"
+    resultado: "Ve 'Solo equipos' (por persona) con Equipos"
+  - paso: "Elige 'Ver como… Darío Gómez' (Mantenedor, sin menú por persona)"
+    resultado: "Ve 'Operación' (por rol): 'Mi trabajo' con 'Equipos del taller' y Órdenes de trabajo, y 'Repuestos' con Stock"
+  - paso: "Elige 'Ver como… Bruno Díaz' (Supervisor, sin asignación)"
+    resultado: "Ve el predeterminado: los grupos en el orden del catálogo (Mantenimiento, Almacenes, Herramientas, Procesos, Producción); en Almacenes, Ajustes de stock sombreada, en cursiva y con '🥈 Team' después de Stock; Procesos y Producción sombreadas con '🥇 Business'"
+  - paso: "Compara con lo que devuelve el servicio 'Menú resuelto' para Bruno"
+    resultado: "Es exactamente lo mismo"
+flujos_alternativos:
+  - nombre: "Lo que no va en el menú"
+    pasos:
+      - paso: "Mira el predeterminado de Bruno"
+        resultado: "No están Alta de equipo (sin acceso para Supervisor), Indicadores (sin activar), Preventivos (sin publicar) ni las herramientas de IA, ni opciones del Portal o de la Consola"
+  - nombre: "Grupo vacío"
+    pasos:
+      - paso: "Ve como Darío con el grupo 'Repuestos' cuyo único Stock quedó sin acceso para Mantenedor"
+        resultado: "El grupo 'Repuestos' no aparece"
+  - nombre: "El servicio para la persona de la sesión"
+    pasos:
+      - paso: "Darío, con su propia sesión, pide el servicio 'Menú resuelto'"
+        resultado: "Recibe 'Operación' con origen rol y cada opción con estado visible u otro_plan, ícono y dirección"
+  - nombre: "Persona de otra empresa"
+    pasos:
+      - paso: "El administrador pide 'Ver como…' con el correo de una persona de otra empresa"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y no ve ningún menú"
+  - nombre: "Sin sesión"
+    pasos:
+      - paso: "Sin haber iniciado sesión, pide el servicio 'Menú resuelto'"
+        resultado: "Responde 401"
+validaciones:
+  - "La resolución es persona, después rol, después predeterminado"
+  - "Lo visible va con estado visible; lo de otro plan queda en su lugar con estado otro_plan y el plan de menor orden"
+  - "Lo sin activar, sin acceso, sin publicar o de IA no va; tampoco el Portal ni la Consola"
+  - "Los grupos vacíos no van"
+  - "El predeterminado respeta la jerarquía y el orden del catálogo"
+  - "'Ver como…' muestra exactamente lo que devuelve el servicio"
+  - "Solo se puede ver como roles y personas de la propia empresa"
+  - "El servicio toma la persona de la sesión y sin sesión responde 401"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), MinTest_SJ, con nombres inventados"
+dudas:
+  - "R3 dice que el predeterminado respeta la jerarquía del catálogo y RF-61 que va en el orden de Funcionalidades. Propuesta: grupos = opciones raíz en el orden del catálogo; dentro de cada una, las activas en el orden de Funcionalidades y las de otro plan a continuación de la opción que las precede en el catálogo."
+  - "La vista de presentación de una opción de otro plan es REQ-012. Propuesta: el servicio ya devuelve su dirección (traz-comp-adm/presentacion/<módulo>/<opción>) y en 'Ver como…' la opción sombreada no se puede tocar hasta REQ-012."
+  - "En un menú custom, ¿una opción de otro plan que el administrador agregó cuando estaba en el plan queda en su lugar sombreada (otro_plan) o se oculta? R3 dice que queda; RF-51 dice que lo apagado se oculta. Propuesta: lo de otro plan queda sombreado en su lugar; lo apagado (sin activar) se oculta."
+derivados: {}
+notas:
+  - "Cubre CP-64, CP-65, CP-67 contra el servicio, y la parte de menú de CP-15 y CP-53. Que la barra lateral de Tools lo dibuje es ADM-UC-135 (decisión de Rodolfo: entra en REQ-009)."

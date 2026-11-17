@@ -1,0 +1,62 @@
+id: ADM-UC-013
+modulo: ADM
+titulo: Los enlaces de los correos llevan al módulo
+perfil: Visitante
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-003-administracion-identidad.md
+    detalle: "sección 'Cómo se arma' (correos) y regla 5"
+  - repo: traz-tools
+    path: doc/v3/administracion/ANALISIS_INICIAL.md
+    detalle: "C.1 (correos) y C.4 (enlaces de los correos de DNATO, que no se redirigen)"
+  - repo: traz-tools
+    path: doc/v3/dnato/DNATO_v2_RELEVAMIENTO.md
+    detalle: "§3.4 (enlaces complete/token y reset_password/token) y §7.3 (correo)"
+pantallas:
+  - "Registro Nuevo Usuario del módulo → correo 'Activar cuenta en Trazalog.com' → Establecer Contraseña"
+  - "Recuperar Contraseña del módulo → correo de recuperación → Restablecer Contraseña"
+precondiciones:
+  - Sin sesión iniciada
+  - Casilla de correo descartable de DocTest para recibir los correos
+flujo_principal:
+  - paso: "Se registra por el registro del módulo con una casilla descartable"
+    resultado: "Llega el correo 'Activar cuenta en Trazalog.com', enviado por register@trazalog.com, y el enlace 'Activar mi cuenta' apunta a la dirección del módulo (traz-comp-adm/main/complete/token/...)"
+  - paso: "Abre el enlace del correo"
+    resultado: "Se muestra 'Establecer Contraseña' del módulo, con el nombre y el correo de la cuenta"
+  - paso: "Con la cuenta ya activa, pide recuperar la contraseña desde 'Recupere contraseña' del módulo"
+    resultado: "Llega el correo de recuperación y su enlace apunta a la dirección del módulo (traz-comp-adm/main/reset_password/token/...)"
+  - paso: "Abre el enlace y define una contraseña nueva"
+    resultado: "Se muestra que la contraseña se actualizó y puede ingresar con ella por el módulo y también por DNATO"
+flujos_alternativos:
+  - nombre: "Registro por DNATO"
+    pasos:
+      - paso: "Se registra por el registro de DNATO, como hoy"
+        resultado: "El enlace del correo sigue apuntando a DNATO: no se redirige nada"
+  - nombre: "Correo de bienvenida de la empresa"
+    pasos:
+      - paso: "Termina el alta de la empresa por el módulo"
+        resultado: "Llega el correo de bienvenida y todo enlace que trae apunta al módulo, no a DNATO"
+  - nombre: "Enlace del módulo abierto en DNATO"
+    pasos:
+      - paso: "Cambia en el enlace de recuperación del módulo la dirección del módulo por la de DNATO y lo abre"
+        resultado: "DNATO acepta el mismo enlace, porque las dos usan la misma tabla de enlaces"
+validaciones:
+  - "Los enlaces de activar cuenta y de restablecer contraseña que manda el módulo llevan al módulo"
+  - "Los correos que manda DNATO no cambian"
+  - "Los correos salen por el mismo envío del servidor que DNATO, con el mismo remitente"
+  - "Todo enlace de cualquier correo del módulo apunta al módulo"
+  - "Una cuenta activada o una contraseña cambiada por el módulo sirve igual en DNATO"
+datos_prueba:
+  casilla: "casilla descartable del seed de DocTest (la misma que usa DNATO-UC-002)"
+dudas:
+  - "La contraseña por defecto de los usuarios iniciales y la clave secreta de reCAPTCHA están escritas en el constants.php de DNATO. En la copia no pueden quedar en el repositorio. ¿Dónde las deja Rodolfo en cada servidor? Propuesta: variables de entorno del servidor web (por ejemplo, en el vhost de Tools), sin valor por defecto en el código; si faltan, la registración falla con un mensaje claro en el log."
+  - "El correo de bienvenida de DNATO incluye la contraseña por defecto de los usuarios iniciales, y la pantalla 'Registro completado' también la muestra (DNATO-UC-005). ¿Se copia igual? Propuesta: sí, para que DNATO-UC-005 pase igual; sacarla es una mejora aparte para las dos versiones."
+  - "El arreglo de países (PR traz-comp-dnato#49, issue traz-tools#608) figura como H-090 en el brief y en el título del PR, pero en doc/hallazgos/REGISTRO.md el H-090 es otro hallazgo (roles de usuario). ¿Qué número le corresponde? Propuesta: Rodolfo le asigna uno libre en el registro; la copia igual parte del código con ese arreglo."
+derivados: {}
+notas:
+  - "Cubre CP-06 (junto con DNATO-UC-008 corrido contra la copia)."
+  - "Los correos de DNATO salen por sendmail del servidor (Postfix, que envía al proveedor por un túnel cifrado; ver traz-comp-dnato/development/PASAJE_PRODUCCION.md §4). La copia no trae usuario ni contraseña de correo: usa la misma configuración del servidor."
+  - "El aviso de 'Nuevo inicio de sesión' que manda checkLoginUser también se copia; si trae enlaces, apuntan al módulo."

@@ -1,0 +1,81 @@
+id: ADM-UC-251
+modulo: ADM
+titulo: Armar un formulario con el constructor
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-015-administracion-formularios.md
+    detalle: "sección 'Constructor (CU-71)' y 'Datos'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-formulario-editor.html
+    detalle: "paleta, campos y propiedades"
+  - repo: traz-tools
+    path: doc/v3/dnato/FORMULARIOS_DINAMICOS_RELEVAMIENTO.md
+    detalle: "§1 modelo de frm.* y §2 tipos de ítem"
+pantallas:
+  - "Portal de la empresa → 📝 Formularios → ＋ Nuevo formulario"
+  - "Constructor de formularios"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ, que tiene la lista de opciones 'obras' con Veladero y Gualcamayo"
+  - "P-1 de MinTest_SJ tiene 12 respuestas"
+flujo_principal:
+  - paso: "Toca '＋ Nuevo formulario' y escribe 'Inspección de equipo'"
+    resultado: "Se abre el constructor en Borrador, con la paleta de tipos de campo y la lista de campos vacía"
+  - paso: "Arrastra un título, un texto corto 'Inspector' (obligatorio), un número 'Horas de uso', una fecha, una lista desplegable 'Obra', casillas 'Fallas', opciones excluyentes 'Resultado', un archivo y una imagen"
+    resultado: "Aparecen nueve renglones; al escribir 'Horas de uso' el nombre interno sugerido es 'horas_de_uso' y lo puede cambiar"
+  - paso: "En 'Obra' toca 'Elegir una lista existente…'"
+    resultado: "Ve 'obras (de tu empresa)' y la elige"
+  - paso: "En 'Fallas' toca '＋ Crear lista nueva', la llama 'fallas_inspeccion' y escribe 'Pérdida de aceite', 'Ruido' y 'Vibración', uno por línea"
+    resultado: "El campo queda con la lista nueva"
+  - paso: "Arrastra 'Inspector' al primer lugar y toca 'Publicar'"
+    resultado: "Ve 'Guardamos el formulario.'; queda Publicado con nueve ítems en ese orden, la lista fallas_inspeccion de MinTest_SJ tiene tres valores y en Actividad figura la publicación"
+flujos_alternativos:
+  - nombre: "Publicar sin campos"
+    pasos:
+      - paso: "Crea un formulario con solo un título y toca 'Publicar'"
+        resultado: "Ve 'Agregá al menos un campo' y queda en Borrador"
+  - nombre: "Nombre interno repetido"
+    pasos:
+      - paso: "Pone a dos campos el mismo nombre interno y guarda"
+        resultado: "Ve 'Ya hay un campo con ese nombre' y no guarda"
+  - nombre: "Nombre de formulario repetido"
+    pasos:
+      - paso: "Crea otro formulario llamado 'Inspección de equipo'"
+        resultado: "Ve 'Ya hay un formulario con ese nombre' y no guarda"
+  - nombre: "Formulario con respuestas"
+    pasos:
+      - paso: "Abre P-1 en el constructor"
+        resultado: "Ve 'Este formulario ya tiene respuestas'; nombre interno y tipo de cada campo están bloqueados; puede cambiar etiqueta, orden, obligatorio y ancho"
+      - paso: "Da de baja el campo 'comprobante' y guarda"
+        resultado: "Las cargas nuevas en Tools ya no lo muestran y las 12 respuestas viejas lo conservan"
+      - paso: "Manda, a propósito, un cambio de nombre interno de P-1 en el envío"
+        resultado: "Se rechaza y P-1 no cambia"
+  - nombre: "Tipos avanzados"
+    pasos:
+      - paso: "Busca en la paleta del Portal la lista desde servicio o URL"
+        resultado: "No está; ve 'Los tipos avanzados (lista desde servicio / URL) solo los configura Trazalog.'"
+      - paso: "Manda, a propósito, un ítem de tipo avanzado en el envío"
+        resultado: "Se rechaza"
+validaciones:
+  - "Se puede armar un formulario con todos los tipos que dibuja Tools hoy"
+  - "El nombre interno se sugiere de la etiqueta y se puede editar"
+  - "Se elige una lista existente de la empresa o se crea una nueva en la empresa"
+  - "No se publica sin al menos un campo con nombre"
+  - "El nombre interno no se repite dentro del formulario"
+  - "El nombre del formulario no se repite en la empresa"
+  - "Con respuestas, nombre interno y tipo no cambian, tampoco por envío manipulado"
+  - "Dar de baja un campo lo oculta en cargas nuevas y lo conserva en las viejas"
+  - "Los tipos avanzados no están en el Portal, tampoco por envío manipulado"
+datos_prueba:
+  formulario: "'Inspección de equipo' (CP-121) en la copia de DEMO, con nombres inventados"
+dudas:
+  - "¿Cuál es el 'ámbito' para el nombre único: la empresa, o la empresa más los globales? Propuesta: la empresa (los propios entre sí) y los globales entre sí; un propio puede llamarse igual que un global, porque 'Usar como base' propone ese nombre."
+  - "El nombre del formulario tiene hasta 45 caracteres (largo de la columna en el volcado viejo). ¿Se agranda? Propuesta: no; el constructor lo limita a 45."
+  - "Cómo se guarda el ancho: hoy 'columna' es una clase de diseño (col-md-6, etc.). Propuesta: Completo = col-md-12, Mitad = col-md-6, Un tercio = col-md-4."
+derivados: {}
+notas:
+  - "Cubre CP-121, CP-122 (en el constructor), CP-123 y la baja de ítem de CP-128. Que Tools dibuje listas globales (F-1) está prohibido en este plan (decisión de Rodolfo del 2026-11-10): si la empresa no tiene su lista, en Tools se ve como hoy."
+  - "Antes del script de columnas nuevas, Pablo saca la estructura de frm.* de DEMO con pg_dump --schema-only (solo lectura, con la columna multiple) y la versiona en el repositorio (F-5, tarea 0 del REQ). Resuelve la duda vieja del DDL."

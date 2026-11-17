@@ -1,0 +1,52 @@
+id: ADM-UC-192
+modulo: ADM
+titulo: Ver cuántos "Me interesa" tiene cada funcionalidad
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-012-administracion-visibilidad.md
+    detalle: "sección 'Contador en el catálogo (RF-43, CP-42)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-catalogo.html
+    detalle: "columna 'Me interesa' y ficha de la opción"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-43; CU-17"
+pantallas:
+  - "Consola → Catálogo"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "4 personas de MinTest_SJ y 3 de Yudica tocaron 'Me interesa' en Procesos con el botón de la vista de presentación"
+flujo_principal:
+  - paso: "Abre Catálogo"
+    resultado: "La fila de Procesos muestra 7 en 'Me interesa'"
+  - paso: "Abre la ficha de Procesos"
+    resultado: "Ve 'Me interesa (7): MinTest_SJ ×4, Yudica ×3'"
+flujos_alternativos:
+  - nombre: "Uno más"
+    pasos:
+      - paso: "Otra persona de Yudica toca 'Me interesa' en Procesos y el superusuario vuelve a abrir la ficha"
+        resultado: "Ve 'Me interesa (8): MinTest_SJ ×4, Yudica ×4'"
+  - nombre: "Repetido no suma"
+    pasos:
+      - paso: "Una persona que ya avisó vuelve a tocar el botón y el superusuario abre la ficha"
+        resultado: "El contador no cambia"
+  - nombre: "No es superusuario"
+    pasos:
+      - paso: "Un administrador pide el contador directo"
+        resultado: "Recibe 'sin permiso' (403)"
+validaciones:
+  - "El contador cuenta un 'Me interesa' por persona, empresa y funcionalidad"
+  - "Se desglosa por empresa"
+  - "Solo lo ve el superusuario"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados"
+dudas:
+  - "¿El contador cuenta los 'Me interesa' de empresas dadas de baja? Propuesta: no; se muestran solo los de empresas no dadas de baja, y la base los conserva."
+  - "¿Hace falta ver quién dentro de cada empresa? El catálogo muestra solo por empresa. Propuesta: no en la Consola; el detalle por persona queda en la auditoría (funcionalidad.interes)."
+derivados: {}
+notas:
+  - "Cubre CP-42 con intereses reales; la pantalla y el recurso son de REQ-005 (ADM-UC-052)."

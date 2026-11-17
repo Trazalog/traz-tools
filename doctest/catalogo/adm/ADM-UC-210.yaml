@@ -1,0 +1,84 @@
+id: ADM-UC-210
+modulo: ADM
+titulo: Consultar la auditoría de la plataforma
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-013-administracion-actividad-y-auditoria.md
+    detalle: "sección 'Consola → Auditoría'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-auditoria.html
+    detalle: "pestaña Auditoría"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-19 y RF-100 (§4.11)"
+pantallas:
+  - "Consola → 📜 Auditoría y uso → Auditoría"
+  - "Consola → 👥 Usuarios → 📜 Ver actividad"
+  - "Consola → 🏢 Empresas → Ficha → Actividad"
+precondiciones:
+  - Usuario con sesión iniciada en Tools y la marca de superusuario
+  - "En la base de prueba hay filas de auditoría de varias empresas (pedido.crear de Yudica, miembro.invitar y miembro.banear de MinTest_SJ, plan.funcionalidad.quitar del plan Free)"
+flujo_principal:
+  - paso: "En la Consola toca '📜 Auditoría y uso'"
+    resultado: "Ve 'Auditoría y uso', la pestaña 'Auditoría' abierta y la tabla con Fecha, Quién, Empresa, Acción, Entidad y Detalle, de la más nueva a la más vieja"
+  - paso: "Elige la empresa MinTest_SJ"
+    resultado: "Solo quedan las filas de MinTest_SJ y el pie dice cuántos registros son, 'solo lectura, se conservan 5 años' y que el consumo de IA no está ahí"
+  - paso: "Elige la acción 'miembro.*'"
+    resultado: "Quedan solo las invitaciones, baneos y demás cambios de membresía de MinTest_SJ"
+  - paso: "Escribe 'ana@' en '🔍 usuario'"
+    resultado: "Quedan solo las filas que hizo ana@"
+  - paso: "Toca '⬇ CSV'"
+    resultado: "Baja un archivo con exactamente las filas filtradas"
+flujos_alternativos:
+  - nombre: "Desde Usuarios de la plataforma"
+    pasos:
+      - paso: "En Consola → Usuarios toca '📜 Ver actividad' en la fila de bruno@"
+        resultado: "Se abre Auditoría con el filtro de bruno@ puesto y 'Llegaste desde bruno@ · Quitar filtro'"
+  - nombre: "Desde la ficha de la empresa"
+    pasos:
+      - paso: "En la ficha de Yudica toca 'Actividad'"
+        resultado: "Se abre Auditoría con la empresa Yudica filtrada"
+  - nombre: "Acción que no es de una empresa"
+    pasos:
+      - paso: "Mira la fila de 'plan.funcionalidad.quitar'"
+        resultado: "La columna Empresa dice '—' y el detalle dice cuántas empresas afectó"
+  - nombre: "Rango de fechas al revés"
+    pasos:
+      - paso: "Pone 'Desde' posterior a 'Hasta'"
+        resultado: "Ve 'La fecha 'Desde' tiene que ser anterior a 'Hasta'.' y la tabla no cambia"
+  - nombre: "Sin resultados"
+    pasos:
+      - paso: "Filtra por una persona que no hizo nada"
+        resultado: "Ve 'No hay registros con esos filtros.'"
+  - nombre: "No hay forma de cambiar nada"
+    pasos:
+      - paso: "Busca en la pantalla un botón para editar o borrar una fila"
+        resultado: "No hay ninguno: la pantalla es solo de lectura"
+  - nombre: "Administrador que no es superusuario"
+    pasos:
+      - paso: "Un administrador entra a la dirección de Auditoría y uso"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Los filtros por empresa, acción, persona y fecha se aplican en el servidor y se pueden combinar"
+  - "Exportar baja exactamente el listado filtrado"
+  - "'Ver actividad' y 'Actividad' de la ficha abren la auditoría con el filtro puesto"
+  - "Las acciones que no son de una empresa muestran '—' en Empresa"
+  - "El rango de fechas tiene que ser válido"
+  - "La pantalla no ofrece ninguna forma de cambiar o borrar filas"
+  - "Solo el superusuario entra"
+datos_prueba:
+  empresas: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1): MinTest_SJ y Yudica, con nombres inventados"
+  filas_auditoria: "las de la maqueta consola-auditoria.html, cargadas en la base de prueba"
+dudas:
+  - "El filtro de persona desde 'Ver actividad': ¿solo lo que la persona hizo, o también lo que le hicieron (por ejemplo que la banearon)? CP-107 dice 'filtro de la persona'. Propuesta: las dos cosas, quién = la persona o identificador = su correo, porque el superusuario quiere ver la historia completa de esa persona."
+  - "La maqueta muestra la acción 'empresa.bloquear'; REQ-008 usa 'empresa.suspender', que es el nombre de CP-04. Propuesta: manda la especificación, 'empresa.suspender'; la maqueta queda desactualizada en ese punto."
+  - "La maqueta no trae filtro de fechas, pero RF-100 pide filtrar por fecha. Propuesta: dos campos Desde y Hasta, vacíos por defecto (sin límite)."
+  - "¿Hay tope de filas para exportar? Propuesta: no en este requerimiento, igual que las exportaciones de REQ-008; si con el volumen real tarda, se agrega."
+derivados: {}
+notas:
+  - "Cubre CU-19 (auditoría), RF-100 y la parte de CP-107 'abre Auditoría filtrada', que REQ-008 dejó para acá."
+  - "La inmutabilidad en la base (CP-101) ya la prueba ADM-UC-034 de REQ-004."

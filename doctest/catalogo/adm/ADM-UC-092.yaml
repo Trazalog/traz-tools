@@ -1,0 +1,72 @@
+id: ADM-UC-092
+modulo: ADM
+titulo: Aceptar la invitación con el enlace del correo
+perfil: Visitante
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "sección 'Aceptar la invitación' y columnas nuevas de seg.tokens"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-35; RF-71; G8 en 02_MODELO_Y_REGLAS.md §6"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "CP-70 y CP-113"
+pantallas:
+  - "Correo de invitación → Aceptar la invitación (traz-comp-adm/invitacion/aceptar)"
+precondiciones:
+  - "fede@ fue invitado a la empresa de prueba como Mantenedor hace menos de 7 días"
+  - "fede@ no tiene usuario en otra empresa"
+flujo_principal:
+  - paso: "Abre el enlace del correo de invitación"
+    resultado: "Ve 'Te invitaron a <empresa>' con los campos de contraseña nueva y repetir, y las reglas que se ponen en verde"
+  - paso: "Escribe una contraseña que cumple todas las reglas, la repite y toca 'Activar mi cuenta'"
+    resultado: "Entra a Tools con esa empresa; en Usuarios del administrador figura como 'Activo'"
+  - paso: "El administrador revisa la auditoría"
+    resultado: "Tiene miembro.activar con el correo de fede@"
+flujos_alternativos:
+  - nombre: "Enlace usado dos veces"
+    pasos:
+      - paso: "Vuelve a abrir el mismo enlace después de activar"
+        resultado: "Ve 'Este enlace ya no sirve. Si ya activaste tu cuenta, ingresá con tu contraseña.'"
+  - nombre: "Enlace vencido"
+    pasos:
+      - paso: "Abre el enlace 8 días después de la invitación"
+        resultado: "Ve 'El enlace venció: pedile a tu administrador que lo reenvíe' y no puede activar"
+  - nombre: "Enlace reemplazado por un reenvío"
+    pasos:
+      - paso: "Abre el primer enlace después de que el administrador reenvió la invitación"
+        resultado: "Ve 'Este enlace ya no sirve. Si ya activaste tu cuenta, ingresá con tu contraseña.'"
+  - nombre: "Contraseña que no cumple las reglas"
+    pasos:
+      - paso: "Escribe una contraseña de 8 caracteres"
+        resultado: "La regla 'Al menos 10 caracteres' queda en rojo y el botón no se habilita; si se manda igual, el servidor la rechaza"
+  - nombre: "Ya tenía usuario"
+    pasos:
+      - paso: "Una persona que ya era usuaria de otra empresa abre su enlace, pone su contraseña y toca 'Aceptar la invitación'"
+        resultado: "Su membresía pasa a 'Activo' y al ingresar puede elegir la empresa nueva"
+  - nombre: "Código inventado"
+    pasos:
+      - paso: "Abre la dirección de aceptar con un código inventado"
+        resultado: "Ve 'Este enlace ya no sirve. Si ya activaste tu cuenta, ingresá con tu contraseña.'"
+validaciones:
+  - "El enlace es de un solo uso"
+  - "El enlace vence según la variable validez_invitacion_dias"
+  - "Un reenvío invalida el enlace anterior"
+  - "El código no se puede adivinar ni deducir del correo"
+  - "La contraseña cumple las reglas de hoy (mínimo 10, mayúscula y minúscula, número, símbolo), también en el servidor"
+  - "Al aceptar, la membresía pasa a activo y queda en la auditoría"
+datos_prueba:
+  invitado: "fede@ con dominio de prueba del ambiente"
+  vencimiento: "para el enlace vencido se cambia a mano la fecha de vencimiento en la base de prueba"
+dudas:
+  - "La especificación dice que el enlace usa main/complete, como el registro. La copia de main/complete (REQ-003) da de alta al usuario en Bonita y AssetPlanner al activar, y su enlace vale el mismo día y se puede reusar. Propuesta: página nueva del módulo para aceptar invitaciones, y main/complete queda igual para el registro."
+  - "¿Al activar entra directo a Tools o vuelve al ingreso? Propuesta: entra directo a Tools con la empresa de la invitación, como hoy el registro abre la sesión al activar."
+  - "¿Se guarda el código del enlace cifrado en seg.tokens? Propuesta: sí, solo el cifrado; en el correo va el código en claro."
+derivados: {}
+notas:
+  - "Cubre CP-113 y la parte del enlace de CP-70 (un solo uso, vence en 7 días)."
+  - "La página es pública: se agrega a la lista pública del controlador base (REQ-002, REQ-003)."

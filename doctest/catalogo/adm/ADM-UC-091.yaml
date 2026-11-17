@@ -1,0 +1,90 @@
+id: ADM-UC-091
+modulo: ADM
+titulo: Invitar a una persona a la empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-007-administracion-usuarios-roles-perfil.md
+    detalle: "secciones 'Un solo modelo para todo cambio de membresía' e 'Invitar (RF-71)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-usuarios.html
+    detalle: "botón Invitar y nota de maqueta del formulario"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-35; RF-71, RF-72"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
+    detalle: "POST /usuario y POST /rol/asignar, que se llaman sin modificar"
+pantallas:
+  - "Portal de la empresa → Usuarios → ✉️ Invitar"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa tiene 4 de 5 lugares usados"
+  - "fede@ no es usuario de la plataforma"
+flujo_principal:
+  - paso: "Toca '✉️ Invitar'"
+    resultado: "Se abre el formulario con Correo, Nombre, Apellido, Rol (los roles de la empresa, por ejemplo Supervisor, Planificador, Mantenedor, Solicitante) y Menú (opcional)"
+  - paso: "Carga fede@, 'Federico', 'Luna', elige Mantenedor y toca 'Invitar'"
+    resultado: "Ve 'Le mandamos la invitación a fede@. Vence el <fecha dentro de 7 días>.'"
+  - paso: "Mira la tabla"
+    resultado: "Federico aparece como 'Invitado · vence <fecha>' con rol Mantenedor, '5 de 5 lugares usados' y el aviso de tope en lugar de 'Invitar'"
+  - paso: "Revisa el correo de fede@ en el ambiente de prueba"
+    resultado: "Tiene el correo con el enlace para activar la cuenta; la auditoría tiene miembro.invitar"
+flujos_alternativos:
+  - nombre: "Ya es usuario de otra empresa"
+    pasos:
+      - paso: "Invita a una persona que ya tiene usuario en otra empresa"
+        resultado: "No se crea otro usuario: solo queda invitada en esta empresa y recibe el enlace para aceptar"
+  - nombre: "Estaba de baja en la empresa"
+    pasos:
+      - paso: "Invita a Darío, que había sido dado de baja"
+        resultado: "Darío vuelve a aparecer como 'Invitado' con el rol elegido"
+  - nombre: "Ya es miembro"
+    pasos:
+      - paso: "Invita a Elena, que está baneada"
+        resultado: "Ve 'Ya es miembro (estado: baneado)' con el botón 'Reactivar'"
+      - paso: "Invita a una persona que ya está invitada"
+        resultado: "Ve 'Ya es miembro (estado: invitado)' con el botón 'Reenviar invitación'"
+  - nombre: "Reenviar la invitación"
+    pasos:
+      - paso: "Toca 'Reenviar invitación' en la fila de Darío"
+        resultado: "Darío recibe un enlace nuevo con vencimiento nuevo; el enlace anterior deja de servir; la auditoría tiene miembro.reenviar"
+  - nombre: "Tope alcanzado y pedido directo"
+    pasos:
+      - paso: "Con 5 de 5, se manda directo al servidor una invitación"
+        resultado: "El servidor la rechaza con 'Llegaste al tope de 5 usuarios del plan Free. Para invitar a alguien más, dá de baja a un usuario o pedí un cambio de plan' y no crea nada"
+  - nombre: "El correo no sale"
+    pasos:
+      - paso: "Invita a alguien con el correo del servidor caído"
+        resultado: "Ve 'La invitación quedó hecha, pero no pudimos mandar el correo. Copiá este enlace y mandáselo vos: <enlace>'"
+  - nombre: "Falla la asignación del rol"
+    pasos:
+      - paso: "Invita a una persona nueva y la asignación del rol en Bonita falla"
+        resultado: "Ve 'No pudimos guardar. Probá de nuevo en un rato.', la persona no queda en la tabla y no ocupa lugar"
+validaciones:
+  - "El usuario se crea siempre con la operación existente de alta de usuario; el rol, con la operación existente de asignar rol"
+  - "Si el correo ya es usuario, solo se crea la membresía"
+  - "Una persona de baja se reutiliza y pasa a invitada"
+  - "Ya es miembro: no se crea nada y se ofrece la acción que corresponde"
+  - "Con el tope alcanzado el servidor rechaza aunque el pedido llegue directo"
+  - "Reenviar invalida el enlace anterior"
+  - "Si el correo falla, la invitación queda y se muestra el enlace para copiar"
+  - "Si un paso falla, se deshacen los anteriores"
+  - "Cada invitación y reenvío queda en la auditoría"
+datos_prueba:
+  invitado_nuevo: "fede@ con dominio de prueba del ambiente, nombre inventado Federico Luna"
+  correo: "buzón de prueba del ambiente; nunca correos reales"
+dudas:
+  - "Para crear un usuario, la operación existente exige una contraseña y crea al usuario también en Bonita y AssetPlanner. Propuesta: se crea con una contraseña al azar que nadie conoce y estado pendiente; la persona pone la suya al aceptar (en Bonita todos usan la misma contraseña técnica, así que no cambia nada ahí)."
+  - "La operación de invitar junta varias llamadas (alta, rol, estado, enlace, auditoría) en un modelo del módulo. La regla del repo pide que la lógica de negocio viva en las APIs, y la carga masiva (REQ-014) y la Consola (REQ-008) van a necesitar lo mismo. Propuesta: en este requerimiento queda en un solo modelo del módulo que usan Portal y Consola; pasarla a un recurso de API nuevo (por ejemplo POST /membresia/invitacion) se decide al escribir REQ-014."
+  - "Si el correo ya es usuario, ¿queda invitado y tiene que aceptar, o queda activo directamente? Propuesta: invitado, y acepta con su contraseña; así nadie aparece en una empresa sin enterarse."
+  - "El menú opcional al invitar usa la asignación de menús de REQ-009, que se construye después. Propuesta: el campo Menú aparece solo si REQ-009 ya está construido; si no, la persona ve el menú de su rol."
+  - "¿Cuántos días vale la invitación? CP-70 dice 7 y la variable validez_invitacion_dias de REQ-004 vale 7. Propuesta: se usa la variable."
+  - "El formulario de la maqueta pide 'nombre', la operación existente pide nombre y apellido. Propuesta: dos campos, Nombre y Apellido, los dos obligatorios."
+derivados: {}
+notas:
+  - "Cubre CP-70 (invitación), CP-71 (rechazo del servidor) y CP-22 en la parte de usuarios."
+  - "La pantalla manda solo el rol elegido: no repite el defecto de DNATO que reenvía todos los roles (Main.php:947-1022)."

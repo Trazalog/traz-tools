@@ -1,0 +1,60 @@
+id: ADM-UC-271
+modulo: ADM
+titulo: Correr toda la migración en un ambiente, en orden y sin romper nada
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-016-administracion-migracion-completa.md
+    detalle: "secciones 'Qué dejaron los requerimientos anteriores' y 'Orden único de ejecución'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§8 pasos M-1 a M-7"
+pantallas:
+  - "Terminal con acceso a la base del ambiente"
+precondiciones:
+  - "Una copia nueva de la base de producción v2, sin ningún script del módulo corrido"
+  - "Los scripts de REQ-004, 005, 008, 009, 011, 013, 014, 015 y 016 listos; los que cambian filas existentes (M-3, y M-2 de herramientas y M-6 de REQ-004) aprobados por Rodolfo; M-7 solo agrega filas nuevas en core.tablas y lo decide el equipo (regla de Rodolfo del 2026-11-10)"
+  - "El correo del superusuario de ese ambiente, que se pasa como parámetro y no queda escrito en el repositorio"
+flujo_principal:
+  - paso: "Sigue el documento de ejecución y corre los scripts en el orden que dice: estructura de cada requerimiento, datos de REQ-004 (M-2, M-5, M-6, M-7), M-4 y M-3"
+    resultado: "Cada script termina bien y deja en su salida qué hizo"
+  - paso: "Revisa el registro de la ejecución"
+    resultado: "Dice qué scripts corrieron, cuándo y con qué resultado"
+  - paso: "Entra a Tools con un usuario de prueba de cada perfil"
+    resultado: "Todo funciona como antes (DocTest 'regresion' en verde)"
+flujos_alternativos:
+  - nombre: "Correr todo dos veces"
+    pasos:
+      - paso: "Vuelve a correr el orden completo en la misma copia"
+        resultado: "Ningún script duplica filas ni da error; la segunda vez no cambia nada"
+  - nombre: "Ambiente con parte ya corrida"
+    pasos:
+      - paso: "Corre el orden completo en una copia de DEMO, donde ya se corrieron algunos scripts de a uno"
+        resultado: "Los ya corridos no cambian nada y los que faltan se aplican"
+  - nombre: "Un script falla"
+    pasos:
+      - paso: "Un script falla a mitad del orden"
+        resultado: "La ejecución se detiene ahí, dice cuál falló y los siguientes no corren"
+  - nombre: "Sin el correo del superusuario"
+    pasos:
+      - paso: "Corre M-6 sin pasar el correo"
+        resultado: "El script se niega a correr y lo pide"
+validaciones:
+  - "El orden es único y está escrito, con dónde se corre cada paso y su vuelta atrás"
+  - "Cada script se puede correr de nuevo sin efecto"
+  - "Funciona sobre un ambiente con parte ya corrida"
+  - "Se corta en el primer error"
+  - "El correo del superusuario es un parámetro, no queda en el repositorio"
+  - "Después de correr, Tools funciona igual"
+datos_prueba:
+  ambiente: "copia de la base de producción v2 en un servidor de prueba, con los datos de clientes protegidos según la política de copias"
+dudas:
+  - "¿En qué ambientes se corre? La especificación dice TEST (staging-v3) y después producción, pero staging-v3 no está armado y hoy DEMO despliega desde develop. Propuesta: copia de DEMO, DEMO, copia de producción y producción, en ese orden."
+  - "¿Quién corre los scripts en producción? Propuesta: Rodolfo o el especialista de infraestructura, con el documento de ejecución, nunca Pablo directo."
+derivados: {}
+notas:
+  - "El registro de la ejecución queda en la tabla nueva de control seg.migracion_scripts (REQ-016, sección 'Datos'): es aditiva y la decide el equipo (regla de Rodolfo del 2026-11-10)."
+  - "Junta M-1, M-2, M-4, M-5, M-6 y M-7, que quedaron en REQ-004 a REQ-015, con M-3 de este requerimiento. M-7b (formularios) queda fuera (REQ-015)."

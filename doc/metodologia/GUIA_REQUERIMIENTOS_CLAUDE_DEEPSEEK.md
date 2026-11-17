@@ -10,7 +10,18 @@ técnico de DocTest (está en [`doctest/README.md`](../../doctest/README.md) y
 [`doctest/GUIA-PRUEBAS-Y-AYUDAS.md`](../../doctest/GUIA-PRUEBAS-Y-AYUDAS.md)) ni la metodología de ramas
 y PR (está en el `CLAUDE.md` del repo).
 
-> Versión 1.4 · noviembre 2026 · Trazalog v2.5 / v3
+> Versión 1.6 · noviembre 2026 · Trazalog v2.5 / v3
+> **Cambios en 1.6:** cómo se trabaja cuando el código va en un **módulo con repositorio propio**
+> (submódulo), como `traz-comp-adm`: el código se commitea en el repositorio del módulo, en `traz-tools`
+> solo el puntero, y cada cambio lleva dos pull requests (sección 2.9 y `REGLAS-PARA-AGENTES.md`).
+>
+> **Cambios en 1.5:**
+> - Claude puede escribir **varios requerimientos por adelantado**, en borrador, pero a Pablo se le pasan
+>   **de a uno**. Pablo y DeepSeek solo trabajan sobre los que están "Listo para Pablo" (sección 2.3).
+> - DocTest deja un **informe de cada corrida** que se lee con `npm run doctest:consola`; cada prueba sale
+>   con un estado (pasa, falla, error conocido, dejó de fallar…) y los errores conocidos se marcan en la
+>   prueba (secciones 1.3, 2.5, 2.6, 2.10 y 2.12).
+>
 > **Cambios en 1.4:**
 > - El documento se parte en dos: **Parte 1, ayuda memoria** del día a día, y **Parte 2, el detalle**.
 > - Dónde deja Pablo el plan y cómo lo aprueba Rodolfo: pull request en borrador y comentario
@@ -97,11 +108,17 @@ flowchart TD
   ambiente y por máquina.
 - 🟢 **Verde** = commit y push (o, después de desplegar, la versión queda). 🔴 **Rojo** = se corrige
   (o, después de desplegar, se vuelve a la versión anterior y se avisa a Rodolfo).
+- 📋 **Después de cada corrida, el resultado se lee con `npm run doctest:consola`** (en `doctest/`; abre
+  `http://127.0.0.1:9333`). Muestra qué pasó con cada prueba, qué cambió respecto de la corrida anterior,
+  sus capturas y un botón **Copiar pedido** para pedir la corrección. Da rojo una prueba que **falla**
+  (falla nueva), que se cortó en **otro punto** del error anotado, o que **dejó de fallar** (sección 2.5).
 
 ## 1.4 Checklist de Rodolfo
 
 - [ ] **Requerimiento nuevo:** pedido A a Claude → contestar las dudas → validar los casos → subirlos
       a `develop`. Antes de pasárselo a Pablo, la lista de control de la sección 2.14.
+- [ ] **Terminó un requerimiento:** revisar con Claude el siguiente borrador contra lo que se construyó,
+      y recién ahí pasarlo a "Listo para Pablo" (sección 2.3).
 - [ ] **Llega el plan de Pablo** (pull request en borrador en GitHub): comentarios sobre los renglones
       si hay algo para cambiar, o un comentario **`✅ Plan aprobado`** si está bien. No el botón
       "Approve" (sección 2.4).
@@ -131,6 +148,11 @@ flowchart TD
 - 📋 **El catálogo manda.** Los casos de uso viven en `doctest/catalogo/`, no en el requerimiento ni en
   un chat.
 - 🔢 **Una tarea por vez.** Siempre.
+- 📦 **El código de un submódulo va en su repositorio.** Si el requerimiento dice que el módulo tiene
+  repositorio propio (por ejemplo `traz-comp-adm`), el código se commitea ahí; en `traz-tools` solo
+  el puntero (sección 2.9).
+- 📑 **Un requerimiento por vez para Pablo.** Puede haber varios escritos en borrador; Pablo solo toma
+  el que está "Listo para Pablo" en `requerimientos/README.md`.
 - 🧪 **Sin caso validado no hay prueba, y sin DocTest en verde no hay commit.**
 - 🚫 **Nada se deriva desde un caso en `borrador`.** El validador lo rechaza.
 - 🗣️ **Si hay duda, se pregunta.** Pablo abre un aviso test-gap; Rodolfo lo aclara en el caso.
@@ -243,6 +265,24 @@ Todo en una sesión de Claude Code abierta en `traz-tools/`.
 5. En ese pull request corre `doctest-validate.yml`, que verifica que los YAML respeten el esquema. Si
    está en rojo, se corrige antes de seguir.
 6. Rodolfo pasa cada caso a `validado` y mergea. **Recién ahí Pablo puede empezar.**
+
+### Varios escritos por adelantado, de a uno para Pablo
+
+- **Por adelantado:** cuando hay un análisis o una especificación que alcanza, Claude puede escribir
+  varios requerimientos de una vez. Quedan en estado **Borrador** en `requerimientos/README.md`. Así se
+  ve el recorrido completo y las dudas aparecen antes.
+- **De a uno para Pablo:** a Pablo se le pasa un solo requerimiento por vez. El siguiente pasa a
+  **Listo para Pablo** cuando el anterior está **Hecho**. La única excepción es que Rodolfo decida, por
+  escrito en el índice, que dos no dependen entre sí.
+- **Se revisa antes de pasarlo:** antes de marcarlo "Listo para Pablo", Rodolfo y Claude lo comparan con
+  lo que realmente se construyó en el anterior (nombres, carpetas, decisiones nuevas) y lo corrigen.
+  Recién ahí se validan sus casos de uso (pasos 3 a 6 de arriba).
+- **Un borrador no se toca:** Pablo y DeepSeek no planifican ni programan un requerimiento en
+  Borrador, aunque esté en el repositorio. Si DeepSeek lo lee para entender hacia dónde va el trabajo,
+  está bien; construir sobre él, no.
+
+**Por qué:** escribirlos por adelantado da la foto completa; pasarlos de a uno evita construir sobre
+algo que el requerimiento anterior terminó cambiando.
 
 ## 2.4 El plan de Pablo (DeepSeek Pro)
 
@@ -363,6 +403,36 @@ flowchart TD
 > su sistema local. Si apunta a una base compartida, las empresas que crea `casi-full` aparecen también
 > ahí. Hasta que esa primera corrida salga bien, este flujo es **el diseño, no algo probado**.
 
+### Cómo se lee el resultado: informe y consola
+
+**Cada corrida deja un informe** (`corrida.yaml`) y se lee con la consola local:
+
+```bash
+# Dónde: terminal, en traz-tools/doctest/. Abre http://127.0.0.1:9333
+npm run doctest:consola
+```
+
+| Estado de la prueba | Qué significa | ¿Da rojo? | Qué hace Pablo |
+|---|---|---|---|
+| `pasa` | Funcionó | no | Nada |
+| `error-conocido` | Falló justo en un error ya anotado | no | Nada: el error ya tiene su hallazgo |
+| `sin-comprobar` | Tiene marca de error conocido, pero no dice qué falla espera | no | Agregarle qué falla espera (sección 2.6) |
+| `inestable` | Falló y pasó al reintentar | no | Avisar si se repite |
+| `salteada` | No corrió, con su motivo | no | Revisar que el motivo sea razonable |
+| `falla` | Falla nueva, sin anotar | **sí** | Corregir su código, o si el error no es suyo, avisar a Rodolfo |
+| `otro-punto` | Tenía marca de error conocido, pero se cortó antes de llegar a ese error | **sí** | Hay algo nuevo roto antes: corregir o avisar |
+| `dejo-de-fallar` | Tenía un error anotado y ahora pasa | **sí** | Buena noticia: sacarle la marca a la prueba y avisar a Rodolfo para cerrar el hallazgo |
+
+- **Dónde quedan los informes:** los de `full` y `casi-full` en `doctest/corridas/<id>/` y **se suben al
+  repositorio** (el informe oculta claves y enlaces de recuperación). Los de `regresion`, `nuevos` y
+  pruebas sueltas en `doctest/corridas/.locales/`, que no se suben.
+- **Issues:** DocTest no abre issues solo. Un error nuevo lo analiza Pablo (o su agente) con su causa, y
+  **Rodolfo aprueba abrirlo**. Para dejar el resumen de una corrida en el issue fijo "Estado de DocTest":
+  `npm run doctest:publicar -- --enviar` (en `doctest/`, con `gh` iniciado; sin `--enviar` solo lo
+  muestra).
+- **Más detalle** (qué se oculta en el informe, la evidencia de Playwright): sección 1.3 de
+  [`doctest/GUIA-PRUEBAS-Y-AYUDAS.md`](../../doctest/GUIA-PRUEBAS-Y-AYUDAS.md).
+
 ## 2.6 Cómo se escribe la prueba de una tarea
 
 La prueba la escribe **DeepSeek Flash, no Pablo a mano**, con el **pedido B** (sección 2.8). No hay un
@@ -385,6 +455,17 @@ Reglas que Flash tiene que respetar (van en el pedido):
 - Los datos que crea llevan el prefijo del YAML (`EQ-TEST-`) más un sello de tiempo.
 - El YAML apunta a la prueba en `derivados.test_e2e`, y `referencias_codigo` lista los archivos que se
   tocaron. Así `npm run doctest` la reconoce como "nueva".
+- **Si la prueba choca con un error que ya está anotado** (un hallazgo `H-NNN` de
+  `doc/hallazgos/REGISTRO.md` que no es de esta tarea), no se la deja en rojo ni se la borra: se marca
+  como error conocido, diciendo **qué falla exacta** se espera, con el número del hallazgo al principio:
+
+  ```ts
+  debeFallarCon(/la empresa 2 eliminó un pedido/);
+  test.fail(true, 'H-119 (B-25): la empresa 2 elimina un pedido de la empresa 1 por URL');
+  ```
+
+  Sin la línea `debeFallarCon`, la prueba queda `sin-comprobar`. Un error **nuevo** no se marca: se avisa
+  a Rodolfo (sección 2.7).
 
 Después, si el caso tiene ayuda de usuario, `npm run features` y `npm run ayudas` regeneran el `.feature`
 y el manual. Los `.feature` no se editan a mano.
@@ -524,6 +605,56 @@ Pablo trabaja **de a una tarea del plan**. Para cada una:
 Lo que Flash **no** debe recibir nunca: varias tareas juntas, un pedido vago ("mejorá esto"), o un
 pedido sin caso de uso asociado.
 
+### Si el código va en un módulo con repositorio propio (submódulo)
+
+Pasa cuando el requerimiento dice "repositorio propio, montado como submódulo" (por ejemplo
+`traz-comp-adm`, el módulo Administración). El código vive en **el repositorio del módulo**; `traz-tools`
+solo guarda en qué commit del módulo está parado (el "puntero").
+
+```mermaid
+flowchart LR
+  A["Código y commits<br/>dentro de application/modules/traz-comp-adm"] --> B["Pull request en traz-comp-adm<br/>a develop del módulo"]
+  B --> C["Rodolfo lo une"]
+  C --> D["En traz-tools: actualizar el puntero<br/>y commitear la carpeta del módulo"]
+  D --> E["Pull request en traz-tools<br/>(el mismo del plan)"]
+```
+
+**Montar el módulo por primera vez** (terminal, parado en `traz-tools`, en la rama del requerimiento):
+
+```bash
+git submodule add -b develop https://github.com/Trazalog/traz-comp-adm.git application/modules/traz-comp-adm
+git add .gitmodules application/modules/traz-comp-adm
+git commit -m "chore(adm): monta el submodulo traz-comp-adm [REQ-002]"
+```
+
+**Programar dentro del módulo** (terminal, parado en `traz-tools/application/modules/traz-comp-adm`). La
+rama del módulo se llama igual que la de `traz-tools`:
+
+```bash
+git checkout develop && git pull origin develop
+git checkout -b feature/req-###-desc-corta
+# ... commits del código del módulo, siempre parado en esta carpeta ...
+git push origin feature/req-###-desc-corta
+```
+
+Pull request en el repositorio del módulo, a `develop`, con el enlace al pull request de `traz-tools`.
+
+**Mover el puntero** cuando Rodolfo une el pull request del módulo (terminal, parado en `traz-tools`):
+
+```bash
+cd application/modules/traz-comp-adm && git checkout develop && git pull origin develop && cd ../../..
+git add application/modules/traz-comp-adm
+git commit -m "chore(adm): actualiza el submodulo traz-comp-adm [REQ-###]"
+git push origin feature/req-###-desc-corta
+```
+
+Mientras se programa, DocTest corre sobre lo que hay en la carpeta del módulo, aunque el puntero
+todavía no se haya movido: se prueba igual en la máquina de Pablo.
+
+⚠️ **Antes de cada commit**, `git status` dentro de la carpeta del módulo. Si dice `HEAD detached`, pasar
+a la rama de trabajo antes (`git checkout feature/req-###-desc-corta`): un commit hecho así queda suelto
+y se pierde.
+
 ## 2.10 El pull request de Pablo
 
 Es **el mismo pull request** que Pablo abrió en borrador con el plan (sección 2.4): una rama
@@ -540,9 +671,10 @@ Cierra REQ-###. Casos de uso: MAN-UC-001, MAN-UC-002.
 
 ## Cómo lo verifiqué
 npm run doctest -- --entorno local
-  Pruebas nuevas: 6 verdes
-  Set de regresión: 71 verdes
-(resultados reales, pegados, no supuestos)
+  Pruebas nuevas: 6 pasa
+  Set de regresión: 68 pasa · 3 error-conocido (H-086, H-089, H-119)
+  Sin falla, otro-punto ni dejo-de-fallar
+(resultados reales, copiados del resumen de npm run doctest:consola, no supuestos)
 ```
 
 ## 2.11 Qué tiene que estar en verde para que Rodolfo apruebe el pull request
@@ -586,9 +718,13 @@ desde `develop`):
    `npm run doctest -- regresion --entorno demo --base <tag de la versión anterior>`.
    "Lo nuevo" son las pruebas de lo que trajo esta versión; la regresión comprueba que lo de antes siga
    andando.
-4. **Si da verde:** la versión queda y le avisa a Rodolfo, que puede recorrer el flujo principal de cada
+4. Lee el resultado con `npm run doctest:consola` (sección 2.5).
+5. **Si da verde:** la versión queda y le avisa a Rodolfo, que puede recorrer el flujo principal de cada
    caso en DEMO. **Si da rojo:** vuelve a desplegar la versión anterior, avisa a Rodolfo y el error se
-   trata como un bug de la versión nueva.
+   trata como un bug de la versión nueva. Si lo único en rojo es un `dejo-de-fallar`, no se vuelve atrás:
+   se le saca la marca a la prueba y se avisa a Rodolfo para cerrar el hallazgo.
+6. **Si la corrida fue `casi-full` o `full`,** su informe queda en `doctest/corridas/`: Pablo lo sube en
+   una rama aparte con pull request, como cualquier otro cambio.
 
 > **Pendiente:** que esto corra solo al terminar cada despliegue, y que vuelva atrás sin intervención.
 > Hoy es manual.

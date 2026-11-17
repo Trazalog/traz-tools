@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Consola · Auditoría y uso</title>
+<!--
+  MAQUETA DNATO v3 — Consola · Auditoría y uso
+  Casos de uso: CU-19
+  Requerimientos: RF-100, RF-101
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-19" data-rf="RF-100, RF-101" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Consola</span></div>
+    <div class="owner"><span class="logo" style="background:var(--dark)">T</span><div><b>Consola Trazalog</b><div class="muted" style="font-size:11.5px">solo súper usuarios</div></div></div>
+    <nav class="nav"><div class="group">Consola Trazalog</div>
+<a href="consola-empresas.html" class=""><span class="ico">🏢</span>Empresas</a>
+<a href="consola-registros.html" class=""><span class="ico">📬</span>Registros<span class="badge red" style="margin-left:auto">2</span></a>
+<a href="consola-planes.html" class=""><span class="ico">📦</span>Planes</a>
+<a href="consola-catalogo.html" class=""><span class="ico">🧩</span>Catálogo y menú global</a>
+<a href="consola-formularios.html" class=""><span class="ico">📝</span>Formularios globales</a>
+<a href="consola-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="consola-auditoria.html" class=" active"><span class="ico">📜</span>Auditoría y uso</a>
+<a href="consola-config.html" class=""><span class="ico">⚙️</span>Variables de sistema</a></nav>
+    <div class="foot">Rodolfo Ruiz · súper usuario</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Consola</b> › Auditoría y uso</div>
+    <div class="spacer"></div>
+    <a class="btn sm" href="inicio-admin.html">🏢 Mi empresa</a><div class="user"><span class="av">RT</span><span class="muted" style="font-size:12.5px">root@trazalog</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Auditoría y uso</h1><div class="sub">Quién hizo qué y cuándo; cuánto se usa la plataforma.</div></div><div class="actions"><button class="btn">⬇ CSV</button></div></div>
+<div class="tabs"><a class="active" href="#">Auditoría</a><a href="#uso">Uso</a></div>
+<div class="card"><div class="toolbar"><select class="select"><option>Todas las empresas</option><option>MinTest_SJ</option></select><select class="select"><option>Todas las acciones</option><option>plan.*</option><option>miembro.*</option><option>pedido.*</option><option>cuota.*</option></select><input class="input" type="date" value="2026-10-01"><input class="input" type="date" value="2026-10-29"><div class="search">🔍 usuario</div></div>
+<table class="tbl"><tr><th>Fecha</th><th>Quién</th><th>Empresa</th><th>Acción</th><th>Entidad</th><th>Detalle</th></tr>
+<tr><td class="mono">29/10 09:12:50</td><td>eva@yudica</td><td>Yudica</td><td class="mono">pedido.crear</td><td>pedido 41</td><td>Business → Enterprise · "Cerramos minera nueva"</td></tr>
+<tr><td class="mono">28/10 17:40:12</td><td>root@trazalog</td><td>—</td><td class="mono">plan.funcionalidad.quitar</td><td>Free</td><td>MAN.OT.LISTA · 1 empresa afectada</td></tr>
+<tr><td class="mono">27/10 15:02:31</td><td>bruno@</td><td>MinTest_SJ</td><td class="mono">funcionalidad.interes</td><td>BPM.PROCESOS</td><td>correo a 1 administrador</td></tr>
+<tr><td class="mono">24/10 11:05:00</td><td>ana@</td><td>MinTest_SJ</td><td class="mono">miembro.invitar</td><td>dario@</td><td>Mantenedor · menú Operación</td></tr>
+<tr><td class="mono">20/10 16:30:44</td><td>ana@</td><td>MinTest_SJ</td><td class="mono">miembro.banear</td><td>elena@</td><td>"licencia"</td></tr>
+<tr><td class="mono">15/10 08:00:00</td><td>root@trazalog</td><td>Tierras de Capayán</td><td class="mono">empresa.bloquear</td><td>empresa 7</td><td>"falta de pago"</td></tr>
+</table><div class="tbl-foot">1.284 registros · solo lectura, se conservan 5 años · el consumo de IA no está acá (tiene su propio registro) <div class="pages"><span class="cur">1</span><span>2</span><span>3</span><span>…</span></div></div></div>
+<a id="uso"></a>
+<div class="card mt"><div class="card-h"><h3>Uso por empresa · octubre 2026</h3></div><table class="tbl"><tr><th>Empresa</th><th>Plan</th><th class="num">Usuarios activos</th><th class="num">Accesos</th><th class="num">IA usadas / cuota</th><th>Más usado</th></tr>
+<tr><td>Yudica</td><td>🥇 Business</td><td class="num">17</td><td class="num">412</td><td class="num">1.980 / 4.000</td><td>Órdenes de trabajo</td></tr>
+<tr><td>MinTest_SJ</td><td>🥉 Free</td><td class="num">3</td><td class="num">96</td><td class="num">21 / 30 (semana)</td><td>Equipos</td></tr>
+<tr><td>Empresa Test</td><td>🥇 Business (prueba)</td><td class="num">2</td><td class="num">35</td><td class="num">120 / 4.000</td><td>Procesos</td></tr>
+</table></div>
+
+  </main>
+</div>
+
+</body>
+</html>

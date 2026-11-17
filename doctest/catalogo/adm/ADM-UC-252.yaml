@@ -1,0 +1,58 @@
+id: ADM-UC-252
+modulo: ADM
+titulo: Ver cómo queda un formulario sin cargar una respuesta
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-015-administracion-formularios.md
+    detalle: "sección 'Vista previa sin respuesta (CU-73, RF-124)'"
+  - repo: traz-tools
+    path: application/modules/traz-comp-formularios/helpers/form_helper.php
+    detalle: "form() (3-87) se usa tal cual; nuevoForm() (282-290) no se usa porque crea una respuesta"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-124 Vista previa"
+pantallas:
+  - "Portal de la empresa → 📝 Formularios → Vista previa"
+  - "Constructor de formularios → Vista previa"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ, que tiene la lista 'obras' con Veladero y Gualcamayo"
+  - "eva@ es administradora de Empresa Test, que no tiene lista 'obras' propia; existe la lista global 'obras' con Obra A y Obra B"
+  - "P-2 de MinTest_SJ y el global G-1 usan la lista 'obras'"
+flujo_principal:
+  - paso: "ana@ toca 'Vista previa' en P-2"
+    resultado: "Ve 'Vista previa · así se ve en Tools · con las listas de tu empresa (o globales) · no crea ninguna respuesta' y el formulario dibujado igual que en Tools, con los obligatorios marcados con *"
+  - paso: "Abre la lista 'Obra'"
+    resultado: "Ve '-Seleccionar-', Veladero y Gualcamayo"
+  - paso: "Se cuenta cuántas respuestas hay guardadas antes y después de abrir la vista previa varias veces"
+    resultado: "La cantidad no cambia: no se creó ninguna respuesta"
+flujos_alternativos:
+  - nombre: "Lista global"
+    pasos:
+      - paso: "eva@ abre la vista previa de G-1"
+        resultado: "La lista 'Obra' muestra Obra A y Obra B, marcada como global"
+  - nombre: "Desde el constructor"
+    pasos:
+      - paso: "ana@ cambia el orden de dos campos en el constructor sin guardar y toca 'Vista previa'"
+        resultado: "Ve el orden nuevo, sin que se haya guardado ni creado nada"
+  - nombre: "Lista que no existe"
+    pasos:
+      - paso: "Un campo usa una lista que no existe ni en la empresa ni global"
+        resultado: "La vista previa muestra la lista vacía y avisa que no tiene opciones"
+validaciones:
+  - "La vista previa dibuja con el mismo dibujo que usa Tools"
+  - "No crea ninguna respuesta"
+  - "Las listas se buscan primero en la empresa y después en las globales"
+  - "Muestra los cambios sin guardar del constructor"
+  - "Una lista inexistente se ve vacía con aviso"
+datos_prueba:
+  listas: "obras de MinTest_SJ y obras global, en la copia de DEMO"
+dudas:
+  - "En este plan no se toca cómo dibuja Tools (F-1 prohibido, decisión de Rodolfo del 2026-11-10): las pantallas de Tools buscan las listas solo en la empresa, así que una lista global se ve vacía en Tools aunque la vista previa la muestre llena. Propuesta: en la vista previa, la lista global lleva la marca '(global · en Tools se ve vacía)', para no engañar al administrador; o bien la vista previa tampoco resuelve globales, para mostrar exactamente lo mismo que Tools. ¿Cuál preferís?"
+  - "La función form() del helper usa un número de respuesta para armar el formulario (data-ninfoid). Propuesta: la vista previa le pasa 0 y no incluye ningún botón de guardar, así no hay forma de grabar desde ahí."
+derivados: {}
+notas:
+  - "Cubre CP-124 dentro de la vista previa. Que Tools resuelva empresa → global al dibujar (F-1) está prohibido en este plan: no se hace."

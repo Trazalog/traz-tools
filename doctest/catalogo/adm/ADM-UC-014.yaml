@@ -1,0 +1,60 @@
+id: ADM-UC-014
+modulo: ADM
+titulo: Volver a la pantalla del módulo que pidió, después de ingresar
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-003-administracion-identidad.md
+    detalle: "sección 'La pantalla a la que se vuelve' y regla 6"
+  - repo: traz-tools
+    path: doctest/catalogo/adm/ADM-UC-001.yaml
+    detalle: "duda pendiente: volver a la pantalla pedida queda para REQ-003"
+  - repo: traz-tools
+    path: doc/v3/dnato/DNATO_v2_RELEVAMIENTO.md
+    detalle: "§3.1: hoy setdir ignora la dirección pedida y siempre va al tablero de Tools"
+pantallas:
+  - "Portal de la empresa (sin sesión) → Ingreso del módulo → Portal de la empresa"
+precondiciones:
+  - Sin sesión iniciada
+  - El usuario es Administrador de la empresa con la que va a ingresar
+flujo_principal:
+  - paso: "Sin sesión, abre la dirección del Portal de la empresa"
+    resultado: "Lo lleva al ingreso del módulo"
+  - paso: "Ingresa con su correo y contraseña (tiene una sola empresa)"
+    resultado: "Vuelve directo al Portal de la empresa, no al tablero de Tools"
+flujos_alternativos:
+  - nombre: "Varias empresas"
+    pasos:
+      - paso: "Un administrador con varias empresas abre el Portal sin sesión, ingresa y elige la empresa que administra"
+        resultado: "Después de elegir la empresa, vuelve al Portal de esa empresa"
+  - nombre: "Elige una empresa que no administra"
+    pasos:
+      - paso: "Abre el Portal sin sesión, ingresa y elige una empresa donde no es administrador"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+  - nombre: "Ingreso directo"
+    pasos:
+      - paso: "Abre directamente la dirección del ingreso del módulo e ingresa"
+        resultado: "Entra al tablero de Tools, como hoy"
+  - nombre: "Dirección de vuelta de afuera"
+    pasos:
+      - paso: "Abre el ingreso del módulo agregando a la dirección una página de otro sitio para volver (por ejemplo, ?volver=https://otro-sitio.com) e ingresa"
+        resultado: "Entra al tablero de Tools; la dirección de afuera se ignora"
+validaciones:
+  - "Si llegó al ingreso porque pidió una pantalla del módulo sin sesión, después de ingresar vuelve a esa pantalla"
+  - "Vuelve a la pantalla pedida también cuando tiene que elegir empresa"
+  - "Volver no saltea el permiso: si la empresa elegida no le da acceso, ve 'sin permiso'"
+  - "Sin pantalla pedida, después de ingresar va al tablero de Tools"
+  - "La pantalla a la que se vuelve sale de la sesión, nunca de la dirección, y solo puede ser una del módulo"
+datos_prueba:
+  administrador: "administrador de la empresa DocTest"
+  administrador_varias_empresas: "usuario de prueba administrador en una empresa y con otro rol en otra"
+dudas:
+  - "Volver a la pantalla pedida es algo que DNATO no hace hoy (siempre va al tablero de Tools) y la especificación no lo pide. ¿Se agrega en la copia? Propuesta: sí, solo para pantallas del módulo, guardando la pantalla en la sesión; las pantallas del resto de Tools siguen mandando al ingreso de DNATO y volviendo al tablero, como hoy."
+  - "Si la persona tarda en ingresar o abre otra pantalla del módulo antes, ¿a cuál vuelve? Propuesta: a la última que pidió sin sesión; la marca se borra apenas se usa."
+derivados: {}
+notas:
+  - "Contesta la duda de ADM-UC-001 ('volver a la pantalla pedida queda para REQ-003')."
+  - "Es lo único que la copia agrega al ingreso de DNATO; no cambia nada para quien ingresa directo."

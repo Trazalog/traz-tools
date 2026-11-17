@@ -1,0 +1,82 @@
+id: ADM-UC-170
+modulo: ADM
+titulo: Descontar una consulta del agente de IA
+perfil: Supervisor
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-011-administracion-cuota-agente.md
+    detalle: "secciones 'R5 — Consumir cuota' y 'Derivación al frente del agente'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§3 regla R5; §4 servicio 'Consumir cuota'; §5 integración con el Gateway"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-51; RF-81, RF-82; RNF-10"
+pantallas:
+  - "Servicio ADMDataService POST /cuota/consumir (sin pantalla; lo llama el portero de WSO2)"
+precondiciones:
+  - "MinTest_SJ en Free (30 consultas por semana), período 26/10 → 2/11 con 21 consumidas"
+  - "bruno@ Supervisor activo; carla@ baneada en MinTest_SJ; dario@ invitado; Tierras de Capayán suspendida"
+  - "man_get_equipos y man_get_ots están en Free; man_crear_ot solo desde Team"
+flujo_principal:
+  - paso: "Se pide al servicio 9 veces consumir man_get_equipos para bruno@ de MinTest_SJ"
+    resultado: "Responde ok las 9 veces, con restantes 8, 7 … 0 y el fin del período 2/11 00:00"
+  - paso: "Se pide una décima vez"
+    resultado: "Responde sin_cuota con código 429 y 'Tu empresa usó las 30 consultas de IA de esta semana del plan Free. Se renueva el lunes 2/11 a las 00:00. Tu administrador puede pedir un cambio de plan desde Mi empresa → Uso de IA'"
+  - paso: "Se revisa el registro de consumos"
+    resultado: "Hay 9 intentos ok y 1 sin_cuota de bruno@ con man_get_equipos; consumidas = 30"
+flujos_alternativos:
+  - nombre: "Veinte a la vez"
+    pasos:
+      - paso: "Con 29 de 30, llegan 20 pedidos al mismo tiempo"
+        resultado: "Exactamente 1 responde ok y 19 sin_cuota; consumidas = 30"
+  - nombre: "Herramienta de otro plan"
+    pasos:
+      - paso: "Se pide consumir man_crear_ot para bruno@"
+        resultado: "Responde fuera_plan con código 403 y 'La herramienta man_crear_ot no está activa para tu empresa. Está incluida en el plan Team'; consumidas no cambia"
+  - nombre: "Sin acceso"
+    pasos:
+      - paso: "Se pide consumir para carla@ (baneada), dario@ (invitado), una persona dada de baja y una de Tierras de Capayán (suspendida)"
+        resultado: "Responde sin_acceso con código 401 en los cuatro casos, sin descontar"
+  - nombre: "Plan vencido"
+    pasos:
+      - paso: "Se pide consumir para una persona de Empresa Test con el plan de prueba vencido"
+        resultado: "Responde plan_vencido con 'El período de prueba de tu empresa terminó. Tu administrador puede pedir un plan desde Mi empresa → Plan', sin descontar"
+  - nombre: "Sin IA e ilimitado"
+    pasos:
+      - paso: "Se pide consumir para alguien de Prueba SinIA (cuota 0)"
+        resultado: "Responde sin_ia con código 403 y 'Tu plan no incluye IA'"
+      - paso: "Se pide consumir 5.000 veces para alguien de una empresa Enterprise"
+        resultado: "Responde ok siempre y cuenta las 5.000"
+  - nombre: "Sin período abierto"
+    pasos:
+      - paso: "Sin período en curso para MinTest_SJ (el proceso diario no corrió), se pide consumir para bruno@"
+        resultado: "Se abre el período según el plan y responde ok"
+  - nombre: "Herramienta que no está en el catálogo"
+    pasos:
+      - paso: "Se pide consumir una herramienta que no existe en el catálogo"
+        resultado: "Responde fuera_plan sin descontar"
+validaciones:
+  - "El orden es acceso, plan vencido, plan, IA y cuota, con un solo resultado"
+  - "El descuento es atómico: con llamadas simultáneas no se pasa del tope"
+  - "Cada intento queda registrado con su resultado; los rechazos no descuentan"
+  - "Con cuota 0 responde sin_ia; con ilimitado siempre ok"
+  - "Sin período abierto, lo abre al vuelo"
+  - "Los mensajes son los de la especificación, legibles para la persona"
+  - "Responde en menos de 50 ms en la copia de DEMO"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados"
+  ambiente: "pedidos directos al recurso en una copia de DEMO, nunca producción"
+dudas:
+  - "El correo de la persona no está entre los claims que el APIM pasa hoy al MI (ADR-009 mapea empr_id y empr_id_mysql). Propuesta: el frente del agente agrega el mapeo del claim de la persona (sub o email del JWT de DNATO) en X-JWT-Assertion, igual que empr_id; sin correo, el servicio responde sin_acceso."
+  - "Si el servicio no responde, ¿el portero de WSO2 deja pasar la consulta o la frena? La especificación no lo dice y es una decisión comercial. Propuesta: la frena con 'No pudimos verificar tu cuota de IA. Probá de nuevo en un rato.', porque RNF-01 pide que el servidor valide todo; Rodolfo decide con el frente del agente."
+  - "Hasta M-3 (REQ-016) las empresas existentes no tienen plan. Propuesta: sin plan = ilimitado (como el plan 'Completo' de M-3), para que nadie pierda el agente el día que se enganche el freno; queda registrado igual."
+  - "R5 paso 2 mira 'publicada y en el plan', pero R2 pide además que esté activa y que el rol tenga acceso. Propuesta: si está en el plan pero sin activar o sin acceso para el rol, responde fuera_plan con 'La herramienta <tool> no está activa para tu empresa.' (sin el plan), y se registra como fuera_plan; no se agrega un resultado nuevo."
+  - "plan_vencido no tiene código en la especificación. Propuesta: 403, como los demás rechazos de plan."
+  - "El mensaje de sin_acceso no está en la especificación. Propuesta: 'No tenés acceso a <empresa>. Comunicate con el administrador de tu empresa.' (el de RF-03 sin el correo, para no exponerlo al agente)."
+derivados: {}
+notas:
+  - "Cubre CP-80, CP-81, CP-82, CP-83, CP-88 y CP-89 contra el servicio, y la parte del agente de CP-19, CP-04 y CP-73. Que el portero de WSO2 llame al servicio y corte la herramienta es del frente del agente."

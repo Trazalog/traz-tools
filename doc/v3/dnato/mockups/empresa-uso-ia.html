@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Uso de IA (cuota MCP)</title>
+<!--
+  MAQUETA DNATO v3 — Uso de IA (cuota MCP)
+  Casos de uso: CU-41, CU-51
+  Requerimientos: RF-80 a RF-86
+  Dónde se construye: DNATO + MCP (política en el Gateway)
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-41, CU-51" data-rf="RF-80 a RF-86" data-donde="DNATO + MCP (política en el Gateway)" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=""><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=""><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=""><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=""><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=" active"><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=""><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=""><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Uso de IA</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Uso de IA</h1><div class="sub">Consultas MCP de tu empresa en el período del plan 🥉 Free.</div></div><div class="actions"><button class="btn">⬇ Exportar CSV</button></div></div>
+
+<div class="grid g3 mb">
+  <div class="card kpi"><div class="l">Estado normal · 21 de 30</div><div class="v">21 <small class="muted" style="font-size:14px">/ 30 esta semana</small></div><div class="d"><div class="progress"><i style="width:70%"></i></div><span class="muted">Se renueva el lunes 2/11 a las 00:00</span></div></div>
+  <div class="card kpi" style="border-color:#f1dfa6"><div class="l">Estado aviso · 24 de 30</div><div class="v">24 <small class="muted" style="font-size:14px">/ 30</small></div><div class="d"><div class="progress"><i class="warn" style="width:80%"></i></div><span style="color:var(--amber)">Te quedan 6 consultas · avisamos por correo</span></div></div>
+  <div class="card kpi" style="border-color:#f3b5b0;background:var(--red-soft)"><div class="l">Estado bloqueado · 30 de 30</div><div class="v">30 <small class="muted" style="font-size:14px">/ 30</small></div><div class="d"><div class="progress"><i class="full" style="width:100%"></i></div><b style="color:var(--red)">Sin consultas hasta el lunes 2/11 00:00</b><div class="mt" style="margin-top:8px"><a class="btn sm primary" href="empresa-plan.html">Pedir cambio de plan</a></div></div></div>
+</div>
+
+<div class="alert danger mb"><span>🤖</span><div><div class="t">Lo que ve el usuario en Claude cuando no hay cuota</div><span class="mono">Tu empresa usó las 30 consultas de IA de esta semana del plan Free. Se renueva el lunes 2/11 a las 00:00. Tu administrador puede pedir un cambio de plan desde Mi empresa → Uso de IA.</span></div></div>
+
+<div class="grid g-2-1">
+  <div class="card"><div class="card-h"><h3>Consultas por día</h3><span class="muted">26/10 → 1/11</span></div><div class="card-b"><div class="bars"><div style="height:30%"><span>Lu 26</span></div><div style="height:60%"><span>Ma 27</span></div><div style="height:45%"><span>Mi 28</span></div><div style="height:75%" class="hl"><span>Ju 29</span></div><div style="height:0"><span>Vi 30</span></div><div style="height:0"><span>Sa 31</span></div><div style="height:0"><span>Do 1</span></div></div><div class="bars-x"></div></div></div>
+  <div class="card"><div class="card-h"><h3>Por persona</h3></div><table class="tbl"><tr><th>Usuario</th><th class="num">Consultas</th></tr><tr><td>Bruno Díaz</td><td class="num">15</td></tr><tr><td>Carla Ruiz</td><td class="num">6</td></tr><tr><td>Ana Pérez</td><td class="num">0</td></tr></table></div>
+</div>
+<div class="grid g2 mt">
+  <div class="card"><div class="card-h"><h3>Por herramienta</h3></div><table class="tbl"><tr><th>Herramienta</th><th class="num">Ok</th><th class="num">Rechazadas</th></tr><tr><td>🤖 Consultar equipos</td><td class="num">15</td><td class="num">0</td></tr><tr><td>🤖 Consultar órdenes de trabajo</td><td class="num">6</td><td class="num">0</td></tr><tr class="off"><td>🤖 Crear orden de trabajo <span class="badge">🥈 Team</span></td><td class="num">0</td><td class="num">3 <span class="muted">fuera del plan</span></td></tr></table></div>
+  <div class="card"><div class="card-h"><h3>Períodos anteriores</h3></div><table class="tbl"><tr><th>Período</th><th class="num">Usadas</th><th class="num">Cuota</th><th></th></tr><tr><td>19/10 → 25/10</td><td class="num">30</td><td class="num">30</td><td><span class="badge red">bloqueado 2 días</span></td></tr><tr><td>12/10 → 18/10</td><td class="num">18</td><td class="num">30</td><td></td></tr><tr><td>5/10 → 11/10</td><td class="num">27</td><td class="num">30</td><td></td></tr><tr><td>28/9 → 4/10</td><td class="num">9</td><td class="num">30</td><td></td></tr></table></div>
+</div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> los tres KPI de arriba son tres estados de la misma tarjeta (CP-85); en producción se muestra uno. Cuota 0 → 'Tu plan no incluye IA' + comparativa; ilimitado → sin barra. El consumo lo registra el servicio Consumir cuota (R5), al que llama el Gateway antes de cada tool call.</div>
+</body>
+</html>

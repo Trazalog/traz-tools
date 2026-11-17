@@ -1,0 +1,70 @@
+id: ADM-UC-030
+modulo: ADM
+titulo: Llegar al Portal y a la Consola desde la barra de Tools
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-004-administracion-base-y-atributos.md
+    detalle: "secciones 'Servicio Contexto del usuario' y 'Los botones en la barra de Tools'; se completa con Dash.php, layout/perfil.php y el modelo Contexto del módulo al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/tools-barra-superior.html
+    detalle: "solo los botones 'Mi empresa' y 'Consola' de la barra superior"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§4 servicio 'Contexto del usuario'; §9b punto T-3"
+pantallas:
+  - "Tools → barra superior → 🏢 Mi empresa"
+  - "Tools → barra superior → 🔑 Consola"
+precondiciones:
+  - Usuario con sesión iniciada en Tools
+  - El usuario es Administrador de la empresa activa de su sesión
+flujo_principal:
+  - paso: "Entra al tablero de Tools"
+    resultado: "En la barra superior, a la izquierda de su perfil, ve el botón '🏢 Mi empresa'"
+  - paso: "Toca '🏢 Mi empresa'"
+    resultado: "Se abre el Portal de su empresa en la misma pestaña"
+  - paso: "Toca '← Ir a Tools'"
+    resultado: "Vuelve al tablero de Tools con la misma sesión y la misma empresa"
+flujos_alternativos:
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "Un usuario sin rol de administrador en la empresa activa entra al tablero"
+        resultado: "No ve '🏢 Mi empresa' ni '🔑 Consola'; el resto de la barra está igual que antes"
+  - nombre: "Superusuario"
+    pasos:
+      - paso: "Un superusuario que además es administrador de la empresa activa entra al tablero"
+        resultado: "Ve '🏢 Mi empresa' y '🔑 Consola'; '🔑 Consola' abre la Consola en la misma pestaña"
+  - nombre: "Superusuario que no administra la empresa activa"
+    pasos:
+      - paso: "Un superusuario sin rol de administrador en la empresa activa entra al tablero"
+        resultado: "Ve solo '🔑 Consola'"
+  - nombre: "Cambia a una empresa que no administra"
+    pasos:
+      - paso: "Un administrador de una empresa con otro rol en una segunda empresa cambia a la segunda"
+        resultado: "El botón '🏢 Mi empresa' desaparece; al volver a la primera, vuelve a aparecer"
+  - nombre: "El servicio no responde"
+    pasos:
+      - paso: "Un administrador entra al tablero mientras el servicio de datos del módulo no responde"
+        resultado: "No ve los botones nuevos, el tablero carga igual y no aparece ningún mensaje de error"
+validaciones:
+  - "'🏢 Mi empresa' se ve solo si es administrador de la empresa activa"
+  - "'🔑 Consola' se ve solo si es superusuario, administre o no la empresa activa"
+  - "Los botones dependen de la empresa activa: cambian al cambiar de empresa"
+  - "Si el servicio de contexto falla, Tools funciona igual y no muestra botones"
+  - "Los botones abren el Portal y la Consola en la misma pestaña"
+datos_prueba:
+  administrador: "administrador de la empresa DocTest"
+  usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest"
+  superusuario: "usuario de prueba con la marca de superusuario en el ambiente (nunca el de producción)"
+dudas:
+  - "La barra está en application/views/layout/perfil.php, pero hay copias en traz-comp-pan, traz-comp-tareasestandar, traz-prod-trazasoft y traz-tools-resi. ¿Hay pantallas en uso que dibujan alguna de esas copias? Propuesta: el análisis de impacto lo verifica; si alguna se usa, se agregan los botones también ahí en el mismo pull request; si no, se dejan como están."
+  - "El menú del perfil hoy tiene 'Usuarios' para quien tiene seg.users.role = 1 (que reciben todos los que se registran). La maqueta lo saca. ¿Se saca ya? Propuesta: no; se saca en REQ-007, cuando el Portal tenga la pantalla de Usuarios, para no dejar a nadie sin esa función."
+  - "El Contexto agrega pedidos al servicio de datos en cada carga del tablero. ¿Se acepta sin memoria intermedia? Propuesta: sí, se pide una vez por carga del tablero (Tools carga el resto por AJAX dentro de la misma página); si el análisis de impacto mide más de medio segundo, se guarda en la sesión hasta 60 segundos (RNF-06)."
+derivados: {}
+notas:
+  - "Cubre CP-106 (solo el botón 'Mi empresa') y CP-108 (botón 'Consola' en Tools)."
+  - "Toca la barra de Tools: es núcleo y necesita análisis de impacto aprobado por Rodolfo antes de construir."
+  - "Solo los dos botones de la maqueta. El indicador de cuota, el selector de empresa con logo y la tarjeta del tablero llegan en otros requerimientos."

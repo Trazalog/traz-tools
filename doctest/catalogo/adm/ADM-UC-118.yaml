@@ -1,0 +1,68 @@
+id: ADM-UC-118
+modulo: ADM
+titulo: Ver, filtrar y exportar las personas de la plataforma
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Usuarios de la plataforma (RF-78)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-usuarios.html
+    detalle: "filtros, llegada filtrada, tabla de membresías, exportar"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-18; RF-78"
+pantallas:
+  - "Consola → 👥 Usuarios"
+  - "Consola → Empresas → 👥 Usuarios (llegada filtrada)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Personas de prueba en MinTest_SJ, Empresa Test y Yudica, con varios roles y estados"
+flujo_principal:
+  - paso: "Toca '👥 Usuarios' en la Consola"
+    resultado: "Ve 'Usuarios de la plataforma', la explicación y una fila por persona con sus empresas y roles (una línea por membresía con su estado), Súper, Ban global, Último acceso y '📜 Ver actividad'"
+  - paso: "Elige empresa Yudica y rol Mantenedor"
+    resultado: "Ve solo las personas con membresía Mantenedor en Yudica, y el pie 'N personas con el filtro aplicado · M en la plataforma'"
+  - paso: "Toca '⬇ Exportar CSV (filtrado)'"
+    resultado: "Baja un CSV con las mismas personas del filtro"
+  - paso: "Va a Empresas y toca '👥 Usuarios' en la fila de MinTest_SJ"
+    resultado: "Ve '🏢 Llegaste desde Empresas › MinTest_SJ: el filtro de empresa ya está aplicado.' y solo las personas de MinTest_SJ"
+  - paso: "Toca 'Quitar filtro'"
+    resultado: "Ve todas las personas de la plataforma"
+flujos_alternativos:
+  - nombre: "Banear en una empresa"
+    pasos:
+      - paso: "En la línea 'MinTest_SJ · Supervisor · activo' de Bruno toca 'Banear' y confirma"
+        resultado: "Bruno queda baneado solo en MinTest_SJ; su línea de otra empresa sigue activa; la auditoría tiene miembro.banear con el superusuario como autor"
+  - nombre: "Reenviar una invitación"
+    pasos:
+      - paso: "En la línea 'invitado · vence <fecha>' de Darío toca 'Reenviar'"
+        resultado: "Darío recibe un enlace nuevo, como en Usuarios de la empresa"
+  - nombre: "Último acceso"
+    pasos:
+      - paso: "Elige 'Último acceso: Nunca'"
+        resultado: "Ve solo las personas que nunca ingresaron"
+  - nombre: "Último administrador de una empresa"
+    pasos:
+      - paso: "Toca 'Banear' en la membresía de la única persona que administra una empresa"
+        resultado: "Ve 'Es la única persona que administra <empresa>: nombrá a otra antes' y no se banea"
+validaciones:
+  - "Lista todas las personas de todas las empresas, con todas sus membresías"
+  - "Filtros por texto, empresa, rol, estado, último acceso, súper y ban global, en el servidor y paginados"
+  - "Exportar baja el listado con el filtro aplicado"
+  - "Desde Empresas y desde la ficha se llega con la empresa filtrada"
+  - "Las acciones por membresía usan la misma operación y las mismas reglas que Usuarios de la empresa"
+  - "Ninguna pantalla administrativa tarda más de 2 segundos con 10.000 personas"
+datos_prueba:
+  personas: "membresías de prueba del fixture dnato_v3_base y 20 personas de prueba en Yudica"
+dudas:
+  - "'📜 Ver actividad' abre la Auditoría filtrada por la persona, que llega con REQ-013. Propuesta: el botón aparece cuando REQ-013 esté construido."
+  - "¿El superusuario puede dar de baja una membresía o cambiarle el rol desde acá? RF-78 nombra banear, reactivar y reenviar. Propuesta: solo esas tres; baja y rol se hacen desde el Portal de la empresa."
+  - "Para el último administrador el mensaje de CP-74 está escrito para quien se banea a sí mismo. Propuesta: en la Consola, 'Es la única persona que administra <empresa>: nombrá a otra antes'."
+  - "¿Qué columnas lleva el CSV y con qué separador? Propuesta: las mismas de la tabla, una fila por membresía, separadas por punto y coma y en UTF-8 para que Excel las abra bien."
+derivados: {}
+notas:
+  - "Cubre CP-107 (salvo 'abre Auditoría filtrada', que es REQ-013)."
