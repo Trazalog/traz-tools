@@ -86,15 +86,27 @@ Regla del menú: si un rol tiene la opción padre y ninguna hija, ve todas las h
 
 Atención: hasta MIG-5 los permisos van fijos en la URL del menú, así que un Solicitante puede editar lo que en asset solo podía mirar.
 
-**Para repetirlo en TEST o PRODUCCIÓN**, desde una terminal con `psql` conectada a la base de tools de ese ambiente, después de cargar
-las opciones MAN en `seg.menues`:
+**Para repetirlo en DEMO, TEST o PRODUCCIÓN**, desde una terminal con `psql` conectada a la base de tools de ese ambiente:
 
-```bash
-psql -f _backend/database/scripts/versiones/v2.8.1.5/configuracion_inicial_empresa_trg_func.sql
-```
+1. Cargar las 31 opciones MAN en `seg.menues`. El script crea las que faltan y actualiza las que ya existen (guarda antes una copia
+   en `seg.menues_bk_man_v30`; cómo deshacerlo está en su encabezado):
 
-El script parte de la función de **desarrollo**: antes de correrlo, comparala con la de ese ambiente. Solo alcanza a las empresas que se
-creen después. Las que ya existen se cargan aparte, como en el punto 1 de arriba.
+   ```bash
+   psql -v ON_ERROR_STOP=1 -f _backend/database/scripts/versiones/v3.0/menu_man.sql
+   ```
+
+2. El alta de empresa que asigna el menú a las empresas nuevas, en este orden:
+
+   ```bash
+   psql -v ON_ERROR_STOP=1 -f _backend/database/scripts/versiones/v2.8.1.7/pedidos_sin_formulario.sql
+   psql -v ON_ERROR_STOP=1 -f _backend/database/scripts/versiones/v2.8.1.7/configuracion_inicial_empresa_trg_func.sql
+   ```
+
+   **No** usar `v2.8.1.5`: le falta el clon del formulario "Entrega Materiales" que tiene producción (ver
+   [ANALISIS-IMPACTO-NUCLEO-MIG.md](ANALISIS-IMPACTO-NUCLEO-MIG.md), punto 2.3).
+
+El alta solo alcanza a las empresas que se creen después. Las que ya existen se cargan aparte, como en el punto 1 de "Lo que se cargó en
+desarrollo".
 
 La unidad industrial por defecto es otro cambio, en la base de Mantenimiento (`assetv2`): ver H49 en
 [HALLAZGOS-POST-MIGRACION.md](HALLAZGOS-POST-MIGRACION.md) y `development/sql/asset-empresa-trigger.sql`.
