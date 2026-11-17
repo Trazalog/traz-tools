@@ -59,6 +59,24 @@ export class PortalPage {
     await this.page.goto(urlPortal(sufijo));
   }
 
+  /** Código de seguridad de la sesión, tal como lo publica la página. */
+  async token(): Promise<string> {
+    return (await this.page.locator('meta[name="adm-token"]').getAttribute('content')) ?? '';
+  }
+
+  /**
+   * Manda un envío (POST) al Portal con los campos indicados.
+   *
+   * Usa el contexto de la página, así que viaja con la sesión de esa persona. Devuelve la
+   * respuesta para poder mirar el código de estado.
+   */
+  async enviar(
+    campos: Record<string, string> = {},
+    encabezados: Record<string, string> = {},
+  ): Promise<{ status(): number }> {
+    return this.page.request.post(urlPortal(), { form: campos, headers: encabezados });
+  }
+
   /** Texto visible de la página, normalizado. */
   async texto(): Promise<string> {
     return (await this.page.locator('body').innerText()).replace(/\s+/g, ' ').trim();
