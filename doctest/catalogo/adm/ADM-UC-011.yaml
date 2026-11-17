@@ -54,7 +54,7 @@ datos_prueba:
   usuario_una_empresa: "uno de los usuarios por defecto de la empresa DocTest"
 dudas:
   - "Salir en Tools sigue yendo a la salida de DNATO (no se redirige nada), así que después de salir el usuario ve el ingreso de DNATO aunque haya entrado por la copia. ¿Está bien hasta la redirección final? Propuesta: sí; la salida del módulo lleva al ingreso del módulo."
-  - "El análisis (C.3) pide dejar el tiempo de sesión en una constante configurable. La copia hereda el de Tools (sin límite) sin tocar nada; hacerlo configurable implica tocar application/config/config.php de Tools. ¿Se deja para el requerimiento de propagar el control a Tools (H-091)? Propuesta: sí, en REQ-003 no se toca config.php."
+  - "El análisis (C.3) pide dejar el tiempo de sesión en una constante configurable. La copia hereda el de Tools (sin límite) sin tocar nada; hacerlo configurable implica tocar application/config/config.php de Tools. ¿Se deja para el requerimiento de propagar el control a Tools (H-123)? Propuesta: sí, en REQ-003 no se toca config.php."
   - "[SUPUESTO] Tools y DNATO siguen compartiendo la sesión en DEMO y producción como dice la configuración (misma cookie, misma carpeta de sesiones, mismo servidor); el relevamiento lo dedujo de los archivos, no lo probó corriendo. Propuesta: este caso lo confirma en DEMO; si falla en el paso de DNATO, se para y se avisa antes de cambiar configuración."
 derivados: {}
 notas:

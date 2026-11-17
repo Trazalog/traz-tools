@@ -68,4 +68,4 @@ dudas:
   - "¿El servicio del navegador hace falta, o alcanza con el modelo que otros módulos cargan por dentro? Propuesta: los dos; el del navegador sirve para la vista de presentación (REQ-012) y para probar CP-91 sin tocar Tools."
 derivados: {}
 notas:
-  - "Cubre CP-91 contra el servicio y la parte de CP-92 que es del servicio (motivo sin_permiso). Que las pantallas de Tools respondan 403 o escondan el botón es la deuda H-091, fuera de este requerimiento."
+  - "Cubre CP-91 contra el servicio y la parte de CP-92 que es del servicio (motivo sin_permiso). Que las pantallas de Tools respondan 403 o escondan el botón es la deuda H-123, fuera de este requerimiento."

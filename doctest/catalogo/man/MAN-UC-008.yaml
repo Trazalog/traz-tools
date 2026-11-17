@@ -3,42 +3,49 @@ modulo: MAN
 titulo: Analizar una solicitud y decidir qué hacer
 perfil: Supervisor
 estado: validado
-version: "1.0"
+version: "2.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Sservicio.php
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Tarea.php
-    detalle: "las tareas del proceso de Bonita que mueven la solicitud"
+  - repo: traz-tools-man
+    path: controllers/Tarea.php
+    detalle: decidirUrgencia() — la tarea de análisis de la solicitud
+  - repo: traz-tools-man
+    path: views/tareas/view_analisisSServicios.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: "POST /tools/man/bandeja/tarea/urgencia: cierra la tarea en Bonita y después escribe en la base (E31)"
 pantallas:
-  - "Mantenimiento → Solicitud de Servicio"
-  - "Mis Tareas"
+  - Mis Tareas (bandeja de tools, panel de Mantenimiento)
+  - Mantenimiento → Bandeja de Tareas
 precondiciones:
-  - "Sesión iniciada en AssetPlanner con perfil Supervisor de Taller"
-  - "Existe una solicitud pendiente de análisis, creada con MAN-UC-007"
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Supervisor de Taller
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - Existe una solicitud pendiente de análisis, creada con MAN-UC-007
   - "La tarea llegó a la bandeja de entrada: el proceso de Bonita es el que la pone ahí (MAN-UC-019)"
 produce:
   - "La solicitud aceptada y clasificada por urgencia: si es urgente sigue derecho a asignación, si no va al backlog"
 depende_de:
   - MAN-UC-007
 flujo_principal:
-  - paso: "Abre la solicitud pendiente, desde el listado o desde Mis Tareas"
-    resultado: "Se muestra qué equipo es, qué reportó el solicitante y los archivos que adjuntó"
-  - paso: "Decide si el trabajo es urgente"
-    resultado: "De esa única decisión sale todo lo demás"
+  - paso: Abre la tarea de análisis desde su bandeja (Mis Tareas, o Mantenimiento → Bandeja de Tareas)
+    resultado: Se muestra qué equipo es, qué reportó el solicitante y los archivos que adjuntó
+  - paso: Decide si el trabajo es urgente
+    resultado: De esa única decisión sale todo lo demás
   - paso: "Si es urgente: la solicitud se marca como urgente y el propio Supervisor la planifica"
-    resultado: "El Supervisor le pone fecha y después asigna el mantenedor que la va a hacer"
+    resultado: El Supervisor le pone fecha y después asigna el mantenedor que la va a hacer
   - paso: "Si no es urgente: la solicitud se convierte en un backlog"
-    resultado: "El Supervisor completa el backlog y a partir de ahí lo toma el Planificador, que le pone fecha y asigna el mantenedor"
+    resultado: El Supervisor completa el backlog y a partir de ahí lo toma el Planificador, que le pone fecha y asigna el mantenedor
 validaciones:
   - "**La urgencia es la única decisión de este paso, y define quién sigue**: si es urgente, el Supervisor planifica y asigna; si no, pasa al Planificador por la vía del backlog"
-  - "Una solicitud rechazada no genera orden de trabajo"
+  - Una solicitud rechazada no genera orden de trabajo
+  - El sistema toma la solicitud y la orden del caso de Bonita, no de lo que manda la pantalla, y verifica que el caso sea de la empresa (E31)
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-008-029-031.solicitud-backlog.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s06
 notas:
   - "Es la bifurcación del proceso: la compuerta *¿Es Urgente?* del diagrama. Todo lo que viene después depende de esta respuesta — ver `doc/man/proceso-mantenimiento.md` §2."
-  - "La tarea llega a la bandeja de entrada del Supervisor; no hace falta ir a buscarla al listado de solicitudes."
-  - "El manual de ayuda existente le dedica una sección propia (s06, *Analizar la Solicitud*)."
+  - La tarea llega a la bandeja de entrada del Supervisor; no hace falta ir a buscarla al listado de solicitudes.
+  - El manual de ayuda existente le dedica una sección propia (s06, *Analizar la Solicitud*).
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

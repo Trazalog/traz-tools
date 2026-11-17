@@ -1,0 +1,44 @@
+id: MAN-UC-041
+modulo: MAN
+titulo: Anular una orden programada sin lanzar
+perfil: Planificador
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-11-03
+referencias_codigo:
+  - repo: traz-tools-man
+    path: controllers/Otrabajo.php
+    detalle: anular()
+  - repo: traz-tools-man
+    path: views/otrabajos/tabla_opciones.php
+  - repo: traz-tools-man
+    path: views/calendar/calendar1.php
+    detalle: la ventanita de la orden
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: POST /tools/man/plan/anular
+pantallas:
+  - Mantenimiento → Ordenes de Trabajo → Anular
+  - Mantenimiento → Plan de Mantenimiento → (clic en la orden) → Anular
+precondiciones:
+  - Sesión iniciada en Tools (ingreso de DNATO) con perfil Planificador
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - Hay una orden programada sin lanzar
+depende_de:
+  - MAN-UC-009
+flujo_principal:
+  - paso: En Ordenes de Trabajo elige Anular sobre una orden "Sin lanzar"
+    resultado: El sistema pide confirmación
+  - paso: Confirma
+    resultado: La orden queda anulada (`AN`) y deja de verse en el listado y en el calendario
+validaciones:
+  - "Solo se pueden anular órdenes sin lanzar (`PL`, preventivo o predictivo, `case_id` 0): no hay caso de Bonita que cerrar"
+  - Queda registrado quién la anuló y cuándo
+  - No se puede deshacer
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-040-041.lanzar-anular.spec.ts
+notas:
+  - Comportamiento decidido por el PM en la migración (E60). Validación del caso pendiente en el PR.
+  - "Se usa `AN` y no `EL`: `EL` es el de las eliminadas por solicitud y el calendario las seguiría mostrando."

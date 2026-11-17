@@ -3,38 +3,43 @@ modulo: MAN
 titulo: Dar de alta un componente
 perfil: Supervisor
 estado: validado
-version: "0.1"
+version: "1.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Componente.php
-    detalle: "agregar_componente() crea el componente; codifNombre($ultimoId,$empId) arma su código"
-  - repo: traz-prod-assetplanner
-    path: application/models/Componentes.php
+  - repo: traz-tools-man
+    path: controllers/Componente.php
+    detalle: index() lista; agregar_componente() crea el componente
+  - repo: traz-tools-man
+    path: models/Componentes.php
+  - repo: traz-tools-man
+    path: views/componente/listabm.php
+    detalle: el ABM de componentes
 pantallas:
-  - "Mantenimiento → Componentes → Nuevo"
+  - Mantenimiento → Componentes → Nuevo
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
 produce:
-  - "Un componente disponible para asignar a un equipo"
+  - Un componente disponible para asignar a un equipo
 depende_de:
   - DNATO-UC-004
 flujo_principal:
-  - paso: "Abre el alta de componentes"
-    resultado: "Se muestra el formulario"
-  - paso: "Carga los datos del componente y su marca"
-    resultado: "El formulario acepta los datos"
-  - paso: "Guarda"
-    resultado: "El componente queda dado de alta y disponible para asignarlo a un equipo"
+  - paso: Abre el alta de componentes
+    resultado: Se muestra el formulario
+  - paso: Carga los datos del componente y su marca
+    resultado: El formulario acepta los datos
+  - paso: Guarda
+    resultado: El componente queda dado de alta y disponible para asignarlo a un equipo
 validaciones:
   - "El **código trazable lo escribe el usuario**: no se genera solo"
-  - "Un componente es una **pieza intercambiable del equipo**"
-  - "El código del componente lo arma el sistema a partir del último id y de la empresa"
+  - Un componente es una **pieza intercambiable del equipo**
+  - El código del componente lo arma el sistema a partir del último id y de la empresa
 dudas: []
 derivados:
   test_e2e: tests/e2e/specs/man/MAN-UC-005-006.componentes.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s03
 notas:
-  - "Un componente es una **pieza intercambiable del equipo** (PM, 2026-08-26)."
+  - Un componente es una **pieza intercambiable del equipo** (PM, 2026-08-26).
   - "**Corrección de la primera pasada:** se había supuesto que `codifNombre()` armaba el código del componente. No es así — esa función arma el nombre de un archivo adjunto, con id, empresa y fecha. El código del componente viene del formulario."
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

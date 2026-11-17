@@ -56,4 +56,4 @@ Característica: Iniciar sesión desde un agente de IA (OAuth 2.1)
 
   # Datos de prueba:
   #   empresa: EMPRESA_TEST_1
-  #   nota: El flujo de más de una empresa necesita un usuario que pertenezca a dos. Hoy las fixtures tienen un usuario por empresa.
+  #   nota: El flujo de más de una empresa necesita un usuario que pertenezca a dos. Hoy las fixtures tienen un usuario por empresa, y no está resuelto cómo dar de alta uno en dos empresas desde la aplicación sin tocar la base — por eso los tres tests del paso 2 están en cuarentena (H-086).

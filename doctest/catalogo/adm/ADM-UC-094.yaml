@@ -64,7 +64,7 @@ datos_prueba:
   texto: "variable texto_suspension_miembro con el texto de RF-03"
 dudas:
   - "Hasta la redirección final la gente sigue ingresando por DNATO, que no conoce el baneo por empresa: un baneado entra igual por ahí. Propuesta: se acepta y se dice en la ventana de baneo ('Por ahora vale para el ingreso nuevo'), o, si Rodolfo prefiere que valga ya, se agrega a DNATO un chequeo del estado en un requerimiento aparte con análisis de impacto."
-  - "Las pantallas de Tools no cortan la sesión del baneado (no tienen chequeo central, deuda H-091). Propuesta: se deja para la derivación T-5 y CP-73 queda cubierto solo en el módulo y en el ingreso."
+  - "Las pantallas de Tools no cortan la sesión del baneado (no tienen chequeo central, deuda H-123). Propuesta: se deja para la derivación T-5 y CP-73 queda cubierto solo en el módulo y en el ingreso."
   - "El mensaje de CP-74 dice 'Sos la única administradora'. Propuesta: neutro, 'Sos la única persona que administra la empresa: nombrá a otra antes'."
   - "¿Reactivar pide confirmación? La especificación dice 'en un clic, con confirmación'. Propuesta: confirmación simple sin motivo, 'Reactivar a <nombre>'."
   - "¿Quién figura en el mensaje de suspensión si la empresa tiene varios administradores? Propuesta: el contacto_admin de la empresa (REQ-004) y, si está vacío, el administrador activo más antiguo."

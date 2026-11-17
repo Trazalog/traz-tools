@@ -45,14 +45,23 @@ export async function sesionDeRol(browser: Browser, rol: RolAlm): Promise<Page> 
     );
   }
 
+  return sesionTools(browser, email, password, empresa, `el rol "${rol}"`);
+}
+
+/** Abre una sesión de Tools con un usuario. Quien la abre es responsable de cerrarla. */
+export async function sesionTools(browser: Browser, email: string, password: string, empresa: string, quien = 'el usuario'): Promise<Page> {
   const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await contexto.newPage();
+  // Las pantallas avisan con alert()/confirm() nativos: un diálogo sin atender traba la página.
+  page.on('dialog', (d) => void d.accept().catch(() => {}));
   const login = new LoginPage(page);
   await login.abrir(requerirUrlDeApp('dnato'));
   await login.ingresar({ email, password, empresa });
 
+  // El ingreso redirige en el navegador: se espera a que salga del login antes de decidir.
+  await page.waitForURL((u) => !/main\/login/i.test(u.href), { timeout: 60_000 }).catch(() => {});
   if (/main\/login/i.test(page.url())) {
-    throw new Error(`No se pudo entrar a Tools con el rol "${rol}" (${email}).`);
+    throw new Error(`No se pudo entrar a Tools con ${quien} (${email}).`);
   }
   return page;
 }

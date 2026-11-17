@@ -9,7 +9,7 @@ inicial de funcionalidades activas de las empresas que ya existen (M-4) y **el m
 dibujado con ese servicio** (punto T-2), encendido por una variable de sistema. Lo leen Pablo para
 planificar y Rodolfo para aprobar el análisis de impacto en Tools. **No** cubre la vista de
 presentación que abre una opción sombreada (REQ-012) ni el control de acceso por pantalla en Tools
-(T-5, deuda H-091). Lista completa en [`README.md`](README.md).
+(T-5, deuda H-123). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
@@ -59,7 +59,7 @@ presentación que abre una opción sombreada (REQ-012) ni el control de acceso p
 ## Qué NO hace
 
 - **No controla el acceso por pantalla en Tools.** Que una opción no esté en el menú no impide abrirla
-  escribiendo la dirección (igual que hoy): eso es el chequeo central T-5 (deuda H-091).
+  escribiendo la dirección (igual que hoy): eso es el chequeo central T-5 (deuda H-123).
 - **No cambia la barra superior de Tools** (T-3): botones de REQ-004, perfil de REQ-007, indicador de
   cuota de REQ-011.
 - **No cambia los menús propios de los submódulos** (`ddpe-tools-pro` arma una copia del menú viejo, ver

@@ -8,7 +8,7 @@ dicen qué ve cada empresa y cada persona (R1 y R2), con el servicio "Funcionali
 expone. Lo leen Pablo para planificar y Rodolfo para aprobarlo. **No** cubre los menús por rol o persona
 ni el menú que dibuja Tools ([REQ-009](REQ-009-administracion-menus.md)), la vista de presentación de lo
 que es de otro plan (REQ-012), ni que las pantallas de Tools rechacen lo que no es visible (deuda
-**H-091**). Lista completa en [`README.md`](README.md).
+**H-123**). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
@@ -50,7 +50,7 @@ que es de otro plan (REQ-012), ni que las pantallas de Tools rechacen lo que no 
 
 - **No hace que las pantallas de Tools rechacen lo que no es visible** (RF-94 para toda la suite,
   punto T-5 de `02_MODELO_Y_REGLAS.md` §9b). El control de acceso vive solo en el módulo (decisión de
-  Rodolfo del 2026-11-10); llevarlo a las pantallas de Tools es la deuda **H-091**, en un requerimiento
+  Rodolfo del 2026-11-10); llevarlo a las pantallas de Tools es la deuda **H-123**, en un requerimiento
   aparte con su análisis de impacto. Acá queda **listo el servicio** que esas pantallas van a llamar.
   Por eso CP-92 ("no ve el botón 'Nuevo equipo'") queda fuera.
 - **No cambia el menú de Tools.** Apagar una funcionalidad acá no la saca del menú lateral de Tools
@@ -101,7 +101,7 @@ REQ-009 y REQ-012).
 ### Dónde vive cada regla
 
 - **R1 y R2 se calculan en el DataService**, en una consulta cada una (recursos nuevos de
-  `ADMDataService`), para que el módulo, el menú resuelto (REQ-009), Tools (H-091) y el agente
+  `ADMDataService`), para que el módulo, el menú resuelto (REQ-009), Tools (H-123) y el agente
   (REQ-011) usen la misma regla sin copiarla (lógica de negocio en las APIs).
 - El módulo tiene un modelo (por ejemplo `Visibilidad`, en `traz-comp-adm/models/`) que toma correo y
   empresa **de la sesión** y llama a esos recursos. Otros módulos de Tools lo pueden cargar con el
@@ -238,7 +238,7 @@ solo las respuestas 403 y 404 (correo, empresa, módulo, opción, motivo), no ca
 ## Decisiones tomadas
 
 - **El control 403/404 vive solo en el módulo** (Rodolfo, 2026-11-10). El servicio queda listo para
-  Tools; usarlo en las pantallas de Tools es H-091.
+  Tools; usarlo en las pantallas de Tools es H-123.
 - **R1 y R2 en el DataService, no en PHP**: así la regla está una sola vez y la pueden usar el módulo,
   el menú resuelto, Tools y el agente (regla del repositorio: la lógica de negocio va en las APIs).
 - **Nunca se borra una fila de funcionalidad de la empresa**: es lo que permite que bajar y volver a
@@ -274,5 +274,5 @@ Están en los casos de uso (campo `dudas`), para contestarlas en un solo lugar.
 | CP-53 | Las herramientas de IA se ven en Funcionalidades | ADM-UC-070 (bajo "IA"). "En la comparativa de Plan": REQ-010. "No en el constructor de menús ni en el menú operativo": REQ-009 |
 | CP-14 | Quitar del plan conserva la activación | ADM-UC-071 (activación y orden se conservan). "Queda en el menú de carla@ con estado otro_plan": REQ-009 |
 | CP-52 | Bajar y volver a subir conserva activación, orden y menús | ADM-UC-071 (activación y orden, probado quitando y volviendo a poner en la matriz, porque el cambio de plan de una empresa es REQ-008). "Reaparece en el menú Gestión": REQ-009 |
-| CP-91 | Pedir a mano una funcionalidad no visible da 403; inexistente 404 | ADM-UC-072, **contra el servicio** "Funcionalidad visible". Que la dirección de la pantalla de Tools responda 403: fuera de alcance (H-091) |
-| CP-92 | Lo que el rol no permite no aparece (botón "Nuevo equipo") | En parte: ADM-UC-072 (el servicio responde `sin_permiso`). Que la pantalla de Tools oculte el botón: fuera de alcance (H-091) |
+| CP-91 | Pedir a mano una funcionalidad no visible da 403; inexistente 404 | ADM-UC-072, **contra el servicio** "Funcionalidad visible". Que la dirección de la pantalla de Tools responda 403: fuera de alcance (H-123) |
+| CP-92 | Lo que el rol no permite no aparece (botón "Nuevo equipo") | En parte: ADM-UC-072 (el servicio responde `sin_permiso`). Que la pantalla de Tools oculte el botón: fuera de alcance (H-123) |

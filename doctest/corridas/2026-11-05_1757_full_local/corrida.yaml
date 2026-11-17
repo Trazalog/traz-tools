@@ -1,0 +1,2601 @@
+corrida:
+  id: 2026-11-05_1757_full_local
+  modo: full
+  entorno: local
+  rama: feat/TAR-doctest-catalogo-y-pruebas
+  commit: fbf3762b
+  inicio: 2026-11-05T20:57:14.194Z
+  minutos: 105
+resumen:
+  total: 204
+  pasan: 171
+  errores_conocidos: 31
+  sin_comprobar: 0
+  otro_punto: 0
+  fallas: 0
+  inestables: 0
+  dejaron_de_fallar: 0
+  salteadas: 2
+empresas:
+  empresa1:
+    nombre: DocTest Ciclo 2611052057
+    dominio: dt2611052057.com
+    administrador: a.dmi.nd.o.ct.es.t@gmail.com
+  empresa2:
+    nombre: DocTest Ciclo 2611052059
+    dominio: dt2611052059.com
+    administrador: ad.m.i.nd.oc.tes.t@gmail.com
+  usuarios:
+    mantenimiento: a.dmi.nd.o.ct.es.t@gmail.com
+    supervisor: mantenimiento@dt2611052057.com
+    planificador: produccion@dt2611052057.com
+    responsable1: mantenimiento@dt2611052057.com
+    responsable2: panol@dt2611052057.com
+    solicitante: usuario@dt2611052057.com
+    almacen: almacen@dt2611052057.com
+  datos_cargados:
+    equipoCodigo: DT-MW4184UZ
+    herramientaCodigo: HRR-MW417Q0P
+    preventivo: "297"
+    responsable: "386"
+    otMateriales: "1486"
+pruebas:
+  - clave: alm/ALM-UC-001.listado-articulos.spec.ts::@smoke la grilla muestra sus
+      columnas
+    modulo: ALM
+    caso: ALM-UC-001
+    titulo: "@smoke la grilla muestra sus columnas"
+    estado: pasa
+    segundos: 10
+  - clave: alm/ALM-UC-001.listado-articulos.spec.ts::ofrece el alta de un artículo
+    modulo: ALM
+    caso: ALM-UC-001
+    titulo: ofrece el alta de un artículo
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-005.stock.spec.ts::@smoke ofrece los filtros de la consulta
+    modulo: ALM
+    caso: ALM-UC-005
+    titulo: "@smoke ofrece los filtros de la consulta"
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-005.stock.spec.ts::el tipo de artículo ofrece las categorías
+      del almacén
+    modulo: ALM
+    caso: ALM-UC-005
+    titulo: el tipo de artículo ofrece las categorías del almacén
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-006-007.ciclo-pedido.spec.ts::el pedido arranca su proceso de
+      aprobación
+    modulo: ALM
+    caso: ALM-UC-006-007
+    titulo: el pedido arranca su proceso de aprobación
+    estado: pasa
+    segundos: 50
+  - clave: alm/ALM-UC-006-007.ciclo-pedido.spec.ts::el pedido nace en un estado del
+      circuito, no en blanco
+    modulo: ALM
+    caso: ALM-UC-006-007
+    titulo: el pedido nace en un estado del circuito, no en blanco
+    estado: pasa
+    segundos: 37
+  - clave: alm/ALM-UC-006-007.ciclo-pedido.spec.ts::el Responsable de Almacén ve el
+      pedido que le hicieron
+    modulo: ALM
+    caso: ALM-UC-006-007
+    titulo: el Responsable de Almacén ve el pedido que le hicieron
+    estado: pasa
+    segundos: 57
+  - clave: alm/ALM-UC-006-007.ciclo-pedido.spec.ts::el Solicitante crea el pedido y
+      queda registrado
+    modulo: ALM
+    caso: ALM-UC-006-007
+    titulo: el Solicitante crea el pedido y queda registrado
+    estado: pasa
+    segundos: 44
+  - clave: "alm/ALM-UC-006-007.ciclo-pedido.spec.ts::preparación: el almacén carga
+      un artículo para que haya qué pedir"
+    modulo: ALM
+    caso: ALM-UC-006-007
+    titulo: "preparación: el almacén carga un artículo para que haya qué pedir"
+    estado: pasa
+    segundos: 37
+    datos:
+      nota: la empresa ya tenía artículos
+  - clave: alm/ALM-UC-010.entrega-materiales.spec.ts::el Responsable aprueba el
+      pedido y pasa a Entrega pendiente
+    modulo: ALM
+    caso: ALM-UC-010
+    titulo: el Responsable aprueba el pedido y pasa a Entrega pendiente
+    estado: pasa
+    segundos: 184
+  - clave: alm/ALM-UC-010.entrega-materiales.spec.ts::el Solicitante pide el
+      artículo que tiene stock
+    modulo: ALM
+    caso: ALM-UC-010
+    titulo: el Solicitante pide el artículo que tiene stock
+    estado: pasa
+    segundos: 53
+  - clave: alm/ALM-UC-010.entrega-materiales.spec.ts::la entrega del resto completa
+      el pedido y lo deja Entregado
+    modulo: ALM
+    caso: ALM-UC-010
+    titulo: la entrega del resto completa el pedido y lo deja Entregado
+    estado: pasa
+    segundos: 164
+  - clave: "alm/ALM-UC-010.entrega-materiales.spec.ts::preparación: el almacén
+      recibe materiales y deja stock (ALM-UC-009)"
+    modulo: ALM
+    caso: ALM-UC-010
+    titulo: "preparación: el almacén recibe materiales y deja stock (ALM-UC-009)"
+    estado: pasa
+    segundos: 98
+  - clave: alm/ALM-UC-010.entrega-materiales.spec.ts::una entrega parcial deja el
+      pedido en Ent. Parcial con saldo pendiente
+    modulo: ALM
+    caso: ALM-UC-010
+    titulo: una entrega parcial deja el pedido en Ent. Parcial con saldo pendiente
+    estado: pasa
+    segundos: 165
+  - clave: alm/ALM-UC-018.historico.spec.ts::@smoke pide el período y ofrece filtrar
+      por tipo de movimiento
+    modulo: ALM
+    caso: ALM-UC-018
+    titulo: "@smoke pide el período y ofrece filtrar por tipo de movimiento"
+    estado: pasa
+    segundos: 8
+  - clave: alm/ALM-UC-018.historico.spec.ts::contempla todos los tipos de movimiento
+      que alteran el stock
+    modulo: ALM
+    caso: ALM-UC-018
+    titulo: contempla todos los tipos de movimiento que alteran el stock
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-020.movimientos-internos.spec.ts::@smoke la grilla muestra las
+      dos puntas del movimiento y su estado
+    modulo: ALM
+    caso: ALM-UC-020
+    titulo: "@smoke la grilla muestra las dos puntas del movimiento y su estado"
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-020.movimientos-internos.spec.ts::es también el acceso a las
+      dos operaciones
+    modulo: ALM
+    caso: ALM-UC-020
+    titulo: es también el acceso a las dos operaciones
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-023-024.ajustes.spec.ts::@smoke la grilla lista un ajuste por
+      fila, con su comprobante
+    modulo: ALM
+    caso: ALM-UC-023-024
+    titulo: "@smoke la grilla lista un ajuste por fila, con su comprobante"
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-023-024.ajustes.spec.ts::el detalle contempla la
+      justificación, que es lo que explica el ajuste
+    modulo: ALM
+    caso: ALM-UC-023-024
+    titulo: el detalle contempla la justificación, que es lo que explica el ajuste
+    estado: pasa
+    segundos: 9
+  - clave: alm/ALM-UC-023-024.ajustes.spec.ts::ofrece el alta de un ajuste
+    modulo: ALM
+    caso: ALM-UC-023-024
+    titulo: ofrece el alta de un ajuste
+    estado: pasa
+    segundos: 8
+  - clave: dnato/DNATO-UC-001.registro.spec.ts::@smoke muestra el formulario con los
+      seis datos que pide
+    modulo: DNATO
+    caso: DNATO-UC-001
+    titulo: "@smoke muestra el formulario con los seis datos que pide"
+    estado: pasa
+    segundos: 4
+  - clave: dnato/DNATO-UC-001.registro.spec.ts::no registra si faltan campos
+      obligatorios
+    modulo: DNATO
+    caso: DNATO-UC-001
+    titulo: no registra si faltan campos obligatorios
+    estado: pasa
+    segundos: 4
+  - clave: dnato/DNATO-UC-001.registro.spec.ts::rechaza un correo ya registrado
+    modulo: DNATO
+    caso: DNATO-UC-001
+    titulo: rechaza un correo ya registrado
+    estado: pasa
+    segundos: 7
+  - clave: dnato/DNATO-UC-001.registro.spec.ts::rechaza un teléfono que no cumple el
+      formato del país
+    modulo: DNATO
+    caso: DNATO-UC-001
+    titulo: rechaza un teléfono que no cumple el formato del país
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-001.registro.spec.ts::rechaza una razón social ya usada en
+      el mismo país
+    modulo: DNATO
+    caso: DNATO-UC-001
+    titulo: rechaza una razón social ya usada en el mismo país
+    estado: pasa
+    segundos: 8
+  - clave: dnato/DNATO-UC-001.registro.spec.ts::registra la cuenta y manda el correo
+      de activación
+    modulo: DNATO
+    caso: DNATO-UC-001
+    titulo: registra la cuenta y manda el correo de activación
+    estado: pasa
+    segundos: 28
+  - clave: dnato/DNATO-UC-006.iniciar-sesion.spec.ts::@smoke entra con las
+      credenciales de su empresa
+    modulo: DNATO
+    caso: DNATO-UC-006
+    titulo: "@smoke entra con las credenciales de su empresa"
+    estado: pasa
+    segundos: 17
+  - clave: dnato/DNATO-UC-006.iniciar-sesion.spec.ts::@smoke no revela las empresas
+      del sistema antes de validar las credenciales
+    modulo: DNATO
+    caso: DNATO-UC-006
+    titulo: "@smoke no revela las empresas del sistema antes de validar las
+      credenciales"
+    estado: pasa
+    segundos: 4
+  - clave: dnato/DNATO-UC-006.iniciar-sesion.spec.ts::cuando el usuario tiene más de
+      una empresa, le ofrece elegir
+    modulo: DNATO
+    caso: DNATO-UC-006
+    titulo: cuando el usuario tiene más de una empresa, le ofrece elegir
+    estado: salteada
+    segundos: 16
+    motivo: El usuario de prueba a.dmi.nd.o.ct.es.t@gmail.com tiene una sola
+      empresa, así que entra directo y el paso 2 no aplica. Para cubrir este
+      escenario hace falta un usuario con membresías en dos empresas.
+    pasos:
+      - Create context
+      - Create page
+      - Navigate to "/traz-comp-dnato/main/login"
+      - Wait for selector locator('#email')
+      - Fill "a.dmi.nd.o.ct.es.t@gmail.com" locator('#email')
+      - Fill "***" locator('#password')
+      - Click locator('button[type="submit"], input[type="submit"]').first()
+      - Wait for load state "networkidle"
+      - Query count locator('.tz-sel__card-btn')
+      - Close context
+  - clave: dnato/DNATO-UC-006.iniciar-sesion.spec.ts::no deja entrar con los campos
+      vacíos
+    modulo: DNATO
+    caso: DNATO-UC-006
+    titulo: no deja entrar con los campos vacíos
+    estado: pasa
+    segundos: 7
+  - clave: dnato/DNATO-UC-006.iniciar-sesion.spec.ts::no se puede saltar al paso de
+      selección de empresa sin haber ingresado
+    modulo: DNATO
+    caso: DNATO-UC-006
+    titulo: no se puede saltar al paso de selección de empresa sin haber ingresado
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-006.iniciar-sesion.spec.ts::ofrece crear una cuenta y
+      recuperar la contraseña
+    modulo: DNATO
+    caso: DNATO-UC-006
+    titulo: ofrece crear una cuenta y recuperar la contraseña
+    estado: pasa
+    segundos: 4
+  - clave: dnato/DNATO-UC-006.iniciar-sesion.spec.ts::rechaza una contraseña
+      equivocada
+    modulo: DNATO
+    caso: DNATO-UC-006
+    titulo: rechaza una contraseña equivocada
+    estado: pasa
+    segundos: 9
+  - clave: dnato/DNATO-UC-007.cerrar-sesion.spec.ts::@smoke al salir vuelve a la
+      pantalla de ingreso y no se puede volver atrás
+    modulo: DNATO
+    caso: DNATO-UC-007
+    titulo: "@smoke al salir vuelve a la pantalla de ingreso y no se puede volver
+      atrás"
+    estado: pasa
+    segundos: 27
+  - clave: dnato/DNATO-UC-008.recuperar-contrasena.spec.ts::avisa cuando el correo
+      no está registrado
+    modulo: DNATO
+    caso: DNATO-UC-008
+    titulo: avisa cuando el correo no está registrado
+    estado: pasa
+    segundos: 8
+  - clave: dnato/DNATO-UC-008.recuperar-contrasena.spec.ts::el aviso de contraseña
+      actualizada llega a la pantalla de ingreso
+    modulo: DNATO
+    caso: DNATO-UC-008
+    titulo: el aviso de contraseña actualizada llega a la pantalla de ingreso
+    estado: error-conocido
+    segundos: 81
+    hallazgo: H-033
+    issue: 466
+    severidad: 🟡
+    error_anotado: "H-033 #466: al terminar, el usuario queda en una página en blanco"
+    pasos:
+      - Navigate to "/traz-comp-dnato/main/forgot"
+      - Fill "doctest-uc008c-jyvvc0y51c@fldubai.com"
+        locator('input[name="email"]')
+      - Click locator('input[type="submit"], button[type="submit"]').first()
+      - Wait for timeout
+      - Navigate to "/traz-comp-dnato/main/reset_password/token/***"
+      - Fill "***" locator('input[name="password"]')
+      - Fill "***" locator('input[name="passconf"]')
+      - Click locator('button[type="submit"], input[type="submit"]').first()
+      - Wait for timeout
+      - Close context
+    error: |
+      TimeoutError: locator.innerText: Timeout 15000ms exceeded.
+      Call log:
+        - waiting for locator('body')
+  - clave: dnato/DNATO-UC-008.recuperar-contrasena.spec.ts::manda el enlace, permite
+      cambiar la contraseña y entrar con la nueva
+    modulo: DNATO
+    caso: DNATO-UC-008
+    titulo: manda el enlace, permite cambiar la contraseña y entrar con la nueva
+    estado: error-conocido
+    segundos: 59
+    hallazgo: H-034
+    issue: 467
+    severidad: 🔴
+    error_anotado: "H-034 #467: el cambio no se guarda, updatePassword() escribe en
+      users sin el esquema seg."
+    pasos:
+      - Fill "***" locator('input[name="passconf"]')
+      - Click locator('button[type="submit"], input[type="submit"]').first()
+      - Wait for timeout
+      - Navigate to
+        "/traz-comp-dnato/oauth/login?client_id=trazalog-mcp-connector&redirect_uri=https%3A%2F%2Fclaude.ai%2Fapi%2Fmcp%2Fauth_callback&response_type=code&c
+      - Fill "doctest-uc008b-349m1i27ah@fldubai.com"
+        locator('input[name="email"]')
+      - Fill "***" locator('input[name="password"]')
+      - Click locator('button[type="submit"], input[type="submit"]').first()
+      - Wait for timeout
+      - ✗ Expect "toMatch"
+      - Close context
+    error: >-
+      Error: expect(received).toMatch(expected)
+
+
+      Expected pattern: /no tiene empresa asignada/i
+
+      Received string:  "Claude solicita acceder a Trazalog. Ingrese sus
+      credenciales para continuar. Correo o contraseña incorrectos. Ingresar ©
+      2026 Trazalog SAS. Todos los derechos reservados."
+    capturas:
+      - conocidos/dnato-DNATO-UC-008-recuperar-contrasena_manda-el-enlace-permite-cambiar-la-contrase-a-y-en-1.png
+  - clave: dnato/DNATO-UC-008.recuperar-contrasena.spec.ts::no manda el enlace si la
+      cuenta todavía no está activada
+    modulo: DNATO
+    caso: DNATO-UC-008
+    titulo: no manda el enlace si la cuenta todavía no está activada
+    estado: pasa
+    segundos: 18
+  - clave: dnato/DNATO-UC-009.oauth-agente.spec.ts::con credenciales válidas
+      devuelve el control al agente
+    modulo: DNATO
+    caso: DNATO-UC-009
+    titulo: con credenciales válidas devuelve el control al agente
+    estado: pasa
+    segundos: 7
+  - clave: dnato/DNATO-UC-009.oauth-agente.spec.ts::muestra quién pide el acceso y
+      pide las credenciales
+    modulo: DNATO
+    caso: DNATO-UC-009
+    titulo: muestra quién pide el acceso y pide las credenciales
+    estado: pasa
+    segundos: 3
+  - clave: dnato/DNATO-UC-009.oauth-agente.spec.ts::rechaza credenciales incorrectas
+    modulo: DNATO
+    caso: DNATO-UC-009
+    titulo: rechaza credenciales incorrectas
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-009.oauth-agente.spec.ts::sin los parámetros del agente no
+      muestra el formulario
+    modulo: DNATO
+    caso: DNATO-UC-009
+    titulo: sin los parámetros del agente no muestra el formulario
+    estado: pasa
+    segundos: 2
+  - clave: dnato/DNATO-UC-010.ver-perfil.spec.ts::muestra los datos de la cuenta y
+      no el nombre de usuario interno
+    modulo: DNATO
+    caso: DNATO-UC-010
+    titulo: muestra los datos de la cuenta y no el nombre de usuario interno
+    estado: error-conocido
+    segundos: 4
+    hallazgo: H-031
+    issue: 463
+    severidad: 🟡
+    error_anotado: "H-031 #463: el perfil es una página en blanco, profile.php llama
+      a image()"
+    pasos:
+      - Create context
+      - Create page
+      - Navigate to "/traz-comp-dnato/main/profile"
+      - Expect "toBe"
+      - ✗ Expect "toContain"
+      - Close context
+    error: |-
+      Error: expect(received).toContain(expected) // indexOf
+
+      Expected substring: "a.dmi.nd.o.ct.es.t@gmail.com"
+      Received string:    ""
+    capturas:
+      - conocidos/dnato-DNATO-UC-010-ver-perfil_muestra-los-datos-de-la-cuenta-y-no-el-nombre-de-usuario-int-1.png
+  - clave: dnato/DNATO-UC-010.ver-perfil.spec.ts::sin sesión, la pantalla de perfil
+      manda al ingreso
+    modulo: DNATO
+    caso: DNATO-UC-010
+    titulo: sin sesión, la pantalla de perfil manda al ingreso
+    estado: pasa
+    segundos: 6
+  - clave: dnato/DNATO-UC-011.editar-perfil.spec.ts::el correo no se puede editar
+    modulo: DNATO
+    caso: DNATO-UC-011
+    titulo: el correo no se puede editar
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-011.editar-perfil.spec.ts::guarda un cambio de nombre y lo
+      deja aplicado
+    modulo: DNATO
+    caso: DNATO-UC-011
+    titulo: guarda un cambio de nombre y lo deja aplicado
+    estado: pasa
+    segundos: 17
+  - clave: dnato/DNATO-UC-012.cambiar-contrasena.spec.ts::cambia la contraseña y la
+      nueva queda vigente
+    modulo: DNATO
+    caso: DNATO-UC-012
+    titulo: cambia la contraseña y la nueva queda vigente
+    estado: pasa
+    segundos: 42
+  - clave: dnato/DNATO-UC-012.cambiar-contrasena.spec.ts::la pantalla pide la
+      contraseña nueva y su confirmación
+    modulo: DNATO
+    caso: DNATO-UC-012
+    titulo: la pantalla pide la contraseña nueva y su confirmación
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-013.lista-de-usuarios.spec.ts::@smoke muestra la grilla
+      con sus columnas
+    modulo: DNATO
+    caso: DNATO-UC-013
+    titulo: "@smoke muestra la grilla con sus columnas"
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-013.lista-de-usuarios.spec.ts::@smoke no ve usuarios de
+      otra empresa
+    modulo: DNATO
+    caso: DNATO-UC-013
+    titulo: "@smoke no ve usuarios de otra empresa"
+    estado: pasa
+    segundos: 9
+  - clave: dnato/DNATO-UC-013.lista-de-usuarios.spec.ts::el administrador ve a los
+      usuarios de su empresa
+    modulo: DNATO
+    caso: DNATO-UC-013
+    titulo: el administrador ve a los usuarios de su empresa
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-013.lista-de-usuarios.spec.ts::el buscador filtra por correo
+    modulo: DNATO
+    caso: DNATO-UC-013
+    titulo: el buscador filtra por correo
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-014-018.circuito-alta-con-rol-asset.spec.ts::un usuario
+      nuevo con rol Mantenedor puede entrar a Tools y a Asset
+    modulo: DNATO
+    caso: DNATO-UC-014-018
+    titulo: un usuario nuevo con rol Mantenedor puede entrar a Tools y a Asset
+    estado: pasa
+    segundos: 54
+    datos:
+      H-032: "usuario sin roles visible en la lista: true"
+      asset: "ingreso a Asset no probado: el ambiente no tiene su URL"
+    pasos:
+      - 1. Alta del usuario en Dnato
+      - 2. El recién creado aparece en la Lista de Usuarios (H-032)
+      - 3. Asignar el rol Mantenedor desde Asignar Rol
+      - 4. Con el rol asignado, aparece en la Lista de Usuarios
+      - 5. El usuario nuevo entra a Tools
+      - 6. El usuario nuevo entra a AssetPlanner
+  - clave: dnato/DNATO-UC-014.alta-usuario.spec.ts::crea el usuario y avisa que hay
+      que asignarle roles
+    modulo: DNATO
+    caso: DNATO-UC-014
+    titulo: crea el usuario y avisa que hay que asignarle roles
+    estado: pasa
+    segundos: 12
+  - clave: dnato/DNATO-UC-014.alta-usuario.spec.ts::el desplegable de empresas
+      ofrece solo las empresas del administrador
+    modulo: DNATO
+    caso: DNATO-UC-014
+    titulo: el desplegable de empresas ofrece solo las empresas del administrador
+    estado: pasa
+    segundos: 6
+  - clave: dnato/DNATO-UC-014.alta-usuario.spec.ts::el usuario recién creado aparece
+      en la lista para poder asignarle roles
+    modulo: DNATO
+    caso: DNATO-UC-014
+    titulo: el usuario recién creado aparece en la lista para poder asignarle roles
+    estado: pasa
+    segundos: 11
+  - clave: dnato/DNATO-UC-014.alta-usuario.spec.ts::muestra el formulario con sus
+      campos obligatorios
+    modulo: DNATO
+    caso: DNATO-UC-014
+    titulo: muestra el formulario con sus campos obligatorios
+    estado: pasa
+    segundos: 6
+  - clave: dnato/DNATO-UC-014.alta-usuario.spec.ts::no deja guardar con una
+      contraseña que no cumple la política
+    modulo: DNATO
+    caso: DNATO-UC-014
+    titulo: no deja guardar con una contraseña que no cumple la política
+    estado: pasa
+    segundos: 6
+  - clave: dnato/DNATO-UC-014.alta-usuario.spec.ts::rechaza un correo que ya existe
+    modulo: DNATO
+    caso: DNATO-UC-014
+    titulo: rechaza un correo que ya existe
+    estado: pasa
+    segundos: 11
+  - clave: dnato/DNATO-UC-015.editar-usuario.spec.ts::abre el formulario de edición
+      con los datos del usuario
+    modulo: DNATO
+    caso: DNATO-UC-015
+    titulo: abre el formulario de edición con los datos del usuario
+    estado: error-conocido
+    segundos: 15
+    hallazgo: H-035
+    issue: 468
+    severidad: 🔴
+    error_anotado: "H-035 #468: main/edituser devuelve una página vacía"
+    pasos:
+      - Create context
+      - Create page
+      - Navigate to "/traz-comp-dnato/main/users"
+      - "Wait for selector locator('table').filter({ has: locator('tbody tr')
+        }).last().locator('tbody tr').first()"
+      - Select option locator('select[name$="_length"]').first()
+      - Expect "not toBe"
+      - Navigate to "/traz-comp-dnato/main/edituser/526"
+      - ✗ Expect "toBeVisible" locator('input[name="firstname"],
+        input[name="firstnameuser"]').first()
+      - Close context
+    error: >
+      Error: expect(locator).toBeVisible() failed
+
+
+      Locator: locator('input[name="firstname"],
+      input[name="firstnameuser"]').first()
+
+      Expected: visible
+
+      Timeout: 10000ms
+
+      Error: element(s) not found
+
+
+      Call log:
+        - Expect "toBeVisible" with timeout 10000ms
+        - waiting for locator('input[name="firstname"], input[name="firstnameuser"]').first()
+    capturas:
+      - conocidos/dnato-DNATO-UC-015-editar-usuario_abre-el-formulario-de-edici-n-con-los-datos-del-usuario-1.png
+  - clave: dnato/DNATO-UC-015.editar-usuario.spec.ts::editar los datos no obliga a
+      cambiar la contraseña
+    modulo: DNATO
+    caso: DNATO-UC-015
+    titulo: editar los datos no obliga a cambiar la contraseña
+    estado: error-conocido
+    segundos: 17
+    hallazgo: H-007
+    issue: 457
+    severidad: 🟡
+    error_anotado: "H-007 #457: exige contraseña al editar (hoy supeditado a H-035)"
+    pasos:
+      - Create context
+      - Create page
+      - Navigate to "/traz-comp-dnato/main/users"
+      - "Wait for selector locator('table').filter({ has: locator('tbody tr')
+        }).last().locator('tbody tr').first()"
+      - Select option locator('select[name$="_length"]').first()
+      - Navigate to "/traz-comp-dnato/main/edituser/526"
+      - ✗ Expect "toBeVisible" locator('input[name="password"]')
+      - Close context
+    error: |
+      Error: expect(locator).toBeVisible() failed
+
+      Locator: locator('input[name="password"]')
+      Expected: visible
+      Timeout: 10000ms
+      Error: element(s) not found
+
+      Call log:
+        - Expect "toBeVisible" with timeout 10000ms
+        - waiting for locator('input[name="password"]')
+    capturas:
+      - conocidos/dnato-DNATO-UC-015-editar-usuario_editar-los-datos-no-obliga-a-cambiar-la-contrase-a-1.png
+  - clave: dnato/DNATO-UC-016.habilitar-inhabilitar.spec.ts::ofrece a los usuarios
+      de la empresa para habilitar o inhabilitar
+    modulo: DNATO
+    caso: DNATO-UC-016
+    titulo: ofrece a los usuarios de la empresa para habilitar o inhabilitar
+    estado: pasa
+    segundos: 7
+  - clave: dnato/DNATO-UC-016.habilitar-inhabilitar.spec.ts::un administrador no
+      puede inhabilitarse a sí mismo
+    modulo: DNATO
+    caso: DNATO-UC-016
+    titulo: un administrador no puede inhabilitarse a sí mismo
+    estado: pasa
+    segundos: 7
+  - clave: dnato/DNATO-UC-017.eliminar-usuario.spec.ts::la acción está disponible y
+      no elimina nada hasta confirmar
+    modulo: DNATO
+    caso: DNATO-UC-017
+    titulo: la acción está disponible y no elimina nada hasta confirmar
+    estado: pasa
+    segundos: 12
+  - clave: dnato/DNATO-UC-018-019.roles-y-perfil.spec.ts::muestra el perfil del
+      usuario y sus roles por empresa
+    modulo: DNATO
+    caso: DNATO-UC-018-019
+    titulo: muestra el perfil del usuario y sus roles por empresa
+    estado: pasa
+    segundos: 15
+  - clave: dnato/DNATO-UC-018-019.roles-y-perfil.spec.ts::ofrece los roles de
+      trabajo de la empresa elegida
+    modulo: DNATO
+    caso: DNATO-UC-018-019
+    titulo: ofrece los roles de trabajo de la empresa elegida
+    estado: pasa
+    segundos: 17
+  - clave: dnato/DNATO-UC-022.empresas-superusuario.spec.ts::@smoke un administrador
+      común no ve el menú de Gestión de Empresas
+    modulo: DNATO
+    caso: DNATO-UC-022
+    titulo: "@smoke un administrador común no ve el menú de Gestión de Empresas"
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-022.empresas-superusuario.spec.ts::sin sesión, la lista de
+      empresas manda al ingreso
+    modulo: DNATO
+    caso: DNATO-UC-022
+    titulo: sin sesión, la lista de empresas manda al ingreso
+    estado: pasa
+    segundos: 11
+  - clave: dnato/DNATO-UC-022.empresas-superusuario.spec.ts::un administrador común
+      no accede a la lista de empresas por dirección directa
+    modulo: DNATO
+    caso: DNATO-UC-022
+    titulo: un administrador común no accede a la lista de empresas por dirección
+      directa
+    estado: pasa
+    segundos: 15
+  - clave: dnato/DNATO-UC-023.alta-empresa.spec.ts::sin sesión, el alta de empresas
+      manda al ingreso
+    modulo: DNATO
+    caso: DNATO-UC-023
+    titulo: sin sesión, el alta de empresas manda al ingreso
+    estado: pasa
+    segundos: 5
+  - clave: dnato/DNATO-UC-023.alta-empresa.spec.ts::un administrador común no puede
+      abrir el alta de empresas
+    modulo: DNATO
+    caso: DNATO-UC-023
+    titulo: un administrador común no puede abrir el alta de empresas
+    estado: pasa
+    segundos: 1
+  - clave: dnato/DNATO-UC-025.menu-por-rol.spec.ts::la empresa recién creada ya
+      tiene menúes asignados a sus roles
+    modulo: DNATO
+    caso: DNATO-UC-025
+    titulo: la empresa recién creada ya tiene menúes asignados a sus roles
+    estado: pasa
+    segundos: 14
+  - clave: dnato/DNATO-UC-025.menu-por-rol.spec.ts::muestra la grilla de
+      asignaciones con sus columnas
+    modulo: DNATO
+    caso: DNATO-UC-025
+    titulo: muestra la grilla de asignaciones con sus columnas
+    estado: pasa
+    segundos: 14
+  - clave: dnato/DNATO-UC-025.menu-por-rol.spec.ts::solo ofrece empresas del
+      administrador para asignar menúes
+    modulo: DNATO
+    caso: DNATO-UC-025
+    titulo: solo ofrece empresas del administrador para asignar menúes
+    estado: pasa
+    segundos: 13
+  - clave: dnato/DNATO-UC-026-027.carga-masiva.spec.ts::la plantilla de una entidad
+      se puede obtener
+    modulo: DNATO
+    caso: DNATO-UC-026-027
+    titulo: la plantilla de una entidad se puede obtener
+    estado: salteada
+    segundos: 0
+    motivo: En local la plantilla apunta a una dirección que este ambiente no sirve
+      (dato de la base)
+    pasos:
+      - Create context
+      - Create page
+      - Close context
+  - clave: dnato/DNATO-UC-026-027.carga-masiva.spec.ts::no deja procesar si no se
+      elige la entidad
+    modulo: DNATO
+    caso: DNATO-UC-026-027
+    titulo: no deja procesar si no se elige la entidad
+    estado: pasa
+    segundos: 7
+  - clave: dnato/DNATO-UC-026-027.carga-masiva.spec.ts::ofrece las entidades que se
+      pueden cargar
+    modulo: DNATO
+    caso: DNATO-UC-026-027
+    titulo: ofrece las entidades que se pueden cargar
+    estado: pasa
+    segundos: 7
+  - clave: dnato/DNATO-UC-026-027.carga-masiva.spec.ts::rechaza un archivo que no es
+      una planilla
+    modulo: DNATO
+    caso: DNATO-UC-026-027
+    titulo: rechaza un archivo que no es una planilla
+    estado: pasa
+    segundos: 13
+  - clave: entorno/PREPARAR-entorno.spec.ts::registrar dos empresas y dejar el
+      perfil del ambiente
+    modulo: ENTORNO
+    caso: ""
+    titulo: registrar dos empresas y dejar el perfil del ambiente
+    estado: pasa
+    segundos: 439
+    pasos:
+      - 1. Registrar la empresa 1
+      - 2. Registrar la empresa 2
+      - 3. Cargar datos de Mantenimiento en la empresa 1
+  - clave: man/MAN-UC-001.listado-equipos.spec.ts::@smoke el menú Mantenimiento
+      ofrece Equipos y la grilla muestra sus columnas
+    modulo: MAN
+    caso: MAN-UC-001
+    titulo: "@smoke el menú Mantenimiento ofrece Equipos y la grilla muestra sus
+      columnas"
+    estado: pasa
+    segundos: 10
+  - clave: man/MAN-UC-001.listado-equipos.spec.ts::con permisos en la URL ofrece el
+      alta de un equipo
+    modulo: MAN
+    caso: MAN-UC-001
+    titulo: con permisos en la URL ofrece el alta de un equipo
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-001.listado-equipos.spec.ts::sin permisos en la URL la
+      pantalla queda de solo lectura (E3)
+    modulo: MAN
+    caso: MAN-UC-001
+    titulo: sin permisos en la URL la pantalla queda de solo lectura (E3)
+    estado: pasa
+    segundos: 9
+    sin_menu: true
+  - clave: man/MAN-UC-003-004-022-026-028.equipos.spec.ts::activo → con historia →
+      inhabilitado → activo, sin perder la historia → dado de baja
+    modulo: MAN
+    caso: MAN-UC-003-004-022-026-028
+    titulo: activo → con historia → inhabilitado → activo, sin perder la historia →
+      dado de baja
+    estado: pasa
+    segundos: 29
+  - clave: man/MAN-UC-003-004-022-026-028.equipos.spec.ts::la acción ofrecida
+      depende del estado y el estado cambia
+    modulo: MAN
+    caso: MAN-UC-003-004-022-026-028
+    titulo: la acción ofrecida depende del estado y el estado cambia
+    estado: pasa
+    segundos: 26
+  - clave: man/MAN-UC-003-004-022-026-028.equipos.spec.ts::la baja lo saca del
+      listado sin borrar el registro
+    modulo: MAN
+    caso: MAN-UC-003-004-022-026-028
+    titulo: la baja lo saca del listado sin borrar el registro
+    estado: pasa
+    segundos: 17
+  - clave: man/MAN-UC-003-004-022-026-028.equipos.spec.ts::la edición cambia la
+      descripción y el listado la muestra
+    modulo: MAN
+    caso: MAN-UC-003-004-022-026-028
+    titulo: la edición cambia la descripción y el listado la muestra
+    estado: pasa
+    segundos: 23
+  - clave: man/MAN-UC-003-004-022-026-028.equipos.spec.ts::nace sin meta y se le
+      asigna un valor
+    modulo: MAN
+    caso: MAN-UC-003-004-022-026-028
+    titulo: nace sin meta y se le asigna un valor
+    estado: pasa
+    segundos: 14
+  - clave: man/MAN-UC-003-004-022-026-028.equipos.spec.ts::un equipo que no es de la
+      empresa no se abre (E4)
+    modulo: MAN
+    caso: MAN-UC-003-004-022-026-028
+    titulo: un equipo que no es de la empresa no se abre (E4)
+    estado: pasa
+    segundos: 7
+  - clave: man/MAN-UC-005-006.componentes.spec.ts::el catálogo de componentes lista
+      marca, descripción, información y adjunto
+    modulo: MAN
+    caso: MAN-UC-005-006
+    titulo: el catálogo de componentes lista marca, descripción, información y adjunto
+    estado: pasa
+    segundos: 9
+    sin_menu: true
+  - clave: man/MAN-UC-005-006.componentes.spec.ts::la lista de asociaciones y su
+      alta piden equipo, componente y código
+    modulo: MAN
+    caso: MAN-UC-005-006
+    titulo: la lista de asociaciones y su alta piden equipo, componente y código
+    estado: pasa
+    segundos: 12
+  - clave: man/MAN-UC-007.solicitud-servicio.spec.ts::@smoke el listado muestra los
+      tiempos de servicio
+    modulo: MAN
+    caso: MAN-UC-007
+    titulo: "@smoke el listado muestra los tiempos de servicio"
+    estado: pasa
+    segundos: 9
+  - clave: "man/MAN-UC-008-029-031.solicitud-backlog.spec.ts::no urgente: se
+      convierte en backlog y al programarlo queda planificado"
+    modulo: MAN
+    caso: MAN-UC-008-029-031
+    titulo: "no urgente: se convierte en backlog y al programarlo queda planificado"
+    estado: pasa
+    segundos: 204
+  - clave: "man/MAN-UC-008-029-031.solicitud-backlog.spec.ts::urgente: la planifica
+      el supervisor y la solicitud queda ligada a su orden"
+    modulo: MAN
+    caso: MAN-UC-008-029-031
+    titulo: "urgente: la planifica el supervisor y la solicitud queda ligada a su
+      orden"
+    estado: pasa
+    segundos: 132
+  - clave: man/MAN-UC-010.ordenes-trabajo.spec.ts::@smoke el listado muestra el
+      origen de cada orden
+    modulo: MAN
+    caso: MAN-UC-010
+    titulo: "@smoke el listado muestra el origen de cada orden"
+    estado: pasa
+    segundos: 12
+  - clave: man/MAN-UC-010.ordenes-trabajo.spec.ts::ofrece filtrar por período
+      programado
+    modulo: MAN
+    caso: MAN-UC-010
+    titulo: ofrece filtrar por período programado
+    estado: pasa
+    segundos: 12
+  - clave: man/MAN-UC-012-020.informes-reportes.spec.ts::@smoke el listado muestra
+      las horas y los recursos de cada informe
+    modulo: MAN
+    caso: MAN-UC-012-020
+    titulo: "@smoke el listado muestra las horas y los recursos de cada informe"
+    estado: pasa
+    segundos: 8
+  - clave: man/MAN-UC-012-020.informes-reportes.spec.ts::@smoke la bandeja de Tools
+      lista las tareas del proceso de Mantenimiento
+    modulo: MAN
+    caso: MAN-UC-012-020
+    titulo: "@smoke la bandeja de Tools lista las tareas del proceso de Mantenimiento"
+    estado: pasa
+    segundos: 11
+    sin_menu: true
+  - clave: man/MAN-UC-012-020.informes-reportes.spec.ts::el menú ofrece los tres
+      reportes de Mantenimiento
+    modulo: MAN
+    caso: MAN-UC-012-020
+    titulo: el menú ofrece los tres reportes de Mantenimiento
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-012-020.informes-reportes.spec.ts::pide equipo, parámetro,
+      fecha y valor
+    modulo: MAN
+    caso: MAN-UC-012-020
+    titulo: pide equipo, parámetro, fecha y valor
+    estado: pasa
+    segundos: 8
+  - clave: man/MAN-UC-012-020.informes-reportes.spec.ts::Rep Equipo muestra la
+      disponibilidad de los equipos
+    modulo: MAN
+    caso: MAN-UC-012-020
+    titulo: Rep Equipo muestra la disponibilidad de los equipos
+    estado: pasa
+    segundos: 8
+  - clave: man/MAN-UC-012-020.informes-reportes.spec.ts::Rep Informe de Servicios
+      ofrece sus filtros y la columna de horas hombre
+    modulo: MAN
+    caso: MAN-UC-012-020
+    titulo: Rep Informe de Servicios ofrece sus filtros y la columna de horas hombre
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-012-020.informes-reportes.spec.ts::Rep Ordenes de trabajo se
+      filtra por equipo, estado y fecha y lista las órdenes
+    modulo: MAN
+    caso: MAN-UC-012-020
+    titulo: Rep Ordenes de trabajo se filtra por equipo, estado y fecha y lista las
+      órdenes
+    estado: pasa
+    segundos: 11
+  - clave: man/MAN-UC-014-018.planes.spec.ts::el listado muestra el estado de cada
+      pendiente
+    modulo: MAN
+    caso: MAN-UC-014-018
+    titulo: el listado muestra el estado de cada pendiente
+    estado: pasa
+    segundos: 11
+  - clave: man/MAN-UC-014-018.planes.spec.ts::el listado muestra equipo, tarea y
+      período
+    modulo: MAN
+    caso: MAN-UC-014-018
+    titulo: el listado muestra equipo, tarea y período
+    estado: pasa
+    segundos: 11
+  - clave: man/MAN-UC-014-018.planes.spec.ts::el listado muestra período, frecuencia
+      y horas hombre
+    modulo: MAN
+    caso: MAN-UC-014-018
+    titulo: el listado muestra período, frecuencia y horas hombre
+    estado: pasa
+    segundos: 15
+  - clave: man/MAN-UC-014-018.planes.spec.ts::pide equipo, parámetro y los límites
+    modulo: MAN
+    caso: MAN-UC-014-018
+    titulo: pide equipo, parámetro y los límites
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-021-037.entrega-informe.spec.ts::@ciclo el informe se ve
+      completo y la verificación en bloque cierra la orden
+    modulo: MAN
+    caso: MAN-UC-021-037
+    titulo: "@ciclo el informe se ve completo y la verificación en bloque cierra la
+      orden"
+    estado: pasa
+    segundos: 166
+  - clave: man/MAN-UC-021-037.entrega-informe.spec.ts::@ciclo una orden terminada se
+      entrega y sale de la lista
+    modulo: MAN
+    caso: MAN-UC-021-037
+    titulo: "@ciclo una orden terminada se entrega y sale de la lista"
+    estado: pasa
+    segundos: 137
+  - clave: man/MAN-UC-021-037.entrega-informe.spec.ts::el listado ofrece Ver Informe
+      y seleccionar todos
+    modulo: MAN
+    caso: MAN-UC-021-037
+    titulo: el listado ofrece Ver Informe y seleccionar todos
+    estado: pasa
+    segundos: 8
+  - clave: man/MAN-UC-021-037.entrega-informe.spec.ts::la pantalla lista las órdenes
+      con sus columnas
+    modulo: MAN
+    caso: MAN-UC-021-037
+    titulo: la pantalla lista las órdenes con sus columnas
+    estado: pasa
+    segundos: 8
+  - clave: man/MAN-UC-021-037.entrega-informe.spec.ts::no entrega ni reprograma una
+      orden que no es de la empresa
+    modulo: MAN
+    caso: MAN-UC-021-037
+    titulo: no entrega ni reprograma una orden que no es de la empresa
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-021-037.entrega-informe.spec.ts::sin informes seleccionados la
+      verificación en bloque avisa
+    modulo: MAN
+    caso: MAN-UC-021-037
+    titulo: sin informes seleccionados la verificación en bloque avisa
+    estado: pasa
+    segundos: 7
+  - clave: man/MAN-UC-024.lectura-falla.spec.ts::con falla registra la lectura y
+      crea la solicitud de servicio
+    modulo: MAN
+    caso: MAN-UC-024
+    titulo: con falla registra la lectura y crea la solicitud de servicio
+    estado: error-conocido
+    segundos: 12
+    hallazgo: E14
+    error_anotado: "E14: el mantenimiento autónomo está apagado hasta portarlo"
+    pasos:
+      - Navigate to "/traz-v3/traz-tools/"
+      - Wait for function
+      - GET "/traz-v3/traz-tools/traz-tools-man/Equipo/cargarequipo/Add-Edit-Del"
+      - POST "/traz-v3/traz-tools/traz-tools-man/Equipo/guardar_equipo"
+      - "alta del equipo DT-MW44CG99: Guardado exitoso de nuevo equipo"
+      - POST "/traz-v3/traz-tools/traz-tools-man/Equipo/paginado"
+      - el equipo DT-MW44CG99 aparece en el listado
+      - POST "/traz-v3/traz-tools/traz-tools-man/Equipo/setLectura"
+      - ✗ La lectura con falla todavía no está disponible en este módulo
+      - Close context
+    error: |-
+      Error: La lectura con falla todavía no está disponible en este módulo
+
+      expect(received).toBe(expected) // Object.is equality
+
+      Expected: true
+      Received: false
+    capturas:
+      - conocidos/man-MAN-UC-024-lectura-falla_con-falla-registra-la-lectura-y-crea-la-solicitud-de-servicio-1.png
+  - clave: man/MAN-UC-024.lectura-falla.spec.ts::sin falla queda solo la lectura
+    modulo: MAN
+    caso: MAN-UC-024
+    titulo: sin falla queda solo la lectura
+    estado: pasa
+    segundos: 17
+  - clave: man/MAN-UC-030.ciclo-ot.spec.ts::programar → asignar con pedido →
+      ejecutar → informe → verificar → conformidad
+    modulo: MAN
+    caso: MAN-UC-030
+    titulo: programar → asignar con pedido → ejecutar → informe → verificar →
+      conformidad
+    estado: pasa
+    segundos: 311
+    datos:
+      orden: OT 1491, caso 30457
+    pasos:
+      - programar
+      - asignar con herramientas y pedido
+      - ejecutar
+      - informe
+      - verificar
+      - conformidad
+      - orden cerrada
+  - clave: man/MAN-UC-033-034-035.editar-planes.spec.ts::el listado ofrece Editar en
+      un predictivo recién creado
+    modulo: MAN
+    caso: MAN-UC-033-034-035
+    titulo: el listado ofrece Editar en un predictivo recién creado
+    estado: error-conocido
+    segundos: 36
+    error_anotado: "H-122: un plan recién creado no se puede editar: nace en estado
+      C y el lápiz solo se muestra en S o PL"
+    pasos:
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Expect "toBeAttached" locator('#content,
+        .content-wrapper').first().locator('table thead th').first()
+      - Evaluate locator('#content, .content-wrapper').first().locator('table
+        thead th')
+      - Evaluate
+      - la fila 61 está en la grilla locator('#content,
+        .content-wrapper').first().locator('table.dataTable tbody tr[id="61"]')
+      - ofrece Eliminar locator('#content,
+        .content-wrapper').first().locator('table.dataTable tbody
+        tr[id="61"]').locator('.fa-times-circle')
+      - ✗ ofrece Editar locator('#content,
+        .content-wrapper').first().locator('table.dataTable tbody
+        tr[id="61"]').locator('.fa-pencil')
+      - Close context
+    error: >
+      Error: ofrece Editar
+
+
+      expect(locator).toHaveCount(expected) failed
+
+
+      Locator:  locator('#content,
+      .content-wrapper').first().locator('table.dataTable tbody
+      tr[id="61"]').locator('.fa-pencil')
+
+      Expected: 1
+
+      Received: 0
+
+      Timeout:  10000ms
+
+
+      Call log:
+        - ofrece Editar with timeout 10000ms
+        - waiting for locator('#content, .content-wrapper').first().locator('table.dataTable tbody tr[id="61"]').locator('.fa-pencil')
+          24 × locator resolved to 0 elements
+             - unexpected value "0"
+    capturas:
+      - conocidos/man-MAN-UC-033-034-035-editar-planes_el-listado-ofrece-Editar-en-un-predictivo-reci-n-crea-1.png
+    hallazgo: H-122
+    severidad: 🟡
+  - clave: man/MAN-UC-033-034-035.editar-planes.spec.ts::el listado ofrece Editar en
+      un preventivo recién creado
+    modulo: MAN
+    caso: MAN-UC-033-034-035
+    titulo: el listado ofrece Editar en un preventivo recién creado
+    estado: error-conocido
+    segundos: 45
+    error_anotado: "H-122: un plan recién creado no se puede editar: nace en estado
+      C y el lápiz solo se muestra en S o PL"
+    pasos:
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Expect "toBeAttached" locator('#content,
+        .content-wrapper').first().locator('table thead th').first()
+      - Evaluate locator('#content, .content-wrapper').first().locator('table
+        thead th')
+      - Evaluate
+      - la fila 303 está en la grilla locator('#content,
+        .content-wrapper').first().locator('table.dataTable tbody tr[id="303"]')
+      - ofrece Eliminar locator('#content,
+        .content-wrapper').first().locator('table.dataTable tbody
+        tr[id="303"]').locator('.fa-times-circle')
+      - ✗ ofrece Editar locator('#content,
+        .content-wrapper').first().locator('table.dataTable tbody
+        tr[id="303"]').locator('.fa-pencil')
+      - Close context
+    error: >
+      Error: ofrece Editar
+
+
+      expect(locator).toHaveCount(expected) failed
+
+
+      Locator:  locator('#content,
+      .content-wrapper').first().locator('table.dataTable tbody
+      tr[id="303"]').locator('.fa-pencil')
+
+      Expected: 1
+
+      Received: 0
+
+      Timeout:  10000ms
+
+
+      Call log:
+        - ofrece Editar with timeout 10000ms
+        - waiting for locator('#content, .content-wrapper').first().locator('table.dataTable tbody tr[id="303"]').locator('.fa-pencil')
+          24 × locator resolved to 0 elements
+             - unexpected value "0"
+    capturas:
+      - conocidos/man-MAN-UC-033-034-035-editar-planes_el-listado-ofrece-Editar-en-un-preventivo-reci-n-crea-1.png
+    hallazgo: H-122
+    severidad: 🟡
+  - clave: man/MAN-UC-033-034-035.editar-planes.spec.ts::se edita la frecuencia y al
+      eliminarlo deja de figurar
+    modulo: MAN
+    caso: MAN-UC-033-034-035
+    titulo: se edita la frecuencia y al eliminarlo deja de figurar
+    estado: pasa
+    segundos: 44
+  - clave: man/MAN-UC-033-034-035.editar-planes.spec.ts::se edita la tarea opcional
+      y al eliminarlo deja de figurar
+    modulo: MAN
+    caso: MAN-UC-033-034-035
+    titulo: se edita la tarea opcional y al eliminarlo deja de figurar
+    estado: pasa
+    segundos: 36
+  - clave: man/MAN-UC-033-034-035.editar-planes.spec.ts::se edita la tarea y al
+      eliminarlo deja de figurar
+    modulo: MAN
+    caso: MAN-UC-033-034-035
+    titulo: se edita la tarea y al eliminarlo deja de figurar
+    estado: pasa
+    segundos: 39
+  - clave: man/MAN-UC-036.asociacion-componente.spec.ts::se cambia el código
+      trazable y al quitarla el componente sigue en el catálogo
+    modulo: MAN
+    caso: MAN-UC-036
+    titulo: se cambia el código trazable y al quitarla el componente sigue en el
+      catálogo
+    estado: pasa
+    segundos: 30
+  - clave: man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts::el mantenedor no
+      puede buscar vales sin DNI
+    modulo: MAN
+    caso: MAN-UC-038-039
+    titulo: el mantenedor no puede buscar vales sin DNI
+    estado: pasa
+    segundos: 8
+  - clave: man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts::el mantenedor no
+      puede quitar un vale que asoció el pañolero
+    modulo: MAN
+    caso: MAN-UC-038-039
+    titulo: el mantenedor no puede quitar un vale que asoció el pañolero
+    estado: pasa
+    segundos: 11
+  - clave: man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts::el pedido muestra lo
+      pedido, lo entregado y lo pendiente de cada artículo
+    modulo: MAN
+    caso: MAN-UC-038-039
+    titulo: el pedido muestra lo pedido, lo entregado y lo pendiente de cada artículo
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts::el supervisor busca
+      vales sin DNI
+    modulo: MAN
+    caso: MAN-UC-038-039
+    titulo: el supervisor busca vales sin DNI
+    estado: pasa
+    segundos: 8
+  - clave: man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts::las entregas del
+      almacén traen su detalle
+    modulo: MAN
+    caso: MAN-UC-038-039
+    titulo: las entregas del almacén traen su detalle
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts::las herramientas
+      usadas salen de los vales asociados, con su origen
+    modulo: MAN
+    caso: MAN-UC-038-039
+    titulo: las herramientas usadas salen de los vales asociados, con su origen
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts::un vale ya asociado
+      no se asocia dos veces
+    modulo: MAN
+    caso: MAN-UC-038-039
+    titulo: un vale ya asociado no se asocia dos veces
+    estado: pasa
+    segundos: 11
+  - clave: man/MAN-UC-040-041.lanzar-anular.spec.ts::@ciclo lanzar una orden sin
+      lanzar le crea su caso
+    modulo: MAN
+    caso: MAN-UC-040-041
+    titulo: "@ciclo lanzar una orden sin lanzar le crea su caso"
+    estado: pasa
+    segundos: 29
+  - clave: man/MAN-UC-040-041.lanzar-anular.spec.ts::la lista de órdenes marca la
+      orden "Sin lanzar" y le ofrece Lanzar y Anular
+    modulo: MAN
+    caso: MAN-UC-040-041
+    titulo: la lista de órdenes marca la orden "Sin lanzar" y le ofrece Lanzar y Anular
+    estado: pasa
+    segundos: 36
+  - clave: man/MAN-UC-040-041.lanzar-anular.spec.ts::no se puede anular una orden
+      que no existe o no es de la empresa
+    modulo: MAN
+    caso: MAN-UC-040-041
+    titulo: no se puede anular una orden que no existe o no es de la empresa
+    estado: pasa
+    segundos: 9
+  - clave: man/MAN-UC-040-041.lanzar-anular.spec.ts::una orden fuera del margen
+      queda programada sin lanzar y se puede anular
+    modulo: MAN
+    caso: MAN-UC-040-041
+    titulo: una orden fuera del margen queda programada sin lanzar y se puede anular
+    estado: pasa
+    segundos: 27
+  - clave: man/MAN-UC-042.indicadores.spec.ts::el tablero muestra las cuatro cajas
+      de mantenimiento
+    modulo: MAN
+    caso: MAN-UC-042
+    titulo: el tablero muestra las cuatro cajas de mantenimiento
+    estado: pasa
+    segundos: 11
+    sin_menu: true
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Área: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Área: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 13
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Clientes: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Clientes: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Contratista: abre por el menú y lista
+      su grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Contratista: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Criticidad: abre por el menú y lista
+      su grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Criticidad: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Familia: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Familia: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Grupo: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Grupo: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Marca: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Marca: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Parámetros: abre por el menú y lista
+      su grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Parámetros: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Procesos: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Procesos: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 9
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Sector: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Sector: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Sistemas: abre por el menú y lista su
+      grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Sistemas: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Sucursales: abre por el menú y lista
+      su grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Sucursales: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: "man/MAN-UC-043.catalogos.spec.ts::Tareas estándar: abre por el menú y
+      lista su grilla"
+    modulo: MAN
+    caso: MAN-UC-043
+    titulo: "Tareas estándar: abre por el menú y lista su grilla"
+    estado: pasa
+    segundos: 10
+  - clave: tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-001-02 el paginado
+      informa el total real de pedidos (HIP-TAR-10)
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: TAR-CP-001-02 el paginado informa el total real de pedidos (HIP-TAR-10)
+    estado: error-conocido
+    segundos: 23
+    hallazgo: H-097
+    issue: 584
+    severidad: 🟡
+    error_anotado: "H-097 #584 (B-07): recordsTotal informa el tamaño de la página,
+      no el total"
+    sin_menu: true
+    pasos:
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for event "response"
+      - Evaluate
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - la empresa tiene que tener al menos 2 pedidos para esta prueba
+      - ✗ recordsTotal=1 recordsFiltered=2
+    error: |-
+      Error: recordsTotal=1 recordsFiltered=2
+
+      expect(received).toBe(expected) // Object.is equality
+
+      Expected: 2
+      Received: 1
+    capturas:
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-001-02-el-paginado-informa-el-total-real-de-p-1.png
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-001-03 buscar por
+      parte del código: aparece solo ese pedido"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-001-03 buscar por parte del código: aparece solo ese pedido"
+    estado: pasa
+    segundos: 9
+    sin_menu: true
+  - clave: tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-001-04 buscar
+      textos con "/", "%", espacio o tilde no rompe el listado (HIP-TAR-10)
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: TAR-CP-001-04 buscar textos con "/", "%", espacio o tilde no rompe el
+      listado (HIP-TAR-10)
+    estado: pasa
+    segundos: 22
+    sin_menu: true
+  - clave: 'tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-001-05 empresa sin
+      pedidos: la grilla dice "sin datos", sin errores (HIP-TAR-10)'
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: 'TAR-CP-001-05 empresa sin pedidos: la grilla dice "sin datos", sin
+      errores (HIP-TAR-10)'
+    estado: error-conocido
+    segundos: 33
+    hallazgo: H-097
+    issue: 584
+    severidad: 🟡
+    error_anotado: "H-097 #584 (B-07): sin pedidos el paginado devuelve recordsTotal
+      1 y data false"
+    sin_menu: true
+    pasos:
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Expect "poll not toBeNull"
+      - Expect "not toBeNull"
+      - ✗ Wait for selector locator('.swal2-popup:visible').first()
+      - '✗ respuesta:
+        {"draw":1,"recordsTotal":1,"recordsFiltered":1,"data":false,"filtro":"petr_id","estadoFinal":"estados_procesosFINALIZADO","search":"","mydata":{"or'
+      - aparece un diálogo de error
+      - '✗ la respuesta no trae "data":
+        {"draw":1,"recordsTotal":1,"recordsFiltered":1,"data":false,"filtro":"petr_id","estadoFinal":"estados_procesosFINALIZADO","search'
+      - Close context
+    error: |-
+      Error: respuesta: {"draw":1,"recordsTotal":1,"recordsFiltered":1,"data":false,"filtro":"petr_id","estadoFinal":"estados_procesosFINALIZADO","search":"","mydata":{"order":"desc","columna":1,"petr_id":"petr_id","cod_proyecto":"cod_proyecto","nombre":"nombre","dir_entrega":"dir_entrega","tipo_trabajo":"tipo_trabajo","fe
+
+      expect(received).toBe(expected) // Object.is equality
+
+      Expected: 0
+      Received: 1
+      ---
+      Error: la respuesta no trae "data": {"draw":1,"recordsTotal":1,"recordsFiltered":1,"data":false,"filtro":"petr_id","estadoFinal":"estados_procesosFINALIZADO","search":"","mydata":{"order":"desc","columna":1,"petr_id":"petr_id","cod_proyecto":"cod_proyecto","nombre":"nombre","dir_entrega":"dir_entrega","tipo_trabajo":"tipo_trabajo","fe
+
+      expect(received).toBe(expected) // Object.is equality
+
+      Expected: true
+      Received: false
+    capturas:
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-001-05-empresa-sin-pedidos-la-grilla-dice-sin-1.png
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-001-05-empresa-sin-pedidos-la-grilla-dice-sin-2.png
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-001-05-empresa-sin-pedidos-la-grilla-dice-sin-3.png
+  - clave: tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-001-06 "Mostrar
+      Pedidos Terminados" responde JSON válido y sigue paginando (HIP-TAR-10)
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: TAR-CP-001-06 "Mostrar Pedidos Terminados" responde JSON válido y sigue
+      paginando (HIP-TAR-10)
+    estado: pasa
+    segundos: 5
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-001-08
+      aislamiento: la empresa 2 no ve los pedidos de la empresa 1"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-001-08 aislamiento: la empresa 2 no ve los pedidos de la empresa 1"
+    estado: pasa
+    segundos: 16
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-002-01 alta
+      completa con el proceso estándar: avisa el éxito y el pedido aparece en el
+      listado (HIP-TAR-09)"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-002-01 alta completa con el proceso estándar: avisa el éxito y
+      el pedido aparece en el listado (HIP-TAR-09)"
+    estado: error-conocido
+    segundos: 33
+    hallazgo: H-114
+    severidad: 🟡
+    error_anotado: "H-114 (B-20): el alta de PROCESO-STANDAR guarda el pedido sin
+      avisar ni refrescar el listado"
+    sin_menu: true
+    pasos:
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for event "response"
+      - Fill "AMW410YNM" locator('#tbl-pedidos_filter input')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for timeout
+      - "el pedido no quedó creado locator('table#tbl-pedidos').locator('tbody
+        tr').filter({ hasText: 'AMW410YNM' })"
+      - ✗ el alta no muestra ningún mensaje al usuario
+      - ✗ el pedido no aparece en el listado hasta recargar la pantalla
+    error: |-
+      Error: el alta no muestra ningún mensaje al usuario
+
+      expect(received).not.toBeNull()
+
+      Received: null
+      ---
+      Error: el pedido no aparece en el listado hasta recargar la pantalla
+
+      expect(received).toBeGreaterThan(expected)
+
+      Expected: > 0
+      Received:   0
+    capturas:
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-002-01-alta-completa-con-el-proceso-est-ndar--1.png
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-002-01-alta-completa-con-el-proceso-est-ndar--2.png
+  - clave: 'tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-002-03 sin
+      obligatorios: "Debes completar los campos obligatorios (*)" y no se crea
+      nada'
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: 'TAR-CP-002-03 sin obligatorios: "Debes completar los campos
+      obligatorios (*)" y no se crea nada'
+    estado: pasa
+    segundos: 5
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-002-04 código de 3
+      caracteres: no permite guardar"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-002-04 código de 3 caracteres: no permite guardar"
+    estado: pasa
+    segundos: 5
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-002-05 objetivo
+      sin unidad de tiempo: pide la unidad"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-002-05 objetivo sin unidad de tiempo: pide la unidad"
+    estado: pasa
+    segundos: 5
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-002-06 fecha de
+      entrega anterior al inicio: avisa y borra la fecha"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-002-06 fecha de entrega anterior al inicio: avisa y borra la fecha"
+    estado: pasa
+    segundos: 5
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-002-07 código
+      repetido en la empresa: error claro, sin segundo pedido (HIP-TAR-07)"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-002-07 código repetido en la empresa: error claro, sin segundo
+      pedido (HIP-TAR-07)"
+    estado: error-conocido
+    segundos: 81
+    hallazgo: H-096
+    issue: 583
+    severidad: 🟡
+    error_anotado: "H-096 #583 (B-06): con un código repetido no se crea otro
+      pedido, pero el usuario no recibe ningún mensaje"
+    sin_menu: true
+    pasos:
+      - Select option
+        locator('#frm-PedidoTrabajo').locator('#unidad_medida_tiempo')
+      - Select option locator('#frm-PedidoTrabajo').locator('#clie_id')
+      - Dispatch "change" locator('#frm-PedidoTrabajo').locator('#clie_id')
+      - Select option locator('#frm-PedidoTrabajo').locator('#tipt_id')
+      - Dispatch "change" locator('#frm-PedidoTrabajo').locator('#tipt_id')
+      - Fill "Pedido DocTest AMW410YNM"
+        locator('#frm-PedidoTrabajo').locator('#descripcion')
+      - Wait for event "response"
+      - Click locator('#btn-accion.btn-guardar')
+      - Wait for load state "networkidle"
+      - ✗ Expect "toBeHidden" locator('#waiting')
+    error: >
+      Error: expect(locator).toBeHidden() failed
+
+
+      Locator:  locator('#waiting')
+
+      Expected: hidden
+
+      Received: visible
+
+      Timeout:  60000ms
+
+
+      Call log:
+        - Expect "toBeHidden" with timeout 60000ms
+        - waiting for locator('#waiting')
+          123 × locator resolved to <div id="waiting" class="waiting" aria-hidden="true">…</div>
+              - unexpected value "visible"
+    capturas:
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-002-07-c-digo-repetido-en-la-empresa-error-cl-1.png
+  - clave: 'tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-003-02 detalle de
+      un pedido sin hitos: "No se crearon hitos para este pedido de trabajo."'
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: 'TAR-CP-003-02 detalle de un pedido sin hitos: "No se crearon hitos para
+      este pedido de trabajo."'
+    estado: pasa
+    segundos: 15
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-004-01 eliminar un
+      pedido sin hitos: desaparece del listado con mensaje de éxito"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-004-01 eliminar un pedido sin hitos: desaparece del listado con
+      mensaje de éxito"
+    estado: pasa
+    segundos: 18
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-004-03 cancelar la
+      eliminación: el pedido sigue"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-004-03 cancelar la eliminación: el pedido sigue"
+    estado: pasa
+    segundos: 23
+    sin_menu: true
+  - clave: "tar/TAR-UC-001-004.pedidos-de-trabajo.spec.ts::TAR-CP-004-05
+      aislamiento: desde la empresa 2 no se puede eliminar un pedido de la
+      empresa 1 (HIP-TAR-02)"
+    modulo: TAR
+    caso: TAR-UC-001-004
+    titulo: "TAR-CP-004-05 aislamiento: desde la empresa 2 no se puede eliminar un
+      pedido de la empresa 1 (HIP-TAR-02)"
+    estado: error-conocido
+    segundos: 22
+    hallazgo: H-119
+    severidad: 🔴
+    error_anotado: "Error de seguridad: el detalle está en un aviso privado."
+    sin_menu: true
+    capturas:
+      - conocidos/tar-TAR-UC-001-004-pedidos-de-trabajo_TAR-CP-004-05-aislamiento-desde-la-empresa-2-no-se-p-1.png
+    privado: true
+  - clave: tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::@TAR-menu el planificador
+      ve los menús del módulo de Tareas
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "@TAR-menu el planificador ve los menús del módulo de Tareas"
+    estado: pasa
+    segundos: 10
+  - clave: tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::@TAR-menu los indicadores
+      de tareas tienen opción de menú
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "@TAR-menu los indicadores de tareas tienen opción de menú"
+    estado: pasa
+    segundos: 9
+  - clave: tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::@TAR-UC-022
+      TAR-CP-022-01/022-02 "finalizadas" cuenta solo las tareas finalizadas
+      (HIP-TAR-03)
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: '@TAR-UC-022 TAR-CP-022-01/022-02 "finalizadas" cuenta solo las tareas
+      finalizadas (HIP-TAR-03)'
+    estado: error-conocido
+    segundos: 18
+    hallazgo: H-120
+    severidad: 🟡
+    error_anotado: "H-120 (B-26): los recuadros cuentan otros textos que los que
+      muestra la tabla"
+    datos:
+      kpi: planificadas=0 finalizadas=0 · filas=1 (finalizada=0, iniciada=0,
+        planificada=1, creada=0)
+    pasos:
+      - Wait for event "response"
+      - Evaluate locator('#masFiltros button[onclick*="filtrar"],
+        button[onclick="filtrar()"]').first()
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for timeout
+      - Evaluate locator('#reportContent table tbody tr')
+      - ✗ el total de planificadas no coincide con las filas en estado
+        "planificado"
+      - el total de finalizadas no coincide con las filas en estado "finalizada"
+      - Close context
+    error: >-
+      Error: el total de planificadas no coincide con las filas en estado
+      "planificado"
+
+
+      expect(received).toBe(expected) // Object.is equality
+
+
+      Expected: 1
+
+      Received: 0
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_-TAR-UC-022-TAR-CP-022-01-022-02-finalizadas-cuenta--1.png
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::prepara los datos de la
+      corrida: pedido, tareas estándar y plantilla"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "prepara los datos de la corrida: pedido, tareas estándar y plantilla"
+    estado: pasa
+    segundos: 90
+    sin_menu: true
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-004-04 eliminar un
+      pedido con tareas asignadas: las tareas no quedan en la bandeja
+      (HIP-TAR-08)"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-004-04 eliminar un pedido con tareas asignadas: las tareas no
+      quedan en la bandeja (HIP-TAR-08)"
+    estado: pasa
+    segundos: 44
+    sin_menu: true
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-005-01/005-02
+      "Trabajo Terminado": lo marca o explica por qué no'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-005-01/005-02 "Trabajo Terminado": lo marca o explica por qué no'
+    estado: error-conocido
+    segundos: 23
+    hallazgo: H-118
+    severidad: 🟡
+    error_anotado: 'H-118 (B-24): "Trabajo Terminado" rechaza el cambio sin avisar al usuario'
+    datos:
+      respuesta: '{"status":false,"msj":"El case especificado no se encuentra en el
+        paso de la TAREA IT"}'
+    pasos:
+      - Wait for selector locator('#tbl-pedidos')
+      - "Click locator('#tbl-pedidos tbody td[data-json]').filter({ hasText:
+        'CMW410YNM' }).first().locator('.dropdown-toggle')"
+      - Wait for event "response"
+      - "Click locator('#tbl-pedidos tbody td[data-json]').filter({ hasText:
+        'CMW410YNM' }).first().locator('a[onclick*=\"finalizarTrabajo\"]')"
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - ✗ Wait for selector locator('.swal2-popup:visible').first()
+      - ✗ el sistema rechazó el cambio y no le dijo nada al usuario
+      - Close context
+    error: |-
+      Error: el sistema rechazó el cambio y no le dijo nada al usuario
+
+      expect(received).toMatch(expected)
+
+      Expected pattern: /TAREA IT|no se encuentra/i
+      Received string:  ""
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-005-01-005-02-Trabajo-Terminado-lo-marca-o-ex-1.png
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-006-01 crear un
+      hito con todos los campos y un PDF: aparece en el pedido"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-006-01 crear un hito con todos los campos y un PDF: aparece en
+      el pedido"
+    estado: pasa
+    segundos: 40
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-006-02 hito sin
+      código o con código de 3 caracteres: no se guarda"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-006-02 hito sin código o con código de 3 caracteres: no se guarda"
+    estado: pasa
+    segundos: 90
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-006-03 ver el
+      detalle del hito: muestra lo cargado, en solo lectura"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-006-03 ver el detalle del hito: muestra lo cargado, en solo
+      lectura"
+    estado: pasa
+    segundos: 23
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-006-07
+      aislamiento: la empresa 2 no puede ver un hito de la empresa 1 por URL
+      (HIP-TAR-02)"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-006-07 aislamiento: la empresa 2 no puede ver un hito de la
+      empresa 1 por URL (HIP-TAR-02)"
+    estado: error-conocido
+    segundos: 21
+    hallazgo: H-116
+    severidad: 🔴
+    error_anotado: "Error de seguridad: el detalle está en un aviso privado."
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-006-07-aislamiento-la-empresa-2-no-puede-ver--1.png
+    privado: true
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-009-01 agregar una
+      tarea libre: aparece con "Se planificó la tarea correctamente!"'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-009-01 agregar una tarea libre: aparece con "Se planificó la
+      tarea correctamente!"'
+    estado: pasa
+    segundos: 38
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-009-03 agregar una
+      tarea del catálogo: copia duración, y queda una sola vez"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-009-03 agregar una tarea del catálogo: copia duración, y queda
+      una sola vez"
+    estado: pasa
+    segundos: 37
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-009-04 "Agregar
+      Todas" de una plantilla: agrega cada tarea una sola vez y sin errores'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-009-04 "Agregar Todas" de una plantilla: agrega cada tarea una
+      sola vez y sin errores'
+    estado: pasa
+    segundos: 49
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-009-05 "Nueva
+      Tarea" con nombre vacío: no agrega nada'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-009-05 "Nueva Tarea" con nombre vacío: no agrega nada'
+    estado: pasa
+    segundos: 23
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-009-06 hito cuyo
+      id contiene un 0: la tarea queda en ESE hito (HIP-TAR-01)"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-009-06 hito cuyo id contiene un 0: la tarea queda en ESE hito
+      (HIP-TAR-01)"
+    estado: error-conocido
+    segundos: 153
+    hallazgo: H-115
+    severidad: 🟠
+    error_anotado: "H-115 (B-21): la planificación del hito se abre con el id sin el cero"
+    datos:
+      hito: Z410YNM7 = hito_id 130
+    pasos:
+      - Wait for event "response"
+      - "Click locator('#tbl-hitos tbody tr').filter({ hasText: 'Z410YNM7'
+        }).first().locator('button.code')"
+      - Wait for selector locator('#pnl-tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - "Query count locator('#tareas-calendario tbody tr.data-json').filter({
+        hasText: 'Tarea cero MW410YNM' }).first()"
+      - ✗ la planificación del hito 130 se abrió con orta_id=13
+      - la tarea agregada al hito 130 no aparece al volver a abrirlo
+      - Close context
+    error: |-
+      Error: la planificación del hito 130 se abrió con orta_id=13
+
+      expect(received).toBe(expected) // Object.is equality
+
+      Expected: "130"
+      Received: "13"
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-009-06-hito-cuyo-id-contiene-un-0-la-tarea-qu-1.png
+  - clave: tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-009-09 volver a
+      pulsar la pestaña Calendario no borra las tareas de la vista
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: TAR-CP-009-09 volver a pulsar la pestaña Calendario no borra las tareas
+      de la vista
+    estado: error-conocido
+    segundos: 33
+    hallazgo: H-099
+    issue: 586
+    severidad: 🟢
+    error_anotado: "H-099 #586 (B-09): copiarTareas() vacía la lista"
+    pasos:
+      - "Click locator('#tbl-hitos tbody tr').filter({ hasText: 'HMW410YNM'
+        }).first().locator('button.code')"
+      - Wait for selector locator('#pnl-tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Query count locator('#tareas-calendario tbody tr.data-json')
+      - el hito no tiene tareas para la prueba
+      - Click locator('#pnl-tareas a[href="#tab_11"]')
+      - ✗ las tareas desaparecieron de la vista locator('#tareas-calendario
+        tbody tr.data-json')
+      - Close context
+    error: |
+      Error: las tareas desaparecieron de la vista
+
+      expect(locator).toHaveCount(expected) failed
+
+      Locator:  locator('#tareas-calendario tbody tr.data-json')
+      Expected: 1
+      Received: 0
+      Timeout:  10000ms
+
+      Call log:
+        - las tareas desaparecieron de la vista with timeout 10000ms
+        - waiting for locator('#tareas-calendario tbody tr.data-json')
+          24 × locator resolved to 0 elements
+             - unexpected value "0"
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-009-09-volver-a-pulsar-la-pesta-a-Calendario--1.png
+  - clave: tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-009-10 una tarea
+      libre toma el proceso TST001
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: TAR-CP-009-10 una tarea libre toma el proceso TST001
+    estado: pasa
+    segundos: 28
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-010-02 elegir un
+      día anterior a hoy: "No se puede seleccionar fechas anteriores a la
+      actual!"'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-010-02 elegir un día anterior a hoy: "No se puede seleccionar
+      fechas anteriores a la actual!"'
+    estado: pasa
+    segundos: 26
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-010-04 planificar
+      a las 15:00 y después asignar: sigue a las 15:00 (HIP-TAR-18)"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-010-04 planificar a las 15:00 y después asignar: sigue a las
+      15:00 (HIP-TAR-18)"
+    estado: error-conocido
+    segundos: 66
+    hallazgo: H-104
+    issue: 591
+    severidad: 🟡
+    error_anotado: "H-104 #591 (HIP-TAR-18): el calendario muestra a las 03:00 una
+      tarea planificada a las 15:00"
+    datos:
+      fec_inicio: antes 07-11-2026+03:00:00 · después 07-11-2026+03:00:00
+    pasos:
+      - "Click locator('#tbl-hitos tbody tr').filter({ hasText: 'HMW410YNM'
+        }).first().locator('button.code')"
+      - Wait for selector locator('#pnl-tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - "Evaluate locator('#tareas-calendario tbody tr.data-json').filter({
+        hasText: 'DT Limp CMW410YNM' }).first()"
+      - Expect "toBe"
+      - fec_inicio=07-11-2026+03:00:00
+      - '✗ evento del calendario: {"descripcion":"Limpieza
+        (DocTest)","hora_duracion":"01:00","even_id":"387","hora_inicio":"03:00","dia_inicio":"2026-11-07T03:00:00","d'
+      - Close context
+    error: |-
+      Error: evento del calendario: {"descripcion":"Limpieza (DocTest)","hora_duracion":"01:00","even_id":"387","hora_inicio":"03:00","dia_inicio":"2026-11-07T03:00:00","dia_fin":"2026-11-07T04:00:00","titulo":"DT Limp CMW410YNM","hora_fin":"04:00"}
+
+      expect(received).toMatch(expected)
+
+      Expected pattern: /[+ T]15:00/
+      Received string:  "2026-11-07T03:00:00"
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-010-04-planificar-a-las-15-00-y-despu-s-asign-1.png
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-011-01/011-03
+      asignar responsable a una tarea planificada: lanza el caso"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-011-01/011-03 asignar responsable a una tarea planificada: lanza
+      el caso"
+    estado: pasa
+    segundos: 47
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-011-04 reasignar:
+      pasa a la bandeja del nuevo responsable, sale de la del anterior y no crea
+      otro caso"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-011-04 reasignar: pasa a la bandeja del nuevo responsable, sale
+      de la del anterior y no crea otro caso"
+    estado: error-conocido
+    segundos: 156
+    hallazgo: H-106
+    issue: 594
+    severidad: 🟡
+    error_anotado: "H-106 #594 (B-16): la tarea reasignada sigue en la bandeja anterior"
+    sin_menu: true
+    pasos:
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for selector locator('table#tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - la reasignación cambió el caso
+      - ✗ la tarea sigue en la bandeja del responsable anterior
+        locator('table#tareas tbody tr.item[data-caseid="30451"]')
+      - ✗ la tarea no llegó a la bandeja del nuevo responsable
+        locator('table#tareas tbody tr.item[data-caseid="30451"]')
+      - Close context
+      - Close context
+    error: >-
+      Error: la tarea sigue en la bandeja del responsable anterior
+
+
+      expect(locator).toHaveCount(expected) failed
+
+
+      Locator:  locator('table#tareas tbody tr.item[data-caseid="30451"]')
+
+      Expected: 0
+
+      Received: 1
+
+      Timeout:  10000ms
+
+
+      Call log:
+        - la tarea sigue en la bandeja del responsable anterior with timeout 10000ms
+        - waiting for locator('table#tareas tbody tr.item[data-caseid="30451"]')
+          24 × locator resolved to 1 element
+             - unexpected value "1"
+
+      ---
+
+      Error: la tarea no llegó a la bandeja del nuevo responsable
+
+
+      expect(locator).toHaveCount(expected) failed
+
+
+      Locator:  locator('table#tareas tbody tr.item[data-caseid="30451"]')
+
+      Expected: 1
+
+      Received: 0
+
+      Timeout:  10000ms
+
+
+      Call log:
+        - la tarea no llegó a la bandeja del nuevo responsable with timeout 10000ms
+        - waiting for locator('table#tareas tbody tr.item[data-caseid="30451"]')
+          24 × locator resolved to 0 elements
+             - unexpected 
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-011-04-reasignar-pasa-a-la-bandeja-del-nuevo--1.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-011-04-reasignar-pasa-a-la-bandeja-del-nuevo--2.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-011-04-reasignar-pasa-a-la-bandeja-del-nuevo--3.png
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-011-05 asignar
+      responsable a una tarea sin fecha: se guarda, sin caso y sin errores
+      (HIP-TAR-06)"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-011-05 asignar responsable a una tarea sin fecha: se guarda, sin
+      caso y sin errores (HIP-TAR-06)"
+    estado: error-conocido
+    segundos: 48
+    hallazgo: H-108
+    severidad: 🟡
+    error_anotado: "H-108 (B-17): asignar una tarea sin fecha abre un caso de Bonita"
+    pasos:
+      - "Click locator('#tbl-hitos tbody tr').filter({ hasText: 'HMW410YNM'
+        }).first().locator('button.code')"
+      - Wait for selector locator('#pnl-tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - "Evaluate locator('#tareas-calendario tbody tr.data-json').filter({
+        hasText: 'Revisar bomba MW410YNM' }).first()"
+      - Expect "soft toBe"
+      - ✗ Expect "soft toBe"
+      - 'la respuesta trae basura además del JSON:
+        {"descripcion":"","estado":"creada","tapl_id":"385","fec_fin":"31-12-3000+12:00:00","rece_id":"","form_id":"","proc_id'
+      - Close context
+    error: |-
+      Error: expect(received).toBe(expected) // Object.is equality
+
+      Expected: ""
+      Received: "30452"
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-011-05-asignar-responsable-a-una-tarea-sin-fe-1.png
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-011-09
+      aislamiento: para asignar solo se ofrecen usuarios de la empresa"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-011-09 aislamiento: para asignar solo se ofrecen usuarios de la
+      empresa"
+    estado: pasa
+    segundos: 25
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-014-01/014-03
+      eliminar la única tarea de un hito: desaparece y vuelve "No hay Tareas
+      Planificadas" (HIP-TAR-20)'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-014-01/014-03 eliminar la única tarea de un hito: desaparece y
+      vuelve "No hay Tareas Planificadas" (HIP-TAR-20)'
+    estado: error-conocido
+    segundos: 62
+    hallazgo: H-117
+    severidad: 🟢
+    error_anotado: 'H-117 (B-23): al quedar vacía la lista, no vuelve "No hay Tareas
+      Planificadas"'
+    pasos:
+      - Expect "soft toMatch"
+      - Query count locator('.swal2-popup:visible')
+      - Click locator('.swal2-confirm:visible').first()
+      - Wait for timeout
+      - Query count locator('.swal2-popup:visible')
+      - Query count locator('#tab_11.active')
+      - "Expect \"toHaveCount\" locator('#tareas-calendario tbody
+        tr.data-json').filter({ hasText: 'Borrar MW410YNM' })"
+      - Click locator('#pnl-tareas a[href="#tab_22"]')
+      - ✗ no vuelve el "No hay Tareas Planificadas"
+        locator('#tareas-planificadas tfoot')
+      - Close context
+    error: |
+      Error: no vuelve el "No hay Tareas Planificadas"
+
+      expect(locator).toBeVisible() failed
+
+      Locator: locator('#tareas-planificadas tfoot')
+      Expected: visible
+      Timeout: 10000ms
+      Error: element(s) not found
+
+      Call log:
+        - no vuelve el "No hay Tareas Planificadas" with timeout 10000ms
+        - waiting for locator('#tareas-planificadas tfoot')
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-014-01-014-03-eliminar-la-nica-tarea-de-un-hi-1.png
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-014-05
+      aislamiento: la empresa 2 no puede eliminar una tarea de la empresa 1 por
+      URL (HIP-TAR-02)"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-014-05 aislamiento: la empresa 2 no puede eliminar una tarea de
+      la empresa 1 por URL (HIP-TAR-02)"
+    estado: error-conocido
+    segundos: 83
+    hallazgo: H-094
+    issue: 581
+    severidad: 🔴
+    error_anotado: "H-094 #581 (B-04): deleteTareaPlanificada no filtra empresa"
+    pasos:
+      - Wait for event "response"
+      - "Click locator('#tbl-hitos tbody tr').filter({ hasText: 'HMW410YNM'
+        }).first().locator('button.code')"
+      - Wait for selector locator('#pnl-tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - "✗ Wait for selector locator('#tareas-calendario tbody
+        tr.data-json').filter({ hasText: 'Aislamiento MW410YNM'
+        }).first().first()"
+      - "Query count locator('#tareas-calendario tbody tr.data-json').filter({
+        hasText: 'Aislamiento MW410YNM' }).first()"
+      - ✗ la empresa 2 eliminó una tarea de la empresa 1
+      - Close context
+    error: |-
+      Error: la empresa 2 eliminó una tarea de la empresa 1
+
+      expect(received).toBeGreaterThan(expected)
+
+      Expected: > 0
+      Received:   0
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-014-05-aislamiento-la-empresa-2-no-puede-elim-1.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-014-05-aislamiento-la-empresa-2-no-puede-elim-2.png
+  - clave: tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-016-01/016-02 el
+      responsable ve la tarea en su bandeja con el pedido correcto (HIP-TAR-12)
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: TAR-CP-016-01/016-02 el responsable ve la tarea en su bandeja con el
+      pedido correcto (HIP-TAR-12)
+    estado: error-conocido
+    segundos: 113
+    hallazgo: H-105
+    issue: 593
+    severidad: 🔴
+    error_anotado: "H-105 #593 (B-15): la tarea no muestra sus datos de pedido"
+    sin_menu: true
+    datos:
+      fila: "Tarea Planificada | DT Insp CMW410YNM case: 30450 Inspección (DocTest)
+        Estado: Planificada Origen: Pedido de trabajo Id Ped.Trabajo: 122
+        Asignado: mantenimiento@dt2611052057.com Fecha: 31/12/3000"
+    pasos:
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - la tarea asignada no está en la bandeja del responsable
+        locator('table#tareas tbody tr.item[data-caseid="30450"]')
+      - Evaluate locator('table#tareas tbody
+        tr.item[data-caseid="30450"]').first().locator('p.label')
+      - la bandeja no muestra el nombre de la tarea
+      - la bandeja no muestra el estado
+      - Expect "soft toContain"
+      - '✗ falta "Nro Pedido: <código>" con su etiqueta'
+      - ✗ "Id Ped.Trabajo" no es el número del pedido (921)
+      - Close context
+    error: >-
+      Error: falta "Nro Pedido: <código>" con su etiqueta
+
+
+      expect(received).toContain(expected) // indexOf
+
+
+      Expected value: "Nro Pedido: CMW410YNM"
+
+      Received array: ["Estado: Planificada", "Origen: Pedido de trabajo", "Id
+      Ped.Trabajo: 122", "", "Asignado: mantenimiento@dt2611052057.com", "Fecha:
+      31/12/3000"]
+
+      ---
+
+      Error: "Id Ped.Trabajo" no es el número del pedido (921)
+
+
+      expect(received).toContain(expected) // indexOf
+
+
+      Expected value: "Id Ped.Trabajo: 921"
+
+      Received array: ["Estado: Planificada", "Origen: Pedido de trabajo", "Id
+      Ped.Trabajo: 122", "", "Asignado: mantenimiento@dt2611052057.com", "Fecha:
+      31/12/3000"]
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-016-01-016-02-el-responsable-ve-la-tarea-en-s-1.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-016-01-016-02-el-responsable-ve-la-tarea-en-s-2.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-016-01-016-02-el-responsable-ve-la-tarea-en-s-3.png
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-016-03/017-01/017-02
+      tomar e iniciar: pide "Inicializar tarea" y registra la hora real del clic
+      (HIP-TAR-04, HIP-TAR-13)'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-016-03/017-01/017-02 tomar e iniciar: pide "Inicializar tarea" y
+      registra la hora real del clic (HIP-TAR-04, HIP-TAR-13)'
+    estado: error-conocido
+    segundos: 88
+    hallazgo: H-105
+    issue: 593
+    severidad: 🔴
+    error_anotado: "H-105 #593 (B-15): la cabecera no muestra el pedido de trabajo"
+    sin_menu: true
+    datos:
+      cabecera: Detalles Tarea Acciones Comentarios Trazabilidad Información Soltar
+        tarea Inicializar tarea Lista de subtareas Aislar MW410YNM Revisar
+        MW410YNM Formulario Tarea Cerrar Hecho
+    pasos:
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Evaluate
+      - "Wait for selector locator('#view, #btnHecho').first()"
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - ✗ la cabecera de la tarea no muestra el pedido de trabajo
+      - ✗ "Inicializar tarea" no está disponible después de tomarla
+        locator('#btnIniciar_tarea')
+      - Close context
+    error: >-
+      Error: la cabecera de la tarea no muestra el pedido de trabajo
+
+
+      expect(received).toContain(expected) // indexOf
+
+
+      Expected substring: "CMW410YNM"
+
+      Received string:    "Detalles Tarea Acciones Comentarios Trazabilidad
+      Información Soltar tarea Inicializar tarea Lista de subtareas Aislar
+      MW410YNM Revisar MW410YNM Formulario Tarea Cerrar Hecho"
+
+      ---
+
+      Error: "Inicializar tarea" no está disponible después de tomarla
+
+
+      expect(locator).toBeEnabled() failed
+
+
+      Locator:  locator('#btnIniciar_tarea')
+
+      Expected: enabled
+
+      Received: disabled
+
+      Timeout:  15000ms
+
+
+      Call log:
+        - "Inicializar tarea" no está disponible después de tomarla with timeout 15000ms
+        - waiting for locator('#btnIniciar_tarea')
+          34 × locator resolved to <button disabled id="btnIniciar_tarea" name="btnIniciar_tarea" onclick="existFunction('IniciarTarea')" class="btn btn-success btn-iniciar pull-right">…</button>
+             - unexpected value "d
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-016-03-017-01-017-02-tomar-e-iniciar-pide-Ini-1.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-016-03-017-01-017-02-tomar-e-iniciar-pide-Ini-2.png
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-016-06
+      aislamiento: la empresa 2 no ve la tarea en su bandeja"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-016-06 aislamiento: la empresa 2 no ve la tarea en su bandeja"
+    estado: pasa
+    segundos: 38
+    sin_menu: true
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-018-01/018-03
+      finalizar: sale de la bandeja y queda "finalizada" con la hora real de fin
+      (HIP-TAR-05)'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-018-01/018-03 finalizar: sale de la bandeja y queda "finalizada"
+      con la hora real de fin (HIP-TAR-05)'
+    estado: error-conocido
+    segundos: 162
+    hallazgo: H-111
+    severidad: 🟡
+    error_anotado: "H-111 (B-19): al finalizar no se registra la hora real de fin"
+    sin_menu: true
+    datos:
+      fec_fin: planificada 31-12-3000+12:00:00 · final 31-12-3000+12:00:00
+    pasos:
+      - Wait for event "response"
+      - "Click locator('#tbl-hitos tbody tr').filter({ hasText: 'HMW410YNM'
+        }).first().locator('button.code')"
+      - Wait for selector locator('#pnl-tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - "Evaluate locator('#tareas-calendario tbody tr.data-json').filter({
+        hasText: 'DT Insp CMW410YNM' }).first()"
+      - Expect "soft toBe"
+      - "✗ fec_fin sigue siendo la planificada: no se registró la hora real de
+        cierre"
+      - Close context
+    error: >-
+      Error: fec_fin sigue siendo la planificada: no se registró la hora real de
+      cierre
+
+
+      expect(received).not.toBe(expected) // Object.is equality
+
+
+      Expected: not "31-12-3000+12:00:00"
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-018-01-018-03-finalizar-sale-de-la-bandeja-y--1.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-018-01-018-03-finalizar-sale-de-la-bandeja-y--2.png
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-018-01-018-03-finalizar-sale-de-la-bandeja-y--3.png
+  - clave: 'tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-018-02 finalizar
+      con una subtarea sin tildar: "No se marcaron como finalizadas todas las
+      subtareas!"'
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: 'TAR-CP-018-02 finalizar con una subtarea sin tildar: "No se marcaron
+      como finalizadas todas las subtareas!"'
+    estado: pasa
+    segundos: 74
+    sin_menu: true
+  - clave: "tar/TAR-UC-005-018.ciclo-de-una-tarea.spec.ts::TAR-CP-X-01 aislamiento:
+      la empresa 2 no ve por URL las tareas planificadas de la empresa 1
+      (HIP-TAR-02)"
+    modulo: TAR
+    caso: TAR-UC-005-018
+    titulo: "TAR-CP-X-01 aislamiento: la empresa 2 no ve por URL las tareas
+      planificadas de la empresa 1 (HIP-TAR-02)"
+    estado: error-conocido
+    segundos: 28
+    hallazgo: H-094
+    issue: 581
+    severidad: 🔴
+    error_anotado: "H-094 #581 (B-04): getTareasPlanificadas no filtra empresa"
+    pasos:
+      - Wait for selector locator('#pnl-tareas')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - "Evaluate locator('#pnl-tareas #origen')"
+      - Close context
+      - Create context
+      - GET
+        "/traz-v3/traz-tools/index.php/traz-comp-tareasestandar/tarea/planificar/PETR/122"
+      - ✗ la empresa 2 recibe las tareas planificadas de la empresa 1
+      - Close context
+    error: >-
+      Error: la empresa 2 recibe las tareas planificadas de la empresa 1
+
+
+      expect(received).not.toContain(expected) // indexOf
+
+
+      Expected substring: not "Revisar bomba MW410YNM"
+
+      Received string:        "<style>
+
+      .nav-tabs>li {
+          font-size: 15px;
+      }
+
+
+      .table-fixed {
+          overflow-y: auto;
+          height: 100px;
+      }
+
+
+      .table-fixed thead th {
+          position: sticky;
+          top: 0;
+          background-color: #FFFFFF;
+      }
+
+
+      .tDnD_whileDrag td {
+          background-color: #eee;
+          /*-webkit-box-shadow: 11px 5px 12px 2px #333, 0 1px 0 #ccc inset, 0 -1px 0 #ccc inset;*/
+          -webkit-box-shadow: 6px 3px 5px #555, 0 1px 0 #ccc inset, 0 -1px 0 #ccc inset;
+          /*-moz-box-shadow: 6px 4px 5px 1px #555, 0 1px 0 #ccc inset, 0 -1px 0 #ccc inset;*/
+          /*-box-shadow: 6px 4px 5px 1px #555, 0 1px 0 #ccc inset, 0 -1px 0 #ccc inset;*/
+      }
+
+      .btnAccionPlantilla{
+          cursor: pointer;
+      }
+
+      </style>
+
+      <div class=\"box\" id=\"pnl-tareas\">
+          <input id=\"o
+    capturas:
+      - conocidos/tar-TAR-UC-005-018-ciclo-de-una-tarea_TAR-CP-X-01-aislamiento-la-empresa-2-no-ve-por-URL-l-1.png
+  - clave: "tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-019-01 alta de una
+      tarea estándar completa: aparece en la lista"
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: "TAR-CP-019-01 alta de una tarea estándar completa: aparece en la lista"
+    estado: pasa
+    segundos: 17
+  - clave: "tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-019-02 sin nombre
+      o sin duración: avisa que faltan obligatorios y no guarda"
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: "TAR-CP-019-02 sin nombre o sin duración: avisa que faltan obligatorios
+      y no guarda"
+    estado: pasa
+    segundos: 16
+  - clave: tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-019-03 una duración
+      imposible (99:99) no se acepta
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: TAR-CP-019-03 una duración imposible (99:99) no se acepta
+    estado: error-conocido
+    segundos: 13
+    hallazgo: H-098
+    issue: 585
+    severidad: 🟢
+    error_anotado: "H-098 #585 (B-08): la máscara acepta 99:99"
+    pasos:
+      - Wait for selector locator('#tab_1 table#tareas').locator('tbody
+        tr.data-json').first()
+      - "Query count locator('#tab_1 table#tareas').locator('tbody
+        tr.data-json').filter({ hasText: 'DT Dur MW410YNM' })"
+      - "Click locator('#tab_1 table#tareas').locator('tbody
+        tr.data-json').filter({ hasText: 'DT Dur MW410YNM'
+        }).locator('[onclick*=\"eliminarTarea\"]').first()"
+      - Click locator('.swal2-confirm:visible').first()
+      - Wait for timeout
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Accept dialog
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - ✗ se guardó una tarea estándar con duración 99:99
+    error: |-
+      Error: se guardó una tarea estándar con duración 99:99
+
+      expect(received).toBe(expected) // Object.is equality
+
+      Expected: 0
+      Received: 1
+    capturas:
+      - conocidos/tar-TAR-UC-019-021-catalogo-de-tareas_TAR-CP-019-03-una-duraci-n-imposible-99-99-no-se-ace-1.png
+  - clave: tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-019-04 editar
+      nombre y duración de una tarea estándar
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: TAR-CP-019-04 editar nombre y duración de una tarea estándar
+    estado: error-conocido
+    segundos: 5
+    hallazgo: H-095
+    issue: 582
+    severidad: 🟡
+    error_anotado: "H-095 #582 (B-05): updateTarea castea vacío a integer"
+    pasos:
+      - "Fill \"DT Insp MW410YNM v2\" locator('#editar
+        #frm-tarea-e').locator('[name=\"nombre\"]')"
+      - "Click locator('#editar #frm-tarea-e').locator('[name=\"duracion\"]')"
+      - "Press \"Control+A\" locator('#editar
+        #frm-tarea-e').locator('[name=\"duracion\"]')"
+      - "Type \"0300\" locator('#editar
+        #frm-tarea-e').locator('[name=\"duracion\"]')"
+      - Click locator('#editar .btn-accion')
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for selector locator('.swal2-popup:visible').first()
+      - ✗ Expect "toMatch"
+    error: |-
+      Error: expect(received).toMatch(expected)
+
+      Expected pattern: /Se editó la tarea estandar/i
+      Received string:  "Algo salio mal"
+    capturas:
+      - conocidos/tar-TAR-UC-019-021-catalogo-de-tareas_TAR-CP-019-04-editar-nombre-y-duraci-n-de-una-tarea--1.png
+  - clave: tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-019-07 "Proceso
+      Asociado" ofrece el proceso de tarea planificada TST001 (H-093)
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: TAR-CP-019-07 "Proceso Asociado" ofrece el proceso de tarea planificada
+      TST001 (H-093)
+    estado: error-conocido
+    segundos: 3
+    hallazgo: H-093
+    issue: 580
+    severidad: 🔴
+    error_anotado: "H-093 #580 (B-03): el selector solo ofrece Reparacion Neumaticos
+      y Fabricación"
+    pasos:
+      - Wait for event "response"
+      - Query count locator('.sidebar-menu
+        a[onclick*="traz-comp-tareasestandar/Tarea" i]').first()
+      - Evaluate locator('.sidebar-menu
+        a[onclick*="traz-comp-tareasestandar/Tarea" i]').first()
+      - Wait for timeout
+      - Wait for load state "networkidle"
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for selector locator('#tab_1 table#tareas').locator('tbody
+        tr.data-json').first()
+      - Evaluate locator('#frm-tarea [name="proc_id"] option')
+      - ✗ Expect "toContain"
+    error: |-
+      Error: expect(received).toContain(expected) // indexOf
+
+      Expected value: "TST001"
+      Received array: []
+    capturas:
+      - conocidos/tar-TAR-UC-019-021-catalogo-de-tareas_TAR-CP-019-07-Proceso-Asociado-ofrece-el-proceso-de--1.png
+  - clave: "tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-020-03 subtarea
+      sin nombre: no se guarda"
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: "TAR-CP-020-03 subtarea sin nombre: no se guarda"
+    estado: pasa
+    segundos: 6
+  - clave: "tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-021-01 crear
+      plantilla y asociar 2 tareas: el selector ya no las ofrece"
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: "TAR-CP-021-01 crear plantilla y asociar 2 tareas: el selector ya no las
+      ofrece"
+    estado: error-conocido
+    segundos: 15
+    hallazgo: H-100
+    issue: 587
+    severidad: 🟢
+    error_anotado: "H-100 #587 (B-10): el selector ofrece tareas ya asociadas"
+    pasos:
+      - Expect "toBeHidden" locator('#waiting')
+      - Expect "toHaveCount" locator('.box .overlay:visible, .wbox:visible')
+      - Wait for selector locator('.swal2-popup:visible').first()
+      - Query count locator('.swal2-popup:visible')
+      - Click locator('.swal2-confirm:visible').first()
+      - Wait for timeout
+      - Query count locator('.swal2-popup:visible')
+      - Expect "toHaveCount" locator('#tareas_asociadas table#tareas_plantillas
+        tbody tr.data-json')
+      - Evaluate locator('#tareas_asociadas select#tareas option')
+      - ✗ las tareas ya asociadas se siguen ofreciendo
+    error: >-
+      Error: las tareas ya asociadas se siguen ofreciendo
+
+
+      expect(received).not.toContain(expected) // indexOf
+
+
+      Expected substring: not "DT Insp MW410YNM"
+
+      Received string:        "- Seleccionar - | DT Insp CMW410YNM | DT Insp
+      MW410YNM | DT Limp CMW410YNM | DT Limp MW410YNM"
+    capturas:
+      - conocidos/tar-TAR-UC-019-021-catalogo-de-tareas_TAR-CP-021-01-crear-plantilla-y-asociar-2-tareas-el--1.png
+  - clave: tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-021-02 editar una
+      plantilla precarga su nombre y no toca el formulario de tareas
+      (HIP-TAR-16)
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: TAR-CP-021-02 editar una plantilla precarga su nombre y no toca el
+      formulario de tareas (HIP-TAR-16)
+    estado: pasa
+    segundos: 4
+  - clave: tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-021-03 desasociar
+      una tarea y eliminar la plantilla
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: TAR-CP-021-03 desasociar una tarea y eliminar la plantilla
+    estado: pasa
+    segundos: 14
+  - clave: "tar/TAR-UC-019-021.catalogo-de-tareas.spec.ts::TAR-CP-021-04 eliminar
+      una tarea estándar que está en una plantilla: la plantilla ya no la
+      muestra"
+    modulo: TAR
+    caso: TAR-UC-019-021
+    titulo: "TAR-CP-021-04 eliminar una tarea estándar que está en una plantilla: la
+      plantilla ya no la muestra"
+    estado: pasa
+    segundos: 13

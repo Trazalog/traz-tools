@@ -58,7 +58,7 @@ datos_prueba:
   empresa: "MinTest_SJ del fixture dnato_v3_base"
   persona: "Carla Ruiz, con dominio de prueba del ambiente"
 dudas:
-  - "Hasta la redirección final la gente sigue ingresando por DNATO, que no conoce la suspensión, y las pantallas de Tools no la miran (H-091). Una empresa suspendida por falta de pago seguiría entrando. Propuesta: se acepta hasta la redirección y se dice en la ventana; si Rodolfo necesita que valga ya, la alternativa más chica es un requerimiento aparte que agregue el chequeo de estado en el ingreso de DNATO, con análisis de impacto."
+  - "Hasta la redirección final la gente sigue ingresando por DNATO, que no conoce la suspensión, y las pantallas de Tools no la miran (H-123). Una empresa suspendida por falta de pago seguiría entrando. Propuesta: se acepta hasta la redirección y se dice en la ventana; si Rodolfo necesita que valga ya, la alternativa más chica es un requerimiento aparte que agregue el chequeo de estado en el ingreso de DNATO, con análisis de impacto."
   - "¿El superusuario puede entrar a una empresa suspendida (para revisar)? Propuesta: no por el ingreso; la ve desde la Consola."
   - "¿Una empresa con el plan pendiente de aprobación se puede suspender? Propuesta: sí, son estados independientes."
 derivados: {}

@@ -462,11 +462,17 @@
          <header name="Accept" scope="transport" value="application/json"/>
          <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
          <property name="uri.var.check_duplicado_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/usuario/duplicado/',$ctx:usr_email)" scope="default"/>
+         <!-- GET limpio, igual que en toolsAssetUserEmpresa: sin cuerpo y sin Content-Type. Con ese header
+              el DataService busca los parametros en un JSON y no en la URL (H47). -->
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="HTTP_METHOD" value="GET" scope="axis2" type="STRING"/>
+         <property name="NO_ENTITY_BODY" value="true" scope="axis2" type="BOOLEAN"/>
          <call>
             <endpoint>
                <http method="GET" uri-template="{uri.var.check_duplicado_url}"/>
             </endpoint>
          </call>
+         <property name="NO_ENTITY_BODY" action="remove" scope="axis2"/>
          <property name="existe_usuario" expression="json-eval($.respuesta.existe)"/>
          <filter source="get-property('existe_usuario')" regex="true">
             <then>

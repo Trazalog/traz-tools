@@ -8,7 +8,7 @@ plan vencido), el botón **"Me interesa"** que avisa al administrador, y el **co
 del catálogo con datos reales. Lo leen Pablo para planificar y Rodolfo para aprobar
 el cambio chico en el menú de Tools. **No** cubre el dibujo del menú sombreado (ya lo hace
 [REQ-009](REQ-009-administracion-menus.md)), el pedido de cambio de plan (REQ-010) ni el rechazo de pantallas no visibles en
-Tools (T-5, deuda H-091). Lista completa en [`README.md`](README.md).
+Tools (T-5, deuda H-123). Lista completa en [`README.md`](README.md).
 
 | Campo | Valor |
 |---|---|
@@ -50,7 +50,7 @@ Tools (T-5, deuda H-091). Lista completa en [`README.md`](README.md).
 - **No dibuja el menú sombreado**: lo hace REQ-009 (con la variable `menu_resuelto_en_tools`). Acá solo
   se le agrega el enlace a la vista de presentación.
 - **No controla el acceso por dirección en Tools** (RF-94, CP-91, CP-92): una persona que escribe la
-  dirección de una pantalla de otro plan todavía entra, hasta el chequeo central T-5 (deuda H-091).
+  dirección de una pantalla de otro plan todavía entra, hasta el chequeo central T-5 (deuda H-123).
 - **No crea pedidos de plan**: "Me interesa" solo avisa; el pedido lo hace el administrador en Plan
   (REQ-010).
 - No hace un fondo de relleno distinto por pantalla: uno genérico para todas (ver la duda de ADM-UC-190).
@@ -264,4 +264,4 @@ Están en los casos de uso (campo `dudas`), para contestarlas en un solo lugar.
 | CP-42 | Contador de "Me interesa" desglosado por empresa | ADM-UC-192 (con intereses hechos con el botón; la pantalla es de REQ-005, ADM-UC-052) |
 | CP-67 (parte del clic) | "Al hacer clic se abre la vista de presentación" | ADM-UC-190 (desde el menú de Tools) |
 | CP-19 (parte de la vista) | Con el plan vencido, la vista dice "El período de prueba de tu empresa terminó" | ADM-UC-190 |
-| CP-91, CP-92 | Pedir a mano una pantalla no visible da 403; lo que el rol no permite no aparece | Fuera de alcance: chequeo central de Tools (T-5, deuda H-091); no son de E9 |
+| CP-91, CP-92 | Pedir a mano una pantalla no visible da 403; lo que el rol no permite no aparece | Fuera de alcance: chequeo central de Tools (T-5, deuda H-123); no son de E9 |
