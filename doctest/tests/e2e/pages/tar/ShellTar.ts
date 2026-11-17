@@ -124,7 +124,8 @@ export class ShellTar {
   async esperarCarga(timeout = 60_000): Promise<void> {
     await this.page.waitForLoadState('networkidle', { timeout }).catch(() => {});
     await expect(this.page.locator('#waiting')).toBeHidden({ timeout });
-    await expect(this.page.locator('.box .overlay:visible, .wbox:visible')).toHaveCount(0, { timeout });
+    // .overlay-inicio no es carga: bloquea la tarea hasta "Inicializar tarea" (traz-comp-tareasestandar).
+    await expect(this.page.locator('.box .overlay:not(.overlay-inicio):visible, .wbox:visible')).toHaveCount(0, { timeout });
   }
 
   // ── SweetAlert ──────────────────────────────────────────────────────────────
