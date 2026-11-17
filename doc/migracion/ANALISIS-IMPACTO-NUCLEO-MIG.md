@@ -144,7 +144,7 @@ No hacer ninguno de estos pasos antes de que el PM apruebe este análisis.
 | 4 | Aplicar, en este orden, `v2.8.1.7/pedidos_sin_formulario.sql` y `v2.8.1.7/configuracion_inicial_empresa_trg_func.sql`. **No** aplicar `v2.8.1.5` | Base PostgreSQL de DEMO, con un cliente de PostgreSQL |
 | 5 | Aplicar `asset-empresa-trigger.sql` | Base MariaDB de asset de DEMO, con un cliente de MySQL |
 | 6 | Aplicar `kpi-mantenimiento.sql` | Base MariaDB de asset de DEMO |
-| 7 | Cargar las opciones de menú de MAN | Base PostgreSQL de DEMO; ver [MENU-MAN.md](MENU-MAN.md) |
+| 7 | Cargar las opciones de menú de MAN: `versiones/v3.0/menu_man.sql`. Conviene correrlo antes del paso 4 o junto con él | Base PostgreSQL de DEMO, con un cliente de PostgreSQL; ver [MENU-MAN.md](MENU-MAN.md) |
 | 8 | Tarea programada que lanza las órdenes preventivas pendientes | Servidor de DEMO; ver `doc/infra/man-lanzamiento-cron.md` |
 | 9 | Prueba completa de DocTest contra DEMO | Máquina local, desde `doctest/`: `node scripts/doctest.mjs full --entorno demo` |
 
