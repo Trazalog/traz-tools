@@ -44,6 +44,11 @@ export class PortalPage {
     return this.page.locator('[data-testid="adm-ir-a-tools"]');
   }
 
+  /** Botón "🔑 Consola": solo lo ve el superusuario. */
+  get irAConsola(): Locator {
+    return this.page.locator('[data-testid="adm-ir-a-consola"]');
+  }
+
   /** Pantalla de error: sin permiso (403). */
   get sinPermiso(): Locator {
     return this.page.locator('[data-testid="adm-sin-permiso"]');

@@ -9,7 +9,16 @@ origen: baseline
 referencias_codigo:
   - repo: traz-tools
     path: requerimientos/REQ-002-administracion-esqueleto.md
-    detalle: "se completa con el controlador de la Consola al programar"
+    detalle: "requerimiento que define la Consola y el permiso de superusuario"
+  - repo: traz-comp-adm
+    path: controllers/Consola.php
+    detalle: "controlador de la Consola (permiso superusuario)"
+  - repo: traz-comp-adm
+    path: views/consola.php
+    detalle: "marco de la Consola: barra, leyenda y vueltas"
+  - repo: traz-comp-adm
+    path: controllers/Portal.php
+    detalle: "muestra el botón Consola solo al superusuario"
   - repo: traz-tools
     path: doc/v3/dnato/mockups/consola-empresas.html
     detalle: "maqueta de la Consola; en REQ-002 solo el marco"
@@ -53,7 +62,8 @@ datos_prueba:
   superusuario: "uno de los correos de TOOLS_ADMIN_USER del ambiente; la contraseña va en doctest/.env, nunca en el catálogo"
   administrador_comun: "el administrador de la empresa DocTest"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-002.consola.spec.ts
 notas:
   - "Decisiones de Rodolfo (2026-11-10): superusuario = correo incluido en TOOLS_ADMIN_USER, que acepta varios correos separados por coma. Las credenciales del superusuario de DEMO las tiene Pablo y van en su doctest/.env."
   - "En REQ-002 la Consola es solo el marco: la lista de empresas, registros, planes y demás llegan con sus requerimientos. La leyenda y los nombres de botones salen de la maqueta consola-empresas.html."
