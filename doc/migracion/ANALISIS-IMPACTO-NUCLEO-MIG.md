@@ -7,7 +7,7 @@ Mantenimiento (MAN), comparados con producción (`master`). Es para que el PM lo
 `develop-v3`, como pide la regla del núcleo de `CLAUDE.md`. No cubre cómo se migró cada pantalla: eso está en
 [MIGRACION-ASSETPLANNER.md](MIGRACION-ASSETPLANNER.md). Tampoco cubre la unificación posterior con `develop`.
 
-**Fecha:** 2026-11-16 · **Estado:** esperando aprobación del PM.
+**Fecha:** 2026-11-16 · **Estado:** aprobado por el PM el 2026-11-16 (ver punto 5). Los PR siguen sin unir.
 
 **PR involucrados:**
 
@@ -75,8 +75,10 @@ producción es exactamente la que se lista acá.
 - **No verificado:** qué versión de la función tiene hoy la base de desarrollo. El encabezado del script dice
   que `v2.8.1.5` se aplicó ahí el 2026-11-04. Si después no se aplicó `v2.8.1.7`, desarrollo no está clonando
   el formulario.
-- **Decisión del PM:** confirmar que en DEMO y en producción se aplica `v2.8.1.7` y no `v2.8.1.5`, y si los
-  roles de Residuos tienen que estar.
+- **Decisión del PM (2026-11-16):** en DEMO y en producción se aplica `v2.8.1.7`, no `v2.8.1.5`. Los roles de
+  Residuos van: Residuos corre en una instancia propia, instalada en el cliente, y por eso no están en `master`.
+- **Ojo al desplegar:** `v2.8.1.7` está en `develop-v3.5`, no en `develop-v3` ni en este PR. Para el paso 4 del
+  despliegue hay que tomar el archivo de esa rama.
 
 ### 2.4 Alta de empresa en asset — `development/sql/asset-empresa-trigger.sql`
 
@@ -116,7 +118,8 @@ producción es exactamente la que se lista acá.
   borra en `toolsMANAPI.xml` es un renglón en blanco. Las rutas que usa el MCP (`/tools/man/mcp/*`) no cambian.
 - **Riesgo:** el EI 6.5 rechaza un servicio de datos con dos recursos iguales (ver
   `archivo/traspaso-migracion-assetplanner.md`). Todo se probó en el MI 4.5, que es más permisivo.
-- **Antes de desplegar en DEMO:** armar el `.car` y desplegarlo en un EI 6 para ver que lo acepte.
+- **Decisión del PM (2026-11-16):** se prueba directamente en el integrador de DEMO, al hacer el pasaje (paso 3
+  del despliegue). Si lo rechaza, no se sigue con los pasos siguientes.
 
 ### 2.8 Pañol — `traz-comp-pan`, `models/Orders.php`
 
@@ -135,8 +138,8 @@ No hacer ninguno de estos pasos antes de que el PM apruebe este análisis.
 |---|---|---|
 | 1 | Código de Tools y de los módulos | Servidor de DEMO, con el script de despliegue habitual |
 | 2 | Agregar las dos líneas de `constants.php` (punto 2.5) | Servidor de DEMO, editando el archivo a mano |
-| 3 | Desplegar el `.car` con `MANDataService` y `toolsMANAPI` | Integrador de DEMO |
-| 4 | Aplicar `v2.8.1.7` del alta de empresa, **no** `v2.8.1.5` | Base PostgreSQL de DEMO, con un cliente de PostgreSQL |
+| 3 | Desplegar el `.car` con `MANDataService` y `toolsMANAPI`. Es la primera prueba en un EI 6: si lo rechaza, parar | Integrador de DEMO |
+| 4 | Aplicar `v2.8.1.7` del alta de empresa (está en la rama `develop-v3.5`), **no** `v2.8.1.5` | Base PostgreSQL de DEMO, con un cliente de PostgreSQL |
 | 5 | Aplicar `asset-empresa-trigger.sql` | Base MariaDB de asset de DEMO, con un cliente de MySQL |
 | 6 | Aplicar `kpi-mantenimiento.sql` | Base MariaDB de asset de DEMO |
 | 7 | Cargar las opciones de menú de MAN | Base PostgreSQL de DEMO; ver [MENU-MAN.md](MENU-MAN.md) |
@@ -151,9 +154,11 @@ No hacer ninguno de estos pasos antes de que el PM apruebe este análisis.
 - Errores conocidos de MAN que siguen abiertos: H-122 (un plan recién creado no se puede editar) y E14
   (mantenimiento autónomo apagado).
 
-## 5. Lo que tiene que decidir el PM
+## 5. Decisiones del PM (2026-11-16)
 
-1. Aprobar los cambios 1, 2 y 4 a 8.
-2. Confirmar que el alta de empresa se despliega con `v2.8.1.7` y no con `v2.8.1.5`, y decir si los roles de
-   Residuos tienen que estar en producción.
-3. Elegir dónde se prueba el `.car` en un EI 6 antes de DEMO.
+1. ✅ Aprobados los cambios 1, 2 y 4 a 8.
+2. ✅ El alta de empresa se despliega con `v2.8.1.7`, no con `v2.8.1.5`. Los roles de Residuos van, porque
+   Residuos usa una instancia propia en el cliente.
+3. ✅ El `.car` se prueba en el integrador de DEMO, durante el pasaje.
+
+Aprobar el análisis no es aprobar la unión de los PR: eso lo confirma el PM aparte.
