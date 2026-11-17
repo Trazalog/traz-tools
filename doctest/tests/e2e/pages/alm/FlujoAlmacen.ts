@@ -56,6 +56,17 @@ async function elegirOpcion(page: Page, selector: string, preferir?: RegExp): Pr
   }, preferir ? preferir.source : null);
 }
 
+/**
+ * Elige el primer establecimiento. Sin placeholder cuando la empresa tiene uno solo (la recién
+ * registrada): ahí la pantalla ya lo trae elegido y hay que volver a disparar el cambio.
+ */
+export async function elegirEstablecimiento(page: Page): Promise<void> {
+  const select = page.locator('#establecimiento');
+  const hayPlaceholder = (await select.locator('option').count()) > 1;
+  await select.selectOption({ index: hayPlaceholder ? 1 : 0 });
+  await select.dispatchEvent('change');
+}
+
 /** Espera a que un `<select>` tenga al menos una opción real (poblado por el AJAX). */
 async function esperarOpciones(page: Page, selector: string): Promise<void> {
   await page.waitForFunction(
@@ -134,6 +145,15 @@ export async function asegurarArticulo(
   if (!/\S/.test(await page.locator('#content').innerText().catch(() => ''))) {
     await new AlmacenesPage(page).abrir('articulos');
   }
+  // El listado pagina: en una empresa con más de una hoja, el artículo nuevo no está en la primera.
+  for (let hoja = 0; hoja < 20; hoja++) {
+    await page.locator('#content table tbody tr').first().waitFor({ timeout: 30_000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    if ((await page.locator('#content').innerText()).includes(codigo)) break;
+    const siguiente = page.locator('#content .paginate_button.next:not(.disabled) a').first();
+    if (!(await siguiente.count())) break;
+    await siguiente.evaluate((a: HTMLElement) => a.click()); // algún aviso puede quedar encima
+  }
   await expect(page.locator('#content'), 'el artículo recién creado tiene que aparecer').toContainText(codigo, {
     timeout: 30_000,
   });
@@ -176,7 +196,8 @@ export async function asegurarProveedor(
   // localidades.
   await elegirOpcion(page, '#formProveedor #pais', /argentina/i);
   await esperarOpciones(page, '#formProveedor #estado');
-  await elegirOpcion(page, '#formProveedor #estado');
+  // No todas las provincias tienen localidades cargadas: San Juan sí.
+  await elegirOpcion(page, '#formProveedor #estado', /san juan/i);
   await esperarOpciones(page, '#formProveedor #localidad');
   await elegirOpcion(page, '#formProveedor #localidad');
   await page.waitForTimeout(500);
@@ -231,12 +252,13 @@ export async function recepcionar(
   await page.waitForTimeout(500);
 
   // #lote es obligatorio para validar_campos() aun en no loteados; el convenio es 'S/L'.
-  await page.locator('#lote').fill('S/L');
+  // Con un artículo no loteado la pantalla ya lo deja cargado y bloqueado.
+  if (await page.locator('#lote').isEnabled()) await page.locator('#lote').fill('S/L');
   await page.locator('#cantidad').fill(String(cantidad));
 
   // Establecimiento dispara seleccionesta() → AJAX que puebla #deposito y le saca el
   // readonly. Se espera a que tenga una opción real antes de elegirla.
-  await page.locator('#establecimiento').selectOption({ index: 1 });
+  await elegirEstablecimiento(page);
   await page.waitForFunction(
     () => {
       const el = document.querySelector('#deposito');
@@ -285,7 +307,7 @@ export async function crearPedidoDe(
   await page.locator('button[onclick*="guardar_pedido"]').click();
   await page.waitForTimeout(2000);
 
-  await page.locator('#establecimiento').selectOption({ index: 1 });
+  await elegirEstablecimiento(page);
   await page.waitForTimeout(1500);
   await page.locator('#deposito').selectOption({ index: 0 });
   await page.locator('button[onclick*="lanzarPedido"]').click();

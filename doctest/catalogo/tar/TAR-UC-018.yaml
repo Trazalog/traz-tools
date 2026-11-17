@@ -1,0 +1,50 @@
+id: TAR-UC-018
+modulo: TAR
+titulo: Ejecutar y finalizar una tarea
+perfil: Operario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: views/proceso/tarea_generica.php
+    detalle: cerrarTarea(), validarTareasFinalizadas(), closeTask()
+  - repo: traz-comp-bpm
+    path: views/notificacion_estandar.php
+    detalle: CerrarTarea()
+  - repo: traz-comp-bpm
+    path: controllers/Proceso.php
+    detalle: cerrarTarea()
+pantallas:
+  - Mis Tareas → tarea → Hecho
+precondiciones:
+  - Sesión iniciada en Tools con perfil Operario
+  - La tarea iniciada
+depende_de:
+  - TAR-UC-017
+flujo_principal:
+  - paso: Tilda todas las subtareas y completa sus formularios
+    resultado: Quedan marcadas
+  - paso: Completa el formulario de la tarea
+    resultado: Queda guardado
+  - paso: Pulsa "Hecho"
+    resultado: Se cierra el caso, la tarea queda finalizada con la hora real de fin y sale de la bandeja
+flujos_alternativos:
+  - nombre: Subtarea sin tildar
+    pasos:
+      - paso: Pulsa "Hecho" con una subtarea sin tildar
+        resultado: Ve "No se marcaron como finalizadas todas las subtareas!" y no se cierra
+validaciones:
+  - El planificador ve la tarea finalizada con su fecha de fin real en el detalle del pedido
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-01: perfil de quien ejecuta (ver TAR-UC-016)"
+  - "D-18: ¿el formulario de la tarea es obligatorio para finalizarla? Hoy no se valida"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-018-01 a 018-07"
+  - "Hipótesis: HIP-TAR-03, HIP-TAR-05"

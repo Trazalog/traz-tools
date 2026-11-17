@@ -1,0 +1,54 @@
+id: TAR-UC-011
+modulo: TAR
+titulo: Asignar o reasignar el responsable de una tarea
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: views/tareas/planificacion/modal_asignar_usuario.php
+  - repo: traz-comp-tareasestandar
+    path: controllers/Tarea.php
+    detalle: validarEstadoProceso(), guardarPlanificada()
+  - repo: traz-comp-tareasestandar
+    path: models/Tareas.php
+    detalle: guardarPlanificada(), lanzarProceso()
+pantallas:
+  - Planificación de Trabajos → hito → Calendario → 👤
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Una tarea en un hito
+depende_de:
+  - TAR-UC-010
+flujo_principal:
+  - paso: Pulsa 👤 en la tarea
+    resultado: Ve la lista de usuarios de la empresa
+  - paso: Elige uno
+    resultado: 'Si el proceso del pedido lo exige, se verifica que el caso esté en la Tarea IT; se pregunta "Desea asignar la tarea a: <usuario>"'
+  - paso: Confirma
+    resultado: La tarea muestra el responsable; si ya tiene fecha, se crea el caso de Bonita y la tarea queda planificada en la bandeja del responsable
+  - paso: Reasigna a otra persona
+    resultado: La tarea pasa a la bandeja del nuevo responsable y sale de la del anterior, sin crear otro caso
+flujos_alternativos:
+  - nombre: El caso del pedido no llegó a la Tarea IT
+    pasos:
+      - paso: Elige un usuario
+        resultado: Ve "El case especificado no alcanzó o finalizó la tarea IT" y no se asigna
+  - nombre: Tarea sin fecha
+    pasos:
+      - paso: Asigna responsable a una tarea sin fecha
+        resultado: Se guarda el responsable, sin caso y sin errores; llega a la bandeja al planificarla
+validaciones:
+  - Solo se ofrecen usuarios de la empresa
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-15: ¿se puede asignar una tarea a cualquier usuario de la empresa o solo a ciertos roles?"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-011-01 a 011-10"
+  - "Hipótesis: HIP-TAR-06"

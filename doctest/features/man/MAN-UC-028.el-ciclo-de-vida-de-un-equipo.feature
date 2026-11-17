@@ -1,6 +1,7 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/man/MAN-UC-028.yaml (versión 0.1, validado 2026-08-26).
+# Fuente: catalogo/man/MAN-UC-028.yaml (versión 2.0, validado 2026-11-03).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
+# Test que lo implementa: tests/e2e/specs/man/MAN-UC-003-004-022-026-028.equipos.spec.ts
 
 @man @MAN-UC-028
 Característica: El ciclo de vida de un equipo
@@ -9,11 +10,12 @@ Característica: El ciclo de vida de un equipo
   Dónde: Mantenimiento → Equipos
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner
+    Dado Sesión iniciada en Tools (ingreso de DNATO)
+    Y La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
 
   Escenario: Camino principal
     Cuando Se da de alta el equipo (MAN-UC-002)
-    Entonces Nace activo y ya puede recibir solicitudes, planes y órdenes de trabajo
+    Entonces Nace en estado de alta (`AL`); con la acción Habilitar pasa a activo (`AC`), con su lectura de alta, y ya puede recibir solicitudes, planes y órdenes de trabajo
     Y cuando Mientras está activo, acumula historia: lecturas, órdenes, informes, componentes
     Entonces Todo eso queda asociado al equipo
     Y cuando Si sale de servicio, se inhabilita (MAN-UC-022)
@@ -22,7 +24,6 @@ Característica: El ciclo de vida de un equipo
     Entonces Vuelve a estar activo, conservando toda su historia
 
   # Reglas que este caso verifica:
-  #   - El equipo tiene **tres** estados: `AC` activo, `IN` inhabilitado y `AN` dado de baja
-  #   - Ninguna de las dos acciones borra el registro: el historial del equipo se conserva siempre
-  #   - En la base el equipo tiene dos estados: `AC` (activo) y `AN`
-  #   - La única transición que el usuario controla a mano es habilitar / inhabilitar
+  #   - El equipo tiene **cuatro** estados: `AL` en alta, `AC` activo, `IN` inhabilitado y `AN` dado de baja
+  #   - Ninguna acción borra el registro: el historial del equipo se conserva siempre
+  #   - La única transición que el usuario controla a mano es habilitar / inhabilitar / eliminar

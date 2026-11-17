@@ -57,14 +57,16 @@ export default defineConfig({
   // hace utilizable la senal mientras tanto.
   retries: 1,
   reporter: EN_CI
-    ? [['github'], ['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }]]
-    : [['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }]],
+    ? [['github'], ['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }], [resolve(HERE, 'reporter/informe-corrida.ts')]]
+    : [['list'], ['html', { outputFolder: resolve(HERE, '.playwright-report'), open: 'never' }], [resolve(HERE, 'reporter/informe-corrida.ts')]],
   use: {
     // RNF-03: nada de esperas fijas — auto-wait de Playwright + asserts explícitos.
     actionTimeout: 15_000,
     navigationTimeout: 60_000,
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    // Siempre, y el informe solo guarda las de las pruebas que fallaron: 'only-on-failure' no saca
+    // captura de los errores conocidos, porque para Playwright fallaron como se esperaba.
+    screenshot: 'on',
     video: 'retain-on-failure',
     locale: 'es-AR',
     timezoneId: 'America/Argentina/San_Juan',

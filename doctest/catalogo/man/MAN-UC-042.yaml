@@ -1,0 +1,33 @@
+id: MAN-UC-042
+modulo: MAN
+titulo: Ver los indicadores de mantenimiento en el tablero de tools
+perfil: Supervisor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-11-03
+referencias_codigo:
+  - repo: traz-tools
+    path: application/config/dashboard.php
+    detalle: las cajas man_disponibilidad, man_mttr, man_mttf, man_mtbf y man_confiabilidad
+  - repo: traz-tools
+    path: _backend/database/scripts/assetplanner/kpi-mantenimiento.sql
+    detalle: el cálculo mensual en kpi_cache
+pantallas:
+  - Tablero de indicadores de tools
+precondiciones:
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - El cálculo de indicadores corrió para el período (cron de KPIs)
+flujo_principal:
+  - paso: Entra al tablero de indicadores de tools
+    resultado: Entre las cajas de Mantenimiento ve el tiempo medio de reparación (MTTR), el tiempo medio hasta la falla (MTTF), el tiempo medio entre fallas (MTBF), en horas, y la confiabilidad de los equipos, en porcentaje
+validaciones:
+  - Los indicadores se calculan por mes y por empresa
+  - Las órdenes sin lanzar no afectan ningún indicador
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-042.indicadores.spec.ts
+notas:
+  - "Comportamiento decidido por el PM en la migración (E61): solo los indicadores que hoy se usan; los de órdenes quedan afuera hasta consultarlo con un experto. Validación del caso pendiente en el PR."
+  - El cálculo (`kpi-mantenimiento.sql`) y el menú hay que repetirlos en TEST y producción.

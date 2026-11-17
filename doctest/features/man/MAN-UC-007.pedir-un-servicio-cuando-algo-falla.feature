@@ -1,5 +1,5 @@
 # ⚠️ Generado por generators/catalog-to-feature.ts — no editar a mano.
-# Fuente: catalogo/man/MAN-UC-007.yaml (versión 1.0, validado 2026-08-26).
+# Fuente: catalogo/man/MAN-UC-007.yaml (versión 2.0, validado 2026-11-03).
 # Si algo está mal, se corrige el caso y se regenera con `npm run features`.
 # Test que lo implementa: tests/e2e/specs/man/MAN-UC-007.solicitud-servicio.spec.ts
 
@@ -10,7 +10,8 @@ Característica: Pedir un servicio cuando algo falla
   Dónde: Mantenimiento → Solicitud de Servicio
 
   Antecedentes:
-    Dado Sesión iniciada en AssetPlanner con perfil Solicitante
+    Dado Sesión iniciada en Tools (ingreso de DNATO) con perfil Solicitante
+    Y La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
     Y El equipo que falla está dado de alta (MAN-UC-002). **Una empresa recién creada no tiene ninguno**
 
   Escenario: Camino principal
@@ -28,3 +29,5 @@ Característica: Pedir un servicio cuando algo falla
   # Reglas que este caso verifica:
   #   - Puede pedir un servicio cualquier usuario con el rol *Solicitante de Mantenimiento* en Bonita
   #   - La solicitud queda asociada al equipo y al solicitante
+  #   - La solicitud y su caso de Bonita se crean en una sola operación: si Bonita falla, no queda una solicitud sin caso (E22)
+  #   - Solo se puede pedir un servicio sobre un equipo de la empresa de la sesión

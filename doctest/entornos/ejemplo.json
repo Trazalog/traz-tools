@@ -1,0 +1,21 @@
+{
+  "entorno": "demo",
+  "creado": "2026-11-02T18:00:00.000Z",
+  "modo": "casi-full",
+  "empresa1": {
+    "nombre": "DocTest Ciclo 2611021800",
+    "dominio": "dt2611021800.com",
+    "admin": { "usuario": "nombre.de.la.casilla@gmail.com", "clave": "<la de DOCTEST_SEED_PASSWORD>" }
+  },
+  "empresa2": {
+    "nombre": "DocTest Ciclo 2611021805",
+    "dominio": "dt2611021805.com",
+    "admin": { "usuario": "nombre.de.lacasilla@gmail.com", "clave": "<la de DOCTEST_SEED_PASSWORD>" }
+  },
+  "man": { "usuario": "nombre.de.la.casilla@gmail.com", "clave": "<la de DOCTEST_SEED_PASSWORD>" },
+  "alm": {
+    "solicitante": { "usuario": "usuario@dt2611021800.com", "clave": "12345" },
+    "almacen": { "usuario": "almacen@dt2611021800.com", "clave": "12345" }
+  },
+  "sembrado": { "equipoCodigo": "EQ-1234567", "herramientaCodigo": "HRR-1234567" }
+}

@@ -3,42 +3,55 @@ modulo: MAN
 titulo: Verificar el informe y dar la conformidad
 perfil: Supervisor
 estado: validado
-version: "1.0"
+version: "2.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Tarea.php
-    detalle: "verificarInforme() y prestarConformidad() — las dos tareas del proceso de Bonita"
+  - repo: traz-tools-man
+    path: controllers/Tarea.php
+    detalle: verificarInforme() y prestarConformidad() — las dos tareas del proceso de Bonita
+  - repo: traz-tools-man
+    path: views/tareas/view_verifica_informe.php
+    detalle: con la pestaña Herramientas e Insumos (rol Supervisor)
+  - repo: traz-tools-man
+    path: views/tareas/view_presta_conformidad.php
+    detalle: con la pestaña Herramientas e Insumos en lectura
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: POST /tools/man/bandeja/tarea/verificar y /bandeja/tarea/conformidad (E31)
 pantallas:
-  - "Mantenimiento → Informe de Servicios"
-  - "Mis Tareas"
+  - Mis Tareas → Verifica Informe de Servicio
+  - Mis Tareas → Presta conformidad
 precondiciones:
-  - Sesión iniciada en AssetPlanner
-  - Hay un informe de servicio cargado
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - Hay un informe de servicio cargado (MAN-UC-012) y la tarea de verificación está en la bandeja del Supervisor
 produce:
   - "La conformidad del solicitante: `CN` si la acepta. Si la rechaza, **la solicitud vuelve a `S`** y el circuito se reabre"
 depende_de:
   - MAN-UC-012
 flujo_principal:
-  - paso: "Filtra los informes por estado para ver los pendientes de verificar"
-    resultado: "El listado muestra los que esperan revisión"
-  - paso: "Abre uno y usa 'Verificar'"
-    resultado: "Se muestra qué se hizo, quiénes trabajaron y qué materiales se pidieron"
-  - paso: "Aprueba o rechaza"
-    resultado: "Si aprueba, el informe pasa a la conformidad del solicitante"
-  - paso: "El solicitante presta conformidad"
-    resultado: "La orden de trabajo queda cerrada"
+  - paso: Abre la tarea "Verifica Informe de Servicio" desde su bandeja
+    resultado: Se muestra qué se hizo, quiénes trabajaron y, en Herramientas e Insumos, el pedido, las entregas y las herramientas usadas
+  - paso: Si hace falta, corrige los vales asociados (MAN-UC-039)
+    resultado: Puede asociar vales sin filtrar por DNI y quitar también los que asoció el pañolero
+  - paso: Aprueba o rechaza
+    resultado: Si aprueba, la orden pasa a `CE` y la conformidad le llega al solicitante; si rechaza, el informe vuelve al Mantenedor
+  - paso: El solicitante abre "Presta conformidad" y la da
+    resultado: Ve el informe y la pestaña Herramientas e Insumos en lectura; la orden queda Conforme (`CN`) y el caso se cierra
 validaciones:
-  - "Al verificar, el supervisor ve las entregas del pedido y las herramientas usadas; puede asociar vales sin filtro de DNI y quitar los que asoció el pañolero (def. 8)"
-  - "Si el Supervisor rechaza el informe, **vuelve al Mantenedor** para que lo corrija y lo presente de nuevo"
+  - Al verificar, el Supervisor ve las entregas del pedido y las herramientas usadas; puede asociar vales sin filtro de DNI y quitar los que asoció el pañolero (def. 8, confirmado por el PM el 2026-11-03)
+  - Si el Supervisor rechaza el informe, **vuelve al Mantenedor** para que lo corrija y lo presente de nuevo
   - "Si el Solicitante no presta conformidad, la solicitud **vuelve al análisis del Supervisor**: no queda marcada como no conforme, reabre el circuito"
   - "Son dos aprobaciones distintas: la del supervisor sobre el trabajo, y la del solicitante que pidió el servicio"
 dudas: []
 derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-030.ciclo-ot.spec.ts
   ayuda: ayudas/src/man/manual_mantenimiento.html#s08
 notas:
   - "**Son los dos únicos puntos donde el proceso retrocede**, y por eso un mismo trabajo puede recorrerse más de una vez. Ver `doc/man/proceso-mantenimiento.md`."
   - "En el código: al verificar el informe la orden pasa a `CE` (Cerrada); al prestar conformidad, a `CN` (Conforme). Si el solicitante rechaza, el estado vuelve a `S` (Solicitada) — el mismo con el que nació."
-  - "Es distinta de la aprobación del **pedido de materiales**, que la hace el almacenero y vive en el circuito de Almacenes."
+  - Es distinta de la aprobación del **pedido de materiales**, que la hace el almacenero y vive en el circuito de Almacenes.
   - "El manual de ayuda existente le dedica una sección (s09) con los dos pasos: *Supervisor verifica el informe* y *Solicitante presta conformidad*."
+  - Rechazar el informe de una orden sin responsable informa un error aunque Bonita ya avanzó (H39).
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

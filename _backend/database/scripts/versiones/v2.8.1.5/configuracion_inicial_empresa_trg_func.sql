@@ -1,3 +1,7 @@
+-- ⚠️ NO APLICAR EN TEST NI EN PRODUCCION (2026-11-16). Esta version se armo desde la base de desarrollo y le
+-- falta el bloque que clona el formulario "Entrega Materiales" de la empresa 9000, que produccion tiene desde
+-- v2.8.1.3. La reemplaza v2.8.1.7 (rama develop-v3.5), que tiene los dos bloques. Ver
+-- doc/migracion/ANALISIS-IMPACTO-NUCLEO-MIG.md, punto 3.
 -- Objetivo: las empresas nuevas reciben el menu de Mantenimiento (H46). Agrega un bloque a
 -- core.configuracion_inicial_empresa_trg; el resto de la funcion queda igual a la base de desarrollo.
 -- Aplicado en desarrollo el 2026-11-04. Falta TEST y PRODUCCION. Ver doc/migracion/MENU-MAN.md.

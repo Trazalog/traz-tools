@@ -23,6 +23,13 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 cargarEnv({ path: resolve(HERE, '..', '..', '.env'), quiet: true });
 
 export default async function globalSetup(_config: FullConfig): Promise<void> {
+  // La preparación del ambiente (`npm run doctest -- casi-full|full`) crea las empresas
+  // desde cero: todavía no hay con quién iniciar sesión, y las credenciales viejas del
+  // perfil o del .env pueden apuntar a empresas que ya no sirven.
+  if (process.env.DOCTEST_SALTAR_SESIONES === '1') {
+    console.log('  · preparación del ambiente: se omite el ingreso previo');
+    return;
+  }
   const navegador = await chromium.launch();
   try {
     for (const empresa of EMPRESAS) {

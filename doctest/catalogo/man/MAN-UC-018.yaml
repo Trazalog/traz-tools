@@ -3,36 +3,39 @@ modulo: MAN
 titulo: Definir un mantenimiento predictivo
 perfil: Planificador
 estado: validado
-version: "1.0"
+version: "2.0"
 origen: baseline
-fecha_validacion: 2026-08-26
+fecha_validacion: 2026-11-03
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Predictivo.php
-  - repo: traz-prod-assetplanner
-    path: application/models/Predictivos.php
-    detalle: "tbl_predictivo + sus tablas de insumos y herramientas"
+  - repo: traz-tools-man
+    path: controllers/Predictivo.php
+  - repo: traz-tools-man
+    path: models/Predictivos.php
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: POST /tools/man/predictivo (E20)
 pantallas:
-  - "Mantenimiento → Predictivo"
+  - Mantenimiento → Predictivo
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - El equipo tiene parámetros configurados y lecturas cargadas
 produce:
-  - "Un plan de mantenimiento predictivo, que genera trabajo cuando la lectura cruza el límite"
+  - Un plan de mantenimiento predictivo, que genera trabajo cuando la lectura cruza el límite
 depende_de:
   - MAN-UC-016
 flujo_principal:
-  - paso: "Entra a Mantenimiento → Predictivo"
-    resultado: "Se listan los predictivos con Id, Equipo, Tarea, Fecha, Período, Cantidad y Horas Hombre"
+  - paso: Entra a Mantenimiento → Predictivo
+    resultado: Se listan los predictivos con Id, Equipo, Tarea, Fecha, Período, Cantidad y Horas Hombre
   - paso: "Crea uno nuevo: elige el equipo y la tarea"
-    resultado: "Queda definido el trabajo"
-  - paso: "Define el período y la cantidad que lo dispara"
-    resultado: "Queda definido cuándo corresponde hacerlo"
-  - paso: "Declara herramientas e insumos"
-    resultado: "Quedan asociados, igual que en el preventivo"
+    resultado: Queda definido el trabajo
+  - paso: Define el período y la cantidad que lo dispara
+    resultado: Queda definido cuándo corresponde hacerlo
+  - paso: Declara herramientas e insumos
+    resultado: Quedan asociados, igual que en el preventivo
 validaciones:
-  - "Las herramientas e insumos quedan declarados, no pedidos — igual que en el preventivo"
-  - "Las herramientas y los insumos quedan declarados, no pedidos"
+  - Las herramientas e insumos quedan declarados, no pedidos — igual que en el preventivo
+  - Las herramientas y los insumos quedan declarados, no pedidos
 dudas: []
 derivados:
   test_e2e: tests/e2e/specs/man/MAN-UC-014-018.planes.spec.ts
@@ -40,3 +43,4 @@ derivados:
 notas:
   - "**Preventivo y predictivo, la diferencia en criollo:** el preventivo se hace **cada tanto** —por tiempo o por uso—, aunque el equipo esté perfecto. El predictivo se hace **cuando el equipo avisa**: se le mide algo —temperatura, vibración, presión— y se interviene cuando ese valor se sale de lo normal. Uno va por calendario, el otro por síntoma."
   - "Por eso el predictivo necesita dos cosas que el preventivo no: **parámetros configurados** en el equipo (MAN-UC-016) y **lecturas cargadas** (MAN-UC-017). Sin eso, no tiene con qué compararse."
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.
