@@ -1,0 +1,65 @@
+id: ADM-UC-272
+modulo: ADM
+titulo: Verificar que el ambiente quedó listo antes del cambio
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-016-administracion-migracion-completa.md
+    detalle: "secciones 'Verificación final (M-8, CP-M1)' y 'Lo que el corte final tiene que resolver'"
+  - repo: traz-tools
+    path: requerimientos/REQ-009-administracion-menus.md
+    detalle: "'Comparación M-8 antes de encender' (rama feature/req-009-administracion-menus)"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-M1 Menú equivalente"
+pantallas:
+  - "Terminal con acceso a la base del ambiente (informe de verificación)"
+precondiciones:
+  - "La copia del ambiente tiene corrido el orden completo (ADM-UC-271)"
+  - "Bruno (Supervisor de MinTest_SJ) hoy ve en Tools Mantenimiento, Almacenes y Herramientas"
+flujo_principal:
+  - paso: "Corre el script de verificación en la copia"
+    resultado: "Sale el informe con cada verificación: menú, plan, membresías, funcionalidades, superusuario, variables y herramientas del agente"
+  - paso: "Lee la parte del menú"
+    resultado: "Para cada usuario compara lo que hoy ve en Tools con el menú nuevo y lista 0 diferencias sin justificar"
+  - paso: "Lee las diferencias justificadas"
+    resultado: "Cada una dice su motivo: regla 'todos los hijos', opción despublicada o membresía sin empresa"
+  - paso: "Lee el final del informe"
+    resultado: "Dice 'Ambiente listo'"
+flujos_alternativos:
+  - nombre: "Una diferencia sin justificar"
+    pasos:
+      - paso: "En la copia se saca a mano una funcionalidad del plan 'Completo' y se corre la verificación"
+        resultado: "El informe lista, por usuario, la opción que 'falta en el nuevo' y termina con 'Ambiente no listo'"
+  - nombre: "Empresa sin plan"
+    pasos:
+      - paso: "Se registra una empresa por DNATO después de M-3 y se corre la verificación"
+        resultado: "El informe la lista en 'Plan' y dice 'Ambiente no listo' hasta correr M-3 de nuevo"
+  - nombre: "Sin superusuario"
+    pasos:
+      - paso: "En una copia sin M-6 se corre la verificación"
+        resultado: "El informe dice que no hay ningún superusuario y 'Ambiente no listo'"
+  - nombre: "Solo lectura"
+    pasos:
+      - paso: "Se compara la base antes y después de correr la verificación"
+        resultado: "No cambió nada"
+validaciones:
+  - "El menú de cada usuario es el mismo en v2 y en v3, salvo diferencias justificadas con su motivo"
+  - "Toda empresa tiene plan"
+  - "Toda membresía tiene estado y se listan las que no resuelven empresa"
+  - "Hay al menos un superusuario"
+  - "Están todas las variables de sistema"
+  - "El informe dice 'Ambiente listo' solo si pasa todo"
+  - "La verificación no cambia ningún dato"
+datos_prueba:
+  ambiente: "copia de DEMO con el orden completo corrido"
+dudas:
+  - "El corte final (redirigir DNATO al módulo y apagarlo): ¿va acá como una función más o queda aparte? Propuesta: aparte, en un REQ-018 (REQ-017 ahora es Formularios globales en Tools) con su propio análisis de impacto, porque toca todas las direcciones de ingreso de Tools (constante DNATO en Dash.php, Login.php, login_helper.php y sesion_helper.php) y porque el token del agente lo sigue emitiendo DNATO (ADR-008): apagar DNATO es mover identidad, que va a workshop. Este requerimiento deja el informe 'Ambiente listo' como condición para empezarlo."
+  - "¿Qué diferencias de menú se aceptan como justificadas? CP-M1 nombra tres motivos. Propuesta: solo esos tres; cualquier otra es 'sin justificar' y frena."
+  - "¿Se exige 'Ambiente listo' también para encender menu_resuelto_en_tools (REQ-009 pedía solo la comparación de menú)? Propuesta: sí, el informe completo, porque una empresa sin plan o sin funcionalidades activas también cambiaría el menú."
+derivados: {}
+notas:
+  - "Cubre CP-M1 (M-8) en cada ambiente con la comparación de REQ-009 (ADM-UC-135), más las verificaciones de M-3 a M-7."

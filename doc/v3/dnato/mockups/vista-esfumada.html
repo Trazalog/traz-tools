@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Vista de presentación (opción de otro plan)</title>
+<!--
+  MAQUETA DNATO v3 — Vista de presentación (opción de otro plan)
+  Casos de uso: CU-50
+  Requerimientos: RF-64, RF-91, RF-92, RNF-07
+  Dónde se construye: DNATO
+  Layout: tools ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-50" data-rf="RF-64, RF-91, RF-92, RNF-07" data-donde="DNATO" data-layout="tools">
+<div class="shell tools">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Tools</span></div>
+    <nav class="nav"><div class="group">Mantenimiento</div>
+<a href="#" class=""><span class="ico">🛠️</span>Equipos</a>
+<a href="#" class=""><span class="ico">📋</span>Órdenes de trabajo</a>
+<a href="#" class=""><span class="ico">📈</span>Indicadores</a>
+<div class="group">Almacenes</div>
+<a href="#" class=""><span class="ico">📦</span>Stock</a>
+<a href="vista-esfumada.html" class="other"><span class="ico">🔁</span>Ajustes de stock<span class="plan-ico" title="Incluido en el plan Team">🥈</span></a>
+<div class="group">Procesos</div>
+<a href="vista-esfumada.html" class="other active"><span class="ico">🔀</span>Procesos<span class="plan-ico" title="Incluido en el plan Business">🥇</span></a>
+<div class="group">Producción</div>
+<a href="vista-esfumada.html" class="other"><span class="ico">🏭</span>Producción<span class="plan-ico" title="Incluido en el plan Business">🥇</span></a>
+<div class="hint">menú resuelto · lo dibuja traz-tools · lo de otro plan queda en su lugar, sombreado</div></nav>
+    <div class="foot">Bruno Díaz · Supervisor</div>
+  </aside>
+  <header class="topbar">
+    <div class="crumbs">Procesos</div>
+    <div class="spacer"></div>
+    <div class="empresa-sel"><span class="av">MT</span>MinTest_SJ <span class="badge" title="Plan Free">🥉 Free</span><span class="caret">▾</span></div>
+    <div class="user"><span class="av">BR</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Procesos</h1><div class="sub">Incluido en el plan 🥇 Business</div></div></div>
+<div class="blur-wrap card">
+  <div class="fake" style="padding:20px">
+    <div class="grid g4 mb"><div class="card kpi"><div class="l">Procesos activos</div><div class="v">00</div></div><div class="card kpi"><div class="l">Pendientes de aprobar</div><div class="v">00</div></div><div class="card kpi"><div class="l">Vencidos</div><div class="v">00</div></div><div class="card kpi"><div class="l">Cumplimiento</div><div class="v">00 %</div></div></div>
+    <table class="tbl"><tr><th>Proceso</th><th>Estado</th><th>Responsable</th><th>Vence</th></tr><tr><td>Permiso de trabajo A</td><td>En curso</td><td>Sucursal A</td><td>00/00</td></tr><tr><td>Inspección B</td><td>Aprobado</td><td>Sucursal B</td><td>00/00</td></tr><tr><td>Incidente C</td><td>Pendiente</td><td>Sucursal C</td><td>00/00</td></tr><tr><td>Permiso de trabajo D</td><td>En curso</td><td>Sucursal A</td><td>00/00</td></tr></table>
+  </div>
+  <div class="cover"><div class="cardx stack">
+    <div class="ico">🥇</div>
+    <h2>Procesos</h2>
+    <div class="badge" style="margin:0 auto">No está en tu plan Free · está incluido en el plan Business</div>
+    <p>Diseñá y ejecutá tus procesos (permisos de trabajo, inspecciones, reportes de incidentes) con aprobaciones y trazabilidad.</p>
+    <button class="btn primary" style="justify-content:center">👍 Me interesa</button>
+    <small class="muted">Le avisamos a tu administrador para que pida el cambio de plan. Ya avisaste el 27/10.</small>
+  </div></div>
+</div>
+<div class="alert danger mt"><span>⏰</span><div><div class="t">Variante "plan vencido" (CP-19)</div>Cuando el plan gratuito / de prueba de la empresa venció, TODAS las opciones del menú se ven así y el cartel dice: <b>"El período de prueba de tu empresa terminó"</b> · "Pedile a tu administrador que elija un plan" · botón <b>Me interesa</b>. El ícono es el del plan no gratuito más bajo que incluye la opción.</div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> dentro de Tools: la opción 'Procesos' queda en su lugar jerárquico del menú, sombreada, en cursiva y con el ícono del plan (RF-64, lo dibuja traz-tools). Al hacer clic, traz-tools abre esta página de DNATO: la funcionalidad sombreada con datos de relleno y la invitación a cambiar de plan. El servidor no envía datos reales.</div>
+</body>
+</html>

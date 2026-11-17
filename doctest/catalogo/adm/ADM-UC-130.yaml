@@ -1,0 +1,91 @@
+id: ADM-UC-130
+modulo: ADM
+titulo: Armar un menú para la empresa
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-009-administracion-menus.md
+    detalle: "sección 'Qué es un menú'; se completa con el controlador y la vista de Menús al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/empresa-menus.html
+    detalle: "pestaña Constructor: Mis menús, árbol y panel 'Funcionalidades activas'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-60, RF-61; CU-32"
+pantallas:
+  - "Portal de la empresa → Menús → Constructor (dirección traz-comp-adm/portal/menus)"
+precondiciones:
+  - Usuario con sesión iniciada, administrador de la empresa activa
+  - "La empresa tiene activas Equipos, Alta de equipo, Órdenes de trabajo, Stock, Herramientas e 'IA: consultar equipos'; Indicadores sin activar; Ajustes de stock y Procesos son de otros planes; Preventivos sin publicar"
+  - "Ya existe el menú 'Operación'"
+flujo_principal:
+  - paso: "Abre 'Menús' en el menú del Portal"
+    resultado: "Ve 'Mis menús' con 'Predeterminado' (automático, con quién lo ve) y 'Operación'"
+  - paso: "Toca '＋ Nuevo menú', escribe el nombre Taller y la descripción"
+    resultado: "Ve el árbol vacío con '＋ Nuevo grupo' y el panel 'Funcionalidades activas' agrupado por módulo"
+  - paso: "Agrega el grupo 'Mi trabajo' y arrastra Equipos y Órdenes de trabajo desde el panel"
+    resultado: "El grupo tiene las dos opciones en ese orden"
+  - paso: "Toca '✎' en Equipos y le pone la etiqueta 'Equipos del taller'"
+    resultado: "La opción muestra '· etiqueta: Equipos del taller'"
+  - paso: "Toca 'Guardar'"
+    resultado: "Ve 'Guardado ✓'; Taller aparece en 'Mis menús' y la auditoría tiene menu.crear"
+flujos_alternativos:
+  - nombre: "El panel solo ofrece lo que se puede usar"
+    pasos:
+      - paso: "Mira el panel de funcionalidades"
+        resultado: "No están Ajustes de stock, Procesos, Indicadores, Preventivos ni 'IA: consultar equipos'; el pie dice 'Solo lo activo de tu plan, de tipo pantalla o acción. Las herramientas de IA no entran en menús.' con 'Lo que trae tu plan →'"
+  - nombre: "Agregar algo que no se puede (pedido directo)"
+    pasos:
+      - paso: "Manda directo al servidor un menú con Procesos o con 'IA: consultar equipos'"
+        resultado: "El servidor lo rechaza con 'Esa funcionalidad no se puede agregar a un menú.' y no guarda"
+  - nombre: "Menú vacío"
+    pasos:
+      - paso: "Crea un menú sin ninguna opción y toca 'Guardar'"
+        resultado: "Ve 'Agregá al menos una opción' y no se guarda"
+  - nombre: "Nombre repetido"
+    pasos:
+      - paso: "Crea otro menú con el nombre Operación"
+        resultado: "Ve 'Ya tenés un menú con ese nombre' y no se guarda"
+  - nombre: "Duplicar"
+    pasos:
+      - paso: "Elige Operación y toca '⧉ Duplicar'"
+        resultado: "Aparece 'Operación (copia)' con el mismo árbol y sin nadie que lo vea"
+  - nombre: "Predeterminado"
+    pasos:
+      - paso: "Elige 'Predeterminado'"
+        resultado: "Lo ve sin poder editarlo ni borrarlo: es lo activo agrupado por módulo, en el orden de Funcionalidades"
+  - nombre: "Borrar un menú"
+    pasos:
+      - paso: "Elige 'Operación (copia)', toca '🗑 Borrar menú' y confirma"
+        resultado: "Desaparece de 'Mis menús'; la auditoría tiene menu.baja"
+  - nombre: "Menú de otra empresa"
+    pasos:
+      - paso: "Pide editar un menú poniendo en la dirección el número de un menú de otra empresa"
+        resultado: "Ve 'Esa página no existe.' y no ve nada de ese menú"
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "Un usuario sin rol de administrador entra a la dirección de Menús"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Solo el administrador de la empresa activa arma menús"
+  - "El panel ofrece solo funcionalidades activas, del plan y de tipo pantalla o acción; el servidor rechaza lo demás"
+  - "Un menú tiene al menos una opción"
+  - "El nombre es único en la empresa"
+  - "Duplicar copia el árbol sin asignaciones"
+  - "El predeterminado no se edita ni se borra"
+  - "Un menú de otra empresa responde 'no existe'"
+  - "Cada alta, cambio, copia y baja queda en la auditoría"
+datos_prueba:
+  empresa: "empresa de prueba con funcionalidades activas cargadas (M-4 o a mano) y planes de REQ-005"
+dudas:
+  - "Borrar un menú que tiene roles o personas asignadas: la especificación pide la baja pero no qué pasa con quienes lo ven. Propuesta: aviso 'Lo ven N personas. Si lo borrás, pasan a ver el menú de su rol o el predeterminado. ¿Continuar?', se quitan sus asignaciones y la baja es lógica."
+  - "¿El ícono de un grupo se elige de core.iconos, como las opciones del catálogo? La maqueta muestra emojis. Propuesta: de core.iconos, igual que el catálogo (REQ-005)."
+  - "¿Una misma funcionalidad puede estar dos veces en un menú (en dos grupos)? Propuesta: no; el panel la marca como ya usada y el servidor lo rechaza."
+  - "El enlace 'Lo que trae tu plan →' lleva a Mi empresa → Plan, que llega con REQ-010. Propuesta: hasta entonces lleva a Funcionalidades."
+derivados: {}
+notas:
+  - "Cubre CP-60, CP-61, CP-62, CP-63, CP-68 y la parte de CP-53 sobre el constructor (las herramientas de IA no están en el panel)."
+  - "Lo que se arma acá no se ve todavía en el menú de Tools: se ve con 'Ver como…' (ADM-UC-132)."

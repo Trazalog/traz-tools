@@ -1,0 +1,70 @@
+id: ADM-UC-010
+modulo: ADM
+titulo: Entrar sin sesión solo a las páginas públicas de identidad del módulo
+perfil: Visitante
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-003-administracion-identidad.md
+    detalle: "lista pública del controlador base; se completa con los controladores main y register del módulo al programar"
+  - repo: traz-tools
+    path: doc/v3/administracion/ANALISIS_INICIAL.md
+    detalle: "C.1 (qué se copia) y C.2 (lista pública)"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "RF-01 (se mantienen como están) y RF-06 / C-2 (nada abierto de más)"
+pantallas:
+  - "Ingreso del módulo (dirección traz-comp-adm/main/login)"
+  - "Registro Nuevo Usuario (traz-comp-adm/main/register)"
+  - "Recuperar Contraseña (traz-comp-adm/main/forgot)"
+precondiciones:
+  - Sin sesión iniciada
+  - El módulo Administración está montado en Tools (REQ-002)
+flujo_principal:
+  - paso: "Sin haber iniciado sesión, abre la dirección del ingreso del módulo"
+    resultado: "Se muestra la pantalla 'Bienvenido' con los campos de correo y contraseña, igual a la de DNATO"
+  - paso: "Toca 'Registrese por favor'"
+    resultado: "Se muestra 'Registro Nuevo Usuario', igual al de DNATO, dentro de la dirección del módulo"
+  - paso: "Vuelve al ingreso y toca 'Recupere contraseña'"
+    resultado: "Se muestra 'Recuperar Contraseña', dentro de la dirección del módulo"
+flujos_alternativos:
+  - nombre: "Pantalla del módulo que no es pública"
+    pasos:
+      - paso: "Sin sesión, abre la dirección del Portal de la empresa (traz-comp-adm/portal)"
+        resultado: "Lo lleva al ingreso del módulo (no al de DNATO) y no ve nada del Portal"
+  - nombre: "Método auxiliar del registro"
+    pasos:
+      - paso: "Sin sesión, abre por dirección directa traz-comp-adm/main/procesarRegistro"
+        resultado: "Ve 'Esa página no existe.' y no se crea ninguna cuenta"
+  - nombre: "Pantalla de DNATO que no se copió"
+    pasos:
+      - paso: "Sin sesión, abre traz-comp-adm/main/users"
+        resultado: "Ve 'Esa página no existe.'"
+  - nombre: "Envío sin código de seguridad"
+    pasos:
+      - paso: "Envía el formulario de ingreso del módulo desde otra página, sin el código de seguridad"
+        resultado: "Ve 'La página venció. Volvé a cargarla e intentá de nuevo.' y no inicia sesión"
+  - nombre: "Ya tiene sesión"
+    pasos:
+      - paso: "Con la sesión abierta, abre la dirección del ingreso del módulo"
+        resultado: "Lo lleva al tablero de Tools sin mostrar el ingreso, igual que DNATO"
+validaciones:
+  - "Sin sesión solo se entra a las páginas de la lista pública: ingreso, elección de empresa, salida, registro, activación, recuperación y los pasos de alta de empresa"
+  - "Una pantalla del módulo que no es pública manda al ingreso del módulo"
+  - "Ningún método auxiliar de la copia se puede abrir desde el navegador"
+  - "Lo que no se copió de DNATO no existe en el módulo"
+  - "Todo envío, también los de las páginas públicas, exige el código de seguridad"
+  - "Con sesión abierta, el ingreso manda al tablero de Tools"
+datos_prueba:
+  direccion_ingreso_copia: "valor de la variable de identidad de DocTest del ambiente"
+dudas:
+  - "Los pasos de alta de empresa (register_success, crearEmpresa, guardarEmpresa, registro_completo y los pedidos de provincias y localidades) se usan con el usuario recién activado, que todavía no tiene empresa. ¿Van en la lista pública y conservan el control propio que tienen en DNATO? Propuesta: sí, copiado tal cual; el controlador base no les exige empresa."
+  - "El formulario de ingreso de DNATO no lleva código de seguridad. ¿Se agrega el del módulo como campo oculto a todos los formularios copiados? Propuesta: sí, no cambia nada visible; si algún envío del formulario de registro (que arma traz-comp-formularios) no puede llevarlo sin tocar ese módulo, Pablo lo lista en el plan y Rodolfo decide."
+  - "[SUPUESTO] DocTest elige la dirección del ingreso a probar con una variable nueva por ambiente (DOCTEST_<AMBIENTE>_URL_IDENTIDAD) que, si está vacía, usa la de DNATO. ¿Está bien ese nombre y que solo la usen DNATO-UC-001 a 008? Propuesta: sí; el ingreso del agente (DNATO-UC-009) y las pantallas de administración de DNATO siguen en la dirección de DNATO."
+derivados: {}
+notas:
+  - "Cubre CP-110 (en la copia) y CP-112."
+  - "El comportamiento de cada página pública NO se prueba acá: lo prueban DNATO-UC-001 a 008 corridos contra la copia. Este caso solo prueba qué se puede abrir sin sesión y qué no."
+  - "En DNATO, procesarRegistro, base64url_encode y base64url_decode son públicos por error (relevamiento §1.7). En la copia son privados."

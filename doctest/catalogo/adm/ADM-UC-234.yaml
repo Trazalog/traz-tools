@@ -1,0 +1,45 @@
+id: ADM-UC-234
+modulo: ADM
+titulo: Rechazar una carga con un procedimiento que no está en el catálogo
+perfil: Administrador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-014-administracion-cargas-masivas.md
+    detalle: "secciones 'Entidades de Tools — sin el procedimiento del navegador' y 'Cómo se revisa'"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-77, segunda parte"
+  - repo: traz-tools
+    path: doc/v3/dnato/DNATO_v2_RELEVAMIENTO.md
+    detalle: "§4.1, riesgos de la carga masiva (procedimiento que llega del navegador)"
+pantallas:
+  - "Portal de la empresa → 🗂️ Cargas masivas"
+precondiciones:
+  - "ana@ es administradora de MinTest_SJ; bruno@ es Supervisor"
+flujo_principal:
+  - paso: "Se manda el envío de 'Procesar carga' con 'sta.bulkload_articulos' en el lugar de la entidad"
+    resultado: "Ve 'Esa entidad no se puede cargar.', no se ejecuta ningún procedimiento y no queda nada cargado"
+  - paso: "Se manda el envío con el nombre de una función de base cualquiera"
+    resultado: "Mismo rechazo, sin ejecutar nada"
+flujos_alternativos:
+  - nombre: "Usuario que no es administrador"
+    pasos:
+      - paso: "bruno@ manda el envío de 'Procesar carga' con una entidad válida"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y no se carga nada"
+  - nombre: "Envío falsificado"
+    pasos:
+      - paso: "ana@ manda el envío sin el código de seguridad de la página"
+        resultado: "Ve 'La página venció. Volvé a cargarla e intentá de nuevo.' y no se carga nada"
+validaciones:
+  - "Una entidad que no está en el catálogo se rechaza sin ejecutar nada"
+  - "Solo el administrador puede cargar, aunque mande el envío a mano"
+  - "Sin el código de seguridad no se carga nada"
+datos_prueba: {}
+dudas:
+  - "El rechazo pasa en la base (la función busca la entidad en el catálogo). ¿Querés además que el módulo lo controle antes de llamar? Propuesta: sí, las dos cosas, así el log del módulo registra el intento con el correo."
+derivados: {}
+notas:
+  - "Cubre CP-77 (procedimiento fuera del catálogo) y los riesgos 1 y 2 del relevamiento de la carga masiva (H-029)."

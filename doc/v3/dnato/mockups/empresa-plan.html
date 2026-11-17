@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Plan y comparativa</title>
+<!--
+  MAQUETA DNATO v3 — Plan y comparativa
+  Casos de uso: CU-42
+  Requerimientos: RF-30, RF-32, RF-33, RF-93
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-42" data-rf="RF-30, RF-32, RF-33, RF-93" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=""><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=""><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=""><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=" active"><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=""><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=""><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=""><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Plan</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Plan</h1><div class="sub">Los cambios de plan los aprueba Trazalog. El cobro se maneja aparte. Si bajás de plan, tus datos se conservan.</div></div></div>
+
+<div class="alert info mb" style="display:none"><span>⏳</span><div><div class="t">Pediste pasar al plan Team</div>Trazalog lo está revisando; te avisamos por correo.</div><div class="actions"><button class="btn sm">Cancelar pedido</button></div></div>
+<div class="alert danger mb"><span>⏰</span><div><div class="t">Estado "plan vencido" (ejemplo): Tu período de prueba terminó el 31/10</div>Tus usuarios pueden entrar, pero todas las pantallas están fuera de plan hasta que pases a un plan. Los planes gratuitos o de prueba se usan una sola vez. Elegí un plan abajo y Trazalog lo activa al aprobarlo.</div></div>
+
+<div class="card cmp"><table class="tbl">
+<tr><th style="width:34%">Qué incluye</th><th class="plan cur">🥉 Free<div class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">Tu plan actual</div></th><th class="plan">🥈 Team<div class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">USD 79 / mes</div></th><th class="plan">🥇 Business<div class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">USD 179 / mes</div></th><th class="plan">💠 Enterprise<div class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">Consultar</div></th></tr>
+<tr><td><b>Usuarios</b></td><td class="c cur">hasta 5</td><td class="c new">hasta 15</td><td class="c new">hasta 40</td><td class="c new">sin límite</td></tr>
+<tr><td><b>Consultas de IA</b></td><td class="c cur">30 por semana</td><td class="c new">1.000 por mes</td><td class="c new">4.000 por mes</td><td class="c new">sin límite</td></tr>
+<tr><td colspan="5" class="muted" style="background:var(--gray-5);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em">Mantenimiento</td></tr><tr><td>🛠️ Equipos</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td>➕ Alta de equipo</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td>📋 Órdenes de trabajo</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td>📈 Indicadores de mantenimiento</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td colspan="5" class="muted" style="background:var(--gray-5);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em">Almacenes</td></tr><tr><td>📦 Stock</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td>🔁 Ajustes de stock</td><td class="c cur">—</td><td class="c new">✔</td><td class="c new">✔</td><td class="c new">✔</td></tr><tr><td colspan="5" class="muted" style="background:var(--gray-5);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em">Herramientas (Pañol)</td></tr><tr><td>🔧 Herramientas</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td>📋 Préstamos y devoluciones</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td colspan="5" class="muted" style="background:var(--gray-5);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em">Procesos y producción</td></tr><tr><td>🔀 Procesos (BPM)</td><td class="c cur">—</td><td class="c">—</td><td class="c new">✔</td><td class="c new">✔</td></tr><tr><td>🏭 Producción</td><td class="c cur">—</td><td class="c">—</td><td class="c new">✔</td><td class="c new">✔</td></tr><tr><td colspan="5" class="muted" style="background:var(--gray-5);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em">IA (herramientas MCP)</td></tr><tr><td>🤖 Consultar equipos</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td>🤖 Consultar órdenes de trabajo</td><td class="c cur">✔</td><td class="c">✔</td><td class="c">✔</td><td class="c">✔</td></tr><tr><td>🤖 Crear orden de trabajo</td><td class="c cur">—</td><td class="c new">✔</td><td class="c new">✔</td><td class="c new">✔</td></tr>
+<tr><td></td><td class="c cur"><span class="badge dark">Tu plan actual</span><div class="muted" style="font-size:11px">gratuito · ya usado</div></td><td class="c"><button class="btn primary">Pedir cambio a Team</button></td><td class="c"><button class="btn primary">Pedir cambio a Business</button></td><td class="c"><button class="btn">Consultar</button></td></tr>
+</table></div>
+
+<div class="modal-back"><div class="modal">
+  <div class="m-h">Pedir cambio al plan 🥈 Team</div>
+  <div class="m-b stack">
+    <p>Ganás: hasta 15 usuarios, 1.000 consultas de IA por mes (hoy 30 por semana), Ajustes de stock y Crear orden de trabajo por IA.</p>
+    <div class="field"><label>Motivo (opcional)</label><textarea class="input">Necesitamos crear órdenes de trabajo por IA</textarea><span class="help">Lo ve Trazalog al revisar el pedido.</span></div>
+    <p class="muted" style="font-size:12.5px">Los cambios de plan los aprueba Trazalog. El cobro se maneja aparte. Si bajás de plan, tus datos se conservan.</p>
+  </div>
+  <div class="m-f"><button class="btn">Cancelar</button><button class="btn primary">Enviar pedido</button></div>
+</div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> las filas son las funcionalidades publicadas del catálogo (seg.menues), agrupadas por módulo; verde = lo que ganás respecto del plan actual. El aviso oculto es el estado 'pedido pendiente' (CP-30); el aviso rojo es el estado 'plan vencido' (CP-19): en ese estado la comparativa muestra solo planes no gratuitos y los gratuitos figuran 'ya usado' (CP-19b).</div>
+</body>
+</html>

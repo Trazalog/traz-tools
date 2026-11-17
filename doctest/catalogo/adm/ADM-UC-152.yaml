@@ -1,0 +1,78 @@
+id: ADM-UC-152
+modulo: ADM
+titulo: Resolver un pedido de cambio de plan
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-010-administracion-plan-y-pedidos.md
+    detalle: "secciones 'Un solo paso para cambiar el plan' y 'Resolver un pedido (CU-20, RF-31)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "ventana 'Pedido de cambio de plan · Yudica'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-20; RF-31, RF-23"
+pantallas:
+  - "Consola → Empresas → Resolver"
+  - "Consola → Ficha de empresa → Pedido pendiente"
+  - "Consola → Registros → Pedidos de plan"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "MinTest_SJ en Free con pedido pendiente a Team (motivo 'crear OT por IA'), 4 lugares usados"
+  - "Team trae además Ajustes de stock y Crear orden de trabajo, que MinTest_SJ no tenía"
+flujo_principal:
+  - paso: "En Empresas, en la fila de MinTest_SJ con 'Free → Team pendiente', toca 'Resolver'"
+    resultado: "Se abre 'Pedido de cambio de plan · MinTest_SJ' con plan actual Free y plan pedido Team (usuarios, IA), 'Pedido por Ana Pérez el <fecha> · motivo: \"crear OT por IA\"', 4 lugares usados que caben en 15, 'Motivo (opcional)' y 'Cerrar', 'Rechazar', 'Aprobar'"
+  - paso: "Escribe 'venta cerrada' y toca 'Aprobar'"
+    resultado: "Ve 'MinTest_SJ pasó a Team.' y la fila muestra Team sin pedido"
+  - paso: "La administradora abre Funcionalidades y revisa su correo"
+    resultado: "Ajustes de stock y Crear orden de trabajo aparecen 'sin activar'; recibió 'Tu pedido fue aprobado'"
+  - paso: "Se revisa la auditoría"
+    resultado: "Están pedido.aprobar y empresa.cambiar_plan con origen pedido"
+flujos_alternativos:
+  - nombre: "Rechazar"
+    pasos:
+      - paso: "Abre el pedido desde Registros → Pedidos de plan, escribe 'sin pago' y toca 'Rechazar'"
+        resultado: "MinTest_SJ sigue en Free; la administradora recibe el motivo por correo y puede pedir de nuevo; la auditoría tiene pedido.rechazar"
+  - nombre: "Plan pendiente del registro"
+    pasos:
+      - paso: "Aprueba desde Registros el alta de Matheu con 'Pedido: Team'"
+        resultado: "Matheu pasa a Team, deja de figurar 'Plan pendiente de aprobación' y el pedido queda aprobado"
+  - nombre: "Menos lugares que los usados"
+    pasos:
+      - paso: "Aprueba un pedido de Yudica (20 lugares) a un plan de 15"
+        resultado: "Ve el aviso 'Yudica usa 20 lugares y <plan> permite 15: sobran 5. No podrá invitar hasta quedar bajo el tope' y se aplica igual al confirmar"
+  - nombre: "Salir del plan vencido"
+    pasos:
+      - paso: "Aprueba el pedido de Empresa Test (plan vencido) a Business"
+        resultado: "Empresa Test vuelve a plan vigente en Business, con las funcionalidades y menús que tenía"
+  - nombre: "Pedido ya resuelto"
+    pasos:
+      - paso: "Aprueba un pedido que la administradora canceló un momento antes"
+        resultado: "Ve 'Ese pedido ya fue resuelto' y no cambia nada"
+  - nombre: "No es superusuario"
+    pasos:
+      - paso: "Un administrador manda directo la resolución de un pedido"
+        resultado: "Recibe 'sin permiso' (403) y no cambia nada"
+validaciones:
+  - "Aprobar es el mismo cambio de plan de la Consola, con origen pedido"
+  - "Lo que trae el plan nuevo y la empresa no tenía queda sin activar"
+  - "Rechazar deja el plan como estaba y la empresa puede pedir de nuevo"
+  - "Aprobar el plan pendiente del registro saca a la empresa de 'pendiente de aprobación'"
+  - "Aprobar un plan no gratuito saca a la empresa del plan vencido"
+  - "Un pedido que ya no está pendiente no se resuelve"
+  - "Solo el superusuario resuelve"
+  - "Correo a los administradores y auditoría en los dos casos"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), MinTest_SJ, Yudica, Matheu y Empresa Test, con nombres inventados"
+dudas:
+  - "CP-31 usa el asunto 'Tu pedido fue aprobado' y REQ-008 propuso 'Aprobamos tu plan <plan>' para el plan pendiente del registro, que ahora es el mismo paso. Propuesta: un solo correo 'Tu pedido fue aprobado' con el plan nuevo en el cuerpo, para los dos orígenes."
+  - "CU-20 pide mostrar el consumo de IA para ver si cabe en el plan pedido, y la cuota es REQ-011. Propuesta: la ventana muestra lugares usados acá y el consumo del período se agrega con REQ-011."
+  - "¿Se puede aprobar un pedido a un plan gratuito que la empresa ya usó (el administrador no puede pedirlo, pero el pedido podría venir de antes)? Propuesta: el botón 'Aprobar' se deshabilita con 'Ya usó un plan de prueba', igual que en el cambio directo de REQ-008."
+derivados: {}
+notas:
+  - "Cubre CP-31, CP-32 y CU-20; la aprobación del plan pendiente del registro completa CP-29 de REQ-008 con datos reales."
+  - "El recálculo del período de cuota al cambiar de plan (RF-86) se engancha a este mismo paso en REQ-011."

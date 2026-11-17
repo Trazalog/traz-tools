@@ -1,0 +1,75 @@
+id: ADM-UC-033
+modulo: ADM
+titulo: Editar las variables de sistema y volver atrás
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-004-administracion-base-y-atributos.md
+    detalle: "secciones 'Variables de sistema' y 'Pantallas'; se completa con el controlador de variables y ADMDataService al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-config.html
+    detalle: "maqueta de Consola → Variables de sistema"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-22 y RF-102"
+pantallas:
+  - "Consola → Variables de sistema"
+precondiciones:
+  - Usuario con sesión iniciada en Tools y la marca de superusuario
+  - El script de base corrió en el ambiente (las variables de RF-102 están cargadas)
+  - "validez_invitacion_dias vale 7"
+flujo_principal:
+  - paso: "En la Consola toca '⚙️ Variables de sistema'"
+    resultado: "Ve la tabla con Grupo, Clave, Valor, Última modificación y 'Historial' por fila, con las claves de la lista (validez_invitacion_dias, contacto_soporte, zona_horaria_cuotas, etc.)"
+  - paso: "Cambia validez_invitacion_dias de 7 a 10 y toca 'Guardar cambios'"
+    resultado: "Ve 'Guardamos los cambios.'; la fila muestra 10 y en Última modificación su correo y la fecha de hoy"
+  - paso: "Toca 'Historial' en validez_invitacion_dias"
+    resultado: "Ve la ventana 'Historial · validez_invitacion_dias' con el cambio de 7 a 10, su correo y la fecha"
+  - paso: "Toca 'Volver a 7'"
+    resultado: "Ve 'Volvimos validez_invitacion_dias a 7.'; la variable vale 7 y el historial tiene 2 entradas"
+flujos_alternativos:
+  - nombre: "Guardar sin cambios"
+    pasos:
+      - paso: "Toca 'Guardar cambios' sin haber cambiado ningún valor"
+        resultado: "Ve 'No hay cambios para guardar.' y el historial no cambia"
+  - nombre: "Varias a la vez"
+    pasos:
+      - paso: "Cambia contacto_soporte y aviso_cuota_porcentaje y toca 'Guardar cambios'"
+        resultado: "Las dos se guardan y cada una tiene su entrada en el historial"
+  - nombre: "No es superusuario"
+    pasos:
+      - paso: "Un administrador sin la marca entra a la dirección de Variables de sistema"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y no ve ninguna variable"
+  - nombre: "El servicio no responde"
+    pasos:
+      - paso: "Toca 'Guardar cambios' mientras el servicio de datos no responde"
+        resultado: "Ve 'No pudimos guardar. Probá de nuevo en un rato.' y ni el valor ni el historial cambian"
+  - nombre: "Quién cambió"
+    pasos:
+      - paso: "Cambia una variable enviando, además, otro correo como autor del cambio"
+        resultado: "El historial muestra su propio correo; el que vino del navegador se ignora"
+validaciones:
+  - "Solo el superusuario ve y cambia variables de sistema"
+  - "Cada cambio guarda el valor anterior, el nuevo, quién y cuándo"
+  - "Volver atrás deja el valor anterior y queda como una entrada más del historial"
+  - "Guardar sin cambios no agrega nada al historial"
+  - "Se pueden guardar varias variables juntas, cada una con su historial"
+  - "Un cambio que falla no deja ni el valor ni el historial a medias"
+  - "Quién hizo el cambio sale de la sesión"
+datos_prueba:
+  variable: "validez_invitacion_dias"
+  valor_inicial: "7"
+  valor_nuevo: "10"
+dudas:
+  - "La especificación no dice qué valores son válidos (por ejemplo, si validez_invitacion_dias acepta texto o 0). ¿Se valida algo? Propuesta: números enteros mayores que 0 para las claves _dias, _horas y _porcentaje (este, de 1 a 100); el resto, texto no vacío; el mensaje sería 'Ese valor no es válido para <clave>.'"
+  - "¿Con qué valores las carga la migración (M-7)? Hoy no existen como valores: el enlace de recuperación vence a la medianoche, no hay contacto de soporte ni precios escritos. Propuesta: los de los datos de prueba de la especificación (7 días, 24 horas, soporte@trazalog.com, 80 %, America/Argentina/San_Juan, 'USD 79 / mes', 'Consultar'), remitente register@trazalog.com (el de DNATO), monedas 'ARS, USD' [SUPUESTO], y los textos de suspensión de RF-03 y RF-04; Rodolfo los corrige antes de correr el script."
+  - "La maqueta dice texto_bloqueo_empresa y la especificación (RF-102) texto_suspension_empresa; manda la especificación. ¿Confirmás? Propuesta: texto_suspension_empresa."
+  - "La maqueta explica 'Viven en core.tablas (global, sin empresa)' y RNF-09 pide textos sin tecnicismos. Propuesta: 'Valen para toda la plataforma. Cada cambio guarda historial y se puede volver atrás.'"
+derivados: {}
+notas:
+  - "Cubre CP-102 y CU-22."
+  - "Cargar las variables no cambia ningún comportamiento: ninguna pantalla existente las lee todavía (por ejemplo, la recuperación de contraseña copiada en REQ-003 sigue igual)."
+  - "Los mensajes 'Guardamos los cambios.', 'No hay cambios para guardar.', 'Volvimos … a ….' y 'No pudimos guardar…' son propuesta: la maqueta no los trae."

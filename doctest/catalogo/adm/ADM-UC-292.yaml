@@ -1,0 +1,69 @@
+id: ADM-UC-292
+modulo: ADM
+titulo: Pasar a global el formulario de la empresa plantilla que usa el alta de empresa
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-017-administracion-formularios-globales.md
+    detalle: "secciones '(viii) Pase mínimo de la 9000 a globales' y 'Cómo se vuelve atrás'"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "§8 M-7b (solo la parte de la 9000 que usa el disparador)"
+  - repo: traz-tools
+    path: doc/v3/dnato/03_CASOS_DE_PRUEBA.md
+    detalle: "escenario CP-132 Migración (parcial)"
+pantallas:
+  - "Consola → 📝 Formularios globales"
+precondiciones:
+  - Usuario con sesión iniciada en Tools y la marca de superusuario
+  - "Copia de DEMO con el script de base de REQ-015 corrido y con 'Entrega Materiales' en la empresa plantilla 9000"
+  - "Empresa Test tiene su clon de 'Entrega Materiales' con respuestas cargadas"
+flujo_principal:
+  - paso: "Se corre el script del pase, junto con el cambio del disparador, en la copia de DEMO"
+    resultado: "El informe del script dice qué número de formulario pasó a global"
+  - paso: "Abre Consola → '📝 Formularios globales'"
+    resultado: "Ve 'Entrega Materiales' como global Publicado"
+  - paso: "Abre la pestaña 'Puntos de uso'"
+    resultado: "formulario_entrega_materiales tiene 'Entrega Materiales' como 'Global al alta'"
+  - paso: "Abre en Tools un vale de entrega viejo de Empresa Test"
+    resultado: "Se ve completo, con lo que se cargó"
+flujos_alternativos:
+  - nombre: "Solo ese formulario"
+    pasos:
+      - paso: "Se revisan los demás formularios de la 9000 (por ejemplo, el del registro)"
+        resultado: "Siguen en la 9000, sin cambios"
+      - paso: "Se revisan las listas de opciones de la 9000"
+        resultado: "Siguen en la 9000, sin cambios"
+  - nombre: "Correrlo dos veces"
+    pasos:
+      - paso: "Se corre el script otra vez"
+        resultado: "No cambia nada y lo informa"
+  - nombre: "Volver atrás"
+    pasos:
+      - paso: "Se corre la vuelta atrás en la copia de DEMO"
+        resultado: "'Entrega Materiales' vuelve a la 9000, el disparador vuelve a la versión v2.8.1.3 y un alta nueva vuelve a copiar el formulario"
+  - nombre: "Administrador de una empresa"
+    pasos:
+      - paso: "Un administrador abre Formularios en el Portal"
+        resultado: "Ve 'Entrega Materiales' en 'Globales disponibles', con 'Vista previa' y '⧉ Usar como base', sin 'Editar'"
+validaciones:
+  - "El formulario que usa el disparador queda global y publicado"
+  - "Queda marcado como 'Global al alta' de la entrega de materiales"
+  - "Ningún otro formulario ni lista de la 9000 cambia"
+  - "Las respuestas y los clones de las empresas existentes no cambian"
+  - "El script se puede correr dos veces sin efecto"
+  - "Hay vuelta atrás probada, junto con el disparador"
+  - "Un administrador ve el global pero no lo edita"
+datos_prueba:
+  plantilla: "'Entrega Materiales' de la 9000 en la copia de DEMO"
+dudas:
+  - "Si la 9000 tiene más de un 'Entrega Materiales' no eliminado, ¿se pasa solo el que usa hoy el disparador (el de número más alto)? Propuesta: sí, solo ese; los otros quedan en la 9000 y se informan en el resultado del script."
+  - "¿Quién corre el script en cada ambiente? Propuesta: Rodolfo, con el disparador nuevo y en la misma transacción, después de probarlo en la copia de DEMO; el perfil del caso es Superusuario porque es quien revisa el resultado en la Consola."
+  - "Después del pase, 'Entrega Materiales (global)' aparece en los combos de tareas estándar y etapas de todas las empresas (ADM-UC-290), y las que ya tienen su clon ven también el suyo con el mismo nombre. Propuesta: aceptarlo; si molesta, el superusuario le puede cambiar el nombre al global en la Consola sin romper el alta, porque el disparador lo busca por número."
+derivados: {}
+notas:
+  - "Cubre la parte mínima de CP-132 (RF-131): solo el formulario de la 9000 que usa el disparador. El resto de M-7b no se hace (decisión de Rodolfo del 2026-11-10)."
+  - "Cambia una fila existente de frm.formularios (empr_id pasa a vacío): lo aprueba Rodolfo."

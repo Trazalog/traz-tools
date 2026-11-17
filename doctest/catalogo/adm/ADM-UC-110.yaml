@@ -1,0 +1,68 @@
+id: ADM-UC-110
+modulo: ADM
+titulo: Ver y filtrar todas las empresas de la plataforma
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "secciones 'La empresa sobre la que se actúa' y 'Consola → Empresas'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "listado con logo, filtros, acciones en línea y exportar"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-13; RF-22"
+pantallas:
+  - "Consola → Empresas"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Empresas de prueba: MinTest_SJ (Free, activa, 5 de 5), Empresa Test (Prueba Business, vence en 2 días), Yudica (Business, con logo), Tierras de Capayán (Team, suspendida) y Matheu (Free, plan Team pendiente de aprobación, administrador sin aceptar)"
+flujo_principal:
+  - paso: "Entra a la Consola y toca '🏢 Empresas'"
+    resultado: "Ve 'Empresas', 'Todas las empresas de la plataforma, su plan y lo que requiere acción.' y una fila por empresa con logo o inicial, plan, usuarios 'N / M', estado y pedido"
+  - paso: "Toca el filtro 'Suspendidas (1)'"
+    resultado: "Ve solo Tierras de Capayán, con 'Suspendida · <fecha>' y el botón 'Reactivar'"
+  - paso: "Toca 'Por vencer (1)'"
+    resultado: "Ve solo Empresa Test, con 'vence <fecha>'"
+  - paso: "Toca 'Admin sin aceptar (1)'"
+    resultado: "Ve solo Matheu, con 'admin sin aceptar' y el botón 'Reenviar invitación'"
+  - paso: "Vuelve a 'Todas' y toca '⬇ Exportar'"
+    resultado: "Baja un archivo CSV con todas las empresas y las mismas columnas"
+flujos_alternativos:
+  - nombre: "Buscar"
+    pasos:
+      - paso: "Escribe 'yud' en '🔍 Nombre o detalle'"
+        resultado: "Ve solo Yudica, con su logo"
+  - nombre: "Ir a los usuarios de una empresa"
+    pasos:
+      - paso: "Toca '👥 Usuarios' en la fila de MinTest_SJ"
+        resultado: "Abre Usuarios de la plataforma con el filtro de empresa MinTest_SJ ya aplicado"
+  - nombre: "Plan pendiente de aprobación"
+    pasos:
+      - paso: "Toca 'Plan pendiente de aprobación (1)' y después 'Revisar' en Matheu"
+        resultado: "Abre Registros con la fila pendiente de Matheu"
+  - nombre: "Administrador que no es superusuario"
+    pasos:
+      - paso: "Un administrador de empresa abre la dirección de Empresas"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.'"
+validaciones:
+  - "Solo el superusuario ve el listado"
+  - "Logo de la empresa o su inicial"
+  - "Filtros en el servidor; exportar baja lo filtrado"
+  - "Las dadas de baja no aparecen salvo con su filtro"
+  - "Las acciones de cada fila llevan a la pantalla con la empresa ya elegida"
+  - "Usar la Consola no cambia la empresa de la sesión del superusuario"
+datos_prueba:
+  empresas: "empresas de prueba del fixture dnato_v3_base; los planes y estados se cargan a mano en la base de prueba"
+dudas:
+  - "En el Portal la empresa sale siempre de la sesión (REQ-002, regla 4); en la Consola el superusuario actúa sobre cualquier empresa, que viene de la pantalla. Propuesta: en las pantallas con permiso superusuario la empresa es un dato de la pantalla que se verifica que exista, y la empresa de la sesión nunca cambia."
+  - "¿Qué es 'Por vencer'? Propuesta: plan gratuito o de prueba que vence dentro de los días de la variable aviso_vencimiento_dias (7)."
+  - "El filtro 'Con pedido pendiente' y la columna 'Pedido' dependen de REQ-010; 'IA (período)' de REQ-011. Propuesta: se muestran con 0 y '—' hasta que existan."
+  - "Hoy el disparador de alta de empresa le da al superadministrador de la plataforma el rol Administrador en cada empresa nueva, así que ocupa un lugar del plan en todas (5 lugares de Free → 4 para la empresa). Propuesta: los superusuarios no ocupan lugar (no cuentan en R4); esto cambia la cuenta de lugares de REQ-007."
+derivados: {}
+notas:
+  - "Cubre CP-26 en la parte de filtros."
+  - "Reemplaza a empresa/listarEmpresas de DNATO (A-11, solo lectura)."

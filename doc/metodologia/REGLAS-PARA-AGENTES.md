@@ -35,6 +35,28 @@ git checkout -b feature/req-###-desc-corta
 git push origin feature/req-###-desc-corta
 ```
 
+### Módulos con repositorio propio (submódulos)
+
+Varios módulos de `application/modules/` tienen **su propio repositorio** en GitHub y Tools solo guarda
+en qué commit de ese repositorio está parado (la lista está en `.gitmodules`). El módulo Administración
+es uno: **`https://github.com/Trazalog/traz-comp-adm.git`**, en `application/modules/traz-comp-adm`.
+
+- **El código de un submódulo se commitea en SU repositorio, nunca en `traz-tools`.** Los comandos de
+  git se corren parado dentro de la carpeta del módulo (`application/modules/<módulo>/`): ahí `git`
+  habla con el repositorio del módulo.
+- Dentro del submódulo valen las mismas reglas: rama propia desde `develop` del módulo, con el mismo
+  nombre que la rama de `traz-tools` (`feature/req-###-desc-corta`), pull request a `develop` **del
+  módulo**, nunca directo a `develop` ni a `main`.
+- En `traz-tools` solo se commitea el **puntero** (la carpeta del módulo como un todo, con
+  `git add application/modules/<módulo>`), y `.gitmodules` cuando se monta un módulo nuevo.
+- Por eso un cambio en un submódulo lleva **dos pull requests**: el del módulo (con el código) y el de
+  `traz-tools` (con el puntero). En la descripción de cada uno va el enlace del otro.
+- El pull request del módulo se une **primero**. Recién después se mueve el puntero en `traz-tools` a
+  ese commit de `develop` del módulo.
+- Antes de cada commit en el módulo, `git status` **dentro** de la carpeta del módulo: si dice
+  `HEAD detached`, crear o pasar a la rama de trabajo antes de commitear (si no, el commit queda suelto
+  y se pierde).
+
 ## 2. Commits
 
 - Formato: `tipo(scope): descripción [ID]` — por ejemplo `feat(man): alta de equipo con componentes [REQ-012]`.
@@ -46,6 +68,9 @@ git push origin feature/req-###-desc-corta
 
 ## 3. Pull requests
 
+- **Solo requerimientos en "Listo para Pablo".** El estado de cada uno está en
+  `requerimientos/README.md`. Un requerimiento en **Borrador** se puede leer para entender hacia dónde
+  va el trabajo, pero **no** se planifica ni se programa.
 - **Uno por requerimiento**, a `develop`. Se abre **en borrador** con solo el plan
   (`requerimientos/REQ-###-….plan.md`) y no se programa hasta que Rodolfo deja el comentario
   **`✅ Plan aprobado`**. Con todas las tareas hechas, se pasa a "Ready for review".
@@ -80,6 +105,11 @@ Closes #NNN
 - Los casos de uso los valida Rodolfo. Si falta uno, el agente redacta un borrador y **para**.
 - Las pruebas **nunca** apuntan a producción.
 - Si algo falla dos veces seguidas, **parar** y mostrar el error completo, sin seguir tocando.
+- **Verde** quiere decir que en el informe de la corrida (`npm run doctest:consola`) no hay ninguna
+  prueba en `falla`, `otro-punto` ni `dejo-de-fallar`. Un `error-conocido` no frena el commit.
+- Si una prueba choca con un error **ya anotado** (hallazgo `H-NNN` de `doc/hallazgos/REGISTRO.md`), se
+  marca con `debeFallarCon(/.../)` + `test.fail(true, 'H-NNN: ...')`. Un error **nuevo** no se marca: se
+  avisa a Rodolfo. Nunca abrir issues por cuenta propia.
 
 ## 5. Sistema productivo: lo que no se toca sin aprobación
 

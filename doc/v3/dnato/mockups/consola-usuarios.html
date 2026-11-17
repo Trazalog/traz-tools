@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Consola · Usuarios de la plataforma</title>
+<!--
+  MAQUETA DNATO v3 — Consola · Usuarios de la plataforma
+  Casos de uso: CU-18
+  Requerimientos: RF-78
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-18" data-rf="RF-78" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Consola</span></div>
+    <div class="owner"><span class="logo" style="background:var(--dark)">T</span><div><b>Consola Trazalog</b><div class="muted" style="font-size:11.5px">solo súper usuarios</div></div></div>
+    <nav class="nav"><div class="group">Consola Trazalog</div>
+<a href="consola-empresas.html" class=""><span class="ico">🏢</span>Empresas</a>
+<a href="consola-registros.html" class=""><span class="ico">📬</span>Registros<span class="badge red" style="margin-left:auto">2</span></a>
+<a href="consola-planes.html" class=""><span class="ico">📦</span>Planes</a>
+<a href="consola-catalogo.html" class=""><span class="ico">🧩</span>Catálogo y menú global</a>
+<a href="consola-formularios.html" class=""><span class="ico">📝</span>Formularios globales</a>
+<a href="consola-usuarios.html" class=" active"><span class="ico">👥</span>Usuarios</a>
+<a href="consola-auditoria.html" class=""><span class="ico">📜</span>Auditoría y uso</a>
+<a href="consola-config.html" class=""><span class="ico">⚙️</span>Variables de sistema</a></nav>
+    <div class="foot">Rodolfo Ruiz · súper usuario</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Consola</b> › Usuarios</div>
+    <div class="spacer"></div>
+    <a class="btn sm" href="inicio-admin.html">🏢 Mi empresa</a><div class="user"><span class="av">RT</span><span class="muted" style="font-size:12.5px">root@trazalog</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Usuarios de la plataforma</h1><div class="sub">Todas las personas, en todas las empresas. Filtrá, actuá en cualquiera y exportá.</div></div><div class="actions"><button class="btn">⬇ Exportar CSV (filtrado)</button></div></div>
+<div class="card"><div class="toolbar"><div class="search">🔍 nombre o correo</div><select class="select"><option>Empresa: MinTest_SJ</option><option>Todas las empresas</option><option>Yudica</option></select><select class="select"><option>Todos los roles</option><option>Administrador</option><option>Supervisor</option><option>Mantenedor</option></select><select class="select"><option>Estado: todos</option><option>Activo</option><option>Invitado sin aceptar</option><option>Baneado</option><option>Baja</option></select><select class="select"><option>Último acceso: cualquiera</option><option>Hace más de 30 días</option><option>Nunca</option></select><div class="chips"><span class="chip">Súper usuarios (1)</span><span class="chip">Con ban global (0)</span></div></div>
+<div class="alert info" style="margin:10px 14px"><span>🏢</span><div>Llegaste desde <b>Empresas › MinTest_SJ</b>: el filtro de empresa ya está aplicado. <a href="#">Quitar filtro</a></div></div>
+<table class="tbl"><tr><th>Usuario</th><th>Empresas y roles (membresías)</th><th>Súper</th><th>Ban global</th><th>Último acceso</th><th class="num">IA período</th><th></th></tr>
+<tr><td><b>Ana Pérez</b><div class="muted">ana@mintest.com.ar · +54 264 555 1234</div></td><td><div class="stack" style="gap:4px"><div>MinTest_SJ · Administrador <span class="badge green">activo</span> <button class="btn sm ghost">Banear</button></div><div>Empresa Test · Supervisor <span class="badge green">activo</span> <button class="btn sm ghost">Banear</button></div></div></td><td><span class="switch"></span></td><td><span class="switch"></span></td><td>hoy 11:20</td><td class="num">0</td><td><div class="row-actions"><a class="btn sm" href="consola-auditoria.html">📜 Ver actividad</a></div></td></tr>
+<tr><td><b>Bruno Díaz</b><div class="muted">bruno@mintest.com.ar</div></td><td>MinTest_SJ · Supervisor <span class="badge green">activo</span> <button class="btn sm ghost">Banear</button></td><td><span class="switch"></span></td><td><span class="switch"></span></td><td>hoy 10:42</td><td class="num">15</td><td><div class="row-actions"><a class="btn sm" href="consola-auditoria.html">📜 Ver actividad</a></div></td></tr>
+<tr class="off"><td><b>Darío Gómez</b><div class="muted">dario@mintest.com.ar</div></td><td>MinTest_SJ · Mantenedor <span class="badge amber">invitado · vence 31/10</span> <button class="btn sm ghost">Reenviar</button></td><td><span class="switch"></span></td><td><span class="switch"></span></td><td>nunca</td><td class="num">0</td><td><div class="row-actions"><a class="btn sm" href="consola-auditoria.html">📜 Ver actividad</a></div></td></tr>
+<tr class="off"><td><b>Elena Soto</b><div class="muted">elena@mintest.com.ar</div></td><td>MinTest_SJ · Mantenedor <span class="badge red">baneado 20/10</span> <button class="btn sm ghost">Reactivar</button></td><td><span class="switch"></span></td><td><span class="switch"></span></td><td>19/10</td><td class="num">0</td><td><div class="row-actions"><a class="btn sm" href="consola-auditoria.html">📜 Ver actividad</a></div></td></tr>
+<tr><td><b>Rodolfo Ruiz</b><div class="muted">root@trazalog</div></td><td class="muted">—</td><td><span class="switch on"></span> <span class="muted">único</span></td><td><span class="switch na"></span></td><td>hoy</td><td class="num">—</td><td></td></tr>
+</table><div class="tbl-foot">5 personas con el filtro aplicado · 212 en la plataforma <div class="pages"><span class="cur">1</span></div></div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> la marca súper usuario reemplaza a la constante TOOLS_ADMIN_USER; el ban global es el banned_users actual de seg.users, reservado al súper usuario. Filtros en servidor; 'Exportar' respeta el filtro; 'Ver actividad' abre Auditoría con la persona filtrada (CP-107). Se llega también desde Empresas con el filtro aplicado.</div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Funcionalidades de la empresa</title>
+<!--
+  MAQUETA DNATO v3 — Funcionalidades de la empresa
+  Casos de uso: CU-31
+  Requerimientos: RF-50, RF-51, RF-52, RF-53
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-31" data-rf="RF-50, RF-51, RF-52, RF-53" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=""><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=" active"><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=""><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=""><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=""><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=""><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=""><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Funcionalidades</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Funcionalidades</h1><div class="sub">Elegí qué usa tu empresa dentro del plan 🥉 Free y ordenalas arrastrando. Ese orden es el del menú predeterminado.</div></div>
+<div class="actions"><a class="btn" href="empresa-plan.html">Ver qué trae cada plan</a></div></div>
+<div class="grid g-2-1">
+<div class="stack">
+  <div class="card"><div class="card-h"><h3>✅ Activas</h3><span class="muted">7 · arrastrá para ordenar · este orden es el del menú predeterminado</span></div>
+  <table class="tbl">
+  <tr class=""><td style="width:28px"><span class="handle">⋮⋮</span></td><td>🛠️ Equipos</td><td><span class="badge">MAN</span></td><td style="text-align:right"><span class="switch on"></span></td></tr><tr class=""><td style="width:28px"><span class="handle">⋮⋮</span></td><td>➕ Alta de equipo</td><td><span class="badge">MAN</span></td><td style="text-align:right"><span class="switch on"></span></td></tr><tr class=""><td style="width:28px"><span class="handle">⋮⋮</span></td><td>📋 Órdenes de trabajo</td><td><span class="badge">MAN</span></td><td style="text-align:right"><span class="switch on"></span></td></tr><tr class=""><td style="width:28px"><span class="handle">⋮⋮</span></td><td>📦 Stock</td><td><span class="badge">ALM</span></td><td style="text-align:right"><span class="switch on"></span></td></tr><tr class=""><td style="width:28px"><span class="handle">⋮⋮</span></td><td>🔧 Herramientas</td><td><span class="badge">PAN</span></td><td style="text-align:right"><span class="switch on"></span></td></tr><tr class=""><td style="width:28px"><span class="handle">⋮⋮</span></td><td>🤖 IA: consultar equipos</td><td><span class="badge">MCP</span></td><td style="text-align:right"><span class="switch on"></span></td></tr><tr class=""><td style="width:28px"><span class="handle">⋮⋮</span></td><td>🤖 IA: consultar órdenes de trabajo</td><td><span class="badge">MCP</span></td><td style="text-align:right"><span class="switch on"></span></td></tr>
+  </table></div>
+  <div class="card"><div class="card-h"><h3>💤 Sin activar</h3><span class="muted">Están en tu plan, las apagaste. Tus usuarios no las ven.</span></div>
+  <table class="tbl">
+  <tr class="off"><td style="width:28px"><span class="handle" style="opacity:.3">⋮⋮</span></td><td>📈 Indicadores de mantenimiento</td><td><span class="badge">MAN</span></td><td style="text-align:right"><span class="switch"></span></td></tr>
+  </table></div>
+  <div class="card"><div class="card-h"><h3>💎 De otros planes</h3><span class="muted">Tus usuarios las ven en "Más en Trazalog" y pueden avisarte si les interesan.</span></div>
+  <table class="tbl">
+  <tr class="off"><td style="width:28px"></td><td>🔁 Ajustes de stock</td><td><span class="badge">ALM</span></td><td style="text-align:right"><span class="badge">🥈 Team</span></td></tr><tr class="off"><td style="width:28px"></td><td>🤖 IA: crear orden de trabajo</td><td><span class="badge">MCP</span></td><td style="text-align:right"><span class="badge">🥈 Team</span></td></tr><tr class="off"><td style="width:28px"></td><td>🔀 Procesos</td><td><span class="badge">BPM</span></td><td style="text-align:right"><span class="badge">🥇 Business</span></td></tr><tr class="off"><td style="width:28px"></td><td>🏭 Producción</td><td><span class="badge">PRD</span></td><td style="text-align:right"><span class="badge">🥇 Business</span></td></tr>
+  </table></div>
+</div>
+<div class="stack">
+  <div class="card"><div class="card-h"><h3>Cómo funciona</h3></div><div class="card-b" style="font-size:13px">
+    <p>🟢 <b>Activa</b>: aparece en los menús y se puede usar.</p>
+    <p>💤 <b>Sin activar</b>: está en tu plan, pero la apagaste. Se quita de todos los menús.</p>
+    <p>💎 <b>De otro plan</b>: se muestra con el ícono del plan que la incluye y abre una vista previa.</p>
+    <p class="muted">Si bajás de plan, lo que quede afuera se conserva (activación, orden y menús) y vuelve solo al subir de nuevo.</p>
+    <p class="muted">Las herramientas de IA (módulo MCP) se activan acá y se ven en Plan y en Uso de IA, pero no entran en los menús.</p>
+  </div></div>
+  <div class="alert warn"><span>⚠️</span><div><div class="t">"Órdenes de trabajo" está en 1 menú: dejará de verse en él</div>El menú "Operación" la oculta mientras esté apagada; si la volvés a encender, reaparece. ¿Continuar?</div><div class="actions"><button class="btn sm">Cancelar</button><button class="btn sm primary">Apagar</button></div></div>
+</div>
+</div>
+<div class="toast">Guardado ✓</div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> el aviso de la derecha es el estado A1 de CU-31 (apagar algo que está en menús); el toast documenta el autoguardado del orden.</div>
+</body>
+</html>

@@ -2,6 +2,8 @@
 
 class REST
 {
+    private $apiRequestCache = [];
+
     public function callAPI($method, $url, $data = null, $token = array())
     {
         log_message('DEBUG', '#TRAZA | #REST | #CURL | #URL >> ' . $url);
@@ -119,8 +121,47 @@ class REST
                 'Curl failed with error #%d: %s',
                 $e->getCode(), $e->getMessage()),
                 E_USER_ERROR);
-
         }
+
+    }
+
+    public function callAPICached($method, $url, $data = null, $token = array())
+    {
+        $method = strtoupper($method);
+
+        if ($method !== 'GET') {
+            $this->clearAPICache();
+            return $this->callAPI($method, $url, $data, $token);
+        }
+
+        $key = md5(
+            $method . '|' .
+            $url . '|' .
+            (is_array($data) ? json_encode($data) : (string) $data) . '|' .
+            md5(json_encode($token))
+        );
+
+        if (array_key_exists($key, $this->apiRequestCache)) {
+            log_message('DEBUG', '#TRAZA | #REST | #CACHE | HIT >> ' . $url);
+            return $this->apiRequestCache[$key];
+        }
+
+        $inicio = microtime(true);
+        $rsp = $this->callAPI($method, $url, $data, $token);
+        $tiempo = round((microtime(true) - $inicio) * 1000, 2);
+
+        log_message('DEBUG', '#TRAZA | #REST | #CACHE | MISS >> ' . $url . ' | ' . $tiempo . ' ms');
+
+        if (isset($rsp['status']) && $rsp['status']) {
+            $this->apiRequestCache[$key] = $rsp;
+        }
+
+        return $rsp;
+    }
+
+    public function clearAPICache()
+    {
+        $this->apiRequestCache = [];
     }
 
 }

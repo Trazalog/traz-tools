@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Actividad de la empresa</title>
+<!--
+  MAQUETA DNATO v3 — Actividad de la empresa
+  Casos de uso: CU-30, CU-19
+  Requerimientos: RF-100
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-30, CU-19" data-rf="RF-100" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=""><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=""><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=""><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=""><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=""><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=""><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=" active"><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Actividad</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Actividad</h1><div class="sub">Quién hizo qué en MinTest_SJ: usuarios, menús, plan, IA. Es la auditoría de la plataforma filtrada por tu empresa.</div></div><div class="actions"><button class="btn">⬇ CSV</button></div></div>
+<div class="card"><div class="toolbar"><select class="select"><option>Todas las acciones</option><option>Usuarios</option><option>Menús</option><option>Plan</option><option>Funcionalidades</option></select><input class="input" type="date" value="2026-10-01"><input class="input" type="date" value="2026-10-29"></div>
+<table class="tbl"><tr><th>Fecha</th><th>Quién</th><th>Qué hizo</th></tr>
+<tr><td class="mono">28/10 17:40</td><td>Trazalog</td><td>Quitó <b>Órdenes de trabajo</b> del plan Free</td></tr>
+<tr><td class="mono">27/10 15:02</td><td>Bruno Díaz</td><td>Marcó "Me interesa" en <b>Procesos</b> (plan Business)</td></tr>
+<tr><td class="mono">27/10 11:30</td><td>Ana Pérez</td><td>Asignó el menú <b>Operación</b> al rol Mantenedor</td></tr>
+<tr><td class="mono">24/10 11:05</td><td>Ana Pérez</td><td>Invitó a <b>Darío Gómez</b> como Mantenedor</td></tr>
+<tr><td class="mono">20/10 16:30</td><td>Ana Pérez</td><td>Baneó a <b>Elena Soto</b> · "licencia"</td></tr>
+</table><div class="tbl-foot">Solo lectura · 30 registros en octubre</div></div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> misma auditoría de la Consola (RF-100) filtrada por la empresa activa y con los textos en lenguaje de usuario. De acá salen los avisos del Inicio.</div>
+</body>
+</html>

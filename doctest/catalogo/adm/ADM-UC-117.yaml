@@ -1,0 +1,73 @@
+id: ADM-UC-117
+modulo: ADM
+titulo: Revisar registros y aprobar o rechazar planes pendientes
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Registros y Notificar a infra (RF-08, RF-29)'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-registros.html
+    detalle: "tarjetas, pestañas, tabla, ventana 'Aprobar plan'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-23; RF-08, RF-29; servicio Notificar a infra en 02_MODELO_Y_REGLAS.md §4"
+pantallas:
+  - "Consola → 📬 Registros"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "Matheu se registró y quedó en Free con el plan Team pendiente de aprobación (cargado a mano en la base de prueba hasta REQ-010)"
+  - "Nueva SA se registró en Free, sin aprobación"
+flujo_principal:
+  - paso: "Toca '📬 Registros'"
+    resultado: "Ve 'Registros', la explicación, las tarjetas 'Pendientes de aprobación', 'Altas este mes', 'Notificaciones a infra' y 'Canales', y la pestaña 'Pendientes (1)'"
+  - paso: "Mira la fila de Matheu"
+    resultado: "Ve '🆕 Alta por registro', Matheu, el correo del administrador, 'Pedido: 🥈 Team · opera en Free mientras tanto', 'Pendiente de aprobación', el resultado de la notificación y los botones 'Aprobar' y 'Rechazar'"
+  - paso: "Toca 'Aprobar'"
+    resultado: "Se abre 'Aprobar plan Team · Matheu' con la fecha y el correo del registro, el plan pedido con usuarios, IA y precio, 'Al aprobar, Matheu pasa a Team y el administrador recibe correo. El cobro se maneja aparte.' y 'Motivo (opcional)'"
+  - paso: "Toca 'Aprobar'"
+    resultado: "Ve 'Matheu pasó a Team.', la fila queda 'Aprobada', el administrador recibe 'Aprobamos tu plan Team' y la auditoría tiene registro.aprobar y empresa.cambiar_plan"
+flujos_alternativos:
+  - nombre: "Rechazar"
+    pasos:
+      - paso: "En otra fila pendiente toca 'Rechazar', escribe un motivo y confirma"
+        resultado: "La empresa sigue en Free, la fila queda 'Rechazada' con el motivo y el administrador recibe el correo"
+  - nombre: "Ver todo y filtrar"
+    pasos:
+      - paso: "Toca 'Todos' y después 'Altas'"
+        resultado: "Ve las altas por registro y desde la Consola, con plan y estado ('Activa · sin aprobación' para Nueva SA)"
+      - paso: "Toca '⬇ Exportar'"
+        resultado: "Baja un CSV con lo filtrado"
+  - nombre: "Notificación fallida"
+    pasos:
+      - paso: "Con el servicio de infraestructura caído, se registra una empresa nueva"
+        resultado: "El alta termina bien; en Registros la fila dice 'fallida' en la notificación, con el número de reintento"
+      - paso: "Toca 'Reintentar' cuando el servicio volvió"
+        resultado: "La notificación queda con resultado ok"
+  - nombre: "Alta por el registro copiado"
+    pasos:
+      - paso: "Un visitante se registra por el registro del módulo"
+        resultado: "Aparece una fila '🆕 Alta por registro' con la empresa, el administrador, el plan y el resultado de la notificación"
+validaciones:
+  - "Cada alta, suspensión y vencimiento genera una fila; el envío a infraestructura queda registrado con canal, resultado y reintentos"
+  - "Si la notificación falla, se reintenta y el alta no se bloquea"
+  - "Aprobar es un cambio directo de plan con origen registro y avisa por correo al administrador"
+  - "Rechazar deja la empresa en su plan, con el motivo, y avisa por correo"
+  - "Filtros por pestaña y fecha; exportar respeta el filtro"
+  - "Todo queda en la auditoría"
+datos_prueba:
+  empresas: "Matheu y Nueva SA, nombres inventados; el plan pendiente se carga a mano"
+  infra: "en el ambiente de prueba, un servicio de notificaciones simulado"
+dudas:
+  - "El contrato de 'Notificar a infra' está a acordar con el especialista de infraestructura (dirección, autenticación, formato, respuesta, quién reintenta). Propuesta: hasta que se acuerde, el módulo guarda el evento con resultado 'sin canal configurado' y no manda nada; Rodolfo coordina el contrato y entra como un cambio chico a este requerimiento."
+  - "¿Quién reintenta las notificaciones fallidas: el módulo o el sistema de infraestructura? La maqueta muestra 'reintento 2/3'. Propuesta: el módulo, hasta 3 veces, en el proceso diario, y con el botón 'Reintentar'."
+  - "Hasta que REQ-010 agregue 'Elegí tu plan' al registro, no hay altas pendientes de aprobación ni pedidos de plan. Propuesta: la aprobación se construye acá y se prueba con datos cargados a mano; los pedidos de plan (CU-20) se resuelven en REQ-010 con el mismo paso."
+  - "El pie de la maqueta dice 'cada fila nace de un evento de DNATO'. Propuesta: 'de Trazalog', porque el registro y la Consola nuevos ya no son DNATO."
+  - "¿Las altas por el ingreso de DNATO (que sigue en paralelo) también aparecen? DNATO no escribe los eventos. Propuesta: no aparecen hasta la redirección final; se dice en el pie."
+derivados: {}
+notas:
+  - "Cubre CP-29 (con el pendiente cargado a mano y la notificación según el contrato que se acuerde)."
+  - "El registro copiado (REQ-003) suma la fila del evento al terminar el alta; no cambia nada visible para el visitante."

@@ -1,0 +1,82 @@
+id: ADM-UC-111
+modulo: ADM
+titulo: Dar de alta una empresa desde la Consola
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-008-administracion-consola-empresas.md
+    detalle: "sección 'Alta de empresa: la misma orquestación que el autorregistro'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "botón '＋ Nueva empresa' y nota de maqueta"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-12; RF-20, RF-21, RF-25"
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsCOREAPI.xml
+    detalle: "POST /empresa, que se llama sin modificar"
+pantallas:
+  - "Consola → Empresas → ＋ Nueva empresa"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "El plan de prueba Team existe y está activo"
+  - "fede@ no es usuario de la plataforma"
+flujo_principal:
+  - paso: "Toca '＋ Nueva empresa'"
+    resultado: "Se abre el formulario con Nombre, Descripción para soporte, País, CUIT, Plan, Moneda, Idioma, Fin del plan, Correo del primer administrador y Logo"
+  - paso: "Carga 'Nueva SA', plan Team, moneda ARS, el correo fede@ y un logo, y toca 'Crear'"
+    resultado: "Ve 'Creamos Nueva SA y le mandamos la invitación a fede@.'"
+  - paso: "Mira la ficha de Nueva SA"
+    resultado: "Tiene plan Team, el logo, todas las funcionalidades de Team activas en el orden del catálogo, y fede@ como Administrador 'Invitado · vence <fecha dentro de 7 días>'"
+  - paso: "Revisa Registros y la auditoría"
+    resultado: "Hay una fila '🆕 Alta desde la Consola' de Nueva SA con el resultado de la notificación a infra, y la auditoría tiene empresa.crear"
+  - paso: "fede@ acepta la invitación y entra"
+    resultado: "Entra a Tools con Nueva SA, ve '🏢 Mi empresa' y puede entrar a AssetPlanner, igual que una empresa creada por el registro"
+flujos_alternativos:
+  - nombre: "El administrador ya es usuario"
+    pasos:
+      - paso: "Da de alta 'Otra SA' con el correo de ana@, que ya es usuaria"
+        resultado: "No se crea otro usuario: ana@ suma una membresía Administrador en Otra SA"
+  - nombre: "El correo no sale"
+    pasos:
+      - paso: "Da de alta una empresa con el correo del servidor caído"
+        resultado: "Ve 'No pudimos enviar el correo. Copiá este enlace y mandáselo: <enlace>'; la empresa queda creada"
+  - nombre: "La orquestación falla a mitad"
+    pasos:
+      - paso: "Da de alta una empresa y falla la creación del establecimiento por defecto"
+        resultado: "Ve 'No pudimos completar el alta: <lo que falló>. Revertimos lo creado. Podés reintentar.' con el botón 'Reintentar'; la empresa no queda activa"
+      - paso: "Toca 'Reintentar' cuando el servicio volvió"
+        resultado: "Se vuelve a mandar el mismo formulario y la empresa se crea"
+  - nombre: "Empresa repetida"
+    pasos:
+      - paso: "Da de alta una empresa con el mismo nombre, país y CUIT que una que ya existe"
+        resultado: "Ve 'La empresa ya existe para el pais y CUIT indicados.' y no se crea nada"
+  - nombre: "Plan de prueba con vencimiento"
+    pasos:
+      - paso: "Da de alta una empresa con el plan Prueba Business, que vence a los 30 días"
+        resultado: "La ficha muestra 'vence <fecha dentro de 30 días>'"
+validaciones:
+  - "El alta usa la misma orquestación que el autorregistro (API de empresa y los mismos pasos posteriores), sin una nueva"
+  - "Si un paso falla, se revierte y se informa qué falló, con Reintentar; nunca redirige en silencio"
+  - "El primer administrador queda invitado; si ya es usuario, solo se crea la membresía"
+  - "Todas las funcionalidades del plan quedan activas en el orden del catálogo"
+  - "Un plan con vencimiento deja la fecha de fin calculada"
+  - "Se genera el evento en Registros y se llama a Notificar a infra, sin frenar el alta si falla"
+  - "Queda en la auditoría"
+datos_prueba:
+  empresa: "Nueva SA y Otra SA, nombres inventados, con CUIT de prueba"
+  administrador: "fede@ con dominio de prueba del ambiente"
+  falla: "en el ambiente de prueba se simula la falla apagando el recurso de establecimiento"
+dudas:
+  - "El autorregistro crea además los usuarios por defecto de la empresa (usuario@, almacen@, … con el dominio del correo del administrador). ¿La Consola también? Propuesta: sí, porque es la misma orquestación; si el correo del administrador es de un servicio público (gmail y similares), el formulario pide el dominio de la empresa, como el registro."
+  - "La especificación pide 'informar qué quedó creado y ofrecer reintentar'; el autorregistro, si falla a mitad, revierte la empresa. Propuesta: igual que el autorregistro (revertir y listar lo que falló), y Reintentar vuelve a mandar el formulario."
+  - "RF-20 no pide País ni CUIT, pero la API de alta y el control de duplicados los usan. Propuesta: el formulario los pide, como el registro."
+  - "RF-21 dice que el permiso inicial de los roles (el que da hoy el disparador de alta) 'pasa a respetar el plan'. Eso es cambiar el disparador, que es núcleo. Propuesta: no se cambia en este requerimiento; los roles quedan con lo que da hoy el disparador y Funcionalidades (REQ-006) ya limita lo que se ve por plan."
+  - "Para tener un solo código, la orquestación sale del controlador copiado del registro a una librería del módulo. Propuesta: sí, sin cambiar lo que hace, y DNATO-UC-002 a 005 contra el registro copiado son la prueba; pasarla a una API queda para cuando se redirija DNATO."
+derivados: {}
+notas:
+  - "Cubre CP-20, CP-21 y CP-22 (alta)."
+  - "Corrige A-12: el alta manual de DNATO no lee la respuesta ni informa el error."

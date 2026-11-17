@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNATO v3 · Roles y accesos</title>
+<!--
+  MAQUETA DNATO v3 — Roles y accesos
+  Casos de uso: CU-40
+  Requerimientos: RF-77, RF-90
+  Dónde se construye: DNATO
+  Layout: portal ("portal" = Portal de la empresa / Consola, con diseño propio, separado del menú operativo de Tools; "tools" = dentro de traz-tools)
+  Especificación: ../01_ESPECIFICACION_FUNCIONAL.md · Modelo y reglas: ../02_MODELO_Y_REGLAS.md · Pruebas: ../03_CASOS_DE_PRUEBA.md
+  Esta página es estática: muestra el estado de la pantalla, no la lógica. Las notas amarillas son para el programador y no van a producción.
+  Los modales se muestran al pie de la página, sin tapar el contenido, para poder ver las dos cosas.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dnato.css">
+</head>
+<body data-cu="CU-40" data-rf="RF-77, RF-90" data-donde="DNATO" data-layout="portal">
+<div class="shell portal">
+  <aside class="sidebar portal">
+    <div class="brand"><span class="dot"></span>Trazalog <span class="ver">Mi empresa</span></div>
+    <div class="owner"><span class="logo" title="Logo de la empresa; sin logo se muestra la inicial">M</span><div><b>MinTest_SJ</b><div class="muted" style="font-size:11.5px">🥉 Plan Free</div></div></div>
+    <nav class="nav"><div class="group">Mi empresa</div>
+<a href="inicio-admin.html" class=""><span class="ico">🏠</span>Inicio</a>
+<a href="empresa-usuarios.html" class=""><span class="ico">👥</span>Usuarios</a>
+<a href="empresa-roles.html" class=" active"><span class="ico">🎭</span>Roles y accesos</a>
+<a href="empresa-menus.html" class=""><span class="ico">🗂️</span>Menús</a>
+<a href="empresa-funcionalidades.html" class=""><span class="ico">🧩</span>Funcionalidades</a>
+<a href="empresa-formularios.html" class=""><span class="ico">📝</span>Formularios</a>
+<div class="group">Plan y consumo</div>
+<a href="empresa-plan.html" class=""><span class="ico">📦</span>Plan</a>
+<a href="empresa-uso-ia.html" class=""><span class="ico">🤖</span>Uso de IA</a>
+<div class="group">Datos</div>
+<a href="empresa-cargas.html" class=""><span class="ico">🗂️</span>Cargas masivas</a>
+<a href="empresa-auditoria.html" class=""><span class="ico">📜</span>Actividad</a></nav>
+    <div class="foot">Ana Pérez · Administradora</div>
+  </aside>
+  <header class="topbar">
+    <a class="btn sm" href="#" title="Volver al menú operativo de Tools">← Ir a Tools</a>
+    <div class="crumbs"><b>Mi empresa</b> › Roles y accesos</div>
+    <div class="spacer"></div>
+    <a class="quota-pill" href="empresa-uso-ia.html" title="Cuota de IA del período">🤖 21/30 esta semana <span class="bar"><i class="" style="width:70%"></i></span></a><a class="btn sm" href="consola-empresas.html" title="Solo la ven los súper usuarios">🔑 Consola</a><div class="empresa-sel"><span class="av">M</span>MinTest_SJ<span class="caret">▾</span></div><div class="user"><span class="av">AN</span></div>
+  </header>
+  <main class="main">
+
+<div class="page-head"><div><h1>Roles y accesos</h1><div class="sub">A qué pantallas accede cada rol de tu empresa. Como hoy: o la tiene en el menú o no la ve. Reemplaza a "Menú por rol".</div></div></div>
+<div class="grid" style="grid-template-columns: 240px 1fr">
+  <div class="card"><div class="card-b stack" style="gap:6px">
+    <div class="row" style="padding:8px"><span>🔒</span><b>Administrador</b><span class="muted" style="margin-left:auto;font-size:12px">todo · no se edita</span></div>
+    <div class="row" style="padding:8px"><span>🎭</span><b>Solicitante</b></div>
+    <div class="row" style="padding:8px;background:var(--red-soft);border-radius:6px"><span>🎭</span><b>Supervisor</b><span class="muted" style="margin-left:auto;font-size:12px">1 persona</span></div>
+    <div class="row" style="padding:8px"><span>🎭</span><b>Planificador</b></div>
+    <div class="row" style="padding:8px"><span>🎭</span><b>Mantenedor</b><span class="muted" style="margin-left:auto;font-size:12px">3 personas</span></div>
+    <p class="muted" style="font-size:12px;padding:8px">Los roles son los de tu empresa en Bonita (se crean al darla de alta). En esta versión no se crean roles nuevos desde acá.</p>
+  </div></div>
+  <div class="card"><div class="card-h"><h3>Supervisor</h3><span class="muted">1 persona · Bruno Díaz · menú: Predeterminado</span><div class="actions"><button class="btn primary">Guardar</button></div></div>
+  <table class="tbl"><tr><th style="width:36px"></th><th>Funcionalidad activa</th><th>Módulo</th></tr>
+  <tr><td><span class="check on">✓</span></td><td>🛠️ Equipos</td><td>MAN</td></tr>
+  <tr><td><span class="check"></span></td><td>➕ Alta de equipo</td><td>MAN</td></tr>
+  <tr><td><span class="check on">✓</span></td><td>📋 Órdenes de trabajo</td><td>MAN</td></tr>
+  <tr><td><span class="check on">✓</span></td><td>📦 Stock</td><td>ALM</td></tr>
+  <tr><td><span class="check on">✓</span></td><td>🔧 Herramientas</td><td>PAN</td></tr>
+  <tr><td><span class="check on">✓</span></td><td>🤖 IA: consultar equipos</td><td>MCP</td></tr>
+  <tr><td><span class="check on">✓</span></td><td>🤖 IA: consultar órdenes de trabajo</td><td>MCP</td></tr>
+  </table>
+  <div class="tbl-foot">Solo funcionalidades activas del plan. Sin casilla = no aparece en el menú ni se puede abrir por URL (RF-90, RF-94).</div></div>
+</div>
+
+  </main>
+</div>
+<div class="spec-note"><b>Nota de maqueta:</b> reemplaza a menu/rolesList (A-19). Una casilla = una fila de seg.memberships_menues (empresa, rol, módulo, opción). No hay modo ver/operar: acceso sí o no, como hoy. Se corrigen los defectos actuales del ABM (campo equivocado, explode('-'), UPDATE que pisa todas las opciones).</div>
+</body>
+</html>

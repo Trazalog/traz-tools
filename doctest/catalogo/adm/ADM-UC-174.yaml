@@ -1,0 +1,60 @@
+id: ADM-UC-174
+modulo: ADM
+titulo: Regalar consultas de IA a una empresa
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-011-administracion-cuota-agente.md
+    detalle: "secciones 'Bonificación (CU-21, RF-85)' y 'Consola → Ficha de empresa'"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresa-ficha.html
+    detalle: "tarjeta 'IA este período', 'Otorgar consultas de IA extra' y 'Uso de IA · últimos 6 períodos'"
+  - repo: traz-tools
+    path: doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md
+    detalle: "CU-21; RF-85, RF-27"
+pantallas:
+  - "Consola → Ficha de empresa"
+  - "Consola → Empresas y Usuarios de la plataforma (columnas de IA)"
+precondiciones:
+  - Usuario con sesión iniciada y marca de superusuario
+  - "MinTest_SJ en Free con 30 de 30 (bloqueada)"
+flujo_principal:
+  - paso: "Abre la ficha de MinTest_SJ"
+    resultado: "Ve 'IA este período' '30 / 30' y 'renueva lunes 2/11 · 0 bonificadas', y 'Uso de IA · últimos 6 períodos'"
+  - paso: "En 'Otorgar consultas de IA extra' pone 5, el motivo 'demo' y toca 'Bonificar'"
+    resultado: "Ve 'Sumamos 5 consultas a MinTest_SJ en este período.' y la tarjeta dice '30 / 35' y '5 bonificadas'"
+  - paso: "La administradora abre Uso de IA y se pide al servicio una consulta"
+    resultado: "Uso de IA muestra 30 de 35 y la consulta responde ok"
+  - paso: "Se revisan la auditoría y el correo de la administradora"
+    resultado: "La auditoría tiene cuota.bonificar con 5 y 'demo'; la administradora recibió el aviso"
+flujos_alternativos:
+  - nombre: "Cantidad inválida"
+    pasos:
+      - paso: "Pone 0 o un texto y toca 'Bonificar'"
+        resultado: "Ve 'Ingresá una cantidad mayor que 0.' y no cambia nada"
+  - nombre: "Uso en los listados"
+    pasos:
+      - paso: "Abre Empresas y Usuarios de la plataforma"
+        resultado: "Ve la columna 'IA (período)' con '30 / 35' en MinTest_SJ y 'IA período' por persona"
+  - nombre: "No es superusuario"
+    pasos:
+      - paso: "Un administrador manda directo una bonificación"
+        resultado: "Recibe 'sin permiso' (403) y no cambia nada"
+validaciones:
+  - "Solo el superusuario bonifica"
+  - "La cantidad es un entero mayor que 0"
+  - "Se suma al período en curso y la empresa bloqueada vuelve a tener consultas en el momento"
+  - "Queda en la auditoría con cantidad y motivo, y se avisa a los administradores"
+  - "La ficha y los listados de la Consola muestran el uso del período"
+datos_prueba:
+  empresa: "fixture dnato_v3_base (03_CASOS_DE_PRUEBA.md §1), con nombres inventados"
+dudas:
+  - "¿Hay un tope para la bonificación? La especificación no lo dice. Propuesta: sin tope, con confirmación si supera la cuota del plan ('Vas a sumar más consultas que la cuota del plan. ¿Continuar?')."
+  - "¿Se puede bonificar a una empresa con IA ilimitada o sin IA? Propuesta: no; el formulario no aparece y el servidor lo rechaza con 'Esta empresa no tiene un tope de consultas.' para ilimitado y 'El plan de esta empresa no incluye IA.' para cuota 0."
+  - "¿El texto del correo a la administradora? Propuesta: asunto 'Trazalog te sumó <N> consultas de IA' y el motivo en el cuerpo."
+derivados: {}
+notas:
+  - "Cubre CP-25 y la parte de uso de IA de RF-27 y CP-26 ('21 de 30 IA') que REQ-008 dejó para acá."

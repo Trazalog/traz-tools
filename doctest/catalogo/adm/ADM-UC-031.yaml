@@ -1,0 +1,62 @@
+id: ADM-UC-031
+modulo: ADM
+titulo: Ser superusuario por la marca en el usuario
+perfil: Superusuario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: requerimientos/REQ-004-administracion-base-y-atributos.md
+    detalle: "sección 'Superusuario por marca'; se completa con el controlador base y ADMDataService al programar"
+  - repo: traz-tools
+    path: doc/v3/dnato/mockups/consola-empresas.html
+    detalle: "marco de la Consola (REQ-002)"
+  - repo: traz-tools
+    path: doc/v3/dnato/02_MODELO_Y_REGLAS.md
+    detalle: "R7 y migración M-6 (§8)"
+pantallas:
+  - "Portal de la empresa → 🔑 Consola"
+  - "Consola (dirección traz-comp-adm/consola)"
+precondiciones:
+  - Usuario con sesión iniciada en Tools
+  - El usuario tiene la marca de superusuario
+flujo_principal:
+  - paso: "Con la marca de superusuario, entra a la dirección de la Consola"
+    resultado: "Se abre la Consola con la barra 'Trazalog · Consola' y la leyenda 'solo súper usuarios'"
+  - paso: "Abre el Portal de una empresa que administra"
+    resultado: "Ve '🔑 Consola' en la cabecera del Portal"
+flujos_alternativos:
+  - nombre: "El correo de TOOLS_ADMIN_USER sin la marca"
+    pasos:
+      - paso: "En un ambiente de prueba, al usuario cuyo correo es TOOLS_ADMIN_USER se le saca la marca, y entra a la Consola"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.': el correo ya no autoriza en el módulo"
+  - nombre: "Otro usuario con la marca"
+    pasos:
+      - paso: "Un usuario de prueba con otro correo y la marca de superusuario entra a la Consola"
+        resultado: "Entra a la Consola"
+  - nombre: "Después de la migración"
+    pasos:
+      - paso: "Después de correr el script en el ambiente, el usuario de TOOLS_ADMIN_USER entra a la Consola"
+        resultado: "Entra, porque la migración le puso la marca"
+  - nombre: "Sin la marca"
+    pasos:
+      - paso: "Un administrador sin la marca entra a la dirección de la Consola"
+        resultado: "Ve 'No tenés permiso para entrar a esta pantalla.' y no ve el botón '🔑 Consola' en el Portal"
+validaciones:
+  - "A la Consola entra solo quien tiene la marca de superusuario"
+  - "El correo TOOLS_ADMIN_USER ya no autoriza en el módulo"
+  - "La marca vale para cualquier usuario, no para un correo fijo"
+  - "La migración marca al usuario de TOOLS_ADMIN_USER de cada ambiente"
+  - "Sin la marca no se ve '🔑 Consola' en el Portal"
+datos_prueba:
+  superusuario: "usuario de prueba con la marca en el ambiente"
+  segundo_superusuario: "otro usuario de prueba al que se le pone la marca solo para este caso"
+dudas:
+  - "Mientras la Consola no tenga la pantalla de Usuarios (REQ-008), la marca solo la pone el script. ¿Rodolfo marca a mano a otros superusuarios si hace falta? Propuesta: sí, con un script que pone la marca y agrega la fila de auditoría; la pantalla llega en REQ-008."
+  - "El usuario de TOOLS_ADMIN_USER puede no existir en seg.users en algún ambiente (en el constants.php de ejemplo es admin@gmail.com). ¿Qué hace la migración? Propuesta: no marca a nadie y lo avisa; Rodolfo dice a quién marcar en ese ambiente."
+  - "DNATO y el resto de Tools siguen usando el correo TOOLS_ADMIN_USER. ¿Está bien que por un tiempo convivan los dos criterios? Propuesta: sí; la migración marca justo a ese correo, así los dos coinciden hasta la redirección final."
+derivados: {}
+notas:
+  - "Cubre CP-108 (la Consola solo para el superusuario, por marca) y contesta la duda de ADM-UC-002 (la marca la propone REQ-004)."
+  - "La regla 'tiene que quedar al menos un superusuario' (CP-103) es de REQ-008."
