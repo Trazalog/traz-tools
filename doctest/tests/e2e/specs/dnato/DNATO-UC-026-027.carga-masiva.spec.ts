@@ -9,7 +9,7 @@
  */
 
 import { expect, test } from '../../fixtures/auth.ts';
-import { urlDnato } from '../../config/apps.ts';
+import { entornoActual, urlDnato } from '../../config/apps.ts';
 
 test.describe('@dnato @DNATO-UC-026 @DNATO-UC-027 Carga masiva', () => {
   test('ofrece las entidades que se pueden cargar', async ({ paginaEmpresa1 }) => {
@@ -33,6 +33,8 @@ test.describe('@dnato @DNATO-UC-026 @DNATO-UC-027 Carga masiva', () => {
   });
 
   test('la plantilla de una entidad se puede obtener', async ({ paginaEmpresa1 }) => {
+    // sta.entidades_negocio guarda la URL completa del archivo, y en DEV apunta a http://localhost: el Apache local la rechaza.
+    test.skip(entornoActual() === 'local', 'En local la plantilla apunta a una dirección que este ambiente no sirve (dato de la base)');
     await paginaEmpresa1.goto(urlDnato('bulkload'), { waitUntil: 'domcontentloaded' });
     await paginaEmpresa1.waitForTimeout(1500);
     // El acceso a la plantilla aparece recién cuando se elige qué se va a cargar.

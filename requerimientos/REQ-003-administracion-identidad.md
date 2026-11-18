@@ -263,7 +263,7 @@ No hay tablas ni columnas nuevas. Lo único nuevo es una clave de sesión del m�
   lo hereda sin tocar `config.php`. Dejarlo en una constante configurable (análisis C.3) toca la
   configuración general de Tools: va con su análisis aparte (duda en ADM-UC-011).
 - **La lista pública vive en el controlador base del módulo** (Rodolfo, 2026-11-10, REQ-002), no en un
-  control general de Tools (deuda H-091).
+  control general de Tools (deuda H-123).
 - **Mismos nombres de controlador que DNATO** (`main`, `register`) dentro del módulo: así las
   direcciones solo cambian en la raíz y las pruebas existentes sirven sin reescribirlas.
 - **El log no copia datos sensibles**: no cambia el comportamiento para el usuario y evita copiar a

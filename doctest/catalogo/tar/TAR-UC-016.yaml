@@ -1,0 +1,47 @@
+id: TAR-UC-016
+modulo: TAR
+titulo: Recibir, tomar y soltar una tarea en la bandeja
+perfil: Operario
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-bpm
+    path: controllers/Proceso.php
+    detalle: detalleTarea(), tomarTarea(), soltarTarea(), guardarComentario()
+  - repo: traz-comp-tareasestandar
+    path: models/Tsttareas.php
+    detalle: map(), desplegarCabecera(), desplegarVista()
+  - repo: traz-comp-bpm
+    path: views/scripts/tarea_std.php
+pantallas:
+  - Mis Tareas (bandeja de entrada)
+precondiciones:
+  - Sesión iniciada en Tools con perfil Operario
+  - Una tarea planificada y asignada al usuario
+depende_de:
+  - TAR-UC-011
+flujo_principal:
+  - paso: Entra a la bandeja
+    resultado: 'Ve "Tarea Planificada | <nombre>" con Estado, Origen: Pedido de trabajo, Id y Nro del pedido, asignado y fecha'
+  - paso: Abre la tarea
+    resultado: Ve la cabecera con los datos del pedido y del hito, y las pestañas Acciones, Comentarios, Trazabilidad e Información
+  - paso: Pulsa "Tomar tarea"
+    resultado: Aparece "Inicializar tarea"
+  - paso: Pulsa "Soltar tarea"
+    resultado: La tarea vuelve a quedar sin tomar
+  - paso: Escribe un comentario y lo guarda
+    resultado: El comentario aparece arriba
+validaciones:
+  - La tarea solo se ve en la bandeja de la empresa del caso
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - 'D-01: ¿con qué perfil se describe a quien ejecuta tareas desde la bandeja? Se propone "Operario" (Mantenedor está definido para órdenes de trabajo de Mantenimiento)'
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-016-01 a 016-07"
+  - "Hipótesis: HIP-TAR-12, HIP-TAR-13"

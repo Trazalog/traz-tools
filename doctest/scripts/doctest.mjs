@@ -9,8 +9,8 @@
  *   nuevos     solo lo nuevo de tu rama.
  *   casi-full  crea dos empresas desde cero, las deja en el perfil del ambiente y corre
  *              el set de regresión contra ellas.
- *   full       crea dos empresas, le carga datos a la primera (AssetPlanner: maestros,
- *              equipo, herramienta), las deja en el perfil y corre TODO: regresión +
+ *   full       crea dos empresas, le carga datos a la primera (Mantenimiento: equipo, stock,
+ *              herramienta, plan y una orden), las deja en el perfil y corre TODO: regresión +
  *              circuitos largos (@ciclo).
  *
  * Opciones:
@@ -94,10 +94,28 @@ function aplicarPerfil() {
   set('DOCTEST_EMPRESA2_PASS', p.empresa2?.admin?.clave);
   set('DOCTEST_MAN_USER', p.man?.usuario);
   set('DOCTEST_MAN_PASS', p.man?.clave);
+  // Mantenimiento corre dentro de Tools con la empresa 1 recién creada, no con un usuario fijo:
+  // el perfil pisa las variables por ambiente, y lo que cargó el modo full es de esa empresa.
+  const pre = { local: 'LOCAL', demo: 'DEMO', 'staging-v3': 'STAGING' }[entorno];
+  set(`DOCTEST_${pre}_MAN_USER`, p.man?.usuario);
+  set(`DOCTEST_${pre}_MAN_PASS`, p.man?.clave);
+  set(`DOCTEST_${pre}_MAN_EMPRESA`, p.empresa1?.nombre);
+  set(`DOCTEST_${pre}_MAN_SUPERVISOR_USER`, p.man?.supervisor?.usuario);
+  set(`DOCTEST_${pre}_MAN_SUPERVISOR_PASS`, p.man?.supervisor?.clave);
+  set(`DOCTEST_${pre}_MAN_PREVENTIVO`, p.sembrado?.preventivo);
+  set(`DOCTEST_${pre}_MAN_RESPONSABLE`, p.sembrado?.responsable);
+  set(`DOCTEST_${pre}_MAN_OT_MATERIALES`, p.sembrado?.otMateriales);
   set('DOCTEST_ALM_SOLICITANTE_USER', p.alm?.solicitante?.usuario);
   set('DOCTEST_ALM_SOLICITANTE_PASS', p.alm?.solicitante?.clave);
   set('DOCTEST_ALM_ALMACEN_USER', p.alm?.almacen?.usuario);
   set('DOCTEST_ALM_ALMACEN_PASS', p.alm?.almacen?.clave);
+  // Tareas: los usuarios de rol de la empresa 1 recién creada.
+  set('DOCTEST_TAR_PLANIFICADOR_USER', p.tar?.planificador?.usuario);
+  set('DOCTEST_TAR_PLANIFICADOR_PASS', p.tar?.planificador?.clave);
+  set('DOCTEST_TAR_RESPONSABLE1_USER', p.tar?.responsable1?.usuario);
+  set('DOCTEST_TAR_RESPONSABLE1_PASS', p.tar?.responsable1?.clave);
+  set('DOCTEST_TAR_RESPONSABLE2_USER', p.tar?.responsable2?.usuario);
+  set('DOCTEST_TAR_RESPONSABLE2_PASS', p.tar?.responsable2?.clave);
   // Los circuitos largos (@ciclo) reusan la empresa 1 en vez de registrar otra.
   set('DOCTEST_CICLO_ADMIN', p.empresa1?.admin?.usuario);
   set('DOCTEST_CICLO_PASS', p.empresa1?.admin?.clave);
@@ -199,6 +217,52 @@ function preparar(sembrar) {
   );
 }
 
+/**
+ * Datos de Tareas de la empresa 1: el proceso PROCESO-STANDAR (por SQL, porque no tiene pantalla) y
+ * el resto por pantalla con seed:tar. La base sale de DOCTEST_<AMBIENTE>_PG_* del .env; sin ellas se
+ * avisa y las pruebas de Tareas fallan al crear el pedido.
+ */
+function sembrarTar() {
+  const pre = { local: 'LOCAL', demo: 'DEMO', 'staging-v3': 'STAGING' }[entorno];
+  const v = (k) => process.env[`DOCTEST_${pre}_PG_${k}`]?.trim();
+  const empresa = process.env.DOCTEST_EMPRESA1_NOMBRE;
+  if (!v('HOST')) {
+    console.log(`\n⚠️  Sin DOCTEST_${pre}_PG_HOST: falta cargar PROCESO-STANDAR en "${empresa}" (seeds/tar/pro-procesos-empresas-test.sql).`);
+    return false;
+  }
+  const env = {
+    ...process.env,
+    PGHOST: v('HOST'), PGPORT: v('PORT') || '5432', PGUSER: v('USER'), PGPASSWORD: v('PASSWORD'), PGDATABASE: v('DATABASE'),
+  };
+  const id = spawnSync('psql', ['-At', '-v', `nombre=${empresa}`], {
+    env, encoding: 'utf8', input: "SELECT empr_id FROM core.empresas WHERE descripcion = :'nombre';\n",
+  }).stdout?.trim();
+  if (!/^\d+$/.test(id ?? '')) {
+    console.log(`\n⚠️  No se encontró la empresa "${empresa}" en la base.`);
+    return false;
+  }
+  const sql = spawnSync(
+    'psql',
+    ['-q', '-v', 'ON_ERROR_STOP=1', '-v', `modelo=${v('MODELO') || '1'}`, '-v', `empresa=${id}`, '-v', `lanzar=${v('LANZAR_BPM') || 'true'}`, '-f', 'tests/e2e/seeds/tar/pro-procesos-empresas-test.sql'],
+    { env, encoding: 'utf8' },
+  );
+  if (sql.status !== 0) {
+    console.log(`\n⚠️  No se pudo cargar PROCESO-STANDAR: ${(sql.stderr || '').trim().slice(0, 300)}`);
+    return false;
+  }
+  const menu = spawnSync(
+    'psql',
+    ['-q', '-v', 'ON_ERROR_STOP=1', '-v', `empresa=${empresa}`, '-f', 'tests/e2e/seeds/tar/menu-planificador.sql'],
+    { env, encoding: 'utf8' },
+  );
+  if (menu.status !== 0) {
+    console.log(`\n⚠️  No se pudo cargar el menú del planificador: ${(menu.stderr || '').trim().slice(0, 300)}`);
+    return false;
+  }
+  const seed = spawnSync('npx', ['tsx', 'tests/e2e/seeds/tar/preparar-datos-tar.ts'], { stdio: 'inherit', env: process.env });
+  return seed.status === 0;
+}
+
 console.log(`DocTest · modo ${modo} · ambiente ${entorno}${soloPlan ? ' · solo plan' : ''}`);
 const inicio = Date.now();
 
@@ -219,6 +283,7 @@ if (modo === 'regresion' || modo === 'nuevos') {
   if (preparar(sembrar) || soloPlan) {
     aplicarPerfil(); // ahora sí, el perfil recién escrito
     if (sembrar) {
+      if (!soloPlan) sembrarTar();
       correr('Todas las pruebas (regresión + circuitos largos)', [
         '--grep-invert',
         FUERA_DE_FULL.join('|'),

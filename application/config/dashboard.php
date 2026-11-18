@@ -74,4 +74,30 @@ $config['dashboard_kpis'] = array(
         'orden' => 40, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
         'color' => '#2b6cb0', 'kpi_nombre' => 'getDisponibilidad', 'chart' => 'doughnut',
     ),
+    // Indicadores de equipos de la pantalla "Rep Equipo" de asset (Kpi/disponibilidadKpi). Se calculan por mes en
+    // assetv2 (scripts/assetplanner/kpi-mantenimiento.sql) y el tablero muestra el promedio de los meses cacheados.
+    array(
+        'id' => 'man_mttr', 'sector' => 'kpi', 'modulo' => 'MAN', 'fuente' => 'man',
+        'titulo' => 'Tiempo medio de reparación (MTTR)',
+        'orden' => 50, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
+        'color' => '#c53030', 'kpi_nombre' => 'man_mttr', 'chart' => 'numero',
+    ),
+    array(
+        'id' => 'man_mttf', 'sector' => 'kpi', 'modulo' => 'MAN', 'fuente' => 'man',
+        'titulo' => 'Tiempo medio hasta la falla (MTTF)',
+        'orden' => 60, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
+        'color' => '#2f855a', 'kpi_nombre' => 'man_mttf', 'chart' => 'numero',
+    ),
+    array(
+        'id' => 'man_mtbf', 'sector' => 'kpi', 'modulo' => 'MAN', 'fuente' => 'man',
+        'titulo' => 'Tiempo medio entre fallas (MTBF)',
+        'orden' => 70, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
+        'color' => '#6b46c1', 'kpi_nombre' => 'man_mtbf', 'chart' => 'numero',
+    ),
+    array(
+        'id' => 'man_confiabilidad', 'sector' => 'kpi', 'modulo' => 'MAN', 'fuente' => 'man',
+        'titulo' => 'Confiabilidad de equipos',
+        'orden' => 80, 'ancho' => 6, 'alto' => 260, 'refresh_seg' => 600,
+        'color' => '#b7791f', 'kpi_nombre' => 'man_confiabilidad', 'chart' => 'doughnut',
+    ),
 );

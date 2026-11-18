@@ -1,5 +1,7 @@
 # AssetPlanner y el Pañol de Trazalog Tools — cómo quedó funcionando hoy
 
+> **ARCHIVADO el 2026-10-26.** Reemplazado por [`../MIGRACION-ASSETPLANNER.md`](../MIGRACION-ASSETPLANNER.md), que es el único documento vigente de la migración. Se conserva como referencia de detalle; si algo de acá lo contradice, vale aquel.
+
 ## Objetivo
 
 Explicarle al Product Owner, en lenguaje de mantenimiento y sin tecnicismos, cómo trabaja hoy

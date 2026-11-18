@@ -1,5 +1,7 @@
 # Traspaso — frente "Migración AssetPlanner a traz-tools" (REQ-ASSET-ALM)
 
+> **ARCHIVADO el 2026-10-26.** Reemplazado por [`../MIGRACION-ASSETPLANNER.md`](../MIGRACION-ASSETPLANNER.md), que es el único documento vigente de la migración. Se conserva como referencia de detalle; si algo de acá lo contradice, vale aquel.
+
 ## Objetivo
 
 Volcado de estado de este frente, para que quien lo retome —yo mismo en otra sesión, u otra persona—

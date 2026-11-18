@@ -1,0 +1,53 @@
+id: TAR-UC-013
+modulo: TAR
+titulo: Pedir materiales para una tarea
+perfil: Planificador
+estado: borrador
+version: "1.0"
+origen: baseline
+referencias_codigo:
+  - repo: traz-comp-tareasestandar
+    path: views/pedidos/pedidos_tarea.php
+  - repo: traz-comp-tareasestandar
+    path: controllers/Pedido.php
+    detalle: guardar()
+  - repo: traz-comp-tareasestandar
+    path: models/Pedidos.php
+    detalle: guardar(), asociarTarea(), lanzarPedidoEtapa(), aceptarPedidoMateriales()
+pantallas:
+  - Planificación de Trabajos → hito → Calendario → ☑ Rec. Materiales
+precondiciones:
+  - Sesión iniciada en Tools con perfil Planificador
+  - Una tarea planificada
+  - Artículos con stock
+depende_de:
+  - TAR-UC-009
+flujo_principal:
+  - paso: Pulsa ☑ y "Nuevo Pedido"
+    resultado: Se abre el pedido
+  - paso: Agrega artículo y cantidad (varios) y pulsa "Realizar Pedido"
+    resultado: El pedido aparece en "Pedidos Tarea" con número, fecha, caso y estado, y se lanza el proceso de pedido de materiales
+flujos_alternativos:
+  - nombre: Desde la receta
+    pasos:
+      - paso: En "Receta Asociada" indica la cantidad a aplicar y pulsa "Calcular"
+        resultado: Las cantidades salen de cantidad del artículo × aplicar ÷ cantidad de la fórmula
+      - paso: Pulsa "Realizar Pedido"
+        resultado: Se crea el pedido
+  - nombre: Datos incompletos
+    pasos:
+      - paso: Agrega sin artículo, sin cantidad o pide sin ítems
+        resultado: Ve el mensaje correspondiente y no se crea el pedido
+validaciones:
+  - El pedido queda asociado a la tarea y a la empresa
+datos_prueba:
+  empresa: DOCTEST_EMPRESA1 (DocTest Empresa SA)
+  datos_base: npm run seed:tar (clientes DT Cliente Norte/Sur, tipos de trabajo DT Mantenimiento/DT Montaje) + pro.procesos PROCESO-STANDAR (seeds/tar/pro-procesos-empresas-test.sql)
+  sufijo: los datos que crean los tests llevan el sufijo de la corrida
+dudas:
+  - "D-16: ¿el pedido de materiales de una tarea se auto-aprueba (PLANIF_AVANZA_TAREA)? Saltea al aprobador de Almacenes"
+derivados: {}
+notas:
+  - Relevado desde código en doc/specs/TAR-spec-modulo-tareas.md (2026-10-26) y verificado en el DEMO el 2026-10-27; los resultados de la corrida están en doc/specs/TAR-bugs-detectados.md
+  - "Casos de prueba: TAR-CP-013-01 a 013-07 (no automatizados en esta tanda)"
+  - "Hipótesis: HIP-TAR-02, HIP-TAR-22, HIP-TAR-23"

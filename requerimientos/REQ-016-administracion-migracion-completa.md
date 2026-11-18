@@ -169,7 +169,7 @@ cero:
 - **Lo que convive hasta el corte**: el ingreso, la registración y la carga masiva de DNATO; su "Menú por
   rol"; `TOOLS_ADMIN_USER` y `seg.users.role`; la regla vieja `menu()` de `menu_helper.php` (REQ-009); las
   empresas que nacen sin plan por el registro de DNATO (M-3 repetible).
-- **Pendientes de otros requerimientos aparte**: el control central de Tools (H-091, T-5), el cambio de
+- **Pendientes de otros requerimientos aparte**: el control central de Tools (H-123, T-5), el cambio de
   del disparador de alta y de los combos de formularios (REQ-017, CP-127); F-1 a F-4 de `traz-comp-formularios` no se hacen en este plan (prohibido tocar cómo se muestran los formularios), el freno de cuota en
   WSO2 (REQ-011, frente del agente).
 

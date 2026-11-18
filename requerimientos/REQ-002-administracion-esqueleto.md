@@ -43,7 +43,7 @@ después las hereda sin tener que acordarse.
 ## Qué NO hace
 
 - **No toca el control de sesión del resto de Tools.** El control vive **solo dentro del módulo**.
-  Llevarlo a todo Tools queda como deuda técnica (hallazgo **H-091**) para un requerimiento aparte, con
+  Llevarlo a todo Tools queda como deuda técnica (hallazgo **H-123**) para un requerimiento aparte, con
   su análisis de impacto. Decisión de Rodolfo del 2026-11-10, que cambia la decisión 4 del análisis.
 - **No cambia la configuración general de Tools** (`application/config/config.php`): ni la protección
   de envíos (`csrf_protection` sigue en `FALSE`), ni los "ganchos" (`enable_hooks` sigue en `FALSE`),
@@ -200,7 +200,7 @@ datos sensibles.
 - **El control vive en el módulo, no en Tools** (Rodolfo, 2026-11-10). Hoy Tools no tiene un control
   central: no hay controlador base común (`application/core/` solo tiene `MY_Loader` y `MY_Router`) y
   los ganchos están apagados (`application/config/config.php:106`). Prenderlo afectaría a todas las
-  pantallas de producción. Si en el módulo funciona bien, se propaga (H-091).
+  pantallas de producción. Si en el módulo funciona bien, se propaga (H-123).
 - **Administrador = el servicio que ya usa el tablero de Tools** (`/usuario/esadmin`), para que Tools y
   el módulo digan lo mismo. No se usa `seg.users.role` (correctivo C-5).
 - **Sin sesión se va al ingreso de DNATO**, como el resto de Tools, y después del ingreso se cae en el

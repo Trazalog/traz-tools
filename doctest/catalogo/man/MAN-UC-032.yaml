@@ -3,30 +3,34 @@ modulo: MAN
 titulo: El ciclo de vida de un plan preventivo
 perfil: Planificador
 estado: borrador
-version: "0.1"
+version: "1.0"
 origen: baseline
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Preventivo.php
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Calendario.php
-    detalle: "guardar_agregar() tipo=3 y setOTenSerie() para los repetitivos"
+  - repo: traz-tools-man
+    path: controllers/Preventivo.php
+  - repo: traz-tools-man
+    path: controllers/Calendario.php
+    detalle: programar() — un preventivo se puede programar en serie
+  - repo: traz-tools
+    path: _backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMANAPI.xml
+    detalle: "POST /tools/man/plan/programar: series por calendario (E45)"
 pantallas:
-  - "Mantenimiento → Preventivo"
-  - "Mantenimiento → Plan de Mantenimiento"
+  - Mantenimiento → Preventivo
+  - Mantenimiento → Plan de Mantenimiento
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
 depende_de:
   - MAN-UC-014
 flujo_principal:
-  - paso: "Se define el preventivo con su período, frecuencia y fecha base (MAN-UC-014)"
-    resultado: "Queda activo, con sus herramientas e insumos declarados"
-  - paso: "Al llegar el vencimiento, aparece en el plan de mantenimiento"
-    resultado: "Queda disponible para programarle una orden"
-  - paso: "Se le genera la orden de trabajo, sola o en serie para varios meses"
-    resultado: "Se crean una o varias órdenes, cada una con los insumos copiados"
-  - paso: "Cada orden sigue su ciclo (MAN-UC-030)"
-    resultado: "Al completarse, el preventivo vuelve a contar hasta el próximo vencimiento"
+  - paso: Se define el preventivo con su período, frecuencia y fecha base (MAN-UC-014)
+    resultado: Queda activo, con sus herramientas e insumos declarados
+  - paso: Al llegar el vencimiento, aparece en el plan de mantenimiento
+    resultado: Queda disponible para programarle una orden
+  - paso: Se le genera la orden de trabajo, sola o en serie para varios meses
+    resultado: Se crean una o varias órdenes, cada una con los insumos copiados
+  - paso: Cada orden sigue su ciclo (MAN-UC-030)
+    resultado: Al completarse, el preventivo vuelve a contar hasta el próximo vencimiento
 validaciones:
   - "El preventivo es **repetitivo**: no se consume, vuelve a vencer"
   - "Un preventivo es **repetitivo**: no se cierra, vuelve a vencer"
@@ -36,3 +40,4 @@ dudas:
 notas:
   - "A diferencia de la solicitud y del backlog, el preventivo **no se consume**: es un plan que vuelve a vencer. Esa es la diferencia conceptual que hay que explicar primero en la ayuda."
   - "A diferencia de la solicitud y el backlog, el preventivo **no se consume**: es un plan que vuelve a vencer. Esa es la diferencia conceptual que hay que explicar primero."
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

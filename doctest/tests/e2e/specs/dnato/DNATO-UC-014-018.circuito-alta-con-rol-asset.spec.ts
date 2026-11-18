@@ -18,6 +18,7 @@
 
 import { expect, test, credenciales } from '../../fixtures/auth.ts';
 import { entornoActual, requerirUrlDeApp, urlDnato } from '../../config/apps.ts';
+import { requerirUrlDeApp, urlDeApp, urlDnato } from '../../config/apps.ts';
 import { AltaUsuarioPage } from '../../pages/dnato/AltaUsuarioPage.ts';
 import { LoginPage } from '../../pages/dnato/LoginPage.ts';
 import { UsuariosListPage } from '../../pages/dnato/UsuariosListPage.ts';
@@ -68,6 +69,7 @@ test.describe('@dnato @DNATO-UC-014 @DNATO-UC-018 Circuito: alta de usuario con 
       console.log(`[circuito] 2. aparece en la lista sin roles: ${visto}`);
       // H-032 (#464) está corregido (traz-comp-dnato e9c2896): este tramo ya da `true`.
       // La aserción vive en DNATO-UC-014; acá la anotación deja el registro.
+      // H-032, #464, resuelto: la aserción vive en DNATO-UC-014; acá solo se registra.
       test.info().annotations.push({ type: 'H-032', description: `usuario sin roles visible en la lista: ${visto}` });
     });
 
@@ -126,6 +128,11 @@ test.describe('@dnato @DNATO-UC-014 @DNATO-UC-018 Circuito: alta de usuario con 
     });
 
     await test.step('6. El usuario nuevo entra a AssetPlanner', async () => {
+      // Asset se apaga y en el ambiente local no está publicado: sin su URL no hay ingreso propio que probar.
+      if (!urlDeApp('man')) {
+        test.info().annotations.push({ type: 'asset', description: 'ingreso a Asset no probado: el ambiente no tiene su URL' });
+        return;
+      }
       const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
       const p = await ctx.newPage();
       const login = new LoginManPage(p);

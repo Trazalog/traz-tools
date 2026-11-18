@@ -278,7 +278,7 @@ salvo que se indique; líneas según `DNATO_v2_RELEVAMIENTO.md`):
 
 > **Cambio de Rodolfo (2026-11-10), reemplaza la decisión de abajo:** el control **no** se hace para
 > todo Tools sino **solo dentro del módulo** (controlador base propio de `traz-comp-adm`, REQ-002).
-> Llevarlo a Tools queda como deuda técnica, hallazgo H-091 de `doc/hallazgos/REGISTRO.md`.
+> Llevarlo a Tools queda como deuda técnica, hallazgo H-123 de `doc/hallazgos/REGISTRO.md`.
 
 Tools exige sesión iniciada (`Dash::index` redirige a `DNATO.main/login` si no hay `empr_id`,
 `application/controllers/Dash.php:21,45-48`), pero registración e ingreso son **públicos** (los usa un
@@ -522,7 +522,7 @@ al aprobar este análisis.
 2. ✅ **Tiempo de sesión:** el de Tools (sin límite), dejándolo **configurable** en `constants.php` (C.3).
 3. ✅ **Estilos de login/registro:** se copian **tal cual**, sin unificar (C.1).
 4. ✅ **Excepción pública de identidad:** ~~control general de Tools~~ → **control solo dentro del
-   módulo** (cambio del 2026-11-10; propagarlo a Tools es la deuda H-091) (C.2).
+   módulo** (cambio del 2026-11-10; propagarlo a Tools es la deuda H-123) (C.2).
 5. ✅ **Prefijo del módulo:** `ADM` confirmado (F.2).
 6. ✅ **Portal/Consola:** diseño propio (layout "portal" de las maquetas), respetando las maquetas; al
    presionar "Mi empresa" se sale del contexto visual de Tools (E.2, F.2). Se estudian las maquetas a

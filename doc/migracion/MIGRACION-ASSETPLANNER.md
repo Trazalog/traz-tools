@@ -1,0 +1,920 @@
+# Migración de AssetPlanner a Trazalog Tools — hoja de ruta
+
+## Objetivo
+
+Documento rector y **único vigente** de la migración de `traz-prod-assetplanner` (app standalone de
+mantenimiento) al submódulo `traz-tools-man` de traz-tools. Dice dónde está la migración (con datos
+medidos), cuál es el camino hasta retirar asset, y qué decisiones faltan. Está escrito para el PM y
+para quien ejecute cualquier etapa, y se lee sin conocer la historia previa. Reemplaza a los
+documentos de [`archivo/`](archivo/): si algo de allá contradice esto, **vale esto**. **No cubre** la
+operatoria de setup de un cliente (eso es `traz-prod-assetplanner/doc/v3/setup-cliente-alm-pan.md`)
+ni la migración de PHP 5.6 a 8.3 (análisis aparte, rama `docs/analisis-migracion-php83`).
+
+---
+
+| | |
+|---|---|
+| **Fecha** | 2026-10-26 · última actualización 2026-10-27 (MIG-0 en curso, A2/A3/P1 resueltas) |
+| **Mediciones contra** | asset `origin/develop` `bf01518` (2026-10-26) · tools `origin/develop-v3` `9556284c` (2026-10-24) · `traz-tools-man` rama `rnsanchez` `343dbb0` (2024-09-09, congelada) |
+| **Clase de riesgo de este documento** | 🟢 — análisis y plan, no toca runtime ni datos |
+| **Etiqueta para commits y PRs de la migración** | `[MIG-ASSET-<etapa>]`, ej. `[MIG-ASSET-1]` (ver §3.3) |
+| **Cómo se mantiene** | Se edita **este** archivo al cerrar cada etapa o decisión. No se abren documentos de plan paralelos: el detalle de una etapa va como sección acá o, si es largo, en un anexo enlazado desde acá |
+
+---
+
+## 1. Resumen
+
+**Destino (decisión del PM, 2026-10-26):** AssetPlanner deja de ser una app aparte. Su núcleo de
+mantenimiento pasa a vivir dentro de traz-tools como el submódulo `traz-tools-man`, con la sesión, el
+menú, los usuarios y los módulos de almacén y pañol de tools. Cuando la última empresa haya pasado,
+asset se retira.
+
+**Dónde estamos:**
+
+1. **Almacén y pañol ya están resueltos, pero del lado equivocado.** Entre agosto y octubre de 2026
+   se hicieron dos frentes que se antepusieron como prioridad: *REQ-ASSET-ALM* (asset consume el
+   almacén y el pañol de tools por REST) y *Pedido y pañol en la OT* (herramientas usadas desde vales
+   reales y detalle de entregas en las pantallas de la OT). Los dos están en prueba. Son la etapa
+   "almacenes y herramientas" del plan original, pero se construyeron **dentro de asset**: hay que
+   portarlos junto con el resto.
+2. **El núcleo no arrancó.** Sigue el fork de Rogelio Sanchez de 2024 (43 archivos, 36.122 líneas)
+   en una rama que ningún repo referencia. El submódulo de tools apunta a un README vacío y el módulo
+   no levanta (§2.2).
+3. **La divergencia creció, pero sigue siendo manejable.** De los 43 archivos portados, ahora
+   cambiaron 19 en asset desde el corte (eran 15 en agosto), con unas 2.300 líneas de diferencia real.
+   Además asset ganó una capa de integración con tools que hay que traer (§2.3).
+4. **MAN no va a tener acceso directo a base de datos: todo pasa por DataServices** (decisión del
+   PM, 2026-10-26). Es el cambio de mayor volumen respecto del plan de agosto (§3.2). A2, A3 y el
+   freeze (P1) se resolvieron el 2026-10-27, y la regla está escrita como ADR-014 (aceptado).
+5. **La migración tiene cuatro escalones.** (1) Llevar asset a tools como módulo **MAN**, con su
+   bandeja de tareas tal como está (MIG-0 a MIG-6; el Plan de Mantenimiento rehecho es MIG-4).
+   (2) Llevar esa bandeja a la bandeja de tools (MIG-7). (3) Cambiar cuándo se lanzan en Bonita las
+   OTs preventivas y predictivas, para que no saturen las bandejas con trabajo a futuro (MIG-8).
+   (4) Llevar a todo tools el mecanismo de notificaciones de asset, mejorado (MIG-9).
+6. **Ramas:** después de la próxima unificación de `develop` con `develop-v3`, no se vuelven a
+   unificar hasta que la migración esté terminada y probada (§3.6).
+
+En este documento, **MAN** es el nombre de asset ya migrado, es decir, el módulo de mantenimiento de
+tools (`traz-tools-man`). Las bases de asset son **MariaDB** (`assetv2`); cuando en conversaciones o
+documentos viejos aparece "MySQL" para asset, se refiere a esta misma base.
+
+---
+
+## 2. Estado medido
+
+### 2.1 Dónde está cada cosa
+
+| Repo / rama | Qué tiene | Estado |
+|---|---|---|
+| `traz-prod-assetplanner` `master` | Lo que corre en producción (tags `v2.9.x`) | `7d8ca44`, 2026-04-17 |
+| `traz-prod-assetplanner` `develop-v3` / `develop` | Producción + la integración con tools (REQ-ASSET-ALM y Pedido y pañol). El demo se despliega desde `develop` | `develop` contiene todo `develop-v3` |
+| `traz-tools-man` `rnsanchez` | **El trabajo portado en 2024.** 43 archivos `.php`, 36.122 líneas. 3 commits "backup", sin PRs | Congelada desde 2024-09-09 |
+| `traz-tools-man` `develop-v3` | **Rama de integración de la migración** (MIG-0), creada el 2026-10-27 desde `rnsanchez` (`343dbb0`). Todo entra por PR, con el CI `man-ci.yml` | Desde 2026-10-27 |
+| `traz-tools-man` `main` · `develop` / `master` | `main`: `controllers/Sservicio.php` y un README (`6bb0900`, 2024-07-11). `develop` y `master`: solo el README (`02cca43`) | Sin uso |
+| `traz-tools` (`develop` y `develop-v3`) | Puntero del submódulo en `02cca43` (el README). Ya tiene `define('MAN', 'traz-tools-man/')` y la conexión `$db['asset_db']` a MariaDB `assetv2`, que agregó Rogelio | Sin cambios desde 2024 en ese punto |
+
+### 2.2 El fork de 2024: qué sirve y por qué no arranca
+
+Lo portado es el núcleo de activos: Equipo, Otrabajo, Preventivo, Predictivo, Backlog, Componente,
+Ordenservicio, Sservicio, Parametro, Proceso, Area y Calendario (12 controllers y 13 models), más 18
+vistas. Rogelio eligió bien el método: usó los helpers de sesión del host (`empresa()`, `userId()`,
+`userNick()` de `application/helpers/sesion_helper.php`), sacó el bloque de login repetido en cada
+`index()` y dejó el logging `#TRAZA` que pide `CLAUDE.md`. **Eso se conserva.** Lo que **no** se
+conserva es su conexión dedicada a MariaDB (`$this->assetDB = $this->load->database('asset_db',
+TRUE)` en los 13 models): MAN accede a los datos solo por DataServices (§3.1).
+
+El error fue de método: convirtió **método por método en vez de archivo por archivo**. Ningún
+archivo quedó del todo convertido. Recontado hoy sobre `343dbb0`:
+
+| Defecto | Cantidad | Efecto |
+|---|---:|---|
+| Accesos a `userdata('user_data')`, una clave de sesión que tools nunca escribe | 89 | Devuelven `NULL` |
+| `$this->db->` en controllers (en tools, `default` es PostgreSQL y no MariaDB) | 62 | Consultas contra el motor equivocado. Lo peor está en `Calendario.php:413-495` |
+| `$this->db->insert_id()` después de un insert hecho en `assetDB` | ~12 | Devuelve el id de **otra** conexión, sin dar error |
+| Vistas referenciadas que nunca se portaron, entre ellas el index del módulo y **todo el calendario** | 23 | Error fatal |
+| `equipo/` contra `Equipo/` (`controllers/Equipo.php:646,652`) | 2 | Error fatal en Linux |
+| URLs con el estilo viejo `index.php/X` en vez de la constante `MAN` | 92 | Navegación rota |
+| Callbacks `.success()`/`.error()` de jQuery 2, que en jQuery 3 tiran `TypeError` | 11 | Pantallas rotas |
+| Autocompletes de jQuery UI rotos porque el host carga jQuery UI **dos veces** (`application/views/layout/general_scripts.php:5` y `:115`, la segunda la trae jHTree) | 48 | Acá se detuvo Rogelio |
+
+La doble carga de jQuery UI **sigue igual hoy** en el host. **Actualización 2026-10-28:** con las vistas ya convertidas,
+los autocompletar de MAN funcionan igual con y sin la segunda carga (prueba en navegador sin pantalla). El análisis
+de impacto y la recomendación de no tocar el layout por ahora están en [analisis-impacto-jquery-ui.md](analisis-impacto-jquery-ui.md).
+
+### 2.3 Divergencia: lo que cambió en asset desde el corte
+
+Comparación entre el corte (`653fd95`, 2024-09-09) y `origin/develop` de hoy, **sin contar cambios de
+espacios ni de fin de línea**. La última columna cuenta los commits desde agosto de 2026, es decir,
+los que vienen de los dos frentes de integración.
+
+| Archivo de asset | +/− real | Commits desde ago-2026 |
+|---|---|---:|
+| `models/Ordenservicios.php` | +422 / −123 | 4 |
+| `controllers/Ordenservicio.php` | +215 / −23 | 1 |
+| `views/Sservicios/list_bpm.php` | +172 / −25 | 0 |
+| `views/tareas/view_presta_presta_conf_modal.php` | +136 / −1 | 3 |
+| `views/ordenservicios/list.php` | +132 / −11 | 0 |
+| `models/Tareas.php` | +127 / −48 | 0 |
+| `models/Calendarios.php` | +42 / −129 | 2 |
+| `models/Preventivos.php` | +56 / −109 | 3 |
+| `models/Otrabajos.php` | +46 / −80 | 3 |
+| `controllers/Otrabajo.php` | +62 / −11 | 1 |
+| `models/Backlogs.php`, `models/Predictivos.php` | +14 / −43 c/u | 2 c/u |
+| `models/Sservicios.php` | +32 / −2 | 0 |
+| `controllers/Calendario.php` | +30 / −26 | 0 |
+| `views/otrabajos/view_agregarOT.php` | +29 / −0 | 1 |
+| `views/preventivo/list.php` | +26 / −1 | 0 |
+| `views/otrabajos/list.php` | +8 / −20 | 0 |
+| `controllers/Sservicio.php` | +8 / −5 | 0 |
+| `views/equipo/list.php` | +1 / −1 | 0 |
+| **19 de 43 archivos** | **≈ 2.270 líneas** | |
+
+Los otros 24 archivos portados (los ABMs de Area, Componente, Equipo, Parametro, Proceso y parte de
+las vistas) **no cambiaron**: el fork vale tal cual, una vez saneado.
+
+**Lo que asset ganó y no estaba en el plan de agosto** (todo vive fuera del fork):
+
+| Pieza | Qué es |
+|---|---|
+| `application/helpers/tools_helper.php` (647 líneas, 24 funciones) | La capa de integración: catálogo de artículos y herramientas, configuración por empresa (`core.tablas`, clave `ASSET`), pedidos, vales, entregas y DNI, todo por REST contra `ALMDataService`, `PANDataService` y `COREDataService` |
+| `traz-comp-almacen/new/Pedidos_Materiales.php` | Copia embebida del model de pedidos de tools, reescrita a REST |
+| `views/tareas/view_inf_servicio_modal.php`, `view_verifica_informe.php`, `views/calendar/view_OtEjecutar_modal.php` | Pantallas de la OT con pedido, entregas y herramientas usadas |
+| `database/scripts/f7-herramientas-usadas.sql` | Tablas nuevas `tbl_otvales` y `tbl_otherramientasusadas` y columna `tbl_otherramientas.descripcion_libre` en `assetv2`, como excepción aprobada al freeze del esquema |
+| `database/scripts/f3-…sql`, `f4-…sql` | Ocultan los menús de almacén y pañol de asset (`sismenu.estado`) |
+| `tests/e2e/01` a `08` (Playwright) | Regresión del circuito de la OT con almacén y pañol |
+| `application/models/Groups.php` | El menú de asset respeta `sismenu.estado` |
+
+### 2.4 Lo que falta portar
+
+| Bloque | Tamaño aprox. | Nota |
+|---|---:|---|
+| `controllers/Tarea.php` y las 17 vistas de `views/tareas/` | 1.231 + ~7.000 líneas | El hueco más grande y el más vivo: bandeja de Bonita, informe de servicio, conformidad |
+| El calendario (`views/calendar/`, motor `Calendario::guardar_agregar()`) | — | Se reimplementa, no se porta (MIG-4) |
+| Vistas de `otrabajos/`, `equipo/`, `Sservicios/`, `ordenservicios/` | ~12.600 líneas | |
+| `backlog/nuevo_edicion_view_.php`, `Lectura`/`Lecturas`, `Ficha`/`Fichas`, `componente/listabm`, vistas de area y proceso | ~2.500 líneas | Corrección (2026-10-29): `Lectura`/`Lecturas` es la carga de lecturas de **parámetros** (`parametroequipo`), no la del contador. La lectura del contador (`historial_lecturas`) ya está en Equipo. Portada en MIG-3 (E29) |
+| La capa de integración de §2.3 | ~1.200 líneas + 2 scripts | Ver MIG-2 |
+
+**Lo que no se porta, porque tools ya lo tiene:**
+
+| De asset | Lo reemplaza, en tools |
+|---|---|
+| Almacén, depósitos, compras y la copia `traz-comp-almacen/` | `traz-comp-almacenes` + `ALMDataService` (asset ya consume esos datos) |
+| Herramientas y pañol viejos | `traz-comp-pan` + `PANDataService` (asset ya consume esos datos) |
+| Login, User, Group, Menu, Administracion | Core de tools + DNATO (ver MIG-5) |
+| Notificaciones · Formularios | `traz-comp-notificaciones` · `traz-comp-formularios` |
+
+**Código muerto, que no se porta:** `views/preventivo/partes.php`, `models/Calendar.php`,
+`models/Calendars.php`, `views/calendar/Calendario.php` (un controller metido dentro de `views/`),
+`programer_.php`, `reprogramer_.php`, `tabla_preventivo_por_horas.php` y los `.orig` versionados.
+
+**Alcance (decisión del PM, 2026-10-30, resuelve P4): todos los ABMs y todo el menú de Mantenimiento, nada más.** Quedan fuera
+Reportes y KoolReport, Seguridad (usuarios, grupos y menú son de DNATO), Almacenes y Pañol y los ABMs que dependen de ellos. Según el menú
+real de asset (`sismenu`, entradas activas):
+
+- **Menú Mantenimiento** (todo migrado): Equipos, Componentes, Preventivo, Backlog, Registro de Parámetros, Predictivo, Solicitud de
+  Servicio, Parametrizar Predictivo, Órdenes de Trabajo, Plan de Mantenimiento, Informe de Servicios, Administrar Órdenes, y "Mis Tareas"
+  (la bandeja, ver [PROPUESTA-BANDEJA.md](PROPUESTA-BANDEJA.md)). Dudoso: la entrada "trazabilidad Activos" está activa pero su
+  dirección es un texto suelto (`fa fa-calendar`): no abre nada en asset.
+- **Menú ABM** — hechos: Área, Procesos, Componentes y (2026-10-31, MIG-5a, con paridad contra asset) Grupo, Sector, Contratista, Tareas estándar, Parámetros, Familia, Marca, Clientes, Criticidad, Sucursales y Sistemas. **Falta:** Unidad de medida (no se porta, E57: es del almacén). Detalle de lo que se pedía: **Faltaban 12:** Grupo, Sector, Contratista, Tareas estándar (`Tarea/index2`),
+  Parámetros (`Altparametro`), Familia (`Family`), Marca, Clientes (`Cliente`), Criticidad, Unidad de medida, Sucursales y Sistemas
+  (`SistemaABM`). "ABM modelos" no tiene dirección. Inactivos en asset y ligados a almacén y pañol (no se portan): Depósito, Proveedor,
+  Plantilla de insumos.
+
+---
+
+## 3. Estrategia
+
+### 3.1 Decisiones vigentes
+
+| Decisión | Desde | Consecuencia para la migración |
+|---|---|---|
+| **Destino: asset entra a tools como submódulo `traz-tools-man`** y la app standalone se retira | PM, 2026-10-26 | Lo que se construyó dentro de asset en ago-oct también se porta |
+| **Se parte del fork de 2024**, no de cero | PM, 2026-08-12 | Con el ajuste de §3.2 |
+| **El núcleo sigue sobre la misma MariaDB `assetv2`**, sin migrar datos | PM, 2026-08-12 | Asset y tools conviven sobre las mismas filas y el corte se puede revertir en el acto |
+| **Almacén y pañol no se migran: se usan los de tools**, y no hay migración masiva de datos (en producción el almacén de asset estaba en cero y el único catálogo real era el de Caleras San Juan) | PM, 2026-08-12 | Esta parte ya está hecha. Desaparecen los riesgos de migrar datos entre motores |
+| **El usuario de asset y el de tools son el mismo** | PM, 2026-10-07 (definición 9 del plan Pedido y pañol) | Se elimina el doble login (MIG-5) |
+| **La lógica de negocio va en las APIs, no en los controllers** | PM, 2026-09-10 (`CLAUDE.md`) | Ver la fila siguiente |
+| **MAN no accede a ninguna base de datos: todo pasa por DataServices** (`MANDataService` para `assetv2`, más los de tools que ya se usan). Las operaciones que tocan varios subsistemas (crear OT + Bonita + pedido) se exponen como recursos del API | PM, 2026-10-26 | Reemplaza el acceso directo por `$db['asset_db']` del plan de agosto. Cuando termina la migración, `$db['asset_db']` se borra del `database.php` de tools. Se formaliza en ADR-014 (MIG-0) |
+| **Todo bugfix nuevo que se haga en asset se replica en MAN** | PM, 2026-10-26 | Regla de doble aplicación, con trazabilidad (§3.5). Rige desde hoy y hasta que asset se retire |
+| **El Plan de Mantenimiento se rehace** (no se porta), porque su FullCalendar (2.2.5, con jQuery 2) no funciona en tools | PM, 2026-10-26 | MIG-4 es camino crítico: sin esa pantalla no hay corte |
+| **La primera versión de MAN trae la bandeja de asset tal cual**, conviviendo con la de tools. La unificación de bandejas viene después del corte | PM, 2026-10-26 | MIG-3 porta la bandeja y MIG-7 la unifica |
+| **Las OTs preventivas y predictivas se lanzan en Bonita cerca de su fecha**, no al programarlas. Es el tercer escalón, después de la bandeja | PM, 2026-10-26 | MIG-8. MIG-4 conserva el comportamiento de hoy, pero deja separado "programar" de "lanzar" |
+| **PHP de destino: 5.6.** Nada de sintaxis 7.x, y el control es `phpcs` con PHPCompatibility | PM, 2026-10-07 | Gate obligatorio en cada PR. El lint local (7.3/8.3) no lo detecta |
+| **Compatibilidad con v2:** lo que se toca en tools es aditivo y no rompe contratos que v2 consume | PM | Las queries nuevas de los DataServices se agregan, no reemplazan |
+| **Ramas de tools: una última unificación de `develop` con `develop-v3`** cuando termine el frente `asset-order-warehouse-tracking`, y **después ninguna más hasta que la migración esté terminada y probada** | PM, 2026-10-26 | Toda la migración se hace sobre `develop-v3`. Ver §3.6 |
+| **Las notificaciones de asset se llevan a todo tools, mejoradas**, como última etapa | PM, 2026-10-26 | MIG-9 |
+| **Bonita al crear una OT: se replica la coreografía de asset** (si el lanzamiento falla, la OT se borra), y los nombres de actividad quedan como están (A2) | PM, 2026-10-27 | MIG-4 no cambia ese comportamiento. El cambio de fondo es MIG-8. En ADR-014 |
+| **La fuente única de los artefactos WSO2 de mantenimiento es la de tools** (`toolsMANAPI`, `MANDataService`, `COREDataService`, `ALMDataService`). Las copias de asset se retiran (A3) | PM, 2026-10-27 | Toda query nueva o corregida para MAN entra a `_backend/api/ToolsAPIProject/` de tools. En ADR-014 |
+| **Freeze de asset (P1): rige cuando cierren las pruebas** de REQ-ASSET-ALM y de Pedido y pañol | PM, 2026-10-27 | Hasta entonces asset puede recibir cambios funcionales de esos dos frentes. Se vuelve a medir §2.3 al arrancar MIG-2 (R1) |
+| **El esquema de `assetv2` no cambia**, salvo excepciones registradas acá (la única hasta hoy: `f7-herramientas-usadas.sql`) | PM, 2026-08-12 | Las mejoras de modelo de datos quedan para después del retiro de asset |
+
+### 3.2 Qué cambia respecto del plan de agosto
+
+- **Almacenes y herramientas salen del plan como etapa**: ya están hechos. Lo que queda es portar la
+  capa de integración (MIG-2).
+- **El corte ya no tiene dos velocidades.** Sin migración de datos a PostgreSQL, toda empresa pasa
+  de una vez y se puede volver atrás en el acto. Desaparecen los riesgos de mojibake, de FK que
+  cruzan de motor y de reconciliación de datos migrados.
+- **Usuarios, permisos y menú pasan a ser una etapa propia (MIG-5).** El plan de agosto los daba por
+  resueltos con "core de tools + DNATO". No lo están: asset tiene su propio padrón (`sisusers`),
+  grupos con permisos propios y `grpDash`.
+- **El acceso a datos pasa a ser por DataServices.** Rogelio dejó 1.718 accesos a `assetDB` en los
+  13 models y 62 accesos a `$this->db` en controllers. Todos se convierten a llamadas REST a
+  `MANDataService`, conservando la firma y el formato de salida de cada método del model. Es el
+  mismo patrón que ya se usó en asset para almacén y pañol (`Pedidos_Materiales.php` reescrito a
+  REST sin tocar a sus llamadores). Los controllers no cambian. **La conversión de datos es parte de
+  portar un archivo**: no hay un estado intermedio "anda con `assetDB`", porque eso sería hacer el
+  trabajo dos veces.
+- **Los 19 archivos que divergieron no se re-mergean sobre el fork: se vuelven a portar** desde el
+  asset actual con la mecánica de Rogelio, usando el fork como referencia. Es una decisión técnica
+  menor que tomé yo. El motivo: el fork está reindentado y con PHPDoc, así que el merge de git choca
+  en casi todas las líneas, y en estos archivos la conversión (sesión, datos a DataService, URLs) es
+  más barata que reaplicar a mano ~2.300 líneas de cambios funcionales. Los 24 archivos que no
+  cambiaron se sanean sobre el fork.
+- **La nomenclatura de etapas es `MIG-n`**, para no chocar con las fases `F0…F8` de los dos frentes
+  anteriores, que usaron los mismos nombres para cosas distintas.
+
+### 3.3 Etapas
+
+```mermaid
+flowchart LR
+    M0["MIG-0<br/>Fundaciones<br/>+ decisiones §4"] --> M1["MIG-1<br/>Saneamiento<br/>que arranque"]
+    M1 --> M2["MIG-2<br/>Re-portar lo divergido<br/>+ capa de integración"]
+    M1 --> M3["MIG-3<br/>Completar el núcleo<br/>Tarea + vistas"]
+    M2 --> M4["MIG-4<br/>Plan de Mantenimiento<br/>reimplementación"]
+    M3 --> M4
+    M1 --> M5["MIG-5<br/>Usuarios, permisos<br/>y menú"]
+    M4 --> M6["MIG-6<br/>Corte por empresa<br/>y retiro de asset"]
+    M5 --> M6
+    M6 --> M7["MIG-7<br/>Bandeja de asset<br/>→ bandeja de tools"]
+    M7 --> M8["MIG-8<br/>Lanzamiento de OTs<br/>cerca de la fecha"]
+    M8 --> M9["MIG-9<br/>Notificaciones<br/>para todo tools"]
+```
+
+**Escalón 1** (MIG-0 a MIG-6): asset pasa a ser MAN y se retira. **Escalón 2** (MIG-7): una sola
+bandeja. **Escalón 3** (MIG-8): OTs a futuro sin caso Bonita. **Escalón 4** (MIG-9): notificaciones
+para todo tools. MIG-2, MIG-3 y MIG-5 pueden avanzar en
+paralelo una vez cerrada MIG-1. MIG-4 necesita el núcleo completo y es el camino crítico del
+escalón 1. Cada etapa entra por PRs contra la rama de integración de `traz-tools-man` (MIG-0, punto 1),
+con la plantilla del repo y la etiqueta `[MIG-ASSET-n]`.
+
+#### MIG-0 — Fundaciones
+
+Sin esto no se puede verificar nada de lo que sigue.
+
+1. **Rama de integración** `develop-v3` en `traz-tools-man`, creada desde `rnsanchez`, con branch
+   protection y PR obligatorio (el mismo modelo que tools y asset). Prohibidos los commits "backup"
+   a ramas personales.
+2. **Apuntar el submódulo** de tools a esa rama (hoy está en `02cca43`).
+3. **Ambiente para probar**: Apache y PHP 5.6 con tools, el submódulo y una **réplica** de `assetv2`
+   con al menos dos empresas, para poder probar el aislamiento. Hoy no existe staging del frontend
+   PHP. Mientras no exista, se trabaja en local (Apache de XAMPP con PHP 7.3, contra `assetv2` de
+   DEV, con la VPN levantada) y el control de PHP 5.6 queda en manos de `phpcs`.
+4. **CI mínimo** en un workflow nuevo `man-ci.yml`, que corre en cada PR a la rama de integración:
+   `php -l`, `phpcs --standard=PHPCompatibility --runtime-set testVersion 5.6`, el checklist de
+   conversión (§3.4, nivel 0b) y gitleaks.
+5. **Sacar las credenciales en claro y rotarlas** (T5).
+6. **Escribir ADR-014: "MAN accede a `assetv2` solo por `MANDataService`"**, con la decisión del PM
+   del 2026-10-26, y hacer el bump del `doc/v3/CONTEXT-PACK.md` en el mismo PR, como pide el
+   Definition of Done de `CLAUDE.md`. El ADR también fija tres reglas técnicas: cómo se devuelven los
+   ids generados (los `insert_id()` de hoy), cómo se hace una operación transaccional de varios
+   pasos (por ejemplo, generar una serie de OTs) y dónde viven las operaciones que tocan varios
+   subsistemas. Resolver también A2 y A3 de §4. Y **verificar que el datasource de
+   `MANDataService` escribe en todos los ambientes**: en DEV ya se escribe (F6 de Pedido y pañol),
+   pero hay que confirmarlo en TEST y PROD.
+7. **Acordar el freeze de asset (P1)**: desde qué fecha asset solo recibe bugfixes, con cherry-pick
+   a ambos lados.
+8. Corregir `doc/vision-v3-context.md` (sección "Asset Planner", línea ~112), que todavía dice que la
+   migración "se pausó por restricciones de presupuesto".
+
+**Criterio de salida:** el submódulo apunta a la rama nueva, el CI corre en verde sobre el fork tal
+como está y ADR-014 está aprobado.
+
+**Estado al 2026-10-27:**
+
+| Punto | Estado |
+|---|---|
+| 1. Rama de integración | ✅ `develop-v3` creada en `traz-tools-man` desde `rnsanchez`, **protegida**: PR obligatorio, check `man-ci` requerido, también para administradores, sin force push ni borrado |
+| 2. Puntero del submódulo | ✅ En PR (tools #570): de `02cca43` a `a845dfd`, la punta de `develop-v3` de `traz-tools-man` |
+| 3. Ambiente local | Pendiente, **lo arma el PM**: XAMPP + VPN contra `assetv2` de DEV. Sin VPN no se pueden probar con `curl` las queries de `MANDataService` |
+| 4. CI mínimo | ✅ `man-ci.yml` (`traz-tools-man` PR #1 y PR #2, fusionados; el #2 ajusta el consumo: un solo job, solo en PR, ~20 s), en verde sobre el fork: `php -l` con PHP 5.6, PHPCompatibility 5.6, checklist 0b y gitleaks. El 0b bloquea solo los archivos de `.ci/portados.txt` y del resto informa la cantidad |
+| 5. Credenciales (T5) | Pendiente, 🔴. **La rotación la hace el PM.** Sacarlas del repo toca `database.php` y `constants.php` de tools, que son core: necesita análisis de impacto aprobado |
+| 6. ADR-014 | ✅ Aceptado por el PM el 2026-10-27, con la regla 4 agregada. A2 y A3 resueltas. Falta verificar que el datasource escribe en TEST y PROD |
+| 7. Freeze (P1) | ✅ Decidido: rige cuando cierren las pruebas de los dos frentes |
+| 8. `doc/vision-v3-context.md` | ✅ Corregido |
+
+#### MIG-1 — Saneamiento: que arranque lo que ya está
+
+**La unidad de trabajo es el archivo completo**, nunca el método. Aplica a los 24 archivos que no
+divergieron:
+
+| Tarea | Volumen |
+|---|---|
+| `userdata('user_data')` → `empresa()` / `userId()` / `userNick()` | 89 sitios |
+| `$this->db` en controllers → bajar la consulta al model | 62 + ~12 sitios (`insert_id()`) |
+| `$this->assetDB` en models → llamadas REST a `MANDataService`, conservando firma y formato de salida. Cada query nueva se agrega al `.dbs` y se prueba con `curl` antes de que el PHP la use | 1.718 accesos en 13 models. Es el grueso del trabajo |
+| Portar las 23 vistas faltantes, salvo el calendario (MIG-4) | ~18 archivos |
+| Unificar `Equipo/` y `equipo/` | 2 sitios |
+| URLs → constante `MAN` | 92 sitios |
+| `.success()`/`.error()` → `.done()`/`.fail()` | 11 sitios |
+| **Quitar la doble carga de jQuery UI** del host y validar los autocompletes. Toca `general_scripts.php` de tools, que es core: necesita análisis de impacto aprobado. **Análisis escrito (2026-10-28): recomienda no tocarlo**, ver [analisis-impacto-jquery-ui.md](analisis-impacto-jquery-ui.md) | 1 archivo + 48 sitios |
+| Quitar `dump`/`var_dump`/`print_r`/`last_query` y el `$empId = 6` fijo (`models/Preventivos.php:109`) | ~11 sitios |
+| Pasar los 6 `<section class="content">` restantes a `box` | 6 vistas |
+
+**Orden sugerido**: primero los ABMs chicos (Area, Proceso, Componente, Parametro), para asentar el
+patrón de conversión a DataService con poco riesgo; después Equipo, el más grande de los que no
+divergieron.
+
+**Estado al 2026-10-27:**
+
+| Archivo / pantalla | Estado | PRs |
+|---|---|---|
+| Área (`controllers/Area.php`, `models/Areas.php`, `views/area/view_.php`) + `helpers/man_helper.php` | ✅ Portado. Paridad OK (10 de 10, incluido aislamiento) | MAN: `feat/MIG-ASSET-1-area` · tools: queries de `MANDataService` en `feat/MIG-ASSET-1-area` |
+| Proceso (`controllers/Proceso.php`, `models/Procesos.php`, `views/proceso/view_.php`) | ✅ Portado. Paridad OK (10 de 10) | MAN: `feat/MIG-ASSET-1-proceso` · tools: `feat/MIG-ASSET-1-proceso` |
+| Parametro (`controllers/Parametro.php`, `models/Parametros.php`, `views/parametro/list.php`) | ✅ Portado. Paridad OK (18 de 18) | MAN: `feat/MIG-ASSET-1-parametro` · tools: `feat/MIG-ASSET-1-parametro` |
+| Componente (`controllers/Componente.php`, `models/Componentes.php`, `views/componente/{list,listabm,view_}.php`) | ✅ Portado. Paridad OK (27 de 27) | MAN: `feat/MIG-ASSET-1-componente` · tools: `feat/MIG-ASSET-1-componente` |
+| Equipo (`controllers/Equipo.php`, `models/Equipos.php`, `views/Equipo/{list,view_}.php`) | ✅ Portado. Paridad OK (66 de 66, incluido aislamiento). Suite completa: 131 de 131 | MAN y tools: `feat/MIG-ASSET-1-equipo` (commits locales; un solo PR al final del tramo) |
+
+**Criterio de salida:** con una sesión de tools, el módulo se abre desde el menú, se navegan los ABMs
+y se listan equipos y OTs reales de una empresa de prueba. Nivel 0b en verde y **cero accesos a
+base de datos** en los archivos portados.
+
+#### MIG-2 — Re-portar lo divergido y la capa de integración
+
+**Estado al 2026-10-28:**
+
+| Archivo / pantalla | Estado |
+|---|---|
+| Capa de integración, lectura (`helpers/man_tools_helper.php`: catálogos de artículos y herramientas, configuración por empresa) | ✅ Portada. Las escrituras (vales, entregas, devoluciones) van con las pantallas que las usan |
+| Preventivo, Predictivo, Backlog (controllers, models y vistas `list`/`view_`) | ✅ Portados desde el asset actual. Paridad OK (56 de 56, incluido aislamiento). Alta con detalle por `toolsMANAPI` (E20) |
+| Solicitudes de servicio (`controllers/Sservicio.php`, `models/Sservicios.php`, vistas `list_bpm`, `view_`, `list_term`) | ✅ Portadas completas. Crear y eliminar con su caso de Bonita por `toolsMANAPI` + `toolsbpmAPI` (A5, E22, E23), verificado en DEV: la primera tarea le llega al usuario de prueba aunque el caso lo inicie admin. Paridad OK (30 de 30, con la prueba de Bonita) |
+| Órdenes de trabajo (`controllers/Otrabajo.php`, `models/Otrabajos.php`, vistas de `otrabajos/`) | ✅ Portadas desde el asset actual (E21). Alta con su caso de Bonita (`POST /tools/man/ot`) y asignación de responsable (`POST /tools/man/ot/asignar`) por `toolsMANAPI`, verificadas en DEV con caso real (E26, E27). Paridad OK: lectura 78 de 78, escrituras 24 de 24, Bonita 9 de 9. Lo de calendario y bandeja (`updateResponsable`, `EjecutarOT`, `reasignaOt`…) va con MIG-3/MIG-4 |
+| Informes de servicio (`controllers/Ordenservicio.php`, `models/Ordenservicios.php`, vistas `ordenservicios/list` y `tareas/view_presta_presta_conf_modal`) | ✅ Portados desde el asset actual (E21): pantalla de informes, ver informe y verificar en bloque por `toolsMANAPI` (E28). Paridad contra asset OK (2026-10-29): pantalla `informe` (listado, ver informe, pedidos, entregas, herramientas usadas y aislamiento entre empresas) y `informe_bonita` (verificar con caso real en la Bonita de DEV, por asset y por MAN, y rechazo de otra empresa). La columna `activa` de herramientas usadas es `tinyint(1)` y el servicio de datos la entregaba como booleano: se convierte a número en la consulta. Cargar, editar y guardar el informe y los vales de pañol van con la bandeja (MIG-3) |
+| Lecturas de parámetros (`controllers/Lectura.php`, `models/Lecturas.php`, vista `lectura/lect`) | ✅ Portadas desde el asset actual (E29). Paridad OK (2026-10-29): pantalla, listas, alta, lecturas del día, baja y aislamiento entre empresas |
+| Bandeja de tareas (`controllers/Tarea.php`, `models/Tareas.php`, vista `tareas/list`) | 🟡 **Primera parte (2026-10-29, E30): la lista** (tabla paginada, búsqueda, orden, actualizar). Paridad OK contra asset con casos reales de Bonita (filas, total, orden, búsqueda y aislamiento entre empresas). **Segunda parte (E31): acciones sobre la tarea** (tomar, soltar, decidir urgencia, iniciar la OT, ejecutar OT, verificar informe, prestar conformidad), probadas contra Bonita sobre casos reales. **Tercera parte (2026-10-30, E32 a E34): detalle de la tarea** (cabecera con equipo, solicitud y OT, comentarios, línea de tiempo y la pantalla de cada tipo de tarea, incluida Ejecutar OT y Editar Backlog) **e informe de servicio** (cargar, editar y guardar). Probado contra Bonita con casos reales (`tests/paridad/paridad.py bandeja_detalle`, `e2e_bandeja_detalle.py`, `e2e_bandeja_informe.py`). **No se migra** (decisión del PM del 2026-10-30): pedido de materiales, cierre de pedidos, vales y herramientas de pañol e insumos del informe (almacenes y pañol), ni los formularios de subtareas (`frm_*`, E34). Falta: verlo en el navegador |
+| Administrar Órdenes (`controllers/Envio.php`, `models/Envios.php`, vista `envio/list`) | ✅ Portada (E49) |
+| Plan de Mantenimiento / Calendario (`controllers/Calendario.php`, `models/Calendarios.php`, vistas `calendar/`) | ✅ Reescrito (no portado) según `MIG-4-CALENDARIO.md`: calendario con FullCalendar 5, cinco tablas de lo que falta programar, filtro, imprimir, Excel, mover y estirar, programar una orden o una serie de cada tipo (E36), y la ventana de la orden con asignar y reasignar (E42). Pruebas (2026-10-30): fechas contra asset y contra una segunda implementación (494 de 494, `golden_fechas.py`), lecturas y cambios contra asset (`paridad.py calendario`) y punta a punta con la Bonita de desarrollo (`e2e_calendario.py`, 52 comprobaciones: cada tipo de origen, series, rechazos, aislamiento entre empresas, falla a mitad de una serie, ventana de la orden con asignar y reasignar). Junto con bandeja, informes y lecturas: PARIDAD OK (96) |
+
+1. **Los 19 archivos de §2.3**: se portan de nuevo desde el asset actual con la misma mecánica, en
+   orden de volumen (`Ordenservicios`, `Ordenservicio`, `list_bpm`, `view_presta_presta_conf_modal`…).
+   Al terminar cada archivo, el checklist 0b tiene que dar cero.
+2. **`tools_helper.php`** pasa a un helper del módulo. Las llamadas siguen yendo por REST a los
+   DataServices, que es lo que pide la regla de lógica en APIs. Lo que se elimina es la indirección
+   de topología: `HOST_TOOLS` (`application/config/constants.php` de asset) deja de definirse como
+   el `HOST` de asset y pasa a ser el host de tools. Hoy funciona solo porque los dos comparten el
+   EI, y nadie lo decidió.
+3. **`Pedidos_Materiales.php` embebido se porta como model del módulo**, en su versión REST, con el
+   mismo proceso Bonita (`8803232493891311406`). No se reemplaza por el model de pedidos de
+   `traz-comp-almacenes`, porque ese pega SQL directo a PostgreSQL (D-3) y sería un paso atrás
+   respecto de la regla de lógica en APIs. Cuando D-3 se resuelva, los dos convergen.
+4. **Pantallas de almacén y pañol**: en tools son las nativas. Los scripts `f3`/`f4`, que ocultan
+   menús de asset, dejan de hacer falta cuando asset se retire.
+
+**Criterio de salida:** los specs `tests/e2e/04` a `08` de asset, adaptados a la URL del módulo,
+pasan contra el módulo migrado.
+
+#### MIG-3 — Completar el núcleo
+
+En orden de dependencia:
+
+1. `controllers/Tarea.php` y las 17 vistas de `views/tareas/`, **en su versión actual** (incluye todo
+   lo de Pedido y pañol). **La bandeja de asset se porta tal cual** y convive con la de tools: es una
+   segunda entrada de menú dentro de MAN. Su mecánica de hoy se describe en MIG-7. Sus lecturas de
+   MariaDB (`case_empresa` y `getOrdenesPorCaseIds` en `models/Tareas.php`) también pasan a
+   `MANDataService`.
+2. `Lectura`/`Lecturas` ✅ (2026-10-29, E29): es la carga de lecturas de parámetros, no la del contador.
+3. Las vistas de `otrabajos/`, `equipo/`, `Sservicios/` y `ordenservicios/` que faltan.
+4. `Ficha`/`Fichas`, `componente/listabm`, area y proceso.
+
+**Criterio de salida:** el ciclo completo de una OT correctiva (solicitud → OT → ejecución con
+pedido → informe → verificación → conformidad) anda en el módulo. Los casos MAN del catálogo DocTest
+que cubren ese ciclo pasan.
+
+#### MIG-4 — Plan de Mantenimiento: reimplementación (camino crítico)
+
+**Especificación detallada (2026-10-30):** [MIG-4-CALENDARIO.md](MIG-4-CALENDARIO.md). Donde difiera de lo que sigue, vale la especificación.
+
+**Es crucial.** La pantalla actual no se puede llevar a tools: su FullCalendar no funciona sobre el
+jQuery del host, y sin esta pantalla no se generan OTs preventivas ni predictivas, así que no hay
+corte posible. Es el único bloque que se reescribe en vez de portarse. `Calendario::guardar_agregar()` (268 líneas)
+**es el motor**: genera las OTs de los cinco orígenes, materializa la recurrencia creando N filas en
+`orden_trabajo` y lanza Bonita en cada una. Además corre sobre FullCalendar 2.2.5, que depende de
+jQuery 2: el mismo conflicto que frenó a Rogelio.
+
+- Extraer el motor y dejar el controller como capa delgada. Con la decisión de DataServices, **la
+  generación de OTs (crear la serie + lanzar Bonita) pasa a ser una operación del API**, no lógica
+  del PHP. El front solo pide "programar este plan".
+- **Separar "programar" de "lanzar".** En MIG-4 las dos cosas siguen pasando juntas, como hoy: se
+  crea la OT y se lanza el caso Bonita en el mismo momento. Pero quedan como dos pasos distintos de
+  la operación, para que MIG-8 pueda diferir el lanzamiento sin reescribir el motor.
+- Recurrencia con RRULE en vez de los números mágicos de `getDiasDuracion()` (T6).
+- Guardas en la generación de series (T3): límite de iteraciones, transacción, frecuencia > 0,
+  validación de `cant_meses` y verificación del status de Bonita dentro del bucle.
+- Una sola regla de alerta (T8) y una sola fuente para la lectura del contador (T7).
+- Unificar Preventivo y Predictivo (comparten cerca de la mitad del código de sus vistas).
+- Front con FullCalendar 6.x, que no necesita jQuery ni Moment. La alternativa es el 4.4 con
+  `rrule` que ya tiene `traz-comp-calendar`. Recomiendo 6.x.
+- Antes de reimplementar, **golden tests**: para un plan dado, la serie de fechas tiene que coincidir
+  con la que genera hoy asset (§3.4, nivel 4).
+
+Lo que requiere cambio de esquema (tabla polimórfica de recursos, `preventivo.perido` varchar usado
+como FK, fechas cero) **queda documentado y no se ejecuta** mientras asset siga en producción.
+
+#### MIG-5 — Usuarios, permisos y menú
+
+**Sin trabajo pendiente en desarrollo (PM, 2026-10-30):** los usuarios y las empresas ya están en DNATO y sincronizados, y los permisos y el
+menú se manejan como en el resto de tools. Lo único hecho en esta etapa es cargar el menú de MAN en las tablas (ver `MENU-MAN.md`).
+La opción "Mis Tareas" de asset es la bandeja (MIG-7).
+
+#### MIG-6 — Salida a producción y retiro de asset
+
+**No hay corte por empresa (PM, 2026-10-30):** una empresa que hoy está en producción tiene que poder usar esta versión con su mismo usuario,
+porque todo está sincronizado en DNATO. Lo que queda es desplegar, y cuando ya no se use asset: desactivar su login, dejarlo en solo
+lectura y retirarlo. Recién ahí se levanta el freeze del esquema de `assetv2`, se termina la regla de doble bugfix (§3.5) y se borra
+`$db['asset_db']` del `database.php` de tools.
+
+#### MIG-7 — Escalón 2: la bandeja de asset pasa a la bandeja de tools
+
+Arranca **apenas termina el corte**. Lo primero es un **estudio**, no código.
+
+**Cómo funciona hoy cada bandeja** (verificado el 2026-10-26):
+
+| | Bandeja de asset (la que trae MAN) | Bandeja 2 de tools |
+|---|---|---|
+| De dónde salen las tareas | Paginando la **API REST de Bonita** desde PHP, con caché en la sesión (`$_SESSION['listadoTareas_cache']`, `bonita_page`) | **Una sola query** en `BandejaDataService.getBandejaTareas`, que lee la base de Bonita por **dblink** (servidor `bonita_bpm`, solo lectura) |
+| Filtro por empresa | Tabla `case_empresa` de **MariaDB** (`assetv2`), más `GET /assetbandeja/linea/validar/...` de `COREDataService` | `core.case_empresa` en **PostgreSQL** |
+| Datos de negocio de cada tarea | `orden_trabajo` en MariaDB (`Tareas::getOrdenesPorCaseIds`) | Tablas de tools (`alm.alm_pedidos_materiales`, `core.equipos`, `core.tablas`…) en la misma query |
+| Paginado y búsqueda | En PHP, sobre lo que trajo Bonita | En la base |
+| Estado | En producción | Hoy solo en `develop` de tools. Llega a `develop-v3` con la unificación de ramas de §3.6. Convive con "Mis Tareas" hasta pasar a todos. Guía: `doc/v3/bandeja-paginado-real.md` |
+
+**El estudio tiene que responder:**
+
+1. Cómo arma tools cada tarea de la bandeja y qué **hooks** tiene: cómo un módulo aporta su
+   formulario de tarea, sus datos de cabecera y sus acciones al tomar, soltar y cerrar.
+2. Qué hace falta para que una tarea de MAN aparezca en la bandeja de tools **con sus datos de
+   negocio**. El problema: `BandejaDataService` resuelve todo en PostgreSQL, y los datos de la OT
+   viven en MariaDB. La base de tools solo tiene dblink, que conecta a PostgreSQL y no a MariaDB.
+3. Qué estrategia conviene. La hipótesis del PM es **sincronizar a PostgreSQL** los datos mínimos
+   de MariaDB que la bandeja necesita: el par case↔empresa (que hoy vive en la `case_empresa` de
+   asset y debería estar en `core.case_empresa`) y un resumen de la OT (número, equipo, tipo,
+   estado, fecha programada). Así la bandeja usa el mismo mecanismo que ya existe. Opciones de
+   sincronización a evaluar: escribir en los dos lados desde la operación del API que crea la OT
+   (encaja con la decisión de DataServices), un proceso periódico, o un foreign data wrapper de
+   MySQL (hoy no está instalado).
+4. Cómo se migran las tareas que ya están abiertas al momento del cambio.
+
+**Entregables:** el estudio (como sección de este documento), la decisión de estrategia, la
+implementación y el retiro de la bandeja de asset del menú de MAN.
+
+#### MIG-8 — Escalón 3: lanzar las OTs preventivas y predictivas cerca de su fecha
+
+**Estado (2026-10-31): implementado y probado en desarrollo la parte de OTs** (programar con margen, `POST /tools/man/plan/lanzar`, `POST /tools/man/plan/lanzar-pendientes`, botón "Lanzar" en Órdenes de Trabajo, corrida `Lanzamiento/ejecutar` para el cron: [`doc/infra/man-lanzamiento-cron.md`](../infra/man-lanzamiento-cron.md)). Decisiones: E58 y E59. **Pendiente:** el botón "Lanzar" en Solicitud de Servicio, instalar el cron en prod/demo y revisar qué muestran el calendario, los KPIs y las tools MCP con órdenes sin lanzar.
+
+**El problema de hoy:** al programar un preventivo o un predictivo, `Calendario::guardar_agregar()`
+crea **todas** las OTs de la serie y lanza un caso Bonita por cada una en ese mismo momento. Las
+bandejas de los mantenedores se llenan de tareas para dentro de meses, que tapan el trabajo del día.
+
+**El cambio:** la OT se crea al programar (sigue apareciendo en el calendario y en los listados), y
+el caso Bonita se lanza **recién cuando la fecha está cerca**, con un margen configurable por
+empresa.
+
+**Lo que hay que resolver:**
+
+- **Quién dispara el lanzamiento.** Hace falta un proceso periódico. En PostgreSQL de tools no hay
+  `pg_cron`, y hoy los KPIs se refrescan con un cron del sistema operativo
+  (`doc/infra/kpi-cron-refresh.md`). La decisión de scheduler también está pendiente para la
+  Fase 2 del tablero del administrador: conviene tomar una sola decisión para los dos casos.
+- **Una OT sin caso Bonita.** Hoy toda OT tiene `case_id`, y si Bonita falla la OT se borra. Hay que
+  definir: un estado "programada, sin lanzar"; qué pasa si el lanzamiento falla (reintento, aviso);
+  y qué pasa si alguien edita o cancela una OT antes de que se lance.
+- **Qué muestran las pantallas** de una OT sin lanzar: el calendario, el listado de OTs, el panel de
+  KPIs y las tools MCP de mantenimiento.
+- **El margen**: cuántos días antes se lanza, por empresa y quizás por tipo de plan (decisión
+  funcional del PM).
+- **Las series ya lanzadas** al momento del cambio: si se dejan como están o si se cancelan los
+  casos futuros para relanzarlos con la regla nueva.
+
+**Dónde se lanza (PM, 2026-10-30):** el proceso tiene dos entradas, "Solicitud de Servicio" y "Planificación" (diagrama de Bonita). Por eso el lanzamiento no puede quedar solo en el Calendario: tiene que poder hacerse también **desde Solicitud de Servicio y desde Órdenes de Trabajo** (una acción "Lanzar" para lo que todavía no tiene caso), además del lanzamiento automático cerca de la fecha.
+
+Como MIG-4 ya deja separados "programar" y "lanzar" (ver MIG-4), este escalón agrega el disparador
+y el estado nuevo, sin reescribir el motor.
+
+#### MIG-9 — Escalón 4: notificaciones para todo tools
+
+**Va al final (PM, 2026-10-30).** El agente de v3.5 está unificando un método nuevo de notificaciones: no se diseña acá. Cuando esté, se le pide que actualice ese método para cubrir los eventos de Mantenimiento.
+
+Es la **última etapa**. Arranca cuando están hechas las cuatro anteriores: MAN migrado, Plan de
+Mantenimiento rehecho, bandeja unificada y lanzamiento de OTs cerca de la fecha. Ese orden importa:
+el lanzamiento diferido de MIG-8 es uno de los eventos que más conviene notificar ("se lanzó tu OT
+de mañana").
+
+**Qué hay hoy en asset** (relevado en septiembre de 2026; el análisis completo está en
+`doc/agente/analisis-alertas-assetplanner.md`, rama `feature/agente-e0-analisis-alertas` de tools):
+
+- Un **pipeline de push** cableado:
+  1. Triggers de MariaDB sobre `orden_trabajo`, `orden_servicio` y `solicitud_reparacion`.
+  2. Cuatro stored procedures que arman el JSON a mano y lo encolan en
+     `synch_notificacion_queue`.
+  3. Una app Siddhi (Streaming Integrator) que lee la cola.
+  4. `FirebaseConnectorAPI` del MI, que envía por FCM.
+- Una **campanita in-app** aparte, que consulta las notificaciones por AJAX periódico.
+- **Está parado:** en DEV hay 434 notificaciones encoladas y 0 procesadas desde 2024. El push nunca
+  se verificó de punta a punta.
+- **Lo que no tiene:** reglas configurables, preferencias por usuario, mail, severidad, ni
+  destinatario por rol. Cada notificación va a un solo `user_id`.
+- **Tools no tiene nada propio:** `traz-comp-notificaciones` es un esqueleto, y la constante `NOTI`
+  no se usa.
+
+**Qué se copia:** el modelo de cola, el conector Firebase, el service worker del push y el patrón de
+la campanita.
+
+**Qué se mejora** (a definir en el diseño):
+
+- Que los eventos salgan de **cualquier módulo de tools** y no solo de mantenimiento: almacén,
+  pañol, bandeja, producción.
+- Que **nazcan en las operaciones del API** y no en triggers de una base. Es coherente con la
+  decisión de DataServices: el API que crea la OT, el pedido o la tarea es el que publica el
+  evento.
+- Destinatarios por rol o por grupo, además de por usuario.
+- Preferencias por usuario (qué recibe y por qué canal) y más canales que el push: mail y quizás
+  WhatsApp, que tools ya tiene como conector.
+- Severidad, agrupación y evitar duplicados.
+- **Corregir antes de reusar:** `MANDataService.getNotificaciones` no filtra por `empr_id` (fuga
+  entre empresas), y la clave privada del service account de Firebase está commiteada en tools (se
+  rota).
+
+**Decisiones que dispara:** el origen de los eventos (API o triggers) y el uso de Streaming
+Integrator o de un proceso más simple son de arquitectura (A4, workshop). Qué eventos se notifican
+y a quién es funcional (P9).
+
+### 3.4 Pruebas
+
+El oráculo es asset funcionando: mientras dure la migración, **asset y el módulo leen la misma
+base**, así que el mismo input tiene que dar la misma salida. **Definición del PM (2026-10-27): la
+prueba automática central de la migración es la de paridad (nivel 1)**: la misma operación hecha
+desde asset y desde MAN tiene que dar lo mismo. Las demás pruebas la complementan, no la reemplazan.
+
+| Nivel | Qué verifica | Cómo | Cuándo |
+|---|---|---|---|
+| 0 | Sintaxis y **compatibilidad con PHP 5.6** | `php -l` + `phpcs` PHPCompatibility 5.6 | Cada PR, bloqueante |
+| 0b | **Checklist de conversión por archivo**: cero `userdata('user_data')`, **cero `$this->db` y cero `assetDB`** (ningún acceso a base), cero URLs sin `MAN`, toda vista referenciada existe | Script propio (grep) | Cada PR, bloqueante |
+| 1 | **Paridad (prueba principal, PM 2026-10-27)**: cada operación migrada se ejecuta **igual en asset y en MAN** (misma empresa, mismo usuario, mismos datos de entrada) y se comparan los resultados. Consultas: se compara la respuesta normalizada. Altas, cambios y bajas: se compara el estado que queda en `assetv2` después de cada una, sobre datos de prueba que se limpian al terminar | Script propio, **corre en local con la VPN** (necesita llegar a asset y a `assetv2` de DEV, que GitHub no alcanza) | Antes de abrir cada PR; el resultado va en "Cómo lo verifiqué". **Ninguna operación se da por migrada sin su prueba de paridad en verde** |
+| 2 | Endpoints AJAX del módulo | Hurl | Cada PR |
+| 3 | **Aislamiento multi-tenant**: la empresa A no ve datos de la empresa B (cubre T1) | Patrón de `scripts/dev/verify-mcp-isolation.py` | Cada PR, bloqueante |
+| 4 | **Golden tests del motor** de planificación | PHPUnit | Cada PR de MIG-4 |
+| 5 | Flujos E2E | **Lo que ya existe**: los 37 casos MAN del catálogo DocTest (`doctest/catalogo/man/`, 27 validados) y `tests/e2e/01-08` de asset, apuntados al módulo | Antes de cerrar cada etapa |
+
+Cada query nueva de `MANDataService` se prueba con `curl` contra el EI de DEV antes de que el PHP
+la use. Recordar que el script de deploy sube los DataServices pero **no las APIs** de WSO2.
+
+**Dónde corre cada nivel.** En GitHub Actions corren solo los niveles 0 y 0b (`man-ci.yml`), que no
+necesitan ningún ambiente. Los demás necesitan llegar a DEV por la VPN y corren en local. La
+organización está en el plan free de GitHub (PM, 2026-10-27): no se suman corridas programadas
+(nightly) ni jobs nuevos sin consultarlo, y el workflow se mantiene en un solo job, solo en PR y
+con filtro de rutas.
+
+Casos negativos obligatorios en MIG-4: frecuencia 0 no cuelga, `cant_meses` fuera de rango se rechaza,
+un plan por contador sin `lectura_base` da error controlado, y la empresa A pidiendo un plan de la B
+recibe 403.
+
+### 3.5 Regla de doble bugfix: asset → MAN
+
+Mientras asset siga en producción, **todo bugfix que se haga en asset se replica en MAN**. Rige desde
+el 2026-10-26 y termina con el retiro de asset (MIG-6).
+
+| Situación del archivo en MAN | Qué se hace |
+|---|---|
+| Todavía no se portó | Nada inmediato. El fix entra solo cuando el archivo se porte desde el asset actual, pero **se anota igual** en el registro (abajo), para verificarlo al portarlo |
+| Ya se portó | El fix se reaplica en MAN en un PR propio, citando el PR de asset. Si el fix tocaba SQL, en MAN va a la query del `MANDataService`, no al PHP |
+| Es del Plan de Mantenimiento (se reimplementa en MIG-4) | Se agrega como caso de prueba del motor nuevo (golden test o caso negativo) |
+
+**Trazabilidad:** cada PR de bugfix en asset lleva en la descripción una línea `MAN:` con el PR de
+MAN que lo replica, o `MAN: pendiente (archivo no portado)`. Al abrir cada etapa se revisan los PRs
+de asset mergeados desde la etapa anterior y se busca esa línea. Un PR sin la línea no se mergea.
+
+Esta regla **no** reemplaza el freeze (P1): el freeze limita qué entra a asset, y esta regla asegura
+que lo que entra no se pierda en MAN.
+
+### 3.6 Ramas durante la migración
+
+Definido por el PM el 2026-10-26:
+
+1. Cuando termine el frente **`asset-order-warehouse-tracking`**, se hace **una última unificación**
+   de `develop` con `develop-v3` en tools, con merge commit y nunca squash. Con eso, la bandeja 2 y
+   el resto de lo que hoy está solo en `develop` quedan también en `develop-v3`.
+2. **Después de esa unificación no se vuelven a unificar las ramas** hasta que la migración esté
+   terminada y probada. Esto suspende, para este período, la sync semanal `develop` → `develop-v3`
+   (E7-CICD-06) que describe `CLAUDE.md`.
+3. Toda la migración (MIG-0 en adelante) se hace en `develop-v3` de tools y en la rama de
+   integración de `traz-tools-man`. Mientras tanto, el demo se sigue desplegando desde `develop`.
+
+**Consecuencia:** los arreglos que entren a `develop` de tools durante la migración no llegan solos a
+`develop-v3`. Si un arreglo toca algo que MAN usa (core, DataServices, `traz-comp-almacenes`,
+`traz-comp-pan`, `traz-comp-bpm`), se replica en `develop-v3` con el mismo mecanismo de §3.5. Lo
+demás espera a la unificación final (R12).
+
+### 3.7 Ambiente de pruebas local
+
+Montado el 2026-10-27. Todo corre en la máquina del PM, con la **VPN** levantada:
+
+| Pieza | Dónde | Nota |
+|---|---|---|
+| Bases | Servidor de **desarrollo** `vm-development-2020-02-26` (`10.142.0.13`): MariaDB `assetv2` (asset) y PostgreSQL `tools_prod_t` (tools y DNATO) | Verificado con `@@hostname`. Pese al nombre, `tools_prod_t` es la base de desarrollo; la de producción es `trazalog_tools` en `10.142.0.2` |
+| WSO2 MI | Local, `~/.wso2-mi/micro-integrator/wso2mi-4.5.0`, puerto `8290` | Sus datasources apuntan a las bases de desarrollo. Ahí se despliegan las queries nuevas de `MANDataService` antes de subirlas |
+| Servidor web | XAMPP local (PHP 7.3), `http://traz-comp.local/` → `/mnt/win/dev/git` | Se arranca con `sudo /opt/lampp/lampp startapache` en una terminal local. Corre como `daemon`: para subir archivos, `assets/files/equipos` de asset necesita permiso de escritura (`chmod 777`, solo en local) |
+| asset | `http://traz-comp.local/traz-prod-assetplanner/` | Sin cambios |
+| tools con MAN | `http://traz-comp.local/traz-v3/traz-tools/` | Cambios **locales, no versionados**, marcados `LOCAL-MIG-ASSET (no commitear)`: `application/config/constants.php` de tools (`DNATO` → `traz-comp.local`, `HOST` → MI local) y de `traz-comp-dnato` (`DE`, `DS`, `DNATO` → `traz-comp.local` y la copia de la migración) |
+
+**Usuario de prueba** (creado en desarrollo el 2026-10-27): `mig.man.a@trazalog.test`, empresa
+*Empresa_Test* (tools `empr_id` 1 = asset `id_empresa` 1). Existe en los tres lugares que pide el
+login: `seg.users` + `seg.memberships_users` (roles Mantenedor, Planificador Mantenimiento,
+Supervisor Taller y Solicitante), Bonita (grupo `1-Empresa_Test`, mismos roles, nombre de usuario =
+correo) y asset (`sisusers` 213, `usuarioasempresa` con el grupo Administrador 85). La contraseña está
+en `doctest/.env` (`DOCTEST_LOCAL_MAN_USER` / `DOCTEST_LOCAL_MAN_PASS`), que no se versiona. Para
+borrarlo: filas de esas tablas con ese correo, y el usuario de Bonita.
+
+**Prueba de paridad:** `traz-tools-man/tests/paridad/paridad.py` (ver su encabezado). Inicia sesión
+en asset y en tools con el mismo usuario, hace cada operación en los dos, compara respuestas y filas
+de la base, prueba el aislamiento entre empresas y borra los datos de prueba (prefijo `MIG paridad`).
+
+### 3.8 Registro de decisiones de ejecución
+
+Decisiones técnicas tomadas durante la ejecución, por mandato del PM del 2026-10-27 ("migrar lo más
+posible sin depender de mí, tomar decisiones y dejarlas documentadas"). Cualquiera se puede revisar.
+
+| # | Fecha | Decisión | Motivo |
+|---|---|---|---|
+| E1 | 2026-10-27 | **Traducción de empresa tools → asset**: `man_empresa()` (`helpers/man_helper.php` de MAN) pide `core.empresas.empr_id_mysql` a `COREDataService` (`GET /empresa/{empr_id}`) una vez por sesión y lo guarda en la sesión. Sin vínculo, la pantalla muestra un error y no datos vacíos | Las dos bases numeran las empresas distinto (ej. MinTest_SJ es 187 en tools y 17 en asset). El vínculo ya existe y lo usa la integración de almacén y pañol |
+| E2 | 2026-10-27 | **Ids generados con MariaDB**: la query lleva `returnGeneratedKeys="true"` y el resultado se lee como `$GENERATED_KEY`, no con el nombre de la columna | Resuelve la pregunta abierta de ADR-014. Probado con `setAreaMan` |
+| E3 | 2026-10-27 | **Permisos hasta MIG-5**: cada pantalla recibe las acciones en la URL, como en asset (`index/Add-Edit-Del`). Sin parámetro, queda de solo lectura | Conservador: no se dan permisos que no se pidieron. El mapeo real es MIG-5 (P3) |
+| E4 | 2026-10-27 | **Toda query de MAN filtra por empresa, también las de "ver uno", modificar y dar de baja**, aunque en asset no filtren. Ante un registro de otra empresa, MAN responde vacío o no modifica nada | ADR-014. En asset, `Obtener_areas` y `Eliminar_areas` no filtran por empresa (anotado en §5.2 como T11). La paridad se exige dentro de la misma empresa; fuera de ella la diferencia es buscada y la prueba la verifica |
+| E5 | 2026-10-27 | **PRs**: los de `traz-tools-man` los fusiono yo cuando el CI pasa y la paridad da OK. Los de `traz-tools` que tocan DataServices **quedan para el PM**, con análisis de impacto, porque son core (`CLAUDE.md`) | El repo del módulo no se despliega en ningún lado hasta el corte. Los DataServices sí son compartidos con v2 y MCP |
+| E6 | 2026-10-27 | **Carpeta de trabajo aparte para tools** (`git worktree` en `/mnt/win/dev/git/traz-v3/traz-tools-mig`) | Otra sesión trabaja en `/mnt/win/dev/git/traz-v3/traz-tools`; así no se le cambia la rama. El servidor web sigue sirviendo la carpeta original, y el MI local se compila desde la carpeta aparte |
+| E8 | 2026-10-27 | **Base de cada archivo**: se parte del fork de Rogelio, salvo que le falten funciones que una vista usa; en ese caso se porta el archivo completo desde el asset actual. Se compara con un listado de métodos reales (sin contar los comentados) | En Parametro parecía que faltaban 10 funciones y eran todas código comentado: las reales coincidían |
+| E9 | 2026-10-27 | **No se portan acciones muertas**: las que ninguna vista ni controller de asset llama, y menos si llaman a métodos inexistentes. Se listan en el PR | Parametro: `baja_parametro`, `bajaparametro`, `geteditar`, `agregar_componente`, `agregarcomponente` (las dos primeras llaman a `delete_parametro`/`delete_p`, que no existen) |
+| E10 | 2026-10-27 | **Solicitudes de cambios de tools sin apilar**: cada una contra `develop-v3` | #575 quedó fusionada sobre la rama de #574 y no llegó a `develop-v3`; se corrigió con #576 |
+| E11 | 2026-10-27 | **Archivos en la carpeta de asset**: MAN guarda y lee PDF, adjuntos e imágenes en la misma carpeta que asset (`man_asset_path()` / `man_asset_url()` del helper de MAN; por defecto `../tools/traz-prod-assetplanner/` respecto de tools, configurable con `MAN_ASSET_PATH` / `MAN_ASSET_URL`). Cuando asset se retire, la carpeta se mueve a tools | En demo y producción asset y tools comparten Apache. Con una sola carpeta las dos aplicaciones ven lo mismo y volver una empresa a asset no pierde archivos |
+| E12 | 2026-10-27 | **Donde asset falla siempre, MAN hace lo que la vista espera**, y se anota en el PR | `Componentes::getequipo` de asset nunca funcionó |
+| E13 | 2026-10-27 | **Valores implícitos explícitos**: la conexión JDBC de WSO2 a MariaDB es estricta (el servidor no). En cada INSERT se pasan los valores que MariaDB completaba sola (`''`, `0`). No se toca el datasource | Afectaba `componentes.pdf` y `componenteequipo.sistemaid`. Cambiar el datasource afectaría a todas las queries de mantenimiento, incluidas las de MCP |
+| E14 | 2026-10-28 | **Mantenimiento autónomo apagado en MAN** hasta portarlo con su motor: en las lecturas no se muestran el campo Falla ni el formulario dinámico (en asset solo aparecen para la empresa `EMPRESAS_FORM`), y si llega una falla el controller la rechaza sin guardar. Los datos (`historial_lecturas.info_id`) no se tocan | El formulario dinámico usa el motor de formularios de asset, que guarda en `assetv2` (`frm_*`), no el de tools (PostgreSQL). La falla crea una solicitud y lanza Bonita: es la regla 3 del ADR-014 y va con Solicitudes en MIG-2. **Ninguna empresa con mantenimiento autónomo pasa a MAN hasta portarlo** |
+| E15 | 2026-10-28 | **Usuario de asset por correo, provisorio hasta MIG-5**: donde asset guarda `usrId` (lecturas), MAN busca el `sisusers` cuyo `usrNick` es el correo de la sesión de tools, dentro de la empresa (`man_usuario()`). Sin vínculo graba 0 y lo deja en el log | Hoy los dos padrones se vinculan así (H-085). MIG-5 fija la clave definitiva |
+| E16 | 2026-10-28 | **La lectura no marca preventivos hasta MIG-4**: MAN guarda la lectura y el estado del equipo, sin la parte de preventivos de `setLecturas` | Esa consulta tiene T1 y lee preventivos de otras empresas; en la práctica marca casi al azar. La regla del contador se define una sola vez en MIG-4 (T7, T8) |
+| E17 | 2026-10-28 | **Sin `request_box` donde participa `historial_lecturas`**: los cambios de estado con su lectura se escriben en secuencia, en el orden de asset, y la pertenencia a la empresa se verifica antes con una consulta | `historial_lecturas` es MyISAM: no se puede deshacer (tampoco en asset con `trans_start`). Además su trigger `actualizaLectura` actualiza `equipos`, así que el INSERT no puede leer `equipos` (error 1442) |
+| E18 | 2026-10-28 | **`Preventivo/getdatos` lee el pañol de tools**: devuelve la herramienta desde el catálogo de tools (`tools_herramientas_full()`) | Desde F4 los ids de herramienta son de tools, pero asset la sigue buscando en su tabla vieja `herramientas` (T16) |
+| E19 | 2026-10-28 | **La edición de backlog desde la bandeja va con la bandeja (MIG-3)**: el tipo `editNuevo` de `Backlog/editar_backlog` cierra una tarea de Bonita y edita el backlog; en MAN responde que todavía no está disponible | Toca Bonita: es la regla 3 del ADR-014 y su vista (`nuevo_edicion_view_`) la carga `Tarea` |
+| E20 | 2026-10-28 | **Cabecera con detalle (Preventivo, Predictivo, Backlog)**: el alta va por `toolsMANAPI` (`POST /tools/man/<entidad>`, plantilla `manAltaConDetalleTemplate`): cabecera, lote de herramientas, lote de insumos y, si un lote falla, compensación que borra todo. En la edición, cabecera y borrado del detalle van en un `request_box` y cada lista nueva en un pedido por lotes (`_batch_req`) | `request_box` no admite repetir una operación, así que una lista no entra en un solo box. El pedido por lotes es atómico, pero solo existe para consultas sin resultado. Lo que pasa entre el box y los lotes de la edición no es atómico, igual que en asset |
+| E21 | 2026-10-28 | **Vistas que el fork reescribió y asset cambió después: se parte del asset actual** y se aplica la conversión del módulo. Es el caso de `Sservicios/list_bpm` (el fork la arma con `$list`; asset hoy usa paginado del lado del servidor). Donde la fusión de tres vías no tiene conflictos, se usa la fusión | La fusión de `list_bpm` daba 6 conflictos sobre 798 líneas reescritas, y la versión del fork no tiene el paginado que usa asset hoy |
+| E22 | 2026-10-28 | **Casos de Bonita desde MAN por `toolsbpmAPI` (A5)**: crear una solicitud es el recurso `POST /tools/man/solicitud` de `toolsMANAPI`: alta de la solicitud, `POST /tools/bpm/proceso/instancia` con el proceso "Proceso de Mantenimiento AssetPlanner" y la sesión `bpm_token` (vacía = la API entra como administrador), `case_id` en la solicitud y compensación (borra el caso y la solicitud) si algo falla. Eliminarla es `POST /tools/man/solicitud/eliminar`: marca solicitud y OT y borra el caso con `DELETE /tools/bpm/proceso/instancia` | Decisión del PM sobre A5. Es el mismo camino que ya usa tools (`traz-comp-tareasestandar`). **Diferencia con asset:** el caso lo inicia el usuario de la sesión de la API (en la práctica, el administrador), no el usuario logueado; se verifica en DEV que la primera tarea le llegue a quien corresponde |
+| E23 | 2026-10-28 | **`case_empresa` en los dos lados mientras convivan**: `toolsbpmAPI` lo registra en tools (`COREDataService /empresa/proceso`, con el `empr_id` de tools) y MAN además en `assetv2` (con el id de asset), en la misma operación | La bandeja de asset lee `case_empresa` de `assetv2`: sin esa fila, una empresa que vuelve a asset no vería los casos lanzados desde MAN (el corte tiene que poder revertirse, §3.2). Se unifica en MIG-7 |
+| E24 | 2026-10-28 | **`Otrabajo/index` va al listado de OT**. En asset abre el tablero de indicadores, que no está portado | El tablero se porta con los informes; mientras tanto el menú no queda en una pantalla vacía |
+| E25 | 2026-10-28 | **Tareas de la OT: solo `usrId`, `usrName` y `usrLastName` del usuario**. Asset devolvía todas las columnas de `sisusers`, incluida la contraseña cifrada | Es lo único que usa la vista; no se manda la contraseña al navegador |
+| E26 | 2026-10-28 | **Alta de OT por `toolsMANAPI` `POST /tools/man/ot`**: OT (solo si el equipo es de la empresa), caso con `toolsbpmAPI` (`idSolicitudServicio` 0, `idOT`), `case_id` y `case_empresa` en `assetv2` (E23), lotes de herramientas (con texto libre) e insumos. Si un paso falla, borra lo creado y el caso. La descripción de la tarea estándar la toma la query. MAN responde `true` si se creó | Regla 3 del ADR-014 y A5. Asset siempre respondía `false` y, si Bonita fallaba, borraba la OT pero seguía (T31) |
+| E27 | 2026-10-28 | **Asignar OT por `toolsMANAPI` `POST /tools/man/ot/asignar`**: cierra la tarea actual, busca "Ejecutar OT" en el caso, busca en Bonita al usuario por su correo (`usrNick` de asset = `userName` de Bonita) y le asigna la tarea; recién ahí graba la OT como asignada. Todo con `bpmAPICallTemplate` | A5. Asset le pasaba a Bonita el número de usuario de asset (T30). Verificado en DEV: Bonita no deja cerrar una tarea que nadie tomó; en uso real el modal se abre desde la bandeja, que la toma antes (MIG-4) |
+| E28 | 2026-10-28 | **Informes de servicio: se porta la pantalla de informes y la ventana de ver informe; verificar en bloque va por `toolsMANAPI` `POST /tools/man/informe/verificar`**. El recurso toma el caso de la OT de la empresa (no el del navegador), busca en el caso la tarea "Verifica Informe de Servicio" que el usuario puede tomar, se la asigna y la cierra con `informeServicioOk`; después graba la lectura de cierre y deja informe y OT en `CE`. Si el caso no tiene esa tarea para el usuario, cierra igual los estados, como asset. Cargar, editar y guardar el informe y los vales de pañol se hacen desde la bandeja y van con ella (MIG-3) | A5 y regla 3 del ADR-014. Una tarea cerrada en Bonita no se puede reabrir: si después falla la base, el recurso informa el error. Corrige T32, T33 y T34 |
+| E29 | 2026-10-29 | **Lecturas de parámetros portadas con datos por `MANDataService` (bloque `MIG-ASSET-3l`), limitadas a la empresa**. No se porta `lectura_List` (la vista no la usa y traía las lecturas de todas las empresas). Sin equipos con parámetros, `getEquipo` responde lista vacía: asset respondía `null` con un aviso de PHP, que rompe el autocompletar | ADR-014. Corrige T35 |
+| E30 | 2026-10-29 | **Bandeja, primera parte (la lista de tareas): `toolsMANAPI` `POST /tools/man/bandeja/pagina` + `MANDataService` `POST /bandeja/casos`**. El recurso busca al usuario en Bonita por su correo, pide una página de sus tareas (`humanTask?f=user_id`) y los datos de asset de esos casos en una sola consulta (solicitud, orden, equipo, cliente, sector, pedido), solo de la empresa, y devuelve las dos cosas. PHP conserva el cache por sesión de asset (pide páginas hasta juntar las filas de la empresa que necesita la tabla) y arma las filas. No se portó el ABM de tareas estándar de `Tarea.php` (`index2`, `*_Tarea`) por creer que ninguna vista lo llamaba: **era un error, el menú ABM de asset lo tiene activo** y se porta con los demás ABMs ni los tres botones que asset muestra solo a la empresa 6 (cierre masivo de "Confecciona informe" y de "Verifica informe", "Asignar Bonita": usan una fecha de corte fija y una variable de sesión que nadie carga). Los recursos van en `toolsMANAPI` y no en `toolsbpmAPI` para no tocar un API del núcleo sin análisis de impacto | A5, ADR-014 (regla 3). Asset hacía hasta cuatro consultas por tarea; dos de ellas nunca devolvían filas (comparaban contra el texto `'B.id_solicitud'`) |
+| E31 | 2026-10-29 | **Bandeja, segunda parte: las acciones sobre la tarea son recursos de `toolsMANAPI` (`POST /tools/man/bandeja/tarea/{asignar,urgencia,ejecutar,verificar,conformidad}` y `/bandeja/ot/inicio`) con consultas nuevas en `MANDataService` (bloque `MIG-ASSET-3t`)**. Cada recurso pide la tarea a Bonita, comprueba que su caso sea de la empresa (`case_empresa`) y toma de ese caso la OT, su tipo y su solicitud: PHP solo manda la tarea y la decisión del usuario (asset confiaba en los números del navegador, T36). Se opera primero en Bonita y después se escribe en la base en una sola llamada `request_box` (una por tipo de origen: solicitud, preventivo, backlog con su solicitud, predictivo); si la base falla, el error se informa y la tarea de Bonita ya quedó cerrada (mismo criterio que `informe/verificar`). La lectura de cierre del equipo al aprobar el informe lleva el estado del equipo como dato aparte, porque la tabla tiene un disparador que actualiza `equipos` y MariaDB no deja leerla en el mismo INSERT. Quien ejecuta la OT queda como responsable y el informe de servicio se le asigna. Al rechazar el informe, se le asigna a quien figura como responsable de la OT. No se porta `CerrarTarea` de pedidos de materiales (depende de las tablas de pedidos de asset, que pueden estar desactualizadas: se resuelve con la parte de pedidos) | A5, ADR-014 (regla 3). Corrige T36 y T37 (T38 se conserva) |
+| E32 | 2026-10-30 | **Bandeja, tercera parte: el detalle de la tarea lee Bonita por `toolsMANAPI` (`POST /tools/man/bandeja/tarea/{detalle,linea,comentarios,comentar,cerrar-backlog}`) y la cabecera y las subtareas por `MANDataService` (bloque `MIG-ASSET-3d`)**. Cada recurso valida que el caso de la tarea sea de la empresa (T39) y lee con la sesión del usuario (asset usaba el administrador). La solicitud de servicio del caso sale de `solicitud_reparacion` por `case_id` (asset la leía de la variable `gIdSolicitudServicio` de Bonita); para backlog, de `tbl_back.sore_id`. Cabecera y línea de tiempo son ayudantes propios de MAN (`helpers/man_tarea_helper.php`) que escapan todo (T43). El modo sin conexión (service worker) no se porta. | A5, ADR-014 (regla 3). Corrige T39, T40, T43, T44 y T45 |
+| E33 | 2026-10-30 | **Informe de servicio desde la Bandeja: `POST /tools/man/bandeja/tarea/informe`** (`toolsMANAPI` + bloque `MIG-ASSET-3i`). Valida el caso, borra el informe anterior de la OT con todo lo que cuelga y escribe el nuevo (informe, tareas, operarios y evidencias, con el equipo sacado de la OT) en una sola operación a la base; **primero la base y después Bonita**: si Bonita falla, el informe queda guardado y al reintentar se reemplaza completo (con Bonita primero, un fallo de la base dejaría la tarea cerrada sin informe y sin poder reintentar). Al editar se conservan las evidencias (T41). Sin herramientas (vales de pañol) ni insumos (almacenes): no se migran. | A5, ADR-014 (regla 3). Corrige T41 |
+| E34 | 2026-10-30 | **Lo que no se porta de la Bandeja**: todo lo de almacenes y pañol que está en el repositorio de asset (decisión del PM: "no se migra"): pedido de materiales y su lista en Ejecutar OT, `CerrarTarea` y `CambiarEstadoPedidoMat`, pestañas Insumos y Herramientas del informe y de la verificación, vales y entregas. Tampoco los formularios de las subtareas (`frm_*`, `Obtener_Formulario`, `guardarForm`): esas tablas no existen en `assetv2` (solo en bases de clientes antiguos como `asp20sim`) y asset nunca cargaba `idForm` en la pantalla de tarea, así que el botón nunca se mostraba. Las tareas de pedidos que la lista manda al módulo de almacenes de tools no cambian. | Decisión del PM del 2026-10-30 |
+| E35 | 2026-10-30 | **Plan de Mantenimiento (Calendario): FullCalendar 5.10, el que ya carga el layout de tools** (no el 6 que proponía el plan): no usa jQuery ni Moment y no suma una segunda copia. El calendario pide las órdenes del rango visible (E37), colorea por tipo como asset y marca con borde azul las que no tienen responsable | PM ("migralo así", especificación MIG-4-CALENDARIO.md) | Especificación §2 |
+| E36 | 2026-10-30 | **El motor es `POST /tools/man/plan/programar` de `toolsMANAPI`**: lee el origen dentro de la empresa, crea las órdenes y copia lo planificado con una sola sentencia a la base, lanza o cierra lo que corresponde en Bonita y recién al final confirma las órdenes y pasa el origen a planificado. "Lanzar" (el bloque de Bonita) queda separado de "programar" (la base) para que MIG-8 pueda diferirlo | Regla 3 del ADR-014. Corrige T3, T48, T51, T55, T59 |
+| E37 | 2026-10-30 | **El calendario trae las órdenes del rango visible**, no solo las del mes de la fecha actual | En la vista semanal que cruza meses asset deja vacía parte de la semana |
+| E38 | 2026-10-30 | **Las referencias de color usan los colores de los eventos** y suman "Correctivo programado" | En asset no coinciden |
+| E39 | 2026-10-30 | **El filtro va en una caja plegable arriba del calendario**, con las mismas cinco listas | El panel derecho de asset es de su layout |
+| E40 | 2026-10-30 | **Los errores del servidor se muestran y la ventana de programar queda abierta**; el aviso "Se ha guardado" sale solo al guardar | Asset los mandaba a la consola (T60, T61) |
+| E41 | 2026-10-30 | **La tarea de Bonita de una solicitud urgente la toma el motor al programar**, no la ventana al abrirse | Asset la tomaba al abrir y la dejaba tomada si se cancelaba |
+| E42 | 2026-10-30 | **La ventana de la orden usa tres recursos nuevos, no el de asignar del listado de OT**: `POST /tools/man/plan/ot/tarea` (¿tiene "Asignar Recursos y Tareas" pendiente?), `/plan/asignar` (EjecutarOT de asset: cierra esa tarea, asigna "Ejecutar OT" al responsable y deja la orden y su origen asignados) y `/plan/reasignar` | `/ot/asignar` (E27) tiene otra función (fecha de entrega, listado) y ya está probado; no se toca. Todos miran la orden dentro de la empresa y buscan el correo del responsable en la base. Corrige T46, T47 |
+| E43 | 2026-10-30 | **Tope por pedido: 400 órdenes y 36 meses** | Guarda de T3. La serie más larga en desarrollo tiene 135 órdenes. Se cambia en un solo lugar (H9) |
+| E44 | 2026-10-30 | **Base primero, Bonita después, y se deshace todo lo creado.** Las órdenes nacen con una marca en `nro` hasta confirmarse; si Bonita o la base fallan se borran los casos lanzados, las copias y las órdenes por esa marca y el plan queda como estaba. Lo único que no se deshace es una tarea de Bonita ya cerrada | Mismo criterio que E33. Probado con una falla a mitad de una serie (el número del segundo caso ya estaba registrado: se borran los casos lanzados, las copias y las órdenes y el plan queda como estaba) y, en una versión de prueba, con una falla forzada después de lanzar 16 casos |
+| E45 | 2026-10-30 | **Las series mensuales, semestrales y anuales se calculan por calendario** (el mismo día de cada mes, y el último si el mes no lo tiene; semanal, 7 días; diario y otros, días) | Recomendación de MIG-4; el PM pidió migrar con la especificación y no eligió la otra opción (H8). Diario y semanal dan igual que asset (192 casos). Corrige T6 y T55 |
+| E46 | 2026-10-30 | **El bucle de la serie va dentro del API.** Probado en el MI local que `foreach` (v2) admite llamadas adentro y que una iteración fallida no corta las demás (se cuentan los fallos al terminar). No hizo falta el plan B (que PHP recorra las fechas) | Regla 3 del ADR-014 |
+| E47 | 2026-10-30 | **El DataService no informa cuántas filas tocó un UPDATE** (la respuesta sale vacía aunque cambie una fila): las comprobaciones de empresa se hacen antes con una consulta (mover, estirar, responsable) y las que importan van dentro del propio SQL (`WHERE ... id_empresa`) | Descubierto con T47 |
+| E48 | 2026-10-30 | **Un plan cuyo equipo está cargado en otra empresa no se programa** ("no se creó ninguna orden: el equipo no es de la empresa"). Asset lo dejaba pasar | En desarrollo es el caso de la mayoría de los planes de la empresa 6 (H7): revisar producción antes del corte |
+| E49 | 2026-10-30 | **Administrar Órdenes (`Envio`) portada**: entregar órdenes terminadas y reprogramar las terminadas parcialmente, con consultas por MANDataService (bloque `MIG-ASSET-4e`) y la empresa de la sesión en cada una. No estaba en el inventario de la migración | Revisión de pantallas con el PM. Corrige T64 |
+| E50 | 2026-10-30 | **Menú de MAN en desarrollo**: opciones, permisos en la URL, opción nueva "Bandeja de Tareas" y menú para `Empresa_Test` (detalle en `MENU-MAN.md`). Los títulos de las cajas de las pantallas pasan a `box-primary` con borde, para que se vean (en el tema de tools son blancos) | El PM no veía el menú ni las pantallas |
+| E51 | 2026-10-30 | **Datos de ejemplo** para la empresa de prueba (`tests/seed_demo_man.py`, `tests/seed_demo_bonita.py`), borrables | Poder revisar las pantallas con contenido (H20) |
+| E52 | 2026-10-30 | **Alcance**: todos los ABMs del menú ABM activo y todo el menú de Mantenimiento, nada más (sin reportes, seguridad ni almacén y pañol). Faltan 12 ABMs (§2.4) | PM |
+| E53 | 2026-10-30 | **No hay corte por empresa ni trabajo de usuarios y permisos en desarrollo**: DNATO ya sincroniza usuarios y empresas | PM |
+| E54 | 2026-10-30 | **Lanzar casos también desde Solicitud de Servicio y desde Órdenes de Trabajo** (MIG-8), no solo desde el Calendario | PM, según el diagrama del proceso de Bonita |
+| E55 | 2026-10-30 | **Notificaciones al final** y con el método que unifique el agente de v3.5 | PM |
+| E56 | 2026-10-31 | **ABMs de catálogo** (Grupo, Sector, Contratista, Parámetros, Familia, Marca, Clientes, Criticidad, Sucursales, Sistemas, Tareas estándar): un bloque generado de `MANDataService` (rutas `/abm/...`, lista, obtener, alta, modificación y baja con `id_empresa` siempre de la sesión). **Tareas estándar** va en su propio controller `Tareaestandar` (no en `Tarea`, que es la bandeja) y crea las tareas visibles (T69). **El desplegable de formularios de Grupo** usa los formularios de tools (`FRMDataService`) | Agente (autonomía) |
+| E57 | 2026-10-31 | **Unidad de medida no se porta**: el ABM de asset usa la lista de valores del almacén (`ALM`, `Lovs`), así que cae en "almacén y pañol no se migra". Las unidades se administran en `traz-comp-almacenes`. El PM la había listado entre los ABMs: confirmar | Agente; **a confirmar con el PM** |
+| E58 | 2026-10-31 | **MIG-8, decisiones del PM**: (1) el lanzamiento automático lo dispara el **cron del sistema operativo**, el mismo mecanismo de los KPIs; (2) el margen es configurable en la lista de valores `core.tablas`, tabla `configuraciones`, y si no hay valor se usan 7 días (`MAN_DIAS_LANZAMIENTO` en `constants.php`); (3) si el lanzamiento falla, la orden queda *programada sin lanzar* y se reintenta en la corrida siguiente; (4) las series ya lanzadas se dejan como están | PM |
+| E59 | 2026-10-31 | **"Programada sin lanzar" = estado `PL`, tipo 3 o 5 y `case_id = 0`**, sin columna nueva (evita migrar la base). Las órdenes viejas sin caso tienen `case_id` NULL y el lanzamiento no las toca. El margen por empresa se guarda en el `valor` de la fila (`man_dias_lanzamiento_<empr_id>`) porque la clave de `core.tablas` es tabla + valor. El caso se inicia en nombre del usuario que programó la orden (`id_usuario`), por pedido del PM: el usuario de servicio pide la instancia con `?user=` (probado en Bonita DEV) | Decisión técnica propia, anotada para revisión |
+| E60 | 2026-10-31 | **Anular una orden sin lanzar** (decisión del PM): opción "Anular" en la lista de Órdenes de Trabajo y ventanita al hacer clic sobre la orden en el calendario (Ver orden / Lanzar ahora / Anular). Anular pone estado `AN` (el que ya excluyen la lista y el calendario) y guarda quién y cuándo (`id_usuario_eliminada`, `fecha_eliminada`, `motivo_eliminada`); no hay caso de Bonita que cerrar. Solo vale para PL, tipo 3 o 5, `case_id` 0 (`POST /tools/man/plan/anular`). Editar una orden sin lanzar sigue siendo el "Editar" de la lista y mover el día en el calendario | Aprobado por el PM; el estado `AN` en lugar de `EL` es decisión técnica propia (`EL` es el de las eliminadas por solicitud y el calendario las seguiría mostrando) |
+| E61 | 2026-11-02 | **Tablero de KPIs de MAN en tools: MTTR, MTTF, MTBF y confiabilidad** (los indicadores que la pantalla Rep Equipo de asset muestra además de la disponibilidad; el PM pidió migrar solo lo que hoy se usa y dejó afuera los indicadores de órdenes hasta consultarlo con un experto). Se calculan por mes en `assetv2.kpi_cache` con `scripts/assetplanner/kpi-mantenimiento.sql`: se habilitan las tres consultas base que estaban apagadas y los cuatro nuevos salen de ellas con la misma fórmula de `Kpi.php`. Verificado a mano con la empresa 6 (septiembre 2026: 416 / 1248 / 1664 h y 80 %). Cuatro cajas nuevas en `dashboard.php` (`numero` y dona). Las órdenes sin lanzar no afectan ningún indicador: las 4 consultas de la caché (y las 4 nuevas) leen solo historial de estados y equipos | Decisión del PM (alcance); fórmulas y nombres `man_*` son decisión técnica propia. H27–H29 |
+| E62 | 2026-11-02 | **Reportes de asset dentro de Mantenimiento** (decisión del PM; cambia el alcance de E52, que los dejaba afuera): "Rep Equipo" (Reporte de Disponibilidad de Equipos, `Kpi/index`) y "Rep Informe de Servicios" (`Reporte`), ambos como opciones del menú Mantenimiento. Rep Informe de Servicios hecho (MIG-REP-2): `Reporte` + `Reportes` + `views/reportes/rep_informes.php` y tres consultas `/rep/informes/{solicitudes,preventivos,backlog}/...` (conteos y filtros iguales a una cuenta independiente en las empresas 1, 6, 8 y 9; se descartó lo que la pantalla no usa: reporte de consumo de pañol, `getCliente`, `getArticulo`, `getSupervisor`, `tiempo`; H31). Rep Equipo hecho: `Kpi` + `Kpis` + `views/kpis/rep_equipos.php`, tres consultas nuevas en `MANDataService` (`/rep/equipos/{lista,disponibles,historial}/empresa/{id}`, bloque MIG-REP-1) y el cálculo de asset pasado a PHP tal cual. Verificado contra una cuenta independiente en Python con las empresas 1, 6, 8 y 9 (solo difiere el equipo 120, por H30). Opción de menú `rep_equipo` cargada en desarrollo | Decisión del PM; el historial de toda la empresa se trae en una sola consulta (asset pedía uno por equipo) es decisión técnica propia |
+| E63 | 2026-11-02 | **Rep Ordenes de trabajo** (`Reporteorden` de asset) migrado como tercer reporte del menú Mantenimiento (MIG-REP-3; el PM: "si migralo, luego estudiamos si los fusionamos" con la lista de Órdenes de Trabajo). `Reporteorden` + `Reporteordenes` + `views/reporteorden/rep_ordenes.php` y dos consultas en `MANDataService` (`/rep/ordenes/empresa/{id}/equipo/{e}/estado/{s}/desde/{d}/hasta/{h}` y `/rep/ordenes/estados/empresa/{id}`; 0 = sin filtro). Se descartó lo que la pantalla no usa (`getOTequipo`, `traerot`, `traerOTestado` y los métodos copiados del reporte de pedidos de pañol). Opción de menú `rep_ordenes_trabajo` (orden 240) cargada en desarrollo. H32 | Decisión del PM; fusionar con la lista de Órdenes de Trabajo queda para estudiar después |
+| E64 | 2026-11-02 | **Ajustes de estética y uso pedidos por el PM**: (1) los tres reportes tenían el título blanco sobre fondo blanco (`box-header` sin `with-border`; el tema pinta de rojo solo el que lo lleva); (2) cabeceras "Mas Detalles" de la tarea (`man_cabecera`) con el mismo acordeón de Bootstrap que usa almacenes (`panel panel-default`, título en un enlace, cerrado de entrada; el PM aportó la captura de almacenes, y ni el estilo `box` rojo ni el gris gustaron) y barras del Plan de Mantenimiento (`calendar/tablas.php`) que pasan a abrirse con un clic en la barra roja, sin botón (+); el `data-widget="collapse"` no funciona en el layout de tools y por eso no se abrían; (3) leyenda "Referencias de colores" del calendario alineada en una sola fila; (4) la lista de usuarios al asignar una OT (y todo autocompletar de MAN) no se veía: H33, pieza `views/_autocompletar.php`; (5) texto de la bandeja para casos sin datos (H34) | Pedido del PM; el texto nuevo de la bandeja y la pieza compartida son decisión técnica propia |
+| E65 | 2026-11-02 | **Corrige E34: la integración de asset con el almacén y el pañol de TOOLS (REQ-ASSET-ALM F3-F6, último commit de asset `f7bc529`) SÍ se migra**; lo que no se migra son los módulos propios de almacén y pañol de asset. Primera pantalla: **Ejecutar OT** (Plan de Mantenimiento). Pestaña *Herramientas*: lista de la OT (heredada del plan) editable con el maestro del pañol de tools o texto libre, más las herramientas usadas de los vales (solo vales, no hay pedido de herramientas: decisión del PM). Pestaña *Pedido Materiales*: borrador prearmado con los insumos de la OT (opción B del PM), se agregan artículos del almacén de tools (búsqueda por código o descripción) y se envía al confirmar *Asignar OT*; una OT tiene un solo pedido y, ya enviado, no se le agregan artículos (decisión del PM); si el envío falla, se puede reintentar con *Enviar pedido* mientras la OT esté AS o C. El pedido lo crea `POST /tools/man/plan/ot/pedido` (toolsMANAPI): pedido con `ortr_id` en el almacén de tools, lanzamiento de "Pedido de Recursos Materiales" en Bonita en nombre del usuario, `core.case_empresa` y caso en el pedido; deshace todo si algo falla (ADR-014). Probado de punta a punta con la OT 1381 (heredó herramienta e insumo del preventivo 179; pedido 1492 Solicitado con caso 30234; segundo pedido y OT ajena rechazados). Pendiente: informe de servicio, edición y verificar (pedido/entregas, herramientas usadas y vales). H35, H36 | Decisión del PM ("traelo a todas las pantallas de MAN", B, solo vales). Crear el pedido al confirmar y no al abrir la ventana (asset lo creaba al abrir) es decisión técnica propia: evita pedidos huérfanos |
+| E66 | 2026-11-02 | **Herramientas, insumos y pedido en todo el ciclo de la OT** (pedido del PM: "que se vean en todo el proceso y ciclo de vida de la OT"). Pieza compartida `views/ot/materiales.php` (herramientas de la OT, pedido al almacén de tools con pedido/entregado/pendiente, entregas con detalle, herramientas usadas de vales) como pestaña "Herramientas e Insumos" en Ejecutar OT, Confecciona informe y su edición (el mantenedor busca vales por DNI, asocia, quita los suyos y tilda "se usó"), Verifica informe (el supervisor busca sin DNI y quita también los del pañolero; confirmado por el PM el 2026-11-03) y Presta conformidad (lectura; asset solo los mostraba dentro de "Ver informe"). Vales: F5 de asset (`buscarVales`, `asociarVale`, `quitarVale`, `tildarHerramienta` + 3 consultas nuevas en `MANDataService`, permisos def. 8 controlados en el servidor). Arreglos encontrados al probar: el panel de la bandeja ocultaba todas las pestañas (ahora solo Comentarios y Trazabilidad, que pone tools) y por eso tampoco se veían las del informe; el informe tomaba la tabla `#tareas` de la bandeja de tools en vez de su campo y no agregaba tareas (H37); las piezas se cargan con `MAN . '...'` porque la bandeja arma las pantallas desde el módulo bpm. Probado de punta a punta con la OT 1381: asignar con pedido → Ejecutar OT → informe con vale 77 asociado → verificar → conformidad (OT CN, caso cerrado), mirando la pestaña en cada paso; lectura de entregas y herramientas usadas contra los datos de prueba de asset (OT 935: pedido 13/8/5, entregas 290 y 291, vales 61 y 78). También probado el camino del rechazo: verificación rechazada → "Edición Informe de Servicios" con la pestaña (OT 1368) → guardado. El vale de salida que asset creaba al guardar el informe (M2) no se porta: regla del PM (2026-11-03), los vales los hace siempre el pañol; el mantenedor solo asocia los suyos (H38). H39, H40 | Pedido del PM; la pieza compartida y la pestaña en Presta conformidad son decisión técnica propia |
+| E67 | 2026-11-18 | **Las consultas de `MANDataService` no repiten parámetros.** El EI 6.5 de DEMO y producción rechaza un `:parametro` que aparece más de una vez (NullPointerException al armar la sentencia); el MI local lo acepta. Las 23 consultas nuevas que lo hacían ligan cada parámetro repetido una sola vez en la derivada `(SELECT :x AS p_x) param`, como los servicios de datos de producción. Control automático en cada PR que toca un `.dbs`. Detalle en [ANALISIS-IMPACTO-NUCLEO-MIG.md](ANALISIS-IMPACTO-NUCLEO-MIG.md) §2.9 | Causa: investigación en DEMO; forma del arreglo: PM |
+| E7 | 2026-10-27 | **Respuestas de objeto suelto** (ej. `{"empresa":{...}}`) se leen con `$this->rest->callAPI()` y no con `wso2()` | El doble `reset()` de `wso2()` reduce un objeto suelto a su primer campo. Para listas (`{"x":{"y":[...]}}`) `wso2()` sirve y se usa vía `man_lista()` |
+
+---
+
+## 4. Decisiones pendientes
+
+La única lista vigente. Las dudas D1-D9 que se le plantearon al PO sobre el pañol quedaron casi todas
+respondidas por las 14 definiciones del plan Pedido y pañol (en `archivo/`). Acá quedan solo las que
+siguen abiertas.
+
+### Arquitectura 🔴 (workshop: no las decide quien ejecuta)
+
+**A1 — Cómo accede a los datos el núcleo. ✅ Resuelta (PM, 2026-10-26):** todo por DataServices y
+ningún acceso directo (§3.1). Escrita como [ADR-014](../adr/ADR-014-man-acceso-datos-dataservices.md),
+aceptado por el PM el 2026-10-27, que agregó la regla 4 (APIs con componentes nativos de WSO2).
+
+**A2 — Bonita y la creación de OT. ✅ Resuelta (PM, 2026-10-27): igual que hoy** (§3.1, ADR-014).
+El contexto era este: hoy no se puede crear una OT sin Bonita: si `lanzarProceso`
+falla, la OT se borra (`controllers/Calendario.php:354-359`). Hay 9 nombres de actividad escritos a
+mano en el código. La reimplementación de MIG-4 replica esa coreografía exacta, salvo que se decida
+otra cosa antes.
+
+**A3 — Fuente única de los artefactos WSO2 de mantenimiento. ✅ Resuelta (PM, 2026-10-27): la de
+tools** (§3.1, ADR-014). Falta retirar las copias de asset. El contexto era este: asset mantiene copias propias
+(`_backend/api/toolsMANAPI.xml`, `_backend/api/dataservice/MANDataService.xml`,
+`_backend/api/dataservice/ASP/COREDataService.xml`, `api/asp_ALMDataService.xml`) distintas de las
+de tools. Tools ya unificó sus copias (PR #545). Falta declarar que la fuente es la de tools y
+retirar las de asset.
+
+**A4 — Origen de los eventos de notificación (MIG-9).** Las opciones son publicarlos desde las
+operaciones del API (recomendado, coherente con A1) o mantener triggers de base, y usar Streaming
+Integrator o un proceso más simple. No bloquea nada hasta MIG-9.
+
+**A5 — Quién lanza los casos de Bonita desde MAN. ✅ Resuelta (PM, 2026-10-28): a través de `toolsbpmAPI`**, que usa la
+plantilla `bpmAPICallTemplate`. Palabras del PM: "la forma de interactuar con bonita deberia ser a traves del api toolsBPMAPI.xml,
+que usa el template BPM tambien". Cómo se aplica (E22, E23 en §3.8): las operaciones de MAN que lanzan o borran casos son recursos
+de `toolsMANAPI` que llaman a `POST`/`DELETE /tools/bpm/proceso/instancia`, con la sesión `bpm_token` como hace
+`traz-comp-tareasestandar`. Lo que sigue es el planteo original.
+
+Planteo original (2026-10-28): Bloquea
+todo lo que falta portar: Solicitudes (`lanzarProcesoBPM`, `eliminar_solicitud`), Órdenes de trabajo,
+Informes de servicio, Calendario (MIG-4) y Bandeja (MIG-3). El choque es entre dos decisiones ya
+tomadas:
+
+- **A2 ("igual que hoy")**: asset lanza el caso **como el usuario logueado**: inicia sesión en Bonita
+  con su contraseña guardada en la sesión (`libraries/BPM.php:112-134` de asset). Además registra el
+  caso en `case_empresa` de `assetv2`, que es de donde lee su bandeja.
+- **ADR-014, regla 3**: las operaciones que tocan varios subsistemas son un recurso de `toolsMANAPI`,
+  con compensación. El MI se conecta a Bonita **como administrador** (`bpmAPICallTemplate`), como en
+  `create_ot`.
+
+Si el caso lo inicia el administrador y no el usuario, cambia el iniciador del caso, que Bonita puede
+usar para asignar tareas al Solicitante. Además, la librería de Bonita de tools registra el caso en su
+propia `case_empresa` (PostgreSQL), no en la de `assetv2`, y la bandeja de asset no lo vería.
+
+Opciones:
+
+| | Cómo | A favor | En contra |
+|---|---|---|---|
+| **C (recomendada)** | Recurso de `toolsMANAPI` que lanza como administrador **en nombre del usuario** (`POST API/bpm/process/{id}/instantiation?user={id de Bonita}`; Bonita de DEV es 7.7.0, que lo admite), registra `case_empresa` en `assetv2` por `MANDataService` y compensa si algo falla | Cumple A2 (el iniciador es el usuario) y la regla 3. No viajan contraseñas al MI. Queda disponible para MCP | Hay que probar en DEV que el proceso "Proceso de Mantenimiento AssetPlanner" (`8664799170016058315`) se comporta igual iniciado así |
+| A | Desde PHP con la librería de Bonita de tools, como el usuario, igual que asset; `case_empresa` en `assetv2` por `MANDataService` | Copia exacta de asset | Deja lógica de varios subsistemas en PHP (contradice la regla 3), sin compensación y fuera del alcance de MCP |
+| B | Recurso de `toolsMANAPI` como administrador, sin "en nombre de" | El más simple | Cambia el iniciador del caso: puede romper la asignación de tareas |
+
+Nota: `create_ot` (MCP) lanza "Proceso de Mantenimiento AssetPlanner SIM", que no existe en la Bonita de
+DEV (T21).
+
+### Funcionales y de negocio (las decide el PM)
+
+| # | Decisión | Mi recomendación |
+|---|---|---|
+| ~~P1~~ | ✅ **Resuelta (PM, 2026-10-27):** el freeze rige cuando cierren las pruebas de los dos frentes (§3.1). Falta registrar acá la fecha en que efectivamente cierren | — |
+| ~~P2~~ | ✅ **Resuelta (PM, 2026-10-29): en asset no se corrige nada**, porque asset se va a apagar. Los errores se compilan en [`ERRORES-ASSET.md`](ERRORES-ASSET.md) y se corrigen solo en MAN. Vale también para T34. Si al terminar la migración no hay fecha de salida de la versión nueva, se corrigen sobre el asset actual los graves (🔴), con análisis de impacto (ver `ERRORES-ASSET.md`) | — |
+| P7 | **MIG-8**: margen de lanzamiento (cuántos días antes de la fecha se lanza el caso Bonita) y qué se hace con las series ya lanzadas | Margen configurable por empresa. Las series existentes se dejan como están |
+| P9 | **MIG-9**: qué eventos de cada módulo se notifican, a quién y por qué canal | Arrancar con los eventos de la OT que ya notifica asset, más el lanzamiento de MIG-8 |
+| P8 | **Scheduler** para MIG-8, compartido con la Fase 2 del tablero del administrador | Una sola decisión para los dos casos. El cron del sistema operativo ya existe para los KPIs |
+| P3 | **Mapeo de grupos y permisos de asset a roles y menú de tools** | Relevar los grupos reales por empresa antes de diseñar el mapeo |
+| P4 | **Alcance inicial** | ✅ Resuelta (PM, 2026-10-30): todos los ABMs y todo el menú de Mantenimiento, nada más (§2.4) |
+| P5 | **Varios pañoles por empresa** (D3) y **qué hacer con el campo "Cantidad"** de las herramientas del plan (D4) | Mantener un pañol hasta que un cliente lo pida |
+| P6 | **Pedido rechazado y cerrado con "No, gracias"**: queda sin salida desde la OT | Decidir con el uso real. La salida es habilitar el pedido nuevo y adaptar `Calendario::verEjecutarOT` |
+
+---
+
+## 5. Riesgos y deuda
+
+### 5.1 Riesgos
+
+| # | Riesgo | Prob. | Impacto | Mitigación |
+|---|---|---|---|---|
+| R1 | **La divergencia sigue creciendo** (pasó de 15 a 19 archivos entre agosto y octubre) | Alta | Alto | Freeze (P1). Volver a medir §2.3 al abrir cada etapa |
+| R2 | **Pérdida de conocimiento**: ya pasó con el fork | Ya ocurrió | Alto | PR obligatorio con descripción, checklist por archivo y este documento al día |
+| R3 | **No hay dónde probar** el frontend PHP | Alta | Bloqueante | MIG-0, punto 3 |
+| R4 | **Doble escritura** con los dos frontends sobre las mismas filas | Media | Alto | Corte por empresa entera |
+| R5 | **Un bugfix de asset no llega a MAN** durante la convivencia | Alta | Alto | Regla de §3.5, con la línea `MAN:` obligatoria en cada PR. Ventana de convivencia corta |
+| R9 | **Volumen de la conversión a DataServices**: 1.718 accesos en models, cada uno con su query nueva en `MANDataService` | Alta | Alto | Conservar las firmas de los models para que los controllers no cambien. Paridad (nivel 1) por endpoint. Empezar por los ABMs chicos |
+| R10 | **Transacciones e ids generados por DataService**: generar una serie de OTs hoy hace muchos inserts encadenados y lee `insert_id()` | Media | Alto | Que lo resuelva ADR-014. La serie se crea como una sola operación del API, no como N llamadas desde PHP |
+| R12 | **`develop` y `develop-v3` vuelven a divergir** durante la migración, porque no se unifican (§3.6) | Alta | Medio | Replicar en `develop-v3` los arreglos de `develop` que toquen lo que MAN usa. Hacer la unificación final apenas se cierren las pruebas |
+| R11 | **Datos de la bandeja desincronizados** entre MariaDB y PostgreSQL (MIG-7) | Media | Medio | Escribir en los dos lados desde la misma operación del API, con una verificación de consistencia periódica |
+| R6 | **Subestimar el calendario** | Media | Alto | MIG-4 como etapa propia, con golden tests antes de reescribir |
+| R7 | **PHP 5.6 en el demo**: la sintaxis 7.x pasa el lint local y revienta en el demo | Alta | Medio | `phpcs` 5.6 bloqueante en el CI |
+| R8 | **Tocar core de tools** (`general_scripts.php`, menú, sesión) | Media | Alto | Cada cambio de core con análisis de impacto aprobado, según `CLAUDE.md` |
+
+### 5.2 Bugs heredados de asset (están hoy en producción)
+
+No se corrigen en asset (P2). La lista en lenguaje simple, agrupada por gravedad y con su estado en MAN, está en [`ERRORES-ASSET.md`](ERRORES-ASSET.md).
+
+| # | Hallazgo | Evidencia (asset) |
+|---|---|---|
+| T1 🔴 | Fuga entre empresas: un `OR` sin paréntesis anula el filtro por empresa | `models/Equipos.php:830-832` |
+| T2 🔴 | ~15 queries armadas concatenando `$_POST` o la URI. En MAN desaparecen al pasar a DataServices (ya resuelto en Parametros) | `models/Calendarios.php:124-147, 599-631, 651-698`; `models/Preventivos.php:559-593, 797-814`; `models/Parametros.php:30-88` |
+| T3 🔴 | `setOTenSerie()`: un `while` sin límite ni transacción. Con frecuencia 0 crea OTs y procesos Bonita hasta el timeout | `controllers/Calendario.php:523-556` |
+| T4 | Fechas `'0000-00-00 00:00:00'` fijas, que bloquean el upgrade del motor | `controllers/Calendario.php:161,171,176` |
+| T5 🔴 | Credenciales en claro en el repo, y un JWT completo en tools | `application/config/database.php` de asset y de tools (en tools, `:99-105`); el JWT está en `application/config/constants.php:247` de tools. Se rotan, no alcanza con moverlas |
+| T6 | Periodicidad rota: Mensual = 30 días, y "500 horas" se toma como 500 días | `controllers/Calendario.php:497-521` |
+| T7 | Dos fuentes para la lectura del contador | `models/Calendarios.php:106` contra `models/Preventivos.php:747` |
+| T8 | La regla de alerta está implementada 4 veces con 3 fórmulas | `controllers/Calendario.php:88-100` y otras |
+| T9 | Clave duplicada en `BPM_PROCESS` (tools) | `application/config/constants.php` de tools |
+| T11 | `Obtener_*` y `Eliminar_*` de Área y Proceso no filtran por empresa: con el id de un registro ajeno se lo ve o se lo da de baja. Corregido en MAN (E4) y en asset (rama `fix/MIG-doble-bugfix-fugas-empresa`, PR al cierre del tramo) | `models/Areas.php:21-40`, `models/Procesos.php:19-41` |
+| T12 | `setLecturas`: además de T1, `$resultado = + lectura_base` asigna en vez de sumar, y si el equipo no tiene preventivo el UPDATE sale con `prevId` vacío (error de SQL, la lectura ya quedó grabada) | `models/Equipos.php:803-882` |
+| T13 | Alta de equipo y "agregar adjunto" con varios archivos: la librería de subida se carga una sola vez y todos toman el nombre del primero, así que desde el segundo el nombre en disco no coincide con el de la base. Corregido en MAN | `controllers/Equipo.php:496-619, 965-1019` |
+| T14 | La unicidad del código de equipo es global (todas las empresas) y por SQL concatenado. MAN conserva la regla global y la pasa a parámetro | `models/Equipos.php:426-436` |
+| T15 | `historial_lecturas` es MyISAM: las lecturas no participan de ninguna transacción | `assetv2` |
+| T16 | `Preventivo/getdatos` busca en la tabla vieja `herramientas` un id que desde F4 es del pañol de tools: devuelve otra herramienta o nada | `models/Preventivos.php` (`getdatos`) |
+| T17 | `bpmAPICallTemplate` escribe en el log del MI el usuario y la contraseña de Bonita | `_backend/.../templates/bpmAPICallTemplate.xml` (tools) |
+| T18 | `toolsFault` termina con `<send/>`: llamado desde el flujo de entrada de un recurso, reenvía el mensaje en vez de responder y el cliente queda esperando. Lo usan `create_ot` y otros recursos de `toolsMANAPI` | `sequences/toolsFaultSequence.xml` (tools) |
+| T19 | `ASP_0100` no está definida: PHP la toma como texto y antepone un aviso que rompe el JSON de la respuesta | `controllers/Backlog.php:303`, `controllers/Sservicio.php:182,190` |
+| T20 🔴 | Las vistas de Backlog y Predictivo borran el adjunto con `Preventivo/eliminarAdjunto` y su propio id: se borra el adjunto del **preventivo** con ese número, de cualquier empresa. Corregido en MAN y en asset (rama `fix/MIG-doble-bugfix-fugas-empresa`) | `views/backlog/list.php`, `views/predictivo/list.php`, `models/Preventivos.php` (`eliminarAdjunto`) |
+| T21 | `create_ot` (MCP) lanza el proceso "Proceso de Mantenimiento AssetPlanner SIM", que no existe en la Bonita de DEV; el de asset es "Proceso de Mantenimiento AssetPlanner" (`8664799170016058315`) | `apis/toolsMANAPI.xml` (`POST /mcp/ot`) |
+| T22 | Los catálogos que se guardan por id no se validan contra la empresa: un POST con el id de una tarea, componente, sector, cliente, herramienta o artículo de otra empresa se graba, y los listados que hacen JOIN muestran su descripción. Pasa en asset. **Corregido en MAN** para las cabeceras de equipo, preventivo, predictivo y backlog: el id se acepta vacío o 0 (como guarda asset) o si es de la empresa. Quedan sin validar herramientas y artículos, que son ids de tools y no de `assetv2` | `MANDataService.dbs` (`setPreventivoMan`, `setBacklogMan`, `setEquipoMan`, `updateEquipoMan` y detalle) |
+| T23 🔴 | Los adjuntos de equipos aceptan cualquier tipo de archivo (`allowed_types "*"`) y quedan en una carpeta servida por Apache, sin `.htaccess` que impida ejecutar. Un `.php` subido como adjunto podría ejecutarse. Heredado de asset; corresponde restringir tipos y negar ejecución en `assets/files*` | `controllers/Equipo.php` (asset y MAN) |
+| T24 | La edición de equipo de MAN graba todas las columnas: una clave que no llega queda en NULL (asset solo actualizaba las que llegaban). La vista manda todas; el riesgo es otro canal (MCP) que llame al mismo endpoint | `models/Equipos.php` (`update_editar`) de MAN |
+| T25 | Los recursos `POST /tools/man/{preventivo,predictivo,backlog}` de `toolsMANAPI` toman `id_empresa` del cuerpo, como `MANDataService`. **No deben publicarse por APIM/MCP** así: para MCP tienen que leer la empresa del JWT (`emprIdFromHeader`, ADR-009) | `apis/toolsMANAPI.xml` |
+| T26 | Con el driver MySQL de `AssetPlannerDataSource`, `returnUpdatedRowCount` no devuelve la cantidad de filas (`{"preventivo":{}}`): no sirve para saber si un UPDATE alcanzó algo. Donde importa, MAN verifica la pertenencia antes con una consulta | `MANDataService.dbs` (todas las `*Man` con `UPDATED_ROW_COUNT`) |
+| T27 | `get_SolicTerminadas`, `getSSs` y `getEquipSectores` no filtran por empresa: la pantalla de solicitudes terminadas muestra las de todas las empresas. Corregido en MAN y en asset (rama `fix/MIG-doble-bugfix-fugas-empresa`) | `models/Sservicios.php` |
+| T28 | Asset lanza los casos de Bonita como el usuario logueado, con la contraseña de Bonita común (`userPass()`). Si la del usuario no es esa, el alta de la solicitud falla y asset la borra (pasa en DEV con el usuario de prueba). Además, `POST /solicitudServicio` de `toolsMANAPI` (app móvil) busca la solicitud recién creada como "la última del equipo", sin filtro de empresa y con JavaScript; MAN usa su propio recurso (E22) y los dos convergen más adelante | `libraries/BPM.php:112-134` de asset; `apis/toolsMANAPI.xml` |
+| T29 | Las OT de DEV de la empresa 1 apuntan al cliente `cliId=1` (de la empresa 6) y a equipos de las empresas 6 y 8. `getcliente`, `getpencil`, `getOrigenOt` y las vistas de OT de asset no filtran por empresa. MAN filtra todo por empresa, así que esas OT de DEV se ven incompletas en MAN | `models/Otrabajos.php` de asset; datos de DEV |
+| T30 | Asignar OT (`Otrabajo/guardar`) le pasa a Bonita como `assigned_id` el `usrId` de asset, que no es el id del usuario en Bonita: la tarea "Ejecutar OT" queda asignada a otra persona o falla. Corregido en MAN (E27); en asset sigue igual | `controllers/Otrabajo.php:701-740` de asset |
+| T31 | `guardar_agregar` de OT en asset responde siempre `false` (`respOT` nunca se asigna) y, si Bonita falla, borra la OT pero sigue: graba un `case_id` vacío y el detalle de una OT borrada | `controllers/Otrabajo.php:169-300` de asset |
+| T32 | "Verificar" informes busca la tarea de Bonita entre las 10 primeras de la bandeja del usuario. Si no está ahí, igual cierra el informe y la OT en la base y deja la tarea abierta en Bonita | `controllers/Ordenservicio.php` (`cierreMasivoVerificaInforme`), `libraries/BPM.php` (`getTodoList`, `c=10`) de asset |
+| T33 | Al abrir un informe desde la pantalla de informes, asset toma la columna "Fecha" como id del equipo: la ventana muestra los datos del equipo vacíos | `views/ordenservicios/list.php` (`find("td").eq(6)`) de asset |
+| T34 🔴 | "Verificar" informes usa el caso y la OT que manda el navegador, sin mirar la empresa: cualquier usuario puede cerrar el informe y la OT de otra empresa (y la tarea de Bonita, si su usuario es candidato) | `controllers/Ordenservicio.php` (`cierreMasivoVerificaInforme`), `models/Tareas.php` (`cambiarEstado`) de asset |
+| T35 🔴 | Lecturas de parámetros: las lecturas de un día, el alta y la baja no miran la empresa. Con el id de una lectura ajena se la borra, y se puede grabar sobre un equipo de otra empresa | `models/Lecturas.php` (`getLecturasCargadas`, `guardar_lectura`, `deleteLectura`) de asset |
+| T10 | Errores latentes de PHP 8 (`$result = fase;`, `$i = $i++`) | `controllers/Predictivo.php:401,78`; `models/Preventivos.php:453` |
+
+### 5.3 Deuda abierta de los frentes anteriores
+
+| # | Qué | Dónde se ejecuta |
+|---|---|---|
+| D-1 | Aplicar `scripts/sql/2026-08-core-empresas-empr-id-mysql.sql` en TEST y PROD (solo está aplicado en DEV) | `psql` contra la base PostgreSQL de tools (esquema `core`) de cada ambiente |
+| D-2 | Correr el checklist de setup (`traz-prod-assetplanner/doc/v3/setup-cliente-alm-pan.md`) para el primer cliente real. Caleras San Juan tiene 32 artículos y 2 herramientas que se cargan a mano (D8) | Pantallas de tools + REST a DEV/PROD |
+| D-3 | El model de pedidos de `traz-comp-almacenes` (`Ordeninsumos.php`, 63 consultas) pega SQL directo a PostgreSQL | Repo `traz-comp-almacenes` |
+| D-4 | `getArticulos2` quedó sin resource que la invoque, y hay 3 queries de `ALMDataService` con el join a `alm_lotes` por revisar | `ALMDataService.dbs` |
+| ~~D-5~~ | ✅ Corregido el 2026-10-27: `doc/vision-v3-context.md` ya no dice que la migración está pausada | — |
+
+---
+
+## 6. Próximo paso
+
+1. **El PM** mergea el CI de `traz-tools-man` (PR #1), arma el ambiente local con la
+   VPN y rota las credenciales (T5). La regla de doble bugfix (§3.5) ya rige: hay que avisarle a
+   quien hoy toca asset.
+2. **Cierre de MIG-0**: fusionar el puntero del submódulo (tools #570) y verificar del datasource en TEST y PROD.
+3. **MIG-1** arranca por los ABMs chicos (Area, Proceso, Componente, Parametro), para asentar el
+   patrón de model → `MANDataService`. Un archivo completo por PR, con el checklist 0b en cero y el
+   archivo agregado a `.ci/portados.txt`. La primera query sirve también para comprobar
+   `returnGeneratedKeys` sobre MariaDB (pregunta abierta de ADR-014).
+
+---
+
+## 7. Documentos: qué sigue vigente y qué se archivó
+
+| Documento | Estado |
+|---|---|
+| **Este** (`doc/migracion/MIGRACION-ASSETPLANNER.md`) | **Vigente. Es el rector.** |
+| [`archivo/assetplanner-a-traz-tools-man.md`](archivo/assetplanner-a-traz-tools-man.md) | Archivado. Plan de agosto 2026, reemplazado por este. Tiene el inventario función por función del fork (§1.2) y las líneas exactas de cada defecto, por si hacen falta |
+| [`archivo/traspaso-migracion-assetplanner.md`](archivo/traspaso-migracion-assetplanner.md) | Archivado. Traspaso del frente REQ-ASSET-ALM al 2026-08-31. Lo que seguía abierto pasó a §4 y §5.3 |
+| [`archivo/integracion-assetplanner-panol.md`](archivo/integracion-assetplanner-panol.md) | Archivado. Explicación al PO y dudas D1-D9, respondidas por el plan Pedido y pañol salvo P5 y D8 |
+| [`archivo/plan-pedido-y-panol-en-la-ot.md`](archivo/plan-pedido-y-panol-en-la-ot.md) | Archivado. Plan del frente de octubre (F0-F8 y 14 definiciones). Es la referencia de **por qué** las pantallas de la OT son como son. Antes vivía fuera del repo |
+| `traz-prod-assetplanner/doc/v3/setup-cliente-alm-pan.md` | **Vigente.** Es un checklist operativo para dar de alta un cliente mientras asset siga en uso |
+| `traz-prod-assetplanner/doc/v3/circuitos-man-alm-pan.md`, `casos-prueba-man.md`, `pruebas-f6-resultados.md` | Referencia del circuito actual de asset. No son plan |
+| `traz-prod-assetplanner/doc/v3/STATE.md` | **Desactualizado** (congelado el 2026-08-15). El estado de la migración vive acá y en `doc/v3/STATE.md` de tools |
+| `doctest/catalogo/man/` | **Vigente.** Catálogo funcional de Mantenimiento y oráculo de los E2E (§3.4) |
+
+---
+
+## Anexo — Cómo repetir las mediciones
+
+Todos los comandos se ejecutan en una **terminal local**, con los repos ya clonados.
+
+Divergencia de un archivo portado (corte `653fd95`), en el repo de asset:
+
+```bash
+cd traz-prod-assetplanner && git fetch origin
+git diff -w --ignore-cr-at-eol --numstat 653fd95 origin/develop -- application/models/Ordenservicios.php
+```
+
+Restos de conversión en el fork, en un clon de `traz-tools-man` con la rama `rnsanchez`:
+
+```bash
+git clone https://github.com/Trazalog/traz-tools-man.git && cd traz-tools-man && git checkout rnsanchez
+grep -rn "userdata('user_data')" --include=*.php . | wc -l
+grep -rho '\$this->db->' controllers/*.php | wc -l
+```
+
+Compatibilidad con PHP 5.6 (requiere `composer global require squizlabs/php_codesniffer phpcompatibility/php-compatibility`):
+
+```bash
+phpcs -p . --standard=PHPCompatibility --runtime-set testVersion 5.6 --extensions=php
+```

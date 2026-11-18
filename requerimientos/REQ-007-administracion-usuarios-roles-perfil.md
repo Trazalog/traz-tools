@@ -10,7 +10,7 @@ pantalla **Mi perfil** de cualquier persona (datos, foto, teléfono y contraseñ
 para aprobar el cambio de base y el análisis de impacto. **No** cubre la Consola → Usuarios del
 superusuario (ban global, marcar superusuarios: [REQ-008](REQ-008-administracion-consola-empresas.md)),
 los menús ([REQ-009](REQ-009-administracion-menus.md)), la carga masiva de usuarios (REQ-014) ni que
-Tools corte las sesiones abiertas de un baneado (derivación H-091). Lista completa en
+Tools corte las sesiones abiertas de un baneado (derivación H-123). Lista completa en
 [`README.md`](README.md).
 
 | Campo | Valor |
@@ -76,7 +76,7 @@ Tools corte las sesiones abiertas de un baneado (derivación H-091). Lista compl
 - **No modifica toolsCOREAPI** ni ningún recurso existente de `COREDataService`.
 - **No corta las sesiones abiertas en Tools.** Un baneado deja de entrar al módulo y al ingreso copiado
   en el próximo pedido; en las pantallas de Tools sigue hasta que Tools tenga el chequeo central (punto
-  T-5, deuda **H-091**, ver la duda de ADM-UC-094). El rechazo del agente (`sin_acceso`) es de la cuota
+  T-5, deuda **H-123**, ver la duda de ADM-UC-094). El rechazo del agente (`sin_acceso`) es de la cuota
   (REQ-011) y del frente MCP.
 - **No cambia DNATO.** DNATO no conoce `seg.membresias_estado` ni `cambiar_password`: quien entre por el
   ingreso de DNATO no ve el baneo ni la obligación de cambiar la contraseña hasta la redirección final
@@ -508,7 +508,7 @@ Están en los casos de uso (campo `dudas`), para contestarlas en un solo lugar.
 | CP-70 | Invitar con lugares disponibles; enlace de un solo uso que vence en 7 días | ADM-UC-091 (invitar) y ADM-UC-092 (enlace) |
 | CP-71 | Tope alcanzado: mensaje y rechazo en el servidor (409) | ADM-UC-090 (mensaje) y ADM-UC-091 (rechazo directo). Con plan cargado a mano en la base de prueba (M-3 es REQ-016) |
 | CP-72 | Invitado y baneado ocupan lugar; baja no | ADM-UC-090 y ADM-UC-095 |
-| CP-73 | Banear corta web y agente | ADM-UC-094 en el módulo y el ingreso copiado. El corte en Tools: derivación T-5 (H-091). El rechazo del agente: REQ-011 y frente MCP. Fuera de alcance |
+| CP-73 | Banear corta web y agente | ADM-UC-094 en el módulo y el ingreso copiado. El corte en Tools: derivación T-5 (H-123). El rechazo del agente: REQ-011 y frente MCP. Fuera de alcance |
 | CP-74 | Ni a uno mismo ni al último administrador | ADM-UC-094 y ADM-UC-095 |
 | CP-75 | Reactivar baneado | ADM-UC-094 |
 | CP-76 | Alta directa obliga a cambiar la contraseña; pedido por id de otra empresa rechazado | ADM-UC-093 |

@@ -4,24 +4,23 @@
  */
 
 import { test, expect } from '../../fixtures/auth-man.ts';
-import { requerirUrlDeApp } from '../../config/apps.ts';
-import { encabezadosDeGrilla } from '../../pages/man/grilla.ts';
-
-const MAN = () => requerirUrlDeApp('man');
+import { ShellMan } from '../../pages/man/ShellMan.ts';
 
 test.describe('@man @MAN-UC-010 Órdenes de trabajo', () => {
-  test('@smoke el listado muestra el origen de cada orden', async ({ paginaMan }) => {
-    await paginaMan.goto(`${MAN()}/Otrabajo/listOrden`, { waitUntil: 'domcontentloaded' });
-    const texto = await encabezadosDeGrilla(paginaMan);
+  test('@smoke el listado muestra el origen de cada orden', async ({ paginaMan }, testInfo) => {
+    const man = new ShellMan(paginaMan);
+    await man.abrir('ordenes', testInfo);
+    const texto = await man.encabezados();
     for (const columna of ['Nº Orden', 'Equipo', 'Origen']) {
       expect(texto).toContain(columna);
     }
   });
 
-  test('ofrece filtrar por período, equipo y estado', async ({ paginaMan }) => {
-    await paginaMan.goto(`${MAN()}/Otrabajo/listOrden`, { waitUntil: 'domcontentloaded' });
-    await encabezadosDeGrilla(paginaMan);
-    const cuerpo = await paginaMan.locator('body').innerText();
+  test('ofrece filtrar por período programado', async ({ paginaMan }, testInfo) => {
+    const man = new ShellMan(paginaMan);
+    await man.abrir('ordenes', testInfo);
+    await man.encabezados();
+    const cuerpo = await man.textoContenido();
     expect(cuerpo).toMatch(/Programada Desde/i);
     expect(cuerpo).toMatch(/Programada Hasta/i);
   });

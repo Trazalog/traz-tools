@@ -39,11 +39,22 @@ export interface PerfilEntorno {
   /** La segunda empresa: la usan los casos que verifican que una empresa no ve los datos de otra. */
   empresa2: EmpresaTest;
   /** Usuario de AssetPlanner (padrón propio). */
-  man: CuentaTest;
+  man: CuentaTest & { supervisor: CuentaTest };
+  /** Usuarios de rol de Tareas de la empresa 1. */
+  tar: { planificador: CuentaTest; responsable1: CuentaTest; responsable2: CuentaTest };
   /** Usuarios de rol de almacén de la empresa 1. */
   alm: { solicitante: CuentaTest; almacen: CuentaTest };
   /** Lo que cargó el modo full, para encadenar. */
-  sembrado?: { equipoCodigo?: string; herramientaCodigo?: string };
+  sembrado?: {
+    equipoCodigo?: string;
+    herramientaCodigo?: string;
+    /** Preventivo de plantilla, con herramienta e insumo (Mantenimiento en Tools). */
+    preventivo?: string;
+    /** Número de usuario de Mantenimiento de quien corre las pruebas. */
+    responsable?: string;
+    /** OT con pedido, entrega y vale. */
+    otMateriales?: string;
+  };
 }
 
 export function entornoActual(): string {

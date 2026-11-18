@@ -72,7 +72,7 @@ pantalla de auditoría (REQ-013). Lista completa en [`README.md`](README.md).
   que existan en Registros, y el cambio directo deja la marca para que REQ-010 cancele el pedido
   pendiente (CP-27).
 - **No hace lo que cambia en Tools y en el agente por el estado de la empresa**: menú todo sombreado con
-  plan vencido (T-2), corte de sesiones en las pantallas de Tools (T-5, H-091), rechazo del agente con
+  plan vencido (T-2), corte de sesiones en las pantallas de Tools (T-5, H-123), rechazo del agente con
   `sin_acceso` o `plan_vencido` (REQ-011 y frente MCP), logo en el selector de Tools (T-3). Acá se
   guarda el estado y se respeta en el módulo y en el ingreso copiado.
 - **No implementa el envío a Telegram ni a correo de infraestructura**: llama al servicio "Notificar a

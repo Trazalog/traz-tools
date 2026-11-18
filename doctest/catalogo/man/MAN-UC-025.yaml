@@ -3,28 +3,36 @@ modulo: MAN
 titulo: Ver y corregir el historial de lecturas de un equipo
 perfil: Mantenedor
 estado: borrador
-version: "0.1"
+version: "1.0"
 origen: baseline
 referencias_codigo:
-  - repo: traz-prod-assetplanner
-    path: application/views/equipo/list.php
-    detalle: "las acciones historialLectura() y 'Editar lectura'"
-  - repo: traz-prod-assetplanner
-    path: application/controllers/Lectura.php
+  - repo: traz-tools-man
+    path: views/Equipo/list.php
+    detalle: las acciones Historial de Lecturas y Editar lectura
+  - repo: traz-tools-man
+    path: controllers/Equipo.php
+    detalle: getHistoriaLect(), setLecturaObservacionEdit()
+  - repo: traz-tools-man
+    path: models/Equipos.php
+    detalle: "setLecturaObservacionEdit(): la lectura corregida tiene que quedar entre la anterior y la siguiente"
 pantallas:
-  - "Mantenimiento → Equipos → Historial de Lecturas"
+  - Mantenimiento → Equipos → Historial de Lecturas
 precondiciones:
-  - Sesión iniciada en AssetPlanner
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
   - El equipo tiene lecturas cargadas
 depende_de:
   - MAN-UC-017
 flujo_principal:
-  - paso: "En el listado de equipos elige la acción Historial de Lecturas"
-    resultado: "Se muestran las lecturas registradas de ese equipo"
-  - paso: "Si una está mal, la corrige con la acción de editar"
-    resultado: "La lectura queda corregida"
+  - paso: En el listado de equipos elige la acción Historial de Lecturas
+    resultado: Se muestran las lecturas registradas de ese equipo
+  - paso: Si una está mal, la corrige con la acción de editar
+    resultado: La lectura queda corregida
 validaciones:
-  - "El historial muestra las lecturas del equipo, y se pueden corregir"
-  - "El historial muestra solo las lecturas del equipo elegido"
+  - El historial muestra las lecturas del equipo, y se pueden corregir
+  - El historial muestra solo las lecturas del equipo elegido
+  - Al corregir, el valor tiene que quedar entre la lectura anterior y la siguiente del equipo; si no, no se guarda
 dudas:
-  - "**Corregir una lectura puede mover el plan de mantenimiento**, porque los preventivos por uso se calculan contra la última lectura. Falta confirmar si al corregirla se recalcula algo o solo cambia el número — y si queda registro de quién la corrigió."
+  - "**Corregir una lectura puede mover el plan de mantenimiento**, porque los preventivos por uso se calculan contra la última lectura. En MAN la corrección cambia el valor y la observación, sin recalcular nada y sin dejar registro de quién la corrigió. ¿Es lo que se busca?"
+notas:
+  - Rearmado para MAN en tools (migración de asset, 2026-11-03). Validación del PM pendiente en el PR.

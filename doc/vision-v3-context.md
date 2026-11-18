@@ -109,7 +109,7 @@ Lacoste, Motores Balderramo, Kolormax, Bodegas Borbore, Agroallium.
 
 ## Asset Planner — Módulo de Mantenimiento Industrial (proyecto separado)
 
-> **Estado:** Proyecto legado independiente (`traz-prod-assetplanner`), aún no migrado a la estructura de traz-tools. La migración estaba en curso pero se pausó por restricciones de presupuesto. Está planificada para la **versión 4**. Se incluye aquí porque representa la capacidad de mantenimiento más completa de la suite.
+> **Estado:** Proyecto legado independiente (`traz-prod-assetplanner`), en migración a traz-tools como el submódulo `traz-tools-man` (MAN). La migración se retomó el 2026-10-26; el plan y su estado están en [`doc/migracion/MIGRACION-ASSETPLANNER.md`](migracion/MIGRACION-ASSETPLANNER.md). Se incluye aquí porque representa la capacidad de mantenimiento más completa de la suite.
 
 Es el módulo más maduro y complejo de toda la suite: **61 controladores, 59 modelos, 226 vistas**. Cubre el ciclo de vida completo de activos industriales.
 

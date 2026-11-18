@@ -65,6 +65,7 @@ test.describe('@dnato @DNATO-UC-014 Dar de alta un usuario de la empresa', () =>
   test('el usuario recién creado aparece en la lista para poder asignarle roles', async ({ paginaEmpresa1 }) => {
     // H-032 (issue #464) quedó corregido en traz-comp-dnato (commit e9c2896): la Lista de
     // Usuarios ya muestra al recién creado sin roles, así que la prueba vuelve a exigirlo.
+    // Fue el hallazgo H-032 (issue #464): un usuario sin roles no aparecía en la lista. Resuelto en dnato (PR #46).
     const datos = nuevo();
     const alta = new AltaUsuarioPage(paginaEmpresa1);
     await alta.abrir();

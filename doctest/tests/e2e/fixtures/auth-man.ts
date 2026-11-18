@@ -1,47 +1,150 @@
 /**
- * Sesión de AssetPlanner para los tests de Mantenimiento.
+ * Sesión para los tests de Mantenimiento (MAN) **dentro de Tools**.
  *
- * Es una fixture aparte de la de Tools a propósito: **MAN tiene su propio ingreso y su propio
- * padrón de usuarios**, así que la sesión de Tools no sirve acá (ver `pages/man/LoginManPage.ts`).
+ * Desde la migración de AssetPlanner a tools (submódulo `traz-tools-man`, 2026-11), Mantenimiento
+ * ya no tiene ingreso propio: se entra por DNATO como al resto de Tools y las pantallas se abren
+ * desde el menú "Mantenimiento". El ingreso viejo de asset (`pages/man/LoginManPage.ts`) queda solo
+ * para las pruebas que todavía verifican asset (DNATO-UC-014-018).
  *
- * Como en el resto de DocTest, las credenciales **nunca se hardcodean**: si falta una, el test
- * falla diciendo exactamente qué variable completar.
+ * Con `npm run doctest` el usuario sale del **perfil del ambiente**: la empresa 1 recién creada por
+ * casi-full/full (el alta de empresa la deja vinculada con Mantenimiento). Sin perfil se usan las
+ * variables DOCTEST_<AMBIENTE>_MAN_USER / _PASS / _EMPRESA del .env y, si no están, DOCTEST_MAN_*.
+ * Las credenciales nunca se hardcodean.
+ *
+ * El ingreso se hace una vez por worker y la sesión se reutiliza con `storageState`.
  */
 
-import { test as base, type Page } from '@playwright/test';
+import { test as base, type Browser, type Page } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { requerirUrlDeApp } from '../config/apps.ts';
-import { LoginManPage, type CredencialesMan } from '../pages/man/LoginManPage.ts';
+import { entornoActual, requerirUrlDeApp } from '../config/apps.ts';
+import { LoginPage } from '../pages/dnato/LoginPage.ts';
 
-export function credencialesMan(): CredencialesMan {
-  const usuario = process.env.DOCTEST_MAN_USER;
-  const password = process.env.DOCTEST_MAN_PASS;
-  if (!usuario || !password) {
-    throw new Error(
-      'Faltan las credenciales de AssetPlanner. Completá DOCTEST_MAN_USER y DOCTEST_MAN_PASS en\n' +
-        'doctest/.env — son las de un usuario de Mantenimiento, que NO son las de Tools: la app\n' +
-        'tiene su propio padrón (ver issue #489).',
-    );
-  }
-  return { usuario, password };
+const HERE = dirname(fileURLToPath(import.meta.url));
+const DIR_SESIONES = resolve(HERE, '..', '.auth');
+
+export interface CredencialesManTools {
+  usuario: string;
+  password: string;
+  /** Nombre de la empresa en la tarjeta del paso 2 del ingreso (si el usuario tiene más de una). */
+  empresa?: string;
 }
 
-export const test = base.extend<{ paginaMan: Page }>({
-  paginaMan: async ({ browser }, usar) => {
-    const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
-    const page = await contexto.newPage();
-    const login = new LoginManPage(page);
-    await login.abrir(requerirUrlDeApp('man'));
-    await login.ingresar(credencialesMan());
-    if (await login.sigueEnElIngreso()) {
+const PREFIJO: Record<string, string> = { local: 'LOCAL', demo: 'DEMO', 'staging-v3': 'STAGING' };
+
+function leer(sufijo: string): string | undefined {
+  const propio = process.env[`DOCTEST_${PREFIJO[entornoActual()]}_MAN_${sufijo}`]?.trim();
+  return propio || process.env[`DOCTEST_MAN_${sufijo}`]?.trim() || undefined;
+}
+
+export function credencialesMan(): CredencialesManTools {
+  const usuario = leer('USER');
+  const password = leer('PASS');
+  if (!usuario || !password) {
+    const p = PREFIJO[entornoActual()];
+    throw new Error(
+      `Faltan las credenciales de Mantenimiento. Completá DOCTEST_${p}_MAN_USER y DOCTEST_${p}_MAN_PASS\n` +
+        'en doctest/.env: un usuario de Tools de una empresa vinculada con Mantenimiento y con el menú MAN.',
+    );
+  }
+  return { usuario, password, empresa: leer('EMPRESA') };
+}
+
+/** El Supervisor de Mantenimiento: recibe "Analisis de Solicitud" y "Verifica Informe" en su bandeja. */
+export function credencialesSupervisor(): CredencialesManTools {
+  const usuario = leer('SUPERVISOR_USER');
+  const password = leer('SUPERVISOR_PASS');
+  if (!usuario || !password) {
+    const p = PREFIJO[entornoActual()];
+    throw new Error(
+      `Falta el Supervisor de Mantenimiento. Completá DOCTEST_${p}_MAN_SUPERVISOR_USER y _PASS en doctest/.env,\n` +
+        'o corré `npm run doctest -- casi-full|full`, que lo anota en el perfil (mantenimiento@ de la empresa 1).',
+    );
+  }
+  return { usuario, password, empresa: leer('EMPRESA') };
+}
+
+/** El Solicitante de Mantenimiento (usuario@ del alta): recibe "Presta conformidad" en su bandeja. */
+export function credencialesSolicitante(): CredencialesManTools {
+  const usuario = process.env.DOCTEST_ALM_SOLICITANTE_USER?.trim();
+  const password = process.env.DOCTEST_ALM_SOLICITANTE_PASS?.trim();
+  if (!usuario || !password) {
+    throw new Error('Falta el Solicitante: DOCTEST_ALM_SOLICITANTE_USER y _PASS, o el perfil de `npm run doctest -- casi-full|full`.');
+  }
+  return { usuario, password, empresa: leer('EMPRESA') };
+}
+
+async function ingresar(browser: Browser, datos: CredencialesManTools, archivo: string): Promise<string> {
+  const contexto = await browser.newContext({ ignoreHTTPSErrors: true });
+  const page = await contexto.newPage();
+  page.setDefaultNavigationTimeout(120_000);
+  const login = new LoginPage(page);
+  await login.abrir(requerirUrlDeApp('dnato'));
+  await login.completar({ email: datos.usuario, password: datos.password, empresa: datos.empresa ?? '' });
+  await login.enviar();
+  if (await login.enSeleccionDeEmpresa()) {
+    const ofrecidas = await login.empresasDisponibles();
+    const elegida = datos.empresa ?? (ofrecidas.length === 1 ? ofrecidas[0] : undefined);
+    if (!elegida) {
+      await contexto.close();
       throw new Error(
-        'No se pudo ingresar a AssetPlanner con las credenciales de DOCTEST_MAN_USER.\n' +
-          'Si el usuario se creó por la registración, es esperable: la contraseña se guarda sin\n' +
-          'hashear y asset la compara contra MD5 (issue #489).',
+        `El usuario de Mantenimiento tiene varias empresas (${ofrecidas.join(', ')}): ` +
+          `indicá cuál en DOCTEST_${PREFIJO[entornoActual()]}_MAN_EMPRESA.`,
       );
     }
-    await usar(page);
+    await login.elegirEmpresa(elegida);
+  }
+  const error = await login.mensajeDeError();
+  if (error || !(await login.sesionIniciada())) {
     await contexto.close();
+    throw new Error(`No se pudo ingresar a Tools con el usuario de Mantenimiento: ${error ?? 'sigue en el ingreso'}`);
+  }
+  mkdirSync(DIR_SESIONES, { recursive: true });
+  const destino = join(DIR_SESIONES, `${archivo}-${entornoActual()}.json`);
+  await contexto.storageState({ path: destino });
+  await contexto.close();
+  return destino;
+}
+
+async function abrirPagina(browser: Browser, sesion: string, usar: (p: Page) => Promise<void>): Promise<void> {
+  const contexto = await browser.newContext({ ignoreHTTPSErrors: true, storageState: sesion });
+  const page = await contexto.newPage();
+  // Las pantallas de asset usan alert()/confirm() nativos: un diálogo sin atender traba la página.
+  page.on('dialog', (d) => void d.accept().catch(() => {}));
+  await usar(page);
+  await contexto.close();
+}
+
+export const test = base.extend<{ paginaMan: Page; paginaSupervisor: Page; paginaSolicitante: Page },
+  { sesionMan: string; sesionSupervisor: string; sesionSolicitante: string }>({
+  sesionMan: [
+    async ({ browser }, usar) => {
+      await usar(await ingresar(browser, credencialesMan(), 'man'));
+    },
+    { scope: 'worker' },
+  ],
+  sesionSupervisor: [
+    async ({ browser }, usar) => {
+      await usar(await ingresar(browser, credencialesSupervisor(), 'man-supervisor'));
+    },
+    { scope: 'worker' },
+  ],
+  sesionSolicitante: [
+    async ({ browser }, usar) => {
+      await usar(await ingresar(browser, credencialesSolicitante(), 'man-solicitante'));
+    },
+    { scope: 'worker' },
+  ],
+  paginaMan: async ({ browser, sesionMan }, usar) => {
+    await abrirPagina(browser, sesionMan, usar);
+  },
+  paginaSupervisor: async ({ browser, sesionSupervisor }, usar) => {
+    await abrirPagina(browser, sesionSupervisor, usar);
+  },
+  paginaSolicitante: async ({ browser, sesionSolicitante }, usar) => {
+    await abrirPagina(browser, sesionSolicitante, usar);
   },
 });
 

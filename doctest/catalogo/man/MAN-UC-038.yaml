@@ -1,0 +1,57 @@
+id: MAN-UC-038
+modulo: MAN
+titulo: Ver las herramientas, los insumos y el pedido en cada paso de la orden de trabajo
+perfil: Mantenedor
+estado: validado
+version: "1.0"
+origen: baseline
+fecha_validacion: 2026-11-03
+referencias_codigo:
+  - repo: traz-tools-man
+    path: views/ot/materiales.php
+    detalle: "la pieza compartida: herramientas de la OT, pedido / entregado / pendiente, entregas con su detalle y herramientas usadas"
+  - repo: traz-tools-man
+    path: views/tareas/view_ejecutarOT.php
+  - repo: traz-tools-man
+    path: views/tareas/view_inf_servicio_modal.php
+  - repo: traz-tools-man
+    path: views/tareas/view_edicion_inf_servicio_modal.php
+  - repo: traz-tools-man
+    path: views/tareas/view_verifica_informe.php
+  - repo: traz-tools-man
+    path: views/tareas/view_presta_conformidad.php
+  - repo: traz-tools-man
+    path: controllers/Ordenservicio.php
+    detalle: getInsumosPorOT(), getEntregasPorOT(), getHerramientasOT(), getHerramientasUsadas()
+pantallas:
+  - Mis Tareas → Ejecutar OT → Herramientas e Insumos
+  - Mis Tareas → Confecciona informe de servicio → Herramientas e Insumos
+  - Mis Tareas → Edición Informe de Servicios → Herramientas e Insumos
+  - Mis Tareas → Verifica Informe de Servicio → Herramientas e Insumos
+  - Mis Tareas → Presta conformidad → Herramientas e Insumos
+precondiciones:
+  - Sesión iniciada en Tools (ingreso de DNATO)
+  - La empresa está vinculada con Mantenimiento (`core.empresas.empr_id_mysql`); sin eso las pantallas avisan "La empresa no está vinculada con Mantenimiento"
+  - La orden de trabajo fue asignada con su lista de herramientas y su pedido (MAN-UC-011)
+depende_de:
+  - MAN-UC-011
+flujo_principal:
+  - paso: Abre una tarea de la orden (Ejecutar OT, informe, edición, verificación o conformidad) y entra a la pestaña "Herramientas e Insumos"
+    resultado: Ve las herramientas declaradas en la orden
+  - paso: Mira el pedido al almacén
+    resultado: Por cada artículo ve lo pedido, lo entregado y lo pendiente
+  - paso: Mira las entregas
+    resultado: "Ve cada entrega del almacén con su detalle: comprobante, artículo, lote, depósito y cantidad"
+  - paso: Mira las herramientas usadas
+    resultado: Ve las herramientas de los vales del pañol asociados a la orden, con quién asoció cada vale
+validaciones:
+  - Lo pedido = lo entregado + lo pendiente
+  - La misma pestaña está en los cinco pasos de la orden; en Presta conformidad es solo de lectura
+  - Una orden sin pedido lo dice, en vez de mostrar una tabla vacía
+  - Las entregas aparecen cuando el almacén entrega desde sus propias pantallas de tools; la orden no entrega nada
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/man/MAN-UC-038-039.herramientas-insumos-ot.spec.ts
+notas:
+  - 'Comportamiento decidido por el PM en la migración (E65, E66): "que se vean en todo el proceso y ciclo de vida de la OT". Validación del caso pendiente en el PR.'
+  - En asset la información solo se veía dentro de "Ver informe"; mostrarla también en Presta conformidad es decisión técnica de la migración.

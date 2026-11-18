@@ -582,9 +582,15 @@ if(!function_exists('validarInactividad')){
 				//Redirigimos pagina.
 				//Verificamos si la presente URL no debe validarse con Sesion sino con Token
 				if (!validarUrlSinSesion() ){
-					echo base_url('Login/log_out');
-					log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');						
-					exit();
+					log_message('DEBUG','#TRAZA |LOGIN | ERROR  >> Sesion Expirada!!!');
+					$ci =& get_instance();
+					if ($ci->input->is_ajax_request()) {
+						// Las llamadas internas leen la dirección y redirigen ellas
+						echo base_url('Login/log_out');
+						exit();
+					}
+					// Navegación directa: se manda al login en vez de dejar el texto en pantalla
+					redirect(base_url('Login/log_out'));
 				}
 			}else{
 				//Refresco el tiempo luego de actividad
