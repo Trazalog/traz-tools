@@ -1901,7 +1901,7 @@
       <param name="id_empresa" sqlType="STRING"/>
    </query>
    <query id="setCaseEmpresaAssetMan" useConfig="AssetPlannerDataSource">
-      <sql>INSERT INTO case_empresa (case_id, empr_id) VALUES (:case_id, :id_empresa)</sql>
+      <sql>INSERT INTO case_empresa (case_id, empr_id) VALUES (:case_id, :id_empresa) ON DUPLICATE KEY UPDATE empr_id = VALUES(empr_id)</sql>
       <param name="case_id" sqlType="STRING"/>
       <param name="id_empresa" sqlType="STRING"/>
    </query>
