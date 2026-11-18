@@ -9,7 +9,16 @@ origen: baseline
 referencias_codigo:
   - repo: traz-tools
     path: requerimientos/REQ-002-administracion-esqueleto.md
-    detalle: "se completa con el controlador base y el del Portal al programar"
+    detalle: "requerimiento que define el Portal y el controlador base"
+  - repo: traz-comp-adm
+    path: controllers/Portal.php
+    detalle: "controlador del Portal"
+  - repo: traz-comp-adm
+    path: core/ADM_Controller.php
+    detalle: "controlador base: sesión, lista pública y permiso por pantalla"
+  - repo: traz-comp-adm
+    path: views/portal.php
+    detalle: "marco del Portal (barra, empresa, menú y saludo)"
   - repo: traz-tools
     path: doc/v3/dnato/mockups/inicio-admin.html
     detalle: "maqueta del Portal; en REQ-002 solo el marco"
@@ -50,7 +59,8 @@ datos_prueba:
   usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest, por ejemplo usuario@<dominio>"
   empresa_ajena_en_direccion: "cualquier empr_id distinto del de la sesión"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-001.portal.spec.ts
 notas:
   - "Decisiones de Rodolfo (2026-11-10): el Portal muestra la empresa activa de la sesión, sin selector; sin sesión va al ingreso de DNATO y después al tablero de Tools; el superusuario entra al Portal solo si además es administrador."
   - "En REQ-002 el Portal es solo el marco: el contenido de la maqueta (plan, uso de IA, avisos, accesos) llega con las pantallas de REQ-004 en adelante. El botón \"Mi empresa\" en la barra de Tools tampoco es parte de este caso."

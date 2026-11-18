@@ -9,7 +9,16 @@ origen: baseline
 referencias_codigo:
   - repo: traz-tools
     path: requerimientos/REQ-002-administracion-esqueleto.md
-    detalle: "se completa con la protección de envíos del controlador base al programar"
+    detalle: "requerimiento que define la protección de envíos"
+  - repo: traz-comp-adm
+    path: core/ADM_Controller.php
+    detalle: "genera el código por sesión y rechaza los envíos sin código válido"
+  - repo: traz-comp-adm
+    path: views/errores/envio_rechazado.php
+    detalle: "pantalla del envío rechazado"
+  - repo: traz-comp-adm
+    path: views/portal.php
+    detalle: "publica el código de la sesión en la meta adm-token"
 pantallas:
   - "Portal de la empresa → Inicio (dirección traz-comp-adm/portal)"
 precondiciones:
@@ -44,7 +53,8 @@ validaciones:
 datos_prueba:
   empresa: "empresa DocTest del ambiente (DOCTEST_EMPRESA)"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-003.envios-falsificados.spec.ts
 notas:
   - "Decisiones de Rodolfo (2026-11-10): la protección se prueba contra la pantalla de inicio y se vuelve a probar con la primera pantalla que guarde algo; el código de seguridad dura toda la sesión."
   - "Es la protección que en DNATO falta (correctivo C-4). No usa la de CodeIgniter de Tools porque esa se prende para todo Tools desde application/config/config.php, y el control vive solo en el módulo."

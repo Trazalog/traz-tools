@@ -60,6 +60,10 @@ const args = [
   ...argsUsuario,
 ];
 
-const bin = join(DOCTEST_ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'playwright.cmd' : 'playwright');
-const res = spawnSync(bin, args, { stdio: 'inherit', cwd: DOCTEST_ROOT, env: process.env });
+// El CLI se lanza con el propio Node y no con el ejecutable de `node_modules/.bin`:
+// en Windows ese ejecutable es un `.cmd`, y desde Node 20.12 / 24 lanzarlo sin shell
+// falla con EINVAL (cambio de seguridad de Node). Con `process.execPath` funciona
+// igual en Windows, Linux y Mac, con cualquier Node 20 o superior.
+const cli = join(DOCTEST_ROOT, 'node_modules', '@playwright', 'test', 'cli.js');
+const res = spawnSync(process.execPath, [cli, ...args], { stdio: 'inherit', cwd: DOCTEST_ROOT, env: process.env });
 process.exit(res.status ?? 1);

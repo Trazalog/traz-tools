@@ -34,7 +34,9 @@ test.describe('@alm @ALM-UC-023 @ALM-UC-024 Ajustes de stock', () => {
     await alm.abrir('ajustes');
     await alm.encabezados();
 
-    expect(await alm.texto()).toMatch(/Nuevo Ajuste/i);
+    // En develop el alta se ofrece con el botón "Agregar"; "Nuevo Ajuste de Stock" es el
+    // título de la ventana que se abre al apretarlo. Antes se esperaba ese título en la grilla.
+    await expect(paginaEmpresa1.getByText('Agregar', { exact: true }).first()).toBeVisible();
   });
 
   test('el detalle contempla la justificación, que es lo que explica el ajuste', async ({ paginaEmpresa1 }) => {

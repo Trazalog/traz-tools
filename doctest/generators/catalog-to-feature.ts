@@ -129,7 +129,9 @@ function aFeature(c: Caso): string {
 
 /** `--dry-run` informa qué haría sin tocar un solo archivo: es como corre en CI. */
 const DRY_RUN = process.argv.includes('--dry-run');
-const soloModulo = (process.argv.find((a) => !a.startsWith('--') && !a.endsWith('.ts') && !a.includes('/')) ?? '').toLowerCase();
+// Se miran solo los argumentos propios (después de node y del script): en Windows el
+// primero es la ruta de node.exe y, sin barras, se tomaba como nombre de módulo.
+const soloModulo = (process.argv.slice(2).find((a) => !a.startsWith('--') && !a.endsWith('.ts')) ?? '').toLowerCase();
 const dirCatalogo = join(RAIZ, 'catalogo');
 const modulos = readdirSync(dirCatalogo, { withFileTypes: true })
   .filter((d) => d.isDirectory())
