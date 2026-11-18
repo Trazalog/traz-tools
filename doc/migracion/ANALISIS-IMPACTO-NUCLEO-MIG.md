@@ -183,7 +183,7 @@ producción es exactamente la que se lista acá.
   (`AFTER UPDATE` en `solicitud_reparacion`), que registra el caso en `case_empresa` cuando se le pone el
   `case_id` a la solicitud. Después la API intenta registrarlo de nuevo y falla. **La base de asset de
   producción no tiene ese disparador** (consultado por el PM el 2026-11-18): ahí el registro lo tiene que hacer
-  la API. La base de desarrollo no se pudo consultar (sin VPN).
+  la API. **La de desarrollo tampoco lo tiene** (consultado el 2026-11-18); por eso allá andaba.
 - **Qué cambia:** la consulta que registra el caso pasa a `INSERT ... ON DUPLICATE KEY UPDATE empr_id =
   VALUES(empr_id)`. Si el caso no está, lo agrega; si ya lo agregó el disparador, deja la empresa que manda la
   API y no falla. Funciona igual con disparador y sin él.
