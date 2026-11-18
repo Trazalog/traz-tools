@@ -34,6 +34,7 @@ producción es exactamente la que se lista acá.
 | 8 | `traz-comp-pan`: el vale usa la numeración de empresa de MAN | Pañol | 🟡 | Aprobar; no mover el puntero en `develop` antes de que llegue MAN |
 | 9 | `MANDataService.dbs`: 23 consultas sin parámetros repetidos (agregado el 2026-11-18, después del despliegue de `v3.0` en DEMO) | Integrador | 🟡 | Aprobado por el PM el 2026-11-18; va en `v3.0.0.1` |
 | 10 | `equipos.numero_serie` pasa a texto en la base de asset, y se borra en DEMO un disparador que producción no tiene (2026-11-18) | Alta de equipo, solicitud de servicio | 🟡 | Aprobado por el PM el 2026-11-18. Sin cambios de código ni tag nuevo: el script de la columna se aplica a mano (paso 10) |
+| 11 | `MANDataService.dbs`: programar órdenes del plan con tablas de cotejamientos distintos (2026-11-18) | Calendario, plan de mantenimiento | 🟡 | Va en `v3.0.0.2` |
 
 ## 2. Cambio por cambio
 
@@ -193,6 +194,24 @@ producción es exactamente la que se lista acá.
   desarrollo. Se evaluó hacer que el registro no fallara si el caso ya existía (`ON DUPLICATE KEY UPDATE`) y se
   descartó: con las bases iguales no hace falta.
 - **Antes de producción:** confirmar que la base de asset de producción siga sin ese disparador (H55).
+
+### 2.11 Programar órdenes del plan — `MANDataService.dbs`, `setPlanOtsMan` (2026-11-18)
+
+- **Qué pasó en DEMO:** programar una orden desde el plan (Calendario) respondía "No se pudieron crear las
+  ordenes". El servicio de datos devolvía `Illegal mix of collations for operation 'UNION'`.
+- **Por qué:** la consulta junta con `UNION` la descripción de cuatro orígenes: la causa de la solicitud, la
+  tarea del preventivo y del predictivo y la tarea opcional del backlog. En la base de asset de DEMO esas
+  columnas son `utf8` pero con cotejamientos distintos (`utf8_spanish_ci` y `utf8_general_ci`), y MariaDB no
+  elige uno solo. En desarrollo la mezcla es `latin1` con `utf8`, que MariaDB sí convierte sola; por eso allá
+  andaba.
+- **Qué cambia:** solo `setPlanOtsMan`. Esos textos se pasan a `CONVERT(... USING utf8) COLLATE
+  utf8_general_ci` antes de juntarlos, y la tarea del predictivo (`tarea_descrip`, texto) se pasa a número,
+  porque va a `orden_trabajo.id_tarea`. Las otras 7 consultas con `UNION` no se tocan: juntan columnas de la
+  misma tabla o solo números, y la de la bandeja ya anda en DEMO.
+- **Cómo se verificó:** en una MariaDB local con los cotejamientos de DEMO, la versión anterior da el mismo
+  error y la nueva crea las órdenes para los cuatro orígenes. Con cotejamientos iguales, las dos crean lo
+  mismo. Contra la base de asset de desarrollo, solo con lecturas: con un preventivo, una solicitud, un backlog
+  y un predictivo reales, el `SELECT` de las dos versiones da las mismas filas.
 
 ## 3. Pasos de despliegue (cuando se unifique con `develop` y se pase a DEMO)
 
