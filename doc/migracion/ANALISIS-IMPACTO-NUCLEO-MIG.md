@@ -33,6 +33,8 @@ producción es exactamente la que se lista acá.
 | 7 | `MANDataService.dbs` y `toolsMANAPI.xml` | Integrador | 🟡 | Aprobar; solo agregan recursos. Falta probar en EI 6 |
 | 8 | `traz-comp-pan`: el vale usa la numeración de empresa de MAN | Pañol | 🟡 | Aprobar; no mover el puntero en `develop` antes de que llegue MAN |
 | 9 | `MANDataService.dbs`: 23 consultas sin parámetros repetidos (agregado el 2026-11-18, después del despliegue de `v3.0` en DEMO) | Integrador | 🟡 | Aprobado por el PM el 2026-11-18; va en `v3.0.0.1` |
+| 10 | `equipos.numero_serie` pasa a texto en la base de asset, y se borra en DEMO un disparador que producción no tiene (2026-11-18) | Alta de equipo, solicitud de servicio | 🟡 | Aprobado por el PM el 2026-11-18. Sin cambios de código ni tag nuevo: el script de la columna se aplica a mano (paso 10) |
+| 11 | `MANDataService.dbs`: programar órdenes del plan con tablas de cotejamientos distintos (2026-11-18) | Calendario, plan de mantenimiento | 🟡 | Va en `v3.0.0.2` |
 
 ## 2. Cambio por cambio
 
@@ -115,6 +117,10 @@ producción es exactamente la que se lista acá.
   - `define('MAN_DIAS_LANZAMIENTO', 7);`;
   - la fila de Mantenimiento en la lista de procesos de la bandeja, la que empieza con
     `BPM_PROCESS_ID_MANTENIMIENTO =>`.
+    **Va dentro de `define('BPM_PROCESS', json_encode(array(...`, y ese bloque tiene que estar después de
+    `define('MAN', ...)`**, porque la fila usa `'proyecto'=>MAN`. Sin la fila, la tarea de Mantenimiento sale
+    en la bandeja sin nombre de proceso, con "Te falto definir el modelo", y al abrirla no muestra cabecera ni
+    acciones (visto en DEMO el 2026-11-18). Cada fila termina en coma salvo la última.
   - Para revisar qué tiene un servidor, parado en su htdocs:
     `grep -n "define('MAN'\|REST_MAN\|MAN_DIAS\|BPM_PROCESS_ID_MANTENIMIENTO =>" traz-tools/application/config/constants.php`
 
@@ -173,6 +179,40 @@ producción es exactamente la que se lista acá.
   (`.github/workflows/dbs-validate.yml`). Deja pasar 3 consultas que ya estaban así en `master` y no se tocan
   acá (H54).
 
+### 2.10 Registro del caso de la solicitud — disparador de la base de asset de DEMO (2026-11-18)
+
+- **Qué pasó en DEMO:** al generar una solicitud de servicio, la API respondía "no se pudo registrar el caso;
+  se borraron el caso y la solicitud". El servicio de datos devolvía `Duplicate entry '<caso>' for key
+  'PRIMARY'` en `case_empresa`.
+- **Por qué:** la base de asset de DEMO tiene el disparador `solicitud_servicio_case_empreas_au_trg`
+  (`AFTER UPDATE` en `solicitud_reparacion`), que registra el caso en `case_empresa` cuando se le pone el
+  `case_id` a la solicitud. Después la API intenta registrarlo de nuevo y falla. **La base de asset de
+  producción no tiene ese disparador** (consultado por el PM el 2026-11-18): ahí el registro lo tiene que hacer
+  la API. **La de desarrollo tampoco lo tiene** (consultado el 2026-11-18); por eso allá andaba.
+- **Qué se hizo:** no se cambió código. Por decisión del PM (DEMO tiene que ser copia de producción), el
+  disparador se borró en DEMO el 2026-11-18. La API sigue registrando el caso, igual que en producción y en
+  desarrollo. Se evaluó hacer que el registro no fallara si el caso ya existía (`ON DUPLICATE KEY UPDATE`) y se
+  descartó: con las bases iguales no hace falta.
+- **Antes de producción:** confirmar que la base de asset de producción siga sin ese disparador (H55).
+
+### 2.11 Programar órdenes del plan — `MANDataService.dbs`, `setPlanOtsMan` (2026-11-18)
+
+- **Qué pasó en DEMO:** programar una orden desde el plan (Calendario) respondía "No se pudieron crear las
+  ordenes". El servicio de datos devolvía `Illegal mix of collations for operation 'UNION'`.
+- **Por qué:** la consulta junta con `UNION` la descripción de cuatro orígenes: la causa de la solicitud, la
+  tarea del preventivo y del predictivo y la tarea opcional del backlog. En la base de asset de DEMO esas
+  columnas son `utf8` pero con cotejamientos distintos (`utf8_spanish_ci` y `utf8_general_ci`), y MariaDB no
+  elige uno solo. En desarrollo la mezcla es `latin1` con `utf8`, que MariaDB sí convierte sola; por eso allá
+  andaba.
+- **Qué cambia:** solo `setPlanOtsMan`. Esos textos se pasan a `CONVERT(... USING utf8) COLLATE
+  utf8_general_ci` antes de juntarlos, y la tarea del predictivo (`tarea_descrip`, texto) se pasa a número,
+  porque va a `orden_trabajo.id_tarea`. Las otras 7 consultas con `UNION` no se tocan: juntan columnas de la
+  misma tabla o solo números, y la de la bandeja ya anda en DEMO.
+- **Cómo se verificó:** en una MariaDB local con los cotejamientos de DEMO, la versión anterior da el mismo
+  error y la nueva crea las órdenes para los cuatro orígenes. Con cotejamientos iguales, las dos crean lo
+  mismo. Contra la base de asset de desarrollo, solo con lecturas: con un preventivo, una solicitud, un backlog
+  y un predictivo reales, el `SELECT` de las dos versiones da las mismas filas.
+
 ## 3. Pasos de despliegue (cuando se unifique con `develop` y se pase a DEMO)
 
 No hacer ninguno de estos pasos antes de que el PM apruebe este análisis.
@@ -193,6 +233,7 @@ teniendo las líneas del paso 2, porque el script lo restaura desde el respaldo.
 | 7 | Cargar las opciones de menú de MAN | Base PostgreSQL de DEMO; ver [MENU-MAN.md](MENU-MAN.md) |
 | 8 | Tarea programada que lanza las órdenes preventivas pendientes | Servidor de DEMO; ver `doc/infra/man-lanzamiento-cron.md` |
 | 9 | Prueba completa de DocTest contra DEMO | Máquina local, desde `doctest/`: `node scripts/doctest.mjs full --entorno demo` |
+| 10 | Pasar el número de serie del equipo a texto: `_backend/database/scripts/assetplanner/equipos-numero-serie-texto.sql` (H53). **Va también en producción**, en la base de asset, antes de habilitar Mantenimiento: sin esto, un número de serie con letras hace fallar el alta del equipo | Base MariaDB de asset de cada instalación, con un cliente de MySQL |
 
 ## 4. Qué no se probó
 
