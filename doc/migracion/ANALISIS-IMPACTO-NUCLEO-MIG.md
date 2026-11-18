@@ -116,6 +116,10 @@ producción es exactamente la que se lista acá.
   - `define('MAN_DIAS_LANZAMIENTO', 7);`;
   - la fila de Mantenimiento en la lista de procesos de la bandeja, la que empieza con
     `BPM_PROCESS_ID_MANTENIMIENTO =>`.
+    **Va dentro de `define('BPM_PROCESS', json_encode(array(...`, y ese bloque tiene que estar después de
+    `define('MAN', ...)`**, porque la fila usa `'proyecto'=>MAN`. Sin la fila, la tarea de Mantenimiento sale
+    en la bandeja sin nombre de proceso, con "Te falto definir el modelo", y al abrirla no muestra cabecera ni
+    acciones (visto en DEMO el 2026-11-18). Cada fila termina en coma salvo la última.
   - Para revisar qué tiene un servidor, parado en su htdocs:
     `grep -n "define('MAN'\|REST_MAN\|MAN_DIAS\|BPM_PROCESS_ID_MANTENIMIENTO =>" traz-tools/application/config/constants.php`
 
