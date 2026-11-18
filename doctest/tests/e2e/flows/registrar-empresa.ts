@@ -85,11 +85,22 @@ async function enviarFormulario(
   throw new Error(`No encontré con qué enviar el formulario en ${page.url()}.\n  Controles: ${controles}`);
 }
 
+/** Hora al minuto (AAMMDDhhmm): de ahí salen la razón social, el CUIT y el dominio de cada empresa. */
+const sufijoMinuto = (): string => new Date().toISOString().slice(2, 16).replace(/[-:T]/g, '');
+let ultimoSufijo = '';
+
 export async function registrarEmpresa(page: Page, cap: Capturador): Promise<EmpresaRegistrada> {
   if (!hayImap()) {
     throw new Error('Falta DOCTEST_MAIL_IMAP_* en .env: la registración lee el mail de activación por IMAP (Gmail).');
   }
-  const sufijo = new Date().toISOString().slice(2, 16).replace(/[-:T]/g, '');
+  // El sufijo es la hora al minuto. Si la empresa anterior se registró en el mismo minuto, se espera
+  // al siguiente: dos altas con la misma razón social las rechaza el sistema ("ya existe").
+  let sufijo = sufijoMinuto();
+  while (sufijo === ultimoSufijo) {
+    await page.waitForTimeout(5_000);
+    sufijo = sufijoMinuto();
+  }
+  ultimoSufijo = sufijo;
   // Administrador: una variante por puntos de la casilla Gmail configurada, elegida al azar.
   const email = () => variantePorPuntos(casillaBase(), Math.floor(Math.random() * 2048));
   const datos = {
