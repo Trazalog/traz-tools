@@ -1340,6 +1340,59 @@
          </call-template>
          <property name="man_session" expression="json-eval($.session)"/>
          <property name="man_tarea" expression="json-eval($.payload[0].id)"/>
+         <!-- Bonita crea Ejecutar OT unos milisegundos después de cerrar la tarea: hasta 4 reintentos, 1 s cada uno (MIG-EI65-ASIGNAR) -->
+         <filter source="get-property('man_tarea')" regex="[0-9]+">
+            <then/>
+            <else>
+               <script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                  <with-param name="session" value="{$ctx:man_session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="man_session" expression="json-eval($.session)"/>
+               <property name="man_tarea" expression="json-eval($.payload[0].id)"/>
+            </else>
+         </filter>
+         <filter source="get-property('man_tarea')" regex="[0-9]+">
+            <then/>
+            <else>
+               <script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                  <with-param name="session" value="{$ctx:man_session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="man_session" expression="json-eval($.session)"/>
+               <property name="man_tarea" expression="json-eval($.payload[0].id)"/>
+            </else>
+         </filter>
+         <filter source="get-property('man_tarea')" regex="[0-9]+">
+            <then/>
+            <else>
+               <script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                  <with-param name="session" value="{$ctx:man_session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="man_session" expression="json-eval($.session)"/>
+               <property name="man_tarea" expression="json-eval($.payload[0].id)"/>
+            </else>
+         </filter>
+         <filter source="get-property('man_tarea')" regex="[0-9]+">
+            <then/>
+            <else>
+               <script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script>
+               <call-template target="bpmAPICallTemplate">
+                  <with-param name="recurso" value="{$ctx:man_recurso}"/>
+                  <with-param name="session" value="{$ctx:man_session}"/>
+                  <with-param name="method" value="GET"/>
+               </call-template>
+               <property name="man_session" expression="json-eval($.session)"/>
+               <property name="man_tarea" expression="json-eval($.payload[0].id)"/>
+            </else>
+         </filter>
          <filter source="get-property('man_tarea')" regex="[0-9]+">
             <then/>
             <else>
@@ -4387,7 +4440,7 @@
          <filter source="get-property('man_error')" regex="OK"><then><filter source="get-property('man_error')" regex="OK"><then><property name="man_recurso" expression="fn:concat('/API/identity/user?p=0&amp;c=1&amp;f=userName%3D', get-property('man_resp_nick'))"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_uid_resp" expression="json-eval($.payload[0].id)"/><filter source="get-property('man_uid_resp')" regex="[0-9]+"><then/><else><property name="man_error" value="El responsable no existe en Bonita"/></else></filter></then><else/></filter></then><else/></filter>
          <filter source="get-property('man_error')" regex="OK"><then><property name="man_recurso" expression="fn:concat('/API/bpm/humanTask?p=0&amp;c=20&amp;f=caseId%3D', get-property('man_o_case'), '&amp;f=name%3D', get-property('man_tarea_nombre'))"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_tarea" expression="json-eval($.payload[0].id)"/><filter source="get-property('man_tarea')" regex="[0-9]+"><then/><else><property name="man_error" value="La orden no esta lista para asignar en Bonita"/></else></filter></then><else/></filter>
          <filter source="get-property('man_error')" regex="OK"><then><property name="man_payload_bpm" expression="fn:concat('{&quot;assigned_id&quot;:&quot;', get-property('man_uid'), '&quot;}')"/><property name="man_recurso" expression="fn:concat('/API/bpm/humanTask/', get-property('man_tarea'))"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="PUT"/><with-param name="payload" value="{$ctx:man_payload_bpm}"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_payload_bpm" expression="'{}'"/><property name="man_recurso" expression="fn:concat('/API/bpm/userTask/', get-property('man_tarea'), '/execution')"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="POST"/><with-param name="payload" value="{$ctx:man_payload_bpm}"/></call-template><property name="man_session" expression="json-eval($.session)"/><filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]"><then/><else><property name="man_error" value="No se pudo cerrar la tarea de Bonita"/></else></filter></then><else/></filter>
-         <filter source="get-property('man_error')" regex="OK"><then><property name="man_recurso" expression="fn:concat('/API/bpm/humanTask?p=0&amp;c=20&amp;f=caseId%3D', get-property('man_o_case'), '&amp;f=name%3D', 'Ejecutar%20OT')"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_tarea_sig" expression="json-eval($.payload[0].id)"/><filter source="get-property('man_tarea_sig')" regex="[0-9]+"><then><property name="man_payload_bpm" expression="fn:concat('{&quot;assigned_id&quot;:&quot;', get-property('man_uid_resp'), '&quot;}')"/><property name="man_recurso" expression="fn:concat('/API/bpm/humanTask/', get-property('man_tarea_sig'))"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="PUT"/><with-param name="payload" value="{$ctx:man_payload_bpm}"/></call-template><property name="man_session" expression="json-eval($.session)"/><filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]"><then/><else><property name="man_error" value="Se cerro la tarea pero no se pudo asignar Ejecutar OT al responsable"/></else></filter></then><else><property name="man_error" value="Se cerro la tarea pero no se encontro la tarea siguiente Ejecutar OT"/></else></filter></then><else/></filter>
+         <filter source="get-property('man_error')" regex="OK"><then><property name="man_recurso" expression="fn:concat('/API/bpm/humanTask?p=0&amp;c=20&amp;f=caseId%3D', get-property('man_o_case'), '&amp;f=name%3D', 'Ejecutar%20OT')"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_tarea_sig" expression="json-eval($.payload[0].id)"/><!-- Bonita crea Ejecutar OT unos milisegundos después de cerrar la tarea: hasta 4 reintentos, 1 s cada uno (MIG-EI65-ASIGNAR) --><filter source="get-property('man_tarea_sig')" regex="[0-9]+"><then/><else><script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_tarea_sig" expression="json-eval($.payload[0].id)"/></else></filter><filter source="get-property('man_tarea_sig')" regex="[0-9]+"><then/><else><script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_tarea_sig" expression="json-eval($.payload[0].id)"/></else></filter><filter source="get-property('man_tarea_sig')" regex="[0-9]+"><then/><else><script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_tarea_sig" expression="json-eval($.payload[0].id)"/></else></filter><filter source="get-property('man_tarea_sig')" regex="[0-9]+"><then/><else><script language="js"><![CDATA[Packages.java.lang.Thread.sleep(1000);]]></script><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="GET"/></call-template><property name="man_session" expression="json-eval($.session)"/><property name="man_tarea_sig" expression="json-eval($.payload[0].id)"/></else></filter><filter source="get-property('man_tarea_sig')" regex="[0-9]+"><then><property name="man_payload_bpm" expression="fn:concat('{&quot;assigned_id&quot;:&quot;', get-property('man_uid_resp'), '&quot;}')"/><property name="man_recurso" expression="fn:concat('/API/bpm/humanTask/', get-property('man_tarea_sig'))"/><call-template target="bpmAPICallTemplate"><with-param name="recurso" value="{$ctx:man_recurso}"/><with-param name="session" value="{$ctx:man_session}"/><with-param name="method" value="PUT"/><with-param name="payload" value="{$ctx:man_payload_bpm}"/></call-template><property name="man_session" expression="json-eval($.session)"/><filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]"><then/><else><property name="man_error" value="Se cerro la tarea pero no se pudo asignar Ejecutar OT al responsable"/></else></filter></then><else><property name="man_error" value="Se cerro la tarea pero no se encontro la tarea siguiente Ejecutar OT"/></else></filter></then><else/></filter>
          <filter source="get-property('man_error')" regex="OK"><then><property name="man_solic" value="0"/><filter source="get-property('man_o_tipo')" regex="2"><then><property name="man_solic" expression="get-property('man_o_sol')"/></then><else><filter source="get-property('man_o_tipo')" regex="4"><then><property name="man_solic" expression="get-property('man_o_sore')"/></then><else/></filter></else></filter><property name="NO_ENTITY_BODY" scope="axis2" action="remove"/><property name="messageType" value="application/json" scope="axis2"/><header name="Accept" scope="transport" value="application/json"/><payloadFactory media-type="json"><format>{"request_box":{"_put_plan_ot_asignar":{"id_tarea":"$1","tarea_opcional":"$8","usrId":"$2","latitud":"$9","longitud":"$10","id_orden":"$3","id_empresa":"$4"},"_put_plan_estado_preventivo":{"estado":"AS","meses":"0","fecha":"2000-01-01 00:00:00","meses2":"0","id_origen":"$5","tipo":"$6","id_empresa":"$4"},"_put_plan_estado_predictivo":{"estado":"AS","id_origen":"$5","tipo":"$6","id_empresa":"$4"},"_put_plan_estado_backlog":{"estado":"AS","id_origen":"$5","tipo":"$6","id_empresa":"$4"},"_put_plan_estado_solicitud":{"estado":"AS","id_solicitud":"$7","id_solicitud2":"$7","id_empresa":"$4"}}}</format><args><arg evaluator="xml" expression="get-property('man_tarea_std')"/><arg evaluator="xml" expression="get-property('man_usr')"/><arg evaluator="xml" expression="get-property('man_orden')"/><arg evaluator="xml" expression="get-property('man_empresa')"/><arg evaluator="xml" expression="get-property('man_o_sol')"/><arg evaluator="xml" expression="get-property('man_o_tipo')"/><arg evaluator="xml" expression="get-property('man_solic')"/>
                <arg evaluator="xml" expression="$ctx:mv_datos__tarea_opcional"/>
                <arg evaluator="xml" expression="$ctx:mv_datos__latitud"/>
