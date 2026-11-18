@@ -32,6 +32,7 @@ producción es exactamente la que se lista acá.
 | 6 | Tablero: 4 indicadores de MAN (`dashboard.php`, `Dashs.php`, `dashboard_kpis.js`, `kpi-mantenimiento.sql`) | Tablero del administrador | 🟢 | Aprobar; sin el script de base los recuadros muestran 0 |
 | 7 | `MANDataService.dbs` y `toolsMANAPI.xml` | Integrador | 🟡 | Aprobar; solo agregan recursos. Falta probar en EI 6 |
 | 8 | `traz-comp-pan`: el vale usa la numeración de empresa de MAN | Pañol | 🟡 | Aprobar; no mover el puntero en `develop` antes de que llegue MAN |
+| 9 | `MANDataService.dbs`: 23 consultas sin parámetros repetidos (agregado el 2026-11-18, después del despliegue de `v3.0` en DEMO) | Integrador | 🟡 | Aprobado por el PM el 2026-11-18; va en `v3.0.0.1` |
 
 ## 2. Cambio por cambio
 
@@ -102,8 +103,20 @@ producción es exactamente la que se lista acá.
   - agrega `MAN_DIAS_LANZAMIENTO = 7`, que solo se usa si la configuración `man_dias_lanzamiento` de
     `core.tablas` no tiene un valor válido.
 - **Qué podría romper:** nada de lo existente. La bandeja empieza a mostrar las tareas de Mantenimiento.
-- **Ojo en cada servidor:** `constants.php` se edita en el servidor. Hay que agregar estas dos líneas a mano
-  en DEMO y producción, sin pisar los valores propios de cada ambiente.
+- **Ojo en cada servidor:** `constants.php` se edita en el servidor y el script de despliegue lo restaura desde
+  el respaldo, así que estas líneas van a mano en DEMO y producción, sin pisar los valores propios de cada
+  ambiente. **Corrección del 2026-11-18:** este punto decía "dos líneas" y son tres, más una que tiene que estar.
+  En DEMO faltaban `MAN` y `REST_MAN`, y Mantenimiento no funcionaba:
+  - `define('MAN', 'traz-tools-man/');`, junto a `#COMPONENTE MANTENIMIENTO`. Ya está en `master`, pero el
+    `constants.php` de DEMO no la tenía. Sin ella las pantallas de MAN llaman a `/traz-tools/MANEquipo/...` y
+    dan error de ajax;
+  - `define('REST_MAN', HOST.'/services/MANDataService');`, después de la línea que define `HOST`. Sin ella
+    las pantallas de MAN no traen datos;
+  - `define('MAN_DIAS_LANZAMIENTO', 7);`;
+  - la fila de Mantenimiento en la lista de procesos de la bandeja, la que empieza con
+    `BPM_PROCESS_ID_MANTENIMIENTO =>`.
+  - Para revisar qué tiene un servidor, parado en su htdocs:
+    `grep -n "define('MAN'\|REST_MAN\|MAN_DIAS\|BPM_PROCESS_ID_MANTENIMIENTO =>" traz-tools/application/config/constants.php`
 
 ### 2.6 Tablero del administrador
 
@@ -132,14 +145,47 @@ producción es exactamente la que se lista acá.
   `traz-comp-pan` en `develop` antes de que llegue MAN, esas dos funciones fallan. En este PR el puntero se
   mueve solo en la rama que va a `develop-v3`.
 
+### 2.9 Consultas sin parámetros repetidos — `MANDataService.dbs` (2026-11-18)
+
+- **Qué pasó en DEMO:** con `v3.0` desplegada, dar de alta un equipo devolvía "Error al guardar equipo". El
+  integrador de DEMO (EI 6.5) respondía `Error in 'SQLQuery.processPreNormalQuery': null`
+  (NullPointerException) **antes** de ejecutar la sentencia. Se investigó en el servidor solo con lecturas: el
+  EI 6.5 rechaza cualquier consulta que use el mismo parámetro con nombre (`:id_empresa`, `:buscar`...) más
+  de una vez, en GET y en POST. Las mismas consultas sin repeticiones funcionan. El MI local lo acepta, y por
+  eso no se vio en desarrollo.
+- **Qué cambia:** 23 consultas nuevas de MAN que repetían parámetros. Cada parámetro repetido se liga una sola
+  vez en una tabla derivada, `(SELECT :id_empresa AS p_id_empresa) param`, y el resto de la consulta usa
+  `param.p_id_empresa`. Es la forma que ya usan los servicios de datos de producción. En los `UPDATE` la
+  derivada va primera (`UPDATE (SELECT ...) param CROSS JOIN tabla ...`), así la pueden usar los `ON` que
+  siguen. Los parámetros que aparecen una sola vez quedan igual; por ejemplo, `LIMIT :inicio, :cantidad`.
+- **Consultas:** altas y cambios de equipo, orden de trabajo, preventivo, predictivo y backlog; asociación de
+  componente; asignación de la orden del plan; listados de equipos, órdenes, solicitudes, tareas activas y
+  componentes del backlog; lecturas vecinas; y los 4 reportes.
+- **Qué no cambia:** lo que devuelve cada consulta, los recursos, sus rutas y los parámetros que reciben.
+  También queda igual el control de que el equipo, el sector, el grupo y los demás datos sean de la misma
+  empresa.
+- **Cómo se verificó:** en una MariaDB 10.6 local con el esquema de asset (`asp_full_after_clean_v223.sql`,
+  completado con las columnas nuevas), cada consulta nueva contra la original, con los mismos valores. En los
+  49 casos dan el mismo resultado, y las altas y cambios afectan las mismas filas. No se pudo probar en un
+  EI 6.5: la prueba de verdad es DEMO después de desplegar `v3.0.0.1`. La MariaDB de DEMO es la 10.1; la
+  sintaxis que se usa existe desde mucho antes.
+- **Control nuevo:** `scripts/ci/dbs-sin-parametros-repetidos.py`, que corre en cada PR que toca un `.dbs`
+  (`.github/workflows/dbs-validate.yml`). Deja pasar 3 consultas que ya estaban así en `master` y no se tocan
+  acá (H54).
+
 ## 3. Pasos de despliegue (cuando se unifique con `develop` y se pase a DEMO)
 
 No hacer ninguno de estos pasos antes de que el PM apruebe este análisis.
 
+**Arreglo `v3.0.0.1` (2026-11-18):** se despliega con la metodología de siempre: tag `v3.0.0.1` en `develop` y
+`sh traz-tools/scripts/deploy/deploytools.sh v3.0.0.1 traz-tools` desde el htdocs del servidor de DEMO. Los
+pasos 2 a 8 ya se hicieron con `v3.0` y no se repiten. Lo que hay que verificar es que `constants.php` siga
+teniendo las líneas del paso 2, porque el script lo restaura desde el respaldo.
+
 | # | Qué | Dónde se ejecuta |
 |---|---|---|
 | 1 | Código de Tools y de los módulos | Servidor de DEMO, con el script de despliegue habitual |
-| 2 | Agregar las dos líneas de `constants.php` (punto 2.5) | Servidor de DEMO, editando el archivo a mano |
+| 2 | Revisar y agregar las líneas de `constants.php` que falten: `MAN`, `REST_MAN`, `MAN_DIAS_LANZAMIENTO` y la fila de Mantenimiento de la bandeja (punto 2.5) | Servidor de DEMO, editando el archivo a mano |
 | 3 | Desplegar el `.car` con `MANDataService` y `toolsMANAPI`. Es la primera prueba en un EI 6: si lo rechaza, parar | Integrador de DEMO |
 | 4 | Aplicar, en este orden, `v2.8.1.7/pedidos_sin_formulario.sql` y `v2.8.1.7/configuracion_inicial_empresa_trg_func.sql`. **No** aplicar `v2.8.1.5` | Base PostgreSQL de DEMO, con un cliente de PostgreSQL |
 | 5 | Aplicar `asset-empresa-trigger.sql` | Base MariaDB de asset de DEMO, con un cliente de MySQL |

@@ -1,0 +1,27 @@
+# DataServices — controles que el EI 6.5 de DEMO y producción exige y el MI local no.
+#
+# Corre solo en los PR que tocan un .dbs. Un solo paso con Python, sin dependencias: unos segundos.
+name: dbs-validate
+
+on:
+  pull_request:
+    paths:
+      - '_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/data-services/**'
+      - 'scripts/ci/dbs-sin-parametros-repetidos.py'
+      - '.github/workflows/dbs-validate.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dbs-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Parámetros sin repetir
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/ci/dbs-sin-parametros-repetidos.py
