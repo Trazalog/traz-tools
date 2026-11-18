@@ -33,7 +33,7 @@ producción es exactamente la que se lista acá.
 | 7 | `MANDataService.dbs` y `toolsMANAPI.xml` | Integrador | 🟡 | Aprobar; solo agregan recursos. Falta probar en EI 6 |
 | 8 | `traz-comp-pan`: el vale usa la numeración de empresa de MAN | Pañol | 🟡 | Aprobar; no mover el puntero en `develop` antes de que llegue MAN |
 | 9 | `MANDataService.dbs`: 23 consultas sin parámetros repetidos (agregado el 2026-11-18, después del despliegue de `v3.0` en DEMO) | Integrador | 🟡 | Aprobado por el PM el 2026-11-18; va en `v3.0.0.1` |
-| 10 | `MANDataService.dbs`: el registro del caso de la solicitud no falla si ya existe, y `equipos.numero_serie` pasa a texto (2026-11-18) | Solicitud de servicio, alta de equipo | 🟡 | Aprobado por el PM el 2026-11-18; va en `v3.0.0.2`. El script de la columna se aplica a mano (paso 10) |
+| 10 | `equipos.numero_serie` pasa a texto en la base de asset, y se borra en DEMO un disparador que producción no tiene (2026-11-18) | Alta de equipo, solicitud de servicio | 🟡 | Aprobado por el PM el 2026-11-18. Sin cambios de código ni tag nuevo: el script de la columna se aplica a mano (paso 10) |
 
 ## 2. Cambio por cambio
 
@@ -174,7 +174,7 @@ producción es exactamente la que se lista acá.
   (`.github/workflows/dbs-validate.yml`). Deja pasar 3 consultas que ya estaban así en `master` y no se tocan
   acá (H54).
 
-### 2.10 Registro del caso de la solicitud — `MANDataService.dbs`, `setCaseEmpresaAssetMan` (2026-11-18)
+### 2.10 Registro del caso de la solicitud — disparador de la base de asset de DEMO (2026-11-18)
 
 - **Qué pasó en DEMO:** al generar una solicitud de servicio, la API respondía "no se pudo registrar el caso;
   se borraron el caso y la solicitud". El servicio de datos devolvía `Duplicate entry '<caso>' for key
@@ -184,11 +184,11 @@ producción es exactamente la que se lista acá.
   `case_id` a la solicitud. Después la API intenta registrarlo de nuevo y falla. **La base de asset de
   producción no tiene ese disparador** (consultado por el PM el 2026-11-18): ahí el registro lo tiene que hacer
   la API. **La de desarrollo tampoco lo tiene** (consultado el 2026-11-18); por eso allá andaba.
-- **Qué cambia:** la consulta que registra el caso pasa a `INSERT ... ON DUPLICATE KEY UPDATE empr_id =
-  VALUES(empr_id)`. Si el caso no está, lo agrega; si ya lo agregó el disparador, deja la empresa que manda la
-  API y no falla. Funciona igual con disparador y sin él.
-- **Cómo se verificó:** en la MariaDB local, la misma fila dos veces (la segunda no cambia nada) y con otra
-  empresa (queda la que manda la API). No se tocó el disparador de DEMO ni nada de producción.
+- **Qué se hizo:** no se cambió código. Por decisión del PM (DEMO tiene que ser copia de producción), el
+  disparador se borró en DEMO el 2026-11-18. La API sigue registrando el caso, igual que en producción y en
+  desarrollo. Se evaluó hacer que el registro no fallara si el caso ya existía (`ON DUPLICATE KEY UPDATE`) y se
+  descartó: con las bases iguales no hace falta.
+- **Antes de producción:** confirmar que la base de asset de producción siga sin ese disparador (H55).
 
 ## 3. Pasos de despliegue (cuando se unifique con `develop` y se pase a DEMO)
 
