@@ -193,6 +193,7 @@ teniendo las líneas del paso 2, porque el script lo restaura desde el respaldo.
 | 7 | Cargar las opciones de menú de MAN | Base PostgreSQL de DEMO; ver [MENU-MAN.md](MENU-MAN.md) |
 | 8 | Tarea programada que lanza las órdenes preventivas pendientes | Servidor de DEMO; ver `doc/infra/man-lanzamiento-cron.md` |
 | 9 | Prueba completa de DocTest contra DEMO | Máquina local, desde `doctest/`: `node scripts/doctest.mjs full --entorno demo` |
+| 10 | Pasar el número de serie del equipo a texto: `_backend/database/scripts/assetplanner/equipos-numero-serie-texto.sql` (H53). **Va también en producción**, en la base de asset, antes de habilitar Mantenimiento: sin esto, un número de serie con letras hace fallar el alta del equipo | Base MariaDB de asset de cada instalación, con un cliente de MySQL |
 
 ## 4. Qué no se probó
 
