@@ -54,5 +54,5 @@ const e=C.empresas;$('emp').innerHTML=e?`<h2>Empresas y datos</h2><table>${[['Em
 filtros();dibujar()}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.f){F=b.dataset.f;filtros();dibujar()}else if(b.dataset.i)copiar(pedido(window._v[b.dataset.i]),b)});
 $('copiar').onclick=e=>copiar(window._v.filter(problema).map(pedido).join('\n'),e.target);$('q').oninput=dibujar;$('sel').onchange=e=>abrir(e.target.value);
-fetch('/api/corridas').then(r=>r.json()).then(l=>{if(!l.length){$('lista').innerHTML='<p>Todavía no hay corridas.</p>';return}$('sel').innerHTML=l.map(c=>`<option value="${esc(c.id)}">${esc(c.id)}</option>`).join('');abrir(l[0].id)});
+fetch('/api/corridas').then(r=>r.json()).then(l=>{if(!l.length){$('lista').innerHTML='<p>Todavía no hay corridas.</p>';return}$('sel').innerHTML=l.map(c=>`<option value="${esc(c.id)}">${esc(c.id)}${c.inicio?` · ${esc(new Date(c.inicio).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}))}`:''}</option>`).join('');abrir(l[0].id)});
 </script></body></html>

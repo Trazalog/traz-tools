@@ -27,12 +27,13 @@ function listar() {
   return RAICES.flatMap((raiz) =>
     existsSync(raiz) ? readdirSync(raiz).filter((d) => existsSync(join(raiz, d, 'corrida.yaml'))) : [],
   )
-    .sort()
-    .reverse()
     .map((id) => {
       const { corrida, resumen } = parse(readFileSync(join(carpetaDe(id), 'corrida.yaml'), 'utf8'));
       return { ...corrida, resumen };
-    });
+    })
+    // La más nueva primero, por la hora en que arrancó: por nombre, "..._man_..." quedaba antes que
+    // "..._full_..." del mismo día aunque fuera de la madrugada, y la consola abría una corrida vieja.
+    .sort((a, b) => String(b.inicio ?? b.id).localeCompare(String(a.inicio ?? a.id)));
 }
 
 function responder(res, codigo, tipo, cuerpo) {
