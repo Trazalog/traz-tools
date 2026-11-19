@@ -14,6 +14,16 @@ import { credenciales } from '../../fixtures/auth.ts';
 /** Dominio de los usuarios iniciales de una empresa, deducido del correo de su administrador. */
 const dominioDe = (correo: string) => correo.split('@')[1];
 
+/** El dominio que más se repite en la lista, sin contar los correos comunes (gmail). */
+function dominioMasRepetido(correos: string[]): string | undefined {
+  const cuenta = new Map<string, number>();
+  for (const c of correos) {
+    const d = dominioDe(c);
+    if (d && d !== 'gmail.com') cuenta.set(d, (cuenta.get(d) ?? 0) + 1);
+  }
+  return [...cuenta.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+}
+
 test.describe('@dnato @DNATO-UC-013 Ver la lista de usuarios de la empresa', () => {
   test('@smoke muestra la grilla con sus columnas', async ({ paginaEmpresa1 }) => {
     const usuarios = new UsuariosListPage(paginaEmpresa1);
@@ -53,8 +63,10 @@ test.describe('@dnato @DNATO-UC-013 Ver la lista de usuarios de la empresa', () 
     expect(correosDos).not.toContain(credenciales('empresa1').email);
 
     // Y tampoco a los usuarios iniciales del otro, que viven en otro dominio.
-    // El dominio se toma de esos usuarios: el administrador puede tener un correo común (gmail), igual que el de la empresa 1.
-    const dominioDos = dominioDe(correosDos.find((c) => !c.endsWith('@gmail.com')) ?? credenciales('empresa2').email);
+    // El dominio es el más repetido en la lista de la empresa 2: sus cinco usuarios iniciales lo comparten.
+    // No sirve tomar el primero que aparezca: el superusuario sale en la lista de todas las empresas
+    // (aceptado por el PM, H-003) y su dominio no es el de ninguna (en DEMO, `prueba.com`).
+    const dominioDos = dominioMasRepetido(correosDos) ?? dominioDe(credenciales('empresa2').email);
     expect(correosUno.filter((c) => c.endsWith('@' + dominioDos))).toHaveLength(0);
   });
 
