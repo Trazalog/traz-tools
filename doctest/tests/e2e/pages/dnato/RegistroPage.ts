@@ -10,7 +10,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { urlDnato } from '../../config/apps.ts';
+import { urlIdentidad } from '../../config/apps.ts';
 
 export interface DatosRegistro {
   nombre: string;
@@ -44,7 +44,7 @@ export class RegistroPage {
   }
 
   async abrir(): Promise<void> {
-    await this.page.goto(urlDnato('main/register'), { waitUntil: 'domcontentloaded' });
+    await this.page.goto(urlIdentidad('main/register'), { waitUntil: 'domcontentloaded' });
     await this.nombre.waitFor();
   }
 

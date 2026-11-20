@@ -150,7 +150,7 @@ function calcularNuevos() {
     const abs = join(REPO_ROOT, f);
     if (!existsSync(abs)) continue; // borrado
     if (/^doctest\/tests\/e2e\/specs\/.+\.spec\.ts$/.test(f)) {
-      if (!f.includes('/specs/entorno/')) pruebas.add(relative(DOCTEST_ROOT, abs));
+      if (!f.includes('/specs/entorno/')) pruebas.add(relative(DOCTEST_ROOT, abs).replace(/\\/g, '/'));
     } else if (/^doctest\/catalogo\/.+\.ya?ml$/.test(f)) {
       const caso = parseYaml(readFileSync(abs, 'utf8')) ?? {};
       const derivadas = [caso?.derivados?.test_e2e].flat().filter(Boolean);

@@ -2,7 +2,8 @@ id: ADM-UC-011
 modulo: ADM
 titulo: Ingresar por el módulo y seguir trabajando en Tools y en DNATO
 perfil: Usuario
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-20
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -52,11 +53,9 @@ validaciones:
 datos_prueba:
   usuario_varias_empresas: "usuario de la empresa DocTest con membresía también en otra empresa de prueba del ambiente"
   usuario_una_empresa: "uno de los usuarios por defecto de la empresa DocTest"
-dudas:
-  - "Salir en Tools sigue yendo a la salida de DNATO (no se redirige nada), así que después de salir el usuario ve el ingreso de DNATO aunque haya entrado por la copia. ¿Está bien hasta la redirección final? Propuesta: sí; la salida del módulo lleva al ingreso del módulo."
-  - "El análisis (C.3) pide dejar el tiempo de sesión en una constante configurable. La copia hereda el de Tools (sin límite) sin tocar nada; hacerlo configurable implica tocar application/config/config.php de Tools. ¿Se deja para el requerimiento de propagar el control a Tools (H-123)? Propuesta: sí, en REQ-003 no se toca config.php."
-  - "[SUPUESTO] Tools y DNATO siguen compartiendo la sesión en DEMO y producción como dice la configuración (misma cookie, misma carpeta de sesiones, mismo servidor); el relevamiento lo dedujo de los archivos, no lo probó corriendo. Propuesta: este caso lo confirma en DEMO; si falla en el paso de DNATO, se para y se avisa antes de cambiar configuración."
-derivados: {}
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-011.sesion-compartida-1.spec.ts
 notas:
   - "Cubre el supuesto de C.3 del análisis (Tools acepta la sesión de la copia) y, junto con DNATO-UC-006 contra la copia, CP-01 y CP-02."
   - "Sentido 1 de la sesión compartida. El sentido 2 (ingresar por DNATO y usar el módulo) es ADM-UC-012."
