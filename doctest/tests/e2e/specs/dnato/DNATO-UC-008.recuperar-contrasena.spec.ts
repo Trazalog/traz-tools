@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Caso de uso: DNATO-UC-008 — Recuperar la contraseña olvidada
  * Catálogo: catalogo/dnato/DNATO-UC-008.yaml
  * Gherkin:  features/dnato/DNATO-UC-008.recuperar-la-contrasena-olvidada.feature
@@ -12,7 +12,7 @@ import { expect, test } from '@playwright/test';
 
 import { RegistroPage } from '../../pages/dnato/RegistroPage.ts';
 import { crearCasilla } from '../../fixtures/casilla-descartable.ts';
-import { urlDnato } from '../../config/apps.ts';
+import { urlIdentidad } from '../../config/apps.ts';
 import { debeFallarCon } from '../../fixtures/fallo-conocido.ts';
 
 const ENLACE_ACTIVACION = /https?:\/\/[^\s"'<>]*main\/complete\/token\/[A-Za-z0-9_-]+/;
@@ -32,7 +32,7 @@ async function intentarOauth(page: import('@playwright/test').Page, email: strin
     code_challenge_method: 'S256',
     state: 'doctest',
   });
-  await page.goto(`${urlDnato('oauth/login')}?${params}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${urlIdentidad('oauth/login')}?${params}`, { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator('button[type="submit"], input[type="submit"]').first().click({ noWaitAfter: true });
@@ -42,7 +42,7 @@ async function intentarOauth(page: import('@playwright/test').Page, email: strin
 
 test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
   test('avisa cuando el correo no está registrado', async ({ page }) => {
-    await page.goto(urlDnato('main/forgot'), { waitUntil: 'domcontentloaded' });
+    await page.goto(urlIdentidad('main/forgot'), { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="email"]').fill(`no-existe-${Date.now()}@ejemplo.test`);
     await page.locator('input[type="submit"], button[type="submit"]').first().click({ noWaitAfter: true });
     await page.waitForTimeout(2000);
@@ -68,7 +68,7 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
     await registro.enviar();
     await registro.esperarMensaje(/registro exitoso/i);
 
-    await page.goto(urlDnato('main/forgot'), { waitUntil: 'domcontentloaded' });
+    await page.goto(urlIdentidad('main/forgot'), { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="email"]').fill(casilla.direccion);
     await page.locator('input[type="submit"], button[type="submit"]').first().click({ noWaitAfter: true });
     await page.waitForTimeout(2500);
@@ -107,7 +107,7 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
     await page.waitForTimeout(4000);
 
     // 2. Pide recuperar la contraseña.
-    await page.goto(urlDnato('main/forgot'), { waitUntil: 'domcontentloaded' });
+    await page.goto(urlIdentidad('main/forgot'), { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="email"]').fill(casilla.direccion);
     await page.locator('input[type="submit"], button[type="submit"]').first().click({ noWaitAfter: true });
     await page.waitForTimeout(3000);
@@ -155,7 +155,7 @@ test.describe('@dnato @DNATO-UC-008 Recuperar la contraseña olvidada', () => {
     await page.locator('input[type="submit"]').first().click({ noWaitAfter: true });
     await page.waitForTimeout(4000);
 
-    await page.goto(urlDnato('main/forgot'), { waitUntil: 'domcontentloaded' });
+    await page.goto(urlIdentidad('main/forgot'), { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="email"]').fill(casilla.direccion);
     await page.locator('input[type="submit"], button[type="submit"]').first().click({ noWaitAfter: true });
     await page.waitForTimeout(3000);

@@ -61,7 +61,8 @@ validaciones:
 datos_prueba:
   direccion_ingreso_copia: "valor de la variable de identidad de DocTest del ambiente"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-010.lista-publica.spec.ts
 notas:
   - "Cubre CP-110 (en la copia) y CP-112."
   - "El comportamiento de cada página pública NO se prueba acá: lo prueban DNATO-UC-001 a 008 corridos contra la copia. Este caso solo prueba qué se puede abrir sin sesión y qué no."

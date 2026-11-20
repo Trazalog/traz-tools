@@ -53,7 +53,8 @@ datos_prueba:
   administrador: "administrador de la empresa DocTest"
   administrador_varias_empresas: "usuario de prueba administrador en una empresa y con otro rol en otra"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-014.volver-a-pantalla.spec.ts
 notas:
   - "Contesta la duda de ADM-UC-001 ('volver a la pantalla pedida queda para REQ-003')."
   - "Es lo único que la copia agrega al ingreso de DNATO; no cambia nada para quien ingresa directo."

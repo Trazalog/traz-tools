@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Caso de uso: DNATO-UC-007 — Cerrar sesión
  * Catálogo: catalogo/dnato/DNATO-UC-007.yaml
  * Gherkin:  features/dnato/DNATO-UC-007.cerrar-sesion.feature
@@ -14,12 +14,12 @@ import { expect, test } from '@playwright/test';
 import { LoginPage } from '../../pages/dnato/LoginPage.ts';
 import { UsuariosListPage } from '../../pages/dnato/UsuariosListPage.ts';
 import { credenciales } from '../../fixtures/auth.ts';
-import { requerirUrlDeApp, urlDnato } from '../../config/apps.ts';
+import { urlIdentidad } from '../../config/apps.ts';
 
 test.describe('@dnato @DNATO-UC-007 Cerrar sesión', () => {
   test('@smoke al salir vuelve a la pantalla de ingreso y no se puede volver atrás', async ({ page }) => {
     const login = new LoginPage(page);
-    await login.abrir(requerirUrlDeApp('dnato'));
+    await login.abrir(urlIdentidad());
     await login.ingresar(credenciales('empresa1'));
     await expect.poll(() => login.sesionIniciada()).toBe(true);
 
@@ -27,11 +27,11 @@ test.describe('@dnato @DNATO-UC-007 Cerrar sesión', () => {
     await usuarios.abrir();
     expect(await usuarios.visible()).toBe(true);
 
-    await page.goto(urlDnato('main/logout'), { waitUntil: 'domcontentloaded' });
+    await page.goto(urlIdentidad('main/logout'), { waitUntil: 'domcontentloaded' });
     await expect(login.email).toBeVisible();
 
     // Volver a una pantalla interna después de salir tiene que devolver al ingreso.
-    await page.goto(urlDnato('main/users'), { waitUntil: 'domcontentloaded' });
+    await page.goto(urlIdentidad('main/users'), { waitUntil: 'domcontentloaded' });
     await expect(login.email).toBeVisible();
   });
 });

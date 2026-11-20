@@ -54,7 +54,8 @@ datos_prueba:
   usuario_varias_empresas: "usuario de la empresa DocTest con membresía también en otra empresa de prueba del ambiente"
   usuario_una_empresa: "uno de los usuarios por defecto de la empresa DocTest"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-011.sesion-compartida-1.spec.ts
 notas:
   - "Cubre el supuesto de C.3 del análisis (Tools acepta la sesión de la copia) y, junto con DNATO-UC-006 contra la copia, CP-01 y CP-02."
   - "Sentido 1 de la sesión compartida. El sentido 2 (ingresar por DNATO y usar el módulo) es ADM-UC-012."

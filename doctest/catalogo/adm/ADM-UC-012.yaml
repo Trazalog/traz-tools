@@ -52,7 +52,8 @@ datos_prueba:
   administrador: "administrador de la empresa DocTest (el que crea la registración)"
   usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-012.sesion-compartida-2.spec.ts
 notas:
   - "Sentido 2 de la sesión compartida. El sentido 1 es ADM-UC-011."
   - "Cubre también la duda de ADM-UC-001 sobre qué pasa sin sesión: ahora va al ingreso del módulo, no al de DNATO."
