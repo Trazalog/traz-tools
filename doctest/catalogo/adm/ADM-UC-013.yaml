@@ -53,7 +53,8 @@ validaciones:
 datos_prueba:
   casilla: "casilla descartable del seed de DocTest (la misma que usa DNATO-UC-002)"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-013.enlaces-correo.spec.ts
 notas:
   - "Cubre CP-06 (junto con DNATO-UC-008 corrido contra la copia)."
   - "Los correos de DNATO salen por sendmail del servidor (Postfix, que envía al proveedor por un túnel cifrado; ver traz-comp-dnato/development/PASAJE_PRODUCCION.md §4). La copia no trae usuario ni contraseña de correo: usa la misma configuración del servidor."
