@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 import { entornoActual, requerirUrlDeApp } from '../config/apps.ts';
 import { LoginPage } from '../pages/dnato/LoginPage.ts';
+import { cerrarSinCaptura } from './cerrar-sin-captura.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DIR_SESIONES = resolve(HERE, '..', '.auth');
@@ -88,7 +89,7 @@ async function ingresar(browser: Browser, datos: CredencialesManTools, archivo: 
     const ofrecidas = await login.empresasDisponibles();
     const elegida = datos.empresa ?? (ofrecidas.length === 1 ? ofrecidas[0] : undefined);
     if (!elegida) {
-      await contexto.close();
+      await cerrarSinCaptura(contexto);
       throw new Error(
         `El usuario de Mantenimiento tiene varias empresas (${ofrecidas.join(', ')}): ` +
           `indicá cuál en DOCTEST_${PREFIJO[entornoActual()]}_MAN_EMPRESA.`,
@@ -98,13 +99,13 @@ async function ingresar(browser: Browser, datos: CredencialesManTools, archivo: 
   }
   const error = await login.mensajeDeError();
   if (error || !(await login.sesionIniciada())) {
-    await contexto.close();
+    await cerrarSinCaptura(contexto);
     throw new Error(`No se pudo ingresar a Tools con el usuario de Mantenimiento: ${error ?? 'sigue en el ingreso'}`);
   }
   mkdirSync(DIR_SESIONES, { recursive: true });
   const destino = join(DIR_SESIONES, `${archivo}-${entornoActual()}.json`);
   await contexto.storageState({ path: destino });
-  await contexto.close();
+  await cerrarSinCaptura(contexto);
   return destino;
 }
 

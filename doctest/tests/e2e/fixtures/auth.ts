@@ -39,6 +39,7 @@ import { fileURLToPath } from 'node:url';
 
 import { LoginPage, type CredencialesEmpresa } from '../pages/dnato/LoginPage.ts';
 import { requerirUrlDeApp } from '../config/apps.ts';
+import { cerrarSinCaptura } from './cerrar-sin-captura.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DIR_SESIONES = resolve(HERE, '..', '.auth');
@@ -98,7 +99,7 @@ export async function guardarSesion(browser: Browser, empresa: Empresa): Promise
 
   const error = await login.mensajeDeError();
   if (error || !(await login.sesionIniciada())) {
-    await contexto.close();
+    await cerrarSinCaptura(contexto);
     throw new Error(
       `No se pudo iniciar sesión con la ${empresa} (${datos.email} / ${datos.empresa}): ${error ?? 'el formulario de ingreso sigue en pantalla'}`,
     );
@@ -107,7 +108,7 @@ export async function guardarSesion(browser: Browser, empresa: Empresa): Promise
   mkdirSync(DIR_SESIONES, { recursive: true });
   const destino = pathSesion(empresa);
   await contexto.storageState({ path: destino });
-  await contexto.close();
+  await cerrarSinCaptura(contexto);
   return destino;
 }
 

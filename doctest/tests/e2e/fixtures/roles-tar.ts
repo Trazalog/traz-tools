@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 import { requerirUrlDeApp } from '../config/apps.ts';
 import { LoginPage } from '../pages/dnato/LoginPage.ts';
+import { cerrarSinCaptura } from './cerrar-sin-captura.ts';
 
 export type RolTar = 'planificador' | 'responsable1' | 'responsable2' | 'empresa2';
 
@@ -88,12 +89,12 @@ async function iniciarSesion(browser: Browser, rol: RolTar, destino: string): Pr
   await page.waitForURL(/traz-tools/, { timeout: 120_000 }).catch(() => {});
   if (!/traz-tools/.test(page.url())) {
     const motivo = (await login.mensajeDeError()) ?? `quedó en ${page.url()}`;
-    await contexto.close();
+    await cerrarSinCaptura(contexto);
     throw new Error(`No se pudo entrar a Tools con el rol "${rol}" (${email}): ${motivo}`);
   }
   mkdirSync(DIR_SESIONES, { recursive: true });
   await contexto.storageState({ path: destino });
-  await contexto.close();
+  await cerrarSinCaptura(contexto);
 }
 
 /** Path de la sesión guardada de un rol; la crea (o la renueva si está por vencer). */
