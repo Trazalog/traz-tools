@@ -2,7 +2,8 @@ id: ADM-UC-014
 modulo: ADM
 titulo: Volver a la pantalla del módulo que pidió, después de ingresar
 perfil: Administrador
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-20
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -51,9 +52,7 @@ validaciones:
 datos_prueba:
   administrador: "administrador de la empresa DocTest"
   administrador_varias_empresas: "usuario de prueba administrador en una empresa y con otro rol en otra"
-dudas:
-  - "Volver a la pantalla pedida es algo que DNATO no hace hoy (siempre va al tablero de Tools) y la especificación no lo pide. ¿Se agrega en la copia? Propuesta: sí, solo para pantallas del módulo, guardando la pantalla en la sesión; las pantallas del resto de Tools siguen mandando al ingreso de DNATO y volviendo al tablero, como hoy."
-  - "Si la persona tarda en ingresar o abre otra pantalla del módulo antes, ¿a cuál vuelve? Propuesta: a la última que pidió sin sesión; la marca se borra apenas se usa."
+dudas: []
 derivados: {}
 notas:
   - "Contesta la duda de ADM-UC-001 ('volver a la pantalla pedida queda para REQ-003')."

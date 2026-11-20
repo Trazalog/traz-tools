@@ -12,7 +12,7 @@ lo que falta de la base (REQ-004, ver [`README.md`](README.md)).
 
 | Campo | Valor |
 |---|---|
-| Estado | Borrador: Rodolfo tiene que contestar las dudas de los casos y aprobar el análisis de impacto |
+| Estado | Listo para Pablo: dudas resueltas y casos validados (2026-11-20) |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base del módulo, Portal) y [`doc/v3/administracion/ANALISIS_INICIAL.md`](../doc/v3/administracion/ANALISIS_INICIAL.md) sección C completa (C.1 qué se copia, C.2 lista pública, C.3 convivencia, C.5 cómo se prueba) |
 | Entrega de la especificación | Ninguna propia: sale de la regla 2 del replanteo (REQ-001). Cubre RF-01 ("se mantienen como están") de `doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md` y la condición de E0 "CP-01, 02, 06 siguen en verde" de `PROMPT_CLI_DNATO_V3_BUILD.md` |
 | Casos de uso | Criterio de aceptación: `DNATO-UC-001` a `DNATO-UC-008` (ya existen, **no se duplican**) corridos contra la copia. Casos nuevos solo para lo nuevo: `ADM-UC-010` a `ADM-UC-014` en `doctest/catalogo/adm/` |
@@ -86,7 +86,7 @@ el último paso del desarrollo será redirigir DNATO a ella (con su análisis de
   guarda en la empresa el país de `paises` (por ejemplo `paisesArgentina`), no el de
   `paises_registracion` (`paises_registracionAR`). Las dos listas se unen por
   `paises_registracion.descripcion = paises.valor`. Si al construir #49 sigue sin unir, Pablo aplica su
-  cambio en la copia y lo dice en el plan. (El brief lo llama hallazgo **H-090**; ver la duda de
+  cambio en la copia y lo dice en el plan. (El brief lo llama hallazgo **H-124**; ver la duda de
   ADM-UC-013 sobre el número.)
 - La lista exacta de qué se copia (controladores, métodos, vistas, estilos, constantes, llamadas a WSO2,
   Bonita y AssetPlanner, accesos directos a la base, correos) es la de **análisis C.1**. No se repite

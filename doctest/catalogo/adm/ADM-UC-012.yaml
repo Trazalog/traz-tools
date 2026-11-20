@@ -2,7 +2,8 @@ id: ADM-UC-012
 modulo: ADM
 titulo: Ingresar por DNATO y entrar al módulo sin volver a ingresar
 perfil: Administrador
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-20
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -50,8 +51,7 @@ validaciones:
 datos_prueba:
   administrador: "administrador de la empresa DocTest (el que crea la registración)"
   usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest"
-dudas:
-  - "Una cuenta recién activada por DNATO que todavía no dio de alta su empresa tiene sesión sin empresa (o con la empresa temporal 9000 del registro). Si en ese momento abre el Portal, ¿qué ve? Propuesta: 'No tenés permiso para entrar a esta pantalla.', igual que cualquiera que no es administrador de la empresa activa; no se lo manda al ingreso para no cortarle la registración."
+dudas: []
 derivados: {}
 notas:
   - "Sentido 2 de la sesión compartida. El sentido 1 es ADM-UC-011."
