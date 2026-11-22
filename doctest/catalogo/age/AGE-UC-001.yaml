@@ -41,5 +41,9 @@ validaciones:
   - "Decisión del PM (2026-11-22): el panel lo abre el usuario; la primera vez que entra a Tools, Quirqui muestra un globito chico ('¿Te ayudo con esta pantalla?') sin abrir el panel"
   - "Decisión del PM (2026-11-22): en pantallas que el catálogo todavía no describe (por ejemplo, Mantenimiento antes de llegar a esta versión), Quirqui dice que todavía no conoce esa pantalla"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  feature: features/age/AGE-UC-001.preguntarle-a-quirqui-que-se-hace-en-la-pantalla.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s02
 notas:
   - "Construido en AGENTE-AS-01. Sin probar todavía en la app real (ver doc/agente/entorno-de-prueba.md)."

@@ -24,3 +24,8 @@ validaciones:
   - "Un usuario no puede calificar la respuesta de otra empresa"
   - "Decisión del PM (2026-11-22): en el panel, una calificación negativa ofrece tres motivos rápidos ('no era eso', 'dato equivocado', 'no se entiende') y un campo libre, opcionales"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  test_hurl: tests/api-mcp/hurl/agentes/feedback.hurl
+  feature: features/age/AGE-UC-007.calificar-una-respuesta-de-quirqui.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s06

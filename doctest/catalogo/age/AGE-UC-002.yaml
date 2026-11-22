@@ -32,3 +32,8 @@ validaciones:
   - "Toda cantidad de la respuesta sale de lo que devolvió el sistema en esa consulta"
   - "Decisión del PM (2026-11-22): cada dato de la empresa se acompaña, al final de la frase, de la consulta de la que salió (por ejemplo, 'según el stock de hoy del depósito Central')"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  test_hurl: tests/api-mcp/hurl/agentes/consulta.hurl
+  feature: features/age/AGE-UC-002.consultar-los-datos-de-mi-empresa-y-recibir-una.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s03
