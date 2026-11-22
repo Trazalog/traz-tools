@@ -32,3 +32,27 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 19 | Mediciones: corren todos los días a las 6, aparte del monitoreo que corre cada hora; los indicadores de Mantenimiento se miden sobre los últimos 30 días | Un indicador no cambia de una hora a otra | PR #668 | 🟢 |
 
 *(La tabla se completa a medida que avanzo.)*
+
+---
+
+## Orden para unir los cambios propuestos
+
+Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno contiene al anterior), así que conviene unirlos en este orden. Entre ramas hay choques menores esperables (la lista de scripts de `db/agente/tests/test-estructura.sql`, `db/agente/README.md`, las importaciones de `agente/orquestador.py` y `agente/api.py`, los contenedores de la pestaña Kuntur en `views/panel.php`, `prompts/kuntur.md` y `doc/v3/STATE.md`). Todos se resuelven **conservando las dos partes**; ya los resolví así en la rama de prueba integrada, donde pasan 481 pruebas.
+
+| Orden | PR | Qué | Toca el núcleo |
+|---|---|---|---|
+| 1 | #643 | Análisis y ADR-A13 del plan de acción | No (documentos) |
+| 2 | #664 | Textos de Quirqui y Kuntur, este registro de decisiones, cómo probar | No |
+| 3 | #661 | Avatares, iconos de avisos, cara en la campanita | No |
+| 4 | #662 → #667 | Casos de uso validados y sus cambios en Quirqui → pruebas y ayuda derivadas | No |
+| 5 | #663 | Funciones sin usar (Kuntur) | No |
+| 6 | #665 → #666 → #668 → (medición del plan) | Lectura de Tareas → tus tareas atrasadas → mediciones → medir si el plan funcionó | **Sí, #665** (4 lecturas nuevas en WSO2) |
+| 7 | #669 | Plan de acción (simulado hasta aprobar sus 5 escrituras en WSO2) | **Sí** (anexo A) |
+
+## Orden para desplegar (cuando se unan)
+
+1. **Base del agente:** aplicar los scripts `029` a `033` en orden (con el usuario dueño de la base).
+2. **WSO2:** el `.car` con `toolsMCPAPI.xml` nuevo, **después** de que estén desplegados #640 y #645 de Tareas (si no, la lectura de tareas vería otras empresas). Publicar en el Publisher del gateway las operaciones nuevas (`doc/api/trazalog-operaciones.yaml`).
+3. **Tools (PHP):** el módulo del agente, `lib/props/avisos.js` y `assets/agentes/`.
+4. **Avisos al celular:** `NTF_ICONOS_URL` apuntando a `https://<tools>/assets/agentes/iconos` en el Streaming Integrator.
+5. **Trabajos programados:** sumar `python -m agente.mediciones` todos los días a las 6 (ver `doc/agente/mediciones.md`).
