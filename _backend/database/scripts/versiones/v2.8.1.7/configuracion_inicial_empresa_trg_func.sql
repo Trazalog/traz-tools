@@ -3,6 +3,8 @@
 -- feat/MIG-ASSET-2-informes, ya aplicada en la base de desarrollo) y agrega un bloque que crea el proceso PROCESO-STANDAR de la empresa (sin caso propio
 -- en Bonita, con planificación de tareas, sin formulario y en estado "En curso") y la lista
 -- tipos_pedidos_trabajo con el valor "General". Las tareas de esos pedidos lanzan TST001.
+-- Además le da al rol "Planificador de Tareas" las pantallas de Tareas (Planificación, Tareas
+-- Estándar e Indicadores): la opción "tareas" sola no muestra ninguna.
 -- Análisis aprobado por el PM el 2026-11-11: doc/analisis/impacto-alta-empresa-pedidos-trabajo.md.
 -- Idempotente (CREATE OR REPLACE). Requiere v2.8.1.3 y pedidos_sin_formulario.sql de esta versión.
 -- Rollback: volver a aplicar v2.8.1.5/configuracion_inicial_empresa_trg_func.sql (la que está en desarrollo).
@@ -49,6 +51,12 @@ AS $function$
 		(new.nombre,'Responsable de Lote '||new.nombre,'PRD','lotes_operarios','core'),
 		(new.nombre,'Responsable de Pañol '||new.nombre,'PAN','panol','core'),
 		(new.nombre,'Planificador de Tareas '||new.nombre,'TAR','tareas','core'),
+		/* La opción "tareas" no tiene pantallas colgando: las de Tareas cuelgan de "tareas_grupo".
+		 * Sin "pedidotrabajo", que apunta al proceso de un cliente (la Planificación usa el estándar). */
+		(new.nombre,'Planificador de Tareas '||new.nombre,'TAR','tareas_grupo','core'),
+		(new.nombre,'Planificador de Tareas '||new.nombre,'TAR','planificacion_tarea','core'),
+		(new.nombre,'Planificador de Tareas '||new.nombre,'TAR','tareas_std','core'),
+		(new.nombre,'Planificador de Tareas '||new.nombre,'TAR','indicador_eficiencia','core'),
 		(new.nombre,'Responsable Procesos '||new.nombre,'PRO','procesos','core'),
 		(new.nombre,'Transportista '||new.nombre,'RESI','residuos_transportista','core'),
 		(new.nombre,'Generador '||new.nombre,'RESI','residuos','core'),

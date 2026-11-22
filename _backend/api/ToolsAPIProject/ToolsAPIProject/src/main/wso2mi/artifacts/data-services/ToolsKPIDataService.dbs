@@ -60,6 +60,18 @@
       <param name="empr_id" sqlType="STRING"/>
       <param name="todos" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
    </query>
+   <query id="getObjetivosPedido" useConfig="ToolsDataSource">
+      <sql>select o.objetivo_id, o.kpi, o.descripcion, o.fuente, o.operador, o.meta,
+       to_char(o.desde,'YYYY-MM-DD') as desde, to_char(o.hasta,'YYYY-MM-DD') as hasta,
+       o.responsable, o.petr_id, o.hito_id, o.hito, o.estado, o.usuario_alta,
+       to_char(o.fec_alta,'YYYY-MM-DD HH24:MI') as fec_alta, o.linea_base,
+       to_char(o.linea_base_fecha,'YYYY-MM-DD') as linea_base_fecha, o.valor_actual,
+       to_char(o.calculado_en,'YYYY-MM-DD HH24:MI') as calculado_en, o.cumple
+ from kpi.objetivos_de_pedido(cast(:empr_id as integer), cast(:petr_id as integer)) o</sql>
+      <result outputType="json">{"objetivos":{"objetivo":[{"objetivo_id":"$objetivo_id","kpi":"$kpi","descripcion":"$descripcion","fuente":"$fuente","operador":"$operador","meta":"$meta","desde":"$desde","hasta":"$hasta","responsable":"$responsable","petr_id":"$petr_id","hito_id":"$hito_id","hito":"$hito","estado":"$estado","usuario_alta":"$usuario_alta","fec_alta":"$fec_alta","linea_base":"$linea_base","linea_base_fecha":"$linea_base_fecha","valor_actual":"$valor_actual","calculado_en":"$calculado_en","cumple":"$cumple"}]}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="petr_id" sqlType="STRING"/>
+   </query>
 
    <!-- Objetivos vigentes de fuente tools que hoy no se cumplen, con la tendencia a 30 dias. -->
    <query id="getDesvios" useConfig="ToolsDataSource">
@@ -84,7 +96,10 @@
    p_hasta         => cast(:hasta as date),
    p_responsable   => nullif(:responsable,''),
    p_propuesto_por => nullif(:propuesto_por,''),
-   p_usuario       => :usuario) as objetivo_id</sql>
+   p_usuario       => :usuario,
+   p_petr_id       => cast(nullif(:petr_id,'') as integer),
+   p_hito_id       => cast(nullif(:hito_id,'') as integer),
+   p_linea_base    => cast(nullif(:linea_base,'') as numeric)) as objetivo_id</sql>
       <result outputType="json">{"respuesta":{"objetivo_id":"$objetivo_id"}}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="kpi" sqlType="STRING"/>
@@ -96,6 +111,9 @@
       <param name="responsable" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
       <param name="propuesto_por" defaultValue="#{NULL}" optional="true" sqlType="STRING"/>
       <param name="usuario" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="petr_id" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="hito_id" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="linea_base" optional="true" sqlType="STRING"/>
    </query>
 
    <query id="cancelarObjetivo" useConfig="ToolsDataSource">
@@ -131,6 +149,12 @@
          <with-param name="hasta" query-param="hasta"/>
       </call-query>
    </resource>
+   <resource method="GET" path="/objetivos/pedido/{petr_id}/emprid/{empr_id}">
+      <call-query href="getObjetivosPedido">
+         <with-param name="petr_id" query-param="petr_id"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
    <resource method="GET" path="/objetivos/emprid/{empr_id}">
       <call-query href="getObjetivos">
          <with-param name="empr_id" query-param="empr_id"/>
@@ -154,6 +178,9 @@
          <with-param name="responsable" query-param="responsable"/>
          <with-param name="propuesto_por" query-param="propuesto_por"/>
          <with-param name="usuario" query-param="usuario"/>
+         <with-param name="petr_id" query-param="petr_id"/>
+         <with-param name="hito_id" query-param="hito_id"/>
+         <with-param name="linea_base" query-param="linea_base"/>
       </call-query>
    </resource>
    <resource method="PUT" path="/objetivo/cancelar">
