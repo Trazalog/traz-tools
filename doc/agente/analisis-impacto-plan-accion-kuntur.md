@@ -169,5 +169,85 @@ Pregunta del PM: cómo muestra Kuntur qué tareas tendrá el plan, de forma fác
 
 - [x] El PM elige opción: **B** (2026-11-12).
 - [ ] Verificar en la base de desarrollo (solo lectura) que ninguna empresa tenga `PROCESO-STANDAR` con `lanzar_bpm = true` y cómo están cargados los `estados_procesos*`.
-- [ ] Que se unan los arreglos de aislamiento de Tareas (#639, #640 y los de los módulos): las operaciones nuevas se apoyan en ellas.
-- [ ] Opción B: diseñar el "todo o nada" (qué hacer con hitos creados si falla una tarea).
+- [x] Que se unan los arreglos de aislamiento de Tareas (#639, #640, #644, #645 y los de los módulos): unidos el 2026-11-13.
+- [x] Opción B: diseñar el "todo o nada" (§8.3).
+- [ ] **Aprobar los recursos MCP de escritura del anexo A** (núcleo). Sin eso, el plan corre simulado.
+
+---
+
+## 8. Cómo quedó construido (AGENTE-CO-04, 2026-11-23)
+
+### 8.1 Qué hay
+
+| Pieza | Dónde | Estado |
+|---|---|---|
+| Propuestas de plan con RLS por empresa | `db/agente/031-plan-accion.sql` (`agente.plan_propuesta`) | Hecho y probado (base de prueba) |
+| Herramienta del motor `kuntur_proponer_plan` (clase generación, solo Kuntur) | `agente/planes.py`, `agente/orquestador.py` | Hecho y probado |
+| Tarjeta del plan en el panel (Aceptar / Pedir cambios / No lo quiero) | `views/panel.php`, `controllers/Agente.php` | Hecho; **no probado en el navegador** |
+| Ejecutor "Aceptar", todo o nada | `agente/planes.py` (`crear`, `aceptar`) | **Simulado** (`SIMULADO = True`): registra lo que crearía en `agente.simulacion` |
+| Recursos MCP de escritura de Tareas | `toolsMCPAPI.xml`, anexo A | Escritos; **sin correr y sin aprobar** |
+| Meta del pedido para medir el plan (R10) | El panel la carga con la sesión del administrador en `traz-comp-bpm/Pedidotrabajo/guardarMeta` (TAR-METAS, #646) | Solo cuando el pedido es real; sin cambios en el núcleo |
+
+### 8.2 El recorrido
+
+```mermaid
+sequenceDiagram
+  participant K as Kuntur (modelo)
+  participant M as Motor de agentes
+  participant P as Panel (administrador)
+  participant T as Tareas (fachada MCP)
+  K->>M: kuntur_proponer_plan(porque, objetivo, pedido, hitos, tareas)
+  M->>M: valida (topes, sin responsables, sin proceso) y guarda la propuesta
+  M-->>P: tarjeta del plan
+  P->>M: Aceptar (solo el id del plan)
+  M->>T: tar_alta_pedido → tar_alta_hito → tar_alta_tarea (token del administrador)
+  T-->>M: petr_id, hito_id, tapl_id
+  M-->>P: listo (o "no se creó nada" y por qué)
+  P->>P: guardarMeta del pedido, si el plan trae meta
+```
+
+### 8.3 Todo o nada
+
+Si falla cualquier alta, el motor da de baja las tareas ya creadas (al revés) y después el pedido. Los hitos **no tienen baja** en el servicio de datos: quedan colgados de un pedido eliminado, que ninguna lista muestra. Si una baja también falla, la propuesta queda `fallida` y el error dice exactamente qué quedó, para que soporte lo limpie. Además, el alta de una tarea que no pudo vincularse a su hito se da de baja dentro de la misma fachada.
+
+---
+
+## Anexo A — Recursos MCP de escritura de Tareas (para aprobar)
+
+Todos en `toolsMCPAPI.xml`, con el mismo patrón que las altas de configuración de ADR-A12: empresa **siempre del token**, token de máquina rechazado (`rechazarTokenMaquina`, 403), errores respondidos en el recurso (no `toolsFault`), y **ningún servicio de datos modificado**. Clase `accion` en el catálogo del agente: ningún agente los ve; solo los llama el motor al aceptar, con el token del administrador.
+
+| Herramienta | Recurso | Llama a (sin cambios) | Controles propios |
+|---|---|---|---|
+| `tar_alta_pedido` | `POST /mcp/tar/pedido` | COREDataService: clientes activos, tipos de pedido de la empresa, `unidad_medida_tiempo`; PRODataService `POST /pedidoTrabajo` | Proceso fijo `PROCESO-STANDAR`, estado `estados_procesosPROC_EN_CURSO`, tipo "General" de la empresa, `objetivo` = semanas con la unidad "Semanas"; código único `K-AAMMDD-xxxxxx` |
+| `tar_alta_hito` | `POST /mcp/tar/hito` | PRODataService `GET /pedidoTrabajo/{empr}/{petr}`; COREDataService establecimientos y unidades; TARDataService `POST /hitos` y `GET /pedidostrabajo/hitos/{petr}?empr_id` | El pedido tiene que ser de la empresa **y** del Proceso Estándar (el servicio de datos no lo controla). `setHito` no devuelve el id: se toma el hito de mayor número del pedido |
+| `tar_alta_tarea` | `POST /mcp/tar/tarea` | TARDataService `GET /hitos/{id}?empr_id`, `POST /tarea/planificar`, `POST /tarea/origen` (y `DELETE /tarea/planificar` si el vínculo falla) | Hito de la empresa; tarea **sin responsable**, "sin fecha" (3000-12-31) y proceso TST001, igual que las de la bolsa: no arranca nada en Bonita |
+| `tar_baja_pedido` | `DELETE /mcp/tar/pedido` | PRODataService `DELETE /pedidoTrabajo` (filtra por empresa, #640) | Solo para deshacer |
+| `tar_baja_tarea` | `DELETE /mcp/tar/tarea` | TARDataService `DELETE /tarea/planificar` (filtra por empresa, #640) | Solo para deshacer |
+
+**Qué hay que verificar en DEV antes de activar** (`SIMULADO = False` en `agente/planes.py` y publicar las cinco en el APIM con esos nombres):
+1. Que `GET /COREDataService/tablas/unidad_medida_tiempo` devuelva `{"tablas":{"tabla":[...]}}` y tenga un valor con "Semana" (supuesto mío, no verificado).
+2. Que `setHito` acepte `user_id` vacío y que `esta_id` sea el primer establecimiento sin problema para las pantallas.
+3. Que `getPedidosTrabajo` con `clave = petr_id` encuentre el pedido recién creado (busca por texto: filtro en la fachada por igualdad exacta).
+4. Que una empresa tenga al menos un cliente activo y el tipo "General" (las anteriores a v2.8.1.7 pueden no tenerlo: el recurso responde 400 con el motivo).
+5. Correr `tests/security/mcp-plan-accion.hurl` contra un MI de prueba desconectado de DEV.
+
+---
+
+## Decisiones de AGENTE-CO-04
+
+🔴 = revisar antes de unir; 🟡 = conviene mirarla; 🟢 = técnica menor.
+
+| # | Decisión | Por qué | Revisión |
+|---|---|---|---|
+| 1 | Los cinco recursos MCP de escritura de Tareas (anexo A), clase `accion`, solo para el motor | Es la única forma de crear el pedido "al aceptar" sin tocar servicios de datos | 🔴 núcleo |
+| 2 | Ejecutor simulado (`SIMULADO = True`) hasta tu aprobación | La regla del núcleo: sin análisis aprobado no se graba en Tareas | 🟢 |
+| 3 | Cliente del pedido: el primero activo de la empresa; si no tiene ninguno, no se crea y se le dice que cargue uno | El pedido exige cliente y el plan es interno; preguntarlo en la tarjeta suma un paso que casi nunca cambia nada | 🟡 ¿preferís que la empresa sea su propio cliente o elegirlo en la tarjeta? |
+| 4 | Establecimiento del hito: el primero de la empresa | El formulario lo pide y el servicio de datos no acepta vacío | 🟡 |
+| 5 | Código del pedido `K-AAMMDD-xxxxxx` | `cod_proyecto` es único por empresa; así no choca y se reconoce que vino de Kuntur | 🟢 |
+| 6 | Duración en semanas: `objetivo` de pedido e hito = semanas, con la unidad "Semanas" | En Tareas `objetivo` es una duración, no una meta (TAR-METAS) | 🟢 |
+| 7 | Topes: 6 hitos, 30 tareas, 26 semanas; la propuesta vence a los 7 días | Un plan de acción, no un proyecto | 🟡 |
+| 8 | El responsable sugerido va como texto en la descripción de la tarea ("sugerido: jefe de taller"), nunca en el campo de responsable | Regla del PM: Kuntur no asigna | 🟢 |
+| 9 | La meta del plan (si la trae) la carga el panel con la sesión del administrador en `Pedidotrabajo/guardarMeta`, solo con pedido real | Reusa TAR-METAS sin tocar el núcleo | 🟢 |
+| 10 | "Pedir cambios" escribe en el chat de Kuntur «Quiero cambios en el plan…» para que el administrador complete; la propuesta anterior queda hasta que vence | Rearmar es una charla, no un formulario | 🟢 |
+| 11 | Kuntur recibe los planes descartados de los últimos 90 días con su motivo, para no repetirlos | Es el "aprende" de la opción B | 🟢 |
+| 12 | El "porque" y el "objetivo" pasan por el guardián de cifras; si hay una cifra sin fuente, no se muestra la tarjeta | Mismo criterio que las metas (R4) | 🟢 |
