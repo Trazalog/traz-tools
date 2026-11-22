@@ -61,9 +61,10 @@
 
   <div id="agp-avisos"></div>
   <div id="agp-kuntur" hidden>
+    <!-- El plan de acción va primero: es lo único que espera una decisión del administrador. -->
+    <div id="agp-planes"></div>
     <div id="agp-config"></div>
     <div id="agp-seguimiento"></div>
-    <div id="agp-planes"></div>
     <div id="agp-planilla">
       <label class="agp-planilla-subir">📎 Subí tu planilla de artículos, herramientas o equipos
         <input type="file" id="agp-planilla-archivo" accept=".xlsx,.csv" hidden></label>
