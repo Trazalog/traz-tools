@@ -41,9 +41,7 @@ POST {{base}}/feedback
 Authorization: Bearer {{jwt_usuario}}
 Content-Type: application/json
 { "interaccion_id": "{{interaccion}}", "util": false, "motivo": "inventado" }
-HTTP *
-[Asserts]
-status >= 400
+HTTP 422
 
 # --- Aislamiento: otra empresa no puede calificar esa respuesta --------------
 POST {{base}}/feedback
