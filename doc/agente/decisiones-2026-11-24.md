@@ -22,4 +22,7 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 11 | Un motivo de calificación desconocido se rechaza con un error claro (422) en lugar de un error interno | Lo encontré corriendo las pruebas de la API | PR #662 | 🟢 |
 | 12 | Recomendaciones de partes sin usar: catálogo de 7 (metas, preventivo, punto de pedido, certificaciones, movimientos de stock, depósitos, pañol), máximo 3 a la vez, "no me interesa" las esconde 30 días para toda la empresa | Reglas sobre datos, sin el modelo, para que cada cifra tenga fuente | PR #663, `doc/agente/funciones-sin-usar.md` | 🟡 mirá si el catálogo es el correcto |
 
+| 13 | **No armé los indicadores por industria** (KPI-VERT: cumplimiento de preventivos, tareas en plazo por usuario, rotación de repuestos críticos) | Dependen de tu documento de indicadores, que no está aprobado, y son un cambio de base de datos en el ambiente compartido. "Tarea en plazo" además necesita definir contra qué fecha se compara, y Tareas no guarda un fin planificado separado del real | queda pendiente | 🔴 decisión tuya: aprobar el documento de indicadores |
+| 14 | El riesgo anotado en la lectura de Tareas (pedir las tareas con el último tramo de la dirección vacío) lo considero bajo | El informe de Indicadores de Tareas que hoy usa producción ya llama al servicio de datos con tramos vacíos (`Reportes.php:52`) y funciona | PR #665 | 🟢 igual conviene probarlo en DEV al desplegar |
+
 *(La tabla se completa a medida que avanzo.)*
