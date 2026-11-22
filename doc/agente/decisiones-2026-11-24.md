@@ -39,9 +39,22 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 
 | 24 | Preparé el resumen para el abogado (aviso de medición, datos personales y proveedor de inteligencia artificial fuera del país, responsabilidad por recomendaciones técnicas, imágenes y nombres como marca) | Para que lo legal no frene el lanzamiento: solo hay que mandarlo | `doc/agente/revision-legal.md` | 🟡 leelo antes de mandarlo |
 
+| 25 | Si el servidor de herramientas (gateway) no responde, el agente contesta igual con lo que sabe y avisa que no vio los datos de la empresa | Antes, con el gateway caído, ninguna pregunta tenía respuesta | PR #671 | 🟢 |
+
 *(La tabla se completa a medida que avanzo.)*
 
 ---
+
+## ⛔ Lo que frena que los agentes funcionen de verdad (lo tenés que hacer vos)
+
+| # | Qué | Por qué | Dónde se hace |
+|---|---|---|---|
+| 1 | **Cargar saldo en la cuenta de OpenRouter** (o cambiar la clave) | Probando el 2026-11-22, OpenRouter responde **402, pago requerido**, tanto al modelo de chat (`minimax/minimax-m3:free`) como al de búsqueda por significado (`openai/text-embedding-3-small`). Sin eso, los agentes responden «No pude responder ahora mismo por un problema técnico» | Panel web de openrouter.ai, sección de créditos; la clave está en `~/.agente-minero.env` |
+| 2 | Aprobar los análisis que tocan el núcleo: #665 (lectura de Tareas) y el anexo A de #669 (crear el pedido al aceptar un plan) | Sin aprobación no se unen | GitHub |
+| 3 | Desplegar el `.car` con `toolsMCPAPI.xml` nuevo en un MI y publicar las operaciones en el gateway | Sin eso, Kuntur y Quirqui no ven Tareas | Servidor de DEV (sigue «Orden para desplegar») |
+| 4 | Suscribir a los administradores al aviso `plan_accion_resultado` | Si no, el aviso «terminó el plan» no le llega a nadie (decisión 21) | Tools, pantalla de avisos |
+| 5 | Probar un aviso real al celular con el Firebase de AssetPlanner | Nunca se probó contra Firebase real | DEV, con la conexión segura (`doc/notificaciones/instalacion-avisos.md`) |
+| 6 | Mandar `doc/agente/revision-legal.md` al abogado | Antes del primer cliente | — |
 
 ## Orden para unir los cambios propuestos
 
@@ -56,6 +69,7 @@ Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno c
 | 5 | #663 | Funciones sin usar (Kuntur) | No |
 | 6 | #665 → #666 → #668 → #670 | Lectura de Tareas → tus tareas atrasadas → mediciones → medir si el plan funcionó | **Sí, #665** (4 lecturas nuevas en WSO2) |
 | 7 | #669 | Plan de acción (simulado hasta aprobar sus 5 escrituras en WSO2) | **Sí** (anexo A) |
+| 8 | #671 | Responder sin el gateway | No |
 
 ## Orden para desplegar (cuando se unan)
 
