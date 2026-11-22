@@ -37,6 +37,8 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 
 | 23 | Temas de Faustino por industria: chancado y molienda pasan a minería; se suman 5 temas de oil & gas (bombeo mecánico y pozos, compresores, separadores y tanques, integridad de ductos, gas sulfhídrico y atmósferas explosivas) y 5 de electricidad (transformadores y subestaciones, líneas, protecciones y maniobras, trabajo con tensión y arco eléctrico, generación) | La lista inicial era solo minera y el producto es para las tres industrias (ADR-A11) | `db/agente/034-taxonomia-verticales.sql`, PR #664 | 🟡 mirá si faltan familias de equipos de tus clientes |
 
+| 24 | Preparé el resumen para el abogado (aviso de medición, datos personales y proveedor de inteligencia artificial fuera del país, responsabilidad por recomendaciones técnicas, imágenes y nombres como marca) | Para que lo legal no frene el lanzamiento: solo hay que mandarlo | `doc/agente/revision-legal.md` | 🟡 leelo antes de mandarlo |
+
 *(La tabla se completa a medida que avanzo.)*
 
 ---
