@@ -124,7 +124,10 @@ class OpenRouter:
         if not textos:
             return []
         data = await self._post(
-            "/embeddings", {"model": self.cfg.modelo_embeddings, "input": textos}
+            # dimensions: los modelos que lo aceptan (nemotron-3.5-embed, text-embedding-3)
+            # devuelven el tamaño del esquema; sin esto devuelven el suyo y no entra.
+            "/embeddings", {"model": self.cfg.modelo_embeddings, "input": textos,
+                            "dimensions": self.cfg.dim_embeddings}
         )
         try:
             filas = sorted(data["data"], key=lambda d: d.get("index", 0))
