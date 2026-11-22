@@ -35,6 +35,8 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 21 | El aviso "terminó el plan" les llega a quienes estén suscriptos al tipo de aviso `plan_accion_resultado` | No se guarda qué administrador aceptó el plan y avisar "a todos los administradores" todavía no se puede (decisión 10) | PR #670 | 🔴 hay que **suscribir a los administradores** a ese aviso en Tools, o no le llega a nadie |
 | 22 | Si el plan funcionó, se propone como práctica a la cola de curaduría, sin números, sin la empresa y sin el número de pedido | Las prácticas se comparten entre empresas (ADR-A4) | PR #670 | 🟡 el curador tiene que revisar que no queden nombres propios o códigos de equipo |
 
+| 23 | Temas de Faustino por industria: chancado y molienda pasan a minería; se suman 5 temas de oil & gas (bombeo mecánico y pozos, compresores, separadores y tanques, integridad de ductos, gas sulfhídrico y atmósferas explosivas) y 5 de electricidad (transformadores y subestaciones, líneas, protecciones y maniobras, trabajo con tensión y arco eléctrico, generación) | La lista inicial era solo minera y el producto es para las tres industrias (ADR-A11) | `db/agente/034-taxonomia-verticales.sql`, PR #664 | 🟡 mirá si faltan familias de equipos de tus clientes |
+
 *(La tabla se completa a medida que avanzo.)*
 
 ---
@@ -55,7 +57,7 @@ Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno c
 
 ## Orden para desplegar (cuando se unan)
 
-1. **Base del agente:** aplicar los scripts `029` a `033` en orden (con el usuario dueño de la base).
+1. **Base del agente:** aplicar los scripts `029` a `034` en orden (con el usuario dueño de la base).
 2. **WSO2:** el `.car` con `toolsMCPAPI.xml` nuevo, **después** de que estén desplegados #640 y #645 de Tareas (si no, la lectura de tareas vería otras empresas). Publicar en el Publisher del gateway las operaciones nuevas (`doc/api/trazalog-operaciones.yaml`).
 3. **Tools (PHP):** el módulo del agente, `lib/props/avisos.js` y `assets/agentes/`.
 4. **Avisos al celular:** `NTF_ICONOS_URL` apuntando a `https://<tools>/assets/agentes/iconos` en el Streaming Integrator.
