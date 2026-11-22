@@ -152,6 +152,18 @@ En paralelo siguen pendientes: Bloque 1 (PR de relevamiento, no abierto todavía
 
 **Lo próximo que hace Claude Code sin esperar:** terminar la app Siddhi del envío push (`_backend/siddhi/AgenteAvisosPush.siddhi`, **borrador**: probada contra el SI local, manda y marca, pero reenvía los pendientes mientras no los marca; falta el estado `enviando`, D-68) y cerrar la fase con su PR. Cuando se aprueben los análisis: DNATO-TOKEN y el motor de KPIs.
 
+**Tanda de agentes del 22 al 24 de noviembre (pedido del PM: avanzar todo lo posible y documentar las decisiones):** cambios propuestos en borrador:
+- #661: avatares e iconos;
+- #662 y #667: casos validados y sus pruebas y ayudas derivadas;
+- #663: funciones sin usar;
+- #664: textos, temas de Faustino por industria, registro de decisiones y revisión legal;
+- #665 y #666: lectura de Tareas y tus tareas atrasadas;
+- #668 y #670: mediciones y medir si el plan funcionó;
+- #669: plan de acción, simulado;
+- #671: responder sin el gateway.
+
+**Qué revisar, en qué orden unir y qué frena:** `doc/agente/decisiones-2026-11-24.md`. **Bloqueante:** OpenRouter responde 402 (pago requerido). La rama local de prueba que junta todo está en `/mnt/win/dev/git/traz-v35/traz-tools-agentes-prueba` (rama `prueba/agentes-integrado`, no se sube); los pasos para probarla están en `doc/agente/entorno-de-prueba.md`.
+
 **Decisiones del PM del 2026-11-11 (tarde):**
 - **Base del agente:** por ahora vive en la máquina del PM (`agente_minero`, PostgreSQL local con pgvector). La de demo y producción se decide más adelante.
 - **Firebase:** la única cuenta es la de producción, y no se usa para pruebas. Para probar avisos al celular hay que crear un proyecto de Firebase de prueba (pasos en la respuesta del chat; se pasan a `doc/notificaciones/instalacion-avisos.md` cuando el PM lo cree).
