@@ -451,7 +451,9 @@
     function cargarMediciones() {
         $.getJSON(BASE + 'kuntur_mediciones').done(function (r) {
             var activas = (r.mediciones || []).filter(function (m) { return m.estado === 'activa'; });
+            var evaluadas = (r.mediciones || []).filter(function (m) { return m.evaluacion; });
             var $m = $('#agp-mediciones').empty();
+            pintarEvaluadas($m, evaluadas);
             if (!activas.length) { return; }
             $m.append('<div class="agp-med-tit">Lo que estoy midiendo</div>');
             activas.forEach(function (m) {
@@ -466,6 +468,20 @@
                           ' <span class="agp-med-dato">' + m.frecuencia + ', hasta el ' + fecha(m.hasta) + ' · ' + dato + escapar(plan) + '</span>' +
                           '<a class="agp-med-cancelar">Cancelar</a></div>');
             });
+        });
+    }
+    // Planes cuya medicion termino (AGENTE-CO-05): funcionó / no funcionó / sin datos.
+    var RESULTADO_PLAN = { funciono: '✅ funcionó', no_funciono: '⚠️ no movió el indicador', sin_datos: '❔ sin datos suficientes' };
+    function pintarEvaluadas($m, evaluadas) {
+        if (!evaluadas.length) { return; }
+        $m.append('<div class="agp-med-tit">Planes que terminaron</div>');
+        evaluadas.slice(0, 5).forEach(function (m) {
+            var e = m.evaluacion, nombre = NOMBRE_INDICADOR[m.indicador] || m.indicador;
+            if (m.parametros && m.parametros.kpi) { nombre += ' ' + m.parametros.kpi; }
+            var dato = e.resultado === 'sin_datos' ? '' :
+                ' · de ' + numero(e.valor_inicial) + ' (' + fecha(e.fecha_inicial) + ') a ' + numero(e.valor_final) + ' (' + fecha(e.fecha_final) + ')';
+            $m.append('<div class="agp-med">' + escapar(nombre) + ' — pedido ' + parseInt(m.petr_id, 10) +
+                      ' <span class="agp-med-dato">' + (RESULTADO_PLAN[e.resultado] || '') + dato + '</span></div>');
         });
     }
     $('#agp-mediciones').on('click', '.agp-med-cancelar', function () {
