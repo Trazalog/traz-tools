@@ -41,6 +41,8 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 
 | 25 | Si el servidor de herramientas (gateway) no responde, el agente contesta igual con lo que sabe y avisa que no vio los datos de la empresa | Antes, con el gateway caído, ninguna pregunta tenía respuesta | PR #671 | 🟢 |
 
+| 26 | Las 5 escrituras del plan se probaron en una copia aislada del servidor de WSO2: 21 de 21. Se corrigió que, cuando el servicio de datos responde sin cuerpo, el servidor devolvía una respuesta vacía y el motor se quedaba sin el número de la tarea creada | Probar antes de pedirte la aprobación | PR #669, anexo A del análisis | 🔴 junto con la aprobación del anexo A: quedan 5 verificaciones en DEV (lista «Semanas», cliente activo y tipo General en empresas reales, cómo se ve el hito en Tareas, código real del servicio, que TST001 arranque al asignar) |
+
 *(La tabla se completa a medida que avanzo.)*
 
 ---
