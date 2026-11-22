@@ -159,6 +159,7 @@ async def test_la_misma_cifra_sin_la_url_se_bloquea(con, monkeypatch, llm_falso)
     llm = llm_falso([
         respuesta_tool("web_buscar", json.dumps({"consulta": "inversión Vicuña"})),
         respuesta_texto("Vicuña va a invertir 7100 millones."),
+        respuesta_texto("Vicuña va a invertir 7100 millones."),  # insiste en el reintento
     ])
     _parchar(monkeypatch, llm, MCPFalso())
 

@@ -231,7 +231,8 @@ class Orquestador:
             "publicadas": len(del_gateway), "ofrecidas": len(tools),
         })
 
-        for _ in range(self.cfg.max_iteraciones):
+        reintento_usado = False
+        for vuelta in range(self.cfg.max_iteraciones):
             respuesta = await llm.chat(mensajes, tools=tools)
             res.modelo = respuesta.modelo
             res.tokens_prompt += respuesta.tokens_prompt
@@ -240,8 +241,34 @@ class Orquestador:
                 res.costo_usd = (res.costo_usd or 0.0) + float(respuesta.costo_usd)
 
             if not respuesta.pide_tools:
-                res.respuesta = respuesta.texto.strip()
-                self._guardian(consulta, res, contexto)
+                texto = respuesta.texto.strip()
+                res.respuesta = texto
+                bloqueada = bool(texto) and self._guardian(consulta, res, contexto)
+                # Un solo reintento (2026-11-22): si la respuesta vino vacia o el guardian
+                # la bloqueo, se le pide al modelo que la rehaga. Lo que se muestra pasa
+                # igual por el guardian: R4 no se afloja, se le da una segunda oportunidad.
+                quedan = vuelta < self.cfg.max_iteraciones - 1
+                if (not texto or bloqueada) and not reintento_usado and quedan:
+                    reintento_usado = True
+                    res.controles.append({"control": "reintento",
+                                          "motivo": "vacia" if not texto else "cifras_sin_fuente"})
+                    if texto:
+                        cifras = res.incidentes[-1].get("cifras", []) if res.incidentes else []
+                        mensajes.append({"role": "assistant", "content": texto})
+                        mensajes.append({"role": "system", "content":
+                            "Esa respuesta no se le mostró al usuario: tiene cifras que no aparecen tal cual "
+                            f"en los datos ({', '.join(map(str, cifras)) or 'ver arriba'}). Reescribila sin esas "
+                            "cifras y sin cuentas propias (sumas, totales, promedios): nombrá cada valor como vino "
+                            "de las herramientas. Las tarjetas que propusiste en esta respuesta tampoco se "
+                            "mostraron: si querés proponer algo, volvé a usar la herramienta sin esas cifras."})
+                    else:
+                        mensajes.append({"role": "system", "content":
+                            "No respondiste nada. Respondele al usuario ahora con lo que ya consultaste, "
+                            "o usá la herramienta que corresponda."})
+                    continue
+                if not texto:
+                    res.respuesta = ("No pude armar una respuesta esta vez. "
+                                     "Probá de nuevo o reformulá la pregunta.")
                 break
 
             # 4. El modelo pidio datos: se los buscamos y volvemos a preguntar.
@@ -277,7 +304,7 @@ class Orquestador:
         res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
         return res
 
-    def _guardian(self, consulta: Consulta, res: Resultado, contexto: str) -> None:
+    def _guardian(self, consulta: Consulta, res: Resultado, contexto: str) -> bool:
         """R4: toda cifra de la respuesta tiene que tener origen, o se bloquea.
 
         Se compara contra lo que el modelo LEYO en esta corrida: el contenido de
@@ -300,6 +327,8 @@ class Orquestador:
             # Las cargas quedan guardadas como propuesta, pero no se muestran: sin
             # tarjeta nadie las confirma y vencen solas.
             res.propuestas_carga = []
+            return True
+        return False
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
                         permitidas: frozenset[str], res: Resultado | None = None) -> dict:
