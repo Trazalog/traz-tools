@@ -232,7 +232,11 @@ class Orquestador:
         })
 
         reintento_usado = False
-        for vuelta in range(self.cfg.max_iteraciones):
+        cerrada = False
+        # Una vuelta de mas, reservada para el reintento: no compite con las consultas.
+        for vuelta in range(self.cfg.max_iteraciones + 1):
+            if vuelta == self.cfg.max_iteraciones and not reintento_usado:
+                break  # la vuelta extra es solo para el reintento
             respuesta = await llm.chat(mensajes, tools=tools)
             res.modelo = respuesta.modelo
             res.tokens_prompt += respuesta.tokens_prompt
@@ -247,8 +251,7 @@ class Orquestador:
                 # Un solo reintento (2026-11-22): si la respuesta vino vacia o el guardian
                 # la bloqueo, se le pide al modelo que la rehaga. Lo que se muestra pasa
                 # igual por el guardian: R4 no se afloja, se le da una segunda oportunidad.
-                quedan = vuelta < self.cfg.max_iteraciones - 1
-                if (not texto or bloqueada) and not reintento_usado and quedan:
+                if (not texto or bloqueada) and not reintento_usado:
                     reintento_usado = True
                     res.controles.append({"control": "reintento",
                                           "motivo": "vacia" if not texto else "cifras_sin_fuente"})
@@ -269,6 +272,7 @@ class Orquestador:
                 if not texto:
                     res.respuesta = ("No pude armar una respuesta esta vez. "
                                      "Probá de nuevo o reformulá la pregunta.")
+                cerrada = True
                 break
 
             # 4. El modelo pidio datos: se los buscamos y volvemos a preguntar.
@@ -293,7 +297,7 @@ class Orquestador:
                         "tipo": "tool_bloqueada", "tool": mensaje["name"],
                         "detalle": "el modelo pidio una tool fuera de su lista blanca",
                     })
-        else:
+        if not cerrada:
             # Se agotaron las iteraciones sin una respuesta final.
             res.respuesta = (
                 "Necesité consultar varios datos y no llegué a cerrar una respuesta. "

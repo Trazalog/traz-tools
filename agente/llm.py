@@ -6,6 +6,7 @@ entorno. Nada de nombres de modelo hardcodeados.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import dataclass
 from typing import Any
@@ -13,6 +14,10 @@ from typing import Any
 import httpx
 
 from .config import Config
+
+
+# Segundos de espera ante un 429 (se multiplica por el numero de intento).
+ESPERA_429 = 3.0
 
 
 class LLMError(RuntimeError):
@@ -71,10 +76,16 @@ class OpenRouter:
         if self._cliente is None:
             raise LLMError("El cliente HTTP no esta abierto; usar 'async with'.")
         url = f"{self.cfg.openrouter_base_url.rstrip('/')}{ruta}"
-        try:
-            r = await self._cliente.post(url, headers=self._headers, json=cuerpo)
-        except httpx.HTTPError as e:
-            raise LLMError(f"No se pudo llegar a OpenRouter: {e}") from e
+        # 429 (limite de uso, comun en los modelos gratuitos): hasta 2 reintentos
+        # con espera corta antes de rendirse.
+        for intento in range(3):
+            try:
+                r = await self._cliente.post(url, headers=self._headers, json=cuerpo)
+            except httpx.HTTPError as e:
+                raise LLMError(f"No se pudo llegar a OpenRouter: {e}") from e
+            if r.status_code != 429 or intento == 2:
+                break
+            await asyncio.sleep(ESPERA_429 * (intento + 1))
         if r.status_code >= 400:
             try:
                 detalle = r.json()
