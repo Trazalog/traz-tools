@@ -63,6 +63,7 @@
   <div id="agp-kuntur" hidden>
     <div id="agp-config"></div>
     <div id="agp-seguimiento"></div>
+    <div id="agp-mediciones"></div>
     <div id="agp-planilla">
       <label class="agp-planilla-subir">📎 Subí tu planilla de artículos, herramientas o equipos
         <input type="file" id="agp-planilla-archivo" accept=".xlsx,.csv" hidden></label>
@@ -157,6 +158,10 @@
 .agp-feedback .elegido { background: #eaf3f9; border-color: #3c8dbc; }
 #agp-kuntur { padding: 6px 12px 0; font-size: 12px; max-height: 60%; overflow-y: auto; }
 #agp-kuntur[hidden] { display: none; }
+#agp-mediciones .agp-med-tit { font-weight: bold; margin: 6px 0 2px; }
+#agp-mediciones .agp-med { border-top: 1px solid #eee; padding: 3px 0; }
+#agp-mediciones .agp-med a { margin-left: 6px; cursor: pointer; }
+#agp-mediciones .agp-med-dato { color: #555; }
 .agp-cfg { border: 1px solid #d6e4f0; border-left: 3px solid #3c8dbc; border-radius: 3px;
            padding: 8px; margin-bottom: 6px; background: #fafcfe; }
 .agp-cfg strong { display: block; margin-bottom: 4px; }
@@ -328,6 +333,7 @@
     function cargarKuntur() {
         $.getJSON(BASE + 'kuntur_configuracion').done(pintarConfig).fail(function () { $('#agp-config').empty(); });
         cargarSeguimiento();
+        cargarMediciones();
     }
     function listaModulos(c) {
         var n = { almacenes: 'Almacenes', mantenimiento: 'Mantenimiento', herramientas: 'Herramientas', tareas: 'Tareas' };
@@ -432,6 +438,39 @@
         var x = seguimiento[$(this).closest('.agp-seg').data('i')];
         kunturPost('kuntur_silenciar', { objetivo_id: x.objetivo_id, silenciado: x.silenciado ? 'false' : 'true' })
             .always(cargarSeguimiento);
+    });
+
+    // Lo que Kuntur le pidió medir a Quirqui (AGENTE-CO-06, R11): el
+    // administrador lo ve y lo cancela.
+    var NOMBRE_INDICADOR = {
+        kpi_get_valor: 'Indicador', tar_get_atrasadas: 'Tareas atrasadas', tar_get_tareas: 'Tareas',
+        tar_get_pedidos: 'Pedidos de trabajo', man_get_kpi_disponibilidad: 'Disponibilidad',
+        man_get_kpi_mttr: 'Tiempo medio de reparación', man_get_kpi_mttf: 'Tiempo medio entre fallas',
+        man_get_kpi_fallas: 'Fallas'
+    };
+    function cargarMediciones() {
+        $.getJSON(BASE + 'kuntur_mediciones').done(function (r) {
+            var activas = (r.mediciones || []).filter(function (m) { return m.estado === 'activa'; });
+            var $m = $('#agp-mediciones').empty();
+            if (!activas.length) { return; }
+            $m.append('<div class="agp-med-tit">Lo que estoy midiendo</div>');
+            activas.forEach(function (m) {
+                var nombre = NOMBRE_INDICADOR[m.indicador] || m.indicador;
+                if (m.parametros && m.parametros.kpi) { nombre += ' ' + m.parametros.kpi; }
+                var ultimo = (m.resultados || [])[0];
+                var dato = ultimo ? 'último: ' + (ultimo.valor === null ? 'sin dato' : numero(ultimo.valor)) + ' (' + fecha(ultimo.fecha) + ')'
+                                  : 'todavía sin medir';
+                var plan = m.avance_plan ? ' · plan: ' + m.avance_plan.finalizadas + ' de ' + m.avance_plan.tareas +
+                                           ' tareas terminadas' + (m.avance_plan.atrasadas ? ', ' + m.avance_plan.atrasadas + ' atrasadas' : '') : '';
+                $m.append('<div class="agp-med" data-id="' + parseInt(m.medicion_id, 10) + '">' + escapar(nombre) +
+                          ' <span class="agp-med-dato">' + m.frecuencia + ', hasta el ' + fecha(m.hasta) + ' · ' + dato + escapar(plan) + '</span>' +
+                          '<a class="agp-med-cancelar">Cancelar</a></div>');
+            });
+        });
+    }
+    $('#agp-mediciones').on('click', '.agp-med-cancelar', function () {
+        kunturPost('kuntur_cancelar_medicion', { medicion_id: $(this).closest('.agp-med').data('id') })
+            .always(cargarMediciones);
     });
 
     function pintar(quien, clase, html) {

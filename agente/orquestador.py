@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, cargas, configuracion, guardian, metas, pantalla, planillas, rag, simulados, sugerencias, web
+from . import agentes, cargas, configuracion, guardian, mediciones, metas, pantalla, planillas, rag, simulados, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -215,6 +215,10 @@ class Orquestador:
         # Proponer una meta tambien es del motor: no escribe nada (AGENTE-CO-03).
         if metas.NOMBRE in permitidas:
             tools.append(metas.DEFINICION)
+        # Pedir una medicion a Quirqui (AGENTE-CO-06): del motor, solo escribe la
+        # base del agente y el administrador la ve y la cancela (R11).
+        if mediciones.NOMBRE in permitidas:
+            tools.append(mediciones.DEFINICION)
         # Servicios simulados de la puesta en marcha (deuda tecnica): mismo
         # nombre e interfaz que tendran los reales. Si el gateway ya publica
         # uno, gana el del gateway.
@@ -251,7 +255,9 @@ class Orquestador:
             })
             for llamada in respuesta.tool_calls:
                 pedida = llamada.get("function", {}).get("name")
-                if pedida in de_config:
+                if pedida == mediciones.NOMBRE and pedida in permitidas:
+                    mensaje = await self._pedir_medicion(con, consulta, mcp, llamada)
+                elif pedida in de_config:
                     mensaje = await self._proponer_carga(con, consulta, mcp, llamada, res)
                 elif (de_config and pedida in permitidas and pedida in simulados.SERVICIOS
                       and simulados.SERVICIOS[pedida].clase == simulados.LECTURA):
@@ -419,6 +425,25 @@ class Orquestador:
         mcp.llamadas.append(LlamadaTool(nombre, {}, "ok", int((time.monotonic() - t0) * 1000)))
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    async def _pedir_medicion(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict) -> dict:
+        """kuntur_pedir_medicion: valida y deja la medicion activa en la base del
+        agente (AGENTE-CO-06). Quirqui la ejecuta en el trabajo programado."""
+        fn = llamada.get("function", {})
+        try:
+            argumentos = json.loads(fn.get("arguments") or "{}")
+        except (json.JSONDecodeError, ValueError):
+            argumentos = {}
+        try:
+            salida = await mediciones.pedir(con, consulta.empr_id, argumentos)
+            salida["nota"] = ("Queda activa: el administrador la ve en 'Lo que estoy midiendo' y la puede "
+                              "cancelar. Quirqui la mide en el trabajo programado.")
+            status, error = "ok", None
+        except mediciones.MedicionInvalida as e:
+            salida, status, error = {"error": str(e)}, "error", str(e)[:300]
+        mcp.llamadas.append(LlamadaTool(mediciones.NOMBRE, argumentos, status, 0, error))
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": mediciones.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False, default=str)}
 
     def _proponer_meta(self, mcp: ClienteMCP, llamada: dict, argumentos: dict,
                        res: Resultado | None) -> dict:
