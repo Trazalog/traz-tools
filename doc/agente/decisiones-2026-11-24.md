@@ -43,6 +43,8 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 
 | 26 | Las 5 escrituras del plan se probaron en una copia aislada del servidor de WSO2: 21 de 21. Se corrigió que, cuando el servicio de datos responde sin cuerpo, el servidor devolvía una respuesta vacía y el motor se quedaba sin el número de la tarea creada | Probar antes de pedirte la aprobación | PR #669, anexo A del análisis | 🔴 junto con la aprobación del anexo A: quedan 5 verificaciones en DEV (lista «Semanas», cliente activo y tipo General en empresas reales, cómo se ve el hito en Tareas, código real del servicio, que TST001 arranque al asignar) |
 
+| 27 | Modelos **gratuitos** por defecto: chat `nvidia/nemotron-3-ultra-550b-a55b:free` y búsqueda por significado `nvidia/nemotron-3.5-embed-1b:free` (pidiendo vectores de 1024, el tamaño de la base) | La cuenta sin crédito responde 402 a los pagos y el gratuito anterior dejó de serlo. Con estos, los agentes contestan de verdad: probado de punta a punta | PR #672 | 🔴 para producción conviene un modelo pago (los gratuitos tienen límites de uso y cambian seguido). Cambiar el modelo de búsqueda obliga a recargar el conocimiento ya cargado |
+
 *(La tabla se completa a medida que avanzo.)*
 
 ---
@@ -51,7 +53,7 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 
 | # | Qué | Por qué | Dónde se hace |
 |---|---|---|---|
-| 1 | **Cargar saldo en la cuenta de OpenRouter** (o cambiar la clave) | Probando el 2026-11-22, OpenRouter responde **402, pago requerido**, tanto al modelo de chat (`minimax/minimax-m3:free`) como al de búsqueda por significado (`openai/text-embedding-3-small`). Sin eso, los agentes responden «No pude responder ahora mismo por un problema técnico» | Panel web de openrouter.ai, sección de créditos; la clave está en `~/.agente-minero.env` |
+| 1 | **Para producción: decidir si se carga saldo en OpenRouter** y se usa un modelo pago | Para probar ya no frena: con #672 los agentes usan modelos gratuitos que funcionan (decisión 27). Sin saldo, los modelos pagos responden 402 | Panel web de openrouter.ai, sección de créditos |
 | 2 | Aprobar los análisis que tocan el núcleo: #665 (lectura de Tareas) y el anexo A de #669 (crear el pedido al aceptar un plan) | Sin aprobación no se unen | GitHub |
 | 3 | Desplegar el `.car` con `toolsMCPAPI.xml` nuevo en un MI y publicar las operaciones en el gateway | Sin eso, Kuntur y Quirqui no ven Tareas | Servidor de DEV (sigue «Orden para desplegar») |
 | 4 | Suscribir a los administradores al aviso `plan_accion_resultado` | Si no, el aviso «terminó el plan» no le llega a nadie (decisión 21) | Tools, pantalla de avisos |
@@ -72,6 +74,7 @@ Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno c
 | 6 | #665 → #666 → #668 → #670 | Lectura de Tareas → tus tareas atrasadas → mediciones → medir si el plan funcionó | **Sí, #665** (4 lecturas nuevas en WSO2) |
 | 7 | #669 | Plan de acción (simulado hasta aprobar sus 5 escrituras en WSO2) | **Sí** (anexo A) |
 | 8 | #671 | Responder sin el gateway | No |
+| 9 | #672 | Modelos gratuitos y vectores de 1024 | No |
 
 ## Orden para desplegar (cuando se unan)
 
