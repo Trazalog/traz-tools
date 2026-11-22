@@ -2,9 +2,10 @@ id: AGE-UC-001
 modulo: AGE
 titulo: Preguntarle a Quirqui qué se hace en la pantalla donde estoy
 perfil: Responsable de Almacén
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: application/modules/traz-comp-agente/views/panel.php
@@ -37,8 +38,8 @@ flujos_alternativos:
 validaciones:
   - "Quirqui solo describe la pantalla con lo que dice el catálogo validado; no inventa pasos"
   - "La ruta de la pantalla no puede usarse para darle instrucciones al agente"
-dudas:
-  - "¿El panel tiene que abrirse solo la primera vez que el usuario entra a una pantalla, o solo cuando lo abre él?"
-  - "Las pantallas de Mantenimiento (AssetPlanner) todavía no están en Tools: ¿se acepta que ahí Quirqui no sepa qué se hace hasta la migración?"
+  - "Decisión del PM (2026-11-22): el panel lo abre el usuario; la primera vez que entra a Tools, Quirqui muestra un globito chico ('¿Te ayudo con esta pantalla?') sin abrir el panel"
+  - "Decisión del PM (2026-11-22): en pantallas que el catálogo todavía no describe (por ejemplo, Mantenimiento antes de llegar a esta versión), Quirqui dice que todavía no conoce esa pantalla"
+dudas: []
 notas:
   - "Construido en AGENTE-AS-01. Sin probar todavía en la app real (ver doc/agente/entorno-de-prueba.md)."

@@ -2,9 +2,10 @@ id: AGE-UC-003
 modulo: AGE
 titulo: Ver o descartar el siguiente paso que propone Quirqui
 perfil: Responsable de Almacén
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: agente/sugerencias.py
@@ -34,6 +35,5 @@ flujos_alternativos:
 validaciones:
   - "Lo que descarta un usuario se le sigue mostrando a los demás"
   - "Quirqui no hace nada por su cuenta: la propuesta dice cómo hacerlo"
-dudas:
-  - "Umbrales por defecto: certificaciones a 30 días, no repetir una descartada por 7 días, máximo 3 propuestas. ¿Son los correctos?"
-  - "Hoy las propuestas son sobre la empresa, no sobre el trabajo de cada usuario (eso llega con el módulo de tareas). ¿Se acepta así la primera versión?"
+  - "Decisión del PM (2026-11-22): valores por defecto confirmados (certificaciones a 30 días, una propuesta descartada no se repite por 7 días, máximo 3 propuestas); las propuestas sobre el trabajo de cada usuario llegan con la lectura de Tareas"
+dudas: []

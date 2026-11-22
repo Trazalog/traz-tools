@@ -2,9 +2,10 @@ id: AGE-UC-002
 modulo: AGE
 titulo: Consultar los datos de mi empresa y recibir una respuesta respaldada
 perfil: Responsable de Almacén
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: agente/orquestador.py
@@ -29,5 +30,5 @@ flujos_alternativos:
 validaciones:
   - "Los datos son siempre de la empresa del usuario; nunca de otra"
   - "Toda cantidad de la respuesta sale de lo que devolvió el sistema en esa consulta"
-dudas:
-  - "¿Quirqui tiene que mostrar de qué consulta salió cada dato (por ejemplo, 'según el stock de hoy') o alcanza con que la respuesta sea correcta?"
+  - "Decisión del PM (2026-11-22): cada dato de la empresa se acompaña, al final de la frase, de la consulta de la que salió (por ejemplo, 'según el stock de hoy del depósito Central')"
+dudas: []

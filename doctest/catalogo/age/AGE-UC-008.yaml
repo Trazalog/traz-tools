@@ -2,9 +2,10 @@ id: AGE-UC-008
 modulo: AGE
 titulo: El Coach no está disponible para quien no es administrador
 perfil: Usuario
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: agente/agentes.py
@@ -25,5 +26,5 @@ flujos_alternativos:
         resultado: "Recibe la misma respuesta que si el Coach no existiera"
 validaciones:
   - "Un usuario que no es administrador no puede ver ni usar al Coach por ninguna vía, ni confirmar que existe"
-dudas:
-  - "Hoy 'administrador' es el nivel 1 de Dnato, que no es por empresa. ¿Se acepta así hasta tener administradores por empresa?"
+  - "Decisión del PM (2026-11-22): 'administrador' es el nivel 1 de Dnato hasta que Dnato v3 tenga administradores por empresa"
+dudas: []
