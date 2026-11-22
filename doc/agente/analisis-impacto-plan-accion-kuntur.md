@@ -185,7 +185,7 @@ Pregunta del PM: cómo muestra Kuntur qué tareas tendrá el plan, de forma fác
 | Herramienta del motor `kuntur_proponer_plan` (clase generación, solo Kuntur) | `agente/planes.py`, `agente/orquestador.py` | Hecho y probado |
 | Tarjeta del plan en el panel (Aceptar / Pedir cambios / No lo quiero) | `views/panel.php`, `controllers/Agente.php` | Hecho; **no probado en el navegador** |
 | Ejecutor "Aceptar", todo o nada | `agente/planes.py` (`crear`, `aceptar`) | **Simulado** (`SIMULADO = True`): registra lo que crearía en `agente.simulacion` |
-| Recursos MCP de escritura de Tareas | `toolsMCPAPI.xml`, anexo A | Escritos; **sin correr y sin aprobar** |
+| Recursos MCP de escritura de Tareas | `toolsMCPAPI.xml`, anexo A | Escritos y **probados en MI aislado (21/21)**; sin aprobar |
 | Meta del pedido para medir el plan (R10) | El panel la carga con la sesión del administrador en `traz-comp-bpm/Pedidotrabajo/guardarMeta` (TAR-METAS, #646) | Solo cuando el pedido es real; sin cambios en el núcleo |
 
 ### 8.2 El recorrido
@@ -224,12 +224,24 @@ Todos en `toolsMCPAPI.xml`, con el mismo patrón que las altas de configuración
 | `tar_baja_pedido` | `DELETE /mcp/tar/pedido` | PRODataService `DELETE /pedidoTrabajo` (filtra por empresa, #640) | Solo para deshacer |
 | `tar_baja_tarea` | `DELETE /mcp/tar/tarea` | TARDataService `DELETE /tarea/planificar` (filtra por empresa, #640) | Solo para deshacer |
 
-**Qué hay que verificar en DEV antes de activar** (`SIMULADO = False` en `agente/planes.py` y publicar las cinco en el APIM con esos nombres):
-1. Que `GET /COREDataService/tablas/unidad_medida_tiempo` devuelva `{"tablas":{"tabla":[...]}}` y tenga un valor con "Semana" (supuesto mío, no verificado).
-2. Que `setHito` acepte `user_id` vacío y que `esta_id` sea el primer establecimiento sin problema para las pantallas.
-3. Que `getPedidosTrabajo` con `clave = petr_id` encuentre el pedido recién creado (busca por texto: filtro en la fachada por igualdad exacta).
-4. Que una empresa tenga al menos un cliente activo y el tipo "General" (las anteriores a v2.8.1.7 pueden no tenerlo: el recurso responde 400 con el motivo).
-5. Correr `tests/security/mcp-plan-accion.hurl` contra un MI de prueba desconectado de DEV.
+**Probado en MI aislado: 21/21** (2026-11-22). Copia del MI 4.5 en el puerto 8301, sin otros `.car`, desconectada de DEV y apuntando a `scripts/dev/simulador-plan-ds.py`; corrida de `tests/security/mcp-plan-accion.hurl`. El registro del simulador confirma:
+- los pedidos llevan la empresa del token, `PROCESO-STANDAR`, el primer cliente activo, el tipo "General" de la empresa y la unidad "Semanas";
+- el usuario del pedido sale del email del token, también con acentos;
+- hitos y tareas sin responsable; tareas "sin fecha", con TST001 y sin caso;
+- las bajas llevan la empresa del token;
+- si falla el vínculo de la tarea con el hito, la tarea se da de baja;
+- sin identidad (503), con token de máquina (403) y con parámetros inválidos (400) no se llama a ningún servicio de datos;
+- un pedido o un hito de otra empresa, o un pedido de un proceso propio de un cliente, dan 400 sin escribir nada;
+- un error del servicio de datos responde 502 en menos de 5 segundos.
+
+**Defecto encontrado y corregido en esa prueba:** cuando la última llamada al servicio de datos responde 202 sin cuerpo (las bajas y el vínculo tarea-hito), el MI contestaba **202 con el cuerpo vacío** en lugar de 200 con el resultado. Por eso el motor no recibía el `tapl_id` de la tarea. La causa: el MI deja marcadas `NO_ENTITY_BODY` y `SC_ACCEPTED`. Ahora se quitan antes de cada respuesta de estos cinco recursos.
+
+**Lo que queda para verificar en DEV antes de activar** (`SIMULADO = False` en `agente/planes.py` y publicar las cinco en el APIM con esos nombres). Las formas de respuesta y los parámetros de los servicios de datos se compararon contra los `.dbs` y coinciden. Lo que el simulador no puede probar:
+1. Que la lista `unidad_medida_tiempo` de DEV tenga un valor con "Semana".
+2. Que las pantallas de Tareas muestren bien un hito con el primer establecimiento y sin responsable.
+3. Que una empresa real tenga al menos un cliente activo y el tipo "General". Las anteriores a v2.8.1.7 pueden no tenerlo; en ese caso el recurso responde 400 con el motivo.
+4. Que el servicio de datos real responda 202 en `POST /hitos`, `POST /tarea/origen` y los `DELETE`, como el simulador. Si responde 200, también funciona.
+5. Que el pedido creado aparezca en Planificación de tareas y que, al asignar responsable y fecha a una tarea, arranque TST001 como cualquier otra.
 
 ---
 

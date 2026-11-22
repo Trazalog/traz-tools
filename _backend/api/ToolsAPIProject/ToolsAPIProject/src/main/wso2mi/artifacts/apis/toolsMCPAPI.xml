@@ -2542,6 +2542,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -2602,6 +2603,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -2657,6 +2659,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -2728,11 +2731,17 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
          </filter>
          <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
          <respond/>
       </inSequence>
@@ -2747,6 +2756,7 @@
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
          <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
          <respond/>
       </faultSequence>
@@ -2828,6 +2838,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -2882,6 +2893,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -2937,6 +2949,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -2994,6 +3007,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -3029,6 +3043,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -3042,6 +3057,11 @@
             mc.setPayloadJSON({ "respuesta": { "hito_id": id, "nro": "" + mayor } });
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
          <respond/>
       </inSequence>
@@ -3056,6 +3076,7 @@
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
          <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
          <respond/>
       </faultSequence>
@@ -3138,6 +3159,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -3196,6 +3218,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -3240,6 +3263,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -3248,6 +3272,11 @@
             mc.setPayloadJSON({ "respuesta": { "tapl_id": "" + mc.getProperty("cfg_tapl_id"), "hito_id": "" + mc.getProperty("cfg_hito_id") } });
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
          <respond/>
       </inSequence>
@@ -3262,6 +3291,7 @@
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
          <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
          <respond/>
       </faultSequence>
@@ -3324,6 +3354,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -3332,6 +3363,11 @@
             mc.setPayloadJSON({ "respuesta": { "baja": true } });
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
          <respond/>
       </inSequence>
@@ -3346,6 +3382,7 @@
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
          <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
          <respond/>
       </faultSequence>
@@ -3408,6 +3445,7 @@
                ]]></script>
                <property name="messageType" value="application/json" scope="axis2"/>
                <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
                <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
                <respond/>
             </else>
@@ -3416,6 +3454,11 @@
             mc.setPayloadJSON({ "respuesta": { "baja": true } });
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
          <respond/>
       </inSequence>
@@ -3430,6 +3473,7 @@
          ]]></script>
          <property name="messageType" value="application/json" scope="axis2"/>
          <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
          <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
          <respond/>
       </faultSequence>
