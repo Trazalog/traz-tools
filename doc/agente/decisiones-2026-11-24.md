@@ -31,13 +31,17 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 18 | Mediciones: la que pide Kuntur queda activa enseguida, sin tarjeta de confirmación; el administrador la ve en «Lo que estoy midiendo» y la puede cancelar. Tope de 20 activas por empresa | Solo escribe en la base del agente, no en Tools; la regla R11 pide que la vea y la cancele, no que la confirme | PR #668, `doc/agente/mediciones.md` | 🟡 |
 | 19 | Mediciones: corren todos los días a las 6, aparte del monitoreo que corre cada hora; los indicadores de Mantenimiento se miden sobre los últimos 30 días | Un indicador no cambia de una hora a otra | PR #668 | 🟢 |
 
+| 20 | Medir si el plan funcionó: se compara el primer valor medido con el último; "funcionó" es que mejoró aunque sea poco, en el sentido del indicador (atrasadas, fallas y tiempo de reparación mejoran si bajan; disponibilidad, si sube). Una medición cancelada no se evalúa | Regla simple y explicable; cada número sale de una medición guardada | PR #670, `doc/agente/mediciones.md` | 🟡 ¿querés una mejora mínima (por ejemplo, 2 puntos) para decir que funcionó? |
+| 21 | El aviso "terminó el plan" les llega a quienes estén suscriptos al tipo de aviso `plan_accion_resultado` | No se guarda qué administrador aceptó el plan y avisar "a todos los administradores" todavía no se puede (decisión 10) | PR #670 | 🔴 hay que **suscribir a los administradores** a ese aviso en Tools, o no le llega a nadie |
+| 22 | Si el plan funcionó, se propone como práctica a la cola de curaduría, sin números, sin la empresa y sin el número de pedido | Las prácticas se comparten entre empresas (ADR-A4) | PR #670 | 🟡 el curador tiene que revisar que no queden nombres propios o códigos de equipo |
+
 *(La tabla se completa a medida que avanzo.)*
 
 ---
 
 ## Orden para unir los cambios propuestos
 
-Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno contiene al anterior), así que conviene unirlos en este orden. Entre ramas hay choques menores esperables (la lista de scripts de `db/agente/tests/test-estructura.sql`, `db/agente/README.md`, las importaciones de `agente/orquestador.py` y `agente/api.py`, los contenedores de la pestaña Kuntur en `views/panel.php`, `prompts/kuntur.md` y `doc/v3/STATE.md`). Todos se resuelven **conservando las dos partes**; ya los resolví así en la rama de prueba integrada, donde pasan 481 pruebas.
+Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno contiene al anterior), así que conviene unirlos en este orden. Entre ramas hay choques menores esperables (la lista de scripts de `db/agente/tests/test-estructura.sql`, `db/agente/README.md`, las importaciones de `agente/orquestador.py` y `agente/api.py`, los contenedores de la pestaña Kuntur en `views/panel.php`, `prompts/kuntur.md` y `doc/v3/STATE.md`). Todos se resuelven **conservando las dos partes**; ya los resolví así en la rama de prueba integrada, donde pasan las 507 pruebas del motor, la prueba de estructura de la base y las 11 pruebas del panel en el navegador.
 
 | Orden | PR | Qué | Toca el núcleo |
 |---|---|---|---|
@@ -46,7 +50,7 @@ Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno c
 | 3 | #661 | Avatares, iconos de avisos, cara en la campanita | No |
 | 4 | #662 → #667 | Casos de uso validados y sus cambios en Quirqui → pruebas y ayuda derivadas | No |
 | 5 | #663 | Funciones sin usar (Kuntur) | No |
-| 6 | #665 → #666 → #668 → (medición del plan) | Lectura de Tareas → tus tareas atrasadas → mediciones → medir si el plan funcionó | **Sí, #665** (4 lecturas nuevas en WSO2) |
+| 6 | #665 → #666 → #668 → #670 | Lectura de Tareas → tus tareas atrasadas → mediciones → medir si el plan funcionó | **Sí, #665** (4 lecturas nuevas en WSO2) |
 | 7 | #669 | Plan de acción (simulado hasta aprobar sus 5 escrituras en WSO2) | **Sí** (anexo A) |
 
 ## Orden para desplegar (cuando se unan)
