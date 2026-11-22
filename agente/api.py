@@ -35,7 +35,7 @@ import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import agentes, cargas, configuracion, entrevistador, planillas, rag
+from . import agentes, cargas, configuracion, entrevistador, planes, planillas, rag
 from .config import Config, cargar
 from .llm import OpenRouter
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
@@ -139,6 +139,8 @@ class ConsultaOut(BaseModel):
     propuestas_meta: list[dict] = []
     # Cargas de configuracion que propuso Kuntur (ADR-A12): tarjeta con "Cargar".
     propuestas_carga: list[dict] = []
+    # Planes de accion que propuso Kuntur (ADR-A13): tarjeta con "Aceptar".
+    propuestas_plan: list[dict] = []
 
 
 class SugerenciasIn(BaseModel):
@@ -160,6 +162,16 @@ class RespuestaConfigIn(BaseModel):
 
 class CargaIn(BaseModel):
     carga_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+
+
+class PlanIn(BaseModel):
+    plan_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+
+
+class DescartePlanIn(BaseModel):
+    plan_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    motivo: str = Field(pattern=r"^(no_es_prioridad|ya_lo_hacemos|no_aplica|otro)$")
+    texto: str | None = Field(default=None, max_length=1000)
 
 
 class SilenciarIn(BaseModel):
@@ -275,7 +287,7 @@ async def consulta(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms, propuestas_meta=res.propuestas_meta,
-        propuestas_carga=res.propuestas_carga,
+        propuestas_carga=res.propuestas_carga, propuestas_plan=res.propuestas_plan,
     )
 
 
@@ -415,6 +427,49 @@ async def kuntur_cargas_descartar(
     try:
         return await cargas.descartar(con, empr_id=ident.empr_id, carga_id=entrada.carga_id, usuario=usuario)
     except cargas.CargaInvalida as e:
+        raise HTTPException(409, str(e)) from e
+
+
+# ------------------------------------------------- Kuntur: plan de accion (ADR-A13)
+@app.get("/kuntur/planes")
+async def kuntur_planes(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """Los planes que esperan respuesta del administrador."""
+    await _admin_de_kuntur(con, ident)
+    abiertos = await planes.pendientes(con)
+    await con.commit()
+    await rag.fijar_empresa(con, ident.empr_id)
+    return {"planes": abiertos}
+
+
+@app.post("/kuntur/planes/aceptar")
+async def kuntur_planes_aceptar(
+    entrada: PlanIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """ADR-A13: se crea en Tareas exactamente lo que se guardo, con el token de ESTE administrador."""
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await planes.aceptar(con, cfg, empr_id=ident.empr_id, plan_id=entrada.plan_id,
+                                    usuario=usuario, autorizacion=ident.autorizacion)
+    except planes.PlanNoDisponible as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/kuntur/planes/descartar")
+async def kuntur_planes_descartar(
+    entrada: DescartePlanIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await planes.descartar(con, empr_id=ident.empr_id, plan_id=entrada.plan_id, usuario=usuario,
+                                      motivo=entrada.motivo, texto=entrada.texto)
+    except planes.PlanNoDisponible as e:
         raise HTTPException(409, str(e)) from e
 
 

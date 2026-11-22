@@ -59,6 +59,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 025 | `025-cargas-configuracion.sql` | ADR-A12: clase de tool `configuracion` (habilitada por nombre exacto en `agente.agente.tools_configuracion`, nunca por patrón) y `carga_propuesta`, lo que Kuntur propuso grabar; se ejecuta solo cuando el administrador toca "Cargar" |
 | 026 | `026-simulados-puesta-en-marcha.sql` | Servicios simulados de la puesta en marcha (deuda técnica): ABM de Mantenimiento con la interfaz de `develop-v3` y Dnato v3. Lo que "graban" queda en `agente.simulacion` |
 | 028 | `028-planillas-carga-masiva.sql` | Planillas que sube el administrador (`agente.planilla`, con RLS) y la herramienta del motor `kuntur_carga_masiva`, de clase configuración. La carga está **simulada** hasta Dnato v3: al confirmar, el CSV queda en `agente.simulacion` |
+| 031 | `031-plan-accion.sql` | Plan de acción de Kuntur, opción B (ADR-A13): `agente.plan_propuesta` (con RLS), la herramienta del motor `kuntur_proponer_plan` (solo Kuntur) y las cinco operaciones de Tareas de clase acción que usa el motor al aceptar. Simulado hasta que el PM apruebe los recursos MCP |
 | 027 | `027-tools-alta-configuracion.sql` | Las tres primeras herramientas reales de configuración para Kuntur: `core_alta_establecimiento`, `alm_alta_deposito`, `core_alta_valor` (recursos de `toolsMCPAPI` sobre los servicios de datos de las pantallas) |
 
 Aplicación completa, desde el directorio del repo:

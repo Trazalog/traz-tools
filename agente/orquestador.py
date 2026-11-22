@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, cargas, configuracion, guardian, metas, pantalla, planillas, rag, simulados, sugerencias, web
+from . import agentes, cargas, configuracion, guardian, metas, pantalla, planes, planillas, rag, simulados, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -84,6 +84,9 @@ class Resultado:
     # Cargas de configuracion que propuso Kuntur (ADR-A12): no se ejecutaron;
     # el panel las muestra y se ejecutan si el administrador toca "Cargar".
     propuestas_carga: list[dict] = field(default_factory=list)
+    # Planes de accion que propuso Kuntur (ADR-A13): no se creo nada en Tareas;
+    # el panel los muestra y se crean si el administrador toca "Aceptar".
+    propuestas_plan: list[dict] = field(default_factory=list)
 
 
 class Orquestador:
@@ -198,6 +201,14 @@ class Orquestador:
                 except planillas.PlanillaInvalida:
                     res.controles.append({"control": "planilla", "planilla_id": consulta.planilla_id,
                                           "error": "no existe"})
+            # Planes que el administrador no quiso (ADR-A13): para no repetirlos.
+            descartados = await planes.descartados_recientes(con)
+            if descartados:
+                lineas = [f"- «{d['pedido']}»: {planes.MOTIVOS.get(d['motivo'], d['motivo'])}"
+                          + (f" ({d['texto']})" if d.get("texto") else "") for d in descartados]
+                mensajes.append({"role": "system", "content":
+                                 "Planes de acción que el administrador no quiso en los últimos 90 días "
+                                 "(no los vuelvas a proponer igual):\n" + "\n".join(lineas)})
         mensajes.append({"role": "user", "content": consulta.pregunta})
         # Lista blanca (ADR-A8, AGENTE-M-02). Primera barrera: el modelo solo
         # VE las tools que este agente puede usar. Las de escritura no estan,
@@ -215,6 +226,9 @@ class Orquestador:
         # Proponer una meta tambien es del motor: no escribe nada (AGENTE-CO-03).
         if metas.NOMBRE in permitidas:
             tools.append(metas.DEFINICION)
+        # Proponer un plan de accion es del motor y no crea nada en Tareas (ADR-A13).
+        if planes.NOMBRE in permitidas:
+            tools.append(planes.DEFINICION)
         # Servicios simulados de la puesta en marcha (deuda tecnica): mismo
         # nombre e interfaz que tendran los reales. Si el gateway ya publica
         # uno, gana el del gateway.
@@ -253,6 +267,8 @@ class Orquestador:
                 pedida = llamada.get("function", {}).get("name")
                 if pedida in de_config:
                     mensaje = await self._proponer_carga(con, consulta, mcp, llamada, res)
+                elif pedida == planes.NOMBRE and pedida in permitidas:
+                    mensaje = await self._proponer_plan(con, consulta, mcp, llamada, res)
                 elif (de_config and pedida in permitidas and pedida in simulados.SERVICIOS
                       and simulados.SERVICIOS[pedida].clase == simulados.LECTURA):
                     mensaje = await self._leer_simulado(con, consulta, mcp, llamada)
@@ -286,7 +302,8 @@ class Orquestador:
         """
         # El motivo de una meta propuesta lo escribe el modelo y se muestra en la
         # tarjeta: sus cifras se controlan igual que las de la respuesta.
-        texto = "\n\n".join([res.respuesta] + [p["motivo"] for p in res.propuestas_meta])
+        texto = "\n\n".join([res.respuesta] + [p["motivo"] for p in res.propuestas_meta]
+                              + [p[k] for p in res.propuestas_plan for k in ("porque", "objetivo")])
         veredicto = guardian.revisar(texto, tools=res.tools_vistas, contexto=contexto,
                                      pregunta=consulta.pregunta)
         res.controles.append(veredicto.control())
@@ -300,6 +317,8 @@ class Orquestador:
             # Las cargas quedan guardadas como propuesta, pero no se muestran: sin
             # tarjeta nadie las confirma y vencen solas.
             res.propuestas_carga = []
+            # Igual con los planes: quedan como propuesta y vencen solos.
+            res.propuestas_plan = []
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
                         permitidas: frozenset[str], res: Resultado | None = None) -> dict:
@@ -410,6 +429,34 @@ class Orquestador:
             salida = p.para_el_modelo()
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
+
+    async def _proponer_plan(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict,
+                             res: Resultado) -> dict:
+        """kuntur_proponer_plan (ADR-A13): se valida y se guarda como propuesta.
+        No sale al MCP ni crea nada en Tareas; lo crea el administrador al aceptar."""
+        fn = llamada.get("function", {})
+        try:
+            argumentos = json.loads(fn.get("arguments") or "{}")
+        except (json.JSONDecodeError, ValueError):
+            argumentos = None
+        try:
+            plan = planes.validar(argumentos)
+        except planes.PlanInvalido as e:
+            mcp.llamadas.append(LlamadaTool(planes.NOMBRE, argumentos if isinstance(argumentos, dict) else {},
+                                            "error", 0, str(e)[:300]))
+            salida = {"error": f"No se puede proponer: {e} Corregilo y volvé a armarlo."}
+        else:
+            p = await planes.proponer(
+                con, empr_id=consulta.empr_id, interaccion_id=res.interaccion_id,
+                usuario=consulta.usuario_nick or str(consulta.usr_id or ""), plan=plan,
+                agente=consulta.agente.clave)
+            res.propuestas_plan.append(p.tarjeta())
+            mcp.llamadas.append(LlamadaTool(planes.NOMBRE, {"pedido": plan["pedido"]["nombre"],
+                                                             "hitos": len(plan["hitos"]),
+                                                             "tareas": plan["total_tareas"]}, "propuesta", 0, None))
+            salida = p.para_el_modelo()
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": planes.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False)}
 
     async def _leer_simulado(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict) -> dict:
         """Una lectura de los servicios simulados (agente/simulados.py)."""
