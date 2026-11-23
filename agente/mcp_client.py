@@ -306,6 +306,13 @@ def _tool(nombre: str, descripcion: str, propiedades: dict | None = None,
                          "parameters": esquema}}
 
 
+# Los KPI de mantenimiento exigen el periodo: sin fechas la fachada corta con
+# error (y hasta el arreglo de toolsFault, tarda el timeout entero).
+_PERIODO = {
+    "fec_inicio": {"type": "string", "description": "Desde, formato AAAA-MM-DD (por ejemplo, hace 90 dias)"},
+    "fec_fin": {"type": "string", "description": "Hasta, formato AAAA-MM-DD (por ejemplo, hoy)"},
+}
+
 # Las descripciones importan: son lo unico que el modelo lee para decidir si
 # una tool sirve. Una descripcion vaga hace que no la llame cuando deberia.
 _TOOLS_DEV = [
@@ -322,13 +329,17 @@ _TOOLS_DEV = [
     _tool("man_get_lecturas",
           "Lecturas de horometro y contadores de los equipos."),
     _tool("man_get_kpi_disponibilidad",
-          "Disponibilidad de los equipos: porcentaje de tiempo en condiciones de operar."),
+          "Disponibilidad de los equipos: porcentaje de tiempo en condiciones de operar, en un periodo.",
+          _PERIODO, ["fec_inicio", "fec_fin"]),
     _tool("man_get_kpi_mttr",
-          "MTTR: tiempo medio de reparacion. Cuanto se tarda en volver a poner un equipo en marcha."),
+          "MTTR: tiempo medio de reparacion en un periodo. Cuanto se tarda en volver a poner un equipo en marcha.",
+          _PERIODO, ["fec_inicio", "fec_fin"]),
     _tool("man_get_kpi_mttf",
-          "MTTF: tiempo medio hasta la falla. Cada cuanto falla un equipo."),
+          "MTTF: tiempo medio hasta la falla en un periodo. Cada cuanto falla un equipo.",
+          _PERIODO, ["fec_inicio", "fec_fin"]),
     _tool("man_get_kpi_fallas",
-          "Cantidad de fallas por equipo en el periodo."),
+          "Cantidad de fallas por equipo en un periodo.",
+          _PERIODO, ["fec_inicio", "fec_fin"]),
     # --- Almacenes -------------------------------------------------------
     _tool("alm_get_stock",
           "Stock disponible de articulos: cantidades por deposito. Sirve para saber si hay "

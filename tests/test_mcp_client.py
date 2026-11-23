@@ -151,3 +151,12 @@ def test_modo_mi_el_modelo_no_ve_las_escrituras_del_plan():
     from agente.mcp_client import _ESCRITURAS_PLAN_DEV, _TOOLS_DEV
     ofrecidas = {t["function"]["name"] for t in _TOOLS_DEV}
     assert not ofrecidas & set(_ESCRITURAS_PLAN_DEV)
+
+
+def test_modo_mi_los_kpi_de_mantenimiento_piden_el_periodo():
+    """Sin fec_inicio y fec_fin la fachada no responde: el modelo tiene que saberlo."""
+    from agente.mcp_client import _TOOLS_DEV
+    for t in _TOOLS_DEV:
+        f = t["function"]
+        if f["name"].startswith("man_get_kpi_"):
+            assert f["parameters"]["required"] == ["fec_inicio", "fec_fin"], f["name"]
