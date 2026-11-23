@@ -183,7 +183,7 @@ async def test_una_cifra_inventada_en_el_motivo_bloquea(con, monkeypatch, llm_fa
     llm = llm_falso([respuesta_tool(metas.NOMBRE, json.dumps(_args())), respuesta_texto("Te propongo esta meta.")])
     res = await _consultar(con, monkeypatch, llm, "kuntur")
     assert res.incidentes and res.propuestas_meta == []
-    assert res.respuesta.startswith("No tengo datos")
+    assert res.respuesta.startswith("No tengo ese dato confirmado")
 
 
 async def test_una_propuesta_invalida_no_llega_al_panel(con, monkeypatch, llm_falso):
