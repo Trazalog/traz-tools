@@ -45,6 +45,9 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 
 | 27 | Modelos **gratuitos** por defecto: chat `nvidia/nemotron-3-ultra-550b-a55b:free` y búsqueda por significado `nvidia/nemotron-3.5-embed-1b:free` (pidiendo vectores de 1024, el tamaño de la base) | La cuenta sin crédito responde 402 a los pagos y el gratuito anterior dejó de serlo. Con estos, los agentes contestan de verdad: probado de punta a punta | PR #672 | 🔴 para producción conviene un modelo pago (los gratuitos tienen límites de uso y cambian seguido). Cambiar el modelo de búsqueda obliga a recargar el conocimiento ya cargado |
 
+| 28 | Motor más robusto con modelos chicos: un reintento si la respuesta viene vacía o bloqueada (siempre pasa por el guardián), no repetir una consulta idéntica, esperar ante «demasiadas consultas», hasta 8 consultas por pregunta y 4000 de tope por respuesta (con 1500 se cortaban los planes) | Probando con el modelo real, Kuntur no llegaba a proponer el plan; con estos cambios, 3 de 3 | PR #673 y #672 | 🟡 el reintento es una segunda oportunidad al modelo, no afloja la regla de cifras |
+| 29 | Las fuentes se nombran en palabras («según el indicador de disponibilidad») y no se hacen cuentas propias | El administrador no entiende `man_get_kpi_disponibilidad`, y una cuenta propia («9 de 10») se bloquea | `prompts/`, PR #664 | 🟢 |
+
 *(La tabla se completa a medida que avanzo.)*
 
 ---
@@ -74,7 +77,7 @@ Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno c
 | 6 | #665 → #666 → #668 → #670 | Lectura de Tareas → tus tareas atrasadas → mediciones → medir si el plan funcionó | **Sí, #665** (4 lecturas nuevas en WSO2) |
 | 7 | #669 | Plan de acción (simulado hasta aprobar sus 5 escrituras en WSO2) | **Sí** (anexo A) |
 | 8 | #671 | Responder sin el gateway | No |
-| 9 | #672 | Modelos gratuitos y vectores de 1024 | No |
+| 9 | #672 → #673 | Modelos gratuitos y vectores de 1024 → motor robusto con modelos chicos | No |
 
 ## Orden para desplegar (cuando se unan)
 
