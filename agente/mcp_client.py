@@ -182,6 +182,8 @@ class ClienteMCP:
 
     # ------------------------------------------------------- modo desarrollo
     async def _llamar_rest(self, nombre: str, argumentos: dict) -> Any:
+        if nombre in _ESCRITURAS_PLAN_DEV:
+            return await self._escribir_rest(nombre, argumentos)
         ruta = _RUTAS_DEV.get(nombre)
         if ruta is None:
             raise MCPError(nombre, "tool desconocida en modo 'mi'")
@@ -199,6 +201,26 @@ class ClienteMCP:
             url += "?" + urlencode(resto)
         try:
             r = await self.cliente.get(url, headers=self._headers)
+        except httpx.HTTPError as e:
+            raise MCPError(nombre, f"no se pudo llegar al MI: {e}") from e
+        if r.status_code >= 400:
+            raise MCPError(nombre, f"HTTP {r.status_code}", r.status_code, r.text[:500])
+        try:
+            return r.json()
+        except (json.JSONDecodeError, ValueError):
+            return r.text
+
+
+    async def _escribir_rest(self, nombre: str, argumentos: dict) -> Any:
+        """Las altas y bajas del plan de accion de Kuntur (AGENTE-CO-04).
+
+        Solo las usa planes.aceptar() cuando el administrador toco "Aceptar":
+        no estan en _TOOLS_DEV, asi que el modelo nunca las ve ni las puede pedir.
+        Los datos viajan en el cuerpo JSON, como los espera la fachada."""
+        metodo, ruta = _ESCRITURAS_PLAN_DEV[nombre]
+        url = self.cfg.mcp_url.rstrip("/") + ruta
+        try:
+            r = await self.cliente.request(metodo, url, headers=self._headers, json=argumentos)
         except httpx.HTTPError as e:
             raise MCPError(nombre, f"no se pudo llegar al MI: {e}") from e
         if r.status_code >= 400:
@@ -261,6 +283,16 @@ _RUTAS_DEV = {
     "tar_get_pedido": "/tar/pedido/{petr_id}",
     "tar_get_tareas": "/tar/tareas",
     "tar_get_atrasadas": "/tar/atrasadas",
+}
+
+# Escrituras del plan de accion (anexo A del analisis de impacto, aprobado el
+# 2026-11-22). No son tools del modelo: las llama planes.DestinoMCP al aceptar.
+_ESCRITURAS_PLAN_DEV = {
+    "tar_alta_pedido": ("POST", "/tar/pedido"),
+    "tar_alta_hito": ("POST", "/tar/hito"),
+    "tar_alta_tarea": ("POST", "/tar/tarea"),
+    "tar_baja_pedido": ("DELETE", "/tar/pedido"),
+    "tar_baja_tarea": ("DELETE", "/tar/tarea"),
 }
 
 
