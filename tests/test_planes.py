@@ -62,6 +62,18 @@ def test_un_plan_bien_armado_queda_con_el_proceso_estandar_y_sus_totales():
     assert p["hitos"][0]["tareas"][0]["responsable_sugerido"] == "jefe de taller"
 
 
+def test_las_semanas_del_plan_no_las_bloquea_el_guardian():
+    """Prueba real contra DEV (2026-11-23): "Semana 1" se bloqueaba por cifra sin fuente.
+
+    Las semanas de cada hito las fija el propio plan: el modelo las ve en la
+    salida de la tool y puede nombrarlas."""
+    from agente import guardian
+    prop = planes.Propuesta("p-1", planes.validar(_plan(), hoy=HOY))
+    vista = [("kuntur_proponer_plan", json.dumps(prop.para_el_modelo(), ensure_ascii=False))]
+    v = guardian.revisar("Semana 1 y 2: preventivos. Semana 4: medir. Son 2 hitos y 3 tareas.", tools=vista)
+    assert not v.bloquear, v.sin_fuente
+
+
 @pytest.mark.parametrize("cambio,mensaje", [
     ({"proc_id": "YUDICA-001"}, "Proceso Estándar"),
     ({"porque": ""}, "porque"),
@@ -319,3 +331,19 @@ def test_los_textos_largos_se_recortan_sin_cortar_palabras():
     assert t.endswith("…") and len(t) <= 60
     assert not t[:-1].endswith("mangue")
     assert _texto("corto", 60) == "corto"
+
+
+def test_una_cantidad_inventada_en_una_tarea_la_ve_el_guardian():
+    """Prueba real contra DEV (2026-11-23): "sugerido: 100 u. aceite" llegó a Tareas sin fuente."""
+    from agente import guardian
+    from agente.orquestador import _textos_del_plan
+    p = planes.validar(_plan(hitos=[{"nombre": "Comprar", "semana_desde": 1, "semana_hasta": 1,
+                                     "tareas": [{"nombre": "Emitir la orden", "descripcion": "Pedir 130 bidones de aceite"}]}]),
+                       hoy=HOY)
+    prop = planes.Propuesta("p-2", p)
+    vista = [("alm_get_stock", '{"stock": "10", "punto_pedido": "50"}'),
+             ("kuntur_proponer_plan", json.dumps(prop.para_el_modelo(), ensure_ascii=False))]
+    texto = "\n".join(_textos_del_plan(prop.tarjeta()))
+    assert "130" in texto
+    v = guardian.revisar(texto, tools=vista)
+    assert v.bloquear and "130" in v.sin_fuente

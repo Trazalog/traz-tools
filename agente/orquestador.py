@@ -98,6 +98,21 @@ def _args_normalizados(crudo) -> dict:
     return v if isinstance(v, dict) else {"_valor": v}
 
 
+def _textos_del_plan(p: dict) -> list[str]:
+    """Todo lo que el plan deja escrito en Tareas, para que el guardian lo revise.
+
+    Prueba contra DEV (2026-11-23): una tarea llevaba "sugerido: 100 u. aceite",
+    cantidades que no salian de ninguna tool, y terminaban en el pedido real."""
+    out = [p.get("porque", ""), p.get("objetivo", "")]
+    ped = p.get("pedido") or {}
+    out += [ped.get("nombre", ""), ped.get("descripcion", "")]
+    for h in p.get("hitos") or []:
+        out.append(h.get("nombre", ""))
+        for t in h.get("tareas") or []:
+            out += [t.get("nombre", ""), t.get("descripcion", "")]
+    return [x for x in out if x]
+
+
 class Orquestador:
     def __init__(self, cfg: Config):
         self.cfg = cfg
@@ -377,7 +392,7 @@ class Orquestador:
         # El motivo de una meta propuesta lo escribe el modelo y se muestra en la
         # tarjeta: sus cifras se controlan igual que las de la respuesta.
         texto = "\n\n".join([res.respuesta] + [p["motivo"] for p in res.propuestas_meta]
-                              + [p[k] for p in res.propuestas_plan for k in ("porque", "objetivo")])
+                              + [t for p in res.propuestas_plan for t in _textos_del_plan(p)])
         veredicto = guardian.revisar(texto, tools=res.tools_vistas, contexto=contexto,
                                      pregunta=consulta.pregunta)
         res.controles.append(veredicto.control())
