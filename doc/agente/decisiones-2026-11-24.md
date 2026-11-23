@@ -57,7 +57,7 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | # | Qué | Por qué | Dónde se hace |
 |---|---|---|---|
 | 1 | **Para producción: decidir si se carga saldo en OpenRouter** y se usa un modelo pago | Para probar ya no frena: con #672 los agentes usan modelos gratuitos que funcionan (decisión 27). Sin saldo, los modelos pagos responden 402 | Panel web de openrouter.ai, sección de créditos |
-| 2 | Aprobar los análisis que tocan el núcleo: #665 (lectura de Tareas) y el anexo A de #669 (crear el pedido al aceptar un plan) | Sin aprobación no se unen | GitHub |
+| 2 | ~~Aprobar los análisis que tocan el núcleo~~ | **Hecho el 2026-11-22** | — |
 | 3 | Desplegar el `.car` con `toolsMCPAPI.xml` nuevo en un MI y publicar las operaciones en el gateway | Sin eso, Kuntur y Quirqui no ven Tareas | Servidor de DEV (sigue «Orden para desplegar») |
 | 3b | **Correr las verificaciones de DEV de una vez** (solo leen): Proceso Estándar, empresas sin cliente activo o sin tipo General, lista de Semanas, pedidos sin empresa, quién recibe el aviso de fin de plan. Al final del archivo está, comentado, cómo suscribir a un administrador | Desde acá no se alcanza la base de DEV (hace falta la conexión segura) | Terminal local con VPN: `psql -h 10.142.0.13 -U postgres -d tools_prod_t -f scripts/dev/verificaciones-dev-agentes.sql` |
 | 4 | Suscribir a los administradores al aviso `plan_accion_resultado` | Si no, el aviso «terminó el plan» no le llega a nadie (decisión 21) | Tools, pantalla de avisos |
@@ -65,6 +65,8 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 6 | Mandar `doc/agente/revision-legal.md` al abogado | Antes del primer cliente | — |
 
 ## Orden para unir los cambios propuestos
+
+> ✅ **Hecho el 2026-11-22**: el PM aprobó unir todo (incluidos los análisis de #665 y del anexo A de #669) y los 14 cambios se unieron en este orden. El plan de acción ya no es simulado.
 
 Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno contiene al anterior), así que conviene unirlos en este orden. Entre ramas hay choques menores esperables (la lista de scripts de `db/agente/tests/test-estructura.sql`, `db/agente/README.md`, las importaciones de `agente/orquestador.py` y `agente/api.py`, los contenedores de la pestaña Kuntur en `views/panel.php`, `prompts/kuntur.md` y `doc/v3/STATE.md`). Todos se resuelven **conservando las dos partes**; ya los resolví así en la rama de prueba integrada, donde pasan las 507 pruebas del motor, la prueba de estructura de la base y las 11 pruebas del panel en el navegador.
 
