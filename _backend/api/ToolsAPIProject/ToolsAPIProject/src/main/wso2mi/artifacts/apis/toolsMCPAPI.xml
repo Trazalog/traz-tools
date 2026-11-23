@@ -3216,10 +3216,19 @@
             var r = mc.getPayloadJSON() || {};
             var l = (r.tablas && r.tablas.tabla) || [];
             if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
-            var umti = "";
-            for (var i = 0; i < l.length; i++) { if (/seman/i.test("" + l[i].valor) && umti === "") { umti = "" + l[i].tabl_id; } }
+            // Semanas si la lista la tiene; si no, Dias con la duracion x 7 (DEV solo tiene Dias,
+            // Meses y Años: verificado el 2026-11-22).
+            var umti = "", dias = "";
+            for (var i = 0; i < l.length; i++) {
+               var v = "" + l[i].valor;
+               if (/seman/i.test(v) && umti === "") { umti = "" + l[i].tabl_id; }
+               if (/^d[ií]as?$/i.test(v) && dias === "") { dias = "" + l[i].tabl_id; }
+            }
+            var sem = parseInt("" + mc.getProperty("cfg_semanas"), 10);
+            if (umti !== "") { mc.setProperty("cfg_objetivo", "" + sem); }
+            else if (dias !== "") { umti = dias; mc.setProperty("cfg_objetivo", "" + (sem * 7)); }
             mc.setProperty("cfg_umti", umti);
-            mc.setProperty("cfg_error", umti === "" ? "La lista unidad_medida_tiempo no tiene Semanas" : "");
+            mc.setProperty("cfg_error", umti === "" ? "La lista unidad_medida_tiempo no tiene Semanas ni Dias" : "");
          ]]></script>
          <filter source="$ctx:cfg_error" regex=".+">
             <then>
@@ -3237,7 +3246,7 @@
                "cod_proyecto": "" + mc.getProperty("cfg_codigo"),
                "descripcion": "" + mc.getProperty("cfg_descripcion"),
                "estado": "estados_procesosPROC_EN_CURSO",
-               "objetivo": "" + mc.getProperty("cfg_semanas"),
+               "objetivo": "" + mc.getProperty("cfg_objetivo"),
                "fec_inicio": mc.getProperty("cfg_fi") + " 00:00:00",
                "fec_entrega": mc.getProperty("cfg_fe") + " 00:00:00",
                "usuario_app": "" + mc.getProperty("cfg_usuario"),
@@ -3450,10 +3459,19 @@
             var r = mc.getPayloadJSON() || {};
             var l = (r.tablas && r.tablas.tabla) || [];
             if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
-            var umti = "";
-            for (var i = 0; i < l.length; i++) { if (/seman/i.test("" + l[i].valor) && umti === "") { umti = "" + l[i].tabl_id; } }
+            // Semanas si la lista la tiene; si no, Dias con la duracion x 7 (DEV solo tiene Dias,
+            // Meses y Años: verificado el 2026-11-22).
+            var umti = "", dias = "";
+            for (var i = 0; i < l.length; i++) {
+               var v = "" + l[i].valor;
+               if (/seman/i.test(v) && umti === "") { umti = "" + l[i].tabl_id; }
+               if (/^d[ií]as?$/i.test(v) && dias === "") { dias = "" + l[i].tabl_id; }
+            }
+            var sem = parseInt("" + mc.getProperty("cfg_semanas"), 10);
+            if (umti !== "") { mc.setProperty("cfg_objetivo", "" + sem); }
+            else if (dias !== "") { umti = dias; mc.setProperty("cfg_objetivo", "" + (sem * 7)); }
             mc.setProperty("cfg_umti", umti);
-            mc.setProperty("cfg_error", umti === "" ? "La lista unidad_medida_tiempo no tiene Semanas" : "");
+            mc.setProperty("cfg_error", umti === "" ? "La lista unidad_medida_tiempo no tiene Semanas ni Dias" : "");
          ]]></script>
          <filter source="$ctx:cfg_error" regex=".+">
             <then>
@@ -3513,7 +3531,7 @@
                mc.setPayloadJSON({ "_post_hitos": {
                   "numero": "" + mc.getProperty("cfg_numero"), "descripcion": "" + mc.getProperty("cfg_descripcion"),
                   "fec_inicio": "" + mc.getProperty("cfg_fi"), "user_id": "",
-                  "objetivo": "" + mc.getProperty("cfg_semanas"), "unidad_tiempo": "" + mc.getProperty("cfg_umti"),
+                  "objetivo": "" + mc.getProperty("cfg_objetivo"), "unidad_tiempo": "" + mc.getProperty("cfg_umti"),
                   "esta_id": esta, "documento": "", "petr_id": "" + mc.getProperty("cfg_petr_id"), "nombre_documento": "" } });
             }
          ]]></script>
