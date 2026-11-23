@@ -216,7 +216,19 @@ class Orquestador:
         permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
         # Las de configuracion (ADR-A12) se ofrecen, pero el motor no las ejecuta.
         de_config = await cargas.de_configuracion(con, consulta.agente.clave)
-        del_gateway = await mcp.listar_tools()
+        try:
+            del_gateway = await mcp.listar_tools()
+        except MCPError as e:
+            # Sin el gateway igual se responde con lo que se sabe (conocimiento y
+            # web), avisando que no se pudieron consultar los datos de la empresa.
+            # Antes, la consulta entera terminaba en "problema técnico".
+            log.warning("Gateway MCP no disponible, se responde sin datos de la empresa: %s", e)
+            res.controles.append({"control": "mcp_no_disponible", "error": str(e)[:200]})
+            del_gateway = []
+            mensajes.insert(len(mensajes) - 1, {"role": "system", "content":
+                "Ahora no podés consultar los datos de la empresa: el sistema que los da no responde. "
+                "Si la pregunta los necesita, decilo así y no des cifras de la empresa. "
+                "Si se puede responder con lo que sabés o con internet, respondé."})
         tools = [t for t in del_gateway
                  if t.get("function", {}).get("name") in permitidas]
         # La busqueda web es una tool del motor, no del gateway: pasa por la
