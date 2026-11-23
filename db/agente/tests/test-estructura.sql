@@ -451,6 +451,37 @@ SELECT 'Quirqui solo alcanza kpi_get_valor; Kuntur las cuatro',
        '011 + 022';
 
 -- ---------------------------------------------------------------------------
+-- 029 - tools de lectura de Tareas
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'la tool ' || n || ' esta catalogada como lectura de tar',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = n AND clase = 'lectura' AND modulo = 'tar'), 'AGENTE-TAR-01'
+FROM unnest(ARRAY['tar_get_pedidos', 'tar_get_pedido', 'tar_get_tareas', 'tar_get_atrasadas']) AS n;
+
+INSERT INTO _resultado
+SELECT 'Kuntur y Quirqui alcanzan las cuatro tar_get_*; Faustino ninguna',
+       (SELECT count(*) FROM agente.tools_permitidas('kuntur') t WHERE t LIKE 'tar\_get\_%') = 4
+       AND (SELECT count(*) FROM agente.tools_permitidas('quirqui') t WHERE t LIKE 'tar\_get\_%') = 4
+       AND (SELECT count(*) FROM agente.tools_permitidas('faustino') t WHERE t LIKE 'tar\_%') = 0,
+       '011 + 029';
+
+-- ---------------------------------------------------------------------------
+-- 032 - Kuntur pide mediciones a Quirqui (AGENTE-CO-06)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'kuntur_pedir_medicion esta catalogada como generacion y solo la alcanza Kuntur',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = 'kuntur_pedir_medicion' AND clase = 'generacion')
+       AND 'kuntur_pedir_medicion' IN (SELECT agente.tools_permitidas('kuntur'))
+       AND 'kuntur_pedir_medicion' NOT IN (SELECT agente.tools_permitidas('quirqui'))
+       AND 'kuntur_pedir_medicion' NOT IN (SELECT agente.tools_permitidas('faustino')),
+       'AGENTE-CO-06';
+
+INSERT INTO _resultado
+SELECT 'el avance de un plan tiene una fila por tarea (avance_plan_tarea_uk)',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'avance_plan_tarea_uk'),
+       'AGENTE-AS-04';
+
+-- ---------------------------------------------------------------------------
 -- 023 - Kuntur activo, con la tool de proponer metas
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -546,10 +577,50 @@ SELECT 'las altas y bajas de Tareas son de accion: ningun agente las ve',
        AND NOT EXISTS (SELECT 1 FROM agente.agente a, agente.tools_permitidas(a.clave) n
                        WHERE n LIKE 'tar\_alta\_%' OR n LIKE 'tar\_baja\_%'),
        'ADR-A13';
+-- 030 - funciones de Tools que la empresa no usa (AGENTE-CO-08)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'propuesta acepta el tipo funcion_sin_usar',
+       pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conname = 'propuesta_tipo_ck')) LIKE '%funcion_sin_usar%',
+       '030';
+
+INSERT INTO _resultado
+SELECT 'indice para el "no me interesa" por empresa',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'propuesta_descartada_empresa_ix'),
+       '030';
 
 -- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
+-- 033 - medicion del plan y practicas (AGENTE-CO-05)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'agente.evaluacion_plan tiene RLS forzado',
+       coalesce((SELECT c.relrowsecurity AND c.relforcerowsecurity
+                   FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                  WHERE n.nspname = 'agente' AND c.relname = 'evaluacion_plan'), false),
+       '033';
+
+INSERT INTO _resultado
+SELECT 'R3: evaluacion_plan no tiene texto libre (solo ' || coalesce(string_agg(c.column_name, ', '), 'nada') || ')',
+       coalesce(bool_and(c.column_name = ANY (ARRAY['mejor', 'resultado', 'tool'])), true),
+       'un campo text nuevo en evaluacion_plan exige revisar R3'
+FROM information_schema.columns c
+WHERE c.table_schema = 'agente' AND c.data_type = 'text' AND c.table_name = 'evaluacion_plan';
+
+INSERT INTO _resultado
+SELECT 'evaluacion_plan: una por medicion y solo funciono / no_funciono / sin_datos',
+       EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'evaluacion_plan_pkey')
+       AND pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conname = 'evaluacion_plan_resultado_ck'))
+           LIKE '%sin_datos%',
+       '033';
+
+INSERT INTO _resultado
+SELECT 'la cola de curaduria acepta practicas que salen de un plan (origen plan_accion)',
+       pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conname = 'candidato_origen_ck')) LIKE '%plan_accion%',
+       '033, ADR-A4';
+
 INSERT INTO _resultado
 SELECT 'script ' || s || ' registrado en schema_version',
        EXISTS (SELECT 1 FROM agente.schema_version WHERE script = s), ''
@@ -561,7 +632,7 @@ FROM unnest(ARRAY[
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
     '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
-    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '031-plan-accion'
+    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar', '030-funciones-sin-usar', '031-plan-accion', '032-mediciones-kuntur', '033-evaluacion-plan', '034-taxonomia-verticales'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

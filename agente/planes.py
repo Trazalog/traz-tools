@@ -41,7 +41,7 @@ from .mcp_client import ClienteMCP, MCPError
 NOMBRE = "kuntur_proponer_plan"
 
 # Hasta que el PM apruebe los recursos MCP de escritura de Tareas.
-SIMULADO = True
+SIMULADO = False  # el PM aprobó las escrituras en Tareas (anexo A) el 2026-11-22
 ENTIDAD_SIMULACION = "tar.plan_accion"
 
 # Lo fijo del pedido (regla del PM, 2026-11-12): la tool NO recibe proceso.

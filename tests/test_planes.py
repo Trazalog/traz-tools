@@ -29,6 +29,14 @@ OTRA = 900502
 HOY = date(2026, 11, 23)
 
 
+@pytest.fixture(autouse=True)
+def _modo_simulado(monkeypatch):
+    """Desde el 2026-11-22 el motor crea en Tareas de verdad (SIMULADO = False). Estas
+    pruebas corren sin gateway, así que usan el modo simulado; el recorrido real está
+    probado con un cliente MCP falso y en el MI aislado (tests/security/mcp-plan-accion.hurl)."""
+    monkeypatch.setattr(planes, "SIMULADO", True)
+
+
 def _plan(**cambios) -> dict:
     p = {
         "porque": "La disponibilidad bajó a 78 % y hay 6 preventivos atrasados en las palas.",

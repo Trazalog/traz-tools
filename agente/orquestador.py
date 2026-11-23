@@ -26,7 +26,7 @@ import logging
 
 import psycopg
 
-from . import agentes, cargas, configuracion, guardian, metas, pantalla, planes, planillas, rag, simulados, sugerencias, web
+from . import agentes, cargas, configuracion, funciones, guardian, mediciones, metas, pantalla, planes, planillas, rag, simulados, sugerencias, web
 from .agentes import Agente
 from .config import Config
 from .llm import LLMError, OpenRouter
@@ -229,6 +229,10 @@ class Orquestador:
         # Proponer un plan de accion es del motor y no crea nada en Tareas (ADR-A13).
         if planes.NOMBRE in permitidas:
             tools.append(planes.DEFINICION)
+        # Pedir una medicion a Quirqui (AGENTE-CO-06): del motor, solo escribe la
+        # base del agente y el administrador la ve y la cancela (R11).
+        if mediciones.NOMBRE in permitidas:
+            tools.append(mediciones.DEFINICION)
         # Servicios simulados de la puesta en marcha (deuda tecnica): mismo
         # nombre e interfaz que tendran los reales. Si el gateway ya publica
         # uno, gana el del gateway.
@@ -265,7 +269,9 @@ class Orquestador:
             })
             for llamada in respuesta.tool_calls:
                 pedida = llamada.get("function", {}).get("name")
-                if pedida in de_config:
+                if pedida == mediciones.NOMBRE and pedida in permitidas:
+                    mensaje = await self._pedir_medicion(con, consulta, mcp, llamada)
+                elif pedida in de_config:
                     mensaje = await self._proponer_carga(con, consulta, mcp, llamada, res)
                 elif pedida == planes.NOMBRE and pedida in permitidas:
                     mensaje = await self._proponer_plan(con, consulta, mcp, llamada, res)
@@ -467,6 +473,25 @@ class Orquestador:
         return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": nombre,
                 "content": json.dumps(salida, ensure_ascii=False)[:8000]}
 
+    async def _pedir_medicion(self, con, consulta: Consulta, mcp: ClienteMCP, llamada: dict) -> dict:
+        """kuntur_pedir_medicion: valida y deja la medicion activa en la base del
+        agente (AGENTE-CO-06). Quirqui la ejecuta en el trabajo programado."""
+        fn = llamada.get("function", {})
+        try:
+            argumentos = json.loads(fn.get("arguments") or "{}")
+        except (json.JSONDecodeError, ValueError):
+            argumentos = {}
+        try:
+            salida = await mediciones.pedir(con, consulta.empr_id, argumentos)
+            salida["nota"] = ("Queda activa: el administrador la ve en 'Lo que estoy midiendo' y la puede "
+                              "cancelar. Quirqui la mide en el trabajo programado.")
+            status, error = "ok", None
+        except mediciones.MedicionInvalida as e:
+            salida, status, error = {"error": str(e)}, "error", str(e)[:300]
+        mcp.llamadas.append(LlamadaTool(mediciones.NOMBRE, argumentos, status, 0, error))
+        return {"role": "tool", "tool_call_id": llamada.get("id", ""), "name": mediciones.NOMBRE,
+                "content": json.dumps(salida, ensure_ascii=False, default=str)}
+
     def _proponer_meta(self, mcp: ClienteMCP, llamada: dict, argumentos: dict,
                        res: Resultado | None) -> dict:
         """kpi_proponer_meta: valida y deja la propuesta en la respuesta. No graba
@@ -506,7 +531,7 @@ class Orquestador:
 
         propuestas: list[dict] = []
         modulo = sugerencias.modulo_de(consulta.pantalla)
-        tools = sugerencias.REGLAS_POR_MODULO.get(modulo or "", ())
+        tools = tuple(sugerencias.REGLAS_POR_MODULO.get(modulo or "", ())) + sugerencias.REGLAS_SIEMPRE
         try:
             permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
             usar = [t for t in tools if t in permitidas]
@@ -524,7 +549,8 @@ class Orquestador:
                     res.contenidos_tools.append(res.tools_vistas[-1][1])
                     cands += sugerencias.candidatas(
                         tool, data, hoy=date.today(),
-                        dias_certificacion=self.cfg.sugerencia_dias_certificacion)
+                        dias_certificacion=self.cfg.sugerencia_dias_certificacion,
+                        usuario=consulta.usuario_nick)
                 res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
             cands.sort(key=lambda c: c.prioridad)
             propuestas = await self._guardar_propuestas(con, consulta, cands)
@@ -541,26 +567,31 @@ class Orquestador:
         await self._registrar(con, consulta, res)
         return propuestas
 
-    async def _guardar_propuestas(self, con, consulta: Consulta,
-                                  cands: list) -> list[dict]:
+    async def _guardar_propuestas(self, con, consulta: Consulta, cands: list, *,
+                                  maximo: int | None = None, silencio_dias: int | None = None,
+                                  silencio_por_empresa: bool = False) -> list[dict]:
         """Guarda las propuestas nuevas y devuelve las que hay que mostrar.
 
         No repite lo que el usuario descarto hace menos de N dias, y reusa la
-        pendiente si ya se habia propuesto lo mismo.
+        pendiente si ya se habia propuesto lo mismo. Con silencio_por_empresa
+        (funciones sin usar de Kuntur, AGENTE-CO-08), lo descartado por
+        cualquier usuario de la empresa cuenta para todos.
         """
         usuario = consulta.usuario_nick or str(consulta.usr_id or "")
+        maximo = self.cfg.sugerencias_max if maximo is None else maximo
+        silencio = self.cfg.sugerencia_silencio_dias if silencio_dias is None else silencio_dias
         salida: list[dict] = []
         async with con.cursor() as cur:
             for c in cands:
-                if len(salida) >= self.cfg.sugerencias_max:
+                if len(salida) >= maximo:
                     break
                 await cur.execute(
                     """
                     SELECT 1 FROM agente.propuesta
-                    WHERE empr_id = %s AND usuario = %s AND clave = %s
+                    WHERE empr_id = %s AND clave = %s AND (%s OR usuario = %s)
                       AND estado = 'descartada'
                       AND fec_respuesta > now() - make_interval(days => %s)
-                    """, (consulta.empr_id, usuario, c.clave, self.cfg.sugerencia_silencio_dias))
+                    """, (consulta.empr_id, c.clave, silencio_por_empresa, usuario, silencio))
                 if await cur.fetchone():
                     continue
                 await cur.execute(
@@ -577,6 +608,59 @@ class Orquestador:
                      c.detalle, json.dumps(c.accion, ensure_ascii=False)))
                 salida.append(dict(await cur.fetchone()))
         return salida
+
+    async def recomendar_funciones(self, con: psycopg.AsyncConnection,
+                                   consulta: Consulta) -> list[dict]:
+        """Hasta N funciones de Tools que la empresa no usa (AGENTE-CO-08).
+
+        Solo para Kuntur (quien llama ya verifico que es administrador, R1).
+        Reglas sobre las tools de lectura (agente/funciones.py), con el token
+        del administrador y por la lista blanca de Kuntur. No usa el modelo.
+        Queda registrada como corrida (R8), con disparador 'apertura_pantalla'.
+        """
+        t0 = time.monotonic()
+        res = Resultado(interaccion_id=str(uuid.uuid4()), respuesta="")
+        consulta.disparador = "apertura_pantalla"
+        await rag.fijar_empresa(con, consulta.empr_id)
+        if consulta.agente is None:
+            consulta.agente = await agentes.obtener(con, "kuntur")
+
+        propuestas: list[dict] = []
+        try:
+            perfil = await configuracion.perfil(con, consulta.empr_id)
+            modulos = list((perfil or {}).get("modulos") or []) if (perfil or {}).get("confirmado_por") else []
+            tools = funciones.tools_necesarias(modulos)
+            permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
+            usar = [t for t in tools if t in permitidas]
+            res.controles.append({"control": "lista_blanca", "publicadas": len(tools),
+                                  "ofrecidas": len(usar)})
+            datos: dict = {}
+            async with ClienteMCP(self.cfg, consulta.autorizacion) as mcp:
+                for tool in usar:
+                    try:
+                        datos[tool] = await mcp.llamar(tool, {})
+                    except MCPError as e:
+                        log.warning("Funciones sin usar: %s fallo: %s", tool, e)
+                        continue
+                    res.tools_vistas.append((tool, json.dumps(datos[tool], ensure_ascii=False)[:8000]))
+                    res.contenidos_tools.append(res.tools_vistas[-1][1])
+                res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
+            cands = funciones.candidatas(datos, modulos)
+            propuestas = await self._guardar_propuestas(
+                con, consulta, cands, maximo=self.cfg.funciones_max,
+                silencio_dias=self.cfg.funciones_silencio_dias, silencio_por_empresa=True)
+            res.respuesta = " · ".join(p["titulo"] for p in propuestas) or "(sin funciones para recomendar)"
+        except Exception as e:  # noqa: BLE001 - se registra y se devuelve vacio
+            res.error = f"{type(e).__name__}: {e}"
+            res.respuesta = "(sin funciones: error)"
+            propuestas = []
+
+        res.latencia_ms = int((time.monotonic() - t0) * 1000)
+        if con.info.transaction_status == psycopg.pq.TransactionStatus.INERROR:
+            await con.rollback()
+            await rag.fijar_empresa(con, consulta.empr_id)
+        await self._registrar(con, consulta, res)
+        return propuestas
 
     # ------------------------------------------------------------- registro
     async def _registrar(self, con, consulta: Consulta, res: Resultado) -> None:

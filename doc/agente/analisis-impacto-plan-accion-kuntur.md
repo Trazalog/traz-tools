@@ -8,7 +8,7 @@ Qué es: el análisis de impacto que exige el `CLAUDE.md` antes de tocar el núc
 |---|---|
 | Fecha | 2026-11-12 |
 | Tarea | AGENTE-CO-04 (plan de acción) — B-05 de `TAR-spec-modulo-tareas.md` |
-| Estado | **El PM eligió la opción B (2026-11-12).** Falta su aprobación del análisis completo y del ADR-A13 antes de programar |
+| Estado | **Aprobado por el PM el 2026-11-22** (opción B, ADR-A13 y las 5 escrituras del anexo A). El motor crea en Tareas de verdad (`agente/planes.py`, `SIMULADO = False`); quedan las verificaciones de DEV (`scripts/dev/verificaciones-dev-agentes.sql`) |
 | Leído en | `traz-tools` rama `fix/TAR-aislamiento-empresa-hora-24` (código de los módulos y `_backend/`), el 2026-11-12. **Todo lo de este documento sale de leer el código; nada se probó en vivo** |
 | Pedido del PM (2026-11-11/12) | Kuntur crea directamente el pedido **con hitos y tareas**; si el usuario no lo quiere, pasa a un estado tipo "cancelado (propuesta del agente)". **Kuntur solo usa el Proceso Estándar**: un proceso propio de un cliente (por ejemplo, el de Yudica) jamás lo genera Kuntur |
 
