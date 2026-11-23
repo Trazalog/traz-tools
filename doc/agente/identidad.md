@@ -99,7 +99,11 @@ Reglas del proceso:
 
 | Personaje | Estado | Modelo | Prompt | Semilla | Fecha | Aprobado |
 |---|---|---|---|---|---|---|
-| *(se completa en AGENTE-ID-03)* | | | | | | |
+| Kuntur, Quirqui, Faustino | base + saludo, escuchando, pensando, hablando, alerta, despedida | Qwen (Space de Hugging Face), generadas por el PM | no registrado | no registrada | 2026-11-21/22 | Sí, el PM las generó y las entregó |
+
+**Cómo se pasaron a la interfaz (2026-11-22):** los originales del PM (PNG de 2736×1520, fondo gris liso, unos 4 MB cada uno) quedan **fuera del repositorio**, en la máquina del PM (`traz-tools/doc/agentes/personajes/<personaje>/`). El script `scripts/dev/avatares-desde-png.py` (necesita Pillow) los convierte: tapa la marca de agua de abajo a la derecha, vuelve transparente el fondo gris conectado con los bordes, recorta al personaje, lo apoya abajo en un cuadrado de 512×512 y lo guarda como `assets/agentes/<clave>/<estado>.webp` (unos 40 KB cada uno). El archivo "saludando" del PM pasa a llamarse `saludo`, que es el nombre que usa el componente; la imagen sin estado queda como `base.webp`. Para regenerarlas, en una terminal local desde la raíz del repositorio: `python scripts/dev/avatares-desde-png.py <carpeta-de-los-png> assets/agentes`.
+
+Limitación conocida: el fondo gris que queda **encerrado** por el personaje (por ejemplo, entre el brazo y el casco de Faustino al despedirse) no se borra, para no comerse las franjas grises del chaleco.
 
 ## El componente (AGENTE-ID-05, hecho)
 
