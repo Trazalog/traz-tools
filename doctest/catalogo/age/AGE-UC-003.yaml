@@ -37,3 +37,8 @@ validaciones:
   - "Quirqui no hace nada por su cuenta: la propuesta dice cómo hacerlo"
   - "Decisión del PM (2026-11-22): valores por defecto confirmados (certificaciones a 30 días, una propuesta descartada no se repite por 7 días, máximo 3 propuestas); las propuestas sobre el trabajo de cada usuario llegan con la lectura de Tareas"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  test_hurl: tests/api-mcp/hurl/agentes/sugerencias.hurl
+  feature: features/age/AGE-UC-003.ver-o-descartar-el-siguiente-paso-que-propone-qu.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s05

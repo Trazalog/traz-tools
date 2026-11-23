@@ -24,3 +24,7 @@ validaciones:
   - "Ningún agente crea órdenes, pedidos ni ningún otro registro"
   - "Decisión del PM (2026-11-22): Quirqui ofrece el enlace directo a la pantalla de alta"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  feature: features/age/AGE-UC-004.pedirle-a-quirqui-que-cree-algo-y-recibir-como-h.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s02

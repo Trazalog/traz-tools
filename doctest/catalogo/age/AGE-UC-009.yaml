@@ -23,3 +23,7 @@ validaciones:
   - "El aviso está siempre visible mientras el panel está abierto"
   - "Decisión del PM (2026-11-22): el caso se valida con el texto provisorio del aviso; se reemplaza cuando llegue la revisión legal (AGENTE-LEGAL-01)"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  feature: features/age/AGE-UC-009.saber-que-se-mide-de-lo-que-hablo-con-quirqui.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s07

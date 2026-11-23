@@ -23,3 +23,8 @@ validaciones:
   - "La búsqueda nunca incluye datos de la empresa"
   - "Decisión del PM (2026-11-22): una respuesta con información de internet lo avisa en una línea: 'Esto lo saqué de internet (fuente: …). No lo validó un experto de Trazalog.'"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  test_hurl: tests/api-mcp/hurl/agentes/consulta.hurl
+  feature: features/age/AGE-UC-006.buscar-informacion-publica-con-la-fuente-citada.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s04

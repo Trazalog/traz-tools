@@ -28,3 +28,8 @@ validaciones:
   - "Un usuario que no es administrador no puede ver ni usar al Coach por ninguna vía, ni confirmar que existe"
   - "Decisión del PM (2026-11-22): 'administrador' es el nivel 1 de Dnato hasta que Dnato v3 tenga administradores por empresa"
 dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  test_hurl: tests/api-mcp/hurl/agentes/kuntur_solo_admin.hurl
+  feature: features/age/AGE-UC-008.el-coach-no-esta-disponible-para-quien-no-es-adm.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s08
