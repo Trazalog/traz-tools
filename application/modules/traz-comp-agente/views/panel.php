@@ -64,6 +64,7 @@
   <div id="agp-kuntur" hidden>
     <div id="agp-config"></div>
     <div id="agp-seguimiento"></div>
+    <div id="agp-funciones"></div>
     <div id="agp-planilla">
       <label class="agp-planilla-subir">📎 Subí tu planilla de artículos, herramientas o equipos
         <input type="file" id="agp-planilla-archivo" accept=".xlsx,.csv" hidden></label>
@@ -166,6 +167,12 @@
 #agp-globito[hidden] { display: none; }
 #agp-kuntur { padding: 6px 12px 0; font-size: 12px; max-height: 60%; overflow-y: auto; }
 #agp-kuntur[hidden] { display: none; }
+.agp-fun { border: 1px solid #e5e5e5; border-left: 3px solid #00a65a; border-radius: 3px;
+           padding: 6px 8px; margin-bottom: 6px; }
+.agp-fun strong { display: block; }
+.agp-fun .agp-fun-porque { color: #555; margin-top: 2px; }
+.agp-fun .agp-prop-acciones a { margin-right: 10px; cursor: pointer; }
+.agp-fun .agp-como { display: none; margin-top: 4px; color: #555; }
 .agp-cfg { border: 1px solid #d6e4f0; border-left: 3px solid #3c8dbc; border-radius: 3px;
            padding: 8px; margin-bottom: 6px; background: #fafcfe; }
 .agp-cfg strong { display: block; margin-bottom: 4px; }
@@ -348,7 +355,36 @@
     function cargarKuntur() {
         $.getJSON(BASE + 'kuntur_configuracion').done(pintarConfig).fail(function () { $('#agp-config').empty(); });
         cargarSeguimiento();
+        cargarFunciones();
     }
+    // Funciones de Tools que la empresa no usa (AGENTE-CO-08): hasta 3, con la
+    // evidencia que sale de las tools. "No me interesa" vale para toda la empresa.
+    function cargarFunciones() {
+        $.getJSON(BASE + 'kuntur_funciones').done(function (r) {
+            var $f = $('#agp-funciones').empty();
+            (r.funciones || []).forEach(function (x) {
+                var a = x.accion || {};
+                var ayuda = /^[A-Za-z0-9_\-\/.]+$/.test(String(a.ayuda || ''));
+                $f.append('<div class="agp-fun" data-id="' + escapar(x.propuesta_id) + '">' +
+                          '<strong>' + escapar(x.titulo) + '</strong>' + escapar(x.detalle) +
+                          '<div class="agp-fun-porque">' + escapar(a.porque) + '</div>' +
+                          '<div class="agp-prop-acciones"><a class="agp-fun-ver">Ver cómo</a><a class="agp-fun-no">No me interesa</a></div>' +
+                          '<div class="agp-como">' + escapar(a.texto) +
+                            (ayuda ? ' <a href="<?= base_url() ?>' + escapar(a.ayuda) + '" target="_blank">Ayuda</a>' : '') +
+                          '</div></div>');
+            });
+        }).fail(function () { $('#agp-funciones').empty(); });
+    }
+    $('#agp-funciones').on('click', '.agp-fun-ver', function () {
+        var $p = $(this).closest('.agp-fun');
+        $p.find('.agp-como').show(); $(this).remove();
+        kunturPost('kuntur_funcion_respuesta', { propuesta_id: $p.data('id'), estado: 'aceptada' });
+    });
+    $('#agp-funciones').on('click', '.agp-fun-no', function () {
+        var $p = $(this).closest('.agp-fun');
+        kunturPost('kuntur_funcion_respuesta', { propuesta_id: $p.data('id'), estado: 'descartada' });
+        $p.slideUp(150, function () { $p.remove(); });
+    });
     function listaModulos(c) {
         var n = { almacenes: 'Almacenes', mantenimiento: 'Mantenimiento', herramientas: 'Herramientas', tareas: 'Tareas' };
         return (c || []).map(function (m) { return n[m] || m; }).join(', ');
