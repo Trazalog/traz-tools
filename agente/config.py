@@ -62,7 +62,7 @@ class Config:
     # Tiene que coincidir con la dimension del DDL (vector(1024) en db/agente).
     dim_embeddings: int = field(default_factory=lambda: _env_int("AGENTE_DIM_EMBEDDINGS", 1024))
     temperatura: float = field(default_factory=lambda: _env_float("AGENTE_TEMPERATURA", 0.2))
-    max_tokens: int = field(default_factory=lambda: _env_int("AGENTE_MAX_TOKENS", 1500))
+    max_tokens: int = field(default_factory=lambda: _env_int("AGENTE_MAX_TOKENS", 4000))
 
     # --- MCP ----------------------------------------------------------------
     # "apim" = camino real: JSON-RPC MCP contra el gateway, con el Bearer del
