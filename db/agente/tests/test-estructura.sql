@@ -563,6 +563,35 @@ SELECT 'indice para el "no me interesa" por empresa',
 -- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
+-- 033 - medicion del plan y practicas (AGENTE-CO-05)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'agente.evaluacion_plan tiene RLS forzado',
+       coalesce((SELECT c.relrowsecurity AND c.relforcerowsecurity
+                   FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                  WHERE n.nspname = 'agente' AND c.relname = 'evaluacion_plan'), false),
+       '033';
+
+INSERT INTO _resultado
+SELECT 'R3: evaluacion_plan no tiene texto libre (solo ' || coalesce(string_agg(c.column_name, ', '), 'nada') || ')',
+       coalesce(bool_and(c.column_name = ANY (ARRAY['mejor', 'resultado', 'tool'])), true),
+       'un campo text nuevo en evaluacion_plan exige revisar R3'
+FROM information_schema.columns c
+WHERE c.table_schema = 'agente' AND c.data_type = 'text' AND c.table_name = 'evaluacion_plan';
+
+INSERT INTO _resultado
+SELECT 'evaluacion_plan: una por medicion y solo funciono / no_funciono / sin_datos',
+       EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'evaluacion_plan_pkey')
+       AND pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conname = 'evaluacion_plan_resultado_ck'))
+           LIKE '%sin_datos%',
+       '033';
+
+INSERT INTO _resultado
+SELECT 'la cola de curaduria acepta practicas que salen de un plan (origen plan_accion)',
+       pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conname = 'candidato_origen_ck')) LIKE '%plan_accion%',
+       '033, ADR-A4';
+
 INSERT INTO _resultado
 SELECT 'script ' || s || ' registrado en schema_version',
        EXISTS (SELECT 1 FROM agente.schema_version WHERE script = s), ''
@@ -574,7 +603,7 @@ FROM unnest(ARRAY[
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
     '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
-    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar', '030-funciones-sin-usar', '032-mediciones-kuntur', '034-taxonomia-verticales'
+    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar', '030-funciones-sin-usar', '032-mediciones-kuntur', '033-evaluacion-plan', '034-taxonomia-verticales'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

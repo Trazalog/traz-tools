@@ -35,7 +35,7 @@ import uuid
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
-from . import agentes, credenciales, rag
+from . import agentes, credenciales, evaluacion, rag
 from .config import Config, cargar
 from .mcp_client import ClienteMCP, MCPError
 
@@ -292,8 +292,22 @@ async def medir_empresa(con, cfg: Config, empr_id: int, autorizacion: str,
                         filas = [a for a in (avance_de_tarea(t, hoy) for t in tareas_del_pedido(ped)) if a]
                         resumen["avances"] += await _guardar_avance(con, empr_id, int(m["petr_id"]), filas)
                 res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
+        # Planes cuya medicion termino: evaluar, avisar y proponer practica (AGENTE-CO-05).
+        if await evaluacion.por_evaluar(con) or await evaluacion.sin_avisar(con):
+            kuntur = await agentes.obtener(con, "kuntur")
+            async with ClienteMCP(cfg, autorizacion) as mcp_ev:
+                async def leer_pedido(petr_id: int):
+                    if TOOL_PEDIDO not in permitidas:
+                        return None
+                    return await mcp_ev.llamar(TOOL_PEDIDO, {"petr_id": petr_id})
+                ev = await evaluacion.evaluar_empresa(con, cfg, empr_id, autorizacion,
+                                                     leer_pedido=leer_pedido, emisor=kuntur.nombre)
+                res.tools_llamadas += [ll.a_dict() for ll in mcp_ev.llamadas]
+            resumen["planes_evaluados"] = ev["evaluadas"]
+            res.controles.append({"control": "evaluacion_planes", **ev})
         res.respuesta = (f"{resumen['medidas']} medición(es), {resumen['avances']} avance(s) de plan, "
-                         f"{resumen['vencidas']} vencida(s), {resumen['errores']} con error")
+                         f"{resumen['vencidas']} vencida(s), {resumen['errores']} con error"
+                         + (f", {resumen['planes_evaluados']} plan(es) evaluado(s)" if resumen.get("planes_evaluados") else ""))
         res.controles.append({"control": "mediciones", **resumen})
         await con.commit()
         await rag.fijar_empresa(con, empr_id)
@@ -346,7 +360,9 @@ DEFINICION = {
                               "description": "La tool de lectura que da el número."},
                 "parametros": {"type": "object", "description": (
                     "Parámetros de esa tool: kpi_get_valor {kpi}; tar_get_tareas {hito_id, estado}; "
-                    "tar_get_pedidos {buscar, todos}; KPI de Mantenimiento {equipo_id}.")},
+                    "tar_get_pedidos {buscar, todos}; KPI de Mantenimiento {equipo_id}. "
+                    "Para un plan, sumá mejor: 'subir' o 'bajar' (hacia dónde mejora el número); "
+                    "si no lo decís, se usa el sentido habitual del indicador.")},
                 "frecuencia": {"type": "string", "enum": list(FRECUENCIAS)},
                 "hasta": {"type": "string", "description": f"Fecha final, AAAA-MM-DD, hasta {MAX_DIAS} días."},
                 "alcance": {"type": "string", "enum": list(ALCANCES),
@@ -384,8 +400,15 @@ def validar(argumentos: dict, *, hoy: date, medibles: frozenset[str] | set[str])
     parametros = argumentos.get("parametros") or {}
     if not isinstance(parametros, dict):
         raise MedicionInvalida("parametros tiene que ser un objeto")
+    mejor = parametros.get("mejor")
+    if mejor not in (None, "", "subir", "bajar"):
+        raise MedicionInvalida("mejor tiene que ser subir o bajar")
     parametros = {k: v for k, v in parametros.items()
                   if k in PARAMETROS[ind] and isinstance(v, (str, int, float, bool))}
+    if mejor:
+        # Hacia donde mejora el indicador: lo usa la evaluacion del plan (AGENTE-CO-05).
+        # No se le pasa a la tool (argumentos_de filtra por PARAMETROS).
+        parametros["mejor"] = mejor
     petr_id = argumentos.get("petr_id")
     if petr_id not in (None, ""):
         try:
@@ -461,7 +484,17 @@ async def listar(con) -> list[dict]:
                               count(*) FILTER (WHERE resultado = 'atrasada') AS atrasadas
                          FROM agente.avance_plan WHERE petr_id = %s""", (m["petr_id"],))
                 avance = await cur.fetchone()
+            await cur.execute(
+                """SELECT resultado, valor_inicial, fecha_inicial, valor_final, fecha_final, tool
+                     FROM agente.evaluacion_plan WHERE medicion_id = %s""", (m["medicion_id"],))
+            e = await cur.fetchone()
+            evaluado = None if not e else {
+                "resultado": e["resultado"], "valor_inicial": _num(e["valor_inicial"]),
+                "fecha_inicial": e["fecha_inicial"].isoformat() if e["fecha_inicial"] else None,
+                "valor_final": _num(e["valor_final"]),
+                "fecha_final": e["fecha_final"].isoformat() if e["fecha_final"] else None, "tool": e["tool"]}
             salida.append({
+                "evaluacion": evaluado,
                 "medicion_id": m["medicion_id"], "indicador": m["indicador"], "parametros": m["parametros"],
                 "alcance": m["alcance"], "alcance_id": m["alcance_id"], "frecuencia": m["frecuencia"],
                 "desde": m["desde"].isoformat(), "hasta": m["hasta"].isoformat(), "petr_id": m["petr_id"],

@@ -50,6 +50,8 @@ Con `kuntur_pedir_medicion` le pedís a Quirqui que mida un número cada cierto 
 3. **Solo números de lectura:** el valor de un indicador, las tareas atrasadas, las tareas de un hito, los pedidos de trabajo o los indicadores de Mantenimiento. No pidas medir conversaciones ni personas por lo que dicen.
 4. **No dupliques:** si ya hay una igual activa, la herramienta te lo dice; no la vuelvas a pedir.
 5. Contale al administrador qué vas a medir, cada cuánto y hasta cuándo, en una línea.
+6. **Para un plan, decí hacia dónde mejora el número** con `parametros.mejor` (`subir` o `bajar`): las tareas atrasadas y las fallas mejoran si bajan, la disponibilidad si sube. Cuando termina la medición, el sistema compara el primer valor con el último, le avisa al administrador si el plan funcionó y, si funcionó, lo propone como práctica para que la revise un experto (sin datos de la empresa).
+7. **Si el plan no funcionó, decilo tal cual** con los dos números que ves en «Planes que terminaron», sin culpar a nadie, y proponé revisar la causa: otra causa probable o un ajuste del plan. Si no hubo datos suficientes, ofrecé medir de nuevo.
 
 ## Puesta en marcha de la empresa
 

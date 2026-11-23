@@ -61,3 +61,26 @@ La fecha planificada es el fin planificado y, si no tiene, la fecha asignada: el
 | 5 | Trabajo diario aparte (`python -m agente.mediciones`, a las 6), no dentro del monitoreo | El monitoreo corre cada hora; medir una vez por día alcanza y no repite llamadas | 🟢 |
 | 6 | Clave única por tarea en `agente.avance_plan` (`032`) | La tabla de `019` no tenía clave natural y el trabajo tiene que poder refrescar sin duplicar | 🟢 |
 | 7 | Tool `kuntur_pedir_medicion` de clase `generacion`, como `kpi_proponer_meta` | No lee datos de la empresa ni cambia nada en Tools | 🟢 |
+
+---
+
+## Medición del plan y prácticas (AGENTE-CO-05)
+
+Cuando la medición de un plan (una medición con `petr_id`) pasa su fecha final y queda `vencida`, el mismo trabajo diario (`python -m agente.mediciones`) hace tres cosas, en `agente/evaluacion.py`:
+
+1. **Decide si funcionó, con una regla:** compara el **primer** valor medido con el **último** (los días sin valor no cuentan). Si mejoró en el sentido del indicador, **funcionó**; igual o peor, **no funcionó**; con menos de dos valores, **sin datos suficientes**. Queda una fila en `agente.evaluacion_plan` (script `033`), **una sola vez** por medición.
+2. **Le avisa al administrador** por los avisos de Tools, firmado por Kuntur, con los dos números, sus fechas y la tool de la que salieron (R4). Si el aviso no sale (API caída o sin `AGENTE_AVISOS_URL`), se reintenta en la próxima corrida sin volver a evaluar; la clave de duplicado es una por medición.
+3. **Si funcionó, propone una práctica** en la cola de curaduría (`agente.candidato`, origen `plan_accion`): el indicador, las etapas (hitos) y las tareas del pedido leídas con `tar_get_pedido`, **sin cifras y sin la empresa ni el pedido**. La aprueba o la descarta un curador (ADR-A4).
+
+El panel muestra los planes que terminaron en la pestaña Kuntur, debajo de «Lo que estoy midiendo»: ✅ funcionó, ⚠️ no movió el indicador o ❔ sin datos suficientes, con los dos valores.
+
+### Decisiones de AGENTE-CO-05
+
+| # | Decisión | Por qué | Revisión |
+|---|---|---|---|
+| 8 | **Hacia dónde mejora** un indicador: lo dice Kuntur en `parametros.mejor` (`subir` o `bajar`); si no lo dice, el sentido habitual (tareas atrasadas, fallas y tiempo de reparación mejoran si **bajan**; disponibilidad y tiempo entre fallas si **suben**); si tampoco se conoce (un KPI del Tablero), **subir** | Sin el sentido no se puede decir si funcionó, y casi todos los KPI del Tablero son "más es mejor". Para uno que no lo sea, Kuntur tiene que decirlo al pedir la medición (regla en `prompts/kuntur.md`) | 🟡 |
+| 9 | **Funcionó = mejoró estrictamente** entre el primer y el último valor; igual o peor es "no funcionó". No hay umbral mínimo de mejora ni tendencia | Es la regla más simple de explicar al administrador y no inventa un porcentaje que nadie definió. Si después hace falta un umbral (por ejemplo, la meta del pedido de TAR-METAS), se agrega a la regla | 🟡 |
+| 10 | Se evalúan solo las mediciones **vencidas** de un plan; una cancelada por el administrador no se evalúa | Cancelar es decir "esto no me interesa": no corresponde avisar ni proponer práctica | 🟢 |
+| 11 | El aviso va a los **suscriptos del tipo** `plan_accion_resultado` (sin destinatario puntual) | La medición no guarda qué administrador aceptó el plan, y avisar a todos los administradores espera Dnato v3 (D-85). Hay que suscribir al administrador a ese tipo de aviso en Tools | 🟡 |
+| 12 | La práctica candidata lleva **etapas y tareas del pedido sin números**, la industria de la empresa y nada más; los nombres pueden conservar letras de un código (por ejemplo "pala P-") | Es conocimiento compartido (ADR-A4) y lo revisa un curador antes de que llegue a nadie; sacar números es la limpieza que se puede hacer con una regla | 🟡 el curador tiene que mirar que no queden nombres propios |
+| 13 | Origen nuevo `plan_accion` en la cola de curaduría (`033`) en lugar de usar `patron_operativo` | Que el curador sepa que viene de un plan medido, no de un patrón observado en charlas | 🟢 |

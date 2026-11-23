@@ -143,6 +143,14 @@ SET LOCAL agente.empr_id = :'EMPRESA_B';
 INSERT INTO agente.medicion_pedida (empr_id, indicador, alcance, alcance_id, frecuencia, hasta)
 VALUES (:EMPRESA_B, 'medicion_de_b', 'persona', 'tecnico-b', 'semanal', current_date + 30);
 
+-- Evaluacion del plan (033): una por empresa, sobre su medicion.
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.evaluacion_plan (medicion_id, empr_id, petr_id, resultado)
+SELECT medicion_id, :EMPRESA_A, 101, 'sin_datos' FROM agente.medicion_pedida WHERE indicador = 'medicion_de_a';
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.evaluacion_plan (medicion_id, empr_id, petr_id, resultado)
+SELECT medicion_id, :EMPRESA_B, 202, 'sin_datos' FROM agente.medicion_pedida WHERE indicador = 'medicion_de_b';
+
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
 
@@ -207,6 +215,12 @@ SELECT 'medicion_pedida: con contexto A, las de B (incluida la de una persona) s
        NOT EXISTS (SELECT 1 FROM agente.medicion_pedida WHERE indicador = 'medicion_de_b')
        AND EXISTS (SELECT 1 FROM agente.medicion_pedida WHERE indicador = 'medicion_de_a'),
        '019';
+
+INSERT INTO _resultado
+SELECT 'evaluacion_plan: con contexto A, la del plan de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.evaluacion_plan WHERE petr_id = 202)
+       AND EXISTS (SELECT 1 FROM agente.evaluacion_plan WHERE petr_id = 101),
+       '033';
 
 INSERT INTO _resultado
 SELECT 'propuesta: con contexto A, las de B son invisibles',
