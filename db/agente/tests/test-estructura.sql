@@ -466,6 +466,22 @@ SELECT 'Kuntur y Quirqui alcanzan las cuatro tar_get_*; Faustino ninguna',
        '011 + 029';
 
 -- ---------------------------------------------------------------------------
+-- 032 - Kuntur pide mediciones a Quirqui (AGENTE-CO-06)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'kuntur_pedir_medicion esta catalogada como generacion y solo la alcanza Kuntur',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = 'kuntur_pedir_medicion' AND clase = 'generacion')
+       AND 'kuntur_pedir_medicion' IN (SELECT agente.tools_permitidas('kuntur'))
+       AND 'kuntur_pedir_medicion' NOT IN (SELECT agente.tools_permitidas('quirqui'))
+       AND 'kuntur_pedir_medicion' NOT IN (SELECT agente.tools_permitidas('faustino')),
+       'AGENTE-CO-06';
+
+INSERT INTO _resultado
+SELECT 'el avance de un plan tiene una fila por tarea (avance_plan_tarea_uk)',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'avance_plan_tarea_uk'),
+       'AGENTE-AS-04';
+
+-- ---------------------------------------------------------------------------
 -- 023 - Kuntur activo, con la tool de proponer metas
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -558,7 +574,7 @@ FROM unnest(ARRAY[
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
     '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
-    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '030-funciones-sin-usar', '034-taxonomia-verticales'
+    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar', '030-funciones-sin-usar', '032-mediciones-kuntur', '034-taxonomia-verticales'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

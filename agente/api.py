@@ -39,7 +39,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from . import agentes, cargas, configuracion, entrevistador, planillas, rag
+from . import agentes, cargas, configuracion, entrevistador, mediciones, planillas, rag
 from .config import Config, cargar
 from .llm import OpenRouter
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
@@ -371,6 +371,31 @@ async def kuntur_avisos_silenciar(
                                          silenciado=entrada.silenciado):
         raise HTTPException(404, "Kuntur no avisó nada de esa meta")
     return {"objetivo_id": entrada.objetivo_id, "silenciado": entrada.silenciado}
+
+
+@app.get("/kuntur/mediciones")
+async def kuntur_mediciones(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """Lo que Kuntur le pidio medir a Quirqui en esta empresa (R11): activas y
+    terminadas, con sus ultimos resultados y el avance del plan (AGENTE-CO-06)."""
+    await _admin_de_kuntur(con, ident)
+    return {"mediciones": await mediciones.listar(con)}
+
+
+@app.post("/kuntur/mediciones/{medicion_id}/cancelar")
+async def kuntur_mediciones_cancelar(
+    medicion_id: int,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El administrador cancela una medicion (R11). Solo las de su empresa (RLS)."""
+    await _admin_de_kuntur(con, ident)
+    if not await mediciones.cancelar(con, medicion_id):
+        raise HTTPException(404, "No hay una medición activa con ese número")
+    await con.commit()
+    return {"medicion_id": medicion_id, "estado": "cancelada"}
 
 
 class PlanillaIn(BaseModel):

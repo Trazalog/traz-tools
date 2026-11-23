@@ -198,6 +198,22 @@ Programado (crontab del usuario del orquestador, una vez por día a las 8):
 
 Cada empresa queda como una corrida (`disparador = 'desvio_kpi'`, canal `scheduler`), con el resumen y las metas en desvío en `controles`.
 
+**Mediciones que Kuntur le pide a Quirqui (desde `032`).** Kuntur pide con `kuntur_pedir_medicion` que se mida un número cada cierto tiempo (siempre después de un plan aceptado). Otro trabajo programado las ejecuta con el token de máquina de la empresa y la lista blanca de Quirqui: guarda el valor y la tool de la que salió en `agente.medicion_resultado` y, si la medición es de un plan, el avance de cada tarea en `agente.avance_plan`. El administrador ve y cancela lo pedido en la pestaña Kuntur («Lo que estoy midiendo»). Detalle: [`mediciones.md`](mediciones.md).
+
+Correrlo a mano (**terminal del servidor del orquestador**, parado en el repo):
+
+```
+.venv-agente/bin/python -m agente.mediciones
+```
+
+Programado (crontab del usuario del orquestador, una vez por día a las 6, antes del seguimiento de metas):
+
+```
+0 6 * * * cd /ruta/a/traz-tools && .venv-agente/bin/python -m agente.mediciones >> /var/log/agente-mediciones.log 2>&1
+```
+
+Cada empresa queda como una corrida (`disparador = 'medicion_pedida'`, canal `scheduler`).
+
 ### La industria de cada empresa (ADR-A11)
 
 El conocimiento está marcado por industria: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Una empresa con la industria declarada recibe lo de su industria y lo general; **sin declarar, recibe todo**, etiquetado. La industria la carga Trazalog o, desde `024`, la confirma el administrador en la entrevista de Kuntur.
