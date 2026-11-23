@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asistentes de IA · Trazalog Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<!--
+  Generado por doctest/generators/build-ayudas.ts — no editar a mano.
+  Contenido: ayudas/src/age/manual_agentes.html
+  Casos de uso que cubre: AGE-UC-001 a AGE-UC-009
+  Versión 1.0
+  (Sin fecha de generación a propósito: estampar el día hacía que regenerar el sitio produjera un
+  diff en TODOS los manuales aunque el contenido fuera idéntico, y eso terminaba en conflictos de
+  merge en cada PR. La versión sale del caso de uso, que es lo que de verdad cambia.)
+-->
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">T</div>
+        <span class="brand-name">TRAZA<span>LOG</span> TOOLS</span>
+      </div>
+      <div class="brand-sub">Manual · Agentes</div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-item" href="index.html" style="color:var(--amber);border-left-color:transparent">
+        <span class="nav-num" style="background:rgba(245,166,35,.15);color:var(--amber)">&#8592;</span>
+        Volver al inicio
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">En este manual</div>
+      <a class="nav-item" href="#s01"><span class="nav-num">01</span> Quiénes son Quirqui y Kuntur</a>
+      <a class="nav-item" href="#s02"><span class="nav-num">02</span> Preguntarle a Quirqui sobre la pantalla donde estás</a>
+      <a class="nav-item" href="#s03"><span class="nav-num">03</span> Preguntar por los datos de tu empresa</a>
+      <a class="nav-item" href="#s04"><span class="nav-num">04</span> Información de internet</a>
+      <a class="nav-item" href="#s05"><span class="nav-num">05</span> El siguiente paso que te propone Quirqui</a>
+      <a class="nav-item" href="#s06"><span class="nav-num">06</span> Calificar una respuesta</a>
+      <a class="nav-item" href="#s07"><span class="nav-num">07</span> Qué se mide de lo que hablás con Quirqui</a>
+      <a class="nav-item" href="#s08"><span class="nav-num">08</span> Kuntur, para los administradores</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Otros manuales</div>
+      <a class="nav-item" href="manual_configuracion_inicial.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Configuración inicial</a>
+      <a class="nav-item" href="manual_alta_equipos_componentes.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Alta de equipos</a>
+      <a class="nav-item" href="manual_mantenimiento_correrctivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento correctivo</a>
+      <a class="nav-item" href="manual_mantenimeinto_preventivo.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Mantenimiento preventivo</a>
+      <a class="nav-item" href="manual_almacen_mantenimiento.html" style="color:var(--teal)"><span class="nav-num" style="background:rgba(13,115,119,.15);color:var(--teal)">›</span> Almacén</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title">Manual de Usuario</span>
+        <span class="topbar-sub">· Agentes</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a href="index.html" class="btn-home">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 7l6-6 6 6M2.5 5.5V13h3.5V9h2v4h3.5V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Volver al inicio
+        </a>
+        <span class="doc-code">AGE.001</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <section id="cover" class="section visible">
+        <div class="cover-tag">📋 Instructivo de procedimientos</div>
+        <div class="cover-title">Quirqui y Kuntur</div>
+        <div class="cover-sub">Cómo preguntarle a Quirqui en cualquier pantalla, cómo calificar sus respuestas, qué se mide y qué hace Kuntur para los administradores.</div>
+        <div class="cover-meta">
+          <div class="cover-pill"><strong>AGE.001</strong></div>
+          <div class="cover-pill">Versión <strong>1.0</strong></div>
+          <div class="cover-pill">Módulo <strong>Agentes</strong></div>
+          <div class="cover-pill"><strong>Trazalog Tools</strong></div>
+        </div>
+      </section>
+
+<section id="s01" class="section">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-meta">
+      <h2>Quiénes son Quirqui y Kuntur</h2>
+      <p>Dos asistentes, cada uno para algo distinto.</p>
+    </div>
+  </div>
+
+  <p>
+    <strong>Quirqui</strong> es el asistente de todo el equipo. Está en todas las pantallas de Tools:
+    le preguntás qué se hace en la pantalla donde estás, cómo cargar algo o qué dicen los datos de tu
+    empresa, y te contesta con lo que sabe y con lo que ve en el sistema.
+  </p>
+  <p>
+    <strong>Kuntur</strong> es el asistente del administrador de la empresa. Ayuda a poner en marcha
+    la empresa, propone metas y avisa cuando una meta está en riesgo. Solo lo ve el administrador
+    (sección <a href="#s08">08</a>).
+  </p>
+
+  <div class="callout">
+    <strong>Los dos te dicen cómo hacer las cosas, pero no las hacen por vos.</strong> Las decisiones
+    y las cargas las hacés vos (salvo cuando Kuntur te muestra algo para cargar y vos tocás
+    <em>Cargar</em>).
+  </div>
+</section>
+
+<section id="s02" class="section">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-meta">
+      <h2>Preguntarle a Quirqui sobre la pantalla donde estás</h2>
+      <p>El botón de abajo a la derecha y el enlace directo a cada pantalla.</p>
+    </div>
+  </div>
+
+  <ol>
+    <li>Tocá el botón con la cara de Quirqui, <strong>abajo a la derecha</strong>. Se abre el panel.</li>
+    <li>Escribí tu pregunta, por ejemplo: <em>"¿qué tengo que hacer en esta pantalla?"</em>.</li>
+    <li>Quirqui sabe en qué pantalla estás y te contesta sobre esa pantalla.</li>
+  </ol>
+
+  <p>
+    El panel lo abrís vos: no se abre solo. La primera vez que entrás a Tools vas a ver un globito
+    que dice <em>"¿Te ayudo con esta pantalla?"</em>; si lo tocás, se abre el panel.
+  </p>
+
+  <p>
+    Si le pedís que cree algo (<em>"dame de alta un artículo"</em>), Quirqui te explica cómo hacerlo
+    y te deja un enlace <strong>Abrir la pantalla</strong> que te lleva directo a donde se carga.
+  </p>
+
+  <div class="callout">
+    Si estás en una pantalla que Quirqui todavía no conoce, te lo dice. Pasa con las pantallas que
+    se van sumando a Tools: cuando se carga su ayuda, Quirqui ya las explica.
+  </div>
+</section>
+
+<section id="s03" class="section">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-meta">
+      <h2>Preguntar por los datos de tu empresa</h2>
+      <p>Stock, equipos, órdenes, herramientas: siempre con de dónde salió el dato.</p>
+    </div>
+  </div>
+
+  <p>
+    Podés preguntarle por los datos de tu empresa: <em>"¿cuánto stock queda de guantes?"</em>,
+    <em>"¿qué herramientas tienen la certificación por vencer?"</em>. Quirqui consulta el sistema y
+    al final de la respuesta te dice de dónde salió cada dato, por ejemplo
+    <em>"según el stock de hoy del depósito Central"</em>.
+  </p>
+  <p>Solo ve los datos de tu empresa. Nunca los de otra.</p>
+
+  <p>
+    <strong>Quirqui no inventa números.</strong> Si para responder necesita una cifra que no tiene
+    confirmada, en lugar de adivinar te contesta:
+  </p>
+  <div class="callout">
+    "No tengo ese dato confirmado. ¿Querés que lo busque en los datos de tu empresa o en internet?"
+  </div>
+</section>
+
+<section id="s04" class="section">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-meta">
+      <h2>Información de internet</h2>
+      <p>Normas y datos públicos, siempre con la fuente.</p>
+    </div>
+  </div>
+
+  <p>
+    Cuando preguntás algo público que Quirqui no tiene registrado (una norma, una ficha de
+    fabricante), lo busca en internet. En ese caso te lo avisa y te deja la fuente:
+  </p>
+  <div class="callout">
+    "Esto lo saqué de internet (fuente: …). No lo validó un experto de Trazalog."
+  </div>
+  <p>Para buscar en internet, Quirqui nunca usa datos de tu empresa: ni nombres, ni códigos, ni cifras.</p>
+</section>
+
+<section id="s05" class="section">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-meta">
+      <h2>El siguiente paso que te propone Quirqui</h2>
+      <p>Propuestas sin que se las pidas: verlas o descartarlas.</p>
+    </div>
+  </div>
+
+  <p>
+    Al abrir el panel, Quirqui puede mostrarte hasta <strong>3 propuestas</strong> de lo que
+    conviene hacer, por ejemplo una certificación que vence en los próximos 30 días o un artículo
+    debajo del punto de pedido.
+  </p>
+  <ul>
+    <li><strong>Ver cómo</strong>: te explica cómo hacerlo y, si hay, te deja la ayuda.</li>
+    <li><strong>Descartar</strong>: la saca. Una propuesta descartada no vuelve a aparecer por 7 días.</li>
+  </ul>
+  <p>Por ahora las propuestas son sobre la empresa. Las propuestas sobre tus propias tareas llegan más adelante.</p>
+</section>
+
+<section id="s06" class="section">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-meta">
+      <h2>Calificar una respuesta</h2>
+      <p>👍 o 👎, y por qué no te sirvió.</p>
+    </div>
+  </div>
+
+  <p>Debajo de cada respuesta hay dos botones: 👍 si te sirvió y 👎 si no.</p>
+  <p>
+    Si tocás 👎, podés decirnos qué pasó con un toque: <strong>No era eso</strong>,
+    <strong>Dato equivocado</strong> o <strong>No se entiende</strong>, y escribir algo más si
+    querés. Es opcional, pero es lo que usamos para corregir a Quirqui.
+  </p>
+  <p>Si cambiás de opinión, tocá el otro botón: queda la última calificación.</p>
+</section>
+
+<section id="s07" class="section">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-meta">
+      <h2>Qué se mide de lo que hablás con Quirqui</h2>
+      <p>El aviso fijo del panel.</p>
+    </div>
+  </div>
+
+  <p>
+    Arriba del panel hay un aviso que siempre está: <em>"Lo que hables con Quirqui se usa para
+    medir indicadores de tu empresa."</em> Tocá <strong>¿Qué se mide?</strong> para ver el detalle:
+  </p>
+  <div class="callout">
+    Se registran tus consultas y las respuestas para mejorar el asistente. El administrador de tu
+    empresa puede pedir indicadores de cumplimiento sobre el trabajo que cargás en Trazalog —por
+    ejemplo, tareas cerradas en plazo—. Lo que conversás con Quirqui no se le muestra.
+  </div>
+  <p><em>Este texto es provisorio: puede cambiar después de una revisión legal.</em></p>
+</section>
+
+<section id="s08" class="section">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-meta">
+      <h2>Kuntur, para los administradores</h2>
+      <p>Solo lo ve quien administra la empresa.</p>
+    </div>
+  </div>
+
+  <p>
+    Si sos administrador, en el panel vas a ver dos pestañas: <strong>Quirqui</strong> y
+    <strong>Kuntur</strong>. Kuntur te acompaña en la puesta en marcha de la empresa, te propone
+    metas (las cargás vos) y te avisa cuando una meta está en riesgo.
+  </p>
+  <p>
+    Si no sos administrador, Kuntur no aparece: ni en el panel ni de ninguna otra forma. Hoy
+    "administrador" es el nivel de administrador de tu usuario; más adelante va a poder ser
+    distinto para cada empresa.
+  </p>
+</section>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script src="manual.js"></script>
+
+</body>
+</html>
