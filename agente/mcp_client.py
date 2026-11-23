@@ -19,8 +19,10 @@ como parametro. Sale del token, y el token viene del usuario.
 from __future__ import annotations
 
 import json
+import string
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import quote, urlencode
 
 import httpx
 
@@ -183,7 +185,18 @@ class ClienteMCP:
         ruta = _RUTAS_DEV.get(nombre)
         if ruta is None:
             raise MCPError(nombre, "tool desconocida en modo 'mi'")
-        url = self.cfg.mcp_url.rstrip("/") + ruta.format(**argumentos)
+        # Los argumentos que no van en la ruta salen como parametros de la URL
+        # (por ejemplo, tar_get_tareas?hito_id=3). Vacios o nulos no se mandan.
+        en_ruta = {f for _, f, _, _ in string.Formatter().parse(ruta) if f}
+        faltan = en_ruta - set(argumentos)
+        if faltan:
+            raise MCPError(nombre, f"falta {', '.join(sorted(faltan))}")
+        resto = {k: (str(v).lower() if isinstance(v, bool) else str(v))
+                 for k, v in argumentos.items() if k not in en_ruta and v not in (None, "")}
+        url = self.cfg.mcp_url.rstrip("/") + ruta.format(
+            **{k: quote(str(argumentos[k]), safe="") for k in en_ruta})
+        if resto:
+            url += "?" + urlencode(resto)
         try:
             r = await self.cliente.get(url, headers=self._headers)
         except httpx.HTTPError as e:
@@ -243,6 +256,11 @@ _RUTAS_DEV = {
     "alm_get_entregas": "/alm/entregas",
     "alm_get_vencimientos": "/alm/vencimientos",
     "alm_get_pedidos_materiales": "/alm/pedidos",
+    # Tareas (AGENTE-TAR-01)
+    "tar_get_pedidos": "/tar/pedidos",
+    "tar_get_pedido": "/tar/pedido/{petr_id}",
+    "tar_get_tareas": "/tar/tareas",
+    "tar_get_atrasadas": "/tar/atrasadas",
 }
 
 
@@ -295,4 +313,19 @@ _TOOLS_DEV = [
           "Articulos vencidos o proximos a vencer. Importante para no entregar material fuera de fecha."),
     _tool("alm_get_pedidos_materiales",
           "Pedidos de materiales: que se pidio, su estado y para que obra o equipo."),
+    # --- Tareas ----------------------------------------------------------
+    _tool("tar_get_pedidos",
+          "Pedidos de trabajo de la empresa (sin los finalizados): codigo, estado, cliente y fechas.",
+          {"buscar": {"type": "string", "description": "Texto a buscar (cliente, codigo, estado)"},
+           "todos": {"type": "boolean", "description": "true para incluir los finalizados"}}),
+    _tool("tar_get_pedido",
+          "Un pedido de trabajo con sus hitos y las tareas de cada hito: estado, responsable y fechas.",
+          {"petr_id": {"type": "string", "description": "Numero del pedido"}}, ["petr_id"]),
+    _tool("tar_get_tareas",
+          "Tareas planificadas de la empresa o de un hito, con estado, responsable y fechas; "
+          "cuenta las que no tienen responsable.",
+          {"hito_id": {"type": "string", "description": "Solo las de este hito"},
+           "estado": {"type": "string", "description": "creada, planificada, iniciada o finalizada"}}),
+    _tool("tar_get_atrasadas",
+          "Tareas no finalizadas cuyo vencimiento ya paso, de la mas atrasada a la menos, con los dias de atraso."),
 ]

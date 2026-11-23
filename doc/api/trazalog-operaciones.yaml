@@ -61,6 +61,8 @@ tags:
     description: La empresa con la que está conectada la sesión
   - name: Indicadores
     description: KPIs del motor de Tools, su historia diaria, las metas de la empresa y los desvíos
+  - name: Tareas
+    description: Pedidos de trabajo, hitos y tareas planificadas del módulo de Tareas (solo lectura)
 
 paths:
 
@@ -1657,6 +1659,146 @@ paths:
       responses:
         "200":
           description: "`desvios.desvio[]`"
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # --- Tareas (AGENTE-TAR-01): solo lectura. La empresa sale del token.
+  /mcp/tar/pedidos:
+    get:
+      operationId: tar_get_pedidos
+      summary: Pedidos de trabajo de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Los pedidos de trabajo del módulo de Tareas de la empresa, con código,
+        descripción, estado, cliente, tipo de trabajo y fechas de inicio y de
+        entrega. Por defecto **no trae los finalizados**. Devuelve hasta 200.
+
+        **Cuándo usar esta operación:**
+        - «¿Qué trabajos tenemos abiertos?»
+        - Para buscar un pedido por cliente, código o estado antes de pedir su detalle con `tar_get_pedido`.
+      tags:
+        - Tareas
+      parameters:
+        - name: buscar
+          in: query
+          required: false
+          description: Texto a buscar en cliente, código, estado, número, dirección o tipo de trabajo (hasta 100 caracteres).
+          schema:
+            type: string
+            maxLength: 100
+        - name: todos
+          in: query
+          required: false
+          description: "`true` para incluir los pedidos finalizados."
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: "`pedidos.pedido[]` con `petr_id`, `codigo`, `estado`, `cliente`, `fec_entrega`; `total`"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Parámetro inválido
+
+  /mcp/tar/pedido/{petr_id}:
+    get:
+      operationId: tar_get_pedido
+      summary: Un pedido de trabajo con sus hitos y tareas
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        La cabecera de un pedido de trabajo de la empresa y sus hitos en orden,
+        cada uno con sus tareas: nombre, estado, responsable (o «sin asignar»),
+        fecha asignada, inicio y fin planificados y duración.
+
+        **Cuándo usar esta operación:**
+        - «¿Cómo va el pedido 120?», «¿qué tareas le faltan?»
+        - Para ver qué hitos de un plan de acción se cumplieron.
+      tags:
+        - Tareas
+      parameters:
+        - name: petr_id
+          in: path
+          required: true
+          description: Número del pedido, tal como lo devuelve `tar_get_pedidos`.
+          schema:
+            type: string
+            pattern: "^[0-9]{1,10}$"
+      responses:
+        "200":
+          description: "`pedido`, `hitos[]` (con `tareas[]`), `total_hitos`, `total_tareas`"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: El número no es válido
+        "404":
+          description: No hay un pedido con ese número en la empresa
+
+  /mcp/tar/tareas:
+    get:
+      operationId: tar_get_tareas
+      summary: Tareas planificadas de la empresa o de un hito
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Las tareas planificadas de los pedidos de trabajo de la empresa (o solo
+        las de un hito), con estado, responsable y fechas. Cuenta cuántas no
+        tienen responsable. Devuelve hasta 300.
+
+        **Cuándo usar esta operación:**
+        - «¿Cuántas tareas hay sin asignar?», «¿qué tareas están iniciadas?»
+      tags:
+        - Tareas
+      parameters:
+        - name: hito_id
+          in: query
+          required: false
+          description: Solo las tareas de este hito (lo devuelve `tar_get_pedido`).
+          schema:
+            type: string
+            pattern: "^[0-9]{1,10}$"
+        - name: estado
+          in: query
+          required: false
+          description: Solo las de este estado (`creada`, `planificada`, `iniciada`, `finalizada`).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "`tareas.tarea[]`, `total`, `sin_responsable`"
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Parámetro inválido
+
+  /mcp/tar/atrasadas:
+    get:
+      operationId: tar_get_atrasadas
+      summary: Tareas atrasadas de la empresa
+      x-mcp-annotations:
+        readOnlyHint: true
+      description: |
+        Las tareas que no están finalizadas y cuyo vencimiento ya pasó (el fin
+        planificado o, si no tiene, la fecha asignada), de la más atrasada a la
+        menos, con `dias_atraso`. Las tareas sin fecha no cuentan.
+
+        **Cuándo usar esta operación:**
+        - «¿Qué está atrasado?»
+        - Para diagnosticar la causa de un desvío de una meta.
+      tags:
+        - Tareas
+      responses:
+        "200":
+          description: "`atrasadas.tarea[]` con `vencimiento` y `dias_atraso`; `total`"
           content:
             application/json:
               schema:

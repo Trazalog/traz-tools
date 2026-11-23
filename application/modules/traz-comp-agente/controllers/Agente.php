@@ -291,6 +291,39 @@ class Agente extends CI_Controller
         $this->_proxyKuntur('GET', '/kuntur/avisos', null);
     }
 
+    /** Lo que Kuntur le pidió medir a Quirqui (R11, AGENTE-CO-06). */
+    public function kuntur_mediciones()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/mediciones', null);
+    }
+
+    /** El administrador cancela una medición. */
+    public function kuntur_cancelar_medicion()
+    {
+        $id = (int) $this->input->post('medicion_id');
+        if ($id <= 0) {
+            $this->_json(array('error' => 'Falta la medición'), 400);
+            return;
+        }
+        $this->_proxyKuntur('POST', '/kuntur/mediciones/' . $id . '/cancelar', array());
+    }
+
+    /** Funciones de Tools que la empresa no usa (AGENTE-CO-08). */
+    public function kuntur_funciones()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/funciones', null, 30);
+    }
+
+    /** "Ver como" o "No me interesa" sobre una funcion recomendada. */
+    public function kuntur_funcion_respuesta()
+    {
+        $estado = $this->input->post('estado') === 'descartada' ? 'descartada' : 'aceptada';
+        $this->_proxyKuntur('POST', '/kuntur/funciones/respuesta', array(
+            'propuesta_id' => (int) $this->input->post('propuesta_id'),
+            'estado'       => $estado,
+        ));
+    }
+
     public function kuntur_silenciar()
     {
         $this->_proxyKuntur('POST', '/kuntur/avisos/silenciar', array(
@@ -311,6 +344,42 @@ class Agente extends CI_Controller
     public function kuntur_descartar()
     {
         $this->_cargaKuntur('/kuntur/cargas/descartar');
+    }
+
+    /**
+     * Plan de acción de Kuntur (ADR-A13): los que esperan respuesta, "Aceptar" y
+     * "No lo quiero". Solo viaja el id (y el motivo): se crea lo que quedó guardado,
+     * con el token de este administrador.
+     */
+    public function kuntur_planes()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/planes', null);
+    }
+
+    public function kuntur_plan_aceptar()
+    {
+        $id = (string) $this->input->post('plan_id');
+        if (!preg_match('/^[0-9a-f-]{36}$/', $id)) {
+            $this->_json(array('error' => 'plan inválido'), 400);
+            return;
+        }
+        // Crear pedido, hitos y tareas son varias llamadas: más margen que una consulta.
+        $this->_proxyKuntur('POST', '/kuntur/planes/aceptar', array('plan_id' => $id), 120);
+    }
+
+    public function kuntur_plan_descartar()
+    {
+        $id     = (string) $this->input->post('plan_id');
+        $motivo = (string) $this->input->post('motivo');
+        $texto  = (string) $this->input->post('texto');
+        if (!preg_match('/^[0-9a-f-]{36}$/', $id)
+            || !in_array($motivo, array('no_es_prioridad', 'ya_lo_hacemos', 'no_aplica', 'otro'), true)
+            || mb_strlen($texto) > 1000) {
+            $this->_json(array('error' => 'respuesta inválida'), 400);
+            return;
+        }
+        $this->_proxyKuntur('POST', '/kuntur/planes/descartar',
+            array('plan_id' => $id, 'motivo' => $motivo, 'texto' => $texto !== '' ? $texto : null));
     }
 
     private function _cargaKuntur($ruta)

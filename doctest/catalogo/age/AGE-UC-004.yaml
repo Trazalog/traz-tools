@@ -2,9 +2,10 @@ id: AGE-UC-004
 modulo: AGE
 titulo: Pedirle a Quirqui que cree algo y recibir cómo hacerlo
 perfil: Mantenedor
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: db/agente/012-tools.sql
@@ -21,5 +22,9 @@ flujo_principal:
     resultado: "Quirqui explica cómo crearla y en qué pantalla, pero no la crea"
 validaciones:
   - "Ningún agente crea órdenes, pedidos ni ningún otro registro"
-dudas:
-  - "¿Quirqui tiene que ofrecer el enlace directo a la pantalla de alta, o alcanza con nombrarla?"
+  - "Decisión del PM (2026-11-22): Quirqui ofrece el enlace directo a la pantalla de alta"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  feature: features/age/AGE-UC-004.pedirle-a-quirqui-que-cree-algo-y-recibir-como-h.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s02
