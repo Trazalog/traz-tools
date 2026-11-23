@@ -77,7 +77,9 @@ DEFINICION = {
             "type": "object",
             "properties": {
                 "porque": {"type": "string",
-                           "description": "En una línea: qué número se movió y la causa principal, con la cifra leída."},
+                           "description": ("En una o dos líneas: qué número se movió y la causa principal, con la cifra "
+                                           "leída. Nombrá la fuente en palabras («según el indicador de disponibilidad»), "
+                                           "nunca el nombre interno de la herramienta.")},
                 "objetivo": {"type": "string", "description": "Qué se espera lograr y en cuánto tiempo."},
                 "meta": {
                     "type": "object",
@@ -144,7 +146,12 @@ class PasoFallido(RuntimeError):
 
 
 def _texto(v: Any, maximo: int) -> str:
-    return re.sub(r"\s+", " ", str(v or "")).strip()[:maximo]
+    """Normaliza espacios y recorta sin cortar una palabra a la mitad."""
+    t = re.sub(r"\s+", " ", str(v or "")).strip()
+    if len(t) <= maximo:
+        return t
+    corte = t[:maximo - 1].rsplit(" ", 1)[0].rstrip(" ,;:.")
+    return corte + "…"
 
 
 def _entero(v: Any, campo: str) -> int:

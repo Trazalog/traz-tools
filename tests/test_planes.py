@@ -303,3 +303,11 @@ async def test_aceptar_de_verdad_llama_a_las_altas_de_la_fachada_en_orden():
     assert mcp.llamadas[1][1]["petr_id"] == "1" and mcp.llamadas[2][1]["hito_id"] == "2"
     assert all("user_id" not in a for _, a in mcp.llamadas)
     assert creado == {"petr_id": "1", "hitos": ["2", "5"], "tareas": ["3", "4", "6"]}
+
+
+def test_los_textos_largos_se_recortan_sin_cortar_palabras():
+    from agente.planes import _texto
+    t = _texto("las OTs correctivas cerradas son fugas hidráulicas y rotura de mangueras", 60)
+    assert t.endswith("…") and len(t) <= 60
+    assert not t[:-1].endswith("mangue")
+    assert _texto("corto", 60) == "corto"
