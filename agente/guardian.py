@@ -64,8 +64,8 @@ PALABRAS_DE_DISCURSO = frozenset({
 MAX_DISCURSO = 10
 
 MENSAJE_BLOQUEO = (
-    "No tengo datos para responder eso con certeza. Puedo consultar los datos de "
-    "tu empresa o buscar una fuente si me decís qué necesitás exactamente."
+    "No tengo ese dato confirmado. ¿Querés que lo busque en los datos de tu "
+    "empresa o en internet?"
 )
 
 _FECHA = re.compile(

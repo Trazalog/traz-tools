@@ -198,6 +198,22 @@ Programado (crontab del usuario del orquestador, una vez por día a las 8):
 
 Cada empresa queda como una corrida (`disparador = 'desvio_kpi'`, canal `scheduler`), con el resumen y las metas en desvío en `controles`.
 
+**Mediciones que Kuntur le pide a Quirqui (desde `032`).** Kuntur pide con `kuntur_pedir_medicion` que se mida un número cada cierto tiempo (siempre después de un plan aceptado). Otro trabajo programado las ejecuta con el token de máquina de la empresa y la lista blanca de Quirqui: guarda el valor y la tool de la que salió en `agente.medicion_resultado` y, si la medición es de un plan, el avance de cada tarea en `agente.avance_plan`. El administrador ve y cancela lo pedido en la pestaña Kuntur («Lo que estoy midiendo»). Detalle: [`mediciones.md`](mediciones.md).
+
+Correrlo a mano (**terminal del servidor del orquestador**, parado en el repo):
+
+```
+.venv-agente/bin/python -m agente.mediciones
+```
+
+Programado (crontab del usuario del orquestador, una vez por día a las 6, antes del seguimiento de metas):
+
+```
+0 6 * * * cd /ruta/a/traz-tools && .venv-agente/bin/python -m agente.mediciones >> /var/log/agente-mediciones.log 2>&1
+```
+
+Cada empresa queda como una corrida (`disparador = 'medicion_pedida'`, canal `scheduler`).
+
 ### La industria de cada empresa (ADR-A11)
 
 El conocimiento está marcado por industria: `mineria`, `oil_gas`, `electricidad` o `general` (aplica a todas). Una empresa con la industria declarada recibe lo de su industria y lo general; **sin declarar, recibe todo**, etiquetado. La industria la carga Trazalog o, desde `024`, la confirma el administrador en la entrevista de Kuntur.
@@ -281,7 +297,7 @@ El JWT que emite Dnato tiene un TTL (`jwt_ttl` en su `config/jwt.php`). Cuando e
 | El agente nunca busca en internet | `AGENTE_WEB_URL` vacía, o falta aplicar `014-tool-web.sql` | Las dos cosas hacen falta: el buscador configurado y la tool catalogada |
 | `web_buscar` vuelve sin resultados | Los buscadores no responden a tiempo | Ver `instalacion.md` §1-ter, punto 5 |
 | Una tool nueva del gateway no la usa ningún agente | No está en el catálogo | Sumarla al seed de `012-tools.sql` con su clase y re-aplicarlo. Si escribe, va como `accion` y no la va a usar nadie |
-| El agente contesta "No tengo datos para responder eso con certeza" | El guardián de cifras (R4) encontró un número sin origen y bloqueó la respuesta | Mirar `incidentes` de esa corrida: `respuesta_bloqueada` tiene lo que iba a decir y `cifras` qué número no tenía fuente. Si es un falso positivo (por ejemplo, "5 puntos" no reconocido como discurso), sumar la palabra a `PALABRAS_DE_DISCURSO` en `agente/guardian.py` |
+| El agente contesta "No tengo ese dato confirmado. ¿Querés que lo busque en los datos de tu empresa o en internet?" | El guardián de cifras (R4) encontró un número sin origen y bloqueó la respuesta | Mirar `incidentes` de esa corrida: `respuesta_bloqueada` tiene lo que iba a decir y `cifras` qué número no tenía fuente. Si es un falso positivo (por ejemplo, "5 puntos" no reconocido como discurso), sumar la palabra a `PALABRAS_DE_DISCURSO` en `agente/guardian.py` |
 | En `tools_llamadas` aparece `"status": "bloqueada"` | El modelo pidió una tool que no tiene permitida (típicamente, crear una OT) | Es lo esperado: no salió al MCP. Si se repite mucho, revisar el prompt |
 | `401` en toda consulta | Falta el header `Authorization: Bearer` | El frontend tiene que reenviar el token de la sesión |
 | `403 El token no trae empr_id` | El JWT no tiene el claim | Es un problema de Dnato/APIM, no del agente. Ver ADR-009 |

@@ -267,3 +267,26 @@ async def test_la_misma_consulta_no_se_repite_en_una_respuesta(con, monkeypatch,
         empr_id=900001, pregunta="¿Qué equipos hay?", autorizacion="Bearer t"))
     assert [ll.tool for ll in mcp.llamadas] == ["man_get_equipos"]
     assert res.respuesta == "Revisé los equipos."
+
+
+class MCPCaido(MCPFalso):
+    """El gateway no responde: falla al pedir la lista de tools."""
+
+    async def listar_tools(self):
+        from agente.mcp_client import MCPError
+        raise MCPError("initialize", "no se pudo llegar al MCP Gateway: All connection attempts failed")
+
+
+@pytest.mark.asyncio
+async def test_sin_gateway_responde_igual_y_avisa_que_no_vio_los_datos(con, monkeypatch, llm_falso):
+    """Antes: "problema técnico". Ahora responde con lo que sabe (2026-11-22)."""
+    llm = llm_falso([respuesta_texto("Ahora no puedo ver los datos de tu empresa, pero en general se revisan en cada parada.")])
+    _parchar(monkeypatch, llm, MCPCaido())
+
+    res = await Orquestador(Config()).responder(con, Consulta(
+        empr_id=900001, pregunta="¿Cada cuánto se revisan las muelas?", autorizacion="Bearer t",
+    ))
+
+    assert res.error is None
+    assert "problema técnico" not in res.respuesta
+    assert any(c.get("control") == "mcp_no_disponible" for c in res.controles)

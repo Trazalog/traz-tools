@@ -2,9 +2,10 @@ id: AGE-UC-007
 modulo: AGE
 titulo: Calificar una respuesta de Quirqui
 perfil: Usuario
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: application/modules/traz-comp-agente/views/panel.php
@@ -21,5 +22,10 @@ flujo_principal:
     resultado: "La calificación queda registrada"
 validaciones:
   - "Un usuario no puede calificar la respuesta de otra empresa"
-dudas:
-  - "En el panel no se pide comentario cuando la calificación es negativa (en el chat de página sí). ¿Hay que pedirlo también en el panel?"
+  - "Decisión del PM (2026-11-22): en el panel, una calificación negativa ofrece tres motivos rápidos ('no era eso', 'dato equivocado', 'no se entiende') y un campo libre, opcionales"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  test_hurl: tests/api-mcp/hurl/agentes/feedback.hurl
+  feature: features/age/AGE-UC-007.calificar-una-respuesta-de-quirqui.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s06

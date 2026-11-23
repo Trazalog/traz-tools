@@ -16,6 +16,8 @@ Endpoints:
     POST /kuntur/avisos/silenciar          "no insistas" (o volver a avisar)
     POST /kuntur/cargas/confirmar          el administrador toco "Cargar": se ejecuta con su token (ADR-A12)
     POST /kuntur/cargas/descartar          "Ahora no"
+    GET  /kuntur/funciones                 funciones de Tools que la empresa no usa (AGENTE-CO-08)
+    POST /kuntur/funciones/respuesta       "ver como" o "no me interesa" (vale para toda la empresa)
 
 Los avisos (la campanita y el push) ya no estan aca: son los de Tools
 (ADR-015, esquema ntf); el monitoreo publica con agente/avisos.py.
@@ -33,9 +35,11 @@ import logging
 
 import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
-from pydantic import BaseModel, Field
+from typing import Literal
 
-from . import agentes, cargas, configuracion, entrevistador, planillas, rag
+from pydantic import BaseModel, Field, field_validator
+
+from . import agentes, cargas, configuracion, entrevistador, mediciones, planes, planillas, rag
 from .config import Config, cargar
 from .llm import OpenRouter
 from .orquestador import AGENTE_POR_DEFECTO, Consulta, Orquestador
@@ -139,6 +143,8 @@ class ConsultaOut(BaseModel):
     propuestas_meta: list[dict] = []
     # Cargas de configuracion que propuso Kuntur (ADR-A12): tarjeta con "Cargar".
     propuestas_carga: list[dict] = []
+    # Planes de accion que propuso Kuntur (ADR-A13): tarjeta con "Aceptar".
+    propuestas_plan: list[dict] = []
 
 
 class SugerenciasIn(BaseModel):
@@ -162,6 +168,16 @@ class CargaIn(BaseModel):
     carga_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
 
 
+class PlanIn(BaseModel):
+    plan_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+
+
+class DescartePlanIn(BaseModel):
+    plan_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    motivo: str = Field(pattern=r"^(no_es_prioridad|ya_lo_hacemos|no_aplica|otro)$")
+    texto: str | None = Field(default=None, max_length=1000)
+
+
 class SilenciarIn(BaseModel):
     objetivo_id: int
     silenciado: bool = True
@@ -171,7 +187,16 @@ class FeedbackIn(BaseModel):
     interaccion_id: str
     util: bool
     comentario: str | None = Field(default=None, max_length=2000)
-    motivo: str | None = None
+    # Los mismos valores que el CHECK de agente.feedback (005): un motivo
+    # desconocido se rechaza con 422 en vez de romper en la base con 500.
+    motivo: Literal["respuesta_incorrecta", "incompleta", "no_entendio",
+                    "datos_desactualizados", "lenta", "otro"] | None = None
+
+    @field_validator("motivo", mode="before")
+    @classmethod
+    def _motivo_vacio(cls, v):
+        # El panel manda "" cuando la persona no eligió motivo.
+        return None if v == "" else v
 
 
 # --- entrevistador -------------------------------------------------------
@@ -275,7 +300,7 @@ async def consulta(
         interaccion_id=res.interaccion_id, agente=agente.clave, respuesta=res.respuesta,
         fragmentos=res.fragmentos, tools_llamadas=res.tools_llamadas,
         modelo=res.modelo, latencia_ms=res.latencia_ms, propuestas_meta=res.propuestas_meta,
-        propuestas_carga=res.propuestas_carga,
+        propuestas_carga=res.propuestas_carga, propuestas_plan=res.propuestas_plan,
     )
 
 
@@ -360,6 +385,31 @@ async def kuntur_avisos_silenciar(
     return {"objetivo_id": entrada.objetivo_id, "silenciado": entrada.silenciado}
 
 
+@app.get("/kuntur/mediciones")
+async def kuntur_mediciones(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """Lo que Kuntur le pidio medir a Quirqui en esta empresa (R11): activas y
+    terminadas, con sus ultimos resultados y el avance del plan (AGENTE-CO-06)."""
+    await _admin_de_kuntur(con, ident)
+    return {"mediciones": await mediciones.listar(con)}
+
+
+@app.post("/kuntur/mediciones/{medicion_id}/cancelar")
+async def kuntur_mediciones_cancelar(
+    medicion_id: int,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """El administrador cancela una medicion (R11). Solo las de su empresa (RLS)."""
+    await _admin_de_kuntur(con, ident)
+    if not await mediciones.cancelar(con, medicion_id):
+        raise HTTPException(404, "No hay una medición activa con ese número")
+    await con.commit()
+    return {"medicion_id": medicion_id, "estado": "cancelada"}
+
+
 class PlanillaIn(BaseModel):
     nombre: str = Field(min_length=1, max_length=200)
     # El archivo tal cual, en base64 (CSV o Excel .xlsx). Hasta 5 MB.
@@ -416,6 +466,88 @@ async def kuntur_cargas_descartar(
         return await cargas.descartar(con, empr_id=ident.empr_id, carga_id=entrada.carga_id, usuario=usuario)
     except cargas.CargaInvalida as e:
         raise HTTPException(409, str(e)) from e
+
+
+# ------------------------------------------------- Kuntur: plan de accion (ADR-A13)
+@app.get("/kuntur/planes")
+async def kuntur_planes(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """Los planes que esperan respuesta del administrador."""
+    await _admin_de_kuntur(con, ident)
+    abiertos = await planes.pendientes(con)
+    await con.commit()
+    await rag.fijar_empresa(con, ident.empr_id)
+    return {"planes": abiertos}
+
+
+@app.post("/kuntur/planes/aceptar")
+async def kuntur_planes_aceptar(
+    entrada: PlanIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """ADR-A13: se crea en Tareas exactamente lo que se guardo, con el token de ESTE administrador."""
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await planes.aceptar(con, cfg, empr_id=ident.empr_id, plan_id=entrada.plan_id,
+                                    usuario=usuario, autorizacion=ident.autorizacion)
+    except planes.PlanNoDisponible as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/kuntur/planes/descartar")
+async def kuntur_planes_descartar(
+    entrada: DescartePlanIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    usuario = await _admin_de_kuntur(con, ident)
+    try:
+        return await planes.descartar(con, empr_id=ident.empr_id, plan_id=entrada.plan_id, usuario=usuario,
+                                      motivo=entrada.motivo, texto=entrada.texto)
+    except planes.PlanNoDisponible as e:
+        raise HTTPException(409, str(e)) from e
+@app.get("/kuntur/funciones")
+async def kuntur_funciones(
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """Hasta 3 funciones de Tools que la empresa no usa, con la evidencia
+    (AGENTE-CO-08). Solo administradores (R1): para otro, Kuntur no existe."""
+    await _admin_de_kuntur(con, ident)
+    agente = await agentes.obtener(con, "kuntur")
+    propuestas = await orquestador.recomendar_funciones(con, Consulta(
+        empr_id=ident.empr_id, pregunta="(funciones de Tools sin usar)",
+        autorizacion=ident.autorizacion, usr_id=ident.usr_id, usuario_nick=ident.nick,
+        agente=agente, pantalla="kuntur/funciones",
+    ))
+    return {"funciones": propuestas}
+
+
+@app.post("/kuntur/funciones/respuesta")
+async def kuntur_funciones_respuesta(
+    entrada: RespuestaPropuestaIn,
+    ident: Identidad = Depends(identidad),
+    con: psycopg.AsyncConnection = Depends(conexion),
+) -> dict:
+    """"Ver como" (aceptada) o "no me interesa" (descartada). Lo descartado no
+    se le recomienda a ningun administrador de la empresa por unos dias."""
+    usuario = await _admin_de_kuntur(con, ident)
+    async with con.cursor() as cur:
+        await cur.execute(
+            """
+            UPDATE agente.propuesta SET estado = %s, fec_respuesta = now()
+            WHERE propuesta_id = %s AND usuario = %s AND tipo = 'funcion_sin_usar'
+              AND estado = 'pendiente'
+            RETURNING propuesta_id, estado, accion
+            """, (entrada.estado, entrada.propuesta_id, usuario))
+        fila = await cur.fetchone()
+    await con.commit()
+    if not fila:
+        raise HTTPException(404, "No existe esa recomendación pendiente")
+    return dict(fila)
 
 
 @app.post("/sugerencias")

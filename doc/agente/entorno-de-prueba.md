@@ -8,6 +8,41 @@ Instrucciones para **entrar al chat del agente y probarlo de punta a punta** en 
 
 ---
 
+## 🆕 Probar la tanda de noviembre (rama de prueba integrada)
+
+Desde el 2026-11-22 hay una copia de Tools que junta **todos los cambios de agentes que todavía no están unidos** (avatares, casos validados, textos de Quirqui y Kuntur, funciones sin usar, y los que se vayan sumando: lectura de Tareas, plan de acción, pruebas derivadas). Está en `/mnt/win/dev/git/traz-v35/traz-tools-agentes-prueba`, en la rama local `prueba/agentes-integrado` (nunca se sube ni se une: es solo para probar).
+
+**1. Prender Apache** — en una terminal local (pide tu contraseña):
+
+```
+sudo /opt/lampp/lampp startapache
+```
+
+**2. Poner al día la base del agente de tu máquina** — en una terminal local, con el usuario dueño de la base (el que creó `agente_minero`; si no es `postgres`, cambialo). Tu base está en el script `011`; esto aplica del `012` al `031` en orden y para en el primer error:
+
+```
+cd /mnt/win/dev/git/traz-v35/traz-tools-agentes-prueba && \
+for f in db/agente/01[2-9]-*.sql db/agente/02[0-9]-*.sql db/agente/03[01]-*.sql; do \
+  case $f in *rollback*) ;; *) psql -h 127.0.0.1 -U postgres -d agente_minero -v ON_ERROR_STOP=1 -f $f || break;; esac; \
+done
+```
+
+Para volver atrás un script: correr su `.rollback.sql` con el mismo comando, empezando por el número más alto.
+
+**3. Levantar el motor de los agentes** — en otra terminal local (queda corriendo; se corta con Ctrl+C):
+
+```
+cd /mnt/win/dev/git/traz-v35/traz-tools-agentes-prueba && ./agente/dev.sh
+```
+
+**4. Entrar** — en el navegador: `http://traz-comp.local/traz-v35/traz-tools-agentes-prueba/`, con el usuario de prueba (más abajo). Como es administrador, el panel muestra **Quirqui y Kuntur**.
+
+**Qué no vas a poder probar todavía, y por qué:**
+- Las herramientas nuevas que pasan por WSO2 (lectura de Tareas, crear el pedido al aceptar un plan) necesitan desplegar el `.car` de la rama en un MI. Tu MI no lo toco: hasta que lo despliegues, Kuntur responde que no pudo consultar esos datos, y el plan de acción funciona **simulado** (la tarjeta lo dice).
+- Los avisos al celular necesitan la conexión segura a desarrollo y el conector de Firebase de AssetPlanner desplegado ahí.
+
+---
+
 ## ⚠️ Entrá por `traz-comp.local`, no por `localhost`
 
 Es lo primero y lo que más confunde. XAMPP tiene dos cosas distintas:

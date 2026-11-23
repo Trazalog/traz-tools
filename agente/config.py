@@ -51,18 +51,18 @@ class Config:
     openrouter_api_key: str = field(default_factory=lambda: _env("OPENROUTER_API_KEY"))
     # Modelo configurable, nunca hardcodeado. DeepSeek por defecto: barato para
     # desarrollo y con tool-calling. Se cambia sin tocar codigo.
-    modelo: str = field(default_factory=lambda: _env("AGENTE_MODELO", "deepseek/deepseek-chat"))
+    modelo: str = field(default_factory=lambda: _env("AGENTE_MODELO", "nvidia/nemotron-3-ultra-550b-a55b:free"))
     # OJO: OpenRouter NO lista sus modelos de embeddings en /models, pero sí los
     # sirve. Hoy solo están los de OpenAI: text-embedding-3-small y -large.
     # cohere/embed-multilingual-v3.0 NO existe ahí, aunque el nombre suene
     # plausible -- verificado contra la API el 2026-09-03.
     modelo_embeddings: str = field(
-        default_factory=lambda: _env("AGENTE_MODELO_EMBEDDINGS", "openai/text-embedding-3-small")
+        default_factory=lambda: _env("AGENTE_MODELO_EMBEDDINGS", "nvidia/nemotron-3.5-embed-1b:free")
     )
     # Tiene que coincidir con la dimension del DDL (vector(1024) en db/agente).
     dim_embeddings: int = field(default_factory=lambda: _env_int("AGENTE_DIM_EMBEDDINGS", 1024))
     temperatura: float = field(default_factory=lambda: _env_float("AGENTE_TEMPERATURA", 0.2))
-    max_tokens: int = field(default_factory=lambda: _env_int("AGENTE_MAX_TOKENS", 1500))
+    max_tokens: int = field(default_factory=lambda: _env_int("AGENTE_MAX_TOKENS", 4000))
 
     # --- MCP ----------------------------------------------------------------
     # "apim" = camino real: JSON-RPC MCP contra el gateway, con el Bearer del
@@ -100,6 +100,12 @@ class Config:
     # Una propuesta descartada no se repite por estos dias.
     sugerencia_silencio_dias: int = field(
         default_factory=lambda: _env_int("AGENTE_SUGERENCIA_SILENCIO_DIAS", 7))
+    # --- Funciones sin usar (AGENTE-CO-08) -----------------------------------
+    # Cuantas recomienda Kuntur a la vez, y por cuantos dias no insiste con una
+    # que la empresa marco "no me interesa". Valores por defecto del pedido.
+    funciones_max: int = field(default_factory=lambda: _env_int("AGENTE_FUNCIONES_MAX", 3))
+    funciones_silencio_dias: int = field(
+        default_factory=lambda: _env_int("AGENTE_FUNCIONES_SILENCIO_DIAS", 30))
     # Avisar certificaciones de herramientas que vencen en estos dias o menos.
     sugerencia_dias_certificacion: int = field(
         default_factory=lambda: _env_int("AGENTE_SUGERENCIA_DIAS_CERTIFICACION", 30))
