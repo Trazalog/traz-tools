@@ -217,6 +217,21 @@ async def test_un_plan_con_una_cifra_inventada_no_muestra_tarjeta(con, monkeypat
     assert res.propuestas_plan == []
 
 
+async def test_si_se_bloquea_solo_el_texto_la_tarjeta_del_plan_vuelve_con_el_reintento(con, monkeypatch, llm_falso):
+    """Prueba real contra DEV (2026-11-23): el texto se bloqueó por "13", el reintento pasó,
+    pero la tarjeta se había perdido y la respuesta decía "te dejé la tarjeta"."""
+    llm = llm_falso([
+        respuesta_tool(planes.NOMBRE, json.dumps(_plan(porque="Hay preventivos atrasados en las palas."))),
+        respuesta_texto("Te dejé el plan: son 13 tareas en la tarjeta."),
+        respuesta_texto("Te dejé el plan en una tarjeta: si te sirve, aceptalo."),
+    ])
+    res = await _consultar(con, monkeypatch, llm)
+    assert {"control": "reintento", "motivo": "cifras_sin_fuente"} in res.controles
+    assert len(res.propuestas_plan) == 1, res.incidentes
+    aviso = llm.llamadas_chat[-1]["mensajes"][-1]["content"]
+    assert "no los vuelvas a proponer" in aviso
+
+
 async def _propuesta(con, empr_id=EMPRESA) -> str:
     await rag.fijar_empresa(con, empr_id)
     p = await planes.proponer(con, empr_id=empr_id, interaccion_id=None, usuario="admin@empresa",

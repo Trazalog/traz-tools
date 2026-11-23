@@ -87,6 +87,7 @@ class Resultado:
     # Planes de accion que propuso Kuntur (ADR-A13): no se creo nada en Tareas;
     # el panel los muestra y se crean si el administrador toca "Aceptar".
     propuestas_plan: list[dict] = field(default_factory=list)
+    planes_limpios: list[dict] = field(default_factory=list)
 
 
 def _args_normalizados(crudo) -> dict:
@@ -310,15 +311,19 @@ class Orquestador:
                     reintento_usado = True
                     res.controles.append({"control": "reintento",
                                           "motivo": "vacia" if not texto else "cifras_sin_fuente"})
+                    # Los planes sanos vuelven a la respuesta: el reintento los controla de nuevo.
+                    res.propuestas_plan, res.planes_limpios = res.planes_limpios, []
                     if texto:
                         cifras = res.incidentes[-1].get("cifras", []) if res.incidentes else []
+                        tarjetas = ("Los planes que ya propusiste quedan en pie: no los vuelvas a proponer. "
+                                    if res.propuestas_plan else "")
                         mensajes.append({"role": "assistant", "content": texto})
                         mensajes.append({"role": "system", "content":
                             "Esa respuesta no se le mostró al usuario: tiene cifras que no aparecen tal cual "
                             f"en los datos ({', '.join(map(str, cifras)) or 'ver arriba'}). Reescribila sin esas "
                             "cifras y sin cuentas propias (sumas, totales, promedios): nombrá cada valor como vino "
-                            "de las herramientas. Las tarjetas que propusiste en esta respuesta tampoco se "
-                            "mostraron: si querés proponer algo, volvé a usar la herramienta sin esas cifras."})
+                            "de las herramientas. " + (tarjetas or "Las tarjetas que propusiste en esta respuesta tampoco se "
+                            "mostraron: si querés proponer algo, volvé a usar la herramienta sin esas cifras.")})
                     else:
                         mensajes.append({"role": "system", "content":
                             "No respondiste nada. Respondele al usuario ahora con lo que ya consultaste, "
@@ -406,7 +411,13 @@ class Orquestador:
             # Las cargas quedan guardadas como propuesta, pero no se muestran: sin
             # tarjeta nadie las confirma y vencen solas.
             res.propuestas_carga = []
-            # Igual con los planes: quedan como propuesta y vencen solos.
+            # Igual con los planes: quedan como propuesta y vencen solos. Los que no
+            # tienen cifras sin fuente en su propio texto se guardan aparte: si el
+            # reintento pasa, vuelven a mostrarse (2026-11-23, prueba contra DEV).
+            res.planes_limpios = [
+                p for p in res.propuestas_plan
+                if not guardian.revisar("\n\n".join(_textos_del_plan(p)), tools=res.tools_vistas,
+                                        contexto=contexto, pregunta=consulta.pregunta).bloquear]
             res.propuestas_plan = []
             return True
         return False

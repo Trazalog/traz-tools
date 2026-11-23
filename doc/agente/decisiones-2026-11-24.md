@@ -52,6 +52,7 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 31 | El modo de desarrollo del motor ahora sabe crear y deshacer el plan en Tareas (antes solo leía y aceptar fallaba). Esas 5 operaciones **no se le ofrecen al modelo**: solo las usa el botón «Aceptar» | Sin esto no se podía probar el plan real sin el gateway | `agente/mcp_client.py` | 🟢 |
 | 32 | El guardián de cifras revisa **todo** el texto del plan que va a Tareas (nombres y descripciones de hitos y tareas), y acepta las semanas y la meta que fija el propio plan («Semana 1», «al 13/12») | En la prueba, «Semana 1» bloqueó la respuesta aunque la tarjeta quedaba creada, y una tarea llevaba cantidades inventadas («sugerido: 100 u. de aceite») que terminaron en el pedido real | `agente/orquestador.py`, `agente/planes.py` | 🟡 si Kuntur propone menos planes por esto, lo vemos |
 | 33 | Las herramientas de indicadores de mantenimiento le dicen al modelo que piden fechas (desde y hasta) | El modelo las llamaba sin fechas y la fachada tardaba un minuto entero en fallar | `agente/mcp_client.py` | 🟢 |
+| 34 | Si el guardián bloquea la respuesta pero el plan propuesto no tiene cifras sin fuente, la tarjeta del plan vuelve a mostrarse cuando el reintento pasa | En la prueba contra DEV el texto se bloqueó por un "13", el reintento salió bien, pero la tarjeta se había perdido y Kuntur decía "te dejé la tarjeta" sin que hubiera ninguna | `agente/orquestador.py` | 🟢 |
 
 ### Lo que encontré en DEV con la prueba (2026-11-23)
 
