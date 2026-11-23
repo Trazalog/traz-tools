@@ -297,7 +297,11 @@ class Orquestador:
                         "tipo": "tool_bloqueada", "tool": mensaje["name"],
                         "detalle": "el modelo pidio una tool fuera de su lista blanca",
                     })
-        if not cerrada:
+        if not cerrada and (res.propuestas_meta or res.propuestas_carga
+                            or getattr(res, "propuestas_plan", None)):
+            # Se quedo sin vueltas justo despues de proponer: la propuesta es la respuesta.
+            res.respuesta = "Te dejé la propuesta lista en la tarjeta: revisala y decidí."
+        elif not cerrada:
             # Se agotaron las iteraciones sin una respuesta final.
             res.respuesta = (
                 "Necesité consultar varios datos y no llegué a cerrar una respuesta. "
