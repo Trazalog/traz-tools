@@ -33,7 +33,9 @@ import logging
 
 import psycopg
 from fastapi import Depends, FastAPI, Header, HTTPException
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator
 
 from . import agentes, cargas, configuracion, entrevistador, planillas, rag
 from .config import Config, cargar
@@ -171,7 +173,16 @@ class FeedbackIn(BaseModel):
     interaccion_id: str
     util: bool
     comentario: str | None = Field(default=None, max_length=2000)
-    motivo: str | None = None
+    # Los mismos valores que el CHECK de agente.feedback (005): un motivo
+    # desconocido se rechaza con 422 en vez de romper en la base con 500.
+    motivo: Literal["respuesta_incorrecta", "incompleta", "no_entendio",
+                    "datos_desactualizados", "lenta", "otro"] | None = None
+
+    @field_validator("motivo", mode="before")
+    @classmethod
+    def _motivo_vacio(cls, v):
+        # El panel manda "" cuando la persona no eligió motivo.
+        return None if v == "" else v
 
 
 # --- entrevistador -------------------------------------------------------

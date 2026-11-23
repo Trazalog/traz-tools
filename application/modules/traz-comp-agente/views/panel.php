@@ -34,6 +34,7 @@
 <?php $this->load->view(AGE . 'avatar'); ?>
 
 <div id="agp-boton" title="Preguntale a tu asistente"><span id="agp-boton-avatar"></span><span id="agp-contador"></span></div>
+<div id="agp-globito" role="button" tabindex="0" hidden>¿Te ayudo con esta pantalla?</div>
 
 <div id="agp-panel" aria-hidden="true">
   <div class="agp-cabecera">
@@ -155,6 +156,14 @@
 .agp-feedback button { border: 1px solid #ddd; background: #fff; border-radius: 3px;
                        padding: 0 7px; cursor: pointer; }
 .agp-feedback .elegido { background: #eaf3f9; border-color: #3c8dbc; }
+.agp-motivos { margin-top: 4px; font-size: 11px; }
+.agp-motivos[hidden] { display: none; }
+.agp-motivos button { margin: 2px 4px 2px 0; }
+.agp-motivos textarea { width: 100%; height: 40px; font-size: 11px; margin-top: 3px; }
+#agp-globito { position: fixed; right: 92px; bottom: 34px; z-index: 1040; background: #fff;
+               border: 1px solid #ddd; border-radius: 12px; padding: 6px 10px; font-size: 12px;
+               box-shadow: 0 2px 8px rgba(0,0,0,.15); cursor: pointer; max-width: 220px; }
+#agp-globito[hidden] { display: none; }
 #agp-kuntur { padding: 6px 12px 0; font-size: 12px; max-height: 60%; overflow-y: auto; }
 #agp-kuntur[hidden] { display: none; }
 .agp-cfg { border: 1px solid #d6e4f0; border-left: 3px solid #3c8dbc; border-radius: 3px;
@@ -271,6 +280,17 @@
     function cerrar() { $panel.removeClass('abierto').attr('aria-hidden', 'true'); estado('despedida'); }
 
     $('#agp-boton').on('click', function () { $panel.hasClass('abierto') ? cerrar() : abrir(); });
+
+    // El panel lo abre el usuario. La primera vez que entra a Tools, un globito chico
+    // ofrece ayuda sin abrir el panel (AGE-UC-001, decisión del PM del 2026-11-22).
+    var GLOBITO = 'tzag-globito-visto';
+    function globitoVisto() { try { localStorage.setItem(GLOBITO, '1'); } catch (e) {} $('#agp-globito').prop('hidden', true); }
+    try { if (!localStorage.getItem(GLOBITO)) { $('#agp-globito').prop('hidden', false); setTimeout(globitoVisto, 15000); } } catch (e) {}
+    $('#agp-globito').on('click keydown', function (e) {
+        if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') { return; }
+        globitoVisto(); abrir();
+    });
+    $('#agp-boton').on('click', globitoVisto);
     $panel.on('click', '.agp-cerrar', cerrar);
     $('#agp-que-se-mide').on('click', function (e) { e.preventDefault(); $('#agp-detalle-medicion').toggle(); });
 
@@ -525,13 +545,19 @@
     });
 
     function pintarRespuesta(r) {
-        var html = '<div class="agp-texto">' + escapar(r.respuesta) + '</div>';
+        var html = '<div class="agp-texto">' + conEnlaces(escapar(r.respuesta)) + '</div>';
         (r.propuestas_meta || []).forEach(function (m) { html += tarjetaMeta(m); });
         (r.propuestas_carga || []).forEach(function (c) { html += tarjetaCarga(c); });
         if (!r.error && r.interaccion_id) {
             html += '<div class="agp-feedback" data-interaccion="' + escapar(r.interaccion_id) + '">' +
                     '<button type="button" data-util="1" title="Me sirvió">👍</button> ' +
-                    '<button type="button" data-util="0" title="No me sirvió">👎</button></div>';
+                    '<button type="button" data-util="0" title="No me sirvió">👎</button>' +
+                    '<div class="agp-motivos" hidden>¿Qué pasó? (opcional)<br>' +
+                    '<button type="button" data-motivo="no_entendio">No era eso</button>' +
+                    '<button type="button" data-motivo="respuesta_incorrecta">Dato equivocado</button>' +
+                    '<button type="button" data-motivo="otro" data-texto="No se entiende">No se entiende</button>' +
+                    '<textarea maxlength="2000" placeholder="Contanos más, si querés"></textarea>' +
+                    '<button type="button" class="agp-motivo-enviar">Enviar</button></div></div>';
         }
         pintar(agente.nombre, r.error ? 'agp-agente agp-error' : 'agp-agente', html);
     }
@@ -596,12 +622,37 @@
             .always(function () { $('#agp-enviar').prop('disabled', false); $('#agp-pregunta').focus(); });
     }
 
-    $conv.on('click', '.agp-feedback button', function () {
+    // Enlace directo a una pantalla de Tools (AGE-UC-004): el agente escribe [texto](tools:ruta)
+    // y acá se convierte en un enlace que navega con linkTo. Solo rutas con forma de controlador.
+    function conEnlaces(html) {
+        return html.replace(/\[([^\]\n]{1,80})\]\(tools:([a-z0-9-]+(?:\/[A-Za-z0-9_]+){1,2}|[A-Za-z0-9_]+)\)/g,
+            '<a href="#" class="agp-ir" data-ruta="$2">$1</a>');
+    }
+    $conv.on('click', '.agp-ir', function (e) {
+        e.preventDefault();
+        if (typeof linkTo === 'function') { linkTo($(this).data('ruta')); }
+    });
+
+    // Calificación: 👍/👎. Con 👎 se ofrecen motivos rápidos y un campo libre, opcionales (AGE-UC-007).
+    $conv.on('click', '.agp-feedback > button', function () {
         var $b = $(this), $caja = $b.closest('.agp-feedback');
-        $caja.find('button').removeClass('elegido');
+        $caja.children('button').removeClass('elegido');
         $b.addClass('elegido');
-        $.post(BASE + 'feedback', { interaccion_id: $caja.data('interaccion'),
-                                    util: $b.data('util') === 1 ? 'true' : 'false' });
+        var util = $b.data('util') === 1;
+        $caja.find('.agp-motivos').prop('hidden', util);
+        $.post(BASE + 'feedback', { interaccion_id: $caja.data('interaccion'), util: util ? 'true' : 'false' });
+    });
+    $conv.on('click', '.agp-motivos button[data-motivo]', function () {
+        $(this).siblings('button[data-motivo]').removeClass('elegido');
+        $(this).addClass('elegido');
+    });
+    $conv.on('click', '.agp-motivo-enviar', function () {
+        var $m = $(this).closest('.agp-motivos'), $caja = $m.closest('.agp-feedback');
+        var $elegido = $m.find('button[data-motivo].elegido');
+        var texto = $.trim($m.find('textarea').val()) || ($elegido.data('texto') || '');
+        $.post(BASE + 'feedback', { interaccion_id: $caja.data('interaccion'), util: 'false',
+                                    motivo: $elegido.data('motivo') || '', comentario: texto });
+        $m.html('Gracias, lo vamos a revisar.');
     });
 })();
 </script>
