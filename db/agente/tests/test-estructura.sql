@@ -451,6 +451,21 @@ SELECT 'Quirqui solo alcanza kpi_get_valor; Kuntur las cuatro',
        '011 + 022';
 
 -- ---------------------------------------------------------------------------
+-- 029 - tools de lectura de Tareas
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'la tool ' || n || ' esta catalogada como lectura de tar',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = n AND clase = 'lectura' AND modulo = 'tar'), 'AGENTE-TAR-01'
+FROM unnest(ARRAY['tar_get_pedidos', 'tar_get_pedido', 'tar_get_tareas', 'tar_get_atrasadas']) AS n;
+
+INSERT INTO _resultado
+SELECT 'Kuntur y Quirqui alcanzan las cuatro tar_get_*; Faustino ninguna',
+       (SELECT count(*) FROM agente.tools_permitidas('kuntur') t WHERE t LIKE 'tar\_get\_%') = 4
+       AND (SELECT count(*) FROM agente.tools_permitidas('quirqui') t WHERE t LIKE 'tar\_get\_%') = 4
+       AND (SELECT count(*) FROM agente.tools_permitidas('faustino') t WHERE t LIKE 'tar\_%') = 0,
+       '011 + 029';
+
+-- ---------------------------------------------------------------------------
 -- 023 - Kuntur activo, con la tool de proponer metas
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
