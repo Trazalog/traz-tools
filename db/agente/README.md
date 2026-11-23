@@ -62,6 +62,8 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 032 | `032-mediciones-kuntur.sql` | La tool `kuntur_pedir_medicion` (del motor, clase `generacion`, solo Kuntur) y una clave única por tarea en `agente.avance_plan`. Kuntur pide mediciones; Quirqui las ejecuta con `python -m agente.mediciones` (AGENTE-CO-06, AS-04) |
 | 033 | `033-evaluacion-plan.sql` | Medición del plan (AGENTE-CO-05): `agente.evaluacion_plan` (una por medición, con RLS, sin texto libre) y el origen `plan_accion` en la cola de curaduría |
 | 028 | `028-planillas-carga-masiva.sql` | Planillas que sube el administrador (`agente.planilla`, con RLS) y la herramienta del motor `kuntur_carga_masiva`, de clase configuración. La carga está **simulada** hasta Dnato v3: al confirmar, el CSV queda en `agente.simulacion` |
+| 030 | `030-funciones-sin-usar.sql` | Habilita el tipo `funcion_sin_usar` en `agente.propuesta` y un índice para el "no me interesa" por empresa: Kuntur recomienda funciones de Tools que la empresa no usa (AGENTE-CO-08). El 029 lo usa otra rama (lectura de Tareas) |
+| 034 | `034-taxonomia-verticales.sql` | Temas de Faustino por industria: marca chancado y molienda como minería y suma temas de oil & gas y electricidad (decisión 23 de `doc/agente/decisiones-2026-11-24.md`) |
 | 027 | `027-tools-alta-configuracion.sql` | Las tres primeras herramientas reales de configuración para Kuntur: `core_alta_establecimiento`, `alm_alta_deposito`, `core_alta_valor` (recursos de `toolsMCPAPI` sobre los servicios de datos de las pantallas) |
 
 Aplicación completa, desde el directorio del repo:

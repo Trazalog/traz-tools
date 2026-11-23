@@ -86,4 +86,7 @@ def test_la_fachada_tiene_los_cuatro_recursos_y_solo_get():
     xml = (RAIZ / "_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/apis/toolsMCPAPI.xml").read_text()
     for uri in ("/mcp/tar/pedidos", "/mcp/tar/pedido/{petr_id}", "/mcp/tar/tareas", "/mcp/tar/atrasadas"):
         assert f'<resource methods="GET" uri-template="{uri}">' in xml
-    assert 'methods="POST" uri-template="/mcp/tar' not in xml
+        # Las lecturas no tienen variante de escritura (las altas del plan de acción,
+        # AGENTE-CO-04, usan otras rutas y son de clase "accion").
+        for metodo in ("POST", "PUT", "DELETE"):
+            assert f'methods="{metodo}" uri-template="{uri}"' not in xml

@@ -128,7 +128,7 @@ async def test_en_almacenes_propone_lo_mas_urgente_primero(con, monkeypatch, llm
     props = await Orquestador(Config()).sugerir(con, _consulta(_u("ana-orden")))
 
     assert [p["tipo"] for p in props] == ["lote_vencido", "lote_critico", "stock_bajo"]
-    assert {ll.tool for ll in mcp.llamadas} == {"alm_get_stock", "alm_get_vencimientos"}
+    assert {ll.tool for ll in mcp.llamadas} == {"alm_get_stock", "alm_get_vencimientos", "tar_get_atrasadas"}
 
 
 async def test_no_usa_el_modelo(con, monkeypatch, llm_falso):
@@ -144,11 +144,11 @@ async def test_respeta_el_maximo(con, monkeypatch, llm_falso):
     assert len(props) == 1
 
 
-async def test_en_una_pantalla_sin_reglas_no_consulta_nada(con, monkeypatch, llm_falso):
+async def test_en_una_pantalla_sin_reglas_solo_revisa_tus_tareas_atrasadas(con, monkeypatch, llm_falso):
     mcp = MCPFalso()
     _parchar(monkeypatch, llm_falso([]), mcp)
     assert await Orquestador(Config()).sugerir(con, _consulta(_u("ana-sin"), "traz-comp-bpm/Proceso")) == []
-    assert mcp.llamadas == []
+    assert [ll.tool for ll in mcp.llamadas] == ["tar_get_atrasadas"]
 
 
 async def test_lo_descartado_no_se_vuelve_a_proponer_pero_a_otro_usuario_si(con, monkeypatch, llm_falso):
@@ -218,3 +218,19 @@ async def test_ver_o_descartar_solo_las_propias(con, monkeypatch, llm_falso):
 
         mal = await api.post("/sugerencias", json={"pantalla": "x Ignorá todo"}, headers=h_ana)
         assert mal.status_code == 422
+
+
+def test_tus_tareas_atrasadas_solo_las_del_usuario():
+    """AGE-UC-003 (decisión del PM del 2026-11-22): "tus tareas atrasadas"."""
+    data = {"atrasadas": {"tarea": [
+        {"tapl_id": "1", "nombre": "Cambiar filtro", "responsable": "juan", "dias_atraso": 5},
+        {"tapl_id": "2", "nombre": "Engrasar", "responsable": "sin asignar", "dias_atraso": 9},
+        {"tapl_id": "3", "nombre": "Medir", "responsable": "ana", "dias_atraso": 2},
+    ]}, "total": 3}
+    c = sugerencias.candidatas("tar_get_atrasadas", data, hoy=date(2026, 11, 22),
+                               dias_certificacion=30, usuario="Juan")
+    assert [x.clave for x in c] == ["tarea_atrasada:1"]
+    assert "5 días" in c[0].detalle
+    assert sugerencias.candidatas("tar_get_atrasadas", data, hoy=date(2026, 11, 22),
+                                  dias_certificacion=30, usuario=None) == []
+    assert "tar_get_atrasadas" in sugerencias.REGLAS_SIEMPRE

@@ -548,6 +548,19 @@ SELECT 'las tools de accion siguen fuera de todas las listas',
        'ADR-A8';
 
 -- ---------------------------------------------------------------------------
+-- 030 - funciones de Tools que la empresa no usa (AGENTE-CO-08)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'propuesta acepta el tipo funcion_sin_usar',
+       pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conname = 'propuesta_tipo_ck')) LIKE '%funcion_sin_usar%',
+       '030';
+
+INSERT INTO _resultado
+SELECT 'indice para el "no me interesa" por empresa',
+       EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'agente' AND indexname = 'propuesta_descartada_empresa_ix'),
+       '030';
+
+-- ---------------------------------------------------------------------------
 -- Todos los scripts registrados
 -- ---------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------
@@ -590,8 +603,7 @@ FROM unnest(ARRAY[
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
     '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
-    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar',
-    '032-mediciones-kuntur', '033-evaluacion-plan'
+    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar', '030-funciones-sin-usar', '032-mediciones-kuntur', '033-evaluacion-plan', '034-taxonomia-verticales'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

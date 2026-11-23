@@ -156,3 +156,16 @@ async def test_un_documento_de_empresa_va_a_su_memoria_y_reemplaza(tmp_path):
         assert await contar(900002) == 0, "el documento de una empresa no lo ve otra"
     finally:
         await con.close()
+
+
+def test_el_caso_de_uso_trae_la_ruta_de_la_pantalla_para_el_enlace_directo():
+    """AGE-UC-004 (decisión del PM del 2026-11-22): Quirqui ofrece el enlace a la pantalla."""
+    from agente.fuentes import rutas_tools
+    uc = {"referencias_codigo": [
+        {"repo": "traz-comp-almacenes", "path": "controllers/Articulo.php"},
+        {"repo": "traz-comp-almacenes", "path": "controllers/new/Entrega_Material.php"},
+        {"repo": "traz-comp-almacenes", "path": "views/articulo/list.php"},
+        {"repo": "traz-tools", "path": "application/controllers/Dash.php"},
+        {"repo": "x", "path": "controllers/../../etc.php"},
+    ]}
+    assert rutas_tools(uc) == ["traz-comp-almacenes/Articulo", "traz-comp-almacenes/new/Entrega_Material", "Dash"]

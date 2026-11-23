@@ -149,6 +149,10 @@ def leer_caso_uso(path: Path) -> Pieza | None:
     lineas = [f"Caso de uso {uc['id']} — {uc.get('titulo', '')}"]
     if pantallas:
         lineas.append("Pantalla: " + "; ".join(pantallas))
+    rutas = rutas_tools(uc)
+    if rutas:
+        # Para el enlace directo a la pantalla (AGE-UC-004, decisión del PM del 2026-11-22).
+        lineas.append("Pantalla en Tools: " + "; ".join(rutas))
     if uc.get("perfil"):
         lineas.append(f"Quién lo hace: {uc['perfil']}")
     if uc.get("precondiciones"):
@@ -191,6 +195,27 @@ def leer_caso_uso(path: Path) -> Pieza | None:
         modulo=_MODULOS.get(str(uc.get("modulo", "")).upper(), "general"),
         metadata=metadata,
     )
+
+
+def rutas_tools(uc: dict) -> list[str]:
+    """Las rutas de Tools (las que abre linkTo) de los controladores del caso.
+
+    repo "traz-comp-almacenes" + "controllers/Articulo.php" -> "traz-comp-almacenes/Articulo";
+    los controladores del propio Tools (repo "traz-tools") quedan sin prefijo.
+    """
+    rutas = []
+    for r in uc.get("referencias_codigo") or []:
+        if not isinstance(r, dict):
+            continue
+        ruta = str(r.get("path", ""))
+        m = re.search(r"controllers/(.+)\.php$", ruta)
+        if not m:
+            continue
+        repo = str(r.get("repo", "")).strip()
+        destino = m.group(1) if repo in ("", "traz-tools") else f"{repo}/{m.group(1)}"
+        if re.fullmatch(r"[a-z0-9-]+(/[A-Za-z0-9_]+){1,2}|[A-Za-z0-9_]+", destino) and destino not in rutas:
+            rutas.append(destino)
+    return rutas
 
 
 def es_caso_uso(path: Path) -> bool:
