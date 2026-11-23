@@ -62,6 +62,8 @@
 
   <div id="agp-avisos"></div>
   <div id="agp-kuntur" hidden>
+    <!-- El plan de acción va primero: es lo único que espera una decisión del administrador. -->
+    <div id="agp-planes"></div>
     <div id="agp-config"></div>
     <div id="agp-seguimiento"></div>
     <div id="agp-mediciones"></div>
@@ -158,6 +160,19 @@
 .agp-feedback button { border: 1px solid #ddd; background: #fff; border-radius: 3px;
                        padding: 0 7px; cursor: pointer; }
 .agp-feedback .elegido { background: #eaf3f9; border-color: #3c8dbc; }
+.agp-plan { border: 1px solid #d9d2e9; border-left: 3px solid #605ca8; border-radius: 3px;
+            padding: 6px 8px; margin: 6px 0; font-size: 12px; background: #fff; }
+.agp-plan .agp-plan-tit { font-weight: 600; display: block; margin-bottom: 2px; }
+.agp-plan .agp-plan-resumen { color: #555; margin: 3px 0; }
+.agp-plan ol { padding-left: 18px; margin: 4px 0; }
+.agp-plan ul { padding-left: 14px; margin: 2px 0 4px; list-style: none; }
+.agp-plan ul li:before { content: '▫ '; color: #888; }
+.agp-plan .agp-plan-sug { color: #999; }
+.agp-plan .agp-plan-semanas { color: #777; font-size: 11px; }
+.agp-plan .agp-plan-acciones a { margin-right: 10px; cursor: pointer; }
+.agp-plan .agp-plan-motivos[hidden] { display: none; }
+.agp-plan .agp-plan-motivos button { margin: 2px 4px 2px 0; }
+.agp-plan .agp-plan-motivos textarea { width: 100%; height: 38px; font-size: 11px; margin-top: 3px; }
 .agp-motivos { margin-top: 4px; font-size: 11px; }
 .agp-motivos[hidden] { display: none; }
 .agp-motivos button { margin: 2px 4px 2px 0; }
@@ -360,6 +375,7 @@
     function cargarKuntur() {
         $.getJSON(BASE + 'kuntur_configuracion').done(pintarConfig).fail(function () { $('#agp-config').empty(); });
         cargarSeguimiento();
+        cargarPlanes();
         cargarMediciones();
         cargarFunciones();
     }
@@ -635,10 +651,105 @@
         responderCarga($t, 'kuntur_descartar').done(function () { $t.slideUp(150, function () { $t.remove(); }); });
     });
 
+    // --- plan de acción de Kuntur (ADR-A13, opción B) ---------------------------
+    // Nada se crea en Tareas hasta "Aceptar"; ahí se crea con la sesión de este
+    // administrador. La tarjeta solo manda el id: se crea lo que quedó guardado.
+    function semanas(h) {
+        return h.semana_desde === h.semana_hasta ? 'semana ' + h.semana_desde
+             : 'semanas ' + h.semana_desde + '-' + h.semana_hasta;
+    }
+    function tarjetaPlan(p) {
+        var html = '<div class="agp-plan" data-plan="' + escapar(p.plan_id) + '">' +
+            '<span class="agp-plan-tit">🦅 Kuntur te propone un plan</span>' +
+            (p.simulado ? '<em>Simulación: al aceptar todavía no se crea en Tareas.</em><br>' : '') +
+            '<strong>Por qué:</strong> ' + escapar(p.porque) + '<br>' +
+            '<strong>Qué espero lograr:</strong> ' + escapar(p.objetivo) + '<br>' +
+            (p.meta ? '<strong>Meta:</strong> ' + escapar(p.meta.titulo) + ' ' + escapar(p.meta.operador) + ' ' +
+                      escapar(p.meta.meta) + ' al ' + escapar(p.meta.hasta) + '<br>' : '') +
+            '<div class="agp-plan-resumen">📁 Pedido: «' + escapar(p.pedido.nombre) + '» · ' + escapar(p.proceso) + ' · ' +
+            p.hitos.length + ' hitos · ' + parseInt(p.total_tareas, 10) + ' tareas · ' + parseInt(p.semanas, 10) + ' semanas</div><ol>';
+        (p.hitos || []).forEach(function (h) {
+            html += '<li>' + escapar(h.nombre) + ' <span class="agp-plan-semanas">(' + semanas(h) + ')</span><ul>';
+            (h.tareas || []).forEach(function (t) {
+                html += '<li>' + escapar(t.nombre) +
+                        (t.responsable_sugerido ? ' <span class="agp-plan-sug">→ sugerido: ' + escapar(t.responsable_sugerido) + '</span>' : '') + '</li>';
+            });
+            html += '</ul></li>';
+        });
+        return html + '</ol><div class="agp-plan-acciones"><a class="agp-plan-si">✅ Aceptar</a>' +
+            '<a class="agp-plan-cambios">✏️ Pedir cambios</a><a class="agp-plan-no">❌ No lo quiero</a></div>' +
+            '<div class="agp-plan-motivos" hidden>¿Por qué no? ' +
+            '<button type="button" data-motivo="no_es_prioridad">No es prioridad</button>' +
+            '<button type="button" data-motivo="ya_lo_hacemos">Ya lo estamos haciendo</button>' +
+            '<button type="button" data-motivo="no_aplica">No aplica</button>' +
+            '<button type="button" data-motivo="otro">Otro</button>' +
+            '<textarea maxlength="1000" placeholder="Contale a Kuntur más, si querés (opcional)"></textarea></div>' +
+            '<div class="agp-plan-msg" hidden></div></div>';
+    }
+    function cargarPlanes() {
+        $.getJSON(BASE + 'kuntur_planes').done(function (r) {
+            var $p = $('#agp-planes').empty();
+            (r.planes || []).forEach(function (p) { $p.append(tarjetaPlan(p)); });
+        }).fail(function () { $('#agp-planes').empty(); });
+    }
+    function mensajePlan($t, clase, texto) {
+        $t.find('.agp-plan-msg').prop('hidden', false).attr('class', 'agp-plan-msg ' + clase).text(texto);
+    }
+    $('#agp-panel').on('click', '.agp-plan-si', function () {
+        var $t = $(this).closest('.agp-plan');
+        $t.find('.agp-plan-acciones, .agp-plan-motivos').hide();
+        mensajePlan($t, 'text-muted', 'Creando el pedido...');
+        $.post(BASE + 'kuntur_plan_aceptar', { plan_id: String($t.data('plan')) })
+            .done(function (r) {
+                if (r.estado !== 'aceptada') {
+                    mensajePlan($t, 'text-danger', 'No se creó nada: ' + (r.error || 'hubo un error.') +
+                                ' Contale a Kuntur qué pasó y lo arma de nuevo.');
+                    return;
+                }
+                if (r.simulado) {
+                    mensajePlan($t, 'text-success', 'Aceptado (simulación): quedó registrado, todavía no en Tareas.');
+                    return;
+                }
+                mensajePlan($t, 'text-success', 'Listo: el pedido quedó en Tareas, sin responsables. Asignalos desde Planificación.');
+                // La meta del pedido (TAR-METAS) se carga con la sesión de este administrador.
+                if (r.meta && r.petr_id) {
+                    $.post('<?= base_url() ?>traz-comp-bpm/Pedidotrabajo/guardarMeta/' + encodeURIComponent(r.petr_id),
+                           { kpi: r.meta.kpi, operador: r.meta.operador, meta: r.meta.meta, hasta: r.meta.hasta })
+                        .done(function (m) {
+                            try { m = typeof m === 'string' ? JSON.parse(m) : m; } catch (e) { m = {}; }
+                            if (!m || !m.ok) { mensajePlan($t, 'text-warning', 'El pedido quedó creado, pero la meta no: ' +
+                                                ((m && m.error) || 'cargala desde Planificación.')); }
+                        });
+                }
+            })
+            .fail(function (xhr) {
+                var r = xhr && xhr.responseJSON;
+                mensajePlan($t, 'text-danger', (r && (r.error || r.detail)) || 'No se pudo.');
+                $t.find('.agp-plan-acciones').show();
+            });
+    });
+    $('#agp-panel').on('click', '.agp-plan-cambios', function () {
+        var $t = $(this).closest('.agp-plan');
+        var nombre = $t.find('.agp-plan-resumen').text().replace(/^.*«|».*$/g, '');
+        if (agente.rol !== 'coach') { elegir('kuntur'); }
+        $('#agp-pregunta').val('Quiero cambios en el plan «' + nombre + '»: ').focus();
+    });
+    $('#agp-panel').on('click', '.agp-plan-no', function () {
+        $(this).closest('.agp-plan').find('.agp-plan-motivos').prop('hidden', false);
+    });
+    $('#agp-panel').on('click', '.agp-plan-motivos button', function () {
+        var $t = $(this).closest('.agp-plan');
+        $.post(BASE + 'kuntur_plan_descartar', { plan_id: String($t.data('plan')), motivo: $(this).data('motivo'),
+                                                 texto: $.trim($t.find('.agp-plan-motivos textarea').val()) })
+            .done(function () { $t.slideUp(150, function () { $t.remove(); }); })
+            .fail(function () { mensajePlan($t, 'text-danger', 'No se pudo. Probá de nuevo.'); });
+    });
+
     function pintarRespuesta(r) {
         var html = '<div class="agp-texto">' + conEnlaces(escapar(r.respuesta)) + '</div>';
         (r.propuestas_meta || []).forEach(function (m) { html += tarjetaMeta(m); });
         (r.propuestas_carga || []).forEach(function (c) { html += tarjetaCarga(c); });
+        (r.propuestas_plan || []).forEach(function (p) { html += tarjetaPlan(p); });
         if (!r.error && r.interaccion_id) {
             html += '<div class="agp-feedback" data-interaccion="' + escapar(r.interaccion_id) + '">' +
                     '<button type="button" data-util="1" title="Me sirvió">👍</button> ' +

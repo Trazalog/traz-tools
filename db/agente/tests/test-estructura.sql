@@ -548,6 +548,35 @@ SELECT 'las tools de accion siguen fuera de todas las listas',
        'ADR-A8';
 
 -- ---------------------------------------------------------------------------
+-- 031 - Plan de accion de Kuntur, opcion B (ADR-A13)
+-- ---------------------------------------------------------------------------
+INSERT INTO _resultado
+SELECT 'plan_propuesta con RLS forzado',
+       coalesce((SELECT relrowsecurity AND relforcerowsecurity FROM pg_class
+                 WHERE oid = to_regclass('agente.plan_propuesta')), false), 'ADR-A13';
+
+INSERT INTO _resultado
+SELECT 'plan_propuesta: estados y motivos cerrados, el descarte exige motivo',
+       EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'plan_propuesta_estado_ck')
+       AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'plan_propuesta_motivo_ck')
+       AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'plan_propuesta_descarte_ck'),
+       'ADR-A13';
+
+INSERT INTO _resultado
+SELECT 'kuntur_proponer_plan es de generacion y solo de Kuntur',
+       EXISTS (SELECT 1 FROM agente.tool WHERE nombre = 'kuntur_proponer_plan' AND clase = 'generacion')
+       AND 'kuntur_proponer_plan' IN (SELECT agente.tools_permitidas('kuntur'))
+       AND 'kuntur_proponer_plan' NOT IN (SELECT agente.tools_permitidas('quirqui'))
+       AND 'kuntur_proponer_plan' NOT IN (SELECT agente.tools_permitidas('faustino')),
+       'ADR-A13';
+
+INSERT INTO _resultado
+SELECT 'las altas y bajas de Tareas son de accion: ningun agente las ve',
+       (SELECT count(*) FROM agente.tool WHERE clase = 'accion' AND nombre IN
+            ('tar_alta_pedido', 'tar_alta_hito', 'tar_alta_tarea', 'tar_baja_pedido', 'tar_baja_tarea')) = 5
+       AND NOT EXISTS (SELECT 1 FROM agente.agente a, agente.tools_permitidas(a.clave) n
+                       WHERE n LIKE 'tar\_alta\_%' OR n LIKE 'tar\_baja\_%'),
+       'ADR-A13';
 -- 030 - funciones de Tools que la empresa no usa (AGENTE-CO-08)
 -- ---------------------------------------------------------------------------
 INSERT INTO _resultado
@@ -603,7 +632,7 @@ FROM unnest(ARRAY[
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
     '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
-    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar', '030-funciones-sin-usar', '032-mediciones-kuntur', '033-evaluacion-plan', '034-taxonomia-verticales'
+    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '029-tools-tar', '030-funciones-sin-usar', '031-plan-accion', '032-mediciones-kuntur', '033-evaluacion-plan', '034-taxonomia-verticales'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

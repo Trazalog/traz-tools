@@ -2992,4 +2992,1039 @@
       </faultSequence>
    </resource>
 
+   <!-- ════════════════════════════════════════════════════════════════════
+        Plan de accion de Kuntur (ADR-A13, AGENTE-CO-04). PENDIENTE DE APROBACION DEL PM:
+        doc/agente/analisis-impacto-plan-accion-kuntur.md, anexo A. Hasta entonces el motor
+        corre simulado (agente/planes.py, SIMULADO = True) y nadie llama a estos recursos.
+
+        CLASE accion: ningun agente los ve ni los puede pedir (agente.tools_por_patrones los
+        excluye). Solo los llama el motor cuando el administrador toca "Aceptar", con SU token;
+        con token de maquina, 403. La empresa sale SIEMPRE del token (jwt_empr_id).
+        El proceso es fijo: PROCESO-STANDAR (no arranca casos de Bonita; TST001 arranca recien
+        cuando una persona asigna responsable y fecha a una tarea). Las tareas nacen sin
+        responsable y "sin fecha" (3000-12-31), igual que las que se agregan a la bolsa.
+        Los servicios de datos que se llaman NO se modifican.
+   ═════════════════════════════════════════════════════════════════════ -->
+   <!-- tar_alta_pedido — pedido de trabajo del Proceso Estandar. Cuerpo:
+        {codigo, nombre, descripcion, semanas, fec_inicio, fec_entrega, clie_id?}.
+        Cliente: el que se manda, si es un cliente activo de la empresa; si no se manda, el
+        primero activo (decision de AGENTE-CO-04, para revisar). Tipo: "General" de la empresa. -->
+   <resource methods="POST" uri-template="/mcp/tar/pedido">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            function t(v) { return (v === null || v === undefined) ? "" : ("" + v).replace(/^\s+|\s+$/g, ""); }
+            var usuario = "kuntur";
+            try {
+               var a = mc.getProperty("x_jwt_assertion");
+               var partes = a ? ("" + a).split(".") : [];
+               if (partes.length === 3) {
+                  var pl = JSON.parse("" + new Packages.java.lang.String(Packages.java.util.Base64.getUrlDecoder().decode(partes[1]), "UTF-8"));
+                  usuario = "" + (pl.email || pl.sub || "kuntur");
+               }
+            } catch (e) { usuario = "kuntur"; }
+            mc.setProperty("cfg_usuario", usuario.substring(0, 100));
+            var codigo = t(b.codigo), nombre = t(b.nombre), semanas = parseInt(t(b.semanas), 10);
+            var fi = t(b.fec_inicio), fe = t(b.fec_entrega), fecha = /^\d{4}-\d{2}-\d{2}$/;
+            var e = "";
+            if (!/^[A-Za-z0-9-]{4,40}$/.test(codigo)) { e = "tar_alta_pedido: codigo de 4 a 40 letras, numeros o guiones"; }
+            else if (nombre === "" || nombre.length > 100) { e = "tar_alta_pedido: requiere nombre (hasta 100 caracteres)"; }
+            else if (isNaN(semanas) || semanas < 1 || semanas > 26) { e = "tar_alta_pedido: semanas entre 1 y 26"; }
+            else if (!fecha.test(fi) || !fecha.test(fe) || fe < fi) { e = "tar_alta_pedido: fec_inicio y fec_entrega YYYY-MM-DD, la entrega no antes del inicio"; }
+            mc.setProperty("cfg_error", e);
+            mc.setProperty("cfg_codigo", codigo);
+            mc.setProperty("cfg_descripcion", (t(b.descripcion) === "" ? nombre : nombre + " - " + t(b.descripcion)).substring(0, 600));
+            mc.setProperty("cfg_semanas", "" + semanas);
+            mc.setProperty("cfg_fi", fi);
+            mc.setProperty("cfg_fe", fe);
+            mc.setProperty("cfg_clie_id", t(b.clie_id));
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.clientes_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/clientes/porEmpresa/',get-property('jwt_empr_id'),'/porEstado/ACTIVO')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.clientes_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET clientes - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET clientes - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.cliente && r.cliente.clientes) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var pedido = "" + mc.getProperty("cfg_clie_id"), elegido = "";
+            for (var i = 0; i < l.length; i++) {
+               if (pedido === "" && elegido === "") { elegido = "" + l[i].clie_id; }
+               if (pedido !== "" && ("" + l[i].clie_id) === pedido) { elegido = pedido; }
+            }
+            mc.setProperty("cfg_clie_id", elegido);
+            mc.setProperty("cfg_error", elegido !== "" ? "" : (pedido === ""
+               ? "La empresa no tiene clientes activos: cargá uno en Clientes antes de aceptar el plan"
+               : "tar_alta_pedido: el cliente " + pedido + " no es un cliente activo de esta empresa"));
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.tipos_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/tabla/tipos_pedidos_trabajo/empresa/',get-property('jwt_empr_id'))"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.tipos_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET tipos_pedidos_trabajo - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET tipos_pedidos_trabajo - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.tablas && r.tablas.tabla) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var tipo = "";
+            for (var i = 0; i < l.length; i++) { if (("" + l[i].valor).toLowerCase() === "general") { tipo = "" + l[i].tabl_id; } }
+            mc.setProperty("cfg_tipt_id", tipo);
+            mc.setProperty("cfg_error", tipo === "" ? "La empresa no tiene el tipo de pedido General (lo crea el alta de empresa desde v2.8.1.7)" : "");
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.umti_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/tablas/unidad_medida_tiempo')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.umti_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET unidad_medida_tiempo - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET unidad_medida_tiempo - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.tablas && r.tablas.tabla) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var umti = "";
+            for (var i = 0; i < l.length; i++) { if (/seman/i.test("" + l[i].valor) && umti === "") { umti = "" + l[i].tabl_id; } }
+            mc.setProperty("cfg_umti", umti);
+            mc.setProperty("cfg_error", umti === "" ? "La lista unidad_medida_tiempo no tiene Semanas" : "");
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "_post_pedidotrabajo": {
+               "cod_proyecto": "" + mc.getProperty("cfg_codigo"),
+               "descripcion": "" + mc.getProperty("cfg_descripcion"),
+               "estado": "estados_procesosPROC_EN_CURSO",
+               "objetivo": "" + mc.getProperty("cfg_semanas"),
+               "fec_inicio": mc.getProperty("cfg_fi") + " 00:00:00",
+               "fec_entrega": mc.getProperty("cfg_fe") + " 00:00:00",
+               "usuario_app": "" + mc.getProperty("cfg_usuario"),
+               "umti_id": "" + mc.getProperty("cfg_umti"),
+               "info_id": "",
+               "proc_id": "PROCESO-STANDAR",
+               "empr_id": "" + mc.getProperty("jwt_empr_id"),
+               "clie_id": "" + mc.getProperty("cfg_clie_id"),
+               "tipt_id": "" + mc.getProperty("cfg_tipt_id") } });
+         ]]></script>
+         <log level="custom" category="DEBUG">
+            <property name="text"    value="#TRAZA | MCP | tar_alta_pedido | iniciando (toolsMCPAPI -> PRODataService)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+         </log>
+         <property name="uri.var.altaPedido_url" expression="fn:concat($ctx:dataservices_url,'/PRODataService/pedidoTrabajo')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.altaPedido_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | POST /mcp/tar/pedido - PRODataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "POST /mcp/tar/pedido - PRODataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP tar_alta_pedido (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP tar_alta_pedido (toolsMCPAPI)" });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+
+   <!-- tar_alta_hito — hito de un pedido de la empresa y del Proceso Estandar. Cuerpo:
+        {petr_id, numero, descripcion, fec_inicio, semanas}. El servicio de datos no controla de quien
+        es el pedido: se controla aca (lista de pedidos de la empresa). Establecimiento: el primero
+        de la empresa (el formulario lo pide; decision de AGENTE-CO-04, para revisar). setHito no
+        devuelve el id: se lee la lista de hitos del pedido (filtrada por empresa, #645) y se toma el
+        de mayor numero. -->
+   <resource methods="POST" uri-template="/mcp/tar/hito">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            function t(v) { return (v === null || v === undefined) ? "" : ("" + v).replace(/^\s+|\s+$/g, ""); }
+            var petr = t(b.petr_id), numero = t(b.numero), desc = t(b.descripcion), fi = t(b.fec_inicio);
+            var semanas = parseInt(t(b.semanas), 10), e = "";
+            if (!/^\d{1,10}$/.test(petr)) { e = "tar_alta_hito: petr_id invalido"; }
+            else if (numero === "" || numero.length > 10) { e = "tar_alta_hito: numero de hasta 10 caracteres"; }
+            else if (desc === "" || desc.length > 200) { e = "tar_alta_hito: descripcion de hasta 200 caracteres"; }
+            else if (!/^\d{4}-\d{2}-\d{2}$/.test(fi)) { e = "tar_alta_hito: fec_inicio YYYY-MM-DD"; }
+            else if (isNaN(semanas) || semanas < 1 || semanas > 26) { e = "tar_alta_hito: semanas entre 1 y 26"; }
+            mc.setProperty("cfg_error", e);
+            mc.setProperty("cfg_petr_id", petr);
+            mc.setProperty("cfg_numero", numero);
+            mc.setProperty("cfg_descripcion", desc);
+            mc.setProperty("cfg_fi", fi);
+            mc.setProperty("cfg_semanas", "" + semanas);
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.pedidos_url" expression="fn:concat($ctx:dataservices_url,'/PRODataService/pedidoTrabajo/',get-property('jwt_empr_id'),'/',get-property('cfg_petr_id'))"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.pedidos_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET pedidos de la empresa - PRODataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET pedidos de la empresa - PRODataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.pedidos_trabajo && r.pedidos_trabajo.pedido_trabajo) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var petr = "" + mc.getProperty("cfg_petr_id"), ok = false;
+            for (var i = 0; i < l.length; i++) { if (("" + l[i].petr_id) === petr && ("" + l[i].proc_id) === "PROCESO-STANDAR") { ok = true; } }
+            mc.setProperty("cfg_error", ok ? "" : "tar_alta_hito: el pedido " + petr + " no es de esta empresa o no es del Proceso Estandar");
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.umti_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/tablas/unidad_medida_tiempo')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.umti_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET unidad_medida_tiempo - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET unidad_medida_tiempo - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.tablas && r.tablas.tabla) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var umti = "";
+            for (var i = 0; i < l.length; i++) { if (/seman/i.test("" + l[i].valor) && umti === "") { umti = "" + l[i].tabl_id; } }
+            mc.setProperty("cfg_umti", umti);
+            mc.setProperty("cfg_error", umti === "" ? "La lista unidad_medida_tiempo no tiene Semanas" : "");
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.estas_url" expression="fn:concat($ctx:dataservices_url,'/COREDataService/establecimientos/',get-property('jwt_empr_id'))"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.estas_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET establecimientos - COREDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET establecimientos - COREDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.establecimientos && r.establecimientos.establecimiento) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var esta = l.length > 0 ? "" + l[0].esta_id : "";
+            mc.setProperty("cfg_esta_id", esta);
+            mc.setProperty("cfg_error", esta === "" ? "La empresa no tiene establecimientos: cargá uno antes de aceptar el plan" : "");
+            if (esta !== "") {
+               mc.setPayloadJSON({ "_post_hitos": {
+                  "numero": "" + mc.getProperty("cfg_numero"), "descripcion": "" + mc.getProperty("cfg_descripcion"),
+                  "fec_inicio": "" + mc.getProperty("cfg_fi"), "user_id": "",
+                  "objetivo": "" + mc.getProperty("cfg_semanas"), "unidad_tiempo": "" + mc.getProperty("cfg_umti"),
+                  "esta_id": esta, "documento": "", "petr_id": "" + mc.getProperty("cfg_petr_id"), "nombre_documento": "" } });
+            }
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.altaHito_url" expression="fn:concat($ctx:dataservices_url,'/TARDataService/hitos')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.altaHito_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | POST /mcp/tar/hito - TARDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "POST /mcp/tar/hito - TARDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <property name="uri.var.hitos_url" expression="fn:concat($ctx:dataservices_url,'/TARDataService/pedidostrabajo/hitos/',get-property('cfg_petr_id'),'?empr_id=',get-property('jwt_empr_id'))"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.hitos_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET hitos del pedido - TARDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET hitos del pedido - TARDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.hitos && r.hitos.hito) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var mayor = -1, id = "";
+            for (var i = 0; i < l.length; i++) { var n = parseInt("" + l[i].nro, 10); if (n > mayor) { mayor = n; id = "" + l[i].hito_id; } }
+            mc.setPayloadJSON({ "respuesta": { "hito_id": id, "nro": "" + mayor } });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP tar_alta_hito (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP tar_alta_hito (toolsMCPAPI)" });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+
+   <!-- tar_alta_tarea — tarea SIN responsable y sin fecha, colgada de un hito de la empresa. Cuerpo:
+        {hito_id, nombre, descripcion}. getHito filtra por empresa (#640): si no devuelve el hito, no es
+        de esta empresa. Proceso de la tarea: TST001 (TAREAS_DEFAULT_PROC). -->
+   <resource methods="POST" uri-template="/mcp/tar/tarea">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            function t(v) { return (v === null || v === undefined) ? "" : ("" + v).replace(/^\s+|\s+$/g, ""); }
+            var usuario = "kuntur";
+            try {
+               var a = mc.getProperty("x_jwt_assertion");
+               var partes = a ? ("" + a).split(".") : [];
+               if (partes.length === 3) {
+                  var pl = JSON.parse("" + new Packages.java.lang.String(Packages.java.util.Base64.getUrlDecoder().decode(partes[1]), "UTF-8"));
+                  usuario = "" + (pl.email || pl.sub || "kuntur");
+               }
+            } catch (e) { usuario = "kuntur"; }
+            mc.setProperty("cfg_usuario", usuario.substring(0, 100));
+            var hito = t(b.hito_id), nombre = t(b.nombre), e = "";
+            if (!/^\d{1,10}$/.test(hito)) { e = "tar_alta_tarea: hito_id invalido"; }
+            else if (nombre === "" || nombre.length > 100) { e = "tar_alta_tarea: requiere nombre (hasta 100 caracteres)"; }
+            mc.setProperty("cfg_error", e);
+            mc.setProperty("cfg_hito_id", hito);
+            mc.setProperty("cfg_nombre", nombre);
+            mc.setProperty("cfg_descripcion", t(b.descripcion).substring(0, 600));
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.hito_url" expression="fn:concat($ctx:dataservices_url,'/TARDataService/hitos/',get-property('cfg_hito_id'),'?empr_id=',get-property('jwt_empr_id'))"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" scope="axis2" action="remove"/>
+         <property name="ContentType" scope="axis2" action="remove"/>
+         <header name="Content-Type" scope="transport" action="remove"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <!-- En un GET el MI pasa el cuerpo como parametros de la URL: se vacia antes. -->
+         <script language="js"><![CDATA[ mc.setPayloadJSON({}); ]]></script>
+         <call>
+            <endpoint>
+               <http method="GET" uri-template="{uri.var.hito_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | GET hito - TARDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "GET hito - TARDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var l = (r.hitos && r.hitos.hito) || [];
+            if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
+            var ok = false;
+            for (var i = 0; i < l.length; i++) { if (("" + l[i].hito_id) === ("" + mc.getProperty("cfg_hito_id"))) { ok = true; } }
+            mc.setProperty("cfg_error", ok ? "" : "tar_alta_tarea: el hito " + mc.getProperty("cfg_hito_id") + " no es de esta empresa");
+            if (ok) {
+               mc.setPayloadJSON({ "_post_tarea_planificar": {
+                  "tapl_id": "", "nombre": "" + mc.getProperty("cfg_nombre"), "fecha": "3000-12-31",
+                  "user_id": "", "info_id": "", "case_id": "", "tare_id": "", "proc_id": "TST001", "form_id": "",
+                  "descripcion": "" + mc.getProperty("cfg_descripcion"), "rece_id": "",
+                  "fec_inicio": "3000-12-31 00:00", "fec_fin": "3000-12-31 00:00", "hora_duracion": "",
+                  "empr_id": "" + mc.getProperty("jwt_empr_id"), "usuario_app": "" + mc.getProperty("cfg_usuario") } });
+            }
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.altaTarea_url" expression="fn:concat($ctx:dataservices_url,'/TARDataService/tarea/planificar')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.altaTarea_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | POST /mcp/tar/tarea - TARDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "POST /mcp/tar/tarea - TARDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            var r = mc.getPayloadJSON() || {};
+            var id = (r.respuesta && r.respuesta.tapl_id) ? "" + r.respuesta.tapl_id : "";
+            mc.setProperty("cfg_tapl_id", id);
+            mc.setPayloadJSON({ "_post_tarea_origen": { "origen": "PETR", "tapl_id": id, "orta_id": "" + mc.getProperty("cfg_hito_id") } });
+         ]]></script>
+         <property name="uri.var.origen_url" expression="fn:concat($ctx:dataservices_url,'/TARDataService/tarea/origen')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="POST" uri-template="{uri.var.origen_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | POST tarea/origen - TARDataService error (tarea dada de baja)"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <!-- El vinculo con el hito fallo: se da de baja la tarea recien creada (todo o nada). -->
+               <script language="js"><![CDATA[
+                  mc.setPayloadJSON({ "delete_tarea_planificar": { "tapl_id": "" + mc.getProperty("cfg_tapl_id"), "empr_id": "" + mc.getProperty("jwt_empr_id") } });
+               ]]></script>
+               <property name="uri.var.bajaTareaRb_url" expression="fn:concat($ctx:dataservices_url,'/TARDataService/tarea/planificar')"/>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <call><endpoint><http method="DELETE" uri-template="{uri.var.bajaTareaRb_url}"/></endpoint></call>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "POST tarea/origen - TARDataService error (tarea dada de baja)", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "respuesta": { "tapl_id": "" + mc.getProperty("cfg_tapl_id"), "hito_id": "" + mc.getProperty("cfg_hito_id") } });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP tar_alta_tarea (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP tar_alta_tarea (toolsMCPAPI)" });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+
+   <!-- tar_baja_pedido — para deshacer un plan que fallo a mitad de camino. Cuerpo: {petr_id}.
+        El servicio de datos filtra por empresa (#640): una de otra empresa no se toca. -->
+   <resource methods="DELETE" uri-template="/mcp/tar/pedido">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            var id = (b.petr_id === null || b.petr_id === undefined) ? "" : ("" + b.petr_id).replace(/^\s+|\s+$/g, "");
+            mc.setProperty("cfg_error", /^\d{1,10}$/.test(id) ? "" : "tar_baja_pedido: petr_id invalido");
+            mc.setPayloadJSON({ "_delete_pedidotrabajo": { "petr_id": id, "empr_id": "" + mc.getProperty("jwt_empr_id") } });
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.tar_baja_pedido_url" expression="fn:concat($ctx:dataservices_url,'/PRODataService/pedidoTrabajo')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="DELETE" uri-template="{uri.var.tar_baja_pedido_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | DELETE /mcp/tar/pedido - PRODataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "DELETE /mcp/tar/pedido - PRODataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "respuesta": { "baja": true } });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP tar_baja_pedido (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP tar_baja_pedido (toolsMCPAPI)" });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+
+   <!-- tar_baja_tarea — para deshacer un plan que fallo a mitad de camino. Cuerpo: {tapl_id}.
+        El servicio de datos filtra por empresa (#640): una de otra empresa no se toca. -->
+   <resource methods="DELETE" uri-template="/mcp/tar/tarea">
+      <inSequence>
+         <sequence key="emprIdFromHeader"/>
+         <sequence key="rechazarTokenMaquina"/>
+
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="apiconf"
+                   expression="get-property('registry','conf:tools/apiconfig.xml')"
+                   scope="default" type="OM"/>
+         <property xmlns:ns2="http://org.apache.synapse/xsd" xmlns:ns="http://org.apache.synapse/xsd"
+                   name="dataservices_url" expression="$ctx:apiconf//dataservices_url"/>
+         <script language="js"><![CDATA[
+            var b = mc.getPayloadJSON() || {};
+            var id = (b.tapl_id === null || b.tapl_id === undefined) ? "" : ("" + b.tapl_id).replace(/^\s+|\s+$/g, "");
+            mc.setProperty("cfg_error", /^\d{1,10}$/.test(id) ? "" : "tar_baja_tarea: tapl_id invalido");
+            mc.setPayloadJSON({ "delete_tarea_planificar": { "tapl_id": id, "empr_id": "" + mc.getProperty("jwt_empr_id") } });
+         ]]></script>
+         <filter source="$ctx:cfg_error" regex=".+">
+            <then>
+               <payloadFactory media-type="json">
+                  <format>{"error":"parametro_invalido","message":"$1"}</format>
+                  <args><arg evaluator="xml" expression="$ctx:cfg_error"/></args>
+               </payloadFactory>
+               <property name="messageType" scope="axis2" type="STRING" value="application/json"/>
+               <property name="HTTP_SC"     scope="axis2" type="STRING" value="400"/>
+               <respond/>
+            </then>
+         </filter>
+         <property name="uri.var.tar_baja_tarea_url" expression="fn:concat($ctx:dataservices_url,'/TARDataService/tarea/planificar')"/>
+         <header name="Accept" scope="transport" value="application/json"/>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="FORCE_ERROR_ON_SOAP_FAULT" value="true" scope="default" type="STRING"/>
+         <call>
+            <endpoint>
+               <http method="DELETE" uri-template="{uri.var.tar_baja_tarea_url}"/>
+            </endpoint>
+         </call>
+         <filter source="get-property('axis2', 'HTTP_SC')" regex="2[0-9][0-9]">
+            <then/>
+            <else>
+               <!-- Se responde aca y no con toolsFault: en un recurso que usa <call>, su <send/> va al
+                    servicio de datos en lugar de volver al que llamo (probado en una copia del MI, 2026-11-11). -->
+               <log level="custom" category="ERROR">
+                  <property name="text" value="#TRAZA | MCP | DELETE /mcp/tar/tarea - TARDataService error"/>
+                  <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+                  <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+               </log>
+               <script language="js"><![CDATA[
+                  var d = "";
+                  try { var j = mc.getPayloadJSON(); d = j ? JSON.stringify(j) : ""; } catch (e) { d = ""; }
+                  if (d.indexOf("_post_") >= 0 || d.indexOf("delete_") >= 0) { d = ""; }
+                  mc.setPayloadJSON({ "error": "servicio_de_datos", "message": "DELETE /mcp/tar/tarea - TARDataService error", "detalle": d.substring(0, 500) });
+               ]]></script>
+               <property name="messageType" value="application/json" scope="axis2"/>
+               <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+               <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+               <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+               <respond/>
+            </else>
+         </filter>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "respuesta": { "baja": true } });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <!-- Si la ultima llamada respondio 202 sin cuerpo, el MI deja NO_ENTITY_BODY y la respuesta
+              sale vacia y con 202 (visto en la copia aislada del MI, 2026-11-22): se quitan antes de responder.
+              SC_ACCEPTED es la marca que hace que el MI conteste 202 aunque HTTP_SC diga 200. -->
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="200" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </inSequence>
+      <faultSequence>
+         <log level="custom" category="ERROR">
+            <property name="text" value="#TRAZA | MCP | Error en MCP tar_baja_tarea (toolsMCPAPI)"/>
+            <property name="empr_id" expression="get-property('jwt_empr_id')"/>
+            <property name="detalle" expression="get-property('ERROR_MESSAGE')"/>
+         </log>
+         <script language="js"><![CDATA[
+            mc.setPayloadJSON({ "error": "servicio_de_datos_no_disponible", "message": "Error en MCP tar_baja_tarea (toolsMCPAPI)" });
+         ]]></script>
+         <property name="messageType" value="application/json" scope="axis2"/>
+         <property name="NO_ENTITY_BODY" scope="axis2" action="remove"/>
+         <property name="SC_ACCEPTED" scope="axis2" action="remove"/>
+         <property name="HTTP_SC" value="502" scope="axis2" type="INTEGER"/>
+         <respond/>
+      </faultSequence>
+   </resource>
+
 </api>

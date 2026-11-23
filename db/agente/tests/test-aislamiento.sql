@@ -127,6 +127,14 @@ SET LOCAL agente.empr_id = :'EMPRESA_A';
 INSERT INTO agente.planilla (planilla_id, empr_id, usuario, nombre, encabezados, filas, total_filas)
 VALUES (gen_random_uuid(), :EMPRESA_A, 'ana', 'planilla de A', '["a"]', '[["1"]]', 1);
 
+-- Planes de accion de Kuntur (031).
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.plan_propuesta (empr_id, usuario, plan)
+VALUES (:EMPRESA_B, 'beto', '{"pedido": {"nombre": "plan de B"}}');
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.plan_propuesta (empr_id, usuario, plan)
+VALUES (:EMPRESA_A, 'ana', '{"pedido": {"nombre": "plan de A"}}');
+
 -- Propuestas de siguiente paso (017).
 SET LOCAL agente.empr_id = :'EMPRESA_A';
 INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
@@ -253,6 +261,12 @@ SELECT 'planilla: con contexto A, la de B es invisible',
        NOT EXISTS (SELECT 1 FROM agente.planilla WHERE nombre = 'planilla de B')
        AND EXISTS (SELECT 1 FROM agente.planilla WHERE nombre = 'planilla de A'),
        '028';
+
+INSERT INTO _resultado
+SELECT 'plan_propuesta: con contexto A, el plan de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.plan_propuesta WHERE plan->'pedido'->>'nombre' = 'plan de B')
+       AND EXISTS (SELECT 1 FROM agente.plan_propuesta WHERE plan->'pedido'->>'nombre' = 'plan de A'),
+       '031';
 
 -- ---------------------------------------------------------------------------
 -- CONTROL 2 — Simetrico: con el contexto de B, A es invisible
