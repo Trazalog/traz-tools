@@ -262,6 +262,8 @@ class Propuesta:
                 # el modelo las nombra ("Semana 1") y el guardian tiene que verlas.
                 "calendario": [{"hito": i, "semana_desde": h.get("semana_desde"), "semana_hasta": h.get("semana_hasta")}
                                for i, h in enumerate(self.plan["hitos"], 1)],
+                # La meta (indicador, valor buscado y fecha) tambien la fija el plan.
+                **({"meta": self.plan["meta"]} if self.plan.get("meta") else {}),
                 "nota": "No se creó nada en Tareas. El administrador ve el plan como tarjeta y lo crea "
                         "solo si toca «Aceptar». Decíselo así; no digas que ya está creado."}
 

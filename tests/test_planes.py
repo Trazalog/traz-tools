@@ -347,3 +347,13 @@ def test_una_cantidad_inventada_en_una_tarea_la_ve_el_guardian():
     assert "130" in texto
     v = guardian.revisar(texto, tools=vista)
     assert v.bloquear and "130" in v.sin_fuente
+
+
+def test_la_meta_que_fija_el_plan_no_la_bloquea_el_guardian():
+    """Prueba real contra DEV (2026-11-23): "meta al 13/12" se bloqueaba por cifra sin fuente."""
+    from agente import guardian
+    p = planes.validar(_plan(meta={"kpi": "man_disponibilidad", "operador": ">=", "meta": 85,
+                                   "hasta": "2026-12-13"}), hoy=HOY)
+    vista = [("kuntur_proponer_plan", json.dumps(planes.Propuesta("p-3", p).para_el_modelo(), ensure_ascii=False))]
+    v = guardian.revisar("La meta: disponibilidad de 85 o más al 13/12.", tools=vista)
+    assert not v.bloquear, v.sin_fuente
