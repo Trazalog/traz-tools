@@ -263,3 +263,16 @@ Todos en `toolsMCPAPI.xml`, con el mismo patrón que las altas de configuración
 | 10 | "Pedir cambios" escribe en el chat de Kuntur «Quiero cambios en el plan…» para que el administrador complete; la propuesta anterior queda hasta que vence | Rearmar es una charla, no un formulario | 🟢 |
 | 11 | Kuntur recibe los planes descartados de los últimos 90 días con su motivo, para no repetirlos | Es el "aprende" de la opción B | 🟢 |
 | 12 | El "porque" y el "objetivo" pasan por el guardián de cifras; si hay una cifra sin fuente, no se muestra la tarjeta | Mismo criterio que las metas (R4) | 🟢 |
+
+
+---
+
+## Verificaciones en DEV (2026-11-22, `scripts/dev/verificaciones-dev-agentes.sql`)
+
+| Verificación | Resultado | Qué se hizo |
+|---|---|---|
+| Ninguna empresa tiene el Proceso Estándar arrancando procesos en Bonita | ✅ 0 empresas | — |
+| Pedidos sin empresa | ✅ 0 de 313 | — |
+| La lista `unidad_medida_tiempo` tiene Semanas | ❌ Solo Días, Meses y Años | Los recursos de alta de pedido e hito usan **Días con la duración × 7** cuando no hay Semanas (PR del 2026-11-22) |
+| Empresas con Proceso Estándar, tipo General y cliente activo | ⚠️ Solo 2 (de prueba) | `scripts/dev/habilitar-plan-accion-empresa.sql` lo habilita empresa por empresa; **núcleo: con aprobación del PM** |
+| Mecanismo de avisos (`ntf`) en la base de DEV | ❌ No está instalado | Desplegar `v2.8.1.5/ntf_avisos.sql` y seguir `doc/notificaciones/instalacion-avisos.md`; sin eso no llega ningún aviso de los agentes |

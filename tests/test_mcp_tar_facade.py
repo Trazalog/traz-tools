@@ -192,3 +192,33 @@ def test_atrasadas():
     assert [t["tapl_id"] for t in b["atrasadas"]["tarea"]] == ["2", "1"]
     assert b["atrasadas"]["tarea"][0]["dias_atraso"] >= 4
     assert b["total"] == 2
+
+
+# ------------------------------------------------ plan de acción: unidad de tiempo
+def _script_unidad(uri):
+    for cod in _scripts(uri):
+        if "cfg_umti" in cod and "seman" in cod:
+            return cod
+    raise AssertionError("no está el script de la unidad de tiempo")
+
+
+@pytest.mark.parametrize("uri", ["/mcp/tar/pedido", "/mcp/tar/hito"])
+def test_sin_semanas_usa_dias_por_siete(uri):
+    """En DEV la lista unidad_medida_tiempo tiene Dias, Meses y Años, sin Semanas (2026-11-22)."""
+    lista = {"tablas": {"tabla": [{"tabl_id": "unidad_medida_tiempoDias", "valor": "Dias"},
+                                  {"tabl_id": "unidad_medida_tiempoMeses", "valor": "Meses"}]}}
+    p, _ = _correr([("payload", lista), ("js", _script_unidad(uri))], {**BASE, "cfg_semanas": "3"})
+    assert p["cfg_umti"] == "unidad_medida_tiempoDias" and p["cfg_objetivo"] == "21" and p["cfg_error"] == ""
+
+
+@pytest.mark.parametrize("uri", ["/mcp/tar/pedido", "/mcp/tar/hito"])
+def test_con_semanas_usa_semanas(uri):
+    lista = {"tablas": {"tabla": [{"tabl_id": "u-Dias", "valor": "Dias"}, {"tabl_id": "u-Semanas", "valor": "Semanas"}]}}
+    p, _ = _correr([("payload", lista), ("js", _script_unidad(uri))], {**BASE, "cfg_semanas": "3"})
+    assert p["cfg_umti"] == "u-Semanas" and p["cfg_objetivo"] == "3"
+
+
+def test_sin_semanas_ni_dias_es_error():
+    lista = {"tablas": {"tabla": {"tabl_id": "u-Meses", "valor": "Meses"}}}
+    p, _ = _correr([("payload", lista), ("js", _script_unidad("/mcp/tar/pedido"))], {**BASE, "cfg_semanas": "3"})
+    assert p["cfg_umti"] == "" and "Dias" in p["cfg_error"]
