@@ -89,6 +89,15 @@ class Resultado:
     propuestas_plan: list[dict] = field(default_factory=list)
 
 
+def _args_normalizados(crudo) -> dict:
+    """Los argumentos de una tool como dict, para comparar dos llamadas."""
+    try:
+        v = json.loads(crudo or "{}") if isinstance(crudo, str) else (crudo or {})
+    except (json.JSONDecodeError, ValueError):
+        return {"_crudo": str(crudo)}
+    return v if isinstance(v, dict) else {"_valor": v}
+
+
 class Orquestador:
     def __init__(self, cfg: Config):
         self.cfg = cfg
@@ -261,7 +270,13 @@ class Orquestador:
             "publicadas": len(del_gateway), "ofrecidas": len(tools),
         })
 
-        for _ in range(self.cfg.max_iteraciones):
+        reintento_usado = False
+        cerrada = False
+        ya_consultadas: set[tuple[str, str]] = set()
+        # Una vuelta de mas, reservada para el reintento: no compite con las consultas.
+        for vuelta in range(self.cfg.max_iteraciones + 1):
+            if vuelta == self.cfg.max_iteraciones and not reintento_usado:
+                break  # la vuelta extra es solo para el reintento
             respuesta = await llm.chat(mensajes, tools=tools)
             res.modelo = respuesta.modelo
             res.tokens_prompt += respuesta.tokens_prompt
@@ -270,8 +285,34 @@ class Orquestador:
                 res.costo_usd = (res.costo_usd or 0.0) + float(respuesta.costo_usd)
 
             if not respuesta.pide_tools:
-                res.respuesta = respuesta.texto.strip()
-                self._guardian(consulta, res, contexto)
+                texto = respuesta.texto.strip()
+                res.respuesta = texto
+                bloqueada = bool(texto) and self._guardian(consulta, res, contexto)
+                # Un solo reintento (2026-11-22): si la respuesta vino vacia o el guardian
+                # la bloqueo, se le pide al modelo que la rehaga. Lo que se muestra pasa
+                # igual por el guardian: R4 no se afloja, se le da una segunda oportunidad.
+                if (not texto or bloqueada) and not reintento_usado:
+                    reintento_usado = True
+                    res.controles.append({"control": "reintento",
+                                          "motivo": "vacia" if not texto else "cifras_sin_fuente"})
+                    if texto:
+                        cifras = res.incidentes[-1].get("cifras", []) if res.incidentes else []
+                        mensajes.append({"role": "assistant", "content": texto})
+                        mensajes.append({"role": "system", "content":
+                            "Esa respuesta no se le mostró al usuario: tiene cifras que no aparecen tal cual "
+                            f"en los datos ({', '.join(map(str, cifras)) or 'ver arriba'}). Reescribila sin esas "
+                            "cifras y sin cuentas propias (sumas, totales, promedios): nombrá cada valor como vino "
+                            "de las herramientas. Las tarjetas que propusiste en esta respuesta tampoco se "
+                            "mostraron: si querés proponer algo, volvé a usar la herramienta sin esas cifras."})
+                    else:
+                        mensajes.append({"role": "system", "content":
+                            "No respondiste nada. Respondele al usuario ahora con lo que ya consultaste, "
+                            "o usá la herramienta que corresponda."})
+                    continue
+                if not texto:
+                    res.respuesta = ("No pude armar una respuesta esta vez. "
+                                     "Probá de nuevo o reformulá la pregunta.")
+                cerrada = True
                 break
 
             # 4. El modelo pidio datos: se los buscamos y volvemos a preguntar.
@@ -291,6 +332,17 @@ class Orquestador:
                       and simulados.SERVICIOS[pedida].clase == simulados.LECTURA):
                     mensaje = await self._leer_simulado(con, consulta, mcp, llamada)
                 else:
+                    # La misma consulta con los mismos parametros no se repite en una
+                    # corrida: los modelos chicos insisten y gastan las vueltas.
+                    fn = llamada.get("function", {})
+                    clave_llamada = (pedida, json.dumps(_args_normalizados(fn.get("arguments")), sort_keys=True))
+                    if clave_llamada in ya_consultadas:
+                        mensaje = {"role": "tool", "tool_call_id": llamada.get("id"), "name": pedida,
+                                   "content": json.dumps({"aviso": "Ya hiciste esta misma consulta en esta "
+                                                          "respuesta; usá ese resultado y seguí."}, ensure_ascii=False)}
+                        mensajes.append(mensaje)
+                        continue
+                    ya_consultadas.add(clave_llamada)
                     mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
                 mensajes.append(mensaje)
                 res.contenidos_tools.append(mensaje["content"])
@@ -300,7 +352,11 @@ class Orquestador:
                         "tipo": "tool_bloqueada", "tool": mensaje["name"],
                         "detalle": "el modelo pidio una tool fuera de su lista blanca",
                     })
-        else:
+        if not cerrada and (res.propuestas_meta or res.propuestas_carga
+                            or getattr(res, "propuestas_plan", None)):
+            # Se quedo sin vueltas justo despues de proponer: la propuesta es la respuesta.
+            res.respuesta = "Te dejé la propuesta lista en la tarjeta: revisala y decidí."
+        elif not cerrada:
             # Se agotaron las iteraciones sin una respuesta final.
             res.respuesta = (
                 "Necesité consultar varios datos y no llegué a cerrar una respuesta. "
@@ -311,7 +367,7 @@ class Orquestador:
         res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
         return res
 
-    def _guardian(self, consulta: Consulta, res: Resultado, contexto: str) -> None:
+    def _guardian(self, consulta: Consulta, res: Resultado, contexto: str) -> bool:
         """R4: toda cifra de la respuesta tiene que tener origen, o se bloquea.
 
         Se compara contra lo que el modelo LEYO en esta corrida: el contenido de
@@ -337,6 +393,8 @@ class Orquestador:
             res.propuestas_carga = []
             # Igual con los planes: quedan como propuesta y vencen solos.
             res.propuestas_plan = []
+            return True
+        return False
 
     async def _ejecutar(self, mcp: ClienteMCP, llamada: dict,
                         permitidas: frozenset[str], res: Resultado | None = None) -> dict:

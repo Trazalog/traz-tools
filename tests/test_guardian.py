@@ -188,7 +188,7 @@ def sin_conocimiento(monkeypatch):
 
 
 async def test_el_usuario_recibe_no_tengo_datos_en_vez_del_numero_inventado(con, monkeypatch, llm_falso):
-    llm = llm_falso([respuesta_texto("Cada 500 horas de operación.")])
+    llm = llm_falso([respuesta_texto("Cada 500 horas de operación.")] * 2)  # insiste en el reintento
     _parchar(monkeypatch, llm, MCPFalso())
 
     res = await Orquestador(Config()).responder(con, Consulta(
@@ -219,7 +219,7 @@ async def test_una_respuesta_respaldada_por_la_tool_llega_entera(con, monkeypatc
 
 
 async def test_el_bloqueo_queda_registrado_en_la_corrida(con, monkeypatch, llm_falso):
-    llm = llm_falso([respuesta_texto("Tenés 7 órdenes vencidas.")])
+    llm = llm_falso([respuesta_texto("Tenés 7 órdenes vencidas.")] * 2)  # insiste en el reintento
     _parchar(monkeypatch, llm, MCPFalso())
 
     res = await Orquestador(Config()).responder(con, Consulta(
@@ -233,3 +233,19 @@ async def test_el_bloqueo_queda_registrado_en_la_corrida(con, monkeypatch, llm_f
         fila = await cur.fetchone()
     assert fila["respuesta"] == guardian.MENSAJE_BLOQUEO
     assert fila["incidentes"][0]["respuesta_bloqueada"] == "Tenés 7 órdenes vencidas."
+
+
+@pytest.mark.asyncio
+async def test_si_la_reescribe_sin_la_cifra_se_muestra_la_nueva(con, monkeypatch, llm_falso):
+    """Un reintento (2026-11-22): el guardián bloquea, el modelo la rehace sin la cifra."""
+    from agente.orquestador import Consulta, Orquestador
+    from agente.config import Config
+    from test_orquestador import MCPFalso, _parchar
+    llm = llm_falso([respuesta_texto("Tenés 7 órdenes vencidas."),
+                     respuesta_texto("Tenés órdenes vencidas: revisalas en la pantalla de órdenes.")])
+    _parchar(monkeypatch, llm, MCPFalso())
+    res = await Orquestador(Config()).responder(con, Consulta(
+        empr_id=900001, pregunta="¿Cómo vengo con las órdenes?", autorizacion="Bearer t"))
+    assert res.respuesta == "Tenés órdenes vencidas: revisalas en la pantalla de órdenes."
+    assert any(c.get("control") == "reintento" for c in res.controles)
+    assert len(llm.llamadas_chat) == 2

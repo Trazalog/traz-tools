@@ -256,6 +256,19 @@ async def test_el_orquestador_no_puede_borrar_interacciones(con, monkeypatch, ll
     await con.rollback()
 
 
+@pytest.mark.asyncio
+async def test_la_misma_consulta_no_se_repite_en_una_respuesta(con, monkeypatch, llm_falso):
+    """Los modelos chicos insisten con la misma tool: la segunda vez no sale al MCP."""
+    llm = llm_falso([respuesta_tool("man_get_equipos"), respuesta_tool("man_get_equipos", call_id="c2"),
+                     respuesta_texto("Revisé los equipos.")])
+    mcp = MCPFalso(tools=[TOOL_EQUIPOS])
+    _parchar(monkeypatch, llm, mcp)
+    res = await Orquestador(Config()).responder(con, Consulta(
+        empr_id=900001, pregunta="¿Qué equipos hay?", autorizacion="Bearer t"))
+    assert [ll.tool for ll in mcp.llamadas] == ["man_get_equipos"]
+    assert res.respuesta == "Revisé los equipos."
+
+
 class MCPCaido(MCPFalso):
     """El gateway no responde: falla al pedir la lista de tools."""
 

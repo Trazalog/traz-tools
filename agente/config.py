@@ -121,7 +121,7 @@ class Config:
     )
 
     # --- Loop del agente ----------------------------------------------------
-    max_iteraciones: int = field(default_factory=lambda: _env_int("AGENTE_MAX_ITERACIONES", 4))
+    max_iteraciones: int = field(default_factory=lambda: _env_int("AGENTE_MAX_ITERACIONES", 8))
 
     # --- Prompts ------------------------------------------------------------
     # Carpeta con un archivo por agente (quirqui.md, kuntur.md, faustino.md).

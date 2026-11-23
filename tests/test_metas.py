@@ -180,10 +180,12 @@ async def test_al_modelo_no_le_vuelve_el_motivo(con, monkeypatch, llm_falso):
 async def test_una_cifra_inventada_en_el_motivo_bloquea(con, monkeypatch, llm_falso):
     """R4 tambien en la tarjeta: el 37 del motivo no salio de ninguna tool."""
     import json
-    llm = llm_falso([respuesta_tool(metas.NOMBRE, json.dumps(_args())), respuesta_texto("Te propongo esta meta.")])
+    llm = llm_falso([respuesta_tool(metas.NOMBRE, json.dumps(_args())), respuesta_texto("Te propongo esta meta."), respuesta_texto("Te propongo esta meta.")])
     res = await _consultar(con, monkeypatch, llm, "kuntur")
     assert res.incidentes and res.propuestas_meta == []
-    assert res.respuesta.startswith("No tengo ese dato confirmado")
+    # Con el reintento (2026-11-22) el modelo rehace la respuesta; la tarjeta con el 37 nunca llega.
+    assert "37" not in res.respuesta
+    assert any(c.get("control") == "reintento" for c in res.controles)
 
 
 async def test_una_propuesta_invalida_no_llega_al_panel(con, monkeypatch, llm_falso):
