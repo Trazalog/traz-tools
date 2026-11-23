@@ -543,7 +543,7 @@ FROM unnest(ARRAY[
     '016-vertical', '017-propuestas', '018-avisos', '019-contrato-coach',
     '020-cola-envio', '021-drop-avisos-agente', '022-tools-kpi', '023-kuntur-metas',
     '024-kuntur-configuracion', '025-cargas-configuracion', '026-simulados-puesta-en-marcha',
-    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '030-funciones-sin-usar'
+    '027-tools-alta-configuracion', '028-planillas-carga-masiva', '030-funciones-sin-usar', '034-taxonomia-verticales'
 ]) AS s;
 
 -- ---------------------------------------------------------------------------

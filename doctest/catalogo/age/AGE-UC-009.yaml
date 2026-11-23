@@ -2,9 +2,10 @@ id: AGE-UC-009
 modulo: AGE
 titulo: Saber qué se mide de lo que hablo con Quirqui
 perfil: Usuario
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: application/modules/traz-comp-agente/views/panel.php
@@ -20,5 +21,9 @@ flujo_principal:
     resultado: "Se despliega qué se registra y que el administrador no ve las conversaciones"
 validaciones:
   - "El aviso está siempre visible mientras el panel está abierto"
-dudas:
-  - "El texto del aviso está pendiente de revisión legal (AGENTE-LEGAL-01). Este caso no se valida hasta tener el texto definitivo."
+  - "Decisión del PM (2026-11-22): el caso se valida con el texto provisorio del aviso; se reemplaza cuando llegue la revisión legal (AGENTE-LEGAL-01)"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  feature: features/age/AGE-UC-009.saber-que-se-mide-de-lo-que-hablo-con-quirqui.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s07
