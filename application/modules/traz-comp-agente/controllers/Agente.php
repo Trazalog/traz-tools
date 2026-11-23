@@ -308,6 +308,22 @@ class Agente extends CI_Controller
         $this->_proxyKuntur('POST', '/kuntur/mediciones/' . $id . '/cancelar', array());
     }
 
+    /** Funciones de Tools que la empresa no usa (AGENTE-CO-08). */
+    public function kuntur_funciones()
+    {
+        $this->_proxyKuntur('GET', '/kuntur/funciones', null, 30);
+    }
+
+    /** "Ver como" o "No me interesa" sobre una funcion recomendada. */
+    public function kuntur_funcion_respuesta()
+    {
+        $estado = $this->input->post('estado') === 'descartada' ? 'descartada' : 'aceptada';
+        $this->_proxyKuntur('POST', '/kuntur/funciones/respuesta', array(
+            'propuesta_id' => (int) $this->input->post('propuesta_id'),
+            'estado'       => $estado,
+        ));
+    }
+
     public function kuntur_silenciar()
     {
         $this->_proxyKuntur('POST', '/kuntur/avisos/silenciar', array(

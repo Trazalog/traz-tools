@@ -35,17 +35,10 @@ def test_el_contenido_real_sobrevive_a_la_limpieza():
     assert "Conocimiento" in limpio and "Memoria" in limpio
 
 
-def test_se_detectan_los_bloques_sin_definir():
-    """Mientras el PM no los complete, tienen que ser detectables.
-
-    Es lo que hace que /salud avise en vez de que alguien salga a produccion
-    con los textos de ejemplo puestos.
-    """
-    sin_definir = pendientes(cargar(PROMPT))
-    letras = {p.split(")")[0].lstrip("(") for p in sin_definir}
-    assert letras == {"A", "B", "C", "D", "E", "F"}, (
-        f"Se esperaban los seis bloques A-F; se encontraron: {sin_definir}"
-    )
+def test_quirqui_y_kuntur_ya_no_tienen_bloques_sin_definir():
+    """Los bloques A-F se completaron el 2026-11-22 (pendientes de revisión del PM)."""
+    assert pendientes(cargar(PROMPT)) == []
+    assert pendientes(cargar(PROMPT.parent / "kuntur.md")) == []
 
 
 def test_un_prompt_completo_no_reporta_pendientes():
