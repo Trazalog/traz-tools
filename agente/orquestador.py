@@ -459,7 +459,7 @@ class Orquestador:
 
         propuestas: list[dict] = []
         modulo = sugerencias.modulo_de(consulta.pantalla)
-        tools = sugerencias.REGLAS_POR_MODULO.get(modulo or "", ())
+        tools = tuple(sugerencias.REGLAS_POR_MODULO.get(modulo or "", ())) + sugerencias.REGLAS_SIEMPRE
         try:
             permitidas = await agentes.tools_permitidas(con, consulta.agente.clave)
             usar = [t for t in tools if t in permitidas]
@@ -477,7 +477,8 @@ class Orquestador:
                     res.contenidos_tools.append(res.tools_vistas[-1][1])
                     cands += sugerencias.candidatas(
                         tool, data, hoy=date.today(),
-                        dias_certificacion=self.cfg.sugerencia_dias_certificacion)
+                        dias_certificacion=self.cfg.sugerencia_dias_certificacion,
+                        usuario=consulta.usuario_nick)
                 res.tools_llamadas = [ll.a_dict() for ll in mcp.llamadas]
             cands.sort(key=lambda c: c.prioridad)
             propuestas = await self._guardar_propuestas(con, consulta, cands)
