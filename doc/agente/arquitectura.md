@@ -159,7 +159,7 @@ Si el registro falla igual, la respuesta se entrega: se pierde la traza, no la r
 
 ### Ninguna cifra sin origen (R4, AGENTE-M-04)
 
-Decisión del PM: si una respuesta trae un número que no tiene origen, **se bloquea**. El usuario recibe "No tengo datos para responder eso con certeza…" y la corrida queda con un incidente `cifra_sin_fuente` que guarda la respuesta original para revisarla. Lo hace `agente/guardian.py`, sobre la respuesta final del modelo (no sobre los mensajes fijos de error).
+Decisión del PM: si una respuesta trae un número que no tiene origen, **se bloquea**. El usuario recibe "No tengo ese dato confirmado. ¿Querés que lo busque en los datos de tu empresa o en internet?" y la corrida queda con un incidente `cifra_sin_fuente` que guarda la respuesta original para revisarla. Lo hace `agente/guardian.py`, sobre la respuesta final del modelo (no sobre los mensajes fijos de error).
 
 **Qué cuenta como origen**, comparado siempre contra lo que el modelo **leyó** en esa corrida:
 

@@ -16,10 +16,9 @@ Se arma con REGLAS sobre lo que devuelven las tools, no con el modelo:
 Los umbrales son valores por defecto configurables (variables
 AGENTE_SUGERENCIA_*), marcados asi a proposito: el PM no los definio.
 
-Limitacion de esta version: ninguna tool dice hoy que tarea es de cada
-usuario, asi que las propuestas son sobre el estado de la empresa en esa
-pantalla. Cuando existan las tools del modulo de tareas (tar_get_tareas, ver
-TAR-API), se suma "tus tareas atrasadas".
+Ademas de lo de la pantalla, en cualquier pantalla se revisan "tus tareas
+atrasadas" (tar_get_atrasadas filtrada por el nick del usuario): decision del
+PM del 2026-11-22 en AGE-UC-003.
 """
 from __future__ import annotations
 
@@ -32,8 +31,13 @@ REGLAS_POR_MODULO = {
     "traz-comp-pan": ("pan_get_certificaciones",),
 }
 
+# En cualquier pantalla: el trabajo atrasado de quien abre el panel.
+REGLAS_SIEMPRE = ("tar_get_atrasadas",)
+
 # Orden en que se muestran: lo mas urgente primero.
-_PRIORIDAD = {"lote_vencido": 0, "lote_critico": 1, "stock_bajo": 2, "certificacion_por_vencer": 3}
+_PRIORIDAD = {"lote_vencido": 0, "tarea_atrasada": 1, "lote_critico": 2, "stock_bajo": 3,
+              "certificacion_por_vencer": 4}
+AYUDA_TAREAS = ""  # todavía no hay manual de Tareas en ayuda/
 
 AYUDA_ALMACENES = "ayuda/manual_almacenes.html"
 AYUDA_HERRAMIENTAS = "ayuda/manual_herramientas.html"
@@ -151,7 +155,30 @@ def certificaciones(data, *, hoy: date, dias: int) -> list[Candidata]:
     return salida
 
 
-def candidatas(tool: str, data, *, hoy: date, dias_certificacion: int) -> list[Candidata]:
+def tareas_atrasadas(data, *, usuario: str | None) -> list[Candidata]:
+    """Las tareas atrasadas que tienen como responsable a quien abre el panel."""
+    if not usuario:
+        return []
+    salida = []
+    for t in _lista(data, "atrasadas", "tarea"):
+        if str(t.get("responsable", "")).strip().lower() != usuario.strip().lower():
+            continue
+        dias = t.get("dias_atraso")
+        nombre = t.get("nombre") or f"tarea {t.get('tapl_id')}"
+        salida.append(Candidata(
+            clave=f"tarea_atrasada:{t.get('tapl_id')}", tipo="tarea_atrasada",
+            titulo=f"Tarea atrasada: {nombre}",
+            detalle=(f"Lleva {dias} días de atraso." if dias not in (None, "") else "Ya pasó su fecha."),
+            accion={"texto": "Terminala o, si no se puede, avisale a quien planifica para reprogramarla.",
+                    "ayuda": AYUDA_TAREAS},
+        ))
+    return salida
+
+
+def candidatas(tool: str, data, *, hoy: date, dias_certificacion: int,
+               usuario: str | None = None) -> list[Candidata]:
+    if tool == "tar_get_atrasadas":
+        return tareas_atrasadas(data, usuario=usuario)
     if tool == "alm_get_stock":
         return stock_bajo(data)
     if tool == "alm_get_vencimientos":

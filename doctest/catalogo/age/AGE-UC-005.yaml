@@ -2,9 +2,10 @@ id: AGE-UC-005
 modulo: AGE
 titulo: Una cifra sin respaldo no le llega al usuario
 perfil: Usuario
-estado: borrador
+estado: validado
 version: "1.0"
 origen: baseline
+fecha_validacion: 2026-11-22
 referencias_codigo:
   - repo: traz-tools
     path: agente/guardian.py
@@ -18,5 +19,10 @@ flujo_principal:
     resultado: "Quirqui responde que no tiene datos para responder eso con certeza, en lugar de dar un número inventado"
 validaciones:
   - "Todo número de una respuesta sale de los datos del sistema, del conocimiento registrado, de la pregunta del usuario o de una fuente de internet citada"
-dudas:
-  - "El mensaje cuando se bloquea dice 'No tengo datos para responder eso con certeza. Puedo consultar los datos de tu empresa o buscar una fuente si me decís qué necesitás exactamente.' ¿Es el tono correcto?"
+  - "Decisión del PM (2026-11-22): el mensaje de bloqueo es 'No tengo ese dato confirmado. ¿Querés que lo busque en los datos de tu empresa o en internet?'"
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/age/AGE-UC-001-009.panel-de-los-agentes.spec.ts
+  test_hurl: tests/api-mcp/hurl/agentes/consulta.hurl
+  feature: features/age/AGE-UC-005.una-cifra-sin-respaldo-no-le-llega-al-usuario.feature
+  ayuda: ayudas/src/age/manual_agentes.html#s03

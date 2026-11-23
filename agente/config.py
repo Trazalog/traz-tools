@@ -100,6 +100,12 @@ class Config:
     # Una propuesta descartada no se repite por estos dias.
     sugerencia_silencio_dias: int = field(
         default_factory=lambda: _env_int("AGENTE_SUGERENCIA_SILENCIO_DIAS", 7))
+    # --- Funciones sin usar (AGENTE-CO-08) -----------------------------------
+    # Cuantas recomienda Kuntur a la vez, y por cuantos dias no insiste con una
+    # que la empresa marco "no me interesa". Valores por defecto del pedido.
+    funciones_max: int = field(default_factory=lambda: _env_int("AGENTE_FUNCIONES_MAX", 3))
+    funciones_silencio_dias: int = field(
+        default_factory=lambda: _env_int("AGENTE_FUNCIONES_SILENCIO_DIAS", 30))
     # Avisar certificaciones de herramientas que vencen en estos dias o menos.
     sugerencia_dias_certificacion: int = field(
         default_factory=lambda: _env_int("AGENTE_SUGERENCIA_DIAS_CERTIFICACION", 30))

@@ -127,6 +127,14 @@ SET LOCAL agente.empr_id = :'EMPRESA_A';
 INSERT INTO agente.planilla (planilla_id, empr_id, usuario, nombre, encabezados, filas, total_filas)
 VALUES (gen_random_uuid(), :EMPRESA_A, 'ana', 'planilla de A', '["a"]', '[["1"]]', 1);
 
+-- Planes de accion de Kuntur (031).
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.plan_propuesta (empr_id, usuario, plan)
+VALUES (:EMPRESA_B, 'beto', '{"pedido": {"nombre": "plan de B"}}');
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.plan_propuesta (empr_id, usuario, plan)
+VALUES (:EMPRESA_A, 'ana', '{"pedido": {"nombre": "plan de A"}}');
+
 -- Propuestas de siguiente paso (017).
 SET LOCAL agente.empr_id = :'EMPRESA_A';
 INSERT INTO agente.propuesta (empr_id, usuario, clave, tipo, titulo, detalle)
@@ -142,6 +150,14 @@ VALUES (:EMPRESA_A, 'medicion_de_a', 'actividad', 'semanal', current_date + 30);
 SET LOCAL agente.empr_id = :'EMPRESA_B';
 INSERT INTO agente.medicion_pedida (empr_id, indicador, alcance, alcance_id, frecuencia, hasta)
 VALUES (:EMPRESA_B, 'medicion_de_b', 'persona', 'tecnico-b', 'semanal', current_date + 30);
+
+-- Evaluacion del plan (033): una por empresa, sobre su medicion.
+SET LOCAL agente.empr_id = :'EMPRESA_A';
+INSERT INTO agente.evaluacion_plan (medicion_id, empr_id, petr_id, resultado)
+SELECT medicion_id, :EMPRESA_A, 101, 'sin_datos' FROM agente.medicion_pedida WHERE indicador = 'medicion_de_a';
+SET LOCAL agente.empr_id = :'EMPRESA_B';
+INSERT INTO agente.evaluacion_plan (medicion_id, empr_id, petr_id, resultado)
+SELECT medicion_id, :EMPRESA_B, 202, 'sin_datos' FROM agente.medicion_pedida WHERE indicador = 'medicion_de_b';
 
 CREATE TEMP TABLE _resultado (control text, ok boolean, detalle text) ON COMMIT DROP;
 GRANT ALL ON _resultado TO agente_app;
@@ -209,6 +225,12 @@ SELECT 'medicion_pedida: con contexto A, las de B (incluida la de una persona) s
        '019';
 
 INSERT INTO _resultado
+SELECT 'evaluacion_plan: con contexto A, la del plan de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.evaluacion_plan WHERE petr_id = 202)
+       AND EXISTS (SELECT 1 FROM agente.evaluacion_plan WHERE petr_id = 101),
+       '033';
+
+INSERT INTO _resultado
 SELECT 'propuesta: con contexto A, las de B son invisibles',
        NOT EXISTS (SELECT 1 FROM agente.propuesta WHERE titulo LIKE '%de B')
        AND EXISTS (SELECT 1 FROM agente.propuesta WHERE titulo LIKE '%de A'),
@@ -239,6 +261,12 @@ SELECT 'planilla: con contexto A, la de B es invisible',
        NOT EXISTS (SELECT 1 FROM agente.planilla WHERE nombre = 'planilla de B')
        AND EXISTS (SELECT 1 FROM agente.planilla WHERE nombre = 'planilla de A'),
        '028';
+
+INSERT INTO _resultado
+SELECT 'plan_propuesta: con contexto A, el plan de B es invisible',
+       NOT EXISTS (SELECT 1 FROM agente.plan_propuesta WHERE plan->'pedido'->>'nombre' = 'plan de B')
+       AND EXISTS (SELECT 1 FROM agente.plan_propuesta WHERE plan->'pedido'->>'nombre' = 'plan de A'),
+       '031';
 
 -- ---------------------------------------------------------------------------
 -- CONTROL 2 — Simetrico: con el contexto de B, A es invisible
