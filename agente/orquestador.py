@@ -86,6 +86,15 @@ class Resultado:
     propuestas_carga: list[dict] = field(default_factory=list)
 
 
+def _args_normalizados(crudo) -> dict:
+    """Los argumentos de una tool como dict, para comparar dos llamadas."""
+    try:
+        v = json.loads(crudo or "{}") if isinstance(crudo, str) else (crudo or {})
+    except (json.JSONDecodeError, ValueError):
+        return {"_crudo": str(crudo)}
+    return v if isinstance(v, dict) else {"_valor": v}
+
+
 class Orquestador:
     def __init__(self, cfg: Config):
         self.cfg = cfg
@@ -233,6 +242,7 @@ class Orquestador:
 
         reintento_usado = False
         cerrada = False
+        ya_consultadas: set[tuple[str, str]] = set()
         # Una vuelta de mas, reservada para el reintento: no compite con las consultas.
         for vuelta in range(self.cfg.max_iteraciones + 1):
             if vuelta == self.cfg.max_iteraciones and not reintento_usado:
@@ -288,6 +298,17 @@ class Orquestador:
                       and simulados.SERVICIOS[pedida].clase == simulados.LECTURA):
                     mensaje = await self._leer_simulado(con, consulta, mcp, llamada)
                 else:
+                    # La misma consulta con los mismos parametros no se repite en una
+                    # corrida: los modelos chicos insisten y gastan las vueltas.
+                    fn = llamada.get("function", {})
+                    clave_llamada = (pedida, json.dumps(_args_normalizados(fn.get("arguments")), sort_keys=True))
+                    if clave_llamada in ya_consultadas:
+                        mensaje = {"role": "tool", "tool_call_id": llamada.get("id"), "name": pedida,
+                                   "content": json.dumps({"aviso": "Ya hiciste esta misma consulta en esta "
+                                                          "respuesta; usá ese resultado y seguí."}, ensure_ascii=False)}
+                        mensajes.append(mensaje)
+                        continue
+                    ya_consultadas.add(clave_llamada)
                     mensaje = await self._ejecutar(mcp, llamada, permitidas, res)
                 mensajes.append(mensaje)
                 res.contenidos_tools.append(mensaje["content"])
