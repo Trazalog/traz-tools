@@ -54,7 +54,8 @@ datos_prueba:
   administrador: "administrador de la empresa DocTest"
   registrado_con_otro_rol: "usuario de prueba registrado por la registración (role = 1) con rol Supervisor en la empresa activa"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-032.administrador-unico.spec.ts
 notas:
   - "Cierra el correctivo C-5 dentro del módulo: reemplaza el servicio /usuario/esadmin que usaba REQ-002 por la definición única."
   - "Cubre CP-106 y CP-108 en la parte de quién ve qué."

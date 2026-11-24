@@ -65,7 +65,8 @@ datos_prueba:
   valor_inicial: "7"
   valor_nuevo: "10"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-033.variables-sistema.spec.ts
 notas:
   - "Cubre CP-102 y CU-22."
   - "Cargar las variables no cambia ningún comportamiento: ninguna pantalla existente las lee todavía (por ejemplo, la recuperación de contraseña copiada en REQ-003 sigue igual)."

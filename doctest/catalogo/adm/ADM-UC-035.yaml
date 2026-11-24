@@ -62,7 +62,8 @@ datos_prueba:
   usuario: "uno de los usuarios por defecto de la empresa DocTest"
   ambiente: "copia de DEMO, nunca producción"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-035.preparar-base.spec.ts
 notas:
   - "Cubre M-1, M-2, M-5 (y la carga de M-6 y M-7, que prueban ADM-UC-031 y ADM-UC-033)."
   - "Es el caso que demuestra que el cambio de base no rompió v2 (compatibilidad: solo se agrega). Se corre antes de cualquier otro de REQ-004."

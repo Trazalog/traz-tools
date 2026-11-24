@@ -61,7 +61,8 @@ datos_prueba:
   usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest"
   superusuario: "usuario de prueba con la marca de superusuario en el ambiente (nunca el de producción)"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-030.barra-tools.spec.ts
 notas:
   - "Cubre CP-106 (solo el botón 'Mi empresa') y CP-108 (botón 'Consola' en Tools)."
   - "Toca la barra de Tools: es núcleo y necesita análisis de impacto aprobado por Rodolfo antes de construir."

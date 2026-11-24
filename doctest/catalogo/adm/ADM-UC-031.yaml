@@ -54,7 +54,8 @@ datos_prueba:
   superusuario: "usuario de prueba con la marca en el ambiente"
   segundo_superusuario: "otro usuario de prueba al que se le pone la marca solo para este caso"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-031.superusuario-marca.spec.ts
 notas:
   - "Cubre CP-108 (la Consola solo para el superusuario, por marca) y contesta la duda de ADM-UC-002 (la marca la propone REQ-004)."
   - "La regla 'tiene que quedar al menos un superusuario' (CP-103) es de REQ-008."

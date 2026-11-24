@@ -52,6 +52,7 @@ validaciones:
 datos_prueba:
   variable: "contacto_soporte"
 dudas: []
-derivados: {}
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-034.auditoria-inmutable.spec.ts
 notas:
   - "Cubre CP-101 y la parte de CP-100 que corresponde a variables de sistema. Las demás acciones de RF-100 las agrega cada requerimiento."
