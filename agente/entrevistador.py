@@ -234,7 +234,7 @@ async def estructurar(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter
             + "\n\nConvertila en hechos, siguiendo las reglas de tu prompt.\n"
               "Respondé SOLO un array JSON, sin texto alrededor y sin ```. "
               "Cada elemento: {\"contenido\": str, \"tipo_equipo\": str|null, "
-              "\"situacion\": str|null, \"confianza\": float}"},
+              "\"situacion\": str|null, \"confianza\": float, \"revisar\": str|null}"},
     ])
 
     hechos = _parsear_hechos(crudo)
@@ -247,18 +247,19 @@ async def estructurar(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter
             await cur.execute(
                 """
                 INSERT INTO agente.hecho
-                    (sesion_id, contenido, tipo_equipo, situacion, modulo, confianza)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                    (sesion_id, contenido, tipo_equipo, situacion, modulo, confianza, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING hecho_id, contenido, tipo_equipo, situacion, confianza
                 """,
                 (sesion_id, h["contenido"], h.get("tipo_equipo"), h.get("situacion"),
-                 sesion["tema_modulo"], h.get("confianza", 0.7)),
+                 sesion["tema_modulo"], h.get("confianza", 0.7),
+                 json.dumps({"revisar": h["revisar"]} if h.get("revisar") else {}, ensure_ascii=False)),
             )
             f = await cur.fetchone()
             creados.append({
                 "hecho_id": f["hecho_id"], "contenido": f["contenido"],
                 "tipo_equipo": f["tipo_equipo"], "situacion": f["situacion"],
-                "confianza": float(f["confianza"]),
+                "confianza": float(f["confianza"]), "revisar": h.get("revisar"),
             })
         await cur.execute(
             "UPDATE agente.sesion_entrevista SET estado = 'en_validacion' WHERE sesion_id = %s",
@@ -564,5 +565,8 @@ def _parsear_hechos(crudo: str) -> list[dict]:
             "tipo_equipo": d.get("tipo_equipo") or None,
             "situacion": d.get("situacion") or None,
             "confianza": max(0.0, min(1.0, confianza)),
+            # Bloque 5 (C) del PM: lo que suena inseguro se guarda tal cual y se
+            # marca para que una persona lo revise antes de que lo usen los otros.
+            "revisar": (str(d.get("revisar")).strip() or None) if d.get("revisar") else None,
         })
     return hechos

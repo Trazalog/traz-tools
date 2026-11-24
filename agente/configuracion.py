@@ -90,7 +90,7 @@ class Pregunta:
 
 GUION: tuple[Pregunta, ...] = (
     Pregunta("industria", "¿En qué industria trabaja tu empresa?", "una", INDUSTRIAS),
-    Pregunta("modulos", "¿Qué partes de Trazalog usan hoy, o usarían?", "varias", MODULOS),
+    Pregunta("modulos", "¿Qué partes del sistema usan hoy, o usarían?", "varias", MODULOS),
     Pregunta("operadora", "¿Trabajan para una operadora (la empresa dueña del yacimiento o de la planta)?",
              "una", {"si": "Sí", "no": "No"}),
     Pregunta("operadora_nombre", "¿Para cuál? Si preferís no decirlo, seguí.", "texto", {},
@@ -209,12 +209,12 @@ def proponer(respuestas: dict) -> dict:
         if modulo not in modulos:
             quien = "La operadora pide" if origen == "operadora" else "Te preocupa"
             observaciones.append(f"{quien} «{titulo}», pero no usan {MODULOS[modulo]}: para medirlo "
-                                 f"hay que empezar a usar {MODULOS[modulo]} en Trazalog.")
+                                 f"hay que empezar a usar {MODULOS[modulo]} en el sistema.")
             continue
         prioridades.append({"kpi": kpi, "titulo": titulo, "origen": origen})
     for e in exigencias:
         if e["kpi"] is None:
-            observaciones.append(f"La operadora pide «{e['texto']}»: hoy Trazalog no lo mide. "
+            observaciones.append(f"La operadora pide «{e['texto']}»: hoy el sistema no lo mide. "
                                  "Lo dejamos anotado.")
 
     return {
@@ -247,7 +247,7 @@ def contexto(perfil: dict | None) -> str | None:
         if k in PREOCUPACIONES:
             lineas.append(f"- Le preocupa: {PREOCUPACIONES[k].lower()} ({metas.INDICADORES[k][0]}).")
     lineas.append("Al proponer metas, empezá por lo que exige la operadora y después por lo que le "
-                  "preocupa. No propongas metas sobre partes de Trazalog que no usan.")
+                  "preocupa. No propongas metas sobre partes del sistema que no usan.")
     return "\n".join(lineas)
 
 

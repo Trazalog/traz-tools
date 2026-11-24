@@ -39,13 +39,13 @@ def test_la_ayuda_no_trae_codigo_ni_estilos():
 def test_cada_pieza_dice_de_que_manual_y_seccion_es():
     """Un fragmento suelto tiene que entenderse sin el resto del manual."""
     p = leer_ayuda(AYUDA / "manual_almacenes.html")[0]
-    assert p.texto.startswith("Ayuda de Trazalog — ")
+    assert p.texto.startswith("Ayuda del sistema — ")
 
 
 def test_las_secciones_largas_se_parten_conservando_link_y_encabezado():
     _, piezas = ingesta.piezas_de(AYUDA / "manual_almacenes.html", tipo="documento", modulo="general")
     assert all(len(p.texto) <= ingesta.MAX_SECCION + 400 for p in piezas)
-    assert all(p.texto.startswith("Ayuda de Trazalog — ") for p in piezas)
+    assert all(p.texto.startswith("Ayuda del sistema — ") for p in piezas)
     assert all(p.metadata.get("ayuda") for p in piezas)
 
 
