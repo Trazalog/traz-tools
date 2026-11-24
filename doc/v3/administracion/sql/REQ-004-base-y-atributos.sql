@@ -242,8 +242,10 @@ CREATE TABLE IF NOT EXISTS seg.variables_historial (
 -- ---------------------------------------------------------------------------
 -- 1.6  Función de cambio de variable: valor + historial + auditoría en UNA operación
 -- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS seg.cambiar_variable(varchar, text, varchar);
+
 CREATE OR REPLACE FUNCTION seg.cambiar_variable(p_clave varchar, p_valor text, p_quien varchar)
-RETURNS void
+RETURNS text
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -268,6 +270,8 @@ BEGIN
     INSERT INTO seg.auditoria (quien, empr_id, accion, entidad, identificador, detalle)
     VALUES (p_quien, NULL, 'variable_sistema', 'core.tablas', p_clave,
             jsonb_build_object('anterior', v_anterior, 'nuevo', p_valor));
+
+    RETURN 'ok';
 END;
 $$;
 
