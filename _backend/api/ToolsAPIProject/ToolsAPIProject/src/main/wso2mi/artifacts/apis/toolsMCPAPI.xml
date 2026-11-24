@@ -1546,7 +1546,7 @@
             var l = (r.establecimientos && r.establecimientos.establecimiento) || [];
             if (l.length === undefined) { l = [l]; }   // con una sola fila el servicio de datos devuelve el objeto
             var esta = "" + mc.getProperty("cfg_esta_id"), ok = false;
-            for (var i = 0; i < l.length; i++) { if (("" + l[i].esta_id) === esta) { ok = true; } }
+            for (var i = 0; i < l.length; i++) { if (String("" + l[i].esta_id) == String(esta)) { ok = true; } }
             mc.setProperty("cfg_error", ok ? "" : "alm_alta_deposito: el establecimiento " + esta + " no es de esta empresa");
             if (ok) {
                mc.setPayloadJSON({ "_post_deposito_establecimiento": {
@@ -2666,8 +2666,10 @@
                return new Date(+m[3], +m[2] - 1, +m[1], m[4] ? +m[4] : 23, m[5] ? +m[5] : 59, m[6] ? +m[6] : 59);
             }
             var r = {}; try { r = mc.getPayloadJSON() || {}; } catch (e) { r = {}; }
+            // String(..) == String(..): en el Rhino del EI 6.5 de DEV, === entre dos textos armados
+            // con "" + x da falso aunque sean iguales (prueba contra DEV, 2026-11-24).
             var l = lista(r, "pedidos_trabajo", "pedido_trabajo"), id = "" + mc.getProperty("uri.var.petr_id"), p = null;
-            for (var i = 0; i < l.length; i++) { if (v(l[i].petr_id) === id) { p = l[i]; } }
+            for (var i = 0; i < l.length; i++) { if (String(v(l[i].petr_id)) == String(id)) { p = l[i]; } }
             mc.setProperty("tar_encontrado", p === null ? "no" : "si");
             mc.setProperty("tar_cabecera", p === null ? "{}" : JSON.stringify(pedido(p)));
          ]]></script>
@@ -3102,7 +3104,7 @@
             var pedido = "" + mc.getProperty("cfg_clie_id"), elegido = "";
             for (var i = 0; i < l.length; i++) {
                if (pedido === "" && elegido === "") { elegido = "" + l[i].clie_id; }
-               if (pedido !== "" && ("" + l[i].clie_id) === pedido) { elegido = pedido; }
+               if (pedido !== "" && String("" + l[i].clie_id) == String(pedido)) { elegido = pedido; }
             }
             mc.setProperty("cfg_clie_id", elegido);
             mc.setProperty("cfg_error", elegido !== "" ? "" : (pedido === ""

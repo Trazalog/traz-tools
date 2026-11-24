@@ -53,6 +53,7 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 32 | El guardián de cifras revisa **todo** el texto del plan que va a Tareas (nombres y descripciones de hitos y tareas), y acepta las semanas y la meta que fija el propio plan («Semana 1», «al 13/12») | En la prueba, «Semana 1» bloqueó la respuesta aunque la tarjeta quedaba creada, y una tarea llevaba cantidades inventadas («sugerido: 100 u. de aceite») que terminaron en el pedido real | `agente/orquestador.py`, `agente/planes.py` | 🟡 si Kuntur propone menos planes por esto, lo vemos |
 | 33 | Las herramientas de indicadores de mantenimiento le dicen al modelo que piden fechas (desde y hasta) | El modelo las llamaba sin fechas y la fachada tardaba un minuto entero en fallar | `agente/mcp_client.py` | 🟢 |
 | 34 | Si el guardián bloquea la respuesta pero el plan propuesto no tiene cifras sin fuente, la tarjeta del plan vuelve a mostrarse cuando el reintento pasa | En la prueba contra DEV el texto se bloqueó por un "13", el reintento salió bien, pero la tarjeta se había perdido y Kuntur decía "te dejé la tarjeta" sin que hubiera ninguna | `agente/orquestador.py` | 🟢 |
+| 35 | En la capa de los agentes, las comparaciones entre textos se hacen con `String(a) == String(b)` en vez de `===` | En el WSO2 6.5 del servidor compartido, `===` entre dos textos armados con `"" + x` da falso aunque sean iguales: "ver el detalle del pedido 978" devolvía "no encontrado". En el WSO2 4.5 local andaba bien | `toolsMCPAPI.xml` (3 lugares) | 🟢 |
 
 ### Lo que encontré en DEV con la prueba (2026-11-23)
 
@@ -101,3 +102,17 @@ Están todos en borrador contra `develop-v3.5`. Algunos van apilados (cada uno c
 3. **Tools (PHP):** el módulo del agente, `lib/props/avisos.js` y `assets/agentes/`.
 4. **Avisos al celular:** `NTF_ICONOS_URL` apuntando a `https://<tools>/assets/agentes/iconos` en el Streaming Integrator.
 5. **Trabajos programados:** sumar `python -m agente.mediciones` todos los días a las 6 (ver `doc/agente/mediciones.md`).
+
+## Instalación en el servidor compartido de desarrollo (2026-11-24)
+
+Autorizada por el PM ("4 listo"). Respaldo previo en el servidor: `/home/rodolfo/respaldo-wso2-antes-agentes-20261124-1808.tgz`.
+
+- **Instalado:** servicios de datos `TARDataService` (el que filtra por empresa), `PRODataService`, `MANDataService` y `PANDataservice` (estos dos solo suman consultas), `MANEquiposDataService` y `PINGDataService` (nuevos); interfaces `toolsMCPAPI` (la de los agentes), `toolsALMAPI` y `toolsPANAPI` (nuevas); secuencias `emprIdFromHeader` y `rechazarTokenMaquina` (nuevas).
+- **No instalado, a propósito:**
+  - 🟡 `ALMDataService`: el del servidor tiene consultas tocadas a mano que no están en ninguna rama (`/articulos`, `/articulos/obtener/{arti_id}`) y la versión de `develop-v3.5` además no tiene las de transportistas que sí tiene `develop`. Reemplazarlo le saca consultas al resto del equipo. Sin él, en el servidor compartido `alm_get_stock` y `alm_get_vencimientos` no andan (se cuelgan por la falla de `toolsFault`), `alm_get_depositos` sí. **Decisión del PM:** unir las tres versiones en una rama y desplegar esa.
+  - `toolsCOREAPI`, `toolsMANAPI`, `toolsbpmAPI`, `toolsLogAPI`, `COREDataService` y el resto: son las de la versión 2 que usa el equipo; no se tocan. Por eso `core_get_empresa_actual` da 404 en el servidor compartido.
+  - `toolsNTFAPI` y `NTFDataService` (avisos al teléfono): necesitan el esquema `ntf` en la base, que todavía no está.
+  - `ToolsKPIDataService`: en el servidor está como `ToolsKPIDataService.dbs.dbs` y distinto; queda como está.
+  - `toolsFaultSequence.xml`: el servidor ya tiene su `toolsFault`; se usa ese.
+- **Probado** con la empresa de prueba 191: `tar_get_pedidos`, `tar_get_atrasadas`, `tar_get_pedido/978` (y 404 para otra empresa), `pan_get_herramientas`, `alm_get_depositos`, `man_get_kpi_fallas`. Sin identidad, 503. La versión 2 sigue respondiendo.
+- `man_get_ots` falla porque el token de prueba no trae la empresa de AssetPlanner; con un usuario real debería andar (supuesto, no probado).
