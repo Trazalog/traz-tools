@@ -12,7 +12,7 @@ lo que falta de la base (REQ-004, ver [`README.md`](README.md)).
 
 | Campo | Valor |
 |---|---|
-| Estado | Listo para Pablo: dudas resueltas y casos validados (2026-11-20) |
+| Estado | Hecho: mergeado en develop el 2026-11-24 |
 | Se apoya en | [REQ-002](REQ-002-administracion-esqueleto.md) (controlador base del módulo, Portal) y [`doc/v3/administracion/ANALISIS_INICIAL.md`](../doc/v3/administracion/ANALISIS_INICIAL.md) sección C completa (C.1 qué se copia, C.2 lista pública, C.3 convivencia, C.5 cómo se prueba) |
 | Entrega de la especificación | Ninguna propia: sale de la regla 2 del replanteo (REQ-001). Cubre RF-01 ("se mantienen como están") de `doc/v3/dnato/01_ESPECIFICACION_FUNCIONAL.md` y la condición de E0 "CP-01, 02, 06 siguen en verde" de `PROMPT_CLI_DNATO_V3_BUILD.md` |
 | Casos de uso | Criterio de aceptación: `DNATO-UC-001` a `DNATO-UC-008` (ya existen, **no se duplican**) corridos contra la copia. Casos nuevos solo para lo nuevo: `ADM-UC-010` a `ADM-UC-014` en `doctest/catalogo/adm/` |
