@@ -343,7 +343,9 @@ _TOOLS_DEV = [
     # --- Almacenes -------------------------------------------------------
     _tool("alm_get_stock",
           "Stock disponible de articulos: cantidades por deposito. Sirve para saber si hay "
-          "un repuesto o insumo antes de planificar una tarea."),
+          "un repuesto o insumo antes de planificar una tarea. Cada articulo trae "
+          "punto_pedido (el minimo) y faltante (cuanto falta para llegar al minimo, ya "
+          "calculado; 0 si no falta): para decir cuanto reponer usa faltante, no lo calcules."),
     _tool("alm_get_depositos",
           "Depositos de la empresa, con su codigo y descripcion."),
     _tool("alm_get_movimientos",

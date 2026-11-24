@@ -88,6 +88,8 @@ class Resultado:
     # el panel los muestra y se crean si el administrador toca "Aceptar".
     propuestas_plan: list[dict] = field(default_factory=list)
     planes_limpios: list[dict] = field(default_factory=list)
+    # Planes que el guardian saco por tener cifras sin respaldo en su propio texto.
+    planes_caidos: int = 0
 
 
 def _args_normalizados(crudo) -> dict:
@@ -97,6 +99,10 @@ def _args_normalizados(crudo) -> dict:
     except (json.JSONDecodeError, ValueError):
         return {"_crudo": str(crudo)}
     return v if isinstance(v, dict) else {"_valor": v}
+
+
+AVISO_PLAN_CAIDO = ("\n\n_Armé un plan, pero tenía una cifra que no sale de tus datos y no te lo "
+                    "muestro. Pedímelo de nuevo y lo rehago._")
 
 
 def _textos_del_plan(p: dict) -> list[str]:
@@ -332,6 +338,10 @@ class Orquestador:
                 if not texto:
                     res.respuesta = ("No pude armar una respuesta esta vez. "
                                      "Probá de nuevo o reformulá la pregunta.")
+                elif res.planes_caidos and not res.propuestas_plan and not bloqueada:
+                    # Prueba contra DEV (2026-11-24): el reintento paso, el plan no, y la
+                    # respuesta decia "te deje el plan en una tarjeta" sin tarjeta.
+                    res.respuesta += AVISO_PLAN_CAIDO
                 cerrada = True
                 break
 
@@ -418,6 +428,7 @@ class Orquestador:
                 p for p in res.propuestas_plan
                 if not guardian.revisar("\n\n".join(_textos_del_plan(p)), tools=res.tools_vistas,
                                         contexto=contexto, pregunta=consulta.pregunta).bloquear]
+            res.planes_caidos += len(res.propuestas_plan) - len(res.planes_limpios)
             res.propuestas_plan = []
             return True
         return False

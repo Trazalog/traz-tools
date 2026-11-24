@@ -1390,8 +1390,8 @@
       </call-query>
    </resource>
    <query id="getStockFiltradoMcp" useConfig="ToolsDataSource">
-      <sql>SELECT A.arti_id, A.barcode, A.descripcion, A.costo, A.cantidad_caja, A.punto_pedido,&#xd;       A.estado, A.unidad_medida, A.es_loteado, COALESCE(t.valor,'') AS tipo_articulo,&#xd;       coalesce(sum(C.cantidad), 0) as stock&#xd;FROM alm.alm_articulos A&#xd;LEFT JOIN core.tablas t ON t.tabl_id = A.tiar_id&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id AND C.empr_id = A.empr_id&#xd;     AND (COALESCE(:depo_id,'') = '' OR C.depo_id = cast(NULLIF(:depo_id,'') as integer))&#xd;WHERE A.empr_id = cast(:empr_id as integer)&#xd;AND A.eliminado = FALSE&#xd;AND (COALESCE(:tipo,'') = '' OR t.valor = :tipo)&#xd;AND (COALESCE(:buscar,'') = '' OR A.descripcion ILIKE '%' || :buscar || '%')&#xd;AND (COALESCE(:depo_id,'') = '' OR EXISTS (SELECT 1 FROM alm.alm_lotes l2 WHERE l2.arti_id = A.arti_id AND l2.empr_id = A.empr_id AND l2.depo_id = cast(NULLIF(:depo_id,'') as integer) AND l2.cantidad &gt; 0))&#xd;GROUP BY A.arti_id, t.valor&#xd;ORDER BY A.descripcion</sql>
-      <result outputType="json">{&#xd;    "materias": {&#xd;        "materia": [&#xd;            {&#xd;                "id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "tipo_articulo": "$tipo_articulo",&#xd;                "stock": "$stock"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
+      <sql>SELECT A.arti_id, A.barcode, A.descripcion, A.costo, A.cantidad_caja, A.punto_pedido,&#xd; A.estado, A.unidad_medida, A.es_loteado, COALESCE(t.valor,'') AS tipo_articulo,&#xd; coalesce(sum(C.cantidad), 0) AS stock,&#xd; GREATEST(COALESCE(cast(NULLIF(cast(A.punto_pedido as text),'') as numeric),0) - coalesce(sum(C.cantidad), 0), 0) AS faltante&#xd;FROM (SELECT cast(:empr_id as integer) AS empr_id, COALESCE(:depo_id,'') AS depo, COALESCE(:tipo,'') AS tipo, COALESCE(:buscar,'') AS buscar) p&#xd;JOIN alm.alm_articulos A ON A.empr_id = p.empr_id&#xd;LEFT JOIN core.tablas t ON t.tabl_id = A.tiar_id&#xd;LEFT JOIN alm.alm_lotes C ON C.arti_id = A.arti_id AND C.empr_id = A.empr_id AND (p.depo = '' OR C.depo_id = cast(NULLIF(p.depo,'') as integer))&#xd;WHERE A.eliminado = FALSE AND (p.tipo = '' OR t.valor = p.tipo) AND (p.buscar = '' OR A.descripcion ILIKE '%' || p.buscar || '%')&#xd;AND (p.depo = '' OR EXISTS (SELECT 1 FROM alm.alm_lotes l2 WHERE l2.arti_id = A.arti_id AND l2.empr_id = A.empr_id AND l2.depo_id = cast(NULLIF(p.depo,'') as integer) AND l2.cantidad &gt; 0))&#xd;GROUP BY A.arti_id, t.valor ORDER BY A.descripcion</sql>
+      <result outputType="json">{&#xd;    "materias": {&#xd;        "materia": [&#xd;            {&#xd;                "id": "$arti_id",&#xd;                "barcode": "$barcode",&#xd;                "titulo": "$descripcion",&#xd;                "descripcion": "$descripcion",&#xd;                "costo": "$costo",&#xd;                "cantidad_caja": "$cantidad_caja",&#xd;                "punto_pedido": "$punto_pedido",&#xd;                "estado": "$estado",&#xd;                "unidad_medida": "$unidad_medida",&#xd;                "es_loteado": "$es_loteado",&#xd;                "tipo_articulo": "$tipo_articulo",&#xd;                "stock": "$stock",&#xd;                "faltante": "$faltante"&#xd;            }&#xd;        ]&#xd;    }&#xd;}</result>
       <param name="empr_id" sqlType="STRING"/>
       <param name="depo_id" sqlType="STRING"/>
       <param name="tipo" sqlType="STRING"/>
@@ -1407,5 +1407,31 @@
    </resource>
    <resource method="GET" path="/entregas/detalle/{enma_id}">
       <call-query href="getDetalleEntregaPorId"><with-param name="enma_id" query-param="enma_id"/></call-query>
+   </resource>
+   <query id="getTransportistasMovimientoInterno" useConfig="ToolsDataSource">
+      <sql>SELECT    trami_id,    transportista,    fec_alta,    to_char(fec_alta, 'DD/MM/YYYY HH24:MI') AS fec_alta_txt,    user_app,    moin_id FROM alm.transportistas_movimientos_internos WHERE moin_id = CAST(:moin_id AS integer) ORDER BY trami_id ASC</sql>
+      <result outputType="json">{     "transportistasMovimientosInternos": {       "transportistaMovimientoInterno": [         {           "trami_id": "$trami_id",           "transportista": "$transportista",           "fec_alta": "$fec_alta",           "fec_alta_txt": "$fec_alta_txt",           "user_app": "$user_app",           "moin_id": "$moin_id"         }       ]     }   }</result>
+      <param name="moin_id" sqlType="STRING"/>
+   </query>
+   <query id="setTransportistaMovimientoInterno" returnGeneratedKeys="true" useConfig="ToolsDataSource">
+      <sql>INSERT INTO alm.transportistas_movimientos_internos (transportista, fec_alta, user_app, moin_id) VALUES (:transportista, CURRENT_TIMESTAMP, :user_app, CAST(:moin_id AS integer))</sql>
+      <result element="GeneratedKeys" rowName="Entry" useColumnNumbers="true">
+         <element column="1" name="ID" xsdType="integer"/>
+      </result>
+      <param name="transportista" sqlType="STRING"/>
+      <param name="user_app" sqlType="STRING"/>
+      <param name="moin_id" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/movimientoInterno/transportistas/moin/{moin_id}">
+      <call-query href="getTransportistasMovimientoInterno">
+         <with-param name="moin_id" query-param="moin_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/movimientoInterno/transportista">
+      <call-query href="setTransportistaMovimientoInterno">
+         <with-param name="transportista" query-param="transportista"/>
+         <with-param name="user_app" query-param="user_app"/>
+         <with-param name="moin_id" query-param="moin_id"/>
+      </call-query>
    </resource>
 </data>

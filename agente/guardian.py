@@ -114,6 +114,14 @@ def _interpretaciones(token: str) -> set[Decimal]:
     """
     t = token.replace(" ", "").rstrip("%")
     candidatos = {t}
+    # Un separador solo puede ser de miles si lo siguen grupos de tres cifras:
+    # "1.500" puede ser 1500, pero "10.0" (como lo devuelve la base) es diez,
+    # nunca cien. Sin esto, un stock de 10.0 respaldaba un "100" inventado.
+    def de_miles(x: str, sep: str) -> str | None:
+        partes = x.split(sep)
+        if len(partes) > 1 and all(len(g) == 3 for g in partes[1:]):
+            return "".join(partes)
+        return None
     if "," in t and "." in t:
         # El ultimo separador es el decimal.
         if t.rfind(",") > t.rfind("."):
@@ -121,11 +129,11 @@ def _interpretaciones(token: str) -> set[Decimal]:
         else:
             candidatos = {t.replace(",", "")}
     elif "," in t:
-        candidatos = {t.replace(",", "."), t.replace(",", "")}
+        candidatos = {t.replace(",", "."), de_miles(t, ",")} - {None}
     elif t.count(".") > 1:
-        candidatos = {t.replace(".", "")}
+        candidatos = {de_miles(t, ".")} - {None}
     elif "." in t:
-        candidatos = {t, t.replace(".", "")}
+        candidatos = {t, de_miles(t, ".")} - {None}
     valores = set()
     for c in candidatos:
         try:
