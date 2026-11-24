@@ -121,3 +121,42 @@ def test_se_desempaqueta_el_content_de_mcp():
     assert _contenido_mcp(result) == {"equipos": [{"id": 1}]}
     # Si no es JSON, vuelve el texto tal cual en vez de explotar.
     assert _contenido_mcp({"content": [{"type": "text", "text": "sin datos"}]}) == "sin datos"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_modo_mi_las_altas_del_plan_van_por_post_con_cuerpo():
+    """Modo desarrollo: aceptar un plan de Kuntur crea el pedido en Tareas.
+
+    Las altas y bajas viajan con el metodo y el cuerpo JSON que espera la
+    fachada (POST/DELETE /mcp/tar/...), con la identidad en X-JWT-Assertion,
+    y sin el empr_id aunque venga en los datos."""
+    import json
+    cfg = _cfg(AGENTE_MCP_MODO="mi", AGENTE_MCP_URL="http://mi/tools/mcp/mcp")
+    alta = respx.post("http://mi/tools/mcp/mcp/tar/pedido").mock(
+        return_value=httpx.Response(200, json={"petr_id": "501"}))
+    baja = respx.delete("http://mi/tools/mcp/mcp/tar/tarea").mock(
+        return_value=httpx.Response(200, json={"ok": True}))
+    async with ClienteMCP(cfg, "Bearer asercion") as mcp:
+        assert await mcp.llamar("tar_alta_pedido", {"descripcion": "Plan", "empr_id": 9}) == {"petr_id": "501"}
+        await mcp.llamar("tar_baja_tarea", {"tapl_id": "7"})
+    pedido = alta.calls[0].request
+    assert pedido.headers["X-JWT-Assertion"] == "asercion"
+    assert json.loads(pedido.content) == {"descripcion": "Plan"}
+    assert json.loads(baja.calls[0].request.content) == {"tapl_id": "7"}
+
+
+def test_modo_mi_el_modelo_no_ve_las_escrituras_del_plan():
+    """Las altas del plan las llama planes.aceptar(), nunca el modelo."""
+    from agente.mcp_client import _ESCRITURAS_PLAN_DEV, _TOOLS_DEV
+    ofrecidas = {t["function"]["name"] for t in _TOOLS_DEV}
+    assert not ofrecidas & set(_ESCRITURAS_PLAN_DEV)
+
+
+def test_modo_mi_los_kpi_de_mantenimiento_piden_el_periodo():
+    """Sin fec_inicio y fec_fin la fachada no responde: el modelo tiene que saberlo."""
+    from agente.mcp_client import _TOOLS_DEV
+    for t in _TOOLS_DEV:
+        f = t["function"]
+        if f["name"].startswith("man_get_kpi_"):
+            assert f["parameters"]["required"] == ["fec_inicio", "fec_fin"], f["name"]

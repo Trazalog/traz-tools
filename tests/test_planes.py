@@ -62,6 +62,18 @@ def test_un_plan_bien_armado_queda_con_el_proceso_estandar_y_sus_totales():
     assert p["hitos"][0]["tareas"][0]["responsable_sugerido"] == "jefe de taller"
 
 
+def test_las_semanas_del_plan_no_las_bloquea_el_guardian():
+    """Prueba real contra DEV (2026-11-23): "Semana 1" se bloqueaba por cifra sin fuente.
+
+    Las semanas de cada hito las fija el propio plan: el modelo las ve en la
+    salida de la tool y puede nombrarlas."""
+    from agente import guardian
+    prop = planes.Propuesta("p-1", planes.validar(_plan(), hoy=HOY))
+    vista = [("kuntur_proponer_plan", json.dumps(prop.para_el_modelo(), ensure_ascii=False))]
+    v = guardian.revisar("Semana 1 y 2: preventivos. Semana 4: medir. Son 2 hitos y 3 tareas.", tools=vista)
+    assert not v.bloquear, v.sin_fuente
+
+
 @pytest.mark.parametrize("cambio,mensaje", [
     ({"proc_id": "YUDICA-001"}, "Proceso Estándar"),
     ({"porque": ""}, "porque"),
@@ -205,6 +217,21 @@ async def test_un_plan_con_una_cifra_inventada_no_muestra_tarjeta(con, monkeypat
     assert res.propuestas_plan == []
 
 
+async def test_si_se_bloquea_solo_el_texto_la_tarjeta_del_plan_vuelve_con_el_reintento(con, monkeypatch, llm_falso):
+    """Prueba real contra DEV (2026-11-23): el texto se bloqueó por "13", el reintento pasó,
+    pero la tarjeta se había perdido y la respuesta decía "te dejé la tarjeta"."""
+    llm = llm_falso([
+        respuesta_tool(planes.NOMBRE, json.dumps(_plan(porque="Hay preventivos atrasados en las palas."))),
+        respuesta_texto("Te dejé el plan: son 13 tareas en la tarjeta."),
+        respuesta_texto("Te dejé el plan en una tarjeta: si te sirve, aceptalo."),
+    ])
+    res = await _consultar(con, monkeypatch, llm)
+    assert {"control": "reintento", "motivo": "cifras_sin_fuente"} in res.controles
+    assert len(res.propuestas_plan) == 1, res.incidentes
+    aviso = llm.llamadas_chat[-1]["mensajes"][-1]["content"]
+    assert "no los vuelvas a proponer" in aviso
+
+
 async def _propuesta(con, empr_id=EMPRESA) -> str:
     await rag.fijar_empresa(con, empr_id)
     p = await planes.proponer(con, empr_id=empr_id, interaccion_id=None, usuario="admin@empresa",
@@ -319,3 +346,29 @@ def test_los_textos_largos_se_recortan_sin_cortar_palabras():
     assert t.endswith("…") and len(t) <= 60
     assert not t[:-1].endswith("mangue")
     assert _texto("corto", 60) == "corto"
+
+
+def test_una_cantidad_inventada_en_una_tarea_la_ve_el_guardian():
+    """Prueba real contra DEV (2026-11-23): "sugerido: 100 u. aceite" llegó a Tareas sin fuente."""
+    from agente import guardian
+    from agente.orquestador import _textos_del_plan
+    p = planes.validar(_plan(hitos=[{"nombre": "Comprar", "semana_desde": 1, "semana_hasta": 1,
+                                     "tareas": [{"nombre": "Emitir la orden", "descripcion": "Pedir 130 bidones de aceite"}]}]),
+                       hoy=HOY)
+    prop = planes.Propuesta("p-2", p)
+    vista = [("alm_get_stock", '{"stock": "10", "punto_pedido": "50"}'),
+             ("kuntur_proponer_plan", json.dumps(prop.para_el_modelo(), ensure_ascii=False))]
+    texto = "\n".join(_textos_del_plan(prop.tarjeta()))
+    assert "130" in texto
+    v = guardian.revisar(texto, tools=vista)
+    assert v.bloquear and "130" in v.sin_fuente
+
+
+def test_la_meta_que_fija_el_plan_no_la_bloquea_el_guardian():
+    """Prueba real contra DEV (2026-11-23): "meta al 13/12" se bloqueaba por cifra sin fuente."""
+    from agente import guardian
+    p = planes.validar(_plan(meta={"kpi": "man_disponibilidad", "operador": ">=", "meta": 85,
+                                   "hasta": "2026-12-13"}), hoy=HOY)
+    vista = [("kuntur_proponer_plan", json.dumps(planes.Propuesta("p-3", p).para_el_modelo(), ensure_ascii=False))]
+    v = guardian.revisar("La meta: disponibilidad de 85 o más al 13/12.", tools=vista)
+    assert not v.bloquear, v.sin_fuente

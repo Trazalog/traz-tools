@@ -87,6 +87,7 @@ class Resultado:
     # Planes de accion que propuso Kuntur (ADR-A13): no se creo nada en Tareas;
     # el panel los muestra y se crean si el administrador toca "Aceptar".
     propuestas_plan: list[dict] = field(default_factory=list)
+    planes_limpios: list[dict] = field(default_factory=list)
 
 
 def _args_normalizados(crudo) -> dict:
@@ -96,6 +97,21 @@ def _args_normalizados(crudo) -> dict:
     except (json.JSONDecodeError, ValueError):
         return {"_crudo": str(crudo)}
     return v if isinstance(v, dict) else {"_valor": v}
+
+
+def _textos_del_plan(p: dict) -> list[str]:
+    """Todo lo que el plan deja escrito en Tareas, para que el guardian lo revise.
+
+    Prueba contra DEV (2026-11-23): una tarea llevaba "sugerido: 100 u. aceite",
+    cantidades que no salian de ninguna tool, y terminaban en el pedido real."""
+    out = [p.get("porque", ""), p.get("objetivo", "")]
+    ped = p.get("pedido") or {}
+    out += [ped.get("nombre", ""), ped.get("descripcion", "")]
+    for h in p.get("hitos") or []:
+        out.append(h.get("nombre", ""))
+        for t in h.get("tareas") or []:
+            out += [t.get("nombre", ""), t.get("descripcion", "")]
+    return [x for x in out if x]
 
 
 class Orquestador:
@@ -295,15 +311,19 @@ class Orquestador:
                     reintento_usado = True
                     res.controles.append({"control": "reintento",
                                           "motivo": "vacia" if not texto else "cifras_sin_fuente"})
+                    # Los planes sanos vuelven a la respuesta: el reintento los controla de nuevo.
+                    res.propuestas_plan, res.planes_limpios = res.planes_limpios, []
                     if texto:
                         cifras = res.incidentes[-1].get("cifras", []) if res.incidentes else []
+                        tarjetas = ("Los planes que ya propusiste quedan en pie: no los vuelvas a proponer. "
+                                    if res.propuestas_plan else "")
                         mensajes.append({"role": "assistant", "content": texto})
                         mensajes.append({"role": "system", "content":
                             "Esa respuesta no se le mostró al usuario: tiene cifras que no aparecen tal cual "
                             f"en los datos ({', '.join(map(str, cifras)) or 'ver arriba'}). Reescribila sin esas "
                             "cifras y sin cuentas propias (sumas, totales, promedios): nombrá cada valor como vino "
-                            "de las herramientas. Las tarjetas que propusiste en esta respuesta tampoco se "
-                            "mostraron: si querés proponer algo, volvé a usar la herramienta sin esas cifras."})
+                            "de las herramientas. " + (tarjetas or "Las tarjetas que propusiste en esta respuesta tampoco se "
+                            "mostraron: si querés proponer algo, volvé a usar la herramienta sin esas cifras.")})
                     else:
                         mensajes.append({"role": "system", "content":
                             "No respondiste nada. Respondele al usuario ahora con lo que ya consultaste, "
@@ -377,7 +397,7 @@ class Orquestador:
         # El motivo de una meta propuesta lo escribe el modelo y se muestra en la
         # tarjeta: sus cifras se controlan igual que las de la respuesta.
         texto = "\n\n".join([res.respuesta] + [p["motivo"] for p in res.propuestas_meta]
-                              + [p[k] for p in res.propuestas_plan for k in ("porque", "objetivo")])
+                              + [t for p in res.propuestas_plan for t in _textos_del_plan(p)])
         veredicto = guardian.revisar(texto, tools=res.tools_vistas, contexto=contexto,
                                      pregunta=consulta.pregunta)
         res.controles.append(veredicto.control())
@@ -391,7 +411,13 @@ class Orquestador:
             # Las cargas quedan guardadas como propuesta, pero no se muestran: sin
             # tarjeta nadie las confirma y vencen solas.
             res.propuestas_carga = []
-            # Igual con los planes: quedan como propuesta y vencen solos.
+            # Igual con los planes: quedan como propuesta y vencen solos. Los que no
+            # tienen cifras sin fuente en su propio texto se guardan aparte: si el
+            # reintento pasa, vuelven a mostrarse (2026-11-23, prueba contra DEV).
+            res.planes_limpios = [
+                p for p in res.propuestas_plan
+                if not guardian.revisar("\n\n".join(_textos_del_plan(p)), tools=res.tools_vistas,
+                                        contexto=contexto, pregunta=consulta.pregunta).bloquear]
             res.propuestas_plan = []
             return True
         return False
