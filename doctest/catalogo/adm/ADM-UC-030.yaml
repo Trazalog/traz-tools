@@ -2,7 +2,8 @@ id: ADM-UC-030
 modulo: ADM
 titulo: Llegar al Portal y a la Consola desde la barra de Tools
 perfil: Administrador
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-24
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -59,10 +60,7 @@ datos_prueba:
   administrador: "administrador de la empresa DocTest"
   usuario_no_admin: "uno de los usuarios por defecto de la empresa DocTest"
   superusuario: "usuario de prueba con la marca de superusuario en el ambiente (nunca el de producción)"
-dudas:
-  - "La barra está en application/views/layout/perfil.php, pero hay copias en traz-comp-pan, traz-comp-tareasestandar, traz-prod-trazasoft y traz-tools-resi. ¿Hay pantallas en uso que dibujan alguna de esas copias? Propuesta: el análisis de impacto lo verifica; si alguna se usa, se agregan los botones también ahí en el mismo pull request; si no, se dejan como están."
-  - "El menú del perfil hoy tiene 'Usuarios' para quien tiene seg.users.role = 1 (que reciben todos los que se registran). La maqueta lo saca. ¿Se saca ya? Propuesta: no; se saca en REQ-007, cuando el Portal tenga la pantalla de Usuarios, para no dejar a nadie sin esa función."
-  - "El Contexto agrega pedidos al servicio de datos en cada carga del tablero. ¿Se acepta sin memoria intermedia? Propuesta: sí, se pide una vez por carga del tablero (Tools carga el resto por AJAX dentro de la misma página); si el análisis de impacto mide más de medio segundo, se guarda en la sesión hasta 60 segundos (RNF-06)."
+dudas: []
 derivados: {}
 notas:
   - "Cubre CP-106 (solo el botón 'Mi empresa') y CP-108 (botón 'Consola' en Tools)."
