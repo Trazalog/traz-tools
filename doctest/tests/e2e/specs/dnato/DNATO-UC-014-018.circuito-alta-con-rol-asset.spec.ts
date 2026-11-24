@@ -17,8 +17,7 @@
  */
 
 import { expect, test, credenciales } from '../../fixtures/auth.ts';
-import { entornoActual, requerirUrlDeApp, urlDnato } from '../../config/apps.ts';
-import { requerirUrlDeApp, urlDeApp, urlDnato } from '../../config/apps.ts';
+import { entornoActual, requerirUrlDeApp, urlDnato, urlDeApp } from '../../config/apps.ts';
 import { AltaUsuarioPage } from '../../pages/dnato/AltaUsuarioPage.ts';
 import { LoginPage } from '../../pages/dnato/LoginPage.ts';
 import { UsuariosListPage } from '../../pages/dnato/UsuariosListPage.ts';

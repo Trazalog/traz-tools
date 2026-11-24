@@ -2,7 +2,8 @@ id: ADM-UC-010
 modulo: ADM
 titulo: Entrar sin sesión solo a las páginas públicas de identidad del módulo
 perfil: Visitante
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-20
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -59,11 +60,9 @@ validaciones:
   - "Con sesión abierta, el ingreso manda al tablero de Tools"
 datos_prueba:
   direccion_ingreso_copia: "valor de la variable de identidad de DocTest del ambiente"
-dudas:
-  - "Los pasos de alta de empresa (register_success, crearEmpresa, guardarEmpresa, registro_completo y los pedidos de provincias y localidades) se usan con el usuario recién activado, que todavía no tiene empresa. ¿Van en la lista pública y conservan el control propio que tienen en DNATO? Propuesta: sí, copiado tal cual; el controlador base no les exige empresa."
-  - "El formulario de ingreso de DNATO no lleva código de seguridad. ¿Se agrega el del módulo como campo oculto a todos los formularios copiados? Propuesta: sí, no cambia nada visible; si algún envío del formulario de registro (que arma traz-comp-formularios) no puede llevarlo sin tocar ese módulo, Pablo lo lista en el plan y Rodolfo decide."
-  - "[SUPUESTO] DocTest elige la dirección del ingreso a probar con una variable nueva por ambiente (DOCTEST_<AMBIENTE>_URL_IDENTIDAD) que, si está vacía, usa la de DNATO. ¿Está bien ese nombre y que solo la usen DNATO-UC-001 a 008? Propuesta: sí; el ingreso del agente (DNATO-UC-009) y las pantallas de administración de DNATO siguen en la dirección de DNATO."
-derivados: {}
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-010.lista-publica.spec.ts
 notas:
   - "Cubre CP-110 (en la copia) y CP-112."
   - "El comportamiento de cada página pública NO se prueba acá: lo prueban DNATO-UC-001 a 008 corridos contra la copia. Este caso solo prueba qué se puede abrir sin sesión y qué no."

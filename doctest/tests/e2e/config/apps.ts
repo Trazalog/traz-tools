@@ -101,3 +101,27 @@ export function urlDnato(ruta = '', entorno: Entorno = entornoActual()): string 
   const base = requerirUrlDeApp('dnato', entorno).replace(/main\/login\/?$/, '').replace(/\/$/, '');
   return ruta ? `${base}/${ruta.replace(/^\//, '')}` : `${base}/`;
 }
+
+/**
+ * URL de la identidad a probar: la copia del módulo (`traz-comp-adm`) si
+ * `DOCTEST_<AMBIENTE>_URL_IDENTIDAD` está configurada, o DNATO si no.
+ *
+ * Solo la usan los recorridos de identidad (DNATO-UC-001 a 008): el ingreso del
+ * agente (DNATO-UC-009) y las pantallas de administración de DNATO siguen en la
+ * dirección de DNATO. Si la variable está vacía, todo funciona como antes.
+ */
+export function urlIdentidad(ruta = '', entorno: Entorno = entornoActual()): string {
+  const variable = `DOCTEST_${entorno.toUpperCase().replace('-', '_')}_URL_IDENTIDAD`;
+  const copia = process.env[variable]?.trim();
+
+  if (!copia) {
+    // Sin variable: se comporta igual que antes (ideal de DNATO).
+    return ruta ? urlDnato(ruta, entorno) : requerirUrlDeApp('dnato', entorno);
+  }
+
+  if (!ruta) return copia; // la variable ya es la URL del ingreso a probar
+
+  const base = copia.replace(/main\/login\/?$/, '').replace(/\/$/, '');
+
+  return `${base}/${ruta.replace(/^\//, '')}`;
+}

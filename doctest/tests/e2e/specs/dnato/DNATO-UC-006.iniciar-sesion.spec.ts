@@ -13,7 +13,7 @@
 import { expect, test } from '@playwright/test';
 
 import { LoginPage } from '../../pages/dnato/LoginPage.ts';
-import { requerirUrlDeApp, urlDnato } from '../../config/apps.ts';
+import { urlIdentidad } from '../../config/apps.ts';
 import { credenciales } from '../../fixtures/auth.ts';
 
 const empresa1 = () => credenciales('empresa1');
@@ -21,7 +21,7 @@ const empresa1 = () => credenciales('empresa1');
 test.describe('@dnato @DNATO-UC-006 Iniciar sesión eligiendo la empresa', () => {
   test('@smoke entra con las credenciales de su empresa', async ({ page }) => {
     const login = new LoginPage(page);
-    await login.abrir(requerirUrlDeApp('dnato'));
+    await login.abrir(urlIdentidad());
 
     await expect(login.email).toBeVisible();
     await expect(login.password).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('@dnato @DNATO-UC-006 Iniciar sesión eligiendo la empresa', () =>
     // elige empresa antes de autenticarse. Este es el control que ocupó su lugar
     // (hallazgo H4: el desplegable listaba TODAS las empresas sin sesión).
     const login = new LoginPage(page);
-    await login.abrir(requerirUrlDeApp('dnato'));
+    await login.abrir(urlIdentidad());
 
     await expect(page.locator('select')).toHaveCount(0);
     expect(await login.empresasDisponibles()).toEqual([]);
@@ -48,7 +48,7 @@ test.describe('@dnato @DNATO-UC-006 Iniciar sesión eligiendo la empresa', () =>
     // La pertenencia se resuelve server-side: el paso 2 exige credenciales ya
     // validadas y no se puede alcanzar por dirección directa.
     const login = new LoginPage(page);
-    await page.goto(urlDnato('main/seleccionar_empresa'));
+    await page.goto(urlIdentidad('main/seleccionar_empresa'));
 
     await expect(login.email).toBeVisible();
     expect(await login.mensajeDeError()).toMatch(/sesión expiró/i);
@@ -57,7 +57,7 @@ test.describe('@dnato @DNATO-UC-006 Iniciar sesión eligiendo la empresa', () =>
 
   test('cuando el usuario tiene más de una empresa, le ofrece elegir', async ({ page }) => {
     const login = new LoginPage(page);
-    await login.abrir(requerirUrlDeApp('dnato'));
+    await login.abrir(urlIdentidad());
     await login.completar(empresa1());
     await login.enviar();
 
@@ -78,7 +78,7 @@ test.describe('@dnato @DNATO-UC-006 Iniciar sesión eligiendo la empresa', () =>
 
   test('rechaza una contraseña equivocada', async ({ page }) => {
     const login = new LoginPage(page);
-    await login.abrir(requerirUrlDeApp('dnato'));
+    await login.abrir(urlIdentidad());
     await login.ingresar({ ...empresa1(), password: 'Contrasena-Incorrecta-2026!' });
 
     expect(await login.mensajeDeError()).toMatch(/correo o contraseña incorrectos/i);
@@ -87,7 +87,7 @@ test.describe('@dnato @DNATO-UC-006 Iniciar sesión eligiendo la empresa', () =>
 
   test('no deja entrar con los campos vacíos', async ({ page }) => {
     const login = new LoginPage(page);
-    await login.abrir(requerirUrlDeApp('dnato'));
+    await login.abrir(urlIdentidad());
     await login.enviar();
 
     expect(await login.sesionIniciada()).toBe(false);
@@ -98,7 +98,7 @@ test.describe('@dnato @DNATO-UC-006 Iniciar sesión eligiendo la empresa', () =>
     // constants.php) y se muestra como banner freemium, duplicado para móvil y
     // escritorio — de ahí el .first().
     const login = new LoginPage(page);
-    await login.abrir(requerirUrlDeApp('dnato'));
+    await login.abrir(urlIdentidad());
 
     await expect(page.getByRole('link', { name: /crear cuenta gratis/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /olvidaste tu contraseña/i })).toBeVisible();
