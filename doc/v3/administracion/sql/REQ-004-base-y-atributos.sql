@@ -1,7 +1,7 @@
 -- REQ-004 · Módulo Administración — base y atributos
 -- Estructura M-1 (aditiva) + carga de datos M-2, M-5, M-6 y M-7.
 --
--- Dónde se ejecuta: PRIMERO en una copia de DEMO, después en DEMO. NUNCA directo en
+-- Dónde se ejecuta: en desarrollo (DEV). NUNCA directo en
 -- producción. Idempotente: se puede correr más de una vez sin efecto adicional.
 -- Vuelta atrás: REQ-004-base-y-atributos-vuelta-atras.sql
 --
@@ -365,8 +365,8 @@ DO $$
 DECLARE
     v_email text := '<CORREO_TOOLS_ADMIN>';
 BEGIN
-    IF v_email = '<CORREO_TOOLS_ADMIN>' THEN
-        RAISE EXCEPTION 'M-6: configurar <CORREO_TOOLS_ADMIN> antes de correr el script';
+    IF v_email NOT LIKE '%@%' THEN
+        RAISE EXCEPTION 'M-6: configurar el correo del superusuario antes de correr el script';
     END IF;
 
     UPDATE seg.users SET superusuario = true WHERE lower(email) = lower(v_email);

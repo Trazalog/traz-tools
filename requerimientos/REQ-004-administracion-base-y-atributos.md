@@ -86,7 +86,7 @@ Un solo script, versionado en `traz-tools` (por ejemplo
 2. **Datos (M-2, M-5, M-6, M-7):** solo `INSERT` y `UPDATE` de las columnas **nuevas**. Ninguna fila
    existente cambia en una columna existente.
 
-Se corre primero en una base de prueba (copia de DEMO) y después en DEMO, nunca directo en producción.
+Se corre en desarrollo (DEV), nunca directo en producción.
 Lleva su script de vuelta atrás (borra solo lo que agregó). La parte de estructura es **aditiva y la
 decide el equipo** (regla de Rodolfo del 2026-11-10). La parte de datos que toca tablas existentes (M-2
 de las herramientas del agente y M-6) la aprueba Rodolfo **antes** de construir; M-5 solo carga
@@ -371,11 +371,11 @@ pregunta se sacó del campo `dudas` de cada caso):
   clave `texto_suspension_empresa` (manda RF-102 sobre la maqueta); el guardado es **de a una variable por
   vez**, cada cambio atómico (valor + historial + auditoría), sin "todo o nada" entre varias.
 - **Auditoría:** no audita login ni rechazos (log + `last_login`); sin depuración automática en este
-  requerimiento; los intentos de modificar/borrar se prueban como prueba técnica contra DEMO.
+  requerimiento; los intentos de modificar/borrar se prueban como prueba técnica contra DEV.
 
 ## Cómo se revisa (además de DocTest)
 
-- El script de base corrido en una copia de DEMO y con su vuelta atrás probada; la carga de M-2 (herramientas
+- El script de base corrido en DEV y con su vuelta atrás probada; la carga de M-2 (herramientas
   del agente) y M-6 aprobada por Rodolfo antes de correrla (M-7 lo decide el equipo (regla de Rodolfo del 2026-11-10)).
 - **Búsqueda de usos de las tablas tocadas** (`core.empresas`, `seg.users`, `seg.menues`, `core.tablas`)
   en DataServices, funciones, disparadores, DNATO, Tools y AssetPlanner: ningún `INSERT` sin lista de

@@ -80,7 +80,7 @@ el Portal:
 | Es administrador | `ADMDataService /usuario/es-admin/...` | **Nueva** (Tarea 3) |
 | Es superusuario | `ADMDataService /usuario/es-super/...` | **Nueva** (Tarea 3) |
 
-Medición: se mide en DEMO al implementar (Tarea 6). **Si el total supera ½ segundo**, se guarda el
+Medición: se mide en DEV al implementar (Tarea 6). **Si el total supera ½ segundo**, se guarda el
 resultado del Contexto en la sesión hasta **60 segundos** (RNF-06, resolución D3 de ADM-UC-030). No se
 cachea nada más.
 
@@ -156,5 +156,5 @@ ambiente**.
   `Dashs::esAdminEmpresa` (por `descripcion`), y el módulo/Contexto usará la definición por `nombre`. Hasta
   B.4c pueden discrepar. Este requerimiento **no** toca `esAdminEmpresa` (resolución D7/D9); la medición de
   B.4 cuantifica los casos.
-- 🟢 **M-2/M-6:** son aditivas a la base y las aprueba Rodolfo antes de correr el script en DEMO (M-7 lo
+- 🟢 **M-2/M-6:** son aditivas a la base y las aprueba Rodolfo antes de correr el script en DEV (M-7 lo
   decide el equipo).

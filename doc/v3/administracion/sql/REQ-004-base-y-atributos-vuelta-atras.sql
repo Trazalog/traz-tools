@@ -1,5 +1,5 @@
 -- Vuelta atrás de REQ-004-base-y-atributos.sql
--- Borra SOLO lo que agregó el script. Correr en la misma copia, en orden inverso.
+-- Borra SOLO lo que agregó el script. Correr en el mismo ambiente (DEV), en orden inverso.
 --
 -- Antes de correr: reemplazar <CORREO_TOOLS_ADMIN> por el mismo correo usado en M-6.
 -- OJO: seg.auditoria no admite UPDATE ni DELETE (el disparador lo impide); sus filas

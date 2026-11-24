@@ -34,7 +34,7 @@ Consola" en la barra superior de Tools. Revisa Rodolfo. Forma de trabajo:
 | Puerta | Qué es | Cuándo |
 |---|---|---|
 | **Análisis de impacto de la barra de Tools** | Núcleo: qué pantallas dibujan `perfil.php` (la compartida y las copias en `traz-comp-pan`, `traz-comp-tareasestandar`, `traz-prod-trazasoft`, `traz-tools-resi`), qué pasa si el módulo no está o el Contexto no responde, cuánto agrega al tiempo de carga y pruebas de regresión de la barra | Rodolfo lo aprueba **antes** de tocar `Dash.php`/`perfil.php` (Tarea 6) |
-| **Carga de datos M-2 y M-6** | Tocan tablas existentes (`seg.menues` y `seg.users`): M-2 carga las tools del agente como `tool_mcp`; M-6 marca `superusuario` al correo `TOOLS_ADMIN_USER` del ambiente | Rodolfo lo aprueba **antes** de correr el script en DEMO. M-1 (estructura), M-5 y M-7 los decide el equipo (regla de Rodolfo del 2026-11-10) |
+| **Carga de datos M-2 y M-6** | Tocan tablas existentes (`seg.menues` y `seg.users`): M-2 carga las tools del agente como `tool_mcp`; M-6 marca `superusuario` al correo `TOOLS_ADMIN_USER` del ambiente | Rodolfo lo aprueba **antes** de correr el script en DEV. M-1 (estructura), M-5 y M-7 los decide el equipo (regla de Rodolfo del 2026-11-10) |
 
 ## Orden y dependencias
 
@@ -71,7 +71,7 @@ flowchart TD
     barra.
   - Redactar la carga de **M-2** (lista de tools del agente como opciones `tool_mcp` del módulo `MCP`; **sin**
     cargar opciones `SEG`, resolución D19) y de **M-6** (correo a marcar), para que Rodolfo las apruebe
-    antes de correr el script en DEMO.
+    antes de correr el script en DEV.
 - **Caso de uso:** ADM-UC-030 (la nota que exige el análisis) y ADM-UC-035 (la verificación "el menú no cambia").
 - **Cómo se verifica:** Rodolfo aprueba el análisis (comentario). Sin aprobación no se toca `Dash.php` ni `perfil.php`.
 
@@ -105,14 +105,14 @@ flowchart TD
   - **M-7:** filas de las variables de RF-102 en `core.tablas` sin empresa, con los valores de la
     especificación (Rodolfo los corrige antes de correr el script).
 - **Vuelta atrás:** borra solo lo que agregó (columnas nuevas, tablas nuevas, función, disparador, filas
-  de M-2/M-5/M-6/M-7). Se prueba en la copia de DEMO.
+  de M-2/M-5/M-6/M-7). Se prueba en DEV.
 - **Búsqueda de usos:** antes de correr, revisar `core.empresas`, `seg.users`, `seg.menues`, `core.tablas`
   en DataServices, funciones, disparadores, DNATO, Tools y AssetPlanner: ningún `INSERT` sin lista de
   columnas ni `SELECT *` que se rompa con columnas nuevas. El resultado va en la descripción del PR.
 - **Caso de uso:** ADM-UC-035 (principal + "membresías", "catálogo", "DNATO", "vuelta atrás"); M-6 la
   prueba ADM-UC-031 y M-7 la prueba ADM-UC-033.
-- **Cómo se verifica:** script corrido en una copia de DEMO y vuelta atrás probada; M-2 y M-6 aprobadas por
-  Rodolfo antes de correrlas en DEMO; el menú de un usuario de prueba es el mismo antes y después.
+- **Cómo se verifica:** script corrido en DEV y vuelta atrás probada; M-2 y M-6 aprobadas por
+  Rodolfo antes de correrlas en DEV; el menú de un usuario de prueba es el mismo antes y después.
 
 ### Tarea 3 — DataService nuevo `ADMDataService.dbs`
 
@@ -205,7 +205,7 @@ flowchart TD
   T3 (`POST /auditoria`, y la escritura desde `seg.cambiar_variable`).
 - **Qué hace:** en este requerimiento se audita el cambio de una variable y la vuelta atrás. Se agrega la
   prueba técnica de inmutabilidad: con el usuario de base que usa WSO2, intentar modificar y borrar una fila
-  de `seg.auditoria` y comprobar que la base rechaza (G5, CP-101). Se corre contra DEMO, **nunca** contra
+  de `seg.auditoria` y comprobar que la base rechaza (G5, CP-101). Se corre contra DEV, **nunca** contra
   producción.
 - **Caso de uso:** ADM-UC-034 (principal + modificar, borrar, sin operación en el servicio, cambio que falla).
 - **Cómo se verifica:** la prueba técnica en verde; no existe ningún recurso de cambiar/borrar auditoría.
