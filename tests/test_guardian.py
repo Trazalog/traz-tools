@@ -69,6 +69,17 @@ def test_porcentajes_y_redondeos(respuesta, fuente):
     assert not _bloquea(respuesta, tools=[_tool("man_get_kpi_disponibilidad", {"valor": fuente})])
 
 
+def test_la_cantidad_a_reponer_que_calculo_el_sistema_pasa():
+    """Decision 36: el faltante lo calcula la consulta de stock (minimo - stock),
+    el agente lo copia. Asi una cantidad a reponer bien sacada se muestra, y una
+    inventada (el "100 de aceite" de la prueba real) se sigue bloqueando."""
+    stock = _tool("alm_get_stock", {"materias": {"materia": [
+        {"descripcion": "Aceite hidraulico 20L", "stock": "10.0",
+         "punto_pedido": "50", "faltante": "40.0"}]}})
+    assert not _bloquea("Pedir 40 unidades de aceite hidraulico.", tools=[stock])
+    assert _bloquea("Pedir 100 unidades de aceite hidraulico.", tools=[stock])
+
+
 @pytest.mark.parametrize("respuesta", ["Quedan 1.500 unidades.", "Quedan 1500 unidades."])
 def test_separador_de_miles_argentino(respuesta):
     assert not _bloquea(respuesta, tools=[_tool("alm_get_stock", {"cantidad": 1500})])

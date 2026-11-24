@@ -54,6 +54,10 @@ Qué es: la lista de las decisiones que tomé solo, por pedido del PM («si ten�
 | 33 | Las herramientas de indicadores de mantenimiento le dicen al modelo que piden fechas (desde y hasta) | El modelo las llamaba sin fechas y la fachada tardaba un minuto entero en fallar | `agente/mcp_client.py` | 🟢 |
 | 34 | Si el guardián bloquea la respuesta pero el plan propuesto no tiene cifras sin fuente, la tarjeta del plan vuelve a mostrarse cuando el reintento pasa | En la prueba contra DEV el texto se bloqueó por un "13", el reintento salió bien, pero la tarjeta se había perdido y Kuntur decía "te dejé la tarjeta" sin que hubiera ninguna | `agente/orquestador.py` | 🟢 |
 | 35 | En la capa de los agentes, las comparaciones entre textos se hacen con `String(a) == String(b)` en vez de `===` | En el WSO2 6.5 del servidor compartido, `===` entre dos textos armados con `"" + x` da falso aunque sean iguales: "ver el detalle del pedido 978" devolvía "no encontrado". En el WSO2 4.5 local andaba bien | `toolsMCPAPI.xml` (3 lugares) | 🟢 |
+| 36 | La consulta de stock de los agentes (`alm_get_stock`) devuelve también el **faltante**: cuánto le falta a cada artículo para llegar a su punto de pedido, calculado por la base (`punto de pedido − stock`, 0 si no falta). Kuntur copia ese número en el plan en vez de hacer la cuenta | Decisión del PM (opción A): «lo útil es que si el plan muestra una cifra, esa cifra salga de lo que faltaba de ese artículo». Antes, una cuenta bien hecha («pedir 40») se bloqueaba igual porque el 40 no estaba escrito en ningún dato | `ALMDataService.dbs` (`getStockFiltradoMcp`), `agente/mcp_client.py`, `prompts/kuntur.md` | 🟢 |
+| 37 | El guardián ya no lee «10.0» como «100»: un punto o una coma solo separan miles si los siguen grupos de tres cifras | Lo encontró la prueba de la decisión 36: un stock de 10.0 (como lo devuelve la base) respaldaba un «100» inventado, justo el caso del aceite | `agente/guardian.py` | 🟢 |
+| 38 | Si el plan apunta a un valor del indicador («que baje a 0»), Kuntur lo pone en la meta del plan; y si un plan igual se cae por una cifra sin respaldo, la respuesta lo dice en vez de hablar de una tarjeta que no está | En la prueba contra DEV la tarea decía «que baje a 0» sin meta, el plan se cayó y la respuesta decía «te dejé la tarjeta» | `prompts/kuntur.md`, `agente/orquestador.py` | 🟢 |
+| 39 | La consulta de stock usa cada filtro **una sola vez** (los filtros se leen una vez en una subconsulta) | En el WSO2 6.5 del servidor compartido, la consulta con el mismo filtro repetido fallaba siempre (error interno de WSO2), con o sin filtros. Con la forma nueva anda en los dos WSO2 | `ALMDataService.dbs` | 🟢 |
 
 ### Lo que encontré en DEV con la prueba (2026-11-23)
 
@@ -109,10 +113,21 @@ Autorizada por el PM ("4 listo"). Respaldo previo en el servidor: `/home/rodolfo
 
 - **Instalado:** servicios de datos `TARDataService` (el que filtra por empresa), `PRODataService`, `MANDataService` y `PANDataservice` (estos dos solo suman consultas), `MANEquiposDataService` y `PINGDataService` (nuevos); interfaces `toolsMCPAPI` (la de los agentes), `toolsALMAPI` y `toolsPANAPI` (nuevas); secuencias `emprIdFromHeader` y `rechazarTokenMaquina` (nuevas).
 - **No instalado, a propósito:**
-  - 🟡 `ALMDataService`: el del servidor tiene consultas tocadas a mano que no están en ninguna rama (`/articulos`, `/articulos/obtener/{arti_id}`) y la versión de `develop-v3.5` además no tiene las de transportistas que sí tiene `develop`. Reemplazarlo le saca consultas al resto del equipo. Sin él, en el servidor compartido `alm_get_stock` y `alm_get_vencimientos` no andan (se cuelgan por la falla de `toolsFault`), `alm_get_depositos` sí. **Decisión del PM:** unir las tres versiones en una rama y desplegar esa.
+  - ~~🟡 `ALMDataService`~~ → **instalado el 2026-11-24** (ver abajo).
   - `toolsCOREAPI`, `toolsMANAPI`, `toolsbpmAPI`, `toolsLogAPI`, `COREDataService` y el resto: son las de la versión 2 que usa el equipo; no se tocan. Por eso `core_get_empresa_actual` da 404 en el servidor compartido.
   - `toolsNTFAPI` y `NTFDataService` (avisos al teléfono): necesitan el esquema `ntf` en la base, que todavía no está.
   - `ToolsKPIDataService`: en el servidor está como `ToolsKPIDataService.dbs.dbs` y distinto; queda como está.
   - `toolsFaultSequence.xml`: el servidor ya tiene su `toolsFault`; se usa ese.
 - **Probado** con la empresa de prueba 191: `tar_get_pedidos`, `tar_get_atrasadas`, `tar_get_pedido/978` (y 404 para otra empresa), `pan_get_herramientas`, `alm_get_depositos`, `man_get_kpi_fallas`. Sin identidad, 503. La versión 2 sigue respondiendo.
 - `man_get_ots` falla porque el token de prueba no trae la empresa de AssetPlanner; con un usuario real debería andar (supuesto, no probado).
+
+### Almacén en el servidor compartido (2026-11-24, segunda parte)
+
+Autorizado por el PM («hazlo y después vemos»). Respaldo del archivo anterior en el servidor: `/home/rodolfo/respaldo-ALMDataService-20261124-2026.dbs`.
+
+- **Corrección de lo que dije antes:** el `ALMDataService` del servidor no tenía «agregados a mano»; tenía una versión **vieja**. Las dos consultas que solo estaban ahí (`GET /articulos` y `GET /articulos/obtener/{arti_id}`) son las que se retiraron a propósito en la versión 2.5 (PR #494) porque leen artículos **sin filtrar por empresa** (fijan la empresa 1); en ese momento se verificó que nadie las usa, y en el código de hoy tampoco aparecen. Producción (`master`) ya no las tiene.
+- **Versión instalada** = la de `develop` (que ya juntaba todo: lo de los agentes y los transportistas) + el faltante (decisión 36) + la consulta de stock con cada filtro una sola vez (decisión 39). Queda en `develop-v3.5` por este PR, así que deja de haber diferencias entre el servidor y una rama.
+- **Probado en el servidor:** stock de la empresa 191 (3 artículos, con faltante 40, 90 y 17), con filtro de depósito y de búsqueda; vencimientos; depósitos; detalle de artículo con empresa; otra empresa (900999) no ve nada; establecimientos (versión 2) sigue andando.
+- **Kuntur de punta a punta contra el servidor:** pidió el stock, propuso un plan de 3 hitos con «pedir 40 / 90 / 17» y la meta «artículos bajo punto de pedido ≤ 0», sin ningún bloqueo del guardián. No lo acepté: no se creó ningún pedido.
+- **Ojo (supuesto, no probado):** `getOTsByEmpresa` de `MANDataService` también repite un filtro (`estado`); si `man_get_ots` sigue fallando con un usuario real, es el primer sospechoso.
+

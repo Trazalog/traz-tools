@@ -18,7 +18,7 @@ from datetime import date
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from agente import agentes, planes, rag
+from agente import agentes, orquestador, planes, rag
 from agente.config import Config
 from agente.orquestador import Consulta, Orquestador
 from conftest import respuesta_texto, respuesta_tool
@@ -230,6 +230,20 @@ async def test_si_se_bloquea_solo_el_texto_la_tarjeta_del_plan_vuelve_con_el_rei
     assert len(res.propuestas_plan) == 1, res.incidentes
     aviso = llm.llamadas_chat[-1]["mensajes"][-1]["content"]
     assert "no los vuelvas a proponer" in aviso
+
+
+async def test_si_el_plan_se_cae_la_respuesta_lo_dice_en_vez_de_hablar_de_una_tarjeta(con, monkeypatch, llm_falso):
+    """Prueba real contra DEV (2026-11-24): una tarea decia "que el indicador baje a 0" sin
+    meta en el plan; el reintento paso el texto pero el plan no, y la respuesta decia
+    "te deje el plan en una tarjeta" sin tarjeta."""
+    llm = llm_falso([
+        respuesta_tool(planes.NOMBRE, json.dumps(_plan(porque="El indicador tiene que bajar a 0."))),
+        respuesta_texto("Te dejé el plan para que baje a 0."),
+        respuesta_texto("Te dejé el plan en una tarjeta: si te sirve, aceptalo."),
+    ])
+    res = await _consultar(con, monkeypatch, llm)
+    assert res.propuestas_plan == [] and res.planes_caidos == 1
+    assert res.respuesta.endswith(orquestador.AVISO_PLAN_CAIDO)
 
 
 async def _propuesta(con, empr_id=EMPRESA) -> str:
