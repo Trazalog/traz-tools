@@ -78,6 +78,18 @@
 			</ul>
 		</li>
 		<!-- BLOQUE PRUEBA -->
+
+		<?php if ( ! empty($adm_contexto['es_admin'])): ?>
+		<li class="nav-item">
+			<a class="nav-link" href="<?php echo html_escape($adm_contexto['url_portal']); ?>" data-testid="adm-tools-mi-empresa" title="Ir al Portal de la empresa">🏢 Mi empresa</a>
+		</li>
+		<?php endif; ?>
+		<?php if ( ! empty($adm_contexto['es_super'])): ?>
+		<li class="nav-item">
+			<a class="nav-link" href="<?php echo html_escape($adm_contexto['url_consola']); ?>" data-testid="adm-tools-consola" title="Ir a la Consola">🔑 Consola</a>
+		</li>
+		<?php endif; ?>
+
 		<li class="dropdown user user-menu">
 			<a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
 				<?php 
