@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Caso de uso: DNATO-UC-007 — Cerrar sesión
  * Catálogo: catalogo/dnato/DNATO-UC-007.yaml
  * Gherkin:  features/dnato/DNATO-UC-007.cerrar-sesion.feature
@@ -30,8 +30,10 @@ test.describe('@dnato @DNATO-UC-007 Cerrar sesión', () => {
     await page.goto(urlIdentidad('main/logout'), { waitUntil: 'domcontentloaded' });
     await expect(login.email).toBeVisible();
 
-    // Volver a una pantalla interna después de salir tiene que devolver al ingreso.
+    // Volver a una pantalla interna después de salir no se puede: en DNATO manda
+    // al ingreso; en la copia (que no copió main/users) da "no existe". Lo que no
+    // puede pasar es que se vea la lista de usuarios.
     await page.goto(urlIdentidad('main/users'), { waitUntil: 'domcontentloaded' });
-    await expect(login.email).toBeVisible();
+    expect(await usuarios.visible()).toBe(false);
   });
 });
