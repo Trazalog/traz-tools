@@ -20,6 +20,8 @@ Procedimiento para poner en marcha el mecanismo único de avisos (ADR-015, esque
 
 **Orden obligatorio:** base → MI → SI → Tools → agentes. El paso 5.4 (sacar el Siddhi viejo de AssetPlanner y poner el puente) va **en el mismo momento**: si conviven, el push de AssetPlanner sale dos veces.
 
+**Para probar sin la cuenta de producción:** crear un proyecto de Firebase de prueba con [`firebase-prueba.md`](firebase-prueba.md).
+
 **Antes de producción:** rotar las credenciales que quedaron expuestas (decisión D-83 y STATE): la clave de la cuenta de servicio de Firebase del conector, la clave privada VAPID, la server key legacy de FCM, y el usuario root de la base que está en claro en `traz-int/siddhi/notificaciones/produccion/NotificacionesAssetSynch.siddhi`.
 
 ---
