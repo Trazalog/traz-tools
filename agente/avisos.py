@@ -55,6 +55,16 @@ def habilitado(cfg: Config) -> bool:
     return bool(cfg.avisos_url)
 
 
+def _headers(cfg: Config, autorizacion: str) -> dict[str, str]:
+    """Como el cliente MCP: por el gateway va el token tal cual; en modo MI
+    (desarrollo, directo al MI o al EI de DEV, sin gateway) la assertion viaja
+    en X-JWT-Assertion, que es lo que leen emprIdFromHeader y usuarioFromHeader."""
+    if cfg.mcp_modo == "mi":
+        return {"X-JWT-Assertion": autorizacion.removeprefix("Bearer ").strip(),
+                "Accept": "application/json"}
+    return {"Authorization": autorizacion, "Accept": "application/json"}
+
+
 async def publicar(cfg: Config, autorizacion: str, aviso: Aviso,
                    *, cliente: httpx.AsyncClient | None = None) -> int:
     """Publica el aviso y devuelve su aviso_id. Con la misma dedupe_key, ntf
@@ -64,8 +74,7 @@ async def publicar(cfg: Config, autorizacion: str, aviso: Aviso,
     propio = cliente is None
     cliente = cliente or httpx.AsyncClient(timeout=float(cfg.mcp_timeout))
     try:
-        r = await cliente.post(cfg.avisos_url, json=aviso.a_dict(),
-                               headers={"Authorization": autorizacion, "Accept": "application/json"})
+        r = await cliente.post(cfg.avisos_url, json=aviso.a_dict(), headers=_headers(cfg, autorizacion))
     except httpx.HTTPError as e:
         raise AvisoError(f"API de avisos inalcanzable: {e}") from e
     finally:

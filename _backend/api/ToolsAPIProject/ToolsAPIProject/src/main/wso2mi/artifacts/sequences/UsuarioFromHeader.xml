@@ -40,7 +40,10 @@
                     if (u.length > 0) {
                         mc.setProperty("jwt_usuario", u);
                         mc.setProperty("jwt_usuario_url",
-                            "" + Packages.java.net.URLEncoder.encode(u, "UTF-8").replace(/\+/g, "%20"));
+                            ("" + Packages.java.net.URLEncoder.encode(u, "UTF-8")).replace(/\+/g, "%20"));
+                    // Primero a texto de JS y después el replace: en el Rhino de EI 6.5 el
+                    // resultado de encode es un String de Java, que no acepta una expresión
+                    // regular de JS, y jwt_usuario_url quedaba vacío (la campanita, vacía).
                     }
                 }
             }

@@ -259,7 +259,7 @@ def _api(monkeypatch) -> APIAvisosFalso:
 
 
 def _cfg() -> Config:
-    return dataclasses.replace(Config(), avisos_url=URL)
+    return dataclasses.replace(Config(), avisos_url=URL, mcp_modo="apim")
 
 
 async def test_avisa_a_quien_cargo_la_meta_firmado_por_kuntur(con_admin, monkeypatch, llm_falso):
