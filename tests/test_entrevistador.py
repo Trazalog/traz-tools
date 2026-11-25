@@ -231,6 +231,16 @@ async def test_la_agenda_es_la_tabla_del_pm_por_industria(con):
     assert "Mantenimiento" not in nombres  # la raíz vieja quedó descartada
 
 
+@pytest.mark.asyncio
+async def test_los_temas_de_seguridad_de_cada_industria_se_preguntan(con):
+    """036, pedido del PM: gas sulfhídrico en oil & gas, trabajo con tensión en electricidad."""
+    oil = {t.nombre for t in await ent.agenda(con, limite=100, vertical="oil_gas")}
+    ele = {t.nombre for t in await ent.agenda(con, limite=100, vertical="electricidad")}
+    assert "Gas sulfhídrico y atmósferas explosivas" in oil
+    assert "Trabajo con tensión y arco eléctrico" in ele
+    assert "Trabajo con tensión y arco eléctrico" not in oil
+
+
 def test_se_descartan_los_hechos_demasiado_cortos():
     """Un hecho de una línea suelta no se sostiene solo fuera de contexto."""
     crudo = json.dumps([{"contenido": "Cambiar muelas.", "confianza": 0.9}])
