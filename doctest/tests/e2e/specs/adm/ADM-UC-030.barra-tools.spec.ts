@@ -14,7 +14,7 @@ const BLOQUEO = 'Requiere el ADMDataService desplegado en el MI y los usuarios d
 
 test.describe('@adm @ADM-UC-030 Llegar al Portal y a la Consola desde la barra de Tools', () => {
   test('el administrador de la empresa ve "Mi empresa" en el tablero', async ({ paginaEmpresa1 }) => {
-    test.skip(true, BLOQUEO);
+    // Habilitada: el ADMDataService ya está desplegado en DEV.
     const barra = new BarraToolsPage(paginaEmpresa1);
     await barra.abrirTablero();
     await expect(barra.miEmpresa).toBeVisible();

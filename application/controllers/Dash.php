@@ -76,7 +76,7 @@ class Dash extends CI_Controller {
 
 		try
 		{
-			$this->load->model(ADM.'Contexto');
+			$this->load->model(ADM.'Contexto', 'contexto');
 			$ctx = $this->contexto->obtener();
 
 			return is_array($ctx) ? $ctx : $vacio;

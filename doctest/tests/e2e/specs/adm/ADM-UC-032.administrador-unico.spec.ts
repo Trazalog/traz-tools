@@ -15,7 +15,7 @@ const BLOQUEO = 'Requiere el ADMDataService desplegado y los usuarios de prueba 
 
 test.describe('@adm @ADM-UC-032 Ser administrador de la empresa por una sola definición', () => {
   test('el administrador de la empresa ve "Mi empresa" y entra al Portal', async ({ paginaEmpresa1 }) => {
-    test.skip(true, BLOQUEO);
+    // Habilitada: el ADMDataService ya está desplegado en DEV.
     const barra = new BarraToolsPage(paginaEmpresa1);
     await barra.abrirTablero();
     await expect(barra.miEmpresa).toBeVisible();
