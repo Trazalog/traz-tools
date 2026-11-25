@@ -96,7 +96,7 @@ def test_un_indicador_de_una_parte_que_no_usan_no_se_propone():
 def test_lo_que_la_operadora_pide_y_no_se_mide_queda_anotado():
     conf = c.proponer(_responder_todo())
     assert {"kpi": None, "texto": "Índice de frecuencia de accidentes"} in conf["exigencias"]
-    assert any("hoy Trazalog no lo mide" in o for o in conf["observaciones"])
+    assert any("hoy el sistema no lo mide" in o for o in conf["observaciones"])
 
 
 def test_si_ya_estaba_la_industria_la_pregunta_para_confirmarla():

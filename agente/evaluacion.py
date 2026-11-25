@@ -131,7 +131,7 @@ def aviso_de(ev: Evaluacion, *, emisor: str) -> avisos.Aviso:
         if ev.resultado == FUNCIONO:
             titulo = f"El plan del pedido {ev.petr_id} funcionó"
             cuerpo = (f"{tramo[0].upper()}{tramo[1:]}. Lo propuse como práctica para que la revise "
-                      "un experto de Trazalog, sin datos de tu empresa.")
+                      "un experto, sin datos de tu empresa.")
         else:
             titulo = f"El plan del pedido {ev.petr_id} no movió el indicador"
             cuerpo = (f"{tramo[0].upper()}{tramo[1:]}. Conviene revisar la causa: entrá a la pestaña "

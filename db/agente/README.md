@@ -65,6 +65,7 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 031 | `031-plan-accion.sql` | Plan de acción de Kuntur, opción B (ADR-A13): `agente.plan_propuesta` (con RLS), la herramienta del motor `kuntur_proponer_plan` (solo Kuntur) y las cinco operaciones de Tareas de clase acción que usa el motor al aceptar. Simulado hasta que el PM apruebe los recursos MCP |
 | 030 | `030-funciones-sin-usar.sql` | Habilita el tipo `funcion_sin_usar` en `agente.propuesta` y un índice para el "no me interesa" por empresa: Kuntur recomienda funciones de Tools que la empresa no usa (AGENTE-CO-08). El 029 lo usa otra rama (lectura de Tareas) |
 | 034 | `034-taxonomia-verticales.sql` | Temas de Faustino por industria: marca chancado y molienda como minería y suma temas de oil & gas y electricidad (decisión 23 de `doc/agente/decisiones-2026-11-24.md`) |
+| 035 | `035-textos-pm.sql` | Gate 2 (AGENTE-M-07): personalidad de los tres sin «de vos» fijo y agenda de Faustino de la tabla del PM, 42 temas por industria (decisiones 40–43 de `doc/agente/decisiones-2026-11-24.md`) |
 | 027 | `027-tools-alta-configuracion.sql` | Las tres primeras herramientas reales de configuración para Kuntur: `core_alta_establecimiento`, `alm_alta_deposito`, `core_alta_valor` (recursos de `toolsMCPAPI` sobre los servicios de datos de las pantallas) |
 
 Aplicación completa, desde el directorio del repo:

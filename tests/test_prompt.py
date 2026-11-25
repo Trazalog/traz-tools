@@ -61,3 +61,39 @@ def test_se_relee_cuando_cambia_el_archivo(tmp_path):
     p.write_text("version dos", encoding="utf-8")
     os.utime(p, None)
     assert cargar(p) == "version dos", "El prompt tiene que recargarse sin reiniciar"
+
+
+# ------------------------------------------- Gate 2 (AGENTE-M-07), textos del PM
+import re  # noqa: E402
+
+import pytest  # noqa: E402
+
+# Frases de cada bloque del PM (2026-11-24) que tienen que llegarle al modelo tal cual.
+TEXTOS_PM = {
+    "quirqui.md": ["sos Quirqui, el asistente del sistema para mantenimiento y almacenes",
+                   "Las advertencias de seguridad no se recortan por brevedad",
+                   "Hablá en el español del país del usuario"],
+    "kuntur.md": ["sos Kuntur, el coach del sistema para quien administra la empresa",
+                  "Cerrá con un plan de no más de tres pasos",
+                  "Si te preguntan cómo se usa una pantalla o cómo se hace una tarea, decí que eso lo responde Quirqui"],
+    "faustino.md": ["sos Faustino, el entrevistador del sistema",
+                    "No imites ni cites a ninguna persona real",
+                    "marcalo para que una persona lo revise"],
+}
+
+
+@pytest.mark.parametrize("archivo", sorted(TEXTOS_PM))
+def test_los_textos_del_pm_le_llegan_al_modelo(archivo):
+    texto = cargar(RAIZ / "prompts" / archivo)
+    for frase in TEXTOS_PM[archivo]:
+        assert frase in texto, f"{archivo}: falta «{frase}»"
+
+
+@pytest.mark.parametrize("archivo", sorted(TEXTOS_PM))
+def test_los_agentes_no_nombran_la_marca(archivo):
+    """Bloque (A) de los tres: «Nunca nombres la marca del sistema»."""
+    assert not re.search(r"trazalog", cargar(RAIZ / "prompts" / archivo), re.I)
+    # El voseo solo aparece en la regla del país (bloque D y su respaldo), no fijo.
+    texto = (cargar(RAIZ / "prompts" / archivo).replace("de vos donde se habla de vos", "")
+             .replace("hablá de vos: hoy quienes usan el sistema son de Argentina", ""))
+    assert "de vos" not in texto

@@ -109,7 +109,7 @@ def leer_ayuda(path: Path) -> list[Pieza]:
             continue
         titulo = re.sub(r"\s+", " ", s["titulo"]).strip()
         link = f"{PREFIJO_AYUDA}{path.name}#{s['id']}"
-        encabezado = f"Ayuda de Trazalog — {lector.titulo_doc or path.stem}"
+        encabezado = f"Ayuda del sistema — {lector.titulo_doc or path.stem}"
         if titulo:
             encabezado += f" — {titulo}"
         piezas.append(Pieza(

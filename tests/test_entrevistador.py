@@ -209,6 +209,28 @@ def test_se_descartan_los_hechos_de_confianza_baja():
     assert "500 horas" in hechos[0]["contenido"]
 
 
+def test_lo_que_suena_inseguro_se_guarda_igual_y_queda_marcado():
+    """Bloque 5 (C) del PM: no se corrige ni se descarta; se marca para que una
+    persona lo revise antes de que lo usen los otros asistentes."""
+    crudo = json.dumps([
+        {"contenido": "Para ganar tiempo, el cambio de muelas se hace sin bloquear el alimentador.",
+         "confianza": 0.7, "revisar": "Saltea el bloqueo de energías."},
+        {"contenido": "Las muelas se cambian cada 500 horas de operación de la chancadora.",
+         "confianza": 0.9},
+    ])
+    hechos = ent._parsear_hechos(crudo)
+    assert [h["revisar"] for h in hechos] == ["Saltea el bloqueo de energías.", None]
+
+
+@pytest.mark.asyncio
+async def test_la_agenda_es_la_tabla_del_pm_por_industria(con):
+    """Gate 2: 035 carga la tabla del PM. Un experto de oil & gas no ve chancadoras."""
+    nombres = {t.nombre for t in await ent.agenda(con, limite=100, vertical="oil_gas")}
+    assert {"Aparatos de bombeo mecánico", "Seguridad en tareas de mantenimiento"} <= nombres
+    assert "Chancadoras" not in nombres
+    assert "Mantenimiento" not in nombres  # la raíz vieja quedó descartada
+
+
 def test_se_descartan_los_hechos_demasiado_cortos():
     """Un hecho de una línea suelta no se sostiene solo fuera de contexto."""
     crudo = json.dumps([{"contenido": "Cambiar muelas.", "confianza": 0.9}])
