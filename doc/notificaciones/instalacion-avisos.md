@@ -5,7 +5,7 @@
 Procedimiento para poner en marcha el mecanismo único de avisos (ADR-015, esquema `ntf`): base, API, conector de Firebase, transporte y puente en el Streaming Integrator, campanita de Tools y agentes. Está escrito para el PM o quien despliegue, y se sigue leyendo solo este archivo, en orden. No explica el porqué del diseño: eso está en [`diseno-avisos-tools.md`](diseno-avisos-tools.md) y en [`ADR-015`](../adr/ADR-015-avisos-tools.md). Las decisiones tomadas al construirlo están en [`decisiones-para-revisar.md`](../agente/decisiones-para-revisar.md) (D-71 a D-85).
 
 - **Versión de la base:** `v2.8.1.5` (`_backend/database/scripts/versiones/v2.8.1.5/ntf_avisos.sql`)
-- **Probado:** PostgreSQL 11.22, MI 4.5.0, SI 4.4.0, MariaDB 10.6, todo local, el 2026-10-28. **No probado** contra DEV, TEST ni producción (sin VPN), ni contra Firebase real.
+- **Probado:** PostgreSQL 11.22, MI 4.5.0, SI 4.4.0, MariaDB 10.6, todo local, el 2026-10-28. **En DEV (2026-11-25):** pasos 1, 2.1 y 7.2 hechos y probados, ver [Estado en DEV](#estado-en-dev-2026-11-25). **No probado** contra TEST ni producción, ni contra Firebase real.
 
 ---
 
@@ -287,3 +287,24 @@ NTF_TEST_DSN="host=127.0.0.1 port=55411 dbname=trazalog_tools user=postgres pass
 ```
 
 Tienen que pasar los 29. Con un MI de prueba que tenga desplegados el DataService y el API, `tests/ntf/probar_dss.sh` y `tests/ntf/probar_api.sh` prueban los recursos de punta a punta (instrucciones al principio de cada script).
+
+---
+
+## Estado en DEV (2026-11-25)
+
+**Dónde:** servidor compartido de DEV (`10.142.0.13`), que corre **WSO2 EI 6.5.0** (puerto 8280), no MI 4.5. Ahí los servicios se despliegan en caliente copiando archivos (no con el CAR), con `sudo install -o wso2 -g wso2 -m 644 <archivo> <carpeta>`.
+
+| Paso | Estado en DEV | Cómo se hizo |
+|---|---|---|
+| 1.1 Esquema `ntf` | ✅ en `tools_prod_t` (10 funciones) | `psql -p 5432 -d tools_prod_t -f ntf_avisos.sql` como `postgres` en el servidor |
+| 1.2 Usuario `si_avisos` | ❌ no creado | No hace falta hasta que haya un Streaming Integrator |
+| 2.1 Servicio de datos y API | ✅ `NTFDataService.dbs` en `dataservices/`; `toolsNTFAPI.xml` en `synapse-configs/default/api/`; `UsuarioFromHeader`, `NtfDispositivo` y `NtfMarcarLeido` en `synapse-configs/default/sequences/` | Copia de los archivos del repo |
+| 2.2 Conector de Firebase | ❌ no está | Necesita reiniciar el EI compartido |
+| 3 API Manager | — | DEV no pasa por el APIM: los agentes llaman directo al EI con `X-JWT-Assertion` (`AGENTE_MCP_MODO=mi`) |
+| 5 Streaming Integrator | ❌ DEV no tiene | Sin él no sale ningún push al celular |
+| 6 Tools (PHP) | ❌ DEV no sirve Tools | La campanita se prueba desde un Tools que apunte a este EI |
+| 7.2 Suscripción | ✅ empresa 191, `admin.test`, tipo `*` | |
+
+**Probado en DEV con la empresa de prueba 191:** publicar, listar, contar no leídos y marcar leídos por `toolsNTFAPI` con el token de `admin.test`. La empresa sale del token aunque el cuerpo diga otra, y la empresa 900999 no ve nada. El monitoreo de Quirqui (`agente/monitoreo.py`) publicó 3 avisos reales de stock bajo; corrido otra vez, no los duplicó.
+
+**Arreglo que salió de la prueba:** en el Rhino de EI 6.5, `UsuarioFromHeader` dejaba vacío el usuario para la URL y la campanita venía siempre vacía. El resultado de `URLEncoder.encode` es un String de Java, que no acepta el `replace` con expresión regular de JS. Ahora se pasa a texto de JS antes.

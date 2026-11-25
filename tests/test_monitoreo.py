@@ -65,7 +65,7 @@ def _api(monkeypatch, status: int = 200) -> APIAvisosFalso:
 
 
 def _cfg() -> Config:
-    return dataclasses.replace(Config(), avisos_url=URL)
+    return dataclasses.replace(Config(), avisos_url=URL, mcp_modo="apim")
 
 
 async def test_publica_los_hallazgos_firmados_por_el_agente(con_admin, monkeypatch, llm_falso):
@@ -153,3 +153,11 @@ async def test_publicar_respuesta_rara_es_error():
     async with httpx.AsyncClient(transport=httpx.MockTransport(manejar)) as c:
         with pytest.raises(avisos.AvisoError, match="inesperada"):
             await avisos.publicar(_cfg(), "Bearer m", avisos.Aviso(tipo="x1", titulo="t"), cliente=c)
+
+
+def test_en_modo_mi_el_token_va_como_assertion_como_en_el_mcp():
+    """Sin gateway (EI de DEV), emprIdFromHeader y usuarioFromHeader leen X-JWT-Assertion."""
+    mi = avisos._headers(dataclasses.replace(Config(), mcp_modo="mi"), "Bearer abc.def.ghi")
+    assert mi["X-JWT-Assertion"] == "abc.def.ghi" and "Authorization" not in mi
+    apim = avisos._headers(dataclasses.replace(Config(), mcp_modo="apim"), "Bearer abc.def.ghi")
+    assert apim["Authorization"] == "Bearer abc.def.ghi" and "X-JWT-Assertion" not in apim
