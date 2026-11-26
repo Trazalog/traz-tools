@@ -665,15 +665,24 @@ async def entrevista_agenda(
     modulo: str | None = None,
     vertical: str | None = None,
     limite: int = 15,
-    _: Identidad = Depends(identidad),
+    ident: Identidad = Depends(identidad),
     con: psycopg.AsyncConnection = Depends(conexion),
 ) -> dict:
-    """Los temas pendientes, del más al menos prioritario."""
+    """Los temas pendientes, del más al menos prioritario.
+
+    `vertical_empresa` es la industria que declaró la empresa de quien entra
+    (entrevista de Kuntur): la pantalla la propone como filtro inicial. Es lo
+    único de la empresa que se lee acá, y con el RLS de esa empresa.
+    """
     if vertical is not None and vertical not in rag.VERTICALES:
         raise HTTPException(400, f"vertical invalida: {vertical}")
     temas = await entrevistador.agenda(con, limite=min(limite, 50), modulo=modulo,
                                        vertical=vertical)
-    return {"temas": [
+    vertical_empresa = None
+    if ident.empr_id:
+        await rag.fijar_empresa(con, ident.empr_id)
+        vertical_empresa = (await configuracion.perfil(con, ident.empr_id) or {}).get("vertical")
+    return {"vertical_empresa": vertical_empresa, "temas": [
         {"tema_id": t.tema_id, "nombre": t.nombre, "descripcion": t.descripcion,
          "modulo": t.modulo, "prioridad": t.prioridad,
          "origen_prioridad": t.origen_prioridad}

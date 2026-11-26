@@ -383,3 +383,10 @@ async def test_no_se_estructura_una_entrevista_sin_respuestas(con, expertos):
 
     with pytest.raises(ValueError, match="ninguna respuesta del experto"):
         await ent.estructurar(con, cfg, llm, r["sesion_id"])
+
+
+def test_la_charla_informa_cuantas_preguntas_suele_tener():
+    """La pantalla de Faustino muestra el avance con esto (AGENTE-UX-01)."""
+    import inspect
+    fuente = inspect.getsource(ent.iniciar) + inspect.getsource(ent.responder)
+    assert fuente.count('"sugeridos": INTERCAMBIOS_SUGERIDOS') == 2

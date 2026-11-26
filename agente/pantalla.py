@@ -13,6 +13,11 @@ caso, ingestadas en chunk.metadata->'controladores' por AGENTE-M-06):
     traz-comp-almacenes/Articulo     ->  traz-comp-almacenes/controllers/Articulo.php
     traz-comp-pan/herramienta/index  ->  traz-comp-pan/controllers/Herramienta.php
 
+Las pantallas de la raiz de Tools (application/controllers, por ejemplo
+"Empresa/editar" o "Dash/dashboard") se buscan como
+"traz-tools/application/controllers/Empresa.php", que es como las cita el
+catalogo.
+
 Limitacion conocida: los casos de Mantenimiento estan relevados sobre
 AssetPlanner y los de Dnato sobre su propia app, que no son pantallas de
 Tools. Se cubren cuando Mantenimiento migre a traz-tools-man.
@@ -64,10 +69,31 @@ def controlador(ruta: str | None) -> str | None:
     return f"{modulo}/controllers/{ctrl[:1].upper()}{ctrl[1:]}.php"
 
 
+def controladores(ruta: str | None) -> list[str]:
+    """Los controladores que pueden implementar la ruta, en minusculas.
+
+    "traz-comp-almacenes/Articulo" puede ser el controlador Articulo del modulo
+    traz-comp-almacenes; "Empresa/editar" o "Dash", un controlador de la raiz de
+    Tools. Se prueban las dos lecturas: el catalogo dice cual existe.
+    """
+    if not ruta_valida(ruta):
+        return []
+    segmentos = [s for s in ruta.strip().lstrip("/").split("?")[0].split("/") if s]
+    if not segmentos or not all(re.match(r"^[A-Za-z0-9_\-]+$", s) for s in segmentos[:2]):
+        return []
+    candidatos = []
+    modulo = controlador(ruta)
+    if modulo:
+        candidatos.append(modulo)
+    raiz = segmentos[0]
+    candidatos.append(f"traz-tools/application/controllers/{raiz[:1].upper()}{raiz[1:]}.php")
+    return [c.lower() for c in candidatos]
+
+
 async def casos_de(con: psycopg.AsyncConnection, ruta: str | None) -> list[CasoDePantalla]:
     """Los casos de uso validados de la pantalla, del conocimiento del producto."""
-    clave = controlador(ruta)
-    if not clave:
+    claves = controladores(ruta)
+    if not claves:
         return []
     async with con.cursor() as cur:
         await cur.execute(
@@ -79,11 +105,11 @@ async def casos_de(con: psycopg.AsyncConnection, ruta: str | None) -> list[CasoD
             WHERE f.tipo = 'caso_uso' AND c.vigente
               AND EXISTS (
                   SELECT 1 FROM jsonb_array_elements_text(c.metadata->'controladores') x
-                  WHERE lower(x) = lower(%s))
+                  WHERE lower(x) = ANY(%s))
             ORDER BY c.metadata->>'caso_uso'
             LIMIT %s
             """,
-            (clave, MAX_CASOS),
+            (claves, MAX_CASOS),
         )
         return [CasoDePantalla(f["caso_uso"], f["contenido"], f["ayuda"]) for f in await cur.fetchall()]
 
@@ -91,8 +117,14 @@ async def casos_de(con: psycopg.AsyncConnection, ruta: str | None) -> list[CasoD
 def contexto(ruta: str, casos: list[CasoDePantalla]) -> str:
     """El mensaje de sistema que le cuenta al modelo donde esta el usuario."""
     if not casos:
+        # Sin esto el modelo describia botones y menus que no existen ("un icono
+        # de engranaje", "Personalizar") con total seguridad: lo vio el PM en el
+        # Tablero de inicio, que no tiene caso de uso (2026-11-25).
         return (f"El usuario está en la pantalla '{ruta}' de Tools. No tenés registrado qué se "
-                "hace en esa pantalla: si te pregunta por ella, decilo y ofrecé lo que sí sabés.")
+                "hace en esa pantalla: si te pregunta por ella, decilo y ofrecé lo que sí sabés. "
+                "No describas botones, menús, íconos, pestañas ni pasos de esa pantalla: no los "
+                "conocés y el usuario los va a buscar. Si sirve, sugerile mirar la ayuda del sistema "
+                "o preguntarle al administrador de su empresa.")
     partes = [f"El usuario está en la pantalla '{ruta}' de Tools. Esto es lo que se hace ahí "
               "(si te pregunta qué hacer, explicalo con esto y proponé el siguiente paso; "
               "si corresponde, citá la ayuda):"]

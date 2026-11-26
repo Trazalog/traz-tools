@@ -50,24 +50,46 @@ def test_sin_casos_el_modelo_sabe_que_no_sabe():
     assert "No tenés registrado qué se hace en esa pantalla" in texto
 
 
+def test_sin_casos_no_describe_botones_que_no_conoce():
+    """Pasó en el Tablero de inicio: sin caso de uso, el modelo inventó un ícono
+    de engranaje y un botón Personalizar (2026-11-25)."""
+    texto = pantalla.contexto("Dash/dashboard", [])
+    assert "No describas botones, menús, íconos" in texto
+
+
+@pytest.mark.parametrize("ruta,esperado", [
+    ("traz-comp-almacenes/Articulo", ["traz-comp-almacenes/controllers/articulo.php",
+                                      "traz-tools/application/controllers/traz-comp-almacenes.php"]),
+    ("Empresa/editar", ["empresa/controllers/editar.php", "traz-tools/application/controllers/empresa.php"]),
+    ("Dash", ["traz-tools/application/controllers/dash.php"]),
+    ("traz-comp-almacenes/../../etc/passwd", []),
+    (None, []),
+])
+def test_tambien_se_buscan_las_pantallas_de_la_raiz_de_tools(ruta, esperado):
+    """Los casos de Empresa, Register, Menu y otros citan
+    traz-tools/application/controllers/<X>.php; antes nunca se encontraban."""
+    assert pantalla.controladores(ruta) == esperado
+
+
 # =========================================================== con base
 CASO = ("Caso de uso ALM-UC-001 — Ver el listado de artículos del almacén\n"
         "Pantalla: Almacenes → Articulos\nPasos:\n1. Entra a Almacenes → Articulos → Se muestra la grilla")
 
 
-async def _sembrar_caso(con):
+async def _sembrar_caso(con, caso="ALM-UC-001", ctrl="traz-comp-almacenes/controllers/Articulo.php"):
     async with con.cursor() as cur:
         # Idempotente: el orquestador hace commit al registrar la corrida, asi
         # que lo sembrado puede quedar de una corrida anterior.
-        await cur.execute("INSERT INTO agente.fuente (tipo, nombre) VALUES ('caso_uso', 'ALM-UC-001-prueba.yaml') "
-                          "ON CONFLICT (tipo, nombre) DO UPDATE SET uri = EXCLUDED.uri RETURNING fuente_id")
+        await cur.execute("INSERT INTO agente.fuente (tipo, nombre) VALUES ('caso_uso', %s) "
+                          "ON CONFLICT (tipo, nombre) DO UPDATE SET uri = EXCLUDED.uri RETURNING fuente_id",
+                          (f"{caso}-prueba.yaml",))
         fuente = (await cur.fetchone())["fuente_id"]
         await cur.execute("DELETE FROM agente.chunk WHERE fuente_id = %s", (fuente,))
         await cur.execute(
             "INSERT INTO agente.chunk (fuente_id, contenido, modulo, metadata) VALUES (%s, %s, 'alm', %s)",
-            (fuente, CASO, json.dumps({
-                "caso_uso": "ALM-UC-001", "pantallas": ["Almacenes → Articulos"],
-                "controladores": ["traz-comp-almacenes/controllers/Articulo.php"],
+            (fuente, CASO.replace("ALM-UC-001", caso), json.dumps({
+                "caso_uso": caso, "pantallas": ["Almacenes → Articulos"],
+                "controladores": [ctrl],
                 "ayuda": "ayuda/manual_almacenes.html#s03"})))
 
 
@@ -76,6 +98,12 @@ async def test_se_encuentran_los_casos_de_la_pantalla_sin_importar_mayusculas(co
     casos = await pantalla.casos_de(con_admin, "traz-comp-almacenes/articulo/index")
     assert [c.caso_uso for c in casos] == ["ALM-UC-001"]
     assert casos[0].ayuda == "ayuda/manual_almacenes.html#s03"
+
+
+async def test_se_encuentran_los_casos_de_una_pantalla_de_la_raiz(con_admin):
+    await _sembrar_caso(con_admin, "EMP-UC-001", "traz-tools/application/controllers/Empresa.php")
+    casos = await pantalla.casos_de(con_admin, "Empresa/editar")
+    assert [c.caso_uso for c in casos] == ["EMP-UC-001"]
 
 
 async def test_otra_pantalla_no_trae_esos_casos(con_admin):

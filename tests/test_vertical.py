@@ -118,3 +118,28 @@ async def test_la_agenda_de_faustino_filtra_por_industria(con_admin):
         r = await api.get("/entrevista/agenda?vertical=oil_gas&limite=50", headers=h)
     nombres = {t["nombre"] for t in r.json()["temas"]}
     assert "Tema prueba oil" in nombres and "Tema prueba mina" not in nombres
+
+
+async def test_la_agenda_de_faustino_propone_la_industria_de_la_empresa(con_admin):
+    """La pantalla de Faustino arranca con la industria que declaró la empresa
+    (AGENTE-UX-01). Una empresa que no la declaró no recibe ninguna."""
+    import base64, json as _json
+    from httpx import ASGITransport, AsyncClient
+    import agente.api as mod
+
+    def jwt(empr_id):
+        b = lambda d: base64.urlsafe_b64encode(_json.dumps(d).encode()).decode().rstrip("=")
+        return f"Bearer {b({'alg': 'none'})}.{b({'empr_id': empr_id, 'sub': 'experto'})}.x"
+
+    con_perfil, sin_perfil = 900777, 900778
+    async with con_admin.cursor() as cur:
+        await cur.execute("DELETE FROM agente.perfil_empresa WHERE empr_id IN (%s, %s)", (con_perfil, sin_perfil))
+        await cur.execute("INSERT INTO agente.perfil_empresa (empr_id, vertical) VALUES (%s, 'electricidad')",
+                          (con_perfil,))
+    await con_admin.commit()
+
+    async with AsyncClient(transport=ASGITransport(app=mod.app), base_url="http://t") as api:
+        r1 = await api.get("/entrevista/agenda", headers={"Authorization": jwt(con_perfil)})
+        r2 = await api.get("/entrevista/agenda", headers={"Authorization": jwt(sin_perfil)})
+    assert r1.status_code == 200 and r1.json()["vertical_empresa"] == "electricidad"
+    assert r2.status_code == 200 and r2.json()["vertical_empresa"] is None
