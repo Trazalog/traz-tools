@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Verificaciones en la base de DESARROLLO antes de desplegar los agentes
 -- (anexo A de doc/historial/agente/analisis-impacto-plan-accion-kuntur.md, decisiones 15,
--- 21 y 26 de doc/agente/decisiones-2026-11-24.md).
+-- 21 y 26 de doc/agente/decisiones.md).
 --
 -- SOLO LEE: corre dentro de una transaccion de solo lectura. No cambia nada.
 --

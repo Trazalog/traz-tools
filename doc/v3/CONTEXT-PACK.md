@@ -87,7 +87,7 @@ Claude.ai ──JWT Dnato──> APIM (:8243)
 | Tiers, límites de uso, analytics de tools | `TRAZALOG_v3_PRICING_STRATEGY` en doc/v3/ (verificar path)                                                                    |
 | Priorización de features, próximo cliente | `investigacion-sector-minero-trazalog-v3-2.md`                                                                                |
 | Cualquier cosa en PHP dentro de Dnato     | `traz-comp-dnato/CLAUDE.md` (PHP 5.6 estricto)                                                                                |
-| Agentes de IA (tareas `AGENTE-*`)         | `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (completo) + `PROMPT_CC_AGENTES_TRAZALOG.md` + `doc/agente/arquitectura.md`        |
+| Agentes de IA (tareas `AGENTE-*`)         | `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (completo) + `PROMPT_CC_AGENTES_TRAZALOG.md` + `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`        |
 
 ## 7. Dónde está cada cosa (mapa de directorios clave)
 

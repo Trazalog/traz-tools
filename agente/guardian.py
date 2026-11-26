@@ -36,7 +36,7 @@ Una norma como "ISO 55000" SI se controla: inventar una referencia normativa
 es tan grave como inventar un torque (prompts/quirqui.md, "Cuando no sabes").
 
 Las decisiones de criterio de este modulo estan en
-doc/agente/decisiones-para-revisar.md (D-15 a D-19, y D-51: los numeros del
+doc/agente/decisiones.md (D-15 a D-19, y D-51: los numeros del
 contexto respaldan solo si comparten alguna palabra de alrededor).
 """
 from __future__ import annotations
