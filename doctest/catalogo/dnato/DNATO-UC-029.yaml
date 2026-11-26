@@ -1,0 +1,60 @@
+id: DNATO-UC-029
+modulo: DNATO
+titulo: Usar el tablero de inicio de Tools
+perfil: Administrador
+estado: borrador
+version: "0.1"
+origen: baseline
+referencias_codigo:
+  - repo: traz-tools
+    path: application/controllers/Dash.php
+    detalle: "index() decide el aterrizaje (el administrador entra al tablero) y dashboard() arma el tablero"
+  - repo: traz-tools
+    path: application/views/dashboard/admin_dashboard.php
+    detalle: saludo, «Comenzar», usuarios, suscripción, módulos y cajas de indicadores
+  - repo: traz-tools
+    path: application/views/dashboard/objetivos.php
+    detalle: el bloque Metas, debajo de los indicadores
+  - repo: traz-tools
+    path: lib/props/dashboard_kpis.js
+    detalle: "«Comenzar» una vez por día y por navegador, el orden de las cajas y «Ver detalle»"
+pantallas:
+  - Tablero de inicio
+precondiciones:
+  - Sesión iniciada en Tools (ingreso de DNATO) con un usuario administrador de la empresa
+flujo_principal:
+  - paso: Entra a Tools
+    resultado: "Aterriza en el tablero de inicio, que lo saluda por su nombre con la fecha del día. La primera vez del día pregunta «¿Comenzamos el día?» y muestra el botón «Comenzar →»"
+  - paso: Toca «Comenzar →»
+    resultado: Aparecen las cajas de «Indicadores de tu operación», cada una con su valor
+  - paso: Mira el resumen de la empresa
+    resultado: "Ve cuántos usuarios tiene la empresa («Usuarios generados»), el plan de su cuenta («Suscripción») y los módulos habilitados"
+  - paso: Toca «Ver detalle →» en una caja
+    resultado: La caja muestra el detalle del indicador
+  - paso: Arrastra una caja a otro lugar
+    resultado: Las cajas quedan en el nuevo orden y se recuerda la próxima vez que entra desde ese navegador
+  - paso: Baja hasta «Metas»
+    resultado: "Ve qué valor tiene que alcanzar cada indicador y para cuándo, y puede cargar una con «Agregar meta»"
+flujos_alternativos:
+  - nombre: Ya comenzó el día
+    pasos:
+      - paso: Vuelve a entrar el mismo día desde el mismo navegador
+        resultado: El tablero muestra los indicadores directamente, sin preguntar «¿Comenzamos el día?»
+  - nombre: Indicador sin configurar
+    pasos:
+      - paso: Mira una caja de un indicador que la empresa todavía no tiene configurado
+        resultado: "La caja dice «Disponible próximamente» o «Indicador aún no configurado.»"
+  - nombre: Usuario que no es administrador
+    pasos:
+      - paso: Entra a Tools un usuario que no es administrador
+        resultado: Aterriza en la pantalla de inicio de siempre, no en el tablero
+validaciones:
+  - "«Comenzar» se recuerda por día y por navegador: en otro navegador o al día siguiente vuelve a preguntar"
+  - El orden de las cajas se guarda por empresa en el navegador
+dudas:
+  - "¿El tablero se documenta solo para el administrador, o también tiene que verlo el resto? Hoy solo aterriza el administrador."
+  - "«Suscripción» dice siempre Freemium (supuesto A5 de config/dashboard.php): ¿se documenta así o se espera al dato real?"
+datos_prueba:
+  empresa: EMPRESA_TEST_1
+notas:
+  - "Relevado el 2026-11-26 para que Quirqui pueda explicar el Tablero (AGENTE-PRUEBAS-01): sin caso de uso, contestaba inventando botones. Pendiente de validación del PM. Al validarlo se le agrega `derivados.ayuda: ayudas/src/dnato/manual_registracion_y_cuenta.html#s11` (la sección ya está escrita)."
