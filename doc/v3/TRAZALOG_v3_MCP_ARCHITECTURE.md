@@ -1,5 +1,9 @@
 # Trazalog v3 — Arquitectura MCP
 
+## Objetivo
+
+Qué es: la arquitectura de referencia de Trazalog v3: el MCP como forma de exponer Tools a asistentes de IA, el gateway de WSO2, identidad y aislamiento por empresa, infraestructura, costos y las decisiones de arquitectura; el capítulo 3-bis ubica a los agentes de IA propios. Para quién: PM, arquitecto y quien desarrolle. Cuándo leerlo: antes de cualquier tarea que toque la capa MCP, la identidad o la infraestructura. Qué NO cubre: el detalle de los agentes ([`AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`](AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md)) ni cómo se publica el conector ([`doc/mcp/publicar-y-operar.md`](../mcp/publicar-y-operar.md)).
+
 ## Documento de Arquitectura Técnica
 **Versión:** 1.3  
 **Fecha:** Marzo 2026 (v1.0) — Mayo 2026 (v1.3 — ADR-008 sobre validación JWT en APIM)  
@@ -196,6 +200,27 @@ Python se justifica **únicamente** cuando la operación requiere capacidades qu
 **Transporte recomendado para producción:** Streamable HTTP con `stateless_http=True` y `json_response=True`.
 
 ---
+
+## 3-bis. Agentes de IA de Trazalog
+
+> Capítulo sumado el 2026-11-26 (unificación de documentación). Es un resumen para ubicar a los agentes en esta arquitectura; el diseño completo y las decisiones ADR-A1 a A14 están en [`AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`](AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md).
+
+Además de los clientes MCP de terceros (Claude, ChatGPT y otros), Trazalog tiene sus propios agentes —**Kuntur** (acompaña al administrador), **Quirqui** (asiste a cada usuario) y **Faustino** (entrevista a expertos)— sobre un **motor único**. El motor es **un cliente MCP más**: no tiene un camino propio a los datos de las empresas.
+
+```mermaid
+flowchart LR
+  U[Usuario en Tools] --> PHP[Tools PHP<br/>panel de los agentes]
+  PHP -->|consulta + permiso del usuario| M[Motor de agentes<br/>servicio aparte, ADR-A14]
+  M -->|modelo de lenguaje| OR[OpenRouter]
+  M -->|conocimiento| PG[(Base propia<br/>PostgreSQL + pgvector)]
+  M -->|MCP con el permiso del usuario| GW[WSO2 MCP Gateway]
+  GW --> DS[DataServices<br/>filtrados por empresa]
+  M -->|avisos| NTF[(Avisos de Tools<br/>ADR-015)]
+```
+
+- **Los datos del cliente entran siempre por el MCP** (ADR-A3), con el permiso del usuario o, en trabajos programados, con el permiso propio de la empresa (ADR-A10). Por eso el aislamiento por empresa de la sección 6 se aplica igual a los agentes: el `empr_id` sale del permiso, nunca de un parámetro.
+- **El conocimiento de la industria no pasa por el MCP** (ADR-A2): vive en la base propia del motor.
+- **Los agentes son de solo lectura** (ADR-A8), con dos excepciones acotadas que confirma el administrador (ADR-A12 y A13).
 
 ## 4. WSO2 MCP Gateway — Capacidades Detalladas
 

@@ -4,7 +4,7 @@
 
 Acá viven **todos los scripts SQL de los agentes de IA de Trazalog**, versionados, numerados e idempotentes, cada uno con su rollback. Este README explica en qué orden se aplican, cómo verificar que quedaron bien y qué decisiones de diseño hay detrás. Está escrito para que cualquiera pueda montar el esquema desde cero sin conocer el historial del proyecto.
 
-**Qué NO cubre:** no explica la arquitectura del agente (eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`) ni cómo instalar los componentes de infraestructura como el Streaming Integrator (eso está en `doc/agente/instalacion.md`).
+**Qué NO cubre:** no explica la arquitectura del agente (eso está en `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`) ni cómo instalar los componentes de infraestructura como el Streaming Integrator (eso está en `doc/agente/instalar-y-operar.md`).
 
 ---
 
@@ -64,8 +64,8 @@ Los scripts se aplican **en orden numérico** y todos son idempotentes: correrlo
 | 028 | `028-planillas-carga-masiva.sql` | Planillas que sube el administrador (`agente.planilla`, con RLS) y la herramienta del motor `kuntur_carga_masiva`, de clase configuración. La carga está **simulada** hasta Dnato v3: al confirmar, el CSV queda en `agente.simulacion` |
 | 031 | `031-plan-accion.sql` | Plan de acción de Kuntur, opción B (ADR-A13): `agente.plan_propuesta` (con RLS), la herramienta del motor `kuntur_proponer_plan` (solo Kuntur) y las cinco operaciones de Tareas de clase acción que usa el motor al aceptar. Simulado hasta que el PM apruebe los recursos MCP |
 | 030 | `030-funciones-sin-usar.sql` | Habilita el tipo `funcion_sin_usar` en `agente.propuesta` y un índice para el "no me interesa" por empresa: Kuntur recomienda funciones de Tools que la empresa no usa (AGENTE-CO-08). El 029 lo usa otra rama (lectura de Tareas) |
-| 034 | `034-taxonomia-verticales.sql` | Temas de Faustino por industria: marca chancado y molienda como minería y suma temas de oil & gas y electricidad (decisión 23 de `doc/agente/decisiones-2026-11-24.md`) |
-| 035 | `035-textos-pm.sql` | Gate 2 (AGENTE-M-07): personalidad de los tres sin «de vos» fijo y agenda de Faustino de la tabla del PM, 42 temas por industria (decisiones 40–43 de `doc/agente/decisiones-2026-11-24.md`) |
+| 034 | `034-taxonomia-verticales.sql` | Temas de Faustino por industria: marca chancado y molienda como minería y suma temas de oil & gas y electricidad (decisión 23 de `doc/agente/decisiones.md`) |
+| 035 | `035-textos-pm.sql` | Gate 2 (AGENTE-M-07): personalidad de los tres sin «de vos» fijo y agenda de Faustino de la tabla del PM, 42 temas por industria (decisiones 40–43 de `doc/agente/decisiones.md`) |
 | 036 | `036-temas-seguridad.sql` | Vuelven «Gas sulfhídrico y atmósferas explosivas» (oil & gas) y «Trabajo con tensión y arco eléctrico» (electricidad), pedido del PM del 2026-11-25 (decisión 44) |
 | 027 | `027-tools-alta-configuracion.sql` | Las tres primeras herramientas reales de configuración para Kuntur: `core_alta_establecimiento`, `alm_alta_deposito`, `core_alta_valor` (recursos de `toolsMCPAPI` sobre los servicios de datos de las pantallas) |
 
@@ -165,7 +165,7 @@ Es una barrera a nivel de permisos de base, no una convención de código: si ma
 
 ### Por qué `notificacion` y `envio` están separadas
 
-Viene del análisis de E0 (`doc/agente/analisis-alertas-assetplanner.md` §6.3). El mecanismo de AssetPlanner mete el token FCM del dispositivo dentro del mismo JSON que después lee la campanita, y solo notifica a un dispositivo por usuario (`LIMIT 1` sobre los tokens). Acá:
+Viene del análisis de E0 (`doc/historial/agente/analisis-alertas-assetplanner.md` §6.3). El mecanismo de AssetPlanner mete el token FCM del dispositivo dentro del mismo JSON que después lee la campanita, y solo notifica a un dispositivo por usuario (`LIMIT 1` sobre los tokens). Acá:
 
 - `notificacion` es **lo que la persona lee** — sin token, sin datos de transporte.
 - `envio` es **una fila por dispositivo activo del destinatario**, con el token y el estado del envío. Es la tabla que el Streaming Integrator poletea.

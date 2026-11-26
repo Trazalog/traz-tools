@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <!--
   Feedback negativo agrupado. Es el tablero del ciclo de mejora: ver
-  doc/agente/feedback.md para que hacer con cada caso.
+  doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md para que hacer con cada caso.
 -->
 <?php if (!empty($feedback['error'])): ?>
       <div class="callout callout-warning">

@@ -2,7 +2,7 @@
 
 Arma una base descartable con el motor de produccion (v2.8.1.4) y le aplica
 v2.8.1.6, siguiendo el plan de prueba del analisis de impacto
-(doc/agente/analisis-impacto-kpi-objetivos.md, seccion 6). Idealmente contra
+(doc/historial/agente/analisis-impacto-kpi-objetivos.md, seccion 6). Idealmente contra
 PostgreSQL 11, la version de produccion. Se saltea sin KPI_TEST_ADMIN_DSN, ej.:
 
     KPI_TEST_ADMIN_DSN="host=127.0.0.1 port=55411 dbname=postgres user=postgres password=..."

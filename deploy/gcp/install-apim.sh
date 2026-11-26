@@ -19,7 +19,7 @@
 # PRE:
 #   - deploy/gcp/.env presente (copiar de .env.example y completar)
 #   - .zip de WSO2 APIM descargado manualmente desde wso2.com (requiere
-#     cuenta) en la ruta APIM_ZIP_PATH — ver doc/infra/wso2-install.md §2
+#     cuenta) en la ruta APIM_ZIP_PATH — ver doc/infra/wso2.md §2
 # USO: sudo ./install-apim.sh   (en la VM GCP)
 
 set -euo pipefail
@@ -107,7 +107,7 @@ PYEOF
 log "deployment.toml actualizado: hostname=$MCP_DOMAIN, https_endpoint=https://$MCP_DOMAIN"
 log "  (database.apim_db/shared_db sin tocar — H2 por defecto)"
 log "PENDIENTE fuera de este script (clase 🔴): [apim.jwt] + Key Manager federado Dnato"
-log "  (ADR-008/ADR-009) — ver doc/identity/apim-keymanager-dnato.md antes de dar de alta el primer cliente"
+log "  (ADR-008/ADR-009) — ver doc/identidad/identidad-y-seguridad.md antes de dar de alta el primer cliente"
 
 # ── Heap sizes ─────────────────────────────────────────────────────
 API_SH="$APIM_HOME/bin/api-manager.sh"
@@ -121,7 +121,7 @@ fi
 # ── JAVA_HOME (JDK 21 requerido por WSO2 4.6.0 — ver doc/v3/deployment-gcp.md §4) ──
 # systemd no lee /etc/profile.d, así que hace falta resolver JAVA_HOME acá y
 # escribirlo explícitamente en el unit (a diferencia de DEV, que lo setea en
-# el perfil de shell — ver doc/infra/wso2-install.md).
+# el perfil de shell — ver doc/infra/wso2.md).
 if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then
   JAVA_HOME_RESOLVED="$JAVA_HOME"
 else

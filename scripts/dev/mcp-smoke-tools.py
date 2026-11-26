@@ -91,7 +91,7 @@ def main():
         print(f"     - {t}")
     if rotas:
         print("\n  Las 'rotas' existen en el MCP Server pero no tienen operacion de backend")
-        print("  asociada. Ver doc/mcp/republicar-mcp-server.md, pasos 4 y 5.")
+        print("  asociada. Ver doc/mcp/publicar-y-operar.md, pasos 4 y 5.")
     return 1 if rotas else 0
 
 

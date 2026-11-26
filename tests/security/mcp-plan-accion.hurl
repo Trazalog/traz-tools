@@ -2,7 +2,7 @@
 # (tar_alta_pedido, tar_alta_hito, tar_alta_tarea, tar_baja_pedido, tar_baja_tarea)
 #
 # PENDIENTE: los recursos esperan la aprobación del PM (anexo A de
-# doc/agente/analisis-impacto-plan-accion-kuntur.md). Corrido 21/21 el 2026-11-22
+# doc/historial/agente/analisis-impacto-plan-accion-kuntur.md). Corrido 21/21 el 2026-11-22
 # en una copia del MI desconectada de DEV, con scripts/dev/simulador-plan-ds.py.
 #
 # Mismo patrón que mcp-alta-configuracion.hurl: llama al MI DIRECTAMENTE,

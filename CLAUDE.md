@@ -45,7 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── bpm/                — Procesos Bonita (.bos, .bar)
 │   ├── siddhi/             — Apps WSO2 Streaming Integrator (.siddhi)
 │   └── flutter/traza_app/  — App móvil companion
-├── doc/
+├── doc/                — Documentación; el índice es doc/README.md
 │   └── v3/                 — Documentos de arquitectura y estrategia v3
 └── scripts/                — Scripts de utilidad (deploy, setup, etc.)
 ```
@@ -170,6 +170,7 @@ Mover los commits a una rama feature y abrir PR.
 
 ## Documentos de referencia (doc/v3/)
 
+- [`doc/README.md`](doc/README.md) — **Índice de toda la documentación**: qué leer para cada tema y tabla de rutas viejas → nuevas.
 - [`doc/v3/TRAZALOG_v3_CICD_STRATEGY.md`](doc/v3/TRAZALOG_v3_CICD_STRATEGY.md) — Estrategia de branching y CI/CD. Sección 2 define el modelo de ramas.
 - [`doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md`](doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md) — Arquitectura de la capa MCP sobre WSO2 APIM 4.6.0.
 - [`doc/v3/TRAZALOG_v3_PRICING_STRATEGY.docx`](doc/v3/TRAZALOG_v3_PRICING_STRATEGY.docx) — Estrategia de pricing v3 (modelo freemium + MCP usage-based).

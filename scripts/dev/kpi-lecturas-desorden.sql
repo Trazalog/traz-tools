@@ -177,5 +177,5 @@ ORDER BY tramos_negativos DESC;
 --   (es un cociente y se cancela), sí a MTTR y MTBF, que se muestran como
 --   valores absolutos.
 --
---   Contexto completo: doc/mcp/casos-de-uso-mineria-y-gaps.md §1.2-bis
+--   Contexto completo: doc/mcp/pruebas-y-casos.md §1.2-bis
 -- ===========================================================================

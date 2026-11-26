@@ -242,7 +242,7 @@ define('REST_PRD_LOTE', HOST.'/services/PRDLoteDataService');
 
 #AGENTE MINERO — el orquestador NO va detras de HOST: es un servicio propio,
 #que en demo y produccion tiene que quedar detras del gateway o en una red
-#donde solo llegue trafico ya validado (ver doc/agente/operacion.md).
+#donde solo llegue trafico ya validado (ver doc/agente/instalar-y-operar.md).
 define('REST_AGENTE', getenv('AGENTE_URL') ?: 'http://127.0.0.1:8099');
 
 #Cliente OAuth contra Dnato. Es el unico client_id que Dnato acepta hoy

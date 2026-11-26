@@ -59,7 +59,7 @@ class Agente extends CI_Controller
 
     /**
      * Feedback negativo agrupado, para el ciclo de mejora.
-     * Ver doc/agente/feedback.md.
+     * Ver doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md.
      */
     public function admin()
     {

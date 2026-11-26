@@ -1,6 +1,10 @@
 # CONTEXT-PACK — traz-tools
 
-> Versión -> 1.8, "último ADR: ADR-015" (ADR-014 está en `develop-v3`, no en esta rama), "último ADR de agentes: ADR-A13", fecha 2026-11-22
+> Versión -> 1.9, "último ADR: ADR-015" (ADR-014 está en `develop-v3`, no en esta rama), "último ADR de agentes: ADR-A14", fecha 2026-11-26
+
+## Objetivo
+
+Qué es: el resumen operativo que toda sesión lee primero: jerarquía de fuentes, decisiones de arquitectura vigentes, reglas que no se negocian y qué leer según la tarea. Para quién: Claude Code y el PM. Cuándo leerlo: al empezar cualquier tarea. Qué NO cubre: el detalle de cada tema; el mapa completo de documentos está en [`doc/README.md`](../README.md).
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -45,6 +49,7 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 | **ADR-A11** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Conocimiento multi-vertical: `vertical` (minería, oil & gas, electricidad, general) como metadato del conocimiento, la taxonomía y el perfil de la empresa                                                                                                                                                         |
 | **ADR-A12** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Excepción a A8: Kuntur graba datos de configuración (clase `configuracion`) solo con confirmación del administrador, con su token, lista cerrada, registro y todo o nada. Dnato v3 contra servicios simulados hasta que exista |
 | **ADR-A13** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Plan de acción de Kuntur: propuesta completa (pedido, hitos, tareas sin responsable) en la base del agente; al aceptar, con el token del administrador, se crea en Tareas solo con el Proceso Estándar. Aprobado por el PM el 2026-11-22 (PR #669) |
+| **ADR-A14** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | El motor de agentes es un servicio aparte de Tools y de WSO2 (FastAPI en Python, base propia con pgvector); entra a WSO2 por el MCP con el permiso del usuario. Aprobado por el PM el 2026-11-25 |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 
@@ -82,21 +87,25 @@ Claude.ai ──JWT Dnato──> APIM (:8243)
 | Tu tarea toca…                            | Leé también…                                                                                                                  |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Identidad / OAuth / JWT / empr_id         | `MCP_ARCHITECTURE.md` §6 + ADR-008 + ADR-009                                                                                  |
-| DataServices / filtrado multi-tenant      | ADR-003 + `doc/identity/dataservices-remediation-phase-a.md`                                                                  |
-| Virtual MCP Server nuevo o modificado     | `doc/mcp/virtual-mcp-equipos.md` / `virtual-mcp-ots.md` (como referencia de formato) + `doc/mcp/tool-annotations-standard.md` |
+| DataServices / filtrado multi-tenant      | ADR-003 + `doc/historial/identidad/dataservices-remediation-phase-a.md`                                                                  |
+| Virtual MCP Server nuevo o modificado     | `doc/historial/mcp/virtual-mcp-equipos.md` / `virtual-mcp-ots.md` (como referencia de formato) + `doc/mcp/diseno.md` |
 | Tiers, límites de uso, analytics de tools | `TRAZALOG_v3_PRICING_STRATEGY` en doc/v3/ (verificar path)                                                                    |
 | Priorización de features, próximo cliente | `investigacion-sector-minero-trazalog-v3-2.md`                                                                                |
 | Cualquier cosa en PHP dentro de Dnato     | `traz-comp-dnato/CLAUDE.md` (PHP 5.6 estricto)                                                                                |
-| Agentes de IA (tareas `AGENTE-*`)         | `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (completo) + `PROMPT_CC_AGENTES_TRAZALOG.md` + `doc/agente/arquitectura.md`        |
+| Agentes de IA (tareas `AGENTE-*`)         | `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (parte 1 completa, y la parte de lo que se toca) + `doc/agente/instalar-y-operar.md` + `doc/agente/decisiones.md` |
 
 ## 7. Dónde está cada cosa (mapa de directorios clave)
 
 ```
-doc/v3/                 → documentos ancla (arquitectura, CICD, pricing, negocio) + STATE.md
+doc/README.md            → índice de toda la documentación ("si querés saber X, leé Y") y tabla de rutas viejas
+doc/v3/                 → documentos ancla (arquitectura, CICD, agentes, despliegue, negocio) + STATE.md
 doc/adr/                → ADRs individuales (ADR-003, ADR-009, ...)
-doc/identity/            → docs de identidad/JWT/discovery OAuth
-doc/mcp/                 → docs de Virtual MCP Servers y demo
-doc/api/                 → specs OpenAPI (equipos.yaml, ot.yaml)
+doc/agente/             → instalar y operar los agentes, decisiones, identidad visual, revisión legal
+doc/identidad/          → identidad y seguridad (JWT, Dnato, discovery OAuth, empr_id)
+doc/mcp/                → conector MCP: diseño, publicar y operar, pruebas y casos
+doc/infra/              → ambientes (incluido el servidor compartido de DEV) y WSO2
+doc/api/                → specs OpenAPI e inventario de artefactos WSO2
+doc/historial/          → lo que ya cumplió su función (no leer para decidir)
 _backend/api/ToolsAPIProject/    → artefactos WSO2 MI (DataServices, sequences, APIs)
 _backend/api/ApimDiscoveryProject/ → discovery OAuth 2.1 (RFC 9728)
 scripts/dev/             → scripts reutilizables (setup ngrok, generación de JWT de test, etc.)

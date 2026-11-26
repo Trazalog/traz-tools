@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Qué es: el resumen para que un abogado revise, en una sola pasada, los temas legales de los agentes de inteligencia artificial de Trazalog Tools (tarea AGENTE-LEGAL-01, decisión D12 del PM: «legal al final, en una sola revisión»). Para quién: el abogado que contrate el PM; está escrito para alguien que no conoce el producto. Cuándo leerlo: antes de ofrecer los agentes al primer cliente real. Qué NO cubre: los contratos comerciales con clientes ni la política de precios. La versión para mandarle al abogado, en lenguaje jurídico, es [`consulta-legal-abogado.md`](consulta-legal-abogado.md).
+Qué es: el resumen para que un abogado revise, en una sola pasada, los temas legales de los agentes de inteligencia artificial de Trazalog Tools (tarea AGENTE-LEGAL-01, decisión D12 del PM: «legal al final, en una sola revisión»). Para quién: el abogado que contrate el PM; está escrito para alguien que no conoce el producto. Cuándo leerlo: antes de ofrecer los agentes al primer cliente real. Qué NO cubre: los contratos comerciales con clientes ni la política de precios. La versión para mandarle al abogado, en lenguaje jurídico, es [`consulta-legal-abogado.md`](../historial/agente/consulta-legal-abogado.md).
 
 | Campo | Valor |
 |---|---|

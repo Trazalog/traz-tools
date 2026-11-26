@@ -11,7 +11,7 @@
 
 En el Sprint 2 se crearon **dos Virtual MCP Servers separados** (`trazalog-equipos`, `trazalog-ots`), cada uno sobre su propia API en el Publisher, aunque ambos apuntan al mismo backend MI (`toolsMANAPI`, context `/tools/man`). Con la incorporación de almacenes (ADR-012), tener un Virtual MCP Server por módulo se vuelve incómodo: el cliente tendría que conectar varios connectors en Claude.ai.
 
-El relevamiento E2-MCP-10-RELEV (`doc/v3/relevamiento-unificacion-mcp.md`) confirmó contra la documentación oficial de WSO2 4.6.0 y contra los artefactos reales del repo:
+El relevamiento E2-MCP-10-RELEV (`doc/historial/v3/relevamiento-unificacion-mcp.md`) confirmó contra la documentación oficial de WSO2 4.6.0 y contra los artefactos reales del repo:
 
 - **Un Virtual MCP Server no puede componerse desde varias APIs distintas.** El wizard de 4.6 exige una sola API (o una sola OpenAPI) como fuente. No hay mecanismo nativo para agrupar operaciones de APIs separadas.
 - Por lo tanto, "un solo MCP Server con todo" solo se logra **consolidando las operaciones en una sola API WSO2** y generando el MCP Server desde ella (Opción A del relevamiento).
@@ -80,6 +80,6 @@ Tools expuestas (nombres con prefijo):
 
 ## Preguntas abiertas (a resolver en implementación, no bloquean el ADR)
 
-- ~~Nombre definitivo del Virtual MCP Server unificado~~ **Resuelto (2026-08-08):** Rodolfo publicó la API/MCP Server como **`Trazalog MCP Server`**, contexto **`/trazalog/mcp`**, versión `1.0` — no `trazalog-operaciones` como se sugería acá. Endpoint MCP: `https://<host-apim>:8243/trazalog/mcp/1.0/mcp`. Ver `doc/mcp/virtual-mcp-unificado.md` §2.6/§2.9.
+- ~~Nombre definitivo del Virtual MCP Server unificado~~ **Resuelto (2026-08-08):** Rodolfo publicó la API/MCP Server como **`Trazalog MCP Server`**, contexto **`/trazalog/mcp`**, versión `1.0` — no `trazalog-operaciones` como se sugería acá. Endpoint MCP: `https://<host-apim>:8243/trazalog/mcp/1.0/mcp`. Ver `doc/mcp/diseno.md` §2.6/§2.9.
 - Confirmar el ruteo a múltiples DataServices desde un artefacto MI (decisión #6) — primera tarea de implementación.
 - Si conviene que la fachada mantenga el backend MI separado por módulo o fusionado (pregunta abierta #1 del relevamiento) — se decide al implementar, según lo que dé la verificación.

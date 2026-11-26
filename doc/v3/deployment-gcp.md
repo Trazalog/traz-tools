@@ -1,5 +1,9 @@
 # Despliegue en GCP — VM nativa WSO2 (ADR-011)
 
+## Objetivo
+
+Qué es: el dimensionamiento y la lista de pasos para instalar WSO2 (API Manager y MI) en una VM de Google Cloud, desplegar ahí la fachada MCP, configurar la identidad y, cuando exista, el motor de los agentes de IA (sección 8, no probada). Para quién: el PM, que ejecuta los pasos en su consola, y quien los revise. Cuándo leerlo: al armar o cambiar el ambiente de TEST o PROD. Qué NO cubre: qué ambiente usar para qué ([`doc/infra/ambientes.md`](../infra/ambientes.md)) ni la instalación en una máquina de desarrollo ([`doc/infra/wso2.md`](../infra/wso2.md)).
+
 > Implementa [ADR-011](../adr/ADR-011-gcp-deployment.md). Tarea: E7-INFRA-01/02.
 > Este documento NO despliega nada — es sizing + checklist para que Rodolfo
 > ejecute en su consola de GCP, más los scripts en [`deploy/gcp/`](../../deploy/gcp/).
@@ -8,7 +12,7 @@
 > desplegar la fachada MCP (`toolsMCPAPI`/`toolsALMAPI` + el Virtual MCP Server
 > unificado) a esta misma VM, una vez que ya está instalada (§1-4). Ese checklist
 > incorpora todo lo aprendido en el smoke test real hecho en DEV el mismo día
-> (`doc/mcp/virtual-mcp-unificado.md` §2.3/§2.8-bis/§4) para no repetir los mismos
+> (`doc/mcp/diseno.md` §2.3/§2.8-bis/§4) para no repetir los mismos
 > errores de configuración acá.
 
 ---
@@ -24,7 +28,7 @@
 
 **Estos son los mínimos "de catálogo" de WSO2**, pensados para un ambiente de producción genérico con carga concurrente real. No son el punto de partida correcto para dimensionar el piloto: Rodolfo ya corre APIM+MI en su máquina de desarrollo con heaps de fábrica (`MI: -Xms256m -Xmx1024m`, sin tocar nada) y le anda bien. El early adopter va a tener **1-2 usuarios**, no la carga concurrente que esos mínimos oficiales asumen. Se prioriza ese dato empírico + el volumen real esperado por sobre el catálogo oficial (ver decisión en 1.4).
 
-**Sistema operativo: `Rocky Linux 9`** — ya decidido en la arquitectura canónica (`TRAZALOG_v3_MCP_ARCHITECTURE.md` §9-10, decisión **IDR-001**), no es una elección nueva de esta tarea. Ese documento estableció que WSO2 4.6.0 requiere JDK 21, y CentOS 7 (el SO histórico de Trazalog) quedó EOL en junio 2024 con una `glibc` (2.17) incompatible con los builds modernos de JDK 21 — por eso IDR-001 fija Rocky Linux 9 (drop-in replacement de CentOS/RHEL, soporte hasta 2032) como el SO de cualquier VM nueva de WSO2 en v3. Ubuntu fue evaluada en ese mismo documento y descartada salvo "razón estratégica" (cambio de paradigma apt↔dnf sin beneficio para este caso). La primera versión de este documento decía Ubuntu 24.04 LTS por error — se tomó como referencia el SO del workstation de DEV de Rodolfo (`doc/infra/wso2-install.md`) en vez de la decisión ya tomada en la arquitectura canónica. Corregido acá.
+**Sistema operativo: `Rocky Linux 9`** — ya decidido en la arquitectura canónica (`TRAZALOG_v3_MCP_ARCHITECTURE.md` §9-10, decisión **IDR-001**), no es una elección nueva de esta tarea. Ese documento estableció que WSO2 4.6.0 requiere JDK 21, y CentOS 7 (el SO histórico de Trazalog) quedó EOL en junio 2024 con una `glibc` (2.17) incompatible con los builds modernos de JDK 21 — por eso IDR-001 fija Rocky Linux 9 (drop-in replacement de CentOS/RHEL, soporte hasta 2032) como el SO de cualquier VM nueva de WSO2 en v3. Ubuntu fue evaluada en ese mismo documento y descartada salvo "razón estratégica" (cambio de paradigma apt↔dnf sin beneficio para este caso). La primera versión de este documento decía Ubuntu 24.04 LTS por error — se tomó como referencia el SO del workstation de DEV de Rodolfo (`doc/infra/wso2.md`) en vez de la decisión ya tomada en la arquitectura canónica. Corregido acá.
 
 ### 1.2 Comparación de tiers E2 (specs verificadas contra `docs.cloud.google.com`)
 
@@ -86,8 +90,8 @@ VM GCP nueva (e2-medium, solo WSO2 nativo)
 
 - **Registro interno del APIM (`apim_db`/`shared_db`): H2 embebida, no PostgreSQL.** Decisión explícita de Rodolfo (2026-07-28) — ver nota de implementación en [ADR-011](../adr/ADR-011-gcp-deployment.md) punto 6. Para un piloto de 1-2 usuarios no se justificaba la complejidad de crear bases + cargar esquemas de PostgreSQL para el registro interno del propio APIM; se deja el H2 de fábrica, igual que en DEV. `install-apim.sh` **no toca** `[database.*]` en `deployment.toml`. Riesgo aceptado: si esto escala a producción real, migrar H2 → PostgreSQL más adelante es trabajo aparte, no trivial.
 - **Red interna del proyecto GCP**: al estar la VM nueva y Dnato en el mismo proyecto, la conectividad es directa por IP interna — no requiere VPN ni peering (ADR-011 #6, ahora acotado a Dnato). **Zona confirmada por Rodolfo: `us-east1-b`** — la VM nueva se crea ahí, misma zona que el resto del stack existente (Dnato, PostgreSQL, y la VM legacy con WSO2 4.4).
-- **Dónde sigue entrando PostgreSQL:** el PostgreSQL existente no se usa en este despliegue en absoluto por ahora — queda reservado para la futura migración de las DataServices de negocio del MI (`AssetPlannerDataSource`, `ToolsDataSource`, hoy mezclan MySQL legacy y PostgreSQL — ver `doc/identity/dataservices-remediation-phase-a.md`, migración ya en curso pero no cerrada, es un cambio al proyecto Maven, no a esta VM, y queda fuera de esta tarea).
-- **Identidad/JWT**: la config de `[apim.jwt]` + Key Manager federado de Dnato (ADR-008/ADR-009) tampoco la tocan estos scripts — es clase 🔴 (identidad/seguridad). Debe aplicarse como paso separado, replicando `doc/identity/apim-keymanager-dnato.md` contra el Dnato de este mismo proyecto GCP, antes de dar de alta al primer cliente.
+- **Dónde sigue entrando PostgreSQL:** el PostgreSQL existente no se usa en este despliegue en absoluto por ahora — queda reservado para la futura migración de las DataServices de negocio del MI (`AssetPlannerDataSource`, `ToolsDataSource`, hoy mezclan MySQL legacy y PostgreSQL — ver `doc/historial/identidad/dataservices-remediation-phase-a.md`, migración ya en curso pero no cerrada, es un cambio al proyecto Maven, no a esta VM, y queda fuera de esta tarea).
+- **Identidad/JWT**: la config de `[apim.jwt]` + Key Manager federado de Dnato (ADR-008/ADR-009) tampoco la tocan estos scripts — es clase 🔴 (identidad/seguridad). Debe aplicarse como paso separado, replicando `doc/identidad/identidad-y-seguridad.md` contra el Dnato de este mismo proyecto GCP, antes de dar de alta al primer cliente.
 
 ---
 
@@ -198,7 +202,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo dnf install -y temurin-21-jdk
    java -version   # debe mostrar "21.x.x"
    ```
-   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 8) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
+   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 8) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
 
 7. **Conseguir los 2 archivos que necesitan los scripts** (WSO2 no deja descargarlos directo con `wget` desde la VM — hay que bajarlos con el navegador y después subirlos). *(Antes había un tercer archivo, el driver JDBC de PostgreSQL — ya no hace falta: el registro interno del APIM usa H2 embebida, ver §2.)*
 
@@ -247,7 +251,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo systemctl start wso2mi
    ```
 
-9. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
+9. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2.md` §5):
    ```bash
    curl -I https://mcp.cloudtrazalog.com
    ```
@@ -260,7 +264,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    ```
    Deberían aparecer los 6 puertos escuchando (3 del APIM, 3 del MI — no colisionan entre sí, el MI ya viene con sus propios puertos de fábrica corridos, distintos de los del APIM, precisamente para poder convivir en la misma máquina sin configurar nada).
 
-   **Consolas del APIM** (mismo patrón que DEV, `doc/infra/wso2-install.md` §5 — solo alcanzables desde dentro de la VM o por túnel SSH, **nunca públicamente**, ADR-011 #9):
+   **Consolas del APIM** (mismo patrón que DEV, `doc/infra/wso2.md` §5 — solo alcanzables desde dentro de la VM o por túnel SSH, **nunca públicamente**, ADR-011 #9):
    ```bash
    curl -k https://localhost:9443/carbon      # Admin Console
    curl -k https://localhost:9443/publisher   # Publisher
@@ -284,7 +288,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
 - **Costo real vs. ADR-005**: ver 1.4 — `e2-medium` (~US$24-25/mes incluyendo disco, a reconfirmar con el calculador oficial) sigue sin ser $0, pero ya fue aceptado conscientemente por Rodolfo dado el volumen de 1-2 usuarios del piloto.
 - ~~Región/VPC exacta~~ **Resuelto: `us-east1-b`** (ver §2 y §4 paso 1).
 - **Versión exacta del MI**: se usa `4.5.0` por ser la validada junto al APIM 4.6.0 en DEV (ver `scripts/dev/setup-mi-b4-car-deploy.sh`). Si Rodolfo prefiere subir a una versión más nueva de MI, es una decisión aparte — no se investigó compatibilidad de versiones más nuevas contra el mecanismo de identidad de ADR-009.
-- **Migración de DataServices a PostgreSQL**: en curso pero no cerrada (`doc/identity/dataservices-remediation-phase-a.md`). Se detectó además que las datasources actuales (`AssetPlannerDataSource.xml`, `ToolsDataSource.xml`) tienen credenciales en texto plano commiteadas en el repo — preexistente, no introducido por esta tarea, pero vale la pena que Rodolfo lo sepa antes del cutover a producción.
+- **Migración de DataServices a PostgreSQL**: en curso pero no cerrada (`doc/historial/identidad/dataservices-remediation-phase-a.md`). Se detectó además que las datasources actuales (`AssetPlannerDataSource.xml`, `ToolsDataSource.xml`) tienen credenciales en texto plano commiteadas en el repo — preexistente, no introducido por esta tarea, pero vale la pena que Rodolfo lo sepa antes del cutover a producción.
 
 ---
 
@@ -411,7 +415,7 @@ tools que escriben fallan en el cliente** aunque el backend funcione perfecto.
 | `@discover` | APIM responde `404` no-JSON-RPC al método `server/discover` del protocolo `2026-07-28` |
 | `@toolcall` | reescribe `202 → 200`: el `202` del backend hace que el cliente MCP descarte la respuesta |
 
-Detalle y evidencia en [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md), apéndice.
+Detalle y evidencia en [`../mcp/republicar-mcp-server.md`](../mcp/publicar-y-operar.md), apéndice.
 
 > **Al validar el Caddyfile hay que cargar el entorno primero**, porque usa variables que provee
 > systemd (`EnvironmentFile=/etc/caddy/gcp.env`). Sin eso, `caddy validate` falla en la línea del
@@ -529,7 +533,7 @@ curl http://localhost:8290/tools/mcp/mcp/man/equipos
 | `ToolsAPIProject_1.0.0.car` | `mvn clean install` (§6.1) | **MI** — `wso2mi-4.5.0/.../carbonapps/` | APIs de orquestación + DataServices |
 | `trazalog-discovery-1.0.0.car` | `bash build.sh` (acá) | **APIM** — `wso2am-4.6.0/.../carbonapps/` | Synapse API `OAuthDiscovery` (PRM RFC 9728) |
 
-**Por qué hace falta el segundo:** cuando Claude.ai agrega un conector MCP, sigue la cadena de descubrimiento RFC 9728 → RFC 8414 → RFC 7591 (`doc/identity/oauth-discovery-flow.md` §2). El primer paso es pedir el **Protected Resource Metadata** en el path que define la RFC 9728 §3.1: `/.well-known/oauth-protected-resource/...`. **WSO2 APIM no sirve el PRM en ese path** — lo sirve embebido dentro del contexto de la API (`/trazalog/mcp/1.0/.well-known/oauth-protected-resource`), que Claude nunca consulta. El CAR `OAuthDiscovery` cubre ese hueco publicando una Synapse API con contexto `/.well-known`. Es el gap **G1** de `oauth-discovery-flow.md` §5, resuelto el 2026-06-30 y validado con Claude.ai Web el 2026-07-02 (`doc/mcp/demo-smoke-test.md`).
+**Por qué hace falta el segundo:** cuando Claude.ai agrega un conector MCP, sigue la cadena de descubrimiento RFC 9728 → RFC 8414 → RFC 7591 (`doc/identidad/identidad-y-seguridad.md` §2). El primer paso es pedir el **Protected Resource Metadata** en el path que define la RFC 9728 §3.1: `/.well-known/oauth-protected-resource/...`. **WSO2 APIM no sirve el PRM en ese path** — lo sirve embebido dentro del contexto de la API (`/trazalog/mcp/1.0/.well-known/oauth-protected-resource`), que Claude nunca consulta. El CAR `OAuthDiscovery` cubre ese hueco publicando una Synapse API con contexto `/.well-known`. Es el gap **G1** de `oauth-discovery-flow.md` §5, resuelto el 2026-06-30 y validado con Claude.ai Web el 2026-07-02 (`doc/historial/mcp/demo-smoke-test.md`).
 
 Los gaps **G2** (`registration_endpoint` en la AS metadata) y **G3** (endpoint DCR `POST /oauth/register`) ya están implementados en `traz-comp-dnato` `develop-v3` — verificado en `application/controllers/Oauth.php` (`registration_endpoint` en `authorization_server_metadata()`, método `register_client()`) y `application/config/routes.php` (`$route['oauth/register']`). **No hay nada que hacer del lado de Dnato para esto**, más allá de que `develop-v3` esté efectivamente desplegado (§7.0-bis).
 
@@ -735,9 +739,9 @@ Después de corregir la configuración, **eliminar el conector en Claude y crear
 
 > **Esta sección es la publicación INICIAL.** Si el MCP Server ya existe en esta VM y lo que hace
 > falta es llevarle tools nuevas o cambios de una tool existente, el procedimiento es otro:
-> [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md).
+> [`../mcp/republicar-mcp-server.md`](../mcp/publicar-y-operar.md).
 
-Seguir `doc/mcp/virtual-mcp-unificado.md` §2 completo — ya corregido con todo lo que falló la primera vez en DEV (2026-08-08). Puntos que cambian respecto a DEV:
+Seguir `doc/mcp/diseno.md` §2 completo — ya corregido con todo lo que falló la primera vez en DEV (2026-08-08). Puntos que cambian respecto a DEV:
 
 - **Acceso al Publisher:** el puerto 9443 nunca se expone públicamente (ADR-011 #9). Entrar por túnel SSH:
   ```bash
@@ -878,7 +882,7 @@ Mismo patrón que el smoke test que se hizo en DEV el 2026-08-08 (`virtual-mcp-u
 
 **`deployment.toml` (donde vive toda la config de identidad — `[apim.jwt]`, `[[apim.jwt.issuer]]`) nunca está versionado en git.** Es un archivo de configuración local de cada instancia de APIM, y cambia por ambiente: el `deployment.toml` de DEV apunta al JWKS local de DEV (`http://localhost:8090/...`, servido por `scripts/dev/dnato-jwks-server.py`, un shim que solo existe para pruebas), el de esta VM tiene que apuntar al JWKS del Dnato real de este mismo proyecto GCP, y el de una futura VM de PROD tendría el suyo propio.
 
-**Por eso desplegar el contenido de `develop-v3` — a esta VM, o a cualquier servidor, incluido el de Dnato — no aplica ninguno de los cambios de `doc/identity/apim-keymanager-dnato.md`.** Ese documento describe ediciones manuales de `deployment.toml`, hechas y verificadas en DEV; acá se replican esas mismas ediciones, a mano, contra el `deployment.toml` de esta VM. No hay ningún artefacto en el repo que las traiga automáticamente.
+**Por eso desplegar el contenido de `develop-v3` — a esta VM, o a cualquier servidor, incluido el de Dnato — no aplica ninguno de los cambios de `doc/identidad/identidad-y-seguridad.md`.** Ese documento describe ediciones manuales de `deployment.toml`, hechas y verificadas en DEV; acá se replican esas mismas ediciones, a mano, contra el `deployment.toml` de esta VM. No hay ningún artefacto en el repo que las traiga automáticamente.
 
 > **Corrección 2026-08-08:** la primera versión de esta sección decía "tampoco hace falta desplegar nada en el servidor de Dnato". **Eso estaba mal** — ver §7.0-bis. `dnato-jwt-prereqs.md` confirmó que Dnato **no necesita código nuevo** para esta federación porque ese código **ya se escribió**, en `traz-comp-dnato` rama `develop-v3` (E9-IDENT-03/04) — no porque no hiciera falta ningún despliegue. Si el servidor de Dnato de este proyecto GCP corre `develop` o `master` (no `develop-v3`), ese código simplemente no está ahí todavía.
 
@@ -968,7 +972,7 @@ SetEnv JWT_AZP "<Consumer Key generado en §7.4 — no existe todavía en este p
 
 **No hace falta tocar `oauth_clients.php`** — ya tiene registrado a Claude.ai (`trazalog-mcp-connector`, redirect fijo `https://claude.ai/api/mcp/auth_callback`), y ese valor es el mismo en cualquier ambiente.
 
-> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles completos viven en los docs de ese otro repo (`doc/identity/jwt-keys-setup.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`). **Los 4 bugs de código de §7.0-quater sí valdría la pena reportarlos/corregirlos en `traz-comp-dnato` directamente** — si se parchean solo acá, se repiten en el próximo sync de código.
+> Esto es trabajo de `traz-comp-dnato`, no de `traz-tools` — la CLAUDE.md de este repo lo marca explícitamente ("Login, tokens, JWT, OAuth → traz-comp-dnato"). Esta sección solo señala que existe y qué falta, para que no se pierda como dependencia; los detalles completos viven en los docs de ese otro repo (`doc/identidad/identidad-y-seguridad.md`, `doc/identity/oauth-login-flow.md`, `doc/identity/token-issuance.md`, todos en `develop-v3`). **Los 4 bugs de código de §7.0-quater sí valdría la pena reportarlos/corregirlos en `traz-comp-dnato` directamente** — si se parchean solo acá, se repiten en el próximo sync de código.
 
 ### 7.0-ter Certificado TLS con cadena incompleta — troubleshooting completo
 
@@ -1121,7 +1125,7 @@ Verificado en el login real del 2026-08-11: `core.empresas` devolvió `"empr_id"
 
 ### 7.1 Qué hay que replicar — mismo mecanismo que DEV, otro `deployment.toml`
 
-Adaptado de `doc/identity/apim-keymanager-dnato.md` §3, aplicado al `deployment.toml` de **esta VM** (no el de DEV):
+Adaptado de `doc/identidad/identidad-y-seguridad.md` §3, aplicado al `deployment.toml` de **esta VM** (no el de DEV):
 
 ```toml
 [apim.jwt]
@@ -1191,3 +1195,22 @@ Repetir §6.4 (verificación OAuth) y §6.5 (aislamiento) de este mismo document
 - [ ] Aplicación + suscripción al MCP Server creadas en el DevPortal de esta VM
 - [ ] §6.4/§6.5 confirmados en verde con identidad real (no la de DEV)
 - [ ] Esta sección actualizada con el resultado real, fecha, y la URL de JWKS usada
+
+---
+
+## 8. El motor de los agentes de IA en esta VM — ⚠️ no probado
+
+> Sección sumada el 2026-11-26 (unificación de documentación). **Nada de esto se ejecutó todavía en GCP.** Describe lo que hace falta para instalarlo, no un procedimiento probado.
+
+El motor de los agentes es un servicio aparte de Tools y de WSO2 (ADR-A14 en [`AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`](AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md)). Cómo se levanta y se configura en una máquina de desarrollo: [`doc/agente/instalar-y-operar.md`](../agente/instalar-y-operar.md).
+
+| Qué hace falta | Estado |
+|---|---|
+| **Unidad de servicio** para que el motor arranque solo y se reinicie si se cae (hoy solo existe `./agente/dev.sh`, que es para desarrollo) | No existe |
+| **Dónde vive la base del motor** (PostgreSQL con pgvector): en esta VM o en otra | Sin decidir (decisión del PM) |
+| Variables de entorno y clave del modelo de lenguaje en un archivo fuera del repositorio, con permisos `600` | Mismo criterio que `deploy/gcp/.env.car` |
+| El motor escucha solo en la red interna: Tools le habla desde el servidor PHP; **no va expuesto a internet** | Ver «Este servicio no va expuesto a internet» en `instalar-y-operar.md` |
+| Modo MCP `apim`: el motor entra por el gateway de esta VM con el permiso del usuario | Configuración por defecto del motor |
+| SearXNG para la búsqueda en internet de los agentes (opcional) | Ver `instalar-y-operar.md`, parte 3 |
+
+Hasta que existan la unidad de servicio y la decisión sobre la base, los agentes solo corren en DEV ([`doc/infra/ambientes.md`](../infra/ambientes.md), sección 5).

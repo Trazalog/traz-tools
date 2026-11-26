@@ -15,7 +15,7 @@ aca solo se elige QUE credencial usar. Y el token sigue pasando por la lista
 blanca y el guardian, como el de un usuario.
 
 ESTADO: la emision del lado de Dnato espera la aprobacion de
-doc/agente/analisis-impacto-token-maquina.md. Este lado esta listo y probado
+doc/historial/agente/analisis-impacto-token-maquina.md. Este lado esta listo y probado
 contra un Dnato simulado; cuando Dnato emita, alcanza con configurar
 AGENTE_DNATO_TOKEN_URL y dar de alta las credenciales.
 
