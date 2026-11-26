@@ -162,7 +162,7 @@ npx @modelcontextprotocol/inspector
 ```
 Si el Inspector lista las tools y `get_equipos` devuelve datos → **la arquitectura está probada.**
 
-**Opción B — script curl con JWT real** (ya documentado en `doc/mcp/virtual-mcp-equipos.md` §4.3):
+**Opción B — script curl con JWT real** (ya documentado en `doc/historial/mcp/virtual-mcp-equipos.md` §4.3):
 `initialize` → `tools/list` → `tools/call` con `Authorization: Bearer <JWT_DNATO>`.
 El JWT se firma con la clave de `traz-comp-dnato` (ver `project-adr008-blockers-state` memory).
 

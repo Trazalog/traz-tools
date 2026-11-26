@@ -165,7 +165,7 @@ Es una barrera a nivel de permisos de base, no una convención de código: si ma
 
 ### Por qué `notificacion` y `envio` están separadas
 
-Viene del análisis de E0 (`doc/agente/analisis-alertas-assetplanner.md` §6.3). El mecanismo de AssetPlanner mete el token FCM del dispositivo dentro del mismo JSON que después lee la campanita, y solo notifica a un dispositivo por usuario (`LIMIT 1` sobre los tokens). Acá:
+Viene del análisis de E0 (`doc/historial/agente/analisis-alertas-assetplanner.md` §6.3). El mecanismo de AssetPlanner mete el token FCM del dispositivo dentro del mismo JSON que después lee la campanita, y solo notifica a un dispositivo por usuario (`LIMIT 1` sobre los tokens). Acá:
 
 - `notificacion` es **lo que la persona lee** — sin token, sin datos de transporte.
 - `envio` es **una fila por dispositivo activo del destinatario**, con el token y el estado del envío. Es la tabla que el Streaming Integrator poletea.

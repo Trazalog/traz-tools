@@ -11,7 +11,7 @@
 
 En el Sprint 2 se crearon **dos Virtual MCP Servers separados** (`trazalog-equipos`, `trazalog-ots`), cada uno sobre su propia API en el Publisher, aunque ambos apuntan al mismo backend MI (`toolsMANAPI`, context `/tools/man`). Con la incorporación de almacenes (ADR-012), tener un Virtual MCP Server por módulo se vuelve incómodo: el cliente tendría que conectar varios connectors en Claude.ai.
 
-El relevamiento E2-MCP-10-RELEV (`doc/v3/relevamiento-unificacion-mcp.md`) confirmó contra la documentación oficial de WSO2 4.6.0 y contra los artefactos reales del repo:
+El relevamiento E2-MCP-10-RELEV (`doc/historial/v3/relevamiento-unificacion-mcp.md`) confirmó contra la documentación oficial de WSO2 4.6.0 y contra los artefactos reales del repo:
 
 - **Un Virtual MCP Server no puede componerse desde varias APIs distintas.** El wizard de 4.6 exige una sola API (o una sola OpenAPI) como fuente. No hay mecanismo nativo para agrupar operaciones de APIs separadas.
 - Por lo tanto, "un solo MCP Server con todo" solo se logra **consolidando las operaciones en una sola API WSO2** y generando el MCP Server desde ella (Opción A del relevamiento).

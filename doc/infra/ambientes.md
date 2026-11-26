@@ -103,7 +103,7 @@ No existe todavía un script equivalente a `scripts/dev/rebuild-and-deploy-mi.sh
 Todavía no existe. El plan (parte de ADR-011, no ejecutado) es clonar la receta de TEST — misma VM (nueva instancia, sizing igual o ajustado según el uso real del piloto), mismo Caddy+TLS, pero con su propio dominio/IP. Antes de dar de alta al primer cliente real sobre esa VM, quedan dos pendientes que hoy están fuera de alcance de TEST:
 
 - Config de identidad completa (ADR-008/ADR-009) contra el Dnato de ese ambiente.
-- Migración de DataServices a PostgreSQL (hoy MySQL/PostgreSQL mezclados — ver `doc/identity/dataservices-remediation-phase-a.md`, en curso, no cerrada).
+- Migración de DataServices a PostgreSQL (hoy MySQL/PostgreSQL mezclados — ver `doc/historial/identidad/dataservices-remediation-phase-a.md`, en curso, no cerrada).
 
 No hay fecha ni VM creada todavía — se define cuando el piloto con el early adopter minero valide el approach en TEST.
 

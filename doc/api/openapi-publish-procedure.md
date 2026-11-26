@@ -27,7 +27,7 @@ Dnato como **Key Manager federado**. El MI **no** valida JWT para tráfico MCP.
 **Prerequisito:** WSO2 APIM 4.6.0 corriendo (`https://localhost:9443`) **y** Dnato configurado
 como Key Manager federado (ver [apim-keymanager-dnato.md](../identity/apim-keymanager-dnato.md)).
 
-> Reemplaza a [`openapi-publish-procedure.OBSOLETE.md`](openapi-publish-procedure.OBSOLETE.md),
+> Reemplaza a [`openapi-publish-procedure.OBSOLETE.md`](../historial/api/openapi-publish-procedure.OBSOLETE.md),
 > que usaba el patrón "JWT passthrough" descartado.
 
 ---

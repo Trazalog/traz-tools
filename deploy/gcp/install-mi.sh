@@ -11,7 +11,7 @@
 #   - Migración de las DataServices de negocio (MySQL → PostgreSQL): las
 #     datasources del proyecto (AssetPlannerDataSource, ToolsDataSource)
 #     están embebidas en el .car y se reconfiguran ahí, no en esta VM.
-#     Ver doc/identity/dataservices-remediation-phase-a.md.
+#     Ver doc/historial/identidad/dataservices-remediation-phase-a.md.
 #
 # PRE:
 #   - deploy/gcp/.env presente (copiar de .env.example y completar)

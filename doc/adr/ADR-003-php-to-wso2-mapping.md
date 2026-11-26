@@ -178,9 +178,9 @@ Las siguientes operaciones se posponen a sprints posteriores y NO tienen decisi�
 
 ## Referencias
 
-- `doc/api/codeigniter-models-survey.md` — relevamiento CI3, tabla de categorización por entidad
+- `doc/historial/api/codeigniter-models-survey.md` — relevamiento CI3, tabla de categorización por entidad
 - `doc/api/inventory-2026.md` §5 — gap analysis vs MCP MVP, §7 — lista negra de DataServices
-- `doc/identity/dataservices-remediation-phase-a.md` — auditoría empr_id en MANDataService y ALMDataService
+- `doc/historial/identidad/dataservices-remediation-phase-a.md` — auditoría empr_id en MANDataService y ALMDataService
 - `doc/identity/gateway-token-validation.md` — flujo de validación JWT y propagación de empr_id
 - `_backend/api/ToolsAPIProject/.../sequences/JwtValidator.xml` — validación JWT en gateway
 - `_backend/api/ToolsAPIProject/.../sequences/EmprIdInjector.xml` — inyección X-Empr-Id

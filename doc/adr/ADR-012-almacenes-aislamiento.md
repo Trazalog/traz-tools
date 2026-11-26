@@ -9,7 +9,7 @@
 
 ## Contexto
 
-El Sprint 3 incorpora el módulo de Almacenes al conjunto de tools MCP. Hoy hay 0 tools de almacenes. El relevamiento (`doc/v3/sprint-3-relevamiento-estado.md`) detectó un **gap de seguridad**: el `ALMDataService` filtra por empresa a nivel SQL, pero recibe el `empr_id` como **parámetro del caller**, no derivado del JWT. Exponerlo así violaría la regla de oro del proyecto (el `empr_id` nunca lo pone el agente) y, al haber escritura, permitiría a un agente operar sobre datos de otra empresa.
+El Sprint 3 incorpora el módulo de Almacenes al conjunto de tools MCP. Hoy hay 0 tools de almacenes. El relevamiento (`doc/historial/v3/sprint-3-relevamiento-estado.md`) detectó un **gap de seguridad**: el `ALMDataService` filtra por empresa a nivel SQL, pero recibe el `empr_id` como **parámetro del caller**, no derivado del JWT. Exponerlo así violaría la regla de oro del proyecto (el `empr_id` nunca lo pone el agente) y, al haber escritura, permitiría a un agente operar sobre datos de otra empresa.
 
 Dos hechos, confirmados por el PM en el workshop, simplifican la decisión:
 

@@ -6,7 +6,7 @@ Qué le va a preguntar a Claude un proveedor de servicios mineros, qué se puede
 y qué falta construir. Cruza los casos de alto impacto identificados en
 [`investigacion-sector-minero-trazalog-v3-2.md`](../v3/investigacion-sector-minero-trazalog-v3-2.md)
 con el relevamiento de modelos de
-[`codeigniter-models-survey.md`](../api/codeigniter-models-survey.md) y con lo que realmente hay
+[`codeigniter-models-survey.md`](../historial/api/codeigniter-models-survey.md) y con lo que realmente hay
 en las bases.
 
 Escrito para decidir qué tools construir y en qué orden. No documenta lo ya construido — eso está

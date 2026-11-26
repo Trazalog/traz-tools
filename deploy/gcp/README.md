@@ -39,6 +39,6 @@ sudo systemctl start wso2mi
 - No configuran identidad/JWT/Key Manager (ADR-008/ADR-009) — es clase 🔴, deuda
   aparte antes de dar de alta al primer cliente.
 - No migran las DataServices de negocio del MI de MySQL a PostgreSQL — trabajo
-  en curso aparte (`doc/identity/dataservices-remediation-phase-a.md`).
+  en curso aparte (`doc/historial/identidad/dataservices-remediation-phase-a.md`).
 - No crean la VM, la IP estática, el DNS, ni las reglas de firewall — eso lo
   hace Rodolfo en su consola de GCP (checklist en `deployment-gcp.md`).

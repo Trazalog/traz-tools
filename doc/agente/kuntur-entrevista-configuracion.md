@@ -2,14 +2,14 @@
 
 ## Objetivo
 
-Qué es: cómo Kuntur acompaña al administrador de una empresa cliente en la puesta en marcha. Cubre la entrevista de configuración, la detección de metas en riesgo, la carga inicial de datos y los menús y roles. Para quién: el PM, que aprueba cada etapa, y quien programe las etapas 2 a 4. Cuándo leerlo: antes de revisar el PR de AGENTE-CO-02 o de empezar la etapa 2. Qué NO cubre: el tono de Kuntur (sale del taller de personajes, [`taller-claude-web-personajes.md`](taller-claude-web-personajes.md)) ni la charla de metas, que ya funciona (ver la sección Kuntur de [`operacion.md`](operacion.md)).
+Qué es: cómo Kuntur acompaña al administrador de una empresa cliente en la puesta en marcha. Cubre la entrevista de configuración, la detección de metas en riesgo, la carga inicial de datos y los menús y roles. Para quién: el PM, que aprueba cada etapa, y quien programe las etapas 2 a 4. Cuándo leerlo: antes de revisar el PR de AGENTE-CO-02 o de empezar la etapa 2. Qué NO cubre: el tono de Kuntur (sale del taller de personajes, [`taller-claude-web-personajes.md`](../historial/agente/taller-claude-web-personajes.md)) ni la charla de metas, que ya funciona (ver la sección Kuntur de [`operacion.md`](operacion.md)).
 
 | Campo | Valor |
 |---|---|
 | Versión | 2, 2026-11-11 (la 1 era un borrador de 5 preguntas; esta incorpora lo que pidió el PM el mismo día) |
 | Tareas | AGENTE-CO-02 (entrevista), CO-07 (avisos), y las etapas nuevas CO-09 (carga inicial) y CO-10 (menús y roles) |
 | Etapa 1 | **Hecha** (rama `feat/AGENTE-CO-02-entrevista-kuntur`) |
-| Etapas 2 y 3 | **ADR-A12 aprobado** (2026-11-11). El mecanismo "Kuntur propone, el administrador toca Cargar" ya está hecho. Las herramientas de alta esperan el análisis de impacto: [`analisis-impacto-kuntur-configuracion.md`](analisis-impacto-kuntur-configuracion.md) |
+| Etapas 2 y 3 | **ADR-A12 aprobado** (2026-11-11). El mecanismo "Kuntur propone, el administrador toca Cargar" ya está hecho. Las herramientas de alta esperan el análisis de impacto: [`analisis-impacto-kuntur-configuracion.md`](../historial/agente/analisis-impacto-kuntur-configuracion.md) |
 | Etapa 4 | Espera al módulo de Tareas |
 
 ---
@@ -135,7 +135,7 @@ sequenceDiagram
 
 ### 3.4 Qué hace falta construir
 
-El detalle y lo que toca del núcleo está en [`analisis-impacto-kuntur-configuracion.md`](analisis-impacto-kuntur-configuracion.md). En resumen:
+El detalle y lo que toca del núcleo está en [`analisis-impacto-kuntur-configuracion.md`](../historial/agente/analisis-impacto-kuntur-configuracion.md). En resumen:
 
 | Pieza | Estado |
 |---|---|

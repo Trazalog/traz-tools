@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Qué es: cómo decide Kuntur qué partes de Tools recomendarle al administrador porque su empresa no las usa (tarea AGENTE-CO-08), y cómo se cambia. Para quién: el PM y quien mantenga el motor de los agentes. Cuándo leerlo: antes de sumar una función al catálogo o de cambiar los valores por defecto. Qué NO cubre: el siguiente paso que propone Quirqui en cada pantalla ([`agente/sugerencias.py`](../../agente/sugerencias.py)) ni las metas de Kuntur ([`analisis-impacto-kpi-objetivos.md`](analisis-impacto-kpi-objetivos.md)).
+Qué es: cómo decide Kuntur qué partes de Tools recomendarle al administrador porque su empresa no las usa (tarea AGENTE-CO-08), y cómo se cambia. Para quién: el PM y quien mantenga el motor de los agentes. Cuándo leerlo: antes de sumar una función al catálogo o de cambiar los valores por defecto. Qué NO cubre: el siguiente paso que propone Quirqui en cada pantalla ([`agente/sugerencias.py`](../../agente/sugerencias.py)) ni las metas de Kuntur ([`analisis-impacto-kpi-objetivos.md`](../historial/agente/analisis-impacto-kpi-objetivos.md)).
 
 ## Cómo funciona
 

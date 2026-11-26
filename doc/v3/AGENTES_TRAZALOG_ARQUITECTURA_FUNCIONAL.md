@@ -183,4 +183,4 @@ El foso **no es la tecnología** (replicable), sino tres cosas difíciles de cop
 
 ## ⏭️ Próximo paso
 
-El orden de construcción está en [`PROMPT_CC_AGENTES_TRAZALOG.md`](PROMPT_CC_AGENTES_TRAZALOG.md): primero los cimientos del motor, después **Quirqui** (que no depende de nada nuevo), en paralelo la identidad visual de los tres, y **Kuntur** cuando el módulo de tareas y el motor de KPIs tengan lo que necesita.
+El orden de construcción está en [`PROMPT_CC_AGENTES_TRAZALOG.md`](../historial/v3/PROMPT_CC_AGENTES_TRAZALOG.md): primero los cimientos del motor, después **Quirqui** (que no depende de nada nuevo), en paralelo la identidad visual de los tres, y **Kuntur** cuando el módulo de tareas y el motor de KPIs tengan lo que necesita.

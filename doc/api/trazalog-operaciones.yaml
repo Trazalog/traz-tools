@@ -11,7 +11,7 @@ info:
 
     **Por qué una sola API:** WSO2 API Manager 4.6.0 genera un Virtual MCP
     Server desde UNA sola API (no combina varias APIs distintas — confirmado
-    contra la doc oficial y el entorno real, ver `doc/v3/relevamiento-unificacion-mcp.md`).
+    contra la doc oficial y el entorno real, ver `doc/historial/v3/relevamiento-unificacion-mcp.md`).
     Un cliente MCP (Claude.ai) se conecta una sola vez a esta API y ve las
     9 tools de ambos módulos.
 

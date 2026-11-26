@@ -226,4 +226,4 @@ Ambos problemas eran de configuración de la instancia real de Rodolfo (no del c
 ## 5. Después de la migración
 
 - Actualizar este documento (o `STATE.md`) marcando `trazalog-equipos`/`trazalog-ots` como despublicados y la fecha.
-- `doc/mcp/virtual-mcp-equipos.md` y `virtual-mcp-ots.md` quedan como registro histórico de Sprint 2 — no se borran, se podría agregar una nota de "reemplazado por virtual-mcp-unificado.md" en cada uno (no hecho en esta tarea, a criterio de Rodolfo).
+- `doc/historial/mcp/virtual-mcp-equipos.md` y `virtual-mcp-ots.md` quedan como registro histórico de Sprint 2 — no se borran, se podría agregar una nota de "reemplazado por virtual-mcp-unificado.md" en cada uno (no hecho en esta tarea, a criterio de Rodolfo).

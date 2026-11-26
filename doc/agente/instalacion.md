@@ -4,7 +4,7 @@
 
 Este documento es el **instructivo paso a paso para instalar y dejar operativos los componentes de infraestructura de los agentes de IA de Trazalog** en cada ambiente (desarrollo, demo, producción). Está escrito para que cualquiera pueda seguirlo sin conocer el historial del proyecto: cada paso dice explícitamente dónde se ejecuta y cómo verificar que salió bien.
 
-**Qué NO cubre:** no explica por qué se eligió esta arquitectura (eso está en `doc/agente/analisis-alertas-assetplanner.md` §6) ni la operación diaria — variables de entorno, jobs, troubleshooting — que va en `doc/agente/operacion.md`. Tampoco cubre todavía el orquestador Python ni el esquema de base de datos: se agregan a este mismo documento cuando esas etapas se construyan (E1 y E2).
+**Qué NO cubre:** no explica por qué se eligió esta arquitectura (eso está en `doc/historial/agente/analisis-alertas-assetplanner.md` §6) ni la operación diaria — variables de entorno, jobs, troubleshooting — que va en `doc/agente/operacion.md`. Tampoco cubre todavía el orquestador Python ni el esquema de base de datos: se agregan a este mismo documento cuando esas etapas se construyan (E1 y E2).
 
 ---
 

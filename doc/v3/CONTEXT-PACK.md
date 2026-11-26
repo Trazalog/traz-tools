@@ -82,8 +82,8 @@ Claude.ai ──JWT Dnato──> APIM (:8243)
 | Tu tarea toca…                            | Leé también…                                                                                                                  |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Identidad / OAuth / JWT / empr_id         | `MCP_ARCHITECTURE.md` §6 + ADR-008 + ADR-009                                                                                  |
-| DataServices / filtrado multi-tenant      | ADR-003 + `doc/identity/dataservices-remediation-phase-a.md`                                                                  |
-| Virtual MCP Server nuevo o modificado     | `doc/mcp/virtual-mcp-equipos.md` / `virtual-mcp-ots.md` (como referencia de formato) + `doc/mcp/tool-annotations-standard.md` |
+| DataServices / filtrado multi-tenant      | ADR-003 + `doc/historial/identidad/dataservices-remediation-phase-a.md`                                                                  |
+| Virtual MCP Server nuevo o modificado     | `doc/historial/mcp/virtual-mcp-equipos.md` / `virtual-mcp-ots.md` (como referencia de formato) + `doc/mcp/tool-annotations-standard.md` |
 | Tiers, límites de uso, analytics de tools | `TRAZALOG_v3_PRICING_STRATEGY` en doc/v3/ (verificar path)                                                                    |
 | Priorización de features, próximo cliente | `investigacion-sector-minero-trazalog-v3-2.md`                                                                                |
 | Cualquier cosa en PHP dentro de Dnato     | `traz-comp-dnato/CLAUDE.md` (PHP 5.6 estricto)                                                                                |
