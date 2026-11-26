@@ -1,0 +1,645 @@
+<title>Revisión de los agentes de Tools</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: una columna de lectura; barra superior fija con el avance; cada función es una fila con su veredicto a la derecha (abajo en el teléfono) */
+:root {
+  --bg: #f4f6f7; --surface: #ffffff; --ink: #18232b; --muted: #5d6b75; --line: #d9e0e4;
+  --accent: #1d5d7a; --accent-soft: #e2eef3; --lechu: #6b4fa8; --lechu-soft: #efe9f8;
+  --ok: #2f7d4f; --ok-soft: #e3f2e8; --warn: #a86a12; --warn-soft: #fbefd9; --bad: #b23b32; --bad-soft: #f8e1df;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11181d; --surface: #182229; --ink: #e5ecef; --muted: #98a7b0; --line: #2a3740;
+  --accent: #6fb3d2; --accent-soft: #1b3442; --lechu: #b59ae6; --lechu-soft: #2a2140;
+  --ok: #6cc391; --ok-soft: #173326; --warn: #e2a64a; --warn-soft: #3a2b12; --bad: #ec8178; --bad-soft: #3d1c19; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11181d; --surface: #182229; --ink: #e5ecef; --muted: #98a7b0; --line: #2a3740;
+  --accent: #6fb3d2; --accent-soft: #1b3442; --lechu: #b59ae6; --lechu-soft: #2a2140;
+  --ok: #6cc391; --ok-soft: #173326; --warn: #e2a64a; --warn-soft: #3a2b12; --bad: #ec8178; --bad-soft: #3d1c19; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface) }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line) }
+header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding-block: 10px }
+.marca { display: flex; align-items: center; gap: 10px; min-width: 0 }
+.logo { font: 700 14px var(--f-display); background: var(--accent); color: var(--surface); border-radius: 6px; padding: 4px 7px }
+.marca b { font: 600 17px var(--f-display); }
+.avance { flex: 1 1 240px; min-width: 0 }
+.barra { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; display: flex }
+.barra i { display: block; height: 100% }
+.cuenta { font-size: 13px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; font-variant-numeric: tabular-nums }
+.acciones { display: flex; gap: 8px; flex-wrap: wrap }
+button, select, textarea, input { font: inherit; color: inherit }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 6px 11px; cursor: pointer }
+.btn:hover { border-color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+main { padding-block: 22px 60px; display: grid; gap: 28px }
+h1 { font: 700 clamp(26px, 4vw, 34px)/1.15 var(--f-display); margin: 0; text-wrap: balance }
+.intro { display: grid; gap: 10px; max-width: 68ch }
+.intro p { margin: 0 }
+.leyenda { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--muted) }
+.aviso { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; font-size: 14px }
+.aviso[data-tipo="ok"] { border-color: var(--ok); background: var(--ok-soft) }
+.filtros { display: flex; flex-wrap: wrap; gap: 6px }
+.filtros button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 14px }
+.filtros button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink) }
+section.bloque { display: grid; gap: 10px }
+.bloque h2 { font: 600 20px/1.2 var(--f-display); margin: 0; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.bloque h2 small { font: 400 14px var(--f-body); color: var(--muted) }
+.etiqueta { font: 500 12px var(--f-mono); color: var(--lechu); background: var(--lechu-soft); border-radius: 4px; padding: 1px 6px; letter-spacing: .02em }
+.lista { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden }
+.item { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 6px 14px; padding: 14px 16px; border-top: 1px solid var(--line); border-left: 4px solid transparent }
+.item:first-child { border-top: 0 }
+.item[data-estado="aprobada"] { border-left-color: var(--ok) }
+.item[data-estado="cambios"] { border-left-color: var(--warn) }
+.item[data-estado="no"] { border-left-color: var(--bad) }
+.fid { font: 500 13px var(--f-mono); color: var(--accent); padding-top: 2px }
+.txt { min-width: 0; display: grid; gap: 4px }
+.txt b { font-weight: 600 }
+.txt .probar { color: var(--muted); font-size: 14px }
+.txt .preg { font-size: 14px }
+.txt .preg::before { content: "🔍 " }
+.veredicto { display: flex; gap: 4px; align-self: start }
+.veredicto button { border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 5px 9px; cursor: pointer; font-size: 13px; white-space: nowrap }
+.veredicto button[aria-pressed="true"][data-v="aprobada"] { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); font-weight: 600 }
+.veredicto button[aria-pressed="true"][data-v="cambios"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); font-weight: 600 }
+.veredicto button[aria-pressed="true"][data-v="no"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); font-weight: 600 }
+.nota { grid-column: 2 / 4; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start }
+textarea { width: 100%; min-height: 64px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--bg) }
+.nota select { border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--bg) }
+.guardado { grid-column: 2 / 4; font-size: 12px; color: var(--muted); min-height: 1em }
+.general { display: grid; gap: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 16px }
+.general label { display: grid; gap: 6px; font-weight: 600 }
+.general label span { font-weight: 400; color: var(--muted); font-size: 14px }
+.vacio { padding: 16px; color: var(--muted) }
+@media (max-width: 640px) {
+  .item { grid-template-columns: 46px minmax(0, 1fr) }
+  .veredicto { grid-column: 1 / 3; flex-wrap: wrap }
+  .nota, .guardado { grid-column: 1 / 3; grid-template-columns: minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: no-preference) { .barra i { transition: width .3s } }
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="marca"><span class="logo">TZ</span><b>Revisión de los agentes de Tools</b></div>
+  <div class="avance" aria-live="polite">
+    <div class="barra" aria-hidden="true"><i id="b-ok" style="background:var(--ok)"></i><i id="b-cambios" style="background:var(--warn)"></i><i id="b-no" style="background:var(--bad)"></i></div>
+    <div class="cuenta" id="cuenta">Cargando lo guardado…</div>
+  </div>
+  <div class="acciones">
+    <button class="btn" type="button" id="copiar">Copiar todo</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div class="intro">
+    <h1>Quirqui, Kuntur y Faustino: ¿qué aprobás y qué cambiarías?</h1>
+    <p>Probá cada función siguiendo el <b>guion de prueba de los agentes (ronda 1)</b>, <code>doc/agente/guion-prueba-agentes.md</code>, con el mismo número (F01, F02…), y marcá tu opinión acá. Se guarda sola apenas marcás o escribís.</p>
+    <p>Tools de prueba: <b>http://traz-comp.local/traz-v35/traz-tools-agentes-prueba/</b> (se entra por <b>http://traz-comp.local/traz-comp-dnato/main/login</b>). Los usuarios y dónde está la clave, en el §2 del guion.</p>
+    <div class="leyenda"><span>✅ <b>Aprobada</b>: está bien así</span><span>✏️ <b>Con cambios</b>: sirve, pero hay que cambiar algo</span><span>❌ <b>No sirve</b>: así no la usaría nadie</span></div>
+    <div class="aviso" id="estado-guardado" hidden></div>
+  </div>
+  <div class="filtros" role="group" aria-label="Mostrar">
+    <button type="button" data-f="todas" aria-pressed="true">Todas</button>
+    <button type="button" data-f="pendientes" aria-pressed="false">Sin revisar</button>
+    <button type="button" data-f="cambios" aria-pressed="false">Con cambios</button>
+    <button type="button" data-f="no" aria-pressed="false">No sirve</button>
+  </div>
+  <div id="bloques"></div>
+  <section class="bloque">
+    <h2>Opinión general</h2>
+    <div class="general">
+      <label for="g-impresion">¿Qué te pareció en general? <span>Quirqui, Kuntur, Faustino: lo mejor, lo peor, y si un cliente minero lo pagaría.</span>
+        <textarea id="g-impresion" rows="4"></textarea></label>
+      <label for="g-ideas">Ideas nuevas o cosas que faltan <span>Cosas que le pedirías a cada agente y no hacen, o datos que esperabas ver.</span>
+        <textarea id="g-ideas" rows="4"></textarea></label>
+      <label for="g-faltan">De "lo que ya sabemos que falta" (§7 del guion), ¿qué es lo más importante? <span>Permisos del menú, el control de cifras, la lentitud, las altas de Kuntur…</span>
+        <textarea id="g-faltan" rows="3"></textarea></label>
+      <div class="guardado" id="g-guardado"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const BLOQUES = [
+ [
+  "A",
+  "Quirqui con los datos del día a día",
+  "operario.minero · AGENTE MINERO TEST",
+  [
+   [
+    "F01",
+    "Entrar y ver el menú",
+    "Agente Minero y el botón de Quirqui (hoy también Feedback y Capturar conocimiento, H-1).",
+    "¿El nombre «Agente Minero» dice qué es?"
+   ],
+   [
+    "F02",
+    "Panel en Almacenes → Artículos",
+    "Aviso amarillo y hasta 3 propuestas («Lote vencido: Aceite hidráulico…»).",
+    "¿Son las propuestas que le importan a almacén?"
+   ],
+   [
+    "F03",
+    "Descartar una propuesta",
+    "No vuelve por 7 días.",
+    "¿7 días está bien?"
+   ],
+   [
+    "F04",
+    "«¿Qué hago en esta pantalla?»",
+    "Explica Artículos: listado, alta y edición.",
+    "¿Se entiende sin haberla usado nunca?"
+   ],
+   [
+    "F05",
+    "Lotes por vencer",
+    "Aceite vencido hace 3 días y filtro que vence en 10.",
+    "¿Tabla, lista u otra cosa?"
+   ],
+   [
+    "F06",
+    "Artículos bajo punto de pedido",
+    "Los 3, con lo que falta: 40, 90 y 17.",
+    ""
+   ],
+   [
+    "F07",
+    "Órdenes de trabajo abiertas",
+    "2: AMT-CH01 (urgente) y AMT-CT01.",
+    "¿Qué dato de la orden mirarías primero?"
+   ],
+   [
+    "F08",
+    "Tablero: «¿Qué hago acá?»",
+    "Dice que no lo tiene registrado y no inventa botones.",
+    "¿Prefiere «no sé» o que intente igual?"
+   ],
+   [
+    "F09",
+    "Pedir un alta de artículo",
+    "Esperado: explica cómo. Hoy: «No tengo ese dato confirmado» (H-2).",
+    "¿Debería poder cargarlo él, con tu confirmación?"
+   ],
+   [
+    "F10",
+    "Pulgar abajo con motivo",
+    "«Gracias, lo vamos a revisar.»",
+    "¿Alcanzan los motivos?"
+   ],
+   [
+    "F11",
+    "Conocimiento de minería",
+    "250 horas y 45 mm.",
+    ""
+   ],
+   [
+    "F12",
+    "Dato de otra industria",
+    "No usa el dato de electricidad.",
+    "¿Está bien que no conteste algo que sabe de otra industria?"
+   ],
+   [
+    "F13",
+    "Pantalla completa (Agente Minero)",
+    "El mismo Quirqui; los ejemplos funcionan.",
+    "¿Hace falta si está el panel?"
+   ]
+  ]
+ ],
+ [
+  "C",
+  "Kuntur conoce a una empresa nueva",
+  "admin.electrica · ELECTRICA DEL SUR TEST",
+  [
+   [
+    "F14",
+    "Abrir el panel",
+    "Pestañas Quirqui y Kuntur; «¿me contás un poco de tu empresa?».",
+    "¿Kuntur debería aparecer solo?"
+   ],
+   [
+    "F15",
+    "Contestar la entrevista",
+    "«Pregunta 1 de 4»…; sin las de la operadora.",
+    "¿Sobra o falta alguna pregunta?"
+   ],
+   [
+    "F16",
+    "Confirmar la tarjeta",
+    "«Así voy a trabajar con tu empresa».",
+    "¿Confiarías en que entendió a la empresa?"
+   ],
+   [
+    "F17",
+    "El mismo dato, ahora sí",
+    "Cada 6 meses; rigidez bajo 30 kV.",
+    ""
+   ],
+   [
+    "F18",
+    "Funciones sin usar",
+    "«Cargar tus depósitos» con No me interesa.",
+    "¿Te sirven? ¿Cuántas como máximo?"
+   ],
+   [
+    "F19",
+    "Faustino con la industria",
+    "Electricidad ya elegida, con su nota.",
+    ""
+   ]
+  ]
+ ],
+ [
+  "D",
+  "Faustino entrevista al experto",
+  "experto.minero · Juan Pérez",
+  [
+   [
+    "F20",
+    "La pantalla de Faustino",
+    "Faustino, los 3 pasos, Minería elegida, temas como tarjetas.",
+    "¿Se entiende para qué es?"
+   ],
+   [
+    "F21",
+    "Elegir experto y tema",
+    "Primera pregunta concreta sobre los mantos.",
+    "¿Invita a contar?"
+   ],
+   [
+    "F22",
+    "Contestar 3 veces",
+    "Cada pregunta sigue lo que contaste; la barra avanza.",
+    "¿Charla o formulario?"
+   ],
+   [
+    "F23",
+    "Ordenar lo que conté",
+    "3 hechos: 200 h, 40 mm, anillo de ajuste.",
+    "¿Entendió bien? ¿Lo redactarías distinto?"
+   ],
+   [
+    "F24",
+    "Aprobar 2 y descartar 1",
+    "El contador avanza; el descartado queda tachado.",
+    "¿Más opciones que aprobar o descartar?"
+   ],
+   [
+    "F25",
+    "Listo, cerrar",
+    "¡Gracias! y Elegir otro tema.",
+    ""
+   ],
+   [
+    "F26",
+    "Faustino en el celular",
+    "Todo entra a lo ancho.",
+    "¿Un experto contestaría desde el celular?"
+   ]
+  ]
+ ],
+ [
+  "E",
+  "Lo que contó el experto llega a los demás",
+  "terminal local, operario y administrador",
+  [
+   [
+    "F27",
+    "Curador: listar",
+    "Los 2 hechos aprobados por Juan.",
+    "¿Quién debería hacer esto, y desde dónde?"
+   ],
+   [
+    "F28",
+    "Curador: aprobar",
+    "✅ aprobado, para los dos.",
+    ""
+   ],
+   [
+    "F29",
+    "Quirqui con lo del experto",
+    "200 h de Juan Pérez y 250 h del ejemplo, y cuál pesa más.",
+    "¿Mostrar los dos o elegir uno?"
+   ],
+   [
+    "F30",
+    "Lo que el experto descartó",
+    "No lo presenta como del experto (hoy usa conocimiento general, H-7).",
+    "¿Debería decir «no lo tengo registrado»?"
+   ],
+   [
+    "F31",
+    "Kuntur con lo del experto",
+    "40 mm, citando a Juan Pérez.",
+    ""
+   ]
+  ]
+ ],
+ [
+  "F",
+  "Metas con Kuntur",
+  "agente.minero.test · administrador",
+  [
+   [
+    "F32",
+    "Pedir una meta",
+    "Tarjeta: artículos bajo punto de pedido, para fin de mes.",
+    "¿Es razonable? ¿La fecha?"
+   ],
+   [
+    "F33",
+    "Cargar la meta",
+    "«Meta cargada.» y aparece en el Tablero, en Metas.",
+    "¿Hace falta editarla desde la tarjeta?"
+   ],
+   [
+    "F34",
+    "Feedback del agente",
+    "El pulgar abajo de F10 con su comentario.",
+    "¿Qué harías con esto?"
+   ]
+  ]
+ ],
+ [
+  "G",
+  "Plan de acción",
+  "agente.minero.test · administrador",
+  [
+   [
+    "F35",
+    "Pedir un plan",
+    "Tarjeta con causa (3 correctivas de AMT-CH01), objetivo e hitos.",
+    "¿Es el plan de un jefe de mantenimiento?"
+   ],
+   [
+    "F36",
+    "Pedir cambios",
+    "Un plan nuevo con el cambio.",
+    ""
+   ],
+   [
+    "F37",
+    "Aceptar",
+    "Pedido con hitos y tareas en Tareas, sin responsables.",
+    "¿Tendría que proponer responsables?"
+   ],
+   [
+    "F38",
+    "No lo quiero",
+    "Pide el motivo; no repite el mismo plan.",
+    "¿Alcanzan los motivos?"
+   ]
+  ]
+ ],
+ [
+  "H",
+  "Configurar la empresa con Kuntur",
+  "agente.minero.test · archivos/",
+  [
+   [
+    "F39",
+    "Carga simulada de un sector",
+    "Tarjeta con aviso de simulación; «Cargado.»",
+    "¿Se entiende que es una simulación?"
+   ],
+   [
+    "F40",
+    "Alta de un depósito",
+    "Esperado: tarjeta para cargarlo. Hoy dice que no puede (H-4).",
+    ""
+   ],
+   [
+    "F41",
+    "Subir una planilla",
+    "Explica las columnas y pide el tipo que falta.",
+    "¿Te sirve que lea la planilla así?"
+   ],
+   [
+    "F42",
+    "No me interesa",
+    "La recomendación no vuelve en 30 días.",
+    ""
+   ]
+  ]
+ ],
+ [
+  "I",
+  "Quién ve qué",
+  "operario.minero y admin.electrica",
+  [
+   [
+    "F43",
+    "Panel del operario",
+    "Solo Quirqui.",
+    ""
+   ],
+   [
+    "F44",
+    "Operario en Feedback del agente",
+    "Esperado: no entra. Hoy ve el feedback de la empresa (H-3).",
+    "¿Quién debería verlo?"
+   ],
+   [
+    "F45",
+    "Operario en Capturar conocimiento",
+    "Esperado: no lo ve. Hoy entra (H-1).",
+    "¿Cualquiera puede ser experto?"
+   ],
+   [
+    "F46",
+    "Otra empresa",
+    "admin.electrica no ve las órdenes de la minera.",
+    ""
+   ]
+  ]
+ ],
+ [
+  "J",
+  "En el celular",
+  "cualquier usuario",
+  [
+   [
+    "F47",
+    "Panel en el celular",
+    "Entra en la pantalla; las tarjetas se leen y se tocan.",
+    "¿Lo usarías desde el celular?"
+   ]
+  ]
+ ]
+];
+const ITEMS = BLOQUES.flatMap(b => b[3]);
+const NOMBRE = { aprobada: "✅ Aprobada", cambios: "✏️ Con cambios", no: "❌ No sirve" };
+const IMPORT = { "": "Importancia…", alta: "🔴 Frena al cliente", media: "🟡 Molesta", baja: "🟢 Detalle" };
+const LOCAL = "revision-agentes-tools-ronda-1";
+
+let datos = {};
+let general = {};
+let filtro = "todas";
+let db = null, enLinea = false;
+
+function leerLocal() { try { const x = JSON.parse(localStorage.getItem(LOCAL) || "{}"); datos = x.datos || {}; general = x.general || {}; } catch (e) {} }
+function guardarLocal() { try { localStorage.setItem(LOCAL, JSON.stringify({ datos, general })); } catch (e) {} }
+
+function el(tag, attrs = {}, ...hijos) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === "text") n.textContent = v; else n.setAttribute(k, v); }
+  hijos.forEach(h => h && n.append(h));
+  return n;
+}
+
+function pinta() {
+  const cont = document.getElementById("bloques");
+  const activo = document.activeElement && document.activeElement.id;
+  cont.replaceChildren();
+  for (const [letra, titulo, quien, items] of BLOQUES) {
+    const visibles = items.filter(([id]) => {
+      const e = (datos[id] || {}).estado;
+      return filtro === "todas" || (filtro === "pendientes" ? !e : e === filtro);
+    });
+    if (!visibles.length) continue;
+    const sec = el("section", { class: "bloque" });
+    const h = el("h2", {}, `Bloque ${letra} · ${titulo}`);
+    h.append(el("small", { text: quien }));
+    sec.append(h);
+    const lista = el("div", { class: "lista" });
+    for (const [id, nombre, probar, preg] of visibles) {
+      const d = datos[id] || {};
+      const it = el("div", { class: "item", id: "it-" + id, "data-estado": d.estado || "" });
+      const txt = el("div", { class: "txt" }, el("b", { text: nombre }), el("span", { class: "probar", text: probar }));
+      if (preg) txt.append(el("span", { class: "preg", text: preg }));
+      const ver = el("div", { class: "veredicto", role: "group", "aria-label": "Opinión sobre " + id });
+      for (const v of ["aprobada", "cambios", "no"]) {
+        const b = el("button", { type: "button", "data-v": v, "aria-pressed": String(d.estado === v), text: NOMBRE[v] });
+        b.onclick = () => cambiar(id, { estado: d.estado === v ? "" : v });
+        ver.append(b);
+      }
+      const ta = el("textarea", { id: "c-" + id, rows: "2", placeholder: d.estado === "aprobada" ? "Comentario o respuesta a la pregunta (opcional)" : "¿Qué cambiarías? ¿Qué pasó?" });
+      ta.value = d.comentario || "";
+      ta.oninput = () => { datos[id] = { ...(datos[id] || {}), comentario: ta.value }; programar(id, () => ({ comentario: ta.value })); };
+      const sel = el("select", { id: "i-" + id, "aria-label": "Importancia de " + id });
+      for (const [k, t] of Object.entries(IMPORT)) { const o = el("option", { value: k, text: t }); if ((d.importancia || "") === k) o.selected = true; sel.append(o); }
+      sel.onchange = () => cambiar(id, { importancia: sel.value });
+      const nota = el("div", { class: "nota" }, ta, d.estado && d.estado !== "aprobada" ? sel : null);
+      it.append(el("span", { class: "fid", text: id }), txt, ver, nota, el("div", { class: "guardado", id: "g-" + id }));
+      lista.append(it);
+    }
+    sec.append(lista);
+    cont.append(sec);
+  }
+  if (!cont.children.length) cont.append(el("div", { class: "lista" }, el("div", { class: "vacio", text: "No hay funciones con este filtro." })));
+  if (activo && document.getElementById(activo)) { const a = document.getElementById(activo); a.focus(); if (a.setSelectionRange && a.value) a.setSelectionRange(a.value.length, a.value.length); }
+  for (const k of ["impresion", "ideas", "faltan"]) { const t = document.getElementById("g-" + k); if (document.activeElement !== t) t.value = general[k] || ""; }
+  cuenta();
+}
+
+function cuenta() {
+  const n = { aprobada: 0, cambios: 0, no: 0 };
+  ITEMS.forEach(([id]) => { const e = (datos[id] || {}).estado; if (e) n[e]++; });
+  const tot = ITEMS.length, hechas = n.aprobada + n.cambios + n.no;
+  document.getElementById("b-ok").style.width = (n.aprobada / tot * 100) + "%";
+  document.getElementById("b-cambios").style.width = (n.cambios / tot * 100) + "%";
+  document.getElementById("b-no").style.width = (n.no / tot * 100) + "%";
+  document.getElementById("cuenta").textContent = `${hechas} de ${tot} revisadas · ✅ ${n.aprobada} · ✏️ ${n.cambios} · ❌ ${n.no}`;
+}
+
+const timers = {};
+function programar(id, fn) { clearTimeout(timers[id]); timers[id] = setTimeout(() => cambiar(id, fn(), false), 700); }
+
+async function cambiar(id, cambio, repintar = true) {
+  datos[id] = { ...(datos[id] || {}), ...cambio };
+  guardarLocal();
+  if (repintar) pinta(); else cuenta();
+  const g = document.getElementById("g-" + id);
+  if (!enLinea) { if (g) g.textContent = "Guardado en este navegador"; return; }
+  try {
+    await db.doc("opiniones/" + id).set({ ...datos[id], funcion: id, actualizado: new Date().toISOString() });
+    const g2 = document.getElementById("g-" + id); if (g2) g2.textContent = "Guardado";
+  } catch (e) { sinLinea("No se pudo guardar en línea: lo que marcás queda en este navegador. Al terminar, tocá «Copiar todo» y mandáselo a quien prepara la prueba."); }
+}
+
+let tGen;
+async function guardarGeneral() {
+  general = { impresion: document.getElementById("g-impresion").value, ideas: document.getElementById("g-ideas").value, faltan: document.getElementById("g-faltan").value };
+  guardarLocal();
+  const g = document.getElementById("g-guardado");
+  if (!enLinea) { g.textContent = "Guardado en este navegador"; return; }
+  try { await db.doc("opiniones/general").set({ ...general, actualizado: new Date().toISOString() }); g.textContent = "Guardado"; }
+  catch (e) { sinLinea("No se pudo guardar en línea: lo que escribís queda en este navegador. Al terminar, tocá «Copiar todo» y mandáselo a quien prepara la prueba."); }
+}
+["impresion", "ideas", "faltan"].forEach(k => document.getElementById("g-" + k).addEventListener("input", () => { clearTimeout(tGen); tGen = setTimeout(guardarGeneral, 700); }));
+
+let pendiente = false;
+function pintarCuandoSePueda() {
+  if (document.activeElement && document.activeElement.tagName === "TEXTAREA") { pendiente = true; cuenta(); return; }
+  pinta();
+}
+document.addEventListener("focusout", () => setTimeout(() => {
+  if (pendiente && !(document.activeElement && document.activeElement.tagName === "TEXTAREA")) { pendiente = false; pinta(); }
+}, 300));
+
+function sinLinea(msg) {
+  enLinea = false;
+  const a = document.getElementById("estado-guardado"); a.hidden = false; a.removeAttribute("data-tipo"); a.textContent = msg;
+}
+
+document.querySelectorAll(".filtros button").forEach(b => b.onclick = () => {
+  filtro = b.dataset.f;
+  document.querySelectorAll(".filtros button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  pinta();
+});
+
+function textoTodo() {
+  const l = ["Revisión de los agentes de Tools", ""];
+  for (const [letra, titulo, , items] of BLOQUES) {
+    l.push(`Bloque ${letra} · ${titulo}`);
+    for (const [id, nombre] of items) {
+      const d = datos[id] || {};
+      l.push(`${id} ${nombre}: ${d.estado ? NOMBRE[d.estado] : "sin revisar"}${d.importancia ? " · " + IMPORT[d.importancia] : ""}${d.comentario ? "\n    " + d.comentario.replace(/\n/g, "\n    ") : ""}`);
+    }
+    l.push("");
+  }
+  l.push("Opinión general:", general.impresion || "—", "", "Ideas nuevas:", general.ideas || "—", "", "Lo más importante de lo que falta:", general.faltan || "—");
+  return l.join("\n");
+}
+document.getElementById("copiar").onclick = async (ev) => {
+  const t = textoTodo(), b = ev.currentTarget;
+  try { await navigator.clipboard.writeText(t); b.textContent = "Copiado ✓"; }
+  catch (e) {
+    const ta = el("textarea", { readonly: "", rows: "12", "aria-label": "Todo lo marcado" }); ta.value = t;
+    const a = document.getElementById("estado-guardado"); a.hidden = false; a.setAttribute("data-tipo", "ok"); a.replaceChildren("No pude copiar solo: seleccioná este texto y copialo.", ta); ta.select();
+  }
+  setTimeout(() => b.textContent = "Copiar todo", 2000);
+};
+
+leerLocal();
+pinta();
+
+(async () => {
+  const c = window.claude;
+  db = c && c.use ? await c.use("db") : null;
+  const user = c && c.use ? await c.use("user") : null;
+  if (!db) { sinLinea("Esta página no puede guardar en línea ahora (¿sesión cerrada en claude.ai?). Lo que marcás queda en este navegador. Al terminar, tocá «Copiar todo» y mandáselo a quien prepara la prueba."); return; }
+  const puede = user ? await user.can("data.write") : null;
+  if (puede === false) { sinLinea("Podés ver la planilla pero no guardar en ella: pedile a quien prepara la prueba que te la comparta como Editor. Mientras tanto, lo que marcás queda en este navegador."); }
+  else enLinea = true;
+  db.collection("opiniones").onSnapshot(snap => {
+    const remoto = {};
+    snap.docs.forEach(d => { remoto[d.id] = d.data(); });
+    if (enLinea) for (const [id, v] of Object.entries(datos)) if (!remoto[id] && (v.estado || v.comentario)) db.doc("opiniones/" + id).set({ ...v, funcion: id, actualizado: new Date().toISOString() }).catch(() => {});
+    if (enLinea && !remoto.general && (general.impresion || general.ideas || general.faltan)) guardarGeneral();
+    for (const [id, v] of Object.entries(remoto)) {
+      if (id === "general") { general = { impresion: v.impresion || "", ideas: v.ideas || "", faltan: v.faltan || "" }; continue; }
+      if (document.activeElement && document.activeElement.id === "c-" + id) continue;
+      datos[id] = { estado: v.estado || "", comentario: v.comentario || "", importancia: v.importancia || "" };
+    }
+    guardarLocal();
+    pintarCuandoSePueda();
+  }, () => sinLinea("Se cortó la conexión con lo guardado. Lo que marcás queda en este navegador; recargá la página en un rato."));
+})();
+</script>
