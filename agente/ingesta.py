@@ -172,22 +172,37 @@ async def _vectores(llm, piezas: list[Pieza]):
         yield [p for p, _ in quedan], [v for _, v in quedan]
 
 
+# Esperas (segundos) ante un 429 que sobrevive a los reintentos del cliente:
+# el modelo gratuito corta por cantidad de pedidos por minuto.
+ESPERAS_429 = (30, 60, 120)
+
+
 async def _embeber(llm, textos: list[str], *, reintento: bool = False) -> list[list[float] | None]:
-    """Vectores de un lote. Si el servicio rechaza el lote entero (pasa con el
-    modelo gratuito: 422 «content safety screening» por UN fragmento inocente),
-    lo parte en dos hasta aislarlo. El fragmento que sigue rechazado después de
-    un reintento queda en None y se saltea: no tira abajo la carga de todo."""
-    try:
-        return await llm.embeddings(textos)
-    except LLMError as e:
-        if e.status not in (413, 422, 500, 502, 503):
-            raise
-        if len(textos) > 1:
-            medio = len(textos) // 2
-            return (await _embeber(llm, textos[:medio]) + await _embeber(llm, textos[medio:]))
-        if reintento:
-            return [None]
-        return await _embeber(llm, textos, reintento=True)
+    """Vectores de un lote.
+
+    - Si el servicio pide esperar (429), espera y reintenta.
+    - Si rechaza el lote entero (pasa con el modelo gratuito: 422 «content
+      safety screening» por UN fragmento inocente), lo parte en dos hasta
+      aislarlo. El fragmento que sigue rechazado después de un reintento queda
+      en None y se saltea: no tira abajo la carga de todo.
+    """
+    for espera in (*ESPERAS_429, None):
+        try:
+            return await llm.embeddings(textos)
+        except LLMError as e:
+            if e.status == 429 and espera is not None:
+                print(f"aviso: el servicio pidió esperar; reintento en {espera} s", file=sys.stderr)
+                await asyncio.sleep(espera)
+                continue
+            if e.status not in (413, 422, 500, 502, 503):
+                raise
+            break
+    if len(textos) > 1:
+        medio = len(textos) // 2
+        return (await _embeber(llm, textos[:medio]) + await _embeber(llm, textos[medio:]))
+    if reintento:
+        return [None]
+    return await _embeber(llm, textos, reintento=True)
 
 
 async def _a_conocimiento(con, llm, archivo: Path, piezas: list[Pieza], *, tipo: str,

@@ -59,3 +59,24 @@ async def test_una_clave_invalida_no_se_reintenta():
     with pytest.raises(LLMError):
         await _embeber(SinClave(), ["a", "b", "c"])
     assert SinClave.llamadas == 1
+
+
+async def test_si_el_servicio_pide_esperar_espera_y_sigue(monkeypatch):
+    import agente.ingesta as ing
+    esperas = []
+
+    async def dormir(seg):
+        esperas.append(seg)
+    monkeypatch.setattr(ing.asyncio, "sleep", dormir)
+
+    class Apurado:
+        veces = 0
+
+        async def embeddings(self, textos):
+            Apurado.veces += 1
+            if Apurado.veces < 3:
+                raise LLMError("OpenRouter respondio 429", 429, {})
+            return [[1.0] for _ in textos]
+
+    assert await _embeber(Apurado(), ["a", "b"]) == [[1.0], [1.0]]
+    assert esperas == [30, 60]
