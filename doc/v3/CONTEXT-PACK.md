@@ -1,6 +1,6 @@
 # CONTEXT-PACK — traz-tools
 
-> Versión -> 1.5, "último ADR: ADR-014", fecha 2026-10-27
+> Versión -> 1.6, "último ADR: ADR-015", fecha 2026-11-26
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -35,6 +35,7 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 | **ADR-012** | doc/adr/ADR-012-almacenes-aislamiento.md                 | Almacenes reusa patrón de Mantenimiento: empr_id del JWT (ADR-009), crear_pedido_materiales con BPM+rollback estilo create_ot. Solo pedidos, sin operaciones de stock                                                                                                                                              |
 | **ADR-013** | ADR-013-unificacion-mcp.md                               | Unificación MCP: fachada delgada toolsMCPAPI resuelve empr_id y rutea a DataServices existentes. Un solo Virtual MCP Server, tools con prefijo de módulo (man_, alm_)                                                                                                                                              |
 | **ADR-014** | doc/adr/ADR-014-man-acceso-datos-dataservices.md | **VIGENTE** (aceptado por el PM 2026-10-27). MAN (asset migrado a `traz-tools-man`) no accede a ninguna base: todo `assetv2` por `MANDataService`. Ids con `returnGeneratedKeys`, escrituras atómicas con `request_box`, operaciones encadenadas o multi-subsistema como recurso de `toolsMANAPI` con compensación estilo `create_ot`. APIs con componentes nativos de WSO2, JavaScript (`script`) solo si no queda otra. Fuente única de artefactos WSO2: tools |
+| **ADR-015** | doc/adr/ADR-015-marca-por-dominio.md | **PROPUESTO** (2026-11-26, REQ-019). La marca (Trazalog / Pirkai) se decide por el dominio del pedido contra una lista cerrada en `application/config/marcas.php` de Tools y DNATO. Función global `marca('clave', '<valor de hoy>')`: con Trazalog todo queda igual. `DNATO`/`DE`/`DS` siguen al dominio solo con otra marca (`marca_url_host()`); el emisor de tokens del agente no depende del dominio |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 

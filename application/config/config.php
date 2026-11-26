@@ -23,7 +23,21 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$base = "http://" . $_SERVER['HTTP_HOST'];
+/* REQ-019: el esquema (http/https) se detecta del pedido, con la misma regla que
+ * traz-comp-dnato. Antes era siempre "http://", y entrando por https el navegador
+ * bloqueaba las hojas de estilo y los scripts cargados con base_url(). */
+$_esquema = 'http';
+if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') {
+    $_esquema = 'https';
+} elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+    $_partes = explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO']);
+    $_esquema = (strtolower(trim($_partes[0])) === 'https') ? 'https' : 'http';
+} elseif (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
+    $_esquema = 'https';
+} elseif (!empty($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443) {
+    $_esquema = 'https';
+}
+$base = $_esquema . "://" . $_SERVER['HTTP_HOST'];
 $base .= str_replace(basename($_SERVER['SCRIPT_NAME']), "", $_SERVER['SCRIPT_NAME']);
 $config['base_url'] = $base;
 

@@ -1,0 +1,17 @@
+{
+    "short_name": "pirkai.net",
+    "name": "pirkai.net",
+    "display": "standalone",
+    "version": "0.1r",
+    "manifest_version": 2,
+    "description": "pirkai.net",
+    "icons": [
+        {
+          "src": "favicon.svg",
+          "type": "image/svg+xml",
+          "sizes": "any"
+        }
+      ],
+    "start_url": "../../../",
+    "permissions": ["http://*", "https://*" ]
+}

@@ -4,11 +4,11 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>TRAZALOG | TOOLS</title>
+    <title><?php echo marca('titulo', 'TRAZALOG | TOOLS') ?></title>
     <!-- Tell the browser to be responsive to screen width -->
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     <!-- Manifest para el desarrollo de la PWA -->
-    <link rel="manifest" crossorigin="use-credentials" href="manifest.json">
+    <link rel="manifest" crossorigin="use-credentials" href="<?php echo marca('manifest', 'manifest.json') ?>">
     <!-- Bootstrap 3.3.7 -->
     <link rel="stylesheet" href="lib/bower_components/bootstrap/dist/css/bootstrap.min.css">
     <!-- Font Awesome -->
@@ -108,11 +108,12 @@
 
     <?php $this->load->view('layout/general_scripts')?>
 
+    <?php /* Marca por dominio (REQ-019): vacío con el dominio de Trazalog */ echo marca_head(base_url()) ?>
 </head>
 
 <?php $this->load->view('layout/wait') ?>
 
-<body class="hold-transition skin-red sidebar-mini">
+<body class="hold-transition <?php echo marca('skin', 'skin-red') ?> sidebar-mini"<?php echo marca_atributo_body() ?>>
 <div class="wrapper">
 
     <header class="main-header">
@@ -194,7 +195,7 @@
         <?php if ($copyright == 'true'): ?>
             <strong>
                 Copyright &copy; <?= date('Y') ?>
-                <a href="http://trazalog.com/">Trazalog</a>.
+                <a href="<?php echo marca('url_sitio', 'http://trazalog.com/') ?>"><?php echo marca('nombre', 'Trazalog') ?></a>.
             </strong>
             All rights reserved.
         <?php endif; ?>
@@ -410,12 +411,12 @@
                 ?>
                 <!-- <div id='calendario'></div> -->
                  <div class="text-center text-muted" style="font-size: 12px; margin-top: 15px;">
-                        © 2026 <strong>Trazalog SAS</strong>. Todos los derechos reservados.<br><br>
+                        © 2026 <strong><?php echo marca('razon_social', 'Trazalog SAS') ?></strong>. Todos los derechos reservados.<br><br>
 
                         <strong>Propiedad Intelectual y Derechos de Autor</strong><br>
                         Todo el contenido de este software, incluyendo pero no limitado a: código fuente,
                         algoritmos, interfaces de usuario, diseños gráficos, logotipos, textos y archivos de audio,
-                        es propiedad exclusiva de <strong>Trazalog SAS</strong> y está protegido por las leyes
+                        es propiedad exclusiva de <strong><?php echo marca('razon_social', 'Trazalog SAS') ?></strong> y está protegido por las leyes
                         internacionales de derechos de autor y propiedad intelectual.
                         Queda prohibida la reproducción, distribución, modificación o ingeniería inversa de
                         cualquier parte de este producto sin la autorización previa y por escrito del titular
@@ -535,6 +536,17 @@ function wc() {
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/main.js'></script>
 <script src='<?php  echo base_url();?>assets/fullcalendar/lib/locales-all.js'></script>
 <script type="module" src="<?php echo base_url();?>lib/props/firebase_config.js"></script>
+<?php if (!marca_es_defecto()): /* Marca por dominio (REQ-019) */ ?>
+<script>
+window.MARCA = <?php echo json_encode(array(
+    'id' => marca_id(),
+    'nombre' => marca('nombre', ''),
+    'titulo_impresion' => marca('titulo_impresion', ''),
+    'logo_impresos' => marca('logo_impresos', '') === '' ? '' : base_url() . marca('logo_impresos', ''),
+)) ?>;
+</script>
+<script src="<?php echo base_url() . marca('js', 'lib/marcas/marca.js') ?>"></script>
+<?php endif; ?>
 </body>
 
 </html>

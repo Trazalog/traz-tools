@@ -90,7 +90,12 @@ define('FILES', 'files/');
 
 # DNATO
 define('LOGIN', true);
-define('DNATO', 'http://localhost/traz-comp-dnato/');
+/* REQ-019 marca por dominio: si el usuario entró por un dominio de otra marca
+ * (application/config/marcas.php), el ingreso se sirve desde ese mismo dominio.
+ * Con el dominio de Trazalog la dirección queda tal cual. En cada servidor se
+ * envuelve SU valor de siempre: ver doc/infra/pirkai-04-configuracion-post-despliegue.md */
+require_once APPPATH . 'helpers/marca_helper.php';
+define('DNATO', marca_url_host('http://localhost/traz-comp-dnato/'));
 
 # AYUDA DE USUARIO
 # Direccion del sitio de ayudas, la que abre el signo de pregunta de la barra superior.
