@@ -86,7 +86,7 @@ Un solo script, versionado en `traz-tools` (por ejemplo
 2. **Datos (M-2, M-5, M-6, M-7):** solo `INSERT` y `UPDATE` de las columnas **nuevas**. Ninguna fila
    existente cambia en una columna existente.
 
-Se corre primero en una base de prueba (copia de DEMO) y después en DEMO, nunca directo en producción.
+Se corre en desarrollo (DEV), nunca directo en producción.
 Lleva su script de vuelta atrás (borra solo lo que agregó). La parte de estructura es **aditiva y la
 decide el equipo** (regla de Rodolfo del 2026-11-10). La parte de datos que toca tablas existentes (M-2
 de las herramientas del agente y M-6) la aprueba Rodolfo **antes** de construir; M-5 solo carga
@@ -122,7 +122,7 @@ los DataServices pero no las APIs; este requerimiento no agrega APIs.
 - `"group"` igual al `nombre` de la empresa `empr_id` (criterio único de Rodolfo, B.4; **no** por
   `descripcion`),
 - rol base Administrador (la misma condición sobre `role` que usa hoy `getEsAdminXEmailEmpresa`),
-- y la membresía de esa persona en esa empresa **no** está `baneado` ni `baja` (estado nuevo; después
+- y la membresía de esa persona en esa empresa está `activo` (estado nuevo; después
   de M-5 todas son `activo`).
 
 `seg.users.role` y `TOOLS_ADMIN_USER` **no autorizan** nada en el módulo. Esta definición la usan el
@@ -346,9 +346,36 @@ Más la función `seg.cambiar_variable(…)` y el disparador que impide modifica
 - **Las variables se cargan pero nadie las lee todavía**: así el ingreso copiado (REQ-003) no cambia
   y cada requerimiento que use una lo hace explícito.
 
+### Resoluciones de las dudas de los casos (Rodolfo, 2026-11-24)
+
+Los seis casos (ADM-UC-030 a 035) quedaron validados. Respuestas a las dudas (el detalle pregunta por
+pregunta se sacó del campo `dudas` de cada caso):
+
+- **Definición de administrador: solo `activo`.** Se corrigió la redacción de arriba (decía "no `baneado`
+  ni `baja`", que incluiría `invitado`). `invitado` no hace administrador.
+- **Alcanza con D-07** para la definición única dentro del módulo (no cambia nada fuera del módulo ni de
+  los dos botones). Queda **riesgo abierto anotado**: hasta B.4c conviven dos definiciones (Tools por
+  `descripcion`, módulo por `nombre`), cuantificado por la medición de B.4.
+- **Estado de la membresía: tabla nueva `seg.membresias_estado`**, única por (correo, `"group"`), sin
+  tocar `seg.memberships_users`. Se aparta de la letra del spec ("columnas en la membresía") porque el
+  estado es uno por persona+empresa, no por rol.
+- **M-2 no carga opciones SEG** (contra el literal del paso M-2; manda RF-44: las pantallas del Portal no
+  entran al catálogo). Sí carga las tools del agente como `tool_mcp`, verificando que el menú de Tools no
+  cambie (la regla "si ningún hijo está habilitado se muestran todos" de `menu_helper.php`); si cambia, se
+  difieren a REQ-005/011.
+- **Superusuario:** M-6 marca al correo de `TOOLS_ADMIN_USER` del ambiente; si no existe, no marca a
+  nadie y avisa. En este requerimiento la marca **no se audita** (la acción "súper usuario" de RF-100 se
+  audita en REQ-008).
+- **Variables:** validación (enteros > 0 para `_dias`/`_horas`, 1–100 para `_porcentaje`, texto no vacío
+  el resto); M-7 carga los valores de la especificación (Rodolfo los corrige antes de correr el script);
+  clave `texto_suspension_empresa` (manda RF-102 sobre la maqueta); el guardado es **de a una variable por
+  vez**, cada cambio atómico (valor + historial + auditoría), sin "todo o nada" entre varias.
+- **Auditoría:** no audita login ni rechazos (log + `last_login`); sin depuración automática en este
+  requerimiento; los intentos de modificar/borrar se prueban como prueba técnica contra DEV.
+
 ## Cómo se revisa (además de DocTest)
 
-- El script de base corrido en una copia de DEMO y con su vuelta atrás probada; la carga de M-2 (herramientas
+- El script de base corrido en DEV y con su vuelta atrás probada; la carga de M-2 (herramientas
   del agente) y M-6 aprobada por Rodolfo antes de correrla (M-7 lo decide el equipo (regla de Rodolfo del 2026-11-10)).
 - **Búsqueda de usos de las tablas tocadas** (`core.empresas`, `seg.users`, `seg.menues`, `core.tablas`)
   en DataServices, funciones, disparadores, DNATO, Tools y AssetPlanner: ningún `INSERT` sin lista de
@@ -361,7 +388,8 @@ Más la función `seg.cambiar_variable(…)` y el disparador que impide modifica
 
 ## Dudas abiertas
 
-Están en los casos de uso (campo `dudas`), para contestarlas en un solo lugar.
+Contestadas por Rodolfo el 2026-11-24; las resoluciones quedaron en "Decisiones tomadas". Los casos
+ADM-UC-030 a 035 están validados.
 
 ---
 

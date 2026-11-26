@@ -2,7 +2,8 @@ id: ADM-UC-034
 modulo: ADM
 titulo: Dejar rastro de cada cambio sin que se pueda borrar
 perfil: Superusuario
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-24
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -50,10 +51,8 @@ validaciones:
   - "No hay fila de auditoría de un cambio que no se guardó"
 datos_prueba:
   variable: "contacto_soporte"
-dudas:
-  - "El consumo del agente no va a la auditoría (RF-100). ¿Y los ingresos al sistema (login) o los rechazos de permiso? Propuesta: no; los rechazos van al log (REQ-002) y los ingresos ya quedan en last_login."
-  - "Los cinco años de guarda (RNF-04): ¿hay que borrar lo más viejo automáticamente? Propuesta: no en este requerimiento; con el volumen esperado [SUPUESTO] no hace falta, y borrar exigiría un permiso que justamente se quita."
-  - "Los dos intentos contra la base no son pasos de usuario. ¿Quedan como prueba técnica que corre Pablo con el usuario de base de prueba? Propuesta: sí, como prueba de servicio en DocTest contra la base de DEMO, nunca contra producción."
-derivados: {}
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-034.auditoria-inmutable.spec.ts
 notas:
   - "Cubre CP-101 y la parte de CP-100 que corresponde a variables de sistema. Las demás acciones de RF-100 las agrega cada requerimiento."

@@ -2,7 +2,8 @@ id: ADM-UC-032
 modulo: ADM
 titulo: Ser administrador de la empresa por una sola definición
 perfil: Administrador
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-24
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -52,11 +53,9 @@ validaciones:
 datos_prueba:
   administrador: "administrador de la empresa DocTest"
   registrado_con_otro_rol: "usuario de prueba registrado por la registración (role = 1) con rol Supervisor en la empresa activa"
-dudas:
-  - "El tablero de Tools decide si aterriza en el tablero del administrador con otro servicio (Dashs::esAdminEmpresa, que une por la descripción). Si no se cambia, puede pasar que alguien aterrice en el tablero de administrador y no vea 'Mi empresa', o al revés. ¿Se pasa también ese aterrizaje a la definición única en este requerimiento? Propuesta: no; se deja para la tarea B.4c del análisis (después de corregir las membresías, B.4a), y la medición de B.4 dice cuántos casos hay."
-  - "La especificación pide que solo la membresía 'activa' haga administrador. Hasta que REQ-007 maneje los estados, todas quedan 'activo' por la migración, y estados como 'invitado' no existen todavía. ¿'invitado' cuenta como administrador? Propuesta: no; solo 'activo'."
-  - "El índice de requerimientos dejaba la definición única de administrador para una reunión de arquitectura, pero la especificación ya la decide (D-07) y este requerimiento la aplica solo dentro del módulo. ¿Confirmás que alcanza con D-07? Propuesta: sí, porque no cambia nada fuera del módulo y de los dos botones."
-derivados: {}
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-032.administrador-unico.spec.ts
 notas:
   - "Cierra el correctivo C-5 dentro del módulo: reemplaza el servicio /usuario/esadmin que usaba REQ-002 por la definición única."
   - "Cubre CP-106 y CP-108 en la parte de quién ve qué."

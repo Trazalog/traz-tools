@@ -1,0 +1,84 @@
+<data enableBatchRequests="true" enableBoxcarring="true" name="ADMDataService" transports="http https local">
+   <config enableOData="false" id="ToolsDataSource">
+      <property name="carbon_datasource_name">ToolsDataSource</property>
+   </config>
+   <!-- Definición única de administrador (R7): membresía activa, rol base Administrador,
+        empresa resuelta por NOMBRE (criterio de Rodolfo, B.4), no por descripción. -->
+   <query id="getEsAdminXEmailEmpresa" useConfig="ToolsDataSource">
+      <sql>select case when exists ( select 1 from seg.memberships_users mu join core.empresas e on e.nombre = mu."group" and e.eliminado = false left join seg.membresias_estado me on me.email = mu.email and me."group" = mu."group" where lower(mu.email) = lower(:email) and e.empr_id = cast(:empr_id as integer) and mu.role ilike 'Administrador%' and coalesce(me.estado, 'activo') = 'activo' ) then 'true' else 'false' end as es_admin</sql>
+      <result outputType="json">{"respuesta":{"es_admin":"$es_admin"}}</result>
+      <param name="email" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <!-- Superusuario por marca en el usuario (R7, C-5): TOOLS_ADMIN_USER ya no autoriza. -->
+   <query id="getEsSuperXEmail" useConfig="ToolsDataSource">
+      <sql>select case when exists ( select 1 from seg.users u where lower(u.email) = lower(:email) and u.superusuario = true ) then 'true' else 'false' end as es_super</sql>
+      <result outputType="json">{"respuesta":{"es_super":"$es_super"}}</result>
+      <param name="email" sqlType="STRING"/>
+   </query>
+   <!-- Variables de sistema de RF-102, con quién y cuándo las cambió por última vez. -->
+   <query id="getVariables" useConfig="ToolsDataSource">
+      <sql>select t.tabla as clave, t.descripcion as grupo, t.valor, (select vh.quien from seg.variables_historial vh where vh.clave = t.tabla order by vh.fecha desc limit 1) as ultimo_quien, (select to_char(vh.fecha, 'YYYY-MM-DD HH24:MI') from seg.variables_historial vh where vh.clave = t.tabla order by vh.fecha desc limit 1) as ultimo_cambio from core.tablas t where t.empr_id is null and t.eliminado = false and ( t.tabla in ('texto_suspension_empresa','texto_suspension_miembro','contacto_soporte','validez_invitacion_dias','validez_recuperacion_horas','aviso_cuota_porcentaje','zona_horaria_cuotas','remitente_correo','monedas_permitidas') or t.tabla like 'precio_plan_%' ) order by t.descripcion, t.tabla</sql>
+      <result outputType="json">{"variables":{"variable":[{"clave":"$clave","grupo":"$grupo","valor":"$valor","ultimo_quien":"$ultimo_quien","ultimo_cambio":"$ultimo_cambio"}]}}</result>
+   </query>
+   <!-- Cambio de variable: valor + historial + auditoría en UNA operación de base. -->
+   <query id="setVariable" useConfig="ToolsDataSource">
+      <sql>select seg.cambiar_variable(:clave, :valor, :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="clave" sqlType="STRING"/>
+      <param name="valor" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <!-- Historial de una variable (más nuevo primero). -->
+   <query id="getHistorialVariable" useConfig="ToolsDataSource">
+      <sql>select to_char(h.fecha, 'YYYY-MM-DD HH24:MI') as fecha, h.quien, h.valor_anterior, h.valor_nuevo from seg.variables_historial h where h.clave = :clave order by h.fecha desc</sql>
+      <result outputType="json">{"historial":{"cambio":[{"fecha":"$fecha","quien":"$quien","valor_anterior":"$valor_anterior","valor_nuevo":"$valor_nuevo"}]}}</result>
+      <param name="clave" sqlType="STRING"/>
+   </query>
+   <!-- Auditoría: solo agrega. El servicio NO expone cambiar ni borrar. -->
+   <query id="setAuditoria" useConfig="ToolsDataSource">
+      <sql>insert into seg.auditoria (quien, empr_id, accion, entidad, identificador, detalle) values (:quien, case when :empr_id is null or :empr_id = '' then null else cast(:empr_id as integer) end, :accion, :entidad, :identificador, case when :detalle is null or :detalle = '' then null else cast(:detalle as jsonb) end)</sql>
+      <param name="quien" sqlType="STRING"/>
+      <param name="empr_id" sqlType="STRING"/>
+      <param name="accion" sqlType="STRING"/>
+      <param name="entidad" sqlType="STRING"/>
+      <param name="identificador" sqlType="STRING"/>
+      <param name="detalle" sqlType="STRING"/>
+   </query>
+   <resource method="GET" path="/usuario/es-admin/{email}/empresa/{empr_id}">
+      <call-query href="getEsAdminXEmailEmpresa">
+         <with-param name="email" query-param="email"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/usuario/es-super/{email}">
+      <call-query href="getEsSuperXEmail">
+         <with-param name="email" query-param="email"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/variables">
+      <call-query href="getVariables"/>
+   </resource>
+   <resource method="POST" path="/variable">
+      <call-query href="setVariable">
+         <with-param name="clave" query-param="clave"/>
+         <with-param name="valor" query-param="valor"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/variable/{clave}/historial">
+      <call-query href="getHistorialVariable">
+         <with-param name="clave" query-param="clave"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/auditoria">
+      <call-query href="setAuditoria">
+         <with-param name="quien" query-param="quien"/>
+         <with-param name="empr_id" query-param="empr_id"/>
+         <with-param name="accion" query-param="accion"/>
+         <with-param name="entidad" query-param="entidad"/>
+         <with-param name="identificador" query-param="identificador"/>
+         <with-param name="detalle" query-param="detalle"/>
+      </call-query>
+   </resource>
+</data>

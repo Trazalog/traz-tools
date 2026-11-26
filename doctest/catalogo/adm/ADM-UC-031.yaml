@@ -2,7 +2,8 @@ id: ADM-UC-031
 modulo: ADM
 titulo: Ser superusuario por la marca en el usuario
 perfil: Superusuario
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-24
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -52,11 +53,9 @@ validaciones:
 datos_prueba:
   superusuario: "usuario de prueba con la marca en el ambiente"
   segundo_superusuario: "otro usuario de prueba al que se le pone la marca solo para este caso"
-dudas:
-  - "Mientras la Consola no tenga la pantalla de Usuarios (REQ-008), la marca solo la pone el script. ¿Rodolfo marca a mano a otros superusuarios si hace falta? Propuesta: sí, con un script que pone la marca y agrega la fila de auditoría; la pantalla llega en REQ-008."
-  - "El usuario de TOOLS_ADMIN_USER puede no existir en seg.users en algún ambiente (en el constants.php de ejemplo es admin@gmail.com). ¿Qué hace la migración? Propuesta: no marca a nadie y lo avisa; Rodolfo dice a quién marcar en ese ambiente."
-  - "DNATO y el resto de Tools siguen usando el correo TOOLS_ADMIN_USER. ¿Está bien que por un tiempo convivan los dos criterios? Propuesta: sí; la migración marca justo a ese correo, así los dos coinciden hasta la redirección final."
-derivados: {}
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-031.superusuario-marca.spec.ts
 notas:
   - "Cubre CP-108 (la Consola solo para el superusuario, por marca) y contesta la duda de ADM-UC-002 (la marca la propone REQ-004)."
   - "La regla 'tiene que quedar al menos un superusuario' (CP-103) es de REQ-008."

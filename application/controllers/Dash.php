@@ -41,6 +41,8 @@ class Dash extends CI_Controller {
 			$data['texto_logo_navbar'] = $footer['data'][0]->valor3;
 
 
+			$data['adm_contexto'] = $this->adm_contexto();
+
 			$this->load->view('layout/Admin',$data);
 		}else{
 			log_message("DEBUG","#TRAZA | CORE | Dash | index() >> Sesion vencida");
@@ -48,6 +50,44 @@ class Dash extends CI_Controller {
 		}
 	}
 
+
+	/**
+	 * Contexto del usuario para los botones de la barra (REQ-004, ADM-UC-030).
+	 *
+	 * Si el módulo Administración no está montado, o el servicio no responde,
+	 * devuelve un contexto vacío: los botones no aparecen y Tools sigue igual.
+	 *
+	 * @return array
+	 */
+	private function adm_contexto()
+	{
+		$vacio = array(
+			'es_admin' => false,
+			'es_super' => false,
+			'empresa' => '',
+			'url_portal' => '',
+			'url_consola' => '',
+		);
+
+		if ( ! is_dir(APPPATH.'modules/traz-comp-adm'))
+		{
+			return $vacio;
+		}
+
+		try
+		{
+			$this->load->model(ADM.'Contexto', 'contexto');
+			$ctx = $this->contexto->obtener();
+
+			return is_array($ctx) ? $ctx : $vacio;
+		}
+		catch (Exception $e)
+		{
+			log_message('ERROR', '#TRAZA | CORE | Dash | adm_contexto() >> '.$e->getMessage());
+
+			return $vacio;
+		}
+	}
 
 	/**
 	 * Tablero / Landing del Administrador. Se carga como fragmento dentro de #content

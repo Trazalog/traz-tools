@@ -2,7 +2,8 @@ id: ADM-UC-033
 modulo: ADM
 titulo: Editar las variables de sistema y volver atrás
 perfil: Superusuario
-estado: borrador
+estado: validado
+fecha_validacion: 2026-11-24
 version: "1.0"
 origen: baseline
 referencias_codigo:
@@ -63,13 +64,11 @@ datos_prueba:
   variable: "validez_invitacion_dias"
   valor_inicial: "7"
   valor_nuevo: "10"
-dudas:
-  - "La especificación no dice qué valores son válidos (por ejemplo, si validez_invitacion_dias acepta texto o 0). ¿Se valida algo? Propuesta: números enteros mayores que 0 para las claves _dias, _horas y _porcentaje (este, de 1 a 100); el resto, texto no vacío; el mensaje sería 'Ese valor no es válido para <clave>.'"
-  - "¿Con qué valores las carga la migración (M-7)? Hoy no existen como valores: el enlace de recuperación vence a la medianoche, no hay contacto de soporte ni precios escritos. Propuesta: los de los datos de prueba de la especificación (7 días, 24 horas, soporte@trazalog.com, 80 %, America/Argentina/San_Juan, 'USD 79 / mes', 'Consultar'), remitente register@trazalog.com (el de DNATO), monedas 'ARS, USD' [SUPUESTO], y los textos de suspensión de RF-03 y RF-04; Rodolfo los corrige antes de correr el script."
-  - "La maqueta dice texto_bloqueo_empresa y la especificación (RF-102) texto_suspension_empresa; manda la especificación. ¿Confirmás? Propuesta: texto_suspension_empresa."
-  - "La maqueta explica 'Viven en core.tablas (global, sin empresa)' y RNF-09 pide textos sin tecnicismos. Propuesta: 'Valen para toda la plataforma. Cada cambio guarda historial y se puede volver atrás.'"
-derivados: {}
+dudas: []
+derivados:
+  test_e2e: tests/e2e/specs/adm/ADM-UC-033.variables-sistema.spec.ts
 notas:
   - "Cubre CP-102 y CU-22."
   - "Cargar las variables no cambia ningún comportamiento: ninguna pantalla existente las lee todavía (por ejemplo, la recuperación de contraseña copiada en REQ-003 sigue igual)."
   - "Los mensajes 'Guardamos los cambios.', 'No hay cambios para guardar.', 'Volvimos … a ….' y 'No pudimos guardar…' son propuesta: la maqueta no los trae."
+  - "Guardado de varias variables: el servicio cambia de a una por vez (PUT /variable), y cada cambio es atómico (valor + historial + auditoría). 'Guardar cambios' con varias editadas hace un cambio por variable; si una falla, las ya guardadas quedan y la pantalla avisa. No hay 'todo o nada' entre varias variables (decisión 2026-11-24)."
