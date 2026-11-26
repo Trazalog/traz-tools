@@ -59,7 +59,7 @@
    <resource method="GET" path="/variables">
       <call-query href="getVariables"/>
    </resource>
-   <resource method="PUT" path="/variable">
+   <resource method="POST" path="/variable">
       <call-query href="setVariable">
          <with-param name="clave" query-param="clave"/>
          <with-param name="valor" query-param="valor"/>
