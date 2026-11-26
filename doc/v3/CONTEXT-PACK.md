@@ -2,6 +2,10 @@
 
 > Versión -> 1.9, "último ADR: ADR-015" (ADR-014 está en `develop-v3`, no en esta rama), "último ADR de agentes: ADR-A14", fecha 2026-11-26
 
+## Objetivo
+
+Qué es: el resumen operativo que toda sesión lee primero: jerarquía de fuentes, decisiones de arquitectura vigentes, reglas que no se negocian y qué leer según la tarea. Para quién: Claude Code y el PM. Cuándo leerlo: al empezar cualquier tarea. Qué NO cubre: el detalle de cada tema; el mapa completo de documentos está en [`doc/README.md`](../README.md).
+
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
 ## Jerarquía de fuentes (en este orden)
@@ -93,11 +97,15 @@ Claude.ai ──JWT Dnato──> APIM (:8243)
 ## 7. Dónde está cada cosa (mapa de directorios clave)
 
 ```
-doc/v3/                 → documentos ancla (arquitectura, CICD, pricing, negocio) + STATE.md
+doc/README.md            → índice de toda la documentación ("si querés saber X, leé Y") y tabla de rutas viejas
+doc/v3/                 → documentos ancla (arquitectura, CICD, agentes, despliegue, negocio) + STATE.md
 doc/adr/                → ADRs individuales (ADR-003, ADR-009, ...)
-doc/identity/            → docs de identidad/JWT/discovery OAuth
-doc/mcp/                 → docs de Virtual MCP Servers y demo
-doc/api/                 → specs OpenAPI (equipos.yaml, ot.yaml)
+doc/agente/             → instalar y operar los agentes, decisiones, identidad visual, revisión legal
+doc/identidad/          → identidad y seguridad (JWT, Dnato, discovery OAuth, empr_id)
+doc/mcp/                → conector MCP: diseño, publicar y operar, pruebas y casos
+doc/infra/              → ambientes (incluido el servidor compartido de DEV) y WSO2
+doc/api/                → specs OpenAPI e inventario de artefactos WSO2
+doc/historial/          → lo que ya cumplió su función (no leer para decidir)
 _backend/api/ToolsAPIProject/    → artefactos WSO2 MI (DataServices, sequences, APIs)
 _backend/api/ApimDiscoveryProject/ → discovery OAuth 2.1 (RFC 9728)
 scripts/dev/             → scripts reutilizables (setup ngrok, generación de JWT de test, etc.)

@@ -10,7 +10,7 @@
 # ────────────────────────────────────────────────────────────────────────────
 # Los dos bloques de compatibilidad MCP NO son opcionales: sin ellos, las
 # tools que escriben fallan en el cliente aunque el backend haga todo bien.
-# Detalle completo en doc/mcp/republicar-mcp-server.md §7.
+# Detalle completo en doc/mcp/publicar-y-operar.md (parte 2, §7).
 # ────────────────────────────────────────────────────────────────────────────
 
 {
@@ -60,7 +60,7 @@
 
 	# ── Todo lo demás: passthrough ───────────────────────────────────────
 	# El Gateway usa certificado self-signed en localhost:8243 (ver
-	# doc/infra/wso2-install.md). Válido acá porque el salto Caddy→APIM
+	# doc/infra/wso2.md). Válido acá porque el salto Caddy→APIM
 	# es loopback, nunca sale de la VM; el cliente solo ve el cert de
 	# Let's Encrypt de Caddy.
 	handle {

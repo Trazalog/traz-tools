@@ -1,5 +1,9 @@
 # Trazalog v3 — Estrategia de CI/CD y Branching
 
+## Objetivo
+
+Qué es: la estrategia de ramas, integración continua, pruebas, migraciones de base y pasaje de v2 a v3, más la metodología de trabajo entre el PM y Claude Code (§5-bis) y, como apéndice E, la sincronización de ramas. Para quién: todo el que trabaje en el repositorio. Cuándo leerlo: antes de abrir una rama o un PR, y ante cualquier duda de proceso. Qué NO cubre: la arquitectura ([`TRAZALOG_v3_MCP_ARCHITECTURE.md`](TRAZALOG_v3_MCP_ARCHITECTURE.md)) ni el estado del proyecto ([`STATE.md`](STATE.md)).
+
 > **Documento de referencia operativa**
 > Versión: 1.1
 > Fecha: Abril 2026

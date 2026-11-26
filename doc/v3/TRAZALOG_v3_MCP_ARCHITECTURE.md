@@ -1,5 +1,9 @@
 # Trazalog v3 — Arquitectura MCP
 
+## Objetivo
+
+Qué es: la arquitectura de referencia de Trazalog v3: el MCP como forma de exponer Tools a asistentes de IA, el gateway de WSO2, identidad y aislamiento por empresa, infraestructura, costos y las decisiones de arquitectura; el capítulo 3-bis ubica a los agentes de IA propios. Para quién: PM, arquitecto y quien desarrolle. Cuándo leerlo: antes de cualquier tarea que toque la capa MCP, la identidad o la infraestructura. Qué NO cubre: el detalle de los agentes ([`AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`](AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md)) ni cómo se publica el conector ([`doc/mcp/publicar-y-operar.md`](../mcp/publicar-y-operar.md)).
+
 ## Documento de Arquitectura Técnica
 **Versión:** 1.3  
 **Fecha:** Marzo 2026 (v1.0) — Mayo 2026 (v1.3 — ADR-008 sobre validación JWT en APIM)  

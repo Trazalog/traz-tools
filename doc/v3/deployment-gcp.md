@@ -1,5 +1,9 @@
 # Despliegue en GCP — VM nativa WSO2 (ADR-011)
 
+## Objetivo
+
+Qué es: el dimensionamiento y la lista de pasos para instalar WSO2 (API Manager y MI) en una VM de Google Cloud, desplegar ahí la fachada MCP, configurar la identidad y, cuando exista, el motor de los agentes de IA (sección 8, no probada). Para quién: el PM, que ejecuta los pasos en su consola, y quien los revise. Cuándo leerlo: al armar o cambiar el ambiente de TEST o PROD. Qué NO cubre: qué ambiente usar para qué ([`doc/infra/ambientes.md`](../infra/ambientes.md)) ni la instalación en una máquina de desarrollo ([`doc/infra/wso2.md`](../infra/wso2.md)).
+
 > Implementa [ADR-011](../adr/ADR-011-gcp-deployment.md). Tarea: E7-INFRA-01/02.
 > Este documento NO despliega nada — es sizing + checklist para que Rodolfo
 > ejecute en su consola de GCP, más los scripts en [`deploy/gcp/`](../../deploy/gcp/).
