@@ -42,7 +42,7 @@ from pathlib import Path
 
 from .config import Config, cargar
 from .fuentes import Pieza, es_caso_uso, leer_ayuda, leer_caso_uso
-from .llm import OpenRouter
+from .llm import LLMError, OpenRouter
 from .rag import _a_vector, abrir, fijar_empresa
 
 EXTENSIONES = {".pdf", ".md", ".txt", ".markdown", ".html", ".yaml", ".yml"}
@@ -163,7 +163,31 @@ async def _vectores(llm, piezas: list[Pieza]):
     # De a lotes: una llamada por fragmento seria carisima y lenta.
     for i in range(0, len(piezas), 32):
         lote = piezas[i:i + 32]
-        yield lote, await llm.embeddings([p.texto for p in lote])
+        vectores = await _embeber(llm, [p.texto for p in lote])
+        quedan = [(p, v) for p, v in zip(lote, vectores) if v is not None]
+        for p, v in zip(lote, vectores):
+            if v is None:
+                print(f"aviso: el servicio rechazó un fragmento y se saltea: {p.texto[:90]!r}",
+                      file=sys.stderr)
+        yield [p for p, _ in quedan], [v for _, v in quedan]
+
+
+async def _embeber(llm, textos: list[str], *, reintento: bool = False) -> list[list[float] | None]:
+    """Vectores de un lote. Si el servicio rechaza el lote entero (pasa con el
+    modelo gratuito: 422 «content safety screening» por UN fragmento inocente),
+    lo parte en dos hasta aislarlo. El fragmento que sigue rechazado después de
+    un reintento queda en None y se saltea: no tira abajo la carga de todo."""
+    try:
+        return await llm.embeddings(textos)
+    except LLMError as e:
+        if e.status not in (413, 422, 500, 502, 503):
+            raise
+        if len(textos) > 1:
+            medio = len(textos) // 2
+            return (await _embeber(llm, textos[:medio]) + await _embeber(llm, textos[medio:]))
+        if reintento:
+            return [None]
+        return await _embeber(llm, textos, reintento=True)
 
 
 async def _a_conocimiento(con, llm, archivo: Path, piezas: list[Pieza], *, tipo: str,
