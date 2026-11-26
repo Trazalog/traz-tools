@@ -175,7 +175,8 @@ async def iniciar(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
         sesion_id = (await cur.fetchone())["sesion_id"]
     await con.commit()
 
-    return {"sesion_id": str(sesion_id), "tema": tema["nombre"], "pregunta": pregunta}
+    return {"sesion_id": str(sesion_id), "tema": tema["nombre"], "pregunta": pregunta,
+            "intercambios": 0, "sugeridos": INTERCAMBIOS_SUGERIDOS}
 
 
 async def responder(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
@@ -212,7 +213,7 @@ async def responder(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,
     transcripcion.append({"rol": "agente", "texto": siguiente})
     await _guardar_transcripcion(con, sesion_id, transcripcion)
     return {"sesion_id": sesion_id, "cerrar": False, "pregunta": siguiente,
-            "intercambios": intercambios}
+            "intercambios": intercambios, "sugeridos": INTERCAMBIOS_SUGERIDOS}
 
 
 async def estructurar(con: psycopg.AsyncConnection, cfg: Config, llm: OpenRouter,

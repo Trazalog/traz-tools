@@ -41,7 +41,7 @@
     <span id="agp-cab-avatar"></span>
     <div class="agp-titulo">
       <strong id="agp-nombre">Quirqui</strong>
-      <small id="agp-rol">tu asistente en Trazalog</small>
+      <small id="agp-rol">tu asistente</small>
     </div>
     <button type="button" class="agp-cerrar" title="Cerrar">&times;</button>
   </div>
@@ -114,6 +114,10 @@
 .agp-quien { font-size: 11px; color: #999; margin-bottom: 2px; }
 .agp-error .agp-texto { color: #dd4b39; }
 .agp-pensando { color: #aaa; font-style: italic; }
+.agp-lista { margin: 4px 0 4px 18px; padding: 0; }
+.agp-lista li { margin: 2px 0; }
+.agp-subtitulo { display: block; margin: 6px 0 2px; }
+.agp-parrafo { display: block; height: 6px; }
 #agp-contador { position: absolute; top: -4px; right: -4px; z-index: 1; min-width: 18px; height: 18px;
                 padding: 0 5px; border-radius: 9px; background: #dd4b39; color: #fff; font-size: 11px;
                 line-height: 18px; text-align: center; display: none; }
@@ -330,7 +334,7 @@
         $('#agp-boton').attr('title', 'Preguntale a ' + agente.nombre);
         $('#agp-cab-avatar').html(TZAgente.avatar(agente, estado));
         $('#agp-nombre').text(agente.nombre);
-        $('#agp-rol').text(agente.rol === 'coach' ? 'tu coach como administrador' : 'tu asistente en Trazalog');
+        $('#agp-rol').text(agente.rol === 'coach' ? 'tu coach como administrador' : 'tu asistente');
     }
     function estado(e) { TZAgente.estado($('#agp-boton .tzag, #agp-cab-avatar .tzag'), e); }
     pintarIdentidad('saludo');
@@ -746,7 +750,7 @@
     });
 
     function pintarRespuesta(r) {
-        var html = '<div class="agp-texto">' + conEnlaces(escapar(r.respuesta)) + '</div>';
+        var html = '<div class="agp-texto">' + conEnlaces(r.error ? escapar(r.respuesta) : formato(escapar(r.respuesta))) + '</div>';
         (r.propuestas_meta || []).forEach(function (m) { html += tarjetaMeta(m); });
         (r.propuestas_carga || []).forEach(function (c) { html += tarjetaCarga(c); });
         (r.propuestas_plan || []).forEach(function (p) { html += tarjetaPlan(p); });
@@ -826,6 +830,31 @@
 
     // Enlace directo a una pantalla de Tools (AGE-UC-004): el agente escribe [texto](tools:ruta)
     // y acá se convierte en un enlace que navega con linkTo. Solo rutas con forma de controlador.
+    // Formato mínimo del texto del agente (AGENTE-UX-01): negritas, títulos cortos y listas.
+    // Recibe texto YA ESCAPADO, así que solo agrega etiquetas propias; nunca HTML del modelo.
+    function formato(html) {
+        var lineas = String(html).replace(/\r/g, '').split('\n'), out = [], lista = null;
+        function cerrarLista() { if (lista) { out.push('</' + lista + '>'); lista = null; } }
+        lineas.forEach(function (l) {
+            var vi = /^\s*[-*•]\s+(.*)$/.exec(l), nu = /^\s*\d{1,2}[.)]\s+(.*)$/.exec(l),
+                ti = /^\s*#{1,4}\s+(.*)$/.exec(l), tipo = vi ? 'ul' : (nu ? 'ol' : null);
+            if (tipo) {
+                if (lista !== tipo) { cerrarLista(); out.push('<' + tipo + ' class="agp-lista">'); lista = tipo; }
+                out.push('<li>' + (vi || nu)[1] + '</li>');
+                return;
+            }
+            cerrarLista();
+            if (ti) { out.push('<strong class="agp-subtitulo">' + ti[1] + '</strong>'); }
+            else if ($.trim(l) === '') { out.push('<span class="agp-parrafo"></span>'); }
+            else { out.push(l + '<br>'); }
+        });
+        cerrarLista();
+        return out.join('')
+            .replace(/\*\*([^*<>\n]{1,200}?)\*\*/g, '<strong>$1</strong>')
+            .replace(/(^|[\s(>])\*([^*<>\n\s][^*<>\n]{0,200}?)\*(?=[\s.,;:)!?<]|$)/g, '$1<em>$2</em>')
+            .replace(/(<br>)+(<\/?(?:ul|ol)|<strong class="agp-subtitulo">|<span class="agp-parrafo">)/g, '$2')
+            .replace(/<br>$/, '');
+    }
     function conEnlaces(html) {
         return html.replace(/\[([^\]\n]{1,80})\]\(tools:([a-z0-9-]+(?:\/[A-Za-z0-9_]+){1,2}|[A-Za-z0-9_]+)\)/g,
             '<a href="#" class="agp-ir" data-ruta="$2">$1</a>');
