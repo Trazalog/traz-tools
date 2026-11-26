@@ -197,6 +197,27 @@ Python se justifica **únicamente** cuando la operación requiere capacidades qu
 
 ---
 
+## 3-bis. Agentes de IA de Trazalog
+
+> Capítulo sumado el 2026-11-26 (unificación de documentación). Es un resumen para ubicar a los agentes en esta arquitectura; el diseño completo y las decisiones ADR-A1 a A14 están en [`AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`](AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md).
+
+Además de los clientes MCP de terceros (Claude, ChatGPT y otros), Trazalog tiene sus propios agentes —**Kuntur** (acompaña al administrador), **Quirqui** (asiste a cada usuario) y **Faustino** (entrevista a expertos)— sobre un **motor único**. El motor es **un cliente MCP más**: no tiene un camino propio a los datos de las empresas.
+
+```mermaid
+flowchart LR
+  U[Usuario en Tools] --> PHP[Tools PHP<br/>panel de los agentes]
+  PHP -->|consulta + permiso del usuario| M[Motor de agentes<br/>servicio aparte, ADR-A14]
+  M -->|modelo de lenguaje| OR[OpenRouter]
+  M -->|conocimiento| PG[(Base propia<br/>PostgreSQL + pgvector)]
+  M -->|MCP con el permiso del usuario| GW[WSO2 MCP Gateway]
+  GW --> DS[DataServices<br/>filtrados por empresa]
+  M -->|avisos| NTF[(Avisos de Tools<br/>ADR-015)]
+```
+
+- **Los datos del cliente entran siempre por el MCP** (ADR-A3), con el permiso del usuario o, en trabajos programados, con el permiso propio de la empresa (ADR-A10). Por eso el aislamiento por empresa de la sección 6 se aplica igual a los agentes: el `empr_id` sale del permiso, nunca de un parámetro.
+- **El conocimiento de la industria no pasa por el MCP** (ADR-A2): vive en la base propia del motor.
+- **Los agentes son de solo lectura** (ADR-A8), con dos excepciones acotadas que confirma el administrador (ADR-A12 y A13).
+
 ## 4. WSO2 MCP Gateway — Capacidades Detalladas
 
 ### 4.1 Funcionalidades del Gateway

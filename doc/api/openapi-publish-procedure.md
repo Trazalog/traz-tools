@@ -8,7 +8,7 @@ publicar, verificar). Es para vos (Rodolfo), en la consola.
 
 **Si ya publicaste la API antes y solo cambiaste la spec**, no hace falta
 repetir todo esto — ver §7 (re-publicar) o, más resumido,
-[`doc/infra/wso2-redeploy-artifacts.md`](../infra/wso2-redeploy-artifacts.md) §2.
+[`doc/infra/wso2.md`](../infra/wso2.md) §2.
 
 > ⚠️ **Este documento es de Sprint 2 y quedó desactualizado en un punto
 > importante:** describe la identidad como un header `X-Empr-Id` inyectado

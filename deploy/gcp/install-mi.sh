@@ -74,7 +74,7 @@ fi
 # ── JAVA_HOME (JDK 21 requerido por WSO2 4.6.0 — ver doc/v3/deployment-gcp.md §4) ──
 # systemd no lee /etc/profile.d, así que hace falta resolver JAVA_HOME acá y
 # escribirlo explícitamente en el unit (a diferencia de DEV, que lo setea en
-# el perfil de shell — ver doc/infra/wso2-install.md).
+# el perfil de shell — ver doc/infra/wso2.md).
 if [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/java" ]; then
   JAVA_HOME_RESOLVED="$JAVA_HOME"
 else

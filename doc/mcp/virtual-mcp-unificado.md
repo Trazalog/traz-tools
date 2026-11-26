@@ -15,7 +15,7 @@ para publicarlo (§2), **cómo migrar sin cortar** lo que ya funciona hoy
 
 **No cubre:** cómo compilar/redesplegar `toolsMCPAPI` en el MI si volvés a
 tocar su código — eso es
-[`doc/infra/wso2-redeploy-artifacts.md`](../infra/wso2-redeploy-artifacts.md).
+[`doc/infra/wso2.md`](../infra/wso2.md).
 Tampoco cubre el despliegue a la VM de GCP (`doc/v3/deployment-gcp.md`,
 Tarea 3.5) — este documento es sobre tu entorno de DEV.
 
@@ -75,7 +75,7 @@ En **`Develop`** → **`API Configurations`** → **`Endpoints`**:
 | Production URL | `http://<host-del-MI>:8290/tools/mcp` |
 | Sandbox URL | `http://<host-del-MI>:8290/tools/mcp` |
 
-> **Corrección 2026-08-08:** este documento decía puerto `8280`, que es incorrecto — el HTTP passthrough del MI en DEV es el `8290` (confirmado en `doc/infra/wso2-install.md` y usado toda la sesión). El primer smoke test real contra el gateway (§4) falló con 404 hasta corregir esto — quedaba apuntando a `10.142.0.13:8280`, un host/puerto que no es el MI de DEV.
+> **Corrección 2026-08-08:** este documento decía puerto `8280`, que es incorrecto — el HTTP passthrough del MI en DEV es el `8290` (confirmado en `doc/infra/wso2.md` y usado toda la sesión). El primer smoke test real contra el gateway (§4) falló con 404 hasta corregir esto — quedaba apuntando a `10.142.0.13:8280`, un host/puerto que no es el MI de DEV.
 >
 > El APIM proxea al MI, context `/tools/mcp` (`toolsMCPAPI`) — no a `/tools/man` ni `/tools/alm` directamente. `toolsMCPAPI` es la única fachada que expone esta API; internamente delega a `toolsALMAPI` para las tools `alm_*`, pero eso es transparente para el APIM.
 >

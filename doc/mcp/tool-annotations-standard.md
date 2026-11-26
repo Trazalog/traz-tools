@@ -141,7 +141,7 @@ En el archivo de configuración del Virtual MCP Server (JSON exportable desde el
 
 Verificar que el campo `annotations` aparezca en el JSON que devuelve `tools/list`
 al conectarse con MCP Inspector (Etapa 1 del testing workflow — ver
-[`doc/infra/testing-workflow.md`](../infra/testing-workflow.md)).
+[`doc/infra/ambientes.md`](../infra/ambientes.md)).
 
 ---
 
@@ -158,5 +158,5 @@ al conectarse con MCP Inspector (Etapa 1 del testing workflow — ver
 
 - MCP Specification — Tool Annotations: https://modelcontextprotocol.io/docs/concepts/tools#annotations
 - WSO2 MCP Gateway docs: https://apim.docs.wso2.com/en/latest/mcp-gateway/overview/
-- Testing workflow: [`doc/infra/testing-workflow.md`](../infra/testing-workflow.md)
+- Testing workflow: [`doc/infra/ambientes.md`](../infra/ambientes.md)
 - Arquitectura MCP Trazalog v3: [`doc/v3/TRAZALOG_v3_MCP_ARCHITECTURE.md`](../v3/TRAZALOG_v3_MCP_ARCHITECTURE.md)

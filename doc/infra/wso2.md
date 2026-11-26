@@ -1,6 +1,215 @@
-# Cómo redesplegar artefactos WSO2 después de un cambio
+# WSO2 en Trazalog — instalar y redesplegar
 
 ## Objetivo
+
+Qué es: todo lo de WSO2 (API Manager y Micro Integrator) que no es de un ambiente en particular: cómo se instala en una máquina de desarrollo (parte 1) y cómo se redespliega un artefacto después de un cambio (parte 2). Para quién: quien desarrolle o pruebe artefactos de WSO2, incluido Claude Code. Cuándo leerlo: al armar una máquina nueva o después de cambiar una API, una secuencia o un servicio de datos. Qué NO cubre: qué ambiente usar para qué ni el servidor compartido de DEV ([`ambientes.md`](ambientes.md)), ni el despliegue en Google Cloud ([`deployment-gcp.md`](../v3/deployment-gcp.md)).
+
+---
+
+## Parte 1 — Instalación de WSO2 API Manager 4.6.0 en DEV
+
+Procedimiento real ejecutado en la workstation del PM (Ubuntu 24).
+Referencia para reproducir en entornos TEST y PROD (ver notas al final).
+
+---
+
+### Entorno
+
+| Item | Valor |
+|---|---|
+| OS | Ubuntu 24 |
+| Path de instalación | `/mnt/win/dev/wso2am-4.6.0/` |
+| Java | Temurin OpenJDK 21 |
+| JAVA_HOME | configurado en `/etc/profile.d/jdk21.sh` |
+| Modo | All-in-one (single node, sin profileSetup) |
+| Base de datos | H2 embebida (solo DEV — ver sección de notas) |
+
+> **Por qué no `/opt/`**: espacio en disco insuficiente en la partición del sistema.
+> La partición montada en `/mnt/win/dev/` tiene el espacio disponible.
+
+---
+
+### 1. Prerequisito: Java 21 Temurin
+
+WSO2 APIM 4.6.0 requiere JDK 21. Verificar antes de continuar:
+
+```bash
+java -version
+# openjdk version "21.x.x" ...
+
+echo $JAVA_HOME
+# /usr/lib/jvm/temurin-21-amd64  (o equivalente)
+```
+
+Si `JAVA_HOME` no está seteado, crearlo en `/etc/profile.d/jdk21.sh`:
+
+```bash
+export JAVA_HOME=/usr/lib/jvm/temurin-21-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+Luego `source /etc/profile.d/jdk21.sh` o reiniciar la sesión.
+
+---
+
+### 2. Descarga e instalación
+
+```bash
+# Descargar el zip oficial desde wso2.com/api-platform/api-manager/
+# (requiere cuenta gratuita en wso2.com)
+
+# Descomprimir en el path de destino
+cd /mnt/win/dev/
+unzip wso2am-4.6.0.zip
+
+# El directorio resultante es /mnt/win/dev/wso2am-4.6.0/
+
+# Dar permisos de ejecución al script principal
+chmod +x /mnt/win/dev/wso2am-4.6.0/bin/api-manager.sh
+```
+
+---
+
+### 3. Configuración (deployment.toml)
+
+Path: `/mnt/win/dev/wso2am-4.6.0/repository/conf/deployment.toml`
+
+Cambios aplicados sobre el archivo default. Solo se listan las secciones modificadas;
+el resto queda con los valores default de WSO2:
+
+```toml
+[server]
+hostname = "localhost"
+mode = "single"
+
+[super_admin]
+username = "admin"
+password = "admin"
+create_admin_account = true
+
+[user_store]
+type = "database_unique_id"
+
+[database.apim_db]
+type = "h2"
+
+[database.shared_db]
+type = "h2"
+
+[[apim.gateway.environment]]
+name = "Default"
+# todos los endpoints apuntan a localhost (valores default de la instalación)
+
+[apim.analytics]
+enable = false
+```
+
+> La configuración completa está en el kickoff doc del proyecto.
+> H2 es la base embebida de WSO2 — válida solo en DEV, sin datos persistentes entre
+> reinstalaciones. Para TEST y PROD usar PostgreSQL (ver E0-INF-05).
+
+---
+
+### 4. Arranque
+
+```bash
+cd /mnt/win/dev/wso2am-4.6.0
+./bin/api-manager.sh start
+```
+
+Seguir los logs durante el primer arranque (~3-4 minutos):
+
+```bash
+tail -f repository/logs/wso2carbon.log
+```
+
+El servidor está listo cuando aparece en el log:
+
+```
+[INFO] WSO2 API Manager started in X seconds
+```
+
+Otros comandos útiles:
+
+```bash
+./bin/api-manager.sh stop
+./bin/api-manager.sh restart
+./bin/api-manager.sh status
+```
+
+---
+
+### 5. Smoke test ejecutado y validado
+
+#### Consolas web
+
+| Endpoint | URL | Estado |
+|---|---|---|
+| Publisher | https://localhost:9443/publisher | OK |
+| Developer Portal | https://localhost:9443/devportal | OK |
+| Admin Console | https://localhost:9443/carbon | OK |
+
+Credenciales: `admin` / `admin`
+
+El browser muestra advertencia de certificado self-signed — aceptar la excepción
+para continuar (solo en DEV).
+
+#### Gateway (puerto 8243)
+
+El Gateway usa HTTPS con certificado self-signed. Validar con curl, no con el browser:
+
+```bash
+curl -k https://localhost:8243
+# Respuesta: "Welcome to WSO2 API Manager" (o similar)
+```
+
+#### API HelloWorld
+
+Se creó una API de prueba desde el Publisher, se publicó y se consumió exitosamente
+desde el Developer Portal — flujo completo validado.
+
+#### Tunnel ngrok
+
+```bash
+ngrok http https://localhost:8243
+```
+
+URL pública generada y accesible desde internet — smoke test completo del flujo
+MCP end-to-end confirmado.
+
+---
+
+### 6. Notas para reproducir en TEST / PROD
+
+**Puerto 8243 es HTTPS — ngrok requiere esquema explícito:**
+
+```bash
+# CORRECTO
+ngrok http https://localhost:8243
+
+# INCORRECTO — rompe el handshake SSL
+ngrok http 8243
+```
+
+**Certificado self-signed en localhost:8243:**
+El browser bloquea la conexión directa al Gateway. Usar siempre `curl -k` para
+validar el Gateway en DEV. En TEST/PROD configurar un certificado válido.
+
+**Base de datos:**
+H2 es solo para DEV. Para TEST y PROD reemplazar las secciones `[database.*]` en
+`deployment.toml` con la configuración PostgreSQL correspondiente (ver E0-INF-05).
+
+**Permisos en filesystem NTFS (Windows/WSL):**
+Si los scripts `.sh` pierden el bit de ejecución después de descomprimir en una
+partición NTFS montada desde Windows:
+
+```bash
+find /mnt/win/dev/wso2am-4.6.0/bin -name "*.sh" -exec chmod +x {} \;
+```
+
+---
+
+## Parte 2 — Redesplegar artefactos después de un cambio
 
 Este documento responde una sola pregunta: **cambié algo en una API, sequence o
 DataService del MI, o en una spec OpenAPI publicada en el APIM — ¿cómo hago
@@ -23,7 +232,7 @@ procedimiento del otro:
 
 ---
 
-## 1. Redesplegar artefactos del MI (APIs, sequences, DataServices)
+### 1. Redesplegar artefactos del MI (APIs, sequences, DataServices)
 
 **Cuándo:** cambiaste cualquier archivo bajo
 `_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/` (por ejemplo,
@@ -81,7 +290,7 @@ cubre el ciclo completo.
 
 ---
 
-## 2. Redesplegar una API publicada en el APIM (Publisher)
+### 2. Redesplegar una API publicada en el APIM (Publisher)
 
 **Cuándo:** cambiaste una spec OpenAPI ya publicada (por ejemplo, agregaste
 una operación nueva a `doc/api/trazalog-operaciones.yaml`, o cambiaste una
@@ -123,10 +332,19 @@ plantilla de verificación.
 
 ---
 
-## 3. Los dos niveles a la vez
+### 3. Los dos niveles a la vez
 
 Si el cambio toca ambos (ej: agregaste una tool nueva en `toolsMCPAPI.xml`
 **y** la sumaste a `trazalog-operaciones.yaml`), hacer primero **§1** (MI) y
 recién después **§2** (APIM) — el Publisher apunta al MI como backend, así
 que si el MI todavía no tiene la ruta nueva, la operación nueva del APIM
 va a devolver error aunque esté bien configurada del lado del Publisher.
+
+## De dónde salió este documento
+
+Fusionado el 2026-11-26 (unificación de documentación, `DOC-UNIF-2`) a partir de:
+
+- `doc/infra/wso2.md`
+- `doc/infra/wso2.md`
+
+El texto se juntó sin reescribirlo; solo se bajaron niveles de título y se ajustaron enlaces. La historia de cada parte está en `git log --follow` de los archivos originales.

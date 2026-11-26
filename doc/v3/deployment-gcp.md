@@ -24,7 +24,7 @@
 
 **Estos son los mínimos "de catálogo" de WSO2**, pensados para un ambiente de producción genérico con carga concurrente real. No son el punto de partida correcto para dimensionar el piloto: Rodolfo ya corre APIM+MI en su máquina de desarrollo con heaps de fábrica (`MI: -Xms256m -Xmx1024m`, sin tocar nada) y le anda bien. El early adopter va a tener **1-2 usuarios**, no la carga concurrente que esos mínimos oficiales asumen. Se prioriza ese dato empírico + el volumen real esperado por sobre el catálogo oficial (ver decisión en 1.4).
 
-**Sistema operativo: `Rocky Linux 9`** — ya decidido en la arquitectura canónica (`TRAZALOG_v3_MCP_ARCHITECTURE.md` §9-10, decisión **IDR-001**), no es una elección nueva de esta tarea. Ese documento estableció que WSO2 4.6.0 requiere JDK 21, y CentOS 7 (el SO histórico de Trazalog) quedó EOL en junio 2024 con una `glibc` (2.17) incompatible con los builds modernos de JDK 21 — por eso IDR-001 fija Rocky Linux 9 (drop-in replacement de CentOS/RHEL, soporte hasta 2032) como el SO de cualquier VM nueva de WSO2 en v3. Ubuntu fue evaluada en ese mismo documento y descartada salvo "razón estratégica" (cambio de paradigma apt↔dnf sin beneficio para este caso). La primera versión de este documento decía Ubuntu 24.04 LTS por error — se tomó como referencia el SO del workstation de DEV de Rodolfo (`doc/infra/wso2-install.md`) en vez de la decisión ya tomada en la arquitectura canónica. Corregido acá.
+**Sistema operativo: `Rocky Linux 9`** — ya decidido en la arquitectura canónica (`TRAZALOG_v3_MCP_ARCHITECTURE.md` §9-10, decisión **IDR-001**), no es una elección nueva de esta tarea. Ese documento estableció que WSO2 4.6.0 requiere JDK 21, y CentOS 7 (el SO histórico de Trazalog) quedó EOL en junio 2024 con una `glibc` (2.17) incompatible con los builds modernos de JDK 21 — por eso IDR-001 fija Rocky Linux 9 (drop-in replacement de CentOS/RHEL, soporte hasta 2032) como el SO de cualquier VM nueva de WSO2 en v3. Ubuntu fue evaluada en ese mismo documento y descartada salvo "razón estratégica" (cambio de paradigma apt↔dnf sin beneficio para este caso). La primera versión de este documento decía Ubuntu 24.04 LTS por error — se tomó como referencia el SO del workstation de DEV de Rodolfo (`doc/infra/wso2.md`) en vez de la decisión ya tomada en la arquitectura canónica. Corregido acá.
 
 ### 1.2 Comparación de tiers E2 (specs verificadas contra `docs.cloud.google.com`)
 
@@ -198,7 +198,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo dnf install -y temurin-21-jdk
    java -version   # debe mostrar "21.x.x"
    ```
-   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 8) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2-install.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
+   Fuente: [adoptium.net/installation/linux](https://adoptium.net/installation/linux/), repo RPM oficial de Adoptium. **Usar `rhel` en el `baseurl`, no `rocky`** — el path `rpm/rocky/` de Adoptium solo tiene paquetes para Rocky Linux 8 (`rpm/rocky/8/`), no existe `rpm/rocky/9/` (probado en la práctica: da 404). `rpm/rhel/9/x86_64/` sí existe y aplica igual a Rocky 9 por ser compatible 1:1 con RHEL 9. `install-apim.sh`/`install-mi.sh` (paso 8) detectan `JAVA_HOME` solos a partir de este `java` instalado y lo escriben en el unit de systemd — a diferencia de DEV (`doc/infra/wso2.md`), acá no alcanza con `/etc/profile.d` porque systemd no lo lee.
 
 7. **Conseguir los 2 archivos que necesitan los scripts** (WSO2 no deja descargarlos directo con `wget` desde la VM — hay que bajarlos con el navegador y después subirlos). *(Antes había un tercer archivo, el driver JDBC de PostgreSQL — ya no hace falta: el registro interno del APIM usa H2 embebida, ver §2.)*
 
@@ -247,7 +247,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    sudo systemctl start wso2mi
    ```
 
-9. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2-install.md` §5):
+9. ⌨️ **Cloud Shell (o cualquier terminal, incluso tu compu) — smoke test** (equivalente al de DEV en `doc/infra/wso2.md` §5):
    ```bash
    curl -I https://mcp.cloudtrazalog.com
    ```
@@ -260,7 +260,7 @@ Cloud Shell queda disponible para todo el resto del checklist — no hay que rep
    ```
    Deberían aparecer los 6 puertos escuchando (3 del APIM, 3 del MI — no colisionan entre sí, el MI ya viene con sus propios puertos de fábrica corridos, distintos de los del APIM, precisamente para poder convivir en la misma máquina sin configurar nada).
 
-   **Consolas del APIM** (mismo patrón que DEV, `doc/infra/wso2-install.md` §5 — solo alcanzables desde dentro de la VM o por túnel SSH, **nunca públicamente**, ADR-011 #9):
+   **Consolas del APIM** (mismo patrón que DEV, `doc/infra/wso2.md` §5 — solo alcanzables desde dentro de la VM o por túnel SSH, **nunca públicamente**, ADR-011 #9):
    ```bash
    curl -k https://localhost:9443/carbon      # Admin Console
    curl -k https://localhost:9443/publisher   # Publisher
@@ -1191,3 +1191,22 @@ Repetir §6.4 (verificación OAuth) y §6.5 (aislamiento) de este mismo document
 - [ ] Aplicación + suscripción al MCP Server creadas en el DevPortal de esta VM
 - [ ] §6.4/§6.5 confirmados en verde con identidad real (no la de DEV)
 - [ ] Esta sección actualizada con el resultado real, fecha, y la URL de JWKS usada
+
+---
+
+## 8. El motor de los agentes de IA en esta VM — ⚠️ no probado
+
+> Sección sumada el 2026-11-26 (unificación de documentación). **Nada de esto se ejecutó todavía en GCP.** Describe lo que hace falta para instalarlo, no un procedimiento probado.
+
+El motor de los agentes es un servicio aparte de Tools y de WSO2 (ADR-A14 en [`AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`](AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md)). Cómo se levanta y se configura en una máquina de desarrollo: [`doc/agente/instalar-y-operar.md`](../agente/instalar-y-operar.md).
+
+| Qué hace falta | Estado |
+|---|---|
+| **Unidad de servicio** para que el motor arranque solo y se reinicie si se cae (hoy solo existe `./agente/dev.sh`, que es para desarrollo) | No existe |
+| **Dónde vive la base del motor** (PostgreSQL con pgvector): en esta VM o en otra | Sin decidir (decisión del PM) |
+| Variables de entorno y clave del modelo de lenguaje en un archivo fuera del repositorio, con permisos `600` | Mismo criterio que `deploy/gcp/.env.car` |
+| El motor escucha solo en la red interna: Tools le habla desde el servidor PHP; **no va expuesto a internet** | Ver «Este servicio no va expuesto a internet» en `instalar-y-operar.md` |
+| Modo MCP `apim`: el motor entra por el gateway de esta VM con el permiso del usuario | Configuración por defecto del motor |
+| SearXNG para la búsqueda en internet de los agentes (opcional) | Ver `instalar-y-operar.md`, parte 3 |
+
+Hasta que existan la unidad de servicio y la decisión sobre la base, los agentes solo corren en DEV ([`doc/infra/ambientes.md`](../infra/ambientes.md), sección 5).

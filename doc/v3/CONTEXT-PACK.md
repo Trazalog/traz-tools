@@ -1,6 +1,6 @@
 # CONTEXT-PACK — traz-tools
 
-> Versión -> 1.8, "último ADR: ADR-015" (ADR-014 está en `develop-v3`, no en esta rama), "último ADR de agentes: ADR-A13", fecha 2026-11-22
+> Versión -> 1.9, "último ADR: ADR-015" (ADR-014 está en `develop-v3`, no en esta rama), "último ADR de agentes: ADR-A14", fecha 2026-11-26
 
 > **Este archivo es un RESUMEN OPERATIVO, NO la fuente de verdad.** Leelo primero, pero ante cualquier ambigüedad, contradicción, o tema que no cubra, andá a la fuente canónica ANTES de decidir. Si ni la fuente canónica lo cubre, PARÁ — es una decisión de arquitectura o de negocio, no la tomes solo (ver reglas de escalamiento en CLAUDE.md).
 
@@ -45,6 +45,7 @@ Trazalog es una plataforma SaaS de gestión de operaciones industriales (manteni
 | **ADR-A11** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Conocimiento multi-vertical: `vertical` (minería, oil & gas, electricidad, general) como metadato del conocimiento, la taxonomía y el perfil de la empresa                                                                                                                                                         |
 | **ADR-A12** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Excepción a A8: Kuntur graba datos de configuración (clase `configuracion`) solo con confirmación del administrador, con su token, lista cerrada, registro y todo o nada. Dnato v3 contra servicios simulados hasta que exista |
 | **ADR-A13** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | Plan de acción de Kuntur: propuesta completa (pedido, hitos, tareas sin responsable) en la base del agente; al aceptar, con el token del administrador, se crea en Tareas solo con el Proceso Estándar. Aprobado por el PM el 2026-11-22 (PR #669) |
+| **ADR-A14** | ❌ (en `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`)        | El motor de agentes es un servicio aparte de Tools y de WSO2 (FastAPI en Python, base propia con pgvector); entra a WSO2 por el MCP con el permiso del usuario. Aprobado por el PM el 2026-11-25 |
 
 ## 3. Mecanismo de identidad vigente (el que importa en el día a día)
 
@@ -87,7 +88,7 @@ Claude.ai ──JWT Dnato──> APIM (:8243)
 | Tiers, límites de uso, analytics de tools | `TRAZALOG_v3_PRICING_STRATEGY` en doc/v3/ (verificar path)                                                                    |
 | Priorización de features, próximo cliente | `investigacion-sector-minero-trazalog-v3-2.md`                                                                                |
 | Cualquier cosa en PHP dentro de Dnato     | `traz-comp-dnato/CLAUDE.md` (PHP 5.6 estricto)                                                                                |
-| Agentes de IA (tareas `AGENTE-*`)         | `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (completo) + `PROMPT_CC_AGENTES_TRAZALOG.md` + `doc/v3/AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md`        |
+| Agentes de IA (tareas `AGENTE-*`)         | `AGENTES_TRAZALOG_ARQUITECTURA_TECNICA.md` (parte 1 completa, y la parte de lo que se toca) + `doc/agente/instalar-y-operar.md` + `doc/agente/decisiones.md` |
 
 ## 7. Dónde está cada cosa (mapa de directorios clave)
 
