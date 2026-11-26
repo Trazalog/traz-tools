@@ -61,11 +61,16 @@ USUARIOS = [
      f"Responsable de Almacén {GRUPO_MINERA}", "4"),
     ("admin.electrica@trazalog.local", "Laura", "Méndez", "adminelectrica", EMPRESA_NUEVA, "Administrador", "1"),
 ]
-# Menú del agente por rol: (grupo, rol, opciones de seg.menues)
+# Menú por rol: (grupo, rol, [(módulo, opción de seg.menues)]). Al dar el padre
+# (por ejemplo ALM/almacenes) Tools muestra también todos sus hijos.
+_AGENTES = [("CORE", "agente_minero"), ("CORE", "agente_feedback"), ("CORE", "agente_entrevista")]
+_ADMIN = [("CORE", "core"), *_AGENTES, ("ALM", "almacenes"), ("MAN", "mantenimiento"),
+          ("PAN", "panol"), ("PRD", "tareas"), ("TAR", "tareas_grupo")]
 MENUES = [
-    (GRUPO_MINERA, f"Experto {GRUPO_MINERA}", ["core", "agente_minero", "agente_entrevista"]),
-    (GRUPO_MINERA, f"Responsable de Almacén {GRUPO_MINERA}", ["agente_minero"]),
-    (EMPRESA_NUEVA, "Administrador", ["core", "agente_minero", "agente_feedback", "agente_entrevista"]),
+    (GRUPO_MINERA, "Administrador", _ADMIN),
+    (GRUPO_MINERA, f"Experto {GRUPO_MINERA}", [("CORE", "core"), ("CORE", "agente_minero"), ("CORE", "agente_entrevista")]),
+    (GRUPO_MINERA, f"Responsable de Almacén {GRUPO_MINERA}", [("CORE", "agente_minero"), ("ALM", "almacenes")]),
+    (EMPRESA_NUEVA, "Administrador", _ADMIN),
 ]
 # Expertos de Faustino: nombre, nick del usuario, especialidad
 EXPERTOS = [
@@ -220,12 +225,12 @@ def sembrar_tools() -> tuple[dict[str, int], int]:
             c.execute('INSERT INTO seg.memberships_users ("group", role, usuario_app, email) VALUES (%s,%s,%s,%s)',
                       (grupo, rol, nick, email))
         for grupo, rol, opciones in MENUES:
-            for op in opciones:
+            for modulo, op in opciones:
                 c.execute("""INSERT INTO seg.memberships_menues (modulo, opcion, "group", role, usuario_app)
-                             SELECT 'CORE', %s, %s, %s, 'agentes-prueba'
+                             SELECT %s, %s, %s, %s, 'agentes-prueba'
                              WHERE NOT EXISTS (SELECT 1 FROM seg.memberships_menues
-                                               WHERE opcion=%s AND "group"=%s AND role=%s AND eliminado=0)""",
-                          (op, grupo, rol, op, grupo, rol))
+                                               WHERE modulo=%s AND opcion=%s AND "group"=%s AND role=%s AND eliminado=0)""",
+                          (modulo, op, grupo, rol, modulo, op, grupo, rol))
     print(f"  {EMPRESA_NUEVA}: empr_id {empr_nueva}; {len(USUARIOS)} usuarios")
     sembrar_bonita()
     return ids, empr_nueva

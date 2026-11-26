@@ -176,7 +176,7 @@ flowchart LR
 |---|---|---|---|
 | F35 | Pestaña **Kuntur**: `Las chancadoras paran mucho por fallas. Armame un plan de acción para bajarlas.` | Tarda (hasta 2 minutos y medio, H-5). Tarjeta **«🦅 Kuntur te propone un plan»**: la **causa** (la **AMT-CH01** tuvo **3 órdenes correctivas** en unos 2 meses y no tiene preventivos), el **objetivo** (por ejemplo, disponibilidad de 90 % en 6 semanas) y **3 hitos** con sus tareas. Botones **✅ Aceptar**, **✏️ Pedir cambios** y **❌ No lo quiero** | ¿El plan es el que armaría un jefe de mantenimiento? |
 | F36 | **✏️ Pedir cambios** y escribí `Que sea en 4 semanas, no en 6` | Kuntur arma un plan nuevo con el cambio | |
-| F37 | **✅ Aceptar** | «Creando el pedido…» y después la confirmación. En **Tareas → Pedidos de trabajo** aparece el pedido con sus hitos y tareas, **sin responsables**. ⚠️ Esto **sí escribe en la base de desarrollo** (empresa 191) | ¿Tendría que proponer responsables? |
+| F37 | **✅ Aceptar** | «Creando el pedido…» y después la confirmación. En el menú **Tareas Grupo → Pedidos Trabajo** aparece el pedido con sus hitos y tareas, **sin responsables**. ⚠️ Esto **sí escribe en la base de desarrollo** (empresa 191) | ¿Tendría que proponer responsables? |
 | F38 | Pedile otro plan (`Armame un plan para que no falte stock`) y tocá **❌ No lo quiero** → **No es prioridad** | Pide el motivo con opciones (**No es prioridad**, **Ya lo estamos haciendo**, **No aplica**, **Otro**). Si le volvés a pedir lo mismo, no te propone el mismo plan | ¿Los motivos alcanzan? |
 
 ### 🅷 Bloque H · Configurar la empresa con Kuntur (20 minutos)
