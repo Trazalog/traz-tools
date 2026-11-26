@@ -40,6 +40,11 @@ class Dash extends CI_Controller {
 			$data['estilo_logo_navbar'] = $footer['data'][0]->valor2;
 			$data['texto_logo_navbar'] = $footer['data'][0]->valor3;
 
+			//Marca por dominio (REQ-019): con el dominio de Trazalog quedan los valores de core.tablas
+			$data['logo_navbar'] = marca('logo_navbar', $data['logo_navbar']);
+			$data['estilo_logo_navbar'] = marca('estilo_logo_navbar', $data['estilo_logo_navbar']);
+			$data['texto_logo_navbar'] = marca('texto_logo_navbar', $data['texto_logo_navbar']);
+
 
 			$data['adm_contexto'] = $this->adm_contexto();
 
@@ -118,6 +123,7 @@ class Dash extends CI_Controller {
 		// Logo del navbar reutilizado como logo de empresa (supuesto A3)
 		$logo = $this->Tablas->obtenerTabla('configuraciones_uitoolsLogoNavbar');
 		$data['logo_empresa'] = isset($logo['data'][0]->valor) ? $logo['data'][0]->valor : '';
+		$data['logo_empresa'] = marca('logo_impresos', $data['logo_empresa']); //REQ-019 (logo para fondo claro)
 
 		$data['nombre_usuario']    = $nombre;
 		$data['fecha_hoy']         = $this->fechaLarga();

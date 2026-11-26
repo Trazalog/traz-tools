@@ -1,0 +1,96 @@
+/*
+ * Marca pirkai.net (REQ-019, ADR-015)
+ *
+ * Se carga SOLO cuando el usuario entra por un dominio de Pirkai
+ * (application/config/marcas.php). Con el dominio de Trazalog no se carga.
+ *
+ * ⚠ Colores PROVISORIOS: elegidos sin definición del dueño del producto.
+ *   Para cambiarlos alcanza con editar las variables de abajo.
+ *
+ * Todas las reglas van bajo body[data-marca="pirkai"] para ganarle a los
+ * estilos del skin de AdminLTE y a los bloques <style> de cada pantalla.
+ *
+ * Qué NO se toca a propósito: botones y alertas de peligro, errores de
+ * validación y los asteriscos de campo obligatorio (ahí el rojo significa
+ * "atención", no "marca").
+ */
+
+body[data-marca="pirkai"] {
+    --marca-primario: #0f766e;        /* barra superior, activos */
+    --marca-primario-oscuro: #115e59; /* logo, menú lateral */
+    --marca-primario-claro: #14b8a6;  /* realces */
+    --marca-lateral: #134e4a;         /* fondo del menú lateral */
+    --marca-lateral-sub: #0f3d3a;     /* submenús */
+    --marca-texto-lateral: #ccfbf1;
+}
+
+/* ---------- Barra superior y logo ---------- */
+body[data-marca="pirkai"] .main-header .navbar,
+body[data-marca="pirkai"] .main-header li.user-header {
+    background-color: var(--marca-primario) !important;
+}
+body[data-marca="pirkai"] .main-header .navbar .sidebar-toggle:hover,
+body[data-marca="pirkai"] .main-header .navbar .dropdown-menu li a:hover {
+    background-color: var(--marca-primario-oscuro) !important;
+}
+body[data-marca="pirkai"] .main-header .logo {
+    background-color: var(--marca-primario-oscuro) !important;
+}
+body[data-marca="pirkai"] .main-header .logo:hover {
+    background-color: var(--marca-lateral) !important;
+}
+
+/* ---------- Menú lateral ---------- */
+body[data-marca="pirkai"] .wrapper,
+body[data-marca="pirkai"] .main-sidebar,
+body[data-marca="pirkai"] .left-side {
+    background-color: var(--marca-lateral) !important;
+}
+body[data-marca="pirkai"] .sidebar a {
+    color: var(--marca-texto-lateral);
+}
+body[data-marca="pirkai"] .sidebar-menu > li.header {
+    background: var(--marca-primario-oscuro) !important;
+}
+body[data-marca="pirkai"] .sidebar-menu > li:hover > a,
+body[data-marca="pirkai"] .sidebar-menu > li.menu-open > a {
+    background: var(--marca-primario-oscuro) !important;
+}
+body[data-marca="pirkai"] .sidebar-menu > li.active > a {
+    background: var(--marca-primario) !important;
+    border-left-color: var(--marca-primario-claro) !important;
+}
+body[data-marca="pirkai"] .sidebar-menu > li > .treeview-menu {
+    background: var(--marca-lateral-sub) !important;
+}
+body[data-marca="pirkai"] .sidebar-menu .treeview-menu > li.active > a,
+body[data-marca="pirkai"] .sidebar-menu .treeview-menu > li > a:hover {
+    background-color: var(--marca-primario) !important;
+}
+
+/* ---------- Paneles y cajas que hoy fuerzan el rojo de Trazalog ---------- */
+body[data-marca="pirkai"] .panel-primary > .panel-heading {
+    background-color: var(--marca-primario) !important;
+    border-color: var(--marca-primario) !important;
+}
+body[data-marca="pirkai"] .panel-primary {
+    border-color: var(--marca-primario) !important;
+}
+body[data-marca="pirkai"] .box.box-primary {
+    border-top-color: var(--marca-primario) !important;
+}
+
+/* ---------- Acentos de marca escritos a mano en pantallas (#dd4b39) ----------
+ * Censo de develop (2026-11-26): líneas divisorias de títulos (border-bottom /
+ * border-top "solid #dd4b39") y separadores <hr> con fondo #dd4b39.
+ * El color de texto #dd4b39 NO se cambia: son los asteriscos de obligatorio. */
+body[data-marca="pirkai"] [style*="solid #dd4b39" i],
+body[data-marca="pirkai"] [style*="solid#dd4b39" i] {
+    border-color: var(--marca-primario) !important;
+}
+body[data-marca="pirkai"] [style*="background-color: #dd4b39" i],
+body[data-marca="pirkai"] [style*="background-color:#dd4b39" i],
+body[data-marca="pirkai"] [style*="background: #dd4b39" i],
+body[data-marca="pirkai"] [style*="background:#dd4b39" i] {
+    background-color: var(--marca-primario) !important;
+}

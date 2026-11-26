@@ -118,3 +118,20 @@ No hay fecha ni VM creada todavía — se define cuando el piloto con el early a
 | Probar el login/flujo completo con Dnato | DEV local + `setup-ngrok.sh` (2 túneles), o TEST (dominio real, sin ngrok) |
 | Mostrarle algo a alguien fuera del equipo, o probar con el early adopter | TEST |
 | Dar de alta un cliente real en producción | Todavía no existe — esperar a que TEST valide y clonar (§3.4) |
+
+---
+
+## 5. Dominios de marca (Pirkai)
+
+Además de los dominios de Trazalog, el sistema de DEMO y producción (`vm-demo-trazalog` y
+`vm-production-assetplanner-inst1`) puede atenderse con dominios de otra marca, que muestran su propio
+logo, nombre y colores sobre el mismo código y los mismos datos
+([REQ-019](../../requerimientos/REQ-019-marca-por-dominio.md), [ADR-015](../adr/ADR-015-marca-por-dominio.md)).
+
+| Ambiente | Dominio de marca | Estado (2026-11-26) |
+|---|---|---|
+| DEMO | `demo.pirkai.net` | Propuesto; sin registro de dominio todavía |
+| Producción | `app.pirkai.net` | Propuesto; sin registro de dominio todavía |
+
+Puesta en marcha y operación: guías [`pirkai-00`](pirkai-00-relevamiento-servidor.md) a
+[`pirkai-06`](pirkai-06-operacion.md).
