@@ -15,7 +15,8 @@ QUÉ HACE (todo con empresas de prueba; nunca toca otras):
   2. Perfiles de empresa y expertos de Faustino.
   3. Base de Tools de DEV: la empresa nueva ELECTRICA DEL SUR TEST, los
      usuarios de prueba con su menú, y su usuario de Bonita.
-  4. Datos del día a día de la empresa 191 en DEV, con fechas relativas a hoy.
+  4. Datos del día a día de la empresa 191 en DEV, con fechas relativas a hoy:
+     lotes en Tools y equipos con órdenes de trabajo en AssetPlanner.
   5. Imprime el punto de partida para compararlo con el guion.
 
 Las claves salen de ~/.agentes-prueba.env (fuera del repo). Nada de esto va
@@ -271,6 +272,78 @@ def sembrar_dia_a_dia() -> None:
     print(f"  lotes: {len(lotes)} (1 vence el {fechas[0]:%d/%m}, 1 venció el {fechas[1]:%d/%m})")
 
 
+def sembrar_mantenimiento() -> None:
+    """Equipos y órdenes de trabajo inventados de la 191 en AssetPlanner (DEV).
+
+    En AssetPlanner no existía la empresa 191: todo lo que se borra y se vuelve
+    a crear acá es de id_empresa = 191 y nada más. No tiene que ver con la
+    migración de AssetPlanner a Mantenimiento.
+    """
+    paso("Equipos y órdenes de trabajo de la 191 en AssetPlanner (DEV)")
+    e = EMPRESA_MINERA
+
+    def dia(n: int) -> str:
+        return (dt.datetime.combine(HOY, dt.time(8, 0)) - dt.timedelta(days=n)).strftime("%Y-%m-%d %H:%M:%S")
+
+    # codigo, descripcion, sector, grupo
+    equipos = [("AMT-CH01", "Chancadora primaria giratoria 42x65", "Planta de Chancado", "Chancadoras"),
+               ("AMT-CH02", "Chancadora secundaria de cono", "Planta de Chancado", "Chancadoras"),
+               ("AMT-CM01", "Camión minero 240 t", "Mina", "Camiones"),
+               ("AMT-CT01", "Cinta transportadora CV-01", "Planta de Chancado", "Cintas")]
+    # equipo, hace cuántos días, causa, estado (S = solicitada, T = terminada), horas que tardó
+    fallas = [("AMT-CH01", 50, "Ruido metálico en el anillo de ajuste", "T", 9),
+              ("AMT-CH01", 31, "Desgaste de mantos fuera de tolerancia", "T", 14),
+              ("AMT-CM01", 20, "Pérdida de aceite hidráulico en el cilindro de levante", "T", 5),
+              ("AMT-CH01", 8, "Atascamiento por material sobredimensionado", "S", 0),
+              ("AMT-CT01", 2, "Desalineación de la banda en la cola", "S", 0)]
+    sql = [f"DELETE FROM orden_trabajo WHERE id_empresa = {e}",
+           f"DELETE FROM solicitud_reparacion WHERE id_empresa = {e}",
+           f"DELETE FROM equipos WHERE id_empresa = {e}",
+           *(f"DELETE FROM {t} WHERE id_empresa = {e}" for t in ("sector", "grupo", "criticidad")),
+           f"INSERT IGNORE INTO empresas (id_empresa, descripcion, clienteid) VALUES ({e}, '{GRUPO_MINERA}', 0)",
+           f"INSERT INTO criticidad (descripcion, id_empresa, estado) VALUES ('Alta', {e}, 'AC')"]
+    for nombre in sorted({x[2] for x in equipos}):
+        sql.append(f"INSERT INTO sector (descripcion, estado, id_empresa) VALUES ('{nombre}', 'AC', {e})")
+    for nombre in sorted({x[3] for x in equipos}):
+        sql.append(f"INSERT INTO grupo (descripcion, estado, id_empresa) VALUES ('{nombre}', 'AC', {e})")
+    for cod, desc, sec, gru in equipos:
+        sql.append(f"""INSERT INTO equipos (descripcion, codigo, marca, ubicacion, id_empresa, id_sector, id_grupo,
+                       id_criticidad, estado, fecha_ingreso, tipo_horas)
+                       SELECT '{desc}', '{cod}', 'Inventada', 'Mina Angaco (demo)', {e},
+                              (SELECT id_sector FROM sector WHERE id_empresa = {e} AND descripcion = '{sec}'),
+                              (SELECT id_grupo FROM grupo WHERE id_empresa = {e} AND descripcion = '{gru}'),
+                              (SELECT id_criti FROM criticidad WHERE id_empresa = {e}), 'AC', '{dia(400)[:10]}', 'H'""")
+    for i, (cod, hace, causa, estado, horas) in enumerate(fallas, 1):
+        case = -(e * 1000 + i)   # vínculo solicitud ↔ orden; negativo para no chocar con casos de Bonita
+        eq = f"(SELECT id_equipo FROM equipos WHERE id_empresa = {e} AND codigo = '{cod}')"
+        sql.append(f"""INSERT INTO solicitud_reparacion (numero, id_tipo, solicitante, f_solicitado, f_sugerido,
+                       id_equipo, causa, estado, usrId, id_empresa, correctivo, urgente, case_id)
+                       SELECT {i}, 1, 'Pedro Ríos', '{dia(hace)}', '{dia(hace)[:10]}', {eq}, '{causa}', '{estado}',
+                              0, {e}, 1, {1 if hace < 10 else 0}, {case}""")
+        if estado == "T":
+            ini = dia(hace - 1)
+            fin = (dt.datetime.strptime(ini, "%Y-%m-%d %H:%M:%S") + dt.timedelta(hours=horas)).strftime(
+                "%Y-%m-%d %H:%M:%S")
+            sql.append(f"""INSERT INTO orden_trabajo (fecha, fecha_program, fecha_inicio, fecha_terminada,
+                           descripcion, estado, id_usuario, id_solicitud, tipo, id_equipo, id_empresa, case_id,
+                           f_asignacion)
+                           SELECT '{ini[:10]}', '{ini}', '{ini}', '{fin}', 'Reparación: {causa}', 'T', 0,
+                                  (SELECT id_solicitud FROM solicitud_reparacion WHERE case_id = {case}), '2', {eq},
+                                  {e}, {case}, '{ini}'""")
+    # La 191 apuntaba en AssetPlanner a la empresa 8 (CSJ-CIENAGUITA, datos que no son de prueba).
+    # Para la prueba usa su propio id: lo que va en el token como empr_id_mysql.
+    # Volver atrás: UPDATE core.empresas SET empr_id_mysql = 8 WHERE empr_id = 191;
+    with tools() as c:
+        c.execute("UPDATE core.empresas SET empr_id_mysql = %s WHERE empr_id = %s", (e, e))
+    r = subprocess.run(["mysql", "-h", env("ASSET_DB_HOST"), "-u", env("ASSET_DB_USER"), env("ASSET_DB_NAME")],
+                       input=";\n".join(sql) + ";\n", text=True, capture_output=True,
+                       env=dict(os.environ, MYSQL_PWD=env("ASSET_DB_PASSWORD")))
+    if r.returncode:
+        sys.exit(f"falló la carga en AssetPlanner:\n{r.stderr[-800:]}")
+    print(f"  {len(equipos)} equipos y {len(fallas)} órdenes "
+          f"({sum(f[3] == 'S' for f in fallas)} abiertas; 3 fallas de la chancadora primaria en 50 días)")
+
+
 # ------------------------------------------------------------------ chequeo
 def resumen(empr_nueva: int) -> None:
     paso("Punto de partida")
@@ -296,6 +369,7 @@ def main() -> int:
     ids, empr_nueva = sembrar_tools()
     sembrar_agentes(ids, empr_nueva)
     sembrar_dia_a_dia()
+    sembrar_mantenimiento()
     resumen(empr_nueva)
     return 0
 
