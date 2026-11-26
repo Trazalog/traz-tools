@@ -297,7 +297,7 @@ una operación nueva a `doc/api/trazalog-operaciones.yaml`, o cambiaste una
 descripción).
 
 > **Si el cambio agrega o modifica tools de un MCP Server ya publicado, usar
-> [`../mcp/republicar-mcp-server.md`](../mcp/republicar-mcp-server.md)** — es el
+> [`../mcp/republicar-mcp-server.md`](../mcp/publicar-y-operar.md)** — es el
 > procedimiento completo y autocontenido (MI → API → MCP Server → revisión →
 > verificación → conector), e incluye los pasos que el resumen de abajo no cubre:
 > desplegar revisión, y que el MCP Server **no hereda** las operaciones nuevas de
@@ -306,7 +306,7 @@ descripción).
 Esto **no tiene script** — es un procedimiento de consola, porque el
 Publisher de WSO2 APIM no tiene una CLI/API pública simple para esto en este
 entorno. Pasos (ya documentados en detalle en
-[`openapi-publish-procedure.md`](../api/openapi-publish-procedure.md) §7,
+[`openapi-publish-procedure.md`](../mcp/publicar-y-operar.md) §7,
 resumidos acá):
 
 1. `https://localhost:9443/publisher` (o el host del APIM correspondiente)
@@ -327,7 +327,7 @@ resumidos acá):
 **Cómo confirmar que el redespliegue funcionó:** `tools/list` contra el
 Virtual MCP Server debe reflejar el cambio (nueva tool, descripción
 actualizada, etc.) — ver el smoke test de
-[`virtual-mcp-unificado.md`](../mcp/virtual-mcp-unificado.md) §4 como
+[`virtual-mcp-unificado.md`](../mcp/diseno.md) §4 como
 plantilla de verificación.
 
 ---

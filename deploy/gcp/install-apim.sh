@@ -107,7 +107,7 @@ PYEOF
 log "deployment.toml actualizado: hostname=$MCP_DOMAIN, https_endpoint=https://$MCP_DOMAIN"
 log "  (database.apim_db/shared_db sin tocar — H2 por defecto)"
 log "PENDIENTE fuera de este script (clase 🔴): [apim.jwt] + Key Manager federado Dnato"
-log "  (ADR-008/ADR-009) — ver doc/identity/apim-keymanager-dnato.md antes de dar de alta el primer cliente"
+log "  (ADR-008/ADR-009) — ver doc/identidad/identidad-y-seguridad.md antes de dar de alta el primer cliente"
 
 # ── Heap sizes ─────────────────────────────────────────────────────
 API_SH="$APIM_HOME/bin/api-manager.sh"

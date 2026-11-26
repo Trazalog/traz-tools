@@ -1,5 +1,11 @@
 # Inventario de artefactos WSO2 MI — Trazalog Tools v2 (git)
 
+## Objetivo
+
+Qué es: el inventario de los artefactos del WSO2 MI de Tools (APIs, secuencias, servicios de datos) tal como estaban en git en mayo de 2026. Para quién: quien necesite ubicar un artefacto o medir el alcance de un cambio. Cuándo leerlo: como punto de partida; la fuente de verdad es `_backend/api/ToolsAPIProject/`.
+
+> ⚠️ Sin verificar desde 2026-05-30: desde entonces se sumaron artefactos (por ejemplo `toolsMCPAPI`, `toolsNTFAPI` y los servicios de datos de KPI y avisos). Antes de usarlo, contrastarlo con el código.
+
 **Tarea:** E1-API-01  
 **Fecha:** Mayo 2026  
 **Fuente:** análisis estático de `_backend/api/ToolsAPIProject/ToolsAPIProject/src/main/wso2mi/artifacts/`  

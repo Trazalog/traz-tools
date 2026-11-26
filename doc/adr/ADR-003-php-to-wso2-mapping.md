@@ -30,7 +30,7 @@ Cada operación que se expone como MCP tool necesita una decisión explícita so
 ## Flujo de autenticación y propagación de empr_id
 
 > **ADR-008 (Mayo 2026):** el flujo de validación fue actualizado. El APIM Gateway valida el JWT
-> y extrae el `empr_id` (no el MI). Ver [empr-id-injection.md](../identity/empr-id-injection.md).
+> y extrae el `empr_id` (no el MI). Ver [empr-id-injection.md](../identidad/identidad-y-seguridad.md).
 >
 > **Superseded a su vez por [ADR-009](ADR-009-backend-jwt-assertion.md).** El mecanismo de
 > inyección de ADR-008 (`EmprIdInjectorPolicy` / header `X-Empr-Id`) quedó deprecado: la
@@ -179,9 +179,9 @@ Las siguientes operaciones se posponen a sprints posteriores y NO tienen decisi�
 ## Referencias
 
 - `doc/historial/api/codeigniter-models-survey.md` — relevamiento CI3, tabla de categorización por entidad
-- `doc/api/inventory-2026.md` §5 — gap analysis vs MCP MVP, §7 — lista negra de DataServices
+- `doc/api/inventario-wso2.md` §5 — gap analysis vs MCP MVP, §7 — lista negra de DataServices
 - `doc/historial/identidad/dataservices-remediation-phase-a.md` — auditoría empr_id en MANDataService y ALMDataService
-- `doc/identity/gateway-token-validation.md` — flujo de validación JWT y propagación de empr_id
+- `doc/identidad/identidad-y-seguridad.md` — flujo de validación JWT y propagación de empr_id
 - `_backend/api/ToolsAPIProject/.../sequences/JwtValidator.xml` — validación JWT en gateway
 - `_backend/api/ToolsAPIProject/.../sequences/EmprIdInjector.xml` — inyección X-Empr-Id
 - `_backend/api/ToolsAPIProject/.../data-services/MANDataService.dbs` — queries existentes y getEquipoIsolated

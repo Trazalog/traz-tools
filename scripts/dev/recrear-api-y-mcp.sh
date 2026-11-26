@@ -19,7 +19,7 @@
 #  (paso 3 del procedimiento). Corriendo esto sin ese paso previo, la API se
 #  recrea con las operaciones viejas.
 #
-#  Este script es el paso 4 de doc/mcp/republicar-mcp-server.md, que tiene los
+#  Este script es el paso 4 de doc/mcp/publicar-y-operar.md, que tiene los
 #  8 pasos completos (MI, API, MCP Server, verificacion) y la tabla de sintomas.
 #  Leelo antes; aca no se repite.
 #

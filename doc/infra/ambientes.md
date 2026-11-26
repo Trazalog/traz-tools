@@ -4,7 +4,7 @@
 
 Este documento explica los ambientes donde corre el stack WSO2 (APIM + MI) de Trazalog v3, cómo levantar DEV en una máquina local (Rodolfo u otro developer), y cómo se usa TEST hoy (futuro PROD), dónde corre el motor de los agentes de IA en cada uno y cómo es el servidor compartido de DEV. Está escrito para cualquier developer que necesite decidir "¿dónde pruebo esto?" o "¿necesito ngrok para esto?".
 
-**Qué NO cubre:** la instalación paso a paso de WSO2 (eso está en [`wso2-install.md`](wso2.md) para DEV y [`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md) para TEST/PROD), el flujo de testing de tools MCP en sí ([`testing-workflow.md`](ambientes.md)), ni la arquitectura de identidad/federación con Dnato ([`doc/identity/oauth-discovery-flow.md`](../identity/oauth-discovery-flow.md), ADR-008/ADR-009). Este doc es el mapa que conecta esos documentos, no un reemplazo.
+**Qué NO cubre:** la instalación paso a paso de WSO2 (eso está en [`wso2-install.md`](wso2.md) para DEV y [`doc/v3/deployment-gcp.md`](../v3/deployment-gcp.md) para TEST/PROD), el flujo de testing de tools MCP en sí ([`testing-workflow.md`](ambientes.md)), ni la arquitectura de identidad/federación con Dnato ([`doc/identidad/identidad-y-seguridad.md`](../identidad/identidad-y-seguridad.md), ADR-008/ADR-009). Este doc es el mapa que conecta esos documentos, no un reemplazo.
 
 ---
 
@@ -339,7 +339,7 @@ Settings → Connectors → Add custom connector → URL: `https://<id>.ngrok-fr
 #### Checklist antes de cerrar un issue de tool MCP
 
 - [ ] Tool pasa Etapa 1: MCP Inspector devuelve schema correcto
-- [ ] Tool tiene annotation correcta (`readOnlyHint` o `destructiveHint`) — ver [`doc/mcp/tool-annotations-standard.md`](../mcp/tool-annotations-standard.md)
+- [ ] Tool tiene annotation correcta (`readOnlyHint` o `destructiveHint`) — ver [`doc/mcp/diseno.md`](../mcp/diseno.md)
 - [ ] Tool pasa Etapa 2: Claude la invoca correctamente con una pregunta en lenguaje natural
 - [ ] Tool result < 25.000 tokens
 - [ ] Timeout < 5 minutos

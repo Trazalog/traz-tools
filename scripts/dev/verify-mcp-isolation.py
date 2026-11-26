@@ -87,7 +87,7 @@ for E in [1,777]:
 # referencia un equipo de la empresa B. La query hace el join natural y termina
 # exponiendo codigo/ubicacion del equipo ajeno. Se reporta como ADVERTENCIA
 # porque el fix correcto depende de una decision de negocio (ver
-# doc/mcp/verificacion-queries-datos-reales.md §6): puede ser dato sucio, o un
+# doc/mcp/pruebas-y-casos.md §6): puede ser dato sucio, o un
 # caso legitimo de mantenimiento tercerizado sobre equipos de un cliente.
 print("-"*78)
 n = my("SELECT count(*) FROM solicitud_reparacion sr JOIN equipos e ON e.id_equipo=sr.id_equipo WHERE sr.id_empresa <> e.id_empresa")
