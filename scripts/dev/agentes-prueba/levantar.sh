@@ -4,7 +4,7 @@
 # Se corre en: terminal local, desde la raíz de la copia de prueba de Tools,
 # con la conexión segura (VPN) a DEV levantada.
 #
-#   scripts/dev/agentes-prueba/levantar.sh          integrador de prueba (8301) y motor (8099)
+#   scripts/dev/agentes-prueba/levantar.sh          base de agentes, integrador de prueba (8301) y motor (8099)
 #   scripts/dev/agentes-prueba/levantar.sh parar    apaga el integrador de prueba
 #
 # - El integrador de prueba es una COPIA del Micro Integrator, en
@@ -32,6 +32,16 @@ fi
 
 [ -f "$HOME/.agentes-prueba.env" ] || { echo "Falta ~/.agentes-prueba.env (ver doc/agente/guion-prueba-agentes.md §9)" >&2; exit 2; }
 set -a; . "$HOME/.agente-minero.env"; . "$HOME/.agentes-prueba.env"; set +a
+
+# 0. Base de agentes de prueba (contenedor; si estaba apagado, lo prende)
+if command -v docker >/dev/null && docker ps -a --format '{{.Names}}' | grep -qx agentes-pg-prueba; then
+    docker start agentes-pg-prueba >/dev/null
+    for _ in $(seq 1 30); do
+        docker exec agentes-pg-prueba pg_isready -q 2>/dev/null && break
+        sleep 1
+    done
+    echo "✅ Base de agentes de prueba prendida"
+fi
 
 # 1. Integrador de prueba
 if [ -z "$(pid_mi)" ]; then
