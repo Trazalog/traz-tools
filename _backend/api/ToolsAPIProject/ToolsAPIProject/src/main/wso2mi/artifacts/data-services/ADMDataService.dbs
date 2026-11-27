@@ -81,4 +81,281 @@
          <with-param name="detalle" query-param="detalle"/>
       </call-query>
    </resource>
+
+   <!-- ================================================================ -->
+   <!-- REQ-005 · Planes                                                  -->
+   <!-- ================================================================ -->
+   <query id="getPlanes" useConfig="ToolsDataSource">
+      <sql>select p.plan_id, p.codigo, p.nombre, p.icono, p.orden, p.tope_usuarios, p.cuota_mcp, p.periodo, p.dia_renovacion, p.base, p.gratuito, p.vencimiento_dias, p.vencimiento_unidad, (select count(*) from core.empresas e where e.plan_id = p.plan_id and e.eliminado = false) as empresas from seg.planes p where p.activo = true order by p.orden, p.codigo</sql>
+      <result outputType="json">{"planes":{"plan":[{"plan_id":"$plan_id","codigo":"$codigo","nombre":"$nombre","icono":"$icono","orden":"$orden","tope_usuarios":"$tope_usuarios","cuota_mcp":"$cuota_mcp","periodo":"$periodo","dia_renovacion":"$dia_renovacion","base":"$base","gratuito":"$gratuito","vencimiento_dias":"$vencimiento_dias","vencimiento_unidad":"$vencimiento_unidad","empresas":"$empresas"}]}}</result>
+   </query>
+   <query id="getMatriz" useConfig="ToolsDataSource">
+      <sql>select pf.plan_id, pf.modulo, pf.opcion from seg.planes_funcionalidades pf join seg.planes p on p.plan_id = pf.plan_id and p.activo = true order by pf.plan_id, pf.modulo, pf.opcion</sql>
+      <result outputType="json">{"matriz":{"casilla":[{"plan_id":"$plan_id","modulo":"$modulo","opcion":"$opcion"}]}}</result>
+   </query>
+   <query id="getEmpresasAfectadas" useConfig="ToolsDataSource">
+      <sql>select e.empr_id, e.nombre, (select count(distinct mu.email) from seg.memberships_users mu left join seg.membresias_estado me on me.email = mu.email and me."group" = mu."group" where upper(trim(mu."group")) = upper(trim(e.nombre)) and coalesce(me.estado,'activo') &lt;&gt; 'baja') as lugares from core.empresas e where e.plan_id = cast(:plan_id as integer) and e.eliminado = false order by e.nombre</sql>
+      <result outputType="json">{"empresas":{"empresa":[{"empr_id":"$empr_id","nombre":"$nombre","lugares":"$lugares"}]}}</result>
+      <param name="plan_id" sqlType="STRING"/>
+   </query>
+   <query id="getAdministradoresEmpresa" useConfig="ToolsDataSource">
+      <sql>select distinct mu.email from seg.memberships_users mu join core.empresas e on upper(trim(e.nombre)) = upper(trim(mu."group")) and e.eliminado = false left join seg.membresias_estado me on me.email = mu.email and me."group" = mu."group" where e.empr_id = cast(:empr_id as integer) and mu.role ilike 'Administrador%' and coalesce(me.estado,'activo') = 'activo'</sql>
+      <result outputType="json">{"administradores":{"administrador":[{"email":"$email"}]}}</result>
+      <param name="empr_id" sqlType="STRING"/>
+   </query>
+   <query id="setPlan" useConfig="ToolsDataSource">
+      <sql>select seg.plan_guardar(cast(nullif(:plan_id,'') as integer), :codigo, :nombre, :icono, coalesce(cast(nullif(:orden,'') as integer),0), cast(nullif(:tope_usuarios,'') as integer), cast(nullif(:cuota_mcp,'') as integer), coalesce(nullif(:periodo,''),'mes'), cast(nullif(:dia_renovacion,'') as integer), coalesce(cast(nullif(:base,'') as boolean),false), coalesce(cast(nullif(:gratuito,'') as boolean),false), cast(nullif(:vencimiento_dias,'') as integer), coalesce(nullif(:vencimiento_unidad,''),'dias'), nullif(:precio,''), :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"plan_id":"$resultado"}}</result>
+      <param defaultValue="#{NULL}" name="plan_id" optional="true" sqlType="STRING"/>
+      <param name="codigo" sqlType="STRING"/>
+      <param name="nombre" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="icono" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="orden" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="tope_usuarios" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="cuota_mcp" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="periodo" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="dia_renovacion" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="base" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="gratuito" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="vencimiento_dias" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="vencimiento_unidad" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="precio" optional="true" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="setPlanCopia" useConfig="ToolsDataSource">
+      <sql>select seg.plan_copiar(cast(:plan_id as integer), :codigo_nuevo, :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"plan_id":"$resultado"}}</result>
+      <param name="plan_id" sqlType="STRING"/>
+      <param name="codigo_nuevo" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="setPlanBaja" useConfig="ToolsDataSource">
+      <sql>select seg.plan_baja(cast(:plan_id as integer), :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="plan_id" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="setPlanBase" useConfig="ToolsDataSource">
+      <sql>select seg.plan_base(cast(:plan_id as integer), :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="plan_id" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="addPlanFuncionalidad" useConfig="ToolsDataSource">
+      <sql>select seg.plan_funcionalidad(cast(:plan_id as integer), :modulo, :opcion, true, :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="plan_id" sqlType="STRING"/>
+      <param name="modulo" sqlType="STRING"/>
+      <param name="opcion" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="quitarPlanFuncionalidad" useConfig="ToolsDataSource">
+      <sql>select seg.plan_funcionalidad(cast(:plan_id as integer), :modulo, :opcion, false, :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="plan_id" sqlType="STRING"/>
+      <param name="modulo" sqlType="STRING"/>
+      <param name="opcion" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+
+   <!-- ================================================================ -->
+   <!-- REQ-005 · Catálogo y estructura del menú                          -->
+   <!-- ================================================================ -->
+   <query id="getCatalogo" useConfig="ToolsDataSource">
+      <sql>select m.modulo, m.opcion, m.texto, m.tipo, m.publicacion, m.eliminado, m.url, m.opcion_padre, m.url_icono, m.texto_presentacion, m.ayuda, (select count(*) from seg.planes_funcionalidades pf where pf.modulo = m.modulo and pf.opcion = m.opcion) as en_planes, (select count(*) from seg.intereses i where i.modulo = m.modulo and i.opcion = m.opcion) as intereses from seg.menues m order by m.modulo, coalesce(m.opcion_padre, m.opcion), m.orden</sql>
+      <result outputType="json">{"catalogo":{"opcion":[{"modulo":"$modulo","opcion":"$opcion","texto":"$texto","tipo":"$tipo","publicacion":"$publicacion","eliminado":"$eliminado","url":"$url","opcion_padre":"$opcion_padre","url_icono":"$url_icono","texto_presentacion":"$texto_presentacion","ayuda":"$ayuda","en_planes":"$en_planes","intereses":"$intereses"}]}}</result>
+   </query>
+   <query id="getIconos" useConfig="ToolsDataSource">
+      <sql>select icono from core.iconos order by icono</sql>
+      <result outputType="json">{"iconos":{"icono":[{"icono":"$icono"}]}}</result>
+   </query>
+   <query id="getIntereses" useConfig="ToolsDataSource">
+      <sql>select i.empr_id, coalesce(e.nombre,'') as empresa, count(*) as cantidad from seg.intereses i left join core.empresas e on e.empr_id = i.empr_id where i.modulo = :modulo and i.opcion = :opcion group by i.empr_id, e.nombre order by empresa</sql>
+      <result outputType="json">{"intereses":{"interes":[{"empr_id":"$empr_id","empresa":"$empresa","cantidad":"$cantidad"}]}}</result>
+      <param name="modulo" sqlType="STRING"/>
+      <param name="opcion" sqlType="STRING"/>
+   </query>
+   <query id="setCatalogoOpcion" useConfig="ToolsDataSource">
+      <sql>select seg.catalogo_opcion_crear(:modulo, :opcion, :texto, nullif(:url,''), nullif(:opcion_padre,''), nullif(:url_icono,''), :tipo, :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="modulo" sqlType="STRING"/>
+      <param name="opcion" sqlType="STRING"/>
+      <param name="texto" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="url" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="opcion_padre" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="url_icono" optional="true" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="updateCatalogoOpcion" useConfig="ToolsDataSource">
+      <sql>select seg.catalogo_opcion_editar(:modulo, :opcion, :texto, nullif(:url_icono,''), :tipo, nullif(:url,''), nullif(:texto_presentacion,''), nullif(:ayuda,''), :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="modulo" sqlType="STRING"/>
+      <param name="opcion" sqlType="STRING"/>
+      <param name="texto" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="url_icono" optional="true" sqlType="STRING"/>
+      <param name="tipo" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="url" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="texto_presentacion" optional="true" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="ayuda" optional="true" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="setCatalogoPublicacion" useConfig="ToolsDataSource">
+      <sql>select seg.catalogo_publicacion(:modulo, :opcion, cast(nullif(:publicar,'') as boolean), :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="modulo" sqlType="STRING"/>
+      <param name="opcion" sqlType="STRING"/>
+      <param name="publicar" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+   <query id="setCatalogoOrden" useConfig="ToolsDataSource">
+      <sql>select seg.catalogo_orden(:modulo, nullif(:opcion_padre,''), :opciones, :quien) as resultado</sql>
+      <result outputType="json">{"respuesta":{"resultado":"$resultado"}}</result>
+      <param name="modulo" sqlType="STRING"/>
+      <param defaultValue="#{NULL}" name="opcion_padre" optional="true" sqlType="STRING"/>
+      <param name="opciones" sqlType="STRING"/>
+      <param name="quien" sqlType="STRING"/>
+   </query>
+
+   <resource method="GET" path="/planes">
+      <call-query href="getPlanes"/>
+   </resource>
+   <resource method="GET" path="/planes/matriz">
+      <call-query href="getMatriz"/>
+   </resource>
+   <resource method="GET" path="/plan/{plan_id}/empresas-afectadas">
+      <call-query href="getEmpresasAfectadas">
+         <with-param name="plan_id" query-param="plan_id"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/empresa/{empr_id}/administradores">
+      <call-query href="getAdministradoresEmpresa">
+         <with-param name="empr_id" query-param="empr_id"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/plan">
+      <call-query href="setPlan">
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="icono" query-param="icono"/>
+         <with-param name="orden" query-param="orden"/>
+         <with-param name="tope_usuarios" query-param="tope_usuarios"/>
+         <with-param name="cuota_mcp" query-param="cuota_mcp"/>
+         <with-param name="periodo" query-param="periodo"/>
+         <with-param name="dia_renovacion" query-param="dia_renovacion"/>
+         <with-param name="base" query-param="base"/>
+         <with-param name="gratuito" query-param="gratuito"/>
+         <with-param name="vencimiento_dias" query-param="vencimiento_dias"/>
+         <with-param name="vencimiento_unidad" query-param="vencimiento_unidad"/>
+         <with-param name="precio" query-param="precio"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/plan">
+      <call-query href="setPlan">
+         <with-param name="plan_id" query-param="plan_id"/>
+         <with-param name="codigo" query-param="codigo"/>
+         <with-param name="nombre" query-param="nombre"/>
+         <with-param name="icono" query-param="icono"/>
+         <with-param name="orden" query-param="orden"/>
+         <with-param name="tope_usuarios" query-param="tope_usuarios"/>
+         <with-param name="cuota_mcp" query-param="cuota_mcp"/>
+         <with-param name="periodo" query-param="periodo"/>
+         <with-param name="dia_renovacion" query-param="dia_renovacion"/>
+         <with-param name="base" query-param="base"/>
+         <with-param name="gratuito" query-param="gratuito"/>
+         <with-param name="vencimiento_dias" query-param="vencimiento_dias"/>
+         <with-param name="vencimiento_unidad" query-param="vencimiento_unidad"/>
+         <with-param name="precio" query-param="precio"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/plan/copia">
+      <call-query href="setPlanCopia">
+         <with-param name="plan_id" query-param="plan_id"/>
+         <with-param name="codigo_nuevo" query-param="codigo_nuevo"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/plan/baja">
+      <call-query href="setPlanBaja">
+         <with-param name="plan_id" query-param="plan_id"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/plan/base">
+      <call-query href="setPlanBase">
+         <with-param name="plan_id" query-param="plan_id"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/plan/funcionalidad">
+      <call-query href="addPlanFuncionalidad">
+         <with-param name="plan_id" query-param="plan_id"/>
+         <with-param name="modulo" query-param="modulo"/>
+         <with-param name="opcion" query-param="opcion"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/plan/funcionalidad/quitar">
+      <call-query href="quitarPlanFuncionalidad">
+         <with-param name="plan_id" query-param="plan_id"/>
+         <with-param name="modulo" query-param="modulo"/>
+         <with-param name="opcion" query-param="opcion"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="GET" path="/catalogo">
+      <call-query href="getCatalogo"/>
+   </resource>
+   <resource method="GET" path="/iconos">
+      <call-query href="getIconos"/>
+   </resource>
+   <resource method="GET" path="/catalogo/intereses/{modulo}/{opcion}">
+      <call-query href="getIntereses">
+         <with-param name="modulo" query-param="modulo"/>
+         <with-param name="opcion" query-param="opcion"/>
+      </call-query>
+   </resource>
+   <resource method="POST" path="/catalogo/opcion">
+      <call-query href="setCatalogoOpcion">
+         <with-param name="modulo" query-param="modulo"/>
+         <with-param name="opcion" query-param="opcion"/>
+         <with-param name="texto" query-param="texto"/>
+         <with-param name="url" query-param="url"/>
+         <with-param name="opcion_padre" query-param="opcion_padre"/>
+         <with-param name="url_icono" query-param="url_icono"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/catalogo/opcion">
+      <call-query href="updateCatalogoOpcion">
+         <with-param name="modulo" query-param="modulo"/>
+         <with-param name="opcion" query-param="opcion"/>
+         <with-param name="texto" query-param="texto"/>
+         <with-param name="url_icono" query-param="url_icono"/>
+         <with-param name="tipo" query-param="tipo"/>
+         <with-param name="url" query-param="url"/>
+         <with-param name="texto_presentacion" query-param="texto_presentacion"/>
+         <with-param name="ayuda" query-param="ayuda"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/catalogo/opcion/publicacion">
+      <call-query href="setCatalogoPublicacion">
+         <with-param name="modulo" query-param="modulo"/>
+         <with-param name="opcion" query-param="opcion"/>
+         <with-param name="publicar" query-param="publicar"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
+   <resource method="PUT" path="/catalogo/orden">
+      <call-query href="setCatalogoOrden">
+         <with-param name="modulo" query-param="modulo"/>
+         <with-param name="opcion_padre" query-param="opcion_padre"/>
+         <with-param name="opciones" query-param="opciones"/>
+         <with-param name="quien" query-param="quien"/>
+      </call-query>
+   </resource>
 </data>
